@@ -4,13 +4,31 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { BookOpen, Loader2, Star, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { useSocket } from "@/lib/providers/SocketProvider";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { courseService } from "@/lib/api/services/course.service";
 
 export default function CoursesPage() {
+  const queryClient = useQueryClient();
+  const { socket } = useSocket();
+
   const { data: courses, isLoading } = useQuery({
     queryKey: ["courses"],
     queryFn: courseService.getAllCourses,
   });
+
+  useEffect(() => {
+    if (!socket) return;
+    
+    socket.on("courseUpdated", () => {
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
+    });
+
+    return () => {
+      socket.off("courseUpdated");
+    };
+  }, [socket, queryClient]);
 
   if (isLoading) {
     return (

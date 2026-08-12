@@ -15,6 +15,8 @@ export interface Course {
   thumbnailUrl: string;
   level: string; // e.g., "BEGINNER", "INTERMEDIATE"
   price: number;
+  status?: string;
+  teacherId?: number;
   classes?: Class[];
 }
 

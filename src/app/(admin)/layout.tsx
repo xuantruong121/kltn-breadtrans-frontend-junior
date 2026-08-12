@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { LayoutDashboard, Users, BookCopy, PenTool, LogOut, FileText } from "lucide-react";
@@ -23,8 +25,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     router.push("/");
   };
 
-  // Only allow Admin or Teacher (basic check)
-  // if (user && user.role !== "ADMIN" && user.role !== "TEACHER") return <div>Access Denied</div>;
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    const unsub = useAuthStore.persist.onFinishHydration(() => setIsReady(true));
+    if (useAuthStore.persist.hasHydrated()) {
+      setIsReady(true);
+    }
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    if (isReady && (!user || (user.role !== 'ADMIN' && user.role !== 'TEACHER'))) {
+      router.push("/");
+    }
+  }, [isReady, user, router]);
+
+  if (!isReady || !user) return null;
 
   return (
     <div className="flex h-[100dvh] bg-slate-50 overflow-hidden text-slate-800">
@@ -35,13 +52,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
         <nav className="flex-1 p-4 flex flex-col gap-2">
           {ADMIN_NAV.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+            const isActive = item.href === "/admin" 
+              ? pathname === "/admin" 
+              : pathname.startsWith(item.href);
+              
             return (
               <Link 
                 key={item.id} 
                 href={item.href}
                 className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                  isActive ? "bg-junior-blue text-white" : "hover:bg-slate-800 hover:text-white"
+                  isActive 
+                    ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" 
+                    : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
                 }`}
               >
                 <item.icon size={20} />

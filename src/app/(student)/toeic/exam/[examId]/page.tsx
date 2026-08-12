@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToeicStore } from "@/stores/toeicStore";
 import { Clock, Send, ChevronRight, ChevronLeft, Loader2 } from "lucide-react";
+import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 
 export default function ToeicExamPage(props: { params: Promise<{ examId: string }> }) {
@@ -62,11 +63,23 @@ export default function ToeicExamPage(props: { params: Promise<{ examId: string 
     fetchExam();
   }, [params.examId]);
 
-  const handleSubmit = async () => {
-    if (!confirm("Bạn có chắc chắn muốn nộp bài không?")) return;
+  const executeSubmit = async (toastId: string) => {
+    toast.dismiss(toastId);
     setIsSubmitting(true);
     await submitAttempt();
     router.push(`/toeic/result/${attemptId}`);
+  };
+
+  const handleSubmit = () => {
+    toast((t) => (
+      <div className="flex flex-col gap-3">
+        <p className="font-medium text-slate-800">Bạn có chắc chắn muốn nộp bài không?</p>
+        <div className="flex gap-2 justify-end mt-2">
+          <button className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors" onClick={() => toast.dismiss(t.id)}>Kiểm tra lại</button>
+          <button className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors" onClick={() => executeSubmit(t.id)}>Nộp bài</button>
+        </div>
+      </div>
+    ), { duration: Infinity });
   };
 
   if (!exam) return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin text-blue-500" size={48} /></div>;

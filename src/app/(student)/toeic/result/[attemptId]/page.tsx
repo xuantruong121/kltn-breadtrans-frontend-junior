@@ -16,7 +16,7 @@ export default function ToeicResultPage(props: { params: Promise<{ attemptId: st
     queryFn: async () => {
       try {
         const res = await axiosClient.get(`/toeic/attempts/${attemptId}/result`);
-        return res;
+        return res.data;
       } catch (err) {
         // Mock fallback
         return {
