@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Quicksand } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "@/lib/providers/QueryProvider";
+import SocketProvider from "@/lib/providers/SocketProvider";
+import { Toaster } from "react-hot-toast";
 
 const quicksand = Quicksand({
   variable: "--font-quicksand",
@@ -21,7 +23,12 @@ export default function RootLayout({
   return (
     <html lang="vi" suppressHydrationWarning>
       <body className={`${quicksand.variable} font-sans min-h-screen antialiased text-slate-700`} suppressHydrationWarning>
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <SocketProvider>
+            {children}
+            <Toaster position="top-center" />
+          </SocketProvider>
+        </QueryProvider>
       </body>
     </html>
   );

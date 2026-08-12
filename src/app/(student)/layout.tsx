@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -13,6 +15,7 @@ const NAV_ITEMS = [
   { id: "practice", href: "/practice", label: "Luyện tập", icon: Gamepad2, color: "text-purple-500" },
   { id: "arena", href: "/arena", label: "Đấu trường", icon: Trophy, color: "text-junior-orange" },
   { id: "toeic", href: "/toeic", label: "Thi TOEIC", icon: Sparkles, color: "text-red-500" },
+  { id: "profile", href: "/student/profile", label: "Hồ sơ cá nhân", icon: UserCircle, color: "text-blue-500" },
 ];
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
@@ -20,12 +23,28 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   const router = useRouter();
   const { user, logout } = useAuthStore();
 
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    const unsub = useAuthStore.persist.onFinishHydration(() => setIsReady(true));
+    if (useAuthStore.persist.hasHydrated()) {
+      setIsReady(true);
+    }
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    if (isReady && (!user || user.role !== 'STUDENT')) {
+      router.push("/");
+    }
+  }, [isReady, user, router]);
+
   const handleLogout = () => {
     logout();
     router.push("/");
   };
 
-  if (!user) return null; // Wait for redirect if not logged in
+  if (!isReady || !user) return null;
 
   return (
     <div className="flex h-[100dvh] bg-sky-50 overflow-hidden">
@@ -63,9 +82,13 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         {/* User Profile Mini */}
         <div className="mt-auto pt-6 border-t-4 border-slate-100">
           <div className="flex items-center gap-3 mb-4 bg-orange-50 p-3 rounded-2xl border-2 border-orange-100">
-             <UserCircle size={40} className="text-junior-orange" />
+             {user.profile?.avatar ? (
+               <img src={user.profile.avatar} alt="Avatar" className="w-10 h-10 rounded-full object-cover border-2 border-orange-200" />
+             ) : (
+               <UserCircle size={40} className="text-junior-orange" />
+             )}
              <div className="overflow-hidden">
-               <p className="font-bold text-slate-800 truncate text-sm">{user.email}</p>
+               <p className="font-bold text-slate-800 truncate text-sm">{user.profile?.fullName || user.email}</p>
                <p className="text-xs font-bold text-junior-orange uppercase">Học sinh</p>
              </div>
           </div>

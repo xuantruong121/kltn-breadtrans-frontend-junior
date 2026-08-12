@@ -12,8 +12,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 Mọi AI coding assistant khi làm việc với repository này PHẢI tuân thủ các quy tắc sau:
 
-1. **ĐỌC TRƯỚC KHI CODE:** 
-   Trước khi bắt tay vào thiết kế kiến trúc hay code một tính năng mới, BẮT BUỘC phải đọc file `PROJECT_PROGRESS.md` ở root directory để hiểu rõ dự án đã làm được gì, cấu trúc hiện tại ra sao, tránh việc viết code trùng lặp hoặc phá vỡ luồng hiện tại.
+1. **ĐỌC TRƯỚC KHI CODE (MANDATORY):** 
+   Yêu cầu bắt buộc mọi Session mới của AI đều phải tham khảo file `PROJECT_PROGRESS.md` ở root directory trước khi code tiếp. Điều này đảm bảo AI sau không phá vỡ kiến trúc (VD: quên dùng zustand `authStore` hay tạo route sai quy ước).
 
 2. **GHI CHÉP LỊCH SỬ CÔNG VIỆC:**
    Sau khi hoàn tất một tính năng lớn (ví dụ: tạo module mới, tích hợp API quan trọng), AI BẮT BUỘC phải mở file `PROJECT_PROGRESS.md` ra và update ngắn gọn nội dung vừa thực hiện vào phần "Các Module Đã Hoàn Thành".

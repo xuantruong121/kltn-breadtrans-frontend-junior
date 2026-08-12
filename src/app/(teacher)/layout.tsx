@@ -7,25 +7,34 @@ import { useAuthStore } from "@/stores/authStore";
 import { useEffect, useState } from "react";
 
 const NAV_ITEMS = [
+  { id: "courses", href: "/teacher/courses", label: "Quản lý Khóa học", icon: FileText },
   { id: "classes", href: "/teacher/classes", label: "Lớp giảng dạy", icon: Users },
   { id: "assignments", href: "/teacher/assignments", label: "Chấm điểm", icon: PenTool },
   { id: "materials", href: "/teacher/materials", label: "Học liệu", icon: BookOpen },
+  { id: "profile", href: "/teacher/profile", label: "Hồ sơ cá nhân", icon: Users },
 ];
 
 export default function TeacherLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuthStore();
-  const [mounted, setMounted] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    if (!user || user.role !== 'TEACHER') {
+    const unsub = useAuthStore.persist.onFinishHydration(() => setIsReady(true));
+    if (useAuthStore.persist.hasHydrated()) {
+      setIsReady(true);
+    }
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    if (isReady && (!user || user.role !== 'TEACHER')) {
       router.push("/");
     }
-  }, [user, router]);
+  }, [isReady, user, router]);
 
-  if (!mounted || !user) return null;
+  if (!isReady || !user) return null;
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
@@ -59,9 +68,18 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         </nav>
 
         <div className="p-4 border-t border-slate-800">
-          <div className="mb-4 px-3">
-            <p className="text-sm text-white font-medium truncate">{user.email}</p>
-            <p className="text-xs text-slate-500">Giáo viên</p>
+          <div className="mb-4 px-3 flex items-center gap-3">
+            {user.profile?.avatar ? (
+              <img src={user.profile.avatar} alt="Avatar" className="w-10 h-10 rounded-full object-cover border border-slate-700" />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
+                {(user.profile?.fullName || user.email).charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="overflow-hidden">
+              <p className="text-sm text-white font-medium truncate">{user.profile?.fullName || user.email}</p>
+              <p className="text-xs text-slate-500">Giáo viên</p>
+            </div>
           </div>
           <button 
             onClick={() => { logout(); router.push('/'); }}
