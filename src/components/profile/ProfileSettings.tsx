@@ -11,6 +11,7 @@ import { useAuthStore } from "@/stores/authStore";
 export default function ProfileSettings() {
   const queryClient = useQueryClient();
   const setProfile = useAuthStore((state) => state.setProfile);
+  const user = useAuthStore((state) => state.user);
   
   const [formData, setFormData] = useState({
     fullName: "",
@@ -128,18 +129,20 @@ export default function ProfileSettings() {
                     placeholder="0912345678"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1">
-                    <Target size={14} /> Mục tiêu (IELTS/TOEIC)
-                  </label>
-                  <input 
-                    type="text" 
-                    value={formData.targetScore}
-                    onChange={(e) => setFormData({...formData, targetScore: e.target.value})}
-                    className="w-full border border-slate-300 rounded-lg px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
-                    placeholder="Vd: IELTS 7.0"
-                  />
-                </div>
+                {user?.role === 'STUDENT' && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1">
+                      <Target size={14} /> Mục tiêu (IELTS/TOEIC)
+                    </label>
+                    <input 
+                      type="text" 
+                      value={formData.targetScore}
+                      onChange={(e) => setFormData({...formData, targetScore: e.target.value})}
+                      className="w-full border border-slate-300 rounded-lg px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                      placeholder="Vd: IELTS 7.0"
+                    />
+                  </div>
+                )}
               </div>
 
               <div>
