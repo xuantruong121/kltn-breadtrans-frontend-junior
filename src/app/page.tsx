@@ -32,7 +32,14 @@ function LoginForm() {
       const res: any = await axiosClient.post('/auth/login', { email, password });
       // API trả về { access_token, refresh_token, user: { id, email, role } }
       setAuth(res.access_token, res.refresh_token, res.user);
-      router.push('/dashboard');
+      
+      if (res.user.role === 'ADMIN') {
+        router.push('/admin/users');
+      } else if (res.user.role === 'TEACHER') {
+        router.push('/teacher/classes');
+      } else {
+        router.push('/dashboard');
+      }
     } catch (error: any) {
       console.error(error);
       setErrorMsg(error.response?.data?.message || "Đăng nhập thất bại. Kiểm tra lại thông tin nhé!");
@@ -74,7 +81,8 @@ function LoginForm() {
         <div className="mb-6">
           <label className="block text-lg font-bold text-slate-700 mb-3">Email của bạn</label>
           <input 
-            type="email" 
+            type="email"
+            data-testid="login-email" 
             placeholder="Ví dụ: hocsinh@gmail.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -89,7 +97,8 @@ function LoginForm() {
         <div className="mb-10">
           <label className="block text-lg font-bold text-slate-700 mb-3">Mật khẩu bí mật</label>
           <input 
-            type="password" 
+            type="password"
+            data-testid="login-password" 
             placeholder="••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -103,6 +112,7 @@ function LoginForm() {
       element: (
         <motion.button
           type="submit"
+          data-testid="login-submit"
           disabled={isLoading}
           whileHover={{ scale: isLoading ? 1 : 1.02 }}
           whileTap={{ scale: isLoading ? 1 : 0.98 }}
@@ -125,7 +135,7 @@ function LoginForm() {
         return (
           <motion.div
             key={item.id}
-            initial={reduce ? false : { opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.1 }}
             transition={{

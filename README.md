@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KLTN BreadTrans - Frontend Junior
 
-## Getting Started
+Dự án Frontend dành cho nền tảng học tiếng Anh trực tuyến tích hợp AI (KLTN BreadTrans). Hệ thống được chia thành 3 phân quyền chính: **Student**, **Teacher**, và **Admin**.
 
-First, run the development server:
+## Công nghệ sử dụng (Tech Stack)
+- **Framework**: Next.js 16 (App Router, Turbopack)
+- **Styling**: Tailwind CSS v4
+- **Animation**: Framer Motion (Glassmorphism, mượt mà)
+- **State Management**: Zustand
+- **Data Fetching**: Axios & React Query
+- **Testing**: Playwright (E2E Testing)
+- **Icon**: Lucide React
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Cấu trúc thư mục (App Router)
+- `(student)`: Các trang dành cho Học sinh (Dashboard, Practice, TOEIC...). Giao diện mang phong cách Bento Grid, gam màu tươi sáng, thân thiện.
+- `(teacher)`: Các trang dành cho Giáo viên quản lý lớp học.
+- `(admin)`: Dashboard CMS cho Quản trị viên hệ thống.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Hướng dẫn cài đặt & chạy dự án
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **Cài đặt thư viện:**
+   ```bash
+   npm install
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. **Chạy Môi trường Phát triển (Development):**
+   ```bash
+   npm run dev
+   ```
+   Dự án sẽ khởi chạy tại [http://localhost:3000](http://localhost:3000).
 
-## Learn More
+## Kiểm thử tự động (E2E Testing với Playwright)
 
-To learn more about Next.js, take a look at the following resources:
+Dự án đã được tích hợp Playwright để tự động hoá việc kiểm thử giao diện và luồng nghiệp vụ. 
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Cách chạy Test:
+1. **Chạy test luồng Auth (Đăng nhập, Phân quyền) với giao diện Browser (khuyên dùng):**
+   ```bash
+   npx playwright test tests/auth.spec.ts --headed
+   ```
+   
+2. **Chạy toàn bộ các test ẩn (Headless) ở chế độ tuần tự:**
+   *(Ghi chú: Nên chạy `--workers=1` để tránh lỗi mock API khi test song song)*
+   ```bash
+   npx playwright test --workers=1
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. **Xem báo cáo HTML chi tiết sau khi test:**
+   ```bash
+   npx playwright show-report
+   ```
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Tài liệu tham khảo
+- Mọi logic thiết kế (Design System) và quy ước code đều được ghi chú rõ trong thư mục tài liệu dự án, vui lòng đọc kỹ `PROJECT_PROGRESS.md` trước khi code thêm tính năng mới.

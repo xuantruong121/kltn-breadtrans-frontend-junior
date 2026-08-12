@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { id: "courses", href: "/courses", label: "Lớp học", icon: BookOpen, color: "text-junior-green" },
   { id: "practice", href: "/practice", label: "Luyện tập", icon: Gamepad2, color: "text-purple-500" },
   { id: "arena", href: "/arena", label: "Đấu trường", icon: Trophy, color: "text-junior-orange" },
+  { id: "toeic", href: "/toeic", label: "Thi TOEIC", icon: Sparkles, color: "text-red-500" },
 ];
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {

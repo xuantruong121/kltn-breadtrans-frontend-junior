@@ -5,6 +5,7 @@ export interface Class {
   name: string;
   courseId: number;
   teacherId: number;
+  meetingLink?: string;
 }
 
 export interface Course {
