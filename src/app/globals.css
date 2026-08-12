@@ -1,26 +1,35 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --font-sans: var(--font-quicksand), ui-sans-serif, system-ui, sans-serif;
+  
+  /* Custom colors for Junior Theme */
+  --color-junior-blue: #3b82f6;
+  --color-junior-blue-dark: #2563eb;
+  --color-junior-orange: #f97316;
+  --color-junior-orange-dark: #ea580c;
+  --color-junior-green: #22c55e;
+  --color-junior-green-dark: #16a34a;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #f0f9ff; /* sky-50 */
+    --foreground: #334155; /* slate-700 */
   }
 }
 
 body {
-  background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* Utility class for clay button 3D shadow */
+.btn-orange-3d {
+  box-shadow: 0 8px 0 0 #ea580c;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.btn-orange-3d:active {
+  transform: translateY(8px);
+  box-shadow: none;
 }

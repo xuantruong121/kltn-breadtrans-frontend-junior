@@ -1,69 +1,212 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { motion, useReducedMotion } from "framer-motion";
+import { Sparkles, ArrowRight, BookOpen, GraduationCap, School, Loader2 } from "lucide-react";
+import axiosClient from "@/lib/api/axiosClient";
+import { useAuthStore } from "@/stores/authStore";
+
+function LoginForm() {
+  const reduce = useReducedMotion();
+  const router = useRouter();
+  
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  
+  const setAuth = useAuthStore((state) => state.setAuth);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) {
+      setErrorMsg("Vui lòng nhập đầy đủ email và mật khẩu nhé!");
+      return;
+    }
+    
+    setIsLoading(true);
+    setErrorMsg("");
+    
+    try {
+      const res: any = await axiosClient.post('/auth/login', { email, password });
+      // API trả về { access_token, refresh_token, user: { id, email, role } }
+      setAuth(res.access_token, res.refresh_token, res.user);
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error(error);
+      setErrorMsg(error.response?.data?.message || "Đăng nhập thất bại. Kiểm tra lại thông tin nhé!");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formItems = [
+    {
+      id: "header",
+      element: (
+        <div className="mb-8">
+          <h1 className="text-5xl lg:text-6xl font-bold text-slate-800 mb-4 tracking-tight">
+            Sẵn sàng <br/>
+            <span className="text-junior-blue">khám phá!</span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-lg text-slate-500 max-w-sm">
+            Đăng nhập để vào lớp học BreadTrans và nhận vô vàn phần thưởng hấp dẫn.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      )
+    },
+    {
+      id: "error",
+      element: errorMsg ? (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-4 p-4 bg-red-100 text-red-600 rounded-xl font-bold"
+        >
+          {errorMsg}
+        </motion.div>
+      ) : null
+    },
+    {
+      id: "email",
+      element: (
+        <div className="mb-6">
+          <label className="block text-lg font-bold text-slate-700 mb-3">Email của bạn</label>
+          <input 
+            type="email" 
+            placeholder="Ví dụ: hocsinh@gmail.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full text-xl p-5 bg-white border-4 border-slate-200 rounded-2xl focus:outline-none focus:border-junior-blue transition-colors shadow-sm"
+          />
         </div>
-      </main>
-    </div>
+      )
+    },
+    {
+      id: "password",
+      element: (
+        <div className="mb-10">
+          <label className="block text-lg font-bold text-slate-700 mb-3">Mật khẩu bí mật</label>
+          <input 
+            type="password" 
+            placeholder="••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full text-xl p-5 bg-white border-4 border-slate-200 rounded-2xl focus:outline-none focus:border-junior-blue transition-colors shadow-sm"
+          />
+        </div>
+      )
+    },
+    {
+      id: "submit",
+      element: (
+        <motion.button
+          type="submit"
+          disabled={isLoading}
+          whileHover={{ scale: isLoading ? 1 : 1.02 }}
+          whileTap={{ scale: isLoading ? 1 : 0.98 }}
+          className={`btn-orange-3d w-full flex items-center justify-center gap-3 text-white text-2xl font-bold p-5 rounded-2xl ${isLoading ? 'bg-slate-400 opacity-80 cursor-not-allowed' : 'bg-junior-orange hover:bg-junior-orange-dark'}`}
+        >
+          {isLoading ? (
+             <><Loader2 className="animate-spin" size={32} /> Đang tải...</>
+          ) : (
+             <>Vào Học Ngay <ArrowRight size={32} strokeWidth={3} /></>
+          )}
+        </motion.button>
+      )
+    }
+  ];
+
+  return (
+    <form onSubmit={handleLogin} className="w-full max-w-md mx-auto xl:mx-0">
+      {formItems.map((item, i) => {
+        if (!item.element) return null;
+        return (
+          <motion.div
+            key={item.id}
+            initial={reduce ? false : { opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.1 }}
+            transition={{
+              duration: 0.7,
+              delay: i * 0.1,
+              ease: [0.16, 1, 0.3, 1], // Spring-like ease out
+            }}
+          >
+            {item.element}
+          </motion.div>
+        );
+      })}
+    </form>
+  );
+}
+
+export default function LoginPage() {
+  const reduce = useReducedMotion();
+
+  return (
+    <main className="min-h-[100dvh] grid grid-cols-1 lg:grid-cols-2">
+      {/* LEFT SIDE: VISUAL ART (Anti Center-Bias) */}
+      <section className="relative bg-junior-blue hidden lg:flex flex-col justify-center items-center overflow-hidden p-12">
+        <motion.div 
+          animate={reduce ? {} : { rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 80, ease: "linear" }}
+          className="absolute -top-32 -left-32 text-sky-400 opacity-20"
+        >
+          <Sparkles size={600} strokeWidth={1} />
+        </motion.div>
+
+        <div className="relative z-10 w-full max-w-lg">
+          <motion.div 
+            initial={{ scale: 0.8, opacity: 0, rotate: -10 }}
+            animate={{ scale: 1, opacity: 1, rotate: -2 }}
+            transition={{ type: "spring", bounce: 0.5, delay: 0.2 }}
+            className="bg-white p-8 rounded-[3rem] shadow-2xl border-8 border-sky-300 flex items-center gap-6 mb-8"
+          >
+            <div className="bg-orange-100 p-6 rounded-full text-junior-orange">
+              <School size={64} strokeWidth={2.5} />
+            </div>
+            <div>
+              <h2 className="text-3xl font-bold text-slate-800">Trường học vui</h2>
+              <p className="text-xl text-slate-500 font-medium">Nơi phép màu bắt đầu</p>
+            </div>
+          </motion.div>
+
+          <div className="flex gap-8 ml-12">
+            <motion.div 
+              initial={{ scale: 0.8, opacity: 0, y: 50 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              transition={{ type: "spring", bounce: 0.6, delay: 0.4 }}
+              className="bg-junior-green p-6 rounded-[2rem] shadow-xl border-4 border-green-400 text-white flex-1"
+            >
+              <BookOpen size={48} className="mb-4" />
+              <h3 className="text-2xl font-bold">Từ vựng</h3>
+            </motion.div>
+            <motion.div 
+              initial={{ scale: 0.8, opacity: 0, y: 50 }}
+              animate={{ scale: 1, opacity: 1, y: 0, rotate: 6 }}
+              transition={{ type: "spring", bounce: 0.6, delay: 0.5 }}
+              className="bg-purple-500 p-6 rounded-[2rem] shadow-xl border-4 border-purple-400 text-white flex-1 mt-12"
+            >
+              <GraduationCap size={48} className="mb-4" />
+              <h3 className="text-2xl font-bold">Luyện nói</h3>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* RIGHT SIDE: FORM STAGGER REVEAL */}
+      <section className="bg-sky-50 flex items-center justify-center p-6 md:p-12 lg:p-24 relative">
+        <div className="w-full max-w-md absolute top-8 left-8 lg:hidden">
+            <div className="flex items-center gap-3 text-junior-blue font-bold text-2xl">
+              <Sparkles size={32} /> BreadTrans
+            </div>
+        </div>
+        
+        {/* STAGGER FORM MOUNT */}
+        <LoginForm />
+      </section>
+    </main>
   );
 }
