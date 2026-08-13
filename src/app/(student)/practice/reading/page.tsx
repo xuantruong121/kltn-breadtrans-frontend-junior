@@ -14,6 +14,7 @@ export default function ReadingTopicsPage() {
     queryKey: ["reading-topics"],
     queryFn: readingService.getTopics,
   });
+  const topicList = Array.isArray(topics) ? topics : [];
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -38,9 +39,9 @@ export default function ReadingTopicsPage() {
         <div className="flex justify-center p-12">
           <Loader2 className="animate-spin text-junior-green" size={48} />
         </div>
-      ) : topics && topics.length > 0 ? (
+      ) : topicList && topicList.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {topics.map((topic, index) => (
+          {topicList.map((topic: any, index: number) => (
             <motion.div
               key={topic.id}
               initial={{ opacity: 0, y: 20 }}
@@ -50,8 +51,10 @@ export default function ReadingTopicsPage() {
               className="bg-white rounded-[2rem] border-4 border-slate-200 overflow-hidden shadow-sm flex flex-col"
             >
               <div className="h-40 bg-green-100 relative">
-                {topic.imageUrl ? (
-                  <img src={topic.imageUrl} alt={topic.title} className="w-full h-full object-cover" />
+                {topic.iconUrl ? (
+                  <div className="absolute inset-0 flex items-center justify-center text-5xl">
+                    {topic.iconUrl}
+                  </div>
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center text-green-300">
                     <Book size={64} />
@@ -59,9 +62,9 @@ export default function ReadingTopicsPage() {
                 )}
               </div>
               <div className="p-6 flex-1 flex flex-col">
-                <h3 className="text-xl font-bold text-slate-800 mb-2 line-clamp-1">{topic.title}</h3>
+                <h3 className="text-xl font-bold text-slate-800 mb-2 line-clamp-1">{topic.name}</h3>
                 <p className="text-slate-500 font-medium text-sm line-clamp-2 mb-6 flex-1">
-                  {topic.description || "Chủ đề đọc hiểu: " + topic.title}
+                  {topic.vietnameseName || topic.name} • {topic.totalArticles || 0} bài
                 </p>
                 <Link href={`/practice/reading/${topic.id}`}>
                   <motion.button

@@ -67,11 +67,17 @@ export default function VocabFlashcardsPage() {
     }
   };
 
-  const playAudio = (e: React.MouseEvent, url?: string) => {
+  const playAudio = (e: React.MouseEvent, text: string, url?: string) => {
     e.stopPropagation();
     if (url) {
       const audio = new Audio(url);
       audio.play();
+    } else {
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        window.speechSynthesis.speak(utterance);
+      }
     }
   };
 
@@ -124,25 +130,18 @@ export default function VocabFlashcardsPage() {
             {!isFlipped ? (
               // FRONT OF CARD
               <>
-                <h2 className="text-6xl font-extrabold text-slate-800 mb-6">{currentWord.word}</h2>
-                <div className="flex gap-4">
-                  {currentWord.ipaUs && (
-                    <button 
-                      onClick={(e) => playAudio(e, currentWord.audioUs)}
-                      className="flex items-center gap-2 text-slate-500 font-medium hover:text-junior-blue bg-slate-50 px-4 py-2 rounded-full border border-slate-200"
-                    >
-                      <Volume2 size={20} /> US: {currentWord.ipaUs}
-                    </button>
-                  )}
-                  {currentWord.ipaUk && (
-                    <button 
-                      onClick={(e) => playAudio(e, currentWord.audioUk)}
-                      className="flex items-center gap-2 text-slate-500 font-medium hover:text-junior-blue bg-slate-50 px-4 py-2 rounded-full border border-slate-200"
-                    >
-                      <Volume2 size={20} /> UK: {currentWord.ipaUk}
-                    </button>
-                  )}
-                </div>
+                <h2 className="text-6xl font-extrabold text-slate-800 mb-2">{currentWord.word}</h2>
+                {currentWord.ipaUs && (
+                  <p className="text-2xl text-slate-400 font-medium mb-8 tracking-wide font-sans">{currentWord.ipaUs}</p>
+                )}
+                {!currentWord.ipaUs && <div className="h-10 mb-8"></div>}
+                
+                <button 
+                  onClick={(e) => playAudio(e, currentWord.word, currentWord.audioUs)}
+                  className="flex items-center justify-center p-4 rounded-full bg-slate-50 text-slate-500 hover:text-junior-blue hover:bg-blue-50 border-2 border-slate-200 hover:border-blue-200 transition-all shadow-sm active:scale-95"
+                >
+                  <Volume2 size={32} />
+                </button>
               </>
             ) : (
               // BACK OF CARD

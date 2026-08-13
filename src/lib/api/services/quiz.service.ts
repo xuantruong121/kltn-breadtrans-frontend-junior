@@ -44,6 +44,8 @@ export interface SubmissionAnalytics {
     total: number;
     accuracyPercent: number;
   }[];
+  results?: any[];
+  questions?: any[];
   strengths: string[];
   weaknesses: string[];
   recommendation: string;
