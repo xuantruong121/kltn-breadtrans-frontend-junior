@@ -9,6 +9,8 @@ import {
 import Link from "next/link";
 import { useAuthStore } from "@/stores/authStore";
 import axiosClient from "@/lib/api/axiosClient";
+import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 type EnrolledClass = {
   classId: number;
@@ -44,10 +46,21 @@ export default function CoursesPage() {
     queryKey: ["my-enrolled-classes", user?.id],
     queryFn: async () => {
       const res = await axiosClient.get("/courses");
-      return res.data;
+      return (res as unknown as EnrolledClass[]) || [];
     },
-    enabled: !!user,
+    enabled: !!user && user.role === "STUDENT",
   });
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+  
+  // Filter active/upcoming classes or classes that have a teacher assigned
+  const validClasses = classes?.filter(c => c.classStatus === 'ACTIVE' || c.classStatus === 'UPCOMING' || c.teacher) || [];
+  
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentClasses = validClasses.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(validClasses.length / itemsPerPage);
 
   if (isLoading) {
     return (
@@ -75,34 +88,32 @@ export default function CoursesPage() {
       </div>
 
       {/* Classes Grid */}
-      {classes && classes.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {classes.map((cls, index) => {
-            const badge = STATUS_BADGE[cls.classStatus] || { label: cls.classStatus, className: "bg-slate-100 text-slate-600" };
-            return (
+      {validClasses.length > 0 ? (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {currentClasses.map((cls, index) => {
+              const badge = STATUS_BADGE[cls.classStatus] || { label: cls.classStatus, className: "bg-slate-100 text-slate-600" };
+              return (
               <motion.div
-                key={cls.classId}
+                key={cls.classId || (cls as any).id || index}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.08 }}
                 whileHover={{ y: -5 }}
-                className="bg-white rounded-[2rem] border-4 border-slate-200 overflow-hidden shadow-sm flex flex-col"
+                className="group bg-white rounded-[2rem] border-4 border-slate-200 overflow-hidden shadow-sm flex flex-col"
               >
                 {/* Thumbnail */}
-                <div className="h-44 bg-sky-100 relative overflow-hidden">
-                  {cls.course.thumbnail ? (
-                    <img src={cls.course.thumbnail} alt={cls.course.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <BookOpen size={60} className="text-sky-200" />
-                    </div>
-                  )}
+                <div className="h-44 relative overflow-hidden bg-gradient-to-br from-sky-400 to-indigo-500 flex items-center justify-center group-hover:from-sky-300 group-hover:to-indigo-400 transition-colors">
+                  <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
+                  <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+                  <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-white/20 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
+                  <BookOpen size={64} className="text-white/80 drop-shadow-md z-10 group-hover:scale-110 transition-transform duration-300" />
                   {/* Status badge */}
                   <div className={`absolute top-3 left-3 px-3 py-1 rounded-xl text-xs font-bold ${badge.className}`}>
                     {badge.label}
                   </div>
                   {/* Level badge */}
-                  {cls.course.level && (
+                  {cls.course?.level && (
                     <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-xl text-slate-600 font-bold text-xs">
                       {LEVEL_LABEL[cls.course.level] || cls.course.level}
                     </div>
@@ -112,7 +123,7 @@ export default function CoursesPage() {
                 {/* Content */}
                 <div className="p-5 flex-1 flex flex-col">
                   {/* Course name */}
-                  <p className="text-xs font-bold text-junior-blue uppercase tracking-wide mb-1">{cls.course.title}</p>
+                  <p className="text-xs font-bold text-junior-blue uppercase tracking-wide mb-1">{cls.course?.title || "Khóa học"}</p>
                   {/* Class name */}
                   <h3 className="text-xl font-bold text-slate-800 mb-3 line-clamp-2">{cls.className}</h3>
 
@@ -157,7 +168,7 @@ export default function CoursesPage() {
 
                   {/* Action Buttons */}
                   <div className="mt-auto flex flex-col gap-2">
-                    <Link href={`/courses/${cls.course.id}?classId=${cls.classId}`} className="w-full">
+                    <Link href={`/classes/${cls.classId}`} className="w-full">
                       <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
@@ -166,20 +177,48 @@ export default function CoursesPage() {
                         Vào Học <ArrowRight size={20} strokeWidth={3} />
                       </motion.button>
                     </Link>
-
-                    {cls.meetingLink && (
-                      <a href={cls.meetingLink} target="_blank" rel="noopener noreferrer" className="w-full">
-                        <button className="w-full flex items-center justify-center gap-2 py-2.5 border-2 border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors text-sm">
-                          <Video size={16} className="text-blue-500" /> Vào Phòng học Online
-                        </button>
-                      </a>
-                    )}
                   </div>
                 </div>
               </motion.div>
             );
           })}
-        </div>
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="mt-12 flex justify-center items-center gap-4">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-3 rounded-2xl bg-white border-2 border-slate-200 text-slate-500 hover:text-junior-blue hover:border-junior-blue disabled:opacity-50 transition-colors"
+              >
+                <ChevronLeft size={24} />
+              </button>
+              <div className="flex items-center gap-2">
+                {Array.from({ length: totalPages }).map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentPage(i + 1)}
+                    className={`w-10 h-10 rounded-xl font-bold transition-all ${
+                      currentPage === i + 1
+                        ? "bg-junior-blue text-white shadow-md shadow-sky-200"
+                        : "bg-white border-2 border-slate-200 text-slate-500 hover:border-junior-blue hover:text-junior-blue"
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-3 rounded-2xl bg-white border-2 border-slate-200 text-slate-500 hover:text-junior-blue hover:border-junior-blue disabled:opacity-50 transition-colors"
+              >
+                <ChevronRight size={24} />
+              </button>
+            </div>
+          )}
+        </>
       ) : (
         <motion.div
           initial={{ opacity: 0, y: 20 }}

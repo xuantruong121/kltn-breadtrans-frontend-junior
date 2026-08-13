@@ -40,8 +40,7 @@ export default function AdminDashboardPage() {
   const { data, isLoading } = useQuery<DashboardStats>({
     queryKey: ["admin-dashboard"],
     queryFn: async () => {
-      const res = await axiosClient.get("/admin/dashboard-stats");
-      return res.data;
+      return await axiosClient.get("/admin/dashboard-stats");
     },
   });
 

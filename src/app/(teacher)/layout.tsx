@@ -7,8 +7,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useEffect, useState } from "react";
 
 const NAV_ITEMS = [
-  { id: "courses", href: "/teacher/courses", label: "Quản lý Khóa học", icon: FileText },
-  { id: "classes", href: "/teacher/classes", label: "Lớp giảng dạy", icon: Users },
+  { id: "classes", href: "/teacher/classes", label: "Lớp học của tôi", icon: Users },
   { id: "assignments", href: "/teacher/assignments", label: "Chấm điểm", icon: PenTool },
   { id: "materials", href: "/teacher/materials", label: "Học liệu", icon: BookOpen },
   { id: "profile", href: "/teacher/profile", label: "Hồ sơ cá nhân", icon: Users },

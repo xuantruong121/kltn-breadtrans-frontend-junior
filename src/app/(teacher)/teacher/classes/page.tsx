@@ -2,20 +2,17 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Users, Video, FileText, Plus, X, Calendar, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { Users, Video, FileText, Plus, X, Calendar, Clock, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import dayjs from "dayjs";
+import Link from "next/link";
 
 export default function TeacherClassesPage() {
   const queryClient = useQueryClient();
-  const [isClassModalOpen, setIsClassModalOpen] = useState(false);
   const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
-  
-  const [newClassName, setNewClassName] = useState("");
-  const [selectedCourseId, setSelectedCourseId] = useState("");
-  
+
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
-  const [expandedClassId, setExpandedClassId] = useState<number | null>(null);
+  const [activeExpandedTab, setActiveExpandedTab] = useState<{ classId: number, tab: 'sessions' | 'students' } | null>(null);
   const [newSession, setNewSession] = useState({ title: "", startTime: "", endTime: "", meetingLink: "" });
 
   // Query classes assigned to the teacher
@@ -23,7 +20,7 @@ export default function TeacherClassesPage() {
     queryKey: ["teacher-classes"],
     queryFn: async () => {
       try {
-        const res = await axiosClient.get("/courses/classes"); 
+        const res = await axiosClient.get("/courses/classes");
         return Array.isArray(res) ? res : [];
       } catch (error) {
         console.error(error);
@@ -32,33 +29,14 @@ export default function TeacherClassesPage() {
     }
   });
 
-  // Query courses for the dropdown
-  const { data: courses } = useQuery({
-    queryKey: ["courses"],
-    queryFn: async () => {
-      try {
-        const res = await axiosClient.get("/courses");
-        return Array.isArray(res) ? res : [];
-      } catch (error) {
-        console.error(error);
-        return [];
-      }
-    }
-  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentClasses = classes?.slice(indexOfFirstItem, indexOfLastItem) || [];
+  const totalPages = Math.ceil((classes?.length || 0) / itemsPerPage);
 
-  const createClassMutation = useMutation({
-    mutationFn: async () => {
-      return axiosClient.post(`/courses/${selectedCourseId}/classes`, {
-        name: newClassName,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teacher-classes"] });
-      setIsClassModalOpen(false);
-      setNewClassName("");
-      setSelectedCourseId("");
-    },
-  });
+
 
   const createSessionMutation = useMutation({
     mutationFn: async () => {
@@ -89,16 +67,10 @@ export default function TeacherClassesPage() {
           <h1 className="text-2xl font-bold text-slate-800">Lớp bạn đang giảng dạy</h1>
           <p className="text-slate-500 text-sm mt-1">Quản lý lớp học, buổi học và bài tập</p>
         </div>
-        <button 
-          onClick={() => setIsClassModalOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
-        >
-          <Plus size={20} /> Tạo lớp học mới
-        </button>
       </div>
-      
+
       <div className="flex flex-col gap-6">
-        {classes?.map((cls: any) => (
+        {currentClasses.map((cls: any) => (
           <div key={cls.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100">
               <div>
@@ -109,37 +81,47 @@ export default function TeacherClassesPage() {
                   {cls.studentCount || 0} học sinh
                 </div>
               </div>
-              
+
               <div className="flex flex-wrap gap-2">
-                <button className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg text-sm transition-colors flex items-center gap-2">
+                <Link href="/teacher/assignments" className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg text-sm transition-colors flex items-center gap-2">
                   <FileText size={16} /> Quản lý bài tập
-                </button>
-                <button 
+                </Link>
+                <button
                   onClick={() => handleOpenSessionModal(cls.id)}
                   className="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium rounded-lg text-sm transition-colors flex items-center gap-2"
                 >
                   <Calendar size={16} /> Tạo buổi học
                 </button>
-                <button 
-                  onClick={() => setExpandedClassId(expandedClassId === cls.id ? null : cls.id)}
+                <button
+                  onClick={() => setActiveExpandedTab(activeExpandedTab?.classId === cls.id && activeExpandedTab?.tab === 'sessions' ? null : { classId: cls.id, tab: 'sessions' })}
                   className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium rounded-lg text-sm transition-colors flex items-center gap-2"
                 >
-                  {expandedClassId === cls.id ? (
-                    <><ChevronUp size={16} /> Thu gọn</>
+                  {activeExpandedTab?.classId === cls.id && activeExpandedTab?.tab === 'sessions' ? (
+                    <><ChevronUp size={16} /> Thu gọn buổi học</>
                   ) : (
                     <><ChevronDown size={16} /> Danh sách buổi học ({cls.sessions?.length || 0})</>
+                  )}
+                </button>
+                <button
+                  onClick={() => setActiveExpandedTab(activeExpandedTab?.classId === cls.id && activeExpandedTab?.tab === 'students' ? null : { classId: cls.id, tab: 'students' })}
+                  className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium rounded-lg text-sm transition-colors flex items-center gap-2"
+                >
+                  {activeExpandedTab?.classId === cls.id && activeExpandedTab?.tab === 'students' ? (
+                    <><ChevronUp size={16} /> Thu gọn học viên</>
+                  ) : (
+                    <><ChevronDown size={16} /> Danh sách học viên ({cls.studentCount || 0})</>
                   )}
                 </button>
               </div>
             </div>
 
             {/* Sessions List */}
-            {expandedClassId === cls.id && (
-              <div className="bg-slate-50 p-6">
+            {activeExpandedTab?.classId === cls.id && activeExpandedTab?.tab === 'sessions' && (
+              <div className="bg-slate-50 p-6 border-t border-slate-100">
                 <h4 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
                   <Calendar size={18} className="text-blue-500" /> Các buổi học đã lên lịch
                 </h4>
-                
+
                 {cls.sessions && cls.sessions.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {cls.sessions.map((session: any) => (
@@ -155,7 +137,7 @@ export default function TeacherClassesPage() {
                             {dayjs(session.startTime).format("HH:mm")} - {dayjs(session.endTime).format("HH:mm")}
                           </div>
                         </div>
-                        <a 
+                        <a
                           href={session.meetingLink}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -173,6 +155,44 @@ export default function TeacherClassesPage() {
                 )}
               </div>
             )}
+
+            {/* Students List */}
+            {activeExpandedTab?.classId === cls.id && activeExpandedTab?.tab === 'students' && (
+              <div className="bg-slate-50 p-6 border-t border-slate-100">
+                <h4 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                  <Users size={18} className="text-blue-500" /> Danh sách học viên ({cls.studentCount || 0})
+                </h4>
+                
+                {cls.enrollments && cls.enrollments.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {cls.enrollments.map((enrollment: any) => (
+                      <div key={enrollment.id} className="bg-white border border-slate-200 p-4 rounded-lg flex items-center gap-4">
+                        <img 
+                          src={enrollment.user?.profile?.avatar || "/default-avatar.png"} 
+                          alt="Student Avatar" 
+                          className="w-12 h-12 rounded-full object-cover border-2 border-slate-100"
+                        />
+                        <div className="flex-1">
+                          <h5 className="font-bold text-slate-800">{enrollment.user?.profile?.fullName || 'Học viên ẩn danh'}</h5>
+                          <p className="text-xs text-slate-500">{enrollment.user?.email}</p>
+                          <div className="mt-2 w-full bg-slate-100 rounded-full h-1.5">
+                            <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${enrollment.progress || 0}%` }}></div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs font-bold text-slate-500">Tiến độ</span>
+                          <p className="font-bold text-green-600">{enrollment.progress || 0}%</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-slate-500 bg-white rounded-lg border border-dashed border-slate-300">
+                    Chưa có học viên nào tham gia lớp này.
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ))}
 
@@ -183,59 +203,37 @@ export default function TeacherClassesPage() {
         )}
       </div>
 
-      {/* Create Class Modal */}
-      {isClassModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-slate-800">Tạo lớp học mới</h2>
-              <button onClick={() => setIsClassModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="space-y-4 mb-6">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Tên lớp học</label>
-                <input 
-                  type="text" 
-                  value={newClassName}
-                  onChange={(e) => setNewClassName(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-4 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                  placeholder="Vd: Lớp IELTS Tối 2-4-6"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Khoá học</label>
-                <select
-                  value={selectedCourseId}
-                  onChange={(e) => setSelectedCourseId(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-4 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 bg-white"
-                >
-                  <option value="">-- Chọn khoá học --</option>
-                  {courses?.map((course: any) => (
-                    <option key={course.id} value={course.id}>{course.title}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <button 
-                onClick={() => setIsClassModalOpen(false)}
-                className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors"
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="mt-8 flex justify-center items-center gap-4">
+          <button
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="p-2 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-600 disabled:opacity-50 transition-colors"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <div className="flex items-center gap-2">
+            {Array.from({ length: totalPages }).map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`w-8 h-8 rounded-lg font-bold text-sm transition-all ${currentPage === i + 1
+                  ? "bg-blue-600 text-white shadow-md shadow-blue-200"
+                  : "bg-white border border-slate-200 text-slate-500 hover:border-blue-600 hover:text-blue-600"
+                  }`}
               >
-                Hủy
+                {i + 1}
               </button>
-              <button 
-                onClick={() => createClassMutation.mutate()}
-                disabled={!newClassName || !selectedCourseId || createClassMutation.isPending}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium transition-colors"
-              >
-                {createClassMutation.isPending ? "Đang tạo..." : "Xác nhận tạo"}
-              </button>
-            </div>
+            ))}
           </div>
+          <button
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="p-2 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-600 disabled:opacity-50 transition-colors"
+          >
+            <ChevronRight size={20} />
+          </button>
         </div>
       )}
 
@@ -253,51 +251,51 @@ export default function TeacherClassesPage() {
             <div className="space-y-4 mb-6">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Tiêu đề buổi học <span className="text-red-500">*</span></label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={newSession.title}
-                  onChange={(e) => setNewSession({...newSession, title: e.target.value})}
+                  onChange={(e) => setNewSession({ ...newSession, title: e.target.value })}
                   className="w-full border border-slate-300 rounded-lg px-4 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                   placeholder="Vd: Buổi 1 - Giới thiệu khoá học"
                 />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Thời gian bắt đầu <span className="text-red-500">*</span></label>
-                  <input 
-                    type="datetime-local" 
+                  <input
+                    type="datetime-local"
                     value={newSession.startTime}
-                    onChange={(e) => setNewSession({...newSession, startTime: e.target.value})}
+                    onChange={(e) => setNewSession({ ...newSession, startTime: e.target.value })}
                     className="w-full border border-slate-300 rounded-lg px-4 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Thời gian kết thúc <span className="text-red-500">*</span></label>
-                  <input 
-                    type="datetime-local" 
+                  <input
+                    type="datetime-local"
                     value={newSession.endTime}
-                    onChange={(e) => setNewSession({...newSession, endTime: e.target.value})}
+                    onChange={(e) => setNewSession({ ...newSession, endTime: e.target.value })}
                     className="w-full border border-slate-300 rounded-lg px-4 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Link phòng học (Meet/Zoom)</label>
                 <div className="flex gap-2">
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={newSession.meetingLink}
-                    onChange={(e) => setNewSession({...newSession, meetingLink: e.target.value})}
+                    onChange={(e) => setNewSession({ ...newSession, meetingLink: e.target.value })}
                     className="flex-1 border border-slate-300 rounded-lg px-4 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                     placeholder="Dán link Meet/Zoom vào đây..."
                   />
-                  <button 
+                  <button
                     type="button"
                     onClick={() => {
                       const randomCode = Math.random().toString(36).substring(2, 12);
-                      setNewSession({...newSession, meetingLink: `https://meet.jit.si/breadtrans-${randomCode}`});
+                      setNewSession({ ...newSession, meetingLink: `https://meet.jit.si/breadtrans-${randomCode}` });
                     }}
                     className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-colors whitespace-nowrap text-sm flex items-center gap-1"
                   >
@@ -308,13 +306,13 @@ export default function TeacherClassesPage() {
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-              <button 
+              <button
                 onClick={() => setIsSessionModalOpen(false)}
                 className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors"
               >
                 Hủy
               </button>
-              <button 
+              <button
                 onClick={() => createSessionMutation.mutate()}
                 disabled={!newSession.title || !newSession.startTime || !newSession.endTime || createSessionMutation.isPending}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium transition-colors"

@@ -39,12 +39,12 @@ export default function AdminCoursesPage() {
 
   const { data: courses, isLoading } = useQuery<Course[]>({
     queryKey: ["admin-courses"],
-    queryFn: async () => (await axiosClient.get("/admin/courses")).data,
+    queryFn: async () => axiosClient.get("/admin/courses") as unknown as Course[],
   });
 
   const { data: teachers } = useQuery<Teacher[]>({
     queryKey: ["admin-users", "TEACHER"],
-    queryFn: async () => (await axiosClient.get("/admin/users?role=TEACHER")).data,
+    queryFn: async () => axiosClient.get("/admin/users?role=TEACHER") as unknown as Teacher[],
   });
 
   const createCourseMutation = useMutation({

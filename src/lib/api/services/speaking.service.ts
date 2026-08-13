@@ -3,8 +3,11 @@ import axiosClient from "../axiosClient";
 export interface SpeakingExercise {
   id: number;
   title: string;
-  description: string;
   targetText: string;
+  imageUrl?: string;
+  audioUrl?: string;
+  difficulty: string;
+  category: string;
 }
 
 export const speakingService = {

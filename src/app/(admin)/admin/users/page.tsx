@@ -41,14 +41,13 @@ export default function AdminUsersPage() {
       const res = await axiosClient.get("/admin/users", {
         params: roleFilter ? { role: roleFilter } : undefined,
       });
-      return res.data;
+      return (res as unknown as UserData[]) || [];
     },
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof form) => {
-      const res = await axiosClient.post("/admin/users", data);
-      return res.data;
+      return axiosClient.post("/admin/users", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });

@@ -5,16 +5,16 @@ import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Home, BookOpen, Gamepad2, Trophy, LogOut, Sparkles, UserCircle } from "lucide-react";
+import { Home, BookOpen, Gamepad2, Trophy, LogOut, Sparkles, UserCircle, Rocket } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
-import FloatingAiTutor from "@/components/FloatingAiTutor";
+import dynamic from "next/dynamic";
+const FloatingAiTutor = dynamic(() => import("@/components/FloatingAiTutor"), { ssr: false });
 
 const NAV_ITEMS = [
   { id: "dashboard", href: "/dashboard", label: "Trang chủ", icon: Home, color: "text-junior-blue" },
   { id: "courses", href: "/courses", label: "Lớp học", icon: BookOpen, color: "text-junior-green" },
   { id: "practice", href: "/practice", label: "Luyện tập", icon: Gamepad2, color: "text-purple-500" },
   { id: "arena", href: "/arena", label: "Đấu trường", icon: Trophy, color: "text-junior-orange" },
-  { id: "toeic", href: "/toeic", label: "Thi TOEIC", icon: Sparkles, color: "text-red-500" },
   { id: "profile", href: "/student/profile", label: "Hồ sơ cá nhân", icon: UserCircle, color: "text-blue-500" },
 ];
 
@@ -50,12 +50,15 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     <div className="flex h-[100dvh] bg-sky-50 overflow-hidden">
       {/* SIDEBAR (Desktop) */}
       <aside className="hidden md:flex flex-col w-64 bg-white border-r-4 border-slate-200 p-6 z-20 shadow-sm relative">
-        <div className="flex items-center gap-3 font-bold text-2xl text-slate-800 mb-12">
-          <div className="bg-junior-blue p-2 rounded-xl text-white">
-            <Sparkles size={28} />
+        <Link href="/dashboard" className="group flex items-center gap-3 mb-12 cursor-pointer">
+          <div className="relative flex items-center justify-center w-12 h-12 bg-gradient-to-tr from-orange-400 to-rose-400 rounded-2xl text-white shadow-lg shadow-orange-200 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300">
+            <Rocket size={24} className="relative z-10" />
+            <div className="absolute inset-0 bg-white/20 rounded-2xl blur-md"></div>
           </div>
-          BreadTrans
-        </div>
+          <span className="font-extrabold text-2xl bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-rose-500 tracking-tight">
+            BreadTrans
+          </span>
+        </Link>
 
         <nav className="flex-1 flex flex-col gap-4">
           {NAV_ITEMS.map((item) => {
@@ -105,12 +108,14 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
         {/* Floating Header for Mobile */}
         <header className="md:hidden flex items-center justify-between p-4 bg-white border-b-4 border-slate-200 z-20">
-          <div className="flex items-center gap-2 font-bold text-xl text-slate-800">
-            <div className="bg-junior-blue p-1 rounded-lg text-white">
-              <Sparkles size={20} />
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <div className="relative flex items-center justify-center w-8 h-8 bg-gradient-to-tr from-orange-400 to-rose-400 rounded-lg text-white shadow-md shadow-orange-200">
+              <Rocket size={16} className="relative z-10" />
             </div>
-            BreadTrans
-          </div>
+            <span className="font-extrabold text-xl bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-rose-500 tracking-tight">
+              BreadTrans
+            </span>
+          </Link>
           <button onClick={handleLogout} className="p-2 text-slate-500 hover:text-red-500">
             <LogOut size={24} />
           </button>

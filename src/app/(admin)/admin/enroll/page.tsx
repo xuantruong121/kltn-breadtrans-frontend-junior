@@ -28,17 +28,17 @@ export default function AdminEnrollPage() {
 
   const { data: classes } = useQuery<ClassOption[]>({
     queryKey: ["admin-classes"],
-    queryFn: async () => (await axiosClient.get("/admin/classes")).data,
+    queryFn: async () => axiosClient.get("/admin/classes") as unknown as ClassOption[],
   });
 
   const { data: students } = useQuery<Student[]>({
     queryKey: ["admin-users", "STUDENT"],
-    queryFn: async () => (await axiosClient.get("/admin/users?role=STUDENT")).data,
+    queryFn: async () => axiosClient.get("/admin/users?role=STUDENT") as unknown as Student[],
   });
 
   const { data: classDetail, isLoading: isLoadingEnrolled } = useQuery<{ enrollments: EnrolledStudent[]; _count: { enrollments: number }; name: string; course: { title: string } }>({
     queryKey: ["admin-class-detail", selectedClassId],
-    queryFn: async () => (await axiosClient.get(`/admin/classes/${selectedClassId}`)).data,
+    queryFn: async () => axiosClient.get(`/admin/classes/${selectedClassId}`) as unknown as { enrollments: EnrolledStudent[]; _count: { enrollments: number }; name: string; course: { title: string } },
     enabled: !!selectedClassId,
   });
 

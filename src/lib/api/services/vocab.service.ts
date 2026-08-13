@@ -2,20 +2,25 @@ import axiosClient from "../axiosClient";
 
 export interface VocabTopic {
   id: number;
-  name: string;
-  description: string;
-  imageUrl: string;
+  title: string;
+  categoryName: string;
+  totalWords: number;
+  isPro: boolean;
+  iconUrl?: string;
   words?: VocabWord[];
 }
 
 export interface VocabWord {
   id: number;
   word: string;
+  pos: string;
+  ipaUs?: string;
+  ipaUk?: string;
   meaning: string;
-  pronunciation: string;
-  exampleSentence: string;
-  imageUrl?: string;
-  audioUrl?: string;
+  audioUs?: string;
+  audioUk?: string;
+  exampleEn?: string;
+  exampleVi?: string;
   // Metadata cho user
   isStarred?: boolean;
   isMastered?: boolean;

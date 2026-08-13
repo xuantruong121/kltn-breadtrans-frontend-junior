@@ -52,8 +52,15 @@ export default function SpeakingExercisesPage() {
             >
               <div>
                 <h3 className="text-xl font-bold text-slate-800 mb-1">{exercise.title}</h3>
-                <p className="text-slate-500 font-medium text-sm">
-                  {exercise.description}
+                <p className="text-slate-500 font-medium text-sm flex gap-2 mt-2">
+                  <span className="bg-slate-100 px-2 py-1 rounded text-xs font-bold uppercase">{exercise.category}</span>
+                  <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${
+                    exercise.difficulty === 'BEGINNER' ? 'bg-green-100 text-green-700' :
+                    exercise.difficulty === 'INTERMEDIATE' ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-red-100 text-red-700'
+                  }`}>
+                    {exercise.difficulty}
+                  </span>
                 </p>
               </div>
               <div className="bg-purple-100 text-purple-500 p-3 rounded-xl">
