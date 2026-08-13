@@ -40,7 +40,7 @@ export default function FloatingAiTutor() {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 md:bottom-8 md:right-8 bg-junior-orange text-white p-4 rounded-full shadow-lg z-40 transition-transform ${isOpen ? 'scale-0' : 'scale-100'}`}
+        className={`fixed bottom-24 right-4 md:bottom-8 md:right-8 bg-junior-orange text-white p-4 rounded-full shadow-lg z-40 transition-transform ${isOpen ? 'scale-0' : 'scale-100'}`}
       >
         <MessageCircle size={32} />
       </motion.button>

@@ -153,14 +153,13 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
-  const reduce = useReducedMotion();
 
   return (
     <main className="min-h-[100dvh] grid grid-cols-1 lg:grid-cols-2">
       {/* LEFT SIDE: VISUAL ART (Anti Center-Bias) */}
       <section className="relative bg-junior-blue hidden lg:flex flex-col justify-center items-center overflow-hidden p-12">
         <motion.div 
-          animate={reduce ? {} : { rotate: 360 }}
+          animate={{ rotate: 360 }}
           transition={{ repeat: Infinity, duration: 80, ease: "linear" }}
           className="absolute -top-32 -left-32 text-sky-400 opacity-20"
         >

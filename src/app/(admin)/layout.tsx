@@ -4,15 +4,16 @@ import { useState, useEffect } from "react";
 
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Users, BookCopy, PenTool, LogOut, FileText } from "lucide-react";
+import { LayoutDashboard, Users, BookCopy, PenTool, LogOut, FileText, UserPlus } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 
 const ADMIN_NAV = [
   { id: "dashboard", href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { id: "courses", href: "/admin/courses", label: "Quản lý Khóa học", icon: BookCopy },
+  { id: "enroll", href: "/admin/enroll", label: "Ghi danh Học viên", icon: UserPlus },
   { id: "quizzes", href: "/admin/quizzes", label: "Quản lý Đề thi", icon: PenTool },
   { id: "ai", href: "/admin/ai-tools", label: "Công cụ AI (PDF, Sinh đề)", icon: FileText },
-  { id: "users", href: "/admin/users", label: "Học viên", icon: Users },
+  { id: "users", href: "/admin/users", label: "Người dùng", icon: Users },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

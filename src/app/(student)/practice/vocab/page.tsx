@@ -50,8 +50,10 @@ export default function VocabTopicsPage() {
               className="bg-white rounded-[2rem] border-4 border-slate-200 overflow-hidden shadow-sm flex flex-col"
             >
               <div className="h-40 bg-orange-100 relative">
-                {topic.imageUrl ? (
-                  <img src={topic.imageUrl} alt={topic.name} className="w-full h-full object-cover" />
+                {topic.iconUrl ? (
+                  <div className="absolute inset-0 flex items-center justify-center text-6xl">
+                    {topic.iconUrl}
+                  </div>
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center text-orange-300">
                     <Library size={64} />
@@ -59,9 +61,9 @@ export default function VocabTopicsPage() {
                 )}
               </div>
               <div className="p-6 flex-1 flex flex-col">
-                <h3 className="text-xl font-bold text-slate-800 mb-2 line-clamp-1">{topic.name}</h3>
+                <h3 className="text-xl font-bold text-slate-800 mb-2 line-clamp-1">{topic.title}</h3>
                 <p className="text-slate-500 font-medium text-sm line-clamp-2 mb-6 flex-1">
-                  {topic.description || "Bộ từ vựng chủ đề " + topic.name}
+                  {topic.categoryName} • {topic.totalWords} từ vựng
                 </p>
                 <Link href={`/practice/vocab/${topic.id}`}>
                   <motion.button

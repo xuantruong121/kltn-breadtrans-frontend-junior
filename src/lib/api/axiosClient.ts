@@ -32,6 +32,9 @@ axiosClient.interceptors.response.use(
     // Optionally handle token refresh or redirect to login here
     if (error.response?.status === 401) {
       useAuthStore.getState().logout();
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
+      }
     }
     return Promise.reject(error);
   }
