@@ -24,7 +24,7 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
     queryKey: ["class-detail", classId],
     queryFn: async () => {
       const res = await axiosClient.get(`/classes/${classId}`);
-      return res;
+      return res as any;
     },
     enabled: !isNaN(classId),
   });

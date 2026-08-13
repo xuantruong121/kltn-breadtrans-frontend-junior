@@ -15,6 +15,10 @@ export interface UserProfile {
     phoneNumber?: string;
     address?: string;
   };
+  stats?: {
+    totalBanhRan: number;
+    [key: string]: any;
+  };
 }
 
 export const userService = {

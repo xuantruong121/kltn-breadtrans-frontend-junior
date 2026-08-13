@@ -145,8 +145,8 @@ export default function DashboardPage() {
           >
             <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
               <div className="w-48 h-48 bg-orange-100 rounded-full border-8 border-orange-200 flex items-center justify-center text-7xl shadow-inner relative animate-pulse-slow">
-                {pet?.health > 50 ? '🍞' : '🥖'}
-                {pet?.happiness > 80 && (
+                {(pet?.health || 0) > 50 ? '🍞' : '🥖'}
+                {(pet?.happiness || 0) > 80 && (
                   <div className="absolute -top-4 -right-4 text-3xl animate-bounce">✨</div>
                 )}
               </div>

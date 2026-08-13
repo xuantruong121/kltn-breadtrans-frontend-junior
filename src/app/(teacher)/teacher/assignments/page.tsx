@@ -84,7 +84,7 @@ export default function TeacherAssignmentsPage() {
       if (!selectedAssignment) return null;
       try {
         const res = await axiosClient.get(`/courses/assignments/${selectedAssignment.id}`);
-        return res;
+        return res as any;
       } catch (error) {
         return null;
       }
@@ -161,9 +161,9 @@ export default function TeacherAssignmentsPage() {
               <div className="p-0">
                 {assignmentsLoading ? (
                   <div className="p-8 text-center text-slate-500">Đang tải...</div>
-                ) : assignments?.length > 0 ? (
+                ) : (assignments || []).length > 0 ? (
                   <div className="divide-y divide-slate-100">
-                    {assignments.map((asgn: any) => (
+                    {(assignments || []).map((asgn: any) => (
                       <div key={asgn.id} className="p-6 hover:bg-slate-50 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                           <div className="flex items-center gap-2 mb-1">
@@ -358,7 +358,7 @@ export default function TeacherAssignmentsPage() {
                 <div className="text-center py-12 text-slate-500">Đang tải danh sách nộp bài...</div>
               ) : assignmentDetail?.submissions?.length > 0 ? (
                 <div className="space-y-4">
-                  {assignmentDetail.submissions.map((sub: any) => (
+                  {(assignmentDetail?.submissions || []).map((sub: any) => (
                     <div key={sub.id} className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
                       <div className="flex justify-between items-start mb-4 border-b border-slate-100 pb-4">
                         <div className="flex items-center gap-3">
