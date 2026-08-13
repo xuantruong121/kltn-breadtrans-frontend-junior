@@ -13,7 +13,7 @@ export default function TeacherCoursesPage() {
   const queryClient = useQueryClient();
   const { socket } = useSocket();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newCourse, setNewCourse] = useState({ title: "", description: "", price: 0 });
+  const [newCourse, setNewCourse] = useState({ title: "", description: "", level: "" });
 
   // Query courses created by this teacher
   const { data: courses, isLoading } = useApiQuery(
@@ -39,7 +39,7 @@ export default function TeacherCoursesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teacherCourses"] });
       setIsModalOpen(false);
-      setNewCourse({ title: "", description: "", price: 0 });
+      setNewCourse({ title: "", description: "", level: "" });
     },
   });
 
@@ -117,8 +117,8 @@ export default function TeacherCoursesPage() {
                     <p className="text-slate-500 text-sm mb-4 line-clamp-2">{course.description || "Chưa có mô tả"}</p>
                     
                     <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
-                      <div className="text-sm font-medium text-slate-700">
-                        {course.price === 0 ? "Miễn phí" : `${course.price.toLocaleString()} VNĐ`}
+                      <div className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">
+                        {course.level === 'BEGINNER' ? 'Cơ bản' : course.level === 'INTERMEDIATE' ? 'Trung cấp' : course.level === 'ADVANCED' ? 'Nâng cao' : 'Tất cả cấp độ'}
                       </div>
                       <div className="flex gap-2">
                         <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
@@ -189,15 +189,17 @@ export default function TeacherCoursesPage() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Giá (VNĐ)</label>
-                <input 
-                  type="number" 
-                  value={newCourse.price}
-                  onChange={(e) => setNewCourse({...newCourse, price: Number(e.target.value)})}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  min="0"
-                  step="1000"
-                />
+                <label className="block text-sm font-medium text-slate-700 mb-1">Cấp độ</label>
+                <select
+                  value={newCourse.level}
+                  onChange={(e) => setNewCourse({...newCourse, level: e.target.value})}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  <option value="">-- Chọn cấp độ --</option>
+                  <option value="BEGINNER">Cơ bản (Beginner)</option>
+                  <option value="INTERMEDIATE">Trung cấp (Intermediate)</option>
+                  <option value="ADVANCED">Nâng cao (Advanced)</option>
+                </select>
               </div>
 
               <div className="pt-2 flex justify-end gap-3 mt-4 border-t border-slate-100">
