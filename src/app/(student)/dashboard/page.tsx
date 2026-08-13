@@ -43,10 +43,11 @@ export default function DashboardPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["myPet"] });
       queryClient.invalidateQueries({ queryKey: ["profile"] }); // Update Banh Ran
-      toast.success("Đã cho thú cưng ăn!");
+      toast.success("Đã cho thú cưng ăn! 🍞");
     },
-    onError: () => {
-      toast.error("Không đủ bánh rán!");
+    onError: (error: any) => {
+      const msg = error?.response?.data?.message;
+      toast.error(msg || "Không đủ bánh rán!");
     }
   });
 
@@ -59,7 +60,8 @@ export default function DashboardPage() {
   }
 
   const displayName = profile?.profile?.fullName || user.email;
-  const banhRan = profile?.stats?.totalBanhRan || 0;
+  const banhRan = (profile as any)?.stats?.totalBanhRan ?? 0;
+  const canFeedPet = banhRan >= 10;
 
   return (
     <div className="max-w-6xl mx-auto pb-20">
@@ -180,13 +182,24 @@ export default function DashboardPage() {
                 </div>
 
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => feedPetMut.mutate()}
+                  whileHover={canFeedPet ? { scale: 1.02 } : {}}
+                  whileTap={canFeedPet ? { scale: 0.98 } : {}}
+                  onClick={() => {
+                    if (!canFeedPet) {
+                      toast.error(`Bạn cần ít nhất 10 Bánh Rán (hiện có: ${banhRan})`);
+                      return;
+                    }
+                    feedPetMut.mutate();
+                  }}
                   disabled={feedPetMut.isPending}
-                  className="btn-primary-3d flex items-center justify-center gap-2 bg-junior-green hover:bg-emerald-500 border-emerald-600 text-white text-lg font-bold px-6 py-3 rounded-xl w-full md:w-auto mx-auto md:mx-0 shadow-md disabled:opacity-50"
+                  className={`flex items-center justify-center gap-2 text-lg font-bold px-6 py-3 rounded-xl w-full md:w-auto mx-auto md:mx-0 shadow-md transition-all ${
+                    canFeedPet
+                      ? "btn-primary-3d bg-junior-green hover:bg-emerald-500 border-emerald-600 text-white"
+                      : "bg-slate-200 text-slate-400 cursor-not-allowed border-2 border-slate-300"
+                  } disabled:opacity-50`}
                 >
                   🥐 Cho {pet?.name} ăn (10 Bánh Rán)
+                  {!canFeedPet && <span className="text-xs font-normal">(Thiếu {10 - banhRan})</span>}
                 </motion.button>
               </div>
             </div>

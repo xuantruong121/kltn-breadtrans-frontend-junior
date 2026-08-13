@@ -10,10 +10,11 @@ import { writingService } from "@/lib/api/services/writing.service";
 export default function WritingTopicsPage() {
   const router = useRouter();
   
-  const { data: topics, isLoading } = useQuery({
+  const { data: topicsData, isLoading } = useQuery({
     queryKey: ["writing-topics"],
     queryFn: writingService.getTopics,
   });
+  const topics = (topicsData as any)?.quizzes || topicsData || [];
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -40,7 +41,7 @@ export default function WritingTopicsPage() {
         </div>
       ) : topics && topics.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {topics.map((topic, index) => (
+          {topics.map((topic: any, index: number) => (
             <motion.div
               key={topic.id}
               initial={{ opacity: 0, y: 20 }}
@@ -59,9 +60,9 @@ export default function WritingTopicsPage() {
                 )}
               </div>
               <div className="p-6 flex-1 flex flex-col">
-                <h3 className="text-xl font-bold text-slate-800 mb-2 line-clamp-1">{topic.title}</h3>
+                <h3 className="text-xl font-bold text-slate-800 mb-2 line-clamp-1">{topic.topicName || topic.title}</h3>
                 <p className="text-slate-500 font-medium text-sm line-clamp-2 mb-6 flex-1">
-                  {topic.description || "Chủ đề luyện viết: " + topic.title}
+                  {topic.description || "Chủ đề luyện viết: " + (topic.topicName || topic.title)}
                 </p>
                 <Link href={`/practice/writing/${topic.id}`}>
                   <motion.button

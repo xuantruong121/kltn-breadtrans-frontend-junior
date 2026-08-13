@@ -10,7 +10,7 @@ export interface ReadingTopic {
 
 export const readingService = {
   getTopics: async (): Promise<ReadingTopic[]> => {
-    return await axiosClient.get("/reading/topics");
+    return await axiosClient.get("/reading/topics?category=BILINGUAL_LEVEL");
   },
 
   getTopicById: async (id: number): Promise<ReadingTopic> => {

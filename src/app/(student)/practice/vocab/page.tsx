@@ -10,10 +10,11 @@ import { vocabService } from "@/lib/api/services/vocab.service";
 export default function VocabTopicsPage() {
   const router = useRouter();
   
-  const { data: topics, isLoading } = useQuery({
+  const { data: topicsData, isLoading } = useQuery({
     queryKey: ["vocab-topics"],
     queryFn: vocabService.getTopics,
   });
+  const topics = (topicsData as any)?.topics || topicsData || [];
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -40,7 +41,7 @@ export default function VocabTopicsPage() {
         </div>
       ) : topics && topics.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {topics.map((topic, index) => (
+          {topics.map((topic: any, index: number) => (
             <motion.div
               key={topic.id}
               initial={{ opacity: 0, y: 20 }}
