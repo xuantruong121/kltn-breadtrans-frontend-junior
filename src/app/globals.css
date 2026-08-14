@@ -19,9 +19,11 @@
   }
 }
 
-body {
+html, body {
   color: var(--foreground);
   font-family: var(--font-sans);
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 /* Utility class for clay button 3D shadow */

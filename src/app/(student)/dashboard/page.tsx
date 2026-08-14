@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { vocabService } from "@/lib/api/services/vocab.service";
 import { motion } from "framer-motion";
 import { Trophy, ArrowRight, Flame, BookOpen, Loader2, Star, Target, CheckCircle2, Heart, Smile } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
@@ -38,6 +40,12 @@ export default function DashboardPage() {
     enabled: !!user,
   });
 
+  const { data: vocabTopicsData } = useQuery({
+    queryKey: ["vocab-topics"],
+    queryFn: vocabService.getTopics,
+    enabled: !!user,
+  });
+
   const feedPetMut = useMutation({
     mutationFn: gamificationService.feedPet,
     onSuccess: () => {
@@ -62,6 +70,17 @@ export default function DashboardPage() {
   const displayName = profile?.profile?.fullName || user.email;
   const banhRan = (profile as any)?.stats?.totalBanhRan ?? 0;
   const canFeedPet = banhRan >= 10;
+
+  // Tính tổng số từ cần ôn tập
+  let totalReviewNeeded = 0;
+  if (vocabTopicsData) {
+    const topics = (vocabTopicsData as any)?.topics || vocabTopicsData || [];
+    topics.forEach((t: any) => {
+      if (t.needReviewCount && t.needReviewCount > 0) {
+        totalReviewNeeded += t.needReviewCount;
+      }
+    });
+  }
 
   return (
     <div className="max-w-6xl mx-auto pb-20">
@@ -89,7 +108,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <div className="text-sm text-sky-100 font-bold uppercase tracking-wider">Chuỗi Ngày</div>
-              <div className="text-2xl font-bold leading-none">12</div>
+              <div className="text-2xl font-bold leading-none">{(profile as any)?.stats?.streakCount ?? 0}</div>
             </div>
           </div>
           <div className="bg-white/20 p-4 rounded-2xl flex items-center gap-3 backdrop-blur-md border border-white/30 shadow-lg hover:scale-105 transition-transform">
@@ -123,7 +142,14 @@ export default function DashboardPage() {
                 <BookOpen size={28} />
               </div>
               <h2 className="text-3xl font-extrabold text-slate-800 mb-2">Đảo Luyện Tập</h2>
-              <p className="text-slate-500 font-medium text-lg mb-6">Hãy khởi động ngày mới bằng một bài học từ vựng thú vị nhé!</p>
+              <p className="text-slate-500 font-medium text-lg mb-4">Hãy khởi động ngày mới bằng một bài học từ vựng thú vị nhé!</p>
+              
+              {totalReviewNeeded > 0 && (
+                <div className="bg-red-50 border-2 border-red-200 text-red-600 rounded-xl p-4 mb-6 flex items-center gap-3">
+                  <Flame size={24} className="animate-pulse" />
+                  <span className="font-bold">Bạn có {totalReviewNeeded} từ vựng cần học/ôn tập lại. Đừng để quên nhé!</span>
+                </div>
+              )}
               
               <div className="w-full bg-slate-100 h-5 rounded-full mb-6 overflow-hidden border border-slate-200 shadow-inner">
                 <div className="bg-junior-orange h-full rounded-full w-1/3" />
@@ -135,7 +161,7 @@ export default function DashboardPage() {
                   whileTap={{ scale: 0.98 }}
                   className="btn-orange-3d flex items-center justify-center gap-2 bg-junior-orange text-white text-xl font-bold px-8 py-4 rounded-2xl w-full md:w-auto shadow-md"
                 >
-                  Học Tiếp Nào! <ArrowRight size={24} strokeWidth={3} />
+                  {totalReviewNeeded > 0 ? 'Ôn Tập Ngay!' : 'Học Tiếp Nào!'} <ArrowRight size={24} strokeWidth={3} />
                 </motion.button>
               </Link>
             </div>
@@ -147,7 +173,10 @@ export default function DashboardPage() {
           >
             <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
               <div className="w-48 h-48 bg-orange-100 rounded-full border-8 border-orange-200 flex items-center justify-center text-7xl shadow-inner relative animate-pulse-slow">
-                {(pet?.health || 0) > 50 ? '🍞' : '🥖'}
+                {pet?.name === 'Vua Bánh Mì' ? '👑' :
+                 pet?.name === 'Bánh Kem Hoàng Gia' ? '🎂' :
+                 pet?.name === 'Bánh Macaron' ? '🍩' :
+                 pet?.name === 'Bánh Sừng Bò' ? '🥐' : '🍞'}
                 {(pet?.happiness || 0) > 80 && (
                   <div className="absolute -top-4 -right-4 text-3xl animate-bounce">✨</div>
                 )}
@@ -155,9 +184,17 @@ export default function DashboardPage() {
               
               <div className="flex-1 w-full text-center md:text-left">
                 <h2 className="text-3xl font-extrabold text-slate-800 mb-2">Thú cưng: {pet?.name}</h2>
-                <div className="flex justify-center md:justify-start gap-4 mb-6">
-                  <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg font-bold">Level {pet?.level}</span>
-                  <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg font-bold">{pet?.exp} XP</span>
+                <div className="flex justify-center md:justify-start gap-4 mb-4">
+                  <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg font-bold">Level {pet?.level || 1}</span>
+                  <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg font-bold">{pet?.exp || 0} / {(pet?.level || 1) * 1000} XP</span>
+                </div>
+                
+                {/* EXP Bar */}
+                <div className="w-full bg-slate-100 h-2 rounded-full mb-6 overflow-hidden">
+                  <div 
+                    className="bg-blue-400 h-full rounded-full transition-all" 
+                    style={{width: `${Math.min(((pet?.exp || 0) / ((pet?.level || 1) * 1000)) * 100, 100)}%`}} 
+                  />
                 </div>
                 
                 <div className="space-y-4 mb-6">
@@ -284,9 +321,9 @@ export default function DashboardPage() {
                           style={{width: `${percent}%`}}
                         />
                       </div>
-                      <span className="text-xs font-bold text-slate-500">
-                        {q.currentValue}/{q.quest.targetValue}
-                      </span>
+                      <div className="text-xs font-bold text-slate-500 w-10 text-right whitespace-nowrap">
+                        {Math.min(q.currentValue, q.quest.targetValue)}/{q.quest.targetValue}
+                      </div>
                     </div>
                   </div>
                 );

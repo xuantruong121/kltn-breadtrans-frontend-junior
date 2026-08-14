@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
-import { Sparkles, ArrowRight, BookOpen, GraduationCap, School, Loader2 } from "lucide-react";
+import { Sparkles, ArrowRight, BookOpen, GraduationCap, School, Loader2, Rocket } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -29,7 +29,13 @@ function LoginForm() {
     setErrorMsg("");
     
     try {
-      const res: any = await axiosClient.post('/auth/login', { email, password });
+      let deviceId = typeof window !== 'undefined' ? localStorage.getItem('deviceId') : null;
+      if (!deviceId && typeof window !== 'undefined') {
+        deviceId = crypto.randomUUID();
+        localStorage.setItem('deviceId', deviceId);
+      }
+      
+      const res: any = await axiosClient.post('/auth/login', { email, password, deviceId });
       // API trả về { access_token, refresh_token, user: { id, email, role } }
       setAuth(res.access_token, res.refresh_token, res.user);
       
@@ -207,11 +213,17 @@ export default function LoginPage() {
 
       {/* RIGHT SIDE: FORM STAGGER REVEAL */}
       <section className="bg-sky-50 flex items-center justify-center p-6 md:p-12 lg:p-24 relative">
-        <div className="w-full max-w-md absolute top-8 left-8 lg:hidden">
-            <div className="flex items-center gap-3 text-junior-blue font-bold text-2xl">
-              <Sparkles size={32} /> BreadTrans
-            </div>
-        </div>
+          <div className="w-full max-w-md absolute top-8 left-8">
+              <div className="flex items-center gap-3">
+                <div className="relative flex items-center justify-center w-10 h-10 bg-gradient-to-tr from-orange-400 to-rose-400 rounded-2xl text-white shadow-lg shadow-orange-200">
+                  <Rocket size={20} className="relative z-10" />
+                  <div className="absolute inset-0 bg-white/20 rounded-2xl blur-md"></div>
+                </div>
+                <span className="font-extrabold text-2xl bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-rose-500 tracking-tight">
+                  BreadTrans
+                </span>
+              </div>
+          </div>
         
         {/* STAGGER FORM MOUNT */}
         <LoginForm />

@@ -41,7 +41,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
   const handleLogout = () => {
     logout();
-    router.push("/");
+    window.location.href = "/";
   };
 
   if (!isReady || !user) return null;
@@ -122,7 +122,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         </header>
 
         {/* Page Content with scroll */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8">
+        <div className="flex-1 overflow-y-auto p-4 pb-28 md:p-8 md:pb-8">
           {children}
         </div>
       </main>

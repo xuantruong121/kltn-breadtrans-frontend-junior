@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X, Send, Bot, User, Loader2 } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { aiService, ChatMessage } from "@/lib/api/services/ai.service";
 
 export default function FloatingAiTutor() {
@@ -12,6 +13,14 @@ export default function FloatingAiTutor() {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const pathname = usePathname();
+
+  // Hide AI tutor when inside a practice exercise or a lesson
+  const isHiddenPath = 
+    pathname.match(/^\/practice\/[^\/]+\/.+/) || 
+    pathname.includes('/lessons/');
+
+  if (isHiddenPath) return null;
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
