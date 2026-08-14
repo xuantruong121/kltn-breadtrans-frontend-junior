@@ -15,6 +15,7 @@ export default function VocabFlashcardsPage() {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
 
   const { data: topic, isLoading } = useQuery({
     queryKey: ["vocab-topic", topicId],
@@ -29,7 +30,11 @@ export default function VocabFlashcardsPage() {
 
   const toggleMasteredMut = useMutation({
     mutationFn: ({ wordId, isMastered }: { wordId: number, isMastered: boolean }) => vocabService.masterWord(wordId, isMastered),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["vocab-topic", topicId] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vocab-topic", topicId] });
+      queryClient.invalidateQueries({ queryKey: ["vocab-topics"] });
+      queryClient.invalidateQueries({ queryKey: ["myQuests"] });
+    },
   });
 
   if (isLoading) {
@@ -57,14 +62,15 @@ export default function VocabFlashcardsPage() {
     if (currentIndex < words.length - 1) {
       setIsFlipped(false);
       setCurrentIndex(prev => prev + 1);
+    } else {
+      setIsCompleted(true);
     }
   };
 
-  const handlePrev = () => {
-    if (currentIndex > 0) {
-      setIsFlipped(false);
-      setCurrentIndex(prev => prev - 1);
-    }
+  const handleMark = (e: React.MouseEvent, isMastered: boolean) => {
+    e.stopPropagation();
+    toggleMasteredMut.mutate({ wordId: currentWord.id, isMastered });
+    handleNext();
   };
 
   const playAudio = (e: React.MouseEvent, text: string, url?: string) => {
@@ -99,10 +105,24 @@ export default function VocabFlashcardsPage() {
         <h1 className="text-3xl font-bold text-slate-800">{topic.title}</h1>
       </div>
 
-      {/* FLASHCARD */}
-      <div className="relative w-full max-w-2xl mx-auto perspective-1000 h-96">
-        <AnimatePresence mode="wait">
-          <motion.div
+      {isCompleted ? (
+        <div className="max-w-2xl mx-auto bg-white p-12 rounded-[3rem] shadow-xl border-4 border-green-100 text-center">
+          <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-green-500">
+            <CheckCircle2 size={48} />
+          </div>
+          <h2 className="text-3xl font-bold text-slate-800 mb-4">Chúc mừng!</h2>
+          <p className="text-slate-500 mb-8 text-lg">Bạn đã học xong tất cả từ vựng trong chủ đề này.</p>
+          <button 
+            onClick={() => router.push('/practice/vocab')}
+            className="btn-primary-3d px-8 py-4 text-lg w-full"
+          >
+            Quay lại Đảo Luyện Tập
+          </button>
+        </div>
+      ) : (
+        <div className="relative w-full max-w-2xl mx-auto perspective-1000 h-96">
+          <AnimatePresence mode="wait">
+            <motion.div
             key={currentIndex + (isFlipped ? "-back" : "-front")}
             initial={{ opacity: 0, rotateY: isFlipped ? -90 : 90 }}
             animate={{ opacity: 1, rotateY: 0 }}
@@ -111,19 +131,13 @@ export default function VocabFlashcardsPage() {
             onClick={() => setIsFlipped(!isFlipped)}
             className="absolute inset-0 w-full h-full bg-white rounded-[3rem] shadow-xl border-4 border-slate-100 cursor-pointer flex flex-col items-center justify-center p-8 text-center"
           >
-            {/* Action buttons (Star, Mastered) */}
+            {/* Action buttons (Star) */}
             <div className="absolute top-6 right-6 flex gap-3">
               <button 
                 onClick={(e) => { e.stopPropagation(); toggleStarMut.mutate({ wordId: currentWord.id, isStarred: !currentWord.isStarred }); }}
                 className={`p-3 rounded-full transition-colors ${currentWord.isStarred ? 'bg-yellow-100 text-yellow-500' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
               >
                 <Star size={24} fill={currentWord.isStarred ? "currentColor" : "none"} />
-              </button>
-              <button 
-                onClick={(e) => { e.stopPropagation(); toggleMasteredMut.mutate({ wordId: currentWord.id, isMastered: !currentWord.isMastered }); }}
-                className={`p-3 rounded-full transition-colors ${currentWord.isMastered ? 'bg-green-100 text-green-500' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
-              >
-                <CheckCircle2 size={24} />
               </button>
             </div>
 
@@ -156,33 +170,32 @@ export default function VocabFlashcardsPage() {
                     <p className="text-slate-500">{currentWord.exampleVi}</p>
                   </div>
                 )}
+                <div className="flex gap-4 mt-8 w-full">
+                  <button 
+                    onClick={(e) => handleMark(e, false)}
+                    className="flex-1 py-4 rounded-2xl font-bold text-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors border border-red-200 shadow-sm active:scale-95"
+                  >
+                    Nhắc học lại sau
+                  </button>
+                  <button 
+                    onClick={(e) => handleMark(e, true)}
+                    className="flex-1 py-4 rounded-2xl font-bold text-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors border border-green-200 shadow-sm active:scale-95"
+                  >
+                    Đã thuộc
+                  </button>
+                </div>
               </>
             )}
 
-            <div className="absolute bottom-6 text-slate-300 font-medium text-sm">
-              Nhấp để lật thẻ
-            </div>
+            {!isFlipped && (
+              <div className="absolute bottom-6 text-slate-300 font-medium text-sm">
+                Nhấp để lật thẻ
+              </div>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
-
-      {/* CONTROLS */}
-      <div className="flex justify-center items-center gap-8 mt-12">
-        <button 
-          onClick={handlePrev}
-          disabled={currentIndex === 0}
-          className={`p-4 rounded-full border-b-4 transition-all ${currentIndex === 0 ? 'bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed' : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200 active:border-b-0 active:translate-y-1'}`}
-        >
-          <ChevronLeft size={32} />
-        </button>
-        <button 
-          onClick={handleNext}
-          disabled={currentIndex === words.length - 1}
-          className={`p-4 rounded-full border-b-4 transition-all ${currentIndex === words.length - 1 ? 'bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed' : 'bg-junior-blue text-white hover:bg-blue-600 border-blue-700 active:border-b-0 active:translate-y-1'}`}
-        >
-          <ChevronRight size={32} />
-        </button>
-      </div>
+      )}
     </div>
   );
 }
