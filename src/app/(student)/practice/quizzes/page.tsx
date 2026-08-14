@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Headphones, Loader2, PlayCircle, ArrowLeft } from "lucide-react";
+import { Headphones, Loader2, PlayCircle, ArrowLeft, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { quizService } from "@/lib/api/services/quiz.service";
@@ -40,27 +40,41 @@ export default function ListeningPracticesPage() {
         </div>
       ) : quizzes && quizzes.length > 0 ? (
         <div className="flex flex-col gap-4">
-          {quizzes.map((quiz, index) => (
-            <motion.div
-              key={quiz.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ scale: 1.01 }}
-              className="bg-white p-6 rounded-2xl border-4 border-slate-100 flex items-center justify-between shadow-sm cursor-pointer hover:border-sky-200 transition-colors"
-              onClick={() => router.push(`/practice/quizzes/${quiz.id}`)}
-            >
-              <div>
-                <h3 className="text-xl font-bold text-slate-800 mb-1">{quiz.title}</h3>
-                <p className="text-slate-500 font-medium text-sm">
-                  {quiz._count?.questions || 0} câu hỏi • Luyện nghe TOEIC
-                </p>
-              </div>
-              <div className="bg-sky-100 text-junior-blue p-3 rounded-xl">
-                <PlayCircle size={28} />
-              </div>
-            </motion.div>
-          ))}
+          {quizzes.map((quiz: any, index: number) => {
+            const isCompleted = quiz.isCompleted;
+            return (
+              <motion.div
+                key={quiz.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                whileHover={{ scale: 1.01 }}
+                className={`p-6 rounded-2xl border-4 flex items-center justify-between shadow-sm cursor-pointer transition-colors ${
+                  isCompleted 
+                    ? 'bg-green-50 border-green-400 hover:border-green-500' 
+                    : 'bg-white border-slate-100 hover:border-sky-200'
+                }`}
+                onClick={() => router.push(`/practice/quizzes/${quiz.id}`)}
+              >
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-xl font-bold text-slate-800">{quiz.title}</h3>
+                    {isCompleted && (
+                      <div className="text-green-500" title="Đã hoàn thành">
+                        <CheckCircle2 size={20} />
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-slate-500 font-medium text-sm">
+                    {quiz._count?.questions || 0} câu hỏi • Luyện nghe TOEIC
+                  </p>
+                </div>
+                <div className={`p-3 rounded-xl ${isCompleted ? 'bg-green-200 text-green-700' : 'bg-sky-100 text-junior-blue'}`}>
+                  <PlayCircle size={28} />
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       ) : (
         <div className="bg-slate-50 p-12 rounded-2xl border-2 border-dashed border-slate-300 text-center">

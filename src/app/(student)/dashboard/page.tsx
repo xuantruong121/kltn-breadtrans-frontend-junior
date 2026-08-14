@@ -321,9 +321,9 @@ export default function DashboardPage() {
                           style={{width: `${percent}%`}}
                         />
                       </div>
-                      <span className="text-xs font-bold text-slate-500">
-                        {q.currentValue}/{q.quest.targetValue}
-                      </span>
+                      <div className="text-xs font-bold text-slate-500 w-10 text-right whitespace-nowrap">
+                        {Math.min(q.currentValue, q.quest.targetValue)}/{q.quest.targetValue}
+                      </div>
                     </div>
                   </div>
                 );

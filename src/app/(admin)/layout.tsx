@@ -23,7 +23,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const handleLogout = () => {
     logout();
-    router.push("/");
+    window.location.href = "/";
   };
 
   const [isReady, setIsReady] = useState(false);

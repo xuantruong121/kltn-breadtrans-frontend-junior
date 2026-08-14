@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { use, useState } from "react";
 import { motion } from "framer-motion";
@@ -10,6 +10,7 @@ import { quizService, AnswerDto } from "@/lib/api/services/quiz.service";
 export default function TakeQuizPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
   const router = useRouter();
+  const queryClient = useQueryClient();
   const quizId = parseInt(params.id);
 
   const [answers, setAnswers] = useState<Record<number, string>>({});
@@ -27,6 +28,10 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
   const submitMutation = useMutation({
     mutationFn: (payload: AnswerDto[]) => quizService.submitQuiz(quizId, payload),
     onSuccess: (data) => {
+      // Invalidate gamification and profile cache to update Daily Quests instantly
+      queryClient.invalidateQueries({ queryKey: ["myQuests"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      
       // Redirect to analytics page
       router.push(`/practice/quizzes/submissions/${data.id}`);
     }
@@ -80,14 +85,27 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
     }
   };
 
+  const WORD_TO_NUMBER: Record<string, string> = {
+    'zero': '0', 'one': '1', 'two': '2', 'three': '3', 'four': '4', 
+    'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9', 
+    'ten': '10', 'eleven': '11', 'twelve': '12', 'thirteen': '13',
+    'fourteen': '14', 'fifteen': '15', 'sixteen': '16', 'seventeen': '17',
+    'eighteen': '18', 'nineteen': '19', 'twenty': '20',
+    'thirty': '30', 'forty': '40', 'fifty': '50', 'sixty': '60'
+  };
+
+  const normalizeStr = (str: string) => {
+    const cleaned = str.toLowerCase().replace(/[.,!?]/g, '').replace(/-/g, ' ').trim();
+    return cleaned.split(/\s+/).map(w => WORD_TO_NUMBER[w] || w).join(' ');
+  };
+
   const handleCheckDictation = () => {
     const userAnswer = answers[currentQuestion.id] || "";
-    const correctAnswer = currentQuestion.content?.correctAnswer || "";
+    const correctAnswer = currentQuestion.content?.correctAnswer || currentQuestion.content?.correct || "";
     
     // Clean strings for comparison
-    const cleanString = (str: string) => str.toLowerCase().replace(/[.,!?]/g, '').trim();
-    const userWords = cleanString(userAnswer).split(/\s+/).filter(Boolean);
-    const correctWords = cleanString(correctAnswer).split(/\s+/).filter(Boolean);
+    const userWords = normalizeStr(userAnswer).split(/\s+/).filter(Boolean);
+    const correctWords = normalizeStr(correctAnswer).split(/\s+/).filter(Boolean);
     
     let isCorrect = true;
     const diff = userWords.map((word, idx) => {
@@ -208,6 +226,27 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                    setDictationResults(prev => ({ ...prev, [currentQuestion.id]: { ...prev[currentQuestion.id], isChecked: false } }));
                  }
               }}
+              onKeyDown={(e) => {
+                if (e.key === 'Control') {
+                  e.preventDefault();
+                  if (currentQuestion.content?.audioText) {
+                    playAudio(currentQuestion.content.audioText, playbackRate);
+                  } else if (currentQuestion.content?.audioUrl) {
+                    const audioEl = document.querySelector('audio');
+                    if (audioEl) {
+                      audioEl.currentTime = 0;
+                      audioEl.play();
+                    }
+                  }
+                } else if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  if (!dictationResults[currentQuestion.id]?.isChecked) {
+                    handleCheckDictation();
+                  } else {
+                    handleNext();
+                  }
+                }
+              }}
               placeholder="Nhập câu trả lời của bạn vào đây..."
               className={`w-full bg-slate-50 border-4 rounded-2xl p-6 text-lg font-medium outline-none transition-colors min-h-[150px] ${
                 dictationResults[currentQuestion.id]?.isChecked
@@ -217,20 +256,51 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                   : "border-slate-200 text-slate-700 focus:border-junior-blue"
               }`}
             />
+            <div className="flex justify-between items-center px-2 mt-1">
+              <span className="text-slate-400 text-sm font-medium hidden md:block">
+                💡 Mẹo: Bấm phím <kbd className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded-md font-sans mx-1 border-b-2 border-slate-300">Ctrl</kbd> để nghe lại audio
+              </span>
+              <span className="text-slate-400 text-sm font-medium hidden md:block">
+                Bấm <kbd className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded-md font-sans mx-1 border-b-2 border-slate-300">Enter</kbd> để tiếp tục
+              </span>
+            </div>
             
             {dictationResults[currentQuestion.id]?.isChecked && (
               <div className="p-4 rounded-2xl bg-slate-100 border-2 border-slate-200">
                 {!dictationResults[currentQuestion.id].isCorrect ? (
-                  <div className="text-lg font-medium leading-relaxed">
-                    <span className="text-slate-500 block mb-2 text-sm font-bold uppercase">Lỗi sai của bạn:</span>
-                    {dictationResults[currentQuestion.id].diff.map((item, idx) => (
-                      <span key={idx} className={`mr-2 ${item.status === 'wrong' ? 'text-red-500 underline decoration-red-500 font-bold' : 'text-slate-700'}`}>
-                        {item.word}
-                      </span>
-                    ))}
-                    {(answers[currentQuestion.id] || '').split(/\s+/).length !== (currentQuestion.content?.correctAnswer || '').split(/\s+/).length && (
-                      <span className="text-orange-500 block mt-2 text-sm italic">* Lưu ý: Số lượng từ của bạn không khớp với đáp án.</span>
-                    )}
+                  <div className="bg-white p-6 rounded-2xl border-2 border-red-100 shadow-sm mt-2">
+                    <div className="flex items-center gap-2 text-red-500 font-bold mb-4 text-lg">
+                      <span className="text-2xl">⚠️</span> Chưa chính xác
+                    </div>
+                    <div className="text-xl font-medium leading-relaxed font-mono flex flex-wrap gap-x-2 gap-y-2">
+                      {(() => {
+                        const correctStr = currentQuestion.content?.correctAnswer || currentQuestion.content?.correct || "";
+                        const userStr = answers[currentQuestion.id] || "";
+                        const uWords = normalizeStr(userStr).split(/\s+/).filter(Boolean);
+                        const cWords = normalizeStr(correctStr).split(/\s+/).filter(Boolean);
+                        // For the UI, we split by space or hyphen so the original words align with the normalized ones if hyphen was used
+                        const origCWords = correctStr.trim().split(/[\s-]+/).filter(Boolean);
+
+                        let firstWrongIdx = cWords.length;
+                        for (let i = 0; i < cWords.length; i++) {
+                          if (uWords[i] !== cWords[i]) {
+                            firstWrongIdx = i;
+                            break;
+                          }
+                        }
+
+                        return origCWords.map((word: string, idx: number) => {
+                          if (idx < firstWrongIdx) {
+                            return <span key={idx} className="text-slate-700">{word}</span>;
+                          } else if (idx === firstWrongIdx) {
+                            return <span key={idx} className="text-green-600 font-extrabold">{word}</span>;
+                          } else {
+                            const masked = word.replace(/[\p{L}\p{N}]/gu, '*');
+                            return <span key={idx} className="text-slate-400 tracking-widest">{masked}</span>;
+                          }
+                        });
+                      })()}
+                    </div>
                   </div>
                 ) : (
                   <div className="text-lg font-medium leading-relaxed">
@@ -266,14 +336,14 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
 
       {/* Actions */}
       <div className="flex justify-end">
-        {quiz.type === 'LISTENING_PRACTICE' && !dictationResults[currentQuestion.id]?.isChecked ? (
+        {quiz.type === 'LISTENING_PRACTICE' && (!dictationResults[currentQuestion.id]?.isChecked || !dictationResults[currentQuestion.id]?.isCorrect) ? (
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleCheckDictation}
             className="flex items-center gap-2 text-white text-xl font-bold px-8 py-4 rounded-2xl shadow-sm bg-orange-500 hover:bg-orange-600"
           >
-            Kiểm tra
+            {dictationResults[currentQuestion.id]?.isChecked ? "Kiểm tra lại" : "Kiểm tra"}
           </motion.button>
         ) : (
           <motion.button

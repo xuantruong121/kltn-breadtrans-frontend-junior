@@ -81,7 +81,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
             </div>
           </div>
           <button 
-            onClick={() => { logout(); router.push('/'); }}
+            onClick={() => { logout(); window.location.href = '/'; }}
             className="w-full flex items-center gap-3 p-3 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-colors"
           >
             <LogOut size={20} /> Đăng xuất
