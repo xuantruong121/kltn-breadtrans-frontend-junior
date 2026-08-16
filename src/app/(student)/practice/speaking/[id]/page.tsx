@@ -314,7 +314,7 @@ export default function SpeakingExerciseDetailPage() {
                 <div className="mt-6 pt-6 border-t border-slate-100">
                   <p className="text-sm font-bold text-red-500 mb-3 uppercase tracking-wider">Các từ cần cải thiện:</p>
                   <div className="flex flex-wrap gap-2">
-                    {result.problematicWords.map((word, i) => (
+                    {result.problematicWords.map((word: string, i: number) => (
                       <span key={i} className="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg font-bold text-sm border border-red-100">
                         {word}
                       </span>
@@ -330,7 +330,7 @@ export default function SpeakingExerciseDetailPage() {
               </h3>
               {result.suggestions && result.suggestions.length > 0 ? (
                 <ul className="space-y-4">
-                  {result.suggestions.map((sug, i) => (
+                  {result.suggestions.map((sug: string, i: number) => (
                     <li key={i} className="flex gap-3 text-indigo-50">
                       <span className="shrink-0 w-6 h-6 rounded-full bg-indigo-500/50 flex items-center justify-center text-xs font-bold text-indigo-100">{i + 1}</span>
                       <span className="leading-relaxed text-sm font-medium">{sug}</span>
