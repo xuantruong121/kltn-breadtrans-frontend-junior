@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Users, BookOpen, PenTool, LogOut, FileText } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useEffect, useState } from "react";
@@ -40,9 +41,9 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
       {/* Sidebar */}
       <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col">
         <div className="p-6 border-b border-slate-800">
-          <div className="font-bold text-2xl text-white flex items-center gap-2">
-            BreadTrans
-          </div>
+          <Link href="/teacher/classes" className="flex items-center">
+            <Image src="/logo.png" alt="BreadTrans Logo" width={160} height={80} priority style={{ width: "auto", height: "auto" }} className="object-contain brightness-0 invert" />
+          </Link>
           <p className="text-xs text-blue-400 mt-1 font-semibold tracking-wider">TEACHER PORTAL</p>
         </div>
 

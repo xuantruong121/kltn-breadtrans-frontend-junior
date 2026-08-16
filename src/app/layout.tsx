@@ -22,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" suppressHydrationWarning>
-      <body className={`${quicksand.variable} font-sans min-h-screen antialiased text-slate-700`} suppressHydrationWarning>
+      <body className={`${quicksand.className} min-h-screen antialiased text-slate-700`} suppressHydrationWarning>
         <QueryProvider>
           <SocketProvider>
             {children}
