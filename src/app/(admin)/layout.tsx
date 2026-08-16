@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { LayoutDashboard, Users, BookCopy, PenTool, LogOut, FileText, UserPlus } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -48,8 +49,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="flex h-[100dvh] bg-slate-50 overflow-hidden text-slate-800">
       {/* SIDEBAR */}
       <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col">
-        <div className="p-6 text-2xl font-bold text-white border-b border-slate-800">
-          BreadTrans<span className="text-junior-blue ml-2">CMS</span>
+        <div className="p-6 text-2xl font-bold text-white border-b border-slate-800 flex items-center gap-2">
+          <Link href="/admin">
+            <Image src="/logo.png" alt="BreadTrans Logo" width={140} height={70} priority style={{ width: "auto", height: "auto" }} className="object-contain brightness-0 invert" />
+          </Link>
+          <span className="text-junior-blue text-sm bg-blue-900/50 px-2 py-1 rounded">CMS</span>
         </div>
         <nav className="flex-1 p-4 flex flex-col gap-2">
           {ADMIN_NAV.map((item) => {

@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
-import { Sparkles, ArrowRight, BookOpen, GraduationCap, School, Loader2, Rocket } from "lucide-react";
+import { Sparkles, ArrowRight, BookOpen, GraduationCap, School, Loader2, Rocket, Croissant } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -92,7 +93,7 @@ function LoginForm() {
             placeholder="Ví dụ: hocsinh@gmail.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full text-xl p-5 bg-white border-4 border-slate-200 rounded-2xl focus:outline-none focus:border-junior-blue transition-colors shadow-sm"
+            className="w-full font-sans text-xl p-5 bg-white border-4 border-slate-200 rounded-2xl focus:outline-none focus:border-junior-blue transition-colors shadow-sm"
           />
         </div>
       )
@@ -108,7 +109,7 @@ function LoginForm() {
             placeholder="••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full text-xl p-5 bg-white border-4 border-slate-200 rounded-2xl focus:outline-none focus:border-junior-blue transition-colors shadow-sm"
+            className="w-full font-sans text-xl p-5 bg-white border-4 border-slate-200 rounded-2xl focus:outline-none focus:border-junior-blue transition-colors shadow-sm"
           />
         </div>
       )
@@ -164,6 +165,19 @@ export default function LoginPage() {
     <main className="min-h-[100dvh] grid grid-cols-1 lg:grid-cols-2">
       {/* LEFT SIDE: VISUAL ART (Anti Center-Bias) */}
       <section className="relative bg-junior-blue hidden lg:flex flex-col justify-center items-center overflow-hidden p-12">
+        {/* TYPOGRAPHIC LOGO PLACEMENT */}
+        <div className="absolute top-12 left-12 z-20 flex items-center gap-5">
+          <div className="bg-white text-junior-orange p-4 rounded-[1.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.12)] border-2 border-white/50 rotate-[-8deg] hover:rotate-0 transition-transform">
+            <Croissant size={52} strokeWidth={2.5} />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-5xl font-extrabold tracking-tight text-white drop-shadow-sm leading-none">
+              Bread<span className="text-orange-300">Trans</span>
+            </span>
+            <span className="text-sky-200 font-bold text-lg tracking-widest uppercase mt-2">Junior</span>
+          </div>
+        </div>
+
         <motion.div 
           animate={{ rotate: 360 }}
           transition={{ repeat: Infinity, duration: 80, ease: "linear" }}
@@ -213,17 +227,6 @@ export default function LoginPage() {
 
       {/* RIGHT SIDE: FORM STAGGER REVEAL */}
       <section className="bg-sky-50 flex items-center justify-center p-6 md:p-12 lg:p-24 relative">
-          <div className="w-full max-w-md absolute top-8 left-8">
-              <div className="flex items-center gap-3">
-                <div className="relative flex items-center justify-center w-10 h-10 bg-gradient-to-tr from-orange-400 to-rose-400 rounded-2xl text-white shadow-lg shadow-orange-200">
-                  <Rocket size={20} className="relative z-10" />
-                  <div className="absolute inset-0 bg-white/20 rounded-2xl blur-md"></div>
-                </div>
-                <span className="font-extrabold text-2xl bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-rose-500 tracking-tight">
-                  BreadTrans
-                </span>
-              </div>
-          </div>
         
         {/* STAGGER FORM MOUNT */}
         <LoginForm />

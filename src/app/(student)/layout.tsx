@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Home, BookOpen, Gamepad2, Trophy, LogOut, Sparkles, UserCircle, Rocket } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
@@ -51,13 +52,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       {/* SIDEBAR (Desktop) */}
       <aside className="hidden md:flex flex-col w-64 bg-white border-r-4 border-slate-200 p-6 z-20 shadow-sm relative">
         <Link href="/dashboard" className="group flex items-center gap-3 mb-12 cursor-pointer">
-          <div className="relative flex items-center justify-center w-12 h-12 bg-gradient-to-tr from-orange-400 to-rose-400 rounded-2xl text-white shadow-lg shadow-orange-200 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300">
-            <Rocket size={24} className="relative z-10" />
-            <div className="absolute inset-0 bg-white/20 rounded-2xl blur-md"></div>
-          </div>
-          <span className="font-extrabold text-2xl bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-rose-500 tracking-tight">
-            BreadTrans
-          </span>
+          <Image src="/logo.png" alt="BreadTrans Logo" width={160} height={80} priority style={{ width: "auto", height: "auto" }} className="object-contain drop-shadow-sm" />
         </Link>
 
         <nav className="flex-1 flex flex-col gap-4">
@@ -109,12 +104,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         {/* Floating Header for Mobile */}
         <header className="md:hidden flex items-center justify-between p-4 bg-white border-b-4 border-slate-200 z-20">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="relative flex items-center justify-center w-8 h-8 bg-gradient-to-tr from-orange-400 to-rose-400 rounded-lg text-white shadow-md shadow-orange-200">
-              <Rocket size={16} className="relative z-10" />
-            </div>
-            <span className="font-extrabold text-xl bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-rose-500 tracking-tight">
-              BreadTrans
-            </span>
+            <Image src="/logo.png" alt="BreadTrans Logo" width={120} height={60} priority style={{ width: "auto", height: "auto" }} className="object-contain drop-shadow-sm" />
           </Link>
           <button onClick={handleLogout} className="p-2 text-slate-500 hover:text-red-500">
             <LogOut size={24} />
