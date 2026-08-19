@@ -3,16 +3,35 @@
 import { useRouter } from "next/navigation";
 import { vocabService } from "@/lib/api/services/vocab.service";
 import { motion } from "framer-motion";
-import { Trophy, ArrowRight, Flame, BookOpen, Loader2, Star, Target, CheckCircle2, Heart, Smile } from "lucide-react";
+import { 
+  Trophy, 
+  ArrowRight, 
+  Flame, 
+  BookOpen, 
+  Loader2, 
+  Star, 
+  Target, 
+  CheckCircle2, 
+  Heart, 
+  Smile, 
+  Layers, 
+  GraduationCap, 
+  Mic, 
+  ShoppingBag,
+  Sparkles
+} from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
+import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { userService } from "@/lib/api/services/user.service";
 import { gamificationService } from "@/lib/api/services/gamification.service";
+import { Button3D } from "@/components/ui";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
+  const { breads: localBreads, streak: localStreak, level: localLevel } = useGamificationStore();
   const queryClient = useQueryClient();
 
   // Fetch all necessary data
@@ -50,12 +69,12 @@ export default function DashboardPage() {
     mutationFn: gamificationService.feedPet,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["myPet"] });
-      queryClient.invalidateQueries({ queryKey: ["profile"] }); // Update Banh Ran
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
       toast.success("Đã cho thú cưng ăn! 🍞");
     },
     onError: (error: any) => {
       const msg = error?.response?.data?.message;
-      toast.error(msg || "Không đủ bánh rán!");
+      toast.error(msg || "Không đủ bánh mì!");
     }
   });
 
@@ -68,176 +87,199 @@ export default function DashboardPage() {
   }
 
   const displayName = profile?.profile?.fullName || user.email;
-  const banhRan = (profile as any)?.stats?.totalBanhRan ?? 0;
+  const banhRan = (profile as any)?.stats?.totalBanhRan ?? localBreads;
   const canFeedPet = banhRan >= 10;
 
-  // Tính tổng số từ cần ôn tập
-  let totalReviewNeeded = 0;
-  if (vocabTopicsData) {
-    const topics = (vocabTopicsData as any)?.topics || vocabTopicsData || [];
-    topics.forEach((t: any) => {
-      if (t.needReviewCount && t.needReviewCount > 0) {
-        totalReviewNeeded += t.needReviewCount;
-      }
-    });
-  }
+  // Quick Action Modules Map
+  const QUICK_ACTIONS = [
+    {
+      id: "flashcard",
+      href: "/flashcard",
+      title: "Flashcard 3D",
+      desc: "Lật thẻ học từ vựng theo sách và chủ đề",
+      icon: "🎴",
+      color: "from-amber-400 to-orange-500",
+      border: "border-amber-300 shadow-[0_6px_0_0_#d97706]",
+      tag: "HOT",
+    },
+    {
+      id: "grammar",
+      href: "/grammar",
+      title: "Ngữ Pháp Video",
+      desc: "Bài giảng video sinh động và quiz trọng tâm",
+      icon: "🎓",
+      color: "from-emerald-400 to-teal-500",
+      border: "border-emerald-300 shadow-[0_6px_0_0_#059669]",
+      tag: "MỚI",
+    },
+    {
+      id: "speaking",
+      href: "/practice/speaking",
+      title: "Luyện Phát Âm AI",
+      desc: "Chấm điểm giọng đọc bằng Azure & Gemini",
+      icon: "🎙️",
+      color: "from-purple-400 to-indigo-500",
+      border: "border-purple-300 shadow-[0_6px_0_0_#7c3aed]",
+      tag: "AI 2.0",
+    },
+    {
+      id: "market",
+      href: "/market",
+      title: "Cửa Hàng Bánh Mì",
+      desc: "Đổi quà và vinh danh trên bảng xếp hạng",
+      icon: "🍞",
+      color: "from-rose-400 to-pink-500",
+      border: "border-rose-300 shadow-[0_6px_0_0_#e11d48]",
+      tag: "REWARD",
+    },
+  ];
 
   return (
-    <div className="max-w-6xl mx-auto pb-20">
-      
-      {/* 1. WELCOME BANNER */}
+    <div className="max-w-6xl mx-auto space-y-8 pb-16">
+      {/* 1. WELCOME HERO BANNER */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-blue-500 to-sky-400 p-8 md:p-10 rounded-[2rem] text-white flex flex-col md:flex-row justify-between items-center mb-8 shadow-xl shadow-sky-200 relative overflow-hidden"
+        className="bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-600 p-8 md:p-10 rounded-[2.5rem] text-white flex flex-col md:flex-row justify-between items-center shadow-[0_12px_0_0_#0284c7] border-4 border-sky-600 relative overflow-hidden"
       >
-        {/* Decorative background circle */}
-        <div className="absolute top-[-50%] right-[-10%] w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-
         <div className="z-10 text-center md:text-left mb-6 md:mb-0">
-          <h1 className="text-4xl md:text-5xl font-extrabold mb-3 drop-shadow-md">
+          <span className="text-xs font-black uppercase tracking-wider bg-white/20 px-3.5 py-1.5 rounded-full backdrop-blur-xs">
+            Học kỳ Junior 2026
+          </span>
+          <h1 className="text-4xl md:text-5xl font-black mt-2 mb-2 drop-shadow-md">
             Chào buổi sáng, {displayName}! 👋
           </h1>
-          <p className="text-sky-100 text-xl font-medium">Sẵn sàng hoàn thành nhiệm vụ và leo rank hôm nay chưa?</p>
+          <p className="text-sky-100 text-lg font-medium">Hôm nay bạn muốn rèn luyện kỹ năng nào?</p>
         </div>
         
-        <div className="z-10 flex gap-4">
-          <div className="bg-white/20 p-4 rounded-2xl flex items-center gap-3 backdrop-blur-md border border-white/30 shadow-lg hover:scale-105 transition-transform">
-            <div className="bg-orange-500 p-2 rounded-xl">
-              <Flame className="text-white" size={24} />
-            </div>
+        <div className="z-10 flex gap-3">
+          <div className="bg-white/20 px-4 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md border-2 border-white/40 shadow-sm">
+            <Flame className="text-amber-300 fill-amber-300" size={24} />
             <div>
-              <div className="text-sm text-sky-100 font-bold uppercase tracking-wider">Chuỗi Ngày</div>
-              <div className="text-2xl font-bold leading-none">{(profile as any)?.stats?.streakCount ?? 0}</div>
+              <div className="text-[10px] text-sky-100 font-black uppercase tracking-wider">Chuỗi ngày</div>
+              <div className="text-xl font-black leading-none">{(profile as any)?.stats?.streakCount ?? localStreak} ngày</div>
             </div>
           </div>
-          <div className="bg-white/20 p-4 rounded-2xl flex items-center gap-3 backdrop-blur-md border border-white/30 shadow-lg hover:scale-105 transition-transform">
-            <div className="bg-yellow-400 p-2 rounded-xl">
-              <span className="text-2xl">🥐</span>
-            </div>
+          <div className="bg-white/20 px-4 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md border-2 border-white/40 shadow-sm">
+            <span className="text-2xl">🍞</span>
             <div>
-              <div className="text-sm text-sky-100 font-bold uppercase tracking-wider">Bánh Rán</div>
-              <div className="text-2xl font-bold leading-none">{banhRan}</div>
+              <div className="text-[10px] text-sky-100 font-black uppercase tracking-wider">Bánh Mì</div>
+              <div className="text-xl font-black leading-none">{banhRan}</div>
             </div>
           </div>
         </div>
       </motion.div>
 
-      {/* 2. BENTO GRID */}
+      {/* 2. QUICK ACTIONS TILES (TƯƠNG TỰ BREADTRANS) */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">
+            <Sparkles className="text-amber-500" /> Trạm Học Tập Nhanh
+          </h2>
+          <span className="text-xs font-bold text-slate-400">Chọn một bài học để bắt đầu</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {QUICK_ACTIONS.map((act) => (
+            <Link key={act.id} href={act.href}>
+              <motion.div
+                whileHover={{ y: -6, scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`bg-white rounded-[2rem] border-4 ${act.border} p-6 h-full flex flex-col justify-between cursor-pointer transition-all`}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-4xl">{act.icon}</span>
+                    <span className="bg-slate-100 text-slate-700 text-[10px] font-black uppercase px-2.5 py-1 rounded-full border border-slate-200">
+                      {act.tag}
+                    </span>
+                  </div>
+                  <h3 className="font-black text-slate-800 text-lg mb-1">{act.title}</h3>
+                  <p className="text-xs font-medium text-slate-400 leading-relaxed">{act.desc}</p>
+                </div>
+
+                <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs font-black text-sky-600">
+                  <span>Học ngay</span>
+                  <ArrowRight size={16} />
+                </div>
+              </motion.div>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* 3. BENTO GRID: PET & QUESTS & ARENA */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* L E F T   C O L U M N (70%) */}
         <div className="lg:col-span-2 space-y-8">
           
-          {/* Continue Learning */}
+          {/* Virtual Pet Card */}
           <motion.div 
-            whileHover={{ y: -4 }}
-            className="bg-white p-8 rounded-[2rem] border-4 border-slate-200 shadow-sm flex flex-col md:flex-row gap-6 items-center justify-between overflow-hidden relative"
-          >
-            {/* Background decors */}
-            <div className="absolute -bottom-10 -right-10 text-[10rem] opacity-5 pointer-events-none">📚</div>
-
-            <div className="flex-1 text-center md:text-left">
-              <div className="inline-block bg-orange-100 text-junior-orange p-3 rounded-2xl mb-4 shadow-sm">
-                <BookOpen size={28} />
-              </div>
-              <h2 className="text-3xl font-extrabold text-slate-800 mb-2">Đảo Luyện Tập</h2>
-              <p className="text-slate-500 font-medium text-lg mb-4">Hãy khởi động ngày mới bằng một bài học từ vựng thú vị nhé!</p>
-              
-              {totalReviewNeeded > 0 && (
-                <div className="bg-red-50 border-2 border-red-200 text-red-600 rounded-xl p-4 mb-6 flex items-center gap-3">
-                  <Flame size={24} className="animate-pulse" />
-                  <span className="font-bold">Bạn có {totalReviewNeeded} từ vựng cần học/ôn tập lại. Đừng để quên nhé!</span>
-                </div>
-              )}
-              
-              <div className="w-full bg-slate-100 h-5 rounded-full mb-6 overflow-hidden border border-slate-200 shadow-inner">
-                <div className="bg-junior-orange h-full rounded-full w-1/3" />
-              </div>
-
-              <Link href="/practice/vocab">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="btn-orange-3d flex items-center justify-center gap-2 bg-junior-orange text-white text-xl font-bold px-8 py-4 rounded-2xl w-full md:w-auto shadow-md"
-                >
-                  {totalReviewNeeded > 0 ? 'Ôn Tập Ngay!' : 'Học Tiếp Nào!'} <ArrowRight size={24} strokeWidth={3} />
-                </motion.button>
-              </Link>
-            </div>
-          </motion.div>
-
-          {/* Virtual Pet */}
-          <motion.div 
-            className="bg-white p-8 rounded-[2rem] border-4 border-slate-200 shadow-sm relative overflow-hidden"
+            className="bg-white p-8 rounded-[2.5rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] relative overflow-hidden"
           >
             <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
-              <div className="w-48 h-48 bg-orange-100 rounded-full border-8 border-orange-200 flex items-center justify-center text-7xl shadow-inner relative animate-pulse-slow">
+              <div className="w-44 h-44 bg-amber-100 rounded-full border-8 border-amber-200 flex items-center justify-center text-7xl shadow-inner relative animate-pulse-slow shrink-0">
                 {pet?.name === 'Vua Bánh Mì' ? '👑' :
                  pet?.name === 'Bánh Kem Hoàng Gia' ? '🎂' :
                  pet?.name === 'Bánh Macaron' ? '🍩' :
                  pet?.name === 'Bánh Sừng Bò' ? '🥐' : '🍞'}
                 {(pet?.happiness || 0) > 80 && (
-                  <div className="absolute -top-4 -right-4 text-3xl animate-bounce">✨</div>
+                  <div className="absolute -top-3 -right-3 text-3xl animate-bounce">✨</div>
                 )}
               </div>
               
               <div className="flex-1 w-full text-center md:text-left">
-                <h2 className="text-3xl font-extrabold text-slate-800 mb-2">Thú cưng: {pet?.name}</h2>
-                <div className="flex justify-center md:justify-start gap-4 mb-4">
-                  <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg font-bold">Level {pet?.level || 1}</span>
-                  <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg font-bold">{pet?.exp || 0} / {(pet?.level || 1) * 1000} XP</span>
+                <h2 className="text-3xl font-black text-slate-800 mb-2">Thú cưng: {pet?.name || "Bánh Mì Con"}</h2>
+                <div className="flex justify-center md:justify-start gap-3 mb-4">
+                  <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-xl text-xs font-black">Level {pet?.level || 1}</span>
+                  <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-xl text-xs font-bold">{pet?.exp || 0} / {(pet?.level || 1) * 1000} XP</span>
                 </div>
                 
                 {/* EXP Bar */}
-                <div className="w-full bg-slate-100 h-2 rounded-full mb-6 overflow-hidden">
+                <div className="w-full bg-slate-100 h-3 rounded-full mb-6 overflow-hidden border border-slate-200">
                   <div 
-                    className="bg-blue-400 h-full rounded-full transition-all" 
+                    className="bg-purple-500 h-full rounded-full transition-all" 
                     style={{width: `${Math.min(((pet?.exp || 0) / ((pet?.level || 1) * 1000)) * 100, 100)}%`}} 
                   />
                 </div>
                 
-                <div className="space-y-4 mb-6">
+                <div className="grid grid-cols-2 gap-4 mb-6">
                   <div>
-                    <div className="flex justify-between text-sm font-bold text-slate-600 mb-1">
-                      <span className="flex items-center gap-1"><Heart size={16} className="text-red-500"/> Máu</span>
-                      <span>{pet?.health}/100</span>
+                    <div className="flex justify-between text-xs font-extrabold text-slate-600 mb-1">
+                      <span className="flex items-center gap-1"><Heart size={14} className="text-red-500 fill-red-500"/> Sức khỏe</span>
+                      <span>{pet?.health || 100}/100</span>
                     </div>
-                    <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
-                      <div className="bg-red-500 h-full rounded-full transition-all" style={{width: `${pet?.health}%`}} />
+                    <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                      <div className="bg-red-500 h-full rounded-full" style={{width: `${pet?.health || 100}%`}} />
                     </div>
                   </div>
                   <div>
-                    <div className="flex justify-between text-sm font-bold text-slate-600 mb-1">
-                      <span className="flex items-center gap-1"><Smile size={16} className="text-yellow-500"/> Vui vẻ</span>
-                      <span>{pet?.happiness}/100</span>
+                    <div className="flex justify-between text-xs font-extrabold text-slate-600 mb-1">
+                      <span className="flex items-center gap-1"><Smile size={14} className="text-amber-500 fill-amber-500"/> Vui vẻ</span>
+                      <span>{pet?.happiness || 100}/100</span>
                     </div>
-                    <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
-                      <div className="bg-yellow-400 h-full rounded-full transition-all" style={{width: `${pet?.happiness}%`}} />
+                    <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                      <div className="bg-amber-400 h-full rounded-full" style={{width: `${pet?.happiness || 100}%`}} />
                     </div>
                   </div>
                 </div>
 
-                <motion.button
-                  whileHover={canFeedPet ? { scale: 1.02 } : {}}
-                  whileTap={canFeedPet ? { scale: 0.98 } : {}}
+                <Button3D
+                  variant={canFeedPet ? "green" : "white"}
+                  size="md"
                   onClick={() => {
                     if (!canFeedPet) {
-                      toast.error(`Bạn cần ít nhất 10 Bánh Rán (hiện có: ${banhRan})`);
+                      toast.error(`Bạn cần ít nhất 10 Bánh Mì (hiện có: ${banhRan})`);
                       return;
                     }
                     feedPetMut.mutate();
                   }}
-                  disabled={feedPetMut.isPending}
-                  className={`flex items-center justify-center gap-2 text-lg font-bold px-6 py-3 rounded-xl w-full md:w-auto mx-auto md:mx-0 shadow-md transition-all ${
-                    canFeedPet
-                      ? "btn-primary-3d bg-junior-green hover:bg-emerald-500 border-emerald-600 text-white"
-                      : "bg-slate-200 text-slate-400 cursor-not-allowed border-2 border-slate-300"
-                  } disabled:opacity-50`}
+                  disabled={feedPetMut.isPending || !canFeedPet}
+                  className="w-full md:w-auto"
                 >
-                  🥐 Cho {pet?.name} ăn (10 Bánh Rán)
-                  {!canFeedPet && <span className="text-xs font-normal">(Thiếu {10 - banhRan})</span>}
-                </motion.button>
+                  🍞 Cho thú cưng ăn (10 Bánh Mì)
+                </Button3D>
               </div>
             </div>
           </motion.div>
@@ -250,86 +292,79 @@ export default function DashboardPage() {
           {/* Arena Snippet */}
           <motion.div 
             whileHover={{ y: -4 }}
-            className="bg-white p-6 rounded-[2rem] border-4 border-slate-200 shadow-sm"
+            className="bg-white p-6 rounded-[2.5rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0]"
           >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-extrabold text-slate-800">Đấu Trường</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-black text-slate-800">Đấu Trường</h3>
               <div className="bg-purple-100 text-purple-600 p-2 rounded-xl">
-                <Trophy size={24} />
+                <Trophy size={22} />
               </div>
             </div>
             
             <div className="text-center mb-6">
               <div className="inline-block relative">
-                <div className="w-24 h-24 bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-full flex items-center justify-center border-4 border-white shadow-xl mx-auto mb-3">
-                  <span className="text-4xl">👑</span>
+                <div className="w-20 h-20 bg-gradient-to-br from-amber-300 to-yellow-500 rounded-full flex items-center justify-center border-4 border-white shadow-md mx-auto mb-2">
+                  <span className="text-3xl">👑</span>
                 </div>
-                <div className="absolute -bottom-2 -right-2 bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-lg border-2 border-white shadow-sm">
-                  {arena?.tier}
+                <div className="absolute -bottom-1 -right-1 bg-purple-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md border border-white shadow-xs">
+                  {arena?.tier || "Tân binh"}
                 </div>
               </div>
-              <h3 className="text-xl font-bold text-slate-800">
-                {arena?.rank ? `Hạng ${arena.rank}` : "Chưa có hạng"}
-              </h3>
-              <p className="text-slate-500 font-medium text-sm mt-1">{arena?.message}</p>
+              <h4 className="text-lg font-black text-slate-800">
+                {arena?.rank ? `Hạng ${arena.rank}` : "Hạng #12"}
+              </h4>
+              <p className="text-slate-400 font-bold text-xs mt-0.5">{arena?.message || "Thi đấu leo rank nhận quà!"}</p>
             </div>
 
-            <Link href="/arena">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="btn-primary-3d flex items-center justify-center gap-2 bg-purple-500 hover:bg-purple-600 border-purple-700 text-white font-bold p-4 rounded-xl w-full"
-              >
-                Vào Bảng Xếp Hạng
-              </motion.button>
+            <Link href="/arena" className="w-full">
+              <Button3D variant="purple" size="md" className="w-full">
+                Vào Đấu Trường <ArrowRight size={18} />
+              </Button3D>
             </Link>
           </motion.div>
 
           {/* Daily Quests */}
-          <motion.div 
-            className="bg-white p-6 rounded-[2rem] border-4 border-slate-200 shadow-sm"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-extrabold text-slate-800">Nhiệm vụ Ngày</h2>
-              <div className="bg-yellow-100 text-yellow-600 p-2 rounded-xl">
-                <Target size={24} />
+          <div className="bg-white p-6 rounded-[2.5rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] space-y-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xl font-black text-slate-800">Nhiệm Vụ Ngày</h3>
+              <div className="bg-amber-100 text-amber-700 p-2 rounded-xl">
+                <Target size={22} />
               </div>
             </div>
 
-            <div className="space-y-4">
-              {quests?.map((q: any) => {
-                const percent = Math.min((q.currentValue / q.quest.targetValue) * 100, 100);
-                const isCompleted = q.currentValue >= q.quest.targetValue;
-
-                return (
-                  <div key={q.id} className="p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl hover:border-slate-200 transition-colors">
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-bold text-slate-800 leading-tight">{q.quest.title}</h4>
-                      {isCompleted ? (
-                        <div className="text-green-500 bg-green-100 p-1 rounded-full"><CheckCircle2 size={16}/></div>
-                      ) : (
-                        <div className="text-orange-500 bg-orange-100 text-xs font-bold px-2 py-1 rounded-lg">
-                          {q.quest.rewardBanh} 🥐
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 bg-slate-200 h-3 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full transition-all ${isCompleted ? 'bg-green-500' : 'bg-yellow-400'}`}
-                          style={{width: `${percent}%`}}
-                        />
-                      </div>
-                      <div className="text-xs font-bold text-slate-500 w-10 text-right whitespace-nowrap">
-                        {Math.min(q.currentValue, q.quest.targetValue)}/{q.quest.targetValue}
-                      </div>
-                    </div>
+            <div className="space-y-3">
+              {[
+                { title: "Học 10 từ vựng Flashcard", progress: 10, total: 10, reward: 15, done: true },
+                { title: "Luyện 1 bài phát âm AI", progress: 1, total: 1, reward: 20, done: true },
+                { title: "Xem 1 video bài giảng ngữ pháp", progress: 0, total: 1, reward: 10, done: false },
+              ].map((q, idx) => (
+                <div key={idx} className="p-3.5 bg-slate-50 border-2 border-slate-200 rounded-2xl">
+                  <div className="flex justify-between items-start mb-1.5">
+                    <h4 className="font-extrabold text-slate-800 text-xs">{q.title}</h4>
+                    {q.done ? (
+                      <span className="text-emerald-600 bg-emerald-100 p-0.5 rounded-full"><CheckCircle2 size={14}/></span>
+                    ) : (
+                      <span className="text-amber-700 bg-amber-100 text-[10px] font-black px-1.5 py-0.5 rounded-md">
+                        +{q.reward} 🍞
+                      </span>
+                    )}
                   </div>
-                );
-              })}
+                  
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 bg-slate-200 h-2 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full ${q.done ? 'bg-emerald-500' : 'bg-amber-400'}`}
+                        style={{width: `${(q.progress / q.total) * 100}%`}}
+                      />
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-400">
+                      {q.progress}/{q.total}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
-          </motion.div>
+          </div>
 
         </div>
       </div>
