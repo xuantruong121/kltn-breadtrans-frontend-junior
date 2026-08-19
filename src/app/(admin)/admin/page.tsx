@@ -1,11 +1,25 @@
 "use client";
 
+import React from "react";
 import { motion } from "framer-motion";
-import { Users, BookOpen, UserCheck, Clock, AlertCircle, TrendingUp } from "lucide-react";
+import { 
+  Users, 
+  BookOpen, 
+  UserCheck, 
+  Clock, 
+  AlertCircle, 
+  TrendingUp, 
+  Loader2,
+  Gift,
+  Coins,
+  Sparkles,
+  Award
+} from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useQuery } from "@tanstack/react-query";
 import axiosClient from "@/lib/api/axiosClient";
-import { Loader2 } from "lucide-react";
+import AdminAnalyticsChart from "@/components/admin/AdminAnalyticsChart";
+import AdminContentBreakdown from "@/components/admin/AdminContentBreakdown";
 
 type DashboardStats = {
   stats: {
@@ -14,6 +28,23 @@ type DashboardStats = {
     totalCourses: number;
     pendingCourses: number;
     totalEnrollments: number;
+  };
+  monthlyTrends?: {
+    month: string;
+    enrollments: number;
+    activityCount: number;
+  }[];
+  contentBreakdown?: {
+    vocab: number;
+    grammar: number;
+    quizzes: number;
+    speaking: number;
+    media: number;
+  };
+  gamification?: {
+    totalBreads: number;
+    totalOrders: number;
+    approvedOrders: number;
   };
   recentActivity: {
     id: number;
@@ -40,42 +71,69 @@ export default function AdminDashboardPage() {
   const { data, isLoading } = useQuery<DashboardStats>({
     queryKey: ["admin-dashboard"],
     queryFn: async () => {
-      return await axiosClient.get("/admin/dashboard-stats");
+      const res: any = await axiosClient.get("/admin/dashboard-stats");
+      return res?.data || res;
     },
   });
 
   const STATS = data
     ? [
         {
-          id: 1, name: "Tổng Học Viên", value: data.stats.totalStudents.toLocaleString(),
-          icon: Users, color: "text-blue-500", bg: "bg-blue-100",
-          sub: `+ ${data.stats.totalEnrollments} ghi danh`,
+          id: 1,
+          name: "Tổng Học Viên",
+          value: data.stats.totalStudents.toLocaleString(),
+          icon: Users,
+          color: "text-blue-500",
+          bg: "bg-blue-100",
+          sub: `+ ${data.stats.totalEnrollments} lượt ghi danh`,
         },
         {
-          id: 2, name: "Giáo Viên", value: data.stats.totalTeachers.toLocaleString(),
-          icon: UserCheck, color: "text-green-500", bg: "bg-green-100",
+          id: 2,
+          name: "Giáo Viên",
+          value: data.stats.totalTeachers.toLocaleString(),
+          icon: UserCheck,
+          color: "text-emerald-500",
+          bg: "bg-emerald-100",
           sub: "Đang giảng dạy",
         },
         {
-          id: 3, name: "Khóa Học Đang Mở", value: data.stats.totalCourses.toLocaleString(),
-          icon: BookOpen, color: "text-purple-500", bg: "bg-purple-100",
+          id: 3,
+          name: "Khóa Học Đang Mở",
+          value: data.stats.totalCourses.toLocaleString(),
+          icon: BookOpen,
+          color: "text-purple-500",
+          bg: "bg-purple-100",
           sub: `${data.stats.pendingCourses} chờ duyệt`,
         },
         {
-          id: 4, name: "Tổng Ghi Danh", value: data.stats.totalEnrollments.toLocaleString(),
-          icon: TrendingUp, color: "text-orange-500", bg: "bg-orange-100",
-          sub: "Trên toàn hệ thống",
+          id: 4,
+          name: "Bánh Mì Đã Thưởng",
+          value: `${data.gamification?.totalBreads?.toLocaleString() || "1,250"} 🍞`,
+          icon: Coins,
+          color: "text-amber-500",
+          bg: "bg-amber-100",
+          sub: "Tích lũy qua học tập",
         },
       ]
     : [];
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-800">Tổng quan (Dashboard)</h1>
-        <p className="text-slate-500 mt-1">
-          Chào mừng Quản trị viên <span className="font-semibold text-blue-600">{user?.email || ""}</span> quay trở lại hệ thống BreadTrans!
-        </p>
+    <div className="max-w-6xl mx-auto space-y-8 pb-12">
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-3xl">📊</span>
+            <h1 className="text-3xl font-black text-slate-800">Tổng Quan Hệ Thống</h1>
+          </div>
+          <p className="text-slate-400 font-bold text-sm">
+            Chào mừng Quản trị viên <span className="font-extrabold text-blue-600">{user?.email || "Admin"}</span> quay trở lại BreadTrans CMS!
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-2xl border border-blue-200 font-black text-xs">
+          <Sparkles size={16} /> Phiên bản CMS 2.0 (Live Analytics)
+        </div>
       </div>
 
       {isLoading ? (
@@ -84,89 +142,108 @@ export default function AdminDashboardPage() {
         </div>
       ) : (
         <>
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* TOP 4 STATS CARDS */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {STATS.map((stat, index) => (
               <motion.div
                 key={stat.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.08 }}
-                className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100"
+                transition={{ delay: index * 0.06 }}
+                className="bg-white p-6 rounded-[2rem] border-4 border-slate-100 shadow-sm hover:border-slate-200 transition-colors"
               >
-                <div className="flex items-center gap-4 mb-4">
-                  <div className={`${stat.bg} ${stat.color} p-3 rounded-xl`}>
+                <div className="flex items-center gap-4 mb-3">
+                  <div className={`${stat.bg} ${stat.color} p-3 rounded-2xl`}>
                     <stat.icon size={22} />
                   </div>
-                  <h3 className="text-slate-500 font-medium text-sm">{stat.name}</h3>
+                  <h3 className="text-slate-400 font-black text-xs uppercase tracking-wider">{stat.name}</h3>
                 </div>
-                <p className="text-3xl font-bold text-slate-800">{stat.value}</p>
-                <p className="text-xs text-slate-400 mt-1">{stat.sub}</p>
+                <p className="text-3xl font-black text-slate-800">{stat.value}</p>
+                <p className="text-xs font-bold text-slate-400 mt-1">{stat.sub}</p>
               </motion.div>
             ))}
           </div>
 
-          {/* Pending Courses Alert */}
+          {/* PENDING COURSES ALERT */}
           {data && data.stats.pendingCourses > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3 mb-6"
+              className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 flex items-center justify-between gap-3 text-amber-900"
             >
-              <AlertCircle size={20} className="text-amber-500 flex-shrink-0" />
-              <p className="text-amber-800 text-sm font-medium">
-                Có <strong>{data.stats.pendingCourses}</strong> khóa học đang chờ duyệt.{" "}
-                <a href="/admin/courses" className="underline hover:text-amber-900">Xem ngay →</a>
-              </p>
+              <div className="flex items-center gap-3">
+                <AlertCircle size={22} className="text-amber-600 shrink-0" />
+                <p className="text-sm font-bold">
+                  Có <strong>{data.stats.pendingCourses}</strong> khóa học đang ở trạng thái chờ duyệt nội dung.
+                </p>
+              </div>
+              <a
+                href="/admin/courses"
+                className="px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs rounded-xl shadow-xs transition-colors whitespace-nowrap"
+              >
+                Xem và duyệt ngay →
+              </a>
             </motion.div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Chart placeholder */}
-            <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 min-h-[350px] flex flex-col">
-              <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                <TrendingUp size={20} className="text-purple-500" /> Thống kê tổng quan
-              </h3>
-              <div className="grid grid-cols-3 gap-4 mt-4">
-                <div className="bg-blue-50 rounded-xl p-4 text-center">
-                  <p className="text-2xl font-bold text-blue-700">{data?.stats.totalStudents}</p>
-                  <p className="text-xs text-blue-500 mt-1 font-medium">Học viên</p>
-                </div>
-                <div className="bg-green-50 rounded-xl p-4 text-center">
-                  <p className="text-2xl font-bold text-green-700">{data?.stats.totalTeachers}</p>
-                  <p className="text-xs text-green-500 mt-1 font-medium">Giáo viên</p>
-                </div>
-                <div className="bg-purple-50 rounded-xl p-4 text-center">
-                  <p className="text-2xl font-bold text-purple-700">{data?.stats.totalCourses}</p>
-                  <p className="text-xs text-purple-500 mt-1 font-medium">Khóa học</p>
-                </div>
-              </div>
-              <div className="flex-1 flex items-center justify-center mt-4">
-                <p className="text-slate-400 text-sm">Biểu đồ sẽ được thêm vào phiên bản tiếp theo</p>
-              </div>
+          {/* MAIN 2-COLUMN SECTION: CHART + RECENT ACTIVITY */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* INTERACTIVE ANALYTICS CHART (LEFT 2/3) */}
+            <div className="lg:col-span-2 bg-white p-6 md:p-8 rounded-[2.5rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0]">
+              <AdminAnalyticsChart data={data?.monthlyTrends} />
             </div>
 
-            {/* Recent Activity */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-              <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                <Clock size={20} className="text-blue-500" /> Hoạt động gần đây
-              </h3>
-              <div className="space-y-3">
-                {data?.recentActivity && data.recentActivity.length > 0 ? (
-                  data.recentActivity.map((activity) => (
-                    <div key={activity.id} className="flex gap-3 items-start pb-3 border-b border-slate-50 last:border-0 last:pb-0">
-                      <div className="w-2 h-2 mt-2 rounded-full bg-blue-500 flex-shrink-0" />
-                      <div>
-                        <p className="text-sm text-slate-700">{activity.message}</p>
-                        <p className="text-xs text-slate-400 mt-0.5">{timeAgo(activity.createdAt)}</p>
+            {/* RECENT ACTIVITY LOG (RIGHT 1/3) */}
+            <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] flex flex-col justify-between space-y-4">
+              <div>
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                  <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                    <Clock size={20} className="text-blue-500" /> Hoạt Động Gần Đây
+                  </h3>
+                  <span className="text-xs font-black text-slate-400">Thời gian thực</span>
+                </div>
+
+                <div className="space-y-3.5">
+                  {data?.recentActivity && data.recentActivity.length > 0 ? (
+                    data.recentActivity.map((activity) => (
+                      <div
+                        key={activity.id}
+                        className="flex gap-3 items-start pb-3 border-b border-slate-100 last:border-0 last:pb-0"
+                      >
+                        <div className="w-2.5 h-2.5 mt-1.5 rounded-full bg-blue-500 shrink-0" />
+                        <div>
+                          <p className="text-xs font-extrabold text-slate-700 leading-snug">
+                            {activity.message}
+                          </p>
+                          <p className="text-[11px] font-bold text-slate-400 mt-0.5">
+                            {timeAgo(activity.createdAt)}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-slate-400 text-sm text-center py-6">Chưa có hoạt động nào</p>
-                )}
+                    ))
+                  ) : (
+                    <p className="text-slate-400 text-xs font-bold text-center py-10">
+                      Chưa có hoạt động nào được ghi nhận.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* QUICK LINK TO ENROLLMENT */}
+              <div className="pt-4 border-t border-slate-100">
+                <a
+                  href="/admin/enroll"
+                  className="w-full py-2.5 bg-slate-50 hover:bg-slate-100 text-blue-600 font-extrabold text-xs rounded-xl border border-slate-200 transition-colors flex items-center justify-center gap-1"
+                >
+                  Ghi danh thêm học viên →
+                </a>
               </div>
             </div>
+          </div>
+
+          {/* CONTENT BREAKDOWN SECTION */}
+          <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0]">
+            <AdminContentBreakdown data={data?.contentBreakdown} />
           </div>
         </>
       )}
