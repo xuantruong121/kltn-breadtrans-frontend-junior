@@ -41,7 +41,7 @@ function LoginForm() {
       setAuth(res.access_token, res.refresh_token, res.user);
       
       if (res.user.role === 'ADMIN') {
-        router.push('/admin/users');
+        router.push('/admin');
       } else if (res.user.role === 'TEACHER') {
         router.push('/teacher/classes');
       } else {

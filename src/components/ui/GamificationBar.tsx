@@ -4,15 +4,35 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Flame, Star, Sparkles, Award } from "lucide-react";
 import { useGamificationStore } from "@/stores/gamificationStore";
+import { useQuery } from "@tanstack/react-query";
+import { userService } from "@/lib/api/services/user.service";
 import Link from "next/link";
 
 export const GamificationBar: React.FC = () => {
   const [mounted, setMounted] = useState(false);
-  const { breads, streak, level, exp } = useGamificationStore();
+  const { breads, streak, level, exp, setStats } = useGamificationStore();
+
+  const { data: profile } = useQuery({
+    queryKey: ["user-profile"],
+    queryFn: userService.getProfile,
+    staleTime: 1000 * 60 * 5,
+  });
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Đồng bộ số liệu từ backend Database vào store
+  useEffect(() => {
+    if (profile?.stats) {
+      setStats({
+        breads: profile.stats.totalBanhRan ?? 0,
+        streak: profile.stats.streak ?? 1,
+        exp: profile.stats.exp ?? 0,
+        level: profile.stats.level ?? 1,
+      });
+    }
+  }, [profile, setStats]);
 
   if (!mounted) {
     return <div className="h-12 w-64 bg-slate-100/50 rounded-2xl animate-pulse" />;

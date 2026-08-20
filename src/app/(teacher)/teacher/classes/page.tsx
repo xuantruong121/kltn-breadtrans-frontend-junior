@@ -6,13 +6,14 @@ import { Users, Video, FileText, Plus, X, Calendar, Clock, ChevronDown, ChevronU
 import axiosClient from "@/lib/api/axiosClient";
 import dayjs from "dayjs";
 import Link from "next/link";
+import DailyClassroomModal from "@/components/classroom/DailyClassroomModal";
 
 export default function TeacherClassesPage() {
   const queryClient = useQueryClient();
-  const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
-
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
-  const [activeExpandedTab, setActiveExpandedTab] = useState<{ classId: number, tab: 'sessions' | 'students' } | null>(null);
+  const [activeExpandedTab, setActiveExpandedTab] = useState<{ classId: number; tab: 'sessions' | 'students' } | null>(null);
+  const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
+  const [activeVideoSession, setActiveVideoSession] = useState<any | null>(null);
   const [newSession, setNewSession] = useState({ title: "", startTime: "", endTime: "", meetingLink: "" });
 
   // Query classes assigned to the teacher
@@ -46,6 +47,16 @@ export default function TeacherClassesPage() {
       queryClient.invalidateQueries({ queryKey: ["teacher-classes"] });
       setIsSessionModalOpen(false);
       setNewSession({ title: "", startTime: "", endTime: "", meetingLink: "" });
+    },
+  });
+
+  const finishSessionMutation = useMutation({
+    mutationFn: async (sessionId: number) => {
+      return axiosClient.patch(`/classes/sessions/${sessionId}/finish`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacher-classes"] });
+      setActiveVideoSession(null);
     },
   });
 
@@ -124,29 +135,98 @@ export default function TeacherClassesPage() {
 
                 {cls.sessions && cls.sessions.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {cls.sessions.map((session: any) => (
-                      <div key={session.id} className="bg-white border border-slate-200 p-4 rounded-lg flex flex-col justify-between">
-                        <div>
-                          <h5 className="font-bold text-slate-800 mb-2">{session.title}</h5>
-                          <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-                            <Calendar size={14} />
-                            {dayjs(session.startTime).format("DD/MM/YYYY")}
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
-                            <Clock size={14} />
-                            {dayjs(session.startTime).format("HH:mm")} - {dayjs(session.endTime).format("HH:mm")}
-                          </div>
-                        </div>
-                        <a
-                          href={session.meetingLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg text-sm transition-colors flex justify-center items-center gap-2"
+                    {cls.sessions.map((session: any) => {
+                      const now = dayjs();
+                      const start = dayjs(session.startTime);
+                      const end = dayjs(session.endTime);
+                      const isLive = now.isAfter(start) && now.isBefore(end);
+                      const isPast = now.isAfter(end);
+                      const isUpcoming = now.isBefore(start);
+
+                      return (
+                        <div 
+                          key={session.id} 
+                          className={`border p-5 rounded-xl flex flex-col justify-between transition-all ${
+                            isLive 
+                              ? "bg-emerald-50/70 border-emerald-300 shadow-sm" 
+                              : isPast 
+                              ? "bg-slate-50 border-slate-200 opacity-75" 
+                              : "bg-white border-slate-200"
+                          }`}
                         >
-                          <Video size={16} /> Tham gia phòng học
-                        </a>
-                      </div>
-                    ))}
+                          <div>
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <h5 className={`font-black text-base ${isPast ? "text-slate-600" : "text-slate-800"}`}>
+                                {session.title}
+                              </h5>
+                              {isLive && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500 text-white shrink-0">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                                  Đang học
+                                </span>
+                              )}
+                              {isUpcoming && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 shrink-0">
+                                  Sắp diễn ra
+                                </span>
+                              )}
+                              {isPast && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-500 shrink-0">
+                                  Đã kết thúc
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-1">
+                              <Calendar size={13} className={isLive ? "text-emerald-600" : isPast ? "text-slate-400" : "text-blue-500"} />
+                              {start.format("DD/MM/YYYY")}
+                            </div>
+                            <div className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-4">
+                              <Clock size={13} className={isLive ? "text-emerald-600" : isPast ? "text-slate-400" : "text-blue-500"} />
+                              {start.format("HH:mm")} - {end.format("HH:mm")}
+                            </div>
+                          </div>
+
+                          {isLive ? (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setActiveVideoSession(session)}
+                                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs transition-all flex justify-center items-center gap-2 cursor-pointer shadow-sm"
+                              >
+                                <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+                                Vào Giảng Dạy
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (confirm(`Bạn có chắc chắn muốn kết thúc buổi học "${session.title}" sớm ngay bây giờ không?`)) {
+                                    finishSessionMutation.mutate(session.id);
+                                  }
+                                }}
+                                disabled={finishSessionMutation.isPending}
+                                className="px-3 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold rounded-xl text-xs border border-rose-200 transition-all cursor-pointer whitespace-nowrap"
+                                title="Kết thúc sớm buổi học này"
+                              >
+                                🛑 Kết thúc sớm
+                              </button>
+                            </div>
+                          ) : isUpcoming ? (
+                            <button
+                              onClick={() => setActiveVideoSession(session)}
+                              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl text-xs transition-all flex justify-center items-center gap-2 cursor-pointer shadow-sm"
+                            >
+                              <Video size={14} /> Vào Phòng Chuẩn Bị
+                            </button>
+                          ) : (
+                            <button
+                              disabled
+                              className="w-full py-2 bg-slate-100 text-slate-400 font-bold rounded-xl text-xs border border-slate-200 flex justify-center items-center gap-1.5 cursor-not-allowed select-none opacity-80"
+                            >
+                              🔒 Buổi học đã kết thúc
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-8 text-slate-500 bg-white rounded-lg border border-dashed border-slate-300">
@@ -293,13 +373,27 @@ export default function TeacherClassesPage() {
                   />
                   <button
                     type="button"
-                    onClick={() => {
-                      const randomCode = Math.random().toString(36).substring(2, 12);
-                      setNewSession({ ...newSession, meetingLink: `https://meet.jit.si/breadtrans-${randomCode}` });
+                    onClick={async () => {
+                      const randomCode = Math.random().toString(36).substring(2, 8);
+                      const cleanTitle = (newSession.title || `class-${selectedClassId || 'general'}`)
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "")
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]/g, "-")
+                        .replace(/-+/g, "-")
+                        .replace(/^-|-$/g, "")
+                        .substring(0, 25);
+                      const roomSlug = `${cleanTitle}-${randomCode}`;
+                      try {
+                        const res: any = await axiosClient.post("/classes/daily-room", { roomName: roomSlug });
+                        setNewSession({ ...newSession, meetingLink: res?.url || `https://breadtrans-kltn.daily.co/${roomSlug}` });
+                      } catch {
+                        setNewSession({ ...newSession, meetingLink: `https://breadtrans-kltn.daily.co/${roomSlug}` });
+                      }
                     }}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-colors whitespace-nowrap text-sm flex items-center gap-1"
+                    className="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-lg transition-colors whitespace-nowrap text-sm flex items-center gap-1.5 cursor-pointer"
                   >
-                    <Video size={16} /> Tạo link tự động
+                    <Video size={16} /> Tạo link Daily.co
                   </button>
                 </div>
               </div>
@@ -308,14 +402,14 @@ export default function TeacherClassesPage() {
             <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
               <button
                 onClick={() => setIsSessionModalOpen(false)}
-                className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors"
+                className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors cursor-pointer"
               >
                 Hủy
               </button>
               <button
                 onClick={() => createSessionMutation.mutate()}
                 disabled={!newSession.title || !newSession.startTime || !newSession.endTime || createSessionMutation.isPending}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium transition-colors"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-bold transition-colors cursor-pointer"
               >
                 {createSessionMutation.isPending ? "Đang tạo..." : "Lưu buổi học"}
               </button>
@@ -323,6 +417,19 @@ export default function TeacherClassesPage() {
           </div>
         </div>
       )}
+
+      {/* DAILY.CO EMBEDDED VIDEO CLASSROOM MODAL */}
+      <DailyClassroomModal
+        isOpen={!!activeVideoSession}
+        onClose={() => setActiveVideoSession(null)}
+        roomUrl={activeVideoSession?.meetingLink}
+        sessionTitle={activeVideoSession?.title || "Phòng học trực tuyến"}
+        sessionId={activeVideoSession?.id}
+        isTeacher={true}
+        onSessionFinished={() => {
+          queryClient.invalidateQueries({ queryKey: ["teacher-classes"] });
+        }}
+      />
     </div>
   );
 }

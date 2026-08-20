@@ -6,6 +6,9 @@ import Image from "next/image";
 import { Users, BookOpen, PenTool, LogOut, FileText } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+
+const FloatingAiTutor = dynamic(() => import("@/components/FloatingAiTutor"), { ssr: false });
 
 const NAV_ITEMS = [
   { id: "classes", href: "/teacher/classes", label: "Lớp học của tôi", icon: Users },
@@ -104,6 +107,9 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
           {children}
         </div>
       </main>
+
+      {/* FLOATING SUPPORT ASSISTANT */}
+      <FloatingAiTutor />
     </div>
   );
 }

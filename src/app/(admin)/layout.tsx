@@ -19,6 +19,9 @@ import {
   Coins 
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
+import dynamic from "next/dynamic";
+
+const FloatingAiTutor = dynamic(() => import("@/components/FloatingAiTutor"), { ssr: false });
 
 const ADMIN_NAV = [
   { id: "dashboard", href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -112,6 +115,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {children}
         </div>
       </main>
+
+      {/* FLOATING SUPPORT ASSISTANT */}
+      <FloatingAiTutor />
     </div>
   );
 }
