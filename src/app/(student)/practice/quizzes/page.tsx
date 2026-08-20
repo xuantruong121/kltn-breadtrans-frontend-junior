@@ -3,7 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Headphones, Loader2, PlayCircle, ArrowLeft, CheckCircle2 } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { quizService } from "@/lib/api/services/quiz.service";
 

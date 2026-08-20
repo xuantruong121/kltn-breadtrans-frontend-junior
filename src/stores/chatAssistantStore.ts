@@ -38,8 +38,6 @@ interface ChatAssistantState {
   markThreadReadByAdmin: (studentId: string) => void;
 }
 
-const DEFAULT_STUDENT_ID = 'student_default';
-
 const INITIAL_THREADS: Record<string, StudentThread> = {
   student_1: {
     studentId: 'student_1',

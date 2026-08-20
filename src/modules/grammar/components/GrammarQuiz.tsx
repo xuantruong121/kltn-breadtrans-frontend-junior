@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, XCircle, HelpCircle, Trophy } from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
 import { GrammarQuestion } from "../types";
 import { Button3D } from "@/components/ui";
 import { useGamificationStore } from "@/stores/gamificationStore";

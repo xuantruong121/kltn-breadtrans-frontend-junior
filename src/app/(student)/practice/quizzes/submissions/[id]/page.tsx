@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import { ArrowLeft, Loader2, Trophy, Target, Star, RefreshCw } from "lucide-react";
 import { quizService } from "@/lib/api/services/quiz.service";
@@ -13,8 +13,11 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
   const router = useRouter();
   const submissionId = parseInt(params.id);
   
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [windowDimension, setWindowDimension] = useState({ width: 0, height: 0 });
+  const [stoppedConfetti, setStoppedConfetti] = useState(false);
+  const [windowDimension, setWindowDimension] = useState({
+    width: typeof window !== "undefined" ? window.innerWidth : 800,
+    height: typeof window !== "undefined" ? window.innerHeight : 600,
+  });
 
   const { data: analytics, isLoading } = useQuery({
     queryKey: ["submission-analytics", submissionId],
@@ -22,17 +25,23 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
     enabled: !isNaN(submissionId),
   });
 
+  const isPerfect = analytics?.overallAccuracyPercent === 100;
+  const showConfetti = isPerfect && !stoppedConfetti;
+
   useEffect(() => {
-    setWindowDimension({ width: window.innerWidth, height: window.innerHeight });
+    const handleResize = () => {
+      setWindowDimension({ width: window.innerWidth, height: window.innerHeight });
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
-    if (analytics && analytics.overallAccuracyPercent === 100) {
-      setShowConfetti(true);
-      const timer = setTimeout(() => setShowConfetti(false), 5000);
+    if (isPerfect) {
+      const timer = setTimeout(() => setStoppedConfetti(true), 5000);
       return () => clearTimeout(timer);
     }
-  }, [analytics]);
+  }, [isPerfect]);
 
   if (isLoading) {
     return (

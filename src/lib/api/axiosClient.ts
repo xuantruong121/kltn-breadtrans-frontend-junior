@@ -73,6 +73,7 @@ axiosClient.interceptors.response.use(
       if (!refreshToken || !deviceId) {
         isRefreshing = false;
         authState.logout();
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
         if (typeof window !== 'undefined') window.location.href = '/';
         return Promise.reject(error);
       }
@@ -102,6 +103,7 @@ axiosClient.interceptors.response.use(
         processQueue(refreshError, null);
         isRefreshing = false;
         authState.logout();
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
         if (typeof window !== 'undefined') window.location.href = '/';
         return Promise.reject(refreshError);
       }

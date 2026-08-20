@@ -1,9 +1,8 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useParams, useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { ArrowLeft, Loader2, PlayCircle, Star, Users, Video, Calendar, FileText, CheckCircle, PenTool, BookOpen, Clock } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Loader2, PlayCircle, Video, Calendar, FileText, CheckCircle, BookOpen, Clock } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { use, useState } from "react";
 import dayjs from "dayjs";

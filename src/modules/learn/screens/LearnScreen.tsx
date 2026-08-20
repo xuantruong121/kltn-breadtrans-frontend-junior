@@ -9,7 +9,6 @@ import {
   Play, 
   CheckCircle2, 
   XCircle, 
-  Sparkles, 
   Clock, 
   BookOpen, 
   Loader2,

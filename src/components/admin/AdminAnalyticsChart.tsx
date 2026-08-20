@@ -11,7 +11,6 @@ import {
   Target, 
   Sparkles,
   ArrowUpRight,
-  BookOpen,
   UserPlus
 } from "lucide-react";
 import Link from "next/link";

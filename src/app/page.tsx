@@ -2,14 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { motion, useReducedMotion } from "framer-motion";
-import { Sparkles, ArrowRight, BookOpen, GraduationCap, School, Loader2, Rocket, Croissant } from "lucide-react";
+import { motion } from "framer-motion";
+import { Sparkles, ArrowRight, BookOpen, GraduationCap, School, Loader2, Croissant } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { useAuthStore } from "@/stores/authStore";
 
 function LoginForm() {
-  const reduce = useReducedMotion();
   const router = useRouter();
   
   const [email, setEmail] = useState("");

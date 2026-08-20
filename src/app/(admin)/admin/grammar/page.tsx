@@ -7,13 +7,9 @@ import {
   Plus, 
   Loader2, 
   Trash2, 
-  HelpCircle, 
   X, 
   Eye, 
-  CheckCircle2, 
-  BookOpen,
-  Sparkles,
-  Layers
+  CheckCircle2
 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { Button3D } from "@/components/ui";

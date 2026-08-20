@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion } from "framer-motion";
-import { ShoppingBag, Trophy, Flame, Sparkles, CheckCircle2, Gift, Clock, AlertCircle, PackageCheck } from "lucide-react";
+import { ShoppingBag, Trophy, Flame, CheckCircle2, Clock, AlertCircle, PackageCheck } from "lucide-react";
 import { MARKET_ITEMS, MOCK_LEADERBOARD } from "../services/marketData";
 import { MarketItemCard } from "../components/MarketItemCard";
 import axiosClient from "@/lib/api/axiosClient";

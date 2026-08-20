@@ -45,7 +45,6 @@ export default function SpeakingExerciseDetailPage() {
   // Handle countdown timer when recording
   useEffect(() => {
     if (isRecording) {
-      setRecordingSeconds(0);
       timerIntervalRef.current = setInterval(() => {
         setRecordingSeconds((prev) => {
           if (prev + 1 >= MAX_RECORDING_SECONDS) {
@@ -68,6 +67,7 @@ export default function SpeakingExerciseDetailPage() {
 
   const startRecording = async () => {
     try {
+      setRecordingSeconds(0);
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: MediaRecorder.isTypeSupported("audio/webm;codecs=opus")

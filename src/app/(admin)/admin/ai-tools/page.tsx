@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Bot,
   FileText,
@@ -12,9 +12,6 @@ import {
   CheckCircle2,
   ArrowRight,
   Save,
-  Check,
-  HelpCircle,
-  Eye,
 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axiosClient from "@/lib/api/axiosClient";

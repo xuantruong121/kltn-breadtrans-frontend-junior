@@ -1,17 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Trophy, 
-  Swords, 
   Clock, 
   CheckCircle2, 
   XCircle, 
-  Sparkles, 
-  Flame, 
-  ArrowRight,
-  ShieldAlert
+  ArrowRight
 } from "lucide-react";
 import { Button3D } from "@/components/ui";
 import { MatchData, MatchResult } from "@/lib/hooks/useArenaSocket";
@@ -49,6 +44,23 @@ export default function ArenaMatchRoom({
   const myProgress = isPlayer1 ? liveProgress?.p1 : liveProgress?.p2;
   const opponentProgress = isPlayer1 ? liveProgress?.p2 : liveProgress?.p1;
 
+  const moveToNextQuestion = useCallback(() => {
+    if (currentIdx < questions.length - 1) {
+      setCurrentIdx((prev) => prev + 1);
+      setSelectedOption(null);
+      setIsAnswered(false);
+      setTimeLeft(15);
+    }
+  }, [currentIdx, questions.length]);
+
+  const handleTimeOut = useCallback(() => {
+    setIsAnswered(true);
+    onSubmitAnswer(matchData.roomId, currentIdx, false);
+    setTimeout(() => {
+      moveToNextQuestion();
+    }, 1500);
+  }, [matchData.roomId, currentIdx, onSubmitAnswer, moveToNextQuestion]);
+
   // Timer countdown per question
   useEffect(() => {
     if (matchResult || isAnswered) return;
@@ -64,15 +76,7 @@ export default function ArenaMatchRoom({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [currentIdx, isAnswered, matchResult]);
-
-  const handleTimeOut = () => {
-    setIsAnswered(true);
-    onSubmitAnswer(matchData.roomId, currentIdx, false);
-    setTimeout(() => {
-      moveToNextQuestion();
-    }, 1500);
-  };
+  }, [currentIdx, isAnswered, matchResult, handleTimeOut]);
 
   const handleSelectOption = (option: string) => {
     if (isAnswered || matchResult) return;
@@ -85,15 +89,6 @@ export default function ArenaMatchRoom({
     setTimeout(() => {
       moveToNextQuestion();
     }, 1200);
-  };
-
-  const moveToNextQuestion = () => {
-    if (currentIdx < questions.length - 1) {
-      setCurrentIdx((prev) => prev + 1);
-      setSelectedOption(null);
-      setIsAnswered(false);
-      setTimeLeft(15);
-    }
   };
 
   const isMeWinner = matchResult?.winnerUserId === user?.id;

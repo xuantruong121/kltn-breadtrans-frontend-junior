@@ -2,8 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Mic, Loader2, ArrowLeft, ArrowRight, PlayCircle, CheckCircle2 } from "lucide-react";
-import Link from "next/link";
+import { Mic, Loader2, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { speakingService } from "@/lib/api/services/speaking.service";
 

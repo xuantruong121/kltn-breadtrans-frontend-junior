@@ -13,10 +13,7 @@ import {
   ChevronLeft,
   Search,
   UserCheck,
-  CheckCircle2,
-  Inbox,
-  Clock,
-  Sparkles
+  Inbox
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { aiService } from "@/lib/api/services/ai.service";
@@ -142,30 +139,34 @@ export default function FloatingAiTutor() {
     ? `student_${user.id}`
     : "student_guest";
 
-  const studentMetadata = {
+  const studentMetadata = useMemo(() => ({
     name: user?.profile?.name || user?.email?.split("@")[0] || "Học viên",
     email: user?.email,
     avatar: user?.profile?.avatar,
-  };
+  }), [user?.profile?.name, user?.email, user?.profile?.avatar]);
 
-  const currentThread: StudentThread = threads[studentThreadId] || {
-    studentId: studentThreadId,
-    studentName: studentMetadata.name,
-    studentEmail: studentMetadata.email,
-    studentAvatar: studentMetadata.avatar,
-    mode: "AI",
-    messages: [
-      {
-        id: "default-init",
-        role: "assistant",
-        content: `Chào ${studentMetadata.name}! Mình là Trợ Lý Bánh Mì 🍞. Bạn có câu hỏi nào hôm nay không?`,
-        senderName: "Trợ Lý Bánh Mì 🍞",
-        timestamp: Date.now(),
-      },
-    ],
-    unreadForAdmin: 0,
-    lastMessageTime: Date.now(),
-  };
+  const currentThread: StudentThread = useMemo(() => {
+    return (
+      threads[studentThreadId] || {
+        studentId: studentThreadId,
+        studentName: studentMetadata.name,
+        studentEmail: studentMetadata.email,
+        studentAvatar: studentMetadata.avatar,
+        mode: "AI",
+        messages: [
+          {
+            id: "default-init",
+            role: "assistant",
+            content: `Chào ${studentMetadata.name}! Mình là Trợ Lý Bánh Mì 🍞. Bạn có câu hỏi nào hôm nay không?`,
+            senderName: "Trợ Lý Bánh Mì 🍞",
+            timestamp: 0,
+          },
+        ],
+        unreadForAdmin: 0,
+        lastMessageTime: 0,
+      }
+    );
+  }, [threads, studentThreadId, studentMetadata]);
 
   // Tổng số tin nhắn chưa đọc cho Admin
   const totalUnreadCount = useMemo(() => {
@@ -201,13 +202,13 @@ export default function FloatingAiTutor() {
       const timer = setTimeout(() => scrollToBottom("auto"), 80);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, adminView, studentThreadId]);
+  }, [isOpen, adminView, studentThreadId, isAdminOrTeacher]);
 
   useEffect(() => {
     if (isOpen && (!isAdminOrTeacher || adminView === "chat")) {
       scrollToBottom("smooth");
     }
-  }, [currentThread?.messages, isLoading, isOpen, adminView]);
+  }, [currentThread?.messages, isLoading, isOpen, adminView, isAdminOrTeacher]);
 
   if (isHiddenPath) return null;
 

@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, XCircle, Trophy, RotateCcw, ArrowRight, Sparkles, Volume2 } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { motion } from "framer-motion";
+import { CheckCircle2, XCircle, Trophy, RotateCcw, ArrowRight, Volume2 } from "lucide-react";
 import { FlashcardWord } from "../types";
 import { Button3D } from "@/components/ui";
 import { useGamificationStore } from "@/stores/gamificationStore";
@@ -19,12 +19,36 @@ interface Question {
   correctAnswer: string;
 }
 
+function deterministicShuffle<T>(arr: T[], seed: number): T[] {
+  const result = [...arr];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.abs((seed * (i + 1) * 9301 + 49297) % 233280) % (i + 1);
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
 export const FlashcardQuizView: React.FC<FlashcardQuizViewProps> = ({
   words,
   allWords,
   onFinish,
 }) => {
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const questions = useMemo<Question[]>(() => {
+    if (words.length === 0) return [];
+    const generated: Question[] = words.map((target, idx) => {
+      const otherWords = allWords.filter((w) => w.id !== target.id);
+      const shuffledOthers = deterministicShuffle(otherWords, idx + 1);
+      const distractors = shuffledOthers.slice(0, 3).map((w) => w.mean);
+      const options = deterministicShuffle([...distractors, target.mean], idx * 7 + 3);
+      return {
+        targetWord: target,
+        options,
+        correctAnswer: target.mean,
+      };
+    });
+    return deterministicShuffle(generated, 42);
+  }, [words, allWords]);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
@@ -32,30 +56,6 @@ export const FlashcardQuizView: React.FC<FlashcardQuizViewProps> = ({
   const [isComplete, setIsComplete] = useState(false);
 
   const { addBreads, addExp } = useGamificationStore();
-
-  // Generate questions
-  useEffect(() => {
-    if (words.length === 0) return;
-
-    const generated: Question[] = words.map((target) => {
-      // Pick 3 distractors from allWords
-      const otherWords = allWords.filter((w) => w.id !== target.id);
-      const shuffledOthers = [...otherWords].sort(() => 0.5 - Math.random());
-      const distractors = shuffledOthers.slice(0, 3).map((w) => w.mean);
-      
-      const options = [...distractors, target.mean].sort(() => 0.5 - Math.random());
-      return {
-        targetWord: target,
-        options,
-        correctAnswer: target.mean,
-      };
-    });
-
-    setQuestions(generated.sort(() => 0.5 - Math.random()));
-    setCurrentIndex(0);
-    setScore(0);
-    setIsComplete(false);
-  }, [words, allWords]);
 
   const currentQ = questions[currentIndex];
 

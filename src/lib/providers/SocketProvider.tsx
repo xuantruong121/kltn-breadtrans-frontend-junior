@@ -36,6 +36,7 @@ export default function SocketProvider({ children }: { children: React.ReactNode
     });
 
     socketInstance.on("connect", () => {
+      setSocket(socketInstance);
       setIsConnected(true);
       console.log("⚡ [WebSocket] Connected to server successfully! ID:", socketInstance.id);
 
@@ -142,10 +143,10 @@ export default function SocketProvider({ children }: { children: React.ReactNode
       useChatAssistantStore.getState().setThreadMode(studentId, mode, adminName);
     });
 
-    setSocket(socketInstance);
-
     return () => {
       socketInstance.disconnect();
+      setSocket(null);
+      setIsConnected(false);
     };
   }, [user?.id, user?.role, user?.email, user?.profile, queryClient]);
 

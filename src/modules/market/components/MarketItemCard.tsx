@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Check, ShoppingBag, Sparkles } from "lucide-react";
+import { Check } from "lucide-react";
 import { MarketItem } from "../types";
 import { Button3D } from "@/components/ui";
 

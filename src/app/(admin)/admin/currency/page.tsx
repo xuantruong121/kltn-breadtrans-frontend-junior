@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Coins, PlusCircle, MinusCircle, Users, Loader2, ArrowRight } from "lucide-react";
+import { Coins, PlusCircle, MinusCircle, Users, Loader2 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { Button3D } from "@/components/ui";
 import toast from "react-hot-toast";

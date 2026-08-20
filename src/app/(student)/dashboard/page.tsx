@@ -1,23 +1,15 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { vocabService } from "@/lib/api/services/vocab.service";
 import { motion } from "framer-motion";
 import { 
   Trophy, 
   ArrowRight, 
   Flame, 
-  BookOpen, 
   Loader2, 
-  Star, 
   Target, 
   CheckCircle2, 
   Heart, 
   Smile, 
-  Layers, 
-  GraduationCap, 
-  Mic, 
-  ShoppingBag,
   Sparkles
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
@@ -31,7 +23,7 @@ import toast from "react-hot-toast";
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
-  const { breads: localBreads, streak: localStreak, level: localLevel } = useGamificationStore();
+  const { breads: localBreads, streak: localStreak } = useGamificationStore();
   const queryClient = useQueryClient();
 
   // Fetch all necessary data
@@ -47,7 +39,7 @@ export default function DashboardPage() {
     enabled: !!user,
   });
 
-  const { data: quests, isLoading: isQuestsLoading } = useQuery({
+  const { isLoading: isQuestsLoading } = useQuery({
     queryKey: ["myQuests"],
     queryFn: gamificationService.getMyDailyQuests,
     enabled: !!user,
@@ -56,12 +48,6 @@ export default function DashboardPage() {
   const { data: arena, isLoading: isArenaLoading } = useQuery({
     queryKey: ["myArenaSnippet"],
     queryFn: gamificationService.getArenaSnippet,
-    enabled: !!user,
-  });
-
-  const { data: vocabTopicsData } = useQuery({
-    queryKey: ["vocab-topics"],
-    queryFn: vocabService.getTopics,
     enabled: !!user,
   });
 

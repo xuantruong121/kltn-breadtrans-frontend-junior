@@ -14,7 +14,6 @@ import {
   Clock,
   CheckCircle2,
   X,
-  HelpCircle,
   Volume2,
   Layers,
   FileQuestion,
@@ -627,11 +626,10 @@ export default function AdminQuizzesPage() {
 
 // Subcomponent: Quick Add Question Form
 function QuickAddQuestionForm({
-  quizId,
   onAdd,
   isLoading,
 }: {
-  quizId: number;
+  quizId?: number;
   onAdd: (data: any) => void;
   isLoading: boolean;
 }) {

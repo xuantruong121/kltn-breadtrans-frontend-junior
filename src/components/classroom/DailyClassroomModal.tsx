@@ -6,7 +6,6 @@ import {
   Video, 
   Maximize2, 
   Minimize2, 
-  PhoneOff, 
   ExternalLink, 
   ShieldCheck,
   Loader2,
@@ -45,15 +44,9 @@ export default function DailyClassroomModal({
   const [isFinishing, setIsFinishing] = useState(false);
 
   useEffect(() => {
-    if (!isOpen) {
-      setActiveUrl(null);
-      setIsLoading(true);
-      setShowFinishConfirm(false);
-      return;
-    }
+    if (!isOpen) return;
 
     let isMounted = true;
-    setIsLoading(true);
 
     const setupRoom = async () => {
       try {
@@ -123,6 +116,9 @@ export default function DailyClassroomModal({
 
     return () => {
       isMounted = false;
+      setActiveUrl(null);
+      setIsLoading(true);
+      setShowFinishConfirm(false);
     };
   }, [isOpen, roomUrl, sessionTitle]);
 

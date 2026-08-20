@@ -4,7 +4,7 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { BookOpen, Users, Calendar, Video, Clock, ArrowRight, Loader2, Sparkles, GraduationCap } from "lucide-react";
+import { Users, Calendar, Video, ArrowRight, Loader2, GraduationCap } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { Button3D } from "@/components/ui";
 

@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Volume2, RotateCw, Sparkles, CheckCircle2 } from "lucide-react";
+import { Volume2, RotateCw, CheckCircle2 } from "lucide-react";
 import { FlashcardWord } from "../types";
 
 interface FlashcardCard3DProps {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useSyncExternalStore, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -11,11 +11,9 @@ import {
   Gamepad2, 
   Trophy, 
   LogOut, 
-  Sparkles, 
   UserCircle, 
   ShoppingBag,
   GraduationCap,
-  Flame,
   Layers,
   Film
 } from "lucide-react";
@@ -36,20 +34,18 @@ const NAV_ITEMS = [
   { id: "market", href: "/market", label: "Cửa hàng", icon: ShoppingBag, color: "text-rose-500", bgActive: "bg-rose-100 border-rose-300 text-rose-700" },
 ];
 
+const emptySubscribe = () => () => {};
+
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuthStore();
 
-  const [isReady, setIsReady] = useState(false);
-
-  useEffect(() => {
-    const unsub = useAuthStore.persist.onFinishHydration(() => setIsReady(true));
-    if (useAuthStore.persist.hasHydrated()) {
-      setIsReady(true);
-    }
-    return unsub;
-  }, []);
+  const isReady = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
 
   useEffect(() => {
     if (isReady && (!user || user.role !== 'STUDENT')) {
@@ -59,7 +55,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
   const handleLogout = () => {
     logout();
-    window.location.href = "/";
+    router.push("/");
   };
 
   if (!isReady || !user) return null;

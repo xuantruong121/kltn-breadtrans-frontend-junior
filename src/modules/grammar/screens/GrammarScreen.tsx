@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { GraduationCap, PlayCircle, BookOpen, Sparkles, CheckCircle2 } from "lucide-react";
+import { PlayCircle } from "lucide-react";
 import { GRAMMAR_TOPICS } from "../services/grammarData";
 import { GrammarTopic, GrammarLesson } from "../types";
 import { GrammarVideoPlayer } from "../components/GrammarVideoPlayer";

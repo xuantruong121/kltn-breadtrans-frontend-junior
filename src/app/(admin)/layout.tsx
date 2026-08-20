@@ -1,40 +1,43 @@
 "use client";
 
-import { useState, useEffect } from "react";
-
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { 
   LayoutDashboard, 
   Users, 
-  BookCopy, 
   PenTool, 
   LogOut, 
   FileText, 
-  UserPlus, 
-  Library, 
   GraduationCap, 
   ShoppingBag, 
-  Coins 
+  Coins,
+  BookOpen,
+  Layers,
+  Gamepad2,
+  Mic
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
+import { useSyncExternalStore, useEffect } from "react";
 import dynamic from "next/dynamic";
 
 const FloatingAiTutor = dynamic(() => import("@/components/FloatingAiTutor"), { ssr: false });
 
-const ADMIN_NAV = [
-  { id: "dashboard", href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { id: "courses", href: "/admin/courses", label: "Quản lý Khóa học", icon: BookCopy },
-  { id: "enroll", href: "/admin/enroll", label: "Ghi danh Học viên", icon: UserPlus },
-  { id: "vocab", href: "/admin/vocab", label: "Quản lý Từ vựng", icon: Library },
-  { id: "grammar", href: "/admin/grammar", label: "Quản lý Ngữ pháp", icon: GraduationCap },
-  { id: "market", href: "/admin/market", label: "Đơn hàng Đổi quà", icon: ShoppingBag },
-  { id: "currency", href: "/admin/currency", label: "Bánh Mì Học viên", icon: Coins },
-  { id: "quizzes", href: "/admin/quizzes", label: "Quản lý Đề thi", icon: PenTool },
+const NAV_ITEMS = [
+  { id: "overview", href: "/admin", label: "Tổng quan", icon: LayoutDashboard },
+  { id: "courses", href: "/admin/courses", label: "Khóa học & Lớp", icon: BookOpen },
+  { id: "vocab", href: "/admin/vocab", label: "Từ vựng (Flashcard)", icon: Layers },
+  { id: "grammar", href: "/admin/grammar", label: "Ngữ pháp (Video)", icon: GraduationCap },
+  { id: "practice", href: "/admin/practice", label: "Luyện tập (Bánh mì)", icon: Gamepad2 },
+  { id: "speaking", href: "/admin/speaking", label: "Luyện phát âm AI", icon: Mic },
+  { id: "quizzes", href: "/admin/quizzes", label: "Đề thi & Quiz", icon: PenTool },
+  { id: "market", href: "/admin/market", label: "Vật phẩm Market", icon: ShoppingBag },
+  { id: "currency", href: "/admin/currency", label: "Giao dịch Bánh Mì", icon: Coins },
   { id: "ai", href: "/admin/ai-tools", label: "Công cụ AI (PDF, Sinh đề)", icon: FileText },
   { id: "users", href: "/admin/users", label: "Người dùng", icon: Users },
 ];
+
+const emptySubscribe = () => () => {};
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -43,18 +46,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const handleLogout = () => {
     logout();
-    window.location.href = "/";
+    router.push("/");
   };
 
-  const [isReady, setIsReady] = useState(false);
-
-  useEffect(() => {
-    const unsub = useAuthStore.persist.onFinishHydration(() => setIsReady(true));
-    if (useAuthStore.persist.hasHydrated()) {
-      setIsReady(true);
-    }
-    return unsub;
-  }, []);
+  const isReady = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
 
   useEffect(() => {
     if (isReady && (!user || (user.role !== 'ADMIN' && user.role !== 'TEACHER'))) {
@@ -75,7 +74,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <span className="text-junior-blue text-sm bg-blue-900/50 px-2 py-1 rounded">CMS</span>
         </div>
         <nav className="flex-1 p-4 flex flex-col gap-2">
-          {ADMIN_NAV.map((item) => {
+          {NAV_ITEMS.map((item) => {
             const isActive = item.href === "/admin" 
               ? pathname === "/admin" 
               : pathname.startsWith(item.href);

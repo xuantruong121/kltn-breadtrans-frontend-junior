@@ -9,10 +9,7 @@ import {
   Loader2, 
   Search, 
   Trash2, 
-  X, 
-  Volume2, 
-  Sparkles,
-  Award
+  X
 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { Button3D } from "@/components/ui";

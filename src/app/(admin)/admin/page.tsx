@@ -8,12 +8,9 @@ import {
   UserCheck, 
   Clock, 
   AlertCircle, 
-  TrendingUp, 
   Loader2,
-  Gift,
   Coins,
-  Sparkles,
-  Award
+  Sparkles
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useQuery } from "@tanstack/react-query";
