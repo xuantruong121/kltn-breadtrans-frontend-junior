@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Book, Loader2, ArrowLeft, ArrowRight, PlayCircle, CheckCircle2 } from "lucide-react";
+import { Book, Loader2, ArrowLeft, PlayCircle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { readingService } from "@/lib/api/services/reading.service";

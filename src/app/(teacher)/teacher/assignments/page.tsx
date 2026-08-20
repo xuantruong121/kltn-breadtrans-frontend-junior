@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { PenTool, Plus, BookOpen, Users, CheckCircle, ChevronDown, ChevronUp, FileText, Check } from "lucide-react";
+import { PenTool, Plus, BookOpen, Users, FileText } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import dayjs from "dayjs";
 
@@ -31,7 +31,7 @@ export default function TeacherAssignmentsPage() {
       try {
         const res = await axiosClient.get("/courses/classes"); 
         return Array.isArray(res) ? res : [];
-      } catch (error) {
+      } catch {
         return [];
       }
     }
@@ -45,7 +45,7 @@ export default function TeacherAssignmentsPage() {
       try {
         const res = await axiosClient.get(`/courses/classes/${selectedClassId}/assignments`);
         return Array.isArray(res) ? res : [];
-      } catch (error) {
+      } catch {
         return [];
       }
     },
@@ -85,7 +85,7 @@ export default function TeacherAssignmentsPage() {
       try {
         const res = await axiosClient.get(`/courses/assignments/${selectedAssignment.id}`);
         return res as any;
-      } catch (error) {
+      } catch {
         return null;
       }
     },

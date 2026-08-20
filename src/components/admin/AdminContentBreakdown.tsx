@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { BookOpen, Layers, GraduationCap, PenTool, Mic, Film, PieChart } from "lucide-react";
+import { Layers, GraduationCap, PenTool, Mic, Film, PieChart } from "lucide-react";
 
 interface ContentBreakdown {
   vocab: number;

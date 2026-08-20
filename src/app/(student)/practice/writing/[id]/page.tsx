@@ -12,7 +12,6 @@ import {
   RotateCcw, 
   Award, 
   FileText,
-  AlertCircle,
   TrendingUp
 } from "lucide-react";
 import { Button3D } from "@/components/ui";

@@ -7,7 +7,16 @@ export interface ChatMessage {
 
 export const aiService = {
   chat: async (messages: ChatMessage[]): Promise<{ answer: string }> => {
-    return await axiosClient.post("/ai/chat", { messages });
+    const lastUserMsg = [...messages].reverse().find((m) => m.role === "user");
+    const prompt = lastUserMsg?.content || messages[messages.length - 1]?.content || "";
+    const res: any = await axiosClient.post("/ai/chat", { prompt, messages });
+    const replyText =
+      res?.answer ||
+      res?.reply ||
+      res?.data?.answer ||
+      res?.data?.reply ||
+      (typeof res === "string" ? res : "Xin lỗi, mình chưa có câu trả lời phù hợp.");
+    return { answer: replyText };
   },
 
   explainError: async (questionId: number, userAnswer: string): Promise<any> => {

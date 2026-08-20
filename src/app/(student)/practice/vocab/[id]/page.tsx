@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Loader2, Star, Volume2, CheckCircle2, ChevronRight, ChevronLeft } from "lucide-react";
+import { ArrowLeft, Loader2, Star, Volume2, CheckCircle2 } from "lucide-react";
 import { vocabService } from "@/lib/api/services/vocab.service";
 
 export default function VocabFlashcardsPage() {

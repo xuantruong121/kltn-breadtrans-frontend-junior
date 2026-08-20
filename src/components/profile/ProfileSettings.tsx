@@ -1,26 +1,13 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useApiMutation } from "@/hooks/useApiMutation";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { User, Phone, MapPin, Target, Camera, Loader2, Save, Key } from "lucide-react";
-import axiosClient from "@/lib/api/axiosClient";
 import { useAuthStore } from "@/stores/authStore";
 
 export default function ProfileSettings() {
-  const queryClient = useQueryClient();
-  const setProfile = useAuthStore((state) => state.setProfile);
-  const user = useAuthStore((state) => state.user);
-  
-  const [formData, setFormData] = useState({
-    fullName: "",
-    phone: "",
-    address: "",
-    targetScore: "",
-    avatar: ""
-  });
-  
   const { data: profile, isLoading } = useApiQuery(
     ["userProfile"],
     "/users/profile",
@@ -29,22 +16,31 @@ export default function ProfileSettings() {
     }
   );
 
-  useEffect(() => {
-    if (profile) {
-      setFormData({
-        fullName: profile.fullName || "",
-        phone: profile.phone || "",
-        address: profile.address || "",
-        targetScore: profile.targetScore || "",
-        avatar: profile.avatar || ""
-      });
-    }
-  }, [profile]);
+  if (isLoading) return (
+    <div className="flex justify-center p-12">
+      <Loader2 className="animate-spin text-blue-600" size={48} />
+    </div>
+  );
+
+  return <ProfileSettingsForm profile={profile || {}} />;
+}
+
+function ProfileSettingsForm({ profile }: { profile: any }) {
+  const queryClient = useQueryClient();
+  const setProfile = useAuthStore((state) => state.setProfile);
+  const user = useAuthStore((state) => state.user);
+  
+  const [formData, setFormData] = useState({
+    fullName: profile?.fullName || "",
+    phone: profile?.phone || "",
+    address: profile?.address || "",
+    targetScore: profile?.targetScore || "",
+    avatar: profile?.avatar || ""
+  });
 
   const updateProfileMutation = useApiMutation("/users/profile", "PATCH", {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["userProfile"] });
-      // updateProfile returns the profile object directly, not wrapped in { profile: ... }
       if (data) {
         setProfile(data);
       }
@@ -56,12 +52,6 @@ export default function ProfileSettings() {
     e.preventDefault();
     updateProfileMutation.mutate(formData);
   };
-
-  if (isLoading) return (
-    <div className="flex justify-center p-12">
-      <Loader2 className="animate-spin text-blue-600" size={48} />
-    </div>
-  );
 
   return (
     <div className="max-w-4xl mx-auto p-6">

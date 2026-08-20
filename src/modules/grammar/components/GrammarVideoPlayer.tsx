@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Play, Sparkles, BookOpen, Clock } from "lucide-react";
+import { Sparkles, BookOpen, Clock } from "lucide-react";
 import { GrammarLesson } from "../types";
 
 interface GrammarVideoPlayerProps {

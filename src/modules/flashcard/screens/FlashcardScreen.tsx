@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { 
   Layers, 
   Gamepad2, 
@@ -9,14 +9,12 @@ import {
   ArrowLeft, 
   ArrowRight, 
   Shuffle, 
-  RotateCcw, 
   CheckCircle2, 
-  Sparkles,
-  BookOpen,
+  BookOpen, 
   Volume2
 } from "lucide-react";
 import { FLASHCARD_BOOKS } from "../services/flashcardData";
-import { FlashcardBook, FlashcardLesson, FlashcardWord, StudyMode } from "../types";
+import { FlashcardBook, FlashcardLesson, StudyMode } from "../types";
 import { FlashcardCard3D } from "../components/FlashcardCard3D";
 import { FlashcardQuizView } from "../components/FlashcardQuizView";
 import { Button3D } from "@/components/ui";
@@ -29,7 +27,7 @@ export const FlashcardScreen: React.FC = () => {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [masteredWords, setMasteredWords] = useState<string[]>([]);
 
-  const { addExp, addBreads } = useGamificationStore();
+  const { addExp } = useGamificationStore();
 
   const words = selectedLesson.words;
   const currentWord = words[currentWordIndex];

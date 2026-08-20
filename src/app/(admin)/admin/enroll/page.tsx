@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Loader2, UserPlus, Users, X, Trash2, BookOpen, Check } from "lucide-react";
+import { Search, Loader2, UserPlus, Users, X, BookOpen, Check } from "lucide-react";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import axiosClient from "@/lib/api/axiosClient";

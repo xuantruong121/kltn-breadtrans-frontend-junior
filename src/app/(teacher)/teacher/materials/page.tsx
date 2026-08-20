@@ -12,11 +12,9 @@ import {
   ExternalLink, 
   Trash2, 
   X, 
-  Search, 
-  DownloadCloud,
-  CheckCircle2
+  Search
 } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import axiosClient from "@/lib/api/axiosClient";
 import { Button3D } from "@/components/ui";
 import toast from "react-hot-toast";

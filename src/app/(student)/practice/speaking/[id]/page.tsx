@@ -13,10 +13,14 @@ export default function SpeakingExerciseDetailPage() {
   const exerciseId = Number(id);
 
   const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const MAX_RECORDING_SECONDS = 45;
+
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isPlayingTTS, setIsPlayingTTS] = useState(false);
 
   const { data: exercise, isLoading } = useQuery({
@@ -29,18 +33,47 @@ export default function SpeakingExerciseDetailPage() {
     mutationFn: (blob: Blob) => speakingService.submitAudio(exerciseId, blob),
   });
 
-  // Clean up audio URL on unmount
+  // Clean up audio URL and timer on unmount
   useEffect(() => {
     return () => {
       if (audioUrl) URL.revokeObjectURL(audioUrl);
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
       window.speechSynthesis.cancel();
     };
   }, [audioUrl]);
 
+  // Handle countdown timer when recording
+  useEffect(() => {
+    if (isRecording) {
+      timerIntervalRef.current = setInterval(() => {
+        setRecordingSeconds((prev) => {
+          if (prev + 1 >= MAX_RECORDING_SECONDS) {
+            stopRecording();
+            return MAX_RECORDING_SECONDS;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    } else {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+    }
+    return () => {
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    };
+  }, [isRecording]);
+
   const startRecording = async () => {
     try {
+      setRecordingSeconds(0);
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+          ? "audio/webm;codecs=opus"
+          : undefined,
+      });
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -51,12 +84,12 @@ export default function SpeakingExerciseDetailPage() {
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
         setAudioBlob(audioBlob);
         setAudioUrl(URL.createObjectURL(audioBlob));
       };
 
-      mediaRecorder.start();
+      mediaRecorder.start(250);
       setIsRecording(true);
     } catch (err) {
       console.error("Error accessing microphone:", err);
@@ -65,12 +98,12 @@ export default function SpeakingExerciseDetailPage() {
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
       
       // Stop all tracks to release mic
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
     }
   };
 
@@ -78,6 +111,12 @@ export default function SpeakingExerciseDetailPage() {
     if (audioBlob) {
       submitAudioMut.mutate(audioBlob);
     }
+  };
+
+  const formatTime = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
   const handlePlayTTS = () => {
@@ -191,38 +230,73 @@ export default function SpeakingExerciseDetailPage() {
         {/* Recording Controls */}
         <div className="flex flex-col items-center justify-center gap-6 mt-12 pt-8">
           {!audioBlob ? (
-            <div className="flex flex-col items-center gap-6">
+            <div className="flex flex-col items-center gap-5 w-full max-w-sm">
               {isRecording && (
-                <div className="flex gap-1 items-end h-8 mb-4">
-                  {[...Array(12)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      animate={{ height: ["20%", "100%", "20%"] }}
-                      transition={{ 
-                        repeat: Infinity, 
-                        duration: 0.8, 
-                        delay: i * 0.05,
-                        ease: "easeInOut"
-                      }}
-                      className="w-1.5 bg-red-400 rounded-full"
+                <div className="w-full flex flex-col items-center gap-3">
+                  {/* Wave animation */}
+                  <div className="flex gap-1.5 items-end h-9">
+                    {[...Array(14)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        animate={{ height: ["15%", "100%", "15%"] }}
+                        transition={{ 
+                          repeat: Infinity, 
+                          duration: 0.7, 
+                          delay: (i * 0.05) % 0.4,
+                          ease: "easeInOut"
+                        }}
+                        className={`w-1.5 rounded-full ${
+                          recordingSeconds > 35 ? "bg-rose-500" : recordingSeconds > 25 ? "bg-amber-500" : "bg-emerald-500"
+                        }`}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Timer Badge */}
+                  <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900 text-white font-mono font-black text-sm shadow-md">
+                    <span className={`w-2.5 h-2.5 rounded-full animate-ping ${
+                      recordingSeconds > 35 ? "bg-rose-400" : "bg-emerald-400"
+                    }`} />
+                    <span>{formatTime(recordingSeconds)}</span>
+                    <span className="text-slate-400">/ 00:45</span>
+                  </div>
+
+                  {/* 45s Progress Bar */}
+                  <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200">
+                    <div
+                      className={`h-full transition-all duration-300 ${
+                        recordingSeconds > 35
+                          ? "bg-rose-500"
+                          : recordingSeconds > 25
+                          ? "bg-amber-500"
+                          : "bg-emerald-500"
+                      }`}
+                      style={{ width: `${(recordingSeconds / MAX_RECORDING_SECONDS) * 100}%` }}
                     />
-                  ))}
+                  </div>
                 </div>
               )}
               
               <button
                 onClick={isRecording ? stopRecording : startRecording}
-                className={`w-28 h-28 rounded-full flex items-center justify-center transition-all ${
+                className={`w-28 h-28 rounded-full flex items-center justify-center transition-all cursor-pointer ${
                   isRecording 
-                    ? 'bg-red-500 text-white animate-pulse shadow-xl shadow-red-500/40 scale-110' 
+                    ? 'bg-rose-500 text-white animate-pulse shadow-xl shadow-rose-500/40 scale-110' 
                     : 'bg-gradient-to-br from-purple-500 to-indigo-500 text-white hover:scale-105 shadow-xl shadow-purple-500/30'
                 }`}
+                title={isRecording ? "Dừng ghi âm" : "Bắt đầu thu âm"}
               >
                 {isRecording ? <StopCircle size={48} /> : <Mic size={48} />}
               </button>
-              <p className={`font-bold ${isRecording ? 'text-red-500' : 'text-slate-500'}`}>
-                {isRecording ? 'Đang ghi âm... Nhấn để dừng' : 'Nhấn vào Micro để bắt đầu đọc'}
-              </p>
+
+              <div className="text-center">
+                <p className={`font-bold text-sm ${isRecording ? 'text-rose-600 font-black' : 'text-slate-600'}`}>
+                  {isRecording ? 'Đang ghi âm... Nhấn vào nút đỏ để dừng' : 'Nhấn vào Micro để bắt đầu đọc'}
+                </p>
+                <p className="text-[11px] font-bold text-slate-400 mt-1">
+                  ⚡ Tối đa 45s/câu • Chuẩn âm vị Azure AI Speech F0
+                </p>
+              </div>
             </div>
           ) : (
             <div className="w-full max-w-md flex flex-col items-center gap-6 bg-slate-50 p-6 rounded-3xl border-2 border-slate-100">

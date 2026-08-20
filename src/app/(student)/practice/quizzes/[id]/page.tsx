@@ -1,10 +1,10 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { use, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Loader2, CheckCircle2, ChevronRight, Volume2, Play, Square } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle2, ChevronRight, Play, Square } from "lucide-react";
 import { quizService, AnswerDto } from "@/lib/api/services/quiz.service";
 
 export default function TakeQuizPage(props: { params: Promise<{ id: string }> }) {

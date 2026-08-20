@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Check, ShoppingBag, Sparkles } from "lucide-react";
+import { Check } from "lucide-react";
 import { MarketItem } from "../types";
 import { Button3D } from "@/components/ui";
 
@@ -53,18 +53,23 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({
           <span className="text-base">🍞</span>
         </div>
 
-        {isUnlocked ? (
+        {/* Chỉ vật phẩm Trang trí / Huy hiệu mới bị giới hạn sở hữu 1 lần duy nhất */}
+        {(item.category === "avatar" || item.category === "badge") && isUnlocked ? (
           <span className="flex items-center gap-1 text-emerald-600 font-black text-xs bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-200">
             <Check size={16} /> Đã sở hữu
           </span>
         ) : (
           <Button3D
-            variant={canAfford ? "orange" : "white"}
+            variant={canAfford ? (item.category === "gift" ? "green" : "orange") : "white"}
             size="sm"
             onClick={onBuy}
             disabled={!canAfford}
           >
-            {canAfford ? "Đổi ngay" : "Thiếu Bánh Mì"}
+            {canAfford 
+              ? item.category === "gift" 
+                ? "Đổi quà 🎁" 
+                : "Mua ngay ⚡"
+              : "Thiếu Bánh Mì"}
           </Button3D>
         )}
       </div>

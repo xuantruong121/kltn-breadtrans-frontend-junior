@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Coins, PlusCircle, MinusCircle, Users, Loader2, ArrowRight } from "lucide-react";
+import { Coins, PlusCircle, MinusCircle, Users, Loader2 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { Button3D } from "@/components/ui";
 import toast from "react-hot-toast";
@@ -91,7 +91,7 @@ export default function AdminCurrencyPage() {
                 <option value="">-- Chọn học viên --</option>
                 {users?.map((u) => (
                   <option key={u.id} value={u.id}>
-                    {u.profile?.fullName || u.email} (ID: #{u.id})
+                    {u.profile?.fullName || u.email} (Hiện có: {u.stats?.totalBanhRan ?? 0} 🍞)
                   </option>
                 ))}
               </select>
@@ -183,6 +183,7 @@ export default function AdminCurrencyPage() {
                     <th className="py-3 px-4">ID</th>
                     <th className="py-3 px-4">Họ và Tên</th>
                     <th className="py-3 px-4">Email</th>
+                    <th className="py-3 px-4 text-center">Số Dư Bánh Mì</th>
                     <th className="py-3 px-4 text-right">Hành Động</th>
                   </tr>
                 </thead>
@@ -194,6 +195,11 @@ export default function AdminCurrencyPage() {
                         {u.profile?.fullName || "Chưa đặt tên"}
                       </td>
                       <td className="py-3 px-4 text-slate-500 text-xs">{u.email}</td>
+                      <td className="py-3 px-4 text-center">
+                        <span className="inline-flex items-center gap-1 bg-amber-100/90 text-amber-800 px-2.5 py-1 rounded-xl text-xs font-black border border-amber-300">
+                          🍞 {u.stats?.totalBanhRan ?? 0}
+                        </span>
+                      </td>
                       <td className="py-3 px-4 text-right">
                         <button
                           onClick={() => setSelectedUserId(u.id)}

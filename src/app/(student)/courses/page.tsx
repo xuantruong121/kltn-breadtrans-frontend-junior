@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
   BookOpen, Loader2, ArrowRight, Users, Calendar,
-  Video, UserCircle, Clock, AlertCircle
+  UserCircle, AlertCircle
 } from "lucide-react";
 import Link from "next/link";
 import { useAuthStore } from "@/stores/authStore";
@@ -42,7 +42,7 @@ const LEVEL_LABEL: Record<string, string> = {
 export default function CoursesPage() {
   const { user } = useAuthStore();
 
-  const { data: classes, isLoading, error } = useQuery<EnrolledClass[]>({
+  const { data: classes, isLoading } = useQuery<EnrolledClass[]>({
     queryKey: ["my-enrolled-classes", user?.id],
     queryFn: async () => {
       const res = await axiosClient.get("/courses");

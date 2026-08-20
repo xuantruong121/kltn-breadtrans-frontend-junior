@@ -1,12 +1,12 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useParams, useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { ArrowLeft, Loader2, PlayCircle, Star, Users, Video, Calendar, FileText, CheckCircle, PenTool, BookOpen, Clock } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Loader2, PlayCircle, Video, Calendar, FileText, CheckCircle, BookOpen, Clock } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { use, useState } from "react";
 import dayjs from "dayjs";
+import DailyClassroomModal from "@/components/classroom/DailyClassroomModal";
 
 export default function ClassDetailPage(props: { params: Promise<{ classId: string }> }) {
   const params = use(props.params);
@@ -16,6 +16,7 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
 
   const [activeTab, setActiveTab] = useState<"lessons" | "sessions" | "assignments">("lessons");
   const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
+  const [activeVideoSession, setActiveVideoSession] = useState<any | null>(null);
   const [submissionText, setSubmissionText] = useState("");
   const [submissionLink, setSubmissionLink] = useState("");
   const [quizAnswers, setQuizAnswers] = useState<number[]>([]);
@@ -165,25 +166,99 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
         {/* SESSIONS TAB */}
         {activeTab === "sessions" && (
           <div>
-            <h2 className="text-xl font-bold text-slate-800 mb-6">Lịch học trực tuyến</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-slate-800">Lịch học trực tuyến</h2>
+              <span className="text-xs font-bold px-3 py-1 bg-slate-100 text-slate-600 rounded-full">
+                Tổng: {cls.sessions?.length || 0} buổi học
+              </span>
+            </div>
+
             {cls.sessions && cls.sessions.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {cls.sessions.map((session: any) => (
-                  <div key={session.id} className="p-5 border-2 border-slate-100 rounded-xl bg-slate-50 flex flex-col justify-between">
-                    <div>
-                      <h4 className="font-bold text-slate-800 mb-2 text-lg">{session.title}</h4>
-                      <div className="flex items-center gap-2 text-slate-500 mb-1 font-medium">
-                        <Calendar size={16} /> {dayjs(session.startTime).format("DD/MM/YYYY")}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {cls.sessions.map((session: any) => {
+                  const now = dayjs();
+                  const start = dayjs(session.startTime);
+                  const end = dayjs(session.endTime);
+                  const isLive = now.isAfter(start) && now.isBefore(end);
+                  const isPast = now.isAfter(end);
+                  const isUpcoming = now.isBefore(start);
+
+                  return (
+                    <div 
+                      key={session.id} 
+                      className={`p-6 rounded-2xl border-4 transition-all flex flex-col justify-between ${
+                        isLive 
+                          ? "bg-emerald-50/60 border-emerald-300 shadow-md shadow-emerald-100" 
+                          : isPast 
+                          ? "bg-slate-50/80 border-slate-200 opacity-75" 
+                          : "bg-white border-slate-200 shadow-xs"
+                      }`}
+                    >
+                      <div>
+                        {/* Session Status Header */}
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <h4 className={`font-black text-lg ${isPast ? "text-slate-600" : "text-slate-900"}`}>
+                            {session.title}
+                          </h4>
+
+                          {isLive && (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-500 text-white shadow-xs animate-bounce shrink-0">
+                              <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+                              ĐANG HỌC
+                            </span>
+                          )}
+                          {isUpcoming && (
+                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black bg-blue-100 text-blue-700 border border-blue-200 shrink-0">
+                              Sắp diễn ra
+                            </span>
+                          )}
+                          {isPast && (
+                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-600 shrink-0">
+                              Đã kết thúc
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Date & Time */}
+                        <div className="space-y-1.5 mb-5 text-sm font-bold text-slate-500">
+                          <div className="flex items-center gap-2">
+                            <Calendar size={16} className={isLive ? "text-emerald-600" : isPast ? "text-slate-400" : "text-blue-500"} />
+                            <span>{start.format("DD/MM/YYYY")}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Clock size={16} className={isLive ? "text-emerald-600" : isPast ? "text-slate-400" : "text-blue-500"} />
+                            <span>{start.format("HH:mm")} - {end.format("HH:mm")}</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-slate-500 mb-4 font-medium">
-                        <Clock size={16} /> {dayjs(session.startTime).format("HH:mm")} - {dayjs(session.endTime).format("HH:mm")}
-                      </div>
+
+                      {/* Action Button */}
+                      {isLive ? (
+                        <button
+                          onClick={() => setActiveVideoSession(session)}
+                          className="w-full btn-green-3d bg-emerald-500 hover:bg-emerald-600 text-white text-center py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md hover:brightness-105 transition-all"
+                        >
+                          <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
+                          Vào Lớp Ngay (Đang diễn ra)
+                        </button>
+                      ) : isUpcoming ? (
+                        <button
+                          onClick={() => setActiveVideoSession(session)}
+                          className="w-full btn-green-3d bg-junior-orange text-white text-center py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md hover:brightness-105 transition-all"
+                        >
+                          Vào Phòng Học Sớm
+                        </button>
+                      ) : (
+                        <button
+                          disabled
+                          className="w-full bg-slate-100 text-slate-400 border-2 border-slate-200 text-center py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 cursor-not-allowed select-none opacity-80"
+                        >
+                          🔒 Buổi học đã kết thúc
+                        </button>
+                      )}
                     </div>
-                    <a href={session.meetingLink} target="_blank" rel="noopener noreferrer" className="w-full btn-green-3d bg-junior-orange text-white text-center py-2 rounded-lg font-bold">
-                      Tham gia
-                    </a>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-12 text-slate-500 border-2 border-dashed border-slate-200 rounded-xl">
@@ -363,6 +438,17 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
           </div>
         </div>
       )}
+
+      {/* DAILY.CO EMBEDDED VIDEO CLASSROOM MODAL */}
+      <DailyClassroomModal
+        isOpen={!!activeVideoSession}
+        onClose={() => setActiveVideoSession(null)}
+        roomUrl={activeVideoSession?.meetingLink}
+        sessionTitle={activeVideoSession?.title || "Buổi học trực tuyến"}
+        courseName={course?.title || cls?.name}
+        sessionId={activeVideoSession?.id}
+        isTeacher={false}
+      />
     </div>
   );
 }

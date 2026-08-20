@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Search, Loader2, BookOpen, Plus, Trash2, Users,
-  ChevronRight, X, Calendar, UserCheck, Settings
+  ChevronRight, X, UserCheck, Settings
 } from "lucide-react";
 import { useState } from "react";
 import axiosClient from "@/lib/api/axiosClient";

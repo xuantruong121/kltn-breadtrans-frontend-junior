@@ -2,18 +2,14 @@
 
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { 
   Library, 
   Plus, 
   Loader2, 
   Search, 
   Trash2, 
-  BookOpen, 
-  X, 
-  Volume2, 
-  Sparkles,
-  Layers
+  X
 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { Button3D } from "@/components/ui";
@@ -28,7 +24,7 @@ export default function AdminVocabPage() {
   // Form: Create Topic
   const [topicTitle, setTopicTitle] = useState("");
   const [categoryName, setCategoryName] = useState("600 TỪ VỰNG TOEIC");
-  const [isPro, setIsPro] = useState(false);
+  const [isPro] = useState(false);
 
   // Form: Add Word to Topic
   const [word, setWord] = useState("");
