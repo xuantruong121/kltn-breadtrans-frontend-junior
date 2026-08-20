@@ -7,7 +7,7 @@ export const FLASHCARD_BOOKS: FlashcardBook[] = [
     category: "Căn bản",
     coverColor: "from-sky-400 to-blue-500",
     icon: "🎒",
-    totalWords: 30,
+    totalWords: 15,
     lessons: [
       {
         id: 1,
@@ -41,7 +41,7 @@ export const FLASHCARD_BOOKS: FlashcardBook[] = [
     category: "Trung cấp",
     coverColor: "from-amber-400 to-orange-500",
     icon: "💼",
-    totalWords: 25,
+    totalWords: 15,
     lessons: [
       {
         id: 1,
@@ -55,6 +55,17 @@ export const FLASHCARD_BOOKS: FlashcardBook[] = [
           { id: "w15", word: "Deadline", ipa: "/ˈded.laɪn/", mean: "Hạn chót", type: "noun", exampleEn: "The project deadline is next Monday.", exampleVi: "Hạn chót của dự án là thứ Hai tuần tới." },
         ],
       },
+      {
+        id: 2,
+        title: "Bài 2: Hợp đồng & Đàm phán kinh doanh",
+        description: "Từ vựng ký kết hợp đồng, thương thảo thương mại trong TOEIC Part 5, 6.",
+        words: [
+          { id: "w16", word: "Negotiate", ipa: "/nəˈɡoʊ.ʃi.eɪt/", mean: "Thương lượng, đàm phán", type: "verb", exampleEn: "They negotiated a new contract.", exampleVi: "Họ đã thương lượng một hợp đồng mới." },
+          { id: "w17", word: "Agreement", ipa: "/əˈɡriː.mənt/", mean: "Hợp đồng, sự thỏa thuận", type: "noun", exampleEn: "Both parties reached an agreement.", exampleVi: "Cả hai bên đã đạt được thỏa thuận." },
+          { id: "w18", word: "Proposal", ipa: "/prəˈpoʊ.zəl/", mean: "Đề xuất, bản đề án", type: "noun", exampleEn: "We submitted the business proposal.", exampleVi: "Chúng tôi đã nộp bản đề xuất kinh doanh." },
+          { id: "w19", word: "Signature", ipa: "/ˈsɪɡ.nə.tʃər/", mean: "Chữ ký", type: "noun", exampleEn: "The document requires your signature.", exampleVi: "Văn bản này cần chữ ký của bạn." },
+        ],
+      },
     ],
   },
   {
@@ -63,17 +74,39 @@ export const FLASHCARD_BOOKS: FlashcardBook[] = [
     category: "Thực tế",
     coverColor: "from-emerald-400 to-teal-500",
     icon: "✈️",
-    totalWords: 20,
+    totalWords: 15,
     lessons: [
       {
         id: 1,
         title: "Bài 1: Sân bay & Phương tiện di chuyển",
         description: "Từ vựng thông báo sân bay, đặt vé tàu xe hay gặp trong Part 4.",
         words: [
-          { id: "w16", word: "Passenger", ipa: "/ˈpæs.ən.dʒər/", mean: "Hành khách", type: "noun", exampleEn: "All passengers must fasten their seatbelts.", exampleVi: "Tất cả hành khách phải thắt dây an toàn." },
-          { id: "w17", word: "Reservation", ipa: "/ˌrez.əˈveɪ.ʃən/", mean: "Sự đặt chỗ trước", type: "noun", exampleEn: "I have a reservation for two nights.", exampleVi: "Tôi đã đặt phòng trước cho 2 đêm." },
-          { id: "w18", word: "Luggage", ipa: "/ˈlʌɡ.ɪdʒ/", mean: "Hành lý", type: "noun", exampleEn: "You can keep your luggage in the hotel lobby.", exampleVi: "Bạn có thể gửi hành lý tại sảnh khách sạn." },
-          { id: "w19", word: "Departure", ipa: "/dɪˈpɑː.tʃər/", mean: "Sự khởi hành", type: "noun", exampleEn: "The departure time was delayed.", exampleVi: "Thời gian khởi hành đã bị hoãn lại." },
+          { id: "w20", word: "Passenger", ipa: "/ˈpæs.ən.dʒər/", mean: "Hành khách", type: "noun", exampleEn: "All passengers must fasten their seatbelts.", exampleVi: "Tất cả hành khách phải thắt dây an toàn." },
+          { id: "w21", word: "Reservation", ipa: "/ˌrez.əˈveɪ.ʃən/", mean: "Sự đặt chỗ trước", type: "noun", exampleEn: "I have a reservation for two nights.", exampleVi: "Tôi đã đặt phòng trước cho 2 đêm." },
+          { id: "w22", word: "Luggage", ipa: "/ˈlʌɡ.ɪdʒ/", mean: "Hành lý", type: "noun", exampleEn: "You can keep your luggage in the hotel lobby.", exampleVi: "Bạn có thể gửi hành lý tại sảnh khách sạn." },
+          { id: "w23", word: "Departure", ipa: "/dɪˈpɑː.tʃər/", mean: "Sự khởi hành", type: "noun", exampleEn: "The departure time was delayed.", exampleVi: "Thời gian khởi hành đã bị hoãn lại." },
+          { id: "w24", word: "Destination", ipa: "/ˌdes.təˈneɪ.ʃən/", mean: "Điểm đến", type: "noun", exampleEn: "Da Nang is a popular tourist destination.", exampleVi: "Đà Nẵng là điểm đến du lịch nổi tiếng." },
+        ],
+      },
+    ],
+  },
+  {
+    id: 4,
+    name: "TOEIC Master: Công nghệ & Đổi mới",
+    category: "Nâng cao",
+    coverColor: "from-purple-400 to-indigo-500",
+    icon: "💻",
+    totalWords: 15,
+    lessons: [
+      {
+        id: 1,
+        title: "Bài 1: Phần mềm, Bảo mật & AI",
+        description: "Từ vựng công nghệ số và chuyển đổi số trong môi trường làm việc 4.0.",
+        words: [
+          { id: "w25", word: "Innovation", ipa: "/ˌɪn.əˈveɪ.ʃən/", mean: "Sự đổi mới, sáng tạo", type: "noun", exampleEn: "Technological innovation drives growth.", exampleVi: "Đổi mới công nghệ thúc đẩy tăng trưởng." },
+          { id: "w26", word: "Security", ipa: "/səˈkjʊr.ə.t̬i/", mean: "An ninh, bảo mật", type: "noun", exampleEn: "Data security is essential for companies.", exampleVi: "Bảo mật dữ liệu là điều tối quan trọng đối với các công ty." },
+          { id: "w27", word: "Upgrade", ipa: "/ʌpˈɡreɪd/", mean: "Nâng cấp", type: "verb", exampleEn: "We must upgrade our operating system.", exampleVi: "Chúng ta cần nâng cấp hệ điều hành." },
+          { id: "w28", word: "Automate", ipa: "/ˈɑː.t̬ə.meɪt/", mean: "Tự động hóa", type: "verb", exampleEn: "The system automates daily tasks.", exampleVi: "Hệ thống tự động hóa các công việc hàng ngày." },
         ],
       },
     ],

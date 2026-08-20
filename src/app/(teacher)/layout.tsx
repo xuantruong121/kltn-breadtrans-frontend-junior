@@ -47,7 +47,14 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
           <div className="p-6 border-b border-slate-800">
             <Link href="/" className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center border border-orange-500/30">
-                <Image src="/logo.png" alt="Logo" width={24} height={24} className="rounded-md" />
+                <Image 
+                  src="/logo.png" 
+                  alt="Logo" 
+                  width={24} 
+                  height={24} 
+                  style={{ width: "auto", height: "auto" }} 
+                  className="rounded-md object-contain max-h-6" 
+                />
               </div>
               <span className="font-bold text-white text-lg tracking-wide">BreadTrans</span>
             </Link>

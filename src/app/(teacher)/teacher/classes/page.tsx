@@ -224,7 +224,9 @@ export default function TeacherClassesPage() {
       {/* CLASSES LIST */}
       <div className="flex flex-col gap-6">
         {currentClasses.map((cls: any) => {
-          const sessions = cls.sessions || [];
+          const sessions = [...(cls.sessions || [])].sort(
+            (a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+          );
           const now = dayjs();
           const upcomingSession = sessions.find((s: any) => dayjs(s.endTime).isAfter(now));
 

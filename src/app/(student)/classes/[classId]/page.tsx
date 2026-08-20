@@ -175,8 +175,13 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
 
             {cls.sessions && cls.sessions.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {cls.sessions.map((session: any) => {
-                  const now = dayjs();
+                {[...cls.sessions]
+                  .sort(
+                    (a: any, b: any) =>
+                      new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+                  )
+                  .map((session: any) => {
+                    const now = dayjs();
                   const start = dayjs(session.startTime);
                   const end = dayjs(session.endTime);
                   const isLive = now.isAfter(start) && now.isBefore(end);
