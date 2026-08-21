@@ -23,6 +23,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import axiosClient from "@/lib/api/axiosClient";
 import toast from "react-hot-toast";
+import { Pagination } from "@/components/ui";
 
 interface MaterialItem {
   id: string;
@@ -69,6 +70,8 @@ export default function TeacherMaterialsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState<string>("ALL");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(6);
 
   // Form State
   const [uploadMode, setUploadMode] = useState<"file" | "link">("file");
@@ -197,6 +200,9 @@ export default function TeacherMaterialsPage() {
     return matchSearch && matchType;
   });
 
+  const totalPages = Math.ceil((filtered?.length || 0) / pageSize);
+  const paginated = filtered?.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   const getTypeIcon = (t: string) => {
     switch (t) {
       case "PDF":
@@ -245,7 +251,10 @@ export default function TeacherMaterialsPage() {
               type="text"
               placeholder="Tìm kiếm tài liệu theo tên, khóa học..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl outline-none focus:border-blue-400 font-bold text-sm"
             />
           </div>
@@ -254,7 +263,10 @@ export default function TeacherMaterialsPage() {
             {["ALL", "PDF", "SLIDE", "AUDIO", "VIDEO"].map((t) => (
               <button
                 key={t}
-                onClick={() => setSelectedType(t)}
+                onClick={() => {
+                  setSelectedType(t);
+                  setCurrentPage(1);
+                }}
                 className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
                   selectedType === t
                     ? "bg-white text-blue-600 shadow-sm"
@@ -268,57 +280,74 @@ export default function TeacherMaterialsPage() {
         </div>
 
         {/* MATERIALS LIST */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map((mat) => (
-            <motion.div
-              key={mat.id}
-              whileHover={{ y: -3 }}
-              className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-6 flex flex-col justify-between hover:border-blue-300 transition-colors space-y-4"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-xs">
-                    {getTypeIcon(mat.type)}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paginated?.map((mat) => (
+              <motion.div
+                key={mat.id}
+                whileHover={{ y: -3 }}
+                className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-6 flex flex-col justify-between hover:border-blue-300 transition-colors space-y-4"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-xs">
+                      {getTypeIcon(mat.type)}
+                    </div>
+                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-500">
+                      {mat.type}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-500">
-                    {mat.type}
+
+                  <div>
+                    <h3 className="text-base font-black text-slate-800 line-clamp-2 leading-snug">
+                      {mat.title}
+                    </h3>
+                    <p className="text-xs font-bold text-slate-400 mt-1">{mat.courseName}</p>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-slate-200 flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-400">
+                    {mat.size} • {mat.uploadedAt}
                   </span>
-                </div>
 
-                <div>
-                  <h3 className="text-base font-black text-slate-800 line-clamp-2 leading-snug">
-                    {mat.title}
-                  </h3>
-                  <p className="text-xs font-bold text-slate-400 mt-1">{mat.courseName}</p>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={mat.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl transition-colors cursor-pointer"
+                      title="Mở tài liệu"
+                    >
+                      <ExternalLink size={16} />
+                    </a>
+                    <button
+                      onClick={() => handleDelete(mat.id)}
+                      className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                      title="Xóa tài liệu"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </motion.div>
+            ))}
+          </div>
 
-              <div className="pt-4 border-t border-slate-200 flex items-center justify-between">
-                <span className="text-[11px] font-bold text-slate-400">
-                  {mat.size} • {mat.uploadedAt}
-                </span>
-
-                <div className="flex items-center gap-2">
-                  <a
-                    href={mat.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl transition-colors cursor-pointer"
-                    title="Mở tài liệu"
-                  >
-                    <ExternalLink size={16} />
-                  </a>
-                  <button
-                    onClick={() => handleDelete(mat.id)}
-                    className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
-                    title="Xóa tài liệu"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+          {/* PAGINATION */}
+          <div className="pt-2">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filtered?.length || 0}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setCurrentPage(1);
+              }}
+            />
+          </div>
         </div>
       </div>
 

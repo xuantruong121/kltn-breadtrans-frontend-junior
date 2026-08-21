@@ -5,10 +5,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PenTool, Plus, BookOpen, Users, FileText } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import dayjs from "dayjs";
+import { Pagination } from "@/components/ui";
 
 export default function TeacherAssignmentsPage() {
   const queryClient = useQueryClient();
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(6);
   
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSubmissionsModalOpen, setIsSubmissionsModalOpen] = useState(false);
@@ -126,7 +129,10 @@ export default function TeacherAssignmentsPage() {
             {classes?.map((cls: any) => (
               <button
                 key={cls.id}
-                onClick={() => setSelectedClassId(cls.id)}
+                onClick={() => {
+                  setSelectedClassId(cls.id);
+                  setCurrentPage(1);
+                }}
                 className={`text-left px-4 py-3 rounded-lg transition-colors flex flex-col ${selectedClassId === cls.id ? 'bg-blue-50 border border-blue-200 text-blue-700' : 'hover:bg-slate-50 border border-transparent text-slate-700'}`}
               >
                 <span className="font-medium truncate">{cls.name}</span>
@@ -162,35 +168,61 @@ export default function TeacherAssignmentsPage() {
                 {assignmentsLoading ? (
                   <div className="p-8 text-center text-slate-500">Đang tải...</div>
                 ) : (assignments || []).length > 0 ? (
-                  <div className="divide-y divide-slate-100">
-                    {(assignments || []).map((asgn: any) => (
-                      <div key={asgn.id} className="p-6 hover:bg-slate-50 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${asgn.type === 'QUIZ' ? 'bg-purple-100 text-purple-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                              {asgn.type === 'QUIZ' ? 'Trắc nghiệm' : 'Tự luận'}
-                            </span>
-                            <h4 className="font-bold text-slate-800 text-lg">{asgn.title}</h4>
+                  <div>
+                    {(() => {
+                      const totalPages = Math.ceil((assignments?.length || 0) / pageSize);
+                      const paginated = (assignments || []).slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+                      return (
+                        <>
+                          <div className="divide-y divide-slate-100">
+                            {paginated.map((asgn: any) => (
+                              <div key={asgn.id} className="p-6 hover:bg-slate-50 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div>
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${asgn.type === 'QUIZ' ? 'bg-purple-100 text-purple-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                      {asgn.type === 'QUIZ' ? 'Trắc nghiệm' : 'Tự luận'}
+                                    </span>
+                                    <h4 className="font-bold text-slate-800 text-lg">{asgn.title}</h4>
+                                  </div>
+                                  <p className="text-sm text-slate-500 mb-2 truncate max-w-lg">{asgn.description || "Không có mô tả"}</p>
+                                  <div className="flex gap-4 text-xs font-medium">
+                                    <span className="text-blue-600 bg-blue-50 px-2 py-1 rounded">Đã nộp: {asgn.submissions?.length || 0}</span>
+                                    {asgn.dueDate && (
+                                      <span className="text-orange-600 bg-orange-50 px-2 py-1 rounded">Hạn: {dayjs(asgn.dueDate).format("DD/MM/YYYY HH:mm")}</span>
+                                    )}
+                                  </div>
+                                </div>
+                                <button 
+                                  onClick={() => {
+                                    setSelectedAssignment(asgn);
+                                    setIsSubmissionsModalOpen(true);
+                                  }}
+                                  className="px-4 py-2 border border-blue-200 hover:bg-blue-50 text-blue-600 font-medium rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
+                                >
+                                  Chấm điểm / Xem bài
+                                </button>
+                              </div>
+                            ))}
                           </div>
-                          <p className="text-sm text-slate-500 mb-2 truncate max-w-lg">{asgn.description || "Không có mô tả"}</p>
-                          <div className="flex gap-4 text-xs font-medium">
-                            <span className="text-blue-600 bg-blue-50 px-2 py-1 rounded">Đã nộp: {asgn.submissions?.length || 0}</span>
-                            {asgn.dueDate && (
-                              <span className="text-orange-600 bg-orange-50 px-2 py-1 rounded">Hạn: {dayjs(asgn.dueDate).format("DD/MM/YYYY HH:mm")}</span>
-                            )}
+
+                          {/* PAGINATION */}
+                          <div className="p-4 bg-slate-50/50 border-t border-slate-100">
+                            <Pagination
+                              currentPage={currentPage}
+                              totalPages={totalPages}
+                              totalItems={assignments?.length || 0}
+                              pageSize={pageSize}
+                              onPageChange={setCurrentPage}
+                              onPageSizeChange={(size) => {
+                                setPageSize(size);
+                                setCurrentPage(1);
+                              }}
+                            />
                           </div>
-                        </div>
-                        <button 
-                          onClick={() => {
-                            setSelectedAssignment(asgn);
-                            setIsSubmissionsModalOpen(true);
-                          }}
-                          className="px-4 py-2 border border-blue-200 hover:bg-blue-50 text-blue-600 font-medium rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
-                        >
-                          Chấm điểm / Xem bài
-                        </button>
-                      </div>
-                    ))}
+                        </>
+                      );
+                    })()}
                   </div>
                 ) : (
                   <div className="p-12 text-center text-slate-500">

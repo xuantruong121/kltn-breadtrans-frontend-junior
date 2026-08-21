@@ -1,24 +1,31 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Headphones, Loader2, PlayCircle, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { quizService } from "@/lib/api/services/quiz.service";
+import { Pagination } from "@/components/ui";
 
 export default function ListeningPracticesPage() {
   const router = useRouter();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(8);
   
   const { data: quizzes, isLoading } = useQuery({
     queryKey: ["listening-practices"],
     queryFn: quizService.getListeningPractices,
   });
 
+  const totalPages = Math.ceil((quizzes?.length || 0) / pageSize);
+  const paginatedQuizzes = quizzes?.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto pb-12">
       <button 
         onClick={() => router.back()}
-        className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-bold mb-8 transition-colors"
+        className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-bold mb-8 transition-colors cursor-pointer"
       >
         <ArrowLeft size={20} /> Quay lại Đảo Luyện Tập
       </button>
@@ -38,42 +45,59 @@ export default function ListeningPracticesPage() {
           <Loader2 className="animate-spin text-junior-blue" size={48} />
         </div>
       ) : quizzes && quizzes.length > 0 ? (
-        <div className="flex flex-col gap-4">
-          {quizzes.map((quiz: any, index: number) => {
-            const isCompleted = quiz.isCompleted;
-            return (
-              <motion.div
-                key={quiz.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ scale: 1.01 }}
-                className={`p-6 rounded-2xl border-4 flex items-center justify-between shadow-sm cursor-pointer transition-colors ${
-                  isCompleted 
-                    ? 'bg-green-50 border-green-400 hover:border-green-500' 
-                    : 'bg-white border-slate-100 hover:border-sky-200'
-                }`}
-                onClick={() => router.push(`/practice/quizzes/${quiz.id}`)}
-              >
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-xl font-bold text-slate-800">{quiz.title}</h3>
-                    {isCompleted && (
-                      <div className="text-green-500" title="Đã hoàn thành">
-                        <CheckCircle2 size={20} />
-                      </div>
-                    )}
+        <div className="space-y-6">
+          <div className="flex flex-col gap-4">
+            {paginatedQuizzes?.map((quiz: any, index: number) => {
+              const isCompleted = quiz.isCompleted;
+              return (
+                <motion.div
+                  key={quiz.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  whileHover={{ scale: 1.01 }}
+                  className={`p-6 rounded-2xl border-4 flex items-center justify-between shadow-sm cursor-pointer transition-colors ${
+                    isCompleted 
+                      ? 'bg-green-50 border-green-400 hover:border-green-500' 
+                      : 'bg-white border-slate-100 hover:border-sky-200'
+                  }`}
+                  onClick={() => router.push(`/practice/quizzes/${quiz.id}`)}
+                >
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-xl font-bold text-slate-800">{quiz.title}</h3>
+                      {isCompleted && (
+                        <div className="text-green-500" title="Đã hoàn thành">
+                          <CheckCircle2 size={20} />
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-slate-500 font-medium text-sm">
+                      {quiz._count?.questions || 0} câu hỏi • Luyện nghe TOEIC
+                    </p>
                   </div>
-                  <p className="text-slate-500 font-medium text-sm">
-                    {quiz._count?.questions || 0} câu hỏi • Luyện nghe TOEIC
-                  </p>
-                </div>
-                <div className={`p-3 rounded-xl ${isCompleted ? 'bg-green-200 text-green-700' : 'bg-sky-100 text-junior-blue'}`}>
-                  <PlayCircle size={28} />
-                </div>
-              </motion.div>
-            );
-          })}
+                  <div className={`p-3 rounded-xl ${isCompleted ? 'bg-green-200 text-green-700' : 'bg-sky-100 text-junior-blue'}`}>
+                    <PlayCircle size={28} />
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* PAGINATION */}
+          <div className="pt-2">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={quizzes?.length || 0}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setCurrentPage(1);
+              }}
+            />
+          </div>
         </div>
       ) : (
         <div className="bg-slate-50 p-12 rounded-2xl border-2 border-dashed border-slate-300 text-center">
@@ -83,3 +107,4 @@ export default function ListeningPracticesPage() {
     </div>
   );
 }
+

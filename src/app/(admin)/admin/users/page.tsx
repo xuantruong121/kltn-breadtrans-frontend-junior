@@ -22,6 +22,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axiosClient from "@/lib/api/axiosClient";
 import toast from "react-hot-toast";
+import { Pagination } from "@/components/ui";
 
 type UserData = {
   id: number;
@@ -45,6 +46,8 @@ export default function AdminUsersPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -142,6 +145,9 @@ export default function AdminUsersPage() {
       (u.profile?.fullName || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const totalPages = Math.ceil((filteredUsers?.length || 0) / pageSize);
+  const paginatedUsers = filteredUsers?.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   const roleBadge = (role: string) => {
     const map: Record<string, string> = {
       ADMIN: "bg-purple-100 text-purple-800 border-purple-300",
@@ -229,7 +235,10 @@ export default function AdminUsersPage() {
             type="text"
             placeholder="Tìm kiếm theo tên hoặc email..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
             className="w-full pl-11 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl font-bold outline-none focus:border-blue-500 focus:bg-white text-slate-800 text-sm transition-all"
           />
         </div>
@@ -237,7 +246,10 @@ export default function AdminUsersPage() {
           {ROLE_FILTER_OPTIONS.map((opt) => (
             <button
               key={opt.value}
-              onClick={() => setRoleFilter(opt.value)}
+              onClick={() => {
+                setRoleFilter(opt.value);
+                setCurrentPage(1);
+              }}
               className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
                 roleFilter === opt.value
                   ? "bg-blue-600 text-white shadow-xs"
@@ -271,7 +283,7 @@ export default function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-bold text-sm text-slate-700">
-                {filteredUsers.map((user) => (
+                {paginatedUsers?.map((user) => (
                   <tr key={user.id} className="hover:bg-slate-50/70 transition-colors">
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
@@ -349,6 +361,21 @@ export default function AdminUsersPage() {
                 ))}
               </tbody>
             </table>
+
+            {/* PAGINATION */}
+            <div className="p-4 bg-slate-50/50 border-t border-slate-100">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filteredUsers?.length || 0}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
           </div>
         ) : (
           <div className="p-16 text-center text-slate-400">

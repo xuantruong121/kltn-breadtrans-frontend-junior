@@ -17,7 +17,8 @@ import {
   Gamepad2,
   Mic,
   Menu,
-  X
+  X,
+  Activity
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useQueryClient } from "@tanstack/react-query";
@@ -29,6 +30,7 @@ const FloatingAiTutor = dynamic(() => import("@/components/FloatingAiTutor"), { 
 
 const NAV_ITEMS = [
   { id: "overview", href: "/admin", label: "Tổng quan", icon: LayoutDashboard },
+  { id: "costs", href: "/admin/costs", label: "Quản lý Chi Phí (Cloud)", icon: Activity },
   { id: "courses", href: "/admin/courses", label: "Khóa học & Lớp", icon: BookOpen },
   { id: "vocab", href: "/admin/vocab", label: "Từ vựng (Flashcard)", icon: Layers },
   { id: "grammar", href: "/admin/grammar", label: "Ngữ pháp (Video)", icon: GraduationCap },

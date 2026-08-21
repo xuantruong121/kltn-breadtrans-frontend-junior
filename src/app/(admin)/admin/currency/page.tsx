@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Coins, PlusCircle, MinusCircle, Users, Loader2 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
-import { Button3D } from "@/components/ui";
+import { Button3D, Pagination } from "@/components/ui";
 import toast from "react-hot-toast";
 
 export default function AdminCurrencyPage() {
@@ -13,6 +13,8 @@ export default function AdminCurrencyPage() {
   const [amount, setAmount] = useState<number>(50);
   const [reason, setReason] = useState<string>("");
   const [actionType, setActionType] = useState<"add" | "subtract">("add");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(8);
 
   const { data: users, isLoading: isUsersLoading } = useQuery<any[]>({
     queryKey: ["admin-users-list"],
@@ -176,42 +178,68 @@ export default function AdminCurrencyPage() {
               <Loader2 className="animate-spin text-amber-500" size={36} />
             </div>
           ) : users && users.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b-2 border-slate-100 bg-slate-50 text-slate-400 font-black text-xs uppercase">
-                    <th className="py-3 px-4">ID</th>
-                    <th className="py-3 px-4">Họ và Tên</th>
-                    <th className="py-3 px-4">Email</th>
-                    <th className="py-3 px-4 text-center">Số Dư Bánh Mì</th>
-                    <th className="py-3 px-4 text-right">Hành Động</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 font-bold text-sm">
-                  {users.map((u) => (
-                    <tr key={u.id} className="hover:bg-slate-50/80">
-                      <td className="py-3 px-4 text-slate-400 font-mono text-xs">#{u.id}</td>
-                      <td className="py-3 px-4 font-black text-slate-800">
-                        {u.profile?.fullName || "Chưa đặt tên"}
-                      </td>
-                      <td className="py-3 px-4 text-slate-500 text-xs">{u.email}</td>
-                      <td className="py-3 px-4 text-center">
-                        <span className="inline-flex items-center gap-1 bg-amber-100/90 text-amber-800 px-2.5 py-1 rounded-xl text-xs font-black border border-amber-300">
-                          🍞 {u.stats?.totalBanhRan ?? 0}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <button
-                          onClick={() => setSelectedUserId(u.id)}
-                          className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 font-extrabold text-xs rounded-xl border border-amber-200 transition-colors cursor-pointer"
-                        >
-                          Chọn điều chỉnh
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="space-y-4">
+              {(() => {
+                const totalPages = Math.ceil((users?.length || 0) / pageSize);
+                const paginatedUsers = users?.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+                return (
+                  <>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="border-b-2 border-slate-100 bg-slate-50 text-slate-400 font-black text-xs uppercase">
+                            <th className="py-3 px-4">ID</th>
+                            <th className="py-3 px-4">Họ và Tên</th>
+                            <th className="py-3 px-4">Email</th>
+                            <th className="py-3 px-4 text-center">Số Dư Bánh Mì</th>
+                            <th className="py-3 px-4 text-right">Hành Động</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 font-bold text-sm">
+                          {paginatedUsers.map((u) => (
+                            <tr key={u.id} className="hover:bg-slate-50/80">
+                              <td className="py-3 px-4 text-slate-400 font-mono text-xs">#{u.id}</td>
+                              <td className="py-3 px-4 font-black text-slate-800">
+                                {u.profile?.fullName || "Chưa đặt tên"}
+                              </td>
+                              <td className="py-3 px-4 text-slate-500 text-xs">{u.email}</td>
+                              <td className="py-3 px-4 text-center">
+                                <span className="inline-flex items-center gap-1 bg-amber-100/90 text-amber-800 px-2.5 py-1 rounded-xl text-xs font-black border border-amber-300">
+                                  🍞 {u.stats?.totalBanhRan ?? 0}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-right">
+                                <button
+                                  onClick={() => setSelectedUserId(u.id)}
+                                  className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 font-extrabold text-xs rounded-xl border border-amber-200 transition-colors cursor-pointer"
+                                >
+                                  Chọn điều chỉnh
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* PAGINATION */}
+                    <div className="pt-2">
+                      <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        totalItems={users?.length || 0}
+                        pageSize={pageSize}
+                        onPageChange={setCurrentPage}
+                        onPageSizeChange={(size) => {
+                          setPageSize(size);
+                          setCurrentPage(1);
+                        }}
+                      />
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           ) : (
             <div className="text-center py-12 text-slate-400 font-bold">
