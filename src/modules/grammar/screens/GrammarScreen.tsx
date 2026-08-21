@@ -2,15 +2,32 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { PlayCircle } from "lucide-react";
+import { PlayCircle, CheckCircle2 } from "lucide-react";
 import { GRAMMAR_TOPICS } from "../services/grammarData";
 import { GrammarTopic, GrammarLesson } from "../types";
 import { GrammarVideoPlayer } from "../components/GrammarVideoPlayer";
 import { GrammarQuiz } from "../components/GrammarQuiz";
+import { useAuthStore } from "@/stores/authStore";
 
 export const GrammarScreen: React.FC = () => {
+  const { user } = useAuthStore();
   const [selectedTopic, setSelectedTopic] = useState<GrammarTopic>(GRAMMAR_TOPICS[0]);
   const [selectedLesson, setSelectedLesson] = useState<GrammarLesson>(GRAMMAR_TOPICS[0].lessons[0]);
+  const [, setTick] = useState(0);
+
+  const getSavedProgress = () => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem(`breadtrans_grammar_progress_${user?.id || "guest"}`);
+        return saved ? JSON.parse(saved) : {};
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  };
+
+  const progressMap = getSavedProgress();
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -29,6 +46,10 @@ export const GrammarScreen: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {GRAMMAR_TOPICS.map((topic) => {
           const isSelected = selectedTopic.id === topic.id;
+          const completedLessonsCount = topic.lessons.filter(
+            (l) => progressMap[l.id]?.showResults
+          ).length;
+
           return (
             <motion.div
               key={topic.id}
@@ -56,7 +77,9 @@ export const GrammarScreen: React.FC = () => {
               </div>
               <div className="text-xs font-bold text-slate-400 pt-2 border-t border-slate-100 flex items-center justify-between">
                 <span>{topic.lessons.length} Video bài giảng</span>
-                <span className="text-emerald-600 font-extrabold">Học ngay →</span>
+                <span className={completedLessonsCount === topic.lessons.length ? "text-emerald-600 font-black" : "text-emerald-600 font-extrabold"}>
+                  {completedLessonsCount > 0 ? `${completedLessonsCount}/${topic.lessons.length} Đã học ✓` : "Học ngay →"}
+                </span>
               </div>
             </motion.div>
           );
@@ -67,6 +90,9 @@ export const GrammarScreen: React.FC = () => {
       <div className="flex items-center gap-2 overflow-x-auto pb-2">
         {selectedTopic.lessons.map((lesson) => {
           const isSelected = selectedLesson.id === lesson.id;
+          const lessonProg = progressMap[lesson.id];
+          const isDone = lessonProg?.showResults;
+
           return (
             <button
               key={lesson.id}
@@ -74,11 +100,20 @@ export const GrammarScreen: React.FC = () => {
               className={`px-4 py-2.5 rounded-2xl font-black text-sm whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 ${
                 isSelected
                   ? "bg-slate-800 text-white shadow-md border-2 border-slate-900"
+                  : isDone
+                  ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-2 border-emerald-300"
                   : "bg-white text-slate-500 hover:bg-slate-100 border-2 border-slate-200"
               }`}
             >
-              <PlayCircle size={16} />
-              {lesson.title}
+              {isDone ? <CheckCircle2 size={16} className="text-emerald-500" /> : <PlayCircle size={16} />}
+              <span>{lesson.title}</span>
+              {isDone && (
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${
+                  isSelected ? "bg-emerald-500 text-white font-black" : "bg-emerald-200/60 text-emerald-800 font-extrabold"
+                }`}>
+                  {lessonProg.correctCount}/{lesson.questions.length}
+                </span>
+              )}
             </button>
           );
         })}
@@ -93,7 +128,12 @@ export const GrammarScreen: React.FC = () => {
 
         {/* Right: Practice Quiz */}
         <div className="lg:col-span-5">
-          <GrammarQuiz questions={selectedLesson.questions} />
+          <GrammarQuiz
+            key={selectedLesson.id}
+            lessonId={selectedLesson.id}
+            questions={selectedLesson.questions}
+            onProgressUpdate={() => setTick((t) => t + 1)}
+          />
         </div>
       </div>
     </div>

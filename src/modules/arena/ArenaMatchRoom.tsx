@@ -141,56 +141,56 @@ export default function ArenaMatchRoom({
       </AnimatePresence>
 
       {/* HEADER SCOREBOARD 1v1 */}
-      <div className="bg-white rounded-[2.5rem] border-4 border-slate-200 shadow-[0_10px_0_0_#e2e8f0] p-6 relative overflow-hidden">
-        <div className="flex items-center justify-between gap-4">
+      <div className="bg-white rounded-3xl sm:rounded-[2.5rem] border-4 border-slate-200 shadow-[0_10px_0_0_#e2e8f0] p-4 sm:p-6 relative overflow-hidden">
+        <div className="flex items-center justify-between gap-2 sm:gap-4">
           {/* My Player Panel */}
-          <div className="flex items-center gap-3">
-            <div className="w-14 h-14 rounded-2xl bg-sky-100 border-3 border-sky-400 flex items-center justify-center text-2xl font-black shadow-inner">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-2xl bg-sky-100 border-2 sm:border-3 border-sky-400 flex items-center justify-center text-lg sm:text-2xl font-black shadow-inner shrink-0">
               {myInfo.avatar ? (
                 <img src={myInfo.avatar} alt="" className="w-full h-full object-cover rounded-xl" />
               ) : (
                 "🧙‍♂️"
               )}
             </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-black text-slate-800 text-lg">{myInfo.userName}</span>
-                <span className="text-xs bg-sky-500 text-white font-extrabold px-2 py-0.5 rounded-md">BẠN</span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1">
+                <span className="font-black text-slate-800 text-xs sm:text-lg truncate max-w-[70px] sm:max-w-[130px]">{myInfo.userName}</span>
+                <span className="text-[10px] bg-sky-500 text-white font-extrabold px-1.5 py-0.2 rounded shrink-0">BẠN</span>
               </div>
-              <p className="font-black text-sky-600 text-2xl tracking-tight">
-                {myProgress?.score || 0} <span className="text-xs text-slate-400 font-bold uppercase">Điểm</span>
+              <p className="font-black text-sky-600 text-base sm:text-2xl tracking-tight">
+                {myProgress?.score || 0} <span className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase">Điểm</span>
               </p>
             </div>
           </div>
 
           {/* VS Center Badge & Timer */}
-          <div className="flex flex-col items-center">
-            <div className="w-12 h-12 rounded-full bg-orange-500 border-4 border-orange-600 flex items-center justify-center text-white font-black shadow-md">
+          <div className="flex flex-col items-center shrink-0">
+            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-orange-500 border-2 sm:border-4 border-orange-600 flex items-center justify-center text-white font-black text-xs sm:text-base shadow-md">
               VS
             </div>
             <div
-              className={`flex items-center gap-1 mt-2 text-xs font-black px-3 py-1 rounded-full border transition-colors ${
+              className={`flex items-center gap-1 mt-1 sm:mt-2 text-[10px] sm:text-xs font-black px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border transition-colors ${
                 timeLeft <= 3
                   ? "bg-rose-50 border-rose-300 text-rose-600 animate-bounce"
                   : "bg-amber-50 border-amber-200 text-amber-600"
               }`}
             >
-              <Clock size={13} /> {timeLeft}s
+              <Clock size={12} /> {timeLeft}s
             </div>
           </div>
 
           {/* Opponent Panel */}
-          <div className="flex items-center gap-3 text-right">
-            <div>
-              <div className="flex items-center justify-end gap-1.5">
-                <span className="text-xs bg-rose-100 text-rose-700 font-extrabold px-2 py-0.5 rounded-md">ĐỐI THỦ</span>
-                <span className="font-black text-slate-800 text-lg">{opponentInfo.userName}</span>
+          <div className="flex items-center gap-2 sm:gap-3 text-right min-w-0">
+            <div className="min-w-0">
+              <div className="flex items-center justify-end gap-1">
+                <span className="text-[10px] bg-rose-100 text-rose-700 font-extrabold px-1.5 py-0.2 rounded shrink-0">ĐỐI THỦ</span>
+                <span className="font-black text-slate-800 text-xs sm:text-lg truncate max-w-[70px] sm:max-w-[130px]">{opponentInfo.userName}</span>
               </div>
-              <p className="font-black text-rose-500 text-2xl tracking-tight">
-                {opponentProgress?.score || 0} <span className="text-xs text-slate-400 font-bold uppercase">Điểm</span>
+              <p className="font-black text-rose-500 text-base sm:text-2xl tracking-tight">
+                {opponentProgress?.score || 0} <span className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase">Điểm</span>
               </p>
             </div>
-            <div className="w-14 h-14 rounded-2xl bg-rose-100 border-3 border-rose-400 flex items-center justify-center text-2xl font-black shadow-inner">
+            <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-2xl bg-rose-100 border-2 sm:border-3 border-rose-400 flex items-center justify-center text-lg sm:text-2xl font-black shadow-inner shrink-0">
               {opponentInfo.avatar ? (
                 <img src={opponentInfo.avatar} alt="" className="w-full h-full object-cover rounded-xl" />
               ) : (
@@ -201,22 +201,22 @@ export default function ArenaMatchRoom({
         </div>
 
         {/* Live Race Progress Bar */}
-        <div className="mt-6 pt-4 border-t-2 border-slate-100">
-          <div className="flex justify-between text-xs font-black text-slate-400 mb-1.5">
-            <span>Tiến độ của bạn: {myProgress?.answered || 0}/{totalRounds}</span>
-            <span className="bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full font-extrabold border border-amber-200">
-              Mức cược: {matchData.stake} 🍞
+        <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t-2 border-slate-100">
+          <div className="flex justify-between text-[11px] sm:text-xs font-black text-slate-400 mb-1.5">
+            <span>Bạn: {myProgress?.answered || 0}/{totalRounds}</span>
+            <span className="bg-amber-100 text-amber-800 px-2 sm:px-2.5 py-0.5 rounded-full font-extrabold border border-amber-200 text-[10px] sm:text-xs">
+              Cược: {matchData.stake} 🍞
             </span>
             <span>Đối thủ: {opponentProgress?.answered || 0}/{totalRounds}</span>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="w-full bg-slate-100 h-3.5 rounded-full overflow-hidden border border-slate-200">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
+            <div className="w-full bg-slate-100 h-2.5 sm:h-3.5 rounded-full overflow-hidden border border-slate-200">
               <div
                 className="bg-sky-500 h-full rounded-full transition-all duration-300"
                 style={{ width: `${((myProgress?.answered || 0) / totalRounds) * 100}%` }}
               />
             </div>
-            <div className="w-full bg-slate-100 h-3.5 rounded-full overflow-hidden border border-slate-200">
+            <div className="w-full bg-slate-100 h-2.5 sm:h-3.5 rounded-full overflow-hidden border border-slate-200">
               <div
                 className="bg-rose-500 h-full rounded-full transition-all duration-300 ml-auto"
                 style={{ width: `${((opponentProgress?.answered || 0) / totalRounds) * 100}%` }}
