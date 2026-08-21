@@ -51,8 +51,8 @@ export const MARKET_ITEMS: MarketItem[] = [
     name: "Khung Avatar Cyberpunk Neon",
     category: "avatar",
     price: 450,
-    icon: "🤖",
-    description: "Hiệu ứng viền phát sáng công nghệ tương lai cực chất.",
+    icon: "💠",
+    description: "Hiệu ứng viền phát sáng Neon Cyan & Magenta tương lai đậm chất game thủ.",
     rarity: "rare",
   },
   {

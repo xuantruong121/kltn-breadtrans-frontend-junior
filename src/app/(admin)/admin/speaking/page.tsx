@@ -12,13 +12,15 @@ import {
   X
 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
-import { Button3D } from "@/components/ui";
+import { Button3D, Pagination } from "@/components/ui";
 import toast from "react-hot-toast";
 
 export default function AdminSpeakingPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Form State
   const [title, setTitle] = useState("");
@@ -83,6 +85,9 @@ export default function AdminSpeakingPage() {
       ex.targetText.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const totalPages = Math.ceil((filtered?.length || 0) / pageSize);
+  const paginated = filtered?.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
       {/* HEADER */}
@@ -116,7 +121,10 @@ export default function AdminSpeakingPage() {
             type="text"
             placeholder="Tìm kiếm bài tập phát âm..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
             className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl outline-none focus:border-purple-400 font-bold text-sm"
           />
         </div>
@@ -126,56 +134,73 @@ export default function AdminSpeakingPage() {
             <Loader2 className="animate-spin text-purple-600" size={40} />
           </div>
         ) : filtered && filtered.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filtered.map((ex) => (
-              <motion.div
-                key={ex.id}
-                whileHover={{ y: -3 }}
-                className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-6 flex flex-col justify-between hover:border-purple-300 transition-colors space-y-4"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase bg-purple-100 text-purple-700 border border-purple-200">
-                        {ex.category}
-                      </span>
-                      <span
-                        className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border ${
-                          ex.difficulty === "BEGINNER"
-                            ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-                            : ex.difficulty === "INTERMEDIATE"
-                            ? "bg-amber-100 text-amber-700 border-amber-200"
-                            : "bg-rose-100 text-rose-700 border-rose-200"
-                        }`}
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {paginated?.map((ex) => (
+                <motion.div
+                  key={ex.id}
+                  whileHover={{ y: -3 }}
+                  className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-6 flex flex-col justify-between hover:border-purple-300 transition-colors space-y-4"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase bg-purple-100 text-purple-700 border border-purple-200">
+                          {ex.category}
+                        </span>
+                        <span
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border ${
+                            ex.difficulty === "BEGINNER"
+                              ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+                              : ex.difficulty === "INTERMEDIATE"
+                              ? "bg-amber-100 text-amber-700 border-amber-200"
+                              : "bg-rose-100 text-rose-700 border-rose-200"
+                          }`}
+                        >
+                          {ex.difficulty}
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          if (confirm(`Bạn có chắc muốn xóa bài tập "${ex.title}"?`)) {
+                            deleteMutation.mutate(ex.id);
+                          }
+                        }}
+                        className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg transition-colors cursor-pointer"
+                        title="Xóa bài tập"
                       >
-                        {ex.difficulty}
-                      </span>
+                        <Trash2 size={16} />
+                      </button>
                     </div>
 
-                    <button
-                      onClick={() => {
-                        if (confirm(`Bạn có chắc muốn xóa bài tập "${ex.title}"?`)) {
-                          deleteMutation.mutate(ex.id);
-                        }
-                      }}
-                      className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg transition-colors cursor-pointer"
-                      title="Xóa bài tập"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    <h3 className="text-base font-black text-slate-800">{ex.title}</h3>
                   </div>
 
-                  <h3 className="text-base font-black text-slate-800">{ex.title}</h3>
-                </div>
+                  <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-1">
+                    <span className="text-[10px] font-black uppercase text-slate-400">Câu mẫu đọc:</span>
+                    <p className="text-sm font-extrabold text-purple-900 leading-relaxed italic">
+                      &ldquo;{ex.targetText}&rdquo;
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
 
-                <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-1">
-                  <span className="text-[10px] font-black uppercase text-slate-400">Câu mẫu đọc:</span>
-                  <p className="text-sm font-extrabold text-purple-900 leading-relaxed italic">
-                    &ldquo;{ex.targetText}&rdquo;
-                  </p>
-                </div>
-              </motion.div>
-            ))}
+            {/* PAGINATION */}
+            <div className="pt-2">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filtered?.length || 0}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
           </div>
         ) : (
           <div className="text-center py-16 text-slate-400 font-bold">

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import toast from "react-hot-toast";
+import { Pagination } from "@/components/ui";
 
 const QUIZ_TYPES = [
   { value: "all", label: "Tất cả thể loại" },
@@ -35,6 +36,8 @@ export default function AdminQuizzesPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Modal states
   const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
@@ -174,6 +177,9 @@ export default function AdminQuizzesPage() {
     return matchSearch && matchType;
   });
 
+  const totalPages = Math.ceil((filteredQuizzes?.length || 0) / pageSize);
+  const paginatedQuizzes = filteredQuizzes?.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
     <div className="max-w-6xl mx-auto pb-20 space-y-8">
       {/* HEADER */}
@@ -206,13 +212,19 @@ export default function AdminQuizzesPage() {
             <input
               type="text"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
               placeholder="Tìm kiếm theo tên đề thi hoặc mã ID..."
               className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:border-emerald-500 focus:bg-white transition-all text-sm"
             />
             {searchTerm && (
               <button
-                onClick={() => setSearchTerm("")}
+                onClick={() => {
+                  setSearchTerm("");
+                  setCurrentPage(1);
+                }}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
                 <X size={16} />
@@ -222,7 +234,10 @@ export default function AdminQuizzesPage() {
 
           <select
             value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
+            onChange={(e) => {
+              setTypeFilter(e.target.value);
+              setCurrentPage(1);
+            }}
             className="w-full md:w-auto px-5 py-3.5 bg-slate-50 border-2 border-slate-200 rounded-2xl font-black text-slate-700 outline-none focus:border-emerald-500 focus:bg-white text-sm cursor-pointer"
           >
             {QUIZ_TYPES.map((t) => (
@@ -252,7 +267,7 @@ export default function AdminQuizzesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-bold text-sm text-slate-700">
-                {filteredQuizzes.map((quiz: any) => {
+                {paginatedQuizzes?.map((quiz: any) => {
                   const questionCount = quiz._count?.questions || quiz.questions?.length || 0;
                   const timeLimitDisplay = quiz.timeLimit ? `${quiz.timeLimit} phút` : "15 phút";
 
@@ -320,6 +335,21 @@ export default function AdminQuizzesPage() {
                 })}
               </tbody>
             </table>
+
+            {/* PAGINATION */}
+            <div className="p-4 bg-slate-50/50 border-t border-slate-100">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filteredQuizzes?.length || 0}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
           </div>
         ) : (
           <div className="text-center py-16 text-slate-400 font-bold border-2 border-dashed border-slate-200 rounded-3xl">

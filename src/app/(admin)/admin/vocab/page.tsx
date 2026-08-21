@@ -12,7 +12,7 @@ import {
   X
 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
-import { Button3D } from "@/components/ui";
+import { Button3D, Pagination } from "@/components/ui";
 import toast from "react-hot-toast";
 
 export default function AdminVocabPage() {
@@ -20,6 +20,8 @@ export default function AdminVocabPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<any | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(6);
 
   // Form: Create Topic
   const [topicTitle, setTopicTitle] = useState("");
@@ -142,6 +144,9 @@ export default function AdminVocabPage() {
     t.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const totalPages = Math.ceil((filteredTopics?.length || 0) / pageSize);
+  const paginatedTopics = filteredTopics?.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
       {/* HEADER */}
@@ -175,7 +180,10 @@ export default function AdminVocabPage() {
             type="text"
             placeholder="Tìm kiếm chủ đề từ vựng..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
             className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl outline-none focus:border-orange-400 font-bold text-sm"
           />
         </div>
@@ -185,48 +193,65 @@ export default function AdminVocabPage() {
             <Loader2 className="animate-spin text-orange-500" size={40} />
           </div>
         ) : filteredTopics && filteredTopics.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTopics.map((t) => (
-              <motion.div
-                key={t.id}
-                whileHover={{ y: -3 }}
-                className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-6 flex flex-col justify-between hover:border-orange-300 transition-colors"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-3xl">📚</span>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedTopics?.map((t) => (
+                <motion.div
+                  key={t.id}
+                  whileHover={{ y: -3 }}
+                  className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-6 flex flex-col justify-between hover:border-orange-300 transition-colors"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-3xl">📚</span>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Bạn có chắc muốn xóa chủ đề "${t.title}"?`)) {
+                            deleteTopicMutation.mutate(t.id);
+                          }
+                        }}
+                        className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg transition-colors cursor-pointer"
+                        title="Xóa chủ đề"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+
+                    <div>
+                      <h3 className="text-lg font-black text-slate-800 leading-snug">{t.title}</h3>
+                      <p className="text-xs font-bold text-slate-400">{t.categoryName}</p>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-slate-200 mt-4 flex items-center justify-between">
+                    <span className="text-xs font-black text-slate-500">
+                      {t._count?.words || t.totalWords || 0} từ vựng
+                    </span>
                     <button
-                      onClick={() => {
-                        if (confirm(`Bạn có chắc muốn xóa chủ đề "${t.title}"?`)) {
-                          deleteTopicMutation.mutate(t.id);
-                        }
-                      }}
-                      className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg transition-colors cursor-pointer"
-                      title="Xóa chủ đề"
+                      onClick={() => setSelectedTopic(t)}
+                      className="text-xs font-black text-orange-600 hover:text-orange-700 cursor-pointer flex items-center gap-1"
                     >
-                      <Trash2 size={16} />
+                      Quản lý từ &rarr;
                     </button>
                   </div>
+                </motion.div>
+              ))}
+            </div>
 
-                  <div>
-                    <h3 className="text-lg font-black text-slate-800 leading-snug">{t.title}</h3>
-                    <p className="text-xs font-bold text-slate-400">{t.categoryName}</p>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-slate-200 mt-4 flex items-center justify-between">
-                  <span className="text-xs font-black text-slate-500">
-                    {t._count?.words || t.totalWords || 0} từ vựng
-                  </span>
-                  <button
-                    onClick={() => setSelectedTopic(t)}
-                    className="text-xs font-black text-orange-600 hover:text-orange-700 cursor-pointer flex items-center gap-1"
-                  >
-                    Quản lý từ &rarr;
-                  </button>
-                </div>
-              </motion.div>
-            ))}
+            {/* PAGINATION */}
+            <div className="pt-2">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filteredTopics?.length || 0}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
           </div>
         ) : (
           <div className="text-center py-16 text-slate-400 font-bold">

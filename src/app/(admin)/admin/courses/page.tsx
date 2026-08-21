@@ -9,6 +9,7 @@ import { useState } from "react";
 import axiosClient from "@/lib/api/axiosClient";
 import toast from "react-hot-toast";
 import Link from "next/link";
+import { Pagination } from "@/components/ui";
 
 type Teacher = { id: number; email: string; profile: { fullName: string; avatar: string | null } | null };
 type ClassData = { id: number; name: string; status: string; _count: { enrollments: number }; startDate: string | null; endDate: string | null };
@@ -33,6 +34,8 @@ export default function AdminCoursesPage() {
   const [showCreateCourse, setShowCreateCourse] = useState(false);
   const [showCreateClass, setShowCreateClass] = useState<number | null>(null); // courseId
   const [expandedCourse, setExpandedCourse] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(8);
 
   const [courseForm, setCourseForm] = useState({ title: "", description: "", level: "", teacherId: "" });
   const [classForm, setClassForm] = useState({ name: "", teacherId: "", startDate: "", endDate: "", meetingLink: "" });
@@ -96,6 +99,9 @@ export default function AdminCoursesPage() {
     (c.teacher?.profile?.fullName || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const totalPages = Math.ceil((filteredCourses?.length || 0) / pageSize);
+  const paginatedCourses = filteredCourses?.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   const levelLabel = (l: string | null) => LEVEL_OPTIONS.find(o => o.value === (l || ""))?.label || "—";
 
   return (
@@ -121,7 +127,10 @@ export default function AdminCoursesPage() {
             type="text"
             placeholder="Tìm kiếm theo tên khóa học hoặc giáo viên..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
             className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-blue-500 text-sm"
           />
         </div>
@@ -132,122 +141,138 @@ export default function AdminCoursesPage() {
         <div className="flex justify-center py-16"><Loader2 className="animate-spin text-blue-600" size={40} /></div>
       ) : (
         <div className="space-y-4">
-          {filteredCourses && filteredCourses.length > 0 ? filteredCourses.map((course) => (
-            <div key={course.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-              {/* Course Header */}
-              <div className="p-5 flex items-center gap-4">
-                <div className="w-16 h-16 rounded-xl bg-blue-50 overflow-hidden flex-shrink-0">
-                  {course.thumbnail ? (
-                    <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-blue-300">
-                      <BookOpen size={28} />
+          {paginatedCourses && paginatedCourses.length > 0 ? (
+            <>
+              {paginatedCourses.map((course) => (
+                <div key={course.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                  {/* Course Header */}
+                  <div className="p-5 flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-xl bg-blue-50 overflow-hidden flex-shrink-0">
+                      {course.thumbnail ? (
+                        <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-blue-300">
+                          <BookOpen size={28} />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="font-bold text-slate-800 text-lg leading-tight">{course.title}</h3>
+                          <p className="text-slate-400 text-xs mt-0.5">{course.description || "Chưa có mô tả"}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => { setShowCreateClass(course.id); setClassForm({ ...classForm, teacherId: course.teacher?.id?.toString() || "" }); }}
+                            className="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors"
+                          >
+                            <Plus size={14} /> Thêm Lớp
+                          </button>
+                          <button className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors" title="Chỉnh sửa">
+                            <Settings size={16} />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm(`Bạn có chắc muốn xóa khóa học "${course.title}"?`)) {
+                                deleteCourseMutation.mutate(course.id);
+                              }
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
+                            title="Xóa khóa học"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4 mt-3 text-xs text-slate-500">
+                        <span className="flex items-center gap-1"><UserCheck size={13} className="text-slate-400" /> {course.teacher?.profile?.fullName || "Chưa gán"}</span>
+                        <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-600">{levelLabel(course.level)}</span>
+                        <span className="flex items-center gap-1"><Users size={13} className="text-slate-400" /> {course._count.classes} lớp học</span>
+                        <button
+                          onClick={() => setExpandedCourse(expandedCourse === course.id ? null : course.id)}
+                          className="ml-auto flex items-center gap-1 text-blue-600 font-semibold hover:underline"
+                        >
+                          {expandedCourse === course.id ? "Thu gọn" : "Chi tiết lớp"}
+                          <ChevronRight size={14} className={`transition-transform ${expandedCourse === course.id ? "rotate-90" : ""}`} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Classes Accordion */}
+                  {expandedCourse === course.id && (
+                    <div className="border-t border-slate-100 bg-slate-50 p-4">
+                      {course.classes.length > 0 ? (
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="text-slate-400 text-xs border-b border-slate-200">
+                              <th className="p-3 text-left font-semibold">Tên Lớp</th>
+                              <th className="p-3 text-left font-semibold">Trạng thái</th>
+                              <th className="p-3 text-left font-semibold">Học viên</th>
+                              <th className="p-3 text-left font-semibold">Thời gian</th>
+                              <th className="p-3 text-right font-semibold">Thao tác</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {course.classes.map((cls) => (
+                              <tr key={cls.id} className="border-b border-slate-100 last:border-0">
+                                <td className="p-3 font-medium text-slate-800">{cls.name}</td>
+                                <td className="p-3">
+                                  <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                                    cls.status === "ACTIVE" ? "bg-green-100 text-green-700" :
+                                    cls.status === "UPCOMING" ? "bg-blue-100 text-blue-700" :
+                                    "bg-slate-100 text-slate-600"
+                                  }`}>
+                                    {cls.status === "ACTIVE" ? "Đang học" : cls.status === "UPCOMING" ? "Sắp khai giảng" : cls.status}
+                                  </span>
+                                </td>
+                                <td className="p-3 text-slate-600">
+                                  <span className="flex items-center gap-1"><Users size={13} /> {cls._count.enrollments} học viên</span>
+                                </td>
+                                <td className="p-3 text-slate-500 text-xs">
+                                  {cls.startDate ? new Date(cls.startDate).toLocaleDateString("vi-VN") : "—"}
+                                  {cls.endDate ? ` → ${new Date(cls.endDate).toLocaleDateString("vi-VN")}` : ""}
+                                </td>
+                                <td className="p-3 text-right">
+                                  <Link href={`/admin/enroll?classId=${cls.id}`}>
+                                    <button className="text-xs text-blue-600 hover:text-blue-800 font-medium underline">
+                                      Quản lý ghi danh
+                                    </button>
+                                  </Link>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      ) : (
+                        <div className="p-6 text-center text-slate-400 text-sm">
+                          Chưa có lớp học nào. Bấm "+ Thêm Lớp" để tạo.
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
+              ))}
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="font-bold text-slate-800 text-lg leading-tight">{course.title}</h3>
-                      <p className="text-slate-400 text-xs mt-0.5">{course.description || "Chưa có mô tả"}</p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded-lg font-medium">{levelLabel(course.level)}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
-                    <span className="flex items-center gap-1">
-                      <UserCheck size={13} /> {course.teacher?.profile?.fullName || "Chưa gán giáo viên"}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Users size={13} /> {course._count.classes} lớp học
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <button
-                    onClick={() => { setShowCreateClass(course.id); setClassForm({ ...classForm, teacherId: course.teacher?.id?.toString() || "" }); }}
-                    className="px-3 py-2 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-sm font-medium flex items-center gap-1 transition-colors"
-                  >
-                    <Plus size={14} /> Thêm Lớp
-                  </button>
-                  <button
-                    onClick={() => setExpandedCourse(expandedCourse === course.id ? null : course.id)}
-                    className="px-3 py-2 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg text-sm font-medium flex items-center gap-1 transition-colors"
-                  >
-                    <ChevronRight size={14} className={`transition-transform ${expandedCourse === course.id ? "rotate-90" : ""}`} />
-                    {course._count.classes} Lớp
-                  </button>
-                  <Link href={`/admin/enroll?courseId=${course.id}`}>
-                    <button className="px-3 py-2 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg text-sm font-medium flex items-center gap-1 transition-colors">
-                      <Settings size={14} /> Ghi danh
-                    </button>
-                  </Link>
-                  <button
-                    onClick={() => { if (confirm(`Xóa khóa học "${course.title}"?`)) deleteCourseMutation.mutate(course.id); }}
-                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
+              {/* PAGINATION */}
+              <div className="pt-2">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={filteredCourses?.length || 0}
+                  pageSize={pageSize}
+                  onPageChange={setCurrentPage}
+                  onPageSizeChange={(size) => {
+                    setPageSize(size);
+                    setCurrentPage(1);
+                  }}
+                />
               </div>
-
-              {/* Classes Panel */}
-              {expandedCourse === course.id && (
-                <div className="border-t border-slate-100 bg-slate-50">
-                  {course.classes.length > 0 ? (
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-slate-400 text-xs border-b border-slate-200">
-                          <th className="p-3 text-left font-semibold">Tên Lớp</th>
-                          <th className="p-3 text-left font-semibold">Trạng thái</th>
-                          <th className="p-3 text-left font-semibold">Học viên</th>
-                          <th className="p-3 text-left font-semibold">Thời gian</th>
-                          <th className="p-3 text-right font-semibold">Thao tác</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {course.classes.map((cls) => (
-                          <tr key={cls.id} className="border-b border-slate-100 last:border-0">
-                            <td className="p-3 font-medium text-slate-800">{cls.name}</td>
-                            <td className="p-3">
-                              <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                                cls.status === "ACTIVE" ? "bg-green-100 text-green-700" :
-                                cls.status === "UPCOMING" ? "bg-blue-100 text-blue-700" :
-                                "bg-slate-100 text-slate-600"
-                              }`}>
-                                {cls.status === "ACTIVE" ? "Đang học" : cls.status === "UPCOMING" ? "Sắp khai giảng" : cls.status}
-                              </span>
-                            </td>
-                            <td className="p-3 text-slate-600">
-                              <span className="flex items-center gap-1"><Users size={13} /> {cls._count.enrollments} học viên</span>
-                            </td>
-                            <td className="p-3 text-slate-500 text-xs">
-                              {cls.startDate ? new Date(cls.startDate).toLocaleDateString("vi-VN") : "—"}
-                              {cls.endDate ? ` → ${new Date(cls.endDate).toLocaleDateString("vi-VN")}` : ""}
-                            </td>
-                            <td className="p-3 text-right">
-                              <Link href={`/admin/enroll?classId=${cls.id}`}>
-                                <button className="text-xs text-blue-600 hover:text-blue-800 font-medium underline">
-                                  Quản lý ghi danh
-                                </button>
-                              </Link>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  ) : (
-                    <div className="p-6 text-center text-slate-400 text-sm">
-                      Chưa có lớp học nào. Bấm "+ Thêm Lớp" để tạo.
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )) : (
+            </>
+          ) : (
             <div className="bg-white rounded-2xl p-16 text-center border border-slate-100">
               <BookOpen size={40} className="text-slate-300 mx-auto mb-3" />
               <h3 className="font-bold text-slate-700 text-lg">Chưa có khóa học nào</h3>

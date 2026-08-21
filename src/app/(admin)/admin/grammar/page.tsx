@@ -12,7 +12,7 @@ import {
   CheckCircle2
 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
-import { Button3D } from "@/components/ui";
+import { Button3D, Pagination } from "@/components/ui";
 import toast from "react-hot-toast";
 
 export default function AdminGrammarPage() {
@@ -21,6 +21,8 @@ export default function AdminGrammarPage() {
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedTopicId, setSelectedTopicId] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(6);
 
   // Form states for new topic
   const [title, setTitle] = useState("");
@@ -43,6 +45,9 @@ export default function AdminGrammarPage() {
       return Array.isArray(res) ? res : res?.data || [];
     },
   });
+
+  const totalPages = Math.ceil((topics?.length || 0) / pageSize);
+  const paginatedTopics = topics?.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   // 2. Get specific topic detail with all its questions
   const { data: selectedTopicDetail, isLoading: isDetailLoading } = useQuery<any>({
@@ -193,63 +198,80 @@ export default function AdminGrammarPage() {
             <Loader2 className="animate-spin text-emerald-500" size={40} />
           </div>
         ) : topics && topics.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {topics.map((t) => (
-              <div
-                key={t.id}
-                className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-6 flex flex-col justify-between hover:border-emerald-400 hover:shadow-md transition-all group"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="bg-emerald-100 text-emerald-800 text-xs font-black px-2.5 py-0.5 rounded-full border border-emerald-200">
-                      {t.level || "BEGINNER"}
-                    </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (confirm(`Bạn có chắc muốn xóa chủ đề "${t.title}"?`)) {
-                          deleteTopicMutation.mutate(t.id);
-                        }
-                      }}
-                      className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg transition-colors cursor-pointer"
-                      title="Xóa chủ đề"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedTopics?.map((t) => (
+                <div
+                  key={t.id}
+                  className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-6 flex flex-col justify-between hover:border-emerald-400 hover:shadow-md transition-all group"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="bg-emerald-100 text-emerald-800 text-xs font-black px-2.5 py-0.5 rounded-full border border-emerald-200">
+                        {t.level || "BEGINNER"}
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm(`Bạn có chắc muốn xóa chủ đề "${t.title}"?`)) {
+                            deleteTopicMutation.mutate(t.id);
+                          }
+                        }}
+                        className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg transition-colors cursor-pointer"
+                        title="Xóa chủ đề"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+
+                    <h3 className="text-lg font-black text-slate-800 leading-snug group-hover:text-emerald-700 transition-colors">
+                      {t.title}
+                    </h3>
+                    <p className="text-xs font-bold text-slate-500 line-clamp-2">
+                      {t.description || "Chưa có mô tả"}
+                    </p>
+
+                    {t.keyFormula && (
+                      <div className="bg-emerald-50/60 border border-emerald-200 rounded-xl p-2.5 text-xs font-mono text-emerald-800 font-bold">
+                        {t.keyFormula}
+                      </div>
+                    )}
                   </div>
 
-                  <h3 className="text-lg font-black text-slate-800 leading-snug group-hover:text-emerald-700 transition-colors">
-                    {t.title}
-                  </h3>
-                  <p className="text-xs font-bold text-slate-500 line-clamp-2">
-                    {t.description || "Chưa có mô tả"}
-                  </p>
+                  <div className="pt-4 border-t border-slate-200 mt-4 flex items-center justify-between gap-2">
+                    <button
+                      onClick={() => handleOpenDetailModal(t.id)}
+                      className="px-3 py-1.5 bg-white hover:bg-emerald-50 text-emerald-700 font-black text-xs rounded-xl border border-slate-200 hover:border-emerald-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                      title="Bấm để xem danh sách câu hỏi hiện có"
+                    >
+                      <Eye size={14} /> {t.totalQuestions || 0} câu hỏi
+                    </button>
 
-                  {t.keyFormula && (
-                    <div className="bg-emerald-50/60 border border-emerald-200 rounded-xl p-2.5 text-xs font-mono text-emerald-800 font-bold">
-                      {t.keyFormula}
-                    </div>
-                  )}
+                    <button
+                      onClick={() => handleOpenAddQuestion(t.id)}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
+                    >
+                      <Plus size={14} /> Thêm câu hỏi
+                    </button>
+                  </div>
                 </div>
+              ))}
+            </div>
 
-                <div className="pt-4 border-t border-slate-200 mt-4 flex items-center justify-between gap-2">
-                  <button
-                    onClick={() => handleOpenDetailModal(t.id)}
-                    className="px-3 py-1.5 bg-white hover:bg-emerald-50 text-emerald-700 font-black text-xs rounded-xl border border-slate-200 hover:border-emerald-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                    title="Bấm để xem danh sách câu hỏi hiện có"
-                  >
-                    <Eye size={14} /> {t.totalQuestions || 0} câu hỏi
-                  </button>
-
-                  <button
-                    onClick={() => handleOpenAddQuestion(t.id)}
-                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
-                  >
-                    <Plus size={14} /> Thêm câu hỏi
-                  </button>
-                </div>
-              </div>
-            ))}
+            {/* PAGINATION */}
+            <div className="pt-2">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={topics?.length || 0}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
           </div>
         ) : (
           <div className="text-center py-16 text-slate-400 font-bold">
