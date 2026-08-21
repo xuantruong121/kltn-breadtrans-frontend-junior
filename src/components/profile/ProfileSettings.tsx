@@ -7,6 +7,8 @@ import { useApiQuery } from "@/hooks/useApiQuery";
 import { User, Phone, MapPin, Target, Camera, Loader2, Save, Key } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 
+import PushNotificationToggle from "@/components/pwa/PushNotificationToggle";
+
 export default function ProfileSettings() {
   const { data: profile, isLoading } = useApiQuery(
     ["userProfile"],
@@ -163,6 +165,8 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
               </div>
             </form>
           </div>
+
+          <PushNotificationToggle />
 
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
              <div className="p-6 border-b border-slate-100">

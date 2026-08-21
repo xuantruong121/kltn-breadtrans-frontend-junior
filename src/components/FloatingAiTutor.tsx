@@ -334,13 +334,13 @@ export default function FloatingAiTutor() {
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.92 }}
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-24 right-4 md:bottom-8 md:right-8 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white p-4 rounded-full shadow-xl hover:shadow-2xl z-40 transition-all border-2 border-white flex items-center justify-center cursor-pointer ${
+        className={`fixed bottom-20 right-3.5 sm:bottom-24 sm:right-4 md:bottom-8 md:right-8 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white p-3.5 sm:p-4 rounded-full shadow-xl hover:shadow-2xl z-40 transition-all border-2 border-white flex items-center justify-center cursor-pointer ${
           isOpen ? "scale-0 pointer-events-none" : "scale-100"
         }`}
         title={isAdminOrTeacher ? "Mở Trung Tâm Tin Nhắn Học Viên" : "Mở Trợ Lý Bánh Mì"}
       >
         <div className="relative">
-          <MessageCircle size={28} />
+          <MessageCircle size={24} className="sm:w-7 sm:h-7" />
           {isAdminOrTeacher ? (
             totalUnreadCount > 0 && (
               <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white animate-pulse">
@@ -363,7 +363,7 @@ export default function FloatingAiTutor() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.9 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-4 right-4 md:bottom-8 md:right-8 w-[92vw] max-w-sm md:w-[420px] bg-white rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.2)] z-50 border-4 border-slate-200 overflow-hidden flex flex-col h-[570px] max-h-[85vh]"
+            className="fixed bottom-20 right-2 sm:right-4 md:bottom-8 md:right-8 w-[calc(100vw-1rem)] max-w-sm md:w-[420px] bg-white rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.2)] z-50 border-4 border-slate-200 overflow-hidden flex flex-col h-[78vh] md:h-[570px] max-h-[85vh]"
           >
             {/* ======================================================== */}
             {/* 1. MÀN HÌNH DANH SÁCH HỌC SINH (DÀNH CHO ADMIN/TEACHER) */}

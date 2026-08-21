@@ -18,14 +18,35 @@ import { learnService } from "@/lib/api/services/learn.service";
 import { ContentTopic } from "../types";
 import { Button3D } from "@/components/ui";
 import { useGamificationStore } from "@/stores/gamificationStore";
+import { useAuthStore } from "@/stores/authStore";
 import toast from "react-hot-toast";
 
+interface TopicProgress {
+  userAnswers: Record<number, number>;
+  isSubmitted: boolean;
+  correctCount: number;
+}
+
 export default function LearnScreen() {
+  const { user } = useAuthStore();
+  const { addBreads } = useGamificationStore();
+
   const [activeTab, setActiveTab] = useState<"movie" | "music">("movie");
   const [selectedTopic, setSelectedTopic] = useState<ContentTopic | null>(null);
-  const [userAnswers, setUserAnswers] = useState<Record<number, number>>({});
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const { addBreads } = useGamificationStore();
+
+  const storageKey = `breadtrans_learn_progress_${user?.id || "guest"}`;
+
+  const [progressMap, setProgressMap] = useState<Record<string | number, TopicProgress>>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem(`breadtrans_learn_progress_${user?.id || "guest"}`);
+        return saved ? JSON.parse(saved) : {};
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  });
 
   const { data: topics, isLoading } = useQuery<ContentTopic[]>({
     queryKey: ["content-topics", activeTab],
@@ -34,21 +55,67 @@ export default function LearnScreen() {
 
   const currentTopic = selectedTopic || (topics && topics.length > 0 ? topics[0] : null);
 
+  const currentTopicId = currentTopic ? currentTopic.id : "";
+  const currentProgress: TopicProgress = (currentTopicId && progressMap[currentTopicId]) || {
+    userAnswers: {},
+    isSubmitted: false,
+    correctCount: 0,
+  };
+
   const handleSelectOption = (exerciseId: number, optionIdx: number) => {
-    if (isSubmitted) return;
-    setUserAnswers((prev) => ({ ...prev, [exerciseId]: optionIdx }));
+    if (!currentTopicId || currentProgress.isSubmitted) return;
+
+    const nextAnswers = { ...currentProgress.userAnswers, [exerciseId]: optionIdx };
+    const nextMap = {
+      ...progressMap,
+      [currentTopicId]: {
+        ...currentProgress,
+        userAnswers: nextAnswers,
+      },
+    };
+
+    setProgressMap(nextMap);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(nextMap));
+      } catch {}
+    }
   };
 
   const handleSubmitQuiz = () => {
-    if (!currentTopic?.exercises || currentTopic.exercises.length === 0) return;
-    setIsSubmitted(true);
+    if (!currentTopic?.exercises || currentTopic.exercises.length === 0 || !currentTopicId) return;
 
     let correctCount = 0;
     currentTopic.exercises.forEach((ex) => {
-      if (userAnswers[ex.id] === ex.correctIndex) {
+      if (currentProgress.userAnswers[ex.id] === ex.correctIndex) {
         correctCount++;
       }
     });
+
+    const nextMap = {
+      ...progressMap,
+      [currentTopicId]: {
+        userAnswers: currentProgress.userAnswers,
+        isSubmitted: true,
+        correctCount,
+      },
+    };
+
+    setProgressMap(nextMap);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(nextMap));
+      } catch {}
+    }
+
+    // Call backend watch tracking API if available
+    try {
+      learnService.updateWatchTracking(currentTopic.topicId || String(currentTopic.id), {
+        completed: true,
+        correctCount,
+        total: currentTopic.exercises.length,
+      }).catch(() => {});
+    } catch {}
 
     const reward = correctCount * 5;
     if (reward > 0) {
@@ -61,9 +128,25 @@ export default function LearnScreen() {
     }
   };
 
-  const handleResetQuiz = () => {
-    setUserAnswers({});
-    setIsSubmitted(false);
+  const handleResetQuiz = (topicId?: string | number) => {
+    const targetId = topicId || currentTopicId;
+    if (!targetId) return;
+
+    const nextMap = {
+      ...progressMap,
+      [targetId]: {
+        userAnswers: {},
+        isSubmitted: false,
+        correctCount: 0,
+      },
+    };
+
+    setProgressMap(nextMap);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(nextMap));
+      } catch {}
+    }
   };
 
   return (
@@ -86,7 +169,6 @@ export default function LearnScreen() {
             onClick={() => {
               setActiveTab("movie");
               setSelectedTopic(null);
-              handleResetQuiz();
             }}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-sm transition-all cursor-pointer ${
               activeTab === "movie"
@@ -100,7 +182,6 @@ export default function LearnScreen() {
             onClick={() => {
               setActiveTab("music");
               setSelectedTopic(null);
-              handleResetQuiz();
             }}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-sm transition-all cursor-pointer ${
               activeTab === "music"
@@ -145,6 +226,11 @@ export default function LearnScreen() {
                           <Clock size={14} /> {currentTopic.materialLinks.duration}
                         </span>
                       )}
+                      {currentProgress.isSubmitted && (
+                        <span className="flex items-center gap-1 text-emerald-700 bg-emerald-100 text-xs font-black px-3 py-1 rounded-full border border-emerald-300">
+                          <CheckCircle2 size={14} /> Đã hoàn thành ({currentProgress.correctCount}/{currentTopic.exercises?.length || 0} đúng)
+                        </span>
+                      )}
                     </div>
                     <h2 className="text-2xl font-black text-slate-800">{currentTopic.title}</h2>
                     <p className="text-sm font-bold text-slate-500 leading-relaxed">
@@ -170,7 +256,9 @@ export default function LearnScreen() {
 
                     <div className="space-y-6">
                       {currentTopic.exercises.map((ex, exIdx) => {
-                        const selected = userAnswers[ex.id];
+                        const selected = currentProgress.userAnswers[ex.id];
+                        const isSubmitted = currentProgress.isSubmitted;
+
                         return (
                           <div key={ex.id} className="space-y-3">
                             <h4 className="font-extrabold text-slate-800 text-base">
@@ -223,8 +311,8 @@ export default function LearnScreen() {
                     </div>
 
                     <div className="pt-4 border-t-2 border-slate-100 flex items-center justify-end gap-3">
-                      {isSubmitted ? (
-                        <Button3D variant="white" size="md" onClick={handleResetQuiz}>
+                      {currentProgress.isSubmitted ? (
+                        <Button3D variant="white" size="md" onClick={() => handleResetQuiz()}>
                           Làm Lại Bài
                         </Button3D>
                       ) : (
@@ -254,30 +342,45 @@ export default function LearnScreen() {
               <div className="space-y-3">
                 {topics?.map((topic) => {
                   const isSelected = currentTopic?.id === topic.id;
+                  const topicProg = progressMap[topic.id];
+                  const isDone = topicProg?.isSubmitted;
+
                   return (
                     <motion.div
                       key={topic.id}
                       whileHover={{ scale: 1.02 }}
                       onClick={() => {
                         setSelectedTopic(topic);
-                        handleResetQuiz();
                       }}
                       className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex gap-3.5 items-start ${
                         isSelected
                           ? "bg-sky-50 border-sky-400 shadow-xs"
+                          : isDone
+                          ? "bg-emerald-50/50 border-emerald-200 hover:border-emerald-300"
                           : "bg-slate-50 border-slate-200 hover:border-slate-300"
                       }`}
                     >
-                      <div className="relative w-16 h-12 rounded-xl overflow-hidden bg-slate-800 shrink-0 border border-slate-300 flex items-center justify-center text-white">
-                        <Play size={18} className="fill-white" />
+                      <div className={`relative w-16 h-12 rounded-xl overflow-hidden shrink-0 border flex items-center justify-center text-white ${
+                        isDone ? "bg-emerald-600 border-emerald-400" : "bg-slate-800 border-slate-300"
+                      }`}>
+                        {isDone ? <CheckCircle2 size={20} /> : <Play size={18} className="fill-white" />}
                       </div>
                       <div className="space-y-1">
-                        <h4 className="font-extrabold text-xs text-slate-800 line-clamp-2 leading-snug">
-                          {topic.title}
-                        </h4>
-                        <span className="text-[11px] font-bold text-slate-400 block">
-                          {topic.materialLinks?.level || "Beginner"} • {topic.exercises?.length || 0} bài tập
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <h4 className="font-extrabold text-xs text-slate-800 line-clamp-2 leading-snug">
+                            {topic.title}
+                          </h4>
+                        </div>
+                        <div className="flex items-center justify-between text-[11px] font-bold">
+                          <span className="text-slate-400">
+                            {topic.materialLinks?.level || "Beginner"} • {topic.exercises?.length || 0} bài tập
+                          </span>
+                          {isDone && (
+                            <span className="text-emerald-700 font-extrabold text-[10px] bg-emerald-100 px-1.5 py-0.5 rounded-md border border-emerald-200">
+                              Đã xong ({topicProg.correctCount}/{topic.exercises?.length || 0})
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </motion.div>
                   );

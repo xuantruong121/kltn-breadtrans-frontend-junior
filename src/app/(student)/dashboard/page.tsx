@@ -39,7 +39,7 @@ export default function DashboardPage() {
     enabled: !!user,
   });
 
-  const { isLoading: isQuestsLoading } = useQuery({
+  const { data: myQuests, isLoading: isQuestsLoading } = useQuery({
     queryKey: ["myQuests"],
     queryFn: gamificationService.getMyDailyQuests,
     enabled: !!user,
@@ -319,36 +319,52 @@ export default function DashboardPage() {
             </div>
 
             <div className="space-y-3">
-              {[
-                { title: "Học 10 từ vựng Flashcard", progress: 10, total: 10, reward: 15, done: true },
-                { title: "Luyện 1 bài phát âm AI", progress: 1, total: 1, reward: 20, done: true },
-                { title: "Xem 1 video bài giảng ngữ pháp", progress: 0, total: 1, reward: 10, done: false },
-              ].map((q, idx) => (
-                <div key={idx} className="p-3.5 bg-slate-50 border-2 border-slate-200 rounded-2xl">
-                  <div className="flex justify-between items-start mb-1.5">
-                    <h4 className="font-extrabold text-slate-800 text-xs">{q.title}</h4>
-                    {q.done ? (
-                      <span className="text-emerald-600 bg-emerald-100 p-0.5 rounded-full"><CheckCircle2 size={14}/></span>
-                    ) : (
-                      <span className="text-amber-700 bg-amber-100 text-[10px] font-black px-1.5 py-0.5 rounded-md">
-                        +{q.reward} 🍞
-                      </span>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-slate-200 h-2 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full ${q.done ? 'bg-emerald-500' : 'bg-amber-400'}`}
-                        style={{width: `${(q.progress / q.total) * 100}%`}}
-                      />
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-400">
-                      {q.progress}/{q.total}
-                    </span>
-                  </div>
+              {isQuestsLoading ? (
+                <div className="space-y-2 animate-pulse">
+                  <div className="h-14 bg-slate-100 rounded-2xl" />
+                  <div className="h-14 bg-slate-100 rounded-2xl" />
+                  <div className="h-14 bg-slate-100 rounded-2xl" />
                 </div>
-              ))}
+              ) : myQuests && myQuests.length > 0 ? (
+                myQuests.map((item) => {
+                  const target = item.quest?.targetValue || 1;
+                  const current = Math.min(item.currentValue || 0, target);
+                  const isDone = item.isCompleted || current >= target;
+                  const reward = item.quest?.rewardBanh || (item.quest?.rewardXP ? `${item.quest.rewardXP} XP` : 10);
+                  return (
+                    <div key={item.id} className="p-3.5 bg-slate-50 border-2 border-slate-200 rounded-2xl transition-all">
+                      <div className="flex justify-between items-start mb-1.5">
+                        <h4 className="font-extrabold text-slate-800 text-xs">{item.quest?.title}</h4>
+                        {isDone ? (
+                          <span className="text-emerald-600 bg-emerald-100 p-0.5 rounded-full" title="Đã hoàn thành">
+                            <CheckCircle2 size={14} />
+                          </span>
+                        ) : (
+                          <span className="text-amber-700 bg-amber-100 text-[10px] font-black px-1.5 py-0.5 rounded-md">
+                            +{reward} 🍞
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 bg-slate-200 h-2 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full transition-all duration-500 ${isDone ? 'bg-emerald-500' : 'bg-amber-400'}`}
+                            style={{ width: `${Math.min(100, Math.round((current / target) * 100))}%` }}
+                          />
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-400">
+                          {current}/{target}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="p-4 text-center text-xs text-slate-400 font-bold bg-slate-50 rounded-2xl">
+                  Chưa có nhiệm vụ mới hôm nay
+                </div>
+              )}
             </div>
           </div>
 

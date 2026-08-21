@@ -32,8 +32,11 @@ export default function ArenaPage() {
   const {
     isSearching,
     matchData,
+    currentRoundData,
+    roundResult,
     liveProgress,
     matchResult,
+    opponentDisconnected,
     joinQueue,
     cancelQueue,
     submitAnswer,
@@ -70,8 +73,11 @@ export default function ArenaPage() {
     return (
       <ArenaMatchRoom
         matchData={matchData}
+        currentRoundData={currentRoundData}
+        roundResult={roundResult}
         liveProgress={liveProgress}
         matchResult={matchResult}
+        opponentDisconnected={opponentDisconnected}
         onSubmitAnswer={submitAnswer}
         onExit={resetMatch}
       />

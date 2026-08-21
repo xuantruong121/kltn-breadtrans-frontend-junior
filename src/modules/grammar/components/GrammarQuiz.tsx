@@ -6,32 +6,121 @@ import { CheckCircle2, XCircle } from "lucide-react";
 import { GrammarQuestion } from "../types";
 import { Button3D } from "@/components/ui";
 import { useGamificationStore } from "@/stores/gamificationStore";
+import { useAuthStore } from "@/stores/authStore";
+import toast from "react-hot-toast";
 
 interface GrammarQuizProps {
+  lessonId: string | number;
   questions: GrammarQuestion[];
+  onProgressUpdate?: () => void;
 }
 
-export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ questions }) => {
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
-  const [showResults, setShowResults] = useState(false);
-
+export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ lessonId, questions, onProgressUpdate }) => {
+  const { user } = useAuthStore();
   const { addBreads, addExp } = useGamificationStore();
+
+  const storageKey = `breadtrans_grammar_progress_${user?.id || "guest"}`;
+
+  const [savedProgress, setSavedProgress] = useState<Record<string | number, {
+    selectedAnswers: Record<string, string>;
+    showResults: boolean;
+    correctCount: number;
+  }>>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem(`breadtrans_grammar_progress_${user?.id || "guest"}`);
+        return saved ? JSON.parse(saved) : {};
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  });
+
+  const currentLessonProg = savedProgress[lessonId] || {
+    selectedAnswers: {},
+    showResults: false,
+    correctCount: 0,
+  };
+
+  const selectedAnswers = currentLessonProg.selectedAnswers;
+  const showResults = currentLessonProg.showResults;
 
   const handleSelect = (questionId: string, option: string) => {
     if (showResults) return;
-    setSelectedAnswers((prev) => ({ ...prev, [questionId]: option }));
+
+    const nextAnswers = { ...selectedAnswers, [questionId]: option };
+    const nextProg = {
+      ...savedProgress,
+      [lessonId]: {
+        ...currentLessonProg,
+        selectedAnswers: nextAnswers,
+      },
+    };
+
+    setSavedProgress(nextProg);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(nextProg));
+      } catch {}
+    }
+    onProgressUpdate?.();
   };
 
   const handleCheckAnswers = () => {
-    setShowResults(true);
     let correctCount = 0;
     questions.forEach((q) => {
       if (selectedAnswers[q.id] === q.correctAnswer) correctCount++;
     });
 
-    // Reward breads & exp
-    addBreads(correctCount * 5);
-    addExp(correctCount * 25);
+    const nextProg = {
+      ...savedProgress,
+      [lessonId]: {
+        selectedAnswers,
+        showResults: true,
+        correctCount,
+      },
+    };
+
+    setSavedProgress(nextProg);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(nextProg));
+      } catch {}
+    }
+
+    const breadReward = correctCount * 5;
+    const expReward = correctCount * 25;
+    if (breadReward > 0) {
+      addBreads(breadReward);
+      addExp(expReward);
+      toast.success(`Chúc mừng! Đúng ${correctCount}/${questions.length} câu ngữ pháp! +${breadReward} 🍞 +${expReward} EXP`, {
+        icon: "🎉",
+      });
+    } else {
+      toast("Hãy xem lại lý thuyết video và làm lại nhé!", { icon: "💡" });
+    }
+
+    onProgressUpdate?.();
+  };
+
+  const handleReset = () => {
+    const nextProg = {
+      ...savedProgress,
+      [lessonId]: {
+        selectedAnswers: {},
+        showResults: false,
+        correctCount: 0,
+      },
+    };
+
+    setSavedProgress(nextProg);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(nextProg));
+      } catch {}
+    }
+    onProgressUpdate?.();
   };
 
   const isAllAnswered = questions.every((q) => selectedAnswers[q.id]);
@@ -43,6 +132,11 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ questions }) => {
           <h3 className="text-xl font-black text-slate-800">Bài Tập Củng Cố Ngữ Pháp</h3>
           <p className="text-xs font-bold text-slate-400">Làm đúng để nhận thêm Bánh Mì 🍞</p>
         </div>
+        {showResults && (
+          <span className="text-xs font-black text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300">
+            {currentLessonProg.correctCount}/{questions.length} câu đúng
+          </span>
+        )}
       </div>
 
       <div className="space-y-6">
@@ -120,10 +214,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ questions }) => {
           <Button3D
             variant="blue"
             size="md"
-            onClick={() => {
-              setSelectedAnswers({});
-              setShowResults(false);
-            }}
+            onClick={handleReset}
           >
             Làm lại bài tập
           </Button3D>

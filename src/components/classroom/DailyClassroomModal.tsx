@@ -153,36 +153,34 @@ export default function DailyClassroomModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/80 backdrop-blur-md">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-slate-900/90 backdrop-blur-md">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ duration: 0.2 }}
-          className={`bg-white rounded-[2.5rem] border-4 border-slate-200 shadow-[0_16px_0_0_#0f172a] flex flex-col overflow-hidden transition-all duration-300 relative ${
-            isFullscreen
-              ? "w-full h-full rounded-none border-0"
-              : "w-full max-w-6xl h-[88vh]"
+          className={`bg-white rounded-none sm:rounded-[2.5rem] border-0 sm:border-4 border-slate-200 shadow-[0_16px_0_0_#0f172a] flex flex-col overflow-hidden transition-all duration-300 relative w-full h-full ${
+            isFullscreen ? "sm:h-full sm:rounded-none sm:border-0" : "sm:max-w-6xl sm:h-[88vh]"
           }`}
         >
           {/* HEADER BAR */}
-          <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b-4 border-slate-800 shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-blue-600 text-white shadow-sm">
-                <Video size={22} />
+          <div className="bg-slate-900 text-white px-3 sm:px-6 py-2.5 sm:py-4 flex items-center justify-between border-b-2 sm:border-b-4 border-slate-800 shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-blue-600 text-white shadow-sm shrink-0">
+                <Video size={18} className="sm:w-[22px] sm:h-[22px]" />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-black text-base md:text-lg text-white leading-tight">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <h3 className="font-black text-sm sm:text-base md:text-lg text-white leading-tight truncate max-w-[140px] sm:max-w-xs md:max-w-md">
                     {sessionTitle}
                   </h3>
-                  <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     Trực Tuyến (Daily.co)
                   </span>
                 </div>
                 {courseName && (
-                  <p className="text-xs font-bold text-slate-400 mt-0.5 truncate max-w-md">
+                  <p className="text-[11px] sm:text-xs font-bold text-slate-400 mt-0.5 truncate max-w-[160px] sm:max-w-md">
                     {courseName}
                   </p>
                 )}
@@ -190,7 +188,7 @@ export default function DailyClassroomModal({
             </div>
 
             {/* CONTROLS */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <a
                 href={displayUrl}
                 target="_blank"
@@ -203,29 +201,29 @@ export default function DailyClassroomModal({
 
               <button
                 onClick={() => setIsFullscreen(!isFullscreen)}
-                className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors cursor-pointer"
+                className="p-2 sm:p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors cursor-pointer"
                 title={isFullscreen ? "Thu nhỏ" : "Toàn màn hình"}
               >
-                {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+                {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
               </button>
 
               {/* RỜI PHÒNG (CÁ NHÂN) */}
               <button
                 onClick={onClose}
-                className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer border border-slate-700"
+                className="px-2.5 sm:px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl transition-colors flex items-center gap-1 sm:gap-1.5 cursor-pointer border border-slate-700"
                 title="Rời phòng học (bạn có thể vào lại)"
               >
-                <LogOut size={15} /> Rời Phòng
+                <LogOut size={14} /> <span className="hidden sm:inline">Rời Phòng</span>
               </button>
 
               {/* KẾT THÚC BUỔI HỌC (CHO GIÁO VIÊN) */}
               {isTeacher && sessionId && (
                 <button
                   onClick={() => setShowFinishConfirm(true)}
-                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer border border-rose-500"
+                  className="px-3 sm:px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1 sm:gap-1.5 cursor-pointer border border-rose-500"
                   title="Kết thúc buổi học cho cả lớp & ngắt phòng Daily.co"
                 >
-                  <AlertOctagon size={16} /> Kết Thúc Buổi Học
+                  <AlertOctagon size={15} /> <span className="hidden sm:inline">Kết Thúc Buổi Học</span>
                 </button>
               )}
             </div>
