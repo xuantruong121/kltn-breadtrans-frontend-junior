@@ -9,6 +9,7 @@ export interface UserProfile {
   profile?: {
     id: number;
     fullName: string;
+    avatar?: string;
     avatarUrl?: string;
     bio?: string;
     dateOfBirth?: string;

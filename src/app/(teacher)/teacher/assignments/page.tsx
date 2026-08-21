@@ -358,14 +358,28 @@ export default function TeacherAssignmentsPage() {
                 <div className="text-center py-12 text-slate-500">Đang tải danh sách nộp bài...</div>
               ) : assignmentDetail?.submissions?.length > 0 ? (
                 <div className="space-y-4">
-                  {(assignmentDetail?.submissions || []).map((sub: any) => (
+                  {(assignmentDetail?.submissions || []).map((sub: any) => {
+                    const isLate = selectedAssignment?.dueDate && sub.submittedAt && dayjs(sub.submittedAt).isAfter(dayjs(selectedAssignment.dueDate));
+
+                    return (
                     <div key={sub.id} className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
                       <div className="flex justify-between items-start mb-4 border-b border-slate-100 pb-4">
                         <div className="flex items-center gap-3">
                           <img src={sub.user?.profile?.avatar || "/default-avatar.png"} alt="Avatar" className="w-10 h-10 rounded-full object-cover border border-slate-200" />
                           <div>
                             <h4 className="font-bold text-slate-800">{sub.user?.profile?.fullName || sub.user?.email}</h4>
-                            <p className="text-xs text-slate-500">Nộp lúc: {dayjs(sub.submittedAt).format("DD/MM/YYYY HH:mm")}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <p className="text-xs text-slate-500">Nộp lúc: {dayjs(sub.submittedAt).format("DD/MM/YYYY HH:mm")}</p>
+                              {isLate ? (
+                                <span className="text-[11px] font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded border border-amber-200">
+                                  Nộp trễ hạn
+                                </span>
+                              ) : (
+                                <span className="text-[11px] font-bold bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded">
+                                  Đúng hạn ✓
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <div className="text-right">
@@ -384,9 +398,12 @@ export default function TeacherAssignmentsPage() {
                       <div className="mb-4">
                         <h5 className="text-xs font-bold text-slate-500 uppercase mb-2">Nội dung bài làm</h5>
                         {selectedAssignment?.type === 'QUIZ' ? (
-                          <div className="bg-slate-50 p-3 rounded border border-slate-200 text-sm">
-                            <p>Học sinh đã làm bài trắc nghiệm. Hệ thống tự động chấm điểm.</p>
-                            <p className="text-emerald-600 font-medium mt-1">Học sinh đạt {sub.grade}/10 điểm.</p>
+                          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm">
+                            <div className="flex items-center gap-2 text-purple-700 font-bold mb-1">
+                              <span>⚡ Đã được hệ thống chấm tự động 100%</span>
+                            </div>
+                            <p className="text-slate-600 text-xs">Học sinh nộp câu trả lời trực tiếp trên hệ thống.</p>
+                            <p className="text-emerald-700 font-black text-base mt-2">Điểm đạt: {sub.grade}/10 điểm</p>
                           </div>
                         ) : (
                           <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 text-slate-700 whitespace-pre-wrap text-sm">
@@ -445,7 +462,8 @@ export default function TeacherAssignmentsPage() {
                         </div>
                       )}
                     </div>
-                  ))}
+                  );
+                })}
                 </div>
               ) : (
                 <div className="text-center py-16 text-slate-500">

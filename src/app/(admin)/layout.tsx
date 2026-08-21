@@ -20,6 +20,7 @@ import {
   X
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSyncExternalStore, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -45,10 +46,12 @@ const emptySubscribe = () => () => {};
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user, logout } = useAuthStore();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   const handleLogout = () => {
+    queryClient.clear();
     logout();
     router.push("/");
   };

@@ -17,13 +17,14 @@ import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { userService } from "@/lib/api/services/user.service";
 import { gamificationService } from "@/lib/api/services/gamification.service";
-import { Button3D } from "@/components/ui";
+import { Button3D, UserAvatarWithFrame } from "@/components/ui";
+import { MARKET_ITEMS } from "@/modules/market/services/marketData";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
-  const { breads: localBreads, streak: localStreak } = useGamificationStore();
+  const { breads: localBreads, streak: localStreak, equippedBadge } = useGamificationStore();
   const queryClient = useQueryClient();
 
   // Fetch all necessary data
@@ -75,67 +76,82 @@ export default function DashboardPage() {
   const displayName = profile?.profile?.fullName || user.email;
   const banhRan = (profile as any)?.stats?.totalBanhRan ?? localBreads;
   const canFeedPet = banhRan >= 10;
+  const activeBadgeItem = MARKET_ITEMS.find((i) => i.id === equippedBadge);
 
   // Quick Action Modules Map
   const QUICK_ACTIONS = [
     {
       id: "flashcard",
-      href: "/flashcard",
-      title: "Flashcard 3D",
-      desc: "Lật thẻ học từ vựng theo sách và chủ đề",
+      title: "Từ Vựng 3D",
+      desc: "Flashcard tương tác",
       icon: "🎴",
+      href: "/flashcard",
       color: "from-amber-400 to-orange-500",
-      border: "border-amber-300 shadow-[0_6px_0_0_#d97706]",
-      tag: "HOT",
+      border: "border-amber-400 shadow-[0_8px_0_0_#f59e0b]",
+      tag: "Từ vựng",
     },
     {
       id: "grammar",
+      title: "Ngữ Pháp 3D",
+      desc: "Bài học trực quan",
+      icon: "📐",
       href: "/grammar",
-      title: "Ngữ Pháp Video",
-      desc: "Bài giảng video sinh động và quiz trọng tâm",
-      icon: "🎓",
       color: "from-emerald-400 to-teal-500",
-      border: "border-emerald-300 shadow-[0_6px_0_0_#059669]",
-      tag: "MỚI",
+      border: "border-emerald-400 shadow-[0_8px_0_0_#10b981]",
+      tag: "Cấu trúc",
     },
     {
-      id: "speaking",
-      href: "/practice/speaking",
-      title: "Luyện Phát Âm AI",
-      desc: "Chấm điểm giọng đọc bằng Azure & Gemini",
-      icon: "🎙️",
+      id: "learn",
+      title: "Phim & Nhạc",
+      desc: "Luyện qua phụ đề",
+      icon: "🎬",
+      href: "/learn",
+      color: "from-rose-400 to-red-500",
+      border: "border-rose-400 shadow-[0_8px_0_0_#f43f5e]",
+      tag: "Giải trí",
+    },
+    {
+      id: "practice",
+      title: "Đề Thi & AI",
+      desc: "Phát âm & TOEIC",
+      icon: "🎯",
+      href: "/practice",
       color: "from-purple-400 to-indigo-500",
-      border: "border-purple-300 shadow-[0_6px_0_0_#7c3aed]",
-      tag: "AI 2.0",
-    },
-    {
-      id: "market",
-      href: "/market",
-      title: "Cửa Hàng Bánh Mì",
-      desc: "Đổi quà và vinh danh trên bảng xếp hạng",
-      icon: "🍞",
-      color: "from-rose-400 to-pink-500",
-      border: "border-rose-300 shadow-[0_6px_0_0_#e11d48]",
-      tag: "REWARD",
+      border: "border-purple-400 shadow-[0_8px_0_0_#8b5cf6]",
+      tag: "Thi cử",
     },
   ];
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-16">
-      {/* 1. WELCOME HERO BANNER */}
+    <div className="space-y-8 max-w-7xl mx-auto pb-12">
+      {/* 1. HERO BANNER */}
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-600 p-8 md:p-10 rounded-[2.5rem] text-white flex flex-col md:flex-row justify-between items-center shadow-[0_12px_0_0_#0284c7] border-4 border-sky-600 relative overflow-hidden"
+        className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 p-6 md:p-10 text-white shadow-[0_12px_0_0_#0284c7] border-4 border-sky-300 flex flex-col md:flex-row items-center justify-between"
       >
-        <div className="z-10 text-center md:text-left mb-6 md:mb-0">
-          <span className="text-xs font-black uppercase tracking-wider bg-white/20 px-3.5 py-1.5 rounded-full backdrop-blur-xs">
-            Học kỳ Junior 2026
-          </span>
-          <h1 className="text-4xl md:text-5xl font-black mt-2 mb-2 drop-shadow-md">
-            Chào buổi sáng, {displayName}! 👋
-          </h1>
-          <p className="text-sky-100 text-lg font-medium">Hôm nay bạn muốn rèn luyện kỹ năng nào?</p>
+        <div className="z-10 flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left mb-6 md:mb-0">
+          <Link href="/student/profile" className="shrink-0 hover:scale-105 transition-transform">
+            <UserAvatarWithFrame
+              avatarUrl={profile?.profile?.avatar || profile?.profile?.avatarUrl || user.profile?.avatar}
+              name={displayName}
+              size="lg"
+              showBadge={true}
+            />
+          </Link>
+          <div>
+            <span className="text-xs font-black uppercase tracking-wider bg-white/20 px-3.5 py-1.5 rounded-full backdrop-blur-xs">
+              Học kỳ Junior 2026
+            </span>
+            <h1 className="text-3xl md:text-4xl font-black mt-2 mb-1 drop-shadow-md flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+              <span>Chào {displayName}!</span>
+              {activeBadgeItem && (
+                <span className="text-2xl" title={activeBadgeItem.name}>{activeBadgeItem.icon}</span>
+              )}
+              <span>👋</span>
+            </h1>
+            <p className="text-sky-100 text-sm md:text-base font-medium">Hôm nay bạn muốn rèn luyện kỹ năng nào?</p>
+          </div>
         </div>
         
         <div className="z-10 flex gap-3">

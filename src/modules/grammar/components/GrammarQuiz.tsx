@@ -7,6 +7,8 @@ import { GrammarQuestion } from "../types";
 import { Button3D } from "@/components/ui";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useAuthStore } from "@/stores/authStore";
+import { useQueryClient } from "@tanstack/react-query";
+import axiosClient from "@/lib/api/axiosClient";
 import toast from "react-hot-toast";
 
 interface GrammarQuizProps {
@@ -18,6 +20,7 @@ interface GrammarQuizProps {
 export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ lessonId, questions, onProgressUpdate }) => {
   const { user } = useAuthStore();
   const { addBreads, addExp } = useGamificationStore();
+  const queryClient = useQueryClient();
 
   const storageKey = `breadtrans_grammar_progress_${user?.id || "guest"}`;
 
@@ -99,6 +102,20 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ lessonId, questions, o
       });
     } else {
       toast("Hãy xem lại lý thuyết video và làm lại nhé!", { icon: "💡" });
+    }
+
+    if (user) {
+      const numericId = Number(lessonId);
+      if (!isNaN(numericId)) {
+        axiosClient.post(`/grammar/topics/${numericId}/attempt`, {
+          answers: selectedAnswers,
+        }).then(() => {
+          queryClient.invalidateQueries({ queryKey: ["myQuests"] });
+          queryClient.invalidateQueries({ queryKey: ["profile"] });
+          queryClient.invalidateQueries({ queryKey: ["stats"] });
+          queryClient.invalidateQueries({ queryKey: ["grammar-topics"] });
+        }).catch(() => {});
+      }
     }
 
     onProgressUpdate?.();

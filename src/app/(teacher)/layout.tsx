@@ -2,8 +2,8 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import { Users, BookOpen, PenTool, LogOut, Menu, X } from "lucide-react";
+import { LogOut, Menu, LayoutDashboard, Calendar, UserCheck, FileText, FolderKanban, BookOpen } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import { useSyncExternalStore, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,10 +12,12 @@ import dynamic from "next/dynamic";
 const FloatingAiTutor = dynamic(() => import("@/components/FloatingAiTutor"), { ssr: false });
 
 const NAV_ITEMS = [
-  { id: "classes", href: "/teacher/classes", label: "Lớp học của tôi", icon: Users },
-  { id: "assignments", href: "/teacher/assignments", label: "Chấm điểm", icon: PenTool },
-  { id: "materials", href: "/teacher/materials", label: "Học liệu", icon: BookOpen },
-  { id: "profile", href: "/teacher/profile", label: "Hồ sơ cá nhân", icon: Users },
+  { id: "dashboard", href: "/teacher/dashboard", label: "Tổng quan", icon: LayoutDashboard },
+  { id: "schedule", href: "/teacher/schedule", label: "Thời khóa biểu", icon: Calendar },
+  { id: "classes", href: "/teacher/classes", label: "Lớp học phụ trách", icon: BookOpen },
+  { id: "assignments", href: "/teacher/assignments", label: "Bài tập & Chấm điểm", icon: FileText },
+  { id: "materials", href: "/teacher/materials", label: "Kho học liệu", icon: FolderKanban },
+  { id: "profile", href: "/teacher/profile", label: "Hồ sơ cá nhân", icon: UserCheck },
 ];
 
 const emptySubscribe = () => () => {};
@@ -23,6 +25,7 @@ const emptySubscribe = () => () => {};
 export default function TeacherLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user, logout } = useAuthStore();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   
@@ -40,49 +43,46 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
 
   if (!isReady || !user) return null;
 
+  const handleLogout = () => {
+    queryClient.clear();
+    logout();
+    router.push("/");
+  };
+
   const sidebarContent = (
-    <div className="flex flex-col justify-between h-full">
+    <div className="flex flex-col h-full justify-between p-4">
+      {/* Brand */}
       <div>
-        {/* Logo */}
-        <div className="p-6 border-b border-slate-800 flex items-center justify-between">
-          <Link href="/" onClick={() => setIsMobileNavOpen(false)} className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center border border-orange-500/30">
-              <Image 
-                src="/logo.png" 
-                alt="Logo" 
-                width={24} 
-                height={24} 
-                style={{ width: "auto", height: "auto" }} 
-                className="rounded-md object-contain max-h-6" 
-              />
-            </div>
-            <span className="font-bold text-white text-lg tracking-wide">BreadTrans</span>
-          </Link>
-          <button 
-            onClick={() => setIsMobileNavOpen(false)}
-            className="lg:hidden text-slate-400 hover:text-white p-1 cursor-pointer"
-          >
-            <X size={20} />
-          </button>
+        <div className="flex items-center gap-3 px-2 py-4 mb-6 border-b border-slate-800">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/20 font-black text-xl">
+            BT
+          </div>
+          <div>
+            <h1 className="font-bold text-white text-lg tracking-tight leading-none">BreadTrans</h1>
+            <span className="text-xs font-semibold px-2 py-0.5 mt-1 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 inline-block">
+              TEACHER PORTAL
+            </span>
+          </div>
         </div>
 
-        {/* Nav links */}
-        <nav className="p-4 space-y-1">
+        {/* Navigation */}
+        <nav className="space-y-1.5">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname.startsWith(item.href);
+            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+
             return (
               <Link
                 key={item.id}
                 href={item.href}
                 onClick={() => setIsMobileNavOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-colors ${
-                  isActive 
-                    ? "bg-blue-600 text-white font-semibold shadow-md shadow-blue-500/20" 
-                    : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                className={`flex items-center gap-3.5 px-3.5 py-3 rounded-xl font-medium text-sm transition-all duration-200 ${
+                  isActive
+                    ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-orange-500/20 font-semibold"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
                 }`}
               >
-                <Icon size={18} />
+                <Icon size={19} className={isActive ? "text-white" : "text-slate-400"} />
                 {item.label}
               </Link>
             );
@@ -91,14 +91,10 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
       </div>
 
       {/* User profile & logout */}
-      <div className="p-4 border-t border-slate-800 space-y-4">
-        <div className="flex items-center gap-3 px-2">
+      <div className="pt-4 border-t border-slate-800">
+        <div className="flex items-center gap-3 px-3 py-2 mb-2 rounded-lg bg-slate-800/40">
           {user.profile?.avatar ? (
-            <img 
-              src={user.profile.avatar} 
-              alt="Avatar" 
-              className="w-10 h-10 rounded-full object-cover border border-slate-700" 
-            />
+            <img src={user.profile.avatar} alt="Avatar" className="w-10 h-10 rounded-full object-cover border border-slate-700" />
           ) : (
             <div className="w-10 h-10 rounded-full bg-slate-800 text-slate-300 font-bold flex items-center justify-center">
               {user.email[0].toUpperCase()}
@@ -110,7 +106,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
           </div>
         </div>
         <button 
-          onClick={() => { logout(); router.push('/'); }}
+          onClick={handleLogout}
           className="w-full flex items-center gap-3 p-3 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-colors cursor-pointer"
         >
           <LogOut size={20} /> Đăng xuất
@@ -122,7 +118,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
       {/* Desktop Sidebar (lg+) */}
-      <aside className="hidden lg:flex w-64 bg-slate-900 border-r border-slate-800 flex-col justify-between shrink-0">
+      <aside className="hidden lg:flex w-64 bg-slate-900 border-r border-slate-800 flex-col shrink-0">
         {sidebarContent}
       </aside>
 

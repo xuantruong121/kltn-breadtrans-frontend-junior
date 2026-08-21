@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { 
   Film, 
@@ -15,6 +15,7 @@ import {
   Award
 } from "lucide-react";
 import { learnService } from "@/lib/api/services/learn.service";
+import { gamificationService } from "@/lib/api/services/gamification.service";
 import { ContentTopic } from "../types";
 import { Button3D } from "@/components/ui";
 import { useGamificationStore } from "@/stores/gamificationStore";
@@ -30,6 +31,7 @@ interface TopicProgress {
 export default function LearnScreen() {
   const { user } = useAuthStore();
   const { addBreads } = useGamificationStore();
+  const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<"movie" | "music">("movie");
   const [selectedTopic, setSelectedTopic] = useState<ContentTopic | null>(null);
@@ -123,6 +125,13 @@ export default function LearnScreen() {
       toast.success(`Chúc mừng! Bạn đã trả lời đúng ${correctCount}/${currentTopic.exercises.length} câu và nhận +${reward} 🍞 Bánh Mì!`, {
         icon: "🎉",
       });
+      if (user) {
+        gamificationService.recordVocabLearned(correctCount).then(() => {
+          queryClient.invalidateQueries({ queryKey: ["myQuests"] });
+          queryClient.invalidateQueries({ queryKey: ["profile"] });
+          queryClient.invalidateQueries({ queryKey: ["stats"] });
+        }).catch(() => {});
+      }
     } else {
       toast("Hãy xem lại video và thử lại để kiếm Bánh Mì nhé!", { icon: "💡" });
     }
