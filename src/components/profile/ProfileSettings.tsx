@@ -61,7 +61,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
   const user = useAuthStore((state) => state.user);
 
   const [activeTab, setActiveTab] = useState<"profile" | "inventory">("profile");
-  const [inventoryCategory, setInventoryCategory] = useState<"all" | "avatar" | "badge" | "powerup">("all");
+  const [inventoryCategory, setInventoryCategory] = useState<"all" | "avatar" | "badge" | "boost">("all");
 
   const {
     unlockedItems,
@@ -105,7 +105,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
 
   const framesCount = myUnlockedList.filter((i) => i.category === "avatar").length;
   const badgesCount = myUnlockedList.filter((i) => i.category === "badge").length;
-  const powerupsCount = myUnlockedList.filter((i) => i.category === "powerup").length;
+  const boostsCount = myUnlockedList.filter((i) => i.category === "boost").length;
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -395,14 +395,14 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setInventoryCategory("powerup")}
+                  onClick={() => setInventoryCategory("boost")}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
-                    inventoryCategory === "powerup"
+                    inventoryCategory === "boost"
                       ? "bg-emerald-600 text-white shadow-xs"
                       : "bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
                   }`}
                 >
-                  ⚡ Vật Phẩm ({powerupsCount})
+                  ⚡ Vật Phẩm ({boostsCount})
                 </button>
               </div>
 
@@ -437,7 +437,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                 {filteredInventory.map((item) => {
                   const isFrame = item.category === "avatar";
                   const isBadge = item.category === "badge";
-                  const isPowerup = item.category === "powerup";
+                  const isBoost = item.category === "boost";
 
                   const isEquipped =
                     (isFrame && equippedAvatarFrame === item.id) ||
@@ -548,7 +548,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                           </button>
                         )}
 
-                        {isPowerup && (
+                        {isBoost && (
                           <div className="w-full py-2 text-center text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-center gap-1.5">
                             <Zap size={14} className="text-emerald-500" /> Tự động kích hoạt khi học
                           </div>
