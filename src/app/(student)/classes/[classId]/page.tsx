@@ -283,6 +283,7 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
                   const submission = asgn.submissions?.[0]; // Current user's submission
                   const isSubmitted = !!submission;
                   const isGraded = submission?.grade !== null && submission?.grade !== undefined;
+                  const isLate = asgn.dueDate && submission?.submittedAt && dayjs(submission.submittedAt).isAfter(dayjs(asgn.dueDate));
 
                   return (
                     <div key={asgn.id} className="p-6 border-2 border-slate-100 rounded-xl flex flex-col md:flex-row gap-6 justify-between items-center">
@@ -295,16 +296,27 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
                         </div>
                         <p className="text-slate-600 mb-3">{asgn.description || "Không có mô tả chi tiết"}</p>
                         
-                        <div className="flex gap-4 items-center">
+                        <div className="flex flex-wrap gap-3 items-center">
                           {asgn.dueDate && (
-                            <span className="text-sm font-bold text-orange-600 bg-orange-50 px-3 py-1 rounded-lg">
+                            <span className="text-xs font-bold text-orange-600 bg-orange-50 px-3 py-1 rounded-lg border border-orange-100">
                               Hạn: {dayjs(asgn.dueDate).format("DD/MM/YYYY HH:mm")}
                             </span>
                           )}
                           {isSubmitted && (
-                            <span className="text-sm font-bold text-junior-green flex items-center gap-1">
-                              <CheckCircle size={16} /> Đã nộp
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-junior-green bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 flex items-center gap-1">
+                                <CheckCircle size={14} /> Đã nộp
+                              </span>
+                              {isLate ? (
+                                <span className="text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-md border border-amber-200">
+                                  Nộp trễ hạn
+                                </span>
+                              ) : (
+                                <span className="text-xs font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
+                                  Đúng hạn ✓
+                                </span>
+                              )}
+                            </div>
                           )}
                         </div>
                       </div>

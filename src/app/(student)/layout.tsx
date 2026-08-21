@@ -11,18 +11,17 @@ import {
   Gamepad2, 
   Trophy, 
   LogOut, 
-  UserCircle, 
   ShoppingBag,
   GraduationCap,
   Layers,
   Film,
   MoreHorizontal,
   X,
-  User,
   ChevronRight
 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
-import { GamificationBar } from "@/components/ui";
+import { GamificationBar, UserAvatarWithFrame } from "@/components/ui";
 import dynamic from "next/dynamic";
 
 const FloatingAiTutor = dynamic(() => import("@/components/FloatingAiTutor"), { ssr: false });
@@ -41,8 +40,8 @@ const NAV_ITEMS = [
 const MAIN_MOBILE_TABS = [
   { id: "dashboard", href: "/dashboard", label: "Trang chủ", icon: Home, color: "text-sky-500" },
   { id: "flashcard", href: "/flashcard", label: "Flashcard", icon: Layers, color: "text-amber-500" },
-  { id: "grammar", href: "/grammar", label: "Ngữ pháp", icon: GraduationCap, color: "text-emerald-500" },
-  { id: "practice", href: "/practice", label: "Luyện tập", icon: Gamepad2, color: "text-purple-500" },
+  { id: "classes", href: "/classes", label: "Lớp học", icon: BookOpen, color: "text-blue-500" },
+  { id: "market", href: "/market", label: "Cửa hàng", icon: ShoppingBag, color: "text-rose-500" },
 ];
 
 const emptySubscribe = () => () => {};
@@ -50,6 +49,7 @@ const emptySubscribe = () => () => {};
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user, logout } = useAuthStore();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
 
@@ -66,6 +66,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   }, [isReady, user, router]);
 
   const handleLogout = () => {
+    queryClient.clear();
     logout();
     router.push("/");
   };
@@ -88,22 +89,25 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
           />
         </Link>
 
-        <nav className="flex-1 flex flex-col gap-2 overflow-y-auto pr-1">
+        {/* NAVIGATION LINKS */}
+        <nav className="space-y-2 flex-1 overflow-y-auto pr-1">
           {NAV_ITEMS.map((item) => {
             const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+            const Icon = item.icon;
+            
             return (
               <Link key={item.id} href={item.href}>
                 <motion.div
-                  whileHover={{ scale: 1.02, x: 4 }}
+                  whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className={`flex items-center gap-3.5 px-4 py-3 rounded-2xl font-bold text-base transition-all select-none ${
+                  className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all border-2 ${
                     isActive 
-                      ? `${item.bgActive} border-2 shadow-sm font-extrabold` 
-                      : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                      ? `${item.bgActive} shadow-[0_4px_0_0_rgba(0,0,0,0.08)]` 
+                      : "border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-700"
                   }`}
                 >
-                  <item.icon className={isActive ? item.color : "text-slate-400"} size={22} strokeWidth={2.5} />
-                  {item.label}
+                  <Icon size={22} className={isActive ? "" : item.color} strokeWidth={isActive ? 2.5 : 2} />
+                  <span className="text-sm tracking-wide">{item.label}</span>
                 </motion.div>
               </Link>
             );
@@ -114,11 +118,12 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         <div className="mt-auto pt-4 border-t-4 border-slate-100">
           <Link href="/student/profile">
             <div className="flex items-center gap-3 mb-3 bg-orange-50 hover:bg-orange-100 p-2.5 rounded-2xl border-2 border-orange-200 transition-colors cursor-pointer">
-              {user.profile?.avatar ? (
-                <img src={user.profile.avatar} alt="Avatar" className="w-10 h-10 rounded-full object-cover border-2 border-orange-300" />
-              ) : (
-                <UserCircle size={38} className="text-orange-500" />
-              )}
+              <UserAvatarWithFrame
+                avatarUrl={user.profile?.avatar}
+                name={user.profile?.fullName || user.email}
+                size="md"
+                showBadge={true}
+              />
               <div className="overflow-hidden flex-1">
                 <p className="font-bold text-slate-800 truncate text-sm">{user.profile?.fullName || user.email}</p>
                 <p className="text-[11px] font-extrabold text-orange-600 uppercase">Học sinh</p>
@@ -153,12 +158,13 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
           <div className="lg:hidden flex items-center gap-1">
             <Link href="/student/profile">
-              <div className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700">
-                {user.profile?.avatar ? (
-                  <img src={user.profile.avatar} alt="Avatar" className="w-7 h-7 rounded-full object-cover border border-slate-300" />
-                ) : (
-                  <User size={20} />
-                )}
+              <div className="p-1 rounded-xl">
+                <UserAvatarWithFrame
+                  avatarUrl={user.profile?.avatar}
+                  name={user.profile?.fullName || user.email}
+                  size="sm"
+                  showBadge={true}
+                />
               </div>
             </Link>
           </div>
@@ -237,13 +243,12 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
               <Link href="/student/profile" onClick={() => setIsMoreOpen(false)}>
                 <div className="bg-sky-50 border-2 border-sky-200 rounded-2xl p-3.5 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    {user.profile?.avatar ? (
-                      <img src={user.profile.avatar} alt="Avatar" className="w-10 h-10 rounded-full object-cover border-2 border-sky-300" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-sky-200 text-sky-700 flex items-center justify-center font-black">
-                        {user.email[0].toUpperCase()}
-                      </div>
-                    )}
+                    <UserAvatarWithFrame
+                      avatarUrl={user.profile?.avatar}
+                      name={user.profile?.fullName || user.email}
+                      size="md"
+                      showBadge={true}
+                    />
                     <div>
                       <p className="font-black text-slate-800 text-sm">{user.profile?.fullName || user.email}</p>
                       <p className="text-[11px] font-bold text-sky-600">Xem hồ sơ & thành tích →</p>

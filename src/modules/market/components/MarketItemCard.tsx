@@ -2,15 +2,17 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 import { MarketItem } from "../types";
 import { Button3D } from "@/components/ui";
 
 interface MarketItemCardProps {
   item: MarketItem;
   isUnlocked: boolean;
+  isEquipped?: boolean;
   canAfford: boolean;
   onBuy: () => void;
+  onEquipToggle?: () => void;
 }
 
 const RARITY_MAP = {
@@ -23,15 +25,21 @@ const RARITY_MAP = {
 export const MarketItemCard: React.FC<MarketItemCardProps> = ({
   item,
   isUnlocked,
+  isEquipped = false,
   canAfford,
   onBuy,
+  onEquipToggle,
 }) => {
   const r = RARITY_MAP[item.rarity];
 
   return (
     <motion.div
       whileHover={{ y: -4 }}
-      className="bg-white rounded-[2rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] p-6 flex flex-col justify-between"
+      className={`bg-white rounded-[2rem] border-4 p-6 flex flex-col justify-between transition-all ${
+        isEquipped
+          ? "border-amber-400 shadow-[0_8px_0_0_#f59e0b] ring-2 ring-amber-300"
+          : "border-slate-200 shadow-[0_8px_0_0_#e2e8f0]"
+      }`}
     >
       <div>
         <div className="flex items-center justify-between mb-4">
@@ -53,11 +61,22 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({
           <span className="text-base">🍞</span>
         </div>
 
-        {/* Chỉ vật phẩm Trang trí / Huy hiệu mới bị giới hạn sở hữu 1 lần duy nhất */}
+        {/* Vật phẩm Trang trí / Huy hiệu đã sở hữu cho phép Trang bị / Đang đeo */}
         {(item.category === "avatar" || item.category === "badge") && isUnlocked ? (
-          <span className="flex items-center gap-1 text-emerald-600 font-black text-xs bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-200">
-            <Check size={16} /> Đã sở hữu
-          </span>
+          <button
+            onClick={onEquipToggle}
+            className={`flex items-center gap-1.5 font-black text-xs px-3.5 py-2 rounded-xl border transition-all cursor-pointer shadow-xs ${
+              isEquipped
+                ? "bg-amber-500 text-white border-amber-600 shadow-amber-200"
+                : "bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100"
+            }`}
+          >
+            {isEquipped ? (
+              <><Check size={16} /> Đang đeo ✓</>
+            ) : (
+              <><Sparkles size={16} /> Trang bị ngay</>
+            )}
+          </button>
         ) : (
           <Button3D
             variant={canAfford ? (item.category === "gift" ? "green" : "orange") : "white"}

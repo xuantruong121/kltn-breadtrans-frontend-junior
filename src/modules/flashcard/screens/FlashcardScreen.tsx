@@ -20,11 +20,14 @@ import { FlashcardQuizView } from "../components/FlashcardQuizView";
 import { Button3D } from "@/components/ui";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useAuthStore } from "@/stores/authStore";
+import { useQueryClient } from "@tanstack/react-query";
+import { gamificationService } from "@/lib/api/services/gamification.service";
 import toast from "react-hot-toast";
 
 export const FlashcardScreen: React.FC = () => {
   const { user } = useAuthStore();
   const { addExp } = useGamificationStore();
+  const queryClient = useQueryClient();
 
   const [selectedBook, setSelectedBook] = useState<FlashcardBook>(FLASHCARD_BOOKS[0]);
   const [selectedLesson, setSelectedLesson] = useState<FlashcardLesson>(FLASHCARD_BOOKS[0].lessons[0]);
@@ -62,6 +65,12 @@ export const FlashcardScreen: React.FC = () => {
       setCurrentWordIndex(0);
       addExp(15);
       toast.success("Hoàn thành vòng ôn tập bài học! +15 EXP ⭐", { id: "round-completed" });
+      if (user) {
+        gamificationService.recordVocabLearned(1).then(() => {
+          queryClient.invalidateQueries({ queryKey: ["myQuests"] });
+          queryClient.invalidateQueries({ queryKey: ["profile"] });
+        }).catch(() => {});
+      }
     }
   };
 
@@ -76,20 +85,30 @@ export const FlashcardScreen: React.FC = () => {
   };
 
   const toggleMastered = (id: string) => {
-    setMasteredWords((prev) => {
-      const isCurrentlyMastered = prev.includes(id);
-      const next = isCurrentlyMastered ? prev.filter((item) => item !== id) : [...prev, id];
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.setItem(storageKey, JSON.stringify(next));
-        } catch {}
+    const isCurrentlyMastered = masteredWords.includes(id);
+    const next = isCurrentlyMastered
+      ? masteredWords.filter((item) => item !== id)
+      : [...masteredWords, id];
+
+    setMasteredWords(next);
+
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(next));
+      } catch {}
+    }
+
+    if (!isCurrentlyMastered) {
+      toast.success("Đã thuộc từ vựng! +5 EXP 🍞", { id: `mastered-${id}` });
+      addExp(5);
+      if (user) {
+        gamificationService.recordVocabLearned(1).then(() => {
+          queryClient.invalidateQueries({ queryKey: ["myQuests"] });
+          queryClient.invalidateQueries({ queryKey: ["profile"] });
+          queryClient.invalidateQueries({ queryKey: ["stats"] });
+        }).catch(() => {});
       }
-      if (!isCurrentlyMastered) {
-        toast.success("Đã thuộc từ vựng! +5 EXP 🍞", { id: `mastered-${id}` });
-        addExp(5);
-      }
-      return next;
-    });
+    }
   };
 
   const playAllAudio = (wordText: string) => {

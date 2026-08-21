@@ -15,7 +15,16 @@ export const MarketScreen: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
 
-  const { breads, unlockedItems, spendBreads, unlockItem } = useGamificationStore();
+  const {
+    breads,
+    unlockedItems,
+    equippedAvatarFrame,
+    equippedBadge,
+    spendBreads,
+    unlockItem,
+    equipAvatarFrame,
+    equipBadge,
+  } = useGamificationStore();
 
   // Truy vấn lịch sử đơn đổi quà của học sinh
   const { data: myOrders, isLoading: isOrdersLoading } = useQuery<any[]>({
@@ -65,6 +74,26 @@ export const MarketScreen: React.FC = () => {
     }
   };
 
+  const handleToggleEquip = (item: typeof MARKET_ITEMS[0]) => {
+    if (item.category === "avatar") {
+      if (equippedAvatarFrame === item.id) {
+        equipAvatarFrame(null);
+        toast("Đã tháo khung avatar");
+      } else {
+        equipAvatarFrame(item.id);
+        toast.success(`Đã trang bị "${item.name}"!`);
+      }
+    } else if (item.category === "badge") {
+      if (equippedBadge === item.id) {
+        equipBadge(null);
+        toast("Đã tháo huy hiệu");
+      } else {
+        equipBadge(item.id);
+        toast.success(`Đã trang bị "${item.name}"!`);
+      }
+    }
+  };
+
   const filteredItems = filterCategory === "all"
     ? MARKET_ITEMS
     : MARKET_ITEMS.filter((i) => i.category === filterCategory);
@@ -101,57 +130,52 @@ export const MarketScreen: React.FC = () => {
             onClick={() => setActiveTab("shop")}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-sm transition-all cursor-pointer ${
               activeTab === "shop"
-                ? "bg-amber-400 text-amber-950 shadow-xs"
-                : "text-slate-500 hover:text-slate-800"
+                ? "bg-amber-500 text-white shadow-xs"
+                : "text-slate-500 hover:bg-slate-100"
             }`}
           >
-            <ShoppingBag size={18} /> Cửa Hàng Vật Phẩm
+            <ShoppingBag size={18} /> Cửa Hàng
           </button>
 
           <button
             onClick={() => setActiveTab("orders")}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-sm transition-all cursor-pointer ${
               activeTab === "orders"
-                ? "bg-amber-400 text-amber-950 shadow-xs"
-                : "text-slate-500 hover:text-slate-800"
+                ? "bg-amber-500 text-white shadow-xs"
+                : "text-slate-500 hover:bg-slate-100"
             }`}
           >
-            <PackageCheck size={18} /> Đơn Đổi Quà Của Tôi
-            {myOrders && myOrders.filter(o => o.status === 'pending').length > 0 && (
-              <span className="bg-rose-500 text-white text-[10px] px-2 py-0.5 rounded-full font-black">
-                {myOrders.filter(o => o.status === 'pending').length}
-              </span>
-            )}
+            <PackageCheck size={18} /> Đơn Đổi Quà {myOrders && myOrders.length > 0 && `(${myOrders.length})`}
           </button>
 
           <button
             onClick={() => setActiveTab("leaderboard")}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-sm transition-all cursor-pointer ${
               activeTab === "leaderboard"
-                ? "bg-amber-400 text-amber-950 shadow-xs"
-                : "text-slate-500 hover:text-slate-800"
+                ? "bg-amber-500 text-white shadow-xs"
+                : "text-slate-500 hover:bg-slate-100"
             }`}
           >
-            <Trophy size={18} /> Bảng Vinh Danh
+            <Trophy size={18} /> Đại Gia Bánh Mì
           </button>
         </div>
 
         {activeTab === "shop" && (
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border-2 border-slate-200 shadow-xs overflow-x-auto">
             {[
               { id: "all", label: "Tất cả" },
-              { id: "boost", label: "Vật phẩm hỗ trợ" },
-              { id: "avatar", label: "Trang trí" },
-              { id: "badge", label: "Huy hiệu" },
-              { id: "gift", label: "Quà thực tế (Chờ duyệt)" },
+              { id: "avatar", label: "Khung Avatar 👑" },
+              { id: "badge", label: "Huy hiệu 🏅" },
+              { id: "boost", label: "Vật phẩm ⚡" },
+              { id: "gift", label: "Quà hiện vật 🎁" },
             ].map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setFilterCategory(cat.id)}
-                className={`px-3.5 py-1.5 rounded-xl font-bold text-xs capitalize transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all cursor-pointer ${
                   filterCategory === cat.id
-                    ? "bg-slate-800 text-white shadow-xs"
-                    : "bg-white text-slate-500 hover:bg-slate-100 border border-slate-200"
+                    ? "bg-slate-800 text-white"
+                    : "text-slate-500 hover:bg-slate-100"
                 }`}
               >
                 {cat.label}
@@ -164,15 +188,24 @@ export const MarketScreen: React.FC = () => {
       {/* TAB CONTENT: SHOP */}
       {activeTab === "shop" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredItems.map((item) => (
-            <MarketItemCard
-              key={item.id}
-              item={item}
-              isUnlocked={unlockedItems.includes(item.id)}
-              canAfford={breads >= item.price && !isSubmitting}
-              onBuy={() => handleBuyItem(item)}
-            />
-          ))}
+          {filteredItems.map((item) => {
+            const isUnlocked = unlockedItems.includes(item.id);
+            const isEquipped =
+              (item.category === "avatar" && equippedAvatarFrame === item.id) ||
+              (item.category === "badge" && equippedBadge === item.id);
+
+            return (
+              <MarketItemCard
+                key={item.id}
+                item={item}
+                isUnlocked={isUnlocked}
+                isEquipped={isEquipped}
+                canAfford={breads >= item.price && !isSubmitting}
+                onBuy={() => handleBuyItem(item)}
+                onEquipToggle={() => handleToggleEquip(item)}
+              />
+            );
+          })}
         </div>
       )}
 

@@ -383,16 +383,26 @@ export default function TeacherClassesPage() {
                             </div>
 
                             <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-                              {session.meetingLink && (
+                              {isLive ? (
                                 <button
                                   onClick={() => setActiveVideoSession(session)}
-                                  className={`flex-1 py-2 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer ${
-                                    isLive
-                                      ? "bg-red-500 hover:bg-red-600 text-white animate-pulse"
-                                      : "bg-blue-600 hover:bg-blue-700 text-white"
-                                  }`}
+                                  className="flex-1 py-2 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer bg-red-500 hover:bg-red-600 text-white animate-pulse"
                                 >
-                                  <Video size={14} /> Vào lớp học Daily
+                                  <Video size={14} /> Vào lớp (Đang diễn ra)
+                                </button>
+                              ) : isPast ? (
+                                <button
+                                  disabled
+                                  className="flex-1 py-2 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed select-none opacity-80"
+                                >
+                                  🔒 Buổi học đã kết thúc
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => setActiveVideoSession(session)}
+                                  className="flex-1 py-2 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer bg-blue-600 hover:bg-blue-700 text-white"
+                                >
+                                  <Video size={14} /> Mở phòng học sớm
                                 </button>
                               )}
 

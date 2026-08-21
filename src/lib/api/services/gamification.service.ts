@@ -80,6 +80,10 @@ export const gamificationService = {
     return await axiosClient.get("/gamification/quests");
   },
 
+  recordVocabLearned: async (count: number = 1): Promise<{ success: boolean; count: number }> => {
+    return await axiosClient.post("/gamification/vocab-learned", { count });
+  },
+
   getArenaSnippet: async (): Promise<ArenaSnippet> => {
     return await axiosClient.get("/gamification/arena/snippet");
   },

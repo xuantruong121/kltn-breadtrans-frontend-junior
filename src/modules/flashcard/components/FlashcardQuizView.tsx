@@ -6,6 +6,9 @@ import { CheckCircle2, XCircle, Trophy, RotateCcw, ArrowRight, Volume2 } from "l
 import { FlashcardWord } from "../types";
 import { Button3D } from "@/components/ui";
 import { useGamificationStore } from "@/stores/gamificationStore";
+import { useAuthStore } from "@/stores/authStore";
+import { useQueryClient } from "@tanstack/react-query";
+import { gamificationService } from "@/lib/api/services/gamification.service";
 
 interface FlashcardQuizViewProps {
   words: FlashcardWord[];
@@ -56,6 +59,8 @@ export const FlashcardQuizView: React.FC<FlashcardQuizViewProps> = ({
   const [isComplete, setIsComplete] = useState(false);
 
   const { addBreads, addExp } = useGamificationStore();
+  const { user } = useAuthStore();
+  const queryClient = useQueryClient();
 
   const currentQ = questions[currentIndex];
 
@@ -83,6 +88,13 @@ export const FlashcardQuizView: React.FC<FlashcardQuizViewProps> = ({
       const earnedBreads = Math.max(5, score * 3);
       addBreads(earnedBreads);
       addExp(score * 20);
+      if (user && score > 0) {
+        gamificationService.recordVocabLearned(score).then(() => {
+          queryClient.invalidateQueries({ queryKey: ["myQuests"] });
+          queryClient.invalidateQueries({ queryKey: ["profile"] });
+          queryClient.invalidateQueries({ queryKey: ["stats"] });
+        }).catch(() => {});
+      }
     }
   };
 

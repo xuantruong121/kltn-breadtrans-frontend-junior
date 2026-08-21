@@ -40,13 +40,16 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Bypass API requests, WebSocket, and dynamic user queries
+  // Bypass Next.js chunks, development HMR, API requests, WebSockets
   if (
+    url.pathname.startsWith('/_next') ||
     url.pathname.startsWith('/api') ||
     url.pathname.startsWith('/socket.io') ||
     url.pathname.includes('/arena') ||
     url.pathname.includes('/daily') ||
-    event.request.method !== 'GET'
+    event.request.method !== 'GET' ||
+    url.hostname === 'localhost' ||
+    url.hostname === '127.0.0.1'
   ) {
     return;
   }
