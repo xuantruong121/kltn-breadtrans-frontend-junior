@@ -27,36 +27,36 @@ export default function DashboardPage() {
   const { breads: localBreads, streak: localStreak, equippedBadge } = useGamificationStore();
   const queryClient = useQueryClient();
 
-  // Fetch all necessary data
+  // Fetch all necessary data scoped by user.id
   const { data: profile, isLoading: isProfileLoading } = useQuery({
-    queryKey: ["profile"],
+    queryKey: ["profile", user?.id],
     queryFn: userService.getProfile,
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
   const { data: pet, isLoading: isPetLoading } = useQuery({
-    queryKey: ["myPet"],
+    queryKey: ["myPet", user?.id],
     queryFn: gamificationService.getMyPet,
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
   const { data: myQuests, isLoading: isQuestsLoading } = useQuery({
-    queryKey: ["myQuests"],
+    queryKey: ["myQuests", user?.id],
     queryFn: gamificationService.getMyDailyQuests,
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
   const { data: arena, isLoading: isArenaLoading } = useQuery({
-    queryKey: ["myArenaSnippet"],
+    queryKey: ["myArenaSnippet", user?.id],
     queryFn: gamificationService.getArenaSnippet,
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
   const feedPetMut = useMutation({
     mutationFn: gamificationService.feedPet,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["myPet"] });
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["myPet", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
       toast.success("Đã cho thú cưng ăn! 🍞");
     },
     onError: (error: any) => {
@@ -73,8 +73,10 @@ export default function DashboardPage() {
     );
   }
 
-  const displayName = profile?.profile?.fullName || user.email;
-  const banhRan = (profile as any)?.stats?.totalBanhRan ?? localBreads;
+  const displayName = user?.profile?.fullName || profile?.profile?.fullName || user.email;
+  const avatarUrl = user?.profile?.avatar || profile?.profile?.avatar || profile?.profile?.avatarUrl;
+  const banhRan = (profile as any)?.stats?.totalBanhRan ?? user?.profile?.totalBanhRan ?? localBreads;
+  const streakCount = (profile as any)?.stats?.streakCount ?? (profile as any)?.stats?.streak ?? localStreak;
   const canFeedPet = banhRan >= 10;
   const activeBadgeItem = MARKET_ITEMS.find((i) => i.id === equippedBadge);
 
@@ -133,7 +135,7 @@ export default function DashboardPage() {
         <div className="z-10 flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left mb-6 md:mb-0">
           <Link href="/student/profile" className="shrink-0 hover:scale-105 transition-transform">
             <UserAvatarWithFrame
-              avatarUrl={profile?.profile?.avatar || profile?.profile?.avatarUrl || user.profile?.avatar}
+              avatarUrl={avatarUrl}
               name={displayName}
               size="lg"
               showBadge={true}
@@ -159,7 +161,7 @@ export default function DashboardPage() {
             <Flame className="text-amber-300 fill-amber-300" size={24} />
             <div>
               <div className="text-[10px] text-sky-100 font-black uppercase tracking-wider">Chuỗi ngày</div>
-              <div className="text-xl font-black leading-none">{(profile as any)?.stats?.streakCount ?? localStreak} ngày</div>
+              <div className="text-xl font-black leading-none">{streakCount} ngày</div>
             </div>
           </div>
           <div className="bg-white/20 px-4 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md border-2 border-white/40 shadow-sm">

@@ -6,9 +6,12 @@ import { motion } from "framer-motion";
 import { Sparkles, ArrowRight, BookOpen, GraduationCap, School, Loader2, Croissant } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { useAuthStore } from "@/stores/authStore";
+import { useGamificationStore } from "@/stores/gamificationStore";
+import { useQueryClient } from "@tanstack/react-query";
 
 function LoginForm() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,7 +38,11 @@ function LoginForm() {
       }
       
       const res: any = await axiosClient.post('/auth/login', { email, password, deviceId });
-      // API trả về { access_token, refresh_token, user: { id, email, role } }
+      // Clear any previous user's cached queries and gamification store
+      queryClient.clear();
+      useGamificationStore.getState().reset();
+
+      // API trả về { access_token, refresh_token, user: { id, email, role, profile } }
       setAuth(res.access_token, res.refresh_token, res.user);
       
       if (res.user.role === 'ADMIN') {

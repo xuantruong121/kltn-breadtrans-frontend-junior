@@ -20,6 +20,7 @@ interface GamificationState {
   unlockItem: (itemId: string) => void;
   equipAvatarFrame: (frameId: string | null) => void;
   equipBadge: (badgeId: string | null) => void;
+  reset: () => void;
 }
 
 export const useGamificationStore = create<GamificationState>()(
@@ -32,6 +33,17 @@ export const useGamificationStore = create<GamificationState>()(
       unlockedItems: [],
       equippedAvatarFrame: null,
       equippedBadge: null,
+
+      reset: () =>
+        set({
+          breads: 0,
+          streak: 1,
+          exp: 0,
+          level: 1,
+          unlockedItems: [],
+          equippedAvatarFrame: null,
+          equippedBadge: null,
+        }),
 
       setBreads: (amount: number) => set({ breads: amount }),
       

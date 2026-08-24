@@ -4,6 +4,7 @@ import React, { useEffect, useSyncExternalStore } from "react";
 import { motion } from "framer-motion";
 import { Flame } from "lucide-react";
 import { useGamificationStore } from "@/stores/gamificationStore";
+import { useAuthStore } from "@/stores/authStore";
 import { useQuery } from "@tanstack/react-query";
 import { userService } from "@/lib/api/services/user.service";
 import Link from "next/link";
@@ -12,11 +13,13 @@ const emptySubscribe = () => () => {};
 
 export const GamificationBar: React.FC = () => {
   const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const { user } = useAuthStore();
   const { breads, streak, level, exp, setStats } = useGamificationStore();
 
   const { data: profile } = useQuery({
-    queryKey: ["profile"],
+    queryKey: ["profile", user?.id],
     queryFn: userService.getProfile,
+    enabled: !!user?.id,
     staleTime: 1000 * 60 * 5,
   });
 
