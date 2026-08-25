@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Sparkles, ArrowRight, BookOpen, GraduationCap, School, Loader2, Croissant } from "lucide-react";
@@ -8,6 +8,8 @@ import axiosClient from "@/lib/api/axiosClient";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQueryClient } from "@tanstack/react-query";
+
+const emptySubscribe = () => () => {};
 
 function LoginForm() {
   const router = useRouter();
@@ -18,7 +20,25 @@ function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   
-  const setAuth = useAuthStore((state) => state.setAuth);
+  const { user, setAuth } = useAuthStore();
+  const isReady = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+
+  // Auto redirect if already logged in
+  useEffect(() => {
+    if (isReady && user) {
+      if (user.role === "ADMIN") {
+        router.push("/admin");
+      } else if (user.role === "TEACHER") {
+        router.push("/teacher/dashboard");
+      } else {
+        router.push("/dashboard");
+      }
+    }
+  }, [isReady, user, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +68,7 @@ function LoginForm() {
       if (res.user.role === 'ADMIN') {
         router.push('/admin');
       } else if (res.user.role === 'TEACHER') {
-        router.push('/teacher/classes');
+        router.push('/teacher/dashboard');
       } else {
         router.push('/dashboard');
       }

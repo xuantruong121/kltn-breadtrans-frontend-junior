@@ -19,13 +19,14 @@ import {
   XCircle,
   Loader2,
   Flame,
+  LogOut,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import axiosClient from "@/lib/api/axiosClient";
 import dayjs from "dayjs";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import DailyClassroomModal from "@/components/classroom/DailyClassroomModal";
+import { openDailyClassroomSession } from "@/lib/utils/dailyClassroom";
 
 export default function TeacherClassesPage() {
   const queryClient = useQueryClient();
@@ -37,7 +38,6 @@ export default function TeacherClassesPage() {
 
   // Modals
   const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
-  const [activeVideoSession, setActiveVideoSession] = useState<any | null>(null);
 
   // Reward Modal State
   const [rewardTarget, setRewardTarget] = useState<{
@@ -137,7 +137,6 @@ export default function TeacherClassesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teacher-classes"] });
-      setActiveVideoSession(null);
       toast.success("Đã kết thúc buổi học!");
     },
   });
@@ -384,12 +383,26 @@ export default function TeacherClassesPage() {
 
                             <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
                               {isLive ? (
-                                <button
-                                  onClick={() => setActiveVideoSession(session)}
-                                  className="flex-1 py-2 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer bg-red-500 hover:bg-red-600 text-white animate-pulse"
-                                >
-                                  <Video size={14} /> Vào lớp (Đang diễn ra)
-                                </button>
+                                <>
+                                  <button
+                                    onClick={() => openDailyClassroomSession(session)}
+                                    className="flex-1 py-2 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer bg-red-500 hover:bg-red-600 text-white animate-pulse"
+                                  >
+                                    <Video size={14} /> Vào lớp
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      if (window.confirm(`Bạn có chắc chắn muốn kết thúc buổi học "${session.title}" ngay bây giờ không? Trạng thái sẽ chuyển sang "Đã kết thúc" cho toàn bộ học sinh.`)) {
+                                        finishSessionMutation.mutate(session.id);
+                                      }
+                                    }}
+                                    disabled={finishSessionMutation.isPending}
+                                    title="Kết thúc buổi học này ngay lập tức"
+                                    className="px-2.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl font-black text-xs flex items-center gap-1 cursor-pointer transition-colors shrink-0"
+                                  >
+                                    {finishSessionMutation.isPending ? <Loader2 size={13} className="animate-spin" /> : <LogOut size={13} />} Kết thúc
+                                  </button>
+                                </>
                               ) : isPast ? (
                                 <button
                                   disabled
@@ -398,18 +411,32 @@ export default function TeacherClassesPage() {
                                   🔒 Buổi học đã kết thúc
                                 </button>
                               ) : (
-                                <button
-                                  onClick={() => setActiveVideoSession(session)}
-                                  className="flex-1 py-2 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer bg-blue-600 hover:bg-blue-700 text-white"
-                                >
-                                  <Video size={14} /> Mở phòng học sớm
-                                </button>
+                                <>
+                                  <button
+                                    onClick={() => openDailyClassroomSession(session)}
+                                    className="flex-1 py-2 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer bg-blue-600 hover:bg-blue-700 text-white"
+                                  >
+                                    <Video size={14} /> Mở phòng sớm
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      if (window.confirm(`Bạn có chắc chắn muốn kết thúc buổi học "${session.title}" này không?`)) {
+                                        finishSessionMutation.mutate(session.id);
+                                      }
+                                    }}
+                                    disabled={finishSessionMutation.isPending}
+                                    title="Kết thúc buổi học này"
+                                    className="px-2.5 py-2 bg-slate-50 hover:bg-rose-50 text-slate-600 hover:text-rose-700 border border-slate-200 hover:border-rose-200 rounded-xl font-black text-xs flex items-center gap-1 cursor-pointer transition-colors shrink-0"
+                                  >
+                                    <LogOut size={13} /> Kết thúc
+                                  </button>
+                                </>
                               )}
 
                               <button
                                 onClick={() => setAttendanceSession(session)}
                                 title="Điểm danh buổi học"
-                                className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl font-black text-xs flex items-center gap-1 cursor-pointer"
+                                className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl font-black text-xs flex items-center gap-1 cursor-pointer shrink-0"
                               >
                                 <CheckCircle2 size={14} /> Điểm danh
                               </button>
@@ -926,19 +953,6 @@ export default function TeacherClassesPage() {
           </div>
         )}
       </AnimatePresence>
-
-      {/* ================= MODAL: PHÒNG HỌC TRỰC TUYẾN DAILY.CO ================= */}
-      {activeVideoSession && (
-        <DailyClassroomModal
-          isOpen={!!activeVideoSession}
-          onClose={() => setActiveVideoSession(null)}
-          roomUrl={activeVideoSession.meetingLink}
-          sessionTitle={activeVideoSession.title || "Lớp học trực tuyến"}
-          sessionId={activeVideoSession.id}
-          isTeacher={true}
-          onSessionFinished={() => finishSessionMutation.mutate(activeVideoSession.id)}
-        />
-      )}
     </div>
   );
 }

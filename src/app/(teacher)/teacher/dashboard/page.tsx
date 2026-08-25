@@ -15,19 +15,19 @@ import {
   Loader2,
   Sparkles,
   Plus,
+  LogOut,
 } from "lucide-react";
 import Link from "next/link";
 import dayjs from "dayjs";
 import axiosClient from "@/lib/api/axiosClient";
 import { useAuthStore } from "@/stores/authStore";
-import DailyClassroomModal from "@/components/classroom/DailyClassroomModal";
+import { openDailyClassroomSession } from "@/lib/utils/dailyClassroom";
 import toast from "react-hot-toast";
 
 export default function TeacherDashboardPage() {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
 
-  const [activeVideoSession, setActiveVideoSession] = useState<any | null>(null);
   const [editingNoteSession, setEditingNoteSession] = useState<{ id: number; note: string } | null>(null);
 
   // 1. Lấy dữ liệu 3 số liệu thống kê tổng quan
@@ -76,6 +76,23 @@ export default function TeacherDashboardPage() {
     },
     onError: () => {
       toast.error("Không thể lưu ghi chú, vui lòng thử lại!");
+    },
+  });
+
+  // Mutation kết thúc buổi học
+  const finishSessionMutation = useMutation({
+    mutationFn: async (sessionId: number) => {
+      return axiosClient.patch(`/classes/sessions/${sessionId}/finish`);
+    },
+    onSuccess: () => {
+      toast.success("Đã kết thúc buổi học!");
+      queryClient.invalidateQueries({ queryKey: ["teacher-dashboard-upcoming"] });
+      queryClient.invalidateQueries({ queryKey: ["teacher-dashboard-overview"] });
+      queryClient.invalidateQueries({ queryKey: ["teacher-schedule"] });
+      queryClient.invalidateQueries({ queryKey: ["teacher-classes"] });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || err?.message || "Không thể kết thúc buổi học!");
     },
   });
 
@@ -278,15 +295,29 @@ export default function TeacherDashboardPage() {
                     </div>
                   </div>
 
-                  {/* Nút vào phòng học */}
-                  <div className="pt-2">
+                  {/* Nút vào phòng học & kết thúc */}
+                  <div className="pt-2 flex items-center gap-2">
                     {isLive ? (
-                      <button
-                        onClick={() => setActiveVideoSession(session)}
-                        className="w-full py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white animate-pulse shadow-sm cursor-pointer"
-                      >
-                        <Video size={16} /> Vào Lớp Dạy Ngay (Đang diễn ra)
-                      </button>
+                      <>
+                        <button
+                          onClick={() => openDailyClassroomSession(session)}
+                          className="flex-1 py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white animate-pulse shadow-sm cursor-pointer"
+                        >
+                          <Video size={16} /> Vào Lớp Dạy Ngay
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Bạn có chắc chắn muốn kết thúc buổi học "${session.title}" ngay bây giờ không?`)) {
+                              finishSessionMutation.mutate(session.id);
+                            }
+                          }}
+                          disabled={finishSessionMutation.isPending}
+                          title="Kết thúc buổi học và đóng phòng"
+                          className="px-3 py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 shadow-sm cursor-pointer transition-colors shrink-0"
+                        >
+                          {finishSessionMutation.isPending ? <Loader2 size={15} className="animate-spin" /> : <LogOut size={15} />} Kết thúc
+                        </button>
+                      </>
                     ) : isPast ? (
                       <button
                         disabled
@@ -295,12 +326,26 @@ export default function TeacherDashboardPage() {
                         🔒 Buổi học đã kết thúc
                       </button>
                     ) : (
-                      <button
-                        onClick={() => setActiveVideoSession(session)}
-                        className="w-full py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-colors cursor-pointer"
-                      >
-                        <Video size={16} /> Mở phòng học sớm
-                      </button>
+                      <>
+                        <button
+                          onClick={() => openDailyClassroomSession(session)}
+                          className="flex-1 py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-colors cursor-pointer"
+                        >
+                          <Video size={16} /> Mở phòng học sớm
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Bạn có chắc chắn muốn kết thúc buổi học "${session.title}" này không?`)) {
+                              finishSessionMutation.mutate(session.id);
+                            }
+                          }}
+                          disabled={finishSessionMutation.isPending}
+                          title="Kết thúc buổi học này"
+                          className="px-3 py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-1 bg-slate-50 hover:bg-rose-50 text-slate-600 hover:text-rose-700 border border-slate-200 hover:border-rose-200 shadow-sm cursor-pointer transition-colors shrink-0"
+                        >
+                          <LogOut size={15} /> Kết thúc
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -413,18 +458,6 @@ export default function TeacherDashboardPage() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Daily WebRTC Modal */}
-      {activeVideoSession && (
-        <DailyClassroomModal
-          isOpen={!!activeVideoSession}
-          onClose={() => setActiveVideoSession(null)}
-          roomUrl={activeVideoSession.meetingLink}
-          sessionTitle={activeVideoSession.title || "Lớp học trực tuyến"}
-          sessionId={activeVideoSession.id}
-          isTeacher={true}
-        />
       )}
     </div>
   );

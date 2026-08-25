@@ -16,11 +16,12 @@ import {
   Sunrise,
   Sun,
   Moon,
+  LogOut,
 } from "lucide-react";
 import dayjs from "dayjs";
 import isoWeek from "dayjs/plugin/isoWeek";
 import axiosClient from "@/lib/api/axiosClient";
-import DailyClassroomModal from "@/components/classroom/DailyClassroomModal";
+import { openDailyClassroomSession } from "@/lib/utils/dailyClassroom";
 import toast from "react-hot-toast";
 
 dayjs.extend(isoWeek);
@@ -76,7 +77,6 @@ export default function TeacherSchedulePage() {
   const queryClient = useQueryClient();
   const [currentDate, setCurrentDate] = useState(dayjs());
   const [selectedSession, setSelectedSession] = useState<any | null>(null);
-  const [activeVideoSession, setActiveVideoSession] = useState<any | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Form tạo buổi học mới
@@ -143,6 +143,24 @@ export default function TeacherSchedulePage() {
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message || err?.message || "Không thể tạo buổi học!");
+    },
+  });
+
+  // Finish Session Mutation
+  const finishSessionMutation = useMutation({
+    mutationFn: async (sessionId: number) => {
+      return axiosClient.patch(`/classes/sessions/${sessionId}/finish`);
+    },
+    onSuccess: () => {
+      toast.success("Đã kết thúc buổi học!");
+      setSelectedSession(null);
+      queryClient.invalidateQueries({ queryKey: ["teacher-schedule"] });
+      queryClient.invalidateQueries({ queryKey: ["teacher-classes"] });
+      queryClient.invalidateQueries({ queryKey: ["teacher-dashboard-overview"] });
+      queryClient.invalidateQueries({ queryKey: ["teacher-dashboard-upcoming"] });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || err?.message || "Không thể kết thúc buổi học!");
     },
   });
 
@@ -483,7 +501,7 @@ export default function TeacherSchedulePage() {
                 Đóng
               </button>
 
-              {dayjs().isAfter(dayjs(selectedSession.endTime)) ? (
+              {dayjs().isAfter(dayjs(selectedSession.endTime)) || selectedSession.status === 'completed' ? (
                 <button
                   disabled
                   className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed select-none opacity-80"
@@ -491,15 +509,29 @@ export default function TeacherSchedulePage() {
                   🔒 Buổi học đã kết thúc
                 </button>
               ) : (
-                <button
-                  onClick={() => {
-                    setActiveVideoSession(selectedSession);
-                    setSelectedSession(null);
-                  }}
-                  className="px-5 py-2 rounded-xl text-xs font-black bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 shadow-xs cursor-pointer"
-                >
-                  <Video size={14} /> Vào phòng học Daily
-                </button>
+                <>
+                  <button
+                    onClick={() => {
+                      if (window.confirm(`Bạn có chắc chắn muốn kết thúc buổi học "${selectedSession.title}" ngay bây giờ không?`)) {
+                        finishSessionMutation.mutate(selectedSession.id);
+                      }
+                    }}
+                    disabled={finishSessionMutation.isPending}
+                    className="px-4 py-2 rounded-xl text-xs font-black bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 flex items-center gap-1.5 cursor-pointer transition-colors"
+                  >
+                    {finishSessionMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <LogOut size={14} />} Kết thúc buổi học
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      openDailyClassroomSession(selectedSession);
+                      setSelectedSession(null);
+                    }}
+                    className="px-5 py-2 rounded-xl text-xs font-black bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  >
+                    <Video size={14} /> Vào phòng học Daily
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -611,18 +643,6 @@ export default function TeacherSchedulePage() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* WebRTC Video Modal */}
-      {activeVideoSession && (
-        <DailyClassroomModal
-          isOpen={!!activeVideoSession}
-          onClose={() => setActiveVideoSession(null)}
-          roomUrl={activeVideoSession.meetingLink}
-          sessionTitle={activeVideoSession.title || "Lớp học trực tuyến"}
-          sessionId={activeVideoSession.id}
-          isTeacher={true}
-        />
       )}
     </div>
   );
