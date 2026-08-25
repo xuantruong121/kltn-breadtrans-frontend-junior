@@ -17,6 +17,8 @@ interface AuthState {
   logout: () => void;
 }
 
+import { useGamificationStore } from './gamificationStore';
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
@@ -25,7 +27,12 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       setAuth: (accessToken, refreshToken, user) => set({ accessToken, refreshToken, user }),
       setProfile: (profile) => set((state) => ({ user: state.user ? { ...state.user, profile } : null })),
-      logout: () => set({ accessToken: null, refreshToken: null, user: null }),
+      logout: () => {
+        try {
+          useGamificationStore.getState().reset();
+        } catch {}
+        set({ accessToken: null, refreshToken: null, user: null });
+      },
     }),
     {
       name: 'auth-storage-junior', // unique name
