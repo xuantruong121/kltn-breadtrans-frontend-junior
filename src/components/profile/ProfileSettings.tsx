@@ -201,7 +201,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                     onClick={() => setActiveTab("inventory")}
                     className="w-full py-2.5 px-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-2xl font-black text-xs flex items-center justify-center gap-2 shadow-md shadow-amber-500/20 transition-all cursor-pointer"
                   >
-                    <Sparkles size={15} /> Quản Lý Túi Đồ ({myUnlockedList.length} món)
+                    <ShoppingBag size={15} /> Quản Lý Túi Đồ ({myUnlockedList.length} món)
                   </button>
                 </div>
               </div>

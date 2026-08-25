@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { Headphones, Loader2, PlayCircle, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { quizService } from "@/lib/api/services/quiz.service";
-import { Pagination } from "@/components/ui";
+import { Pagination, BackButton } from "@/components/ui";
 
 export default function ListeningPracticesPage() {
   const router = useRouter();
@@ -23,12 +23,9 @@ export default function ListeningPracticesPage() {
 
   return (
     <div className="max-w-4xl mx-auto pb-12">
-      <button 
-        onClick={() => router.back()}
-        className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-bold mb-8 transition-colors cursor-pointer"
-      >
-        <ArrowLeft size={20} /> Quay lại Đảo Luyện Tập
-      </button>
+      <div className="mb-8">
+        <BackButton href="/dashboard" label="Quay lại Trang chủ" />
+      </div>
 
       <div className="flex items-center gap-4 mb-8">
         <div className="bg-junior-blue p-4 rounded-2xl text-white">

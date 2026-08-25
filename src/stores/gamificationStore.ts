@@ -69,7 +69,7 @@ export const useGamificationStore = create<GamificationState>()(
       addExp: (amount: number) => {
         set((state) => {
           const newExp = state.exp + amount;
-          const newLevel = Math.floor(newExp / 200) + 1;
+          const newLevel = Math.floor(newExp / 500) + 1;
           return { exp: newExp, level: newLevel };
         });
       },

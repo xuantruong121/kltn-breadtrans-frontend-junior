@@ -8,7 +8,7 @@ import {
   XCircle, 
   ArrowRight,
   WifiOff,
-  Sparkles,
+  Flame,
   Zap
 } from "lucide-react";
 import { Button3D } from "@/components/ui";
@@ -236,7 +236,7 @@ export default function ArenaMatchRoom({
         >
           <div className="flex items-center justify-between">
             <span className="bg-purple-100 text-purple-800 font-extrabold text-xs px-3.5 py-1.5 rounded-full border border-purple-200 flex items-center gap-1.5">
-              <Sparkles size={14} /> Hiệp {roundIdx + 1} / {totalRounds}
+              <Flame size={14} /> Hiệp {roundIdx + 1} / {totalRounds}
             </span>
             {currentQ.ipa && (
               <span className="text-slate-400 font-bold text-sm tracking-wider bg-slate-100 px-3 py-1 rounded-xl">
@@ -245,7 +245,7 @@ export default function ArenaMatchRoom({
             )}
           </div>
 
-          <h3 className="text-2xl font-black text-slate-800 text-center leading-relaxed py-2">
+          <h3 className="text-xl sm:text-2xl font-black text-slate-800 text-center leading-relaxed py-2 break-words max-w-full px-2">
             {currentQ.prompt}
           </h3>
 
@@ -280,9 +280,9 @@ export default function ArenaMatchRoom({
                   key={oIdx}
                   disabled={hasSubmitted || !!roundResult}
                   onClick={() => handleSelectOption(opt)}
-                  className={`p-5 rounded-2xl border-3 font-bold text-left transition-all text-base flex items-center justify-between cursor-pointer ${btnStyle}`}
+                  className={`p-5 rounded-2xl border-3 font-bold text-left transition-all text-base flex items-center justify-between gap-3 cursor-pointer ${btnStyle}`}
                 >
-                  <span>{opt}</span>
+                  <span className="break-words flex-1">{opt}</span>
                   {roundResult && isCorrectOpt && (
                     <CheckCircle2 size={22} className="text-emerald-600 shrink-0" />
                   )}

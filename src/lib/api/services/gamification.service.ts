@@ -33,6 +33,16 @@ export interface Pet {
   level: number;
   exp: number;
   lastFedAt: string | null;
+  roster?: Record<
+    string,
+    {
+      level: number;
+      exp: number;
+      health: number;
+      happiness: number;
+      lastFedAt: string | null;
+    }
+  > | null;
 }
 
 export interface DailyQuest {
@@ -74,6 +84,10 @@ export const gamificationService = {
 
   feedPet: async (): Promise<Pet> => {
     return await axiosClient.post("/gamification/pet/feed");
+  },
+
+  changePetType: async (petName: string): Promise<Pet> => {
+    return await axiosClient.post("/gamification/pet/change-type", { petName });
   },
 
   getMyDailyQuests: async (): Promise<QuestProgress[]> => {

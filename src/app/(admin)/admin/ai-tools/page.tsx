@@ -385,7 +385,7 @@ export default function AdminAiToolsPage() {
             <div>
               <div className="text-base font-black">AI Smart Generator</div>
               <div className={`text-xs font-semibold mt-0.5 ${activeTab === "smart" ? "text-indigo-200" : "text-slate-400"}`}>
-                Từ PDF/DOCX $\rightarrow$ Quiz + Flashcard
+                Từ PDF/DOCX &rarr; Quiz + Flashcard
               </div>
             </div>
           </button>

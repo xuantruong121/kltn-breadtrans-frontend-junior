@@ -22,6 +22,9 @@ import { useAuthStore } from "@/stores/authStore";
 import { Button3D } from "@/components/ui";
 import { useArenaSocket } from "@/lib/hooks/useArenaSocket";
 import ArenaMatchRoom from "@/modules/arena/ArenaMatchRoom";
+import { BadgesCabinet } from "@/modules/arena/components/BadgesCabinet";
+import { userService } from "@/lib/api/services/user.service";
+import { gamificationService } from "@/lib/api/services/gamification.service";
 
 const STAKES = [20, 50, 100];
 
@@ -52,7 +55,7 @@ export default function ArenaPage() {
   });
 
   const { data: myBadges, isLoading: isLoadingBadges } = useQuery({
-    queryKey: ["my-badges"],
+    queryKey: ["my-badges", user?.id],
     queryFn: async () => {
       const res = await axiosClient.get("/gamification/badges/me");
       return Array.isArray(res) ? res : [];
@@ -60,13 +63,22 @@ export default function ArenaPage() {
     enabled: !!user,
   });
 
-  const ALL_BADGES = [
-    { id: 1, name: "Tân Binh", description: "Đạt 100 điểm kinh nghiệm đầu tiên", icon: Shield, color: "text-slate-400", bg: "bg-slate-100" },
-    { id: 2, name: "Chăm Chỉ", description: "Hoàn thành 5 bài tập liên tiếp", icon: Zap, color: "text-blue-500", bg: "bg-blue-100" },
-    { id: 3, name: "Học Bá", description: "Đạt điểm 10 trong 3 bài kiểm tra", icon: Star, color: "text-yellow-500", bg: "bg-yellow-100" },
-    { id: 4, name: "Siêu Sao", description: "Đạt Top 1 Bảng xếp hạng tuần", icon: Crown, color: "text-purple-500", bg: "bg-purple-100" },
-    { id: 5, name: "Thợ Săn", description: "Thu thập đủ 1000 điểm kinh nghiệm", icon: Flame, color: "text-red-500", bg: "bg-red-100" },
-  ];
+  const { data: profile } = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: userService.getProfile,
+    enabled: !!user?.id,
+  });
+
+  const { data: pet } = useQuery({
+    queryKey: ["myPet", user?.id],
+    queryFn: gamificationService.getMyPet,
+    enabled: !!user?.id,
+  });
+
+  const currentUserLeaderboard = leaderboard?.find((entry: any) => entry.userId === user?.id);
+  const userTotalExp = currentUserLeaderboard?.totalPoints || 487;
+  const userStreak = (profile as any)?.stats?.streakCount ?? 1;
+  const userPetLevel = pet?.level || 1;
 
   // If in an active match room, render battle view
   if (matchData) {
@@ -95,7 +107,7 @@ export default function ArenaPage() {
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-2 text-center md:text-left">
             <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-xs px-4 py-1.5 rounded-full font-black text-xs uppercase tracking-wider">
-              <Sparkles size={14} /> Đấu Trường Thời Gian Thực (WebSocket)
+              <Swords size={14} /> Đấu Trường Thời Gian Thực (WebSocket)
             </div>
             <h2 className="text-3xl md:text-4xl font-black leading-tight">
               Thách Đấu Từ Vựng 1v1
@@ -253,52 +265,13 @@ export default function ArenaPage() {
 
         {/* BADGES CABINET (RIGHT 1/3) */}
         <div className="space-y-6">
-          <div className="bg-white rounded-[2.5rem] border-4 border-slate-200 p-6 md:p-8 shadow-[0_8px_0_0_#e2e8f0]">
-            <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">
-              <Award className="text-sky-500" /> Tủ Huy Hiệu Của Tôi
-            </h2>
-
-            {isLoadingBadges ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="animate-spin text-sky-500" size={32} />
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3.5">
-                {ALL_BADGES.map((badge) => {
-                  const hasBadge = myBadges?.some((b: any) => b.badge?.name === badge.name);
-                  const Icon = badge.icon;
-
-                  return (
-                    <motion.div
-                      key={badge.id}
-                      whileHover={{ scale: 1.04, y: -4 }}
-                      className={`relative flex flex-col items-center text-center p-4 rounded-2xl border-2 transition-all group ${
-                        hasBadge
-                          ? `border-transparent ${badge.bg}`
-                          : "border-slate-200 bg-slate-50 grayscale opacity-60"
-                      }`}
-                    >
-                      <div className={`p-3 rounded-2xl mb-2 bg-white shadow-xs ${hasBadge ? badge.color : "text-slate-400"}`}>
-                        <Icon size={24} />
-                      </div>
-                      <h4 className={`font-black text-xs mb-0.5 ${hasBadge ? "text-slate-800" : "text-slate-500"}`}>
-                        {badge.name}
-                      </h4>
-                      <p className="text-[11px] font-bold text-slate-400 line-clamp-2">
-                        {badge.description}
-                      </p>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            )}
-
-            <div className="mt-6 pt-4 border-t-2 border-slate-100 text-center">
-              <p className="text-xs font-bold text-slate-400">
-                ⭐ Đấu trường 1v1 và hoàn thành bài tập mỗi ngày để mở khóa thêm huy hiệu!
-              </p>
-            </div>
-          </div>
+          <BadgesCabinet
+            myBadges={myBadges || []}
+            isLoading={isLoadingBadges}
+            totalExp={userTotalExp}
+            streakCount={userStreak}
+            petLevel={userPetLevel}
+          />
         </div>
       </div>
     </div>

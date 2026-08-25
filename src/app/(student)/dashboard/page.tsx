@@ -10,7 +10,7 @@ import {
   CheckCircle2, 
   Heart, 
   Smile, 
-  Sparkles
+  Compass
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
@@ -18,6 +18,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { userService } from "@/lib/api/services/user.service";
 import { gamificationService } from "@/lib/api/services/gamification.service";
 import { Button3D, UserAvatarWithFrame } from "@/components/ui";
+import { PetStage3D } from "@/modules/pet/components/PetStage3D";
 import { MARKET_ITEMS } from "@/modules/market/services/marketData";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -62,6 +63,17 @@ export default function DashboardPage() {
     onError: (error: any) => {
       const msg = error?.response?.data?.message;
       toast.error(msg || "Không đủ bánh mì!");
+    }
+  });
+
+  const changePetSpeciesMut = useMutation({
+    mutationFn: gamificationService.changePetType,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["myPet", user?.id] });
+      toast.success("Đã đổi thú cưng đồng hành mới! ✨");
+    },
+    onError: () => {
+      toast.error("Không thể đổi thú cưng!");
     }
   });
 
@@ -178,7 +190,7 @@ export default function DashboardPage() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">
-            <Sparkles className="text-amber-500" /> Trạm Học Tập Nhanh
+            <Compass className="text-amber-500" /> Trạm Học Tập Nhanh
           </h2>
           <span className="text-xs font-bold text-slate-400">Chọn một bài học để bắt đầu</span>
         </div>
@@ -218,75 +230,15 @@ export default function DashboardPage() {
         {/* L E F T   C O L U M N (70%) */}
         <div className="lg:col-span-2 space-y-8">
           
-          {/* Virtual Pet Card */}
-          <motion.div 
-            className="bg-white p-8 rounded-[2.5rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] relative overflow-hidden"
-          >
-            <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
-              <div className="w-44 h-44 bg-amber-100 rounded-full border-8 border-amber-200 flex items-center justify-center text-7xl shadow-inner relative animate-pulse-slow shrink-0">
-                {pet?.name === 'Vua Bánh Mì' ? '👑' :
-                 pet?.name === 'Bánh Kem Hoàng Gia' ? '🎂' :
-                 pet?.name === 'Bánh Macaron' ? '🍩' :
-                 pet?.name === 'Bánh Sừng Bò' ? '🥐' : '🍞'}
-                {(pet?.happiness || 0) > 80 && (
-                  <div className="absolute -top-3 -right-3 text-3xl animate-bounce">✨</div>
-                )}
-              </div>
-              
-              <div className="flex-1 w-full text-center md:text-left">
-                <h2 className="text-3xl font-black text-slate-800 mb-2">Thú cưng: {pet?.name || "Bánh Mì Con"}</h2>
-                <div className="flex justify-center md:justify-start gap-3 mb-4">
-                  <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-xl text-xs font-black">Level {pet?.level || 1}</span>
-                  <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-xl text-xs font-bold">{pet?.exp || 0} / {(pet?.level || 1) * 1000} XP</span>
-                </div>
-                
-                {/* EXP Bar */}
-                <div className="w-full bg-slate-100 h-3 rounded-full mb-6 overflow-hidden border border-slate-200">
-                  <div 
-                    className="bg-purple-500 h-full rounded-full transition-all" 
-                    style={{width: `${Math.min(((pet?.exp || 0) / ((pet?.level || 1) * 1000)) * 100, 100)}%`}} 
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div>
-                    <div className="flex justify-between text-xs font-extrabold text-slate-600 mb-1">
-                      <span className="flex items-center gap-1"><Heart size={14} className="text-red-500 fill-red-500"/> Sức khỏe</span>
-                      <span>{pet?.health || 100}/100</span>
-                    </div>
-                    <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                      <div className="bg-red-500 h-full rounded-full" style={{width: `${pet?.health || 100}%`}} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-xs font-extrabold text-slate-600 mb-1">
-                      <span className="flex items-center gap-1"><Smile size={14} className="text-amber-500 fill-amber-500"/> Vui vẻ</span>
-                      <span>{pet?.happiness || 100}/100</span>
-                    </div>
-                    <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                      <div className="bg-amber-400 h-full rounded-full" style={{width: `${pet?.happiness || 100}%`}} />
-                    </div>
-                  </div>
-                </div>
-
-                <Button3D
-                  variant={canFeedPet ? "green" : "white"}
-                  size="md"
-                  onClick={() => {
-                    if (!canFeedPet) {
-                      toast.error(`Bạn cần ít nhất 10 Bánh Mì (hiện có: ${banhRan})`);
-                      return;
-                    }
-                    feedPetMut.mutate();
-                  }}
-                  disabled={feedPetMut.isPending || !canFeedPet}
-                  className="w-full md:w-auto"
-                >
-                  🍞 Cho thú cưng ăn (10 Bánh Mì)
-                </Button3D>
-              </div>
-            </div>
-          </motion.div>
+          {/* Interactive 3D Pet Sanctuary Stage */}
+          <PetStage3D
+            pet={pet}
+            banhRan={banhRan}
+            onFeed={() => feedPetMut.mutate()}
+            onChangeSpecies={(speciesName) => changePetSpeciesMut.mutate(speciesName)}
+            isFeeding={feedPetMut.isPending}
+            isChangingSpecies={changePetSpeciesMut.isPending}
+          />
 
         </div>
 

@@ -19,7 +19,7 @@ const PRACTICE_AREAS = [
     description: "Bộ thẻ từ vựng sinh động giúp bạn nhớ lâu hơn gấp 3 lần.",
     icon: Library,
     color: "bg-junior-orange",
-    path: "/practice/vocab",
+    path: "/flashcard",
   },
   {
     id: "reading",
