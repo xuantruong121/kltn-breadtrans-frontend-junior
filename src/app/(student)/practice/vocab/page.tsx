@@ -2,10 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Library, Loader2, ArrowLeft, PlayCircle, CheckCircle2 } from "lucide-react";
+import { Library, Loader2, PlayCircle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { vocabService } from "@/lib/api/services/vocab.service";
+import { BackButton } from "@/components/ui";
 
 export default function VocabTopicsPage() {
   const router = useRouter();
@@ -18,12 +19,9 @@ export default function VocabTopicsPage() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <button 
-        onClick={() => router.back()}
-        className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-bold mb-8 transition-colors"
-      >
-        <ArrowLeft size={20} /> Quay lại Đảo Luyện Tập
-      </button>
+      <div className="mb-8">
+        <BackButton href="/flashcard" label="Quay lại Flashcard & Từ vựng" />
+      </div>
 
       <div className="flex items-center gap-4 mb-8">
         <div className="bg-junior-orange p-4 rounded-2xl text-white">

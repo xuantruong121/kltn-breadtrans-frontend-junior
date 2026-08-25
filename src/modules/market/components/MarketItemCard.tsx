@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Zap } from "lucide-react";
 import { MarketItem } from "../types";
 import { Button3D } from "@/components/ui";
 
@@ -74,7 +74,7 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({
             {isEquipped ? (
               <><Check size={16} /> Đang đeo ✓</>
             ) : (
-              <><Sparkles size={16} /> Trang bị ngay</>
+              <><Zap size={16} /> Trang bị ngay</>
             )}
           </button>
         ) : (

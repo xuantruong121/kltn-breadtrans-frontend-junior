@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, PlayCircle, Video, Calendar, FileText, CheckCircle, BookOpen, Clock } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
+import { BackButton } from "@/components/ui";
 import { use, useState } from "react";
 import dayjs from "dayjs";
 import DailyClassroomModal from "@/components/classroom/DailyClassroomModal";
@@ -71,12 +72,9 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
   return (
     <div className="max-w-5xl mx-auto">
       {/* Back button */}
-      <button 
-        onClick={() => router.back()}
-        className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-bold mb-6 transition-colors"
-      >
-        <ArrowLeft size={20} /> Quay lại
-      </button>
+      <div className="mb-6">
+        <BackButton href="/classes" label="Quay lại danh sách lớp học" />
+      </div>
 
       {/* Hero Section */}
       <div className="bg-white rounded-[2rem] border-4 border-slate-200 overflow-hidden shadow-sm mb-8">

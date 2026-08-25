@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Sparkles, BookOpen, Clock } from "lucide-react";
+import { Lightbulb, BookOpen, Clock } from "lucide-react";
 import { GrammarLesson } from "../types";
 
 interface GrammarVideoPlayerProps {
@@ -36,7 +36,7 @@ export const GrammarVideoPlayer: React.FC<GrammarVideoPlayerProps> = ({ lesson }
         {/* Key Formula */}
         <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4">
           <div className="flex items-center gap-1.5 text-amber-800 text-xs font-black uppercase tracking-wider mb-1">
-            <Sparkles size={16} className="text-amber-500" /> Công thức ghi nhớ cốt lõi
+            <Lightbulb size={16} className="text-amber-500" /> Công thức ghi nhớ cốt lõi
           </div>
           <p className="text-lg font-black text-amber-900 font-mono">
             {lesson.keyFormula}

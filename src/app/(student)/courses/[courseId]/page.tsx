@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowLeft, Loader2, PlayCircle, Star, Users, Video } from "lucide-react";
 import { courseService } from "@/lib/api/services/course.service";
+import { BackButton } from "@/components/ui";
 import { use } from "react";
 
 export default function CourseDetailPage(props: { params: Promise<{ courseId: string }> }) {
@@ -38,12 +39,9 @@ export default function CourseDetailPage(props: { params: Promise<{ courseId: st
   return (
     <div className="max-w-4xl mx-auto">
       {/* Back button */}
-      <button 
-        onClick={() => router.back()}
-        className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-bold mb-6 transition-colors"
-      >
-        <ArrowLeft size={20} /> Quay lại danh sách
-      </button>
+      <div className="mb-6">
+        <BackButton label="Quay lại danh sách khóa học" />
+      </div>
 
       {/* Hero Section */}
       <div className="bg-white rounded-[2rem] border-4 border-slate-200 overflow-hidden shadow-sm mb-8">

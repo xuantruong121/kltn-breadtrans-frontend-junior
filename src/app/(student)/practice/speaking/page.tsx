@@ -9,14 +9,14 @@ import {
   ArrowLeft, 
   CheckCircle2, 
   Search, 
-  Sparkles,
+  ArrowUpDown,
   Layers,
   Award,
   ChevronRight
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { speakingService } from "@/lib/api/services/speaking.service";
-import { Pagination } from "@/components/ui";
+import { Pagination, BackButton } from "@/components/ui";
 
 const DIFFICULTY_WEIGHT: Record<string, number> = {
   BEGINNER: 1,
@@ -108,12 +108,9 @@ export default function SpeakingExercisesPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-16">
       {/* Top Back Navigation */}
-      <button
-        onClick={() => router.back()}
-        className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-black text-sm transition-colors cursor-pointer"
-      >
-        <ArrowLeft size={18} /> Quay lại Đảo Luyện Tập
-      </button>
+      <div>
+        <BackButton href="/dashboard" label="Quay lại Trang chủ" />
+      </div>
 
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-[2.5rem] p-6 md:p-8 text-white shadow-[0_10px_0_0_#4f46e5] relative overflow-hidden border-4 border-purple-700">
@@ -251,7 +248,7 @@ export default function SpeakingExercisesPage() {
               Danh sách bài tập ({filteredAndSortedExercises.length} bài phù hợp)
             </span>
             <span className="text-xs font-bold text-purple-600 flex items-center gap-1">
-              <Sparkles size={14} /> Sắp xếp: Dễ &rarr; Khó
+              <ArrowUpDown size={14} /> Sắp xếp: Dễ &rarr; Khó
             </span>
           </div>
 
