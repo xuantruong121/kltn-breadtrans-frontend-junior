@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { LogOut, Menu, LayoutDashboard, Calendar, UserCheck, FileText, FolderKanban, BookOpen } from "lucide-react";
+import { LogOut, Menu, LayoutDashboard, Calendar, UserCheck, FileText, FolderKanban, BookOpen, GraduationCap } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import { useSyncExternalStore, useEffect, useState } from "react";
@@ -13,8 +13,9 @@ const FloatingAiTutor = dynamic(() => import("@/components/FloatingAiTutor"), { 
 
 const NAV_ITEMS = [
   { id: "dashboard", href: "/teacher/dashboard", label: "Tổng quan", icon: LayoutDashboard },
-  { id: "schedule", href: "/teacher/schedule", label: "Thời khóa biểu", icon: Calendar },
+  { id: "courses", href: "/teacher/courses", label: "Khóa học của tôi", icon: GraduationCap },
   { id: "classes", href: "/teacher/classes", label: "Lớp học phụ trách", icon: BookOpen },
+  { id: "schedule", href: "/teacher/schedule", label: "Thời khóa biểu", icon: Calendar },
   { id: "assignments", href: "/teacher/assignments", label: "Bài tập & Chấm điểm", icon: FileText },
   { id: "materials", href: "/teacher/materials", label: "Kho học liệu", icon: FolderKanban },
   { id: "profile", href: "/teacher/profile", label: "Hồ sơ cá nhân", icon: UserCheck },
