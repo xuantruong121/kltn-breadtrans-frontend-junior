@@ -202,22 +202,22 @@ export default function AdminAnalyticsChart({ data }: AdminAnalyticsChartProps) 
       </div>
 
       {/* 4. OPERATIONAL INSIGHTS & ACTIONS BANNER */}
-      <div className="bg-slate-900 text-slate-100 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-slate-800">
+      <div className="bg-gradient-to-r from-blue-50/50 via-slate-50/70 to-slate-50/90 text-slate-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-slate-200 shadow-xs">
         <div className="flex items-start gap-3">
-          <div className="p-2.5 rounded-lg bg-slate-800 text-blue-400 shrink-0 border border-slate-700 mt-0.5">
+          <div className="p-2.5 rounded-lg bg-white text-blue-600 shrink-0 border border-blue-100 shadow-xs mt-0.5">
             <LineChart size={18} />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+              <span className="text-xs font-bold text-slate-800 uppercase tracking-wide">
                 Đề Xuất Tối Ưu Vận Hành
               </span>
-              <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-blue-900/60 text-blue-300 border border-blue-700/50">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-100/70 text-blue-700 border border-blue-200/60">
                 Phân tích lưu lượng
               </span>
             </div>
-            <p className="text-xs text-slate-300 mt-1 leading-relaxed max-w-xl">
-              Lượt truy cập học tập cao nhất tập trung vào khung giờ <strong>19h00 &ndash; 22h00</strong>. Đề xuất mở thêm phòng luyện nói Speaking tương tác và tổ chức giải đấu Mini Game vào buổi tối để tăng tỷ lệ hoàn thành.
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed max-w-3xl">
+              Lượt truy cập học tập cao nhất tập trung vào khung giờ <strong className="text-slate-900 font-semibold">19h00 &ndash; 22h00</strong>. Đề xuất mở thêm phòng luyện nói Speaking tương tác và tổ chức giải đấu Mini Game vào buổi tối để tăng tỷ lệ hoàn thành.
             </p>
           </div>
         </div>
@@ -225,13 +225,13 @@ export default function AdminAnalyticsChart({ data }: AdminAnalyticsChartProps) 
         <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
           <Link
             href="/admin/enroll"
-            className="flex-1 sm:flex-none px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
+            className="flex-1 sm:flex-none px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
           >
             <UserPlus size={14} /> Ghi danh học viên
           </Link>
           <Link
             href="/admin/users"
-            className="flex-1 sm:flex-none px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap"
+            className="flex-1 sm:flex-none px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-semibold rounded-lg border border-slate-200 shadow-xs transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap"
           >
             Danh sách <ArrowUpRight size={14} />
           </Link>
