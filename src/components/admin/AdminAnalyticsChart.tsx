@@ -5,13 +5,14 @@ import { motion } from "framer-motion";
 import { 
   TrendingUp, 
   Users, 
-  Zap, 
-  Trophy, 
+  Activity, 
+  Calendar, 
   Clock, 
-  Target, 
-  Sparkles,
+  CheckCircle2, 
   ArrowUpRight,
-  UserPlus
+  UserPlus,
+  BarChart3,
+  LineChart
 } from "lucide-react";
 import Link from "next/link";
 
@@ -44,72 +45,71 @@ export default function AdminAnalyticsChart({ data }: AdminAnalyticsChartProps) 
 
   return (
     <div className="space-y-6 flex flex-col">
-      {/* 1. CHART HEADER CONTROLS */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-100">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-purple-100 text-purple-600 rounded-xl">
-              <TrendingUp size={18} />
-            </div>
-            <div>
-              <h3 className="text-base sm:text-lg font-black text-slate-800">
-                Xu Hướng Tăng Trưởng Hệ Thống
-              </h3>
-              <p className="text-xs font-semibold text-slate-400">
-                Dữ liệu ghi danh và lượt tương tác học tập thực tế qua các tháng
-              </p>
-            </div>
+      {/* 1. CHART HEADER & CONTROLS */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-slate-100 text-slate-800 rounded-lg border border-slate-200">
+            <BarChart3 size={18} strokeWidth={2} />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-slate-900">
+              Xu Hướng Tăng Trưởng &amp; Tương Tác
+            </h3>
+            <p className="text-xs text-slate-500">
+              Dữ liệu ghi danh học viên và tổng lượt hoàn thành bài học theo từng tháng
+            </p>
           </div>
         </div>
 
-        {/* METRIC SELECTOR TABS */}
-        <div className="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200/60 self-start sm:self-auto">
+        {/* METRIC SELECTOR TABS (SEGMENTED CONTROL) */}
+        <div className="inline-flex items-center p-1 bg-slate-100 rounded-lg border border-slate-200 self-start sm:self-auto text-xs font-medium">
           <button
             onClick={() => setMetric("enrollments")}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 cursor-pointer ${
               metric === "enrollments"
-                ? "bg-white text-blue-600 shadow-xs border border-slate-200/60"
-                : "text-slate-500 hover:text-slate-800"
+                ? "bg-white text-slate-900 font-semibold shadow-xs border border-slate-200/80"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <Users size={14} /> Ghi Danh
           </button>
           <button
             onClick={() => setMetric("activity")}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 cursor-pointer ${
               metric === "activity"
-                ? "bg-white text-purple-600 shadow-xs border border-slate-200/60"
-                : "text-slate-500 hover:text-slate-800"
+                ? "bg-white text-slate-900 font-semibold shadow-xs border border-slate-200/80"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            <Zap size={14} /> Tương Tác
+            <Activity size={14} /> Lượt Tương Tác
           </button>
         </div>
       </div>
 
-      {/* 2. INTERACTIVE BAR CHART WITH GRIDLINES */}
-      <div className="relative pt-6 pb-2 bg-slate-50/50 rounded-2xl p-4 border border-slate-100">
-        {/* Background Dotted Gridlines */}
-        <div className="absolute inset-x-4 top-10 bottom-10 flex flex-col justify-between pointer-events-none opacity-40">
+      {/* 2. INTERACTIVE BAR CHART */}
+      <div className="relative pt-6 pb-3 bg-slate-50/60 rounded-xl p-4 border border-slate-200/70">
+        {/* Dotted Gridlines & Y-Axis Reference */}
+        <div className="absolute inset-x-4 top-10 bottom-10 flex flex-col justify-between pointer-events-none opacity-50">
           <div className="border-b border-dashed border-slate-300 w-full" />
           <div className="border-b border-dashed border-slate-300 w-full" />
           <div className="border-b border-dashed border-slate-300 w-full" />
         </div>
 
-        <div className="h-56 sm:h-60 flex items-end justify-between gap-3 sm:gap-6 px-2 relative z-10">
+        <div className="h-56 sm:h-64 flex items-end justify-between gap-3 sm:gap-6 px-3 relative z-10">
           {trends.map((item, index) => {
             const currentVal = metric === "enrollments" ? item.enrollments : item.activityCount;
-            const heightPercent = Math.max(16, Math.round((currentVal / maxVal) * 100));
+            const heightPercent = Math.max(12, Math.round((currentVal / maxVal) * 100));
             const isHovered = hoveredIdx === index;
 
-            const barGradient =
+            // Clean, non-neon bar styling
+            const barBg =
               metric === "enrollments"
                 ? isHovered
-                  ? "from-blue-600 to-sky-400"
-                  : "from-blue-500 to-sky-400"
+                  ? "bg-blue-700"
+                  : "bg-blue-600"
                 : isHovered
-                ? "from-purple-600 to-pink-400"
-                : "from-purple-500 to-pink-400";
+                ? "bg-indigo-700"
+                : "bg-indigo-600";
 
             return (
               <div
@@ -121,12 +121,12 @@ export default function AdminAnalyticsChart({ data }: AdminAnalyticsChartProps) 
                 {/* TOOLTIP ON HOVER */}
                 {isHovered && (
                   <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    initial={{ opacity: 0, y: 6, scale: 0.96 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                    className="absolute -top-14 bg-slate-900 text-white font-bold text-xs py-1.5 px-3 rounded-xl shadow-xl z-30 whitespace-nowrap pointer-events-none"
+                    className="absolute -top-14 bg-slate-900 text-white text-xs py-1.5 px-3 rounded-lg shadow-md z-30 whitespace-nowrap pointer-events-none"
                   >
-                    <div className="font-extrabold text-amber-300">
-                      {currentVal} {metric === "enrollments" ? "học viên" : "lượt học"}
+                    <div className="font-semibold text-white">
+                      {currentVal} {metric === "enrollments" ? "học viên mới" : "lượt học"}
                     </div>
                     <span className="text-[10px] text-slate-400">Tháng {item.month.replace("T", "")}</span>
                     <div className="absolute left-1/2 -bottom-1 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45" />
@@ -134,7 +134,7 @@ export default function AdminAnalyticsChart({ data }: AdminAnalyticsChartProps) 
                 )}
 
                 {/* NUMBER VALUE PILL ON TOP OF BAR */}
-                <span className="text-[11px] font-black text-slate-500 mb-1.5 transition-colors group-hover:text-slate-800">
+                <span className="text-[11px] font-semibold text-slate-500 mb-1.5 transition-colors group-hover:text-slate-900 group-hover:font-bold">
                   {currentVal}
                 </span>
 
@@ -142,16 +142,16 @@ export default function AdminAnalyticsChart({ data }: AdminAnalyticsChartProps) 
                 <motion.div
                   initial={{ height: 0 }}
                   animate={{ height: `${heightPercent}%` }}
-                  transition={{ duration: 0.6, delay: index * 0.08, ease: "easeOut" }}
-                  className={`w-full max-w-[48px] rounded-2xl bg-gradient-to-t ${barGradient} shadow-sm transition-all ${
-                    isHovered ? "scale-105 shadow-md ring-4 ring-purple-100" : ""
+                  transition={{ duration: 0.5, delay: index * 0.05, ease: "easeOut" }}
+                  className={`w-full max-w-[42px] rounded-t-md ${barBg} transition-all ${
+                    isHovered ? "ring-2 ring-slate-400/50 opacity-95" : ""
                   }`}
                 />
 
                 {/* MONTH LABEL */}
                 <span
-                  className={`text-xs font-black mt-3 transition-colors ${
-                    isHovered ? "text-slate-800" : "text-slate-500"
+                  className={`text-xs mt-2.5 transition-colors ${
+                    isHovered ? "text-slate-900 font-bold" : "text-slate-500 font-medium"
                   }`}
                 >
                   {item.month}
@@ -162,58 +162,62 @@ export default function AdminAnalyticsChart({ data }: AdminAnalyticsChartProps) 
         </div>
       </div>
 
-      {/* 3. GROWTH STATS 4 MINI CARDS */}
+      {/* 3. GROWTH STATS 4 MINI METRIC TILES */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-3.5 bg-blue-50/70 border border-blue-200/60 rounded-2xl">
-          <div className="flex items-center gap-1.5 text-blue-600 mb-1">
-            <Trophy size={15} />
-            <span className="text-[11px] font-black uppercase">Tháng Đỉnh Điểm</span>
+        <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200">
+          <div className="flex items-center gap-1.5 text-slate-500 mb-1">
+            <Calendar size={14} className="text-blue-600" />
+            <span className="text-[11px] font-semibold uppercase tracking-wider">Tháng Cao Điểm</span>
           </div>
-          <div className="text-base font-black text-slate-800">Tháng 8 (T8)</div>
-          <div className="text-[10px] font-bold text-blue-600 mt-0.5">110 lượt tương tác</div>
+          <div className="text-base font-bold text-slate-900">Tháng 8 (T8)</div>
+          <div className="text-[11px] text-slate-500 mt-0.5">110 lượt học tập</div>
         </div>
 
-        <div className="p-3.5 bg-emerald-50/70 border border-emerald-200/60 rounded-2xl">
-          <div className="flex items-center gap-1.5 text-emerald-600 mb-1">
-            <TrendingUp size={15} />
-            <span className="text-[11px] font-black uppercase">Tăng Trưởng</span>
+        <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200">
+          <div className="flex items-center gap-1.5 text-slate-500 mb-1">
+            <TrendingUp size={14} className="text-emerald-600" />
+            <span className="text-[11px] font-semibold uppercase tracking-wider">Tăng Trưởng</span>
           </div>
-          <div className="text-base font-black text-slate-800">+24.5%</div>
-          <div className="text-[10px] font-bold text-emerald-600 mt-0.5">+8 học viên mới</div>
+          <div className="text-base font-bold text-slate-900">+24.5%</div>
+          <div className="text-[11px] text-emerald-600 font-medium mt-0.5">+8 học viên ghi danh</div>
         </div>
 
-        <div className="p-3.5 bg-purple-50/70 border border-purple-200/60 rounded-2xl">
-          <div className="flex items-center gap-1.5 text-purple-600 mb-1">
-            <Clock size={15} />
-            <span className="text-[11px] font-black uppercase">Thời Lượng Học</span>
+        <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200">
+          <div className="flex items-center gap-1.5 text-slate-500 mb-1">
+            <Clock size={14} className="text-indigo-600" />
+            <span className="text-[11px] font-semibold uppercase tracking-wider">Thời Lượng Học</span>
           </div>
-          <div className="text-base font-black text-slate-800">38 phút/ngày</div>
-          <div className="text-[10px] font-bold text-purple-600 mt-0.5">Tăng 12% so với T7</div>
+          <div className="text-base font-bold text-slate-900">38 phút/ngày</div>
+          <div className="text-[11px] text-slate-500 mt-0.5">Duy trì đều đặn</div>
         </div>
 
-        <div className="p-3.5 bg-amber-50/70 border border-amber-200/60 rounded-2xl">
-          <div className="flex items-center gap-1.5 text-amber-600 mb-1">
-            <Target size={15} />
-            <span className="text-[11px] font-black uppercase">Tỷ Lệ Giữ Chân</span>
+        <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200">
+          <div className="flex items-center gap-1.5 text-slate-500 mb-1">
+            <CheckCircle2 size={14} className="text-amber-600" />
+            <span className="text-[11px] font-semibold uppercase tracking-wider">Tỷ Lệ Giữ Chân</span>
           </div>
-          <div className="text-base font-black text-slate-800">94.2%</div>
-          <div className="text-[10px] font-bold text-amber-600 mt-0.5">Duy trì Streak tốt</div>
+          <div className="text-base font-bold text-slate-900">94.2%</div>
+          <div className="text-[11px] text-slate-500 mt-0.5">Duy trì chuỗi bài học</div>
         </div>
       </div>
 
-      {/* 4. AI INSIGHTS & ACTIONS BANNER */}
-      <div className="bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md">
+      {/* 4. OPERATIONAL INSIGHTS & ACTIONS BANNER */}
+      <div className="bg-slate-900 text-slate-100 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-slate-800">
         <div className="flex items-start gap-3">
-          <div className="p-2 rounded-xl bg-indigo-500/30 text-amber-300 shrink-0 border border-indigo-400/30">
-            <Sparkles size={18} />
+          <div className="p-2.5 rounded-lg bg-slate-800 text-blue-400 shrink-0 border border-slate-700 mt-0.5">
+            <LineChart size={18} />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-black text-indigo-200 uppercase tracking-wider">AI Phân Tích Thông Minh</span>
-              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Thời gian thực</span>
+              <span className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                Đề Xuất Tối Ưu Vận Hành
+              </span>
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-blue-900/60 text-blue-300 border border-blue-700/50">
+                Phân tích lưu lượng
+              </span>
             </div>
-            <p className="text-xs font-bold text-slate-300 mt-1 leading-relaxed">
-              Lượt học tăng cao nhất vào khung giờ <strong>19h00 - 22h00</strong>. Đề xuất tổ chức thêm lớp Speaking &amp; Đấu trường 1v1 vào buổi tối.
+            <p className="text-xs text-slate-300 mt-1 leading-relaxed max-w-xl">
+              Lượt truy cập học tập cao nhất tập trung vào khung giờ <strong>19h00 &ndash; 22h00</strong>. Đề xuất mở thêm phòng luyện nói Speaking tương tác và tổ chức giải đấu Mini Game vào buổi tối để tăng tỷ lệ hoàn thành.
             </p>
           </div>
         </div>
@@ -221,15 +225,15 @@ export default function AdminAnalyticsChart({ data }: AdminAnalyticsChartProps) 
         <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
           <Link
             href="/admin/enroll"
-            className="flex-1 sm:flex-none px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer whitespace-nowrap"
+            className="flex-1 sm:flex-none px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
           >
-            <UserPlus size={14} /> Ghi Danh
+            <UserPlus size={14} /> Ghi danh học viên
           </Link>
           <Link
             href="/admin/users"
-            className="flex-1 sm:flex-none px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-black rounded-xl border border-slate-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+            className="flex-1 sm:flex-none px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap"
           >
-            Học Viên <ArrowUpRight size={14} />
+            Danh sách <ArrowUpRight size={14} />
           </Link>
         </div>
       </div>
