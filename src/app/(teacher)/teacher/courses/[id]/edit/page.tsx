@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axiosClient from "@/lib/api/axiosClient";
 import toast from "react-hot-toast";
 import Link from "next/link";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -78,6 +79,8 @@ export default function CourseEditStudioPage() {
   const [activeStep, setActiveStep] = useState<1 | 2 | 3>(1);
   const [isDirty, setIsDirty] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showRevertConfirmModal, setShowRevertConfirmModal] = useState(false);
+  const [showSubmitReviewConfirmModal, setShowSubmitReviewConfirmModal] = useState(false);
 
   // Form State (Step 1)
   const [basicForm, setBasicForm] = useState({
@@ -186,7 +189,7 @@ export default function CourseEditStudioPage() {
     },
     onError: (err: any) => {
       toast.error(
-        err?.response?.data?.message || "Cập nhật thông tin thất bại.",
+        getApiErrorMessage(err, "Cập nhật thông tin thất bại."),
       );
     },
   });
@@ -201,12 +204,16 @@ export default function CourseEditStudioPage() {
         queryKey: ["teacher-course-detail", courseId],
       });
       queryClient.invalidateQueries({ queryKey: ["teacher-my-courses"] });
+      setShowRevertConfirmModal(false);
       toast.success("Khóa học đã được chuyển về Bản nháp để chỉnh sửa.");
     },
     onError: (err: any) => {
+      setShowRevertConfirmModal(false);
       toast.error(
-        err?.response?.data?.message ||
+        getApiErrorMessage(
+          err,
           "Không thể chuyển về Bản nháp. Khóa học có thể đang có lớp học diễn ra.",
+        ),
       );
     },
   });
@@ -221,10 +228,13 @@ export default function CourseEditStudioPage() {
         queryKey: ["teacher-course-detail", courseId],
       });
       queryClient.invalidateQueries({ queryKey: ["teacher-my-courses"] });
+      setShowSubmitReviewConfirmModal(false);
       toast.success("Đã gửi khóa học để Admin phê duyệt!");
+      router.push(`/teacher/courses/${courseId}`);
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Gửi duyệt thất bại.");
+      setShowSubmitReviewConfirmModal(false);
+      toast.error(getApiErrorMessage(err, "Gửi duyệt thất bại."));
     },
   });
 
@@ -245,7 +255,7 @@ export default function CourseEditStudioPage() {
       toast.success("Thêm bài học mới thành công!");
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Thêm bài học thất bại.");
+      toast.error(getApiErrorMessage(err, "Thêm bài học thất bại."));
     },
   });
 
@@ -268,7 +278,7 @@ export default function CourseEditStudioPage() {
       toast.success("Cập nhật bài học thành công!");
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Cập nhật bài học thất bại.");
+      toast.error(getApiErrorMessage(err, "Cập nhật bài học thất bại."));
     },
   });
 
@@ -285,7 +295,7 @@ export default function CourseEditStudioPage() {
       toast.success("Đã xóa bài học!");
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Xóa bài học thất bại.");
+      toast.error(getApiErrorMessage(err, "Xóa bài học thất bại."));
     },
   });
 
@@ -304,7 +314,7 @@ export default function CourseEditStudioPage() {
     },
     onError: (err: any) => {
       toast.error(
-        err?.response?.data?.message || "Sắp xếp bài học thất bại.",
+        getApiErrorMessage(err, "Sắp xếp bài học thất bại."),
       );
     },
   });
@@ -331,7 +341,7 @@ export default function CourseEditStudioPage() {
       toast.success("Đã thêm tài liệu học tập!");
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Thêm tài liệu thất bại.");
+      toast.error(getApiErrorMessage(err, "Thêm tài liệu thất bại."));
     },
   });
 
@@ -358,7 +368,7 @@ export default function CourseEditStudioPage() {
     },
     onError: (err: any) => {
       toast.error(
-        err?.response?.data?.message || "Cập nhật tài liệu thất bại.",
+        getApiErrorMessage(err, "Cập nhật tài liệu thất bại."),
       );
     },
   });
@@ -376,7 +386,7 @@ export default function CourseEditStudioPage() {
       toast.success("Đã xóa tài liệu học tập!");
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Xóa tài liệu thất bại.");
+      toast.error(getApiErrorMessage(err, "Xóa tài liệu thất bại."));
     },
   });
 
@@ -545,6 +555,13 @@ export default function CourseEditStudioPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            {isDirty && (
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse"></span>
+                Có thay đổi chưa lưu
+              </span>
+            )}
+
             <Link
               href={`/teacher/courses/${courseId}`}
               className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
@@ -553,7 +570,7 @@ export default function CourseEditStudioPage() {
               Xem trang khóa học
             </Link>
 
-            {isDraft && activeStep === 1 && (
+            {(isDraft || isPublished) && activeStep === 1 && (
               <button
                 onClick={() => handleSaveBasicInfo(false)}
                 disabled={updateCourseMutation.isPending}
@@ -587,7 +604,7 @@ export default function CourseEditStudioPage() {
               </p>
               <div className="mt-3">
                 <button
-                  onClick={() => revertToDraftMutation.mutate()}
+                  onClick={() => setShowRevertConfirmModal(true)}
                   disabled={revertToDraftMutation.isPending}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-amber-800 border border-amber-300 rounded-lg text-xs font-semibold hover:bg-amber-100 transition-colors shadow-xs"
                 >
@@ -626,15 +643,7 @@ export default function CourseEditStudioPage() {
               </span>
             ) : (
               <button
-                onClick={() => {
-                  if (
-                    confirm(
-                      "Chuyển khóa học về Bản nháp để sửa giáo trình? Sau khi sửa bạn sẽ cần gửi duyệt lại.",
-                    )
-                  ) {
-                    revertToDraftMutation.mutate();
-                  }
-                }}
+                onClick={() => setShowRevertConfirmModal(true)}
                 disabled={revertToDraftMutation.isPending}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-emerald-800 border border-emerald-300 rounded-lg text-xs font-semibold hover:bg-emerald-100 transition-colors shadow-xs shrink-0"
               >
@@ -661,7 +670,7 @@ export default function CourseEditStudioPage() {
             </div>
 
             <button
-              onClick={() => revertToDraftMutation.mutate()}
+              onClick={() => setShowRevertConfirmModal(true)}
               disabled={revertToDraftMutation.isPending}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-rose-800 border border-rose-300 rounded-lg text-xs font-semibold hover:bg-rose-100 transition-colors shadow-xs shrink-0"
             >
@@ -753,6 +762,12 @@ export default function CourseEditStudioPage() {
                     {formErrors.title}
                   </p>
                 )}
+                {isPublished && (
+                  <p className="text-[11px] text-amber-800 bg-amber-50/80 px-2.5 py-1 rounded border border-amber-200 mt-1.5 flex items-center gap-1.5">
+                    <Lock size={12} className="shrink-0 text-amber-600" />
+                    Tiêu đề không thể chỉnh sửa trực tiếp khi khóa học đã xuất bản.
+                  </p>
+                )}
               </div>
 
               {/* Level */}
@@ -794,6 +809,12 @@ export default function CourseEditStudioPage() {
                     );
                   })}
                 </div>
+                {isPublished && (
+                  <p className="text-[11px] text-amber-800 bg-amber-50/80 px-2.5 py-1 rounded border border-amber-200 mt-2 flex items-center gap-1.5">
+                    <Lock size={12} className="shrink-0 text-amber-600" />
+                    Trình độ học thuật không thể chỉnh sửa trực tiếp khi khóa học đã xuất bản.
+                  </p>
+                )}
               </div>
 
               {/* Description */}
@@ -1335,7 +1356,13 @@ export default function CourseEditStudioPage() {
                   </button>
                 </div>
 
-                <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3 w-full sm:w-auto justify-end">
+                  {!checklist.hasLessons && (
+                    <span className="text-xs font-medium text-rose-600 flex items-center gap-1.5">
+                      <XCircle size={14} /> Khóa học cần có ít nhất 1 bài học để gửi duyệt
+                    </span>
+                  )}
+
                   <button
                     onClick={() => router.push(`/teacher/courses/${courseId}`)}
                     className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
@@ -1348,15 +1375,7 @@ export default function CourseEditStudioPage() {
                       disabled={
                         !checklist.canSubmit || submitReviewMutation.isPending
                       }
-                      onClick={() => {
-                        if (
-                          confirm(
-                            "Gửi khóa học này tới Admin phê duyệt? Sau khi gửi, nội dung sẽ được khóa để thẩm định.",
-                          )
-                        ) {
-                          submitReviewMutation.mutate();
-                        }
-                      }}
+                      onClick={() => setShowSubmitReviewConfirmModal(true)}
                       className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-50"
                     >
                       {submitReviewMutation.isPending ? (
@@ -1748,6 +1767,99 @@ export default function CourseEditStudioPage() {
                 className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-xs"
               >
                 Rời đi không lưu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL: REVERT TO DRAFT CONFIRMATION */}
+      {/* ============================================================ */}
+      {showRevertConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4">
+              <RotateCcw size={22} />
+            </div>
+            <h3 className="font-bold text-slate-900 text-base mb-1">
+              Chuyển khóa học về Bản nháp?
+            </h3>
+            <p className="text-xs text-slate-600 leading-relaxed mb-4">
+              Bạn đang chuẩn bị chỉnh sửa giáo trình của khóa học đã xuất bản.
+            </p>
+            <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-lg text-[11px] text-amber-900 mb-6 space-y-1.5">
+              <p className="font-semibold text-amber-800">Sau khi chuyển về Bản nháp:</p>
+              <ul className="list-disc list-inside space-y-1 text-amber-800/90">
+                <li>Giáo trình có thể được chỉnh sửa.</li>
+                <li>Khóa học sẽ cần được gửi duyệt lại trước khi xuất bản.</li>
+                <li>Các thay đổi chưa được duyệt sẽ không được áp dụng vào trạng thái xuất bản hiện tại.</li>
+              </ul>
+            </div>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowRevertConfirmModal(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                disabled={revertToDraftMutation.isPending}
+                onClick={() => revertToDraftMutation.mutate()}
+                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold shadow-xs disabled:opacity-50 inline-flex items-center gap-1.5"
+              >
+                {revertToDraftMutation.isPending && (
+                  <Loader2 size={13} className="animate-spin" />
+                )}
+                {revertToDraftMutation.isPending ? "Đang chuyển..." : "Chuyển về Bản nháp"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL: SUBMIT REVIEW CONFIRMATION */}
+      {/* ============================================================ */}
+      {showSubmitReviewConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
+              <Send size={22} />
+            </div>
+            <h3 className="font-bold text-slate-900 text-base mb-1">
+              Gửi khóa học để Admin duyệt?
+            </h3>
+            <p className="text-xs text-slate-600 leading-relaxed mb-4">
+              Bạn đang chuẩn bị gửi giáo trình và thông tin khóa học tới Ban Quản Trị.
+            </p>
+            <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-lg text-[11px] text-blue-900 mb-6 space-y-1.5">
+              <p className="font-semibold text-blue-800">Lưu ý sau khi gửi:</p>
+              <ul className="list-disc list-inside space-y-1 text-blue-800/90">
+                <li>Nội dung khóa học sẽ tạm thời bị khóa trong thời gian thẩm định.</li>
+                <li>Bạn không thể tiếp tục chỉnh sửa cho đến khi Admin phản hồi phê duyệt hoặc từ chối.</li>
+              </ul>
+            </div>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowSubmitReviewConfirmModal(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                disabled={submitReviewMutation.isPending}
+                onClick={() => submitReviewMutation.mutate()}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-xs disabled:opacity-50 inline-flex items-center gap-1.5"
+              >
+                {submitReviewMutation.isPending && (
+                  <Loader2 size={13} className="animate-spin" />
+                )}
+                {submitReviewMutation.isPending ? "Đang gửi..." : "Gửi duyệt ngay"}
               </button>
             </div>
           </div>
