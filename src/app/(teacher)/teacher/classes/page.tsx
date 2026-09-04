@@ -20,6 +20,9 @@ import {
   Loader2,
   Flame,
   LogOut,
+  Edit,
+  AlertTriangle,
+  Lock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import axiosClient from "@/lib/api/axiosClient";
@@ -27,6 +30,7 @@ import dayjs from "dayjs";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { openDailyClassroomSession } from "@/lib/utils/dailyClassroom";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 export default function TeacherClassesPage() {
   const queryClient = useQueryClient();
@@ -58,6 +62,41 @@ export default function TeacherClassesPage() {
     startTime: "",
     endTime: "",
     meetingLink: "",
+  });
+
+  // Edit Class State & Mutation
+  const [editingClass, setEditingClass] = useState<any | null>(null);
+  const [editClassForm, setEditClassForm] = useState({
+    name: "",
+    capacity: 30,
+    startDate: "",
+    endDate: "",
+    meetingLink: "",
+  });
+
+  const handleOpenEditClass = (cls: any) => {
+    setEditingClass(cls);
+    setEditClassForm({
+      name: cls.name || "",
+      capacity: cls.capacity || 30,
+      startDate: cls.startDate ? dayjs(cls.startDate).format("YYYY-MM-DD") : "",
+      endDate: cls.endDate ? dayjs(cls.endDate).format("YYYY-MM-DD") : "",
+      meetingLink: cls.meetingLink || "",
+    });
+  };
+
+  const updateClassMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      return await axiosClient.patch(`/courses/classes/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacher-classes"] });
+      setEditingClass(null);
+      toast.success("Cập nhật lớp học thành công!");
+    },
+    onError: (err: any) => {
+      toast.error(getApiErrorMessage(err, "Cập nhật lớp học thất bại."));
+    },
   });
 
   // Query classes assigned to the teacher
@@ -261,6 +300,14 @@ export default function TeacherClassesPage() {
 
                 {/* ACTION BUTTONS */}
                 <div className="flex flex-wrap items-center gap-2.5">
+                  <button
+                    onClick={() => handleOpenEditClass(cls)}
+                    className="px-3.5 py-2.5 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-2xl text-xs flex items-center gap-1.5 border border-slate-200 transition-all cursor-pointer shadow-2xs"
+                    title="Chỉnh sửa thông tin lớp học"
+                  >
+                    <Edit size={14} /> Sửa lớp
+                  </button>
+
                   <Link
                     href="/teacher/assignments"
                     className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black rounded-2xl text-xs flex items-center gap-1.5 transition-all cursor-pointer"
@@ -949,6 +996,297 @@ export default function TeacherClassesPage() {
                   Tạo Buổi Học
                 </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* ================= MODAL: EDIT CLASS ================= */}
+        {editingClass && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl p-6 md:p-8 max-w-lg w-full border-2 border-slate-100 shadow-2xl space-y-5"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    {editingClass.status === "COMPLETED" || editingClass.status === "CANCELLED"
+                      ? "Chi tiết lớp học"
+                      : "Chỉnh sửa lớp học"}
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Mã lớp học: #{editingClass.id} • {editingClass.name}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`px-2.5 py-1 rounded-md text-xs font-bold border ${
+                      editingClass.status === "ONGOING"
+                        ? "bg-green-50 text-green-700 border-green-200"
+                        : editingClass.status === "UPCOMING"
+                          ? "bg-blue-50 text-blue-700 border-blue-200"
+                          : editingClass.status === "COMPLETED"
+                            ? "bg-slate-100 text-slate-600 border-slate-200"
+                            : "bg-rose-50 text-rose-700 border-rose-200"
+                    }`}
+                  >
+                    {editingClass.status === "ONGOING"
+                      ? "ONGOING - Đang diễn ra"
+                      : editingClass.status === "UPCOMING"
+                        ? "UPCOMING - Sắp diễn ra"
+                        : editingClass.status === "COMPLETED"
+                          ? "COMPLETED - Đã kết thúc"
+                          : "CANCELLED - Đã hủy"}
+                  </span>
+                  <button
+                    onClick={() => setEditingClass(null)}
+                    className="p-1 text-slate-400 hover:text-slate-700 rounded-lg"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              </div>
+
+              {editingClass.status === "ONGOING" && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-xs text-green-900 flex items-start gap-2.5 mb-4">
+                  <AlertTriangle size={16} className="shrink-0 text-green-700 mt-0.5" />
+                  <div>
+                    <strong>Lớp học đang diễn ra (ONGOING):</strong> Ngày bắt đầu đã được khóa lịch sử. Ngày kết thúc mới không được sớm hơn buổi học cuối cùng đã lên lịch.
+                  </div>
+                </div>
+              )}
+
+              {(editingClass.status === "COMPLETED" || editingClass.status === "CANCELLED") && (
+                <div className="p-3 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-600 flex items-start gap-2.5 mb-4">
+                  <Lock size={16} className="shrink-0 text-slate-500 mt-0.5" />
+                  <div>
+                    <strong>Lớp học ở chế độ chỉ đọc:</strong> Lớp đã {editingClass.status === "COMPLETED" ? "kết thúc" : "bị hủy"}. Toàn bộ thông tin không thể chỉnh sửa thêm.
+                  </div>
+                </div>
+              )}
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (editingClass.status === "COMPLETED" || editingClass.status === "CANCELLED") {
+                    setEditingClass(null);
+                    return;
+                  }
+
+                  if (!editClassForm.name.trim()) {
+                    toast.error("Tên lớp học là bắt buộc.");
+                    return;
+                  }
+                  if (
+                    editingClass.studentCount &&
+                    editClassForm.capacity < editingClass.studentCount
+                  ) {
+                    toast.error(
+                      `Sức chứa không được nhỏ hơn số học viên hiện tại (${editingClass.studentCount}).`
+                    );
+                    return;
+                  }
+                  if (
+                    editClassForm.startDate &&
+                    editClassForm.endDate &&
+                    new Date(editClassForm.startDate) >= new Date(editClassForm.endDate)
+                  ) {
+                    toast.error("Ngày kết thúc phải sau ngày bắt đầu.");
+                    return;
+                  }
+
+                  const isOngoing = editingClass.status === "ONGOING";
+                  const payload: any = {
+                    name: editClassForm.name.trim(),
+                    capacity: Number(editClassForm.capacity),
+                    endDate: editClassForm.endDate ? new Date(editClassForm.endDate).toISOString() : undefined,
+                    meetingLink: editClassForm.meetingLink.trim() || undefined,
+                  };
+
+                  // Only send startDate if not ONGOING
+                  if (!isOngoing && editClassForm.startDate) {
+                    payload.startDate = new Date(editClassForm.startDate).toISOString();
+                  }
+
+                  updateClassMutation.mutate({
+                    id: editingClass.id,
+                    data: payload,
+                  });
+                }}
+                className="space-y-4 text-xs"
+              >
+                {/* Section 1: Thông tin cơ bản */}
+                <div className="space-y-3 pb-3 border-b border-slate-100">
+                  <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                    1. Thông tin lớp học
+                  </h4>
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1">Khóa học</label>
+                    <input
+                      type="text"
+                      disabled
+                      readOnly
+                      value={editingClass.course?.title || "Khóa học"}
+                      className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-500 cursor-not-allowed font-medium"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1">
+                      Tên lớp học <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      disabled={editingClass.status === "COMPLETED" || editingClass.status === "CANCELLED"}
+                      value={editClassForm.name}
+                      onChange={(e) => setEditClassForm({ ...editClassForm, name: e.target.value })}
+                      placeholder="Ví dụ: K01 - Tối 2-4-6"
+                      className="w-full border border-slate-200 rounded-xl px-3.5 py-2 outline-none focus:border-blue-500 text-slate-800 font-semibold disabled:bg-slate-50 disabled:text-slate-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Section 2: Giáo viên phụ trách */}
+                <div className="space-y-2 pb-3 border-b border-slate-100">
+                  <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                    2. Giáo viên phụ trách
+                  </h4>
+                  <div>
+                    <input
+                      type="text"
+                      disabled
+                      readOnly
+                      value={editingClass.teacher?.profile?.fullName || editingClass.teacher?.email || "Bạn (Giáo viên phụ trách)"}
+                      className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-600 font-medium cursor-not-allowed"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
+                      <Lock size={11} /> Chỉ Ban Quản Trị (Admin) mới có thể thay đổi giáo viên phụ trách lớp.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Section 3: Sức chứa học viên */}
+                <div className="space-y-2 pb-3 border-b border-slate-100">
+                  <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                    3. Sức chứa học viên
+                  </h4>
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-slate-700 font-bold">
+                        Sức chứa tối đa (Capacity) <span className="text-rose-500">*</span>
+                      </label>
+                      <span className="text-[11px] font-semibold text-slate-500">
+                        Học viên hiện tại: <strong>{editingClass.studentCount || 0}</strong>
+                      </span>
+                    </div>
+                    <input
+                      type="number"
+                      min={editingClass.studentCount || 1}
+                      required
+                      disabled={editingClass.status === "COMPLETED" || editingClass.status === "CANCELLED"}
+                      value={editClassForm.capacity}
+                      onChange={(e) =>
+                        setEditClassForm({ ...editClassForm, capacity: Number(e.target.value) })
+                      }
+                      className={`w-full border rounded-xl px-3.5 py-2 outline-none text-slate-800 font-semibold ${
+                        editClassForm.capacity < (editingClass.studentCount || 0)
+                          ? "border-rose-400 bg-rose-50/40 text-rose-700"
+                          : "border-slate-200 focus:border-blue-500 disabled:bg-slate-50"
+                      }`}
+                    />
+                    {editClassForm.capacity < (editingClass.studentCount || 0) && (
+                      <p className="text-[11px] text-rose-500 font-semibold mt-1">
+                        Sức chứa không thể nhỏ hơn {editingClass.studentCount || 0} học viên hiện tại.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Section 4: Lịch học & Phòng học */}
+                <div className="space-y-3 pb-2">
+                  <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                    4. Thời gian & Phòng học
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-slate-700 font-bold mb-1">
+                        Ngày bắt đầu {editingClass.status === "ONGOING" && <span className="text-[10px] text-amber-600 font-normal">(Đã khóa)</span>}
+                      </label>
+                      <input
+                        type="date"
+                        disabled={
+                          editingClass.status === "ONGOING" ||
+                          editingClass.status === "COMPLETED" ||
+                          editingClass.status === "CANCELLED"
+                        }
+                        value={editClassForm.startDate}
+                        onChange={(e) =>
+                          setEditClassForm({ ...editClassForm, startDate: e.target.value })
+                        }
+                        className="w-full border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-blue-500 text-slate-800 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
+                      />
+                      {editingClass.status === "ONGOING" && (
+                        <p className="text-[10px] text-amber-700 mt-1 flex items-center gap-1">
+                          <Lock size={10} /> Không thể thay đổi ngày bắt đầu vì lớp đã bắt đầu.
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-700 font-bold mb-1">Ngày kết thúc</label>
+                      <input
+                        type="date"
+                        disabled={editingClass.status === "COMPLETED" || editingClass.status === "CANCELLED"}
+                        value={editClassForm.endDate}
+                        onChange={(e) => setEditClassForm({ ...editClassForm, endDate: e.target.value })}
+                        className="w-full border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-blue-500 text-slate-800 disabled:bg-slate-50"
+                      />
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        Phải sau các buổi học đã lên lịch.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1">Link phòng học trực tuyến</label>
+                    <input
+                      type="url"
+                      disabled={editingClass.status === "COMPLETED" || editingClass.status === "CANCELLED"}
+                      value={editClassForm.meetingLink}
+                      onChange={(e) => setEditClassForm({ ...editClassForm, meetingLink: e.target.value })}
+                      placeholder="https://meet.google.com/..."
+                      className="w-full border border-slate-200 rounded-xl px-3.5 py-2 outline-none focus:border-blue-500 text-slate-800 disabled:bg-slate-50"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setEditingClass(null)}
+                    className="flex-1 py-2.5 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                  >
+                    {editingClass.status === "COMPLETED" || editingClass.status === "CANCELLED" ? "Đóng" : "Hủy"}
+                  </button>
+
+                  {editingClass.status !== "COMPLETED" && editingClass.status !== "CANCELLED" && (
+                    <button
+                      type="submit"
+                      disabled={
+                        updateClassMutation.isPending ||
+                        editClassForm.capacity < (editingClass.studentCount || 0)
+                      }
+                      className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-xs transition-colors disabled:opacity-50"
+                    >
+                      {updateClassMutation.isPending && <Loader2 size={14} className="animate-spin" />}
+                      Lưu Thay Đổi
+                    </button>
+                  )}
+                </div>
+              </form>
             </motion.div>
           </div>
         )}
