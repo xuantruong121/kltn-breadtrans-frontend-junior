@@ -23,15 +23,22 @@ export const useSocket = () => useContext(SocketContext);
 export default function SocketProvider({ children }: { children: React.ReactNode }) {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const { user } = useAuthStore();
+  const { user, accessToken } = useAuthStore();
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    // Kết nối tới Backend WebSocket
+    if (!accessToken) {
+      return;
+    }
+
+    // Kết nối tới Backend WebSocket kèm JWT token
     const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || "http://localhost:3001";
     
     const socketInstance = io(backendUrl, {
       transports: ["websocket"],
+      auth: {
+        token: accessToken,
+      },
       autoConnect: true,
     });
 
@@ -148,7 +155,7 @@ export default function SocketProvider({ children }: { children: React.ReactNode
       setSocket(null);
       setIsConnected(false);
     };
-  }, [user?.id, user?.role, user?.email, user?.profile, queryClient]);
+  }, [accessToken, user?.id, user?.role, user?.email, user?.profile, queryClient]);
 
   return (
     <SocketContext.Provider value={{ socket, isConnected }}>
