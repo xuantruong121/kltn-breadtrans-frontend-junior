@@ -46,6 +46,60 @@ export interface ClassDetail extends Class {
   };
 }
 
+// ================= PUBLIC DISCOVERY (PHASE 3A) =================
+
+export interface PublicTeacher {
+  id: number | null;
+  fullName: string;
+  avatar: string | null;
+  specialization?: string | null;
+}
+
+export interface PublicCourseCard {
+  id: number;
+  title: string;
+  description: string | null;
+  thumbnail: string | null;
+  level: string | null;
+  status: string;
+  createdAt: string;
+  teacher: PublicTeacher;
+  upcomingClassCount: number;
+}
+
+export interface PublicClass {
+  id: number;
+  name: string;
+  startDate: string | null;
+  endDate: string | null;
+  capacity: number;
+  currentEnrollmentCount: number;
+  remainingSeats: number;
+  isSoldOut: boolean;
+  status: string;
+  teacher: PublicTeacher;
+}
+
+export interface PublicLessonOutline {
+  id: number;
+  title: string;
+  description: string | null;
+  order: number;
+}
+
+export interface PublicCourseDetail {
+  id: number;
+  title: string;
+  description: string | null;
+  thumbnail: string | null;
+  level: string | null;
+  status: string;
+  createdAt: string;
+  teacher: PublicTeacher;
+  lessons: PublicLessonOutline[];
+  classes: PublicClass[];
+}
+
 export const courseService = {
   getAllCourses: async (): Promise<Course[]> => {
     return await axiosClient.get("/courses");
@@ -57,5 +111,14 @@ export const courseService = {
 
   getClassById: async (classId: number): Promise<ClassDetail> => {
     return await axiosClient.get(`/courses/classes/${classId}`);
-  }
+  },
+
+  // Canonical Public Discovery APIs (Phase 3A)
+  getPublicCatalog: async (): Promise<PublicCourseCard[]> => {
+    return await axiosClient.get("/public/courses");
+  },
+
+  getPublicCourseDetail: async (id: number): Promise<PublicCourseDetail> => {
+    return await axiosClient.get(`/public/courses/${id}`);
+  },
 };

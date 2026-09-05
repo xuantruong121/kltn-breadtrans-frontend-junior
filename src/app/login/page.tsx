@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useSyncExternalStore } from "react";
+import { useState, useEffect, useSyncExternalStore, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowRight, Loader2, Eye, EyeOff } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
@@ -13,9 +13,27 @@ import { AuthShell } from "@/components/auth/AuthShell";
 
 const emptySubscribe = () => () => {};
 
+function getSafeRedirect(raw: string | null): string | null {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  // Safe internal path check: starts with '/', not '//', does not contain protocol ':', and not recursive login
+  if (
+    trimmed.startsWith("/") &&
+    !trimmed.startsWith("//") &&
+    !trimmed.includes(":") &&
+    !trimmed.startsWith("/login")
+  ) {
+    return trimmed;
+  }
+  return null;
+}
+
 function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+
+  const safeRedirect = getSafeRedirect(searchParams.get("redirect"));
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,10 +56,10 @@ function LoginForm() {
       } else if (user.role === "TEACHER") {
         router.push("/teacher/dashboard");
       } else {
-        router.push("/dashboard");
+        router.push(safeRedirect || "/dashboard");
       }
     }
-  }, [isReady, user, router]);
+  }, [isReady, user, router, safeRedirect]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,7 +91,7 @@ function LoginForm() {
       } else if (res.user.role === 'TEACHER') {
         router.push('/teacher/dashboard');
       } else {
-        router.push('/dashboard');
+        router.push(safeRedirect || '/dashboard');
       }
     } catch (error: any) {
       console.error(error);
@@ -93,7 +111,11 @@ function LoginForm() {
             <span className="text-junior-blue">khám phá!</span>
           </h1>
           <p className="text-lg text-slate-500 max-w-sm">
-            Đăng nhập để vào lớp học BreadTrans và nhận vô vàn phần thưởng hấp dẫn.
+            {safeRedirect ? (
+              <span>Đăng nhập để tiếp tục truy cập và khám phá khóa học.</span>
+            ) : (
+              <span>Đăng nhập để vào lớp học BreadTrans và nhận vô vàn phần thưởng hấp dẫn.</span>
+            )}
           </p>
         </div>
       )
@@ -130,7 +152,8 @@ function LoginForm() {
       id: "password",
       element: (
         <div className="mb-10">
-          <label className="block text-lg font-bold text-slate-700 mb-3">Mật khẩu bí mật</label>          <div className="relative">
+          <label className="block text-lg font-bold text-slate-700 mb-3">Mật khẩu bí mật</label>
+          <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
               data-testid="login-password"
@@ -173,7 +196,7 @@ function LoginForm() {
             Chưa có tài khoản?
           </span>
           <Link
-            href="/register"
+            href={safeRedirect ? `/register?redirect=${encodeURIComponent(safeRedirect)}` : "/register"}
             data-testid="register-link"
             className="inline-flex min-h-11 items-center justify-center rounded-xl px-4 font-bold text-junior-blue underline decoration-2 underline-offset-4 transition-colors hover:text-blue-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-junior-blue/30"
           >
@@ -197,7 +220,7 @@ function LoginForm() {
             transition={{
               duration: 0.7,
               delay: i * 0.1,
-              ease: [0.16, 1, 0.3, 1], // Spring-like ease out
+              ease: [0.16, 1, 0.3, 1],
             }}
           >
             {item.element}
@@ -211,7 +234,9 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <AuthShell>
-      <LoginForm />
+      <Suspense fallback={<div className="p-8 text-center text-slate-400">Đang tải biểu mẫu...</div>}>
+        <LoginForm />
+      </Suspense>
     </AuthShell>
   );
 }
