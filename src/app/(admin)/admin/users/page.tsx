@@ -17,6 +17,8 @@ import {
   Flame,
   AlertTriangle,
   Lock,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -53,6 +55,8 @@ export default function AdminUsersPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<UserData | null>(null);
+  const [showCreatePassword, setShowCreatePassword] = useState(false);
+  const [showEditPassword, setShowEditPassword] = useState(false);
 
   // Forms
   const [createForm, setCreateForm] = useState({
@@ -84,7 +88,8 @@ export default function AdminUsersPage() {
   // Create User Mutation
   const createMutation = useMutation({
     mutationFn: async (data: typeof createForm) => {
-      return axiosClient.post("/admin/users", data);
+      if (data.role === "TEACHER") return axiosClient.post("/admin/teachers", { email: data.email, fullName: data.fullName, phone: data.phone });
+      return axiosClient.post("/admin/users", { ...data, role: "STUDENT" });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
@@ -430,14 +435,10 @@ export default function AdminUsersPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-600 mb-1">Mật khẩu ban đầu <span className="text-rose-500">*</span></label>
-                  <input
-                    type="password"
-                    placeholder="Ít nhất 6 ký tự"
-                    value={createForm.password}
-                    onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-                    className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-blue-500 text-slate-800"
-                  />
+                  <label className="block text-slate-600 mb-1">Mật khẩu ban đầu <span className="text-rose-500">*</span></label>                  <div className="relative">
+                    <input type={showCreatePassword ? "text" : "password"} placeholder="Ít nhất 6 ký tự" value={createForm.password} onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })} className="w-full pr-12 border-2 border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-blue-500 text-slate-800" />
+                    <button type="button" onClick={() => setShowCreatePassword((value) => !value)} aria-label={showCreatePassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"} aria-pressed={showCreatePassword} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500">{showCreatePassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-slate-600 mb-1">Số điện thoại</label>
@@ -458,7 +459,7 @@ export default function AdminUsersPage() {
                   >
                     <option value="STUDENT">Học viên</option>
                     <option value="TEACHER">Giáo viên</option>
-                    <option value="ADMIN">Quản trị viên</option>
+
                   </select>
                 </div>
               </div>
@@ -475,7 +476,7 @@ export default function AdminUsersPage() {
                   disabled={
                     createMutation.isPending ||
                     !createForm.email ||
-                    !createForm.password ||
+                    (createForm.role === "STUDENT" && !createForm.password) ||
                     !createForm.fullName
                   }
                   className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black flex items-center justify-center gap-2 transition-all shadow-md text-sm disabled:opacity-50"
@@ -551,20 +552,14 @@ export default function AdminUsersPage() {
                   >
                     <option value="STUDENT">Học viên</option>
                     <option value="TEACHER">Giáo viên</option>
-                    <option value="ADMIN">Quản trị viên</option>
+
                   </select>
                 </div>
                 <div>
                   <label className="block text-slate-600 mb-1">Đặt lại Mật khẩu mới (Để trống nếu không đổi)</label>
                   <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                    <input
-                      type="password"
-                      placeholder="Nhập mật khẩu mới..."
-                      value={editForm.password}
-                      onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
-                      className="w-full pl-10 pr-4 py-2.5 border-2 border-slate-200 rounded-xl outline-none focus:border-blue-500 text-slate-800"
-                    />
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />                    <input type={showEditPassword ? "text" : "password"} placeholder="Nhập mật khẩu mới..." value={editForm.password} onChange={(e) => setEditForm({ ...editForm, password: e.target.value })} className="w-full pl-10 pr-12 py-2.5 border-2 border-slate-200 rounded-xl outline-none focus:border-blue-500 text-slate-800" />
+                    <button type="button" onClick={() => setShowEditPassword((value) => !value)} aria-label={showEditPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"} aria-pressed={showEditPassword} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500">{showEditPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
                   </div>
                 </div>
               </div>
