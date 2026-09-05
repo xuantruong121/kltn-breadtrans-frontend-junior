@@ -342,12 +342,11 @@ export default function AdminCoursesPage() {
     editingClass && (
       editingClass.hasEnrollments === true ||
       (editingClass.totalEnrollmentCount ?? 0) > 0 ||
-      (editingClass._count?.enrollments ?? 0) > 0 ||
       editingClass.status !== "UPCOMING"
     )
   );
-  const editingClassActiveEnrolled = editingClass?.activeEnrollmentCount ?? editingClass?._count?.enrollments ?? 0;
-  const editingClassTotalEnrolled = editingClass?.totalEnrollmentCount ?? editingClass?._count?.enrollments ?? 0;
+  const editingClassActiveEnrolled = editingClass?.activeEnrollmentCount ?? 0;
+  const editingClassTotalEnrolled = editingClass?.totalEnrollmentCount ?? 0;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -626,7 +625,7 @@ export default function AdminCoursesPage() {
                                     <td className="p-3 text-slate-600">
                                       <span className="flex items-center gap-1">
                                         <Users size={13} />{" "}
-                                        {cls.activeEnrollmentCount ?? cls._count?.enrollments ?? 0} /{" "}
+                                        {cls.activeEnrollmentCount ?? 0} /{" "}
                                         {cls.capacity || 30}
                                       </span>
                                       <span className="text-[11px] text-slate-400 block">
@@ -1225,7 +1224,7 @@ export default function AdminCoursesPage() {
                     </div>
                     <input
                       type="number"
-                      min={editingClassActiveEnrolled || 1}
+                      min={editingClassActiveEnrolled}
                       required
                       disabled={editingClass.status === "COMPLETED" || editingClass.status === "CANCELLED"}
                       value={editClassForm.capacity}

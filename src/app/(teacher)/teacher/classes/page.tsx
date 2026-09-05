@@ -1135,8 +1135,7 @@ export default function TeacherClassesPage() {
                     toast.error("Tên lớp học là bắt buộc.");
                     return;
                   }
-                  const activeStudents =
-                    editingClass.activeEnrollmentCount ?? editingClass.studentCount ?? 0;
+                  const activeStudents = editingClass.activeEnrollmentCount ?? 0;
                   if (
                     activeStudents > 0 &&
                     editClassForm.capacity < activeStudents
@@ -1238,12 +1237,12 @@ export default function TeacherClassesPage() {
                         Sức chứa tối đa (Capacity) <span className="text-rose-500">*</span>
                       </label>
                       <span className="text-[11px] font-semibold text-slate-500">
-                        Học viên đang học: <strong>{editingClass.activeEnrollmentCount ?? editingClass.studentCount ?? 0}</strong>
+                        Học viên đang học: <strong>{editingClass.activeEnrollmentCount ?? 0}</strong>
                       </span>
                     </div>
                     <input
                       type="number"
-                      min={editingClass.activeEnrollmentCount ?? editingClass.studentCount ?? 1}
+                      min={editingClass.activeEnrollmentCount ?? 0}
                       required
                       disabled={editingClass.status === "COMPLETED" || editingClass.status === "CANCELLED"}
                       value={editClassForm.capacity}
@@ -1251,14 +1250,14 @@ export default function TeacherClassesPage() {
                         setEditClassForm({ ...editClassForm, capacity: Number(e.target.value) })
                       }
                       className={`w-full border rounded-xl px-3.5 py-2 outline-none text-slate-800 font-semibold ${
-                        editClassForm.capacity < (editingClass.activeEnrollmentCount ?? editingClass.studentCount ?? 0)
+                        editClassForm.capacity < (editingClass.activeEnrollmentCount ?? 0)
                           ? "border-rose-400 bg-rose-50/40 text-rose-700"
                           : "border-slate-200 focus:border-blue-500 disabled:bg-slate-50"
                       }`}
                     />
-                    {editClassForm.capacity < (editingClass.activeEnrollmentCount ?? editingClass.studentCount ?? 0) && (
+                    {editClassForm.capacity < (editingClass.activeEnrollmentCount ?? 0) && (
                       <p className="text-[11px] text-rose-500 font-semibold mt-1">
-                        Sức chứa không thể nhỏ hơn {editingClass.activeEnrollmentCount ?? editingClass.studentCount ?? 0} học viên đang học.
+                        Sức chứa không thể nhỏ hơn {editingClass.activeEnrollmentCount ?? 0} học viên đang học.
                       </p>
                     )}
                   </div>
@@ -1269,7 +1268,6 @@ export default function TeacherClassesPage() {
                   const isTuitionLocked =
                     editingClass.hasEnrollments === true ||
                     (editingClass.totalEnrollmentCount ?? 0) > 0 ||
-                    (editingClass.studentCount ?? 0) > 0 ||
                     editingClass.status !== "UPCOMING";
                   return (
                     <div className="space-y-2 pb-3 border-b border-slate-100">
@@ -1401,7 +1399,7 @@ export default function TeacherClassesPage() {
                       type="submit"
                       disabled={
                         updateClassMutation.isPending ||
-                        editClassForm.capacity < (editingClass.studentCount || 0) ||
+                        editClassForm.capacity < (editingClass.activeEnrollmentCount ?? 0) ||
                         isDateInvalid
                       }
                       className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
