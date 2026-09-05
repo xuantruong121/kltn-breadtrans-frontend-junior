@@ -23,6 +23,7 @@ import {
   Edit,
   AlertTriangle,
   Lock,
+  Eye,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import axiosClient from "@/lib/api/axiosClient";
@@ -66,6 +67,8 @@ export default function TeacherClassesPage() {
 
   // Edit Class State & Mutation
   const [editingClass, setEditingClass] = useState<any | null>(null);
+  const [initialClassForm, setInitialClassForm] = useState<any>(null);
+  const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
   const [editClassForm, setEditClassForm] = useState({
     name: "",
     capacity: 30,
@@ -76,13 +79,28 @@ export default function TeacherClassesPage() {
 
   const handleOpenEditClass = (cls: any) => {
     setEditingClass(cls);
-    setEditClassForm({
+    const initial = {
       name: cls.name || "",
       capacity: cls.capacity || 30,
       startDate: cls.startDate ? dayjs(cls.startDate).format("YYYY-MM-DD") : "",
       endDate: cls.endDate ? dayjs(cls.endDate).format("YYYY-MM-DD") : "",
       meetingLink: cls.meetingLink || "",
-    });
+    };
+    setEditClassForm(initial);
+    setInitialClassForm(initial);
+  };
+
+  const handleCloseEditClass = () => {
+    if (
+      editingClass?.status !== "COMPLETED" &&
+      editingClass?.status !== "CANCELLED" &&
+      initialClassForm &&
+      JSON.stringify(editClassForm) !== JSON.stringify(initialClassForm)
+    ) {
+      setShowUnsavedConfirm(true);
+    } else {
+      setEditingClass(null);
+    }
   };
 
   const updateClassMutation = useMutation({
@@ -240,6 +258,11 @@ export default function TeacherClassesPage() {
     setAttendanceRecords((prev) => prev.map((rec) => ({ ...rec, isPresent })));
   };
 
+  const isDateInvalid =
+    Boolean(editClassForm.startDate) &&
+    Boolean(editClassForm.endDate) &&
+    new Date(editClassForm.endDate) <= new Date(editClassForm.startDate);
+
   if (isLoading)
     return (
       <div className="flex justify-center p-20">
@@ -283,6 +306,25 @@ export default function TeacherClassesPage() {
                     <span className="bg-emerald-50 text-emerald-700 text-xs font-black px-3 py-1 rounded-xl border border-emerald-200 flex items-center gap-1">
                       <Users size={13} /> {cls.studentCount || 0} Học viên
                     </span>
+                    <span
+                      className={`text-xs font-bold px-3 py-1 rounded-xl border ${
+                        cls.status === "ONGOING"
+                          ? "bg-green-50 text-green-700 border-green-200"
+                          : cls.status === "UPCOMING"
+                            ? "bg-blue-50 text-blue-700 border-blue-200"
+                            : cls.status === "COMPLETED"
+                              ? "bg-slate-100 text-slate-600 border-slate-200"
+                              : "bg-rose-50 text-rose-700 border-rose-200"
+                      }`}
+                    >
+                      {cls.status === "ONGOING"
+                        ? "ONGOING - Đang diễn ra"
+                        : cls.status === "UPCOMING"
+                          ? "UPCOMING - Sắp diễn ra"
+                          : cls.status === "COMPLETED"
+                            ? "COMPLETED - Đã kết thúc"
+                            : "CANCELLED - Đã hủy"}
+                    </span>
                   </div>
 
                   <h3 className="font-black text-2xl text-slate-800 tracking-tight">{cls.name}</h3>
@@ -303,9 +345,21 @@ export default function TeacherClassesPage() {
                   <button
                     onClick={() => handleOpenEditClass(cls)}
                     className="px-3.5 py-2.5 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-2xl text-xs flex items-center gap-1.5 border border-slate-200 transition-all cursor-pointer shadow-2xs"
-                    title="Chỉnh sửa thông tin lớp học"
+                    title={
+                      cls.status === "COMPLETED" || cls.status === "CANCELLED"
+                        ? "Xem chi tiết lớp học"
+                        : "Chỉnh sửa thông tin lớp học"
+                    }
                   >
-                    <Edit size={14} /> Sửa lớp
+                    {cls.status === "COMPLETED" || cls.status === "CANCELLED" ? (
+                      <>
+                        <Eye size={14} /> Chi tiết
+                      </>
+                    ) : (
+                      <>
+                        <Edit size={14} /> Sửa lớp
+                      </>
+                    )}
                   </button>
 
                   <Link
@@ -1041,7 +1095,7 @@ export default function TeacherClassesPage() {
                           : "CANCELLED - Đã hủy"}
                   </span>
                   <button
-                    onClick={() => setEditingClass(null)}
+                    onClick={handleCloseEditClass}
                     className="p-1 text-slate-400 hover:text-slate-700 rounded-lg"
                   >
                     <X size={20} />
@@ -1242,11 +1296,21 @@ export default function TeacherClassesPage() {
                         disabled={editingClass.status === "COMPLETED" || editingClass.status === "CANCELLED"}
                         value={editClassForm.endDate}
                         onChange={(e) => setEditClassForm({ ...editClassForm, endDate: e.target.value })}
-                        className="w-full border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-blue-500 text-slate-800 disabled:bg-slate-50"
+                        className={`w-full border rounded-xl px-3 py-2 outline-none text-slate-800 disabled:bg-slate-50 ${
+                          isDateInvalid
+                            ? "border-rose-400 bg-rose-50/40 text-rose-700"
+                            : "border-slate-200 focus:border-blue-500"
+                        }`}
                       />
-                      <p className="text-[10px] text-slate-400 mt-1">
-                        Phải sau các buổi học đã lên lịch.
-                      </p>
+                      {isDateInvalid ? (
+                        <p className="text-[11px] text-rose-500 font-semibold mt-1">
+                          Ngày kết thúc phải sau ngày bắt đầu.
+                        </p>
+                      ) : (
+                        <p className="text-[10px] text-slate-400 mt-1">
+                          Phải sau các buổi học đã lên lịch.
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -1266,8 +1330,8 @@ export default function TeacherClassesPage() {
                 <div className="flex gap-3 pt-3 border-t border-slate-100">
                   <button
                     type="button"
-                    onClick={() => setEditingClass(null)}
-                    className="flex-1 py-2.5 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                    onClick={handleCloseEditClass}
+                    className="flex-1 py-2.5 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
                   >
                     {editingClass.status === "COMPLETED" || editingClass.status === "CANCELLED" ? "Đóng" : "Hủy"}
                   </button>
@@ -1277,9 +1341,10 @@ export default function TeacherClassesPage() {
                       type="submit"
                       disabled={
                         updateClassMutation.isPending ||
-                        editClassForm.capacity < (editingClass.studentCount || 0)
+                        editClassForm.capacity < (editingClass.studentCount || 0) ||
+                        isDateInvalid
                       }
-                      className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-xs transition-colors disabled:opacity-50"
+                      className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
                     >
                       {updateClassMutation.isPending && <Loader2 size={14} className="animate-spin" />}
                       Lưu Thay Đổi
@@ -1291,6 +1356,37 @@ export default function TeacherClassesPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Unsaved Changes Confirmation Modal */}
+      {showUnsavedConfirm && (
+        <div className="fixed inset-0 z-60 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-100">
+            <h4 className="text-base font-bold text-slate-900 mb-2">Bạn có thay đổi chưa được lưu</h4>
+            <p className="text-sm text-slate-600 mb-6">
+              Các thay đổi của bạn sẽ bị mất nếu bạn rời đi mà không lưu.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowUnsavedConfirm(false)}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Ở lại
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowUnsavedConfirm(false);
+                  setEditingClass(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 text-white font-bold hover:bg-rose-700 transition-colors cursor-pointer"
+              >
+                Rời đi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

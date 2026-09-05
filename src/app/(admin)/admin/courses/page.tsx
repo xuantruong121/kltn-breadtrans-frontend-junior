@@ -43,6 +43,8 @@ type ClassData = {
   _count: { enrollments: number };
   startDate: string | null;
   endDate: string | null;
+  teacherId?: number;
+  meetingLink?: string;
 };
 
 type Course = {
@@ -132,6 +134,23 @@ export default function AdminCoursesPage() {
 
   // Delete Course Confirmation State
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
+
+  // Delete Class State
+  const [classToDelete, setClassToDelete] = useState<ClassData | null>(null);
+
+  const deleteClassMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return (await axiosClient.delete(`/courses/classes/${id}`)).data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
+      setClassToDelete(null);
+      toast.success("Đã xóa lớp học thành công!");
+    },
+    onError: (err: any) => {
+      toast.error(getApiErrorMessage(err, "Không thể xóa lớp học."));
+    },
+  });
 
   const handleOpenEditClass = (cls: any, course: Course) => {
     setEditingClass(cls);
@@ -305,6 +324,11 @@ export default function AdminCoursesPage() {
       data: classForm,
     });
   };
+
+  const isAdminDateInvalid =
+    Boolean(editClassForm.startDate) &&
+    Boolean(editClassForm.endDate) &&
+    new Date(editClassForm.endDate) <= new Date(editClassForm.startDate);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -603,15 +627,22 @@ export default function AdminCoursesPage() {
                                       <div className="flex items-center justify-end gap-2">
                                         <button
                                           onClick={() => handleOpenEditClass(cls, course)}
-                                          className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded text-xs transition-colors"
+                                          className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded text-xs transition-colors cursor-pointer"
                                           title="Chỉnh sửa thông tin lớp học"
                                         >
                                           Sửa lớp
                                         </button>
+                                        <button
+                                          onClick={() => setClassToDelete(cls)}
+                                          className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors cursor-pointer"
+                                          title="Xóa lớp học"
+                                        >
+                                          <Trash2 size={14} />
+                                        </button>
                                         <Link
                                           href={`/admin/enroll?classId=${cls.id}`}
                                         >
-                                          <button className="text-xs text-blue-600 hover:text-blue-800 font-medium underline">
+                                          <button className="text-xs text-blue-600 hover:text-blue-800 font-medium underline cursor-pointer">
                                             Quản lý ghi danh
                                           </button>
                                         </Link>
@@ -1191,11 +1222,21 @@ export default function AdminCoursesPage() {
                       disabled={editingClass.status === "COMPLETED" || editingClass.status === "CANCELLED"}
                       value={editClassForm.endDate}
                       onChange={(e) => setEditClassForm({ ...editClassForm, endDate: e.target.value })}
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-blue-500 text-slate-800 disabled:bg-slate-50"
+                      className={`w-full border rounded-xl px-3 py-2 outline-none text-slate-800 disabled:bg-slate-50 ${
+                        isAdminDateInvalid
+                          ? "border-rose-400 bg-rose-50/40 text-rose-700"
+                          : "border-slate-200 focus:border-blue-500"
+                      }`}
                     />
-                    <p className="text-[10px] text-slate-400 mt-1">
-                      Phải sau các buổi học đã lên lịch.
-                    </p>
+                    {isAdminDateInvalid ? (
+                      <p className="text-[11px] text-rose-500 font-semibold mt-1">
+                        Ngày kết thúc phải sau ngày bắt đầu.
+                      </p>
+                    ) : (
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        Phải sau các buổi học đã lên lịch.
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -1220,7 +1261,7 @@ export default function AdminCoursesPage() {
                     setEditingClassCourse(null);
                     setShowTeacherChangeConfirm(false);
                   }}
-                  className="flex-1 py-2.5 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                  className="flex-1 py-2.5 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
                 >
                   {editingClass.status === "COMPLETED" || editingClass.status === "CANCELLED" ? "Đóng" : "Hủy"}
                 </button>
@@ -1230,9 +1271,10 @@ export default function AdminCoursesPage() {
                     type="submit"
                     disabled={
                       updateClassMutation.isPending ||
-                      Number(editClassForm.capacity) < (editingClass._count?.enrollments || 0)
+                      Number(editClassForm.capacity) < (editingClass._count?.enrollments || 0) ||
+                      isAdminDateInvalid
                     }
-                    className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-xs transition-colors disabled:opacity-50"
+                    className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
                   >
                     {updateClassMutation.isPending && <Loader2 size={14} className="animate-spin" />}
                     Lưu Thay Đổi
@@ -1294,6 +1336,84 @@ export default function AdminCoursesPage() {
                   <Loader2 size={13} className="animate-spin" />
                 )}
                 Xác nhận xóa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: BLOCK DELETE CLASS (WHEN ENROLLED) ================= */}
+      {classToDelete && (classToDelete._count?.enrollments || 0) > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="p-2.5 bg-rose-50 text-rose-600 rounded-xl shrink-0">
+                <AlertCircle size={24} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Không thể xóa lớp học này
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Mã lớp #{classToDelete.id}: {classToDelete.name}
+                </p>
+              </div>
+            </div>
+            <p className="text-sm text-slate-600 mb-6 leading-relaxed">
+              Lớp đã có <strong>{classToDelete._count?.enrollments} học viên</strong> đăng ký. Hãy chuyển lớp sang <strong>CANCELLED</strong> thay vì xóa để bảo lưu lịch sử học tập và giao dịch.
+            </p>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setClassToDelete(null)}
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer"
+              >
+                Đã hiểu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: CONFIRM DELETE CLASS (WHEN EMPTY) ================= */}
+      {classToDelete && (classToDelete._count?.enrollments || 0) === 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="p-2.5 bg-rose-50 text-rose-600 rounded-xl shrink-0">
+                <Trash2 size={24} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Xóa lớp học?
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Mã lớp #{classToDelete.id}: {classToDelete.name}
+                </p>
+              </div>
+            </div>
+            <p className="text-sm text-slate-600 mb-6 leading-relaxed">
+              Thao tác này không thể hoàn tác. Bạn có chắc chắn muốn xóa vĩnh viễn lớp học này không?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                disabled={deleteClassMutation.isPending}
+                onClick={() => setClassToDelete(null)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold transition-colors cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                disabled={deleteClassMutation.isPending}
+                onClick={() => deleteClassMutation.mutate(classToDelete.id)}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                {deleteClassMutation.isPending && (
+                  <Loader2 size={16} className="animate-spin" />
+                )}
+                Xóa lớp học
               </button>
             </div>
           </div>

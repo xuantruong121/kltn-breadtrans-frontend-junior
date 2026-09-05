@@ -28,6 +28,13 @@ export function getApiErrorMessage(err: any, defaultMessage: string = "Thao tác
 
   // 2. Ongoing class prevents reverting to draft
   if (
+    lowerMsg.includes("đang chờ admin duyệt") ||
+    lowerMsg.includes("đang chờ duyệt")
+  ) {
+    return "Khóa học đang chờ Admin duyệt và không thể chuyển về Bản nháp.";
+  }
+
+  if (
     lowerMsg.includes("chuyển khóa học về bản nháp") ||
     (lowerMsg.includes("lớp học đang diễn ra") && lowerMsg.includes("khóa học"))
   ) {
