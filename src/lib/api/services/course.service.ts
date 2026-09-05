@@ -5,7 +5,16 @@ export interface Class {
   name: string;
   courseId: number;
   teacherId: number;
-  meetingLink?: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  capacity?: number;
+  tuitionFeeVnd?: number;
+  status?: string;
+  meetingLink?: string | null;
+  studentCount?: number;
+  activeEnrollmentCount?: number;
+  totalEnrollmentCount?: number;
+  hasEnrollments?: boolean;
 }
 
 export interface Course {
@@ -42,11 +51,11 @@ export interface ClassDetail extends Class {
     email: string;
     profile: {
       fullName: string;
-    }
+    };
   };
 }
 
-// ================= PUBLIC DISCOVERY (PHASE 3A) =================
+// ================= PUBLIC DISCOVERY (PHASE 3A & 3B) =================
 
 export interface PublicTeacher {
   id: number | null;
@@ -73,6 +82,7 @@ export interface PublicClass {
   startDate: string | null;
   endDate: string | null;
   capacity: number;
+  tuitionFeeVnd: number;
   currentEnrollmentCount: number;
   remainingSeats: number;
   isSoldOut: boolean;
@@ -100,6 +110,22 @@ export interface PublicCourseDetail {
   classes: PublicClass[];
 }
 
+export interface EnrollResponseDto {
+  enrollmentId: number;
+  classId: number;
+  status: 'ACTIVE' | 'PENDING_PAYMENT';
+  tuitionFeeVnd: number;
+  accessGranted: boolean;
+  message: string;
+}
+
+export interface StudentCourseEnrollment {
+  id: number;
+  classId: number;
+  status: 'ACTIVE' | 'PENDING_PAYMENT' | 'COMPLETED' | 'DROPPED';
+  joinedAt: string;
+}
+
 export const courseService = {
   getAllCourses: async (): Promise<Course[]> => {
     return await axiosClient.get("/courses");
@@ -120,5 +146,16 @@ export const courseService = {
 
   getPublicCourseDetail: async (id: number): Promise<PublicCourseDetail> => {
     return await axiosClient.get(`/public/courses/${id}`);
+  },
+
+  // Self-Enrollment APIs (Phase 3B)
+  enrollInClass: async (classId: number): Promise<EnrollResponseDto> => {
+    return await axiosClient.post(`/courses/classes/${classId}/enroll`);
+  },
+
+  getMyCourseEnrollments: async (
+    courseId: number,
+  ): Promise<StudentCourseEnrollment[]> => {
+    return await axiosClient.get(`/courses/${courseId}/my-enrollments`);
   },
 };

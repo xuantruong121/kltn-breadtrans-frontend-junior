@@ -21,6 +21,7 @@ type EnrolledClass = {
   endDate: string | null;
   progress: number;
   enrollmentStatus: string;
+  tuitionFeeVnd?: number;
   joinedAt: string;
   studentCount: number;
   teacher: { id: number; email: string; profile: { fullName: string; avatar: string | null } | null } | null;
@@ -92,7 +93,11 @@ export default function CoursesPage() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {currentClasses.map((cls, index) => {
-              const badge = STATUS_BADGE[cls.classStatus] || { label: cls.classStatus, className: "bg-slate-100 text-slate-600" };
+              const isPending = cls.enrollmentStatus === "PENDING_PAYMENT";
+              const badge = isPending
+                ? { label: "Chờ thanh toán", className: "bg-amber-100 text-amber-800 border border-amber-300" }
+                : (STATUS_BADGE[cls.classStatus] || { label: cls.classStatus, className: "bg-slate-100 text-slate-600" });
+
               return (
               <motion.div
                 key={cls.classId || (cls as any).id || index}
@@ -150,33 +155,51 @@ export default function CoursesPage() {
                     )}
                   </div>
 
-                  {/* Progress bar */}
-                  <div className="mb-4">
-                    <div className="flex justify-between text-xs text-slate-500 mb-1">
-                      <span>Tiến độ học</span>
-                      <span className="font-bold text-junior-green">{cls.progress}%</span>
+                  {/* Progress bar or Payment Note */}
+                  {isPending ? (
+                    <div className="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200/80 space-y-1">
+                      <div className="flex items-center justify-between text-xs font-bold text-amber-900">
+                        <span>Học phí:</span>
+                        <span>{new Intl.NumberFormat("vi-VN").format(cls.tuitionFeeVnd || 0)} đ</span>
+                      </div>
+                      <p className="text-[11px] text-amber-700">
+                        Vui lòng chờ trung tâm xác nhận để bắt đầu học.
+                      </p>
                     </div>
-                    <div className="w-full bg-slate-100 rounded-full h-2.5">
-                      <motion.div
-                        className="bg-junior-green h-2.5 rounded-full"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${cls.progress}%` }}
-                        transition={{ delay: index * 0.08 + 0.3, duration: 0.8 }}
-                      />
+                  ) : (
+                    <div className="mb-4">
+                      <div className="flex justify-between text-xs text-slate-500 mb-1">
+                        <span>Tiến độ học</span>
+                        <span className="font-bold text-junior-green">{cls.progress}%</span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-2.5">
+                        <motion.div
+                          className="bg-junior-green h-2.5 rounded-full"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${cls.progress}%` }}
+                          transition={{ delay: index * 0.08 + 0.3, duration: 0.8 }}
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Action Buttons */}
                   <div className="mt-auto flex flex-col gap-2">
-                    <Link href={`/classes/${cls.classId}`} className="w-full">
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="w-full btn-green-3d flex items-center justify-center gap-2 bg-junior-green text-white font-bold p-3 rounded-xl"
-                      >
-                        Vào Học <ArrowRight size={20} strokeWidth={3} />
-                      </motion.button>
-                    </Link>
+                    {isPending ? (
+                      <div className="w-full py-3 rounded-xl text-center text-xs font-bold bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed">
+                        Đang chờ thanh toán học phí
+                      </div>
+                    ) : (
+                      <Link href={`/classes/${cls.classId}`} className="w-full">
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          className="w-full btn-green-3d flex items-center justify-center gap-2 bg-junior-green text-white font-bold p-3 rounded-xl cursor-pointer"
+                        >
+                          Vào Học <ArrowRight size={20} strokeWidth={3} />
+                        </motion.button>
+                      </Link>
+                    )}
                   </div>
                 </div>
               </motion.div>

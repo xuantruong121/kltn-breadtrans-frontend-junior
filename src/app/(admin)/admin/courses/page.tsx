@@ -19,7 +19,6 @@ import {
   RotateCcw,
   AlertTriangle,
   AlertCircle,
-  Edit,
   Lock,
 } from "lucide-react";
 import { useState } from "react";
@@ -40,6 +39,10 @@ type ClassData = {
   name: string;
   status: string;
   capacity?: number;
+  tuitionFeeVnd?: number;
+  activeEnrollmentCount?: number;
+  totalEnrollmentCount?: number;
+  hasEnrollments?: boolean;
   _count: { enrollments: number };
   startDate: string | null;
   endDate: string | null;
@@ -117,6 +120,7 @@ export default function AdminCoursesPage() {
     endDate: "",
     meetingLink: "",
     capacity: "30",
+    tuitionFeeVnd: "0",
   });
 
   // Edit Class State (Admin)
@@ -129,6 +133,7 @@ export default function AdminCoursesPage() {
     endDate: "",
     meetingLink: "",
     capacity: "30",
+    tuitionFeeVnd: "0",
   });
   const [showTeacherChangeConfirm, setShowTeacherChangeConfirm] = useState(false);
 
@@ -162,6 +167,7 @@ export default function AdminCoursesPage() {
       endDate: cls.endDate ? new Date(cls.endDate).toISOString().slice(0, 10) : "",
       meetingLink: cls.meetingLink || "",
       capacity: (cls.capacity || 30).toString(),
+      tuitionFeeVnd: (cls.tuitionFeeVnd ?? 0).toString(),
     });
   };
 
@@ -267,6 +273,7 @@ export default function AdminCoursesPage() {
           endDate: data.endDate || undefined,
           meetingLink: data.meetingLink || undefined,
           capacity: parseInt(data.capacity) || 30,
+          tuitionFeeVnd: parseInt(data.tuitionFeeVnd) || 0,
         })
       ).data,
     onSuccess: () => {
@@ -279,6 +286,7 @@ export default function AdminCoursesPage() {
         endDate: "",
         meetingLink: "",
         capacity: "30",
+        tuitionFeeVnd: "0",
       });
       toast.success("Tạo lớp học thành công!");
     },
@@ -329,6 +337,17 @@ export default function AdminCoursesPage() {
     Boolean(editClassForm.startDate) &&
     Boolean(editClassForm.endDate) &&
     new Date(editClassForm.endDate) <= new Date(editClassForm.startDate);
+
+  const isEditingClassTuitionLocked = Boolean(
+    editingClass && (
+      editingClass.hasEnrollments === true ||
+      (editingClass.totalEnrollmentCount ?? 0) > 0 ||
+      (editingClass._count?.enrollments ?? 0) > 0 ||
+      editingClass.status !== "UPCOMING"
+    )
+  );
+  const editingClassActiveEnrolled = editingClass?.activeEnrollmentCount ?? editingClass?._count?.enrollments ?? 0;
+  const editingClassTotalEnrolled = editingClass?.totalEnrollmentCount ?? editingClass?._count?.enrollments ?? 0;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -607,8 +626,13 @@ export default function AdminCoursesPage() {
                                     <td className="p-3 text-slate-600">
                                       <span className="flex items-center gap-1">
                                         <Users size={13} />{" "}
-                                        {cls._count?.enrollments || 0} /{" "}
+                                        {cls.activeEnrollmentCount ?? cls._count?.enrollments ?? 0} /{" "}
                                         {cls.capacity || 30}
+                                      </span>
+                                      <span className="text-[11px] text-slate-400 block">
+                                        {cls.tuitionFeeVnd && cls.tuitionFeeVnd > 0
+                                          ? `${Number(cls.tuitionFeeVnd).toLocaleString("vi-VN")} đ`
+                                          : "Miễn phí"}
                                       </span>
                                     </td>
                                     <td className="p-3 text-slate-500 text-xs">
@@ -874,20 +898,41 @@ export default function AdminCoursesPage() {
                   />
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Sức chứa tối đa (Capacity)
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={200}
-                  value={classForm.capacity}
-                  onChange={(e) =>
-                    setClassForm({ ...classForm, capacity: e.target.value })
-                  }
-                  className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-blue-500"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Sức chứa tối đa (Capacity)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={200}
+                    value={classForm.capacity}
+                    onChange={(e) =>
+                      setClassForm({ ...classForm, capacity: e.target.value })
+                    }
+                    className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Học phí (VNĐ)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    step={1000}
+                    placeholder="0 = Miễn phí"
+                    value={classForm.tuitionFeeVnd}
+                    onChange={(e) =>
+                      setClassForm({ ...classForm, tuitionFeeVnd: e.target.value })
+                    }
+                    className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-blue-500"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    0 = Lớp học miễn phí (FREE).
+                  </p>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -1009,7 +1054,7 @@ export default function AdminCoursesPage() {
                   Xác nhận thay đổi Giáo viên phụ trách?
                 </div>
                 <p className="leading-relaxed text-rose-700">
-                  Lớp học này hiện đang có <strong>{editingClass._count?.enrollments || 0} học viên</strong>. Việc thay đổi giáo viên có thể ảnh hưởng đến quyền chấm điểm, các buổi học trực tuyến và thông báo đến học viên.
+                  Lớp học này hiện đang có <strong>{editingClassActiveEnrolled} học viên</strong>. Việc thay đổi giáo viên có thể ảnh hưởng đến quyền chấm điểm, các buổi học trực tuyến và thông báo đến học viên.
                 </p>
                 <div className="flex justify-end gap-2 pt-1">
                   <button
@@ -1035,6 +1080,9 @@ export default function AdminCoursesPage() {
                       if (!isOngoing && editClassForm.startDate) {
                         payload.startDate = new Date(editClassForm.startDate).toISOString();
                       }
+                      if (!isEditingClassTuitionLocked) {
+                        payload.tuitionFeeVnd = Math.max(0, parseInt(editClassForm.tuitionFeeVnd) || 0);
+                      }
                       updateClassMutation.mutate({ id: editingClass.id, data: payload });
                     }}
                     className="px-3 py-1 bg-rose-600 text-white rounded font-semibold text-[11px]"
@@ -1057,9 +1105,8 @@ export default function AdminCoursesPage() {
                   toast.error("Tên lớp học là bắt buộc.");
                   return;
                 }
-                const currentEnrolled = editingClass._count?.enrollments || 0;
-                if (Number(editClassForm.capacity) < currentEnrolled) {
-                  toast.error(`Sức chứa không được nhỏ hơn số học viên hiện tại (${currentEnrolled}).`);
+                if (Number(editClassForm.capacity) < editingClassActiveEnrolled) {
+                  toast.error(`Sức chứa không được nhỏ hơn số học viên đang hoạt động (${editingClassActiveEnrolled}).`);
                   return;
                 }
                 if (
@@ -1076,7 +1123,7 @@ export default function AdminCoursesPage() {
                   editClassForm.teacherId &&
                   Number(editClassForm.teacherId) !== editingClass.teacherId;
 
-                if (isTeacherChanged && currentEnrolled > 0 && !showTeacherChangeConfirm) {
+                if (isTeacherChanged && editingClassActiveEnrolled > 0 && !showTeacherChangeConfirm) {
                   setShowTeacherChangeConfirm(true);
                   return;
                 }
@@ -1091,6 +1138,9 @@ export default function AdminCoursesPage() {
                 };
                 if (!isOngoing && editClassForm.startDate) {
                   payload.startDate = new Date(editClassForm.startDate).toISOString();
+                }
+                if (!isEditingClassTuitionLocked) {
+                  payload.tuitionFeeVnd = Math.max(0, parseInt(editClassForm.tuitionFeeVnd) || 0);
                 }
 
                 updateClassMutation.mutate({ id: editingClass.id, data: payload });
@@ -1153,38 +1203,84 @@ export default function AdminCoursesPage() {
                 </div>
               </div>
 
-              {/* Section 3: Sức chứa */}
-              <div className="space-y-2 pb-3 border-b border-slate-100">
+              {/* Section 3: Sức chứa & Học phí */}
+              <div className="space-y-3 pb-3 border-b border-slate-100">
                 <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                  3. Sức chứa học viên
+                  3. Sức chứa & Học phí
                 </h4>
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-slate-700 font-bold">
-                      Sức chứa tối đa (Capacity) <span className="text-rose-500">*</span>
-                    </label>
-                    <span className="text-[11px] font-semibold text-slate-500">
-                      Học viên hiện tại: <strong>{editingClass._count?.enrollments || 0}</strong>
-                    </span>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-slate-700 font-bold">
+                        Sức chứa tối đa <span className="text-rose-500">*</span>
+                      </label>
+                      <span className="text-[10px] font-semibold text-slate-500">
+                        Đang học: <strong>{editingClassActiveEnrolled}</strong>
+                        {editingClassTotalEnrolled > editingClassActiveEnrolled && (
+                          <span className="text-slate-400 font-normal ml-1">
+                            (Tổng: {editingClassTotalEnrolled})
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    <input
+                      type="number"
+                      min={editingClassActiveEnrolled || 1}
+                      required
+                      disabled={editingClass.status === "COMPLETED" || editingClass.status === "CANCELLED"}
+                      value={editClassForm.capacity}
+                      onChange={(e) => setEditClassForm({ ...editClassForm, capacity: e.target.value })}
+                      className={`w-full border rounded-xl px-3.5 py-2 outline-none font-semibold ${
+                        Number(editClassForm.capacity) < editingClassActiveEnrolled
+                          ? "border-rose-400 bg-rose-50/40 text-rose-700"
+                          : "border-slate-200 focus:border-blue-500 text-slate-800 disabled:bg-slate-50"
+                      }`}
+                    />
+                    {Number(editClassForm.capacity) < editingClassActiveEnrolled && (
+                      <p className="text-[11px] text-rose-500 font-semibold mt-1">
+                        Sức chứa không thể nhỏ hơn {editingClassActiveEnrolled} học viên đang hoạt động.
+                      </p>
+                    )}
                   </div>
-                  <input
-                    type="number"
-                    min={editingClass._count?.enrollments || 1}
-                    required
-                    disabled={editingClass.status === "COMPLETED" || editingClass.status === "CANCELLED"}
-                    value={editClassForm.capacity}
-                    onChange={(e) => setEditClassForm({ ...editClassForm, capacity: e.target.value })}
-                    className={`w-full border rounded-xl px-3.5 py-2 outline-none font-semibold ${
-                      Number(editClassForm.capacity) < (editingClass._count?.enrollments || 0)
-                        ? "border-rose-400 bg-rose-50/40 text-rose-700"
-                        : "border-slate-200 focus:border-blue-500 text-slate-800 disabled:bg-slate-50"
-                    }`}
-                  />
-                  {Number(editClassForm.capacity) < (editingClass._count?.enrollments || 0) && (
-                    <p className="text-[11px] text-rose-500 font-semibold mt-1">
-                      Sức chứa không thể nhỏ hơn {editingClass._count?.enrollments || 0} học viên hiện tại.
-                    </p>
-                  )}
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-slate-700 font-bold">
+                        Học phí (VNĐ) <span className="text-rose-500">*</span>
+                      </label>
+                      {isEditingClassTuitionLocked && (
+                        <span className="text-[10px] text-amber-700 font-semibold flex items-center gap-0.5">
+                          <Lock size={10} /> Đã khóa
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      type="number"
+                      min={0}
+                      step={1000}
+                      disabled={
+                        isEditingClassTuitionLocked ||
+                        editingClass.status === "COMPLETED" ||
+                        editingClass.status === "CANCELLED"
+                      }
+                      value={editClassForm.tuitionFeeVnd}
+                      onChange={(e) => setEditClassForm({ ...editClassForm, tuitionFeeVnd: e.target.value })}
+                      placeholder="0 = Miễn phí"
+                      className="w-full border border-slate-200 rounded-xl px-3.5 py-2 outline-none focus:border-blue-500 text-slate-800 font-semibold disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
+                    />
+                    {isEditingClassTuitionLocked ? (
+                      <p className="text-[10px] text-amber-600 mt-1 flex items-center gap-1">
+                        <Lock size={10} />
+                        {editingClass.status !== "UPCOMING"
+                          ? "Chỉ đổi học phí khi lớp Sắp diễn ra."
+                          : "Đã có người đăng ký (khóa học phí)."}
+                      </p>
+                    ) : (
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        0 = Miễn phí. Khóa khi có học viên đăng ký.
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -1271,7 +1367,7 @@ export default function AdminCoursesPage() {
                     type="submit"
                     disabled={
                       updateClassMutation.isPending ||
-                      Number(editClassForm.capacity) < (editingClass._count?.enrollments || 0) ||
+                      Number(editClassForm.capacity) < editingClassActiveEnrolled ||
                       isAdminDateInvalid
                     }
                     className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-xs transition-colors disabled:opacity-50 cursor-pointer"

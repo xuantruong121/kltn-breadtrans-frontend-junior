@@ -76,6 +76,14 @@ export function getApiErrorMessage(err: any, defaultMessage: string = "Thao tác
     return "Khóa học đã xuất bản chỉ cho phép sửa trực tiếp ảnh bìa và mô tả. Để sửa tiêu đề, cấp độ hoặc giáo trình, vui lòng chuyển về Bản nháp.";
   }
 
+  // 7. Enrollment specific errors
+  if (lowerMsg.includes("đã đủ số lượng học viên tối đa") || lowerMsg.includes("full capacity")) {
+    return "Lớp học đã đủ số lượng học viên tối đa. Vui lòng chọn lớp học khác hoặc liên hệ trung tâm để được hỗ trợ.";
+  }
+  if (lowerMsg.includes("đã ghi danh vào lớp học này rồi")) {
+    return "Bạn đã ghi danh vào lớp học này trước đó.";
+  }
+
   // If there's an explicit custom backend message
   if (message && message.trim().length > 0) {
     return message;
