@@ -599,19 +599,9 @@ export default function CourseEditStudioPage() {
                 Khóa học đang chờ Quản trị viên duyệt
               </h4>
               <p className="text-amber-700 leading-relaxed text-xs">
-                Nội dung hiện đã được khóa để bảo đảm quá trình thẩm định. Bạn có
-                thể rút lại về Bản nháp nếu muốn tiếp tục chỉnh sửa.
+                Nội dung khóa học hiện được khóa trong thời gian thẩm định. Bạn sẽ có
+                thể tiếp tục chỉnh sửa nếu Admin từ chối khóa học.
               </p>
-              <div className="mt-3">
-                <button
-                  onClick={() => setShowRevertConfirmModal(true)}
-                  disabled={revertToDraftMutation.isPending}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-amber-800 border border-amber-300 rounded-lg text-xs font-semibold hover:bg-amber-100 transition-colors shadow-xs"
-                >
-                  <RotateCcw size={12} />
-                  Rút lại về Bản nháp
-                </button>
-              </div>
             </div>
           </div>
         )}

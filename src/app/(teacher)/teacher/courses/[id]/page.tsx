@@ -289,25 +289,27 @@ export default function TeacherCourseDetailPage() {
               )}
 
               {isRejected && (
-                <Link
-                  href={`/teacher/courses/${courseId}/edit`}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
+                <button
+                  onClick={() => {
+                    revertToDraftMutation.mutate(undefined, {
+                      onSuccess: () => router.push(`/teacher/courses/${courseId}/edit`),
+                    });
+                  }}
+                  disabled={revertToDraftMutation.isPending}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-60"
                 >
-                  <Edit size={14} /> Chỉnh sửa & Hoàn thiện lại
-                </Link>
+                  {revertToDraftMutation.isPending ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Edit size={14} />
+                  )}
+                  Chỉnh sửa lại
+                </button>
               )}
 
               {isPendingReview && (
-                <div className="flex items-center gap-2">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-2 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg text-xs font-semibold">
-                    <Clock size={14} className="text-amber-600" /> Đang chờ duyệt (Đã khóa)
-                  </div>
-                  <button
-                    onClick={() => setShowRevertModal(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold transition-colors shadow-xs"
-                  >
-                    <RotateCcw size={14} /> Rút lại về Bản nháp
-                  </button>
+                <div className="inline-flex items-center gap-1.5 px-3 py-2 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg text-xs font-semibold">
+                  <Clock size={14} className="text-amber-600" /> Đang chờ duyệt (Đã khóa)
                 </div>
               )}
 
@@ -392,22 +394,14 @@ export default function TeacherCourseDetailPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6">
         {/* Status Alerts */}
         {isPendingReview && (
-          <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between gap-4 text-amber-800 flex-wrap">
-            <div className="flex items-center gap-3 text-xs sm:text-sm">
-              <Clock size={18} className="shrink-0 text-amber-600" />
-              <div>
-                <strong className="block font-semibold">Đang chờ Admin duyệt</strong>
-                <span className="text-amber-700 text-xs">
-                  Nội dung khóa học hiện đã được khóa trong thời gian thẩm định. Bạn có thể rút lại về Bản nháp để sửa tiếp.
-                </span>
-              </div>
+          <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-3 text-amber-800">
+            <Clock size={18} className="shrink-0 text-amber-600 mt-0.5" />
+            <div className="text-xs sm:text-sm">
+              <strong className="block font-semibold mb-0.5">Đang chờ Admin duyệt</strong>
+              <span className="text-amber-700 text-xs leading-relaxed">
+                Nội dung khóa học hiện được khóa trong thời gian thẩm định. Bạn sẽ có thể tiếp tục chỉnh sửa nếu Admin từ chối khóa học.
+              </span>
             </div>
-            <button
-              onClick={() => setShowRevertModal(true)}
-              className="px-3.5 py-1.5 bg-white text-amber-800 border border-amber-300 rounded-lg text-xs font-semibold hover:bg-amber-100 transition-colors shrink-0"
-            >
-              Rút lại về Bản nháp
-            </button>
           </div>
         )}
 
@@ -416,18 +410,24 @@ export default function TeacherCourseDetailPage() {
             <div className="flex items-center gap-3 text-xs sm:text-sm">
               <XCircle size={18} className="shrink-0 text-rose-600" />
               <div>
-                <strong className="block font-semibold">Khóa học cần được chỉnh sửa</strong>
+                <strong className="block font-semibold">Khóa học cần được chỉnh sửa trước khi gửi duyệt lại</strong>
                 <span className="text-rose-700 text-xs">
-                  Khóa học chưa được Admin thông qua. Vui lòng vào Studio để hoàn thiện giáo trình và nộp duyệt lại.
+                  Khóa học chưa được Admin thông qua. Vui lòng bấm &quot;Chỉnh sửa lại&quot; để đưa khóa học về Bản nháp và hoàn thiện nội dung.
                 </span>
               </div>
             </div>
-            <Link
-              href={`/teacher/courses/${courseId}/edit`}
-              className="px-3.5 py-1.5 bg-rose-600 text-white rounded-lg text-xs font-semibold hover:bg-rose-700 transition-colors shrink-0"
+            <button
+              onClick={() => {
+                revertToDraftMutation.mutate(undefined, {
+                  onSuccess: () => router.push(`/teacher/courses/${courseId}/edit`),
+                });
+              }}
+              disabled={revertToDraftMutation.isPending}
+              className="px-3.5 py-1.5 bg-rose-600 text-white rounded-lg text-xs font-semibold hover:bg-rose-700 transition-colors shrink-0 disabled:opacity-60 flex items-center gap-1.5"
             >
-              Vào Studio chỉnh sửa
-            </Link>
+              {revertToDraftMutation.isPending && <Loader2 size={12} className="animate-spin" />}
+              Chỉnh sửa lại
+            </button>
           </div>
         )}
 
