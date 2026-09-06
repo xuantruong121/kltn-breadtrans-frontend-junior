@@ -3,14 +3,29 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
-  BookOpen, Loader2, ArrowRight, Users, Calendar,
-  UserCircle, AlertCircle
+  BookOpen,
+  Loader2,
+  ArrowRight,
+  Users,
+  Calendar,
+  UserCircle,
+  AlertCircle,
+  CreditCard,
+  Clock,
+  CheckCircle,
+  XCircle,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuthStore } from "@/stores/authStore";
 import axiosClient from "@/lib/api/axiosClient";
-import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useMemo } from "react";
+import {
+  paymentService,
+  StudentPayment,
+} from "@/lib/api/services/payment.service";
+import { PaymentDetailModal } from "@/modules/payment/components/PaymentDetailModal";
 
 type EnrolledClass = {
   classId: number;
@@ -42,6 +57,7 @@ const LEVEL_LABEL: Record<string, string> = {
 
 export default function CoursesPage() {
   const { user } = useAuthStore();
+  const [selectedPaymentId, setSelectedPaymentId] = useState<number | null>(null);
 
   const { data: classes, isLoading } = useQuery<EnrolledClass[]>({
     queryKey: ["my-enrolled-classes", user?.id],
@@ -51,6 +67,22 @@ export default function CoursesPage() {
     },
     enabled: !!user && user.role === "STUDENT",
   });
+
+  const { data: payments } = useQuery<StudentPayment[]>({
+    queryKey: ["my-payments", user?.id],
+    queryFn: paymentService.getMyPayments,
+    enabled: !!user && user.role === "STUDENT",
+  });
+
+  const paymentMap = useMemo(() => {
+    const map = new Map<number, StudentPayment>();
+    if (payments) {
+      for (const p of payments) {
+        map.set(p.class.id, p);
+      }
+    }
+    return map;
+  }, [payments]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
@@ -93,14 +125,46 @@ export default function CoursesPage() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {currentClasses.map((cls, index) => {
+              const payment = paymentMap.get(cls.classId);
               const isPending = cls.enrollmentStatus === "PENDING_PAYMENT";
-              const badge = isPending
-                ? { label: "Chờ thanh toán", className: "bg-amber-100 text-amber-800 border border-amber-300" }
-                : (STATUS_BADGE[cls.classStatus] || { label: cls.classStatus, className: "bg-slate-100 text-slate-600" });
+
+              let badge = STATUS_BADGE[cls.classStatus] || {
+                label: cls.classStatus,
+                className: "bg-slate-100 text-slate-600",
+              };
+
+              if (isPending) {
+                if (payment?.status === "REPORTED") {
+                  badge = {
+                    label: "Đã báo chuyển khoản",
+                    className: "bg-sky-100 text-sky-800 border border-sky-300",
+                  };
+                } else if (payment?.status === "CONFIRMED") {
+                  badge = {
+                    label: "Đã xác nhận",
+                    className: "bg-emerald-100 text-emerald-800 border border-emerald-300",
+                  };
+                } else if (payment?.status === "REJECTED") {
+                  badge = {
+                    label: "Bị từ chối",
+                    className: "bg-rose-100 text-rose-800 border border-rose-300",
+                  };
+                } else if (payment?.status === "REVIEW_REQUIRED") {
+                  badge = {
+                    label: "Cần xử lý",
+                    className: "bg-purple-100 text-purple-800 border border-purple-300",
+                  };
+                } else {
+                  badge = {
+                    label: "Chờ thanh toán",
+                    className: "bg-amber-100 text-amber-800 border border-amber-300",
+                  };
+                }
+              }
 
               return (
               <motion.div
-                key={cls.classId || (cls as any).id || index}
+                key={cls.classId || index}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.08 }}
@@ -160,7 +224,7 @@ export default function CoursesPage() {
                     <div className="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200/80 space-y-1">
                       <div className="flex items-center justify-between text-xs font-bold text-amber-900">
                         <span>Học phí:</span>
-                        <span>{new Intl.NumberFormat("vi-VN").format(cls.tuitionFeeVnd || 0)} đ</span>
+                        <span>{new Intl.NumberFormat("vi-VN").format(payment?.amountVnd ?? cls.tuitionFeeVnd ?? 0)} đ</span>
                       </div>
                       <p className="text-[11px] text-amber-700">
                         Vui lòng chờ trung tâm xác nhận để bắt đầu học.
@@ -186,9 +250,58 @@ export default function CoursesPage() {
                   {/* Action Buttons */}
                   <div className="mt-auto flex flex-col gap-2">
                     {isPending ? (
-                      <div className="w-full py-3 rounded-xl text-center text-xs font-bold bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed">
-                        Đang chờ thanh toán học phí
-                      </div>
+                      payment ? (
+                        payment.status === "PENDING" ? (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedPaymentId(payment.id)}
+                            className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold p-3 rounded-xl transition-colors cursor-pointer text-xs"
+                          >
+                            <CreditCard size={16} />
+                            Xem hướng dẫn chuyển khoản
+                          </button>
+                        ) : payment.status === "REPORTED" ? (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedPaymentId(payment.id)}
+                            className="w-full flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-bold p-3 rounded-xl transition-colors cursor-pointer text-xs"
+                          >
+                            <Clock size={16} />
+                            Đã báo chuyển khoản — Chờ xác nhận
+                          </button>
+                        ) : payment.status === "CONFIRMED" ? (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedPaymentId(payment.id)}
+                            className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold p-3 rounded-xl transition-colors cursor-pointer text-xs"
+                          >
+                            <CheckCircle size={16} />
+                            Đã xác nhận thanh toán
+                          </button>
+                        ) : payment.status === "REJECTED" ? (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedPaymentId(payment.id)}
+                            className="w-full flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-bold p-3 rounded-xl transition-colors cursor-pointer text-xs"
+                          >
+                            <XCircle size={16} />
+                            Thanh toán bị từ chối
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedPaymentId(payment.id)}
+                            className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold p-3 rounded-xl transition-colors cursor-pointer text-xs"
+                          >
+                            <AlertCircle size={16} />
+                            Cần xử lý thêm
+                          </button>
+                        )
+                      ) : (
+                        <div className="w-full p-3 rounded-xl text-center text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                          Chưa có thông tin thanh toán. Vui lòng liên hệ trung tâm.
+                        </div>
+                      )
                     ) : (
                       <Link href={`/classes/${cls.classId}`} className="w-full">
                         <motion.button
@@ -261,6 +374,12 @@ export default function CoursesPage() {
           </div>
         </motion.div>
       )}
+
+      {/* Payment Detail Modal */}
+      <PaymentDetailModal
+        paymentId={selectedPaymentId}
+        onClose={() => setSelectedPaymentId(null)}
+      />
     </div>
   );
 }
