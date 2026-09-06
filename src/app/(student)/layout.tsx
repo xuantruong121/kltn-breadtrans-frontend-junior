@@ -33,6 +33,7 @@ const FloatingAiTutor = dynamic(() => import("@/components/FloatingAiTutor"), { 
 const NAV_ITEMS = [
   { id: "dashboard", href: "/dashboard", label: "Trang chủ", icon: Home, color: "text-sky-500", bgActive: "bg-sky-100 border-sky-300 text-sky-600" },
   { id: "my-courses", href: "/my-courses", label: "Khóa học của tôi", icon: BookmarkCheck, color: "text-cyan-600", bgActive: "bg-cyan-100 border-cyan-300 text-cyan-700" },
+  { id: "classes", href: "/classes", label: "Lớp học", icon: BookOpen, color: "text-blue-500", bgActive: "bg-blue-100 border-blue-300 text-blue-700" },
   { id: "listening", href: "/practice/quizzes", label: "Luyện Nghe", icon: Headphones, color: "text-indigo-500", bgActive: "bg-indigo-100 border-indigo-300 text-indigo-700" },
   { id: "reading", href: "/practice/reading", label: "Luyện Đọc", icon: BookOpenCheck, color: "text-emerald-500", bgActive: "bg-emerald-100 border-emerald-300 text-emerald-700" },
   { id: "speaking", href: "/practice/speaking", label: "Luyện Nói (AI)", icon: Mic, color: "text-purple-500", bgActive: "bg-purple-100 border-purple-300 text-purple-700" },
@@ -40,7 +41,6 @@ const NAV_ITEMS = [
   { id: "flashcard", href: "/flashcard", label: "Flashcard & Từ vựng", icon: Layers, color: "text-amber-500", bgActive: "bg-amber-100 border-amber-300 text-amber-700" },
   { id: "grammar", href: "/grammar", label: "Ngữ pháp", icon: GraduationCap, color: "text-teal-500", bgActive: "bg-teal-100 border-teal-300 text-teal-700" },
   { id: "learn", href: "/learn", label: "Phim & Nhạc", icon: Film, color: "text-red-500", bgActive: "bg-red-100 border-red-300 text-red-700" },
-  { id: "classes", href: "/classes", label: "Lớp học", icon: BookOpen, color: "text-blue-500", bgActive: "bg-blue-100 border-blue-300 text-blue-700" },
   { id: "arena", href: "/arena", label: "Đấu trường", icon: Trophy, color: "text-orange-500", bgActive: "bg-orange-100 border-orange-300 text-orange-700" },
   { id: "market", href: "/market", label: "Cửa hàng", icon: ShoppingBag, color: "text-pink-500", bgActive: "bg-pink-100 border-pink-300 text-pink-700" },
 ];
