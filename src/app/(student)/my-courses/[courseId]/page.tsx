@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowLeft, Loader2, PlayCircle, Star, Users, Video } from "lucide-react";
 import { courseService } from "@/lib/api/services/course.service";
@@ -40,7 +41,7 @@ export default function CourseDetailPage(props: { params: Promise<{ courseId: st
     <div className="max-w-4xl mx-auto">
       {/* Back button */}
       <div className="mb-6">
-        <BackButton label="Quay lại danh sách khóa học" />
+        <BackButton label="Quay lại danh sách khóa học" href="/my-courses" />
       </div>
 
       {/* Hero Section */}
@@ -93,9 +94,11 @@ export default function CourseDetailPage(props: { params: Promise<{ courseId: st
                     <Video size={20} /> Lớp Học Online
                   </a>
                 )}
-                <button className="flex items-center justify-center gap-2 bg-sky-100 text-junior-blue hover:bg-sky-200 transition-colors font-bold p-3 rounded-xl w-full">
-                  <PlayCircle size={20} /> Xem Tài Liệu
-                </button>
+                <Link href={`/classes/${c.id}`} className="w-full">
+                  <button className="flex items-center justify-center gap-2 bg-sky-100 text-junior-blue hover:bg-sky-200 transition-colors font-bold p-3 rounded-xl w-full cursor-pointer">
+                    <PlayCircle size={20} /> Xem Tài Liệu
+                  </button>
+                </Link>
               </div>
             </motion.div>
           ))

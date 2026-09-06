@@ -20,7 +20,8 @@ import {
   Headphones,
   BookOpenCheck,
   Mic,
-  PenTool
+  PenTool,
+  BookmarkCheck
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
@@ -31,6 +32,7 @@ const FloatingAiTutor = dynamic(() => import("@/components/FloatingAiTutor"), { 
 
 const NAV_ITEMS = [
   { id: "dashboard", href: "/dashboard", label: "Trang chủ", icon: Home, color: "text-sky-500", bgActive: "bg-sky-100 border-sky-300 text-sky-600" },
+  { id: "my-courses", href: "/my-courses", label: "Khóa học của tôi", icon: BookmarkCheck, color: "text-cyan-600", bgActive: "bg-cyan-100 border-cyan-300 text-cyan-700" },
   { id: "listening", href: "/practice/quizzes", label: "Luyện Nghe", icon: Headphones, color: "text-indigo-500", bgActive: "bg-indigo-100 border-indigo-300 text-indigo-700" },
   { id: "reading", href: "/practice/reading", label: "Luyện Đọc", icon: BookOpenCheck, color: "text-emerald-500", bgActive: "bg-emerald-100 border-emerald-300 text-emerald-700" },
   { id: "speaking", href: "/practice/speaking", label: "Luyện Nói (AI)", icon: Mic, color: "text-purple-500", bgActive: "bg-purple-100 border-purple-300 text-purple-700" },

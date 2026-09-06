@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -44,6 +44,20 @@ interface ApiErrorShape {
 const OTP_LENGTH = 6;
 const RESEND_DELAY_SECONDS = 60;
 const emptyOtp = () => Array.from({ length: OTP_LENGTH }, () => "");
+
+function getSafeRedirect(raw: string | null) {
+  if (!raw) return null;
+  const value = raw.trim();
+  if (
+    value.startsWith("/") &&
+    !value.startsWith("//") &&
+    !value.includes(":") &&
+    !value.startsWith("/login")
+  ) {
+    return value;
+  }
+  return null;
+}
 
 function getErrorMessage(error: unknown, fallback: string) {
   if (typeof error !== "object" || error === null) return fallback;
@@ -92,6 +106,11 @@ function StepProgress({ current }: { current: 1 | 2 }) {
 
 export default function RegisterFlow() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const safeRedirect = getSafeRedirect(searchParams.get("redirect"));
+  const loginHref = safeRedirect
+    ? `/login?redirect=${encodeURIComponent(safeRedirect)}`
+    : "/login";
   const otpRefs = useRef<Array<HTMLInputElement | null>>([]);
   const [step, setStep] = useState<RegisterStep>("details");
   const [form, setForm] = useState<RegistrationForm>({
@@ -261,7 +280,7 @@ export default function RegisterFlow() {
             className="mx-auto w-full max-w-lg"
           >
             <Link
-              href="/"
+              href={loginHref}
               className="mb-6 inline-flex min-h-11 items-center gap-2 rounded-xl px-2 font-bold text-slate-600 transition-colors hover:text-junior-blue focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200"
             >
               <ArrowLeft size={20} aria-hidden="true" />
@@ -382,7 +401,7 @@ export default function RegisterFlow() {
 
             <p className="mt-7 text-center font-medium text-slate-600">
               Đã có tài khoản?{" "}
-              <Link href="/" className="inline-flex min-h-11 items-center font-bold text-junior-blue underline decoration-2 underline-offset-4 focus-visible:rounded-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200">
+              <Link href={loginHref} className="inline-flex min-h-11 items-center font-bold text-junior-blue underline decoration-2 underline-offset-4 focus-visible:rounded-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200">
                 Đăng nhập ngay
               </Link>
             </p>
@@ -489,7 +508,7 @@ export default function RegisterFlow() {
             <p className="mx-auto mt-4 max-w-md text-base font-medium leading-relaxed text-slate-500 sm:text-lg">
               Chào mừng {form.fullName.trim()} đến với BreadTrans Junior. Bạn có thể đăng nhập và bắt đầu học ngay bây giờ.
             </p>
-            <Button3D type="button" size="xl" variant="orange" onClick={() => router.push("/")} className="mt-8 min-h-14 w-full">
+            <Button3D type="button" size="xl" variant="orange" onClick={() => router.push(loginHref)} className="mt-8 min-h-14 w-full">
               Đăng nhập ngay
               <ArrowRight size={24} aria-hidden="true" />
             </Button3D>

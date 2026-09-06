@@ -110,6 +110,7 @@ export default function TeacherCourseDetailPage() {
     startDate: "",
     endDate: "",
     capacity: 30,
+    tuitionFeeVnd: 0,
     meetingLink: "",
   });
 
@@ -154,6 +155,7 @@ export default function TeacherCourseDetailPage() {
         endDate: data.endDate || undefined,
         meetingLink: data.meetingLink || undefined,
         capacity: Number(data.capacity) || 30,
+        tuitionFeeVnd: Number(data.tuitionFeeVnd) || 0,
       });
     },
     onSuccess: () => {
@@ -166,6 +168,7 @@ export default function TeacherCourseDetailPage() {
         startDate: "",
         endDate: "",
         capacity: 30,
+        tuitionFeeVnd: 0,
         meetingLink: "",
       });
       toast.success("Mở lớp học mới thành công!");
@@ -351,6 +354,7 @@ export default function TeacherCourseDetailPage() {
                         startDate: "",
                         endDate: "",
                         capacity: 30,
+                        tuitionFeeVnd: 0,
                         meetingLink: "",
                       });
                       setShowCreateClassModal(true);
@@ -648,6 +652,7 @@ export default function TeacherCourseDetailPage() {
                         startDate: "",
                         endDate: "",
                         capacity: 30,
+                        tuitionFeeVnd: 0,
                         meetingLink: "",
                       });
                       setShowCreateClassModal(true);
@@ -744,6 +749,29 @@ export default function TeacherCourseDetailPage() {
                   }
                   className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-amber-500 focus:bg-white"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Học phí (VNĐ)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  step={10000}
+                  value={classForm.tuitionFeeVnd}
+                  onChange={(e) =>
+                    setClassForm({
+                      ...classForm,
+                      tuitionFeeVnd: Math.max(0, Number(e.target.value)),
+                    })
+                  }
+                  placeholder="0 = Miễn phí"
+                  className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-amber-500 focus:bg-white"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Nhập 0 nếu đây là lớp học miễn phí. Sau khi có học viên đăng ký, học phí sẽ bị khóa không thể sửa đổi.
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
