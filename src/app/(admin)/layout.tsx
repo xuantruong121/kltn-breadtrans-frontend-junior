@@ -18,7 +18,8 @@ import {
   Mic,
   Menu,
   X,
-  Activity
+  Activity,
+  CreditCard,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useQueryClient } from "@tanstack/react-query";
@@ -28,9 +29,18 @@ import dynamic from "next/dynamic";
 
 const FloatingAiTutor = dynamic(() => import("@/components/FloatingAiTutor"), { ssr: false });
 
-const NAV_ITEMS = [
+interface NavItem {
+  id: string;
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  roles?: ("ADMIN" | "TEACHER")[];
+}
+
+const NAV_ITEMS: NavItem[] = [
   { id: "overview", href: "/admin", label: "Tổng quan", icon: LayoutDashboard },
   { id: "costs", href: "/admin/costs", label: "Quản lý Chi Phí (Cloud)", icon: Activity },
+  { id: "payments", href: "/admin/payments", label: "Thanh toán", icon: CreditCard, roles: ["ADMIN"] },
   { id: "courses", href: "/admin/courses", label: "Khóa học & Lớp", icon: BookOpen },
   { id: "vocab", href: "/admin/vocab", label: "Từ vựng (Flashcard)", icon: Layers },
   { id: "grammar", href: "/admin/grammar", label: "Ngữ pháp (Video)", icon: GraduationCap },
@@ -90,7 +100,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
         </div>
         <nav className="p-4 flex flex-col gap-1.5 overflow-y-auto max-h-[calc(100vh-180px)]">
-          {NAV_ITEMS.map((item) => {
+          {NAV_ITEMS.filter(
+            (item) =>
+              !item.roles ||
+              (user && item.roles.includes(user.role as "ADMIN" | "TEACHER"))
+          ).map((item) => {
             const isActive = item.href === "/admin" 
               ? pathname === "/admin" 
               : pathname.startsWith(item.href);
