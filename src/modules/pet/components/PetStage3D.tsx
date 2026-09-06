@@ -11,8 +11,7 @@ import {
   Award, 
   Shield, 
   ChevronRight,
-  Flame,
-  Volume2
+  Flame
 } from "lucide-react";
 import { Pet } from "@/lib/api/services/gamification.service";
 import { PET_SPECIES_LIST, PetSpecies, getSpeciesIdFromPetName } from "../types";
@@ -310,48 +309,6 @@ export const PetStage3D: React.FC<PetStage3DProps> = ({
     }, 1500);
   };
 
-  const playPetVoice = () => {
-    // Strip emoji characters from text before reading
-    const cleanText = speechText
-      .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{1F200}-\u{1F2FF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FAFF}]|[\u{1F000}-\u{1F02F}]/gu, "")
-      .replace(/[✨❤️🍞💖🥰🥺😢🐾🥖👑🎂🍩🥐🦉🐱🦊🕶️🧙‍♂️🌌🎀🧚‍♀️🎤🌟]/g, "")
-      .trim();
-
-    if (!cleanText) return;
-
-    // Primary: Backend Azure Neural Vietnamese Studio Voice
-    try {
-      const backendUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
-      const ttsUrl = `${backendUrl}/ai/tts/vietnamese?text=${encodeURIComponent(
-        cleanText
-      )}`;
-
-      const audio = new Audio(ttsUrl);
-      audio.playbackRate = 1.05;
-
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        playPromise.catch((err) => {
-          console.warn("Backend TTS stream error, falling back to Web Speech:", err);
-          if ("speechSynthesis" in window) {
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(cleanText);
-            utterance.lang = "vi-VN";
-            window.speechSynthesis.speak(utterance);
-          }
-        });
-      }
-    } catch {
-      if ("speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.lang = "vi-VN";
-        window.speechSynthesis.speak(utterance);
-      }
-    }
-  };
-
   return (
     <>
       <motion.div
@@ -373,13 +330,6 @@ export const PetStage3D: React.FC<PetStage3DProps> = ({
               className="relative bg-white border-2 border-slate-200 rounded-2xl px-4 py-2.5 shadow-sm max-w-xs text-center mb-4 text-xs sm:text-sm font-bold text-slate-700 select-none"
             >
               <span>{speechText}</span>
-              <button
-                onClick={playPetVoice}
-                className="inline-block ml-1 text-sky-500 hover:text-sky-700 p-0.5 align-middle cursor-pointer"
-                title="Nghe giọng thú cưng"
-              >
-                <Volume2 size={14} />
-              </button>
               {/* Bubble Arrow */}
               <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-r-2 border-b-2 border-slate-200 rotate-45" />
             </motion.div>
