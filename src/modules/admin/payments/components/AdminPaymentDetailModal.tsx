@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { paymentService, PaymentStatus } from "@/lib/api/services/payment.service";
 import { RejectPaymentDialog } from "./RejectPaymentDialog";
+import { ConfirmPaymentDialog } from "./ConfirmPaymentDialog";
 import {
   X,
   Loader2,
@@ -16,6 +17,7 @@ import {
   Ban,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
   QrCode,
 } from "lucide-react";
 import Image from "next/image";
@@ -86,6 +88,7 @@ export const AdminPaymentDetailModal: React.FC<AdminPaymentDetailModalProps> = (
   onClose,
 }) => {
   const [isRejectOpen, setIsRejectOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const {
     data: detail,
@@ -156,6 +159,45 @@ export const AdminPaymentDetailModal: React.FC<AdminPaymentDetailModalProps> = (
                     Cập nhật lần cuối: <span className="font-medium">{formatDate(detail.updatedAt)}</span>
                   </div>
                 </div>
+
+                {/* Activation Result UX for Admin */}
+                {detail.status === "CONFIRMED" && (
+                  <>
+                    {detail.activationIssue === "CLASS_FULL" && (
+                      <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 flex items-start gap-3">
+                        <AlertTriangle size={20} className="text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-bold">Lớp học hiện đã đủ chỗ</p>
+                          <p className="text-xs mt-0.5 text-amber-800">
+                            Đã xác nhận thanh toán nhưng lớp hiện đã đủ chỗ.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {detail.activationIssue === "CLASS_NOT_ELIGIBLE" && (
+                      <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-900 flex items-start gap-3">
+                        <AlertCircle size={20} className="text-rose-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-bold">Lớp học không đủ điều kiện tự động kích hoạt</p>
+                          <p className="text-xs mt-0.5 text-rose-800">
+                            Đã xác nhận thanh toán nhưng lớp không còn đủ điều kiện kích hoạt tự động.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {!detail.activationIssue && detail.enrollment?.status === "ACTIVE" && (
+                      <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 flex items-start gap-3">
+                        <CheckCircle2 size={20} className="text-emerald-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-bold">Kích hoạt ghi danh thành công</p>
+                          <p className="text-xs mt-0.5 text-emerald-800">
+                            Đã xác nhận thanh toán và kích hoạt ghi danh.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
 
                 {/* Section A: Financial Snapshot */}
                 <div className="border border-slate-200 rounded-xl p-5 bg-white shadow-xs">
@@ -363,15 +405,24 @@ export const AdminPaymentDetailModal: React.FC<AdminPaymentDetailModalProps> = (
               >
                 Đóng
               </button>
-              {/* Only REPORTED exposes Reject button. No confirm button in Phase 3C-4 */}
+              {/* Only REPORTED exposes Confirm and Reject buttons */}
               {detail && detail.status === "REPORTED" && (
-                <button
-                  type="button"
-                  onClick={() => setIsRejectOpen(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-sm transition-colors cursor-pointer"
-                >
-                  <Ban size={16} /> Từ chối thanh toán
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setIsRejectOpen(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <Ban size={16} /> Từ chối thanh toán
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsConfirmOpen(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-colors cursor-pointer"
+                  >
+                    <CheckCircle2 size={16} /> Xác nhận thanh toán
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -385,6 +436,17 @@ export const AdminPaymentDetailModal: React.FC<AdminPaymentDetailModalProps> = (
           transferCode={detail.transferCode}
           isOpen={isRejectOpen}
           onClose={() => setIsRejectOpen(false)}
+        />
+      )}
+
+      {/* Confirm Dialog */}
+      {detail && (
+        <ConfirmPaymentDialog
+          paymentId={detail.id}
+          transferCode={detail.transferCode}
+          amountVnd={detail.amountVnd}
+          isOpen={isConfirmOpen}
+          onClose={() => setIsConfirmOpen(false)}
         />
       )}
     </>

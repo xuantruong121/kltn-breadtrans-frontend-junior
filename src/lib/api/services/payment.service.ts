@@ -7,6 +7,8 @@ export type PaymentStatus =
   | 'REJECTED'
   | 'REVIEW_REQUIRED';
 
+export type PaymentActivationIssue = 'CLASS_FULL' | 'CLASS_NOT_ELIGIBLE';
+
 export interface ClassSummary {
   id: number;
   name: string;
@@ -58,6 +60,7 @@ export interface AdminPaymentItem {
   amountVnd: number;
   transferCode: string;
   status: PaymentStatus;
+  activationIssue?: PaymentActivationIssue | null;
   createdAt: string;
   reportedAt: string | null;
   reviewedAt: string | null;
@@ -99,6 +102,7 @@ export interface AdminPaymentDetail {
   amountVnd: number;
   transferCode: string;
   status: PaymentStatus;
+  activationIssue?: PaymentActivationIssue | null;
   createdAt: string;
   updatedAt: string;
   reportedAt: string | null;
@@ -167,5 +171,9 @@ export const paymentService = {
     data: RejectPaymentInput,
   ): Promise<AdminPaymentDetail> => {
     return await axiosClient.post(`/admin/payments/${id}/reject`, data);
+  },
+
+  adminConfirmPayment: async (id: number): Promise<AdminPaymentDetail> => {
+    return await axiosClient.post(`/admin/payments/${id}/confirm`);
   },
 };

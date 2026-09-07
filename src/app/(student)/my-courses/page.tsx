@@ -58,6 +58,9 @@ const LEVEL_LABEL: Record<string, string> = {
 export default function CoursesPage() {
   const { user } = useAuthStore();
   const [selectedPaymentId, setSelectedPaymentId] = useState<number | null>(null);
+  const [selectedEnrollmentStatus, setSelectedEnrollmentStatus] = useState<
+    "ACTIVE" | "PENDING_PAYMENT" | "COMPLETED" | "DROPPED" | undefined
+  >(undefined);
 
   const { data: classes, isLoading } = useQuery<EnrolledClass[]>({
     queryKey: ["my-enrolled-classes", user?.id],
@@ -141,8 +144,8 @@ export default function CoursesPage() {
                   };
                 } else if (payment?.status === "CONFIRMED") {
                   badge = {
-                    label: "Đã xác nhận",
-                    className: "bg-emerald-100 text-emerald-800 border border-emerald-300",
+                    label: "Đã nhận thanh toán (Chờ kích hoạt)",
+                    className: "bg-amber-100 text-amber-800 border border-amber-300",
                   };
                 } else if (payment?.status === "REJECTED") {
                   badge = {
@@ -254,7 +257,10 @@ export default function CoursesPage() {
                         payment.status === "PENDING" ? (
                           <button
                             type="button"
-                            onClick={() => setSelectedPaymentId(payment.id)}
+                            onClick={() => {
+                              setSelectedPaymentId(payment.id);
+                              setSelectedEnrollmentStatus(cls.enrollmentStatus as any);
+                            }}
                             className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold p-3 rounded-xl transition-colors cursor-pointer text-xs"
                           >
                             <CreditCard size={16} />
@@ -263,7 +269,10 @@ export default function CoursesPage() {
                         ) : payment.status === "REPORTED" ? (
                           <button
                             type="button"
-                            onClick={() => setSelectedPaymentId(payment.id)}
+                            onClick={() => {
+                              setSelectedPaymentId(payment.id);
+                              setSelectedEnrollmentStatus(cls.enrollmentStatus as any);
+                            }}
                             className="w-full flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-bold p-3 rounded-xl transition-colors cursor-pointer text-xs"
                           >
                             <Clock size={16} />
@@ -272,16 +281,22 @@ export default function CoursesPage() {
                         ) : payment.status === "CONFIRMED" ? (
                           <button
                             type="button"
-                            onClick={() => setSelectedPaymentId(payment.id)}
-                            className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold p-3 rounded-xl transition-colors cursor-pointer text-xs"
+                            onClick={() => {
+                              setSelectedPaymentId(payment.id);
+                              setSelectedEnrollmentStatus(cls.enrollmentStatus as any);
+                            }}
+                            className="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-bold p-3 rounded-xl transition-colors cursor-pointer text-xs"
                           >
-                            <CheckCircle size={16} />
-                            Đã xác nhận thanh toán
+                            <Clock size={16} />
+                            Đã nhận thanh toán (Chờ kích hoạt)
                           </button>
                         ) : payment.status === "REJECTED" ? (
                           <button
                             type="button"
-                            onClick={() => setSelectedPaymentId(payment.id)}
+                            onClick={() => {
+                              setSelectedPaymentId(payment.id);
+                              setSelectedEnrollmentStatus(cls.enrollmentStatus as any);
+                            }}
                             className="w-full flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-bold p-3 rounded-xl transition-colors cursor-pointer text-xs"
                           >
                             <XCircle size={16} />
@@ -290,7 +305,10 @@ export default function CoursesPage() {
                         ) : (
                           <button
                             type="button"
-                            onClick={() => setSelectedPaymentId(payment.id)}
+                            onClick={() => {
+                              setSelectedPaymentId(payment.id);
+                              setSelectedEnrollmentStatus(cls.enrollmentStatus as any);
+                            }}
                             className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold p-3 rounded-xl transition-colors cursor-pointer text-xs"
                           >
                             <AlertCircle size={16} />
@@ -378,7 +396,11 @@ export default function CoursesPage() {
       {/* Payment Detail Modal */}
       <PaymentDetailModal
         paymentId={selectedPaymentId}
-        onClose={() => setSelectedPaymentId(null)}
+        enrollmentStatus={selectedEnrollmentStatus}
+        onClose={() => {
+          setSelectedPaymentId(null);
+          setSelectedEnrollmentStatus(undefined);
+        }}
       />
     </div>
   );

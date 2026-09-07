@@ -24,6 +24,7 @@ import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 interface PaymentDetailModalProps {
   paymentId: number | null;
+  enrollmentStatus?: "ACTIVE" | "PENDING_PAYMENT" | "COMPLETED" | "DROPPED";
   onClose: () => void;
   onReportSuccess?: () => void;
 }
@@ -59,8 +60,29 @@ const STATUS_CONFIG: Record<
   },
 };
 
+const getStatusConfig = (
+  status: string,
+  enrollmentStatus?: "ACTIVE" | "PENDING_PAYMENT" | "COMPLETED" | "DROPPED",
+) => {
+  if (status === "CONFIRMED" && enrollmentStatus === "PENDING_PAYMENT") {
+    return {
+      label: "Đã nhận thanh toán (Chờ kích hoạt)",
+      badgeClass: "bg-amber-100 text-amber-800 border-amber-300",
+      icon: <Clock size={16} className="text-amber-700" />,
+    };
+  }
+  return (
+    STATUS_CONFIG[status] || {
+      label: status,
+      badgeClass: "bg-slate-100 text-slate-800 border-slate-300",
+      icon: <Clock size={16} className="text-slate-700" />,
+    }
+  );
+};
+
 export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
   paymentId,
+  enrollmentStatus,
   onClose,
   onReportSuccess,
 }) => {
@@ -192,13 +214,10 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                       Trạng thái thanh toán:
                     </span>
                     <span
-                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${
-                        STATUS_CONFIG[payment.status]?.badgeClass ||
-                        "bg-slate-100 text-slate-700 border-slate-200"
-                      }`}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${getStatusConfig(payment.status, enrollmentStatus).badgeClass}`}
                     >
-                      {STATUS_CONFIG[payment.status]?.icon}
-                      {STATUS_CONFIG[payment.status]?.label || payment.status}
+                      {getStatusConfig(payment.status, enrollmentStatus).icon}
+                      {getStatusConfig(payment.status, enrollmentStatus).label}
                     </span>
                   </div>
                 </div>
@@ -413,20 +432,37 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                     </div>
                   </div>
                 ) : payment.status === "CONFIRMED" ? (
-                  <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start gap-3">
-                    <CheckCircle2
-                      size={18}
-                      className="text-emerald-600 flex-shrink-0 mt-0.5"
-                    />
-                    <div className="text-xs text-emerald-900 space-y-0.5">
-                      <p className="font-bold">
-                        Khoản thanh toán đã được xác nhận!
-                      </p>
-                      <p className="text-emerald-700 leading-relaxed">
-                        Lớp học đã được kích hoạt. Bạn có thể vào học ngay bây giờ.
-                      </p>
+                  enrollmentStatus === "ACTIVE" ? (
+                    <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start gap-3">
+                      <CheckCircle2
+                        size={18}
+                        className="text-emerald-600 flex-shrink-0 mt-0.5"
+                      />
+                      <div className="text-xs text-emerald-900 space-y-0.5">
+                        <p className="font-bold">
+                          Khoản thanh toán đã được xác nhận!
+                        </p>
+                        <p className="text-emerald-700 leading-relaxed">
+                          Thanh toán đã được xác nhận. Ghi danh đã được kích hoạt.
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-3">
+                      <Clock
+                        size={18}
+                        className="text-amber-600 flex-shrink-0 mt-0.5"
+                      />
+                      <div className="text-xs text-amber-900 space-y-0.5">
+                        <p className="font-bold">
+                          Đã nhận thanh toán (Chờ kích hoạt)
+                        </p>
+                        <p className="text-amber-700 leading-relaxed">
+                          Thanh toán đã được xác nhận nhưng quyền vào lớp chưa được kích hoạt. Vui lòng liên hệ trung tâm để được hỗ trợ.
+                        </p>
+                      </div>
+                    </div>
+                  )
                 ) : payment.status === "REJECTED" ? (
                   <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-3">
                     <XCircle
@@ -436,8 +472,7 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                     <div className="text-xs text-rose-900 space-y-0.5">
                       <p className="font-bold">Khoản thanh toán bị từ chối.</p>
                       <p className="text-rose-700 leading-relaxed">
-                        Vui lòng liên hệ ban quản trị để được hỗ trợ kiểm tra lại
-                        thông tin giao dịch.
+                        Thanh toán đã bị từ chối. Vui lòng liên hệ trung tâm để được hỗ trợ.
                       </p>
                     </div>
                   </div>
