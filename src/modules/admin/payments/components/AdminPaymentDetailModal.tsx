@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { paymentService, PaymentStatus } from "@/lib/api/services/payment.service";
+import toast from "react-hot-toast";
 import { RejectPaymentDialog } from "./RejectPaymentDialog";
 import { ConfirmPaymentDialog } from "./ConfirmPaymentDialog";
 import {
@@ -19,6 +20,7 @@ import {
   AlertCircle,
   AlertTriangle,
   QrCode,
+  RefreshCw,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -89,6 +91,7 @@ export const AdminPaymentDetailModal: React.FC<AdminPaymentDetailModalProps> = (
 }) => {
   const [isRejectOpen, setIsRejectOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const {
     data: detail,
@@ -99,6 +102,34 @@ export const AdminPaymentDetailModal: React.FC<AdminPaymentDetailModalProps> = (
     queryKey: ["admin-payment-detail", paymentId],
     queryFn: () => paymentService.adminGetPaymentDetail(paymentId!),
     enabled: isOpen && !!paymentId,
+  });
+
+  const retryMutation = useMutation({
+    mutationFn: async () => {
+      return await paymentService.adminRetryActivation(paymentId!);
+    },
+    onSuccess: (updated) => {
+      if (updated.enrollment?.status === "ACTIVE") {
+        toast.success("Đã kích hoạt ghi danh thành công.");
+      } else if (updated.activationIssue === "CLASS_FULL") {
+        toast.error("Lớp vẫn đã đủ chỗ. Ghi danh chưa được kích hoạt.");
+      } else if (updated.activationIssue === "CLASS_NOT_ELIGIBLE") {
+        toast.error("Lớp vẫn chưa đủ điều kiện kích hoạt.");
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["admin-payments"] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-payment-detail", paymentId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["classes"] });
+      queryClient.invalidateQueries({ queryKey: ["enrollments"] });
+    },
+    onError: (err: any) => {
+      const msg =
+        err?.response?.data?.message ||
+        "Không thể kích hoạt lại ghi danh. Vui lòng thử lại.";
+      toast.error(msg);
+    },
   });
 
   if (!isOpen) return null;
@@ -424,6 +455,31 @@ export const AdminPaymentDetailModal: React.FC<AdminPaymentDetailModalProps> = (
                   </button>
                 </>
               )}
+
+              {/* Retry Activation Button: ONLY for CONFIRMED + PENDING_PAYMENT + activationIssue != null */}
+              {detail &&
+                detail.status === "CONFIRMED" &&
+                detail.enrollment?.status === "PENDING_PAYMENT" &&
+                detail.activationIssue != null && (
+                  <button
+                    type="button"
+                    onClick={() => retryMutation.mutate()}
+                    disabled={retryMutation.isPending}
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg shadow-sm transition-colors cursor-pointer"
+                  >
+                    {retryMutation.isPending ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Đang thử kích hoạt lại...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw size={16} />
+                        Thử kích hoạt lại
+                      </>
+                    )}
+                  </button>
+                )}
             </div>
           </div>
         </div>

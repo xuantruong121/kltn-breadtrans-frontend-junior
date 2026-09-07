@@ -176,4 +176,8 @@ export const paymentService = {
   adminConfirmPayment: async (id: number): Promise<AdminPaymentDetail> => {
     return await axiosClient.post(`/admin/payments/${id}/confirm`);
   },
+
+  adminRetryActivation: async (id: number): Promise<AdminPaymentDetail> => {
+    return await axiosClient.post(`/admin/payments/${id}/retry-activation`);
+  },
 };
