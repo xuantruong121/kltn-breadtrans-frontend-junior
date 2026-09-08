@@ -10,6 +10,7 @@ import {
   Dumbbell,
   Headphones,
   Home,
+  KeyRound,
   LayoutDashboard,
   LogIn,
   Menu,
@@ -359,12 +360,12 @@ export function AppHeader() {
                     </Link>
 
                     <Link
-                      href="/my-courses"
+                      href="/change-password"
                       onClick={closeMenus}
-                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors whitespace-nowrap"
+                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-900 transition-colors whitespace-nowrap"
                     >
-                      <BookOpen size={16} className="text-slate-400 shrink-0" />
-                      <span>Khóa học của tôi</span>
+                      <KeyRound size={16} className="text-slate-400 shrink-0" />
+                      <span>Đổi mật khẩu</span>
                     </Link>
 
                     <button
