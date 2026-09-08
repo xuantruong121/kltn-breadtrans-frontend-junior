@@ -1,36 +1,17 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import {
   ArrowRight,
-  BookOpen,
   CheckCircle2,
   ChevronRight,
-  Headphones,
-  Mic,
-  PenTool,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
-import { userService } from "@/lib/api/services/user.service";
-import { gamificationService } from "@/lib/api/services/gamification.service";
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
   const { breads, streak } = useGamificationStore();
-
-  const { data: profile } = useQuery({
-    queryKey: ["profile", user?.id],
-    queryFn: userService.getProfile,
-    enabled: !!user?.id,
-  });
-
-  const { data: quests = [] } = useQuery({
-    queryKey: ["myQuests", user?.id],
-    queryFn: gamificationService.getMyDailyQuests,
-    enabled: !!user?.id,
-  });
 
   const studentName = user?.profile?.name || user?.email?.split("@")[0] || "Học Viên";
   const studentAvatar = user?.profile?.avatarUrl;
@@ -84,7 +65,7 @@ export default function DashboardPage() {
                 Chào {studentName}, sẵn sàng bứt phá mục tiêu hôm nay!
               </h1>
               <p className="text-slate-600 text-sm sm:text-base font-semibold mt-1">
-                Chỉ cần 15 phút tập trung mỗi ngày để tiến gần hơn đến mốc TOEIC 750+.
+                Chỉ cần 15 phút tập trung mỗi ngày để tiến gần hơn với mục tiêu tiếng Anh của bạn.
               </p>
             </div>
           </div>
@@ -236,7 +217,7 @@ export default function DashboardPage() {
                 />
               </div>
               <p className="text-[11px] font-semibold text-slate-500 text-center">
-                Chỉ cần làm thêm 1 bài nghe Part 2 để đạt 100% mục tiêu!
+                Chỉ cần hoàn thành thêm một bài luyện ngắn để đạt 100% mục tiêu!
               </p>
             </div>
           </div>
@@ -276,17 +257,17 @@ export default function DashboardPage() {
             <div className="space-y-1.5">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-lg text-xs font-black bg-amber-100 text-amber-800 border border-amber-200">
-                  Khóa trọng tâm
+                  Lộ trình đang học
                 </span>
-                <span className="text-xs font-semibold text-slate-500">Mục tiêu: 650 - 750+ TOEIC</span>
+                <span className="text-xs font-semibold text-slate-500">Mục tiêu: Giao tiếp tự tin</span>
               </div>
               <h3 className="text-lg sm:text-xl font-bold text-slate-900">
-                TOEIC Đột Phá 650+: Nghe Hiểu Chuyên Sâu &amp; Bẫy Đề Thi
+                Tiếng Anh giao tiếp công sở
               </h3>
               <p className="text-sm font-semibold text-slate-600 flex items-center gap-2">
                 <span className="inline-block w-2 h-2 rounded-full bg-amber-600" />
                 <span>
-                  Đang học dở: <strong>Bài 14: Chiến thuật phân biệt từ đồng âm trong Part 3 &amp; 4</strong>
+                  Đang học dở: <strong>Bài 14: Nghe hội thoại và bắt ý chính</strong>
                 </span>
                 <span className="hidden sm:inline text-slate-400">· Ước tính 15 phút</span>
               </p>
@@ -361,7 +342,7 @@ export default function DashboardPage() {
             </div>
             <div className="pt-5 mt-4 border-t border-slate-100">
               <Link
-                href="/practice"
+                href="/practice/listening"
                 className="w-full py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition-colors font-extrabold flex items-center justify-center gap-1 text-xs cursor-pointer"
               >
                 Bắt đầu luyện nghe →
@@ -417,7 +398,7 @@ export default function DashboardPage() {
             </div>
             <div className="pt-5 mt-4 border-t border-slate-100">
               <Link
-                href="/practice"
+                href="/practice/reading"
                 className="w-full py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors font-extrabold flex items-center justify-center gap-1 text-xs cursor-pointer"
               >
                 Bắt đầu luyện đọc →
@@ -480,7 +461,7 @@ export default function DashboardPage() {
                 Từ vựng cốt lõi
               </h4>
               <p className="text-sm font-semibold text-slate-600 mt-2 leading-relaxed">
-                Luyện ghi nhớ hơn 3,000 từ vựng quan trọng xuất hiện nhiều nhất trong kỳ thi với chu kỳ lặp thông minh SRS.
+                Luyện ghi nhớ từ vựng theo chủ đề hằng ngày, học tập và công việc với chu kỳ lặp thông minh SRS.
               </p>
             </div>
             <div className="pt-5 mt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold">

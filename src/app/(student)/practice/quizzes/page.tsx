@@ -4,39 +4,45 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
-  Headphones,
-  Loader2,
-  PlayCircle,
+  BookOpen,
   CheckCircle2,
+  Clock,
+  Loader2,
   Search,
   ArrowRight,
-  Clock,
-  BookOpen,
+  Target,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { quizService } from "@/lib/api/services/quiz.service";
-import { Pagination, BackButton } from "@/components/ui";
+import { Pagination } from "@/components/ui";
 
-export default function ListeningPracticesPage() {
+type PaperFilter = "ALL" | "TWO_SKILL" | "FOUR_SKILL";
+
+export default function ToeicPapersPage() {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
   const [searchQuery, setSearchQuery] = useState("");
+  const [paperFilter, setPaperFilter] = useState<PaperFilter>("ALL");
 
   const { data: quizzes, isLoading } = useQuery({
-    queryKey: ["listening-practices"],
-    queryFn: quizService.getListeningPractices,
+    queryKey: ["toeic-papers"],
+    queryFn: quizService.getToeicPapers,
   });
 
   const filteredQuizzes = useMemo(() => {
     if (!quizzes) return [];
-    if (!searchQuery.trim()) return quizzes;
+    const byFormat = quizzes.filter((quiz: any) => {
+      if (paperFilter === "ALL") return true;
+      return quiz.bilingualContent?.examFormat === paperFilter;
+    });
+    if (!searchQuery.trim()) return byFormat;
     const q = searchQuery.toLowerCase().trim();
-    return quizzes.filter((quiz: any) =>
+    return byFormat.filter((quiz: any) =>
       quiz.title?.toLowerCase().includes(q)
     );
-  }, [quizzes, searchQuery]);
+  }, [quizzes, searchQuery, paperFilter]);
 
   const totalPages = Math.ceil((filteredQuizzes.length || 0) / pageSize);
   const paginatedQuizzes = filteredQuizzes.slice(
@@ -47,8 +53,7 @@ export default function ListeningPracticesPage() {
   return (
     <div className="max-w-5xl mx-auto pb-16 px-4 sm:px-6">
       {/* Breadcrumb & Navigation */}
-      <div className="mb-6 flex items-center justify-between">
-        <BackButton href="/practice" label="Quay lại Trung tâm luyện tập" />
+      <div className="mb-6 flex items-center justify-end">
         <Link
           href="/dashboard"
           className="text-xs font-bold text-slate-500 hover:text-amber-700 transition-colors"
@@ -62,14 +67,14 @@ export default function ListeningPracticesPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-xs px-3 py-1 rounded-full text-xs font-bold text-amber-50">
-              <Headphones size={14} />
-              <span>TOEIC Listening & Chép chính tả</span>
+              <Target size={14} />
+              <span>TOEIC 2 kỹ năng &amp; 4 kỹ năng</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Kho bài Luyện Nghe TOEIC
+              Kho đề TOEIC
             </h1>
             <p className="text-sm text-amber-100 max-w-xl leading-relaxed">
-              Luyện phản xạ nghe chuẩn phát âm bản ngữ, làm quen ngữ cảnh công sở thực tế và cải thiện tốc độ bắt từ khóa chính xác.
+              Chọn đề 2 kỹ năng hoặc 4 kỹ năng, làm bài theo thời gian và theo dõi kết quả luyện thi của bạn.
             </p>
           </div>
 
@@ -79,7 +84,7 @@ export default function ListeningPracticesPage() {
                 {quizzes?.length || 0}
               </div>
               <div className="text-[11px] font-bold text-amber-100 uppercase tracking-wider">
-                Bài luyện nghe
+                Đề TOEIC
               </div>
             </div>
           </div>
@@ -88,14 +93,38 @@ export default function ListeningPracticesPage() {
 
       {/* Controls & Search */}
       <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="relative flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          {([
+            ["ALL", "Tất cả đề"],
+            ["TWO_SKILL", "2 kỹ năng"],
+            ["FOUR_SKILL", "4 kỹ năng"],
+          ] as const).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => {
+                setPaperFilter(value);
+                setCurrentPage(1);
+              }}
+              className={`rounded-xl px-3.5 py-2 text-xs font-black transition-colors ${
+                paperFilter === value
+                  ? "bg-amber-500 text-white shadow-sm"
+                  : "bg-slate-50 text-slate-600 hover:bg-amber-50 hover:text-amber-800"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div className="relative w-full sm:w-64 shrink-0">
           <Search
-            size={18}
+            size={17}
             className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
           />
           <input
             type="text"
-            placeholder="Tìm kiếm bài tập nghe theo tiêu đề..."
+            placeholder="Tìm đề TOEIC..."
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -104,17 +133,18 @@ export default function ListeningPracticesPage() {
             className="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 focus:bg-white transition-all"
           />
         </div>
+      </div>
 
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-500 shrink-0">
-          <span>Hiển thị {filteredQuizzes.length} bài tập</span>
-        </div>
+      <div className="mb-4 flex items-center justify-between text-xs font-bold text-slate-500">
+        <span>{filteredQuizzes.length} đề phù hợp</span>
+        <span className="inline-flex items-center gap-1.5"><Clock size={14} /> Bấm giờ theo từng đề</span>
       </div>
 
       {/* Quizzes List */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-slate-200">
           <Loader2 className="animate-spin text-amber-600 mb-3" size={36} />
-          <p className="text-xs font-bold text-slate-500">Đang tải danh sách bài luyện nghe...</p>
+          <p className="text-xs font-bold text-slate-500">Đang tải kho đề TOEIC...</p>
         </div>
       ) : filteredQuizzes.length > 0 ? (
         <div className="space-y-6">
@@ -140,7 +170,7 @@ export default function ListeningPracticesPage() {
                     {/* Top Row: Tag & Status */}
                     <div className="flex items-center justify-between gap-2 mb-3">
                       <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-200/60">
-                        <Headphones size={12} /> Part 1-4 Listening
+                        <BookOpen size={12} /> {quiz.bilingualContent?.skillLabel || "TOEIC"}
                       </span>
 
                       {isCompleted ? (
@@ -197,15 +227,15 @@ export default function ListeningPracticesPage() {
       ) : (
         <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center space-y-3">
           <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center mx-auto">
-            <Headphones size={24} />
+            <Target size={24} />
           </div>
           <h3 className="text-base font-bold text-slate-800">
-            {searchQuery ? "Không tìm thấy bài luyện nghe phù hợp" : "Chưa có bài luyện nghe nào"}
+            {searchQuery || paperFilter !== "ALL" ? "Không tìm thấy đề TOEIC phù hợp" : "Chưa có đề TOEIC nào"}
           </h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
             {searchQuery
-              ? "Hãy thử tìm với từ khóa khác hoặc xóa bộ lọc để xem toàn bộ danh sách."
-              : "Các bài tập nghe mới sẽ sớm được cập nhật trên hệ thống."}
+              ? "Hãy thử từ khóa khác hoặc chuyển sang bộ lọc khác."
+              : "Các đề TOEIC mới sẽ sớm được cập nhật trên hệ thống."}
           </p>
         </div>
       )}

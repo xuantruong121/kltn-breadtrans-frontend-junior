@@ -3,7 +3,7 @@ import { FlashcardBook } from "../types";
 export const FLASHCARD_BOOKS: FlashcardBook[] = [
   {
     id: 1,
-    name: "TOEIC Starter: Trường học & Đời sống",
+    name: "Tiếng Anh hằng ngày: Trường học & Đời sống",
     category: "Căn bản",
     coverColor: "from-sky-400 to-blue-500",
     icon: "🎒",
@@ -12,7 +12,7 @@ export const FLASHCARD_BOOKS: FlashcardBook[] = [
       {
         id: 1,
         title: "Bài 1: Lớp học & Đồ dùng học tập",
-        description: "Từ vựng thường gặp trong môi trường học đường và bài thi TOEIC Part 1.",
+        description: "Từ vựng thường gặp trong môi trường học đường và đời sống hằng ngày.",
         words: [
           { id: "w1", word: "Schedule", ipa: "/ˈʃedʒ.uːl/", mean: "Lịch trình, thời khóa biểu", type: "noun", exampleEn: "I need to check my class schedule.", exampleVi: "Tôi cần kiểm tra lại lịch học của mình." },
           { id: "w2", word: "Assignment", ipa: "/əˈsaɪn.mənt/", mean: "Bài tập, nhiệm vụ", type: "noun", exampleEn: "The teacher gave us a reading assignment.", exampleVi: "Giáo viên giao cho chúng tôi một bài đọc." },
@@ -25,7 +25,7 @@ export const FLASHCARD_BOOKS: FlashcardBook[] = [
       {
         id: 2,
         title: "Bài 2: Giao tiếp hàng ngày & Bạn bè",
-        description: "Các mẫu câu và từ vựng chào hỏi, kết bạn trong bài thi TOEIC Part 2 & 3.",
+        description: "Các mẫu câu và từ vựng chào hỏi, kết bạn trong giao tiếp hằng ngày.",
         words: [
           { id: "w7", word: "Introduce", ipa: "/ˌɪn.trəˈdʒuːs/", mean: "Giới thiệu", type: "verb", exampleEn: "Let me introduce my new classmate.", exampleVi: "Để tôi giới thiệu bạn học mới của tôi." },
           { id: "w8", word: "Conversation", ipa: "/ˌkɒn.vəˈseɪ.ʃən/", mean: "Cuộc trò chuyện", type: "noun", exampleEn: "We had a pleasant conversation.", exampleVi: "Chúng tôi đã có một cuộc trò chuyện vui vẻ." },
@@ -37,7 +37,7 @@ export const FLASHCARD_BOOKS: FlashcardBook[] = [
   },
   {
     id: 2,
-    name: "TOEIC Business: Văn phòng & Công sở",
+    name: "Tiếng Anh công sở: Văn phòng & Công việc",
     category: "Trung cấp",
     coverColor: "from-amber-400 to-orange-500",
     icon: "💼",
@@ -58,7 +58,7 @@ export const FLASHCARD_BOOKS: FlashcardBook[] = [
       {
         id: 2,
         title: "Bài 2: Hợp đồng & Đàm phán kinh doanh",
-        description: "Từ vựng ký kết hợp đồng, thương thảo thương mại trong TOEIC Part 5, 6.",
+        description: "Từ vựng ký kết hợp đồng và thương thảo trong môi trường công việc.",
         words: [
           { id: "w16", word: "Negotiate", ipa: "/nəˈɡoʊ.ʃi.eɪt/", mean: "Thương lượng, đàm phán", type: "verb", exampleEn: "They negotiated a new contract.", exampleVi: "Họ đã thương lượng một hợp đồng mới." },
           { id: "w17", word: "Agreement", ipa: "/əˈɡriː.mənt/", mean: "Hợp đồng, sự thỏa thuận", type: "noun", exampleEn: "Both parties reached an agreement.", exampleVi: "Cả hai bên đã đạt được thỏa thuận." },
@@ -70,7 +70,7 @@ export const FLASHCARD_BOOKS: FlashcardBook[] = [
   },
   {
     id: 3,
-    name: "TOEIC Explorer: Du lịch & Khách sạn",
+    name: "Khám phá thế giới: Du lịch & Khách sạn",
     category: "Thực tế",
     coverColor: "from-emerald-400 to-teal-500",
     icon: "✈️",
@@ -92,7 +92,7 @@ export const FLASHCARD_BOOKS: FlashcardBook[] = [
   },
   {
     id: 4,
-    name: "TOEIC Master: Công nghệ & Đổi mới",
+    name: "Chủ đề hiện đại: Công nghệ & Đổi mới",
     category: "Nâng cao",
     coverColor: "from-purple-400 to-indigo-500",
     icon: "💻",

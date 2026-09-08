@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { use, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Loader2, CheckCircle2, ChevronRight, Play, Square } from "lucide-react";
+import { Loader2, CheckCircle2, ChevronRight, Play, Square } from "lucide-react";
 import { quizService, AnswerDto } from "@/lib/api/services/quiz.service";
 import { BackButton } from "@/components/ui";
 
@@ -50,6 +50,8 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
 
   const questions = quiz.questions || [];
   const currentQuestion = questions[currentStep];
+  const skillLabel = quiz.bilingualContent?.skillLabel || "TOEIC";
+  const sectionLabel = currentQuestion?.content?.section;
 
   const handleNext = () => {
     if (currentStep < questions.length - 1) {
@@ -144,7 +146,7 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
           <div>
             <h1 className="text-xl font-black text-slate-800 line-clamp-1">{quiz.title}</h1>
             <p className="text-xs font-bold text-slate-400">
-              Luyện nghe chép chính tả • Chuẩn âm giọng bản xứ
+              Đề TOEIC {skillLabel} • Làm bài theo từng phần
             </p>
           </div>
         </div>
@@ -218,6 +220,13 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
               </div>
             ) : null}
             
+            {sectionLabel && (
+              <div className="mb-4 flex justify-center">
+                <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-amber-800 border border-amber-200">
+                  {sectionLabel}
+                </span>
+              </div>
+            )}
             <h3 className="text-xl font-bold text-slate-800 mb-6 text-center break-words max-w-full px-2">
               {currentQuestion.content?.text || "Nghe đoạn âm thanh và điền câu trả lời vào bên dưới:"}
             </h3>

@@ -157,13 +157,13 @@ function LoginForm() {
             Đăng nhập BreadTrans
           </h1>
           <p className="text-sm text-on-surface-variant mt-1.5 leading-relaxed">
-            Chào mừng bạn quay trở lại! Tiếp tục hành trình nâng cao 4 kỹ năng tiếng Anh.
+            Chào mừng bạn quay trở lại! Tiếp tục hành trình học tiếng Anh của bạn.
           </p>
         </div>
 
         {/* Alert Notification Box */}
         {errorMsg && (
-          <div className="mb-5 bg-error-container text-on-error-container border border-error/20 p-3 rounded-xl text-sm font-medium flex items-center justify-between gap-2 animate-in fade-in duration-150">
+          <div role="alert" className="mb-5 bg-error-container text-on-error-container border border-error/20 p-3 rounded-xl text-sm font-medium flex items-center justify-between gap-2 animate-in fade-in duration-150">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-error text-[20px] shrink-0">
                 error
@@ -200,6 +200,7 @@ function LoginForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
+                aria-invalid={Boolean(errorMsg)}
                 className="w-full pl-10 pr-4 py-3 bg-surface-container-low border border-transparent rounded-xl text-on-surface text-sm placeholder:text-on-surface-variant/50 focus:outline-none focus:bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
               />
             </div>
@@ -222,13 +223,14 @@ function LoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
+                aria-invalid={Boolean(errorMsg)}
                 className="w-full pl-10 pr-11 py-3 bg-surface-container-low border border-transparent rounded-xl text-on-surface text-sm placeholder:text-on-surface-variant/50 focus:outline-none focus:bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
               />
               <button
                 type="button"
                 id="togglePassBtn"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-on-surface-variant/70 hover:text-on-surface transition-colors"
+                className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 items-center justify-center text-on-surface-variant/70 hover:text-on-surface transition-colors"
                 title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                 aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
               >
@@ -253,7 +255,7 @@ function LoginForm() {
               <span>Ghi nhớ đăng nhập</span>
             </label>
             <Link
-              href="/forgot-password"
+              href="mailto:support@breadtrans.edu.vn?subject=Y%C3%AAu%20c%E1%BA%A7u%20h%E1%BB%97%20tr%E1%BB%A3%20%C4%91%E1%BA%B7t%20l%E1%BA%A1i%20m%E1%BA%ADt%20kh%E1%BA%A9u"
               className="font-semibold text-primary hover:text-primary-container transition-colors"
             >
               Quên mật khẩu?

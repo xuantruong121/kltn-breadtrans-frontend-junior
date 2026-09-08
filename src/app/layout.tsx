@@ -13,8 +13,8 @@ const quicksand = Quicksand({
 });
 
 export const metadata: Metadata = {
-  title: "BreadTrans - Luyện TOEIC & Tiếng Anh AI",
-  description: "Nền tảng học tiếng Anh và luyện thi TOEIC tương tác với AI",
+  title: "BreadTrans - Học tiếng Anh cùng AI",
+  description: "Nền tảng tự học tiếng Anh 4 kỹ năng, từ vựng, ngữ pháp và luyện đề TOEIC với AI",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -27,8 +27,8 @@ export const viewport: Viewport = {
   themeColor: "#f97316",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  maximumScale: 5,
+  userScalable: true,
 };
 
 export default function RootLayout({

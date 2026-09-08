@@ -14,7 +14,6 @@ import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { QuickLoginModal } from "@/components/auth/QuickLoginModal";
 import { QuickRegisterModal } from "@/components/auth/QuickRegisterModal";
 import { MobileBottomNav } from "@/components/navigation/MobileBottomNav";
-import { MobileSkillsSheet } from "@/components/navigation/MobileSkillsSheet";
 
 export default function PublicLandingPage() {
   const router = useRouter();
@@ -28,7 +27,6 @@ export default function PublicLandingPage() {
   // Quick modals state
   const [quickLoginOpen, setQuickLoginOpen] = useState(false);
   const [quickRegisterOpen, setQuickRegisterOpen] = useState(false);
-  const [mobileSkillsOpen, setMobileSkillsOpen] = useState(false);
 
   // Intercept action if guest
   const handleProtectedAction = (label: string, route: string) => {
@@ -151,7 +149,7 @@ export default function PublicLandingPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => handleProtectedAction("bài kiểm tra chẩn đoán", "/practice/quizzes")}
+                  onClick={() => handleProtectedAction("bài kiểm tra chẩn đoán", "/diagnostic")}
                   className="text-xs font-black text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-xl transition-colors cursor-pointer shrink-0"
                   type="button"
                 >
@@ -166,9 +164,9 @@ export default function PublicLandingPage() {
                     2
                   </span>
                   <div>
-                    <p className="text-sm font-bold text-slate-900">Kích hoạt lộ trình TOEIC cá nhân hóa</p>
+                    <p className="text-sm font-bold text-slate-900">Nhận gợi ý lộ trình học phù hợp</p>
                     <p className="text-xs font-semibold text-slate-500">
-                      AI thiết kế mục tiêu 650+ hoặc 800+ theo năng lực thực tế
+                      Chọn kỹ năng muốn cải thiện và xây dựng nhịp học phù hợp với bạn
                     </p>
                   </div>
                 </div>
@@ -211,7 +209,7 @@ export default function PublicLandingPage() {
               </div>
               <h3 className="text-xl font-bold text-slate-900">Tặng 50 Bánh Mì cho tài khoản mới</h3>
               <p className="text-xs font-semibold text-slate-600 mt-1 leading-relaxed">
-                Tích lũy Bánh Mì để mở khóa tài liệu giải chi tiết ETS, đề thi độc quyền và nhận 3 lượt chấm phát âm AI miễn phí cùng bài kiểm tra chẩn đoán trình độ 5 phút.
+                Tích lũy Bánh Mì để mở khóa nội dung học, nhận lượt chấm phát âm AI và bắt đầu với bài kiểm tra đầu vào ngắn.
               </p>
               <div className="mt-4 bg-amber-50 border border-amber-200/70 p-4 rounded-2xl space-y-2">
                 <div className="flex items-center gap-2.5">
@@ -269,10 +267,10 @@ export default function PublicLandingPage() {
                   <span className="px-2.5 py-0.5 rounded-lg text-xs font-black bg-amber-100 text-amber-800 border border-amber-200">
                     Khóa trọng tâm
                   </span>
-                  <span className="text-xs font-semibold text-slate-500">Mục tiêu: 650 - 750+ TOEIC</span>
+                  <span className="text-xs font-semibold text-slate-500">Mục tiêu: Giao tiếp tự tin</span>
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold text-slate-900">
-                  TOEIC Đột Phá 650+: Nghe Hiểu Chuyên Sâu &amp; Bẫy Đề Thi
+                  Tiếng Anh giao tiếp công sở
                 </h3>
                 <p className="text-sm font-semibold text-slate-600 flex items-center gap-2">
                   <span className="inline-block w-2 h-2 rounded-full bg-amber-600" />
@@ -326,7 +324,7 @@ export default function PublicLandingPage() {
                     🎧
                   </div>
                   <span className="text-[11px] font-black uppercase px-2.5 py-1 rounded-lg bg-blue-100 text-blue-800 tracking-wide">
-                    Part 1 - 4
+                    Nghe hiểu
                   </span>
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
@@ -339,7 +337,7 @@ export default function PublicLandingPage() {
               <div className="pt-5 mt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold">
                 <span className="text-slate-500 font-bold">120 bài nghe</span>
                 <button
-                  onClick={() => handleProtectedAction("bài luyện nghe", "/practice")}
+                  onClick={() => handleProtectedAction("bài luyện nghe", "/practice/listening")}
                   className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition-colors font-extrabold flex items-center gap-1 cursor-pointer"
                   type="button"
                 >
@@ -386,7 +384,7 @@ export default function PublicLandingPage() {
                     📖
                   </div>
                   <span className="text-[11px] font-black uppercase px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 tracking-wide">
-                    Part 5 - 7
+                    Đọc hiểu
                   </span>
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
@@ -399,7 +397,7 @@ export default function PublicLandingPage() {
               <div className="pt-5 mt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold">
                 <span className="text-emerald-800 font-extrabold">85 bài đọc hiểu</span>
                 <button
-                  onClick={() => handleProtectedAction("bài luyện đọc", "/practice")}
+                  onClick={() => handleProtectedAction("bài luyện đọc", "/practice/reading")}
                   className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors font-extrabold flex items-center gap-1 cursor-pointer"
                   type="button"
                 >
@@ -460,11 +458,11 @@ export default function PublicLandingPage() {
                     Từ vựng cốt lõi
                   </h3>
                   <p className="text-sm font-semibold text-slate-600 mt-2 leading-relaxed">
-                    Luyện ghi nhớ 3,000 từ vựng TOEIC xuất hiện nhiều nhất trong đề thi ETS với chu kỳ lặp thông minh và theo dõi từ khóa cốt lõi.
+                    Luyện ghi nhớ từ vựng theo chủ đề hằng ngày, học tập và công việc với chu kỳ lặp thông minh.
                   </p>
                 </div>
                 <div className="pt-5 mt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold">
-                  <span className="text-amber-800 font-extrabold">Bộ 3,000 từ ETS</span>
+                  <span className="text-amber-800 font-extrabold">Từ vựng theo chủ đề</span>
                   <button
                     onClick={() => handleProtectedAction("kho từ vựng", "/flashcard")}
                     className="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition-colors font-extrabold flex items-center gap-1 cursor-pointer"
@@ -541,7 +539,7 @@ export default function PublicLandingPage() {
 
         {/* Footer note matching UI mockup */}
         <footer className="pt-8 pb-4 text-center text-xs font-semibold text-slate-400 border-t border-slate-200/80">
-          <p>© 2025 BreadTrans - Nền Tảng Luyện Thi TOEIC &amp; Tiếng Anh Toàn Diện. Thiết kế lấy học viên làm trung tâm.</p>
+          <p>© 2025 BreadTrans - Nền tảng tự học tiếng Anh với AI. Thiết kế lấy học viên làm trung tâm.</p>
         </footer>
       </div>
       {/* END: MainContentContainer */}
@@ -573,7 +571,7 @@ export default function PublicLandingPage() {
 
       {/* Mobile navigation bottom bar */}
       <MobileBottomNav
-        onOpenSkills={() => setMobileSkillsOpen(true)}
+        onOpenSkills={() => handleProtectedAction("Trung tâm luyện kỹ năng", "/practice")}
         onOpenAccount={() => {
           if (user) {
             router.push("/dashboard");
@@ -581,13 +579,6 @@ export default function PublicLandingPage() {
             openDirectLogin("tài khoản học viên", "/dashboard");
           }
         }}
-      />
-
-      {/* Mobile Skills Sheet */}
-      <MobileSkillsSheet
-        isOpen={mobileSkillsOpen}
-        onClose={() => setMobileSkillsOpen(false)}
-        onSelectRoute={(label, route) => handleProtectedAction(label, route)}
       />
 
       {/* Auth Gate Modal */}

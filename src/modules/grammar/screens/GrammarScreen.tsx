@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { PlayCircle, CheckCircle2 } from "lucide-react";
+import { BookOpenCheck, PlayCircle, CheckCircle2 } from "lucide-react";
 import { GRAMMAR_TOPICS } from "../services/grammarData";
 import { GrammarTopic, GrammarLesson } from "../types";
 import { GrammarVideoPlayer } from "../components/GrammarVideoPlayer";
@@ -33,11 +33,12 @@ export const GrammarScreen: React.FC = () => {
     <div className="max-w-6xl mx-auto space-y-8">
       {/* HEADER */}
       <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-2xs">
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center gap-3 mb-1">
+          <span className="flex size-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700" aria-hidden="true"><BookOpenCheck size={22} /></span>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">Ngữ Pháp Tiếng Anh</h1>
         </div>
         <p className="font-medium text-slate-500 text-sm">
-          Bài giảng video sinh động và các điểm ngữ pháp trọng tâm theo form đề TOEIC
+          Bài học ngắn, ví dụ gần gũi và câu hỏi có giải thích để bạn dùng tiếng Anh tự tin hơn.
         </p>
       </div>
 
@@ -99,7 +100,7 @@ export const GrammarScreen: React.FC = () => {
               onClick={() => setSelectedLesson(lesson)}
               className={`px-4 py-2.5 rounded-2xl font-black text-sm whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 ${
                 isSelected
-                  ? "bg-slate-800 text-white shadow-md border-2 border-slate-900"
+                  ? "bg-emerald-600 text-white shadow-md border-2 border-emerald-700"
                   : isDone
                   ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-2 border-emerald-300"
                   : "bg-white text-slate-500 hover:bg-slate-100 border-2 border-slate-200"

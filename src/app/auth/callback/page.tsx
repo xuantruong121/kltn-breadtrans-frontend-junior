@@ -17,7 +17,7 @@ function GoogleCallbackHandler() {
   useEffect(() => {
     const code = searchParams.get("code");
     if (!code) {
-      router.replace("/login");
+      router.replace("/auth/error");
       return;
     }
     let active = true;
@@ -28,14 +28,14 @@ function GoogleCallbackHandler() {
       setAuth(response.access_token, response.refresh_token, response.user);
       router.replace(response.user.role === "ADMIN" ? "/admin" : "/dashboard");
     }).catch(() => {
-      if (active) router.replace("/login?googleError=1");
+      if (active) router.replace("/auth/error");
     });
     return () => { active = false; };
   }, [queryClient, router, searchParams, setAuth]);
 
-  return <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm font-bold text-slate-500"><Loader2 className="animate-spin text-junior-blue" size={24} /> Đang hoàn tất đăng nhập Google...</div>;
+  return <div className="flex min-h-[60vh] items-center justify-center gap-3 bg-surface px-4 text-center text-sm font-bold text-slate-600"><Loader2 className="animate-spin text-primary" size={24} aria-hidden="true" /> Đang hoàn tất đăng nhập Google...</div>;
 }
 
 export default function GoogleCallbackPage() {
-  return <Suspense fallback={<div className="flex min-h-[60vh] items-center justify-center"><Loader2 className="animate-spin text-junior-blue" size={24} /></div>}><GoogleCallbackHandler /></Suspense>;
+  return <Suspense fallback={<div className="flex min-h-[60vh] items-center justify-center bg-surface"><Loader2 className="animate-spin text-primary" size={24} aria-label="Đang tải" /></div>}><GoogleCallbackHandler /></Suspense>;
 }

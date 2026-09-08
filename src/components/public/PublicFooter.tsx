@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin, Wheat } from "lucide-react";
 
 export function PublicFooter() {
   return (
@@ -10,15 +10,15 @@ export function PublicFooter() {
           {/* Brand Col */}
           <div className="md:col-span-1 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-600 flex items-center justify-center text-white font-bold text-xl shadow-xs">
-                🍞
+              <div className="w-10 h-10 rounded-xl bg-amber-600 flex items-center justify-center text-white shadow-xs">
+                <Wheat size={22} aria-hidden="true" />
               </div>
               <span className="text-2xl font-black tracking-tight text-slate-900">
                 Bread<span className="text-amber-600">Trans</span>
               </span>
             </div>
             <p className="text-sm leading-relaxed text-slate-500">
-              Nền tảng tự học tiếng Anh và luyện thi TOEIC 4 kỹ năng tự chủ, hỗ trợ AI chấm phát âm và sửa lỗi ngữ pháp thông minh.
+              Nền tảng tự học tiếng Anh 4 kỹ năng, kết hợp Flashcard, ngữ pháp và AI hỗ trợ phát âm, viết câu.
             </p>
           </div>
 
@@ -95,7 +95,12 @@ export function PublicFooter() {
         </div>
 
         <div className="border-t border-slate-200 pt-8 text-center text-xs font-semibold text-slate-400">
-          <p>© {new Date().getFullYear()} BreadTrans - Nền Tảng Luyện Thi TOEIC &amp; Tiếng Anh Toàn Diện. Thiết kế lấy học viên làm trung tâm.</p>
+          <div className="mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+            <Link href="/terms" className="hover:text-amber-700">Điều khoản</Link>
+            <Link href="/privacy" className="hover:text-amber-700">Chính sách bảo mật</Link>
+            <Link href="/help" className="hover:text-amber-700">Trợ giúp</Link>
+          </div>
+          <p>© {new Date().getFullYear()} BreadTrans - Nền tảng tự học tiếng Anh cùng AI. Thiết kế lấy học viên làm trung tâm.</p>
         </div>
       </div>
     </footer>

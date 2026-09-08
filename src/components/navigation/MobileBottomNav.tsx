@@ -16,6 +16,10 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
 
   const isHome = pathname === "/" || pathname === "/dashboard";
   const isToeic = pathname.startsWith("/practice/quizzes");
+  const isSkills =
+    (pathname.startsWith("/practice") && !pathname.startsWith("/practice/quizzes")) ||
+    pathname.startsWith("/flashcard") ||
+    pathname.startsWith("/grammar");
   const isCourses = pathname.startsWith("/courses") || pathname.startsWith("/my-courses");
   const isProfile = pathname.startsWith("/student/profile");
 
@@ -35,13 +39,15 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
         <span className="text-[11px]">Trang chủ</span>
       </Link>
 
-      {/* 2. Kỹ năng (Mở sheet hoặc trang luyện tập) */}
+      {/* 2. Trung tâm kỹ năng */}
       <button
         type="button"
         onClick={onOpenSkills}
-        className="flex flex-col items-center gap-1 min-w-[56px] py-1 text-slate-500 hover:text-amber-700 transition-colors cursor-pointer"
+        className={`flex flex-col items-center gap-1 min-w-[56px] py-1 transition-colors cursor-pointer ${
+          isSkills ? "text-amber-700 font-bold" : "text-slate-500 hover:text-amber-700"
+        }`}
       >
-        <Compass size={20} className="stroke-2" />
+        <Compass size={20} className={isSkills ? "stroke-[2.5]" : "stroke-2"} />
         <span className="text-[11px] font-semibold">Kỹ năng</span>
       </button>
 

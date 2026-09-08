@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, use } from "react";
-import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   PenTool, 
@@ -12,17 +11,13 @@ import {
   FileText,
   TrendingUp,
   BookOpen,
-  ArrowRight,
-  AlertCircle
 } from "lucide-react";
-import { useAuthStore } from "@/stores/authStore";
 import { BackButton } from "@/components/ui";
 import axiosClient from "@/lib/api/axiosClient";
 import toast from "react-hot-toast";
 
 export default function WritingDetailPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
-  const router = useRouter();
   const [content, setContent] = useState("");
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [feedback, setFeedback] = useState<any | null>(null);
@@ -86,7 +81,7 @@ export default function WritingDetailPage(props: { params: Promise<{ id: string 
           <BackButton href="/practice/writing" label="Quay lại danh sách bài viết" />
           <div className="h-6 w-px bg-slate-200 hidden sm:block" />
           <div>
-            <h1 className="text-xl font-extrabold text-slate-900 line-clamp-1">TOEIC Writing: Workplace Email</h1>
+            <h1 className="text-xl font-extrabold text-slate-900 line-clamp-1">Luyện viết: Email công việc</h1>
             <p className="text-xs text-slate-500 font-medium">
               Viết bài theo tình huống thực tế & nhận phân tích chuyên sâu từ AI
             </p>
@@ -184,13 +179,13 @@ export default function WritingDetailPage(props: { params: Promise<{ id: string 
                     </div>
                     <div>
                       <h3 className="text-lg font-extrabold text-slate-900">Báo Cáo Đánh Giá</h3>
-                      <p className="text-xs text-slate-500 font-medium">Theo khung tiêu chí chuẩn TOEIC Writing Rubrics</p>
+                      <p className="text-xs text-slate-500 font-medium">Theo các tiêu chí rõ ràng về ý, cấu trúc và cách dùng từ</p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3">
                     <div className="text-right">
-                      <span className="text-[10px] font-bold uppercase text-slate-400 block">Ước lượng TOEIC</span>
+                      <span className="text-[10px] font-bold uppercase text-slate-400 block">Mức độ hoàn thành</span>
                       <span className="text-xs font-extrabold text-blue-600">{feedback.toeicEstimated}</span>
                     </div>
                     <div className="px-3.5 py-1.5 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-200 font-extrabold text-lg">

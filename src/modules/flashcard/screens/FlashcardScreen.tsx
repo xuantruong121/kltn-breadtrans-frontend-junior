@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useMemo } from "react";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { 
   Layers, 
@@ -17,13 +17,8 @@ import {
   PlayCircle,
   Loader2,
   Search,
-  Check,
   RotateCcw,
-  Sparkles,
-  Award,
   ChevronRight,
-  ShieldCheck,
-  X
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FLASHCARD_BOOKS } from "../services/flashcardData";
@@ -275,7 +270,7 @@ export const FlashcardScreen: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-[2rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0]">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-2xl">🎴</span>
+            <span className="flex size-9 items-center justify-center rounded-xl bg-amber-100 text-amber-700" aria-hidden="true"><Layers size={20} /></span>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-800">Flashcard & Từ Vựng</h1>
           </div>
           <p className="font-bold text-slate-400 text-xs sm:text-sm">
@@ -706,7 +701,7 @@ export const FlashcardScreen: React.FC = () => {
                 {/* Words Table / List Cards */}
                 {filteredListWords.length > 0 ? (
                   <div className="divide-y divide-slate-100">
-                    {filteredListWords.map((w, index) => {
+                  {filteredListWords.map((w) => {
                       const isMastered = masteredWords.includes(w.id);
                       const originalIdx = words.findIndex((item) => item.id === w.id);
 
@@ -799,7 +794,7 @@ export const FlashcardScreen: React.FC = () => {
             <div>
               <h2 className="text-2xl font-black">Bộ Từ Vựng Theo Chủ Đề Hệ Thống</h2>
               <p className="text-amber-100 text-sm font-medium mt-1">
-                Luyện tập từ vựng chuyên sâu theo từng ngữ cảnh giao tiếp và đề thi
+                Luyện tập từ vựng chuyên sâu theo từng ngữ cảnh giao tiếp, học tập và công việc
               </p>
             </div>
             <span className="bg-white/20 backdrop-blur-md px-4 py-2 rounded-2xl font-black text-sm">

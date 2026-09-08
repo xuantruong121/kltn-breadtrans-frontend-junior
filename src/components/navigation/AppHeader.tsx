@@ -17,23 +17,118 @@ import {
   Mic,
   PenTool,
   ShoppingBag,
-  Sparkles,
   Target,
   Trophy,
   User,
+  Wheat,
   X,
   Bell,
+  BellOff,
   LogOut,
   Flame,
+  LineChart,
+  Loader2,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
+import { usePushNotification } from "@/lib/hooks/usePushNotification";
 
 const emptySubscribe = () => () => {};
 
 function isActivePath(pathname: string, href: string) {
   if (href === "/" || href === "/dashboard") return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function StudentNotificationMenu() {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const {
+    isSupported,
+    permission,
+    isSubscribed,
+    isLoading,
+    subscribeToPush,
+    unsubscribeFromPush,
+  } = usePushNotification();
+
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+      document.removeEventListener("mousedown", closeOnOutsideClick);
+    };
+  }, []);
+
+  const status = !isSupported
+    ? "Trình duyệt chưa hỗ trợ"
+    : permission === "denied"
+      ? "Đã bị chặn"
+      : isSubscribed
+        ? "Đang bật"
+        : "Chưa bật";
+
+  return (
+    <div ref={menuRef} className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-label="Mở thông báo"
+        aria-expanded={open}
+        aria-controls="student-notification-menu"
+        className={`relative flex min-h-11 min-w-11 items-center justify-center rounded-xl border transition-all focus-visible:outline-none ${
+          open
+            ? "border-blue-200 bg-blue-50 text-blue-700 shadow-sm"
+            : "border-transparent text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-800"
+        }`}
+      >
+        <Bell size={20} aria-hidden="true" />
+        {!isSubscribed && isSupported && permission !== "denied" && (
+          <span className="absolute right-2 top-2 size-2 rounded-full bg-rose-500 ring-2 ring-white" aria-label="Chưa thiết lập thông báo" />
+        )}
+      </button>
+
+      {open && (
+        <section id="student-notification-menu" className="absolute right-0 top-full z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+          <div className="flex items-start gap-3 border-b border-slate-100 bg-slate-50/70 p-4">
+            <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${isSubscribed ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+              {isSubscribed ? <ShieldCheck size={20} aria-hidden="true" /> : <BellOff size={20} aria-hidden="true" />}
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-extrabold text-slate-900">Thông báo học tập</h2>
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${isSubscribed ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800"}`}>{status}</span>
+              </div>
+              <p className="mt-1 text-xs leading-5 text-slate-500">Nhận nhắc duy trì chuỗi học và cập nhật nội dung mới trên thiết bị này.</p>
+            </div>
+          </div>
+          <div className="space-y-3 p-4">
+            {!isSupported ? (
+              <p className="rounded-xl bg-slate-50 p-3 text-xs font-semibold leading-5 text-slate-500">Trình duyệt hiện tại không hỗ trợ thông báo đẩy.</p>
+            ) : permission === "denied" ? (
+              <p className="rounded-xl bg-rose-50 p-3 text-xs font-semibold leading-5 text-rose-700">Bạn đã chặn thông báo. Hãy bật lại quyền thông báo trong cài đặt trình duyệt để tiếp tục.</p>
+            ) : isSubscribed ? (
+              <button type="button" disabled={isLoading} onClick={unsubscribeFromPush} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-extrabold text-slate-700 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-60">
+                {isLoading ? <Loader2 size={17} className="animate-spin" aria-hidden="true" /> : <BellOff size={17} aria-hidden="true" />} Tắt thông báo
+              </button>
+            ) : (
+              <button type="button" disabled={isLoading} onClick={subscribeToPush} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-extrabold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
+                {isLoading ? <Loader2 size={17} className="animate-spin" aria-hidden="true" /> : <Bell size={17} aria-hidden="true" />} Bật nhắc học
+              </button>
+            )}
+          </div>
+        </section>
+      )}
+    </div>
+  );
 }
 
 export function AppHeader() {
@@ -90,19 +185,23 @@ export function AppHeader() {
 
   const isStudent = isReady && user?.role === "STUDENT";
   const isAdmin = isReady && user?.role === "ADMIN";
+  const isSkillsPath =
+    (pathname.startsWith("/practice") && !pathname.startsWith("/practice/quizzes")) ||
+    pathname.startsWith("/flashcard") ||
+    pathname.startsWith("/grammar");
 
   const primaryLinks = isStudent
     ? [
         { label: "Trang chủ", href: "/dashboard", icon: Home },
         { label: "Khóa học của tôi", href: "/my-courses", icon: BookOpen },
-        { label: "Luyện đề TOEIC", href: "/practice/quizzes", icon: Target },
+        { label: "Luyện đề", href: "/practice/quizzes", icon: Target },
         { label: "Cửa hàng", href: "/market", icon: ShoppingBag },
         { label: "Bảng xếp hạng", href: "/arena", icon: Trophy },
       ]
     : [
         { label: "Trang chủ", href: "/", icon: Home },
         { label: "Khóa học", href: "/courses", icon: BookOpen },
-        { label: "Luyện đề TOEIC", href: "/practice/quizzes", icon: Target },
+        { label: "Luyện đề", href: "/practice/quizzes", icon: Target },
         { label: "Cửa hàng", href: "/market", icon: ShoppingBag },
         { label: "Bảng xếp hạng", href: "/arena", icon: Trophy },
       ];
@@ -119,7 +218,7 @@ export function AppHeader() {
             className="flex items-center gap-2.5 rounded-xl group focus:outline-none focus:ring-2 focus:ring-amber-500 shrink-0"
           >
             <div className="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-md shadow-amber-900/10 group-hover:scale-105 transition-transform shrink-0">
-              <span className="text-2xl" role="img" aria-label="BreadTrans Bánh Mì">🍞</span>
+              <Wheat size={22} strokeWidth={2.25} aria-hidden="true" />
             </div>
             <div className="flex flex-col shrink-0">
               <div className="flex items-center gap-1.5">
@@ -148,29 +247,42 @@ export function AppHeader() {
                 : "text-slate-600 hover:text-amber-800 hover:bg-amber-50/50"
             }`}
           >
-            <span className="shrink-0 text-base leading-none">🏠</span>
+            <Home size={16} className="shrink-0" aria-hidden="true" />
             <span className="whitespace-nowrap">Trang chủ</span>
           </Link>
 
-          {/* Dropdown Luyện kỹ năng */}
+          {/* Trung tâm luyện kỹ năng + lối tắt theo từng kỹ năng */}
           <div
             ref={skillsRef}
-            className="relative shrink-0 group"
+            className="relative flex shrink-0 group"
             onMouseEnter={() => setSkillsOpen(true)}
             onMouseLeave={() => setSkillsOpen(false)}
           >
-            <button
-              type="button"
-              onClick={() => setSkillsOpen((prev) => !prev)}
-              aria-expanded={skillsOpen}
-              className={`px-3 xl:px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors font-bold focus:outline-none cursor-pointer shrink-0 whitespace-nowrap ${
-                skillsOpen || pathname.startsWith("/practice") || pathname.startsWith("/flashcard") || pathname.startsWith("/grammar")
+            <Link
+              href="/practice"
+              onClick={closeMenus}
+              className={`px-3 xl:px-3.5 py-2 rounded-l-xl flex items-center gap-1.5 transition-colors font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 shrink-0 whitespace-nowrap ${
+                isSkillsPath
                   ? "text-amber-800 bg-amber-50/80 font-black"
                   : "text-slate-600 hover:text-amber-800 hover:bg-amber-50/50"
               }`}
             >
-              <span className="shrink-0 text-base leading-none">🎯</span>
+              <Dumbbell size={16} className="shrink-0" aria-hidden="true" />
               <span className="whitespace-nowrap">Luyện kỹ năng</span>
+            </Link>
+            <button
+              type="button"
+              onClick={() => setSkillsOpen((prev) => !prev)}
+              aria-label={skillsOpen ? "Đóng danh sách kỹ năng" : "Mở danh sách kỹ năng"}
+              aria-expanded={skillsOpen}
+              aria-controls="skills-navigation-menu"
+              aria-haspopup="menu"
+              className={`flex min-h-11 min-w-11 items-center justify-center rounded-r-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
+                isSkillsPath || skillsOpen
+                  ? "bg-amber-50/80 text-amber-700"
+                  : "text-slate-400 hover:bg-amber-50/50 hover:text-amber-700"
+              }`}
+            >
               <ChevronDown
                 size={14}
                 className={`transition-transform duration-200 text-slate-400 shrink-0 ${
@@ -187,10 +299,10 @@ export function AppHeader() {
                   : "opacity-0 pointer-events-none -translate-y-1 group-hover:opacity-100 group-hover:pointer-events-auto group-hover:translate-y-0"
               }`}
             >
-              <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xl p-2 space-y-1">
+              <div id="skills-navigation-menu" role="menu" className="bg-white border border-slate-200/90 rounded-2xl shadow-xl p-2 space-y-1">
                 {/* 1. Luyện nghe */}
                 <Link
-                  href="/practice"
+                  href="/practice/listening"
                   onClick={closeMenus}
                   className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-blue-50/70 text-slate-800 transition-colors group/item"
                 >
@@ -228,7 +340,7 @@ export function AppHeader() {
 
                 {/* 3. Luyện đọc */}
                 <Link
-                  href="/practice"
+                  href="/practice/reading"
                   onClick={closeMenus}
                   className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-emerald-50/70 text-slate-800 transition-colors group/item"
                 >
@@ -312,15 +424,7 @@ export function AppHeader() {
                 </span>
               </div>
 
-              {/* Notification Bell */}
-              <button
-                type="button"
-                aria-label="Thông báo"
-                className="relative p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
-              >
-                <Bell size={20} />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
-              </button>
+              <StudentNotificationMenu />
 
               {/* Student Avatar & Dropdown */}
               <div ref={profileRef} className="relative shrink-0">
@@ -329,7 +433,7 @@ export function AppHeader() {
                   onClick={() => setProfileMenuOpen((prev) => !prev)}
                   aria-expanded={profileMenuOpen}
                   aria-label="Menu tài khoản"
-                  className="flex items-center gap-1.5 p-0.5 rounded-full ring-2 ring-amber-500/60 hover:ring-amber-600 transition-all focus:outline-none cursor-pointer shrink-0"
+                  className="flex min-h-11 min-w-11 items-center gap-1.5 rounded-full bg-white px-1.5 ring-2 ring-amber-500/60 shadow-sm transition-all hover:bg-amber-50 hover:ring-amber-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-amber-700 cursor-pointer shrink-0"
                 >
                   <div className="w-8 h-8 rounded-full bg-amber-600 text-white font-black text-xs flex items-center justify-center overflow-hidden shrink-0">
                     {user?.profile?.name ? (
@@ -368,6 +472,15 @@ export function AppHeader() {
                       <span>Đổi mật khẩu</span>
                     </Link>
 
+                    <Link
+                      href="/history"
+                      onClick={closeMenus}
+                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-sky-50 hover:text-sky-900 transition-colors whitespace-nowrap"
+                    >
+                      <LineChart size={16} className="text-sky-600 shrink-0" />
+                      <span>Lịch sử luyện tập</span>
+                    </Link>
+
                     <button
                       type="button"
                       onClick={handleLogout}
@@ -386,7 +499,7 @@ export function AppHeader() {
           {isAdmin && (
             <Link
               href="/admin"
-              className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-slate-800 shrink-0 whitespace-nowrap"
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-primary-container shrink-0 whitespace-nowrap"
             >
               <LayoutDashboard size={15} /> Quản trị
             </Link>
@@ -443,37 +556,50 @@ export function AppHeader() {
               </Link>
             ))}
 
+            <Link
+              href="/practice"
+              onClick={closeMenus}
+              className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-base font-bold transition-colors ${
+                isSkillsPath
+                  ? "bg-amber-50 text-amber-900"
+                  : "text-slate-700 hover:bg-amber-50 hover:text-amber-900"
+              }`}
+            >
+              <Dumbbell size={19} className="text-amber-600" />
+              Trung tâm luyện kỹ năng
+            </Link>
+
             <p className="px-4 pb-1 pt-5 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
-              Luyện tập 4 kỹ năng AI
+              Luyện theo kỹ năng
             </p>
             <div className="grid grid-cols-2 gap-2 pt-1">
               <Link
-                href="/practice"
+                href="/practice/listening"
                 onClick={closeMenus}
-                className="p-3 rounded-xl bg-blue-50/70 border border-blue-200/50 text-xs font-bold text-blue-900"
-              >
-                🎧 Luyện Nghe
+                  className="flex items-center gap-2 p-3 rounded-xl bg-blue-50/70 border border-blue-200/50 text-xs font-bold text-blue-900"
+                >
+                  <Headphones size={16} aria-hidden="true" /> Luyện Nghe
               </Link>
               <Link
                 href="/practice/speaking"
                 onClick={closeMenus}
-                className="p-3 rounded-xl bg-purple-50/70 border border-purple-200/50 text-xs font-bold text-purple-900"
-              >
-                🎙️ Luyện Nói AI
+                  className="flex items-center gap-2 p-3 rounded-xl bg-purple-50/70 border border-purple-200/50 text-xs font-bold text-purple-900"
+                >
+                  <Mic size={16} aria-hidden="true" /> Luyện Nói AI
               </Link>
               <Link
-                href="/practice"
+                href="/practice/reading"
                 onClick={closeMenus}
-                className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/50 text-xs font-bold text-emerald-900"
-              >
-                📖 Luyện Đọc
+                  className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/50 text-xs font-bold text-emerald-900"
+                >
+                  <BookOpen size={16} aria-hidden="true" /> Luyện Đọc
               </Link>
               <Link
                 href="/practice/writing"
                 onClick={closeMenus}
-                className="p-3 rounded-xl bg-rose-50/70 border border-rose-200/50 text-xs font-bold text-rose-900"
-              >
-                ✍️ Luyện Viết AI
+                  className="flex items-center gap-2 p-3 rounded-xl bg-rose-50/70 border border-rose-200/50 text-xs font-bold text-rose-900"
+                >
+                  <PenTool size={16} aria-hidden="true" /> Luyện Viết AI
               </Link>
             </div>
           </nav>

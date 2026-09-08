@@ -76,8 +76,17 @@
 
 @layer base {
   :root {
-    --background: #fbfaf8; /* warm organic base */
-    --foreground: #1e293b; /* slate-800 */
+    --background: #fbfaf8;
+    --foreground: #172033;
+  }
+
+  * {
+    border-color: #e2e8f0;
+  }
+
+  :focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--color-primary) 62%, white);
+    outline-offset: 3px;
   }
 }
 
@@ -88,6 +97,25 @@ html, body {
   max-width: 100vw;
   scroll-behavior: smooth;
   background-color: var(--background);
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Duolingo / DauTOEIC 3D Tactile Buttons */
@@ -138,5 +166,4 @@ html, body {
   transform: translateY(-4px);
   box-shadow: 0 16px 32px -8px rgba(15, 23, 42, 0.08);
 }
-
 

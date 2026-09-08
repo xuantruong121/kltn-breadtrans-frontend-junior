@@ -93,12 +93,12 @@ export function AuthShell({ children }: AuthShellProps) {
                 <span className="text-xl font-bold text-primary tracking-tight">BreadTrans</span>
               </div>
               <p className="text-sm text-on-surface-variant max-w-md mb-4 leading-relaxed">
-                Nền tảng tự học ngoại ngữ và luyện thi TOEIC ứng dụng AI thông minh. Rèn luyện toàn
-                diện 4 kỹ năng với phương pháp tương tác phản xạ tự nhiên.
+                Nền tảng tự học tiếng Anh ứng dụng AI. Rèn luyện 4 kỹ năng, củng cố từ vựng
+                và ngữ pháp theo phương pháp tương tác tự nhiên.
               </p>
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-container-low text-on-surface-variant text-xs font-semibold">
                 <span className="material-symbols-outlined text-secondary text-[18px]">verified</span>
-                <span>Chuẩn kiến thức định dạng ETS &amp; CEFR</span>
+                <span>Học theo lộ trình phù hợp với bạn</span>
               </div>
             </div>
 
@@ -108,7 +108,7 @@ export function AuthShell({ children }: AuthShellProps) {
                 <li>
                   <Link
                     className="text-on-surface-variant hover:text-primary transition-colors"
-                    href="/practice"
+                    href="/practice/listening"
                   >
                     Luyện Nghe chép chính tả
                   </Link>
@@ -124,7 +124,7 @@ export function AuthShell({ children }: AuthShellProps) {
                 <li>
                   <Link
                     className="text-on-surface-variant hover:text-primary transition-colors"
-                    href="/practice"
+                    href="/practice/reading"
                   >
                     Luyện Đọc tra từ thông minh
                   </Link>

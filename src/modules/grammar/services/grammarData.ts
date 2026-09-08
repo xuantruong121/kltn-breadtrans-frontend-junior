@@ -101,7 +101,7 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   },
   {
     id: "parts-of-speech",
-    title: "Từ Loại trong đề TOEIC (Parts of Speech)",
+    title: "Từ loại cơ bản (Parts of Speech)",
     level: "Trung cấp",
     icon: "🧩",
     color: "from-emerald-400 to-teal-500",
@@ -144,7 +144,7 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
     lessons: [
       {
         id: "passive-basics",
-        title: "Cấu Trúc Bị Động Cơ Bản Trong TOEIC",
+        title: "Cấu trúc bị động cơ bản",
         duration: "14:20",
         youtubeId: "nkA_K_h7KjY",
         keyFormula: "S + be + V3/V-ed + (by O)",

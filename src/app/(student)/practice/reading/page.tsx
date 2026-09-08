@@ -4,13 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Book, Loader2, PlayCircle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { readingService } from "@/lib/api/services/reading.service";
-import { BackButton } from "@/components/ui";
 
 export default function ReadingTopicsPage() {
-  const router = useRouter();
-  
   const { data: topics, isLoading } = useQuery({
     queryKey: ["reading-topics"],
     queryFn: readingService.getTopics,
@@ -19,10 +15,6 @@ export default function ReadingTopicsPage() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="mb-8">
-        <BackButton href="/dashboard" label="Quay lại Trang chủ" />
-      </div>
-
       <div className="flex items-center gap-4 mb-8">
         <div className="bg-junior-green p-4 rounded-2xl text-white">
           <Book size={32} />

@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { PenTool, Loader2, ArrowRight, CheckCircle2, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { writingService } from "@/lib/api/services/writing.service";
-import { BackButton } from "@/components/ui";
 
 export default function WritingTopicsPage() {
   const { data: topicsData, isLoading } = useQuery({
@@ -15,14 +14,10 @@ export default function WritingTopicsPage() {
 
   return (
     <div className="space-y-8 pb-16">
-      <div className="mb-2">
-        <BackButton href="/practice" label="Quay lại Trung tâm luyện tập" />
-      </div>
-
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 uppercase tracking-wider">
-            <PenTool size={14} /> Luyện viết chuẩn đề TOEIC Writing
+            <PenTool size={14} /> Luyện viết tiếng Anh với AI
           </div>
           <h1 className="mt-1 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
             Luyện Viết AI
