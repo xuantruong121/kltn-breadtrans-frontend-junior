@@ -22,11 +22,8 @@ import {
   Video,
   BookOpen,
   Send,
-  HelpCircle,
   Save,
   Loader2,
-  ExternalLink,
-  Lock,
   RotateCcw,
   Check,
   AlertCircle,
@@ -58,7 +55,6 @@ type Course = {
   thumbnail: string | null;
   level: string | null;
   status: "DRAFT" | "PENDING_REVIEW" | "PUBLISHED" | "REJECTED";
-  teacherId: number;
   lessons?: Lesson[];
   quizzes?: any[];
   classes?: any[];
@@ -70,7 +66,7 @@ const LEVEL_OPTIONS = [
   { value: "ADVANCED", label: "Nâng cao (Advanced)" },
 ];
 
-export default function CourseEditStudioPage() {
+export default function AdminCourseEditStudioPage() {
   const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -80,7 +76,7 @@ export default function CourseEditStudioPage() {
   const [isDirty, setIsDirty] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showRevertConfirmModal, setShowRevertConfirmModal] = useState(false);
-  const [showSubmitReviewConfirmModal, setShowSubmitReviewConfirmModal] = useState(false);
+  const [showPublishConfirmModal, setShowPublishConfirmModal] = useState(false);
 
   // Form State (Step 1)
   const [basicForm, setBasicForm] = useState({
@@ -135,17 +131,21 @@ export default function CourseEditStudioPage() {
     name: "",
   });
 
-  // Query course data
-  const { data: course, isLoading, isError } = useQuery<Course>({
-    queryKey: ["teacher-course-detail", courseId],
+  // Query Course Detail
+  const {
+    data: course,
+    isLoading,
+    isError,
+  } = useQuery<Course>({
+    queryKey: ["admin-course-detail", courseId],
     queryFn: async () => {
       const res: any = await axiosClient.get(`/courses/${courseId}`);
-      return res?.data || res;
+      return res;
     },
-    enabled: !isNaN(courseId),
+    enabled: !!courseId && !isNaN(courseId),
   });
 
-  // Sync basic form on initial fetch
+  // Populate form on load
   useEffect(() => {
     if (course) {
       setBasicForm({
@@ -181,16 +181,14 @@ export default function CourseEditStudioPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["teacher-course-detail", courseId],
+        queryKey: ["admin-course-detail", courseId],
       });
-      queryClient.invalidateQueries({ queryKey: ["teacher-my-courses"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
       setIsDirty(false);
       toast.success("Đã lưu thông tin khóa học thành công!");
     },
     onError: (err: any) => {
-      toast.error(
-        getApiErrorMessage(err, "Cập nhật thông tin thất bại."),
-      );
+      toast.error(getApiErrorMessage(err, "Cập nhật thông tin thất bại."));
     },
   });
 
@@ -201,40 +199,41 @@ export default function CourseEditStudioPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["teacher-course-detail", courseId],
+        queryKey: ["admin-course-detail", courseId],
       });
-      queryClient.invalidateQueries({ queryKey: ["teacher-my-courses"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
       setShowRevertConfirmModal(false);
-      toast.success("Khóa học đã được chuyển về Bản nháp để chỉnh sửa.");
+      toast.success("Khóa học đã được chuyển về Bản nháp.");
     },
     onError: (err: any) => {
       setShowRevertConfirmModal(false);
       toast.error(
         getApiErrorMessage(
           err,
-          "Không thể chuyển về Bản nháp. Khóa học có thể đang có lớp học diễn ra.",
+          "Không thể chuyển về Bản nháp. Khóa học có thể đang có lớp học ONGOING.",
         ),
       );
     },
   });
 
-  // Submit for Review Mutation (Step 3)
-  const submitReviewMutation = useMutation({
+  // Publish Mutation (Direct publish by Admin)
+  const publishCourseMutation = useMutation({
     mutationFn: async () => {
-      return await axiosClient.post(`/courses/${courseId}/submit-review`);
+      return await axiosClient.post(`/admin/courses/${courseId}/review`, {
+        action: "APPROVE",
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["teacher-course-detail", courseId],
+        queryKey: ["admin-course-detail", courseId],
       });
-      queryClient.invalidateQueries({ queryKey: ["teacher-my-courses"] });
-      setShowSubmitReviewConfirmModal(false);
-      toast.success("Đã gửi khóa học để Admin phê duyệt!");
-      router.push(`/teacher/courses/${courseId}`);
+      queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
+      setShowPublishConfirmModal(false);
+      toast.success("Đã xuất bản khóa học thành công!");
     },
     onError: (err: any) => {
-      setShowSubmitReviewConfirmModal(false);
-      toast.error(getApiErrorMessage(err, "Gửi duyệt thất bại."));
+      setShowPublishConfirmModal(false);
+      toast.error(getApiErrorMessage(err, "Xuất bản khóa học thất bại."));
     },
   });
 
@@ -249,7 +248,7 @@ export default function CourseEditStudioPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["teacher-course-detail", courseId],
+        queryKey: ["admin-course-detail", courseId],
       });
       setLessonModal((prev) => ({ ...prev, isOpen: false }));
       toast.success("Thêm bài học mới thành công!");
@@ -272,7 +271,7 @@ export default function CourseEditStudioPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["teacher-course-detail", courseId],
+        queryKey: ["admin-course-detail", courseId],
       });
       setLessonModal((prev) => ({ ...prev, isOpen: false }));
       toast.success("Cập nhật bài học thành công!");
@@ -289,7 +288,7 @@ export default function CourseEditStudioPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["teacher-course-detail", courseId],
+        queryKey: ["admin-course-detail", courseId],
       });
       setDeleteConfirm((prev) => ({ ...prev, isOpen: false }));
       toast.success("Đã xóa bài học!");
@@ -308,14 +307,12 @@ export default function CourseEditStudioPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["teacher-course-detail", courseId],
+        queryKey: ["admin-course-detail", courseId],
       });
       toast.success("Đã cập nhật thứ tự bài học.");
     },
     onError: (err: any) => {
-      toast.error(
-        getApiErrorMessage(err, "Sắp xếp bài học thất bại."),
-      );
+      toast.error(getApiErrorMessage(err, "Sắp xếp bài học thất bại."));
     },
   });
 
@@ -335,7 +332,7 @@ export default function CourseEditStudioPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["teacher-course-detail", courseId],
+        queryKey: ["admin-course-detail", courseId],
       });
       setMaterialModal((prev) => ({ ...prev, isOpen: false }));
       toast.success("Đã thêm tài liệu học tập!");
@@ -354,22 +351,17 @@ export default function CourseEditStudioPage() {
       materialId: number;
       data: { title?: string; fileUrl?: string; fileType?: string };
     }) => {
-      return await axiosClient.patch(
-        `/courses/materials/${materialId}`,
-        data,
-      );
+      return await axiosClient.patch(`/courses/materials/${materialId}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["teacher-course-detail", courseId],
+        queryKey: ["admin-course-detail", courseId],
       });
       setMaterialModal((prev) => ({ ...prev, isOpen: false }));
       toast.success("Đã cập nhật tài liệu học tập!");
     },
     onError: (err: any) => {
-      toast.error(
-        getApiErrorMessage(err, "Cập nhật tài liệu thất bại."),
-      );
+      toast.error(getApiErrorMessage(err, "Cập nhật tài liệu thất bại."));
     },
   });
 
@@ -380,7 +372,7 @@ export default function CourseEditStudioPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["teacher-course-detail", courseId],
+        queryKey: ["admin-course-detail", courseId],
       });
       setDeleteConfirm((prev) => ({ ...prev, isOpen: false }));
       toast.success("Đã xóa tài liệu học tập!");
@@ -413,18 +405,12 @@ export default function CourseEditStudioPage() {
   const handleSaveBasicInfo = async (continueToNext = false) => {
     if (!validateBasicForm()) return;
 
-    // If published, only send description and thumbnail
-    const payload: Partial<Course> = isPublished
-      ? {
-          description: basicForm.description.trim(),
-          thumbnail: basicForm.thumbnail.trim() || undefined,
-        }
-      : {
-          title: basicForm.title.trim(),
-          level: basicForm.level,
-          description: basicForm.description.trim(),
-          thumbnail: basicForm.thumbnail.trim() || undefined,
-        };
+    const payload: Partial<Course> = {
+      title: basicForm.title.trim(),
+      level: basicForm.level,
+      description: basicForm.description.trim(),
+      thumbnail: basicForm.thumbnail.trim() || undefined,
+    };
 
     updateCourseMutation.mutate(payload, {
       onSuccess: () => {
@@ -454,37 +440,38 @@ export default function CourseEditStudioPage() {
     if (isDirty) {
       setShowExitConfirm(true);
     } else {
-      router.push(`/teacher/courses/${courseId}`);
+      router.push("/admin/courses");
     }
   };
 
-  // Checklist for Step 3
+  // Pre-flight check for publishing
   const checklist = useMemo(() => {
-    const hasTitle = !!course?.title && course.title.trim().length >= 5;
-    const hasDesc = !!course?.description && course.description.trim().length > 0;
-    const lessons = course?.lessons || [];
-    const hasLessons = lessons.length > 0;
+    const hasTitle = Boolean(basicForm.title && basicForm.title.length >= 5);
+    const hasDesc = Boolean(basicForm.description && basicForm.description.length > 0);
+    const hasLessons = Boolean(course?.lessons && course.lessons.length > 0);
     const lessonsHaveContent =
       hasLessons &&
-      lessons.every(
-        (l) => (l.materials && l.materials.length > 0) || !!l.videoUrl,
-      );
+      (course?.lessons?.every(
+        (l) => Boolean(l.videoUrl) || (l.materials && l.materials.length > 0),
+      ) ?? false);
+
+    const canPublish = hasTitle && hasDesc && hasLessons;
 
     return {
       hasTitle,
       hasDesc,
       hasLessons,
       lessonsHaveContent,
-      canSubmit: hasTitle && hasDesc && hasLessons && isDraft,
+      canPublish,
     };
-  }, [course, isDraft]);
+  }, [basicForm, course]);
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <Loader2 className="animate-spin text-slate-400 mb-3" size={36} />
+      <div className="flex flex-col items-center justify-center min-h-[500px]">
+        <Loader2 className="animate-spin text-blue-600 mb-3" size={36} />
         <p className="text-slate-500 text-sm font-medium">
-          Đang tải thông tin khóa học...
+          Đang tải thông tin Course Studio...
         </p>
       </div>
     );
@@ -492,16 +479,18 @@ export default function CourseEditStudioPage() {
 
   if (isError || !course) {
     return (
-      <div className="p-8 max-w-2xl mx-auto text-center">
-        <AlertCircle size={48} className="mx-auto text-rose-500 mb-4" />
-        <h2 className="text-xl font-bold text-slate-900 mb-2">
+      <div className="max-w-md mx-auto my-16 p-8 bg-white rounded-2xl border border-slate-200 text-center shadow-xs">
+        <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mx-auto mb-4">
+          <XCircle size={24} />
+        </div>
+        <h3 className="text-lg font-bold text-slate-800 mb-2">
           Không tìm thấy khóa học
-        </h2>
+        </h3>
         <p className="text-slate-500 text-sm mb-6">
-          Khóa học không tồn tại hoặc bạn không có quyền truy cập vào tài nguyên này.
+          Khóa học không tồn tại hoặc bạn không có quyền truy cập.
         </p>
         <Link
-          href="/teacher/courses"
+          href="/admin/courses"
           className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800"
         >
           <ArrowLeft size={16} /> Quay lại danh sách khóa học
@@ -518,15 +507,15 @@ export default function CourseEditStudioPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={handleBackNavigation}
-              className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
-              title="Quay lại chi tiết khóa học"
+              className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+              title="Quay lại danh sách khóa học"
             >
               <ArrowLeft size={18} />
             </button>
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Course Studio
+                  Admin Course Studio
                 </span>
                 <span
                   className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${
@@ -542,10 +531,10 @@ export default function CourseEditStudioPage() {
                   {isDraft
                     ? "Bản nháp"
                     : isPendingReview
-                      ? "Chờ duyệt"
+                      ? "Chờ duyệt (Legacy)"
                       : isPublished
                         ? "Đã xuất bản"
-                        : "Bị từ chối"}
+                        : "Bị từ chối (Legacy)"}
                 </span>
               </div>
               <h1 className="text-base font-bold text-slate-900 truncate max-w-xs sm:max-w-md">
@@ -562,19 +551,11 @@ export default function CourseEditStudioPage() {
               </span>
             )}
 
-            <Link
-              href={`/teacher/courses/${courseId}`}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
-            >
-              <ExternalLink size={13} />
-              Xem trang khóa học
-            </Link>
-
-            {(isDraft || isPublished) && activeStep === 1 && (
+            {activeStep === 1 && (
               <button
                 onClick={() => handleSaveBasicInfo(false)}
                 disabled={updateCourseMutation.isPending}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {updateCourseMutation.isPending ? (
                   <Loader2 size={13} className="animate-spin" />
@@ -591,21 +572,6 @@ export default function CourseEditStudioPage() {
       {/* Main Container */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6">
         {/* Status Alerts */}
-        {isPendingReview && (
-          <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-3 text-amber-800">
-            <Clock size={20} className="shrink-0 text-amber-600 mt-0.5" />
-            <div className="text-sm">
-              <h4 className="font-semibold mb-0.5">
-                Khóa học đang chờ Quản trị viên duyệt
-              </h4>
-              <p className="text-amber-700 leading-relaxed text-xs">
-                Nội dung khóa học hiện được khóa trong thời gian thẩm định. Bạn sẽ có
-                thể tiếp tục chỉnh sửa nếu Admin từ chối khóa học.
-              </p>
-            </div>
-          </div>
-        )}
-
         {isPublished && (
           <div className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start justify-between gap-4 text-emerald-800 flex-wrap">
             <div className="flex items-start gap-3">
@@ -616,10 +582,8 @@ export default function CourseEditStudioPage() {
               <div className="text-sm">
                 <h4 className="font-semibold mb-0.5">Khóa học đã xuất bản</h4>
                 <p className="text-emerald-700 text-xs leading-relaxed max-w-2xl">
-                  Bạn có thể cập nhật ảnh bìa và mô tả trực tiếp. Nếu cần thay
-                  đổi tiêu đề hoặc giáo trình học thuật, vui lòng chuyển khóa học
-                  về Bản nháp (chỉ cho phép khi không có lớp học nào đang diễn
-                  ra).
+                  Khóa học hiện đang hiển thị công khai trên danh mục. Bạn có thể
+                  cập nhật thông tin hoặc chuyển về Bản nháp bất cứ khi nào.
                 </p>
               </div>
             </div>
@@ -627,7 +591,7 @@ export default function CourseEditStudioPage() {
             {ongoingClassCount > 0 ? (
               <span
                 className="px-3 py-1.5 bg-slate-100 text-slate-500 rounded-lg text-xs font-medium border border-slate-200 shrink-0 cursor-not-allowed"
-                title="Khóa học đang có lớp diễn ra, không thể sửa giáo trình"
+                title="Khóa học đang có lớp diễn ra, không thể chuyển về bản nháp"
               >
                 Đang có {ongoingClassCount} lớp ONGOING (Khóa sửa giáo trình)
               </span>
@@ -635,38 +599,48 @@ export default function CourseEditStudioPage() {
               <button
                 onClick={() => setShowRevertConfirmModal(true)}
                 disabled={revertToDraftMutation.isPending}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-emerald-800 border border-emerald-300 rounded-lg text-xs font-semibold hover:bg-emerald-100 transition-colors shadow-xs shrink-0"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-emerald-800 border border-emerald-300 rounded-lg text-xs font-semibold hover:bg-emerald-100 transition-colors shadow-xs shrink-0 cursor-pointer"
               >
                 <RotateCcw size={13} />
-                Chuyển về Bản nháp để sửa giáo trình
+                Chuyển về Bản nháp
               </button>
             )}
           </div>
         )}
 
-        {isRejected && (
-          <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 flex items-start justify-between gap-4 text-rose-800 flex-wrap">
+        {(isPendingReview || isRejected) && (
+          <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-start justify-between gap-4 text-amber-800 flex-wrap">
             <div className="flex items-start gap-3">
-              <XCircle size={20} className="shrink-0 text-rose-600 mt-0.5" />
+              <Clock size={20} className="shrink-0 text-amber-600 mt-0.5" />
               <div className="text-sm">
                 <h4 className="font-semibold mb-0.5">
-                  Khóa học bị từ chối phê duyệt
+                  Khóa học ở trạng thái lịch sử ({course.status})
                 </h4>
-                <p className="text-rose-700 text-xs leading-relaxed">
-                  Khóa học chưa đạt tiêu chuẩn kiểm định của Quản trị viên. Bạn
-                  hãy hoàn thiện giáo trình và nộp lại để được xem xét.
+                <p className="text-amber-700 text-xs leading-relaxed">
+                  Bạn có thể xuất bản trực tiếp khóa học này hoặc chuyển về Bản
+                  nháp để biên soạn lại.
                 </p>
               </div>
             </div>
 
-            <button
-              onClick={() => setShowRevertConfirmModal(true)}
-              disabled={revertToDraftMutation.isPending}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-rose-800 border border-rose-300 rounded-lg text-xs font-semibold hover:bg-rose-100 transition-colors shadow-xs shrink-0"
-            >
-              <RotateCcw size={13} />
-              Chuyển về Bản nháp để hoàn thiện
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowRevertConfirmModal(true)}
+                disabled={revertToDraftMutation.isPending}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-amber-800 border border-amber-300 rounded-lg text-xs font-semibold hover:bg-amber-100 transition-colors shadow-xs shrink-0 cursor-pointer"
+              >
+                <RotateCcw size={13} />
+                Chuyển về Bản nháp
+              </button>
+              <button
+                onClick={() => setShowPublishConfirmModal(true)}
+                disabled={publishCourseMutation.isPending}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-colors shadow-xs shrink-0 cursor-pointer"
+              >
+                <CheckCircle2 size={13} />
+                Xuất bản ngay
+              </button>
+            </div>
           </div>
         )}
 
@@ -676,7 +650,7 @@ export default function CourseEditStudioPage() {
             {[
               { step: 1, title: "1. Thông tin chung", icon: BookOpen },
               { step: 2, title: "2. Giáo trình", icon: FileText },
-              { step: 3, title: "3. Kiểm tra & Nộp", icon: CheckCircle2 },
+              { step: 3, title: "3. Kiểm tra & Xuất bản", icon: CheckCircle2 },
             ].map((s) => {
               const Icon = s.icon;
               const isActive = activeStep === s.step;
@@ -686,7 +660,7 @@ export default function CourseEditStudioPage() {
                 <button
                   key={s.step}
                   onClick={() => setActiveStep(s.step as any)}
-                  className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
+                  className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
                     isActive
                       ? "bg-slate-900 text-white shadow-xs"
                       : isCompleted
@@ -703,9 +677,7 @@ export default function CourseEditStudioPage() {
           </div>
         </div>
 
-        {/* ============================================================ */}
         {/* STEP 1: BASIC INFORMATION */}
-        {/* ============================================================ */}
         {activeStep === 1 && (
           <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs">
             <div className="border-b border-slate-100 pb-4 mb-6">
@@ -723,15 +695,9 @@ export default function CourseEditStudioPage() {
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Tiêu đề khóa học <span className="text-rose-500">*</span>
-                  {isPublished && (
-                    <span className="ml-2 text-[11px] font-normal text-slate-400">
-                      (Đã khóa trên khóa học đã xuất bản)
-                    </span>
-                  )}
                 </label>
                 <input
                   type="text"
-                  disabled={isPendingReview || isPublished}
                   value={basicForm.title}
                   onChange={(e) => {
                     setBasicForm({ ...basicForm, title: e.target.value });
@@ -741,21 +707,15 @@ export default function CourseEditStudioPage() {
                     }
                   }}
                   placeholder="Ví dụ: Luyện thi IELTS Writing Task 2 Nâng Cao"
-                  className={`w-full px-3.5 py-2.5 text-sm bg-slate-50 border rounded-lg outline-none transition-all disabled:bg-slate-100 disabled:text-slate-500 ${
+                  className={`w-full px-3.5 py-2.5 text-sm bg-slate-50 border rounded-lg outline-none transition-all ${
                     formErrors.title
                       ? "border-rose-400 focus:border-rose-500 bg-rose-50/30"
-                      : "border-slate-200 focus:border-amber-500 focus:bg-white"
+                      : "border-slate-200 focus:border-blue-500 focus:bg-white"
                   }`}
                 />
                 {formErrors.title && (
                   <p className="text-xs text-rose-500 mt-1 font-medium">
                     {formErrors.title}
-                  </p>
-                )}
-                {isPublished && (
-                  <p className="text-[11px] text-amber-800 bg-amber-50/80 px-2.5 py-1 rounded border border-amber-200 mt-1.5 flex items-center gap-1.5">
-                    <Lock size={12} className="shrink-0 text-amber-600" />
-                    Tiêu đề không thể chỉnh sửa trực tiếp khi khóa học đã xuất bản.
                   </p>
                 )}
               </div>
@@ -764,30 +724,23 @@ export default function CourseEditStudioPage() {
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Trình độ học thuật <span className="text-rose-500">*</span>
-                  {isPublished && (
-                    <span className="ml-2 text-[11px] font-normal text-slate-400">
-                      (Đã khóa trên khóa học đã xuất bản)
-                    </span>
-                  )}
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {LEVEL_OPTIONS.map((opt) => {
                     const isSelected = basicForm.level === opt.value;
-                    const disabled = isPendingReview || isPublished;
                     return (
                       <button
                         type="button"
                         key={opt.value}
-                        disabled={disabled}
                         onClick={() => {
                           setBasicForm({ ...basicForm, level: opt.value });
                           setIsDirty(true);
                         }}
-                        className={`p-3 rounded-xl text-left border text-xs font-medium transition-all ${
+                        className={`p-3 rounded-xl text-left border text-xs font-medium transition-all cursor-pointer ${
                           isSelected
-                            ? "bg-amber-50/60 border-amber-400 text-amber-900 shadow-xs"
+                            ? "bg-blue-50/60 border-blue-400 text-blue-900 shadow-xs"
                             : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-                        } ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
+                        }`}
                       >
                         <div className="font-semibold text-slate-900 mb-0.5">
                           {opt.label}
@@ -799,12 +752,6 @@ export default function CourseEditStudioPage() {
                     );
                   })}
                 </div>
-                {isPublished && (
-                  <p className="text-[11px] text-amber-800 bg-amber-50/80 px-2.5 py-1 rounded border border-amber-200 mt-2 flex items-center gap-1.5">
-                    <Lock size={12} className="shrink-0 text-amber-600" />
-                    Trình độ học thuật không thể chỉnh sửa trực tiếp khi khóa học đã xuất bản.
-                  </p>
-                )}
               </div>
 
               {/* Description */}
@@ -814,7 +761,6 @@ export default function CourseEditStudioPage() {
                 </label>
                 <textarea
                   rows={4}
-                  disabled={isPendingReview}
                   value={basicForm.description}
                   onChange={(e) => {
                     setBasicForm({ ...basicForm, description: e.target.value });
@@ -824,10 +770,10 @@ export default function CourseEditStudioPage() {
                     }
                   }}
                   placeholder="Mô tả mục tiêu đầu ra, lộ trình học tập và đối tượng học viên phù hợp..."
-                  className={`w-full px-3.5 py-2.5 text-sm bg-slate-50 border rounded-lg outline-none transition-all disabled:bg-slate-100 disabled:text-slate-500 ${
+                  className={`w-full px-3.5 py-2.5 text-sm bg-slate-50 border rounded-lg outline-none transition-all ${
                     formErrors.description
                       ? "border-rose-400 focus:border-rose-500 bg-rose-50/30"
-                      : "border-slate-200 focus:border-amber-500 focus:bg-white"
+                      : "border-slate-200 focus:border-blue-500 focus:bg-white"
                   }`}
                 />
                 {formErrors.description && (
@@ -846,7 +792,6 @@ export default function CourseEditStudioPage() {
                   <div className="flex-1">
                     <input
                       type="url"
-                      disabled={isPendingReview}
                       value={basicForm.thumbnail}
                       onChange={(e) => {
                         setBasicForm({
@@ -856,7 +801,7 @@ export default function CourseEditStudioPage() {
                         setIsDirty(true);
                       }}
                       placeholder="https://images.unsplash.com/... hoặc link ảnh hợp lệ"
-                      className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-amber-500 focus:bg-white transition-all disabled:bg-slate-100"
+                      className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-blue-500 focus:bg-white transition-all"
                     />
                     <p className="text-[11px] text-slate-400 mt-1">
                       Khuyến nghị tỷ lệ 16:9, dung lượng nhẹ, độ phân giải tối
@@ -886,7 +831,7 @@ export default function CourseEditStudioPage() {
               <button
                 type="button"
                 onClick={handleBackNavigation}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
               >
                 Hủy bỏ
               </button>
@@ -894,17 +839,19 @@ export default function CourseEditStudioPage() {
               <div className="flex items-center gap-3">
                 <button
                   type="button"
-                  disabled={updateCourseMutation.isPending || isPendingReview}
+                  disabled={updateCourseMutation.isPending}
                   onClick={() => handleSaveBasicInfo(false)}
-                  className="px-4 py-2 bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-50"
+                  className="px-4 py-2 bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
                 >
-                  {updateCourseMutation.isPending ? "Đang lưu..." : "Lưu thay đổi"}
+                  {updateCourseMutation.isPending
+                    ? "Đang lưu..."
+                    : "Lưu thay đổi"}
                 </button>
 
                 <button
                   type="button"
                   onClick={() => handleSaveBasicInfo(true)}
-                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
+                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer"
                 >
                   Tiếp tục sang Giáo trình →
                 </button>
@@ -913,9 +860,7 @@ export default function CourseEditStudioPage() {
           </div>
         )}
 
-        {/* ============================================================ */}
         {/* STEP 2: CURRICULUM BUILDER */}
-        {/* ============================================================ */}
         {activeStep === 2 && (
           <div className="space-y-6">
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex items-center justify-between flex-wrap gap-4">
@@ -929,22 +874,20 @@ export default function CourseEditStudioPage() {
                 </p>
               </div>
 
-              {!isPendingReview && !isPublished && (
-                <button
-                  onClick={() =>
-                    setLessonModal({
-                      isOpen: true,
-                      mode: "CREATE",
-                      title: "",
-                      description: "",
-                      videoUrl: "",
-                    })
-                  }
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
-                >
-                  <Plus size={14} /> Thêm bài học mới
-                </button>
-              )}
+              <button
+                onClick={() =>
+                  setLessonModal({
+                    isOpen: true,
+                    mode: "CREATE",
+                    title: "",
+                    description: "",
+                    videoUrl: "",
+                  })
+                }
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+              >
+                <Plus size={14} /> Thêm bài học mới
+              </button>
             </div>
 
             {/* Lessons List */}
@@ -977,56 +920,54 @@ export default function CourseEditStudioPage() {
                         </div>
 
                         {/* Reorder and Lesson Actions */}
-                        {!isPendingReview && !isPublished && (
-                          <div className="flex items-center gap-1 shrink-0">
-                            <button
-                              disabled={idx === 0}
-                              onClick={() => handleMoveLesson(idx, "UP")}
-                              className="p-1.5 text-slate-400 hover:text-slate-700 rounded hover:bg-slate-100 transition-colors disabled:opacity-30"
-                              title="Di chuyển lên"
-                            >
-                              <ChevronUp size={15} />
-                            </button>
-                            <button
-                              disabled={idx === (course.lessons?.length || 1) - 1}
-                              onClick={() => handleMoveLesson(idx, "DOWN")}
-                              className="p-1.5 text-slate-400 hover:text-slate-700 rounded hover:bg-slate-100 transition-colors disabled:opacity-30"
-                              title="Di chuyển xuống"
-                            >
-                              <ChevronDown size={15} />
-                            </button>
-                            <button
-                              onClick={() =>
-                                setLessonModal({
-                                  isOpen: true,
-                                  mode: "EDIT",
-                                  lessonId: lesson.id,
-                                  title: lesson.title,
-                                  description: lesson.description || "",
-                                  videoUrl: lesson.videoUrl || "",
-                                })
-                              }
-                              className="p-1.5 text-slate-500 hover:text-slate-900 rounded hover:bg-slate-100 transition-colors ml-1"
-                              title="Chỉnh sửa bài học"
-                            >
-                              <Edit size={14} />
-                            </button>
-                            <button
-                              onClick={() =>
-                                setDeleteConfirm({
-                                  isOpen: true,
-                                  type: "LESSON",
-                                  id: lesson.id,
-                                  name: lesson.title,
-                                })
-                              }
-                              className="p-1.5 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50 transition-colors"
-                              title="Xóa bài học"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            disabled={idx === 0}
+                            onClick={() => handleMoveLesson(idx, "UP")}
+                            className="p-1.5 text-slate-400 hover:text-slate-700 rounded hover:bg-slate-100 transition-colors disabled:opacity-30 cursor-pointer"
+                            title="Di chuyển lên"
+                          >
+                            <ChevronUp size={15} />
+                          </button>
+                          <button
+                            disabled={idx === (course.lessons?.length || 1) - 1}
+                            onClick={() => handleMoveLesson(idx, "DOWN")}
+                            className="p-1.5 text-slate-400 hover:text-slate-700 rounded hover:bg-slate-100 transition-colors disabled:opacity-30 cursor-pointer"
+                            title="Di chuyển xuống"
+                          >
+                            <ChevronDown size={15} />
+                          </button>
+                          <button
+                            onClick={() =>
+                              setLessonModal({
+                                isOpen: true,
+                                mode: "EDIT",
+                                lessonId: lesson.id,
+                                title: lesson.title,
+                                description: lesson.description || "",
+                                videoUrl: lesson.videoUrl || "",
+                              })
+                            }
+                            className="p-1.5 text-slate-500 hover:text-slate-900 rounded hover:bg-slate-100 transition-colors ml-1 cursor-pointer"
+                            title="Chỉnh sửa bài học"
+                          >
+                            <Edit size={14} />
+                          </button>
+                          <button
+                            onClick={() =>
+                              setDeleteConfirm({
+                                isOpen: true,
+                                type: "LESSON",
+                                id: lesson.id,
+                                name: lesson.title,
+                              })
+                            }
+                            className="p-1.5 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50 transition-colors cursor-pointer"
+                            title="Xóa bài học"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </div>
 
                       {/* Video URL */}
@@ -1056,23 +997,21 @@ export default function CourseEditStudioPage() {
                             Tài liệu đính kèm ({lesson.materials?.length || 0})
                           </span>
 
-                          {!isPendingReview && !isPublished && (
-                            <button
-                              onClick={() =>
-                                setMaterialModal({
-                                  isOpen: true,
-                                  mode: "CREATE",
-                                  lessonId: lesson.id,
-                                  title: "",
-                                  fileUrl: "",
-                                  fileType: "PDF",
-                                })
-                              }
-                              className="text-xs font-semibold text-amber-600 hover:text-amber-700 flex items-center gap-1"
-                            >
-                              <Plus size={12} /> Thêm tài liệu
-                            </button>
-                          )}
+                          <button
+                            onClick={() =>
+                              setMaterialModal({
+                                isOpen: true,
+                                mode: "CREATE",
+                                lessonId: lesson.id,
+                                title: "",
+                                fileUrl: "",
+                                fileType: "PDF",
+                              })
+                            }
+                            className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer"
+                          >
+                            <Plus size={12} /> Thêm tài liệu
+                          </button>
                         </div>
 
                         {hasMaterials ? (
@@ -1096,41 +1035,39 @@ export default function CourseEditStudioPage() {
                                   </a>
                                 </div>
 
-                                {!isPendingReview && !isPublished && (
-                                  <div className="flex items-center gap-1 shrink-0">
-                                    <button
-                                      onClick={() =>
-                                        setMaterialModal({
-                                          isOpen: true,
-                                          mode: "EDIT",
-                                          lessonId: lesson.id,
-                                          materialId: mat.id,
-                                          title: mat.title,
-                                          fileUrl: mat.fileUrl,
-                                          fileType: mat.fileType || "PDF",
-                                        })
-                                      }
-                                      className="p-1 text-slate-400 hover:text-slate-700 rounded"
-                                      title="Sửa tài liệu"
-                                    >
-                                      <Edit size={12} />
-                                    </button>
-                                    <button
-                                      onClick={() =>
-                                        setDeleteConfirm({
-                                          isOpen: true,
-                                          type: "MATERIAL",
-                                          id: mat.id,
-                                          name: mat.title,
-                                        })
-                                      }
-                                      className="p-1 text-slate-400 hover:text-rose-600 rounded"
-                                      title="Xóa tài liệu"
-                                    >
-                                      <Trash2 size={12} />
-                                    </button>
-                                  </div>
-                                )}
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <button
+                                    onClick={() =>
+                                      setMaterialModal({
+                                        isOpen: true,
+                                        mode: "EDIT",
+                                        lessonId: lesson.id,
+                                        materialId: mat.id,
+                                        title: mat.title,
+                                        fileUrl: mat.fileUrl,
+                                        fileType: mat.fileType || "PDF",
+                                      })
+                                    }
+                                    className="p-1 text-slate-400 hover:text-slate-700 rounded cursor-pointer"
+                                    title="Sửa tài liệu"
+                                  >
+                                    <Edit size={12} />
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      setDeleteConfirm({
+                                        isOpen: true,
+                                        type: "MATERIAL",
+                                        id: mat.id,
+                                        name: mat.title,
+                                      })
+                                    }
+                                    className="p-1 text-slate-400 hover:text-rose-600 rounded cursor-pointer"
+                                    title="Xóa tài liệu"
+                                  >
+                                    <Trash2 size={12} />
+                                  </button>
+                                </div>
                               </div>
                             ))}
                           </div>
@@ -1154,22 +1091,20 @@ export default function CourseEditStudioPage() {
                   Hãy bắt đầu xây dựng giáo trình bằng cách thêm các bài giảng đầu
                   tiên kèm bài giảng video hoặc tài liệu PDF/DOCX.
                 </p>
-                {!isPendingReview && !isPublished && (
-                  <button
-                    onClick={() =>
-                      setLessonModal({
-                        isOpen: true,
-                        mode: "CREATE",
-                        title: "",
-                        description: "",
-                        videoUrl: "",
-                      })
-                    }
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
-                  >
-                    <Plus size={14} /> Thêm bài học đầu tiên
-                  </button>
-                )}
+                <button
+                  onClick={() =>
+                    setLessonModal({
+                      isOpen: true,
+                      mode: "CREATE",
+                      title: "",
+                      description: "",
+                      videoUrl: "",
+                    })
+                  }
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                >
+                  <Plus size={14} /> Thêm bài học đầu tiên
+                </button>
               </div>
             )}
 
@@ -1177,34 +1112,32 @@ export default function CourseEditStudioPage() {
             <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-center justify-between shadow-xs">
               <button
                 onClick={() => setActiveStep(1)}
-                className="px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                className="px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
               >
                 ← Quay lại Thông tin chung
               </button>
 
               <button
                 onClick={() => setActiveStep(3)}
-                className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
+                className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer"
               >
-                Tiếp tục sang Kiểm tra & Nộp →
+                Tiếp tục sang Kiểm tra & Xuất bản →
               </button>
             </div>
           </div>
         )}
 
-        {/* ============================================================ */}
-        {/* STEP 3: REVIEW & SUBMIT */}
-        {/* ============================================================ */}
+        {/* STEP 3: REVIEW & PUBLISH */}
         {activeStep === 3 && (
           <div className="space-y-6">
             <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs">
               <div className="border-b border-slate-100 pb-4 mb-6">
                 <h2 className="text-lg font-bold text-slate-900">
-                  Kiểm tra & Gửi phê duyệt
+                  Kiểm tra & Xuất bản khóa học
                 </h2>
                 <p className="text-xs text-slate-500 mt-1">
                   Rà soát tổng quan các tiêu chuẩn chất lượng học thuật trước khi
-                  gửi tới Ban Quản Trị để phê duyệt xuất bản.
+                  quyết định xuất bản công khai.
                 </p>
               </div>
 
@@ -1230,7 +1163,7 @@ export default function CourseEditStudioPage() {
                     {course.lessons?.length || 0} Bài học
                   </div>
                   <div className="text-xs text-slate-500 mt-0.5">
-                    Thứ tự đã được chuẩn hóa
+                    Thứ tự chuẩn hóa
                   </div>
                 </div>
 
@@ -1254,7 +1187,7 @@ export default function CourseEditStudioPage() {
               {/* Checklist */}
               <div className="border border-slate-200 rounded-xl overflow-hidden mb-8">
                 <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 font-semibold text-xs text-slate-700">
-                  Tiêu chuẩn đánh giá điều kiện nộp duyệt
+                  Tiêu chuẩn đánh giá điều kiện xuất bản
                 </div>
                 <div className="divide-y divide-slate-100 text-xs">
                   <div className="px-4 py-3 flex items-center justify-between">
@@ -1274,7 +1207,7 @@ export default function CourseEditStudioPage() {
 
                   <div className="px-4 py-3 flex items-center justify-between">
                     <span className="font-medium text-slate-700">
-                      Mô tả khóa học đầy đủ mục tiêu & đối tượng
+                      Mô tả khóa học đầy đủ
                     </span>
                     {checklist.hasDesc ? (
                       <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold">
@@ -1317,15 +1250,6 @@ export default function CourseEditStudioPage() {
                       </span>
                     )}
                   </div>
-
-                  <div className="px-4 py-3 flex items-center justify-between bg-slate-50/50">
-                    <span className="font-medium text-slate-700">
-                      Trạng thái hiện tại cho phép nộp duyệt
-                    </span>
-                    <span className="font-semibold text-slate-900">
-                      {course.status}
-                    </span>
-                  </div>
                 </div>
               </div>
 
@@ -1334,46 +1258,40 @@ export default function CourseEditStudioPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setActiveStep(1)}
-                    className="px-3 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
+                    className="px-3 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 cursor-pointer"
                   >
                     Sửa Thông tin chung
                   </button>
                   <button
                     onClick={() => setActiveStep(2)}
-                    className="px-3 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
+                    className="px-3 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 cursor-pointer"
                   >
                     Sửa Giáo trình
                   </button>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3 w-full sm:w-auto justify-end">
-                  {!checklist.hasLessons && (
-                    <span className="text-xs font-medium text-rose-600 flex items-center gap-1.5">
-                      <XCircle size={14} /> Khóa học cần có ít nhất 1 bài học để gửi duyệt
-                    </span>
-                  )}
-
                   <button
-                    onClick={() => router.push(`/teacher/courses/${courseId}`)}
-                    className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                    onClick={() => router.push("/admin/courses")}
+                    className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                   >
-                    Lưu bản nháp & Thoát
+                    Quay lại danh sách
                   </button>
 
-                  {isDraft && (
+                  {!isPublished && (
                     <button
                       disabled={
-                        !checklist.canSubmit || submitReviewMutation.isPending
+                        !checklist.canPublish || publishCourseMutation.isPending
                       }
-                      onClick={() => setShowSubmitReviewConfirmModal(true)}
-                      className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-50"
+                      onClick={() => setShowPublishConfirmModal(true)}
+                      className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
                     >
-                      {submitReviewMutation.isPending ? (
+                      {publishCourseMutation.isPending ? (
                         <Loader2 size={14} className="animate-spin" />
                       ) : (
-                        <Send size={14} />
+                        <CheckCircle2 size={14} />
                       )}
-                      Gửi duyệt khóa học
+                      Xuất bản khóa học (PUBLISHED)
                     </button>
                   )}
                 </div>
@@ -1383,9 +1301,7 @@ export default function CourseEditStudioPage() {
         )}
       </div>
 
-      {/* ============================================================ */}
       {/* MODAL: CREATE / EDIT LESSON */}
-      {/* ============================================================ */}
       {lessonModal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
           <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
@@ -1399,7 +1315,7 @@ export default function CourseEditStudioPage() {
                 onClick={() =>
                   setLessonModal((prev) => ({ ...prev, isOpen: false }))
                 }
-                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg"
+                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -1442,8 +1358,8 @@ export default function CourseEditStudioPage() {
                   onChange={(e) =>
                     setLessonModal({ ...lessonModal, title: e.target.value })
                   }
-                  placeholder="Ví dụ: Bài 1: Tổng quan chiến lược làm bài Task 2"
-                  className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-amber-500 focus:bg-white"
+                  placeholder="Ví dụ: Bài 1: Tổng quan chiến lược làm bài"
+                  className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-blue-500 focus:bg-white"
                 />
               </div>
 
@@ -1461,7 +1377,7 @@ export default function CourseEditStudioPage() {
                     })
                   }
                   placeholder="Nội dung chính hoặc hướng dẫn bài học..."
-                  className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-amber-500 focus:bg-white"
+                  className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-blue-500 focus:bg-white"
                 />
               </div>
 
@@ -1476,7 +1392,7 @@ export default function CourseEditStudioPage() {
                     setLessonModal({ ...lessonModal, videoUrl: e.target.value })
                   }
                   placeholder="https://youtube.com/watch?v=..."
-                  className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-amber-500 focus:bg-white"
+                  className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-blue-500 focus:bg-white"
                 />
               </div>
 
@@ -1486,7 +1402,7 @@ export default function CourseEditStudioPage() {
                   onClick={() =>
                     setLessonModal((prev) => ({ ...prev, isOpen: false }))
                   }
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
                 >
                   Hủy
                 </button>
@@ -1496,7 +1412,7 @@ export default function CourseEditStudioPage() {
                     createLessonMutation.isPending ||
                     updateLessonMutation.isPending
                   }
-                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-xs disabled:opacity-50"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-xs disabled:opacity-50 cursor-pointer"
                 >
                   {createLessonMutation.isPending ||
                   updateLessonMutation.isPending ? (
@@ -1512,9 +1428,7 @@ export default function CourseEditStudioPage() {
         </div>
       )}
 
-      {/* ============================================================ */}
       {/* MODAL: CREATE / EDIT MATERIAL */}
-      {/* ============================================================ */}
       {materialModal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
           <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
@@ -1528,7 +1442,7 @@ export default function CourseEditStudioPage() {
                 onClick={() =>
                   setMaterialModal((prev) => ({ ...prev, isOpen: false }))
                 }
-                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg"
+                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -1587,7 +1501,7 @@ export default function CourseEditStudioPage() {
                     })
                   }
                   placeholder="Ví dụ: Slide Bài giảng Unit 1 (PDF)"
-                  className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-amber-500 focus:bg-white"
+                  className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-blue-500 focus:bg-white"
                 />
               </div>
 
@@ -1603,7 +1517,7 @@ export default function CourseEditStudioPage() {
                       fileType: e.target.value,
                     })
                   }
-                  className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-amber-500 focus:bg-white"
+                  className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-blue-500 focus:bg-white"
                 >
                   <option value="PDF">Tài liệu PDF</option>
                   <option value="DOCX">Văn bản Word (.docx)</option>
@@ -1628,7 +1542,7 @@ export default function CourseEditStudioPage() {
                     })
                   }
                   placeholder="https://drive.google.com/... hoặc link tải"
-                  className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-amber-500 focus:bg-white"
+                  className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-blue-500 focus:bg-white"
                 />
               </div>
 
@@ -1638,7 +1552,7 @@ export default function CourseEditStudioPage() {
                   onClick={() =>
                     setMaterialModal((prev) => ({ ...prev, isOpen: false }))
                   }
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
                 >
                   Hủy
                 </button>
@@ -1648,7 +1562,7 @@ export default function CourseEditStudioPage() {
                     createMaterialMutation.isPending ||
                     updateMaterialMutation.isPending
                   }
-                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-xs disabled:opacity-50"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-xs disabled:opacity-50 cursor-pointer"
                 >
                   {createMaterialMutation.isPending ||
                   updateMaterialMutation.isPending ? (
@@ -1664,9 +1578,7 @@ export default function CourseEditStudioPage() {
         </div>
       )}
 
-      {/* ============================================================ */}
       {/* MODAL: DELETE CONFIRMATION */}
-      {/* ============================================================ */}
       {deleteConfirm.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
           <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
@@ -1681,10 +1593,7 @@ export default function CourseEditStudioPage() {
               <span className="font-semibold text-slate-800">
                 {deleteConfirm.name}
               </span>
-              &rdquo;?{" "}
-              {deleteConfirm.type === "LESSON"
-                ? "Tất cả tài liệu đính kèm bên trong bài học này cũng sẽ bị xóa. Thao tác này không thể hoàn tác."
-                : "Hành động này không thể hoàn tác."}
+              &rdquo;? Thao tác này không thể hoàn tác.
             </p>
 
             <div className="flex items-center justify-end gap-3">
@@ -1693,7 +1602,7 @@ export default function CourseEditStudioPage() {
                 onClick={() =>
                   setDeleteConfirm((prev) => ({ ...prev, isOpen: false }))
                 }
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
               >
                 Hủy
               </button>
@@ -1710,7 +1619,7 @@ export default function CourseEditStudioPage() {
                     deleteMaterialMutation.mutate(deleteConfirm.id);
                   }
                 }}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-xs disabled:opacity-50"
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-xs disabled:opacity-50 cursor-pointer"
               >
                 {deleteLessonMutation.isPending ||
                 deleteMaterialMutation.isPending ? (
@@ -1723,9 +1632,7 @@ export default function CourseEditStudioPage() {
         </div>
       )}
 
-      {/* ============================================================ */}
       {/* MODAL: UNSAVED CHANGES GUARD */}
-      {/* ============================================================ */}
       {showExitConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
           <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
@@ -1744,7 +1651,7 @@ export default function CourseEditStudioPage() {
               <button
                 type="button"
                 onClick={() => setShowExitConfirm(false)}
-                className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg"
+                className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg cursor-pointer"
               >
                 Ở lại chỉnh sửa
               </button>
@@ -1752,9 +1659,9 @@ export default function CourseEditStudioPage() {
                 type="button"
                 onClick={() => {
                   setShowExitConfirm(false);
-                  router.push(`/teacher/courses/${courseId}`);
+                  router.push("/admin/courses");
                 }}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-xs"
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-xs cursor-pointer"
               >
                 Rời đi không lưu
               </button>
@@ -1763,9 +1670,7 @@ export default function CourseEditStudioPage() {
         </div>
       )}
 
-      {/* ============================================================ */}
       {/* MODAL: REVERT TO DRAFT CONFIRMATION */}
-      {/* ============================================================ */}
       {showRevertConfirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
           <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
@@ -1776,21 +1681,13 @@ export default function CourseEditStudioPage() {
               Chuyển khóa học về Bản nháp?
             </h3>
             <p className="text-xs text-slate-600 leading-relaxed mb-4">
-              Bạn đang chuẩn bị chỉnh sửa giáo trình của khóa học đã xuất bản.
+              Bạn đang chuyển khóa học về trạng thái Bản nháp (DRAFT).
             </p>
-            <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-lg text-[11px] text-amber-900 mb-6 space-y-1.5">
-              <p className="font-semibold text-amber-800">Sau khi chuyển về Bản nháp:</p>
-              <ul className="list-disc list-inside space-y-1 text-amber-800/90">
-                <li>Giáo trình có thể được chỉnh sửa.</li>
-                <li>Khóa học sẽ cần được gửi duyệt lại trước khi xuất bản.</li>
-                <li>Các thay đổi chưa được duyệt sẽ không được áp dụng vào trạng thái xuất bản hiện tại.</li>
-              </ul>
-            </div>
             <div className="flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setShowRevertConfirmModal(false)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
               >
                 Hủy
               </button>
@@ -1798,58 +1695,54 @@ export default function CourseEditStudioPage() {
                 type="button"
                 disabled={revertToDraftMutation.isPending}
                 onClick={() => revertToDraftMutation.mutate()}
-                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold shadow-xs disabled:opacity-50 inline-flex items-center gap-1.5"
+                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold shadow-xs disabled:opacity-50 inline-flex items-center gap-1.5 cursor-pointer"
               >
                 {revertToDraftMutation.isPending && (
                   <Loader2 size={13} className="animate-spin" />
                 )}
-                {revertToDraftMutation.isPending ? "Đang chuyển..." : "Chuyển về Bản nháp"}
+                {revertToDraftMutation.isPending
+                  ? "Đang chuyển..."
+                  : "Chuyển về Bản nháp"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ============================================================ */}
-      {/* MODAL: SUBMIT REVIEW CONFIRMATION */}
-      {/* ============================================================ */}
-      {showSubmitReviewConfirmModal && (
+      {/* MODAL: PUBLISH CONFIRMATION */}
+      {showPublishConfirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
           <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
-              <Send size={22} />
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
+              <CheckCircle2 size={22} />
             </div>
             <h3 className="font-bold text-slate-900 text-base mb-1">
-              Gửi khóa học để Admin duyệt?
+              Xuất bản khóa học?
             </h3>
             <p className="text-xs text-slate-600 leading-relaxed mb-4">
-              Bạn đang chuẩn bị gửi giáo trình và thông tin khóa học tới Ban Quản Trị.
+              Khóa học sẽ chuyển sang trạng thái PUBLISHED và hiển thị công khai
+              trên danh mục khóa học cho học viên.
             </p>
-            <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-lg text-[11px] text-blue-900 mb-6 space-y-1.5">
-              <p className="font-semibold text-blue-800">Lưu ý sau khi gửi:</p>
-              <ul className="list-disc list-inside space-y-1 text-blue-800/90">
-                <li>Nội dung khóa học sẽ tạm thời bị khóa trong thời gian thẩm định.</li>
-                <li>Bạn không thể tiếp tục chỉnh sửa cho đến khi Admin phản hồi phê duyệt hoặc từ chối.</li>
-              </ul>
-            </div>
             <div className="flex items-center justify-end gap-3">
               <button
                 type="button"
-                onClick={() => setShowSubmitReviewConfirmModal(false)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                onClick={() => setShowPublishConfirmModal(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
               >
                 Hủy
               </button>
               <button
                 type="button"
-                disabled={submitReviewMutation.isPending}
-                onClick={() => submitReviewMutation.mutate()}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-xs disabled:opacity-50 inline-flex items-center gap-1.5"
+                disabled={publishCourseMutation.isPending}
+                onClick={() => publishCourseMutation.mutate()}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs disabled:opacity-50 inline-flex items-center gap-1.5 cursor-pointer"
               >
-                {submitReviewMutation.isPending && (
+                {publishCourseMutation.isPending && (
                   <Loader2 size={13} className="animate-spin" />
                 )}
-                {submitReviewMutation.isPending ? "Đang gửi..." : "Gửi duyệt ngay"}
+                {publishCourseMutation.isPending
+                  ? "Đang xuất bản..."
+                  : "Xuất bản ngay"}
               </button>
             </div>
           </div>

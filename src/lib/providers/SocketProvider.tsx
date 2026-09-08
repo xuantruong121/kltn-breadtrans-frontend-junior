@@ -126,7 +126,7 @@ export default function SocketProvider({ children }: { children: React.ReactNode
       );
 
       // Thông báo Toast nếu tin nhắn đến từ đối phương
-      if (user?.role === "ADMIN" || user?.role === "TEACHER") {
+      if (user?.role === "ADMIN") {
         if (fromRole === "STUDENT") {
           toast(`💬 ${studentName}: "${message.content.substring(0, 35)}..."`, {
             icon: "📩",
@@ -134,7 +134,7 @@ export default function SocketProvider({ children }: { children: React.ReactNode
           });
         }
       } else if (user?.role === "STUDENT") {
-        if ((fromRole === "ADMIN" || fromRole === "TEACHER") && targetUserId === user.id) {
+        if (fromRole === "ADMIN" && targetUserId === user.id) {
           toast(`👨‍🏫 Thầy Cô vừa trả lời bạn: "${message.content.substring(0, 35)}..."`, {
             icon: "💬",
             duration: 5000,

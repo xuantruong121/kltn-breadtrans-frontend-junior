@@ -148,8 +148,8 @@ export default function PublicCoursesPage() {
                     <Calendar size={14} className="text-slate-400" />
                     <span>
                       {course.upcomingClassCount > 0
-                        ? `${course.upcomingClassCount} lớp sắp mở`
-                        : "Đang cập nhật lịch"}
+                        ? `${course.upcomingClassCount} gói học đang mở`
+                        : "Đang cập nhật"}
                     </span>
                   </div>
                 </div>
@@ -167,16 +167,16 @@ export default function PublicCoursesPage() {
 
               {/* Card Footer */}
               <div className="pt-6 mt-6 border-t border-slate-100 flex items-center justify-between">
-                {/* Teacher info */}
+                {/* Academic info */}
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-xs text-slate-700">
-                    {course.teacher?.fullName?.[0] || "T"}
+                    {course.teacher?.fullName?.[0] || "B"}
                   </div>
                   <div className="flex flex-col">
                     <span className="text-xs font-bold text-slate-800 truncate max-w-[120px]">
-                      {course.teacher?.fullName || "Giảng viên trung tâm"}
+                      {course.teacher?.fullName || "Ban Học Thuật BreadTrans"}
                     </span>
-                    <span className="text-[10px] font-medium text-slate-400">Giảng viên</span>
+                    <span className="text-[10px] font-medium text-slate-400">Đội ngũ học thuật</span>
                   </div>
                 </div>
 

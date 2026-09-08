@@ -56,17 +56,6 @@ type SystemCostsResponse = {
       costVnd: number;
       withinFreeTier: boolean;
     };
-    dailyVideo: {
-      name: string;
-      totalSessions: number;
-      totalRooms?: number;
-      participantMinutes: number;
-      freeQuotaMinutes: number;
-      usedPercent: number;
-      costUsd: number;
-      costVnd: number;
-      withinFreeTier: boolean;
-    };
     cloudflareR2: {
       name: string;
       activeAudioFiles: number;
@@ -417,70 +406,6 @@ export default function AdminCostsPage() {
                 <span className="text-[11px] font-bold text-slate-400 block">Chi Phí Vượt Mức</span>
                 <span className="text-lg font-black text-emerald-600">
                   ${services.azureSpeech.costUsd.toFixed(2)}
-                </span>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* 3. Daily.co Video Classroom */}
-        {services?.dailyVideo && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-xs relative overflow-hidden"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-amber-600">
-                  <Video className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-black text-slate-800 text-base flex items-center gap-2">
-                    {services.dailyVideo.name}
-                  </h3>
-                  <p className="text-xs text-slate-400 font-medium">
-                    Phòng học ảo trực tuyến WebRTC
-                  </p>
-                </div>
-              </div>
-              <span className="text-[11px] font-black px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl">
-                10.000 Phút / Tháng Free
-              </span>
-            </div>
-
-            <div className="space-y-2 mb-4">
-              <div className="flex justify-between text-xs font-bold">
-                <span className="text-slate-600">Participant-Minutes tiêu thụ:</span>
-                <span className="text-amber-700">
-                  {services.dailyVideo.participantMinutes.toLocaleString()} / {services.dailyVideo.freeQuotaMinutes.toLocaleString()} phút ({services.dailyVideo.usedPercent}%)
-                </span>
-              </div>
-              <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/60">
-                <div
-                  className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-500"
-                  style={{ width: `${Math.max(4, services.dailyVideo.usedPercent)}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
-              <div>
-                <span className="text-[11px] font-bold text-slate-400 block">Tổng Buổi Học (Sessions)</span>
-                <span className="text-lg font-black text-slate-800">
-                  {services.dailyVideo.totalSessions}
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] font-bold text-slate-400 block">Số Phòng (Rooms)</span>
-                <span className="text-lg font-black text-amber-700">
-                  {services.dailyVideo.totalRooms ?? 3} phòng
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] font-bold text-slate-400 block">Chi Phí Vượt Mức</span>
-                <span className="text-lg font-black text-emerald-600">
-                  ${services.dailyVideo.costUsd.toFixed(2)}
                 </span>
               </div>
             </div>

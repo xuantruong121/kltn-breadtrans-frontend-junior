@@ -31,7 +31,6 @@ type EnrolledClass = {
   classId: number;
   className: string;
   classStatus: string;
-  meetingLink: string | null;
   startDate: string | null;
   endDate: string | null;
   progress: number;
@@ -90,8 +89,8 @@ export default function CoursesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
   
-  // Filter active/upcoming classes or classes that have a teacher assigned
-  const validClasses = classes?.filter(c => c.classStatus === 'ACTIVE' || c.classStatus === 'UPCOMING' || c.teacher) || [];
+  // All enrolled offerings
+  const validClasses = classes || [];
   
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -203,7 +202,7 @@ export default function CoursesPage() {
                   <div className="flex items-center gap-2 mb-2">
                     <UserCircle size={16} className="text-slate-400 flex-shrink-0" />
                     <span className="text-sm text-slate-500 truncate">
-                      {cls.teacher?.profile?.fullName || cls.teacher?.email || "Chưa có giáo viên"}
+                      {cls.teacher?.profile?.fullName || cls.teacher?.email || "Ban Học Thuật BreadTrans"}
                     </span>
                   </div>
 
@@ -236,7 +235,7 @@ export default function CoursesPage() {
                   ) : (
                     <div className="mb-4">
                       <div className="flex justify-between text-xs text-slate-500 mb-1">
-                        <span>Tiến độ học</span>
+                        <span>Tiến độ nội dung</span>
                         <span className="font-bold text-junior-green">{cls.progress}%</span>
                       </div>
                       <div className="w-full bg-slate-100 rounded-full h-2.5">

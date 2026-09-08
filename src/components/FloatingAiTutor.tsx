@@ -129,7 +129,7 @@ export default function FloatingAiTutor() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { socket } = useSocket();
 
-  const isAdminOrTeacher = user?.role === "ADMIN" || user?.role === "TEACHER";
+  const isAdminOrTeacher = user?.role === "ADMIN";
   const currentDisplayName = user?.profile?.name || user?.email?.split("@")[0] || "Người dùng";
 
   // ID của học sinh đang trò chuyện

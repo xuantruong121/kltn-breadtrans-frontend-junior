@@ -136,14 +136,14 @@ export default function AdminDashboardPage() {
         },
         {
           id: "gamification",
-          name: "Bánh Mì Thưởng",
+          name: "Điểm Thưởng Tích Lũy",
           value: `${data.gamification?.totalBreads?.toLocaleString() || "1,250"}`,
-          unit: "điểm",
+          unit: "Bánh Mì",
           icon: Coins,
           color: "text-amber-600",
           bg: "bg-amber-50",
           borderColor: "border-amber-100",
-          sub: `${data.gamification?.approvedOrders || 0} đổi thưởng hoàn tất`,
+          sub: `Tổng ví học viên · ${data.gamification?.approvedOrders || 0} đổi quà xong`,
         },
       ]
     : [];
@@ -180,7 +180,7 @@ export default function AdminDashboardPage() {
             href="/admin/enroll"
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors"
           >
-            <UserPlus size={14} /> Ghi danh mới
+            <UserPlus size={14} strokeWidth={2} /> Ghi danh mới
           </Link>
         </div>
       </div>
@@ -218,7 +218,7 @@ export default function AdminDashboardPage() {
                       {stat.value}
                     </span>
                     {stat.unit && (
-                      <span className="text-xs font-medium text-slate-500">
+                      <span className="text-xs font-semibold text-slate-500">
                         {stat.unit}
                       </span>
                     )}
@@ -230,7 +230,7 @@ export default function AdminDashboardPage() {
                     </span>
                     {stat.trendPositive && (
                       <span className="text-emerald-600 flex items-center gap-0.5 font-semibold text-[11px]">
-                        <TrendingUp size={12} /> Hoạt động
+                        <TrendingUp size={12} strokeWidth={2} /> Hoạt động
                       </span>
                     )}
                   </div>
@@ -248,7 +248,7 @@ export default function AdminDashboardPage() {
             >
               <div className="flex items-center gap-3">
                 <div className="p-1.5 bg-amber-100 text-amber-800 rounded-lg shrink-0">
-                  <AlertTriangle size={18} />
+                  <AlertTriangle size={18} strokeWidth={2} />
                 </div>
                 <div className="text-sm">
                   <span className="font-semibold text-amber-900">Nội dung chờ duyệt:</span> Hiện có{" "}
@@ -259,86 +259,96 @@ export default function AdminDashboardPage() {
                 href="/admin/courses"
                 className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs rounded-lg shadow-xs transition-colors whitespace-nowrap self-end sm:self-auto"
               >
-                Xét duyệt ngay <ArrowRight size={14} />
+                Xét duyệt ngay <ArrowRight size={14} strokeWidth={2} />
               </Link>
             </motion.div>
           )}
 
-          {/* 4. MAIN ANALYTICS SECTION: 2-COLUMN GRID (CHART + RECENT ACTIVITY) */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-            {/* INTERACTIVE ANALYTICS CHART (LEFT 2/3) */}
-            <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200/80 shadow-xs">
-              <AdminAnalyticsChart data={data?.monthlyTrends} />
+          {/* 4. MAIN WORKSPACE & STICKY ACTIVITY FEED */}
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+            {/* LEFT COLUMN: PRIMARY WORKSPACE (8 OF 12 COLS) */}
+            <div className="xl:col-span-8 space-y-6">
+              {/* INTERACTIVE ANALYTICS CHART & OPERATIONAL INSIGHTS */}
+              <div className="bg-white p-6 rounded-xl border border-slate-200/80 shadow-xs">
+                <AdminAnalyticsChart data={data?.monthlyTrends} />
+              </div>
+
+              {/* CONTENT BREAKDOWN SECTION */}
+              <div className="bg-white p-6 rounded-xl border border-slate-200/80 shadow-xs">
+                <AdminContentBreakdown data={data?.contentBreakdown} />
+              </div>
             </div>
 
-            {/* AUDIT LOG & RECENT ACTIVITY (RIGHT 1/3) */}
-            <div className="bg-white p-6 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between h-full space-y-4">
-              <div>
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-                  <div className="flex items-center gap-2">
-                    <Clock size={17} className="text-slate-600" />
-                    <h3 className="text-sm font-bold text-slate-900">
-                      Nhật Ký Hoạt Động
-                    </h3>
-                  </div>
-                  <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-                    {data?.recentActivity?.length || 0} bản ghi
-                  </span>
-                </div>
-
-                <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-                  {data?.recentActivity && data.recentActivity.length > 0 ? (
-                    data.recentActivity.map((activity) => {
-                      const Icon = getActivityIcon(activity.type);
-                      return (
-                        <div
-                          key={activity.id}
-                          className="flex gap-3 items-start pb-3 border-b border-slate-100 last:border-0 last:pb-0"
-                        >
-                          <div className="p-1.5 rounded-md bg-slate-100 text-slate-600 shrink-0 mt-0.5">
-                            <Icon size={13} strokeWidth={2} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-slate-800 leading-snug break-words">
-                              {activity.message}
-                            </p>
-                            <span className="text-[11px] text-slate-400 mt-1 block">
-                              {timeAgo(activity.createdAt)}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="text-center py-12 text-slate-400">
-                      <Clock size={24} className="mx-auto mb-2 opacity-40" />
-                      <p className="text-xs">Chưa có hoạt động nào được ghi nhận.</p>
+            {/* RIGHT COLUMN: STICKY AUDIT LOG & RECENT ACTIVITY (4 OF 12 COLS) */}
+            <div className="xl:col-span-4 xl:sticky xl:top-6 space-y-6">
+              <div className="bg-white p-6 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-4">
+                <div>
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-1.5 rounded-lg bg-slate-100 text-slate-700 border border-slate-200/60">
+                        <Clock size={16} strokeWidth={2} />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-900">
+                          Nhật Ký Hoạt Động
+                        </h3>
+                        <p className="text-[11px] text-slate-400">Thời gian thực hệ thống</p>
+                      </div>
                     </div>
-                  )}
+                    <span className="text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200/70">
+                      {data?.recentActivity?.length || 0} bản ghi
+                    </span>
+                  </div>
+
+                  <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+                    {data?.recentActivity && data.recentActivity.length > 0 ? (
+                      data.recentActivity.map((activity) => {
+                        const Icon = getActivityIcon(activity.type);
+                        return (
+                          <div
+                            key={activity.id}
+                            className="flex gap-3 items-start pb-3 border-b border-slate-100 last:border-0 last:pb-0"
+                          >
+                            <div className="p-1.5 rounded-md bg-slate-100 text-slate-600 shrink-0 mt-0.5 border border-slate-200/60">
+                              <Icon size={13} strokeWidth={2} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium text-slate-800 leading-snug break-words">
+                                {activity.message}
+                              </p>
+                              <span className="text-[11px] text-slate-400 mt-1 block">
+                                {timeAgo(activity.createdAt)}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center py-12 text-slate-400">
+                        <Clock size={24} className="mx-auto mb-2 opacity-40" />
+                        <p className="text-xs">Chưa có hoạt động nào được ghi nhận.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* QUICK NAV ACTIONS */}
+                <div className="pt-3 border-t border-slate-100 flex gap-2">
+                  <Link
+                    href="/admin/users"
+                    className="flex-1 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200 transition-colors flex items-center justify-center gap-1 shadow-2xs"
+                  >
+                    Quản lý học viên <ArrowUpRight size={13} strokeWidth={2} />
+                  </Link>
+                  <Link
+                    href="/admin/enroll"
+                    className="flex-1 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-xs rounded-lg border border-blue-200 transition-colors flex items-center justify-center gap-1 shadow-2xs"
+                  >
+                    Ghi danh <UserPlus size={13} strokeWidth={2} />
+                  </Link>
                 </div>
               </div>
-
-              {/* QUICK NAV ACTIONS */}
-              <div className="pt-3 border-t border-slate-100 flex gap-2">
-                <Link
-                  href="/admin/users"
-                  className="flex-1 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200 transition-colors flex items-center justify-center gap-1"
-                >
-                  Quản lý học viên <ArrowUpRight size={13} />
-                </Link>
-                <Link
-                  href="/admin/enroll"
-                  className="flex-1 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-xs rounded-lg border border-blue-200 transition-colors flex items-center justify-center gap-1"
-                >
-                  Ghi danh <UserPlus size={13} />
-                </Link>
-              </div>
             </div>
-          </div>
-
-          {/* 5. CONTENT BREAKDOWN SECTION */}
-          <div className="bg-white p-6 rounded-xl border border-slate-200/80 shadow-xs">
-            <AdminContentBreakdown data={data?.contentBreakdown} />
           </div>
         </>
       )}

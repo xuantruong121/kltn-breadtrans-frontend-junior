@@ -10,18 +10,33 @@ import {
   CheckCircle2, 
   Heart, 
   Smile, 
-  Compass
+  Compass,
+  Calendar,
+  FileText,
+  Clock,
+  BookOpen
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { userService } from "@/lib/api/services/user.service";
 import { gamificationService } from "@/lib/api/services/gamification.service";
+import axiosClient from "@/lib/api/axiosClient";
 import { Button3D, UserAvatarWithFrame } from "@/components/ui";
 import { PetStage3D } from "@/modules/pet/components/PetStage3D";
 import { MARKET_ITEMS } from "@/modules/market/services/marketData";
 import Link from "next/link";
 import toast from "react-hot-toast";
+
+type AcademicClass = {
+  id: number;
+  name: string;
+  enrollmentStatus: string;
+  course?: { title?: string };
+  teacher?: { profile?: { fullName?: string | null } | null } | null;
+  progress?: number;
+  assignments?: Array<{ id: number; title: string; dueDate?: string | null; submissions?: Array<{ id: number; grade?: number | null }> }>;
+};
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
@@ -50,6 +65,15 @@ export default function DashboardPage() {
   const { data: arena, isLoading: isArenaLoading } = useQuery({
     queryKey: ["myArenaSnippet", user?.id],
     queryFn: gamificationService.getArenaSnippet,
+    enabled: !!user?.id,
+  });
+
+  const { data: academicClasses, isLoading: isAcademicLoading, isError: isAcademicError } = useQuery<AcademicClass[]>({
+    queryKey: ["student-academic-classes", user?.id],
+    queryFn: async () => {
+      const response = await axiosClient.get("/courses/classes");
+      return response as unknown as AcademicClass[];
+    },
     enabled: !!user?.id,
   });
 
@@ -91,6 +115,12 @@ export default function DashboardPage() {
   const streakCount = (profile as any)?.stats?.streakCount ?? (profile as any)?.stats?.streak ?? localStreak;
   const canFeedPet = banhRan >= 10;
   const activeBadgeItem = MARKET_ITEMS.find((i) => i.id === equippedBadge);
+
+  const currentClasses = (academicClasses || []).filter((item) => item.enrollmentStatus === "ACTIVE");
+  const continueLearning = currentClasses.slice(0, 3);
+  const pendingAssignments = currentClasses
+    .flatMap((item) => (item.assignments || []).filter((assignment) => !assignment.submissions?.length).map((assignment) => ({ ...assignment, className: item.name, classId: item.id })))
+    .slice(0, 3);
 
   // Quick Action Modules Map
   const QUICK_ACTIONS = [
@@ -186,7 +216,62 @@ export default function DashboardPage() {
         </div>
       </motion.div>
 
-      {/* 2. QUICK ACTIONS TILES (TƯƠNG TỰ BREADTRANS) */}
+      {/* 2. ACADEMIC ACTIONS */}
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-5" aria-label="Tổng quan học tập">
+        <div className="lg:col-span-2 bg-white rounded-[2rem] border-4 border-sky-100 shadow-[0_6px_0_0_#dbeafe] p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-black text-slate-800 flex items-center gap-2"><BookOpen className="text-sky-500" size={22} /> Khóa học của tôi</h2>
+              <p className="text-xs text-slate-400 font-bold mt-1">Truy cập nhanh các gói học đang tham gia</p>
+            </div>
+            <Link href="/my-courses" className="text-xs font-black text-sky-600 hover:underline">Xem tất cả</Link>
+          </div>
+          {isAcademicLoading ? (
+            <div className="grid sm:grid-cols-2 gap-3"><div className="h-24 bg-slate-100 rounded-2xl animate-pulse" /><div className="h-24 bg-slate-100 rounded-2xl animate-pulse" /></div>
+          ) : isAcademicError ? (
+            <p className="text-sm font-bold text-rose-500 bg-rose-50 rounded-2xl p-4">Không thể tải thông tin khóa học. Vui lòng thử lại sau.</p>
+          ) : currentClasses.length === 0 ? (
+            <div className="text-center bg-slate-50 rounded-2xl p-6"><p className="text-sm font-black text-slate-600">Bạn chưa có khóa học đang học.</p><Link href="/my-courses" className="inline-block mt-2 text-xs font-black text-sky-600">Xem khóa học của tôi →</Link></div>
+          ) : (
+            <div className="grid sm:grid-cols-2 gap-3">
+              {currentClasses.slice(0, 4).map((item) => (
+                <Link key={item.id} href={`/classes/${item.id}`} className="rounded-2xl border-2 border-slate-100 p-4 hover:border-sky-300 hover:bg-sky-50 transition-colors">
+                  <p className="text-[10px] uppercase tracking-wide font-black text-sky-600 truncate">{item.course?.title || "Khóa học"}</p>
+                  <h3 className="font-black text-slate-800 truncate mt-1">{item.name}</h3>
+                  <div className="flex items-center justify-between mt-3 text-xs font-bold text-slate-400"><span>Tiến độ nội dung</span><span className="text-sky-600">{item.progress || 0}% →</span></div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-5">
+          <div className="bg-white rounded-[2rem] border-4 border-emerald-100 shadow-[0_6px_0_0_#d1fae5] p-5">
+            <h2 className="text-lg font-black text-slate-800 flex items-center gap-2"><BookOpen className="text-emerald-500" size={20} /> Tiếp tục học</h2>
+            {continueLearning.length === 0 ? (
+              <p className="text-xs font-bold text-slate-400 bg-slate-50 rounded-2xl p-4 mt-3">Bạn chưa có khóa học nào đang diễn ra.</p>
+            ) : (
+              <div className="space-y-2 mt-3">
+                {continueLearning.map((item) => (
+                  <Link key={item.id} href={`/classes/${item.id}`} className="block rounded-xl bg-emerald-50 hover:bg-emerald-100/70 p-3 transition-colors">
+                    <p className="text-xs font-black text-slate-800 truncate">{item.course?.title || item.name}</p>
+                    <div className="flex items-center justify-between text-[11px] font-bold text-emerald-700 mt-1">
+                      <span>Tiến độ nội dung: {item.progress || 0}%</span>
+                      <span className="flex items-center gap-1">Học tiếp <ArrowRight size={11} /></span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="bg-white rounded-[2rem] border-4 border-amber-100 shadow-[0_6px_0_0_#fef3c7] p-5">
+            <h2 className="text-lg font-black text-slate-800 flex items-center gap-2"><FileText className="text-amber-500" size={20} /> Bài tập cần làm</h2>
+            {pendingAssignments.length === 0 ? <p className="text-xs font-bold text-slate-400 bg-slate-50 rounded-2xl p-4 mt-3">Bạn đã hoàn thành các bài tập hiện có.</p> : <div className="space-y-2 mt-3">{pendingAssignments.map((assignment) => <Link key={assignment.id} href={`/classes/${assignment.classId}`} className="block rounded-xl bg-amber-50 p-3"><p className="text-xs font-black text-slate-700 truncate">{assignment.title}</p><p className="text-[11px] font-bold text-amber-700 mt-1">{assignment.className}</p></Link>)}</div>}
+          </div>
+        </div>
+      </section>
+
+      {/* 3. QUICK ACTIONS TILES (TƯƠNG TỰ BREADTRANS) */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">

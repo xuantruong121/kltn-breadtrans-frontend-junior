@@ -33,7 +33,7 @@ const FloatingAiTutor = dynamic(() => import("@/components/FloatingAiTutor"), { 
 const NAV_ITEMS = [
   { id: "dashboard", href: "/dashboard", label: "Trang chủ", icon: Home, color: "text-sky-500", bgActive: "bg-sky-100 border-sky-300 text-sky-600" },
   { id: "my-courses", href: "/my-courses", label: "Khóa học của tôi", icon: BookmarkCheck, color: "text-cyan-600", bgActive: "bg-cyan-100 border-cyan-300 text-cyan-700" },
-  { id: "classes", href: "/classes", label: "Lớp học", icon: BookOpen, color: "text-blue-500", bgActive: "bg-blue-100 border-blue-300 text-blue-700" },
+  { id: "classes", href: "/my-courses", label: "Lớp học", icon: BookOpen, color: "text-blue-500", bgActive: "bg-blue-100 border-blue-300 text-blue-700" },
   { id: "listening", href: "/practice/quizzes", label: "Luyện Nghe", icon: Headphones, color: "text-indigo-500", bgActive: "bg-indigo-100 border-indigo-300 text-indigo-700" },
   { id: "reading", href: "/practice/reading", label: "Luyện Đọc", icon: BookOpenCheck, color: "text-emerald-500", bgActive: "bg-emerald-100 border-emerald-300 text-emerald-700" },
   { id: "speaking", href: "/practice/speaking", label: "Luyện Nói (AI)", icon: Mic, color: "text-purple-500", bgActive: "bg-purple-100 border-purple-300 text-purple-700" },
@@ -49,7 +49,7 @@ const MAIN_MOBILE_TABS = [
   { id: "dashboard", href: "/dashboard", label: "Trang chủ", icon: Home, color: "text-sky-500" },
   { id: "speaking", href: "/practice/speaking", label: "Luyện Nói", icon: Mic, color: "text-purple-500" },
   { id: "flashcard", href: "/flashcard", label: "Flashcard", icon: Layers, color: "text-amber-500" },
-  { id: "classes", href: "/classes", label: "Lớp học", icon: BookOpen, color: "text-blue-500" },
+  { id: "classes", href: "/my-courses", label: "Lớp học", icon: BookOpen, color: "text-blue-500" },
 ];
 
 const emptySubscribe = () => () => {};

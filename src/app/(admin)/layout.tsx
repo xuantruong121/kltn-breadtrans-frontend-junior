@@ -34,14 +34,15 @@ interface NavItem {
   href: string;
   label: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
-  roles?: ("ADMIN" | "TEACHER")[];
+  roles?: ("ADMIN")[];
 }
 
 const NAV_ITEMS: NavItem[] = [
   { id: "overview", href: "/admin", label: "Tổng quan", icon: LayoutDashboard },
   { id: "costs", href: "/admin/costs", label: "Quản lý Chi Phí (Cloud)", icon: Activity },
   { id: "payments", href: "/admin/payments", label: "Thanh toán", icon: CreditCard, roles: ["ADMIN"] },
-  { id: "courses", href: "/admin/courses", label: "Khóa học & Lớp", icon: BookOpen },
+  { id: "courses", href: "/admin/courses", label: "Khóa học & Gói học", icon: BookOpen },
+  { id: "assignments", href: "/admin/assignments", label: "Bài tập & Chấm điểm", icon: PenTool },
   { id: "vocab", href: "/admin/vocab", label: "Từ vựng (Flashcard)", icon: Layers },
   { id: "grammar", href: "/admin/grammar", label: "Ngữ pháp (Video)", icon: GraduationCap },
   { id: "practice", href: "/admin/practice", label: "Luyện tập (Bánh mì)", icon: Gamepad2 },
@@ -75,7 +76,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   );
 
   useEffect(() => {
-    if (isReady && (!user || (user.role !== 'ADMIN' && user.role !== 'TEACHER'))) {
+    if (isReady && (!user || user.role !== 'ADMIN')) {
       router.push("/");
     }
   }, [isReady, user, router]);
@@ -103,7 +104,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {NAV_ITEMS.filter(
             (item) =>
               !item.roles ||
-              (user && item.roles.includes(user.role as "ADMIN" | "TEACHER"))
+              (user && item.roles.includes(user.role as "ADMIN"))
           ).map((item) => {
             const isActive = item.href === "/admin" 
               ? pathname === "/admin" 

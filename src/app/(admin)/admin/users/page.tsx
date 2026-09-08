@@ -29,7 +29,7 @@ import { Pagination } from "@/components/ui";
 type UserData = {
   id: number;
   email: string;
-  role: "STUDENT" | "TEACHER" | "ADMIN";
+  role: "STUDENT" | "ADMIN";
   createdAt: string;
   lastLoginAt: string | null;
   loginCount: number;
@@ -40,7 +40,6 @@ type UserData = {
 const ROLE_FILTER_OPTIONS = [
   { label: "Tất cả", value: "" },
   { label: "Học viên", value: "STUDENT" },
-  { label: "Giáo viên", value: "TEACHER" },
   { label: "Quản trị", value: "ADMIN" },
 ];
 
@@ -70,7 +69,7 @@ export default function AdminUsersPage() {
   const [editForm, setEditForm] = useState({
     fullName: "",
     phone: "",
-    role: "STUDENT" as "STUDENT" | "TEACHER" | "ADMIN",
+    role: "STUDENT" as "STUDENT" | "ADMIN",
     password: "",
   });
 
@@ -88,8 +87,13 @@ export default function AdminUsersPage() {
   // Create User Mutation
   const createMutation = useMutation({
     mutationFn: async (data: typeof createForm) => {
-      if (data.role === "TEACHER") return axiosClient.post("/admin/teachers", { email: data.email, fullName: data.fullName, phone: data.phone });
-      return axiosClient.post("/admin/users", { ...data, role: "STUDENT" });
+      return axiosClient.post("/admin/users", {
+        fullName: data.fullName,
+        email: data.email,
+        password: data.password,
+        role: data.role === "ADMIN" ? "ADMIN" : "STUDENT",
+        phone: data.phone,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
@@ -156,12 +160,10 @@ export default function AdminUsersPage() {
   const roleBadge = (role: string) => {
     const map: Record<string, string> = {
       ADMIN: "bg-purple-100 text-purple-800 border-purple-300",
-      TEACHER: "bg-amber-100 text-amber-800 border-amber-300",
       STUDENT: "bg-emerald-100 text-emerald-800 border-emerald-300",
     };
     const labels: Record<string, string> = {
       ADMIN: "Quản trị",
-      TEACHER: "Giáo viên",
       STUDENT: "Học viên",
     };
     return (
@@ -458,8 +460,7 @@ export default function AdminUsersPage() {
                     className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-blue-500 bg-white text-slate-800 font-bold"
                   >
                     <option value="STUDENT">Học viên</option>
-                    <option value="TEACHER">Giáo viên</option>
-
+                    <option value="ADMIN">Quản trị viên (Admin)</option>
                   </select>
                 </div>
               </div>
@@ -551,8 +552,7 @@ export default function AdminUsersPage() {
                     className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-blue-500 bg-white text-slate-800 font-bold"
                   >
                     <option value="STUDENT">Học viên</option>
-                    <option value="TEACHER">Giáo viên</option>
-
+                    <option value="ADMIN">Quản trị viên (Admin)</option>
                   </select>
                 </div>
                 <div>

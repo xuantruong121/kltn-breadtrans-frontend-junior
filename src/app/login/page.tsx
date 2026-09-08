@@ -53,8 +53,6 @@ function LoginForm() {
     if (isReady && user) {
       if (user.role === "ADMIN") {
         router.push("/admin");
-      } else if (user.role === "TEACHER") {
-        router.push("/teacher/dashboard");
       } else {
         router.push(safeRedirect || "/dashboard");
       }
@@ -88,8 +86,6 @@ function LoginForm() {
       
       if (res.user.role === 'ADMIN') {
         router.push('/admin');
-      } else if (res.user.role === 'TEACHER') {
-        router.push('/teacher/dashboard');
       } else {
         router.push(safeRedirect || '/dashboard');
       }

@@ -10,13 +10,8 @@ import {
   Users,
   ChevronRight,
   X,
-  UserCheck,
   Settings,
   CheckCircle2,
-  Clock,
-  XCircle,
-  Check,
-  RotateCcw,
   AlertTriangle,
   AlertCircle,
   Lock,
@@ -27,12 +22,6 @@ import toast from "react-hot-toast";
 import Link from "next/link";
 import { Pagination } from "@/components/ui";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
-
-type Teacher = {
-  id: number;
-  email: string;
-  profile: { fullName: string; avatar: string | null } | null;
-};
 
 type ClassData = {
   id: number;
@@ -46,8 +35,6 @@ type ClassData = {
   _count: { enrollments: number };
   startDate: string | null;
   endDate: string | null;
-  teacherId?: number;
-  meetingLink?: string;
 };
 
 type Course = {
@@ -56,9 +43,8 @@ type Course = {
   description: string | null;
   thumbnail: string | null;
   level: string | null;
-  status: "DRAFT" | "PENDING_REVIEW" | "PUBLISHED" | "REJECTED";
+  status: "DRAFT" | "PUBLISHED";
   createdAt: string;
-  teacher: Teacher | null;
   classes: ClassData[];
   _count: { classes: number };
 };
@@ -79,20 +65,10 @@ const STATUS_CONFIG: Record<
     badgeClass: "bg-slate-100 text-slate-700 border-slate-200",
     icon: Settings,
   },
-  PENDING_REVIEW: {
-    label: "Chờ duyệt",
-    badgeClass: "bg-amber-50 text-amber-700 border-amber-200",
-    icon: Clock,
-  },
   PUBLISHED: {
     label: "Đã duyệt",
     badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
     icon: CheckCircle2,
-  },
-  REJECTED: {
-    label: "Bị từ chối",
-    badgeClass: "bg-rose-50 text-rose-700 border-rose-200",
-    icon: XCircle,
   },
 };
 
@@ -110,15 +86,12 @@ export default function AdminCoursesPage() {
     title: "",
     description: "",
     level: "",
-    teacherId: "",
   });
 
   const [classForm, setClassForm] = useState({
     name: "",
-    teacherId: "",
     startDate: "",
     endDate: "",
-    meetingLink: "",
     capacity: "30",
     tuitionFeeVnd: "0",
   });
@@ -128,14 +101,11 @@ export default function AdminCoursesPage() {
   const [editingClassCourse, setEditingClassCourse] = useState<Course | null>(null);
   const [editClassForm, setEditClassForm] = useState({
     name: "",
-    teacherId: "",
     startDate: "",
     endDate: "",
-    meetingLink: "",
     capacity: "30",
     tuitionFeeVnd: "0",
   });
-  const [showTeacherChangeConfirm, setShowTeacherChangeConfirm] = useState(false);
 
   // Delete Course Confirmation State
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
@@ -162,10 +132,8 @@ export default function AdminCoursesPage() {
     setEditingClassCourse(course);
     setEditClassForm({
       name: cls.name || "",
-      teacherId: cls.teacherId?.toString() || course.teacher?.id?.toString() || "",
       startDate: cls.startDate ? new Date(cls.startDate).toISOString().slice(0, 10) : "",
       endDate: cls.endDate ? new Date(cls.endDate).toISOString().slice(0, 10) : "",
-      meetingLink: cls.meetingLink || "",
       capacity: (cls.capacity || 30).toString(),
       tuitionFeeVnd: (cls.tuitionFeeVnd ?? 0).toString(),
     });
@@ -178,7 +146,6 @@ export default function AdminCoursesPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
       setEditingClass(null);
       setEditingClassCourse(null);
-      setShowTeacherChangeConfirm(false);
       toast.success("Cập nhật lớp học thành công!");
     },
     onError: (err: any) =>
@@ -191,25 +158,18 @@ export default function AdminCoursesPage() {
       (await axiosClient.get("/admin/courses")) as unknown as Course[],
   });
 
-  const { data: teachers } = useQuery<Teacher[]>({
-    queryKey: ["admin-users", "TEACHER"],
-    queryFn: async () =>
-      (await axiosClient.get("/admin/users?role=TEACHER")) as unknown as Teacher[],
-  });
-
   const createCourseMutation = useMutation({
     mutationFn: async (data: typeof courseForm) =>
       (
         await axiosClient.post("/admin/courses", {
           ...data,
-          teacherId: data.teacherId ? parseInt(data.teacherId) : undefined,
         })
       ).data,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
       queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
       setShowCreateCourse(false);
-      setCourseForm({ title: "", description: "", level: "", teacherId: "" });
+       setCourseForm({ title: "", description: "", level: "" });
       toast.success("Tạo khóa học thành công!");
     },
     onError: (err: any) =>
@@ -233,30 +193,6 @@ export default function AdminCoursesPage() {
       ),
   });
 
-  const reviewCourseMutation = useMutation({
-    mutationFn: async ({
-      courseId,
-      action,
-    }: {
-      courseId: number;
-      action: "APPROVE" | "REJECT";
-    }) =>
-      (await axiosClient.post(`/admin/courses/${courseId}/review`, { action }))
-        .data,
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
-      toast.success(
-        variables.action === "APPROVE"
-          ? "Đã phê duyệt khóa học (PUBLISHED)!"
-          : "Đã từ chối khóa học (chuyển sang trạng thái Cần chỉnh sửa - REJECTED)!",
-      );
-    },
-    onError: (err: any) =>
-      toast.error(
-        getApiErrorMessage(err, "Thao tác xét duyệt thất bại."),
-      ),
-  });
-
   const createClassMutation = useMutation({
     mutationFn: async ({
       courseId,
@@ -268,10 +204,8 @@ export default function AdminCoursesPage() {
       (
         await axiosClient.post(`/admin/courses/${courseId}/classes`, {
           ...data,
-          teacherId: parseInt(data.teacherId),
           startDate: data.startDate || undefined,
           endDate: data.endDate || undefined,
-          meetingLink: data.meetingLink || undefined,
           capacity: parseInt(data.capacity) || 30,
           tuitionFeeVnd: parseInt(data.tuitionFeeVnd) || 0,
         })
@@ -281,10 +215,8 @@ export default function AdminCoursesPage() {
       setShowCreateClass(null);
       setClassForm({
         name: "",
-        teacherId: "",
         startDate: "",
         endDate: "",
-        meetingLink: "",
         capacity: "30",
         tuitionFeeVnd: "0",
       });
@@ -295,11 +227,7 @@ export default function AdminCoursesPage() {
   });
 
   const filteredCourses = courses?.filter((c) => {
-    const matchesSearch =
-      c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (c.teacher?.profile?.fullName || "")
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
+    const matchesSearch = c.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "ALL" || c.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -470,35 +398,13 @@ export default function AdminCoursesPage() {
 
                           {/* Top Action Buttons */}
                           <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-                            {/* Review Actions for Pending or Draft Courses */}
-                            {course.status === "PENDING_REVIEW" && (
-                              <>
-                                <button
-                                  onClick={() =>
-                                    reviewCourseMutation.mutate({
-                                      courseId: course.id,
-                                      action: "APPROVE",
-                                    })
-                                  }
-                                  className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors"
-                                  title="Phê duyệt khóa học (PUBLISHED)"
-                                >
-                                  <Check size={13} /> Duyệt
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    reviewCourseMutation.mutate({
-                                      courseId: course.id,
-                                      action: "REJECT",
-                                    })
-                                  }
-                                  className="px-2.5 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors border border-rose-200"
-                                  title="Từ chối (chuyển về DRAFT)"
-                                >
-                                  <RotateCcw size={13} /> Từ chối
-                                </button>
-                              </>
-                            )}
+                            <Link
+                              href={`/admin/courses/${course.id}/edit`}
+                              className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors"
+                              title="Mở Course Studio để soạn giáo trình và bài học"
+                            >
+                              <BookOpen size={14} /> Soạn bài học (Studio)
+                            </Link>
 
                             {/* Create Class Button - strictly disabled unless PUBLISHED */}
                             {course.status === "PUBLISHED" ? (
@@ -507,8 +413,6 @@ export default function AdminCoursesPage() {
                                   setShowCreateClass(course.id);
                                   setClassForm({
                                     ...classForm,
-                                    teacherId:
-                                      course.teacher?.id?.toString() || "",
                                     capacity: "30",
                                   });
                                 }}
@@ -536,10 +440,6 @@ export default function AdminCoursesPage() {
                         </div>
 
                         <div className="flex items-center gap-4 mt-3 text-xs text-slate-500 flex-wrap">
-                          <span className="flex items-center gap-1">
-                            <UserCheck size={13} className="text-slate-400" />{" "}
-                            {course.teacher?.profile?.fullName || "Chưa gán giáo viên"}
-                          </span>
                           <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-600">
                             {levelLabel(course.level)}
                           </span>
@@ -773,25 +673,6 @@ export default function AdminCoursesPage() {
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Giáo viên phụ trách
-                </label>
-                <select
-                  value={courseForm.teacherId}
-                  onChange={(e) =>
-                    setCourseForm({ ...courseForm, teacherId: e.target.value })
-                  }
-                  className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-blue-500 bg-white"
-                >
-                  <option value="">-- Chưa gán giáo viên --</option>
-                  {teachers?.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.profile?.fullName || t.email}
-                    </option>
-                  ))}
-                </select>
-              </div>
             </div>
             <div className="flex gap-3 mt-6">
               <button
@@ -846,25 +727,6 @@ export default function AdminCoursesPage() {
                   }
                   className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-blue-500"
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Giáo viên *
-                </label>
-                <select
-                  value={classForm.teacherId}
-                  onChange={(e) =>
-                    setClassForm({ ...classForm, teacherId: e.target.value })
-                  }
-                  className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-blue-500 bg-white"
-                >
-                  <option value="">-- Chọn giáo viên --</option>
-                  {teachers?.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.profile?.fullName || t.email}
-                    </option>
-                  ))}
-                </select>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -933,23 +795,6 @@ export default function AdminCoursesPage() {
                   </p>
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Link Meet (Google Meet/Zoom)
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://meet.google.com/... (để trống sẽ tự tạo)"
-                  value={classForm.meetingLink}
-                  onChange={(e) =>
-                    setClassForm({
-                      ...classForm,
-                      meetingLink: e.target.value,
-                    })
-                  }
-                  className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-blue-500"
-                />
-              </div>
             </div>
             <div className="flex gap-3 mt-6">
               <button
@@ -962,8 +807,7 @@ export default function AdminCoursesPage() {
                 onClick={handleCreateClassSubmit}
                 disabled={
                   createClassMutation.isPending ||
-                  !classForm.name ||
-                  !classForm.teacherId
+                  !classForm.name
                 }
                 className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-60"
               >
@@ -1017,7 +861,6 @@ export default function AdminCoursesPage() {
                   onClick={() => {
                     setEditingClass(null);
                     setEditingClassCourse(null);
-                    setShowTeacherChangeConfirm(false);
                   }}
                   className="text-slate-400 hover:text-slate-600 p-1"
                 >
@@ -1041,53 +884,6 @@ export default function AdminCoursesPage() {
                 <Lock size={16} className="shrink-0 text-slate-500 mt-0.5" />
                 <div>
                   <strong>Lớp học ở chế độ chỉ đọc:</strong> Trạng thái {editingClass.status}. Toàn bộ thông tin không thể chỉnh sửa thêm.
-                </div>
-              </div>
-            )}
-
-            {/* Teacher Change Warning for Admin */}
-            {showTeacherChangeConfirm && (
-              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 mb-4 space-y-2">
-                <div className="flex items-center gap-2 font-bold text-rose-900">
-                  <AlertTriangle size={16} className="text-rose-600" />
-                  Xác nhận thay đổi Giáo viên phụ trách?
-                </div>
-                <p className="leading-relaxed text-rose-700">
-                  Lớp học này hiện đang có <strong>{editingClassActiveEnrolled} học viên</strong>. Việc thay đổi giáo viên có thể ảnh hưởng đến quyền chấm điểm, các buổi học trực tuyến và thông báo đến học viên.
-                </p>
-                <div className="flex justify-end gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setShowTeacherChangeConfirm(false)}
-                    className="px-3 py-1 bg-white border border-rose-300 text-rose-800 rounded font-semibold text-[11px]"
-                  >
-                    Hủy đổi
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowTeacherChangeConfirm(false);
-                      // proceed submit
-                      const isOngoing = editingClass.status === "ONGOING";
-                      const payload: any = {
-                        name: editClassForm.name.trim(),
-                        teacherId: Number(editClassForm.teacherId),
-                        capacity: Number(editClassForm.capacity),
-                        endDate: editClassForm.endDate ? new Date(editClassForm.endDate).toISOString() : undefined,
-                        meetingLink: editClassForm.meetingLink.trim() || undefined,
-                      };
-                      if (!isOngoing && editClassForm.startDate) {
-                        payload.startDate = new Date(editClassForm.startDate).toISOString();
-                      }
-                      if (!isEditingClassTuitionLocked) {
-                        payload.tuitionFeeVnd = Math.max(0, parseInt(editClassForm.tuitionFeeVnd) || 0);
-                      }
-                      updateClassMutation.mutate({ id: editingClass.id, data: payload });
-                    }}
-                    className="px-3 py-1 bg-rose-600 text-white rounded font-semibold text-[11px]"
-                  >
-                    Xác nhận đổi giáo viên
-                  </button>
                 </div>
               </div>
             )}
@@ -1117,23 +913,11 @@ export default function AdminCoursesPage() {
                   return;
                 }
 
-                // Check if teacher changed and class has students
-                const isTeacherChanged =
-                  editClassForm.teacherId &&
-                  Number(editClassForm.teacherId) !== editingClass.teacherId;
-
-                if (isTeacherChanged && editingClassActiveEnrolled > 0 && !showTeacherChangeConfirm) {
-                  setShowTeacherChangeConfirm(true);
-                  return;
-                }
-
                 const isOngoing = editingClass.status === "ONGOING";
                 const payload: any = {
                   name: editClassForm.name.trim(),
-                  teacherId: editClassForm.teacherId ? Number(editClassForm.teacherId) : undefined,
                   capacity: Number(editClassForm.capacity),
                   endDate: editClassForm.endDate ? new Date(editClassForm.endDate).toISOString() : undefined,
-                  meetingLink: editClassForm.meetingLink.trim() || undefined,
                 };
                 if (!isOngoing && editClassForm.startDate) {
                   payload.startDate = new Date(editClassForm.startDate).toISOString();
@@ -1177,32 +961,7 @@ export default function AdminCoursesPage() {
                 </div>
               </div>
 
-              {/* Section 2: Giáo viên phụ trách */}
-              <div className="space-y-2 pb-3 border-b border-slate-100">
-                <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                  2. Phân công Giáo viên
-                </h4>
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1">
-                    Giáo viên phụ trách <span className="text-rose-500">*</span>
-                  </label>
-                  <select
-                    disabled={editingClass.status === "COMPLETED" || editingClass.status === "CANCELLED"}
-                    value={editClassForm.teacherId}
-                    onChange={(e) => setEditClassForm({ ...editClassForm, teacherId: e.target.value })}
-                    className="w-full border border-slate-200 rounded-xl px-3.5 py-2 outline-none focus:border-blue-500 text-slate-800 font-semibold disabled:bg-slate-50 disabled:text-slate-500"
-                  >
-                    <option value="">-- Chọn giáo viên --</option>
-                    {teachers?.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.profile?.fullName || t.email} ({t.email})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Section 3: Sức chứa & Học phí */}
+              {/* Section 2: Sức chứa & Học phí */}
               <div className="space-y-3 pb-3 border-b border-slate-100">
                 <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                   3. Sức chứa & Học phí
@@ -1283,7 +1042,7 @@ export default function AdminCoursesPage() {
                 </div>
               </div>
 
-              {/* Section 4: Lịch học & Họp trực tuyến */}
+              {/* Section 3: Lịch học */}
               <div className="space-y-3 pb-2">
                 <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                   4. Thời gian & Phòng học
@@ -1335,17 +1094,6 @@ export default function AdminCoursesPage() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1">Meeting Link</label>
-                  <input
-                    type="url"
-                    disabled={editingClass.status === "COMPLETED" || editingClass.status === "CANCELLED"}
-                    value={editClassForm.meetingLink}
-                    onChange={(e) => setEditClassForm({ ...editClassForm, meetingLink: e.target.value })}
-                    placeholder="https://meet.google.com/..."
-                    className="w-full border border-slate-200 rounded-xl px-3.5 py-2 outline-none focus:border-blue-500 text-slate-800 disabled:bg-slate-50"
-                  />
-                </div>
               </div>
 
               <div className="flex gap-3 pt-3 border-t border-slate-100">
@@ -1354,7 +1102,6 @@ export default function AdminCoursesPage() {
                   onClick={() => {
                     setEditingClass(null);
                     setEditingClassCourse(null);
-                    setShowTeacherChangeConfirm(false);
                   }}
                   className="flex-1 py-2.5 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
                 >

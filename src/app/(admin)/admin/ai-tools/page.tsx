@@ -1039,7 +1039,7 @@ export default function AdminAiToolsPage() {
                           )}
                           {publishResult.assignmentId && (
                             <Link
-                              href="/teacher/assignments"
+                              href="/admin/assignments"
                               className="px-4 py-2 bg-amber-600 text-white rounded-xl text-xs font-black flex items-center gap-1.5 hover:bg-amber-700 shadow-sm"
                             >
                               Xem Bài Tập Đã Giao (#{publishResult.assignmentId}) <ArrowRight size={14} />

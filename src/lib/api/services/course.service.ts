@@ -4,13 +4,11 @@ export interface Class {
   id: number;
   name: string;
   courseId: number;
-  teacherId: number;
   startDate?: string | null;
   endDate?: string | null;
   capacity?: number;
   tuitionFeeVnd?: number;
   status?: string;
-  meetingLink?: string | null;
   studentCount?: number;
   activeEnrollmentCount?: number;
   totalEnrollmentCount?: number;
@@ -25,7 +23,6 @@ export interface Course {
   thumbnail?: string;
   level: string; // e.g., "BEGINNER", "INTERMEDIATE"
   status?: string;
-  teacherId?: number;
   classes?: Class[];
 }
 
@@ -46,7 +43,7 @@ export interface Lesson {
 
 export interface ClassDetail extends Class {
   lessons: Lesson[];
-  teacher: {
+  teacher?: {
     id: number;
     email: string;
     profile: {
@@ -72,7 +69,7 @@ export interface PublicCourseCard {
   level: string | null;
   status: string;
   createdAt: string;
-  teacher: PublicTeacher;
+  teacher?: PublicTeacher;
   upcomingClassCount: number;
 }
 
@@ -81,13 +78,13 @@ export interface PublicClass {
   name: string;
   startDate: string | null;
   endDate: string | null;
-  capacity: number;
+  capacity: number | null;
   tuitionFeeVnd: number;
   currentEnrollmentCount: number;
   remainingSeats: number;
   isSoldOut: boolean;
   status: string;
-  teacher: PublicTeacher;
+  teacher?: PublicTeacher;
 }
 
 export interface PublicLessonOutline {
@@ -105,7 +102,7 @@ export interface PublicCourseDetail {
   level: string | null;
   status: string;
   createdAt: string;
-  teacher: PublicTeacher;
+  teacher?: PublicTeacher;
   lessons: PublicLessonOutline[];
   classes: PublicClass[];
 }

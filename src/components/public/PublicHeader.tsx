@@ -82,15 +82,6 @@ export function PublicHeader() {
                   </Link>
                 </>
               )}
-              {user.role === "TEACHER" && (
-                <Link
-                  href="/teacher/dashboard"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-junior-blue text-white hover:bg-junior-blue-dark transition-colors shadow-xs"
-                >
-                  <LayoutDashboard size={18} />
-                  Khu vực giảng viên
-                </Link>
-              )}
               {user.role === "ADMIN" && (
                 <Link
                   href="/admin"
@@ -165,14 +156,6 @@ export function PublicHeader() {
                     <LayoutDashboard size={18} /> Vào học
                   </Link>
                 </>
-              ) : user.role === "TEACHER" ? (
-                <Link
-                  href="/teacher/dashboard"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold bg-junior-blue text-white"
-                >
-                  <LayoutDashboard size={18} /> Khu vực giảng viên
-                </Link>
               ) : (
                 <Link
                   href="/admin"
