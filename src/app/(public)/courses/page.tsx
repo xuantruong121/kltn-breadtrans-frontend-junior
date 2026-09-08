@@ -64,7 +64,7 @@ export default function PublicCoursesPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
       {/* 1. Header */}
       <div className="space-y-4 max-w-3xl">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-junior-blue font-bold text-xs uppercase tracking-wider">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-600 font-bold text-xs uppercase tracking-wider">
           Chương trình học chuẩn hóa
         </div>
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight">
@@ -85,7 +85,7 @@ export default function PublicCoursesPage() {
             placeholder="Tìm theo tên khóa học hoặc nội dung..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-junior-blue transition-colors"
+            className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-600 transition-colors"
           />
         </div>
 
@@ -100,7 +100,7 @@ export default function PublicCoursesPage() {
                 onClick={() => setSelectedLevel(opt.value)}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors shrink-0 ${
                   isSelected
-                    ? "bg-junior-blue text-white shadow-xs"
+                    ? "bg-blue-600 text-white shadow-xs"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                 }`}
               >
@@ -141,7 +141,7 @@ export default function PublicCoursesPage() {
               <div className="space-y-4">
                 {/* Badges row */}
                 <div className="flex items-center justify-between">
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-junior-blue border border-blue-200/60 uppercase tracking-wide">
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-600 border border-blue-200/60 uppercase tracking-wide">
                     {course.level || "Cơ bản"}
                   </span>
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
@@ -155,7 +155,7 @@ export default function PublicCoursesPage() {
                 </div>
 
                 {/* Course Title */}
-                <h2 className="text-xl font-bold text-slate-900 group-hover:text-junior-blue transition-colors line-clamp-2">
+                <h2 className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2">
                   {course.title}
                 </h2>
 
@@ -168,26 +168,28 @@ export default function PublicCoursesPage() {
               {/* Card Footer */}
               <div className="pt-6 mt-6 border-t border-slate-100 flex items-center justify-between">
                 {/* Academic info */}
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-xs text-slate-700">
-                    {course.teacher?.fullName?.[0] || "B"}
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center font-bold text-xs">
+                    <BookOpen size={16} />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-xs font-bold text-slate-800 truncate max-w-[120px]">
-                      {course.teacher?.fullName || "Ban Học Thuật BreadTrans"}
+                    <span className="text-xs font-bold text-slate-800">
+                      Tự học theo tiến độ
                     </span>
-                    <span className="text-[10px] font-medium text-slate-400">Đội ngũ học thuật</span>
+                    <span className="text-[10px] font-medium text-slate-400">Hỗ trợ AI 24/7</span>
                   </div>
                 </div>
+
 
                 {/* Detail Link */}
                 <Link
                   href={`/courses/${course.id}`}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-junior-blue transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-blue-600 transition-colors"
                 >
                   Xem chi tiết
                   <ArrowRight size={14} />
                 </Link>
+
               </div>
             </div>
           ))}

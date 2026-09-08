@@ -6,7 +6,6 @@ import {
   ArrowLeft, 
   Loader2, 
   PlayCircle, 
-  Video, 
   Calendar, 
   FileText, 
   CheckCircle, 
@@ -134,7 +133,7 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full min-h-[50vh]">
-        <Loader2 className="animate-spin text-junior-green" size={48} />
+        <Loader2 className="animate-spin text-emerald-600" size={48} />
       </div>
     );
   }
@@ -143,10 +142,11 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
     return (
       <div className="text-center p-12">
         <h2 className="text-2xl font-bold text-slate-800">Không tìm thấy lớp học</h2>
-        <button onClick={() => router.back()} className="mt-4 text-junior-blue font-bold">Quay lại</button>
+        <button onClick={() => router.back()} className="mt-4 text-blue-600 font-bold">Quay lại</button>
       </div>
     );
   }
+
 
   const course = cls.course;
 
@@ -154,81 +154,132 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
     <div className="max-w-5xl mx-auto">
       {/* Back button */}
       <div className="mb-6">
-        <BackButton href="/my-courses" label="Quay lại danh sách lớp học" />
+        <BackButton href="/my-courses" label="Quay lại khóa học của tôi" />
       </div>
 
-      {/* Hero Section */}
-      <div className="bg-white rounded-[2rem] border-4 border-slate-200 overflow-hidden shadow-sm mb-8">
-        <div className="h-48 bg-junior-green/10 relative">
-          {course?.thumbnailUrl ? (
-            <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-cover" />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-junior-green to-teal-500" />
-          )}
-          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl text-slate-700 font-bold flex items-center gap-2 shadow-sm">
-            LỚP: {cls.name}
+
+      {/* Workspace Header */}
+      <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-2xs mb-8 space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wide">
+              {course?.level || "Cơ bản"}
+            </span>
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
+              Gói học: {cls.name}
+            </span>
+          </div>
+          <span className="text-xs font-semibold text-slate-500">
+            Tự học theo tiến độ cá nhân
+          </span>
+        </div>
+
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            {course?.title || cls.name}
+          </h1>
+          <p className="mt-1 text-sm text-slate-600 leading-relaxed max-w-3xl">
+            {course?.description || "Không gian tự học tích hợp bài giảng, bài tập thực hành và kiểm tra đánh giá."}
+          </p>
+        </div>
+
+        {/* Content Progress Bar */}
+        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
+          <div className="flex justify-between text-xs font-bold text-slate-600">
+            <span>Tiến độ nội dung hoàn thành</span>
+            <span className="text-blue-600 font-extrabold">{cls.progress ?? 0}%</span>
+          </div>
+          <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-blue-600 transition-all duration-300"
+              style={{ width: `${Math.min(100, Math.max(0, cls.progress ?? 0))}%` }}
+            />
           </div>
         </div>
-        <div className="p-8">
-          <h1 className="text-3xl font-bold text-slate-800 mb-2">{course?.title || "Khóa học"}</h1>
-          <div className="flex flex-wrap items-center gap-4 text-slate-500 font-bold mb-6">
-            <div className="flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-xl min-w-max">
-              <img src={cls.teacher?.profile?.avatar || course?.teacher?.profile?.avatar || "/default-avatar.png"} alt="Teacher" className="w-6 h-6 rounded-full" /> 
-              {cls.teacher?.profile?.fullName || cls.teacher?.email || course?.teacher?.profile?.fullName || course?.teacher?.email || "Ban Học Thuật BreadTrans"}
-            </div>
-          </div>
 
-          {/* Tabs */}
-          <div className="flex border-b border-slate-200 mt-6 overflow-x-auto whitespace-nowrap hide-scrollbar">
-            <button 
-              onClick={() => setActiveTab("lessons")}
-              className={`px-4 md:px-6 py-3 font-bold border-b-4 transition-colors flex items-center gap-2 ${activeTab === "lessons" ? "border-junior-blue text-junior-blue" : "border-transparent text-slate-500 hover:text-slate-700"}`}
-            >
-              <BookOpen size={18} /> Bài giảng
-            </button>
-            <button 
-              onClick={() => setActiveTab("assignments")}
-              className={`px-4 md:px-6 py-3 font-bold border-b-4 transition-colors flex items-center gap-2 ${activeTab === "assignments" ? "border-junior-green text-junior-green" : "border-transparent text-slate-500 hover:text-slate-700"}`}
-            >
-              <FileText size={18} /> Bài tập ({cls.assignments?.length || 0})
-            </button>
-          </div>
+        {/* Tabs */}
+        <div className="flex border-b border-slate-200 pt-2 gap-4">
+          <button 
+            onClick={() => setActiveTab("lessons")}
+            className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 cursor-pointer ${
+              activeTab === "lessons" 
+                ? "border-blue-600 text-blue-600" 
+                : "border-transparent text-slate-500 hover:text-slate-900"
+            }`}
+          >
+            <BookOpen size={16} /> Bài giảng & Nội dung ({course?.lessons?.length || 0})
+          </button>
+          <button 
+            onClick={() => setActiveTab("assignments")}
+            className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 cursor-pointer ${
+              activeTab === "assignments" 
+                ? "border-blue-600 text-blue-600" 
+                : "border-transparent text-slate-500 hover:text-slate-900"
+            }`}
+          >
+            <FileText size={16} /> Bài tập & Đánh giá ({cls.assignments?.length || 0})
+          </button>
         </div>
       </div>
 
       {/* Tab Content */}
-      <div className="bg-white rounded-2xl p-6 border-4 border-slate-100 shadow-sm min-h-[400px]">
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-2xs min-h-[400px]">
         
         {/* LESSONS TAB */}
         {activeTab === "lessons" && (
-          <div>
-            <h2 className="text-xl font-bold text-slate-800 mb-6">Chương trình học</h2>
+          <div className="space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <h2 className="text-xl font-extrabold text-slate-900">Danh sách bài học</h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Học theo thứ tự để nắm vững kiến thức một cách liền mạch
+                </p>
+              </div>
+              <span className="text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-xl">
+                {course?.lessons?.length || 0} bài học
+              </span>
+            </div>
+
             {course?.lessons && course.lessons.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {course.lessons.map((lesson: any, i: number) => (
-                  <div key={lesson.id} className="flex items-center gap-4 p-4 border-2 border-slate-100 rounded-xl hover:border-junior-blue/30 transition-colors">
-                    <div className="w-12 h-12 bg-sky-100 text-junior-blue rounded-full flex items-center justify-center font-bold text-lg">
-                      {i + 1}
+                  <div 
+                    key={lesson.id} 
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-5 border border-slate-200 rounded-2xl hover:border-blue-300 hover:bg-slate-50/60 transition"
+                  >
+                    <div className="flex items-start gap-3.5">
+                      <div className="w-9 h-9 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-extrabold text-sm shrink-0 border border-blue-100">
+                        {lesson.order || i + 1}
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="font-extrabold text-slate-900 text-base">{lesson.title}</h4>
+                        <p className="text-slate-500 text-xs sm:text-sm leading-relaxed line-clamp-2">
+                          {lesson.description || lesson.content || "Nội dung bài giảng chi tiết."}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <h4 className="font-bold text-slate-800 text-lg">{lesson.title}</h4>
-                      <p className="text-slate-500 text-sm">{lesson.content || "Bài giảng chi tiết"}</p>
-                    </div>
+
                     {lesson.videoUrl && (
-                      <a href={lesson.videoUrl} target="_blank" rel="noopener noreferrer" className="bg-junior-blue text-white p-2 rounded-lg hover:bg-blue-600">
-                        <PlayCircle size={20} />
+                      <a 
+                        href={lesson.videoUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-extrabold hover:bg-blue-700 transition shrink-0"
+                      >
+                        <PlayCircle size={16} /> Xem video bài giảng
                       </a>
                     )}
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 text-slate-500 border-2 border-dashed border-slate-200 rounded-xl">
+              <div className="text-center py-12 text-slate-500 border border-dashed border-slate-200 rounded-2xl">
                 Khóa học chưa có bài giảng nào.
               </div>
             )}
           </div>
         )}
+
 
         {/* ASSIGNMENTS TAB */}
         {activeTab === "assignments" && (
@@ -261,7 +312,7 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
                           )}
                           {isSubmitted && (
                             <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold text-junior-green bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 flex items-center gap-1">
+                              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 flex items-center gap-1">
                                 <CheckCircle size={14} /> Đã nộp
                               </span>
                               {isLate ? (
@@ -282,9 +333,10 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
                         {isGraded && (
                           <div className="text-center mb-2">
                             <span className="block text-xs font-bold text-slate-400 mb-1">Điểm</span>
-                            <span className="text-2xl font-black text-junior-blue">{submission.grade}/10</span>
+                            <span className="text-2xl font-black text-blue-600">{submission.grade}/10</span>
                           </div>
                         )}
+
                         <button 
                           onClick={() => {
                             setSelectedAssignment(asgn);
@@ -308,9 +360,13 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
                               setUploadedFile(null);
                             }
                           }}
-                          className={`btn-green-3d font-bold px-6 py-2 rounded-xl text-white ${isSubmitted ? (isGraded ? 'bg-slate-400' : 'bg-junior-blue') : 'bg-junior-green'}`}
+                          className={`font-extrabold px-5 py-2.5 rounded-xl text-xs transition cursor-pointer ${
+                            isSubmitted 
+                              ? (isGraded ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-blue-50 text-blue-700 hover:bg-blue-100') 
+                              : 'bg-blue-600 text-white hover:bg-blue-700 shadow-2xs'
+                          }`}
                         >
-                          {isSubmitted ? (isGraded ? "Xem kết quả" : "Xem bài làm") : "Làm bài ngay"}
+                          {isSubmitted ? (isGraded ? "Xem kết quả chấm" : "Xem bài làm") : "Làm bài ngay"}
                         </button>
                       </div>
                     </div>
@@ -318,13 +374,14 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
                 })}
               </div>
             ) : (
-              <div className="text-center py-12 text-slate-500 border-2 border-dashed border-slate-200 rounded-xl">
-                Lớp học chưa có bài tập nào.
+              <div className="text-center py-12 text-slate-500 border border-dashed border-slate-200 rounded-2xl">
+                Gói học hiện chưa có bài tập nào.
               </div>
             )}
           </div>
         )}
       </div>
+
 
       {/* ================= REDESIGNED MULTI-MODE ASSIGNMENT MODAL ================= */}
       <AnimatePresence>
@@ -409,42 +466,43 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
 
                 {/* Modal Body */}
                 <div className="p-5 sm:p-7 overflow-y-auto space-y-6">
-                  {/* Yêu cầu bài tập (Mission Brief Card) - No AI signs */}
-                  <div className="bg-sky-50/70 border-2 border-sky-200 rounded-2xl p-4 sm:p-5 shadow-xs">
+                  {/* Yêu cầu bài tập (Mission Brief Card) */}
+                  <div className="bg-blue-50/70 border border-blue-200 rounded-2xl p-4 sm:p-5 shadow-2xs">
                     <div className="flex items-center gap-2 mb-2">
-                      <div className="w-7 h-7 rounded-lg bg-sky-600 text-white flex items-center justify-center shrink-0">
+                      <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
                         <ClipboardList size={16} />
                       </div>
-                      <h4 className="font-black text-sky-900 text-sm uppercase tracking-wide">
-                        Yêu cầu bài tập từ giáo viên
+                      <h4 className="font-extrabold text-blue-900 text-xs sm:text-sm uppercase tracking-wide">
+                        Yêu cầu bài tập
                       </h4>
                     </div>
-                    <p className="text-slate-700 text-sm sm:text-base font-medium whitespace-pre-wrap leading-relaxed pl-9">
-                      {selectedAssignment.description || "Hãy hoàn thành bài tập theo hướng dẫn của giáo viên."}
+                    <p className="text-slate-700 text-sm font-medium whitespace-pre-wrap leading-relaxed pl-9">
+                      {selectedAssignment.description || "Hãy hoàn thành bài tập theo hướng dẫn đính kèm."}
                     </p>
                   </div>
 
-                  {/* Teacher Feedback & Grade Result (If Graded) */}
+                  {/* Feedback & Grade Result (If Graded) */}
                   {isGraded && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="bg-gradient-to-br from-amber-50 to-emerald-50 border-2 border-emerald-300 rounded-3xl p-5 sm:p-6 shadow-md"
+                      className="bg-gradient-to-br from-amber-50 to-emerald-50 border border-emerald-300 rounded-2xl p-5 shadow-xs"
                     >
                       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-emerald-200/60">
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-md shrink-0">
-                            <Award size={28} />
+                          <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                            <Award size={22} />
                           </div>
                           <div>
-                            <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
+                            <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">
                               Kết quả đánh giá
                             </span>
-                            <h3 className="text-lg font-black text-slate-800">
-                              Bài làm đã được giáo viên chấm điểm
+                            <h3 className="text-base font-extrabold text-slate-800">
+                              Bài làm đã được chấm điểm
                             </h3>
                           </div>
                         </div>
+
 
                         <div className="bg-white px-5 py-2.5 rounded-2xl border-2 border-emerald-300 text-center shadow-xs self-start sm:self-auto">
                           <span className="text-[10px] font-black uppercase text-slate-400 block">

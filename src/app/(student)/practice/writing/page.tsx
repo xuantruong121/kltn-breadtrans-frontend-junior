@@ -1,16 +1,12 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
-import { PenTool, Loader2, PlayCircle, CheckCircle2 } from "lucide-react";
+import { PenTool, Loader2, ArrowRight, CheckCircle2, BookOpen } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { writingService } from "@/lib/api/services/writing.service";
 import { BackButton } from "@/components/ui";
 
 export default function WritingTopicsPage() {
-  const router = useRouter();
-  
   const { data: topicsData, isLoading } = useQuery({
     queryKey: ["writing-topics"],
     queryFn: writingService.getTopics,
@@ -18,78 +14,80 @@ export default function WritingTopicsPage() {
   const topics = (topicsData as any)?.quizzes || topicsData || [];
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="mb-8">
-        <BackButton href="/dashboard" label="Quay lại Trang chủ" />
+    <div className="space-y-8 pb-16">
+      <div className="mb-2">
+        <BackButton href="/practice" label="Quay lại Trung tâm luyện tập" />
       </div>
 
-      <div className="flex items-center gap-4 mb-8">
-        <div className="bg-pink-500 p-4 rounded-2xl text-white">
-          <PenTool size={32} />
-        </div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-slate-800">Luyện Viết (Toeic Part 1-3)</h1>
-          <p className="text-slate-500 font-medium mt-1">Viết bài luận và nhận đánh giá chi tiết từ AI Gia sư.</p>
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 uppercase tracking-wider">
+            <PenTool size={14} /> Luyện viết chuẩn đề TOEIC Writing
+          </div>
+          <h1 className="mt-1 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+            Luyện Viết AI
+          </h1>
+          <p className="mt-1 text-sm text-slate-500 font-medium">
+            Viết bài theo các chủ đề thực tế trong môi trường làm việc và nhận đánh giá ngữ pháp, từ vựng chi tiết từ AI.
+          </p>
         </div>
       </div>
 
       {isLoading ? (
         <div className="flex justify-center p-12">
-          <Loader2 className="animate-spin text-pink-500" size={48} />
+          <Loader2 className="animate-spin text-blue-600" size={40} />
         </div>
       ) : topics && topics.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {topics.map((topic: any, index: number) => {
+          {topics.map((topic: any) => {
             const isCompleted = topic.isCompleted;
             return (
-              <motion.div
+              <div
                 key={topic.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ y: -6 }}
-                className={`bg-white rounded-[2rem] border-4 overflow-hidden shadow-sm flex flex-col relative ${isCompleted ? 'border-green-400' : 'border-slate-200'}`}
+                className="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-2xs transition duration-200 hover:-translate-y-1 hover:border-rose-300 hover:shadow-md"
               >
-                {isCompleted && (
-                  <div className="absolute top-4 right-4 z-10 bg-green-500 text-white p-2 rounded-full shadow-lg" title="Đã hoàn thành">
-                    <CheckCircle2 size={24} />
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-[11px] font-bold text-rose-700">
+                      Workplace Writing
+                    </span>
+                    {isCompleted && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                        <CheckCircle2 size={12} /> Đã hoàn thành
+                      </span>
+                    )}
                   </div>
-                )}
-                <div className="h-40 bg-pink-100 relative">
-                  {topic.imageUrl ? (
-                    <img src={topic.imageUrl} alt={topic.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-pink-300">
-                      <PenTool size={64} />
-                    </div>
-                  )}
-                </div>
-                <div className="p-6 flex-1 flex flex-col">
-                  <h3 className="text-xl font-bold text-slate-800 mb-2 line-clamp-1">{topic.topicName || topic.title}</h3>
-                  <p className="text-slate-500 font-medium text-sm line-clamp-2 mb-6 flex-1">
-                    {topic.description || "Chủ đề luyện viết: " + (topic.topicName || topic.title)}
+
+                  <h3 className="text-lg font-extrabold text-slate-900 line-clamp-1">
+                    {topic.topicName || topic.title}
+                  </h3>
+                  <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed line-clamp-3">
+                    {topic.description ||
+                      "Luyện tập viết câu và đoạn văn trả lời email theo yêu cầu công việc."}
                   </p>
-                  <Link href={`/practice/writing/${topic.id}`}>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`w-full flex items-center justify-center gap-2 text-white font-bold p-3 rounded-xl transition-all ${
-                        isCompleted 
-                          ? 'bg-green-500 shadow-[0_4px_0_0_#15803d] active:shadow-[0_0px_0_0_#15803d]' 
-                          : 'bg-pink-500 shadow-[0_4px_0_0_#be185d] active:shadow-[0_0px_0_0_#be185d]'
-                      } active:translate-y-1`}
-                    >
-                      {isCompleted ? 'Ôn Tập Lại' : 'Viết Bài'} <PlayCircle size={20} strokeWidth={3} />
-                    </motion.button>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-slate-100">
+                  <Link
+                    href={`/practice/writing/${topic.id}`}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-xs font-extrabold text-white shadow-xs transition hover:bg-blue-700"
+                  >
+                    {isCompleted ? "Ôn tập lại" : "Bắt đầu viết"} <ArrowRight size={14} />
                   </Link>
                 </div>
-              </motion.div>
-            )
+              </div>
+            );
           })}
         </div>
       ) : (
-        <div className="bg-slate-50 p-12 rounded-2xl border-2 border-dashed border-slate-300 text-center">
-          <p className="text-slate-500 font-medium text-lg">Chưa có bài luyện viết nào được tạo.</p>
+        <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center max-w-lg mx-auto space-y-3">
+          <BookOpen className="mx-auto text-slate-300" size={40} />
+          <h3 className="text-base font-extrabold text-slate-800">
+            Chưa có bài luyện viết nào
+          </h3>
+          <p className="text-xs text-slate-500">
+            Hệ thống đang chuẩn bị các đề bài mới. Vui lòng quay lại sau!
+          </p>
         </div>
       )}
     </div>

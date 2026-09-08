@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { 
   Users, 
   BookOpen, 
-  UserCheck, 
   Clock, 
   AlertTriangle, 
   Loader2,
@@ -28,7 +27,6 @@ import AdminContentBreakdown from "@/components/admin/AdminContentBreakdown";
 type DashboardStats = {
   stats: {
     totalStudents: number;
-    totalTeachers: number;
     totalCourses: number;
     pendingCourses: number;
     totalEnrollments: number;
@@ -110,17 +108,6 @@ export default function AdminDashboardPage() {
           bg: "bg-blue-50",
           borderColor: "border-blue-100",
           sub: `+${data.stats.totalEnrollments.toLocaleString()} lượt ghi danh`,
-          trendPositive: true,
-        },
-        {
-          id: "teachers",
-          name: "Giảng Viên Hoạt Động",
-          value: data.stats.totalTeachers.toLocaleString(),
-          icon: UserCheck,
-          color: "text-emerald-600",
-          bg: "bg-emerald-50",
-          borderColor: "border-emerald-100",
-          sub: "Đang phụ trách lớp",
           trendPositive: true,
         },
         {

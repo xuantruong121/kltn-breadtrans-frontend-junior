@@ -1,31 +1,30 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
+import { useState, useMemo } from "react";
+import Link from "next/link";
 import {
   BookOpen,
   Loader2,
   ArrowRight,
-  Users,
-  Calendar,
-  UserCircle,
-  AlertCircle,
   CreditCard,
   Clock,
-  CheckCircle,
+  CheckCircle2,
   XCircle,
+  AlertCircle,
   ChevronLeft,
   ChevronRight,
+  GraduationCap,
+  Sparkles,
 } from "lucide-react";
-import Link from "next/link";
 import { useAuthStore } from "@/stores/authStore";
 import axiosClient from "@/lib/api/axiosClient";
-import { useState, useMemo } from "react";
 import {
   paymentService,
   StudentPayment,
 } from "@/lib/api/services/payment.service";
 import { PaymentDetailModal } from "@/modules/payment/components/PaymentDetailModal";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 type EnrolledClass = {
   classId: number;
@@ -38,28 +37,26 @@ type EnrolledClass = {
   tuitionFeeVnd?: number;
   joinedAt: string;
   studentCount: number;
-  teacher: { id: number; email: string; profile: { fullName: string; avatar: string | null } | null } | null;
   course: {
-    id: number; title: string; thumbnail: string | null; description: string | null; level: string | null;
+    id: number;
+    title: string;
+    thumbnail: string | null;
+    description: string | null;
+    level: string | null;
   };
 };
 
-const STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  ACTIVE: { label: "Đang học", className: "bg-green-100 text-green-700" },
-  UPCOMING: { label: "Sắp khai giảng", className: "bg-blue-100 text-blue-700" },
-  COMPLETED: { label: "Đã kết thúc", className: "bg-slate-100 text-slate-600" },
-};
+type TabFilter = "ALL" | "ACTIVE" | "PENDING_PAYMENT" | "COMPLETED";
 
-const LEVEL_LABEL: Record<string, string> = {
-  BEGINNER: "Cơ bản", INTERMEDIATE: "Trung cấp", ADVANCED: "Nâng cao",
-};
-
-export default function CoursesPage() {
+export default function MyCoursesPage() {
   const { user } = useAuthStore();
+  const [selectedTab, setSelectedTab] = useState<TabFilter>("ALL");
   const [selectedPaymentId, setSelectedPaymentId] = useState<number | null>(null);
   const [selectedEnrollmentStatus, setSelectedEnrollmentStatus] = useState<
     "ACTIVE" | "PENDING_PAYMENT" | "COMPLETED" | "DROPPED" | undefined
   >(undefined);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   const { data: classes, isLoading } = useQuery<EnrolledClass[]>({
     queryKey: ["my-enrolled-classes", user?.id],
@@ -86,276 +83,250 @@ export default function CoursesPage() {
     return map;
   }, [payments]);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
-  
-  // All enrolled offerings
-  const validClasses = classes || [];
-  
+  const allEnrolled = classes || [];
+
+  const filteredClasses = useMemo(() => {
+    if (selectedTab === "ALL") return allEnrolled;
+    if (selectedTab === "ACTIVE") {
+      return allEnrolled.filter((c) => c.enrollmentStatus === "ACTIVE");
+    }
+    if (selectedTab === "PENDING_PAYMENT") {
+      return allEnrolled.filter((c) => c.enrollmentStatus === "PENDING_PAYMENT");
+    }
+    if (selectedTab === "COMPLETED") {
+      return allEnrolled.filter(
+        (c) => c.enrollmentStatus === "COMPLETED" || c.progress >= 100
+      );
+    }
+    return allEnrolled;
+  }, [allEnrolled, selectedTab]);
+
+  const totalPages = Math.ceil(filteredClasses.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentClasses = validClasses.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(validClasses.length / itemsPerPage);
+  const currentClasses = filteredClasses.slice(indexOfFirstItem, indexOfLastItem);
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full min-h-[50vh]">
-        <Loader2 className="animate-spin text-junior-green" size={48} />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="animate-spin text-blue-600" size={40} />
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <div className="bg-junior-green p-4 rounded-2xl text-white">
-          <BookOpen size={32} />
-        </div>
+    <div className="space-y-8 pb-16">
+      {/* 1. Header & Summary */}
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <h1 className="text-4xl font-bold text-slate-800">Lớp học của tôi</h1>
-          <p className="text-slate-500 font-medium mt-1">
-            {classes && classes.length > 0
-              ? `Bạn đang tham gia ${classes.length} lớp học.`
-              : "Chưa có lớp học nào được ghi danh."}
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 uppercase tracking-wider">
+            <GraduationCap size={15} /> Thư viện khóa học của bạn
+          </div>
+          <h1 className="mt-1 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+            Khóa học của tôi
+          </h1>
+          <p className="mt-1 text-sm text-slate-500 font-medium">
+            Quản lý lộ trình học tập, theo dõi tiến độ bài giảng và truy cập vào không gian học.
           </p>
         </div>
+
+        <Link
+          href="/courses"
+          className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-extrabold text-slate-700 shadow-2xs hover:border-blue-300 hover:text-blue-600"
+        >
+          Khám phá thêm khóa học <ArrowRight size={14} />
+        </Link>
       </div>
 
-      {/* Classes Grid */}
-      {validClasses.length > 0 ? (
+      {/* 2. Filter Tabs */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3">
+        {[
+          { key: "ALL", label: "Tất cả khóa học", count: allEnrolled.length },
+          {
+            key: "ACTIVE",
+            label: "Đang học",
+            count: allEnrolled.filter((c) => c.enrollmentStatus === "ACTIVE").length,
+          },
+          {
+            key: "PENDING_PAYMENT",
+            label: "Chờ thanh toán",
+            count: allEnrolled.filter((c) => c.enrollmentStatus === "PENDING_PAYMENT").length,
+          },
+          {
+            key: "COMPLETED",
+            label: "Đã hoàn thành",
+            count: allEnrolled.filter(
+              (c) => c.enrollmentStatus === "COMPLETED" || c.progress >= 100
+            ).length,
+          },
+        ].map((tab) => {
+          const isActive = selectedTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => {
+                setSelectedTab(tab.key as TabFilter);
+                setCurrentPage(1);
+              }}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-colors cursor-pointer ${
+                isActive
+                  ? "bg-blue-600 text-white shadow-xs"
+                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+              }`}
+            >
+              <span>{tab.label}</span>
+              <span
+                className={`rounded-full px-1.5 py-0.2 text-[10px] font-extrabold ${
+                  isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+                }`}
+              >
+                {tab.count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 3. Courses Grid */}
+      {currentClasses.length > 0 ? (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {currentClasses.map((cls, index) => {
+            {currentClasses.map((cls) => {
               const payment = paymentMap.get(cls.classId);
               const isPending = cls.enrollmentStatus === "PENDING_PAYMENT";
-
-              let badge = STATUS_BADGE[cls.classStatus] || {
-                label: cls.classStatus,
-                className: "bg-slate-100 text-slate-600",
-              };
-
-              if (isPending) {
-                if (payment?.status === "REPORTED") {
-                  badge = {
-                    label: "Đã báo chuyển khoản",
-                    className: "bg-sky-100 text-sky-800 border border-sky-300",
-                  };
-                } else if (payment?.status === "CONFIRMED") {
-                  badge = {
-                    label: "Đã nhận thanh toán (Chờ kích hoạt)",
-                    className: "bg-amber-100 text-amber-800 border border-amber-300",
-                  };
-                } else if (payment?.status === "REJECTED") {
-                  badge = {
-                    label: "Bị từ chối",
-                    className: "bg-rose-100 text-rose-800 border border-rose-300",
-                  };
-                } else if (payment?.status === "REVIEW_REQUIRED") {
-                  badge = {
-                    label: "Cần xử lý",
-                    className: "bg-purple-100 text-purple-800 border border-purple-300",
-                  };
-                } else {
-                  badge = {
-                    label: "Chờ thanh toán",
-                    className: "bg-amber-100 text-amber-800 border border-amber-300",
-                  };
-                }
-              }
+              const isCompleted =
+                cls.enrollmentStatus === "COMPLETED" || cls.progress >= 100;
 
               return (
-              <motion.div
-                key={cls.classId || index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.08 }}
-                whileHover={{ y: -5 }}
-                className="group bg-white rounded-[2rem] border-4 border-slate-200 overflow-hidden shadow-sm flex flex-col"
-              >
-                {/* Thumbnail */}
-                <div className="h-44 relative overflow-hidden bg-gradient-to-br from-sky-400 to-indigo-500 flex items-center justify-center group-hover:from-sky-300 group-hover:to-indigo-400 transition-colors">
-                  <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
-                  <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-                  <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-white/20 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-                  <BookOpen size={64} className="text-white/80 drop-shadow-md z-10 group-hover:scale-110 transition-transform duration-300" />
-                  {/* Status badge */}
-                  <div className={`absolute top-3 left-3 px-3 py-1 rounded-xl text-xs font-bold ${badge.className}`}>
-                    {badge.label}
-                  </div>
-                  {/* Level badge */}
-                  {cls.course?.level && (
-                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-xl text-slate-600 font-bold text-xs">
-                      {LEVEL_LABEL[cls.course.level] || cls.course.level}
+                <div
+                  key={cls.classId}
+                  className="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-2xs transition duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+                >
+                  <div>
+                    {/* Header: Level & Status badge */}
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-bold text-blue-700">
+                        {cls.course?.level || "Cơ bản"}
+                      </span>
+                      <StatusBadge status={cls.enrollmentStatus} size="sm" />
                     </div>
-                  )}
-                </div>
 
-                {/* Content */}
-                <div className="p-5 flex-1 flex flex-col">
-                  {/* Course name */}
-                  <p className="text-xs font-bold text-junior-blue uppercase tracking-wide mb-1">{cls.course?.title || "Khóa học"}</p>
-                  {/* Class name */}
-                  <h3 className="text-xl font-bold text-slate-800 mb-3 line-clamp-2">{cls.className}</h3>
+                    {/* Course Title */}
+                    <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">
+                      {cls.course?.title || "Khóa học"}
+                    </p>
+                    <h3 className="mt-1 text-lg font-extrabold text-slate-900 line-clamp-2">
+                      {cls.className}
+                    </h3>
 
-                  {/* Teacher */}
-                  <div className="flex items-center gap-2 mb-2">
-                    <UserCircle size={16} className="text-slate-400 flex-shrink-0" />
-                    <span className="text-sm text-slate-500 truncate">
-                      {cls.teacher?.profile?.fullName || cls.teacher?.email || "Ban Học Thuật BreadTrans"}
-                    </span>
+                    {/* Meta info */}
+                    <p className="mt-2 text-xs text-slate-500 leading-relaxed line-clamp-2">
+                      {cls.course?.description ||
+                        "Lộ trình tự học theo bài giảng tuần tự, bài tập thực hành và hỗ trợ AI."}
+                    </p>
+
+                    {/* Progress Bar or Payment Info */}
+                    <div className="mt-6 pt-4 border-t border-slate-100">
+                      {isPending ? (
+                        <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-3.5 space-y-1">
+                          <div className="flex items-center justify-between text-xs font-bold text-amber-900">
+                            <span>Học phí:</span>
+                            <span>
+                              {new Intl.NumberFormat("vi-VN").format(
+                                payment?.amountVnd ?? cls.tuitionFeeVnd ?? 0
+                              )}{" "}
+                              đ
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-amber-700">
+                            {payment?.status === "REPORTED"
+                              ? "Đã báo chuyển khoản. Quản trị viên đang duyệt."
+                              : "Vui lòng hoàn tất thanh toán để mở khóa toàn bộ bài học."}
+                          </p>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="flex justify-between text-xs font-bold text-slate-600 mb-1.5">
+                            <span>Tiến độ nội dung</span>
+                            <span className="text-blue-600 font-extrabold">
+                              {cls.progress}%
+                            </span>
+                          </div>
+                          <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                            <div
+                              className="h-full bg-blue-600 rounded-full transition-all duration-300"
+                              style={{ width: `${Math.min(100, cls.progress)}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Students */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <Users size={16} className="text-slate-400 flex-shrink-0" />
-                    <span className="text-sm text-slate-500">{cls.studentCount} học viên</span>
-                    {cls.startDate && (
-                      <>
-                        <span className="text-slate-300 mx-1">•</span>
-                        <Calendar size={14} className="text-slate-400" />
-                        <span className="text-sm text-slate-500">
-                          {new Date(cls.startDate).toLocaleDateString("vi-VN")}
-                        </span>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Progress bar or Payment Note */}
-                  {isPending ? (
-                    <div className="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200/80 space-y-1">
-                      <div className="flex items-center justify-between text-xs font-bold text-amber-900">
-                        <span>Học phí:</span>
-                        <span>{new Intl.NumberFormat("vi-VN").format(payment?.amountVnd ?? cls.tuitionFeeVnd ?? 0)} đ</span>
-                      </div>
-                      <p className="text-[11px] text-amber-700">
-                        Vui lòng chờ trung tâm xác nhận để bắt đầu học.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="mb-4">
-                      <div className="flex justify-between text-xs text-slate-500 mb-1">
-                        <span>Tiến độ nội dung</span>
-                        <span className="font-bold text-junior-green">{cls.progress}%</span>
-                      </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2.5">
-                        <motion.div
-                          className="bg-junior-green h-2.5 rounded-full"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${cls.progress}%` }}
-                          transition={{ delay: index * 0.08 + 0.3, duration: 0.8 }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Action Buttons */}
-                  <div className="mt-auto flex flex-col gap-2">
+                  {/* Primary Action CTA */}
+                  <div className="mt-6 pt-4">
                     {isPending ? (
                       payment ? (
-                        payment.status === "PENDING" ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedPaymentId(payment.id);
-                              setSelectedEnrollmentStatus(cls.enrollmentStatus as any);
-                            }}
-                            className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold p-3 rounded-xl transition-colors cursor-pointer text-xs"
-                          >
-                            <CreditCard size={16} />
-                            Xem hướng dẫn chuyển khoản
-                          </button>
-                        ) : payment.status === "REPORTED" ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedPaymentId(payment.id);
-                              setSelectedEnrollmentStatus(cls.enrollmentStatus as any);
-                            }}
-                            className="w-full flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-bold p-3 rounded-xl transition-colors cursor-pointer text-xs"
-                          >
-                            <Clock size={16} />
-                            Đã báo chuyển khoản — Chờ xác nhận
-                          </button>
-                        ) : payment.status === "CONFIRMED" ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedPaymentId(payment.id);
-                              setSelectedEnrollmentStatus(cls.enrollmentStatus as any);
-                            }}
-                            className="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-bold p-3 rounded-xl transition-colors cursor-pointer text-xs"
-                          >
-                            <Clock size={16} />
-                            Đã nhận thanh toán (Chờ kích hoạt)
-                          </button>
-                        ) : payment.status === "REJECTED" ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedPaymentId(payment.id);
-                              setSelectedEnrollmentStatus(cls.enrollmentStatus as any);
-                            }}
-                            className="w-full flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-bold p-3 rounded-xl transition-colors cursor-pointer text-xs"
-                          >
-                            <XCircle size={16} />
-                            Thanh toán bị từ chối
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedPaymentId(payment.id);
-                              setSelectedEnrollmentStatus(cls.enrollmentStatus as any);
-                            }}
-                            className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold p-3 rounded-xl transition-colors cursor-pointer text-xs"
-                          >
-                            <AlertCircle size={16} />
-                            Cần xử lý thêm
-                          </button>
-                        )
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedPaymentId(payment.id);
+                            setSelectedEnrollmentStatus(
+                              cls.enrollmentStatus as any
+                            );
+                          }}
+                          className="w-full inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-amber-500 px-4 py-2.5 text-xs font-extrabold text-white shadow-xs transition hover:bg-amber-600 cursor-pointer"
+                        >
+                          <CreditCard size={15} />
+                          {payment.status === "REPORTED"
+                            ? "Xem trạng thái chuyển khoản"
+                            : "Xem hướng dẫn thanh toán"}
+                        </button>
                       ) : (
-                        <div className="w-full p-3 rounded-xl text-center text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
-                          Chưa có thông tin thanh toán. Vui lòng liên hệ trung tâm.
+                        <div className="w-full rounded-2xl bg-amber-50 p-2.5 text-center text-xs font-bold text-amber-800 border border-amber-200">
+                          Chờ thông tin thanh toán
                         </div>
                       )
+                    ) : isCompleted ? (
+                      <Link
+                        href={`/classes/${cls.classId}`}
+                        className="w-full inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-extrabold text-slate-800 shadow-2xs transition hover:bg-slate-50 hover:text-blue-600"
+                      >
+                        Xem lại bài học <ArrowRight size={14} />
+                      </Link>
                     ) : (
-                      <Link href={`/classes/${cls.classId}`} className="w-full">
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          className="w-full btn-green-3d flex items-center justify-center gap-2 bg-junior-green text-white font-bold p-3 rounded-xl cursor-pointer"
-                        >
-                          Vào Học <ArrowRight size={20} strokeWidth={3} />
-                        </motion.button>
+                      <Link
+                        href={`/classes/${cls.classId}`}
+                        className="w-full inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-xs font-extrabold text-white shadow-xs transition hover:bg-blue-700"
+                      >
+                        Tiếp tục học <ArrowRight size={14} />
                       </Link>
                     )}
                   </div>
                 </div>
-              </motion.div>
-            );
-          })}
+              );
+            })}
           </div>
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="mt-12 flex justify-center items-center gap-4">
+            <div className="mt-8 flex justify-center items-center gap-2">
               <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="p-3 rounded-2xl bg-white border-2 border-slate-200 text-slate-500 hover:text-junior-blue hover:border-junior-blue disabled:opacity-50 transition-colors"
+                className="p-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition-colors cursor-pointer"
               >
-                <ChevronLeft size={24} />
+                <ChevronLeft size={18} />
               </button>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 {Array.from({ length: totalPages }).map((_, i) => (
                   <button
                     key={i}
                     onClick={() => setCurrentPage(i + 1)}
-                    className={`w-10 h-10 rounded-xl font-bold transition-all ${
+                    className={`h-9 w-9 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
                       currentPage === i + 1
-                        ? "bg-junior-blue text-white shadow-md shadow-sky-200"
-                        : "bg-white border-2 border-slate-200 text-slate-500 hover:border-junior-blue hover:text-junior-blue"
+                        ? "bg-blue-600 text-white shadow-xs"
+                        : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
                     }`}
                   >
                     {i + 1}
@@ -363,44 +334,49 @@ export default function CoursesPage() {
                 ))}
               </div>
               <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="p-3 rounded-2xl bg-white border-2 border-slate-200 text-slate-500 hover:text-junior-blue hover:border-junior-blue disabled:opacity-50 transition-colors"
+                className="p-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition-colors cursor-pointer"
               >
-                <ChevronRight size={24} />
+                <ChevronRight size={18} />
               </button>
             </div>
           )}
         </>
       ) : (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white p-12 rounded-[2rem] border-4 border-slate-200 text-center"
-        >
-          <div className="bg-slate-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5">
-            <BookOpen size={36} className="text-slate-300" />
-          </div>
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">Chưa có lớp học nào</h2>
-          <p className="text-slate-500 font-medium max-w-sm mx-auto">
-            Bạn chưa được ghi danh vào lớp học nào. Vui lòng liên hệ với quản trị viên để được thêm vào lớp học.
+        /* Empty State */
+        <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center max-w-lg mx-auto space-y-4">
+          <BookOpen className="mx-auto text-slate-300" size={44} />
+          <h3 className="text-lg font-extrabold text-slate-900">
+            {selectedTab === "ALL"
+              ? "Bạn chưa đăng ký khóa học nào"
+              : "Không có khóa học trong mục này"}
+          </h3>
+          <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+            Khám phá các lộ trình tự học tiếng Anh và luyện đề TOEIC để bắt đầu nâng cao trình độ của bạn ngay hôm nay.
           </p>
-          <div className="mt-6 flex items-center justify-center gap-2 text-sm text-amber-600 bg-amber-50 px-4 py-3 rounded-xl border border-amber-200 max-w-sm mx-auto">
-            <AlertCircle size={16} />
-            <span>Liên hệ Admin nếu bạn đã đóng học phí nhưng chưa được vào lớp.</span>
+          <div className="pt-2">
+            <Link
+              href="/courses"
+              className="inline-flex min-h-11 items-center gap-2 rounded-2xl bg-orange-600 px-5 py-2.5 text-xs font-extrabold text-white transition hover:bg-orange-700"
+            >
+              Khám phá khóa học <ArrowRight size={14} />
+            </Link>
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* Payment Detail Modal */}
-      <PaymentDetailModal
-        paymentId={selectedPaymentId}
-        enrollmentStatus={selectedEnrollmentStatus}
-        onClose={() => {
-          setSelectedPaymentId(null);
-          setSelectedEnrollmentStatus(undefined);
-        }}
-      />
+      {selectedPaymentId && (
+        <PaymentDetailModal
+          paymentId={selectedPaymentId}
+          onClose={() => {
+            setSelectedPaymentId(null);
+            setSelectedEnrollmentStatus(undefined);
+          }}
+          enrollmentStatus={selectedEnrollmentStatus}
+        />
+      )}
     </div>
   );
 }

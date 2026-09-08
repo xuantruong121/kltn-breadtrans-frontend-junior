@@ -4,3 +4,5 @@ export * from "./GamificationBar";
 export * from "./UserAvatarWithFrame";
 export * from "./Pagination";
 export * from "./BackButton";
+export * from "./StatusBadge";
+

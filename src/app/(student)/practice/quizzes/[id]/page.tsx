@@ -261,21 +261,21 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                     }
                   }}
                   placeholder="Nhập những gì bạn vừa nghe được vào đây..."
-                  className={`w-full bg-slate-50 border-4 rounded-2xl p-6 text-lg font-medium outline-none transition-colors min-h-[160px] ${
+                  className={`w-full bg-slate-50 border-2 rounded-2xl p-6 text-lg font-medium outline-none transition-colors min-h-[160px] ${
                     dictationResults[currentQuestion.id]?.isChecked
                       ? dictationResults[currentQuestion.id].isCorrect
                         ? "border-emerald-400 text-emerald-800 bg-emerald-50/50"
                         : "border-rose-300 text-slate-800 bg-rose-50/30"
-                      : "border-slate-200 text-slate-700 focus:border-junior-blue"
+                      : "border-slate-200 text-slate-700 focus:border-amber-500 focus:bg-white"
                   }`}
                 />
                 
                 {dictationResults[currentQuestion.id]?.isChecked && (
-                  <div className="p-5 rounded-2xl bg-slate-50 border-2 border-slate-200">
+                  <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200">
                     {!dictationResults[currentQuestion.id].isCorrect ? (
-                      <div className="bg-white p-6 rounded-2xl border-2 border-rose-200 shadow-sm">
-                        <div className="flex items-center gap-2 text-rose-500 font-bold mb-3 text-base">
-                          <span className="text-xl">⚠️</span> Cần chỉnh sửa một chút:
+                      <div className="bg-white p-6 rounded-2xl border border-rose-200 shadow-2xs">
+                        <div className="flex items-center gap-2 text-rose-600 font-bold mb-3 text-base">
+                          <span className="text-lg">⚠️</span> Cần chỉnh sửa một chút:
                         </div>
                         <div className="text-xl font-medium leading-relaxed font-mono flex flex-wrap gap-x-2 gap-y-2 break-words max-w-full">
                           {(() => {
@@ -324,10 +324,10 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                     <button
                       key={i}
                       onClick={() => setAnswers({ ...answers, [currentQuestion.id]: opt })}
-                      className={`p-5 rounded-2xl border-4 font-bold text-left transition-all cursor-pointer ${
+                      className={`p-5 rounded-2xl border-2 font-bold text-left transition-all cursor-pointer ${
                         answers[currentQuestion.id] === opt 
-                          ? "border-junior-blue bg-sky-50 text-junior-blue shadow-sm" 
-                          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                          ? "border-amber-500 bg-amber-50/70 text-amber-900 shadow-2xs" 
+                          : "border-slate-200 bg-white text-slate-700 hover:border-amber-300"
                       }`}
                     >
                       <span className="break-words">{opt}</span>
@@ -344,7 +344,7 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                 if (currentStep > 0) setCurrentStep(currentStep - 1);
               }}
               disabled={currentStep === 0}
-              className="px-6 py-3.5 rounded-2xl font-bold text-slate-500 bg-white border-2 border-slate-200 hover:bg-slate-100 transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+              className="px-6 py-3.5 rounded-2xl font-bold text-slate-500 bg-white border border-slate-200 hover:bg-slate-100 transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
             >
               ← Câu trước
             </button>
@@ -354,7 +354,7 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleCheckDictation}
-                className="flex items-center gap-2 text-white text-lg font-black px-8 py-3.5 rounded-2xl shadow-md bg-amber-500 hover:bg-amber-600 cursor-pointer"
+                className="flex items-center gap-2 text-white text-base font-black px-7 py-3 rounded-2xl shadow-sm bg-amber-500 hover:bg-amber-600 cursor-pointer"
               >
                 {dictationResults[currentQuestion.id]?.isChecked ? "Kiểm tra lại" : "Kiểm tra đáp án"}
               </motion.button>
@@ -364,16 +364,16 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                 whileTap={{ scale: 0.98 }}
                 onClick={handleNext}
                 disabled={submitMutation.isPending}
-                className={`flex items-center gap-2 text-white text-lg font-black px-8 py-3.5 rounded-2xl shadow-md cursor-pointer ${
-                  isLastStep ? "bg-emerald-500 hover:bg-emerald-600" : "bg-sky-500 hover:bg-sky-600"
+                className={`flex items-center gap-2 text-white text-base font-black px-7 py-3 rounded-2xl shadow-sm cursor-pointer ${
+                  isLastStep ? "bg-emerald-600 hover:bg-emerald-700" : "bg-amber-600 hover:bg-amber-700"
                 }`}
               >
                 {submitMutation.isPending ? (
-                  <Loader2 className="animate-spin" size={22} />
+                  <Loader2 className="animate-spin" size={20} />
                 ) : isLastStep ? (
-                  <>Nộp bài <CheckCircle2 size={22} strokeWidth={2.5} /></>
+                  <>Nộp bài <CheckCircle2 size={20} strokeWidth={2.5} /></>
                 ) : (
-                  <>Câu tiếp theo <ChevronRight size={22} strokeWidth={2.5} /></>
+                  <>Câu tiếp theo <ChevronRight size={20} strokeWidth={2.5} /></>
                 )}
               </motion.button>
             )}
@@ -383,9 +383,9 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
         {/* RIGHT COLUMN: QUESTION NAVIGATOR & SIDEBAR WIDGETS */}
         <div className="col-span-12 lg:col-span-4 space-y-6">
           {/* Question Matrix Card */}
-          <div className="bg-white p-6 rounded-[2rem] border-4 border-slate-100 shadow-sm space-y-4">
+          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-black text-slate-800 text-base">Danh Sách Câu Hỏi</h3>
+              <h3 className="font-extrabold text-slate-800 text-base">Danh Sách Câu Hỏi</h3>
               <span className="text-xs font-bold text-slate-400">
                 {Object.keys(answers).length}/{questions.length} Đã làm
               </span>
@@ -401,14 +401,14 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                   <button
                     key={q.id || idx}
                     onClick={() => setCurrentStep(idx)}
-                    className={`h-11 rounded-xl font-black text-sm transition-all flex items-center justify-center cursor-pointer border-2 ${
+                    className={`h-10 rounded-xl font-extrabold text-sm transition-all flex items-center justify-center cursor-pointer border ${
                       isCurrent
-                        ? "bg-sky-500 text-white border-sky-600 ring-4 ring-sky-100 shadow-sm scale-105"
+                        ? "bg-amber-500 text-white border-amber-600 shadow-2xs"
                         : isPassed
-                        ? "bg-emerald-100 text-emerald-700 border-emerald-300"
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-300"
                         : isAnswered
-                        ? "bg-amber-100 text-amber-800 border-amber-300"
-                        : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"
+                        ? "bg-amber-50 text-amber-800 border-amber-300"
+                        : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
                     }`}
                   >
                     {idx + 1}

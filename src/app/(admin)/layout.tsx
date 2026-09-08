@@ -86,16 +86,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const sidebarNav = (
     <div className="flex flex-col h-full justify-between">
       <div>
-        <div className="p-6 text-2xl font-bold text-white border-b border-slate-800 flex items-center justify-between">
+        <div className="flex items-center justify-between border-b border-slate-200 p-6 text-2xl font-bold text-slate-900">
           <div className="flex items-center gap-2">
             <Link href="/admin" onClick={() => setIsMobileNavOpen(false)}>
-              <Image src="/logo.png" alt="BreadTrans Logo" width={130} height={60} priority style={{ width: "auto", height: "auto" }} className="object-contain brightness-0 invert max-h-8" />
+              <Image src="/logo.png" alt="BreadTrans Logo" width={130} height={60} priority style={{ width: "auto", height: "auto" }} className="max-h-8 object-contain" />
             </Link>
-            <span className="text-sky-300 text-xs bg-blue-900/50 px-2 py-0.5 rounded font-black">CMS</span>
+            <span className="rounded bg-blue-50 px-2 py-0.5 text-xs font-black text-junior-blue">CMS</span>
           </div>
           <button
             onClick={() => setIsMobileNavOpen(false)}
-            className="lg:hidden text-slate-400 hover:text-white p-1 cursor-pointer"
+            className="cursor-pointer p-1 text-slate-500 hover:text-slate-900 lg:hidden"
           >
             <X size={20} />
           </button>
@@ -118,7 +118,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
                   isActive 
                     ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" 
-                    : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >
                 <item.icon size={18} />
@@ -128,13 +128,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </nav>
       </div>
-      <div className="p-4 border-t border-slate-800">
-        <div className="mb-3 truncate px-2 text-xs text-slate-400 font-bold">
+      <div className="border-t border-slate-200 p-4">
+        <div className="mb-3 truncate px-2 text-xs font-bold text-slate-500">
            {user?.email}
         </div>
         <button 
           onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 p-2.5 bg-slate-800 hover:bg-red-500 hover:text-white text-slate-300 rounded-xl transition-colors text-xs font-bold cursor-pointer"
+          className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-100 p-2.5 text-xs font-bold text-slate-600 transition-colors hover:bg-rose-50 hover:text-rose-600"
         >
           <LogOut size={16} /> Đăng xuất
         </button>
@@ -145,7 +145,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex h-[100dvh] bg-slate-50 overflow-hidden text-slate-800">
       {/* Desktop Sidebar (lg+) */}
-      <aside className="hidden lg:flex w-64 bg-slate-900 text-slate-300 flex-col shrink-0">
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-200 bg-white text-slate-700 lg:flex">
         {sidebarNav}
       </aside>
 
@@ -165,7 +165,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 280 }}
-              className="relative w-72 max-w-[80vw] bg-slate-900 text-slate-300 h-full z-10 shadow-2xl flex flex-col justify-between"
+              className="relative z-10 flex h-full w-72 max-w-[80vw] flex-col justify-between bg-white text-slate-700 shadow-2xl"
             >
               {sidebarNav}
             </motion.aside>
@@ -176,19 +176,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile Header Bar */}
-        <header className="lg:hidden bg-slate-900 text-white px-4 py-3 flex items-center justify-between shrink-0 border-b border-slate-800">
+        <header className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-3 text-slate-900 lg:hidden">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsMobileNavOpen(true)}
-              className="p-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white cursor-pointer"
+              className="cursor-pointer rounded-xl bg-slate-100 p-1.5 text-slate-600 hover:text-slate-900"
             >
               <Menu size={22} />
             </button>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-sm text-white">BreadTrans CMS</span>
+              <span className="text-sm font-bold text-slate-900">BreadTrans CMS</span>
             </div>
           </div>
-          <span className="text-[10px] font-black uppercase bg-blue-900/60 text-blue-300 px-2 py-0.5 rounded border border-blue-700">
+          <span className="rounded border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-black uppercase text-junior-blue">
             Admin
           </span>
         </header>

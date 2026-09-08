@@ -11,7 +11,6 @@ import {
   Target,
   Loader2,
   Save,
-  Sparkles,
   ShoppingBag,
   Backpack,
   CheckCircle2,

@@ -1,10 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Headphones, Loader2, PlayCircle, ArrowLeft, CheckCircle2 } from "lucide-react";
+import {
+  Headphones,
+  Loader2,
+  PlayCircle,
+  CheckCircle2,
+  Search,
+  ArrowRight,
+  Clock,
+  BookOpen,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { quizService } from "@/lib/api/services/quiz.service";
 import { Pagination, BackButton } from "@/components/ui";
 
@@ -12,96 +22,193 @@ export default function ListeningPracticesPage() {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
-  
+  const [searchQuery, setSearchQuery] = useState("");
+
   const { data: quizzes, isLoading } = useQuery({
     queryKey: ["listening-practices"],
     queryFn: quizService.getListeningPractices,
   });
 
-  const totalPages = Math.ceil((quizzes?.length || 0) / pageSize);
-  const paginatedQuizzes = quizzes?.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const filteredQuizzes = useMemo(() => {
+    if (!quizzes) return [];
+    if (!searchQuery.trim()) return quizzes;
+    const q = searchQuery.toLowerCase().trim();
+    return quizzes.filter((quiz: any) =>
+      quiz.title?.toLowerCase().includes(q)
+    );
+  }, [quizzes, searchQuery]);
+
+  const totalPages = Math.ceil((filteredQuizzes.length || 0) / pageSize);
+  const paginatedQuizzes = filteredQuizzes.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   return (
-    <div className="max-w-4xl mx-auto pb-12">
-      <div className="mb-8">
-        <BackButton href="/dashboard" label="Quay lại Trang chủ" />
+    <div className="max-w-5xl mx-auto pb-16 px-4 sm:px-6">
+      {/* Breadcrumb & Navigation */}
+      <div className="mb-6 flex items-center justify-between">
+        <BackButton href="/practice" label="Quay lại Trung tâm luyện tập" />
+        <Link
+          href="/dashboard"
+          className="text-xs font-bold text-slate-500 hover:text-amber-700 transition-colors"
+        >
+          Trang chủ học viên
+        </Link>
       </div>
 
-      <div className="flex items-center gap-4 mb-8">
-        <div className="bg-junior-blue p-4 rounded-2xl text-white">
-          <Headphones size={32} />
-        </div>
-        <div>
-          <h1 className="text-4xl font-bold text-slate-800">Luyện Nghe (Chép chính tả)</h1>
-          <p className="text-slate-500 font-medium mt-1">Chọn một bài tập để bắt đầu luyện tai nhé!</p>
+      {/* Header Banner */}
+      <div className="bg-gradient-to-r from-amber-500 via-amber-600 to-orange-600 rounded-3xl p-6 sm:p-8 text-white shadow-md mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-xs px-3 py-1 rounded-full text-xs font-bold text-amber-50">
+              <Headphones size={14} />
+              <span>TOEIC Listening & Chép chính tả</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+              Kho bài Luyện Nghe TOEIC
+            </h1>
+            <p className="text-sm text-amber-100 max-w-xl leading-relaxed">
+              Luyện phản xạ nghe chuẩn phát âm bản ngữ, làm quen ngữ cảnh công sở thực tế và cải thiện tốc độ bắt từ khóa chính xác.
+            </p>
+          </div>
+
+          <div className="shrink-0 flex sm:flex-col items-center sm:items-end gap-3 text-right">
+            <div className="bg-white/15 px-4 py-2 rounded-2xl backdrop-blur-xs text-center">
+              <div className="text-2xl font-black text-white leading-tight">
+                {quizzes?.length || 0}
+              </div>
+              <div className="text-[11px] font-bold text-amber-100 uppercase tracking-wider">
+                Bài luyện nghe
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Controls & Search */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="relative flex-1">
+          <Search
+            size={18}
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+          />
+          <input
+            type="text"
+            placeholder="Tìm kiếm bài tập nghe theo tiêu đề..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 focus:bg-white transition-all"
+          />
+        </div>
+
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-500 shrink-0">
+          <span>Hiển thị {filteredQuizzes.length} bài tập</span>
+        </div>
+      </div>
+
+      {/* Quizzes List */}
       {isLoading ? (
-        <div className="flex justify-center p-12">
-          <Loader2 className="animate-spin text-junior-blue" size={48} />
+        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-slate-200">
+          <Loader2 className="animate-spin text-amber-600 mb-3" size={36} />
+          <p className="text-xs font-bold text-slate-500">Đang tải danh sách bài luyện nghe...</p>
         </div>
-      ) : quizzes && quizzes.length > 0 ? (
+      ) : filteredQuizzes.length > 0 ? (
         <div className="space-y-6">
-          <div className="flex flex-col gap-4">
-            {paginatedQuizzes?.map((quiz: any, index: number) => {
+          <div className="grid gap-4 sm:grid-cols-2">
+            {paginatedQuizzes.map((quiz: any, index: number) => {
               const isCompleted = quiz.isCompleted;
+              const questionCount = quiz._count?.questions || quiz.questionsCount || 0;
+
               return (
                 <motion.div
                   key={quiz.id}
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  whileHover={{ scale: 1.01 }}
-                  className={`p-6 rounded-2xl border-4 flex items-center justify-between shadow-sm cursor-pointer transition-colors ${
-                    isCompleted 
-                      ? 'bg-green-50 border-green-400 hover:border-green-500' 
-                      : 'bg-white border-slate-100 hover:border-sky-200'
-                  }`}
+                  transition={{ delay: index * 0.04 }}
                   onClick={() => router.push(`/practice/quizzes/${quiz.id}`)}
+                  className={`group relative rounded-2xl border p-5 flex flex-col justify-between cursor-pointer transition-all duration-200 ${
+                    isCompleted
+                      ? "bg-emerald-50/40 border-emerald-200 hover:border-emerald-300 hover:shadow-md"
+                      : "bg-white border-slate-200/80 hover:border-amber-400 hover:shadow-md"
+                  }`}
                 >
                   <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-xl font-bold text-slate-800">{quiz.title}</h3>
-                      {isCompleted && (
-                        <div className="text-green-500" title="Đã hoàn thành">
-                          <CheckCircle2 size={20} />
-                        </div>
+                    {/* Top Row: Tag & Status */}
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-200/60">
+                        <Headphones size={12} /> Part 1-4 Listening
+                      </span>
+
+                      {isCompleted ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                          <CheckCircle2 size={13} /> Đã hoàn thành
+                        </span>
+                      ) : (
+                        <span className="text-[11px] font-bold text-slate-400">
+                          Chưa làm
+                        </span>
                       )}
                     </div>
-                    <p className="text-slate-500 font-medium text-sm">
-                      {quiz._count?.questions || 0} câu hỏi • Luyện nghe TOEIC
-                    </p>
+
+                    {/* Title */}
+                    <h3 className="text-base font-bold text-slate-900 group-hover:text-amber-800 transition-colors line-clamp-2">
+                      {quiz.title}
+                    </h3>
                   </div>
-                  <div className={`p-3 rounded-xl ${isCompleted ? 'bg-green-200 text-green-700' : 'bg-sky-100 text-junior-blue'}`}>
-                    <PlayCircle size={28} />
+
+                  {/* Bottom Row: Metadata & Button */}
+                  <div className="mt-5 pt-3.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-semibold">
+                    <span className="flex items-center gap-1">
+                      <BookOpen size={13} className="text-slate-400" />
+                      {questionCount} câu hỏi
+                    </span>
+
+                    <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 group-hover:translate-x-0.5 transition-transform">
+                      {isCompleted ? "Luyện lại" : "Bắt đầu làm"}
+                      <ArrowRight size={13} />
+                    </span>
                   </div>
                 </motion.div>
               );
             })}
           </div>
 
-          {/* PAGINATION */}
-          <div className="pt-2">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={quizzes?.length || 0}
-              pageSize={pageSize}
-              onPageChange={setCurrentPage}
-              onPageSizeChange={(size) => {
-                setPageSize(size);
-                setCurrentPage(1);
-              }}
-            />
-          </div>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="pt-4">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filteredQuizzes.length}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+          )}
         </div>
       ) : (
-        <div className="bg-slate-50 p-12 rounded-2xl border-2 border-dashed border-slate-300 text-center">
-          <p className="text-slate-500 font-medium text-lg">Chưa có bài luyện nghe nào được tạo.</p>
+        <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center mx-auto">
+            <Headphones size={24} />
+          </div>
+          <h3 className="text-base font-bold text-slate-800">
+            {searchQuery ? "Không tìm thấy bài luyện nghe phù hợp" : "Chưa có bài luyện nghe nào"}
+          </h3>
+          <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            {searchQuery
+              ? "Hãy thử tìm với từ khóa khác hoặc xóa bộ lọc để xem toàn bộ danh sách."
+              : "Các bài tập nghe mới sẽ sớm được cập nhật trên hệ thống."}
+          </p>
         </div>
       )}
     </div>
   );
 }
-

@@ -1,92 +1,184 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Headphones, Book, Library, Mic, PenTool, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import {
+  ArrowRight,
+  BookOpen,
+  Clock,
+  Dumbbell,
+  GraduationCap,
+  Headphones,
+  Layers,
+  Mic,
+  PenTool,
+  Target,
+  Trophy,
+  Zap,
+} from "lucide-react";
 
 const PRACTICE_AREAS = [
   {
-    id: "listening",
-    title: "Luyện Nghe (Chép chính tả)",
-    description: "Cải thiện kỹ năng nghe thông qua phương pháp chép chính tả hiệu quả cao.",
-    icon: Headphones,
-    color: "bg-junior-blue",
-    path: "/practice/quizzes?type=listening",
+    title: "Từ vựng cốt lõi",
+    desc: "Học và ôn luyện từ vựng qua thẻ Flashcard thông minh. Ghi nhớ nhanh với phiên âm và câu ví dụ ngữ cảnh.",
+    outcome: "Mở rộng vốn từ vựng",
+    format: "Flashcard 2 mặt",
+    duration: "5 - 10 phút",
+    href: "/flashcard",
+    icon: Layers,
+    badge: "Vocabulary",
+    tone: "bg-amber-50 text-amber-600 border-amber-200",
   },
   {
-    id: "vocab",
-    title: "Học Từ Vựng (Flashcards)",
-    description: "Bộ thẻ từ vựng sinh động giúp bạn nhớ lâu hơn gấp 3 lần.",
-    icon: Library,
-    color: "bg-junior-orange",
-    path: "/flashcard",
+    title: "Ngữ pháp trọng điểm",
+    desc: "Nắm vững các chủ điểm ngữ pháp cốt lõi thường xuất hiện trong đề thi TOEIC qua các câu hỏi tương tác có giải thích chi tiết.",
+    outcome: "Dùng câu chuẩn xác",
+    format: "Trắc nghiệm kèm giải thích",
+    duration: "10 - 15 phút",
+    href: "/grammar",
+    icon: BookOpen,
+    badge: "Grammar",
+    tone: "bg-emerald-50 text-emerald-600 border-emerald-200",
   },
   {
-    id: "reading",
-    title: "Luyện Đọc (Song ngữ)",
-    description: "Đọc hiểu tiếng Anh dễ dàng hơn với chế độ hiển thị song ngữ thông minh.",
-    icon: Book,
-    color: "bg-junior-green",
-    path: "/practice/reading",
-  },
-  {
-    id: "speaking",
-    title: "Luyện Phát Âm (AI Chấm)",
-    description: "Tự tin giao tiếp với AI Gia sư chấm điểm phát âm cực kỳ chuẩn xác.",
+    title: "Luyện Nói AI (Azure Speech)",
+    desc: "Ghi âm phát âm trực tiếp trên trình duyệt. Nhận chấm điểm độ chính xác từng âm tiết, độ trôi chảy và ngữ điệu tức thì.",
+    outcome: "Tự tin phát âm chuẩn",
+    format: "Ghi âm & Đánh giá âm tiết",
+    duration: "5 - 10 phút",
+    href: "/practice/speaking",
     icon: Mic,
-    color: "bg-purple-500",
-    path: "/practice/speaking",
+    badge: "Azure AI Speech",
+    tone: "bg-violet-50 text-violet-600 border-violet-200",
   },
   {
-    id: "writing",
-    title: "Luyện Viết (Toeic Part 1-3)",
-    description: "Viết bài theo chủ đề và nhận nhận xét ngay lập tức từ AI.",
+    title: "Luyện Viết AI (Gemini)",
+    desc: "Viết mô tả tranh, email và bài luận theo tiêu chuẩn TOEIC Writing. Nhận phản hồi chuyên sâu về ngữ pháp và từ vựng từ AI.",
+    outcome: "Viết câu mạch lạc",
+    format: "Viết bài luận theo đề",
+    duration: "15 - 20 phút",
+    href: "/practice/writing",
     icon: PenTool,
-    color: "bg-pink-500",
-    path: "/practice/writing",
+    badge: "AI Feedback",
+    tone: "bg-rose-50 text-rose-600 border-rose-200",
+  },
+  {
+    title: "Luyện Nghe & Đọc",
+    desc: "Rèn luyện khả năng đọc hiểu nhanh và bắt âm chuẩn xác qua các đoạn văn song ngữ và bài nghe thực tế.",
+    outcome: "Tăng tốc độ đọc hiểu",
+    format: "Audio & Đọc hiểu",
+    duration: "10 - 15 phút",
+    href: "/practice/quizzes",
+    icon: Headphones,
+    badge: "Listening & Reading",
+    tone: "bg-blue-50 text-blue-600 border-blue-200",
+  },
+  {
+    title: "Luyện đề TOEIC bấm giờ",
+    desc: "Kho đề thi thử trắc nghiệm mô phỏng đúng cấu trúc bài thi chuẩn hóa, tính giờ tự động và báo cáo phân tích điểm số.",
+    outcome: "Làm quen áp lực phòng thi",
+    format: "Thi thử có bấm giờ",
+    duration: "20 - 45 phút",
+    href: "/practice/quizzes",
+    icon: Target,
+    badge: "Mock Test",
+    tone: "bg-orange-50 text-orange-600 border-orange-200",
   },
 ];
 
-export default function PracticePage() {
+export default function PracticeHubPage() {
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="bg-gradient-to-r from-sky-400 to-indigo-500 p-12 rounded-[3rem] text-white text-center mb-12 shadow-xl relative overflow-hidden">
-        <div className="relative z-10">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">🏝️ Đảo Luyện Tập</h1>
-          <p className="text-xl font-medium text-sky-100 max-w-2xl mx-auto">
-            Nơi bạn có thể mài giũa từng kỹ năng riêng biệt. Hãy chọn một hòn đảo nhỏ để bắt đầu chuyến phiêu lưu hôm nay!
+    <div className="space-y-10 pb-16">
+      {/* 1. Practice Hub Hero */}
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-10 shadow-2xs">
+        <div className="max-w-3xl space-y-3">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 uppercase tracking-wider">
+            <Dumbbell size={15} /> Trung tâm luyện kỹ năng tiếng Anh & TOEIC
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+            Luyện tập tập trung. Phản hồi tức thì.
+          </h1>
+          <p className="text-sm sm:text-base leading-relaxed text-slate-600">
+            Chọn kỹ năng bạn cần cải thiện hôm nay. Mỗi bài tập đều được thiết kế ngắn gọn,
+            hướng đến kết quả cụ thể và tích hợp công nghệ AI hỗ trợ chỉnh sửa chi tiết.
           </p>
         </div>
-        {/* Decor shapes */}
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20">
-          <div className="absolute top-[-20%] left-[-10%] w-64 h-64 bg-white rounded-full mix-blend-overlay blur-3xl"></div>
-          <div className="absolute bottom-[-20%] right-[-10%] w-96 h-96 bg-white rounded-full mix-blend-overlay blur-3xl"></div>
-        </div>
-      </div>
+      </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {PRACTICE_AREAS.map((area, index) => (
-          <Link href={area.path} key={area.id}>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ y: -8, scale: 1.02 }}
-              className="bg-white rounded-[2rem] border-4 border-slate-200 p-6 flex flex-col h-full shadow-sm hover:shadow-xl transition-all hover:border-slate-300"
-            >
-              <div className={`${area.color} w-16 h-16 rounded-2xl flex items-center justify-center text-white mb-6 shadow-inner`}>
-                <area.icon size={32} />
-              </div>
-              <h2 className="text-2xl font-bold text-slate-800 mb-3">{area.title}</h2>
-              <p className="text-slate-500 font-medium mb-6 flex-1">{area.description}</p>
-              
-              <div className="flex items-center text-slate-400 font-bold gap-2 group-hover:text-slate-700 transition-colors mt-auto">
-                Khám phá <ArrowRight size={20} />
-              </div>
-            </motion.div>
+      {/* 2. Skills Grid */}
+      <section>
+        <div className="flex items-end justify-between gap-4 mb-6">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-wider text-orange-600">
+              Khu vực luyện tập
+            </p>
+            <h2 className="mt-0.5 text-2xl font-extrabold text-slate-900">
+              Bắt đầu luyện tập
+            </h2>
+          </div>
+          <Link
+            href="/dashboard"
+            className="text-xs sm:text-sm font-extrabold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1"
+          >
+            Về trang chủ <ArrowRight size={14} />
           </Link>
-        ))}
-      </div>
+        </div>
+
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {PRACTICE_AREAS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.title}
+                href={item.href}
+                className="group flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-2xs transition duration-200 hover:-translate-y-1 hover:border-blue-300 hover:shadow-md"
+              >
+                <div>
+                  {/* Top Bar: Icon + Badge */}
+                  <div className="flex items-center justify-between">
+                    <div
+                      className={`flex h-12 w-12 items-center justify-center rounded-2xl border ${item.tone}`}
+                    >
+                      <Icon size={22} />
+                    </div>
+                    <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600">
+                      {item.badge}
+                    </span>
+                  </div>
+
+                  {/* Title & Desc */}
+                  <h3 className="mt-5 text-lg font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors">
+                    {item.title}
+                  </h3>
+                  <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600">
+                    {item.desc}
+                  </p>
+                </div>
+
+                {/* Footer metadata */}
+                <div className="mt-6 pt-4 border-t border-slate-100 space-y-3">
+                  <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                    <span className="flex items-center gap-1">
+                      <Clock size={13} /> {item.duration}
+                    </span>
+                    <span className="font-semibold text-slate-700">
+                      {item.format}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-100">
+                      {item.outcome}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-xs font-extrabold text-blue-600 group-hover:translate-x-0.5 transition-transform">
+                      Vào luyện <ArrowRight size={14} />
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }

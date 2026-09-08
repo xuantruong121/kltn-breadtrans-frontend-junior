@@ -32,12 +32,11 @@ export const GrammarScreen: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       {/* HEADER */}
-      <div className="bg-white p-6 rounded-[2rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0]">
+      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-2xs">
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-2xl">🎓</span>
-          <h1 className="text-3xl font-black text-slate-800">Ngữ Pháp Tiếng Anh</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">Ngữ Pháp Tiếng Anh</h1>
         </div>
-        <p className="font-bold text-slate-400 text-sm">
+        <p className="font-medium text-slate-500 text-sm">
           Bài giảng video sinh động và các điểm ngữ pháp trọng tâm theo form đề TOEIC
         </p>
       </div>
@@ -53,17 +52,18 @@ export const GrammarScreen: React.FC = () => {
           return (
             <motion.div
               key={topic.id}
-              whileHover={{ y: -4 }}
+              whileHover={{ y: -2 }}
               onClick={() => {
                 setSelectedTopic(topic);
                 setSelectedLesson(topic.lessons[0]);
               }}
-              className={`p-5 rounded-3xl border-4 cursor-pointer transition-all ${
+              className={`p-5 rounded-3xl border cursor-pointer transition-all shadow-2xs hover:shadow-xs ${
                 isSelected
-                  ? "bg-emerald-50 border-emerald-400 shadow-[0_6px_0_0_#34d399]"
-                  : "bg-white border-slate-200 hover:border-slate-300 shadow-[0_6px_0_0_#e2e8f0]"
+                  ? "bg-emerald-50/70 border-emerald-300 ring-1 ring-emerald-300"
+                  : "bg-white border-slate-200 hover:border-slate-300"
               }`}
             >
+
               <div className="flex items-center gap-3 mb-2">
                 <span className="text-3xl">{topic.icon}</span>
                 <div>

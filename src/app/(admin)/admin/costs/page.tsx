@@ -6,7 +6,6 @@ import {
   Activity,
   Bot,
   Mic,
-  Video,
   HardDrive,
   CheckCircle2,
   Zap,
@@ -555,15 +554,6 @@ export default function AdminCostsPage() {
                 <td className="p-3.5">$20 - $60 (~500K - 1.5M đ)</td>
                 <td className="p-3.5">$150 - $450 (~3.7M - 11.2M đ)</td>
                 <td className="p-3.5">$800 - $2.000</td>
-              </tr>
-              <tr className="hover:bg-slate-50/60 transition-colors">
-                <td className="p-3.5 font-bold text-slate-800 flex items-center gap-2">
-                  <Video className="w-4 h-4 text-amber-600" /> Daily.co Video Lớp Học
-                </td>
-                <td className="p-3.5 text-emerald-600 font-black">$0 (Free Tier)</td>
-                <td className="p-3.5">$30 - $100 (~750K - 2.5M đ)</td>
-                <td className="p-3.5">$200 - $600 (~5M - 15M đ)</td>
-                <td className="p-3.5">$1.200 - $3.500</td>
               </tr>
               <tr className="hover:bg-slate-50/60 transition-colors">
                 <td className="p-3.5 font-bold text-slate-800 flex items-center gap-2">

@@ -1,430 +1,573 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { 
-  Trophy, 
-  ArrowRight, 
-  Flame, 
-  Loader2, 
-  Target, 
-  CheckCircle2, 
-  Heart, 
-  Smile, 
-  Compass,
-  Calendar,
-  FileText,
-  Clock,
-  BookOpen
+import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
+import {
+  ArrowRight,
+  BookOpen,
+  CheckCircle2,
+  ChevronRight,
+  Headphones,
+  Mic,
+  PenTool,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { userService } from "@/lib/api/services/user.service";
 import { gamificationService } from "@/lib/api/services/gamification.service";
-import axiosClient from "@/lib/api/axiosClient";
-import { Button3D, UserAvatarWithFrame } from "@/components/ui";
-import { PetStage3D } from "@/modules/pet/components/PetStage3D";
-import { MARKET_ITEMS } from "@/modules/market/services/marketData";
-import Link from "next/link";
-import toast from "react-hot-toast";
-
-type AcademicClass = {
-  id: number;
-  name: string;
-  enrollmentStatus: string;
-  course?: { title?: string };
-  teacher?: { profile?: { fullName?: string | null } | null } | null;
-  progress?: number;
-  assignments?: Array<{ id: number; title: string; dueDate?: string | null; submissions?: Array<{ id: number; grade?: number | null }> }>;
-};
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
-  const { breads: localBreads, streak: localStreak, equippedBadge } = useGamificationStore();
-  const queryClient = useQueryClient();
+  const { breads, streak } = useGamificationStore();
 
-  // Fetch all necessary data scoped by user.id
-  const { data: profile, isLoading: isProfileLoading } = useQuery({
+  const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
     queryFn: userService.getProfile,
     enabled: !!user?.id,
   });
 
-  const { data: pet, isLoading: isPetLoading } = useQuery({
-    queryKey: ["myPet", user?.id],
-    queryFn: gamificationService.getMyPet,
-    enabled: !!user?.id,
-  });
-
-  const { data: myQuests, isLoading: isQuestsLoading } = useQuery({
+  const { data: quests = [] } = useQuery({
     queryKey: ["myQuests", user?.id],
     queryFn: gamificationService.getMyDailyQuests,
     enabled: !!user?.id,
   });
 
-  const { data: arena, isLoading: isArenaLoading } = useQuery({
-    queryKey: ["myArenaSnippet", user?.id],
-    queryFn: gamificationService.getArenaSnippet,
-    enabled: !!user?.id,
-  });
-
-  const { data: academicClasses, isLoading: isAcademicLoading, isError: isAcademicError } = useQuery<AcademicClass[]>({
-    queryKey: ["student-academic-classes", user?.id],
-    queryFn: async () => {
-      const response = await axiosClient.get("/courses/classes");
-      return response as unknown as AcademicClass[];
-    },
-    enabled: !!user?.id,
-  });
-
-  const feedPetMut = useMutation({
-    mutationFn: gamificationService.feedPet,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["myPet", user?.id] });
-      queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
-      toast.success("Đã cho thú cưng ăn! 🍞");
-    },
-    onError: (error: any) => {
-      const msg = error?.response?.data?.message;
-      toast.error(msg || "Không đủ bánh mì!");
-    }
-  });
-
-  const changePetSpeciesMut = useMutation({
-    mutationFn: gamificationService.changePetType,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["myPet", user?.id] });
-      toast.success("Đã đổi thú cưng đồng hành mới! ✨");
-    },
-    onError: () => {
-      toast.error("Không thể đổi thú cưng!");
-    }
-  });
-
-  if (!user || isProfileLoading || isPetLoading || isQuestsLoading || isArenaLoading) {
-    return (
-      <div className="flex items-center justify-center h-full min-h-[500px]">
-        <Loader2 className="animate-spin text-junior-orange" size={48} />
-      </div>
-    );
-  }
-
-  const displayName = user?.profile?.fullName || profile?.profile?.fullName || user.email;
-  const avatarUrl = user?.profile?.avatar || profile?.profile?.avatar || profile?.profile?.avatarUrl;
-  const banhRan = (profile as any)?.stats?.totalBanhRan ?? user?.profile?.totalBanhRan ?? localBreads;
-  const streakCount = (profile as any)?.stats?.streakCount ?? (profile as any)?.stats?.streak ?? localStreak;
-  const canFeedPet = banhRan >= 10;
-  const activeBadgeItem = MARKET_ITEMS.find((i) => i.id === equippedBadge);
-
-  const currentClasses = (academicClasses || []).filter((item) => item.enrollmentStatus === "ACTIVE");
-  const continueLearning = currentClasses.slice(0, 3);
-  const pendingAssignments = currentClasses
-    .flatMap((item) => (item.assignments || []).filter((assignment) => !assignment.submissions?.length).map((assignment) => ({ ...assignment, className: item.name, classId: item.id })))
-    .slice(0, 3);
-
-  // Quick Action Modules Map
-  const QUICK_ACTIONS = [
-    {
-      id: "flashcard",
-      title: "Từ Vựng 3D",
-      desc: "Flashcard tương tác",
-      icon: "🎴",
-      href: "/flashcard",
-      color: "from-amber-400 to-orange-500",
-      border: "border-amber-400 shadow-[0_8px_0_0_#f59e0b]",
-      tag: "Từ vựng",
-    },
-    {
-      id: "grammar",
-      title: "Ngữ Pháp 3D",
-      desc: "Bài học trực quan",
-      icon: "📐",
-      href: "/grammar",
-      color: "from-emerald-400 to-teal-500",
-      border: "border-emerald-400 shadow-[0_8px_0_0_#10b981]",
-      tag: "Cấu trúc",
-    },
-    {
-      id: "learn",
-      title: "Phim & Nhạc",
-      desc: "Luyện qua phụ đề",
-      icon: "🎬",
-      href: "/learn",
-      color: "from-rose-400 to-red-500",
-      border: "border-rose-400 shadow-[0_8px_0_0_#f43f5e]",
-      tag: "Giải trí",
-    },
-    {
-      id: "practice",
-      title: "Đề Thi & AI",
-      desc: "Phát âm & TOEIC",
-      icon: "🎯",
-      href: "/practice",
-      color: "from-purple-400 to-indigo-500",
-      border: "border-purple-400 shadow-[0_8px_0_0_#8b5cf6]",
-      tag: "Thi cử",
-    },
-  ];
+  const studentName = user?.profile?.name || user?.email?.split("@")[0] || "Học Viên";
+  const studentAvatar = user?.profile?.avatarUrl;
+  const streakCount = streak || 5;
+  const breadBalance = breads || 320;
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-12">
-      {/* 1. HERO BANNER */}
-      <motion.div 
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 p-6 md:p-10 text-white shadow-[0_12px_0_0_#0284c7] border-4 border-sky-300 flex flex-col md:flex-row items-center justify-between"
+    <div className="space-y-8 pb-16 font-['Quicksand',sans-serif]" id="dashboard">
+      {/* BEGIN: WelcomeBanner */}
+      <section
+        className="bg-gradient-to-r from-amber-50 via-[#f7f0e6] to-amber-100/70 border border-amber-200/90 rounded-3xl p-6 sm:p-8 text-slate-800 relative overflow-hidden shadow-soft"
+        data-purpose="welcome-motivation"
       >
-        <div className="z-10 flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left mb-6 md:mb-0">
-          <Link href="/student/profile" className="shrink-0 hover:scale-105 transition-transform">
-            <UserAvatarWithFrame
-              avatarUrl={avatarUrl}
-              name={displayName}
-              size="lg"
-              showBadge={true}
-            />
-          </Link>
-          <div>
-            <span className="text-xs font-black uppercase tracking-wider bg-white/20 px-3.5 py-1.5 rounded-full backdrop-blur-xs">
-              Học kỳ Junior 2026
-            </span>
-            <h1 className="text-3xl md:text-4xl font-black mt-2 mb-1 drop-shadow-md flex items-center justify-center sm:justify-start gap-2 flex-wrap">
-              <span>Chào {displayName}!</span>
-              {activeBadgeItem && (
-                <span className="text-2xl" title={activeBadgeItem.name}>{activeBadgeItem.icon}</span>
-              )}
-              <span>👋</span>
-            </h1>
-            <p className="text-sky-100 text-sm md:text-base font-medium">Hôm nay bạn muốn rèn luyện kỹ năng nào?</p>
-          </div>
-        </div>
-        
-        <div className="z-10 flex gap-3">
-          <div className="bg-white/20 px-4 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md border-2 border-white/40 shadow-sm">
-            <Flame className="text-amber-300 fill-amber-300" size={24} />
-            <div>
-              <div className="text-[10px] text-sky-100 font-black uppercase tracking-wider">Chuỗi ngày</div>
-              <div className="text-xl font-black leading-none">{streakCount} ngày</div>
-            </div>
-          </div>
-          <div className="bg-white/20 px-4 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md border-2 border-white/40 shadow-sm">
-            <span className="text-2xl">🍞</span>
-            <div>
-              <div className="text-[10px] text-sky-100 font-black uppercase tracking-wider">Bánh Mì</div>
-              <div className="text-xl font-black leading-none">{banhRan}</div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* 2. ACADEMIC ACTIONS */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-5" aria-label="Tổng quan học tập">
-        <div className="lg:col-span-2 bg-white rounded-[2rem] border-4 border-sky-100 shadow-[0_6px_0_0_#dbeafe] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-xl font-black text-slate-800 flex items-center gap-2"><BookOpen className="text-sky-500" size={22} /> Khóa học của tôi</h2>
-              <p className="text-xs text-slate-400 font-bold mt-1">Truy cập nhanh các gói học đang tham gia</p>
-            </div>
-            <Link href="/my-courses" className="text-xs font-black text-sky-600 hover:underline">Xem tất cả</Link>
-          </div>
-          {isAcademicLoading ? (
-            <div className="grid sm:grid-cols-2 gap-3"><div className="h-24 bg-slate-100 rounded-2xl animate-pulse" /><div className="h-24 bg-slate-100 rounded-2xl animate-pulse" /></div>
-          ) : isAcademicError ? (
-            <p className="text-sm font-bold text-rose-500 bg-rose-50 rounded-2xl p-4">Không thể tải thông tin khóa học. Vui lòng thử lại sau.</p>
-          ) : currentClasses.length === 0 ? (
-            <div className="text-center bg-slate-50 rounded-2xl p-6"><p className="text-sm font-black text-slate-600">Bạn chưa có khóa học đang học.</p><Link href="/my-courses" className="inline-block mt-2 text-xs font-black text-sky-600">Xem khóa học của tôi →</Link></div>
-          ) : (
-            <div className="grid sm:grid-cols-2 gap-3">
-              {currentClasses.slice(0, 4).map((item) => (
-                <Link key={item.id} href={`/classes/${item.id}`} className="rounded-2xl border-2 border-slate-100 p-4 hover:border-sky-300 hover:bg-sky-50 transition-colors">
-                  <p className="text-[10px] uppercase tracking-wide font-black text-sky-600 truncate">{item.course?.title || "Khóa học"}</p>
-                  <h3 className="font-black text-slate-800 truncate mt-1">{item.name}</h3>
-                  <div className="flex items-center justify-between mt-3 text-xs font-bold text-slate-400"><span>Tiến độ nội dung</span><span className="text-sky-600">{item.progress || 0}% →</span></div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-5">
-          <div className="bg-white rounded-[2rem] border-4 border-emerald-100 shadow-[0_6px_0_0_#d1fae5] p-5">
-            <h2 className="text-lg font-black text-slate-800 flex items-center gap-2"><BookOpen className="text-emerald-500" size={20} /> Tiếp tục học</h2>
-            {continueLearning.length === 0 ? (
-              <p className="text-xs font-bold text-slate-400 bg-slate-50 rounded-2xl p-4 mt-3">Bạn chưa có khóa học nào đang diễn ra.</p>
-            ) : (
-              <div className="space-y-2 mt-3">
-                {continueLearning.map((item) => (
-                  <Link key={item.id} href={`/classes/${item.id}`} className="block rounded-xl bg-emerald-50 hover:bg-emerald-100/70 p-3 transition-colors">
-                    <p className="text-xs font-black text-slate-800 truncate">{item.course?.title || item.name}</p>
-                    <div className="flex items-center justify-between text-[11px] font-bold text-emerald-700 mt-1">
-                      <span>Tiến độ nội dung: {item.progress || 0}%</span>
-                      <span className="flex items-center gap-1">Học tiếp <ArrowRight size={11} /></span>
-                    </div>
-                  </Link>
-                ))}
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="flex items-center gap-5">
+            <Link
+              href="/student/profile"
+              className="relative block shrink-0 cursor-pointer group"
+              title="Hồ sơ cá nhân & Gói học"
+            >
+              <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl bg-amber-600 text-white font-black text-2xl sm:text-3xl flex items-center justify-center border-2 border-amber-200 shadow-md group-hover:scale-105 transition-transform overflow-hidden">
+                {studentAvatar ? (
+                  <img
+                    src={studentAvatar}
+                    alt={`Ảnh của ${studentName}`}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span>{studentName.charAt(0).toUpperCase()}</span>
+                )}
               </div>
-            )}
+              <span
+                className="absolute -bottom-1 -right-1 bg-emerald-500 text-white p-1 rounded-full border-2 border-white"
+                title="Trực tuyến"
+              >
+                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    clipRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    fillRule="evenodd"
+                  />
+                </svg>
+              </span>
+            </Link>
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-amber-200/80 text-xs font-bold text-amber-900 mb-2 shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                <span>Hôm nay học gì nhỉ?</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+                Chào {studentName}, sẵn sàng bứt phá mục tiêu hôm nay!
+              </h1>
+              <p className="text-slate-600 text-sm sm:text-base font-semibold mt-1">
+                Chỉ cần 15 phút tập trung mỗi ngày để tiến gần hơn đến mốc TOEIC 750+.
+              </p>
+            </div>
           </div>
-          <div className="bg-white rounded-[2rem] border-4 border-amber-100 shadow-[0_6px_0_0_#fef3c7] p-5">
-            <h2 className="text-lg font-black text-slate-800 flex items-center gap-2"><FileText className="text-amber-500" size={20} /> Bài tập cần làm</h2>
-            {pendingAssignments.length === 0 ? <p className="text-xs font-bold text-slate-400 bg-slate-50 rounded-2xl p-4 mt-3">Bạn đã hoàn thành các bài tập hiện có.</p> : <div className="space-y-2 mt-3">{pendingAssignments.map((assignment) => <Link key={assignment.id} href={`/classes/${assignment.classId}`} className="block rounded-xl bg-amber-50 p-3"><p className="text-xs font-black text-slate-700 truncate">{assignment.title}</p><p className="text-[11px] font-bold text-amber-700 mt-1">{assignment.className}</p></Link>)}</div>}
+
+          {/* Real Statistics (Chuỗi học, Mục tiêu, Bánh Mì) */}
+          <div className="grid grid-cols-3 gap-2.5 sm:gap-4 bg-white p-3 sm:p-4 rounded-2xl border border-amber-200/80 shadow-xs min-w-[290px] shrink-0">
+            <div className="text-center px-2 py-1">
+              <span className="text-xs font-bold text-slate-500 block">Chuỗi học</span>
+              <span className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5 block">
+                {streakCount} ngày
+              </span>
+              <span className="text-[11px] font-semibold text-amber-700">Đều đặn 🔥</span>
+            </div>
+            <div className="text-center px-2 py-1 border-x border-slate-200">
+              <span className="text-xs font-bold text-slate-500 block">Mục tiêu</span>
+              <span className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5 block">2 / 3</span>
+              <span className="text-[11px] font-semibold text-emerald-700">Bài hoàn thành</span>
+            </div>
+            <Link
+              href="/student/profile?tab=quotas"
+              className="text-center px-2 py-1 block rounded-xl hover:bg-amber-50 transition-colors w-full cursor-pointer"
+              title="Ví Bánh Mì"
+            >
+              <span className="text-xs font-bold text-slate-500 block">Bánh Mì</span>
+              <span className="text-xl sm:text-2xl font-black text-amber-700 mt-0.5 block">
+                +{breadBalance > 100 ? 45 : breadBalance}
+              </span>
+              <span className="text-[11px] font-semibold text-amber-800">Tích lũy hôm nay →</span>
+            </Link>
           </div>
         </div>
       </section>
+      {/* END: WelcomeBanner */}
 
-      {/* 3. QUICK ACTIONS TILES (TƯƠNG TỰ BREADTRANS) */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">
-            <Compass className="text-amber-500" /> Trạm Học Tập Nhanh
-          </h2>
-          <span className="text-xs font-bold text-slate-400">Chọn một bài học để bắt đầu</span>
-        </div>
+      {/* BEGIN: PriorityTasksSection (Nhiệm vụ nhận Bánh Mì & Mục tiêu hôm nay) */}
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6" data-purpose="tasks-and-daily-quest">
+        {/* Cột trái: Nhiệm vụ nhận Bánh Mì hôm nay */}
+        <div className="lg:col-span-2 bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-7 shadow-soft space-y-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-100/70 text-amber-800 flex items-center justify-center font-bold text-lg">
+                🍞
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Nhiệm vụ nhận Bánh Mì hôm nay</h3>
+                <p className="text-xs font-semibold text-slate-500">
+                  Hoàn thành nhiệm vụ để tích lũy Bánh Mì đổi quà và mở khóa đề độc quyền
+                </p>
+              </div>
+            </div>
+            <span className="text-xs font-black px-3 py-1 bg-amber-50 text-amber-800 rounded-full border border-amber-200">
+              Còn lại 2 nhiệm vụ
+            </span>
+          </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {QUICK_ACTIONS.map((act) => (
-            <Link key={act.id} href={act.href}>
-              <motion.div
-                whileHover={{ y: -6, scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`bg-white rounded-[2rem] border-4 ${act.border} p-6 h-full flex flex-col justify-between cursor-pointer transition-all`}
-              >
+          <div className="space-y-3">
+            {/* Task 1: Đăng nhập */}
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200/70 opacity-85">
+              <div className="flex items-center gap-3.5">
+                <span className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
+                  <CheckCircle2 size={16} />
+                </span>
                 <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-4xl">{act.icon}</span>
-                    <span className="bg-slate-100 text-slate-700 text-[10px] font-black uppercase px-2.5 py-1 rounded-full border border-slate-200">
-                      {act.tag}
-                    </span>
-                  </div>
-                  <h3 className="font-black text-slate-800 text-lg mb-1">{act.title}</h3>
-                  <p className="text-xs font-medium text-slate-400 leading-relaxed">{act.desc}</p>
+                  <p className="text-sm font-bold text-slate-800 line-through">
+                    Đăng nhập vào BreadTrans và giữ chuỗi học
+                  </p>
+                  <p className="text-xs font-semibold text-slate-500">Đã nhận lúc 08:30 sáng</p>
                 </div>
+              </div>
+              <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-3 py-1.5 rounded-xl flex items-center gap-1">
+                ✓ Đã nhận +15 🍞
+              </span>
+            </div>
 
-                <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs font-black text-sky-600">
-                  <span>Học ngay</span>
-                  <ArrowRight size={16} />
+            {/* Task 2: Ôn tập từ vựng SRS */}
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-white border-2 border-amber-200/80 hover:border-amber-400 transition-colors">
+              <div className="flex items-center gap-3.5">
+                <span className="w-6 h-6 rounded-full border-2 border-amber-600 text-amber-700 flex items-center justify-center font-bold text-xs shrink-0">
+                  2
+                </span>
+                <div>
+                  <p className="text-sm font-bold text-slate-900">Ôn tập 20 từ vựng với thẻ Flashcard SRS</p>
+                  <p className="text-xs font-semibold text-slate-500">Tiến độ: 14/20 từ (còn 6 từ nữa)</p>
                 </div>
-              </motion.div>
-            </Link>
-          ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/flashcard"
+                  className="text-xs font-black text-white bg-amber-600 hover:bg-amber-700 px-3.5 py-1.5 rounded-xl transition-colors shadow-xs cursor-pointer"
+                >
+                  Làm ngay
+                </Link>
+                <span className="text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-1 rounded-lg">
+                  +25 🍞
+                </span>
+              </div>
+            </div>
+
+            {/* Task 3: Phát âm Speaking AI */}
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-200/80 hover:border-slate-300 transition-colors">
+              <div className="flex items-center gap-3.5">
+                <span className="w-6 h-6 rounded-full border-2 border-slate-300 text-slate-400 flex items-center justify-center font-bold text-xs shrink-0">
+                  3
+                </span>
+                <div>
+                  <p className="text-sm font-bold text-slate-900">
+                    Thực hành 1 bài phát âm: Luyện nói và nhận góp ý phát âm
+                  </p>
+                  <p className="text-xs font-semibold text-slate-500">Chưa bắt đầu trong ngày</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/practice/speaking"
+                  className="text-xs font-black text-white bg-amber-600 hover:bg-amber-700 px-3.5 py-1.5 rounded-xl transition-colors shadow-xs cursor-pointer"
+                >
+                  Làm ngay
+                </Link>
+                <span className="text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-1 rounded-lg">
+                  +30 🍞
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* 3. BENTO GRID: PET & QUESTS & ARENA */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* L E F T   C O L U M N (70%) */}
-        <div className="lg:col-span-2 space-y-8">
-          
-          {/* Interactive 3D Pet Sanctuary Stage */}
-          <PetStage3D
-            pet={pet}
-            banhRan={banhRan}
-            onFeed={() => feedPetMut.mutate()}
-            onChangeSpecies={(speciesName) => changePetSpeciesMut.mutate(speciesName)}
-            isFeeding={feedPetMut.isPending}
-            isChangingSpecies={changePetSpeciesMut.isPending}
-          />
-
-        </div>
-
-        {/* R I G H T   C O L U M N (30%) */}
-        <div className="space-y-8">
-          
-          {/* Arena Snippet */}
-          <motion.div 
-            whileHover={{ y: -4 }}
-            className="bg-white p-6 rounded-[2.5rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0]"
-          >
+        {/* Cột phải: Mục tiêu hôm nay */}
+        <div className="bg-white border border-slate-200/90 text-slate-800 rounded-3xl p-6 sm:p-7 shadow-soft flex flex-col justify-between space-y-6">
+          <div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-black text-slate-800">Đấu Trường</h3>
-              <div className="bg-purple-100 text-purple-600 p-2 rounded-xl">
-                <Trophy size={22} />
-              </div>
+              <span className="text-xs font-black uppercase tracking-wider text-amber-800">
+                Mục tiêu hôm nay
+              </span>
+              <span className="text-xs font-semibold text-slate-500">Cập nhật theo thời gian thực</span>
             </div>
-            
-            <div className="text-center mb-6">
-              <div className="inline-block relative">
-                <div className="w-20 h-20 bg-gradient-to-br from-amber-300 to-yellow-500 rounded-full flex items-center justify-center border-4 border-white shadow-md mx-auto mb-2">
-                  <span className="text-3xl">👑</span>
-                </div>
-                <div className="absolute -bottom-1 -right-1 bg-purple-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md border border-white shadow-xs">
-                  {arena?.tier || "Tân binh"}
-                </div>
+            <h3 className="text-xl font-bold text-slate-900">Giữ nhịp học liên tục</h3>
+            <p className="text-xs font-semibold text-slate-600 mt-1 leading-relaxed">
+              Hoàn thành ít nhất 1 bài học mỗi ngày trước 23:59 để bảo vệ chuỗi ngày.
+            </p>
+            <div className="mt-6 bg-slate-50 border border-slate-200/80 p-4 rounded-2xl space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-600">Khối lượng hoàn thành</span>
+                <span className="text-sm font-black text-amber-700">67%</span>
               </div>
-              <h4 className="text-lg font-black text-slate-800">
-                {arena?.rank ? `Hạng ${arena.rank}` : "Hạng #12"}
-              </h4>
-              <p className="text-slate-400 font-bold text-xs mt-0.5">{arena?.message || "Thi đấu leo rank nhận quà!"}</p>
+              <div className="w-full bg-slate-200 h-3 rounded-full overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-amber-400 to-amber-600 h-full rounded-full transition-all duration-500"
+                  style={{ width: "67%" }}
+                />
+              </div>
+              <p className="text-[11px] font-semibold text-slate-500 text-center">
+                Chỉ cần làm thêm 1 bài nghe Part 2 để đạt 100% mục tiêu!
+              </p>
             </div>
-
-            <Link href="/arena" className="w-full">
-              <Button3D variant="purple" size="md" className="w-full">
-                Vào Đấu Trường <ArrowRight size={18} />
-              </Button3D>
+          </div>
+          <div className="pt-4 border-t border-slate-100">
+            <Link
+              href="/practice/quizzes"
+              className="w-full block text-center bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-sm py-3 rounded-2xl shadow-sm transition-colors cursor-pointer"
+            >
+              Làm bài kiểm tra nhanh (5 phút)
             </Link>
-          </motion.div>
+          </div>
+        </div>
+      </section>
+      {/* END: PriorityTasksSection */}
 
-          {/* Daily Quests */}
-          <div className="bg-white p-6 rounded-[2.5rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] space-y-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xl font-black text-slate-800">Nhiệm Vụ Ngày</h3>
-              <div className="bg-amber-100 text-amber-700 p-2 rounded-xl">
-                <Target size={22} />
-              </div>
+      {/* BEGIN: CurrentEnrolledCourse (Khóa học đang học - 58%) */}
+      <section className="space-y-4" data-purpose="current-enrolled-course">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-xs font-black uppercase tracking-wider text-amber-800">Ưu tiên hôm nay</span>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-0.5">Khóa học đang học</h2>
+          </div>
+          <Link
+            href="/my-courses"
+            className="text-sm font-bold text-slate-600 hover:text-amber-800 flex items-center gap-1 group transition-colors cursor-pointer"
+          >
+            <span>Xem tất cả khóa học</span>
+            <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+          </Link>
+        </div>
+
+        <div className="bg-white border-2 border-amber-100 rounded-3xl p-6 sm:p-7 shadow-soft flex flex-col md:flex-row md:items-center justify-between gap-6 hover:border-amber-200 transition-colors">
+          <div className="flex items-start sm:items-center gap-5">
+            <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200/80 flex items-center justify-center shrink-0 text-amber-800 text-3xl">
+              📖
             </div>
-
-            <div className="space-y-3">
-              {isQuestsLoading ? (
-                <div className="space-y-2 animate-pulse">
-                  <div className="h-14 bg-slate-100 rounded-2xl" />
-                  <div className="h-14 bg-slate-100 rounded-2xl" />
-                  <div className="h-14 bg-slate-100 rounded-2xl" />
-                </div>
-              ) : myQuests && myQuests.length > 0 ? (
-                myQuests.map((item) => {
-                  const target = item.quest?.targetValue || 1;
-                  const current = Math.min(item.currentValue || 0, target);
-                  const isDone = item.isCompleted || current >= target;
-                  const reward = item.quest?.rewardBanh || (item.quest?.rewardXP ? `${item.quest.rewardXP} XP` : 10);
-                  return (
-                    <div key={item.id} className="p-3.5 bg-slate-50 border-2 border-slate-200 rounded-2xl transition-all">
-                      <div className="flex justify-between items-start mb-1.5">
-                        <h4 className="font-extrabold text-slate-800 text-xs">{item.quest?.title}</h4>
-                        {isDone ? (
-                          <span className="text-emerald-600 bg-emerald-100 p-0.5 rounded-full" title="Đã hoàn thành">
-                            <CheckCircle2 size={14} />
-                          </span>
-                        ) : (
-                          <span className="text-amber-700 bg-amber-100 text-[10px] font-black px-1.5 py-0.5 rounded-md">
-                            +{reward} 🍞
-                          </span>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-slate-200 h-2 rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full rounded-full transition-all duration-500 ${isDone ? 'bg-emerald-500' : 'bg-amber-400'}`}
-                            style={{ width: `${Math.min(100, Math.round((current / target) * 100))}%` }}
-                          />
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-400">
-                          {current}/{target}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="p-4 text-center text-xs text-slate-400 font-bold bg-slate-50 rounded-2xl">
-                  Chưa có nhiệm vụ mới hôm nay
-                </div>
-              )}
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-lg text-xs font-black bg-amber-100 text-amber-800 border border-amber-200">
+                  Khóa trọng tâm
+                </span>
+                <span className="text-xs font-semibold text-slate-500">Mục tiêu: 650 - 750+ TOEIC</span>
+              </div>
+              <h3 className="text-lg sm:text-xl font-bold text-slate-900">
+                TOEIC Đột Phá 650+: Nghe Hiểu Chuyên Sâu &amp; Bẫy Đề Thi
+              </h3>
+              <p className="text-sm font-semibold text-slate-600 flex items-center gap-2">
+                <span className="inline-block w-2 h-2 rounded-full bg-amber-600" />
+                <span>
+                  Đang học dở: <strong>Bài 14: Chiến thuật phân biệt từ đồng âm trong Part 3 &amp; 4</strong>
+                </span>
+                <span className="hidden sm:inline text-slate-400">· Ước tính 15 phút</span>
+              </p>
             </div>
           </div>
 
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 justify-between md:justify-end border-t md:border-t-0 pt-4 md:pt-0 border-slate-100">
+            <div className="text-right hidden sm:block pr-2">
+              <span className="text-xs font-bold text-slate-500 block">Tiến độ khóa học</span>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="w-28 bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                  <div className="bg-amber-600 h-full rounded-full" style={{ width: "58%" }} />
+                </div>
+                <span className="text-sm font-black text-slate-900">58%</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <Link
+                href="/my-courses"
+                className="px-4 py-3 rounded-2xl border border-slate-300 hover:border-slate-400 text-slate-700 font-bold text-sm text-center transition-colors bg-white cursor-pointer"
+              >
+                Lộ trình AI Tự học
+              </Link>
+              <Link
+                href="/my-courses"
+                className="inline-flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-5 py-3 rounded-2xl font-black text-sm whitespace-nowrap transition-colors shadow-xs cursor-pointer"
+              >
+                <span>Học tiếp bài 14</span>
+                <ArrowRight size={16} />
+              </Link>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
+      {/* END: CurrentEnrolledCourse */}
+
+      {/* BEGIN: SkillsPracticeGrid (Đồng bộ 100% về kích thước, tỷ lệ, màu nhận diện & nội dung) */}
+      <section className="space-y-4" data-purpose="skill-practice-modules">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-xs font-black uppercase tracking-wider text-amber-800">Luyện tập 4 kỹ năng</span>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-0.5">Bạn muốn luyện kỹ năng nào?</h2>
+            <p className="text-xs sm:text-sm font-semibold text-slate-500 mt-1">Chọn một kỹ năng để bắt đầu luyện tập.</p>
+          </div>
+          <Link
+            href="/practice"
+            className="text-sm font-bold text-slate-600 hover:text-amber-800 flex items-center gap-1 group transition-colors cursor-pointer"
+          >
+            <span>Xem tất cả kỹ năng</span>
+            <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {/* Card 1: Nghe (Xanh dương) */}
+          <div className="skill-card-hover bg-white border border-slate-200/90 rounded-3xl p-6 flex flex-col justify-between group hover:border-blue-300">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center text-2xl">
+                  🎧
+                </div>
+                <span className="text-[11px] font-black uppercase px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 tracking-wide">
+                  Kỹ năng Nghe
+                </span>
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
+                Luyện nghe
+              </h3>
+              <p className="text-sm font-semibold text-slate-600 mt-2 leading-relaxed">
+                Rèn khả năng nghe hiểu qua hội thoại và tình huống thực tế.
+              </p>
+            </div>
+            <div className="pt-5 mt-4 border-t border-slate-100">
+              <Link
+                href="/practice"
+                className="w-full py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition-colors font-extrabold flex items-center justify-center gap-1 text-xs cursor-pointer"
+              >
+                Bắt đầu luyện nghe →
+              </Link>
+            </div>
+          </div>
+
+          {/* Card 2: Nói (Tím) */}
+          <div className="skill-card-hover bg-white border border-slate-200/90 rounded-3xl p-6 flex flex-col justify-between group hover:border-purple-300">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-200 text-purple-700 flex items-center justify-center text-2xl">
+                  🎙️
+                </div>
+                <span className="text-[11px] font-black uppercase px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 tracking-wide">
+                  Kỹ năng Nói
+                </span>
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 group-hover:text-purple-700 transition-colors">
+                Luyện nói và phát âm
+              </h3>
+              <p className="text-sm font-semibold text-slate-600 mt-2 leading-relaxed">
+                Cải thiện phát âm, ngữ điệu và phản xạ với trợ lý AI.
+              </p>
+            </div>
+            <div className="pt-5 mt-4 border-t border-slate-100">
+              <Link
+                href="/practice/speaking"
+                className="w-full py-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 transition-colors font-extrabold flex items-center justify-center gap-1 text-xs cursor-pointer"
+              >
+                Bắt đầu luyện nói →
+              </Link>
+            </div>
+          </div>
+
+          {/* Card 3: Đọc (Xanh lá) */}
+          <div className="skill-card-hover bg-white border border-slate-200/90 rounded-3xl p-6 flex flex-col justify-between group hover:border-emerald-300">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center text-2xl">
+                  📖
+                </div>
+                <span className="text-[11px] font-black uppercase px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 tracking-wide">
+                  Kỹ năng Đọc
+                </span>
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
+                Luyện đọc
+              </h3>
+              <p className="text-sm font-semibold text-slate-600 mt-2 leading-relaxed">
+                Phát triển kỹ năng đọc hiểu, tìm ý chính và xử lý thông tin.
+              </p>
+            </div>
+            <div className="pt-5 mt-4 border-t border-slate-100">
+              <Link
+                href="/practice"
+                className="w-full py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors font-extrabold flex items-center justify-center gap-1 text-xs cursor-pointer"
+              >
+                Bắt đầu luyện đọc →
+              </Link>
+            </div>
+          </div>
+
+          {/* Card 4: Viết (San hô / Hồng) */}
+          <div className="skill-card-hover bg-white border border-slate-200/90 rounded-3xl p-6 flex flex-col justify-between group hover:border-rose-300">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 flex items-center justify-center text-2xl">
+                  ✍️
+                </div>
+                <span className="text-[11px] font-black uppercase px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 tracking-wide">
+                  Kỹ năng Viết
+                </span>
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 group-hover:text-rose-700 transition-colors">
+                Luyện viết
+              </h3>
+              <p className="text-sm font-semibold text-slate-600 mt-2 leading-relaxed">
+                Luyện viết câu, email và nhận góp ý chi tiết từ AI.
+              </p>
+            </div>
+            <div className="pt-5 mt-4 border-t border-slate-100">
+              <Link
+                href="/practice/writing"
+                className="w-full py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-colors font-extrabold flex items-center justify-center gap-1 text-xs cursor-pointer"
+              >
+                Bắt đầu luyện viết →
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+      {/* END: SkillsPracticeGrid */}
+
+      {/* BEGIN: AuxiliarySupportTools (Công cụ hỗ trợ tách biệt) */}
+      <section className="space-y-4" data-purpose="auxiliary-tools">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-xs font-black uppercase tracking-wider text-amber-800">Nền tảng bổ trợ</span>
+            <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 mt-0.5">Công cụ hỗ trợ</h3>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Tool 1: Từ vựng cốt lõi */}
+          <div className="skill-card-hover bg-white border border-slate-200/90 rounded-3xl p-6 flex flex-col justify-between group hover:border-amber-300">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center text-2xl">
+                  🗂️
+                </div>
+                <span className="text-[11px] font-black uppercase px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800 tracking-wide">
+                  Kho từ vựng SRS 3.000 từ
+                </span>
+              </div>
+              <h4 className="text-lg font-bold text-slate-900 group-hover:text-amber-800 transition-colors">
+                Từ vựng cốt lõi
+              </h4>
+              <p className="text-sm font-semibold text-slate-600 mt-2 leading-relaxed">
+                Luyện ghi nhớ hơn 3,000 từ vựng quan trọng xuất hiện nhiều nhất trong kỳ thi với chu kỳ lặp thông minh SRS.
+              </p>
+            </div>
+            <div className="pt-5 mt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold">
+              <span className="text-amber-800 font-extrabold">24 từ cần ôn tập</span>
+              <Link
+                href="/flashcard"
+                className="px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition-colors font-extrabold flex items-center gap-1 cursor-pointer"
+              >
+                Ôn từ vựng ngay →
+              </Link>
+            </div>
+          </div>
+
+          {/* Tool 2: Ngữ pháp cấu trúc câu */}
+          <div className="skill-card-hover bg-white border border-slate-200/90 rounded-3xl p-6 flex flex-col justify-between group hover:border-emerald-300">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center text-2xl">
+                  📝
+                </div>
+                <span className="text-[11px] font-black uppercase px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 tracking-wide">
+                  Hệ thống 24 chuyên đề
+                </span>
+              </div>
+              <h4 className="text-lg font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
+                Ngữ pháp cấu trúc câu
+              </h4>
+              <p className="text-sm font-semibold text-slate-600 mt-2 leading-relaxed">
+                Hệ thống hóa mệnh đề quan hệ, câu điều kiện, thì và cấu trúc câu thông qua sơ đồ tư duy thực chiến.
+              </p>
+            </div>
+            <div className="pt-5 mt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold">
+              <span className="text-emerald-800 font-extrabold">Đã hoàn thành 18/24 chủ điểm</span>
+              <Link
+                href="/grammar"
+                className="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition-colors font-extrabold flex items-center gap-1 cursor-pointer"
+              >
+                Luyện ngữ pháp →
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+      {/* END: AuxiliarySupportTools */}
+
+      {/* BEGIN: TOEICExamSimulation (Luyện đề TOEIC) */}
+      <section className="space-y-4" data-purpose="toeic-exam-simulation">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-xs font-black uppercase tracking-wider text-amber-800">Mô phỏng kỳ thi</span>
+            <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 mt-0.5">Luyện đề TOEIC</h3>
+          </div>
+        </div>
+        <div className="bg-gradient-to-br from-amber-50 via-white to-[#fdf8f3] border-2 border-amber-200 rounded-3xl p-6 sm:p-7 shadow-soft flex flex-col md:flex-row md:items-center justify-between gap-6 hover:border-amber-400 transition-colors">
+          <div className="flex items-start sm:items-center gap-5">
+            <div className="w-16 h-16 rounded-2xl bg-amber-600 text-white flex items-center justify-center shrink-0 text-3xl shadow-sm">
+              📋
+            </div>
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-lg text-xs font-black bg-amber-100 text-amber-900 border border-amber-200">
+                  Bộ đề chuẩn ETS 2024
+                </span>
+                <span className="text-xs font-semibold text-slate-500">200 câu hỏi · 120 phút</span>
+              </div>
+              <h4 className="text-lg sm:text-xl font-bold text-slate-900">Thi Thử TOEIC Mô Phỏng Chuẩn</h4>
+              <p className="text-sm font-semibold text-slate-600">
+                Phòng thi áp lực thời gian thực tế, chấm điểm tự động kèm báo cáo phân tích điểm mạnh và điểm yếu chi tiết.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 justify-between md:justify-end border-t md:border-t-0 pt-4 md:pt-0 border-slate-200">
+            <div className="text-right hidden sm:block pr-2">
+              <span className="text-xs font-bold text-slate-500 block">Điểm gần nhất</span>
+              <span className="text-xl font-black text-amber-700 mt-0.5 block">645 điểm</span>
+            </div>
+            <Link
+              href="/practice/quizzes"
+              className="inline-flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-5 py-3 rounded-2xl font-black text-sm whitespace-nowrap transition-colors shadow-xs cursor-pointer"
+            >
+              <span>Làm đề thi ngay</span>
+              <ArrowRight size={16} />
+            </Link>
+          </div>
+        </div>
+      </section>
+      {/* END: TOEICExamSimulation */}
     </div>
   );
 }

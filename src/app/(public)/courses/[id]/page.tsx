@@ -211,7 +211,7 @@ export default function PublicCourseDetailPage() {
         <div className="pt-2">
           <Link
             href="/courses"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-junior-blue text-white font-bold hover:bg-junior-blue-dark transition-colors shadow-xs"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors shadow-xs"
           >
             <ArrowLeft size={18} />
             Quay lại danh mục khóa học
@@ -236,11 +236,12 @@ export default function PublicCourseDetailPage() {
         <div className="pt-2">
           <Link
             href="/courses"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-junior-blue text-white font-bold hover:bg-junior-blue-dark transition-colors shadow-xs"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors shadow-xs"
           >
             <ArrowLeft size={18} />
             Quay lại danh mục khóa học
           </Link>
+
         </div>
       </div>
     );
@@ -291,21 +292,40 @@ export default function PublicCourseDetailPage() {
             "Khóa học cung cấp kiến thức nền tảng vững vàng, phát triển toàn diện các kỹ năng nghe nói đọc viết và tự tin ứng dụng trong môi trường học tập."}
         </p>
 
-        {/* Teacher profile highlight */}
-        <div className="pt-4 border-t border-slate-100 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-blue-100 text-junior-blue flex items-center justify-center font-bold text-lg">
-            {course.teacher?.fullName?.[0] || "B"}
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Phụ trách chuyên môn
-            </p>
-            <p className="text-base font-bold text-slate-900">{course.teacher?.fullName || "Ban Học Thuật BreadTrans"}</p>
-            {course.teacher?.specialization && (
-              <p className="text-xs font-semibold text-slate-500">
-                {course.teacher.specialization}
+        {/* Self-paced learning highlight */}
+        <div className="pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-base">
+              <Clock size={20} />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Thời gian
               </p>
-            )}
+              <p className="text-sm font-bold text-slate-900">Tự học 24/7 linh hoạt</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-base">
+              <ShieldCheck size={20} />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Hỗ trợ học tập
+              </p>
+              <p className="text-sm font-bold text-slate-900">AI phân tích & chấm điểm</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-base">
+              <CheckCircle2 size={20} />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Lộ trình
+              </p>
+              <p className="text-sm font-bold text-slate-900">Tuần tự theo từng bài</p>
+            </div>
           </div>
         </div>
       </div>
@@ -450,10 +470,9 @@ export default function PublicCourseDetailPage() {
                           <span>Sĩ số tối đa: {cls.capacity} học viên</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <UserIcon size={14} className="text-slate-400 shrink-0" />
+                          <ShieldCheck size={14} className="text-slate-400 shrink-0" />
                           <span>
-                            Giảng viên / Phụ trách:{" "}
-                            <strong className="text-slate-800">{cls.teacher?.fullName || "Ban Học Thuật BreadTrans"}</strong>
+                            Hình thức: <strong className="text-slate-800">Tự học có hướng dẫn AI</strong>
                           </span>
                         </div>
                       </div>
@@ -464,7 +483,7 @@ export default function PublicCourseDetailPage() {
                           /* 1. Guest: Login CTA */
                           <Link
                             href={loginCtaUrl}
-                            className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold bg-junior-orange text-white hover:bg-junior-orange-dark transition-all shadow-xs"
+                            className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold bg-orange-600 text-white hover:bg-orange-700 transition-all shadow-xs"
                           >
                             Đăng nhập để đăng ký lớp
                             <ArrowRight size={14} />

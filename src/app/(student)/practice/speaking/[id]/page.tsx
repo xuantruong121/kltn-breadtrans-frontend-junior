@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Loader2, Mic, StopCircle, Star, Sparkles, Volume2, Activity, CheckCircle2, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Loader2, Mic, StopCircle, Star, Volume2, Activity, CheckCircle2, AlertTriangle, Target } from "lucide-react";
 import { speakingService } from "@/lib/api/services/speaking.service";
 import { BackButton } from "@/components/ui";
 import { motion } from "framer-motion";
@@ -485,10 +485,10 @@ export default function SpeakingExerciseDetailPage() {
                     <button 
                       onClick={handleSubmit}
                       disabled={submitAudioMut.isPending}
-                      className="flex-1 py-3 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 shadow-md transition-all disabled:opacity-70 flex items-center justify-center gap-2 cursor-pointer"
+                      className="flex-1 py-3 px-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-all disabled:opacity-70 flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      {submitAudioMut.isPending ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
-                      Chấm điểm AI
+                      {submitAudioMut.isPending ? <Loader2 className="animate-spin" size={18} /> : <Activity size={18} />}
+                      Chấm điểm phát âm
                     </button>
                   </div>
                 </div>
@@ -512,19 +512,19 @@ export default function SpeakingExerciseDetailPage() {
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800 p-6 sm:p-8 rounded-[2.5rem] text-white shadow-2xl overflow-hidden relative"
+              className="bg-slate-900 p-6 sm:p-8 rounded-3xl text-white shadow-xl overflow-hidden relative border border-slate-800"
             >
               <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
                 <Activity size={200} />
               </div>
 
               <div className="flex items-center gap-4 mb-6 relative z-10">
-                <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md">
-                  <Star size={28} className="text-yellow-400 fill-yellow-400" />
+                <div className="bg-white/10 p-3 rounded-2xl backdrop-blur-md">
+                  <Star size={24} className="text-amber-400 fill-amber-400" />
                 </div>
                 <div>
                   <h2 className="text-xl font-bold">Báo cáo Phát âm Chi tiết</h2>
-                  <p className="text-indigo-200 text-xs">AI đã phân tích từng âm tiết theo ngữ âm chuẩn</p>
+                  <p className="text-slate-300 text-xs">Azure Speech phân tích từng âm vị theo thang chuẩn quốc tế</p>
                 </div>
               </div>
               
@@ -539,28 +539,28 @@ export default function SpeakingExerciseDetailPage() {
               )}
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 relative z-10">
-                <div className="col-span-2 bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/20 flex flex-col items-center justify-center text-center">
-                  <div className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 mb-1">
+                <div className="col-span-2 bg-white/10 backdrop-blur-md p-5 rounded-2xl border border-white/10 flex flex-col items-center justify-center text-center">
+                  <div className="text-5xl font-black text-emerald-400 mb-1">
                     {result.overallScore} <span className="text-xl text-white/50">/ 10</span>
                   </div>
-                  <p className="font-bold text-indigo-200 uppercase tracking-wider text-xs">Điểm Tổng</p>
+                  <p className="font-bold text-slate-300 uppercase tracking-wider text-xs">Điểm Tổng</p>
                 </div>
                 
-                <div className="bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/20 flex flex-col items-center justify-center text-center">
+                <div className="bg-white/10 backdrop-blur-md p-5 rounded-2xl border border-white/10 flex flex-col items-center justify-center text-center">
                   <div className="text-3xl font-bold text-white mb-1">{result.accuracyScore || 0}</div>
-                  <p className="font-bold text-indigo-300 uppercase tracking-wider text-[10px]">Chính xác (Accuracy)</p>
+                  <p className="font-bold text-slate-300 uppercase tracking-wider text-[10px]">Chính xác (Accuracy)</p>
                 </div>
                 
-                <div className="bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/20 flex flex-col items-center justify-center text-center">
+                <div className="bg-white/10 backdrop-blur-md p-5 rounded-2xl border border-white/10 flex flex-col items-center justify-center text-center">
                   <div className="text-3xl font-bold text-white mb-1">{result.fluencyScore || 0}</div>
-                  <p className="font-bold text-indigo-300 uppercase tracking-wider text-[10px]">Trôi chảy (Fluency)</p>
+                  <p className="font-bold text-slate-300 uppercase tracking-wider text-[10px]">Trôi chảy (Fluency)</p>
                 </div>
               </div>
 
               <div className="grid sm:grid-cols-2 gap-4 relative z-10">
-                <div className="bg-white text-slate-800 p-5 rounded-3xl shadow-lg">
-                  <h3 className="font-bold text-base mb-3 flex items-center gap-2 text-indigo-600">
-                    <CheckCircle2 size={18} /> Nhận xét giáo viên AI
+                <div className="bg-white text-slate-800 p-5 rounded-2xl shadow-md">
+                  <h3 className="font-bold text-base mb-3 flex items-center gap-2 text-blue-600">
+                    <CheckCircle2 size={18} /> Đánh giá phát âm
                   </h3>
                   <p className="text-slate-600 text-sm leading-relaxed font-medium">
                     {result.feedback}
@@ -568,10 +568,10 @@ export default function SpeakingExerciseDetailPage() {
                   
                   {result.problematicWords && result.problematicWords.length > 0 && (
                     <div className="mt-4 pt-4 border-t border-slate-100">
-                      <p className="text-xs font-bold text-red-500 mb-2 uppercase tracking-wider">Từ cần luyện thêm:</p>
+                      <p className="text-xs font-bold text-rose-600 mb-2 uppercase tracking-wider">Từ cần luyện thêm:</p>
                       <div className="flex flex-wrap gap-1.5">
                         {result.problematicWords.map((word: string, i: number) => (
-                          <span key={i} className="bg-red-50 text-red-600 px-2.5 py-1 rounded-lg font-bold text-xs border border-red-100">
+                          <span key={i} className="bg-rose-50 text-rose-600 px-2.5 py-1 rounded-lg font-bold text-xs border border-rose-100">
                             {word}
                           </span>
                         ))}
@@ -580,24 +580,25 @@ export default function SpeakingExerciseDetailPage() {
                   )}
                 </div>
 
-                <div className="bg-indigo-800/50 backdrop-blur-md border border-indigo-400/30 p-5 rounded-3xl">
-                  <h3 className="font-bold text-base mb-3 text-indigo-100 flex items-center gap-2">
-                    <Sparkles size={18} className="text-yellow-400" /> Gợi ý cải thiện
+                <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700 p-5 rounded-2xl">
+                  <h3 className="font-bold text-base mb-3 text-slate-100 flex items-center gap-2">
+                    <Target size={18} className="text-amber-400" /> Gợi ý cải thiện
                   </h3>
                   {result.suggestions && result.suggestions.length > 0 ? (
                     <ul className="space-y-3">
                       {result.suggestions.map((sug: string, i: number) => (
-                        <li key={i} className="flex gap-2.5 text-indigo-50 text-xs">
-                          <span className="shrink-0 w-5 h-5 rounded-full bg-indigo-500/50 flex items-center justify-center text-[10px] font-bold text-indigo-100">{i + 1}</span>
+                        <li key={i} className="flex gap-2.5 text-slate-200 text-xs">
+                          <span className="shrink-0 w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-[10px] font-bold text-white">{i + 1}</span>
                           <span className="leading-relaxed font-medium">{sug}</span>
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-indigo-200 text-xs">Tuyệt vời! Hãy tiếp tục duy trì phong độ này nhé.</p>
+                    <p className="text-slate-400 text-xs">Tuyệt vời! Hãy tiếp tục duy trì phong độ này nhé.</p>
                   )}
                 </div>
               </div>
+
             </motion.div>
           )}
         </div>
