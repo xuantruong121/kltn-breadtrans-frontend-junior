@@ -4,13 +4,11 @@ export interface Class {
   id: number;
   name: string;
   courseId: number;
-  teacherId: number;
   startDate?: string | null;
   endDate?: string | null;
   capacity?: number;
   tuitionFeeVnd?: number;
   status?: string;
-  meetingLink?: string | null;
   studentCount?: number;
   activeEnrollmentCount?: number;
   totalEnrollmentCount?: number;
@@ -25,7 +23,6 @@ export interface Course {
   thumbnail?: string;
   level: string; // e.g., "BEGINNER", "INTERMEDIATE"
   status?: string;
-  teacherId?: number;
   classes?: Class[];
 }
 
@@ -46,13 +43,19 @@ export interface Lesson {
 
 export interface ClassDetail extends Class {
   lessons: Lesson[];
-  teacher: {
+  teacher?: {
     id: number;
     email: string;
     profile: {
       fullName: string;
     };
   };
+}
+
+export interface StudentLearningClass extends Class {
+  enrollmentProgress: number;
+  enrollmentStatus: "ACTIVE" | "COMPLETED";
+  course: Pick<Course, "id" | "title" | "description" | "thumbnail" | "thumbnailUrl" | "level">;
 }
 
 // ================= PUBLIC DISCOVERY (PHASE 3A & 3B) =================
@@ -72,7 +75,7 @@ export interface PublicCourseCard {
   level: string | null;
   status: string;
   createdAt: string;
-  teacher: PublicTeacher;
+  teacher?: PublicTeacher;
   upcomingClassCount: number;
 }
 
@@ -81,13 +84,13 @@ export interface PublicClass {
   name: string;
   startDate: string | null;
   endDate: string | null;
-  capacity: number;
+  capacity: number | null;
   tuitionFeeVnd: number;
   currentEnrollmentCount: number;
   remainingSeats: number;
   isSoldOut: boolean;
   status: string;
-  teacher: PublicTeacher;
+  teacher?: PublicTeacher;
 }
 
 export interface PublicLessonOutline {
@@ -105,7 +108,7 @@ export interface PublicCourseDetail {
   level: string | null;
   status: string;
   createdAt: string;
-  teacher: PublicTeacher;
+  teacher?: PublicTeacher;
   lessons: PublicLessonOutline[];
   classes: PublicClass[];
 }
@@ -137,6 +140,10 @@ export const courseService = {
 
   getClassById: async (classId: number): Promise<ClassDetail> => {
     return await axiosClient.get(`/courses/classes/${classId}`);
+  },
+
+  getMyLearningClasses: async (): Promise<StudentLearningClass[]> => {
+    return await axiosClient.get("/classes");
   },
 
   // Canonical Public Discovery APIs (Phase 3A)

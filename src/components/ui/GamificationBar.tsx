@@ -69,7 +69,7 @@ export const GamificationBar: React.FC = () => {
         </div>
       </div>
 
-      {/* Streak */}
+      {/* Streak & Freezes */}
       <motion.div 
         whileHover={{ scale: 1.05 }}
         className="flex items-center gap-1 sm:gap-1.5 bg-orange-100/90 border-2 border-orange-300 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-2xl shadow-sm cursor-default"
@@ -77,7 +77,28 @@ export const GamificationBar: React.FC = () => {
         <Flame size={18} className="text-orange-500 fill-orange-500 animate-bounce" />
         <span className="font-black text-orange-700 text-xs sm:text-sm">{streak}</span>
         <span className="hidden sm:inline text-[11px] font-bold text-orange-600">ngày</span>
+        {Boolean((profile as any)?.stats?.streakFreezes && (profile as any).stats.streakFreezes > 0) && (
+          <span
+            className="ml-0.5 text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-200 px-1.5 py-0.5 rounded-md flex items-center gap-0.5"
+            title={`Bạn đang có ${(profile as any).stats.streakFreezes} khiên bảo vệ chuỗi`}
+          >
+            🛡️ {(profile as any).stats.streakFreezes}
+          </span>
+        )}
       </motion.div>
+
+      {/* Pet Companion */}
+      <Link href="/pet">
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="flex items-center gap-1 sm:gap-1.5 bg-emerald-100/90 border-2 border-emerald-300 hover:border-emerald-400 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-2xl shadow-sm cursor-pointer transition-all"
+          title="Thú cưng đồng hành"
+        >
+          <span className="text-base leading-none">🐾</span>
+          <span className="hidden sm:inline text-[10px] font-extrabold text-emerald-700 uppercase">Pet</span>
+        </motion.div>
+      </Link>
 
       {/* Breads (Tiền tệ Bánh Mì) */}
       <Link href="/market">

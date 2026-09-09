@@ -1,97 +1,157 @@
 "use client";
 
-import React from "react";
-import { motion } from "framer-motion";
-import { Check, Zap } from "lucide-react";
-import { MarketItem } from "../types";
-import { Button3D } from "@/components/ui";
+import React, { useState } from "react";
+import Image from "next/image";
+import { Check, Wheat } from "lucide-react";
+import { MarketProduct } from "../types";
 
 interface MarketItemCardProps {
-  item: MarketItem;
+  product: MarketProduct;
   isUnlocked: boolean;
   isEquipped?: boolean;
   canAfford: boolean;
-  onBuy: () => void;
-  onEquipToggle?: () => void;
+  isGuest: boolean;
+  onRedeem: (product: MarketProduct) => void;
+  onEquipToggle?: (product: MarketProduct) => void;
 }
 
-const RARITY_MAP = {
-  common: { label: "Phổ biến", bg: "bg-slate-100 text-slate-700 border-slate-300" },
-  rare: { label: "Hiếm", bg: "bg-sky-100 text-sky-800 border-sky-300" },
-  epic: { label: "Sử thi", bg: "bg-purple-100 text-purple-800 border-purple-300" },
-  legendary: { label: "Huyền thoại", bg: "bg-amber-100 text-amber-900 border-amber-400" },
+const RARITY_MAP: Record<string, { label: string; badgeClass: string }> = {
+  COMMON: { label: "Phổ biến", badgeClass: "bg-slate-100 text-slate-700 border-slate-200" },
+  RARE: { label: "Hiếm", badgeClass: "bg-blue-50 text-blue-700 border-blue-200" },
+  EPIC: { label: "Sử thi", badgeClass: "bg-purple-50 text-purple-700 border-purple-200" },
+  LEGENDARY: { label: "Huyền thoại", badgeClass: "bg-amber-50 text-amber-800 border-amber-300" },
+};
+
+const CATEGORY_LABEL_MAP: Record<string, string> = {
+  BOOST: "Bảo vệ & Tăng tốc",
+  BADGE: "Huy hiệu vinh danh",
+  AVATAR_FRAME: "Khung đại diện",
+  PHYSICAL: "Quà hiện vật",
 };
 
 export const MarketItemCard: React.FC<MarketItemCardProps> = ({
-  item,
+  product,
   isUnlocked,
   isEquipped = false,
   canAfford,
-  onBuy,
+  isGuest,
+  onRedeem,
   onEquipToggle,
 }) => {
-  const r = RARITY_MAP[item.rarity];
+  const [imgSrc, setImgSrc] = useState(product.imageUrl || "/images/market/streak-freeze.svg");
+  const rarity = RARITY_MAP[product.rarity?.toUpperCase()] || RARITY_MAP.COMMON;
+  const isOutOfStock = product.stock <= 0;
+  const isEquippable = (product.category === "AVATAR_FRAME" || product.category === "BADGE") && isUnlocked;
 
   return (
-    <motion.div
-      whileHover={{ y: -4 }}
-      className={`bg-white rounded-[2rem] border-4 p-6 flex flex-col justify-between transition-all ${
+    <div
+      className={`group relative flex flex-col justify-between rounded-2xl border bg-white p-5 transition-all duration-200 ${
         isEquipped
-          ? "border-amber-400 shadow-[0_8px_0_0_#f59e0b] ring-2 ring-amber-300"
-          : "border-slate-200 shadow-[0_8px_0_0_#e2e8f0]"
+          ? "border-amber-400 bg-amber-50/20 shadow-md ring-1 ring-amber-400/50"
+          : "border-slate-200/90 hover:border-amber-300 hover:shadow-md"
       }`}
     >
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border-2 ${r.bg}`}>
-            {r.label}
+        {/* Card Header: Rarity & Category */}
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <span
+            className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-bold tracking-wide ${rarity.badgeClass}`}
+          >
+            {rarity.label}
           </span>
-          <span className="text-3xl">{item.icon}</span>
+          <span className="text-[11px] font-medium text-slate-400">
+            {CATEGORY_LABEL_MAP[product.category] || product.category}
+          </span>
         </div>
 
-        <h3 className="text-xl font-black text-slate-800 mb-1">{item.name}</h3>
-        <p className="text-xs font-medium text-slate-400 leading-relaxed mb-6">
-          {item.description}
+        {/* Product Visual */}
+        <div className="relative mb-4 flex h-28 w-full items-center justify-center rounded-xl bg-slate-50 p-3 group-hover:bg-amber-50/50 transition-colors">
+          <Image
+            src={imgSrc}
+            alt={product.name}
+            width={72}
+            height={72}
+            className="h-16 w-16 object-contain transition-transform duration-200 group-hover:scale-105"
+            onError={() => setImgSrc("/images/market/streak-freeze.svg")}
+            loading="lazy"
+          />
+          {product.category === "PHYSICAL" && (
+            <span className="absolute bottom-2 right-2 rounded bg-amber-100/90 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">
+              Giao tận nhà
+            </span>
+          )}
+        </div>
+
+        {/* Name & Description */}
+        <h3 className="text-base font-bold text-slate-900 line-clamp-1 mb-1 group-hover:text-amber-900 transition-colors">
+          {product.name}
+        </h3>
+        <p className="text-xs leading-relaxed text-slate-500 line-clamp-2 min-h-[32px] mb-4">
+          {product.description || "Vật phẩm phần thưởng được quản lý bởi hệ thống học tập BreadTrans."}
         </p>
       </div>
 
-      <div className="pt-4 border-t-2 border-slate-100 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1 font-black text-amber-800 text-lg">
-          <span>{item.price}</span>
-          <span className="text-base">🍞</span>
+      {/* Card Footer: Price & Action */}
+      <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5">
+          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-100 text-amber-800">
+            <Wheat size={14} aria-hidden="true" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-extrabold text-amber-900 leading-none">
+              {product.price.toLocaleString("vi-VN")}
+            </span>
+            <span className="text-[10px] text-slate-400 font-medium">Bánh Mì</span>
+          </div>
         </div>
 
-        {/* Vật phẩm Trang trí / Huy hiệu đã sở hữu cho phép Trang bị / Đang đeo */}
-        {(item.category === "avatar" || item.category === "badge") && isUnlocked ? (
+        {/* Action Button */}
+        {isEquippable ? (
           <button
-            onClick={onEquipToggle}
-            className={`flex items-center gap-1.5 font-black text-xs px-3.5 py-2 rounded-xl border transition-all cursor-pointer shadow-xs ${
+            type="button"
+            onClick={() => onEquipToggle?.(product)}
+            className={`inline-flex items-center gap-1 rounded-xl px-3.5 py-2 text-xs font-bold transition-colors cursor-pointer ${
               isEquipped
-                ? "bg-amber-500 text-white border-amber-600 shadow-amber-200"
-                : "bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100"
+                ? "bg-amber-600 text-white shadow-xs hover:bg-amber-700"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
             }`}
           >
             {isEquipped ? (
-              <><Check size={16} /> Đang đeo ✓</>
+              <>
+                <Check size={14} /> Đang dùng
+              </>
             ) : (
-              <><Zap size={16} /> Trang bị ngay</>
+              "Trang bị"
             )}
           </button>
         ) : (
-          <Button3D
-            variant={canAfford ? (item.category === "gift" ? "green" : "orange") : "white"}
-            size="sm"
-            onClick={onBuy}
-            disabled={!canAfford}
+          <button
+            type="button"
+            onClick={() => onRedeem(product)}
+            disabled={!isGuest && (isOutOfStock || !canAfford)}
+            className={`inline-flex items-center justify-center rounded-xl px-4 py-2 text-xs font-bold transition-colors cursor-pointer ${
+              isGuest
+                ? "bg-amber-600 text-white hover:bg-amber-700 shadow-xs"
+                : isOutOfStock
+                ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                : !canAfford
+                ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                : "bg-amber-600 text-white hover:bg-amber-700 shadow-xs active:scale-98"
+            }`}
           >
-            {canAfford 
-              ? item.category === "gift" 
-                ? "Đổi quà 🎁" 
-                : "Mua ngay ⚡"
-              : "Thiếu Bánh Mì"}
-          </Button3D>
+            {isGuest
+              ? "Đổi quà"
+              : isOutOfStock
+              ? "Hết hàng"
+              : !canAfford
+              ? "Chưa đủ bánh"
+              : product.category === "PHYSICAL"
+              ? "Đổi quà"
+              : "Mua ngay"}
+          </button>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 };
+export default MarketItemCard;

@@ -1,7 +1,7 @@
 {
-  "name": "BreadTrans - Luyện TOEIC & Tiếng Anh AI",
+  "name": "BreadTrans - Luyện TOEIC & Tiếng Anh Trực Tuyến",
   "short_name": "BreadTrans",
-  "description": "Nền tảng học tiếng Anh và luyện thi TOEIC tương tác với AI",
+  "description": "Nền tảng học tiếng Anh và luyện thi TOEIC tương tác thông minh",
   "start_url": "/",
   "id": "/",
   "display": "standalone",

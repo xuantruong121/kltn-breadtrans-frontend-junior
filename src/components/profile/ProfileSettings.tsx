@@ -11,7 +11,6 @@ import {
   Target,
   Loader2,
   Save,
-  Sparkles,
   ShoppingBag,
   Backpack,
   CheckCircle2,
@@ -460,8 +459,12 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
 
                       <div className="space-y-3">
                         <div className="flex items-center gap-3.5">
-                          <div className="w-14 h-14 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-3xl shadow-inner shrink-0">
-                            {item.icon}
+                          <div className="w-14 h-14 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center p-2 shadow-inner shrink-0">
+                            {item.icon?.startsWith("/") ? (
+                              <img src={item.icon} alt={item.name} className="w-10 h-10 object-contain" />
+                            ) : (
+                              <span className="text-2xl">{item.icon}</span>
+                            )}
                           </div>
                           <div>
                             <span

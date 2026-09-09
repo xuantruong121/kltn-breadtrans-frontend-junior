@@ -11,22 +11,10 @@ import {
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  ArrowLeft,
-  ArrowRight,
-  CheckCircle2,
-  Eye,
-  EyeOff,
-  Loader2,
-  LockKeyhole,
-  Mail,
-  RotateCcw,
-  ShieldCheck,
-  UserRound,
-} from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
-import { Button3D } from "@/components/ui";
 import { AuthShell } from "./AuthShell";
+import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
+import GoogleAccountLinkModal from "@/components/auth/GoogleAccountLinkModal";
 
 type RegisterStep = "details" | "otp" | "success";
 type FieldName = "fullName" | "email" | "password";
@@ -81,23 +69,23 @@ function getErrorMessage(error: unknown, fallback: string) {
   return raw;
 }
 
-function StepProgress({ current }: { current: 1 | 2 }) {
+function StepProgressBar({ current }: { current: 1 | 2 }) {
   return (
-    <div className="mb-7" aria-label={`Bước ${current} trên 2`}>
-      <div className="mb-3 flex items-center justify-between text-sm font-bold">
-        <span className={current === 1 ? "text-junior-blue" : "text-slate-500"}>
-          1. Thông tin
+    <div className="mb-6" aria-label={`Bước ${current} trên 2`}>
+      <div className="mb-2 flex items-center justify-between text-xs font-bold">
+        <span className={current === 1 ? "text-primary font-bold" : "text-on-surface-variant/60"}>
+          1. Thông tin tài khoản
         </span>
-        <span className={current === 2 ? "text-junior-blue" : "text-slate-400"}>
-          2. Xác thực
+        <span className={current === 2 ? "text-primary font-bold" : "text-on-surface-variant/60"}>
+          2. Xác thực email
         </span>
       </div>
-      <div className="h-3 overflow-hidden rounded-full bg-slate-200" aria-hidden="true">
+      <div className="h-1.5 overflow-hidden rounded-full bg-surface-container-highest" aria-hidden="true">
         <motion.div
           initial={false}
           animate={{ width: current === 1 ? "50%" : "100%" }}
           transition={{ type: "spring", stiffness: 180, damping: 24 }}
-          className="h-full rounded-full bg-junior-blue"
+          className="h-full rounded-full bg-primary"
         />
       </div>
     </div>
@@ -111,6 +99,7 @@ export default function RegisterFlow() {
   const loginHref = safeRedirect
     ? `/login?redirect=${encodeURIComponent(safeRedirect)}`
     : "/login";
+
   const otpRefs = useRef<Array<HTMLInputElement | null>>([]);
   const [step, setStep] = useState<RegisterStep>("details");
   const [form, setForm] = useState<RegistrationForm>({
@@ -125,12 +114,16 @@ export default function RegisterFlow() {
   const [resendSeconds, setResendSeconds] = useState(RESEND_DELAY_SECONDS);
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldName, string>>>({});
+  const [linkModalData, setLinkModalData] = useState<{
+    isOpen: boolean;
+    credential: string;
+  }>({ isOpen: false, credential: "" });
 
   useEffect(() => {
     if (step !== "otp" || resendSeconds <= 0) return;
     const timer = window.setTimeout(
       () => setResendSeconds((seconds) => Math.max(0, seconds - 1)),
-      1000,
+      1000
     );
     return () => window.clearTimeout(timer);
   }, [step, resendSeconds]);
@@ -148,11 +141,15 @@ export default function RegisterFlow() {
 
   const validateDetails = () => {
     const next: Partial<Record<FieldName, string>> = {};
-    if (form.fullName.trim().length < 2) next.fullName = "Họ và tên cần có ít nhất 2 ký tự.";
+    if (form.fullName.trim().length < 2) {
+      next.fullName = "Họ và tên cần có ít nhất 2 ký tự.";
+    }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
       next.email = "Hãy nhập một địa chỉ email hợp lệ.";
     }
-    if (form.password.length < 6) next.password = "Mật khẩu cần có ít nhất 6 ký tự.";
+    if (form.password.length < 6) {
+      next.password = "Mật khẩu cần có ít nhất 6 ký tự.";
+    }
     setFieldErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -176,7 +173,7 @@ export default function RegisterFlow() {
       setStep("otp");
     } catch (requestError: unknown) {
       setError(
-        getErrorMessage(requestError, "Chưa thể gửi mã OTP. Hãy kiểm tra kết nối và thử lại."),
+        getErrorMessage(requestError, "Chưa thể gửi mã OTP. Hãy kiểm tra kết nối và thử lại.")
       );
     } finally {
       setIsSubmitting(false);
@@ -240,8 +237,8 @@ export default function RegisterFlow() {
       setError(
         getErrorMessage(
           requestError,
-          "Chưa thể xác thực tài khoản. Hãy kiểm tra mã OTP và thử lại.",
-        ),
+          "Chưa thể xác thực tài khoản. Hãy kiểm tra mã OTP và thử lại."
+        )
       );
     } finally {
       setIsSubmitting(false);
@@ -264,257 +261,432 @@ export default function RegisterFlow() {
     }
   };
 
-  const inputClassName =
-    "w-full rounded-2xl border-4 border-slate-200 bg-white py-4 pl-14 pr-5 text-lg font-semibold text-slate-800 shadow-sm outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 focus:border-junior-blue focus:ring-4 focus:ring-blue-100";
-
   return (
-    <AuthShell contentPosition="start">
+    <AuthShell>
       <AnimatePresence mode="wait" initial={false}>
         {step === "details" && (
-          <motion.section
+          <motion.div
             key="details"
-            initial={{ opacity: 0, x: 24 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -16 }}
-            transition={{ duration: 0.25 }}
-            className="mx-auto w-full max-w-lg"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.2 }}
+            className="bg-surface-container-lowest rounded-2xl shadow-xl p-6 sm:p-10 relative border border-surface-container-high/60"
           >
-            <Link
-              href={loginHref}
-              className="mb-6 inline-flex min-h-11 items-center gap-2 rounded-xl px-2 font-bold text-slate-600 transition-colors hover:text-junior-blue focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200"
-            >
-              <ArrowLeft size={20} aria-hidden="true" />
-              Quay lại đăng nhập
-            </Link>
+            <StepProgressBar current={1} />
 
-            <StepProgress current={1} />
-            <header className="mb-7">
-              <p className="mb-2 font-bold uppercase tracking-[0.18em] text-junior-orange">
-                Dành cho học viên
-              </p>
-              <h1 className="text-4xl font-extrabold tracking-tight text-slate-800 sm:text-5xl">
-                Bắt đầu hành trình!
+            {/* Header Info */}
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-primary-fixed flex items-center justify-center mx-auto mb-3 shadow-xs">
+                <span
+                  className="material-symbols-outlined text-primary text-[28px]"
+                  style={{ fontVariationSettings: "'FILL' 1" }}
+                >
+                  person_add
+                </span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">
+                Đăng ký BreadTrans
               </h1>
-              <p className="mt-3 text-base font-medium leading-relaxed text-slate-500 sm:text-lg">
-                Tạo tài khoản để tham gia lớp học và khám phá thế giới tiếng Anh cùng BreadTrans.
+              <p className="text-sm text-on-surface-variant mt-1.5 leading-relaxed">
+                Tạo tài khoản học viên để bắt đầu hành trình nâng cao 4 kỹ năng tiếng Anh.
               </p>
-            </header>
+            </div>
 
+            {/* Error Alert Box */}
             {error && (
-              <div role="alert" className="mb-5 rounded-2xl border-2 border-red-200 bg-red-50 p-4 font-semibold text-red-700">
-                {error}
+              <div className="mb-5 bg-error-container text-on-error-container border border-error/20 p-3 rounded-xl text-sm font-medium flex items-center justify-between gap-2 animate-in fade-in duration-150">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-error text-[20px] shrink-0">
+                    error
+                  </span>
+                  <span>{error}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setError("")}
+                  aria-label="Đóng thông báo lỗi"
+                  className="text-on-error-container/80 hover:text-on-error-container p-0.5 rounded-md transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[18px]">close</span>
+                </button>
               </div>
             )}
 
-            <form onSubmit={submitDetails} noValidate className="space-y-5">
-              <div>
-                <label htmlFor="register-full-name" className="mb-2 block text-base font-bold text-slate-700">
-                  Họ và tên <span className="text-red-500">*</span>
+            {/* Form Elements */}
+            <form onSubmit={submitDetails} noValidate className="space-y-4">
+              {/* Full Name Field */}
+              <div className="space-y-1.5">
+                <label className="block text-sm font-semibold text-on-surface" htmlFor="register-full-name">
+                  Họ và tên <span className="text-error">*</span>
                 </label>
                 <div className="relative">
-                  <UserRound size={22} aria-hidden="true" className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-on-surface-variant/70">
+                    <span className="material-symbols-outlined text-[20px]">person</span>
+                  </span>
                   <input
                     id="register-full-name"
                     name="fullName"
                     type="text"
                     autoComplete="name"
+                    required
                     value={form.fullName}
-                    onChange={(event) => updateField("fullName", event.target.value)}
-                    aria-invalid={Boolean(fieldErrors.fullName)}
-                    aria-describedby={fieldErrors.fullName ? "full-name-error" : undefined}
-                    className={`${inputClassName} ${fieldErrors.fullName ? "border-red-300 focus:border-red-500 focus:ring-red-100" : ""}`}
+                    onChange={(e) => updateField("fullName", e.target.value)}
                     placeholder="Ví dụ: Nguyễn Minh Anh"
+                    className={`w-full pl-10 pr-4 py-3 bg-surface-container-low border rounded-xl text-on-surface text-sm placeholder:text-on-surface-variant/50 focus:outline-none focus:bg-surface-container-lowest transition-all ${
+                      fieldErrors.fullName
+                        ? "border-error focus:ring-4 focus:ring-error/10"
+                        : "border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10"
+                    }`}
                   />
                 </div>
-                {fieldErrors.fullName && <p id="full-name-error" className="mt-2 text-sm font-semibold text-red-600">{fieldErrors.fullName}</p>}
+                {fieldErrors.fullName && (
+                  <p className="text-xs text-error font-medium mt-1">{fieldErrors.fullName}</p>
+                )}
               </div>
 
-              <div>
-                <label htmlFor="register-email" className="mb-2 block text-base font-bold text-slate-700">
-                  Email <span className="text-red-500">*</span>
+              {/* Email Field */}
+              <div className="space-y-1.5">
+                <label className="block text-sm font-semibold text-on-surface" htmlFor="register-email">
+                  Địa chỉ Email <span className="text-error">*</span>
                 </label>
                 <div className="relative">
-                  <Mail size={22} aria-hidden="true" className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-on-surface-variant/70">
+                    <span className="material-symbols-outlined text-[20px]">mail</span>
+                  </span>
                   <input
                     id="register-email"
                     name="email"
                     type="email"
                     autoComplete="email"
                     inputMode="email"
+                    required
                     value={form.email}
-                    onChange={(event) => updateField("email", event.target.value)}
-                    aria-invalid={Boolean(fieldErrors.email)}
-                    aria-describedby={fieldErrors.email ? "email-error" : undefined}
-                    className={`${inputClassName} ${fieldErrors.email ? "border-red-300 focus:border-red-500 focus:ring-red-100" : ""}`}
-                    placeholder="hocsinh@gmail.com"
+                    onChange={(e) => updateField("email", e.target.value)}
+                    placeholder="name@example.com"
+                    className={`w-full pl-10 pr-4 py-3 bg-surface-container-low border rounded-xl text-on-surface text-sm placeholder:text-on-surface-variant/50 focus:outline-none focus:bg-surface-container-lowest transition-all ${
+                      fieldErrors.email
+                        ? "border-error focus:ring-4 focus:ring-error/10"
+                        : "border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10"
+                    }`}
                   />
                 </div>
-                {fieldErrors.email && <p id="email-error" className="mt-2 text-sm font-semibold text-red-600">{fieldErrors.email}</p>}
+                {fieldErrors.email && (
+                  <p className="text-xs text-error font-medium mt-1">{fieldErrors.email}</p>
+                )}
               </div>
 
-              <div>
-                <label htmlFor="register-password" className="mb-2 block text-base font-bold text-slate-700">
-                  Mật khẩu <span className="text-red-500">*</span>
+              {/* Password Field */}
+              <div className="space-y-1.5">
+                <label className="block text-sm font-semibold text-on-surface" htmlFor="register-password">
+                  Mật khẩu <span className="text-error">*</span>
                 </label>
                 <div className="relative">
-                  <LockKeyhole size={22} aria-hidden="true" className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-on-surface-variant/70">
+                    <span className="material-symbols-outlined text-[20px]">key</span>
+                  </span>
                   <input
                     id="register-password"
                     name="password"
                     type={showPassword ? "text" : "password"}
                     autoComplete="new-password"
+                    required
                     value={form.password}
-                    onChange={(event) => updateField("password", event.target.value)}
-                    aria-invalid={Boolean(fieldErrors.password)}
-                    aria-describedby={fieldErrors.password ? "password-help password-error" : "password-help"}
-                    className={`${inputClassName} pr-16 ${fieldErrors.password ? "border-red-300 focus:border-red-500 focus:ring-red-100" : ""}`}
-                    placeholder="Ít nhất 6 ký tự"
+                    onChange={(e) => updateField("password", e.target.value)}
+                    placeholder="Tối thiểu 6 ký tự"
+                    className={`w-full pl-10 pr-11 py-3 bg-surface-container-low border rounded-xl text-on-surface text-sm placeholder:text-on-surface-variant/50 focus:outline-none focus:bg-surface-container-lowest transition-all ${
+                      fieldErrors.password
+                        ? "border-error focus:ring-4 focus:ring-error/10"
+                        : "border-transparent focus:border-primary focus:ring-4 focus:ring-primary/10"
+                    }`}
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword((visible) => !visible)}
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-on-surface-variant/70 hover:text-on-surface transition-colors"
+                    title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                     aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                    aria-pressed={showPassword}
-                    className="absolute right-3 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-junior-blue focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200"
                   >
-                    {showPassword ? <EyeOff size={22} /> : <Eye size={22} />}
+                    <span className="material-symbols-outlined text-[20px]">
+                      {showPassword ? "visibility_off" : "visibility"}
+                    </span>
                   </button>
                 </div>
-                <p id="password-help" className="mt-2 text-sm font-medium text-slate-500">
-                  Dùng tối thiểu 6 ký tự và không chia sẻ mật khẩu với người khác.
-                </p>
-                {fieldErrors.password && <p id="password-error" className="mt-1 text-sm font-semibold text-red-600">{fieldErrors.password}</p>}
+                {fieldErrors.password ? (
+                  <p className="text-xs text-error font-medium mt-1">{fieldErrors.password}</p>
+                ) : (
+                  <p className="text-xs text-on-surface-variant/70 mt-1">
+                    Mật khẩu gồm ít nhất 6 ký tự để bảo vệ tài khoản của bạn.
+                  </p>
+                )}
               </div>
 
-              <Button3D
+              {/* Submit CTA */}
+              <button
                 type="submit"
-                size="xl"
-                variant="orange"
                 disabled={isSubmitting}
-                className="mt-2 min-h-14 w-full"
-                icon={isSubmitting ? <Loader2 className="animate-spin motion-reduce:animate-none" size={24} /> : undefined}
+                className="w-full py-3.5 px-6 rounded-xl font-bold text-sm sm:text-base bg-primary text-on-primary hover:bg-primary-container shadow-md transition-all duration-150 flex items-center justify-center gap-2 select-none active:scale-[0.99] disabled:opacity-75 disabled:cursor-not-allowed cursor-pointer mt-2"
               >
-                {isSubmitting ? "Đang gửi mã..." : "Gửi mã xác thực"}
-                {!isSubmitting && <ArrowRight size={24} aria-hidden="true" />}
-              </Button3D>
+                {isSubmitting ? (
+                  <>
+                    <svg
+                      className="animate-spin h-5 w-5 text-on-primary"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    <span>Đang gửi mã xác thực...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Đăng ký tài khoản</span>
+                    <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                  </>
+                )}
+              </button>
             </form>
 
-            <p className="mt-7 text-center font-medium text-slate-600">
-              Đã có tài khoản?{" "}
-              <Link href={loginHref} className="inline-flex min-h-11 items-center font-bold text-junior-blue underline decoration-2 underline-offset-4 focus-visible:rounded-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200">
-                Đăng nhập ngay
-              </Link>
-            </p>
-          </motion.section>
+            {/* Divider with Text */}
+            <div className="relative my-6 flex items-center justify-center">
+              <div className="w-full bg-surface-container-highest h-[1px]" />
+              <span className="absolute px-3 bg-surface-container-lowest text-xs font-semibold text-on-surface-variant/70 uppercase tracking-wider">
+                Hoặc tiếp tục với
+              </span>
+            </div>
+
+            {/* Google SSO */}
+            <div className="space-y-2">
+              <GoogleSignInButton
+                redirectUrl={safeRedirect}
+                onAccountLinkRequired={({ credential }) =>
+                  setLinkModalData({ isOpen: true, credential })
+                }
+                onError={(msg) => setError(msg)}
+              />
+            </div>
+
+            {/* Footer Card Direction */}
+            <div className="mt-6 text-center pt-3 bg-surface-container-low/50 rounded-xl p-3">
+              <p className="text-sm text-on-surface-variant">
+                Đã có tài khoản BreadTrans?{" "}
+                <Link
+                  href={loginHref}
+                  className="font-bold text-primary hover:underline ml-1 inline-block"
+                >
+                  Đăng nhập ngay
+                </Link>
+              </p>
+            </div>
+          </motion.div>
         )}
 
         {step === "otp" && (
-          <motion.section
+          <motion.div
             key="otp"
-            initial={{ opacity: 0, x: 24 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -16 }}
-            transition={{ duration: 0.25 }}
-            className="mx-auto w-full max-w-lg text-center"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.2 }}
+            className="bg-surface-container-lowest rounded-2xl shadow-xl p-6 sm:p-10 relative border border-surface-container-high/60"
           >
-            <StepProgress current={2} />
-            <div className="mx-auto mb-5 flex size-20 items-center justify-center rounded-[1.75rem] border-4 border-sky-200 bg-white text-junior-blue shadow-[0_7px_0_0_#bae6fd]">
-              <ShieldCheck size={42} strokeWidth={2.5} aria-hidden="true" />
+            <StepProgressBar current={2} />
+
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-primary-fixed flex items-center justify-center mx-auto mb-3 shadow-xs">
+                <span
+                  className="material-symbols-outlined text-primary text-[28px]"
+                  style={{ fontVariationSettings: "'FILL' 1" }}
+                >
+                  mark_email_read
+                </span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">
+                Kiểm tra email nhé!
+              </h1>
+              <p className="text-sm text-on-surface-variant mt-1.5 leading-relaxed">
+                BreadTrans đã gửi mã xác thực 6 chữ số tới địa chỉ
+              </p>
+              <div className="mt-1 font-bold text-primary break-all text-sm">{form.email}</div>
             </div>
-            <h1 className="text-4xl font-extrabold tracking-tight text-slate-800 sm:text-5xl">Kiểm tra email nhé!</h1>
-            <p className="mx-auto mt-3 max-w-md text-base font-medium leading-relaxed text-slate-500 sm:text-lg">
-              BreadTrans đã gửi mã gồm 6 chữ số tới
-              <strong className="mt-1 block break-all text-slate-700">{form.email}</strong>
-            </p>
 
-            {error && <div role="alert" className="mt-6 rounded-2xl border-2 border-red-200 bg-red-50 p-4 text-left font-semibold text-red-700">{error}</div>}
+            {error && (
+              <div className="mb-5 bg-error-container text-on-error-container border border-error/20 p-3 rounded-xl text-sm font-medium flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-error text-[20px] shrink-0">
+                    error
+                  </span>
+                  <span>{error}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setError("")}
+                  className="text-on-error-container/80 hover:text-on-error-container p-0.5 rounded-md"
+                >
+                  <span className="material-symbols-outlined text-[18px]">close</span>
+                </button>
+              </div>
+            )}
 
-            <form onSubmit={verifyOtp} className="mt-7">
-              <fieldset>
-                <legend className="mb-3 text-left text-base font-bold text-slate-700">Mã xác thực OTP</legend>
+            <form onSubmit={verifyOtp} className="space-y-6">
+              <div>
+                <label className="block text-xs font-semibold text-on-surface-variant mb-3 text-center">
+                  Nhập mã 6 chữ số
+                </label>
                 <div className="grid grid-cols-6 gap-2 sm:gap-3">
                   {otpDigits.map((digit, index) => (
                     <input
                       key={index}
-                      ref={(element) => { otpRefs.current[index] = element; }}
+                      ref={(element) => {
+                        otpRefs.current[index] = element;
+                      }}
                       type="text"
                       inputMode="numeric"
                       autoComplete={index === 0 ? "one-time-code" : "off"}
                       pattern="[0-9]*"
                       maxLength={1}
                       value={digit}
-                      onChange={(event) => updateOtpDigit(index, event.target.value)}
-                      onKeyDown={(event) => handleOtpKeyDown(index, event)}
+                      onChange={(e) => updateOtpDigit(index, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(index, e)}
                       onPaste={handleOtpPaste}
                       aria-label={`Chữ số OTP thứ ${index + 1}`}
-                      className="h-14 min-w-0 rounded-2xl border-4 border-slate-200 bg-white text-center text-2xl font-extrabold tabular-nums text-slate-800 shadow-sm outline-none transition-colors focus:border-junior-blue focus:ring-4 focus:ring-blue-100 sm:h-16 sm:text-3xl"
+                      className="h-13 sm:h-14 min-w-0 rounded-xl bg-surface-container-low border border-outline-variant/40 text-center text-xl sm:text-2xl font-bold text-on-surface focus:outline-none focus:bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
                     />
                   ))}
                 </div>
-                <p className="mt-3 text-left text-sm font-medium text-slate-500">
+                <p className="mt-3 text-center text-xs text-on-surface-variant/70">
                   Mã có hiệu lực trong 5 phút. Bạn có thể dán toàn bộ mã vào bất kỳ ô nào.
                 </p>
-              </fieldset>
+              </div>
 
-              <Button3D
+              <button
                 type="submit"
-                size="xl"
-                variant="orange"
                 disabled={isSubmitting}
-                className="mt-7 min-h-14 w-full"
-                icon={isSubmitting ? <Loader2 className="animate-spin motion-reduce:animate-none" size={24} /> : undefined}
+                className="w-full py-3.5 px-6 rounded-xl font-bold text-sm sm:text-base bg-primary text-on-primary hover:bg-primary-container shadow-md transition-all duration-150 flex items-center justify-center gap-2 select-none active:scale-[0.99] disabled:opacity-75 disabled:cursor-not-allowed cursor-pointer"
               >
-                {isSubmitting ? "Đang xác thực..." : "Xác nhận tài khoản"}
-                {!isSubmitting && <ArrowRight size={24} aria-hidden="true" />}
-              </Button3D>
+                {isSubmitting ? (
+                  <>
+                    <svg
+                      className="animate-spin h-5 w-5 text-on-primary"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    <span>Đang xác thực...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Xác nhận tài khoản</span>
+                    <span className="material-symbols-outlined text-[20px]">check</span>
+                  </>
+                )}
+              </button>
             </form>
 
-            <div className="mt-6 flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-5">
+            <div className="mt-6 pt-4 border-t border-surface-container-high/40 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
               <button
                 type="button"
-                onClick={() => { setError(""); setStep("details"); }}
-                className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 font-bold text-slate-600 transition-colors hover:bg-white hover:text-junior-blue focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200"
+                onClick={() => {
+                  setError("");
+                  setStep("details");
+                }}
+                className="inline-flex items-center gap-1.5 font-semibold text-on-surface-variant hover:text-primary transition-colors py-1 px-2 rounded-lg hover:bg-surface-container-low"
               >
-                <ArrowLeft size={19} aria-hidden="true" />
-                Thay đổi email
+                <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                <span>Thay đổi email</span>
               </button>
+
               <button
                 type="button"
                 onClick={resendOtp}
                 disabled={resendSeconds > 0 || isResending}
-                className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 font-bold text-junior-blue transition-colors hover:bg-white disabled:cursor-not-allowed disabled:text-slate-400 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200"
+                className="inline-flex items-center gap-1.5 font-semibold text-primary hover:underline disabled:text-on-surface-variant/50 disabled:no-underline disabled:cursor-not-allowed"
               >
-                {isResending ? <Loader2 size={19} className="animate-spin motion-reduce:animate-none" /> : <RotateCcw size={19} aria-hidden="true" />}
-                {resendSeconds > 0 ? `Gửi lại sau ${resendSeconds}s` : "Gửi lại mã"}
+                <span className="material-symbols-outlined text-[18px]">replay</span>
+                <span>
+                  {resendSeconds > 0 ? `Gửi lại sau ${resendSeconds}s` : "Gửi lại mã OTP"}
+                </span>
               </button>
             </div>
-          </motion.section>
+          </motion.div>
         )}
 
         {step === "success" && (
-          <motion.section
+          <motion.div
             key="success"
-            initial={{ opacity: 0, scale: 0.96 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: "spring", stiffness: 180, damping: 20 }}
-            className="mx-auto w-full max-w-lg text-center"
-            aria-live="polite"
+            transition={{ duration: 0.2 }}
+            className="bg-surface-container-lowest rounded-2xl shadow-xl p-6 sm:p-10 relative border border-surface-container-high/60 text-center"
           >
-            <div className="mx-auto mb-7 flex size-24 items-center justify-center rounded-[2rem] border-4 border-emerald-200 bg-white text-junior-green shadow-[0_8px_0_0_#a7f3d0]">
-              <CheckCircle2 size={52} strokeWidth={2.5} aria-hidden="true" />
+            <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4 shadow-xs">
+              <span
+                className="material-symbols-outlined text-[32px]"
+                style={{ fontVariationSettings: "'FILL' 1" }}
+              >
+                check_circle
+              </span>
             </div>
-            <p className="mb-2 font-bold uppercase tracking-[0.18em] text-junior-green">Hoàn tất đăng ký</p>
-            <h1 className="text-4xl font-extrabold tracking-tight text-slate-800 sm:text-5xl">Tài khoản đã sẵn sàng!</h1>
-            <p className="mx-auto mt-4 max-w-md text-base font-medium leading-relaxed text-slate-500 sm:text-lg">
-              Chào mừng {form.fullName.trim()} đến với BreadTrans Junior. Bạn có thể đăng nhập và bắt đầu học ngay bây giờ.
+
+            <div className="inline-block px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold uppercase tracking-wider mb-2">
+              Hoàn tất đăng ký
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">
+              Tài khoản đã sẵn sàng!
+            </h1>
+
+            <p className="text-sm text-on-surface-variant mt-2 max-w-sm mx-auto leading-relaxed">
+              Chào mừng <strong className="text-on-surface">{form.fullName.trim()}</strong> đến
+              với BreadTrans. Bạn có thể đăng nhập và bắt đầu học tập ngay bây giờ.
             </p>
-            <Button3D type="button" size="xl" variant="orange" onClick={() => router.push(loginHref)} className="mt-8 min-h-14 w-full">
-              Đăng nhập ngay
-              <ArrowRight size={24} aria-hidden="true" />
-            </Button3D>
-          </motion.section>
+
+            <button
+              type="button"
+              onClick={() => router.push(loginHref)}
+              className="mt-6 w-full py-3.5 px-6 rounded-xl font-bold text-sm sm:text-base bg-primary text-on-primary hover:bg-primary-container shadow-md transition-all duration-150 flex items-center justify-center gap-2 select-none active:scale-[0.99] cursor-pointer"
+            >
+              <span>Đăng nhập ngay</span>
+              <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+            </button>
+          </motion.div>
         )}
       </AnimatePresence>
+
+      <GoogleAccountLinkModal
+        isOpen={linkModalData.isOpen}
+        credential={linkModalData.credential}
+        defaultEmail={form.email}
+        redirectUrl={safeRedirect}
+        onClose={() => setLinkModalData({ isOpen: false, credential: "" })}
+      />
     </AuthShell>
   );
 }

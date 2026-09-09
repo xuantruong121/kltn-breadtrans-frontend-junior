@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
-import { ArrowLeft, Loader2, Trophy, Target, Star, RefreshCw } from "lucide-react";
+import { Loader2, Trophy, Target, Star, RefreshCw } from "lucide-react";
 import { quizService } from "@/lib/api/services/quiz.service";
 import { BackButton } from "@/components/ui";
 import Confetti from "react-confetti";

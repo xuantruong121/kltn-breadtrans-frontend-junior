@@ -1,22 +1,107 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Loader2, Mic, StopCircle, Star, Sparkles, Volume2, Activity, CheckCircle2, AlertTriangle } from "lucide-react";
-import { speakingService } from "@/lib/api/services/speaking.service";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useParams } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Gauge,
+  Loader2,
+  Mic,
+  StopCircle,
+  Volume2,
+  Activity,
+  AlertTriangle,
+  Target,
+  Square,
+  Award,
+  BookOpen,
+} from "lucide-react";
+import {
+  speakingService,
+  SpeakingSubmissionDetail,
+} from "@/lib/api/services/speaking.service";
 import { BackButton } from "@/components/ui";
-import { motion } from "framer-motion";
-import { useGamificationStore } from "@/stores/gamificationStore";
+import { WordDictionaryPopup } from "@/components/speaking/WordDictionaryPopup";
+import { PronunciationReportCard } from "@/components/speaking/PronunciationReportCard";
 import toast from "react-hot-toast";
+
+/**
+ * Encodes linear 16-bit PCM mono samples into a standard RIFF/WAV Blob.
+ */
+const encodeWAV = (samples: Float32Array, sampleRate = 16000): Blob => {
+  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  const view = new DataView(buffer);
+
+  const writeString = (offset: number, value: string) => {
+    for (let i = 0; i < value.length; i++) {
+      view.setUint8(offset + i, value.charCodeAt(i));
+    }
+  };
+
+  writeString(0, "RIFF");
+  view.setUint32(4, 36 + samples.length * 2, true);
+  writeString(8, "WAVE");
+
+  writeString(12, "fmt ");
+  view.setUint32(16, 16, true); // SubChunk1Size (16 for PCM)
+  view.setUint16(20, 1, true); // AudioFormat 1 = PCM
+  view.setUint16(22, 1, true); // NumChannels = 1 (Mono)
+  view.setUint32(24, sampleRate, true); // SampleRate = 16000
+  view.setUint32(28, sampleRate * 2, true); // ByteRate = 16000 * 1 * 2 = 32000
+  view.setUint16(32, 2, true); // BlockAlign = 1 * 2 = 2
+  view.setUint16(34, 16, true); // BitsPerSample = 16
+
+  writeString(36, "data");
+  view.setUint32(40, samples.length * 2, true);
+
+  for (let i = 0, offset = 44; i < samples.length; i++, offset += 2) {
+    const s = Math.max(-1, Math.min(1, samples[i]));
+    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+  }
+
+  return new Blob([view], { type: "audio/wav" });
+};
+
+/**
+ * Resamples raw audio data to exactly 16,000 Hz using native OfflineAudioContext.
+ */
+async function resampleTo16kHz(
+  audioData: Float32Array,
+  inputSampleRate: number,
+): Promise<Float32Array> {
+  if (inputSampleRate === 16000) return audioData;
+  const targetLength = Math.round((audioData.length * 16000) / inputSampleRate);
+  if (targetLength <= 0) return audioData;
+
+  const OfflineCtx =
+    window.OfflineAudioContext || (window as any).webkitOfflineAudioContext;
+  const offlineCtx = new OfflineCtx(1, targetLength, 16000);
+  const audioBuffer = offlineCtx.createBuffer(1, audioData.length, inputSampleRate);
+  audioBuffer.getChannelData(0).set(audioData);
+
+  const source = offlineCtx.createBufferSource();
+  source.buffer = audioBuffer;
+  source.connect(offlineCtx.destination);
+  source.start(0);
+
+  const renderedBuffer = await offlineCtx.startRendering();
+  return renderedBuffer.getChannelData(0);
+}
+
+const TTS_SPEED_OPTIONS = [
+  { value: 0.5, label: "0.5x", title: "0.5x - Rất chậm: Nghe rõ từng âm vị & khẩu hình" },
+  { value: 0.75, label: "0.75x", title: "0.75x - Chậm: Luyện nối âm & ngữ điệu câu" },
+  { value: 1.0, label: "1.0x", title: "1.0x - Chuẩn: Tốc độ đàm thoại & chuẩn thi TOEIC" },
+  { value: 1.25, label: "1.25x", title: "1.25x - Nhanh: Thử thách phản xạ nghe" },
+  { value: 1.5, label: "1.5x", title: "1.5x - Rất nhanh: Tốc độ nâng cao" },
+] as const;
 
 export default function SpeakingExerciseDetailPage() {
   const { id } = useParams();
-  const router = useRouter();
   const exerciseId = Number(id);
   const queryClient = useQueryClient();
-  const { addBreads, addExp } = useGamificationStore();
 
+  // Recording State
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const MAX_RECORDING_SECONDS = 45;
@@ -28,7 +113,24 @@ export default function SpeakingExerciseDetailPage() {
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const recordedSamplesRef = useRef<Float32Array[]>([]);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Audio Quality Metrics State
+  const [qualityWarning, setQualityWarning] = useState<string | null>(null);
+
+  // TTS State
   const [isPlayingTTS, setIsPlayingTTS] = useState(false);
+  const [ttsRate, setTtsRate] = useState<number>(1.0);
+  const [ttsAccent, setTtsAccent] = useState<"US" | "UK">("US");
+  const ttsAudioElementRef = useRef<HTMLAudioElement | null>(null);
+
+  // Dictionary Popup State
+  const [selectedWordForLookup, setSelectedWordForLookup] = useState<string | null>(null);
+
+  // Submission & Polling State
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPolling, setIsPolling] = useState(false);
+  const [currentSubmission, setCurrentSubmission] = useState<SpeakingSubmissionDetail | null>(null);
+  const pollingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: exercise, isLoading } = useQuery({
     queryKey: ["speaking-exercise", exerciseId],
@@ -36,108 +138,41 @@ export default function SpeakingExerciseDetailPage() {
     enabled: !!exerciseId,
   });
 
-  const submitAudioMut = useMutation({
-    mutationFn: (blob: Blob) => speakingService.submitAudio(exerciseId, blob),
-    onSuccess: (data: any) => {
-      const assessment = data?.assessment;
-      if (assessment && !assessment.isSilentOrNoSpeech && assessment.overallScore > 0) {
-        if (assessment.overallScore >= 8) {
-          addExp(25);
-        }
-        addBreads(5);
-      }
-      queryClient.invalidateQueries({ queryKey: ["myQuests"] });
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
-      queryClient.invalidateQueries({ queryKey: ["stats"] });
-      queryClient.invalidateQueries({ queryKey: ["myPet"] });
-      toast.success("AI đã hoàn thành chấm điểm phát âm!");
-    },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Có lỗi xảy ra khi chấm điểm.");
-    },
-  });
-
-  // Clean up audio URL, media tracks, audio context and timer on unmount
+  // Clean up resources on unmount
   useEffect(() => {
     return () => {
       if (audioUrl) URL.revokeObjectURL(audioUrl);
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+      if (pollingTimerRef.current) clearTimeout(pollingTimerRef.current);
       if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current.getTracks().forEach((t) => t.stop());
       }
       if (audioContextRef.current) {
         audioContextRef.current.close().catch(() => {});
       }
-      window.speechSynthesis.cancel();
+      if (ttsAudioElementRef.current) {
+        ttsAudioElementRef.current.pause();
+        ttsAudioElementRef.current = null;
+      }
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
     };
   }, [audioUrl]);
 
-  // Handle countdown timer when recording
-  useEffect(() => {
-    if (isRecording) {
-      timerIntervalRef.current = setInterval(() => {
-        setRecordingSeconds((prev) => {
-          if (prev + 1 >= MAX_RECORDING_SECONDS) {
-            stopRecording();
-            return MAX_RECORDING_SECONDS;
-          }
-          return prev + 1;
-        });
-      }, 1000);
-    } else {
-      if (timerIntervalRef.current) {
-        clearInterval(timerIntervalRef.current);
-        timerIntervalRef.current = null;
-      }
-    }
-    return () => {
-      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-    };
-  }, [isRecording]);
-
-  // Helper encode Float32 PCM samples into standard 16-bit 16kHz mono WAV Blob
-  const encodeWAV = (samples: Float32Array, sampleRate = 16000): Blob => {
-    const buffer = new ArrayBuffer(44 + samples.length * 2);
-    const view = new DataView(buffer);
-
-    const writeString = (offset: number, str: string) => {
-      for (let i = 0; i < str.length; i++) {
-        view.setUint8(offset + i, str.charCodeAt(i));
-      }
-    };
-
-    writeString(0, "RIFF");
-    view.setUint32(4, 36 + samples.length * 2, true);
-    writeString(8, "WAVE");
-    writeString(12, "fmt ");
-    view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true); // PCM format
-    view.setUint16(22, 1, true); // Mono (1 channel)
-    view.setUint32(24, sampleRate, true);
-    view.setUint32(28, sampleRate * 2, true); // Byte rate
-    view.setUint16(32, 2, true); // Block align
-    view.setUint16(34, 16, true); // 16 bits per sample
-    writeString(36, "data");
-    view.setUint32(40, samples.length * 2, true);
-
-    let offset = 44;
-    for (let i = 0; i < samples.length; i++, offset += 2) {
-      const s = Math.max(-1, Math.min(1, samples[i]));
-      view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
-    }
-
-    return new Blob([view], { type: "audio/wav" });
-  };
-
+  /**
+   * Phase 3.1: Starts microphone recording with hardware constraints,
+   * ZERO speaker loopback, and mono audio capture.
+   */
   const startRecording = async () => {
     try {
+      setQualityWarning(null);
       setRecordingSeconds(0);
       recordedSamplesRef.current = [];
 
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           channelCount: 1,
-          sampleRate: 16000,
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
@@ -146,7 +181,7 @@ export default function SpeakingExerciseDetailPage() {
       mediaStreamRef.current = stream;
 
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      const audioCtx = new AudioCtx({ sampleRate: 16000 });
+      const audioCtx = new AudioCtx();
       audioContextRef.current = audioCtx;
 
       const source = audioCtx.createMediaStreamSource(stream);
@@ -158,17 +193,28 @@ export default function SpeakingExerciseDetailPage() {
         recordedSamplesRef.current.push(new Float32Array(inputData));
       };
 
+      // Connect to a Zero-Gain node to avoid microphone audio feeding back into speakers!
+      const zeroGain = audioCtx.createGain();
+      zeroGain.gain.value = 0.0;
+
       source.connect(processor);
-      processor.connect(audioCtx.destination);
+      processor.connect(zeroGain);
+      zeroGain.connect(audioCtx.destination);
 
       setIsRecording(true);
     } catch (err) {
       console.error("Error accessing microphone:", err);
-      alert("Không thể truy cập Microphone. Vui lòng kiểm tra và cấp quyền micro trong trình duyệt.");
+      toast.error(
+        "Không thể truy cập Microphone. Vui lòng kiểm tra và cấp quyền micro trong cài đặt trình duyệt.",
+      );
     }
   };
 
-  const stopRecording = () => {
+  /**
+   * Phase 3.1 & 3.2: Stops recording, resamples audio to 16,000 Hz, calculates
+   * client-side quality metrics (RMS, peak, clipping, silence), and produces WAV.
+   */
+  const stopRecording = useCallback(async () => {
     setIsRecording(false);
 
     if (processorRef.current) {
@@ -182,7 +228,7 @@ export default function SpeakingExerciseDetailPage() {
     }
 
     if (audioContextRef.current) {
-      const actualSampleRate = audioContextRef.current.sampleRate || 16000;
+      const inputSampleRate = audioContextRef.current.sampleRate || 44100;
       audioContextRef.current.close().catch(() => {});
       audioContextRef.current = null;
 
@@ -190,24 +236,223 @@ export default function SpeakingExerciseDetailPage() {
       let totalLength = 0;
       for (const chunk of chunks) totalLength += chunk.length;
 
-      if (totalLength > 0) {
-        const merged = new Float32Array(totalLength);
-        let offset = 0;
-        for (const chunk of chunks) {
-          merged.set(chunk, offset);
-          offset += chunk.length;
-        }
-
-        const wavBlob = encodeWAV(merged, actualSampleRate);
-        setAudioBlob(wavBlob);
-        setAudioUrl(URL.createObjectURL(wavBlob));
+      if (totalLength === 0) {
+        setQualityWarning("Bản ghi âm rỗng. Vui lòng bấm micro và đọc lại.");
+        return;
       }
+
+      const merged = new Float32Array(totalLength);
+      let offset = 0;
+      for (const chunk of chunks) {
+        merged.set(chunk, offset);
+        offset += chunk.length;
+      }
+
+      // 1. Resample to exactly 16,000 Hz via native Web Audio API
+      let resampled: Float32Array<any> = merged;
+      try {
+        resampled = await resampleTo16kHz(merged, inputSampleRate);
+      } catch (resampleErr) {
+        console.warn("OfflineAudioContext resampling fallback:", resampleErr);
+      }
+
+      // 2. Client-side quality inspection
+      let sumSquares = 0;
+      let peak = 0;
+      let clippingCount = 0;
+
+      for (let i = 0; i < resampled.length; i++) {
+        const val = Math.abs(resampled[i]);
+        sumSquares += val * val;
+        if (val > peak) peak = val;
+        if (val >= 0.99) clippingCount++;
+      }
+
+      const rms = Math.sqrt(sumSquares / resampled.length);
+      const clippingRatio = clippingCount / resampled.length;
+
+      if (peak < 0.01 || rms < 0.001) {
+        setQualityWarning("Âm thanh quá nhỏ hoặc im lặng. Vui lòng nói to và rõ hơn.");
+      } else if (clippingRatio > 0.05) {
+        setQualityWarning("Âm thanh bị rè hoặc quá gần micro. Hãy giữ khoảng cách phù hợp.");
+      } else {
+        setQualityWarning(null);
+      }
+
+      // 3. Encode into 16-bit PCM WAV
+      const wavBlob = encodeWAV(resampled, 16000);
+      setAudioBlob(wavBlob);
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
+      setAudioUrl(URL.createObjectURL(wavBlob));
+    }
+  }, [audioUrl]);
+
+  // Countdown timer during recording (max 45s)
+  useEffect(() => {
+    if (isRecording) {
+      timerIntervalRef.current = setInterval(() => {
+        setRecordingSeconds((prev) => {
+          if (prev + 1 >= MAX_RECORDING_SECONDS) {
+            stopRecording();
+            return MAX_RECORDING_SECONDS;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    } else if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+    return () => {
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    };
+  }, [isRecording, stopRecording]);
+
+  /**
+   * Phase 1.3 & 2: Submits audio with Idempotency-Key and polls until completion.
+   */
+  const handleSubmit = async () => {
+    if (!audioBlob) return;
+
+    if (qualityWarning?.includes("im lặng") || qualityWarning?.includes("rỗng")) {
+      toast.error("Bản ghi âm không có âm thanh rõ ràng. Vui lòng thu âm lại.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setIsPolling(true);
+    setCurrentSubmission(null);
+
+    try {
+      const response = await speakingService.submitAudio(
+        exerciseId,
+        audioBlob,
+      );
+
+      // Start polling submission status
+      pollSubmissionStatus(response.submissionId, 0);
+    } catch (err: any) {
+      setIsSubmitting(false);
+      setIsPolling(false);
+      const msg = err?.response?.data?.message || "Có lỗi xảy ra khi nộp bài phát âm.";
+      toast.error(msg);
     }
   };
 
-  const handleSubmit = () => {
-    if (audioBlob) {
-      submitAudioMut.mutate(audioBlob);
+  /**
+   * Polls GET /speaking/submissions/:id every 1.5s until COMPLETED or FAILED (max 45 polls = ~60s).
+   */
+  const pollSubmissionStatus = (submissionId: number, attempt: number) => {
+    if (attempt > 40) {
+      setIsPolling(false);
+      setIsSubmitting(false);
+      toast.error("Thời gian chấm điểm kéo dài hơn dự kiến. Vui lòng tải lại trang.");
+      return;
+    }
+
+    pollingTimerRef.current = setTimeout(async () => {
+      try {
+        const sub = await speakingService.getSubmission(submissionId);
+        setCurrentSubmission(sub);
+
+        if (sub.status === "COMPLETED" || sub.status === "FAILED") {
+          setIsPolling(false);
+          setIsSubmitting(false);
+
+          if (sub.status === "COMPLETED") {
+            toast.success("Đã hoàn thành đánh giá phát âm!");
+            queryClient.invalidateQueries({ queryKey: ["daily-quests"] });
+            queryClient.invalidateQueries({ queryKey: ["user-stats"] });
+            queryClient.invalidateQueries({ queryKey: ["myPet"] });
+          } else {
+            toast.error("Đánh giá phát âm chưa thành công. Bạn vui lòng thử lại.");
+          }
+        } else {
+          // Still PENDING or PROCESSING -> continue polling
+          pollSubmissionStatus(submissionId, attempt + 1);
+        }
+      } catch (err: any) {
+        console.error("Polling error:", err);
+        // Retry next tick
+        pollSubmissionStatus(submissionId, attempt + 1);
+      }
+    }, 1500);
+  };
+
+  /**
+   * Phase 5: Neural TTS playback. Locks speed & accent controls while playing.
+   */
+  const handleTogglePlayTTS = async () => {
+    if (isPlayingTTS) {
+      if (ttsAudioElementRef.current) {
+        ttsAudioElementRef.current.pause();
+        ttsAudioElementRef.current = null;
+      }
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+      setIsPlayingTTS(false);
+      return;
+    }
+
+    if (!exercise?.targetText) return;
+
+    setIsPlayingTTS(true);
+
+    try {
+      // 1. Try high-quality Neural TTS from backend
+      const audioBlob = await speakingService.generateTts(
+        exercise.targetText,
+        ttsAccent,
+        ttsRate,
+      );
+
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      ttsAudioElementRef.current = audio;
+
+      audio.onended = () => {
+        setIsPlayingTTS(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+
+      audio.onerror = () => {
+        setIsPlayingTTS(false);
+        URL.revokeObjectURL(audioUrl);
+        fallbackBrowserTTS();
+      };
+
+      await audio.play();
+    } catch {
+      // 2. Fallback to Web Speech API if backend TTS unavailable
+      fallbackBrowserTTS();
+    }
+  };
+
+  const fallbackBrowserTTS = () => {
+    if (!exercise?.targetText || typeof window === "undefined" || !("speechSynthesis" in window)) {
+      setIsPlayingTTS(false);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(exercise.targetText);
+    utterance.rate = Number(ttsRate);
+    utterance.lang = ttsAccent === "US" ? "en-US" : "en-GB";
+
+    utterance.onend = () => setIsPlayingTTS(false);
+    utterance.onerror = () => setIsPlayingTTS(false);
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const handlePlayIsolatedWordSample = (word: string) => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.rate = Number(ttsRate);
+      utterance.lang = ttsAccent === "US" ? "en-US" : "en-GB";
+      window.speechSynthesis.speak(utterance);
     }
   };
 
@@ -217,437 +462,395 @@ export default function SpeakingExerciseDetailPage() {
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
-  const handlePlayTTS = () => {
-    if (!exercise?.targetText) return;
-    
-    if (isPlayingTTS) {
-      window.speechSynthesis.cancel();
-      setIsPlayingTTS(false);
-      return;
-    }
+  /**
+   * Phase 4.2: Tokenizes target sentence preserving words, apostrophes, and contractions.
+   * Each word is clickable and keyboard accessible for dictionary lookup.
+   */
+  const renderInteractiveTargetWords = (text: string) => {
+    const tokens = text.match(/[\w'-]+|[^\s\w]/g) || [text];
 
-    const utterance = new SpeechSynthesisUtterance(exercise.targetText);
-    utterance.lang = "en-US";
-    utterance.rate = 0.9; // Slightly slower for clear pronunciation
-    
-    utterance.onend = () => setIsPlayingTTS(false);
-    utterance.onerror = () => setIsPlayingTTS(false);
-    
-    setIsPlayingTTS(true);
-    window.speechSynthesis.speak(utterance);
-  };
+    return (
+      <div className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-2 text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 leading-relaxed px-2 break-words max-w-3xl mx-auto">
+        {tokens.map((token, index) => {
+          const isWord = /[\w]/.test(token);
+          if (!isWord) {
+            return (
+              <span key={index} className="text-slate-500 font-bold select-none">
+                {token}
+              </span>
+            );
+          }
 
-  const renderColoredText = (text: string, assessmentResult?: any) => {
-    if (!assessmentResult) {
-      const words = text.split(/\s+/);
-      return words.map((word, index) => (
-        <span key={index} className="inline-block px-1">
-          {word}
-        </span>
-      ));
-    }
-
-    // Nếu im lặng hoặc điểm = 0
-    if (assessmentResult.isSilentOrNoSpeech || assessmentResult.overallScore === 0) {
-      const words = text.split(/\s+/);
-      return words.map((word, index) => (
-        <span
-          key={index}
-          className="inline-block px-1 text-slate-400 font-medium italic underline decoration-slate-300 decoration-dashed underline-offset-4"
-          title="Chưa đọc từ này"
-        >
-          {word}
-        </span>
-      ));
-    }
-
-    // 1. Ưu tiên sử dụng danh sách words phân tích chi tiết từ Backend
-    if (assessmentResult.words && assessmentResult.words.length > 0) {
-      return assessmentResult.words.map((item: any, index: number) => {
-        if (item.isCorrect) {
           return (
-            <span
-              key={index}
-              className="inline-block px-1 text-emerald-600 font-bold drop-shadow-xs"
-              title={`Phát âm chuẩn: ${item.accuracyScore || 85}%`}
+            <button
+              key={`${token}-${index}`}
+              type="button"
+              onClick={() => setSelectedWordForLookup(token)}
+              title={`Nhấn để tra từ điển: "${token}"`}
+              className="inline-block rounded-lg px-1.5 py-0.5 transition-all text-slate-900 hover:text-amber-700 hover:bg-amber-100/70 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:bg-amber-50 cursor-pointer"
             >
-              {item.word}
-            </span>
+              {token}
+            </button>
           );
-        } else if (item.errorType === "Mispronunciation") {
-          return (
-            <span
-              key={index}
-              className="inline-block px-1 text-rose-600 font-bold underline decoration-rose-400 decoration-wavy underline-offset-4"
-              title={`Phát âm chưa chuẩn: ${item.accuracyScore || 0}%`}
-            >
-              {item.word}
-            </span>
-          );
-        } else {
-          // Omission / Unspoken
-          return (
-            <span
-              key={index}
-              className="inline-block px-1 text-slate-400 font-medium italic underline decoration-slate-300 decoration-dashed underline-offset-4"
-              title="Chưa đọc / Bỏ sót"
-            >
-              {item.word}
-            </span>
-          );
-        }
-      });
-    }
-
-    // 2. Fallback: Nếu không có mảng words chi tiết
-    const problematicWords = assessmentResult.problematicWords || [];
-    const badWords = problematicWords.map((w: string) =>
-      w.toLowerCase().replace(/[.,!?;:]/g, "")
+        })}
+      </div>
     );
-    const words = text.split(/\s+/);
-
-    return words.map((word, index) => {
-      const cleanWord = word.toLowerCase().replace(/[.,!?;:]/g, "");
-      const isBad = badWords.includes(cleanWord);
-      return (
-        <span
-          key={index}
-          className={`inline-block px-1 ${
-            isBad
-              ? "text-rose-600 font-bold underline decoration-rose-300 decoration-wavy underline-offset-4"
-              : "text-emerald-600 font-bold"
-          }`}
-        >
-          {word}
-        </span>
-      );
-    });
   };
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Loader2 className="animate-spin text-purple-500" size={48} />
+        <Loader2 className="animate-spin text-amber-500" size={48} />
       </div>
     );
   }
 
   if (!exercise) {
-    return <div className="text-center mt-12">Không tìm thấy bài tập.</div>;
+    return <div className="text-center mt-12 text-slate-600">Không tìm thấy bài tập phát âm.</div>;
   }
 
-  const result = submitAudioMut.data?.assessment;
-
   return (
-    <div className="max-w-6xl mx-auto space-y-6 pb-20">
-      {/* TOP HEADER BAR */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border-4 border-slate-100 shadow-sm">
+    <div className="w-full space-y-6 pb-20">
+      {/* Top Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 sm:px-7 rounded-3xl border border-slate-200/90 shadow-xs">
         <div className="flex items-center gap-4">
           <BackButton href="/practice/speaking" label="Quay lại danh sách bài nói" />
-          <div className="h-6 w-0.5 bg-slate-200 hidden sm:block"></div>
+          <div className="h-6 w-px bg-slate-200 hidden sm:block" />
           <div>
-            <h1 className="text-xl font-black text-slate-800 line-clamp-1">{exercise.title}</h1>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase">{exercise.category}</span>
-              <span className="bg-purple-100 text-purple-700 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase">{exercise.difficulty}</span>
+            <h1 className="text-lg sm:text-xl font-bold text-slate-800 line-clamp-1">
+              {exercise.title}
+            </h1>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase">
+                {exercise.category}
+              </span>
+              <span className="bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase">
+                {exercise.difficulty}
+              </span>
             </div>
           </div>
         </div>
-
-        {/* Sample Audio Button */}
-        <button 
-          onClick={handlePlayTTS}
-          className={`flex items-center gap-2 px-4 py-2 rounded-2xl transition-all font-bold text-sm shadow-sm cursor-pointer ${
-            isPlayingTTS 
-              ? 'bg-blue-500 text-white animate-pulse' 
-              : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
-          }`}
-          title="Nghe audio mẫu"
-        >
-          <Volume2 size={20} />
-          <span>{isPlayingTTS ? "Đang đọc mẫu..." : "Nghe mẫu chuẩn"}</span>
-        </button>
+        <div className="hidden md:flex items-center gap-2 text-xs font-semibold text-slate-500 bg-slate-50 px-3.5 py-1.5 rounded-xl border border-slate-200/60">
+          <Activity size={15} className="text-amber-600" />
+          <span>Luyện phát âm chuẩn âm vị quốc tế</span>
+        </div>
       </div>
 
-      {/* 2-COLUMN MAIN LAYOUT */}
-      <div className="grid grid-cols-12 gap-6 items-start">
-        {/* LEFT COLUMN: SPEAKING EXERCISE & FEEDBACK */}
-        <div className="col-span-12 lg:col-span-8 space-y-6">
-          <div className="bg-white p-6 sm:p-8 rounded-[2.5rem] border-4 border-slate-100 shadow-sm">
-            {/* Target Text Box */}
-            <div className="bg-gradient-to-br from-purple-50/80 to-blue-50/80 p-6 sm:p-8 rounded-3xl border-2 border-purple-100/60 mb-8 text-center relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-200 rounded-full blur-3xl opacity-50 -mr-10 -mt-10"></div>
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-200 rounded-full blur-3xl opacity-50 -ml-10 -mb-10"></div>
-              
-              <p className="text-xs font-bold text-purple-500 uppercase tracking-wider mb-4 relative z-10">Đoạn văn cần đọc</p>
-              <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-2 text-xl sm:text-2xl md:text-3xl font-medium text-slate-700 leading-relaxed relative z-10 px-2 break-words max-w-full">
-                {renderColoredText(exercise.targetText, result)}
-              </div>
-
-              {/* Color coding legend */}
-              {result && (
-                <div className="mt-6 pt-4 border-t border-purple-100 flex flex-wrap items-center justify-center gap-4 text-xs font-bold relative z-10">
-                  <span className="flex items-center gap-1.5 text-emerald-600">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Phát âm chuẩn
-                  </span>
-                  <span className="flex items-center gap-1.5 text-red-600">
-                    <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span> Cần cải thiện
-                  </span>
-                  <span className="flex items-center gap-1.5 text-slate-500">
-                    <span className="w-2.5 h-2.5 rounded-full bg-slate-300"></span> Chưa đọc / Bỏ sót
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Recording Controls */}
-            <div className="flex flex-col items-center justify-center gap-6 pt-2">
-              {!audioBlob ? (
-                <div className="flex flex-col items-center gap-5 w-full max-w-sm">
-                  {isRecording && (
-                    <div className="w-full flex flex-col items-center gap-3">
-                      {/* Wave animation */}
-                      <div className="flex gap-1.5 items-end h-9">
-                        {[...Array(14)].map((_, i) => (
-                          <motion.div
-                            key={i}
-                            animate={{ height: ["15%", "100%", "15%"] }}
-                            transition={{ 
-                              repeat: Infinity, 
-                              duration: 0.7, 
-                              delay: (i * 0.05) % 0.4,
-                              ease: "easeInOut"
-                            }}
-                            className={`w-1.5 rounded-full ${
-                              recordingSeconds > 35 ? "bg-rose-500" : recordingSeconds > 25 ? "bg-amber-500" : "bg-emerald-500"
-                            }`}
-                          />
-                        ))}
-                      </div>
-
-                      {/* Timer Badge */}
-                      <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900 text-white font-mono font-black text-sm shadow-md">
-                        <span className={`w-2.5 h-2.5 rounded-full animate-ping ${
-                          recordingSeconds > 35 ? "bg-rose-400" : "bg-emerald-400"
-                        }`} />
-                        <span>{formatTime(recordingSeconds)}</span>
-                        <span className="text-slate-400">/ 00:45</span>
-                      </div>
-
-                      {/* Progress Bar */}
-                      <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200">
-                        <div
-                          className={`h-full transition-all duration-300 ${
-                            recordingSeconds > 35
-                              ? "bg-rose-500"
-                              : recordingSeconds > 25
-                              ? "bg-amber-500"
-                              : "bg-emerald-500"
-                          }`}
-                          style={{ width: `${(recordingSeconds / MAX_RECORDING_SECONDS) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                  
-                  <button
-                    onClick={isRecording ? stopRecording : startRecording}
-                    className={`w-24 h-24 rounded-full flex items-center justify-center transition-all cursor-pointer ${
-                      isRecording 
-                        ? 'bg-rose-500 text-white animate-pulse shadow-xl shadow-rose-500/40 scale-110' 
-                        : 'bg-gradient-to-br from-purple-500 to-indigo-500 text-white hover:scale-105 shadow-xl shadow-purple-500/30'
-                    }`}
-                    title={isRecording ? "Dừng ghi âm" : "Bắt đầu thu âm"}
-                  >
-                    {isRecording ? <StopCircle size={44} /> : <Mic size={44} />}
-                  </button>
-
-                  <div className="text-center">
-                    <p className={`font-bold text-sm ${isRecording ? 'text-rose-600 font-black' : 'text-slate-600'}`}>
-                      {isRecording ? 'Đang ghi âm... Nhấn vào nút đỏ để dừng' : 'Nhấn vào Micro để bắt đầu đọc'}
-                    </p>
-                    <p className="text-[11px] font-bold text-slate-400 mt-1">
-                      ⚡ Tối đa 45s/câu • Chuẩn âm vị Azure AI Speech
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="w-full max-w-md flex flex-col items-center gap-5 bg-slate-50 p-6 rounded-3xl border-2 border-slate-100">
-                  <audio src={audioUrl!} controls className="w-full h-11" />
-                  
-                  <div className="flex gap-3 w-full">
-                    <button 
-                      onClick={() => { setAudioBlob(null); setAudioUrl(null); submitAudioMut.reset(); }}
-                      className="flex-1 py-3 px-4 rounded-xl font-bold text-slate-600 bg-white border-2 border-slate-200 hover:bg-slate-100 transition-colors cursor-pointer"
-                    >
-                      Thu lại
-                    </button>
-                    <button 
-                      onClick={handleSubmit}
-                      disabled={submitAudioMut.isPending}
-                      className="flex-1 py-3 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 shadow-md transition-all disabled:opacity-70 flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      {submitAudioMut.isPending ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
-                      Chấm điểm AI
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Error handling */}
-          {submitAudioMut.isError && (
-            <div className="bg-red-50 border-2 border-red-200 text-red-600 p-6 rounded-3xl flex items-start gap-4">
-              <AlertTriangle className="shrink-0 mt-1" />
-              <div>
-                <h3 className="font-bold text-lg mb-1">Lỗi phân tích</h3>
-                <p>{(submitAudioMut.error as any)?.response?.data?.message || "Đã xảy ra lỗi khi chấm điểm. Có thể do bạn chưa nói gì, hoặc tạp âm quá ồn."}</p>
-              </div>
-            </div>
-          )}
-
-          {/* AI Feedback Result */}
-          {submitAudioMut.isSuccess && result && (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800 p-6 sm:p-8 rounded-[2.5rem] text-white shadow-2xl overflow-hidden relative"
-            >
-              <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-                <Activity size={200} />
-              </div>
-
-              <div className="flex items-center gap-4 mb-6 relative z-10">
-                <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md">
-                  <Star size={28} className="text-yellow-400 fill-yellow-400" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold">Báo cáo Phát âm Chi tiết</h2>
-                  <p className="text-indigo-200 text-xs">AI đã phân tích từng âm tiết theo ngữ âm chuẩn</p>
-                </div>
-              </div>
-              
-              {/* Silence Alert Banner */}
-              {(result.isSilentOrNoSpeech || result.overallScore === 0) && (
-                <div className="mb-6 bg-amber-500/20 border-2 border-amber-400/60 text-amber-100 p-4 rounded-2xl flex items-center gap-3 relative z-10 backdrop-blur-md">
-                  <AlertTriangle className="text-amber-400 shrink-0" size={24} />
-                  <div className="text-sm font-medium">
-                    <span className="font-bold text-amber-300">Không phát hiện giọng nói rõ ràng:</span> Hệ thống chưa nghe thấy bạn đọc đoạn văn. Hãy kiểm tra lại micro, chọn nơi yên tĩnh và đọc to, rõ ràng theo câu mẫu nhé!
-                  </div>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 relative z-10">
-                <div className="col-span-2 bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/20 flex flex-col items-center justify-center text-center">
-                  <div className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 mb-1">
-                    {result.overallScore} <span className="text-xl text-white/50">/ 10</span>
-                  </div>
-                  <p className="font-bold text-indigo-200 uppercase tracking-wider text-xs">Điểm Tổng</p>
-                </div>
-                
-                <div className="bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/20 flex flex-col items-center justify-center text-center">
-                  <div className="text-3xl font-bold text-white mb-1">{result.accuracyScore || 0}</div>
-                  <p className="font-bold text-indigo-300 uppercase tracking-wider text-[10px]">Chính xác (Accuracy)</p>
-                </div>
-                
-                <div className="bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/20 flex flex-col items-center justify-center text-center">
-                  <div className="text-3xl font-bold text-white mb-1">{result.fluencyScore || 0}</div>
-                  <p className="font-bold text-indigo-300 uppercase tracking-wider text-[10px]">Trôi chảy (Fluency)</p>
-                </div>
-              </div>
-
-              <div className="grid sm:grid-cols-2 gap-4 relative z-10">
-                <div className="bg-white text-slate-800 p-5 rounded-3xl shadow-lg">
-                  <h3 className="font-bold text-base mb-3 flex items-center gap-2 text-indigo-600">
-                    <CheckCircle2 size={18} /> Nhận xét giáo viên AI
-                  </h3>
-                  <p className="text-slate-600 text-sm leading-relaxed font-medium">
-                    {result.feedback}
-                  </p>
-                  
-                  {result.problematicWords && result.problematicWords.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-slate-100">
-                      <p className="text-xs font-bold text-red-500 mb-2 uppercase tracking-wider">Từ cần luyện thêm:</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {result.problematicWords.map((word: string, i: number) => (
-                          <span key={i} className="bg-red-50 text-red-600 px-2.5 py-1 rounded-lg font-bold text-xs border border-red-100">
-                            {word}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="bg-indigo-800/50 backdrop-blur-md border border-indigo-400/30 p-5 rounded-3xl">
-                  <h3 className="font-bold text-base mb-3 text-indigo-100 flex items-center gap-2">
-                    <Sparkles size={18} className="text-yellow-400" /> Gợi ý cải thiện
-                  </h3>
-                  {result.suggestions && result.suggestions.length > 0 ? (
-                    <ul className="space-y-3">
-                      {result.suggestions.map((sug: string, i: number) => (
-                        <li key={i} className="flex gap-2.5 text-indigo-50 text-xs">
-                          <span className="shrink-0 w-5 h-5 rounded-full bg-indigo-500/50 flex items-center justify-center text-[10px] font-bold text-indigo-100">{i + 1}</span>
-                          <span className="leading-relaxed font-medium">{sug}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-indigo-200 text-xs">Tuyệt vời! Hãy tiếp tục duy trì phong độ này nhé.</p>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </div>
-
-        {/* RIGHT COLUMN: EXERCISE CONTEXT & PRO TIPS */}
-        <div className="col-span-12 lg:col-span-4 space-y-6">
-          {/* Image & Topic Info Card */}
+      {/* 3-Column Responsive Layout */}
+      <div className="grid grid-cols-12 gap-6 xl:gap-8 items-start">
+        {/* LEFT COLUMN: Guidance & Tips */}
+        <div className="order-3 lg:order-1 col-span-12 lg:col-span-3 space-y-6">
           {exercise.imageUrl && (
-            <div className="bg-white p-4 rounded-[2rem] border-4 border-slate-100 shadow-sm overflow-hidden">
-              <div className="rounded-2xl overflow-hidden border border-slate-100 max-h-48 mb-3">
-                <img src={exercise.imageUrl} alt="Exercise image" className="w-full h-full object-cover" />
+            <div className="bg-white p-4 rounded-3xl border border-slate-200/90 shadow-xs overflow-hidden">
+              <div className="rounded-2xl overflow-hidden border border-slate-100 max-h-48 mb-2.5">
+                <img
+                  src={exercise.imageUrl}
+                  alt="Exercise illustration"
+                  className="w-full h-full object-cover"
+                />
               </div>
-              <p className="text-xs text-slate-500 font-bold text-center">Hình ảnh minh họa ngữ cảnh bài nói</p>
+              <p className="text-xs text-slate-500 font-semibold text-center">
+                Hình ảnh minh họa ngữ cảnh bài nói
+              </p>
             </div>
           )}
 
-          {/* Speaking Guidance Tips */}
-          <div className="bg-gradient-to-br from-purple-50 to-indigo-50 p-6 rounded-[2rem] border-2 border-purple-100 space-y-4">
-            <h3 className="font-black text-purple-900 text-base flex items-center gap-2">
-              <span>🎙️</span> Bí Quyết Đạt Điểm Cao
+          {/* Tips Card */}
+          <div className="bg-slate-50 border border-slate-200 rounded-3xl p-5 sm:p-6 space-y-4 shadow-xs">
+            <h3 className="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2">
+              <Mic size={18} className="text-amber-600" />
+              <span>Bí quyết phát âm chuẩn</span>
             </h3>
 
-            <ul className="space-y-3 text-xs font-bold text-purple-800">
-              <li className="bg-white/80 p-3 rounded-xl border border-purple-100 flex items-start gap-2.5">
-                <span className="text-purple-600 text-sm mt-0.5">1.</span>
-                <span>Bấm nút <strong>Nghe mẫu chuẩn</strong> ở trên để làm quen với ngữ điệu và trọng âm câu.</span>
+            <ul className="space-y-3 text-xs sm:text-sm text-slate-700 font-medium">
+              <li className="bg-white p-3.5 rounded-2xl border border-slate-200/80 flex items-start gap-3 shadow-2xs">
+                <span className="size-6 rounded-full bg-amber-100 text-amber-800 font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">
+                  1
+                </span>
+                <span>
+                  Bấm trực tiếp vào từng từ trên màn hình để <strong>tra từ điển & phiên âm IPA</strong>.
+                </span>
               </li>
-              <li className="bg-white/80 p-3 rounded-xl border border-purple-100 flex items-start gap-2.5">
-                <span className="text-purple-600 text-sm mt-0.5">2.</span>
-                <span>Nói to, rõ ràng, giữ khoảng cách khoảng 10-15cm so với micro của thiết bị.</span>
+              <li className="bg-white p-3.5 rounded-2xl border border-slate-200/80 flex items-start gap-3 shadow-2xs">
+                <span className="size-6 rounded-full bg-amber-100 text-amber-800 font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">
+                  2
+                </span>
+                <span>
+                  Bấm <strong>Nghe mẫu phát âm</strong> để làm quen ngữ điệu và trọng âm trước khi đọc.
+                </span>
               </li>
-              <li className="bg-white/80 p-3 rounded-xl border border-purple-100 flex items-start gap-2.5">
-                <span className="text-purple-600 text-sm mt-0.5">3.</span>
-                <span>Đừng quên phát âm rõ các âm đuôi quan trọng như <em>/s/, /ed/, /t/, /d/</em>.</span>
+              <li className="bg-white p-3.5 rounded-2xl border border-slate-200/80 flex items-start gap-3 shadow-2xs">
+                <span className="size-6 rounded-full bg-amber-100 text-amber-800 font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">
+                  3
+                </span>
+                <span>
+                  Nói to, rõ ràng, giữ khoảng cách khoảng 10-15cm so với micro của thiết bị.
+                </span>
               </li>
             </ul>
           </div>
 
-          {/* Gamification Reward Card */}
-          <div className="bg-purple-50 border-2 border-purple-200 p-5 rounded-[2rem] flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-purple-500 text-white flex items-center justify-center text-2xl shadow-sm shrink-0">
-              ⭐
+          {/* Reward Badge Card */}
+          <div className="bg-amber-50/80 border border-amber-200 p-5 rounded-3xl flex items-center gap-4 shadow-xs">
+            <div className="size-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-xs shrink-0">
+              <Award size={24} />
             </div>
             <div>
-              <p className="font-black text-slate-800 text-sm">Phần Thưởng Luyện Phát Âm</p>
-              <p className="text-xs font-bold text-purple-800 mt-0.5">+25 EXP khi đạt điểm &ge; 8.0/10</p>
+              <p className="font-bold text-slate-900 text-sm">Phần thưởng luyện nói</p>
+              <p className="text-xs font-semibold text-amber-800 mt-0.5">
+                Cộng EXP khi đạt điểm &ge; 6.0/10
+              </p>
             </div>
           </div>
         </div>
+
+        {/* CENTER COLUMN: Practice Canvas */}
+        <div className="order-1 lg:order-2 col-span-12 lg:col-span-6 space-y-6">
+          <div className="bg-white p-6 sm:p-8 lg:p-9 rounded-3xl border border-slate-200/90 shadow-sm space-y-6">
+            {/* Target Text Card with Interactive Word Lookup */}
+            <div className="bg-gradient-to-b from-amber-50/40 via-orange-50/20 to-white p-6 sm:p-8 rounded-3xl border border-amber-200/70 text-center relative">
+              <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-bold uppercase tracking-wider mb-4">
+                <Target size={14} className="text-amber-700" />
+                <span>Câu cần luyện đọc</span>
+              </div>
+
+              {/* Render interactive words */}
+              {renderInteractiveTargetWords(exercise.targetText)}
+
+              <p className="mt-4 text-xs text-slate-400 font-medium flex items-center justify-center gap-1.5">
+                <BookOpen size={13} />
+                <span>Mẹo: Nhấn vào bất kỳ từ nào để tra cứu nghĩa và nghe đọc mẫu</span>
+              </p>
+            </div>
+
+            {/* Neural TTS Control Deck */}
+            <div className="w-full bg-slate-50/80 rounded-2xl border border-slate-200/90 p-4 sm:p-5 flex flex-col gap-3.5 shadow-2xs">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={handleTogglePlayTTS}
+                  aria-pressed={isPlayingTTS}
+                  aria-label={isPlayingTTS ? "Dừng nghe mẫu" : "Nghe mẫu phát âm"}
+                  className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer shadow-xs ${
+                    isPlayingTTS
+                      ? "bg-rose-600 hover:bg-rose-700 text-white"
+                      : "bg-amber-600 hover:bg-amber-700 text-white"
+                  }`}
+                >
+                  {isPlayingTTS ? (
+                    <>
+                      <Square size={15} className="fill-white shrink-0" />
+                      <span>Dừng phát âm</span>
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 size={18} className="shrink-0" />
+                      <span>Nghe mẫu phát âm</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Accent selector (locked during playback) */}
+                <div
+                  className={`flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 transition-opacity ${
+                    isPlayingTTS ? "opacity-60 cursor-not-allowed" : ""
+                  }`}
+                  role="group"
+                  aria-label="Chọn chất giọng"
+                >
+                  {(["US", "UK"] as const).map((accent) => {
+                    const selected = ttsAccent === accent;
+                    return (
+                      <button
+                        key={accent}
+                        type="button"
+                        disabled={isPlayingTTS}
+                        onClick={() => setTtsAccent(accent)}
+                        aria-pressed={selected}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                          isPlayingTTS ? "cursor-not-allowed" : "cursor-pointer"
+                        } ${
+                          selected
+                            ? "bg-amber-100 text-amber-900 font-extrabold"
+                            : "text-slate-600 hover:text-slate-900"
+                        }`}
+                        title={isPlayingTTS ? "Đang phát âm, tạm khóa chỉnh giọng" : undefined}
+                      >
+                        {accent === "US" ? "Giọng Mỹ (US)" : "Giọng Anh (UK)"}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Speed rate controls (locked during playback) */}
+              <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2.5 border-t border-slate-200/70">
+                <div className="flex items-center gap-1.5 text-slate-500 font-bold text-xs shrink-0">
+                  <Gauge size={14} className="text-amber-600" />
+                  <span>Tốc độ đọc:</span>
+                </div>
+
+                <div
+                  className={`flex items-center gap-1.5 overflow-x-auto transition-opacity ${
+                    isPlayingTTS ? "opacity-60 cursor-not-allowed" : ""
+                  }`}
+                  role="group"
+                  aria-label="Chọn tốc độ đọc"
+                >
+                  {TTS_SPEED_OPTIONS.map((opt) => {
+                    const selected = ttsRate === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        disabled={isPlayingTTS}
+                        onClick={() => setTtsRate(opt.value)}
+                        aria-pressed={selected}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                          isPlayingTTS ? "cursor-not-allowed" : "cursor-pointer"
+                        } ${
+                          selected
+                            ? "bg-amber-500 text-white font-extrabold shadow-2xs"
+                            : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
+                        }`}
+                        title={isPlayingTTS ? "Đang phát âm, tạm khóa chỉnh tốc độ" : opt.title}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Recording & Submission Dock */}
+            <div className="flex flex-col items-center justify-center gap-5 pt-3">
+              {!audioBlob ? (
+                <div className="flex flex-col items-center gap-4 w-full max-w-lg mx-auto">
+                  {isRecording && (
+                    <div className="w-full flex flex-col items-center gap-3">
+                      <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-800 text-white font-mono font-bold text-xs shadow-xs">
+                        <span className="size-2.5 rounded-full bg-rose-400 animate-ping" />
+                        <span>{formatTime(recordingSeconds)}</span>
+                        <span className="text-slate-400">/ 00:45</span>
+                      </div>
+
+                      <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200">
+                        <div
+                          className={`h-full transition-all duration-300 ${
+                            recordingSeconds > 35 ? "bg-rose-500" : "bg-emerald-500"
+                          }`}
+                          style={{
+                            width: `${(recordingSeconds / MAX_RECORDING_SECONDS) * 100}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={isRecording ? stopRecording : startRecording}
+                    className={`size-24 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                      isRecording
+                        ? "bg-rose-500 text-white animate-pulse shadow-lg scale-105"
+                        : "bg-amber-500 text-white hover:bg-amber-600 hover:scale-105 shadow-md shadow-amber-500/25"
+                    }`}
+                    title={isRecording ? "Dừng ghi âm" : "Bắt đầu thu âm"}
+                    aria-label={isRecording ? "Dừng ghi âm" : "Bắt đầu thu âm"}
+                  >
+                    {isRecording ? <StopCircle size={40} /> : <Mic size={40} />}
+                  </button>
+
+                  <div className="text-center">
+                    <p
+                      className={`font-bold text-sm ${
+                        isRecording ? "text-rose-600" : "text-slate-700"
+                      }`}
+                    >
+                      {isRecording
+                        ? "Đang thu âm giọng đọc... Bấm nút để kết thúc"
+                        : "Nhấn vào Micro để bắt đầu đọc"}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Mono 16kHz WAV • Tối đa 45s • Không tiếng vang loa
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="w-full max-w-lg flex flex-col items-center gap-4 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                  <audio src={audioUrl!} controls className="w-full h-11" />
+
+                  {/* Client Quality Warning Banner */}
+                  {qualityWarning && (
+                    <div className="w-full p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs flex items-center gap-2">
+                      <AlertTriangle size={16} className="shrink-0 text-amber-600" />
+                      <span>{qualityWarning}</span>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 w-full">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAudioBlob(null);
+                        setAudioUrl(null);
+                        setQualityWarning(null);
+                      }}
+                      disabled={isSubmitting}
+                      className="flex-1 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      Thu lại
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSubmit}
+                      disabled={isSubmitting || isPolling}
+                      className="flex-1 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm text-white bg-amber-600 hover:bg-amber-700 shadow-xs transition-all disabled:opacity-70 flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      {isSubmitting || isPolling ? (
+                        <>
+                          <Loader2 className="animate-spin" size={18} />
+                          <span>Đang xử lý...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Activity size={18} />
+                          <span>Chấm điểm phát âm</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: Pronunciation Report Card */}
+        <div className="order-2 lg:order-3 col-span-12 lg:col-span-3 space-y-6">
+          <PronunciationReportCard
+            submission={currentSubmission}
+            targetText={exercise.targetText}
+            isPolling={isPolling}
+            onRetry={handleSubmit}
+            onSelectWord={(word) => setSelectedWordForLookup(word)}
+            onPlaySample={handlePlayIsolatedWordSample}
+            userAudioUrl={audioUrl}
+          />
+        </div>
       </div>
+
+      {/* Interactive Word Dictionary Popup */}
+      {selectedWordForLookup && (
+        <WordDictionaryPopup
+          word={selectedWordForLookup}
+          onClose={() => setSelectedWordForLookup(null)}
+          onPracticeWord={(w) => {
+            handlePlayIsolatedWordSample(w);
+          }}
+        />
+      )}
     </div>
   );
 }

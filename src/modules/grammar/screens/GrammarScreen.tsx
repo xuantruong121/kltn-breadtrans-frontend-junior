@@ -1,141 +1,90 @@
 "use client";
 
 import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { PlayCircle, CheckCircle2 } from "lucide-react";
-import { GRAMMAR_TOPICS } from "../services/grammarData";
-import { GrammarTopic, GrammarLesson } from "../types";
+import { BookOpenCheck, CheckCircle2, Loader2, PlayCircle } from "lucide-react";
+import { grammarService } from "@/lib/api/services/grammar.service";
 import { GrammarVideoPlayer } from "../components/GrammarVideoPlayer";
 import { GrammarQuiz } from "../components/GrammarQuiz";
-import { useAuthStore } from "@/stores/authStore";
 
 export const GrammarScreen: React.FC = () => {
-  const { user } = useAuthStore();
-  const [selectedTopic, setSelectedTopic] = useState<GrammarTopic>(GRAMMAR_TOPICS[0]);
-  const [selectedLesson, setSelectedLesson] = useState<GrammarLesson>(GRAMMAR_TOPICS[0].lessons[0]);
-  const [, setTick] = useState(0);
+  const [selectedTopicId, setSelectedTopicId] = useState<number | null>(null);
+  const topicsQuery = useQuery({ queryKey: ["grammar-topics"], queryFn: grammarService.getTopics });
+  const selectedTopic = selectedTopicId ?? topicsQuery.data?.[0]?.id ?? null;
+  const detailQuery = useQuery({
+    queryKey: ["grammar-topic", selectedTopic],
+    queryFn: () => grammarService.getTopic(selectedTopic as number),
+    enabled: selectedTopic !== null,
+  });
 
-  const getSavedProgress = () => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem(`breadtrans_grammar_progress_${user?.id || "guest"}`);
-        return saved ? JSON.parse(saved) : {};
-      } catch {
-        return {};
-      }
-    }
-    return {};
-  };
+  if (topicsQuery.isLoading) {
+    return <div className="flex min-h-64 items-center justify-center"><Loader2 className="animate-spin text-emerald-600" size={44} aria-label="Đang tải chủ đề ngữ pháp" /></div>;
+  }
 
-  const progressMap = getSavedProgress();
+  if (topicsQuery.isError || !topicsQuery.data?.length) {
+    return (
+      <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white p-10 text-center">
+        <h1 className="text-2xl font-black text-slate-800">Chưa có chủ đề ngữ pháp</h1>
+        <p className="mt-2 text-sm font-medium text-slate-500">Nội dung sẽ xuất hiện khi quản trị viên thêm chủ đề vào hệ thống.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
-      {/* HEADER */}
-      <div className="bg-white p-6 rounded-[2rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0]">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-2xl">🎓</span>
-          <h1 className="text-3xl font-black text-slate-800">Ngữ Pháp Tiếng Anh</h1>
+    <div className="mx-auto max-w-6xl space-y-8">
+      <header className="rounded-3xl border border-slate-200 bg-white p-6 shadow-2xs sm:p-8">
+        <div className="mb-1 flex items-center gap-3">
+          <span className="flex size-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700" aria-hidden="true"><BookOpenCheck size={22} /></span>
+          <h1 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">Ngữ pháp tiếng Anh</h1>
         </div>
-        <p className="font-bold text-slate-400 text-sm">
-          Bài giảng video sinh động và các điểm ngữ pháp trọng tâm theo form đề TOEIC
-        </p>
-      </div>
+        <p className="text-sm font-medium text-slate-500">Chọn một chủ đề, xem kiến thức trọng tâm và làm bài để lưu tiến độ thật của bạn.</p>
+      </header>
 
-      {/* TOPIC SELECTOR */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {GRAMMAR_TOPICS.map((topic) => {
-          const isSelected = selectedTopic.id === topic.id;
-          const completedLessonsCount = topic.lessons.filter(
-            (l) => progressMap[l.id]?.showResults
-          ).length;
-
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {topicsQuery.data.map((topic, index) => {
+          const selected = topic.id === selectedTopic;
           return (
-            <motion.div
+            <motion.button
               key={topic.id}
-              whileHover={{ y: -4 }}
-              onClick={() => {
-                setSelectedTopic(topic);
-                setSelectedLesson(topic.lessons[0]);
-              }}
-              className={`p-5 rounded-3xl border-4 cursor-pointer transition-all ${
-                isSelected
-                  ? "bg-emerald-50 border-emerald-400 shadow-[0_6px_0_0_#34d399]"
-                  : "bg-white border-slate-200 hover:border-slate-300 shadow-[0_6px_0_0_#e2e8f0]"
-              }`}
+              type="button"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.04 }}
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setSelectedTopicId(topic.id)}
+              aria-pressed={selected}
+              className={`min-h-36 rounded-3xl border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${selected ? "border-emerald-300 bg-emerald-50/70 ring-1 ring-emerald-300" : "border-slate-200 bg-white hover:border-slate-300"}`}
             >
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-3xl">{topic.icon}</span>
-                <div>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
-                    {topic.level}
-                  </span>
-                  <h3 className="font-extrabold text-slate-800 text-base line-clamp-1">
-                    {topic.title}
-                  </h3>
-                </div>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-black text-slate-600">{topic.level}</span>
+                {topic.isCompleted && <CheckCircle2 size={18} className="text-emerald-600" aria-label="Đã hoàn thành" />}
               </div>
-              <div className="text-xs font-bold text-slate-400 pt-2 border-t border-slate-100 flex items-center justify-between">
-                <span>{topic.lessons.length} Video bài giảng</span>
-                <span className={completedLessonsCount === topic.lessons.length ? "text-emerald-600 font-black" : "text-emerald-600 font-extrabold"}>
-                  {completedLessonsCount > 0 ? `${completedLessonsCount}/${topic.lessons.length} Đã học ✓` : "Học ngay →"}
-                </span>
+              <h2 className="line-clamp-1 text-base font-extrabold text-slate-800">{topic.title}</h2>
+              <p className="mt-1 line-clamp-2 text-sm leading-5 text-slate-500">{topic.description || "Bài học và câu hỏi thực hành."}</p>
+              <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-xs font-bold text-slate-500">
+                <span>{topic.totalQuestions} câu hỏi</span>
+                <span className="text-emerald-700">{topic.isCompleted ? `${topic.lastScore ?? 0}% lần gần nhất` : "Bắt đầu"}</span>
               </div>
-            </motion.div>
+            </motion.button>
           );
         })}
-      </div>
+      </section>
 
-      {/* LESSON TABS */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2">
-        {selectedTopic.lessons.map((lesson) => {
-          const isSelected = selectedLesson.id === lesson.id;
-          const lessonProg = progressMap[lesson.id];
-          const isDone = lessonProg?.showResults;
-
-          return (
-            <button
-              key={lesson.id}
-              onClick={() => setSelectedLesson(lesson)}
-              className={`px-4 py-2.5 rounded-2xl font-black text-sm whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 ${
-                isSelected
-                  ? "bg-slate-800 text-white shadow-md border-2 border-slate-900"
-                  : isDone
-                  ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-2 border-emerald-300"
-                  : "bg-white text-slate-500 hover:bg-slate-100 border-2 border-slate-200"
-              }`}
-            >
-              {isDone ? <CheckCircle2 size={16} className="text-emerald-500" /> : <PlayCircle size={16} />}
-              <span>{lesson.title}</span>
-              {isDone && (
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${
-                  isSelected ? "bg-emerald-500 text-white font-black" : "bg-emerald-200/60 text-emerald-800 font-extrabold"
-                }`}>
-                  {lessonProg.correctCount}/{lesson.questions.length}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* MAIN CONTENT: VIDEO & QUIZ */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left: Video Player & Key formulas */}
-        <div className="lg:col-span-7 space-y-6">
-          <GrammarVideoPlayer lesson={selectedLesson} />
+      {detailQuery.isLoading ? (
+        <div className="flex min-h-64 items-center justify-center"><Loader2 className="animate-spin text-emerald-600" size={40} aria-label="Đang tải bài học" /></div>
+      ) : detailQuery.data ? (
+        <section className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+          <div className="lg:col-span-7"><GrammarVideoPlayer topic={detailQuery.data} /></div>
+          <div className="lg:col-span-5"><GrammarQuiz key={detailQuery.data.id} topicId={detailQuery.data.id} questions={detailQuery.data.questions} /></div>
+        </section>
+      ) : (
+        <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white p-8 text-center text-slate-500">
+          <PlayCircle className="mx-auto" aria-hidden="true" />
+          <p className="mt-2 font-bold">Không thể tải chi tiết bài học.</p>
         </div>
-
-        {/* Right: Practice Quiz */}
-        <div className="lg:col-span-5">
-          <GrammarQuiz
-            key={selectedLesson.id}
-            lessonId={selectedLesson.id}
-            questions={selectedLesson.questions}
-            onProgressUpdate={() => setTick((t) => t + 1)}
-          />
-        </div>
-      </div>
+      )}
     </div>
   );
 };

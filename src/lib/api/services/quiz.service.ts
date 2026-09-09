@@ -13,10 +13,20 @@ export interface Quiz {
   title: string;
   description: string;
   type: string; // e.g. "LISTENING_PRACTICE"
+  bilingualContent?: {
+    examFormat?: "TWO_SKILL" | "FOUR_SKILL";
+    examSetId?: number;
+    isBundle?: boolean;
+    skillLabel?: string;
+    sections?: string[];
+    durationMinutes?: number;
+  };
   questions?: Question[];
   _count?: {
     questions: number;
   };
+  questionsCount?: number;
+  isBundle?: boolean;
 }
 
 export interface AnswerDto {
@@ -54,6 +64,10 @@ export interface SubmissionAnalytics {
 export const quizService = {
   getListeningPractices: async (): Promise<Quiz[]> => {
     return await axiosClient.get("/quizzes/listening-practice");
+  },
+
+  getToeicPapers: async (): Promise<Quiz[]> => {
+    return await axiosClient.get("/quizzes/toeic-papers");
   },
 
   getQuizById: async (id: number): Promise<Quiz> => {

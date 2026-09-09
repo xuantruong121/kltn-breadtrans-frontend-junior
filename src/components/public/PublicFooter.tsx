@@ -1,43 +1,49 @@
 import Link from "next/link";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin, Wheat } from "lucide-react";
 
 export function PublicFooter() {
   return (
-    <footer className="bg-slate-900 text-slate-300 pt-16 pb-12 border-t border-slate-800">
+    <footer className="border-t border-slate-200 bg-white pt-16 pb-12 text-slate-600">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
           {/* Brand Col */}
+          {/* Brand Col */}
           <div className="md:col-span-1 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-junior-blue flex items-center justify-center text-white font-bold text-xl">
-                B
+              <div className="w-10 h-10 rounded-xl bg-amber-600 flex items-center justify-center text-white shadow-xs">
+                <Wheat size={22} aria-hidden="true" />
               </div>
-              <span className="text-2xl font-bold text-white tracking-tight">
-                BreadTrans <span className="text-junior-blue">Junior</span>
+              <span className="text-2xl font-black tracking-tight text-slate-900">
+                Bread<span className="text-amber-600">Trans</span>
               </span>
             </div>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              Hệ thống đào tạo tiếng Anh và luyện thi TOEIC tương tác, mang lại trải nghiệm học tập hiệu quả, hiện đại và tràn đầy cảm hứng cho học viên.
+            <p className="text-sm leading-relaxed text-slate-500">
+              Nền tảng tự học tiếng Anh 4 kỹ năng, kết hợp Flashcard, ngữ pháp cùng công cụ luyện phát âm và viết câu thông minh.
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-base font-bold text-white mb-4">Khám phá</h4>
-            <ul className="space-y-2.5 text-sm">
+            <h4 className="mb-4 text-base font-bold text-slate-900">Khám phá</h4>
+            <ul className="space-y-2.5 text-sm font-semibold text-slate-600">
               <li>
-                <Link href="/" className="hover:text-white transition-colors">
+                <Link href="/" className="transition-colors hover:text-amber-600">
                   Trang chủ
                 </Link>
               </li>
               <li>
-                <Link href="/courses" className="hover:text-white transition-colors">
+                <Link href="/courses" className="transition-colors hover:text-amber-600">
                   Danh sách khóa học
                 </Link>
               </li>
               <li>
-                <Link href="/register" className="hover:text-white transition-colors">
-                  Đăng ký nhập học
+                <Link href="/practice/quizzes" className="transition-colors hover:text-amber-600">
+                  Đề thi TOEIC
+                </Link>
+              </li>
+              <li>
+                <Link href="/register" className="transition-colors hover:text-amber-600">
+                  Đăng ký nhận Bánh Mì
                 </Link>
               </li>
             </ul>
@@ -45,21 +51,26 @@ export function PublicFooter() {
 
           {/* Support */}
           <div>
-            <h4 className="text-base font-bold text-white mb-4">Dành cho học viên</h4>
-            <ul className="space-y-2.5 text-sm">
+            <h4 className="mb-4 text-base font-bold text-slate-900">Dành cho học viên</h4>
+            <ul className="space-y-2.5 text-sm font-semibold text-slate-600">
               <li>
-                <Link href="/login" className="hover:text-white transition-colors">
+                <Link href="/login" className="transition-colors hover:text-amber-600">
                   Đăng nhập hệ thống
                 </Link>
               </li>
               <li>
-                <Link href="/my-courses" className="hover:text-white transition-colors">
-                  Lớp học của tôi
+                <Link href="/my-courses" className="transition-colors hover:text-amber-600">
+                  Khóa học của tôi
                 </Link>
               </li>
               <li>
-                <Link href="/change-password" className="hover:text-white transition-colors">
-                  Đổi mật khẩu
+                <Link href="/flashcard" className="transition-colors hover:text-amber-600">
+                  Flashcard từ vựng
+                </Link>
+              </li>
+              <li>
+                <Link href="/arena" className="transition-colors hover:text-amber-600">
+                  Bảng xếp hạng
                 </Link>
               </li>
             </ul>
@@ -67,24 +78,29 @@ export function PublicFooter() {
 
           {/* Contact */}
           <div className="space-y-3">
-            <h4 className="text-base font-bold text-white mb-4">Liên hệ trung tâm</h4>
-            <div className="flex items-center gap-3 text-sm text-slate-400">
-              <Phone size={16} className="text-junior-blue shrink-0" />
+            <h4 className="mb-4 text-base font-bold text-slate-900">Liên hệ trung tâm</h4>
+            <div className="flex items-center gap-3 text-sm text-slate-500 font-medium">
+              <Phone size={16} className="text-amber-600 shrink-0" />
               <span>Hotline: 1900 6868</span>
             </div>
-            <div className="flex items-center gap-3 text-sm text-slate-400">
-              <Mail size={16} className="text-junior-blue shrink-0" />
+            <div className="flex items-center gap-3 text-sm text-slate-500 font-medium">
+              <Mail size={16} className="text-amber-600 shrink-0" />
               <span>contact@breadtrans.edu.vn</span>
             </div>
-            <div className="flex items-start gap-3 text-sm text-slate-400">
-              <MapPin size={16} className="text-junior-blue shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 text-sm text-slate-500 font-medium">
+              <MapPin size={16} className="text-amber-600 shrink-0 mt-0.5" />
               <span>Tầng 5, Tòa nhà Tri Thức, Quận Cầu Giấy, Hà Nội</span>
             </div>
           </div>
         </div>
 
-        <div className="pt-8 border-t border-slate-800 text-center text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} BreadTrans Junior. Toàn bộ bản quyền được bảo lưu.</p>
+        <div className="border-t border-slate-200 pt-8 text-center text-xs font-semibold text-slate-400">
+          <div className="mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+            <Link href="/terms" className="hover:text-amber-700">Điều khoản</Link>
+            <Link href="/privacy" className="hover:text-amber-700">Chính sách bảo mật</Link>
+            <Link href="/help" className="hover:text-amber-700">Trợ giúp</Link>
+          </div>
+          <p>© {new Date().getFullYear()} BreadTrans - Nền tảng tự học tiếng Anh & Luyện thi TOEIC. Thiết kế lấy học viên làm trung tâm.</p>
         </div>
       </div>
     </footer>

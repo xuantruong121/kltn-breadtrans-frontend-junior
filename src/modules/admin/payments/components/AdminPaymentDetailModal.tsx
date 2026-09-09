@@ -9,7 +9,6 @@ import { ConfirmPaymentDialog } from "./ConfirmPaymentDialog";
 import {
   X,
   Loader2,
-  Calendar,
   CreditCard,
   User,
   GraduationCap,
@@ -136,10 +135,10 @@ export const AdminPaymentDetailModal: React.FC<AdminPaymentDetailModalProps> = (
 
   return (
     <>
-      <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-        <div className="bg-white rounded-xl shadow-2xl border border-slate-200 max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+        <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full max-h-[min(90dvh,calc(100dvh-3rem))] flex flex-col overflow-hidden">
           {/* Modal Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/70">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/70 shrink-0">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 text-blue-700 rounded-lg">
                 <CreditCard size={20} />
@@ -162,7 +161,7 @@ export const AdminPaymentDetailModal: React.FC<AdminPaymentDetailModalProps> = (
           </div>
 
           {/* Modal Body */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                 <Loader2 size={32} className="animate-spin mb-3 text-blue-600" />

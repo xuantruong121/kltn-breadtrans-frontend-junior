@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, CheckCircle2, Sparkles, Zap, Shield, Heart, Award, ArrowRight } from "lucide-react";
+import { X, CheckCircle2, Zap, Award } from "lucide-react";
 import { PET_SPECIES_LIST, PetSpecies, getSpeciesIdFromPetName } from "../types";
 import { Button3D } from "@/components/ui";
 
@@ -31,12 +31,12 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="bg-white rounded-[2.5rem] border-4 border-slate-200 shadow-[0_20px_40px_rgba(0,0,0,0.2)] max-w-4xl w-full p-5 sm:p-7 max-h-[88vh] overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-slate-100/60 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-amber-400"
+          className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-4xl w-full p-5 sm:p-7 max-h-[min(90dvh,calc(100dvh-3rem))] overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-slate-100/60 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-amber-400"
         >
           {/* Header */}
           <div className="flex items-center justify-between pb-3 border-b-2 border-slate-100 mb-5">
@@ -155,7 +155,7 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
                       </>
                     ) : (
                       <>
-                        <Sparkles size={15} /> Chọn {species.name} Đồng Hành
+                        <Award size={15} /> Chọn {species.name} Đồng Hành
                       </>
                     )}
                   </Button3D>

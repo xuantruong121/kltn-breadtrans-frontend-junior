@@ -211,7 +211,7 @@ export default function PublicCourseDetailPage() {
         <div className="pt-2">
           <Link
             href="/courses"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-junior-blue text-white font-bold hover:bg-junior-blue-dark transition-colors shadow-xs"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors shadow-xs"
           >
             <ArrowLeft size={18} />
             Quay lại danh mục khóa học
@@ -236,11 +236,12 @@ export default function PublicCourseDetailPage() {
         <div className="pt-2">
           <Link
             href="/courses"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-junior-blue text-white font-bold hover:bg-junior-blue-dark transition-colors shadow-xs"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors shadow-xs"
           >
             <ArrowLeft size={18} />
             Quay lại danh mục khóa học
           </Link>
+
         </div>
       </div>
     );
@@ -291,21 +292,40 @@ export default function PublicCourseDetailPage() {
             "Khóa học cung cấp kiến thức nền tảng vững vàng, phát triển toàn diện các kỹ năng nghe nói đọc viết và tự tin ứng dụng trong môi trường học tập."}
         </p>
 
-        {/* Teacher profile highlight */}
-        <div className="pt-4 border-t border-slate-100 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-blue-100 text-junior-blue flex items-center justify-center font-bold text-lg">
-            {course.teacher.fullName?.[0] || "G"}
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Phụ trách chuyên môn
-            </p>
-            <p className="text-base font-bold text-slate-900">{course.teacher.fullName}</p>
-            {course.teacher.specialization && (
-              <p className="text-xs font-semibold text-slate-500">
-                {course.teacher.specialization}
+        {/* Self-paced learning highlight */}
+        <div className="pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-base">
+              <Clock size={20} />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Thời gian
               </p>
-            )}
+              <p className="text-sm font-bold text-slate-900">Tự học 24/7 linh hoạt</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-base">
+              <ShieldCheck size={20} />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Hỗ trợ học tập
+              </p>
+              <p className="text-sm font-bold text-slate-900">Phân tích & chấm điểm tự động</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-base">
+              <CheckCircle2 size={20} />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Lộ trình
+              </p>
+              <p className="text-sm font-bold text-slate-900">Tuần tự theo từng bài</p>
+            </div>
           </div>
         </div>
       </div>
@@ -369,30 +389,30 @@ export default function PublicCourseDetailPage() {
             <h3 className="text-xl font-bold text-slate-900">Cam kết chất lượng đào tạo</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
-                <p className="font-bold text-sm text-slate-900">Tương tác trực tiếp</p>
+                <p className="font-bold text-sm text-slate-900">Tự học có hướng dẫn</p>
                 <p className="text-xs text-slate-600">
-                  Giảng viên sửa phát âm và theo sát phản xạ từng học viên.
+                  Luyện tập phát âm, ngữ pháp và nhận phản hồi trực tiếp từ hệ thống.
                 </p>
               </div>
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
-                <p className="font-bold text-sm text-slate-900">Kiểm tra định kỳ</p>
+                <p className="font-bold text-sm text-slate-900">Bài tập & Đánh giá</p>
                 <p className="text-xs text-slate-600">
-                  Đánh giá tiến độ sau mỗi học phần để phụ huynh nắm rõ năng lực.
+                  Hệ thống chấm trắc nghiệm tự động và phản hồi bài viết chuẩn hóa.
                 </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Upcoming Classes (Sidebar) */}
+        {/* RIGHT COLUMN: Offerings (Sidebar) */}
         <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-28">
           <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
             <div className="pb-4 border-b border-slate-100">
               <h3 className="text-xl font-bold text-slate-900 tracking-tight">
-                Lịch mở lớp sắp tới
+                Danh sách Gói học đang mở
               </h3>
               <p className="text-xs text-slate-500 mt-1">
-                Các lớp dự kiến khai giảng mở ghi danh trực tiếp
+                Lựa chọn gói khóa học phù hợp để bắt đầu học ngay
               </p>
             </div>
 
@@ -450,10 +470,9 @@ export default function PublicCourseDetailPage() {
                           <span>Sĩ số tối đa: {cls.capacity} học viên</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <UserIcon size={14} className="text-slate-400 shrink-0" />
+                          <ShieldCheck size={14} className="text-slate-400 shrink-0" />
                           <span>
-                            Giảng viên:{" "}
-                            <strong className="text-slate-800">{cls.teacher.fullName}</strong>
+                            Hình thức: <strong className="text-slate-800">Tự học có hướng dẫn</strong>
                           </span>
                         </div>
                       </div>
@@ -464,7 +483,7 @@ export default function PublicCourseDetailPage() {
                           /* 1. Guest: Login CTA */
                           <Link
                             href={loginCtaUrl}
-                            className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold bg-junior-orange text-white hover:bg-junior-orange-dark transition-all shadow-xs"
+                            className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold bg-orange-600 text-white hover:bg-orange-700 transition-all shadow-xs"
                           >
                             Đăng nhập để đăng ký lớp
                             <ArrowRight size={14} />
@@ -472,7 +491,7 @@ export default function PublicCourseDetailPage() {
                         ) : user.role !== "STUDENT" ? (
                           /* 2. Teacher or Admin */
                           <div className="p-2.5 rounded-xl bg-slate-100 text-slate-500 text-xs text-center font-medium">
-                            Tài khoản {user.role === "TEACHER" ? "Giảng viên" : "Quản trị viên"} (quản lý tại Dashboard)
+                            Tài khoản quản trị viên (quản lý tại Dashboard)
                           </div>
                         ) : isEnrolledActive ? (
                           /* 3. Student already ACTIVE */
@@ -598,7 +617,7 @@ export default function PublicCourseDetailPage() {
                 <div className="flex justify-between">
                   <span className="text-slate-500 text-xs">Giảng viên:</span>
                   <span className="text-slate-700 font-medium">
-                    {selectedClassForEnroll.teacher.fullName}
+                    {selectedClassForEnroll.teacher?.fullName || "Ban Học Thuật BreadTrans"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center pt-2 border-t border-slate-200/60">

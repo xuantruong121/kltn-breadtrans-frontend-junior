@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, Loader2, PlayCircle, Star, Users, Video } from "lucide-react";
+import { Loader2, PlayCircle, Star, Users } from "lucide-react";
 import { courseService } from "@/lib/api/services/course.service";
 import { BackButton } from "@/components/ui";
 import { use } from "react";
@@ -89,11 +89,6 @@ export default function CourseDetailPage(props: { params: Promise<{ courseId: st
                 </p>
               </div>
               <div className="flex flex-col gap-2">
-                {c.meetingLink && (
-                  <a href={c.meetingLink} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 bg-orange-100 text-junior-orange hover:bg-orange-200 transition-colors font-bold p-3 rounded-xl w-full">
-                    <Video size={20} /> Lớp Học Online
-                  </a>
-                )}
                 <Link href={`/classes/${c.id}`} className="w-full">
                   <button className="flex items-center justify-center gap-2 bg-sky-100 text-junior-blue hover:bg-sky-200 transition-colors font-bold p-3 rounded-xl w-full cursor-pointer">
                     <PlayCircle size={20} /> Xem Tài Liệu

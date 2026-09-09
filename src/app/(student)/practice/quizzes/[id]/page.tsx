@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { use, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Loader2, CheckCircle2, ChevronRight, Play, Square } from "lucide-react";
+import { Loader2, CheckCircle2, ChevronRight, Play, Square } from "lucide-react";
 import { quizService, AnswerDto } from "@/lib/api/services/quiz.service";
 import { BackButton } from "@/components/ui";
 
@@ -32,6 +32,8 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
       // Invalidate gamification and profile cache to update Daily Quests instantly
       queryClient.invalidateQueries({ queryKey: ["myQuests"] });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["daily-quests"] });
+      queryClient.invalidateQueries({ queryKey: ["user-stats"] });
       
       // Redirect to analytics page
       router.push(`/practice/quizzes/submissions/${data.id}`);
@@ -50,6 +52,14 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
 
   const questions = quiz.questions || [];
   const currentQuestion = questions[currentStep];
+  const skillLabel = quiz.bilingualContent?.skillLabel || "TOEIC";
+  const sectionLabel = currentQuestion?.content?.section;
+  const isReading = quiz.type === 'BILINGUAL_READING';
+  const backHref = quiz.type === 'LISTENING_PRACTICE'
+    ? '/practice/listening'
+    : isReading
+    ? '/practice/reading'
+    : '/practice/quizzes';
 
   const handleNext = () => {
     if (currentStep < questions.length - 1) {
@@ -139,12 +149,12 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
       {/* TOP HEADER BAR */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border-4 border-slate-100 shadow-sm">
         <div className="flex items-center gap-4">
-          <BackButton href="/practice/quizzes" label="Thoát bài thi" />
+          <BackButton href={backHref} label="Thoát bài thi" />
           <div className="h-6 w-0.5 bg-slate-200 hidden sm:block"></div>
           <div>
             <h1 className="text-xl font-black text-slate-800 line-clamp-1">{quiz.title}</h1>
             <p className="text-xs font-bold text-slate-400">
-              Luyện nghe chép chính tả • Chuẩn âm giọng bản xứ
+              Đề TOEIC {skillLabel} • Làm bài theo từng phần
             </p>
           </div>
         </div>
@@ -217,7 +227,22 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                 </div>
               </div>
             ) : null}
+
+            {/* Reading Passage: show for BILINGUAL_READING quizzes */}
+            {isReading && currentQuestion.content?.passage && (
+              <div className="mb-6 bg-emerald-50 border border-emerald-200 rounded-2xl p-5">
+                <p className="text-xs font-bold text-emerald-700 mb-2 uppercase tracking-wide">Đoạn văn</p>
+                <p className="text-sm leading-7 text-slate-700 font-medium">{currentQuestion.content.passage}</p>
+              </div>
+            )}
             
+            {sectionLabel && (
+              <div className="mb-4 flex justify-center">
+                <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-amber-800 border border-amber-200">
+                  {sectionLabel}
+                </span>
+              </div>
+            )}
             <h3 className="text-xl font-bold text-slate-800 mb-6 text-center break-words max-w-full px-2">
               {currentQuestion.content?.text || "Nghe đoạn âm thanh và điền câu trả lời vào bên dưới:"}
             </h3>
@@ -261,21 +286,21 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                     }
                   }}
                   placeholder="Nhập những gì bạn vừa nghe được vào đây..."
-                  className={`w-full bg-slate-50 border-4 rounded-2xl p-6 text-lg font-medium outline-none transition-colors min-h-[160px] ${
+                  className={`w-full bg-slate-50 border-2 rounded-2xl p-6 text-lg font-medium outline-none transition-colors min-h-[160px] ${
                     dictationResults[currentQuestion.id]?.isChecked
                       ? dictationResults[currentQuestion.id].isCorrect
                         ? "border-emerald-400 text-emerald-800 bg-emerald-50/50"
                         : "border-rose-300 text-slate-800 bg-rose-50/30"
-                      : "border-slate-200 text-slate-700 focus:border-junior-blue"
+                      : "border-slate-200 text-slate-700 focus:border-amber-500 focus:bg-white"
                   }`}
                 />
                 
                 {dictationResults[currentQuestion.id]?.isChecked && (
-                  <div className="p-5 rounded-2xl bg-slate-50 border-2 border-slate-200">
+                  <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200">
                     {!dictationResults[currentQuestion.id].isCorrect ? (
-                      <div className="bg-white p-6 rounded-2xl border-2 border-rose-200 shadow-sm">
-                        <div className="flex items-center gap-2 text-rose-500 font-bold mb-3 text-base">
-                          <span className="text-xl">⚠️</span> Cần chỉnh sửa một chút:
+                      <div className="bg-white p-6 rounded-2xl border border-rose-200 shadow-2xs">
+                        <div className="flex items-center gap-2 text-rose-600 font-bold mb-3 text-base">
+                          <span className="text-lg">⚠️</span> Cần chỉnh sửa một chút:
                         </div>
                         <div className="text-xl font-medium leading-relaxed font-mono flex flex-wrap gap-x-2 gap-y-2 break-words max-w-full">
                           {(() => {
@@ -324,10 +349,10 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                     <button
                       key={i}
                       onClick={() => setAnswers({ ...answers, [currentQuestion.id]: opt })}
-                      className={`p-5 rounded-2xl border-4 font-bold text-left transition-all cursor-pointer ${
+                      className={`p-5 rounded-2xl border-2 font-bold text-left transition-all cursor-pointer ${
                         answers[currentQuestion.id] === opt 
-                          ? "border-junior-blue bg-sky-50 text-junior-blue shadow-sm" 
-                          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                          ? "border-amber-500 bg-amber-50/70 text-amber-900 shadow-2xs" 
+                          : "border-slate-200 bg-white text-slate-700 hover:border-amber-300"
                       }`}
                     >
                       <span className="break-words">{opt}</span>
@@ -344,7 +369,7 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                 if (currentStep > 0) setCurrentStep(currentStep - 1);
               }}
               disabled={currentStep === 0}
-              className="px-6 py-3.5 rounded-2xl font-bold text-slate-500 bg-white border-2 border-slate-200 hover:bg-slate-100 transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+              className="px-6 py-3.5 rounded-2xl font-bold text-slate-500 bg-white border border-slate-200 hover:bg-slate-100 transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
             >
               ← Câu trước
             </button>
@@ -354,7 +379,7 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleCheckDictation}
-                className="flex items-center gap-2 text-white text-lg font-black px-8 py-3.5 rounded-2xl shadow-md bg-amber-500 hover:bg-amber-600 cursor-pointer"
+                className="flex items-center gap-2 text-white text-base font-black px-7 py-3 rounded-2xl shadow-sm bg-amber-500 hover:bg-amber-600 cursor-pointer"
               >
                 {dictationResults[currentQuestion.id]?.isChecked ? "Kiểm tra lại" : "Kiểm tra đáp án"}
               </motion.button>
@@ -364,16 +389,16 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                 whileTap={{ scale: 0.98 }}
                 onClick={handleNext}
                 disabled={submitMutation.isPending}
-                className={`flex items-center gap-2 text-white text-lg font-black px-8 py-3.5 rounded-2xl shadow-md cursor-pointer ${
-                  isLastStep ? "bg-emerald-500 hover:bg-emerald-600" : "bg-sky-500 hover:bg-sky-600"
+                className={`flex items-center gap-2 text-white text-base font-black px-7 py-3 rounded-2xl shadow-sm cursor-pointer ${
+                  isLastStep ? "bg-emerald-600 hover:bg-emerald-700" : "bg-amber-600 hover:bg-amber-700"
                 }`}
               >
                 {submitMutation.isPending ? (
-                  <Loader2 className="animate-spin" size={22} />
+                  <Loader2 className="animate-spin" size={20} />
                 ) : isLastStep ? (
-                  <>Nộp bài <CheckCircle2 size={22} strokeWidth={2.5} /></>
+                  <>Nộp bài <CheckCircle2 size={20} strokeWidth={2.5} /></>
                 ) : (
-                  <>Câu tiếp theo <ChevronRight size={22} strokeWidth={2.5} /></>
+                  <>Câu tiếp theo <ChevronRight size={20} strokeWidth={2.5} /></>
                 )}
               </motion.button>
             )}
@@ -383,9 +408,9 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
         {/* RIGHT COLUMN: QUESTION NAVIGATOR & SIDEBAR WIDGETS */}
         <div className="col-span-12 lg:col-span-4 space-y-6">
           {/* Question Matrix Card */}
-          <div className="bg-white p-6 rounded-[2rem] border-4 border-slate-100 shadow-sm space-y-4">
+          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-black text-slate-800 text-base">Danh Sách Câu Hỏi</h3>
+              <h3 className="font-extrabold text-slate-800 text-base">Danh Sách Câu Hỏi</h3>
               <span className="text-xs font-bold text-slate-400">
                 {Object.keys(answers).length}/{questions.length} Đã làm
               </span>
@@ -401,14 +426,14 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                   <button
                     key={q.id || idx}
                     onClick={() => setCurrentStep(idx)}
-                    className={`h-11 rounded-xl font-black text-sm transition-all flex items-center justify-center cursor-pointer border-2 ${
+                    className={`h-10 rounded-xl font-extrabold text-sm transition-all flex items-center justify-center cursor-pointer border ${
                       isCurrent
-                        ? "bg-sky-500 text-white border-sky-600 ring-4 ring-sky-100 shadow-sm scale-105"
+                        ? "bg-amber-500 text-white border-amber-600 shadow-2xs"
                         : isPassed
-                        ? "bg-emerald-100 text-emerald-700 border-emerald-300"
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-300"
                         : isAnswered
-                        ? "bg-amber-100 text-amber-800 border-amber-300"
-                        : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"
+                        ? "bg-amber-50 text-amber-800 border-amber-300"
+                        : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
                     }`}
                   >
                     {idx + 1}
@@ -419,11 +444,31 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
           </div>
 
           {/* Tips & Keyboard Shortcuts */}
-          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-[2rem] border-2 border-indigo-100/70 space-y-4">
+          {isReading ? (
+            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-6 rounded-2xl border border-emerald-100 space-y-4">
+              <h3 className="font-black text-emerald-900 text-base flex items-center gap-2">
+                <span>📖</span> Mẹo Đọc Hiểu
+              </h3>
+              <ul className="space-y-3 text-xs font-bold text-emerald-800">
+                <li className="flex items-start gap-2 bg-white/80 p-3 rounded-xl border border-emerald-100">
+                  <span className="text-emerald-500 mt-0.5 shrink-0">1.</span>
+                  <span>Đọc câu hỏi <strong>trước</strong> rồi mới đọc đoạn văn để tìm thông tin cần thiết.</span>
+                </li>
+                <li className="flex items-start gap-2 bg-white/80 p-3 rounded-xl border border-emerald-100">
+                  <span className="text-emerald-500 mt-0.5 shrink-0">2.</span>
+                  <span>Chú ý <strong>từ khóa</strong> trong câu hỏi và tìm chúng trong đoạn văn.</span>
+                </li>
+                <li className="flex items-start gap-2 bg-white/80 p-3 rounded-xl border border-emerald-100">
+                  <span className="text-emerald-500 mt-0.5 shrink-0">3.</span>
+                  <span>Loại trừ các đáp án sai dựa trên thông tin được nêu rõ trong đoạn văn.</span>
+                </li>
+              </ul>
+            </div>
+          ) : (
+          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-2xl border border-indigo-100/70 space-y-4">
             <h3 className="font-black text-indigo-900 text-base flex items-center gap-2">
               <span>⌨️</span> Phím Tắt & Mẹo Làm Bài
             </h3>
-
             <ul className="space-y-3 text-xs font-bold text-indigo-800">
               <li className="flex items-center justify-between bg-white/80 p-2.5 rounded-xl border border-indigo-100">
                 <span>Nghe lại audio:</span>
@@ -438,6 +483,7 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
               </li>
             </ul>
           </div>
+          )}
 
           {/* Gamification Reward Card */}
           <div className="bg-amber-50 border-2 border-amber-200 p-5 rounded-[2rem] flex items-center gap-4">

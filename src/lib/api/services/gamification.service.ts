@@ -18,11 +18,32 @@ export interface UserBadge {
 }
 
 export interface LeaderboardEntry {
-  userId: number;
-  fullName: string;
-  avatarUrl: string | null;
-  totalPoints: number;
   rank: number;
+  userId: number;
+  displayName: string;
+  avatarUrl: string | null;
+  weeklyExp: number;
+  totalPoints: number;
+  tier: string;
+  isCurrentUser?: boolean;
+}
+
+export interface LeaderboardCurrentUserRank {
+  rank: number;
+  userId: number;
+  displayName: string;
+  avatarUrl: string | null;
+  tier: string;
+  totalPoints: number;
+  weeklyExp: number;
+  isCurrentUser: boolean;
+}
+
+export interface LeaderboardResponse {
+  tier: string;
+  scope: string;
+  entries: LeaderboardEntry[];
+  currentUserRank: LeaderboardCurrentUserRank | null;
 }
 
 export interface Pet {
@@ -63,6 +84,48 @@ export interface QuestProgress {
   quest: DailyQuest;
 }
 
+export interface TodayQuestItem {
+  id: number;
+  questId: number;
+  title?: string;
+  description?: string | null;
+  type?: string;
+  currentValue: number;
+  targetValue?: number;
+  rewardXP?: number;
+  rewardBanh?: number;
+  isCompleted: boolean;
+  progressPercent?: number;
+  actionLabel?: string;
+  actionUrl?: string;
+  quest?: DailyQuest;
+}
+
+export interface LearningActivityItem {
+  id: number;
+  userId: number;
+  type: string;
+  targetId?: number | null;
+  metadata?: any;
+  occurredAt: string;
+  createdAt?: string;
+}
+
+export interface DashboardTodayResponse {
+  dateKey: string;
+  timezone: string;
+  timeZone?: string;
+  quests: TodayQuestItem[];
+  activities: LearningActivityItem[];
+  summary: {
+    completedCount: number;
+    totalCount: number;
+    progressPercent: number;
+    earnedXp: number;
+    earnedBanh: number;
+  };
+}
+
 export interface ArenaSnippet {
   rank: number | null;
   tier: string;
@@ -74,8 +137,14 @@ export const gamificationService = {
     return await axiosClient.get("/gamification/badges/me");
   },
   
-  getLeaderboard: async (): Promise<LeaderboardEntry[]> => {
-    return await axiosClient.get("/gamification/leaderboard");
+  getLeaderboard: async (tier?: string, scope?: string): Promise<LeaderboardResponse> => {
+    return await axiosClient.get("/gamification/leaderboard", {
+      params: { tier, scope },
+    });
+  },
+
+  getDashboardToday: async (): Promise<DashboardTodayResponse> => {
+    return await axiosClient.get("/gamification/dashboard/today");
   },
 
   getMyPet: async (): Promise<Pet> => {
@@ -92,10 +161,6 @@ export const gamificationService = {
 
   getMyDailyQuests: async (): Promise<QuestProgress[]> => {
     return await axiosClient.get("/gamification/quests");
-  },
-
-  recordVocabLearned: async (count: number = 1): Promise<{ success: boolean; count: number }> => {
-    return await axiosClient.post("/gamification/vocab-learned", { count });
   },
 
   getArenaSnippet: async (): Promise<ArenaSnippet> => {

@@ -4,9 +4,8 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Activity,
-  Bot,
+  Cpu,
   Mic,
-  Video,
   HardDrive,
   CheckCircle2,
   Zap,
@@ -56,17 +55,6 @@ type SystemCostsResponse = {
       costVnd: number;
       withinFreeTier: boolean;
     };
-    dailyVideo: {
-      name: string;
-      totalSessions: number;
-      totalRooms?: number;
-      participantMinutes: number;
-      freeQuotaMinutes: number;
-      usedPercent: number;
-      costUsd: number;
-      costVnd: number;
-      withinFreeTier: boolean;
-    };
     cloudflareR2: {
       name: string;
       activeAudioFiles: number;
@@ -105,7 +93,7 @@ export default function AdminCostsPage() {
       return res?.data || res;
     },
     onSuccess: (res: any) => {
-      toast.success(res?.message || "Đã làm sạch cache Gemini AI trên Redis!");
+      toast.success(res?.message || "Đã làm sạch cache dữ liệu trên Redis!");
       queryClient.invalidateQueries({ queryKey: ["admin", "system-costs"] });
     },
     onError: () => {
@@ -289,7 +277,7 @@ export default function AdminCostsPage() {
 
       {/* 2. 4 Core Services Grid (Light Mode) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* 1. Google Gemini AI */}
+        {/* 1. Dịch vụ LLM */}
         {services?.gemini && (
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
@@ -299,7 +287,7 @@ export default function AdminCostsPage() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-2xl text-blue-600">
-                  <Bot className="w-5 h-5" />
+                  <Cpu className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="font-black text-slate-800 text-base flex items-center gap-2">
@@ -359,7 +347,7 @@ export default function AdminCostsPage() {
           </motion.div>
         )}
 
-        {/* 2. Microsoft Azure AI Speech */}
+        {/* 2. Dịch vụ Speech */}
         {services?.azureSpeech && (
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
@@ -417,70 +405,6 @@ export default function AdminCostsPage() {
                 <span className="text-[11px] font-bold text-slate-400 block">Chi Phí Vượt Mức</span>
                 <span className="text-lg font-black text-emerald-600">
                   ${services.azureSpeech.costUsd.toFixed(2)}
-                </span>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* 3. Daily.co Video Classroom */}
-        {services?.dailyVideo && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-xs relative overflow-hidden"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-amber-600">
-                  <Video className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-black text-slate-800 text-base flex items-center gap-2">
-                    {services.dailyVideo.name}
-                  </h3>
-                  <p className="text-xs text-slate-400 font-medium">
-                    Phòng học ảo trực tuyến WebRTC
-                  </p>
-                </div>
-              </div>
-              <span className="text-[11px] font-black px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl">
-                10.000 Phút / Tháng Free
-              </span>
-            </div>
-
-            <div className="space-y-2 mb-4">
-              <div className="flex justify-between text-xs font-bold">
-                <span className="text-slate-600">Participant-Minutes tiêu thụ:</span>
-                <span className="text-amber-700">
-                  {services.dailyVideo.participantMinutes.toLocaleString()} / {services.dailyVideo.freeQuotaMinutes.toLocaleString()} phút ({services.dailyVideo.usedPercent}%)
-                </span>
-              </div>
-              <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/60">
-                <div
-                  className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-500"
-                  style={{ width: `${Math.max(4, services.dailyVideo.usedPercent)}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
-              <div>
-                <span className="text-[11px] font-bold text-slate-400 block">Tổng Buổi Học (Sessions)</span>
-                <span className="text-lg font-black text-slate-800">
-                  {services.dailyVideo.totalSessions}
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] font-bold text-slate-400 block">Số Phòng (Rooms)</span>
-                <span className="text-lg font-black text-amber-700">
-                  {services.dailyVideo.totalRooms ?? 3} phòng
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] font-bold text-slate-400 block">Chi Phí Vượt Mức</span>
-                <span className="text-lg font-black text-emerald-600">
-                  ${services.dailyVideo.costUsd.toFixed(2)}
                 </span>
               </div>
             </div>
@@ -572,7 +496,7 @@ export default function AdminCostsPage() {
               className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-2xl text-xs font-black transition-all cursor-pointer disabled:opacity-50"
             >
               <Trash2 className={`w-4 h-4 ${isPurgingCache ? "animate-spin" : ""}`} />
-              {isPurgingCache ? "Đang xóa..." : "Xóa Cache AI (Redis)"}
+              {isPurgingCache ? "Đang xóa..." : "Xóa Cache Bộ Đệm (Redis)"}
             </button>
 
             <button
@@ -615,7 +539,7 @@ export default function AdminCostsPage() {
             <tbody className="divide-y divide-slate-100 font-semibold text-slate-600">
               <tr className="hover:bg-slate-50/60 transition-colors">
                 <td className="p-3.5 font-bold text-slate-800 flex items-center gap-2">
-                  <Bot className="w-4 h-4 text-blue-600" /> Google Gemini AI
+                  <Cpu className="w-4 h-4 text-blue-600" /> Dịch vụ xử lý nội dung văn bản (LLM)
                 </td>
                 <td className="p-3.5 text-emerald-600 font-black">$0 (Free Tier)</td>
                 <td className="p-3.5">$10 - $35 (~250K - 875K đ)</td>
@@ -624,21 +548,12 @@ export default function AdminCostsPage() {
               </tr>
               <tr className="hover:bg-slate-50/60 transition-colors">
                 <td className="p-3.5 font-bold text-slate-800 flex items-center gap-2">
-                  <Mic className="w-4 h-4 text-violet-600" /> Azure AI Speech
+                  <Mic className="w-4 h-4 text-violet-600" /> Dịch vụ xử lý phát âm & âm vị (Speech)
                 </td>
                 <td className="p-3.5 text-emerald-600 font-black">$0 (Free Tier)</td>
                 <td className="p-3.5">$20 - $60 (~500K - 1.5M đ)</td>
                 <td className="p-3.5">$150 - $450 (~3.7M - 11.2M đ)</td>
                 <td className="p-3.5">$800 - $2.000</td>
-              </tr>
-              <tr className="hover:bg-slate-50/60 transition-colors">
-                <td className="p-3.5 font-bold text-slate-800 flex items-center gap-2">
-                  <Video className="w-4 h-4 text-amber-600" /> Daily.co Video Lớp Học
-                </td>
-                <td className="p-3.5 text-emerald-600 font-black">$0 (Free Tier)</td>
-                <td className="p-3.5">$30 - $100 (~750K - 2.5M đ)</td>
-                <td className="p-3.5">$200 - $600 (~5M - 15M đ)</td>
-                <td className="p-3.5">$1.200 - $3.500</td>
               </tr>
               <tr className="hover:bg-slate-50/60 transition-colors">
                 <td className="p-3.5 font-bold text-slate-800 flex items-center gap-2">

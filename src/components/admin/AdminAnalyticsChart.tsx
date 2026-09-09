@@ -12,7 +12,7 @@ import {
   ArrowUpRight,
   UserPlus,
   BarChart3,
-  LineChart
+  Lightbulb
 } from "lucide-react";
 import Link from "next/link";
 
@@ -44,7 +44,7 @@ export default function AdminAnalyticsChart({ data }: AdminAnalyticsChartProps) 
   const maxVal = Math.max(...values, 10);
 
   return (
-    <div className="space-y-6 flex flex-col">
+    <div className="space-y-6">
       {/* 1. CHART HEADER & CONTROLS */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
         <div className="flex items-center gap-3">
@@ -52,17 +52,22 @@ export default function AdminAnalyticsChart({ data }: AdminAnalyticsChartProps) 
             <BarChart3 size={18} strokeWidth={2} />
           </div>
           <div>
-            <h3 className="text-base font-bold text-slate-900">
-              Xu Hướng Tăng Trưởng &amp; Tương Tác
-            </h3>
-            <p className="text-xs text-slate-500">
-              Dữ liệu ghi danh học viên và tổng lượt hoàn thành bài học theo từng tháng
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-bold text-slate-900">
+                Xu Hướng Tăng Trưởng &amp; Tương Tác
+              </h3>
+              <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200/80">
+                6 tháng gần nhất
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Dữ liệu ghi danh học viên mới và tổng lượt học tập hoàn thành
             </p>
           </div>
         </div>
 
-        {/* METRIC SELECTOR TABS (SEGMENTED CONTROL) */}
-        <div className="inline-flex items-center p-1 bg-slate-100 rounded-lg border border-slate-200 self-start sm:self-auto text-xs font-medium">
+        {/* METRIC SELECTOR TABS */}
+        <div className="inline-flex items-center p-1 bg-slate-100/90 rounded-lg border border-slate-200/80 self-start sm:self-auto text-xs font-medium">
           <button
             onClick={() => setMetric("enrollments")}
             className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 cursor-pointer ${
@@ -71,7 +76,7 @@ export default function AdminAnalyticsChart({ data }: AdminAnalyticsChartProps) 
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            <Users size={14} /> Ghi Danh
+            <Users size={14} strokeWidth={2} /> Ghi Danh
           </button>
           <button
             onClick={() => setMetric("activity")}
@@ -81,15 +86,15 @@ export default function AdminAnalyticsChart({ data }: AdminAnalyticsChartProps) 
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            <Activity size={14} /> Lượt Tương Tác
+            <Activity size={14} strokeWidth={2} /> Lượt Tương Tác
           </button>
         </div>
       </div>
 
       {/* 2. INTERACTIVE BAR CHART */}
-      <div className="relative pt-6 pb-3 bg-slate-50/60 rounded-xl p-4 border border-slate-200/70">
-        {/* Dotted Gridlines & Y-Axis Reference */}
-        <div className="absolute inset-x-4 top-10 bottom-10 flex flex-col justify-between pointer-events-none opacity-50">
+      <div className="relative pt-6 pb-3 bg-slate-50/70 rounded-xl p-4 border border-slate-200/80">
+        {/* Dotted Gridlines */}
+        <div className="absolute inset-x-4 top-10 bottom-10 flex flex-col justify-between pointer-events-none opacity-40">
           <div className="border-b border-dashed border-slate-300 w-full" />
           <div className="border-b border-dashed border-slate-300 w-full" />
           <div className="border-b border-dashed border-slate-300 w-full" />
@@ -101,7 +106,6 @@ export default function AdminAnalyticsChart({ data }: AdminAnalyticsChartProps) 
             const heightPercent = Math.max(12, Math.round((currentVal / maxVal) * 100));
             const isHovered = hoveredIdx === index;
 
-            // Clean, non-neon bar styling
             const barBg =
               metric === "enrollments"
                 ? isHovered
@@ -126,7 +130,7 @@ export default function AdminAnalyticsChart({ data }: AdminAnalyticsChartProps) 
                     className="absolute -top-14 bg-slate-900 text-white text-xs py-1.5 px-3 rounded-lg shadow-md z-30 whitespace-nowrap pointer-events-none"
                   >
                     <div className="font-semibold text-white">
-                      {currentVal} {metric === "enrollments" ? "học viên mới" : "lượt học"}
+                      {currentVal} {metric === "enrollments" ? "học viên mới" : "lượt học tập"}
                     </div>
                     <span className="text-[10px] text-slate-400">Tháng {item.month.replace("T", "")}</span>
                     <div className="absolute left-1/2 -bottom-1 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45" />
@@ -142,8 +146,8 @@ export default function AdminAnalyticsChart({ data }: AdminAnalyticsChartProps) 
                 <motion.div
                   initial={{ height: 0 }}
                   animate={{ height: `${heightPercent}%` }}
-                  transition={{ duration: 0.5, delay: index * 0.05, ease: "easeOut" }}
-                  className={`w-full max-w-[42px] rounded-t-md ${barBg} transition-all ${
+                  transition={{ duration: 0.45, delay: index * 0.04, ease: "easeOut" }}
+                  className={`w-full max-w-[44px] rounded-t-md ${barBg} transition-all ${
                     isHovered ? "ring-2 ring-slate-400/50 opacity-95" : ""
                   }`}
                 />
@@ -164,36 +168,36 @@ export default function AdminAnalyticsChart({ data }: AdminAnalyticsChartProps) 
 
       {/* 3. GROWTH STATS 4 MINI METRIC TILES */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200">
+        <div className="p-3.5 bg-slate-50/70 rounded-xl border border-slate-200/80 hover:border-slate-300 transition-colors">
           <div className="flex items-center gap-1.5 text-slate-500 mb-1">
-            <Calendar size={14} className="text-blue-600" />
+            <Calendar size={14} className="text-blue-600" strokeWidth={2} />
             <span className="text-[11px] font-semibold uppercase tracking-wider">Tháng Cao Điểm</span>
           </div>
           <div className="text-base font-bold text-slate-900">Tháng 8 (T8)</div>
           <div className="text-[11px] text-slate-500 mt-0.5">110 lượt học tập</div>
         </div>
 
-        <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200">
+        <div className="p-3.5 bg-slate-50/70 rounded-xl border border-slate-200/80 hover:border-slate-300 transition-colors">
           <div className="flex items-center gap-1.5 text-slate-500 mb-1">
-            <TrendingUp size={14} className="text-emerald-600" />
+            <TrendingUp size={14} className="text-emerald-600" strokeWidth={2} />
             <span className="text-[11px] font-semibold uppercase tracking-wider">Tăng Trưởng</span>
           </div>
           <div className="text-base font-bold text-slate-900">+24.5%</div>
           <div className="text-[11px] text-emerald-600 font-medium mt-0.5">+8 học viên ghi danh</div>
         </div>
 
-        <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200">
+        <div className="p-3.5 bg-slate-50/70 rounded-xl border border-slate-200/80 hover:border-slate-300 transition-colors">
           <div className="flex items-center gap-1.5 text-slate-500 mb-1">
-            <Clock size={14} className="text-indigo-600" />
+            <Clock size={14} className="text-indigo-600" strokeWidth={2} />
             <span className="text-[11px] font-semibold uppercase tracking-wider">Thời Lượng Học</span>
           </div>
           <div className="text-base font-bold text-slate-900">38 phút/ngày</div>
           <div className="text-[11px] text-slate-500 mt-0.5">Duy trì đều đặn</div>
         </div>
 
-        <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200">
+        <div className="p-3.5 bg-slate-50/70 rounded-xl border border-slate-200/80 hover:border-slate-300 transition-colors">
           <div className="flex items-center gap-1.5 text-slate-500 mb-1">
-            <CheckCircle2 size={14} className="text-amber-600" />
+            <CheckCircle2 size={14} className="text-amber-600" strokeWidth={2} />
             <span className="text-[11px] font-semibold uppercase tracking-wider">Tỷ Lệ Giữ Chân</span>
           </div>
           <div className="text-base font-bold text-slate-900">94.2%</div>
@@ -202,17 +206,17 @@ export default function AdminAnalyticsChart({ data }: AdminAnalyticsChartProps) 
       </div>
 
       {/* 4. OPERATIONAL INSIGHTS & ACTIONS BANNER */}
-      <div className="bg-gradient-to-r from-blue-50/50 via-slate-50/70 to-slate-50/90 text-slate-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-slate-200 shadow-xs">
+      <div className="bg-slate-50/90 text-slate-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-slate-200/90 shadow-2xs">
         <div className="flex items-start gap-3">
-          <div className="p-2.5 rounded-lg bg-white text-blue-600 shrink-0 border border-blue-100 shadow-xs mt-0.5">
-            <LineChart size={18} />
+          <div className="p-2.5 rounded-lg bg-white text-blue-600 shrink-0 border border-slate-200 shadow-2xs mt-0.5">
+            <Lightbulb size={18} strokeWidth={2} />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+              <span className="text-xs font-bold text-slate-900 uppercase tracking-wide">
                 Đề Xuất Tối Ưu Vận Hành
               </span>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-100/70 text-blue-700 border border-blue-200/60">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-100/80 text-blue-700 border border-blue-200/70">
                 Phân tích lưu lượng
               </span>
             </div>
@@ -227,13 +231,13 @@ export default function AdminAnalyticsChart({ data }: AdminAnalyticsChartProps) 
             href="/admin/enroll"
             className="flex-1 sm:flex-none px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
           >
-            <UserPlus size={14} /> Ghi danh học viên
+            <UserPlus size={14} strokeWidth={2} /> Ghi danh học viên
           </Link>
           <Link
             href="/admin/users"
-            className="flex-1 sm:flex-none px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-semibold rounded-lg border border-slate-200 shadow-xs transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap"
+            className="flex-1 sm:flex-none px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-semibold rounded-lg border border-slate-200 shadow-2xs transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap"
           >
-            Danh sách <ArrowUpRight size={14} />
+            Danh sách <ArrowUpRight size={14} strokeWidth={2} />
           </Link>
         </div>
       </div>

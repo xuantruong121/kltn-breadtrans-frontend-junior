@@ -99,7 +99,7 @@ export default function AdminSpeakingPage() {
           <div>
             <h1 className="text-3xl font-black text-slate-800">Quản Lý Luyện Phát Âm</h1>
             <p className="text-slate-400 font-bold text-sm">
-              Quản lý câu mẫu và tiêu chuẩn chấm điểm phát âm bằng Azure AI
+              Quản lý câu mẫu và tiêu chuẩn chấm điểm phát âm tự động
             </p>
           </div>
         </div>

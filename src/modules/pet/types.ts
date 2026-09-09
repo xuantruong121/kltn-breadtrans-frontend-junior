@@ -88,7 +88,7 @@ export const PET_SPECIES_LIST: PetSpecies[] = [
     icon: "🐱",
     buff: "Khiên Bảo Vệ Chuỗi Streak 1 ngày",
     buffDetail: "Tự động cứu chuỗi ngày học của bạn 1 lần mỗi tuần nếu chẳng may bạn bận rộn quên học 1 ngày.",
-    lore: "Cô mèo bánh cá nhỏ nhắn từ Nhật Bản với chiếc nón bánh cá giòn rụm, cực kỳ yêu thích những bạn học sinh siêng năng luyện phát âm AI!",
+    lore: "Cô mèo bánh cá nhỏ nhắn từ Nhật Bản với chiếc nón bánh cá giòn rụm, cực kỳ yêu thích những bạn học sinh siêng năng luyện phát âm chuẩn xác!",
     quote: "Meow meow! Hôm nay bạn phát âm tiếng Anh cực kỳ chuẩn luôn đó!",
     themeColor: {
       bg: "from-rose-400 via-pink-400 to-rose-500",

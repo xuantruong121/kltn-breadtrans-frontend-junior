@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Mic, 
   Loader2, 
-  ArrowLeft, 
   CheckCircle2, 
   Search, 
   ArrowUpDown,
@@ -16,7 +15,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { speakingService } from "@/lib/api/services/speaking.service";
-import { Pagination, BackButton } from "@/components/ui";
+import { Pagination } from "@/components/ui";
 
 const DIFFICULTY_WEIGHT: Record<string, number> = {
   BEGINNER: 1,
@@ -25,7 +24,7 @@ const DIFFICULTY_WEIGHT: Record<string, number> = {
 };
 
 const DIFFICULTY_LABELS: Record<string, { label: string; color: string; bg: string; border: string; text: string; icon: string }> = {
-  ALL: { label: "Tất Cả", color: "purple", bg: "bg-purple-50", border: "border-purple-200", text: "text-purple-700", icon: "✨" },
+  ALL: { label: "Tất Cả", color: "slate", bg: "bg-slate-100", border: "border-slate-200", text: "text-slate-700", icon: "" },
   BEGINNER: { label: "Cơ Bản (Dễ)", color: "emerald", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", icon: "🟢" },
   INTERMEDIATE: { label: "Trung Cấp (Vừa)", color: "amber", bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700", icon: "🟡" },
   ADVANCED: { label: "Nâng Cao (Khó)", color: "rose", bg: "bg-rose-50", border: "border-rose-200", text: "text-rose-700", icon: "🔴" },
@@ -107,43 +106,34 @@ export default function SpeakingExercisesPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-16">
-      {/* Top Back Navigation */}
-      <div>
-        <BackButton href="/dashboard" label="Quay lại Trang chủ" />
-      </div>
-
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-[2.5rem] p-6 md:p-8 text-white shadow-[0_10px_0_0_#4f46e5] relative overflow-hidden border-4 border-purple-700">
+      <div className="bg-white rounded-3xl p-6 md:p-8 text-slate-900 shadow-xs relative overflow-hidden border border-slate-200">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="p-4 bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 text-white shadow-inner">
-              <Mic size={36} />
+            <div className="p-4 bg-blue-50 rounded-2xl border border-blue-200 text-blue-700 shadow-xs">
+              <Mic size={32} />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-purple-200 text-purple-900 border border-purple-300/60">
-                  Phát Âm AI Chấm Chuẩn Âm Vị
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
+                  Đánh giá chuẩn âm vị quốc tế
                 </span>
               </div>
-              <h1 className="text-2xl md:text-3xl font-black mt-1">Luyện Phát Âm Trực Tiếp</h1>
-              <p className="text-purple-100 text-xs md:text-sm font-medium mt-1">
+              <h1 className="text-2xl md:text-3xl font-black mt-1 text-slate-900">Luyện Phát Âm Trực Tiếp</h1>
+              <p className="text-slate-600 text-xs md:text-sm font-medium mt-1">
                 Luyện nói tiếng Anh theo các cấp độ từ Dễ đến Khó với phản hồi tức thì
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/20 self-start md:self-auto">
-            <Award className="text-amber-300 w-6 h-6 shrink-0" />
+          <div className="flex items-center gap-3 bg-slate-50 px-4 py-3 rounded-2xl border border-slate-200 self-start md:self-auto shadow-xs">
+            <Award className="text-amber-600 w-6 h-6 shrink-0" />
             <div>
-              <span className="text-[11px] font-bold text-purple-200 block uppercase">Tổng Bài Tập</span>
-              <span className="text-lg font-black text-white">{exercises?.length || 0} bài luyện nói</span>
+              <span className="text-[11px] font-bold text-slate-500 block uppercase">Tổng Bài Tập</span>
+              <span className="text-lg font-black text-slate-900">{exercises?.length || 0} bài luyện nói</span>
             </div>
           </div>
         </div>
-
-        {/* Ambient Glows */}
-        <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-pink-400/20 rounded-full blur-2xl" />
-        <div className="absolute -top-10 -left-10 w-48 h-48 bg-purple-300/20 rounded-full blur-2xl" />
       </div>
 
       {/* Control Box: Filter Tabs, Category, and Search */}
@@ -367,4 +357,3 @@ export default function SpeakingExercisesPage() {
     </div>
   );
 }
-

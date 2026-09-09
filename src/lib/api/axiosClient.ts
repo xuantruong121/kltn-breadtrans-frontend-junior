@@ -1,10 +1,11 @@
-import axios, { AxiosRequestConfig } from 'axios';
-import { useAuthStore } from '@/stores/authStore';
+import axios, { AxiosRequestConfig } from "axios";
+import { useAuthStore } from "@/stores/authStore";
+import { getDeviceId, persistDeviceId } from "@/lib/auth/deviceId";
 
 const axiosClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001",
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -13,8 +14,8 @@ axiosClient.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().accessToken;
     if (token) {
-      if (config.headers && typeof config.headers.set === 'function') {
-        config.headers.set('Authorization', `Bearer ${token}`);
+      if (config.headers && typeof config.headers.set === "function") {
+        config.headers.set("Authorization", `Bearer ${token}`);
       } else {
         config.headers = {
           ...(config.headers || {}),
@@ -24,7 +25,7 @@ axiosClient.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 let isRefreshing = false;
@@ -44,6 +45,40 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
+const isPublicOrOptionalEndpoint = (url?: string): boolean => {
+  if (!url) return false;
+  const publicPaths = [
+    "/gamification/leaderboard",
+    "/market/products",
+    "/courses",
+    "/practice",
+    "/grammar",
+    "/flashcard",
+    "/exams",
+    "/auth/login",
+    "/auth/register",
+    "/auth/forgot-password",
+  ];
+  return publicPaths.some((p) => url.includes(p));
+};
+
+const isGuestAllowedPage = (): boolean => {
+  if (typeof window === "undefined") return false;
+  const p = window.location.pathname;
+  if (p === "/" || p === "/login" || p === "/register") return true;
+  const guestPrefixes = [
+    "/courses",
+    "/practice",
+    "/market",
+    "/arena",
+    "/flashcard",
+    "/grammar",
+  ];
+  return guestPrefixes.some(
+    (prefix) => p === prefix || p.startsWith(`${prefix}/`),
+  );
+};
+
 // Intercept response to handle generic errors (e.g. 401 Unauthorized)
 axiosClient.interceptors.response.use(
   (response) => {
@@ -53,23 +88,38 @@ axiosClient.interceptors.response.use(
     return response.data;
   },
   async (error) => {
-    const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as AxiosRequestConfig & {
+      _retry?: boolean;
+    };
 
     // If 401 Unauthorized and not already retried and not the refresh request itself
     if (
       error.response?.status === 401 &&
       originalRequest &&
       !originalRequest._retry &&
-      !originalRequest.url?.includes('/auth/refresh') &&
-      !originalRequest.url?.includes('/auth/login')
+      !originalRequest.url?.includes("/auth/refresh") &&
+      !originalRequest.url?.includes("/auth/login")
     ) {
+      const authState = useAuthStore.getState();
+      const hasExistingAuth = !!(
+        authState.accessToken || authState.refreshToken
+      );
+
+      // If client is an unauthenticated guest or requesting a public/optional endpoint, do NOT refresh or redirect
+      if (!hasExistingAuth || isPublicOrOptionalEndpoint(originalRequest.url)) {
+        return Promise.reject(error);
+      }
+
       if (isRefreshing) {
         return new Promise<string>((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
           .then((token) => {
-            if (originalRequest.headers && typeof originalRequest.headers.set === 'function') {
-              originalRequest.headers.set('Authorization', `Bearer ${token}`);
+            if (
+              originalRequest.headers &&
+              typeof originalRequest.headers.set === "function"
+            ) {
+              originalRequest.headers.set("Authorization", `Bearer ${token}`);
             } else {
               originalRequest.headers = {
                 ...(originalRequest.headers || {}),
@@ -87,23 +137,24 @@ axiosClient.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const authState = useAuthStore.getState();
       const refreshToken = authState.refreshToken;
 
       // Get or generate deviceId
-      let deviceId = typeof window !== 'undefined' ? localStorage.getItem('deviceId') : null;
-      if (!deviceId && typeof window !== 'undefined') {
-        deviceId = crypto.randomUUID();
-        localStorage.setItem('deviceId', deviceId);
-      }
+      const deviceId = getDeviceId();
 
       if (!refreshToken || !deviceId) {
         isRefreshing = false;
         processQueue(error, null);
-        authState.logout();
-        if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+        if (authState.user || authState.accessToken) {
+          authState.logout();
+        }
+        if (
+          !isGuestAllowedPage() &&
+          typeof window !== "undefined" &&
+          window.location.pathname !== "/"
+        ) {
           // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-          window.location.href = '/';
+          window.location.href = "/login";
         }
         return Promise.reject(error);
       }
@@ -119,19 +170,26 @@ axiosClient.interceptors.response.use(
             headers: authState.accessToken
               ? { Authorization: `Bearer ${authState.accessToken}` }
               : undefined,
-          }
+          },
         );
 
         const data = res.data.data || res.data;
         const newAccessToken = data.access_token;
         const newRefreshToken = data.refresh_token;
+        persistDeviceId(data.deviceId || deviceId);
 
         if (authState.user) {
           authState.setAuth(newAccessToken, newRefreshToken, authState.user);
         }
 
-        if (originalRequest.headers && typeof originalRequest.headers.set === 'function') {
-          originalRequest.headers.set('Authorization', `Bearer ${newAccessToken}`);
+        if (
+          originalRequest.headers &&
+          typeof originalRequest.headers.set === "function"
+        ) {
+          originalRequest.headers.set(
+            "Authorization",
+            `Bearer ${newAccessToken}`,
+          );
         } else {
           originalRequest.headers = {
             ...(originalRequest.headers || {}),
@@ -147,16 +205,20 @@ axiosClient.interceptors.response.use(
         processQueue(refreshError, null);
         isRefreshing = false;
         authState.logout();
-        if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+        if (
+          !isGuestAllowedPage() &&
+          typeof window !== "undefined" &&
+          window.location.pathname !== "/"
+        ) {
           // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-          window.location.href = '/';
+          window.location.href = "/login";
         }
         return Promise.reject(refreshError);
       }
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export { axiosClient };

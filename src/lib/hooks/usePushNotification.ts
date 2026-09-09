@@ -70,9 +70,19 @@ export function usePushNotification() {
 
       // 2. Register & Subscribe
       const registration = await navigator.serviceWorker.ready;
-      const vapidKey =
-        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
-        "BBHW4US29BdbTAUO0IWZIvZPRd9eFQZ7pibsO7mEvTziEI-R_bfnWqEelWkCQrn_CrldpBlpsmCbtOFSMSmxPhY";
+      let vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      if (!vapidKey) {
+        try {
+          const res: any = await axiosClient.get("/notifications/public-key");
+          vapidKey = res?.publicKey;
+        } catch (err) {
+          console.error("Failed to fetch VAPID key from backend:", err);
+        }
+      }
+
+      if (!vapidKey) {
+        throw new Error("Không tìm thấy cấu hình VAPID Public Key.");
+      }
 
       const convertedKey = urlBase64ToUint8Array(vapidKey);
 

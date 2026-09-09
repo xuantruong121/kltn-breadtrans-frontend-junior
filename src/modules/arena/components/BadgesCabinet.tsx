@@ -13,11 +13,10 @@ import {
   Heart, 
   CheckCircle2, 
   Lock, 
-  Sparkles,
+  BadgeCheck,
   Zap
 } from "lucide-react";
 import { BadgeDetailModal, BadgeItem } from "./BadgeDetailModal";
-import { useGamificationStore } from "@/stores/gamificationStore";
 
 interface BadgesCabinetProps {
   myBadges: any[];
@@ -29,14 +28,12 @@ interface BadgesCabinetProps {
 
 export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
   myBadges = [],
-  isLoading = false,
-  totalExp = 487,
-  streakCount = 1,
-  petLevel = 1,
+  totalExp = 0,
+  streakCount = 0,
+  petLevel = 0,
 }) => {
   const [selectedBadge, setSelectedBadge] = useState<BadgeItem | null>(null);
   const [filterTab, setFilterTab] = useState<"all" | "unlocked" | "locked">("all");
-  const { equippedBadge } = useGamificationStore();
 
   // 8 Standardized Gamified Badges
   const ALL_BADGES: BadgeItem[] = [
@@ -85,7 +82,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
       borderColor: "border-yellow-400",
       shadowColor: "shadow-[0_6px_0_0_#eab308]",
       accentGlow: "bg-yellow-400",
-      currentValue: 1,
+      currentValue: 0,
       targetValue: 1,
       unit: "Top 1",
       rewardBreads: 100,
@@ -119,7 +116,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
       borderColor: "border-sky-400",
       shadowColor: "shadow-[0_6px_0_0_#0284c7]",
       accentGlow: "bg-sky-400",
-      currentValue: 1,
+      currentValue: 0,
       targetValue: 3,
       unit: "bài 10đ",
       rewardBreads: 50,
@@ -136,7 +133,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
       borderColor: "border-rose-400",
       shadowColor: "shadow-[0_6px_0_0_#e11d48]",
       accentGlow: "bg-rose-400",
-      currentValue: 1,
+      currentValue: 0,
       targetValue: 3,
       unit: "trận thắng",
       rewardBreads: 60,
@@ -145,15 +142,15 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
     {
       id: 7,
       name: "Giọng Đọc Vàng",
-      category: "Luyện Nói AI",
-      description: "Đạt điểm phát âm 90+ trong 5 câu luyện nói AI",
+      category: "Luyện phát âm",
+      description: "Đạt điểm phát âm 90+ trong 5 câu luyện phát âm",
       icon: Mic,
       color: "text-emerald-600",
       bgColor: "bg-emerald-100",
       borderColor: "border-emerald-400",
       shadowColor: "shadow-[0_6px_0_0_#059669]",
       accentGlow: "bg-emerald-400",
-      currentValue: 2,
+      currentValue: 0,
       targetValue: 5,
       unit: "câu 90+",
       rewardBreads: 50,
@@ -180,15 +177,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
 
   // Helper check if badge is unlocked
   const isBadgeUnlocked = (badge: BadgeItem) => {
-    return myBadges?.some(
-      (b: any) =>
-        b.badge?.name === badge.name ||
-        (badge.id === 1 && totalExp >= 100) ||
-        (badge.id === 2 && streakCount >= 1) ||
-        (badge.id === 3 && totalExp >= 100) ||
-        (badge.id === 4 && totalExp >= 1000) ||
-        (badge.id === 8 && petLevel >= 2)
-    );
+    return myBadges?.some((b: any) => b.badge?.name === badge.name);
   };
 
   const unlockedBadgesCount = ALL_BADGES.filter(isBadgeUnlocked).length;
@@ -226,7 +215,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
         <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-2xl p-3.5 text-white shadow-xs mb-4">
           <div className="flex justify-between items-center text-xs font-black mb-1.5">
             <span className="flex items-center gap-1.5">
-              <Sparkles size={14} /> Đã Mở Khóa: {unlockedBadgesCount}/{ALL_BADGES.length} Huy Hiệu
+              <BadgeCheck size={14} /> Đã Mở Khóa: {unlockedBadgesCount}/{ALL_BADGES.length} Huy Hiệu
             </span>
             <span className="bg-white/20 px-2 py-0.5 rounded-full text-[10px]">
               {progressTotalPercent}%
@@ -278,8 +267,6 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
         <div className="grid grid-cols-2 gap-3">
           {filteredBadges.map((badge) => {
             const hasUnlocked = isBadgeUnlocked(badge);
-            const isEquipped =
-              equippedBadge === `badge_${badge.id}` || equippedBadge === badge.name;
             const Icon = badge.icon;
             const progress = Math.min(
               Math.round(((badge.currentValue || 0) / badge.targetValue) * 100),
@@ -299,11 +286,6 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
                 }`}
               >
                 {/* Equipped Ribbon or Status Tag */}
-                {hasUnlocked && isEquipped && (
-                  <span className="absolute -top-2 -right-2 bg-emerald-500 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full shadow-xs flex items-center gap-0.5">
-                    <Sparkles size={10} /> Đang đeo
-                  </span>
-                )}
 
                 <div>
                   {/* Badge Medal Orb */}

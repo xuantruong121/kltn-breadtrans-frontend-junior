@@ -3,20 +3,22 @@
 import { useState, useEffect, useSyncExternalStore, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
-import { ArrowRight, Loader2, Eye, EyeOff } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { AuthShell } from "@/components/auth/AuthShell";
+import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
+import GoogleAccountLinkModal from "@/components/auth/GoogleAccountLinkModal";
+import { getDeviceId, persistDeviceId } from "@/lib/auth/deviceId";
+import { normalizeAuthResponse } from "@/lib/auth/authResponse";
+import { hydrateSession } from "@/lib/auth/hydrateSession";
 
 const emptySubscribe = () => () => {};
 
 function getSafeRedirect(raw: string | null): string | null {
   if (!raw) return null;
   const trimmed = raw.trim();
-  // Safe internal path check: starts with '/', not '//', does not contain protocol ':', and not recursive login
   if (
     trimmed.startsWith("/") &&
     !trimmed.startsWith("//") &&
@@ -34,18 +36,26 @@ function LoginForm() {
   const queryClient = useQueryClient();
 
   const safeRedirect = getSafeRedirect(searchParams.get("redirect"));
-  
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  
+  const [showReturnBanner, setShowReturnBanner] = useState(
+    Boolean(safeRedirect),
+  );
+  const [linkModalData, setLinkModalData] = useState<{
+    isOpen: boolean;
+    credential: string;
+  }>({ isOpen: false, credential: "" });
+
   const { user, setAuth } = useAuthStore();
   const isReady = useSyncExternalStore(
     emptySubscribe,
     () => true,
-    () => false
+    () => false,
   );
 
   // Auto redirect if already logged in
@@ -53,8 +63,6 @@ function LoginForm() {
     if (isReady && user) {
       if (user.role === "ADMIN") {
         router.push("/admin");
-      } else if (user.role === "TEACHER") {
-        router.push("/teacher/dashboard");
       } else {
         router.push(safeRedirect || "/dashboard");
       }
@@ -63,178 +71,314 @@ function LoginForm() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-      setErrorMsg("Vui lòng nhập đầy đủ email và mật khẩu nhé!");
+    if (!email.trim() || !password) {
+      setErrorMsg("Vui lòng nhập đầy đủ địa chỉ email và mật khẩu.");
       return;
     }
-    
+
     setIsLoading(true);
     setErrorMsg("");
-    
+
     try {
-      let deviceId = typeof window !== 'undefined' ? localStorage.getItem('deviceId') : null;
-      if (!deviceId && typeof window !== 'undefined') {
-        deviceId = crypto.randomUUID();
-        localStorage.setItem('deviceId', deviceId);
-      }
-      
-      const res: any = await axiosClient.post('/auth/login', { email, password, deviceId });
+      const deviceId = getDeviceId();
+
+      const res = normalizeAuthResponse(
+        await axiosClient.post("/auth/login", {
+          email: email.trim().toLowerCase(),
+          password,
+          deviceId,
+        }),
+      );
+
       // Clear any previous user's cached queries and gamification store
       queryClient.clear();
       useGamificationStore.getState().reset();
 
-      // API trả về { access_token, refresh_token, user: { id, email, role, profile } }
+      // Set user session in authStore
       setAuth(res.access_token, res.refresh_token, res.user);
-      
-      if (res.user.role === 'ADMIN') {
-        router.push('/admin');
-      } else if (res.user.role === 'TEACHER') {
-        router.push('/teacher/dashboard');
+      persistDeviceId(res.deviceId || deviceId);
+      await hydrateSession(queryClient);
+
+      if (res.user.role === "ADMIN") {
+        router.push("/admin");
       } else {
-        router.push(safeRedirect || '/dashboard');
+        router.push(safeRedirect || "/dashboard");
       }
     } catch (error: any) {
-      console.error(error);
-      setErrorMsg(error.response?.data?.message || "Đăng nhập thất bại. Kiểm tra lại thông tin nhé!");
+      console.error("Login failed:", error);
+      const msg = error.response?.data?.message;
+      setErrorMsg(
+        Array.isArray(msg)
+          ? msg.join(". ")
+          : msg || "Email hoặc mật khẩu không chính xác. Vui lòng thử lại.",
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  const formItems = [
-    {
-      id: "header",
-      element: (
-        <div className="mb-8">
-          <h1 className="text-5xl lg:text-6xl font-bold text-slate-800 mb-4 tracking-tight">
-            Sẵn sàng <br/>
-            <span className="text-junior-blue">khám phá!</span>
-          </h1>
-          <p className="text-lg text-slate-500 max-w-sm">
-            {safeRedirect ? (
-              <span>Đăng nhập để tiếp tục truy cập và khám phá khóa học.</span>
-            ) : (
-              <span>Đăng nhập để vào lớp học BreadTrans và nhận vô vàn phần thưởng hấp dẫn.</span>
-            )}
-          </p>
-        </div>
-      )
-    },
-    {
-      id: "error",
-      element: errorMsg ? (
-        <motion.div 
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-4 p-4 bg-red-100 text-red-600 rounded-xl font-bold"
-        >
-          {errorMsg}
-        </motion.div>
-      ) : null
-    },
-    {
-      id: "email",
-      element: (
-        <div className="mb-6">
-          <label className="block text-lg font-bold text-slate-700 mb-3">Email của bạn</label>
-          <input 
-            type="email"
-            data-testid="login-email" 
-            placeholder="Ví dụ: hocsinh@gmail.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full font-sans text-xl p-5 bg-white border-4 border-slate-200 rounded-2xl focus:outline-none focus:border-junior-blue transition-colors shadow-sm"
-          />
-        </div>
-      )
-    },
-    {
-      id: "password",
-      element: (
-        <div className="mb-10">
-          <label className="block text-lg font-bold text-slate-700 mb-3">Mật khẩu bí mật</label>
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              data-testid="login-password"
-              placeholder="••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full font-sans text-xl p-5 pr-16 bg-white border-4 border-slate-200 rounded-2xl focus:outline-none focus:border-junior-blue transition-colors shadow-sm"
-            />
-            <button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"} aria-pressed={showPassword} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500">
-              {showPassword ? <EyeOff size={24} /> : <Eye size={24} />}
-            </button>
-          </div>
-        </div>
-      )
-    },
-    {
-      id: "submit",
-      element: (
-        <motion.button
-          type="submit"
-          data-testid="login-submit"
-          disabled={isLoading}
-          whileHover={{ scale: isLoading ? 1 : 1.02 }}
-          whileTap={{ scale: isLoading ? 1 : 0.98 }}
-          className={`btn-orange-3d w-full flex items-center justify-center gap-3 text-white text-2xl font-bold p-5 rounded-2xl ${isLoading ? 'bg-slate-400 opacity-80 cursor-not-allowed' : 'bg-junior-orange hover:bg-junior-orange-dark'}`}
-        >
-          {isLoading ? (
-             <><Loader2 className="animate-spin" size={32} /> Đang tải...</>
-          ) : (
-             <>Vào Học Ngay <ArrowRight size={32} strokeWidth={3} /></>
-          )}
-        </motion.button>
-      )
-    },
-    {
-      id: "register",
-      element: (
-        <div className="mt-6 flex flex-col items-center gap-2 text-center sm:flex-row sm:justify-center">
-          <span className="text-base font-medium text-slate-600">
-            Chưa có tài khoản?
-          </span>
-          <Link
-            href={safeRedirect ? `/register?redirect=${encodeURIComponent(safeRedirect)}` : "/register"}
-            data-testid="register-link"
-            className="inline-flex min-h-11 items-center justify-center rounded-xl px-4 font-bold text-junior-blue underline decoration-2 underline-offset-4 transition-colors hover:text-blue-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-junior-blue/30"
-          >
-            Đăng ký học viên
-          </Link>
-        </div>
-      )
-    }
-  ];
+  const registerHref = safeRedirect
+    ? `/register?redirect=${encodeURIComponent(safeRedirect)}`
+    : "/register";
 
   return (
-    <form onSubmit={handleLogin} className="w-full max-w-md mx-auto xl:mx-0">
-      {formItems.map((item, i) => {
-        if (!item.element) return null;
-        return (
-          <motion.div
-            key={item.id}
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.1 }}
-            transition={{
-              duration: 0.7,
-              delay: i * 0.1,
-              ease: [0.16, 1, 0.3, 1],
-            }}
+    <>
+      {/* Return URL Context Notification Banner */}
+      {showReturnBanner && (
+        <div className="mb-4 bg-secondary-fixed/40 text-on-secondary-fixed border border-secondary-fixed-dim/40 p-3 rounded-xl shadow-xs flex items-start justify-between gap-2 transition-all duration-200">
+          <div className="flex items-start gap-2 text-xs sm:text-sm leading-snug">
+            <span className="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5">
+              info
+            </span>
+            <div>
+              Bạn cần đăng nhập để truy cập tính năng vừa chọn. Hệ thống sẽ tự
+              động chuyển tiếp ngay sau khi xác thực thành công.
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowReturnBanner(false)}
+            aria-label="Đóng thông báo"
+            className="text-on-secondary-fixed/70 hover:text-on-secondary-fixed p-0.5 rounded-md hover:bg-secondary-fixed-dim/20 transition-colors shrink-0"
           >
-            {item.element}
-          </motion.div>
-        );
-      })}
-    </form>
+            <span className="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+      )}
+
+      {/* Authentication Card */}
+      <div className="bg-surface-container-lowest rounded-2xl shadow-xl p-6 sm:p-10 relative border border-surface-container-high/60">
+        {/* Header Info */}
+        <div className="text-center mb-6">
+          <div className="w-12 h-12 rounded-2xl bg-primary-fixed flex items-center justify-center mx-auto mb-3 shadow-xs">
+            <span
+              className="material-symbols-outlined text-primary text-[28px]"
+              style={{ fontVariationSettings: "'FILL' 1" }}
+            >
+              lock_open
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">
+            Đăng nhập BreadTrans
+          </h1>
+          <p className="text-sm text-on-surface-variant mt-1.5 leading-relaxed">
+            Chào mừng bạn quay trở lại! Tiếp tục hành trình học tiếng Anh của
+            bạn.
+          </p>
+        </div>
+
+        {/* Alert Notification Box */}
+        {errorMsg && (
+          <div
+            role="alert"
+            className="mb-5 bg-error-container text-on-error-container border border-error/20 p-3 rounded-xl text-sm font-medium flex items-center justify-between gap-2 animate-in fade-in duration-150"
+          >
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-error text-[20px] shrink-0">
+                error
+              </span>
+              <span>{errorMsg}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setErrorMsg("")}
+              aria-label="Đóng thông báo lỗi"
+              className="text-on-error-container/80 hover:text-on-error-container p-0.5 rounded-md transition-colors"
+            >
+              <span className="material-symbols-outlined text-[18px]">
+                close
+              </span>
+            </button>
+          </div>
+        )}
+
+        {/* Form Elements */}
+        <form className="space-y-4" onSubmit={handleLogin}>
+          {/* Email Input Field */}
+          <div className="space-y-1.5">
+            <label
+              className="block text-sm font-semibold text-on-surface"
+              htmlFor="emailInput"
+            >
+              Địa chỉ Email <span className="text-error">*</span>
+            </label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-on-surface-variant/70">
+                <span className="material-symbols-outlined text-[20px]">
+                  mail
+                </span>
+              </span>
+              <input
+                id="emailInput"
+                name="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@example.com"
+                aria-invalid={Boolean(errorMsg)}
+                className="w-full pl-10 pr-4 py-3 bg-surface-container-low border border-transparent rounded-xl text-on-surface text-sm placeholder:text-on-surface-variant/50 focus:outline-none focus:bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Password Input Field */}
+          <div className="space-y-1.5">
+            <label
+              className="block text-sm font-semibold text-on-surface"
+              htmlFor="passwordInput"
+            >
+              Mật khẩu <span className="text-error">*</span>
+            </label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-on-surface-variant/70">
+                <span className="material-symbols-outlined text-[20px]">
+                  key
+                </span>
+              </span>
+              <input
+                id="passwordInput"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                aria-invalid={Boolean(errorMsg)}
+                className="w-full pl-10 pr-11 py-3 bg-surface-container-low border border-transparent rounded-xl text-on-surface text-sm placeholder:text-on-surface-variant/50 focus:outline-none focus:bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
+              />
+              <button
+                type="button"
+                id="togglePassBtn"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 items-center justify-center text-on-surface-variant/70 hover:text-on-surface transition-colors"
+                title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              >
+                <span className="material-symbols-outlined text-[20px]">
+                  {showPassword ? "visibility_off" : "visibility"}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* Options Row: Remember & Forgot */}
+          <div className="flex items-center justify-between text-xs sm:text-sm pt-1">
+            <label className="flex items-center gap-2 cursor-pointer select-none text-on-surface-variant hover:text-on-surface">
+              <input
+                id="rememberMe"
+                name="remember"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded bg-surface-container-low text-primary accent-primary cursor-pointer"
+              />
+              <span>Ghi nhớ đăng nhập</span>
+            </label>
+            <Link
+              href="mailto:support@breadtrans.edu.vn?subject=Y%C3%AAu%20c%E1%BA%A7u%20h%E1%BB%97%20tr%E1%BB%A3%20%C4%91%E1%BA%B7t%20l%E1%BA%A1i%20m%E1%BA%ADt%20kh%E1%BA%A9u"
+              className="font-semibold text-primary hover:text-primary-container transition-colors"
+            >
+              Quên mật khẩu?
+            </Link>
+          </div>
+
+          {/* CTA Primary Action */}
+          <button
+            type="submit"
+            id="submitBtn"
+            disabled={isLoading}
+            className="w-full py-3.5 px-6 rounded-xl font-bold text-sm sm:text-base bg-primary text-on-primary hover:bg-primary-container shadow-md transition-all duration-150 flex items-center justify-center gap-2 select-none active:scale-[0.99] disabled:opacity-75 disabled:cursor-not-allowed cursor-pointer"
+          >
+            {isLoading ? (
+              <>
+                <svg
+                  className="animate-spin h-5 w-5 text-on-primary"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    fill="currentColor"
+                  />
+                </svg>
+                <span>Đang xử lý...</span>
+              </>
+            ) : (
+              <>
+                <span>Đăng nhập</span>
+                <span className="material-symbols-outlined text-[20px]">
+                  arrow_forward
+                </span>
+              </>
+            )}
+          </button>
+        </form>
+
+        {/* Divider with Text */}
+        <div className="relative my-6 flex items-center justify-center">
+          <div className="w-full bg-surface-container-highest h-[1px]" />
+          <span className="absolute px-3 bg-surface-container-lowest text-xs font-semibold text-on-surface-variant/70 uppercase tracking-wider">
+            Hoặc tiếp tục với
+          </span>
+        </div>
+
+        {/* Social SSO: Google Authentication */}
+        <div className="space-y-2">
+          <GoogleSignInButton
+            redirectUrl={safeRedirect}
+            onAccountLinkRequired={({ credential }) =>
+              setLinkModalData({ isOpen: true, credential })
+            }
+            onError={(msg) => setErrorMsg(msg)}
+          />
+        </div>
+
+        {/* Footer Card Direction */}
+        <div className="mt-6 text-center pt-3 bg-surface-container-low/50 rounded-xl p-3">
+          <p className="text-sm text-on-surface-variant">
+            Chưa có tài khoản BreadTrans?{" "}
+            <Link
+              href={registerHref}
+              className="font-bold text-primary hover:underline ml-1 inline-block"
+            >
+              Đăng ký ngay miễn phí
+            </Link>
+          </p>
+        </div>
+      </div>
+
+      <GoogleAccountLinkModal
+        isOpen={linkModalData.isOpen}
+        credential={linkModalData.credential}
+        defaultEmail={email}
+        redirectUrl={safeRedirect}
+        onClose={() => setLinkModalData({ isOpen: false, credential: "" })}
+      />
+    </>
   );
 }
 
 export default function LoginPage() {
   return (
     <AuthShell>
-      <Suspense fallback={<div className="p-8 text-center text-slate-400">Đang tải biểu mẫu...</div>}>
+      <Suspense
+        fallback={
+          <div className="p-12 text-center text-sm text-on-surface-variant animate-pulse">
+            Đang tải biểu mẫu...
+          </div>
+        }
+      >
         <LoginForm />
       </Suspense>
     </AuthShell>
