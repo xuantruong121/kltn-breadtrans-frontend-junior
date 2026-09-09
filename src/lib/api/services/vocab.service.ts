@@ -49,10 +49,35 @@ export interface VocabTopicDetail {
   words: VocabWord[];
 }
 
+export interface DictionaryEntry {
+  word: string;
+  partOfSpeech: string | null;
+  ipaUs: string | null;
+  ipaUk: string | null;
+  meaningVi: string | null;
+  definitions: Array<{
+    definition: string;
+    meaningVi: string | null;
+    example: string | null;
+  }>;
+  examples: string[];
+  collocations: VocabWord["collocations"];
+  synonyms: string[];
+  antonyms: string[];
+  audio: { us: string | null; uk: string | null };
+  exampleVi?: string | null;
+}
+
 export interface VocabLookupResponse {
   query: string;
   canonicalWord: string | null;
   isInflectionMatch: boolean;
+  source?: "LOCAL" | "CACHE" | "EXTERNAL";
+  providerUnavailable?: boolean;
+  saved?: boolean;
+  savedId?: number | null;
+  meaningViStatus?: "ENRICHED" | "UNAVAILABLE" | "NOT_APPLICABLE";
+  entries?: DictionaryEntry[];
   matches: VocabWord[];
 }
 
@@ -81,6 +106,18 @@ export const vocabService = {
 
   reviewWord: async (id: number, isCorrect: boolean): Promise<any> => {
     return await axiosClient.post(`/vocab/words/${id}/review`, { isCorrect });
+  },
+
+  getSavedWords: async (): Promise<VocabWord[]> => {
+    return await axiosClient.get("/vocab/saved");
+  },
+
+  saveWord: async (word: string): Promise<{ id: number }> => {
+    return await axiosClient.post("/vocab/saved", { word });
+  },
+
+  removeSavedWord: async (id: number): Promise<{ deleted: boolean }> => {
+    return await axiosClient.delete(`/vocab/saved/${id}`);
   },
 
   lookupWord: async (

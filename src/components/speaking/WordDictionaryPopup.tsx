@@ -20,6 +20,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
   const [match, setMatch] = useState<VocabWord | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [isStarred, setIsStarred] = useState(false);
+  const [savedId, setSavedId] = useState<number | null>(null);
   const [starLoading, setStarLoading] = useState(false);
   const [playingAccent, setPlayingAccent] = useState<"US" | "UK" | null>(null);
 
@@ -37,15 +38,36 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
     setLoading(true);
     setNotFound(false);
     setMatch(null);
+    setSavedId(null);
+    setIsStarred(false);
 
     vocabService
       .lookupWord(cleanWord, controller.signal)
       .then((res) => {
         if (!isMounted) return;
-        if (res.matches && res.matches.length > 0) {
-          const first = res.matches[0];
+        const externalMatches: VocabWord[] = (res.entries || []).map(
+          (entry, index) => ({
+            id: -(index + 1),
+            word: entry.word,
+            pos: entry.partOfSpeech || "",
+            ipaUs: entry.ipaUs || undefined,
+            ipaUk: entry.ipaUk || undefined,
+            meaning: entry.meaningVi || entry.definitions[0]?.definition || "",
+            exampleEn: entry.examples[0] || undefined,
+            exampleVi: entry.exampleVi || entry.definitions[0]?.meaningVi || undefined,
+            audioUs: entry.audio.us || undefined,
+            audioUk: entry.audio.uk || undefined,
+            collocations: entry.collocations,
+          }),
+        );
+        const matches: VocabWord[] = res.matches?.length
+          ? res.matches
+          : externalMatches;
+        if (matches.length > 0) {
+          const first = matches[0];
           setMatch(first);
-          setIsStarred(Boolean(first.isStarred));
+          setIsStarred(Boolean(res.saved || first.isStarred));
+          setSavedId(res.savedId ?? null);
         } else {
           setNotFound(true);
         }
@@ -81,10 +103,18 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
   }, [onClose]);
 
   const handleToggleStar = async () => {
-    if (!match) return;
+    if (!match) {
+      return;
+    }
     setStarLoading(true);
     try {
-      await vocabService.starWord(match.id, !isStarred);
+      if (isStarred) {
+        if (savedId) await vocabService.removeSavedWord(savedId);
+        setSavedId(null);
+      } else {
+        const saved = await vocabService.saveWord(match.word);
+        setSavedId(saved.id);
+      }
       setIsStarred(!isStarred);
       toast.success(
         !isStarred
@@ -225,7 +255,9 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
                   type="button"
                   onClick={handleToggleStar}
                   disabled={starLoading}
-                  aria-label={isStarred ? "Bỏ lưu từ vựng" : "Lưu từ vựng"}
+                  aria-label={
+                    isStarred ? "Bỏ lưu từ vựng" : "Lưu từ vựng"
+                  }
                   className={`rounded-xl p-2.5 transition-colors border ${
                     isStarred
                       ? "border-amber-300 bg-amber-50 text-amber-500 hover:bg-amber-100"
