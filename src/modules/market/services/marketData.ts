@@ -1,4 +1,4 @@
-import { MarketItem, LeaderboardUser } from "../types";
+import { MarketItem } from "../types";
 
 export const MARKET_ITEMS: MarketItem[] = [
   {
@@ -91,13 +91,4 @@ export const MARKET_ITEMS: MarketItem[] = [
     description: "Bình giữ nhiệt inox 304 cao cấp giữ nóng lạnh suốt 12 tiếng.",
     rarity: "epic",
   },
-];
-
-export const MOCK_LEADERBOARD: LeaderboardUser[] = [
-  { id: "u1", name: "Minh Anh (Junior)", avatar: "🦊", breads: 1850, streak: 28, rank: 1 },
-  { id: "u2", name: "Bảo Nam", avatar: "🐼", breads: 1420, streak: 21, rank: 2 },
-  { id: "u3", name: "Gia Hân", avatar: "🐰", breads: 1240, streak: 19, rank: 3 },
-  { id: "u4", name: "Tuấn Kiệt", avatar: "🦁", breads: 950, streak: 14, rank: 4 },
-  { id: "u5", name: "Phương Linh", avatar: "🐱", breads: 830, streak: 12, rank: 5 },
-  { id: "u6", name: "Quang Huy", avatar: "🐯", breads: 670, streak: 9, rank: 6 },
 ];

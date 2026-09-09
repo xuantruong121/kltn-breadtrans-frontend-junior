@@ -46,6 +46,18 @@ Tài liệu này ghi chép lại toàn bộ tiến độ, kiến trúc và các 
 - **Backend API:** `GET /users/profile` và `PATCH /users/profile` xử lý update Avatar, Full Name, Phone, Target Score... bằng model `Profile` (One-to-One với `User`).
 - **Frontend UI (`/profile` chung):** Giao diện Profile Settings. Dữ liệu `profile` được đính kèm vào response đăng nhập và lưu trong `authStore`. Sidebar tự động hiển thị Avatar và Full Name (nếu có) thay vì Email.
 
+### E. Dữ Liệu Học Tập Thật — Ngữ pháp & Flashcard
+- **Ngữ pháp (`/grammar`):** Bỏ dữ liệu static/localStorage; lấy chủ đề, câu hỏi và kết quả từ `GrammarTopic`, `GrammarQuestion`, `GrammarAttempt` qua React Query. Chỉ backend chấm điểm và cấp thưởng.
+- **Flashcard (`/flashcard`):** Bỏ sách Flashcard 3D mock; dùng trực tiếp `VocabTopic`, `VocabWord`, `UserVocabWordProgress`. Tiến độ đã thuộc/yêu thích được lưu theo user ở backend.
+- **Seed:** `prisma/seed.ts` có nội dung từ vựng và ngữ pháp thực, thay cho các bản ghi placeholder dạng đánh số.
+- **Luyện nói:** Cụm nghe mẫu có nút nghe icon-only, chuyển tốc độ 0.75×/0.9×/1× và đổi giọng US/UK bằng Web Speech API.
+
+### F. Dữ Liệu Thật — Lịch sử, kiểm tra đầu vào và nội dung học
+- **Kiểm tra đầu vào (`/diagnostic`):** Câu hỏi được tải từ backend; đáp án đúng không được đưa xuống trước khi nộp. Backend chấm, lưu `DiagnosticAttempt` và ghi hoạt động học.
+- **Lịch sử (`/history`):** Lấy `LearningActivity` và tóm tắt từ API, không còn danh sách minh họa tĩnh.
+- **Học qua phim/nhạc:** Câu trả lời được gửi đến backend để chấm và ghi `ContentAttempt`; Bánh Mì được cộng trong transaction server, không cộng qua Zustand ở trình duyệt.
+- **Cửa hàng và huy hiệu:** Catalog, số dư, đơn đổi quà, bảng xếp hạng và huy hiệu đã đạt dùng API. UI không còn tự mở khóa hay trừ Bánh Mì từ state client.
+
 ## 3. Quy Ước Kiến Trúc (Architecture Rules)
 - Mọi route của Học Sinh phải nằm trong `(student)` để thừa hưởng UI.
 - Mọi route của Quản Trị phải nằm trong `(admin)` và của Giáo viên nằm trong `(teacher)`.

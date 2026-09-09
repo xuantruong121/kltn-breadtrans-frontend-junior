@@ -5,9 +5,16 @@ export interface VocabTopic {
   title: string;
   categoryName: string;
   totalWords: number;
+  learnedCount: number;
+  needReviewCount: number;
   isPro: boolean;
   iconUrl?: string;
   words?: VocabWord[];
+}
+
+export interface VocabTopicsResponse {
+  categories: Array<{ name: string; count: number; topics: VocabTopic[] }>;
+  topics: VocabTopic[];
 }
 
 export interface VocabWord {
@@ -26,12 +33,20 @@ export interface VocabWord {
   isMastered?: boolean;
 }
 
+export interface VocabTopicDetail {
+  topicId: number;
+  title: string;
+  categoryName: string;
+  totalWords: number;
+  words: VocabWord[];
+}
+
 export const vocabService = {
-  getTopics: async (): Promise<VocabTopic[]> => {
+  getTopics: async (): Promise<VocabTopicsResponse> => {
     return await axiosClient.get("/vocab/topics");
   },
 
-  getTopicById: async (id: number): Promise<VocabTopic> => {
+  getTopicById: async (id: number): Promise<VocabTopicDetail> => {
     return await axiosClient.get(`/vocab/topics/${id}`);
   },
 
@@ -41,5 +56,9 @@ export const vocabService = {
 
   masterWord: async (id: number, isMastered: boolean): Promise<any> => {
     return await axiosClient.post(`/vocab/words/${id}/master`, { isMastered });
+  },
+
+  reviewWord: async (id: number, isCorrect: boolean): Promise<any> => {
+    return await axiosClient.post(`/vocab/words/${id}/review`, { isCorrect });
   },
 };

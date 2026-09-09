@@ -15,11 +15,8 @@ import {
   Award
 } from "lucide-react";
 import { learnService } from "@/lib/api/services/learn.service";
-import { gamificationService } from "@/lib/api/services/gamification.service";
 import { ContentTopic } from "../types";
 import { Button3D } from "@/components/ui";
-import { useGamificationStore } from "@/stores/gamificationStore";
-import { useAuthStore } from "@/stores/authStore";
 import toast from "react-hot-toast";
 
 interface TopicProgress {
@@ -29,26 +26,13 @@ interface TopicProgress {
 }
 
 export default function LearnScreen() {
-  const { user } = useAuthStore();
-  const { addBreads } = useGamificationStore();
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<"movie" | "music">("movie");
   const [selectedTopic, setSelectedTopic] = useState<ContentTopic | null>(null);
 
-  const storageKey = `breadtrans_learn_progress_${user?.id || "guest"}`;
-
-  const [progressMap, setProgressMap] = useState<Record<string | number, TopicProgress>>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem(`breadtrans_learn_progress_${user?.id || "guest"}`);
-        return saved ? JSON.parse(saved) : {};
-      } catch {
-        return {};
-      }
-    }
-    return {};
-  });
+  const [progressMap, setProgressMap] = useState<Record<string | number, TopicProgress>>({});
+  const [resultMap, setResultMap] = useState<Record<string | number, Array<{ exerciseId: number; correctOption: number; isCorrect: boolean; explanation: string | null }>>>({});
 
   const { data: topics, isLoading } = useQuery<ContentTopic[]>({
     queryKey: ["content-topics", activeTab],
@@ -77,22 +61,14 @@ export default function LearnScreen() {
     };
 
     setProgressMap(nextMap);
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(nextMap));
-      } catch {}
-    }
   };
 
-  const handleSubmitQuiz = () => {
+  const handleSubmitQuiz = async () => {
     if (!currentTopic?.exercises || currentTopic.exercises.length === 0 || !currentTopicId) return;
 
-    let correctCount = 0;
-    currentTopic.exercises.forEach((ex) => {
-      if (currentProgress.userAnswers[ex.id] === ex.correctIndex) {
-        correctCount++;
-      }
-    });
+    try {
+      const result = await learnService.submitAttempt(currentTopic.id, currentProgress.userAnswers);
+      const correctCount = result.correctCount as number;
 
     const nextMap = {
       ...progressMap,
@@ -104,11 +80,7 @@ export default function LearnScreen() {
     };
 
     setProgressMap(nextMap);
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(nextMap));
-      } catch {}
-    }
+      setResultMap((previous) => ({ ...previous, [currentTopicId]: result.questionsResult }));
 
     // Call backend watch tracking API if available
     try {
@@ -119,22 +91,15 @@ export default function LearnScreen() {
       }).catch(() => {});
     } catch {}
 
-    const reward = correctCount * 5;
-    if (reward > 0) {
-      addBreads(reward);
-      toast.success(`Chúc mừng! Bạn đã trả lời đúng ${correctCount}/${currentTopic.exercises.length} câu và nhận +${reward} 🍞 Bánh Mì!`, {
+    if (result.rewardBanh > 0) {
+      toast.success(`Chúc mừng! Bạn đã trả lời đúng ${correctCount}/${currentTopic.exercises.length} câu và nhận +${result.rewardBanh} 🍞 Bánh Mì!`, {
         icon: "🎉",
       });
-      if (user) {
-        gamificationService.recordVocabLearned(correctCount).then(() => {
-          queryClient.invalidateQueries({ queryKey: ["myQuests"] });
-          queryClient.invalidateQueries({ queryKey: ["profile"] });
-          queryClient.invalidateQueries({ queryKey: ["stats"] });
-        }).catch(() => {});
-      }
+      queryClient.invalidateQueries({ queryKey: ["user-stats"] });
     } else {
       toast("Hãy xem lại video và thử lại để kiếm Bánh Mì nhé!", { icon: "💡" });
     }
+    } catch { toast.error("Không thể nộp bài. Vui lòng thử lại."); }
   };
 
   const handleResetQuiz = (topicId?: string | number) => {
@@ -151,11 +116,7 @@ export default function LearnScreen() {
     };
 
     setProgressMap(nextMap);
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(nextMap));
-      } catch {}
-    }
+    setResultMap((previous) => ({ ...previous, [targetId]: [] }));
   };
 
   return (
@@ -267,6 +228,7 @@ export default function LearnScreen() {
                       {currentTopic.exercises.map((ex, exIdx) => {
                         const selected = currentProgress.userAnswers[ex.id];
                         const isSubmitted = currentProgress.isSubmitted;
+                        const serverResult = resultMap[currentTopicId]?.find((item) => item.exerciseId === ex.id);
 
                         return (
                           <div key={ex.id} className="space-y-3">
@@ -278,7 +240,7 @@ export default function LearnScreen() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                               {ex.options.map((opt, oIdx) => {
                                 const isSelected = selected === oIdx;
-                                const isCorrect = ex.correctIndex === oIdx;
+                                const isCorrect = serverResult?.correctOption === oIdx;
 
                                 let btnStyle = "bg-slate-50 border-slate-200 hover:border-sky-300 text-slate-700";
                                 if (isSelected) {
@@ -309,9 +271,9 @@ export default function LearnScreen() {
                               })}
                             </div>
 
-                            {isSubmitted && ex.explanation && (
+                            {isSubmitted && serverResult?.explanation && (
                               <div className="bg-sky-50 border border-sky-200 rounded-xl p-3 text-xs font-bold text-sky-800">
-                                💡 Giải thích: {ex.explanation}
+                                💡 Giải thích: {serverResult.explanation}
                               </div>
                             )}
                           </div>

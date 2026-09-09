@@ -1,242 +1,126 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, XCircle } from "lucide-react";
-import { GrammarQuestion } from "../types";
-import { Button3D } from "@/components/ui";
-import { useGamificationStore } from "@/stores/gamificationStore";
-import { useAuthStore } from "@/stores/authStore";
-import { useQueryClient } from "@tanstack/react-query";
-import axiosClient from "@/lib/api/axiosClient";
 import toast from "react-hot-toast";
+import { Button3D } from "@/components/ui";
+import { grammarService } from "@/lib/api/services/grammar.service";
+import { GrammarAttemptResult, GrammarQuestion } from "../types";
 
 interface GrammarQuizProps {
-  lessonId: string | number;
+  topicId: number;
   questions: GrammarQuestion[];
-  onProgressUpdate?: () => void;
 }
 
-export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ lessonId, questions, onProgressUpdate }) => {
-  const { user } = useAuthStore();
-  const { addBreads, addExp } = useGamificationStore();
+export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topicId, questions }) => {
   const queryClient = useQueryClient();
+  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [result, setResult] = useState<GrammarAttemptResult | null>(null);
 
-  const storageKey = `breadtrans_grammar_progress_${user?.id || "guest"}`;
-
-  const [savedProgress, setSavedProgress] = useState<Record<string | number, {
-    selectedAnswers: Record<string, string>;
-    showResults: boolean;
-    correctCount: number;
-  }>>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem(`breadtrans_grammar_progress_${user?.id || "guest"}`);
-        return saved ? JSON.parse(saved) : {};
-      } catch {
-        return {};
-      }
-    }
-    return {};
+  const submitAttempt = useMutation({
+    mutationFn: () => grammarService.submitAttempt(topicId, answers),
+    onSuccess: (data) => {
+      setResult(data);
+      void Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["grammar-topics"] }),
+        queryClient.invalidateQueries({ queryKey: ["user-stats"] }),
+        queryClient.invalidateQueries({ queryKey: ["daily-quests"] }),
+        queryClient.invalidateQueries({ queryKey: ["profile"] }),
+      ]);
+      toast.success(
+        data.rewardBanh || data.rewardXP
+          ? `Kết quả: ${data.correctCount}/${data.totalQuestions}. Bạn nhận ${data.rewardBanh} Bánh Mì và ${data.rewardXP} EXP.`
+          : `Kết quả: ${data.correctCount}/${data.totalQuestions}. Hãy luyện lại để cải thiện nhé.`,
+      );
+    },
+    onError: () => toast.error("Không thể nộp bài lúc này. Vui lòng thử lại."),
   });
 
-  const currentLessonProg = savedProgress[lessonId] || {
-    selectedAnswers: {},
-    showResults: false,
-    correctCount: 0,
+  const reset = () => {
+    setAnswers({});
+    setResult(null);
   };
 
-  const selectedAnswers = currentLessonProg.selectedAnswers;
-  const showResults = currentLessonProg.showResults;
-
-  const handleSelect = (questionId: string, option: string) => {
-    if (showResults) return;
-
-    const nextAnswers = { ...selectedAnswers, [questionId]: option };
-    const nextProg = {
-      ...savedProgress,
-      [lessonId]: {
-        ...currentLessonProg,
-        selectedAnswers: nextAnswers,
-      },
-    };
-
-    setSavedProgress(nextProg);
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(nextProg));
-      } catch {}
-    }
-    onProgressUpdate?.();
-  };
-
-  const handleCheckAnswers = () => {
-    let correctCount = 0;
-    questions.forEach((q) => {
-      if (selectedAnswers[q.id] === q.correctAnswer) correctCount++;
-    });
-
-    const nextProg = {
-      ...savedProgress,
-      [lessonId]: {
-        selectedAnswers,
-        showResults: true,
-        correctCount,
-      },
-    };
-
-    setSavedProgress(nextProg);
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(nextProg));
-      } catch {}
-    }
-
-    const breadReward = correctCount * 5;
-    const expReward = correctCount * 25;
-    if (breadReward > 0) {
-      addBreads(breadReward);
-      addExp(expReward);
-      toast.success(`Chúc mừng! Đúng ${correctCount}/${questions.length} câu ngữ pháp! +${breadReward} 🍞 +${expReward} EXP`, {
-        icon: "🎉",
-      });
-    } else {
-      toast("Hãy xem lại lý thuyết video và làm lại nhé!", { icon: "💡" });
-    }
-
-    if (user) {
-      const numericId = Number(lessonId);
-      if (!isNaN(numericId)) {
-        axiosClient.post(`/grammar/topics/${numericId}/attempt`, {
-          answers: selectedAnswers,
-        }).then(() => {
-          queryClient.invalidateQueries({ queryKey: ["myQuests"] });
-          queryClient.invalidateQueries({ queryKey: ["profile"] });
-          queryClient.invalidateQueries({ queryKey: ["stats"] });
-          queryClient.invalidateQueries({ queryKey: ["grammar-topics"] });
-        }).catch(() => {});
-      }
-    }
-
-    onProgressUpdate?.();
-  };
-
-  const handleReset = () => {
-    const nextProg = {
-      ...savedProgress,
-      [lessonId]: {
-        selectedAnswers: {},
-        showResults: false,
-        correctCount: 0,
-      },
-    };
-
-    setSavedProgress(nextProg);
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(nextProg));
-      } catch {}
-    }
-    onProgressUpdate?.();
-  };
-
-  const isAllAnswered = questions.every((q) => selectedAnswers[q.id]);
+  const isAllAnswered = questions.length > 0 && questions.every((question) => answers[String(question.id)] !== undefined);
+  const resultFor = (questionId: number) => result?.questionsResult.find((item) => item.questionId === questionId);
 
   return (
-    <div className="bg-white rounded-[2rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] p-6 space-y-6">
-      <div className="flex items-center justify-between border-b-2 border-slate-100 pb-4">
+    <section className="space-y-6 rounded-[2rem] border-4 border-slate-200 bg-white p-6 shadow-[0_8px_0_0_#e2e8f0]">
+      <header className="flex items-center justify-between border-b-2 border-slate-100 pb-4">
         <div>
-          <h3 className="text-xl font-black text-slate-800">Bài Tập Củng Cố Ngữ Pháp</h3>
-          <p className="text-xs font-bold text-slate-400">Làm đúng để nhận thêm Bánh Mì 🍞</p>
+          <h2 className="text-xl font-black text-slate-800">Bài tập củng cố</h2>
+          <p className="mt-1 text-xs font-bold text-slate-400">Kết quả được chấm và lưu trên hệ thống.</p>
         </div>
-        {showResults && (
-          <span className="text-xs font-black text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300">
-            {currentLessonProg.correctCount}/{questions.length} câu đúng
+        {result && (
+          <span className="rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700">
+            {result.correctCount}/{result.totalQuestions} câu đúng
           </span>
         )}
-      </div>
+      </header>
 
-      <div className="space-y-6">
-        {questions.map((q, index) => {
-          const userAns = selectedAnswers[q.id];
-          const isCorrect = userAns === q.correctAnswer;
+      {questions.length === 0 ? (
+        <p className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-5 text-sm font-medium text-slate-500">
+          Chủ đề này chưa có câu hỏi. Hãy quay lại sau khi nội dung được bổ sung.
+        </p>
+      ) : (
+        <div className="space-y-6">
+          {questions.map((question, index) => {
+            const questionResult = resultFor(question.id);
+            return (
+              <article key={question.id} className="space-y-3 rounded-2xl border-2 border-slate-200 bg-slate-50 p-5">
+                <p className="text-base font-extrabold text-slate-800">Câu {index + 1}: {question.question}</p>
+                <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
+                  {question.options.map((option, optionIndex) => {
+                    const isSelected = answers[String(question.id)] === optionIndex;
+                    const isCorrect = questionResult?.correctOption === optionIndex;
+                    const isIncorrectSelection = isSelected && questionResult && !questionResult.isCorrect;
+                    const style = questionResult
+                      ? isCorrect
+                        ? "border-emerald-500 bg-emerald-100 text-emerald-800"
+                        : isIncorrectSelection
+                          ? "border-rose-500 bg-rose-100 text-rose-800"
+                          : "border-slate-200 bg-slate-100 text-slate-400"
+                      : isSelected
+                        ? "border-sky-400 bg-sky-100 text-sky-800"
+                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100";
+                    return (
+                      <button
+                        key={optionIndex}
+                        type="button"
+                        disabled={Boolean(result)}
+                        onClick={() => setAnswers((current) => ({ ...current, [question.id]: optionIndex }))}
+                        className={`flex min-h-11 items-center justify-between rounded-xl border-2 p-3 text-left text-sm font-bold transition ${style} disabled:cursor-default`}
+                      >
+                        <span>{option}</span>
+                        {questionResult && isCorrect && <CheckCircle2 size={16} aria-hidden="true" />}
+                        {isIncorrectSelection && <XCircle size={16} aria-hidden="true" />}
+                      </button>
+                    );
+                  })}
+                </div>
+                {questionResult?.explanation && (
+                  <p className="rounded-xl border border-sky-200 bg-sky-50 p-3 text-xs font-bold leading-5 text-sky-800">
+                    <strong>Giải thích:</strong> {questionResult.explanation}
+                  </p>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      )}
 
-          return (
-            <div key={q.id} className="p-5 rounded-2xl bg-slate-50 border-2 border-slate-200 space-y-3">
-              <p className="font-extrabold text-slate-800 text-base">
-                Câu {index + 1}: {q.question}
-              </p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                {q.options.map((opt, oIdx) => {
-                  const isSelected = userAns === opt;
-                  let btnStyle = "bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-100";
-
-                  if (showResults) {
-                    if (opt === q.correctAnswer) {
-                      btnStyle = "bg-emerald-100 border-2 border-emerald-500 text-emerald-800 font-black";
-                    } else if (isSelected && !isCorrect) {
-                      btnStyle = "bg-rose-100 border-2 border-rose-500 text-rose-800 line-through font-bold";
-                    } else {
-                      btnStyle = "bg-slate-100 border-2 border-slate-200 text-slate-400 opacity-60";
-                    }
-                  } else if (isSelected) {
-                    btnStyle = "bg-sky-100 border-2 border-sky-400 text-sky-800 font-black shadow-xs";
-                  }
-
-                  return (
-                    <button
-                      key={oIdx}
-                      onClick={() => handleSelect(q.id, opt)}
-                      disabled={showResults}
-                      className={`p-3 rounded-xl text-left font-bold text-sm transition-all cursor-pointer select-none flex items-center justify-between ${btnStyle}`}
-                    >
-                      <span>{opt}</span>
-                      {showResults && opt === q.correctAnswer && (
-                        <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-                      )}
-                      {showResults && isSelected && !isCorrect && (
-                        <XCircle size={16} className="text-rose-600 shrink-0" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {showResults && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  className="bg-sky-50 border border-sky-200 rounded-xl p-3 text-xs font-bold text-sky-800"
-                >
-                  💡 <strong>Giải thích:</strong> {q.explanation}
-                </motion.div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="pt-2 flex justify-end">
-        {!showResults ? (
-          <Button3D
-            variant="orange"
-            size="lg"
-            onClick={handleCheckAnswers}
-            disabled={!isAllAnswered}
-          >
-            Kiểm tra đáp án
-          </Button3D>
-        ) : (
-          <Button3D
-            variant="blue"
-            size="md"
-            onClick={handleReset}
-          >
-            Làm lại bài tập
-          </Button3D>
-        )}
-      </div>
-    </div>
+      {questions.length > 0 && (
+        <div className="flex justify-end">
+          {result ? (
+            <Button3D variant="blue" size="md" onClick={reset}>Làm lại bài tập</Button3D>
+          ) : (
+            <Button3D variant="orange" size="lg" onClick={() => submitAttempt.mutate()} disabled={!isAllAnswered || submitAttempt.isPending}>
+              {submitAttempt.isPending ? "Đang chấm..." : "Nộp bài và xem kết quả"}
+            </Button3D>
+          )}
+        </div>
+      )}
+    </section>
   );
 };

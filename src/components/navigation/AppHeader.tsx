@@ -29,10 +29,16 @@ import {
   LineChart,
   Loader2,
   ShieldCheck,
+  CheckCheck,
+  Clock,
+  Settings,
+  Inbox,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { usePushNotification } from "@/lib/hooks/usePushNotification";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { notificationService, NotificationItem } from "@/lib/api/services/notification.service";
 
 const emptySubscribe = () => () => {};
 
@@ -41,17 +47,70 @@ function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+function formatRelativeTime(dateStr: string) {
+  try {
+    const date = new Date(dateStr);
+    const diffMs = Date.now() - date.getTime();
+    const diffMins = Math.floor(diffMs / (60 * 1000));
+    if (diffMins < 1) return "Vừa xong";
+    if (diffMins < 60) return `${diffMins} phút trước`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours} giờ trước`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays} ngày trước`;
+    return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
+  } catch {
+    return "";
+  }
+}
+
 function StudentNotificationMenu() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   const [open, setOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"inbox" | "settings">("inbox");
   const menuRef = useRef<HTMLDivElement>(null);
+
   const {
     isSupported,
     permission,
     isSubscribed,
-    isLoading,
+    isLoading: isPushLoading,
     subscribeToPush,
     unsubscribeFromPush,
   } = usePushNotification();
+
+  const { data: unreadData } = useQuery({
+    queryKey: ["notifications-unread"],
+    queryFn: () => notificationService.getUnreadCount(),
+    enabled: !!user,
+    refetchInterval: 30000,
+  });
+  const unreadCount = unreadData?.count || 0;
+
+  const { data: inboxData, isLoading: isInboxLoading } = useQuery({
+    queryKey: ["notifications-inbox"],
+    queryFn: () => notificationService.getInbox(20),
+    enabled: !!user && open && activeTab === "inbox",
+  });
+  const items = inboxData?.items || [];
+
+  const markReadMut = useMutation({
+    mutationFn: (id: number) => notificationService.markRead(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications-unread"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications-inbox"] });
+    },
+  });
+
+  const markAllReadMut = useMutation({
+    mutationFn: () => notificationService.markAllRead(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications-unread"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications-inbox"] });
+    },
+  });
 
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -67,6 +126,16 @@ function StudentNotificationMenu() {
       document.removeEventListener("mousedown", closeOnOutsideClick);
     };
   }, []);
+
+  const handleItemClick = (item: NotificationItem) => {
+    if (!item.isRead) {
+      markReadMut.mutate(item.id);
+    }
+    if (item.url) {
+      setOpen(false);
+      router.push(item.url);
+    }
+  };
 
   const status = !isSupported
     ? "Trình duyệt chưa hỗ trợ"
@@ -86,45 +155,184 @@ function StudentNotificationMenu() {
         aria-controls="student-notification-menu"
         className={`relative flex min-h-11 min-w-11 items-center justify-center rounded-xl border transition-all focus-visible:outline-none ${
           open
-            ? "border-blue-200 bg-blue-50 text-blue-700 shadow-sm"
+            ? "border-amber-200 bg-amber-50 text-amber-800 shadow-sm"
             : "border-transparent text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-800"
         }`}
       >
         <Bell size={20} aria-hidden="true" />
-        {!isSubscribed && isSupported && permission !== "denied" && (
-          <span className="absolute right-2 top-2 size-2 rounded-full bg-rose-500 ring-2 ring-white" aria-label="Chưa thiết lập thông báo" />
-        )}
+        {unreadCount > 0 ? (
+          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white ring-2 ring-white">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        ) : !isSubscribed && isSupported && permission !== "denied" ? (
+          <span className="absolute right-2 top-2 size-2 rounded-full bg-amber-500 ring-2 ring-white" aria-label="Chưa thiết lập thông báo" />
+        ) : null}
       </button>
 
       {open && (
-        <section id="student-notification-menu" className="absolute right-0 top-full z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
-          <div className="flex items-start gap-3 border-b border-slate-100 bg-slate-50/70 p-4">
-            <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${isSubscribed ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
-              {isSubscribed ? <ShieldCheck size={20} aria-hidden="true" /> : <BellOff size={20} aria-hidden="true" />}
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-extrabold text-slate-900">Thông báo học tập</h2>
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${isSubscribed ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800"}`}>{status}</span>
+        <section id="student-notification-menu" className="absolute right-0 top-full z-50 mt-2 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+          {/* TABS HEADER */}
+          <div className="flex border-b border-slate-100 bg-slate-50/80 p-1.5">
+            <button
+              type="button"
+              onClick={() => setActiveTab("inbox")}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition-all ${
+                activeTab === "inbox"
+                  ? "bg-white text-amber-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <Inbox size={15} />
+              <span>Hộp thư</span>
+              {unreadCount > 0 && (
+                <span className="rounded-full bg-rose-500 px-1.5 py-0.2 text-[9px] font-black text-white">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("settings")}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition-all ${
+                activeTab === "settings"
+                  ? "bg-white text-amber-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <Settings size={15} />
+              <span>Cài đặt nhận tin</span>
+            </button>
+          </div>
+
+          {/* TAB 1: INBOX */}
+          {activeTab === "inbox" && (
+            <div>
+              {/* Inbox Subheader */}
+              <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2.5">
+                <span className="text-xs font-bold text-slate-500">
+                  {unreadCount > 0 ? `${unreadCount} thông báo chưa đọc` : "Đã đọc tất cả"}
+                </span>
+                {unreadCount > 0 && (
+                  <button
+                    type="button"
+                    disabled={markAllReadMut.isPending}
+                    onClick={() => markAllReadMut.mutate()}
+                    className="flex items-center gap-1 text-[11px] font-bold text-amber-700 hover:text-amber-900 disabled:opacity-50 cursor-pointer"
+                  >
+                    <CheckCheck size={13} />
+                    <span>Đọc tất cả</span>
+                  </button>
+                )}
               </div>
-              <p className="mt-1 text-xs leading-5 text-slate-500">Nhận nhắc duy trì chuỗi học và cập nhật nội dung mới trên thiết bị này.</p>
+
+              {/* Notification List */}
+              <div className="max-h-[360px] overflow-y-auto divide-y divide-slate-100">
+                {isInboxLoading ? (
+                  <div className="flex items-center justify-center py-8 text-slate-400">
+                    <Loader2 size={24} className="animate-spin text-amber-500" />
+                  </div>
+                ) : items.length === 0 ? (
+                  <div className="py-10 text-center text-slate-400">
+                    <Inbox size={32} className="mx-auto mb-2 text-slate-300" />
+                    <p className="text-xs font-bold">Chưa có thông báo nào</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Các lời nhắc ôn từ vựng và chuỗi học tập sẽ hiển thị tại đây.
+                    </p>
+                  </div>
+                ) : (
+                  items.map((item) => {
+                    const isVocab = item.type === "vocab_review";
+                    const isStreak = item.type === "streak";
+
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={() => handleItemClick(item)}
+                        className={`group relative flex items-start gap-3 p-3.5 transition-colors cursor-pointer ${
+                          item.isRead ? "bg-white hover:bg-slate-50/80" : "bg-amber-50/50 hover:bg-amber-50"
+                        }`}
+                      >
+                        {/* Icon */}
+                        <div
+                          className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl text-xs ${
+                            isVocab
+                              ? "bg-amber-100 text-amber-800"
+                              : isStreak
+                              ? "bg-orange-100 text-orange-700"
+                              : "bg-blue-100 text-blue-700"
+                          }`}
+                        >
+                          {isVocab ? (
+                            <BookOpen size={16} />
+                          ) : isStreak ? (
+                            <Flame size={16} />
+                          ) : (
+                            <Bell size={16} />
+                          )}
+                        </div>
+
+                        {/* Content */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-1">
+                            <p
+                              className={`text-xs leading-snug line-clamp-1 ${
+                                item.isRead ? "font-semibold text-slate-700" : "font-extrabold text-slate-900"
+                              }`}
+                            >
+                              {item.title}
+                            </p>
+                            {!item.isRead && (
+                              <span className="size-2 shrink-0 rounded-full bg-amber-500" />
+                            )}
+                          </div>
+                          <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500 line-clamp-2">
+                            {item.body}
+                          </p>
+                          <div className="mt-1 flex items-center gap-1 text-[10px] text-slate-400">
+                            <Clock size={11} />
+                            <span>{formatRelativeTime(item.createdAt)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             </div>
-          </div>
-          <div className="space-y-3 p-4">
-            {!isSupported ? (
-              <p className="rounded-xl bg-slate-50 p-3 text-xs font-semibold leading-5 text-slate-500">Trình duyệt hiện tại không hỗ trợ thông báo đẩy.</p>
-            ) : permission === "denied" ? (
-              <p className="rounded-xl bg-rose-50 p-3 text-xs font-semibold leading-5 text-rose-700">Bạn đã chặn thông báo. Hãy bật lại quyền thông báo trong cài đặt trình duyệt để tiếp tục.</p>
-            ) : isSubscribed ? (
-              <button type="button" disabled={isLoading} onClick={unsubscribeFromPush} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-extrabold text-slate-700 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-60">
-                {isLoading ? <Loader2 size={17} className="animate-spin" aria-hidden="true" /> : <BellOff size={17} aria-hidden="true" />} Tắt thông báo
-              </button>
-            ) : (
-              <button type="button" disabled={isLoading} onClick={subscribeToPush} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-extrabold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
-                {isLoading ? <Loader2 size={17} className="animate-spin" aria-hidden="true" /> : <Bell size={17} aria-hidden="true" />} Bật nhắc học
-              </button>
-            )}
-          </div>
+          )}
+
+          {/* TAB 2: PUSH SETTINGS */}
+          {activeTab === "settings" && (
+            <div>
+              <div className="flex items-start gap-3 border-b border-slate-100 bg-slate-50/70 p-4">
+                <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${isSubscribed ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                  {isSubscribed ? <ShieldCheck size={20} aria-hidden="true" /> : <BellOff size={20} aria-hidden="true" />}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-extrabold text-slate-900">Thông báo trình duyệt</h2>
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${isSubscribed ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800"}`}>{status}</span>
+                  </div>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">Nhận nhắc ôn tập từ vựng Spaced Repetition và duy trì ngọn lửa streak ngay trên thiết bị này.</p>
+                </div>
+              </div>
+              <div className="space-y-3 p-4">
+                {!isSupported ? (
+                  <p className="rounded-xl bg-slate-50 p-3 text-xs font-semibold leading-5 text-slate-500">Trình duyệt hiện tại không hỗ trợ thông báo đẩy.</p>
+                ) : permission === "denied" ? (
+                  <p className="rounded-xl bg-rose-50 p-3 text-xs font-semibold leading-5 text-rose-700">Bạn đã chặn thông báo. Hãy bật lại quyền thông báo trong cài đặt trình duyệt để tiếp tục.</p>
+                ) : isSubscribed ? (
+                  <button type="button" disabled={isPushLoading} onClick={unsubscribeFromPush} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-extrabold text-slate-700 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer">
+                    {isPushLoading ? <Loader2 size={17} className="animate-spin" aria-hidden="true" /> : <BellOff size={17} aria-hidden="true" />} Tắt thông báo đẩy
+                  </button>
+                ) : (
+                  <button type="button" disabled={isPushLoading} onClick={subscribeToPush} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 text-sm font-extrabold text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer">
+                    {isPushLoading ? <Loader2 size={17} className="animate-spin" aria-hidden="true" /> : <Bell size={17} aria-hidden="true" />} Bật nhận thông báo
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </section>
       )}
     </div>
@@ -277,7 +485,7 @@ export function AppHeader() {
               aria-expanded={skillsOpen}
               aria-controls="skills-navigation-menu"
               aria-haspopup="menu"
-              className={`flex min-h-11 min-w-11 items-center justify-center rounded-r-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
+              className={`-ml-2 flex min-h-11 min-w-11 items-center justify-center rounded-r-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
                 isSkillsPath || skillsOpen
                   ? "bg-amber-50/80 text-amber-700"
                   : "text-slate-400 hover:bg-amber-50/50 hover:text-amber-700"
@@ -319,7 +527,7 @@ export function AppHeader() {
                   </div>
                 </Link>
 
-                {/* 2. Luyện nói và phát âm */}
+                {/* 2. Luyện nói */}
                 <Link
                   href="/practice/speaking"
                   onClick={closeMenus}
@@ -330,7 +538,7 @@ export function AppHeader() {
                   </div>
                   <div>
                     <div className="text-sm font-bold text-slate-900 group-hover/item:text-purple-700 transition-colors">
-                      Luyện nói và phát âm
+                      Luyện nói
                     </div>
                     <div className="text-xs font-semibold text-slate-500 leading-snug mt-0.5">
                       Cải thiện phát âm, ngữ điệu và phản xạ với trợ lý AI.
@@ -585,7 +793,7 @@ export function AppHeader() {
                 onClick={closeMenus}
                   className="flex items-center gap-2 p-3 rounded-xl bg-purple-50/70 border border-purple-200/50 text-xs font-bold text-purple-900"
                 >
-                  <Mic size={16} aria-hidden="true" /> Luyện Nói AI
+                  <Mic size={16} aria-hidden="true" /> Luyện nói
               </Link>
               <Link
                 href="/practice/reading"

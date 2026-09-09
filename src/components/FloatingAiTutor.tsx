@@ -17,8 +17,9 @@ import {
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { aiService } from "@/lib/api/services/ai.service";
+import { supportService } from "@/lib/api/services/support.service";
 import { useAuthStore } from "@/stores/authStore";
-import { useChatAssistantStore, StudentThread } from "@/stores/chatAssistantStore";
+import { useChatAssistantStore, StudentThread, AssistantMessage } from "@/stores/chatAssistantStore";
 import { useSocket } from "@/lib/providers/SocketProvider";
 
 // 🌟 Component parse và format Markdown sạch đẹp (tránh lộ kí tự ***, **, gạch đầu dòng, chuẩn màu tương phản)
@@ -107,6 +108,23 @@ function FormattedMessage({ content, isWhiteText = false }: { content: string; i
   return <div className="space-y-0.5 text-[13.5px]">{formattedElements}</div>;
 }
 
+function mapSupportMessageToAssistantMessage(msg: any): AssistantMessage {
+  let role: "user" | "assistant" | "admin" | "system" = "user";
+  if (msg.senderRole === "ADMIN") role = "admin";
+  else if (msg.senderRole === "AI") role = "assistant";
+  else if (msg.senderRole === "SYSTEM") role = "system";
+
+  return {
+    id: msg.id,
+    clientMessageId: msg.clientMessageId || undefined,
+    role,
+    content: msg.content,
+    senderName: msg.senderName || undefined,
+    timestamp: typeof msg.createdAt === "number" ? msg.createdAt : new Date(msg.createdAt).getTime(),
+    pending: false,
+  };
+}
+
 export default function FloatingAiTutor() {
   const pathname = usePathname();
   const { user } = useAuthStore();
@@ -119,13 +137,15 @@ export default function FloatingAiTutor() {
     setAdminView,
     setActiveStudentId,
     setThreadMode,
+    loadThreadFromBackend,
     addMessageToThread,
-    clearThreadMessages,
   } = useChatAssistantStore();
 
   const [input, setInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingHistory, setIsFetchingHistory] = useState(false);
+  const [conversationId, setConversationId] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { socket } = useSocket();
 
@@ -134,7 +154,7 @@ export default function FloatingAiTutor() {
 
   // ID của học sinh đang trò chuyện
   const studentThreadId = isAdminOrTeacher
-    ? activeStudentId || "student_1"
+    ? activeStudentId || ""
     : user?.id
     ? `student_${user.id}`
     : "student_guest";
@@ -146,27 +166,136 @@ export default function FloatingAiTutor() {
   }), [user?.profile?.name, user?.email, user?.profile?.avatar]);
 
   const currentThread: StudentThread = useMemo(() => {
-    return (
-      threads[studentThreadId] || {
-        studentId: studentThreadId,
-        studentName: studentMetadata.name,
-        studentEmail: studentMetadata.email,
-        studentAvatar: studentMetadata.avatar,
-        mode: "AI",
-        messages: [
+    if (studentThreadId && threads[studentThreadId]) {
+      return threads[studentThreadId];
+    }
+    return {
+      conversationId: conversationId || undefined,
+      studentId: studentThreadId || "student_guest",
+      studentName: studentMetadata.name,
+      studentEmail: studentMetadata.email,
+      studentAvatar: studentMetadata.avatar,
+      mode: "AI",
+      messages: [],
+      unreadForAdmin: 0,
+      lastMessageTime: 0,
+    };
+  }, [threads, studentThreadId, studentMetadata, conversationId]);
+
+  // Load student conversation from backend
+  const loadStudentConversation = async () => {
+    if (!user?.id || isAdminOrTeacher) return;
+    setIsFetchingHistory(true);
+    try {
+      const conv = await supportService.getMyConversation();
+      setConversationId(conv.id);
+      const msgRes = await supportService.getMessages(conv.id, 1, 100);
+      const mapped = (msgRes.data || []).map(mapSupportMessageToAssistantMessage);
+      loadThreadFromBackend(
+        `student_${user.id}`,
+        conv.id,
+        studentMetadata,
+        conv.mode,
+        mapped,
+        conv.unreadCount
+      );
+    } catch (err) {
+      console.error("Failed to load student support conversation:", err);
+    } finally {
+      setIsFetchingHistory(false);
+    }
+  };
+
+  // Load admin conversations list from backend
+  const loadAdminConversations = async () => {
+    if (!isAdminOrTeacher) return;
+    setIsFetchingHistory(true);
+    try {
+      const res = await supportService.getAdminConversations(1, 50);
+      (res.data || []).forEach((conv: any) => {
+        const sId = `student_${conv.studentId}`;
+        const existingMessages = threads[sId]?.messages || [];
+        loadThreadFromBackend(
+          sId,
+          conv.id,
           {
-            id: "default-init",
-            role: "assistant",
-            content: `Chào ${studentMetadata.name}! Mình là Trợ Lý Bánh Mì 🍞. Bạn có câu hỏi nào hôm nay không?`,
-            senderName: "Trợ Lý Bánh Mì 🍞",
-            timestamp: 0,
+            name: conv.studentName,
+            email: conv.studentEmail,
+            avatar: conv.studentAvatar,
           },
-        ],
-        unreadForAdmin: 0,
-        lastMessageTime: 0,
+          conv.mode,
+          existingMessages,
+          conv.unreadCount
+        );
+      });
+    } catch (err) {
+      console.error("Failed to load admin support conversations:", err);
+    } finally {
+      setIsFetchingHistory(false);
+    }
+  };
+
+  // Load messages for a student conversation (Admin view)
+  const loadAdminMessagesForStudent = async (sId: string) => {
+    if (!isAdminOrTeacher || !sId) return;
+    const thread = threads[sId];
+    let targetConvId = thread?.conversationId;
+
+    if (!targetConvId) {
+      const numericId = Number(sId.replace("student_", ""));
+      if (numericId) {
+        try {
+          const all = await supportService.getAdminConversations(1, 100);
+          const found = all.data?.find((c) => c.studentId === numericId);
+          if (found) targetConvId = found.id;
+        } catch (e) {
+          console.error(e);
+        }
       }
-    );
-  }, [threads, studentThreadId, studentMetadata]);
+    }
+
+    if (!targetConvId) return;
+
+    setIsFetchingHistory(true);
+    try {
+      const msgRes = await supportService.getAdminMessages(targetConvId, 1, 100);
+      const mapped = (msgRes.data || []).map(mapSupportMessageToAssistantMessage);
+      loadThreadFromBackend(
+        sId,
+        targetConvId,
+        {
+          name: thread?.studentName || "Học viên",
+          email: thread?.studentEmail,
+          avatar: thread?.studentAvatar,
+        },
+        thread?.mode || "AI",
+        mapped,
+        0
+      );
+    } catch (err) {
+      console.error("Failed to load admin messages for student:", err);
+    } finally {
+      setIsFetchingHistory(false);
+    }
+  };
+
+  // Trigger loads on auth or modal open
+  useEffect(() => {
+    if (isOpen) {
+      if (isAdminOrTeacher) {
+        loadAdminConversations();
+      } else if (user?.id) {
+        loadStudentConversation();
+      }
+    }
+  }, [isOpen, user?.id, isAdminOrTeacher]);
+
+  // When admin selects a student to chat
+  useEffect(() => {
+    if (isAdminOrTeacher && activeStudentId && adminView === "chat") {
+      loadAdminMessagesForStudent(activeStudentId);
+    }
+  }, [isAdminOrTeacher, activeStudentId, adminView]);
 
   // Tổng số tin nhắn chưa đọc cho Admin
   const totalUnreadCount = useMemo(() => {
@@ -212,6 +341,14 @@ export default function FloatingAiTutor() {
 
   if (isHiddenPath) return null;
 
+  const handleReload = () => {
+    if (isAdminOrTeacher && activeStudentId) {
+      loadAdminMessagesForStudent(activeStudentId);
+    } else {
+      loadStudentConversation();
+    }
+  };
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -220,10 +357,16 @@ export default function FloatingAiTutor() {
 
     // 1. Nếu là ADMIN / TEACHER đang trả lời trong thread của học sinh:
     if (isAdminOrTeacher) {
+      if (!studentThreadId) return;
+      const adminClientMessageId = `adm_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
       const adminMsg = {
+        id: adminClientMessageId,
+        clientMessageId: adminClientMessageId,
         role: "admin" as const,
-        senderName: `${currentDisplayName} (${user?.role === "ADMIN" ? "Quản Trị Viên" : "Giáo Viên"})`,
+        senderName: `${currentDisplayName} (Quản Trị Viên)`,
         content: messageText,
+        timestamp: Date.now(),
+        pending: true,
       };
 
       addMessageToThread(
@@ -231,6 +374,32 @@ export default function FloatingAiTutor() {
         { name: currentThread.studentName, email: currentThread.studentEmail },
         adminMsg
       );
+
+      const targetConvId = currentThread.conversationId;
+      if (targetConvId) {
+        try {
+          const persisted = await supportService.sendAdminMessage(
+            targetConvId,
+            messageText,
+            adminClientMessageId
+          );
+          addMessageToThread(
+            studentThreadId,
+            { name: currentThread.studentName, email: currentThread.studentEmail },
+            {
+              id: persisted.id,
+              clientMessageId: adminClientMessageId,
+              role: "admin",
+              senderName: persisted.senderName || adminMsg.senderName,
+              content: persisted.content,
+              timestamp: new Date(persisted.createdAt).getTime(),
+              pending: false,
+            }
+          );
+        } catch (err) {
+          console.error("Failed to persist admin message:", err);
+        }
+      }
 
       // Bắn sự kiện Socket Real-time cho học sinh
       socket?.emit("chat:sendMessage", {
@@ -246,10 +415,16 @@ export default function FloatingAiTutor() {
     }
 
     // 2. Nếu là HỌC VIÊN gửi câu hỏi:
+    setIsLoading(true);
+    const studentClientMessageId = `cmsg_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
     const studentMsg = {
+      id: studentClientMessageId,
+      clientMessageId: studentClientMessageId,
       role: "user" as const,
       senderName: currentDisplayName,
       content: messageText,
+      timestamp: Date.now(),
+      pending: true,
     };
 
     addMessageToThread(studentThreadId, studentMetadata, studentMsg);
@@ -265,6 +440,38 @@ export default function FloatingAiTutor() {
       targetUserId: user?.id,
     });
 
+    let currentConvId = conversationId || currentThread.conversationId;
+    if (!currentConvId && user?.id) {
+      try {
+        const conv = await supportService.getMyConversation();
+        currentConvId = conv.id;
+        setConversationId(conv.id);
+      } catch (e) {
+        console.error("Failed to get conversation id:", e);
+      }
+    }
+
+    if (currentConvId) {
+      try {
+        const persisted = await supportService.sendMessage(
+          currentConvId,
+          messageText,
+          studentClientMessageId
+        );
+        addMessageToThread(studentThreadId, studentMetadata, {
+          id: persisted.id,
+          clientMessageId: studentClientMessageId,
+          role: "user",
+          senderName: persisted.senderName || currentDisplayName,
+          content: persisted.content,
+          timestamp: new Date(persisted.createdAt).getTime(),
+          pending: false,
+        });
+      } catch (err) {
+        console.error("Failed to persist student message:", err);
+      }
+    }
+
     // Nếu học sinh đang ở chế độ HUMAN MODE -> không gọi AI
     if (currentThread.mode === "HUMAN") {
       setIsLoading(false);
@@ -272,7 +479,6 @@ export default function FloatingAiTutor() {
     }
 
     // 3. Chế độ AI (AI MODE) -> Gọi Gemini AI
-    setIsLoading(true);
     try {
       const aiPayload = currentThread.messages
         .filter((m) => m.role === "user" || m.role === "assistant")
@@ -283,12 +489,38 @@ export default function FloatingAiTutor() {
         }));
 
       const res = await aiService.chat(aiPayload);
+      const aiClientMessageId = `aimsg_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
       const aiMsg = {
+        id: aiClientMessageId,
+        clientMessageId: aiClientMessageId,
         role: "assistant" as const,
         senderName: "Trợ Lý Bánh Mì 🍞",
         content: res.answer || "Bánh Mì đã nhận được câu hỏi rồi nhé!",
+        timestamp: Date.now(),
+        pending: false,
       };
       addMessageToThread(studentThreadId, studentMetadata, aiMsg);
+
+      if (currentConvId) {
+        try {
+          const persistedAi = await supportService.saveAiMessage(
+            currentConvId,
+            aiMsg.content,
+            aiClientMessageId
+          );
+          addMessageToThread(studentThreadId, studentMetadata, {
+            id: persistedAi.id,
+            clientMessageId: aiClientMessageId,
+            role: "assistant",
+            senderName: "Trợ Lý Bánh Mì 🍞",
+            content: persistedAi.content,
+            timestamp: new Date(persistedAi.createdAt).getTime(),
+            pending: false,
+          });
+        } catch (err) {
+          console.error("Failed to persist AI message:", err);
+        }
+      }
 
       // Đồng bộ câu trả lời của AI tới Admin qua socket
       socket?.emit("chat:sendMessage", {
@@ -310,8 +542,22 @@ export default function FloatingAiTutor() {
     }
   };
 
-  const handleToggleMode = () => {
+  const handleToggleMode = async () => {
     const nextMode = currentThread.mode === "AI" ? "HUMAN" : "AI";
+    const convId = currentThread.conversationId || conversationId;
+
+    if (convId) {
+      try {
+        if (isAdminOrTeacher) {
+          await supportService.toggleAdminMode(convId, nextMode);
+        } else {
+          await supportService.toggleMode(convId, nextMode);
+        }
+      } catch (err) {
+        console.error("Failed to persist mode toggle:", err);
+      }
+    }
+
     setThreadMode(studentThreadId, nextMode, currentDisplayName);
 
     // Bắn sự kiện Socket Real-time thay đổi Mode
@@ -517,11 +763,12 @@ export default function FloatingAiTutor() {
 
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={() => clearThreadMessages(studentThreadId)}
-                        className="hover:bg-white/20 p-1.5 rounded-xl transition-colors text-amber-100 hover:text-white cursor-pointer"
-                        title="Xóa lịch sử cuộc trò chuyện này"
+                        onClick={handleReload}
+                        disabled={isFetchingHistory}
+                        className="hover:bg-white/20 p-1.5 rounded-xl transition-colors text-amber-100 hover:text-white cursor-pointer disabled:opacity-50"
+                        title="Tải lại lịch sử cuộc trò chuyện từ máy chủ"
                       >
-                        <RotateCcw size={16} />
+                        <RotateCcw size={16} className={isFetchingHistory ? "animate-spin" : ""} />
                       </button>
                       <button
                         onClick={() => setIsOpen(false)}
@@ -561,78 +808,96 @@ export default function FloatingAiTutor() {
 
                 {/* Khung Tin Nhắn */}
                 <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3.5 bg-slate-50 scroll-smooth">
-                  {currentThread.messages.map((msg) => {
-                    if (msg.role === "system") {
+                  {currentThread.messages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center my-auto py-12 text-center text-slate-400 space-y-3">
+                      <div className="w-14 h-14 rounded-3xl bg-amber-100 flex items-center justify-center text-3xl shadow-inner">
+                        🍞
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="font-black text-slate-700 text-sm">
+                          {isAdminOrTeacher ? "Chưa có tin nhắn nào" : "Chào mừng bạn đến với BreadTrans!"}
+                        </h4>
+                        <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
+                          {isAdminOrTeacher
+                            ? `Chưa có lịch sử tin nhắn với học viên ${currentThread.studentName || "này"}.`
+                            : "Bạn cần giải đáp thắc mắc về bài học, từ vựng, ngữ pháp hay lộ trình học? Hãy nhập câu hỏi bên dưới để bắt đầu nhé!"}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    currentThread.messages.map((msg) => {
+                      if (msg.role === "system") {
+                        return (
+                          <div key={msg.id} className="self-center my-1 max-w-[90%]">
+                            <div className="bg-amber-100/80 border border-amber-300/80 text-amber-900 text-xs font-bold px-3 py-2 rounded-2xl text-center shadow-2xs">
+                              {msg.content}
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      // Nếu người đang xem là Admin:
+                      //   Tin nhắn của học sinh (user) nằm bên trái (self-start).
+                      //   Tin nhắn của Admin (admin) nằm bên phải (self-end).
+                      // Nếu người đang xem là Học sinh:
+                      //   Tin nhắn của học sinh (user) nằm bên phải (self-end).
+                      //   Tin nhắn của AI / Admin nằm bên trái (self-start).
+                      const isRightBubble = isAdminOrTeacher
+                        ? msg.role === "admin"
+                        : msg.role === "user";
+
+                      const isStudentMsg = msg.role === "user";
+                      const isAdminMsg = msg.role === "admin";
+
                       return (
-                        <div key={msg.id} className="self-center my-1 max-w-[90%]">
-                          <div className="bg-amber-100/80 border border-amber-300/80 text-amber-900 text-xs font-bold px-3 py-2 rounded-2xl text-center shadow-2xs">
-                            {msg.content}
+                        <div
+                          key={msg.id}
+                          className={`flex gap-2 max-w-[88%] ${isRightBubble ? "self-end flex-row-reverse" : "self-start"}`}
+                        >
+                          {/* Avatar */}
+                          <div
+                            className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-1 shadow-2xs font-bold text-xs ${
+                              isStudentMsg
+                                ? "bg-blue-500 text-white"
+                                : isAdminMsg
+                                ? "bg-emerald-600 text-white"
+                                : "bg-orange-500 text-white"
+                            }`}
+                          >
+                            {isStudentMsg ? (
+                              <User size={14} />
+                            ) : isAdminMsg ? (
+                              <GraduationCap size={14} />
+                            ) : (
+                              <Bot size={14} />
+                            )}
+                          </div>
+
+                          {/* Message Bubble */}
+                          <div className="flex flex-col gap-1 max-w-full">
+                            {msg.senderName && !isRightBubble && (
+                              <span className="text-[11px] font-black text-slate-500 ml-1">
+                                {msg.senderName}
+                              </span>
+                            )}
+                            <div
+                              className={`p-3.5 rounded-2xl break-words shadow-2xs ${
+                                isRightBubble
+                                  ? isStudentMsg
+                                    ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-tr-xs shadow-md border border-blue-400"
+                                    : "bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-tr-xs shadow-md border border-emerald-500"
+                                  : isAdminMsg
+                                  ? "bg-emerald-50/95 border-2 border-emerald-300 text-emerald-950 rounded-tl-xs shadow-xs"
+                                  : "bg-white border-2 border-slate-200 text-slate-800 rounded-tl-xs shadow-xs"
+                              }`}
+                            >
+                              <FormattedMessage content={msg.content} isWhiteText={isRightBubble} />
+                            </div>
                           </div>
                         </div>
                       );
-                    }
-
-                    // Nếu người đang xem là Admin:
-                    //   Tin nhắn của học sinh (user) nằm bên trái (self-start).
-                    //   Tin nhắn của Admin (admin) nằm bên phải (self-end).
-                    // Nếu người đang xem là Học sinh:
-                    //   Tin nhắn của học sinh (user) nằm bên phải (self-end).
-                    //   Tin nhắn của AI / Admin nằm bên trái (self-start).
-                    const isRightBubble = isAdminOrTeacher
-                      ? msg.role === "admin"
-                      : msg.role === "user";
-
-                    const isStudentMsg = msg.role === "user";
-                    const isAdminMsg = msg.role === "admin";
-
-                    return (
-                      <div
-                        key={msg.id}
-                        className={`flex gap-2 max-w-[88%] ${isRightBubble ? "self-end flex-row-reverse" : "self-start"}`}
-                      >
-                        {/* Avatar */}
-                        <div
-                          className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-1 shadow-2xs font-bold text-xs ${
-                            isStudentMsg
-                              ? "bg-blue-500 text-white"
-                              : isAdminMsg
-                              ? "bg-emerald-600 text-white"
-                              : "bg-orange-500 text-white"
-                          }`}
-                        >
-                          {isStudentMsg ? (
-                            <User size={14} />
-                          ) : isAdminMsg ? (
-                            <GraduationCap size={14} />
-                          ) : (
-                            <Bot size={14} />
-                          )}
-                        </div>
-
-                        {/* Message Bubble */}
-                        <div className="flex flex-col gap-1 max-w-full">
-                          {msg.senderName && !isRightBubble && (
-                            <span className="text-[11px] font-black text-slate-500 ml-1">
-                              {msg.senderName}
-                            </span>
-                          )}
-                          <div
-                            className={`p-3.5 rounded-2xl break-words shadow-2xs ${
-                              isRightBubble
-                                ? isStudentMsg
-                                  ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-tr-xs shadow-md border border-blue-400"
-                                  : "bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-tr-xs shadow-md border border-emerald-500"
-                                : isAdminMsg
-                                ? "bg-emerald-50/95 border-2 border-emerald-300 text-emerald-950 rounded-tl-xs shadow-xs"
-                                : "bg-white border-2 border-slate-200 text-slate-800 rounded-tl-xs shadow-xs"
-                            }`}
-                          >
-                            <FormattedMessage content={msg.content} isWhiteText={isRightBubble} />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                    })
+                  )}
 
                   {/* Typing Indicator */}
                   {isLoading && (

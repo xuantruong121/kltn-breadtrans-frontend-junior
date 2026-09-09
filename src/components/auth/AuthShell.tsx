@@ -118,7 +118,7 @@ export function AuthShell({ children }: AuthShellProps) {
                     className="text-on-surface-variant hover:text-primary transition-colors"
                     href="/practice/speaking"
                   >
-                    Luyện Nói AI chấm IPA
+                    Luyện nói với AI
                   </Link>
                 </li>
                 <li>

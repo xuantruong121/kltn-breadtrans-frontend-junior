@@ -2,29 +2,21 @@
 
 import React, { useState } from "react";
 import { ShoppingBag, Trophy, Flame, CheckCircle2, Clock, AlertCircle, PackageCheck } from "lucide-react";
-import { MARKET_ITEMS, MOCK_LEADERBOARD } from "../services/marketData";
 import { MarketItemCard } from "../components/MarketItemCard";
 import axiosClient from "@/lib/api/axiosClient";
-import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { MarketItem } from "../types";
 
 export const MarketScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"shop" | "orders" | "leaderboard">("shop");
-  const [filterCategory, setFilterCategory] = useState<string>("all");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
 
-  const {
-    breads,
-    unlockedItems,
-    equippedAvatarFrame,
-    equippedBadge,
-    spendBreads,
-    unlockItem,
-    equipAvatarFrame,
-    equipBadge,
-  } = useGamificationStore();
+  const { data: balance } = useQuery<{ totalBanh: number }>({ queryKey: ["market-balance"], queryFn: () => axiosClient.get("/market/currency/balance") });
+  const { data: products = [] } = useQuery<Array<{ id: number; name: string; price: number; imageUrl: string | null }>>({ queryKey: ["market-products"], queryFn: () => axiosClient.get("/market/products") });
+  const { data: leaderboard = [] } = useQuery<any[]>({ queryKey: ["market-leaderboard"], queryFn: () => axiosClient.get("/gamification/leaderboard") });
+  const items: MarketItem[] = products.map((product) => ({ id: String(product.id), name: product.name, price: product.price, icon: product.imageUrl || "🎁", category: "gift", description: "Vật phẩm được quản lý và định giá bởi BreadTrans.", rarity: "common" }));
 
   // Truy vấn lịch sử đơn đổi quà của học sinh
   const { data: myOrders, isLoading: isOrdersLoading } = useQuery<any[]>({
@@ -35,38 +27,21 @@ export const MarketScreen: React.FC = () => {
     },
   });
 
-  const handleBuyItem = async (item: typeof MARKET_ITEMS[0]) => {
-    if (breads < item.price) {
+  const handleBuyItem = async (item: MarketItem) => {
+    if ((balance?.totalBanh || 0) < item.price) {
       toast.error("Bạn không đủ số Bánh Mì để đổi vật phẩm này!");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const res: any = await axiosClient.post("/market/orders", {
-        items: [{ id: item.id, name: item.name, price: item.price, category: item.category, quantity: 1 }],
-        totalBanh: item.price,
+      await axiosClient.post("/market/orders", {
+        items: [{ id: Number(item.id), quantity: 1 }],
       });
 
-      const isPending = res?.status === "pending" || item.category === "gift";
-
-      if (spendBreads(item.price)) {
-        // Chỉ lưu vào unlockedItems nếu là Avatar Frame hoặc Badge sở hữu 1 lần
-        if (item.category === "avatar" || item.category === "badge") {
-          unlockItem(item.id);
-        }
-
-        if (isPending) {
-          toast.success(`🎁 Yêu cầu đổi "${item.name}" đã gửi thành công! Vui lòng chờ Ban Quản Trị phê duyệt nhé.`, {
-            duration: 6000,
-          });
-        } else {
-          toast.success(`🎉 Chúc mừng! Bạn đã nhận "${item.name}" thành công!`);
-        }
-
-        queryClient.invalidateQueries({ queryKey: ["my-market-orders"] });
-        queryClient.invalidateQueries({ queryKey: ["user-profile"] });
-      }
+      toast.success(`🎁 Yêu cầu đổi "${item.name}" đã gửi. Ban Quản Trị sẽ xử lý đơn của bạn.`, { duration: 6000 });
+      queryClient.invalidateQueries({ queryKey: ["my-market-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["market-balance"] });
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Có lỗi xảy ra khi đổi quà!");
     } finally {
@@ -74,29 +49,7 @@ export const MarketScreen: React.FC = () => {
     }
   };
 
-  const handleToggleEquip = (item: typeof MARKET_ITEMS[0]) => {
-    if (item.category === "avatar") {
-      if (equippedAvatarFrame === item.id) {
-        equipAvatarFrame(null);
-        toast("Đã tháo khung avatar");
-      } else {
-        equipAvatarFrame(item.id);
-        toast.success(`Đã trang bị "${item.name}"!`);
-      }
-    } else if (item.category === "badge") {
-      if (equippedBadge === item.id) {
-        equipBadge(null);
-        toast("Đã tháo huy hiệu");
-      } else {
-        equipBadge(item.id);
-        toast.success(`Đã trang bị "${item.name}"!`);
-      }
-    }
-  };
-
-  const filteredItems = filterCategory === "all"
-    ? MARKET_ITEMS
-    : MARKET_ITEMS.filter((i) => i.category === filterCategory);
+  const filteredItems = items;
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
@@ -117,7 +70,7 @@ export const MarketScreen: React.FC = () => {
             <span className="text-4xl">🍞</span>
             <div>
               <span className="text-xs font-extrabold text-slate-400 uppercase">Số dư của bạn</span>
-              <p className="text-3xl font-black text-amber-700">{breads} <span className="text-sm text-slate-400">Bánh Mì</span></p>
+              <p className="text-3xl font-black text-amber-700">{balance?.totalBanh || 0} <span className="text-sm text-slate-400">Bánh Mì</span></p>
             </div>
           </div>
         </div>
@@ -160,49 +113,19 @@ export const MarketScreen: React.FC = () => {
           </button>
         </div>
 
-        {activeTab === "shop" && (
-          <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border-2 border-slate-200 shadow-xs overflow-x-auto">
-            {[
-              { id: "all", label: "Tất cả" },
-              { id: "avatar", label: "Khung Avatar 👑" },
-              { id: "badge", label: "Huy hiệu 🏅" },
-              { id: "boost", label: "Vật phẩm ⚡" },
-              { id: "gift", label: "Quà hiện vật 🎁" },
-            ].map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setFilterCategory(cat.id)}
-                className={`px-3 py-1.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all cursor-pointer ${
-                  filterCategory === cat.id
-                    ? "bg-slate-800 text-white"
-                    : "text-slate-500 hover:bg-slate-100"
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* TAB CONTENT: SHOP */}
       {activeTab === "shop" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredItems.map((item) => {
-            const isUnlocked = unlockedItems.includes(item.id);
-            const isEquipped =
-              (item.category === "avatar" && equippedAvatarFrame === item.id) ||
-              (item.category === "badge" && equippedBadge === item.id);
-
             return (
               <MarketItemCard
                 key={item.id}
                 item={item}
-                isUnlocked={isUnlocked}
-                isEquipped={isEquipped}
-                canAfford={breads >= item.price && !isSubmitting}
+                isUnlocked={false}
+                canAfford={(balance?.totalBanh || 0) >= item.price && !isSubmitting}
                 onBuy={() => handleBuyItem(item)}
-                onEquipToggle={() => handleToggleEquip(item)}
               />
             );
           })}
@@ -296,42 +219,42 @@ export const MarketScreen: React.FC = () => {
           </div>
 
           <div className="space-y-3">
-            {MOCK_LEADERBOARD.map((user) => {
+            {leaderboard.map((user, index) => {
               let rankStyle = "bg-slate-50 border-2 border-slate-200";
               let badgeColor = "bg-slate-200 text-slate-700";
 
-              if (user.rank === 1) {
+              const rank = index + 1;
+              if (rank === 1) {
                 rankStyle = "bg-amber-100/60 border-2 border-amber-300 shadow-sm";
                 badgeColor = "bg-amber-400 text-amber-950 font-black";
-              } else if (user.rank === 2) {
+              } else if (rank === 2) {
                 rankStyle = "bg-slate-100/80 border-2 border-slate-300";
                 badgeColor = "bg-slate-300 text-slate-800 font-black";
-              } else if (user.rank === 3) {
+              } else if (rank === 3) {
                 rankStyle = "bg-orange-100/60 border-2 border-orange-300";
                 badgeColor = "bg-orange-300 text-orange-950 font-black";
               }
 
               return (
                 <div
-                  key={user.id}
+                  key={user.userId}
                   className={`flex items-center justify-between p-4 rounded-2xl transition-all ${rankStyle}`}
                 >
                   <div className="flex items-center gap-4">
                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shadow-xs ${badgeColor}`}>
-                      #{user.rank}
+                      #{rank}
                     </div>
-                    <span className="text-2xl">{user.avatar}</span>
+                    <span className="text-2xl">{user.user?.profile?.fullName?.[0] || "👤"}</span>
                     <div>
-                      <h4 className="font-black text-slate-800 text-sm">{user.name}</h4>
+                      <h4 className="font-black text-slate-800 text-sm">{user.user?.profile?.fullName || user.user?.email || "Học viên"}</h4>
                       <span className="text-xs font-bold text-orange-600 flex items-center gap-1">
-                        <Flame size={14} className="fill-orange-500" /> {user.streak} ngày streak
+                        <Flame size={14} className="fill-orange-500" /> {user.tier || "Đồng"}
                       </span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-1.5 font-black text-amber-700 text-base">
-                    <span>{user.breads}</span>
-                    <span>🍞</span>
+                    <span>{user.weeklyExp || user.totalPoints || 0}</span><span>XP</span>
                   </div>
                 </div>
               );

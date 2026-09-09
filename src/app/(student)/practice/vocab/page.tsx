@@ -4,18 +4,15 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Library, Loader2, PlayCircle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { vocabService } from "@/lib/api/services/vocab.service";
 import { BackButton } from "@/components/ui";
 
 export default function VocabTopicsPage() {
-  const router = useRouter();
-  
   const { data: topicsData, isLoading } = useQuery({
     queryKey: ["vocab-topics"],
     queryFn: vocabService.getTopics,
   });
-  const topics = (topicsData as any)?.topics || topicsData || [];
+  const topics = topicsData?.topics ?? [];
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -39,7 +36,7 @@ export default function VocabTopicsPage() {
         </div>
       ) : topics && topics.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {topics.map((topic: any, index: number) => {
+          {topics.map((topic, index) => {
             const isCompleted = topic.learnedCount >= topic.totalWords && topic.totalWords > 0;
             const progressPercent = topic.totalWords > 0 ? Math.round((topic.learnedCount / topic.totalWords) * 100) : 0;
             

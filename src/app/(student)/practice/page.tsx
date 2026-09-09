@@ -8,6 +8,7 @@ import {
   Clock,
   Dumbbell,
   Headphones,
+  History,
   Layers,
   Mic,
   PenTool,
@@ -25,7 +26,7 @@ const SKILLS = [
     theme: "border-blue-200 bg-blue-50 text-blue-700",
   },
   {
-    title: "Luyện nói & phát âm",
+    title: "Luyện nói",
     description: "Ghi âm trực tiếp, luyện phản xạ và nhận nhận xét phát âm từ AI.",
     href: "/practice/speaking",
     icon: Mic,
@@ -53,7 +54,7 @@ const SKILLS = [
   },
 ];
 
-const FOUNDATIONS = [
+const LEARNING_TOOLS = [
   {
     title: "Flashcard từ vựng",
     description: "Ghi nhớ từ mới theo chủ đề bằng thẻ học, âm thanh và ôn tập lặp lại.",
@@ -69,6 +70,22 @@ const FOUNDATIONS = [
     icon: BookOpen,
     action: "Học ngữ pháp",
     theme: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  },
+  {
+    title: "Kiểm tra đầu vào",
+    description: "Làm bài kiểm tra ngắn để xác định điểm xuất phát và chọn hướng học phù hợp.",
+    href: "/diagnostic",
+    icon: ClipboardCheck,
+    action: "Bắt đầu kiểm tra",
+    theme: "border-blue-200 bg-blue-50 text-blue-700",
+  },
+  {
+    title: "Lịch sử luyện tập",
+    description: "Xem lại các hoạt động đã hoàn thành và duy trì nhịp học của bạn.",
+    href: "/history",
+    icon: History,
+    action: "Xem lịch sử",
+    theme: "border-violet-200 bg-violet-50 text-violet-700",
   },
 ];
 
@@ -128,11 +145,12 @@ export default function PracticeHubPage() {
 
       <section aria-labelledby="foundation-heading">
         <div className="mb-6">
-          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-emerald-700">Nền tảng học</p>
-          <h2 id="foundation-heading" className="mt-1 text-2xl font-black text-slate-900">Từ vựng và ngữ pháp</h2>
+          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-emerald-700">Công cụ học bổ trợ</p>
+          <h2 id="foundation-heading" className="mt-1 text-2xl font-black text-slate-900">Củng cố và theo dõi việc học</h2>
+          <p className="mt-1 text-sm text-slate-600">Các công cụ này hỗ trợ việc học tiếng Anh, tách biệt với bốn kỹ năng và khu Luyện đề TOEIC.</p>
         </div>
-        <div className="grid gap-5 lg:grid-cols-2">
-          {FOUNDATIONS.map((tool) => {
+        <div className="grid gap-5 sm:grid-cols-2">
+          {LEARNING_TOOLS.map((tool) => {
             const Icon = tool.icon;
             return (
               <Link key={tool.href} href={tool.href} className="group flex gap-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-2xs transition hover:border-emerald-300 hover:shadow-md">

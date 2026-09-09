@@ -32,6 +32,8 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
       // Invalidate gamification and profile cache to update Daily Quests instantly
       queryClient.invalidateQueries({ queryKey: ["myQuests"] });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["daily-quests"] });
+      queryClient.invalidateQueries({ queryKey: ["user-stats"] });
       
       // Redirect to analytics page
       router.push(`/practice/quizzes/submissions/${data.id}`);

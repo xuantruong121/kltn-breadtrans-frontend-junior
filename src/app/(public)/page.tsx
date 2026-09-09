@@ -358,7 +358,7 @@ export default function PublicLandingPage() {
                   </span>
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 group-hover:text-violet-700 transition-colors">
-                  Luyện nói và phát âm
+                  Luyện nói
                 </h3>
                 <p className="text-sm font-semibold text-slate-600 mt-2 leading-relaxed">
                   Cải thiện phát âm, ngữ điệu và phản xạ với trợ lý AI.

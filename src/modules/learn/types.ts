@@ -2,7 +2,7 @@ export interface ContentExercise {
   id: number;
   question: string;
   options: string[];
-  correctIndex: number;
+  correctIndex?: number;
   explanation?: string;
 }
 

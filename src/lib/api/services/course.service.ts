@@ -52,6 +52,12 @@ export interface ClassDetail extends Class {
   };
 }
 
+export interface StudentLearningClass extends Class {
+  enrollmentProgress: number;
+  enrollmentStatus: "ACTIVE" | "COMPLETED";
+  course: Pick<Course, "id" | "title" | "description" | "thumbnail" | "thumbnailUrl" | "level">;
+}
+
 // ================= PUBLIC DISCOVERY (PHASE 3A & 3B) =================
 
 export interface PublicTeacher {
@@ -134,6 +140,10 @@ export const courseService = {
 
   getClassById: async (classId: number): Promise<ClassDetail> => {
     return await axiosClient.get(`/courses/classes/${classId}`);
+  },
+
+  getMyLearningClasses: async (): Promise<StudentLearningClass[]> => {
+    return await axiosClient.get("/classes");
   },
 
   // Canonical Public Discovery APIs (Phase 3A)
