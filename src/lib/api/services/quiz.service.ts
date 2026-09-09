@@ -15,6 +15,8 @@ export interface Quiz {
   type: string; // e.g. "LISTENING_PRACTICE"
   bilingualContent?: {
     examFormat?: "TWO_SKILL" | "FOUR_SKILL";
+    examSetId?: number;
+    isBundle?: boolean;
     skillLabel?: string;
     sections?: string[];
     durationMinutes?: number;
@@ -23,6 +25,8 @@ export interface Quiz {
   _count?: {
     questions: number;
   };
+  questionsCount?: number;
+  isBundle?: boolean;
 }
 
 export interface AnswerDto {

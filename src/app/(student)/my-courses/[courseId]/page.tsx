@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, Loader2, PlayCircle, Star, Users, Video } from "lucide-react";
+import { Loader2, PlayCircle, Star, Users } from "lucide-react";
 import { courseService } from "@/lib/api/services/course.service";
 import { BackButton } from "@/components/ui";
 import { use } from "react";

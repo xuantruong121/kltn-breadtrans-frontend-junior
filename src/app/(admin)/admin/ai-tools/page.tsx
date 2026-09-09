@@ -3,12 +3,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
-  Bot,
+  Cpu,
   FileText,
   Headphones,
   UploadCloud,
   Loader2,
-  Sparkles,
   CheckCircle2,
   ArrowRight,
   Save,
@@ -110,7 +109,7 @@ export default function AdminAiToolsPage() {
   const { data: classesData } = useQuery({
     queryKey: ["all-classes"],
     queryFn: async () => {
-      const res: any = await axiosClient.get("/class");
+      const res: any = await axiosClient.get("/admin/classes");
       return res?.data || res || [];
     },
   });
@@ -147,11 +146,11 @@ export default function AdminAiToolsPage() {
       setJobStatus({ status: "queued", progress: 10, message: "Đang xếp hàng xử lý..." });
       setSmartResult(null);
       setPublishResult(null);
-      toast.success("Đã gửi tài liệu! Gemini AI đang phân tích...");
+      toast.success("Đã gửi tài liệu! Hệ thống đang phân tích...");
       refetchQuota();
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || err?.message || "Không thể khởi tạo tiến trình AI");
+      toast.error(err?.response?.data?.message || err?.message || "Không thể khởi tạo tiến trình xử lý");
     },
   });
 
@@ -186,11 +185,11 @@ export default function AdminAiToolsPage() {
             setSelectedClassId(classesList[0].id);
           }
 
-          toast.success("AI đã hoàn thành sinh bộ trắc nghiệm, flashcard và bài tập!");
+          toast.success("Đã hoàn thành sinh bộ trắc nghiệm, flashcard và bài tập!");
           refetchQuota();
         } else if (statusData?.status === "failed") {
           clearInterval(interval);
-          toast.error(statusData?.error || "Tiến trình AI xử lý thất bại!");
+          toast.error(statusData?.error || "Tiến trình xử lý thất bại!");
         }
       } catch (err: any) {
         console.error("Polling error:", err);
@@ -289,7 +288,7 @@ export default function AdminAiToolsPage() {
     onSuccess: (data: any) => {
       const qId = data?.quizId;
       setMessage({ type: "success", text: data?.message || "Import đề thi ETS thành công!", quizId: qId });
-      toast.success("AI đã bóc tách đề thi ETS!");
+      toast.success("Đã bóc tách đề thi ETS thành công!");
       setPdfFile(null);
       setAudioFile(null);
       refetchQuota();
@@ -307,27 +306,27 @@ export default function AdminAiToolsPage() {
   return (
     <div className="max-w-6xl mx-auto pb-24 space-y-8">
       {/* ================= HEADER & QUOTA WIDGET ================= */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-linear-to-br from-indigo-900 via-indigo-800 to-slate-900 text-white p-8 rounded-[2.5rem] shadow-xl border-4 border-indigo-500/20">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-900 text-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-800">
         <div className="flex items-center gap-5">
-          <div className="bg-indigo-500 p-4 rounded-3xl text-white shadow-lg shadow-indigo-500/30 ring-4 ring-white/10">
-            <Bot size={36} />
+          <div className="bg-indigo-600 p-3.5 sm:p-4 rounded-2xl text-white shadow-sm ring-1 ring-white/10">
+            <Cpu size={32} />
           </div>
           <div>
-            <div className="inline-flex items-center gap-2 bg-indigo-500/30 text-indigo-200 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider mb-2 border border-indigo-400/30">
-              <Sparkles size={14} className="text-amber-300 animate-pulse" /> AI Educational Assistant
+            <div className="inline-flex items-center gap-2 bg-indigo-500/20 text-indigo-200 px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider mb-2 border border-indigo-400/20">
+              <Cpu size={14} className="text-indigo-300" /> Hệ thống tạo nội dung tự động
             </div>
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight">AI Smart Generator</h1>
-            <p className="text-indigo-200 font-semibold text-sm mt-1">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Bộ Công Cụ Tạo Nội Dung</h1>
+            <p className="text-indigo-200/80 font-medium text-sm mt-1">
               Tự động hóa soạn câu hỏi trắc nghiệm, flashcard và bài tập từ tài liệu PDF/Word
             </p>
           </div>
         </div>
 
         {/* REDIS QUOTA TRACKER */}
-        <div className="bg-white/10 backdrop-blur-md p-5 rounded-3xl border-2 border-white/15 min-w-[280px] space-y-3">
+        <div className="bg-white/10 backdrop-blur-md p-5 rounded-2xl border border-white/15 min-w-[280px] space-y-3">
           <div className="flex items-center justify-between text-xs font-black">
             <span className="flex items-center gap-1.5 text-indigo-200">
-              <Activity size={14} className="text-emerald-400" /> Quota Gemini (RPD)
+              <Activity size={14} className="text-emerald-400" /> Hạn mức xử lý hàng ngày (RPD)
             </span>
             <span
               className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
@@ -361,7 +360,7 @@ export default function AdminAiToolsPage() {
           </div>
 
           <div className="flex items-center justify-between text-[11px] font-bold text-indigo-300">
-            <span>Model: {quotaData?.modelName || "gemini-3.1-flash-lite"}</span>
+            <span>Tiến trình xử lý: {quotaData?.modelName ? "Tự động phân tích" : "Sẵn sàng"}</span>
             <span>Còn {quotaData?.remaining ?? 500} lượt</span>
           </div>
         </div>
@@ -373,17 +372,17 @@ export default function AdminAiToolsPage() {
         <div className="w-full lg:w-80 shrink-0 flex flex-col gap-3">
           <button
             onClick={() => setActiveTab("smart")}
-            className={`p-5 rounded-3xl flex items-center gap-3.5 font-black transition-all text-left cursor-pointer text-sm ${
+            className={`p-4 sm:p-5 rounded-2xl flex items-center gap-3.5 font-bold transition-all text-left cursor-pointer text-sm ${
               activeTab === "smart"
-                ? "bg-indigo-600 text-white shadow-[0_8px_0_0_#4338ca] scale-[1.02]"
-                : "bg-white text-slate-600 hover:bg-slate-50 border-2 border-slate-200"
+                ? "bg-indigo-600 text-white shadow-sm"
+                : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
             }`}
           >
-            <div className={`p-2.5 rounded-2xl ${activeTab === "smart" ? "bg-white/20" : "bg-indigo-50 text-indigo-600"}`}>
-              <Sparkles size={20} />
+            <div className={`p-2.5 rounded-xl ${activeTab === "smart" ? "bg-white/20" : "bg-indigo-50 text-indigo-600"}`}>
+              <FileText size={20} />
             </div>
             <div>
-              <div className="text-base font-black">AI Smart Generator</div>
+              <div className="text-sm sm:text-base font-black">Trích xuất từ tài liệu</div>
               <div className={`text-xs font-semibold mt-0.5 ${activeTab === "smart" ? "text-indigo-200" : "text-slate-400"}`}>
                 Từ PDF/DOCX &rarr; Quiz + Flashcard
               </div>
@@ -392,36 +391,36 @@ export default function AdminAiToolsPage() {
 
           <button
             onClick={() => setActiveTab("dictation")}
-            className={`p-5 rounded-3xl flex items-center gap-3.5 font-black transition-all text-left cursor-pointer text-sm ${
+            className={`p-4 sm:p-5 rounded-2xl flex items-center gap-3.5 font-bold transition-all text-left cursor-pointer text-sm ${
               activeTab === "dictation"
-                ? "bg-indigo-600 text-white shadow-[0_8px_0_0_#4338ca] scale-[1.02]"
-                : "bg-white text-slate-600 hover:bg-slate-50 border-2 border-slate-200"
+                ? "bg-indigo-600 text-white shadow-sm"
+                : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
             }`}
           >
-            <div className={`p-2.5 rounded-2xl ${activeTab === "dictation" ? "bg-white/20" : "bg-indigo-50 text-indigo-600"}`}>
+            <div className={`p-2.5 rounded-xl ${activeTab === "dictation" ? "bg-white/20" : "bg-indigo-50 text-indigo-600"}`}>
               <Headphones size={20} />
             </div>
             <div>
-              <div className="text-base font-black">Sinh Luyện Nghe TTS</div>
+              <div className="text-sm sm:text-base font-black">Sinh Luyện Nghe TTS</div>
               <div className={`text-xs font-semibold mt-0.5 ${activeTab === "dictation" ? "text-indigo-200" : "text-slate-400"}`}>
-                Chép chính tả & Azure Audio
+                Chép chính tả & tệp âm thanh
               </div>
             </div>
           </button>
 
           <button
             onClick={() => setActiveTab("toeic")}
-            className={`p-5 rounded-3xl flex items-center gap-3.5 font-black transition-all text-left cursor-pointer text-sm ${
+            className={`p-4 sm:p-5 rounded-2xl flex items-center gap-3.5 font-bold transition-all text-left cursor-pointer text-sm ${
               activeTab === "toeic"
-                ? "bg-indigo-600 text-white shadow-[0_8px_0_0_#4338ca] scale-[1.02]"
-                : "bg-white text-slate-600 hover:bg-slate-50 border-2 border-slate-200"
+                ? "bg-indigo-600 text-white shadow-sm"
+                : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
             }`}
           >
-            <div className={`p-2.5 rounded-2xl ${activeTab === "toeic" ? "bg-white/20" : "bg-indigo-50 text-indigo-600"}`}>
+            <div className={`p-2.5 rounded-xl ${activeTab === "toeic" ? "bg-white/20" : "bg-indigo-50 text-indigo-600"}`}>
               <FileText size={20} />
             </div>
             <div>
-              <div className="text-base font-black">Sinh Câu Hỏi TOEIC</div>
+              <div className="text-sm sm:text-base font-black">Sinh Câu Hỏi TOEIC</div>
               <div className={`text-xs font-semibold mt-0.5 ${activeTab === "toeic" ? "text-indigo-200" : "text-slate-400"}`}>
                 Part 5 & Part 6 ngữ pháp
               </div>
@@ -430,17 +429,17 @@ export default function AdminAiToolsPage() {
 
           <button
             onClick={() => setActiveTab("import")}
-            className={`p-5 rounded-3xl flex items-center gap-3.5 font-black transition-all text-left cursor-pointer text-sm ${
+            className={`p-4 sm:p-5 rounded-2xl flex items-center gap-3.5 font-bold transition-all text-left cursor-pointer text-sm ${
               activeTab === "import"
-                ? "bg-indigo-600 text-white shadow-[0_8px_0_0_#4338ca] scale-[1.02]"
-                : "bg-white text-slate-600 hover:bg-slate-50 border-2 border-slate-200"
+                ? "bg-indigo-600 text-white shadow-sm"
+                : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
             }`}
           >
-            <div className={`p-2.5 rounded-2xl ${activeTab === "import" ? "bg-white/20" : "bg-indigo-50 text-indigo-600"}`}>
+            <div className={`p-2.5 rounded-xl ${activeTab === "import" ? "bg-white/20" : "bg-indigo-50 text-indigo-600"}`}>
               <UploadCloud size={20} />
             </div>
             <div>
-              <div className="text-base font-black">Import Đề ETS</div>
+              <div className="text-sm sm:text-base font-black">Import Đề ETS</div>
               <div className={`text-xs font-semibold mt-0.5 ${activeTab === "import" ? "text-indigo-200" : "text-slate-400"}`}>
                 Bóc tách đề thi PDF nguyên bản
               </div>
@@ -450,7 +449,7 @@ export default function AdminAiToolsPage() {
 
         {/* WORKSPACE CONTENT */}
         <div className="flex-1 space-y-8">
-          {/* ================= TAB 1: AI SMART GENERATOR ================= */}
+          {/* ================= TAB 1: SMART GENERATOR ================= */}
           {activeTab === "smart" && (
             <div className="space-y-8">
               {/* UPLOAD & CONFIG CARD */}
@@ -580,16 +579,16 @@ export default function AdminAiToolsPage() {
                 {/* ACTION BUTTON & STATUS */}
                 <div className="flex items-center justify-between pt-4 border-t-2 border-slate-100">
                   <div className="text-xs font-bold text-slate-400">
-                    Sử dụng model <span className="font-black text-slate-700">{quotaData?.modelName || "gemini-3.1-flash-lite"}</span> (Retry 3x backoff)
+                    Cơ chế xử lý tự động (Retry 3x backoff)
                   </div>
 
                   <button
                     onClick={() => startSmartJobMut.mutate()}
                     disabled={isSmartLoading}
-                    className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black flex items-center gap-2.5 shadow-[0_6px_0_0_#4338ca] active:translate-y-1 active:shadow-none transition-all cursor-pointer text-base disabled:opacity-50"
+                    className="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center gap-2.5 shadow-sm transition-all cursor-pointer text-sm disabled:opacity-50"
                   >
-                    {isSmartLoading ? <Loader2 className="animate-spin" size={20} /> : <Sparkles size={20} className="text-amber-300" />}
-                    {isSmartLoading ? "Đang xử lý tài liệu..." : "✨ Bắt Đầu Sinh Nội Dung"}
+                    {isSmartLoading ? <Loader2 className="animate-spin" size={18} /> : <FileText size={18} />}
+                    {isSmartLoading ? "Đang xử lý tài liệu..." : "Bắt Đầu Tạo Nội Dung"}
                   </button>
                 </div>
 
@@ -598,7 +597,7 @@ export default function AdminAiToolsPage() {
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-indigo-50 border-2 border-indigo-200 p-6 rounded-3xl space-y-4 font-bold"
+                    className="bg-indigo-50 border border-indigo-200 p-6 rounded-2xl space-y-4 font-bold"
                   >
                     <div className="flex items-center justify-between text-indigo-900 text-sm font-black">
                       <span className="flex items-center gap-2">
@@ -607,7 +606,7 @@ export default function AdminAiToolsPage() {
                       <span>{jobStatus.progress || 35}%</span>
                     </div>
 
-                    <div className="w-full h-3 bg-indigo-200/60 rounded-full overflow-hidden">
+                    <div className="w-full h-2 bg-indigo-200/60 rounded-full overflow-hidden">
                       <motion.div
                         className="h-full bg-indigo-600 rounded-full"
                         initial={{ width: "10%" }}
@@ -618,7 +617,7 @@ export default function AdminAiToolsPage() {
 
                     <div className="grid grid-cols-3 gap-2 text-center text-xs font-black text-indigo-700">
                       <div className="bg-white/80 py-2 rounded-xl border border-indigo-200">1. Trích xuất Text ✓</div>
-                      <div className="bg-indigo-600 text-white py-2 rounded-xl shadow-xs">2. Gemini AI Phân tích</div>
+                      <div className="bg-indigo-600 text-white py-2 rounded-xl shadow-xs">2. Tự động phân tích</div>
                       <div className="bg-white/50 py-2 rounded-xl text-indigo-400">3. Xuất Bản Dữ Liệu</div>
                     </div>
                   </motion.div>
@@ -630,12 +629,12 @@ export default function AdminAiToolsPage() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white p-8 rounded-[2.5rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] space-y-6"
+                  className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-2 border-slate-100 pb-4">
                     <div>
                       <span className="text-xs font-black uppercase text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300">
-                        ✓ AI Xử Lý Xong — Chờ Admin Phê Duyệt
+                        ✓ Xử Lý Hoàn Tất — Chờ Phê Duyệt
                       </span>
                       <h3 className="text-2xl font-black text-slate-800 mt-2">
                         Không Gian Duyệt & Chỉnh Sửa Nội Dung
@@ -698,10 +697,10 @@ export default function AdminAiToolsPage() {
                         {editedQuestions.map((q, qIdx) => (
                           <div
                             key={qIdx}
-                            className="bg-slate-50 border-2 border-slate-200 p-6 rounded-3xl space-y-4 relative"
+                            className="bg-slate-50 border border-slate-200 p-6 rounded-2xl space-y-4 relative"
                           >
                             <div className="flex items-center justify-between">
-                              <span className="bg-indigo-600 text-white px-3 py-1 rounded-xl font-black text-xs">
+                              <span className="bg-indigo-600 text-white px-3 py-1 rounded-lg font-black text-xs">
                                 Câu {qIdx + 1}
                               </span>
                               <button
@@ -725,7 +724,7 @@ export default function AdminAiToolsPage() {
                                   updated[qIdx].question = e.target.value;
                                   setEditedQuestions(updated);
                                 }}
-                                className="w-full px-4 py-2.5 bg-white border-2 border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:border-indigo-500"
+                                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg font-bold text-slate-800 outline-none focus:border-indigo-500"
                               />
                             </div>
 
@@ -736,7 +735,7 @@ export default function AdminAiToolsPage() {
                                 return (
                                   <div
                                     key={oIdx}
-                                    className={`p-3 rounded-2xl border-2 flex items-center gap-2 ${
+                                    className={`p-3 rounded-xl border flex items-center gap-2 ${
                                       isCorrect ? "bg-emerald-50 border-emerald-300" : "bg-white border-slate-200"
                                     }`}
                                   >
@@ -785,7 +784,7 @@ export default function AdminAiToolsPage() {
                                   updated[qIdx].explanation = e.target.value;
                                   setEditedQuestions(updated);
                                 }}
-                                className="w-full px-4 py-2 bg-amber-50/50 border border-amber-200 rounded-xl font-medium text-xs text-amber-900 outline-none"
+                                className="w-full px-4 py-2 bg-amber-50/50 border border-amber-200 rounded-lg font-medium text-xs text-amber-900 outline-none"
                               />
                             </div>
                           </div>
@@ -813,7 +812,7 @@ export default function AdminAiToolsPage() {
                         {editedFlashcards.map((fc, fIdx) => (
                           <div
                             key={fIdx}
-                            className="bg-slate-50 border-2 border-slate-200 p-5 rounded-3xl space-y-3 relative font-bold text-xs"
+                            className="bg-slate-50 border border-slate-200 p-5 rounded-2xl space-y-3 relative font-bold text-xs"
                           >
                             <div className="flex items-center justify-between">
                               <span className="bg-indigo-100 text-indigo-700 px-2.5 py-0.5 rounded-lg font-black text-[11px]">
@@ -908,7 +907,7 @@ export default function AdminAiToolsPage() {
                   {/* SUB-TAB 3: ASSIGNMENT REVIEW */}
                   {reviewTab === "assignment" && (
                     <div className="space-y-6 font-bold text-sm">
-                      <div className="bg-indigo-50 border-2 border-indigo-200 p-6 rounded-3xl space-y-4">
+                      <div className="bg-indigo-50 border border-indigo-200 p-6 rounded-2xl space-y-4">
                         <div>
                           <label className="block text-indigo-900 font-black text-xs uppercase mb-1.5">
                             Giao Vào Lớp Học Nào?
@@ -916,7 +915,7 @@ export default function AdminAiToolsPage() {
                           <select
                             value={selectedClassId}
                             onChange={(e) => setSelectedClassId(Number(e.target.value))}
-                            className="w-full px-4 py-3 bg-white border-2 border-indigo-200 rounded-xl outline-none focus:border-indigo-500 text-slate-800 font-bold"
+                            className="w-full px-4 py-3 bg-white border border-indigo-200 rounded-lg outline-none focus:border-indigo-500 text-slate-800 font-bold"
                           >
                             <option value="">-- Chọn lớp học đích --</option>
                             {classesList.map((c: any) => (
@@ -935,7 +934,7 @@ export default function AdminAiToolsPage() {
                             type="text"
                             value={editedAssignmentTitle}
                             onChange={(e) => setEditedAssignmentTitle(e.target.value)}
-                            className="w-full px-4 py-3 bg-white border-2 border-indigo-200 rounded-xl outline-none focus:border-indigo-500 font-bold text-slate-800"
+                            className="w-full px-4 py-3 bg-white border border-indigo-200 rounded-lg outline-none focus:border-indigo-500 font-bold text-slate-800"
                           />
                         </div>
 
@@ -947,7 +946,7 @@ export default function AdminAiToolsPage() {
                             value={editedAssignmentDesc}
                             onChange={(e) => setEditedAssignmentDesc(e.target.value)}
                             rows={5}
-                            className="w-full p-4 bg-white border-2 border-indigo-200 rounded-xl outline-none focus:border-indigo-500 font-bold text-slate-800"
+                            className="w-full p-4 bg-white border border-indigo-200 rounded-lg outline-none focus:border-indigo-500 font-bold text-slate-800"
                           />
                         </div>
                       </div>
@@ -994,14 +993,14 @@ export default function AdminAiToolsPage() {
                       <button
                         onClick={() => publishContentMut.mutate()}
                         disabled={publishContentMut.isPending}
-                        className="px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black flex items-center gap-2 shadow-[0_6px_0_0_#047857] active:translate-y-1 active:shadow-none transition-all cursor-pointer text-base disabled:opacity-50"
+                        className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black flex items-center gap-2 shadow-sm transition-all cursor-pointer text-sm disabled:opacity-50"
                       >
                         {publishContentMut.isPending ? (
                           <Loader2 className="animate-spin" size={20} />
                         ) : (
                           <Save size={20} />
                         )}
-                        {publishContentMut.isPending ? "Đang lưu..." : "💾 Phê Duyệt & Xuất Bản Vào Hệ Thống"}
+                        {publishContentMut.isPending ? "Đang lưu..." : "Lưu & Xuất Bản"}
                       </button>
                     </div>
 
@@ -1010,42 +1009,15 @@ export default function AdminAiToolsPage() {
                       <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="p-6 bg-emerald-50 border-3 border-emerald-300 rounded-3xl text-emerald-900 font-bold space-y-3"
+                        className="p-6 bg-emerald-50 border border-emerald-300 rounded-2xl text-emerald-900 font-bold space-y-3"
                       >
                         <div className="flex items-center gap-2 text-base font-black text-emerald-800">
                           <CheckCircle2 size={24} className="text-emerald-600" />
                           Xuất Bản Thành Công Vào Cơ Sở Dữ Liệu!
                         </div>
                         <p className="text-xs">
-                          Tất cả nội dung bạn phê duyệt đã được lưu vào hệ thống an toàn. Học sinh và giáo viên đã có thể thấy ngay lập tức:
+                          Tất cả nội dung bạn phê duyệt đã được lưu vào hệ thống an toàn.
                         </p>
-
-                        <div className="flex flex-wrap gap-3 pt-2">
-                          {publishResult.quizId && (
-                            <Link
-                              href="/admin/quizzes"
-                              className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-black flex items-center gap-1.5 hover:bg-emerald-700 shadow-sm"
-                            >
-                              Xem Đề Thi Mới (#{publishResult.quizId}) <ArrowRight size={14} />
-                            </Link>
-                          )}
-                          {publishResult.vocabTopicId && (
-                            <Link
-                              href="/admin/vocab"
-                              className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-black flex items-center gap-1.5 hover:bg-indigo-700 shadow-sm"
-                            >
-                              Xem Bộ Flashcard Mới (#{publishResult.vocabTopicId}) <ArrowRight size={14} />
-                            </Link>
-                          )}
-                          {publishResult.assignmentId && (
-                            <Link
-                              href="/admin/assignments"
-                              className="px-4 py-2 bg-amber-600 text-white rounded-xl text-xs font-black flex items-center gap-1.5 hover:bg-amber-700 shadow-sm"
-                            >
-                              Xem Bài Tập Đã Giao (#{publishResult.assignmentId}) <ArrowRight size={14} />
-                            </Link>
-                          )}
-                        </div>
                       </motion.div>
                     )}
                   </div>
@@ -1056,10 +1028,10 @@ export default function AdminAiToolsPage() {
 
           {/* ================= TAB 2: DICTATION ================= */}
           {activeTab === "dictation" && (
-            <div className="bg-white p-8 rounded-[2.5rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] space-y-6">
+            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
               <h2 className="text-2xl font-black text-slate-800 mb-1">Sinh bài Luyện Nghe (Nghe Chép Chính Tả)</h2>
               <p className="text-slate-400 font-bold text-xs mb-6">
-                AI sẽ sinh đoạn hội thoại tiếng Anh theo chủ đề, tự động tạo file Audio giọng bản xứ (Azure TTS) và tạo thành các câu hỏi điền từ trong cơ sở dữ liệu.
+                Hệ thống sẽ tạo đoạn hội thoại tiếng Anh theo chủ đề, tự động tạo file Audio phát âm chuẩn và lưu vào cơ sở dữ liệu.
               </p>
 
               <div className="space-y-4 font-bold text-sm">
@@ -1070,7 +1042,7 @@ export default function AdminAiToolsPage() {
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
                     placeholder="VD: Job Interview, Booking a Hotel, Customer Support..."
-                    className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:bg-white text-slate-800 font-bold"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:bg-white text-slate-800 font-bold"
                   />
                 </div>
                 <div>
@@ -1081,7 +1053,7 @@ export default function AdminAiToolsPage() {
                     onChange={(e) => setCount(Number(e.target.value))}
                     min={1}
                     max={15}
-                    className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:bg-white text-slate-800 font-bold"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:bg-white text-slate-800 font-bold"
                   />
                 </div>
               </div>
@@ -1101,10 +1073,10 @@ export default function AdminAiToolsPage() {
                 <button
                   onClick={() => generateDictationMut.mutate()}
                   disabled={generateDictationMut.isPending}
-                  className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black flex items-center gap-2 shadow-[0_6px_0_0_#4338ca] active:translate-y-1 active:shadow-none transition-all cursor-pointer disabled:opacity-50"
+                  className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-50 text-sm"
                 >
-                  {generateDictationMut.isPending ? <Loader2 className="animate-spin" size={20} /> : <Sparkles size={20} />}
-                  {generateDictationMut.isPending ? "Đang sinh bài nghe..." : "Thực Thi AI"}
+                  {generateDictationMut.isPending ? <Loader2 className="animate-spin" size={18} /> : <Headphones size={18} />}
+                  {generateDictationMut.isPending ? "Đang tạo bài nghe..." : "Tạo Bài Luyện Nghe"}
                 </button>
               </div>
             </div>
@@ -1112,10 +1084,10 @@ export default function AdminAiToolsPage() {
 
           {/* ================= TAB 3: TOEIC ================= */}
           {activeTab === "toeic" && (
-            <div className="bg-white p-8 rounded-[2.5rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] space-y-6">
+            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
               <h2 className="text-2xl font-black text-slate-800 mb-1">Sinh Câu Hỏi TOEIC Reading</h2>
               <p className="text-slate-400 font-bold text-xs mb-6">
-                AI sẽ sinh bộ câu hỏi trắc nghiệm kèm 4 đáp án A, B, C, D và lời giải thích ngữ pháp chi tiết theo chủ đề bạn chỉ định.
+                Hệ thống sẽ tạo bộ câu hỏi trắc nghiệm kèm 4 đáp án A, B, C, D và lời giải thích ngữ pháp chi tiết theo chủ đề bạn chỉ định.
               </p>
 
               <div className="space-y-4 font-bold text-sm">
@@ -1126,32 +1098,30 @@ export default function AdminAiToolsPage() {
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
                     placeholder="VD: Marketing Campaign, Office Equipment, Business Contract..."
-                    className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:bg-white text-slate-800 font-bold"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:bg-white text-slate-800 font-bold"
                   />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-slate-600 mb-1.5">Part</label>
-                    <select
-                      value={part}
-                      onChange={(e) => setPart(Number(e.target.value))}
-                      className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:bg-white text-slate-800 font-bold"
-                    >
-                      <option value={5}>Part 5 (Incomplete Sentences)</option>
-                      <option value={6}>Part 6 (Text Completion)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-slate-600 mb-1.5">Số lượng câu</label>
-                    <input
-                      type="number"
-                      value={count}
-                      onChange={(e) => setCount(Number(e.target.value))}
-                      min={1}
-                      max={20}
-                      className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:bg-white text-slate-800 font-bold"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-slate-600 mb-1.5">Phần thi TOEIC (Part)</label>
+                  <select
+                    value={part}
+                    onChange={(e) => setPart(Number(e.target.value))}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:bg-white text-slate-800 font-bold cursor-pointer"
+                  >
+                    <option value={5}>Part 5: Hoàn thành câu (Incomplete Sentences)</option>
+                    <option value={6}>Part 6: Hoàn thành đoạn văn (Text Completion)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-600 mb-1.5">Số lượng câu hỏi</label>
+                  <input
+                    type="number"
+                    value={count}
+                    onChange={(e) => setCount(Number(e.target.value))}
+                    min={1}
+                    max={10}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:bg-white text-slate-800 font-bold"
+                  />
                 </div>
               </div>
 
@@ -1165,10 +1135,10 @@ export default function AdminAiToolsPage() {
                 <button
                   onClick={() => generateToeicMut.mutate()}
                   disabled={generateToeicMut.isPending}
-                  className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black flex items-center gap-2 shadow-[0_6px_0_0_#4338ca] active:translate-y-1 active:shadow-none transition-all cursor-pointer disabled:opacity-50"
+                  className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-50 text-sm"
                 >
-                  {generateToeicMut.isPending ? <Loader2 className="animate-spin" size={20} /> : <Sparkles size={20} />}
-                  {generateToeicMut.isPending ? "Đang sinh câu hỏi..." : "Thực Thi AI"}
+                  {generateToeicMut.isPending ? <Loader2 className="animate-spin" size={18} /> : <FileText size={18} />}
+                  {generateToeicMut.isPending ? "Đang tạo câu hỏi..." : "Tạo Câu Hỏi TOEIC"}
                 </button>
               </div>
 
@@ -1198,10 +1168,10 @@ export default function AdminAiToolsPage() {
 
           {/* ================= TAB 4: IMPORT ETS ================= */}
           {activeTab === "import" && (
-            <div className="bg-white p-8 rounded-[2.5rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] space-y-6">
+            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
               <h2 className="text-2xl font-black text-slate-800 mb-1">Trích xuất Đề thi ETS (PDF + Audio)</h2>
               <p className="text-slate-400 font-bold text-xs mb-6">
-                Tải lên file PDF đề thi ETS và file Audio đính kèm. AI Gemini sẽ tự động bóc tách câu hỏi và lưu vào hệ thống.
+                Tải lên file PDF đề thi ETS và file Audio đính kèm. Hệ thống sẽ tự động bóc tách câu hỏi và lưu vào hệ thống.
               </p>
 
               <div className="space-y-4 font-bold text-sm">
@@ -1216,7 +1186,7 @@ export default function AdminAiToolsPage() {
                   />
                 </div>
 
-                <div className="border-2 border-dashed border-slate-200 bg-slate-50 p-6 rounded-2xl text-center">
+              <div className="border-2 border-dashed border-slate-200 bg-slate-50 p-6 rounded-2xl text-center">
                   <Headphones size={40} className="text-slate-400 mx-auto mb-2" />
                   <label className="block text-sm font-black text-slate-700 mb-2">File Audio Nghe (Tùy chọn)</label>
                   <input
@@ -1243,9 +1213,9 @@ export default function AdminAiToolsPage() {
                 <button
                   onClick={() => importEtsMut.mutate()}
                   disabled={importEtsMut.isPending}
-                  className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black flex items-center gap-2 shadow-[0_6px_0_0_#4338ca] active:translate-y-1 active:shadow-none transition-all cursor-pointer disabled:opacity-50"
+                  className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-50 text-sm"
                 >
-                  {importEtsMut.isPending ? <Loader2 className="animate-spin" size={20} /> : <Sparkles size={20} />}
+                  {importEtsMut.isPending ? <Loader2 className="animate-spin" size={18} /> : <UploadCloud size={18} />}
                   {importEtsMut.isPending ? "Đang import đề..." : "Import Đề ETS"}
                 </button>
               </div>

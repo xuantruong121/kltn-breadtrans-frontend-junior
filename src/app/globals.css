@@ -72,6 +72,13 @@
 
   --color-outline: #887364;
   --color-outline-variant: #dbc2b0;
+  /* Unified Z-Index Stacking Hierarchy */
+  --z-bottom-nav: 40;
+  --z-floating: 45;
+  --z-drawer: 50;
+  --z-modal-backdrop: 60;
+  --z-modal: 70;
+  --z-toast: 90;
 }
 
 @layer base {
@@ -93,10 +100,9 @@
 html, body {
   color: var(--foreground);
   font-family: var(--font-sans);
-  overflow-x: hidden;
-  max-width: 100vw;
   scroll-behavior: smooth;
   background-color: var(--background);
+  min-height: 100dvh;
 }
 
 button,

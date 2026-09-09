@@ -6,7 +6,7 @@ import {
   MessageCircle, 
   X, 
   Send, 
-  Bot, 
+  Headphones,
   User, 
   RotateCcw, 
   GraduationCap,
@@ -83,7 +83,7 @@ function FormattedMessage({ content, isWhiteText = false }: { content: string; i
       if (isHeader) {
         elements.push(
           <h4 key={`header-${lineIdx}`} className={`font-black text-sm mt-2 mb-1 flex items-center gap-1 ${isWhiteText ? "text-amber-200" : "text-junior-orange"}`}>
-            ✨ {parts}
+            {parts}
           </h4>
         );
       } else if (isBullet) {
@@ -580,7 +580,7 @@ export default function FloatingAiTutor() {
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.92 }}
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-20 right-3.5 sm:bottom-24 sm:right-4 md:bottom-8 md:right-8 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white p-3.5 sm:p-4 rounded-full shadow-xl hover:shadow-2xl z-40 transition-all border-2 border-white flex items-center justify-center cursor-pointer ${
+        className={`fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-3.5 sm:bottom-[calc(4.5rem+env(safe-area-inset-bottom))] sm:right-4 md:bottom-8 md:right-8 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white min-h-[48px] min-w-[48px] p-3.5 sm:p-4 rounded-full shadow-xl hover:shadow-2xl z-[45] transition-all border-2 border-white flex items-center justify-center cursor-pointer ${
           isOpen ? "scale-0 pointer-events-none" : "scale-100"
         }`}
         title={isAdminOrTeacher ? "Mở Trung Tâm Tin Nhắn Học Viên" : "Mở Trợ Lý Bánh Mì"}
@@ -609,7 +609,7 @@ export default function FloatingAiTutor() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.9 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-20 right-2 sm:right-4 md:bottom-8 md:right-8 w-[calc(100vw-1rem)] max-w-sm md:w-[420px] bg-white rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.2)] z-50 border-4 border-slate-200 overflow-hidden flex flex-col h-[78vh] md:h-[570px] max-h-[85vh]"
+            className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-2 sm:right-4 md:bottom-8 md:right-8 w-[calc(100vw-1rem)] max-w-sm md:w-[420px] bg-white rounded-2xl shadow-2xl z-[50] border border-slate-200 overflow-hidden flex flex-col h-[min(78dvh,580px)] max-h-[calc(100dvh-5.5rem)]"
           >
             {/* ======================================================== */}
             {/* 1. MÀN HÌNH DANH SÁCH HỌC SINH (DÀNH CHO ADMIN/TEACHER) */}
@@ -693,7 +693,7 @@ export default function FloatingAiTutor() {
                                     : "bg-emerald-100 text-emerald-800 border-emerald-200"
                                 }`}
                               >
-                                {isHumanMode ? "👨‍🏫 Trực Tiếp" : "🤖 AI"}
+                                {isHumanMode ? "Hỗ trợ trực tiếp" : "Tự động"}
                               </span>
 
                               {thread.studentEmail && (
@@ -755,7 +755,7 @@ export default function FloatingAiTutor() {
                             }`}
                           />
                           <span>
-                            {currentThread.mode === "AI" ? "AI Đang Tự Động Trả Lời" : "Tư Vấn Trực Tiếp"}
+                            {currentThread.mode === "AI" ? "Chế độ phản hồi tự động" : "Tư Vấn Trực Tiếp"}
                           </span>
                         </div>
                       </div>
@@ -784,7 +784,7 @@ export default function FloatingAiTutor() {
                   {isAdminOrTeacher ? (
                     <div className="bg-white/15 backdrop-blur-xs rounded-xl p-2 flex items-center justify-between text-xs font-bold mt-1 border border-white/20">
                       <span className="text-[11px]">
-                        {currentThread.mode === "AI" ? "🤖 Học sinh đang chat với AI" : "👨‍🏫 Bạn đang chat trực tiếp"}
+                        {currentThread.mode === "AI" ? "Học viên đang nhận phản hồi tự động" : "Bạn đang trao đổi trực tiếp"}
                       </span>
                       <button
                         onClick={handleToggleMode}
@@ -794,7 +794,7 @@ export default function FloatingAiTutor() {
                             : "bg-emerald-400 text-emerald-950 hover:bg-emerald-300"
                         }`}
                       >
-                        {currentThread.mode === "AI" ? "Chuyển Sang Trực Tiếp" : "Bật Lại AI"}
+                        {currentThread.mode === "AI" ? "Chuyển sang trực tiếp" : "Bật phản hồi tự động"}
                       </button>
                     </div>
                   ) : (
@@ -869,7 +869,7 @@ export default function FloatingAiTutor() {
                             ) : isAdminMsg ? (
                               <GraduationCap size={14} />
                             ) : (
-                              <Bot size={14} />
+                              <Headphones size={14} />
                             )}
                           </div>
 
@@ -903,7 +903,7 @@ export default function FloatingAiTutor() {
                   {isLoading && (
                     <div className="self-start flex gap-2">
                       <div className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center shrink-0 mt-1">
-                        <Bot size={14} />
+                        <Headphones size={14} />
                       </div>
                       <div className="p-3 bg-white border-2 border-slate-200 rounded-2xl rounded-tl-xs text-slate-400 flex items-center gap-1.5 shadow-2xs">
                         <span className="text-xs font-bold text-slate-500 mr-1">Bánh Mì đang soạn câu trả lời</span>
@@ -953,7 +953,7 @@ export default function FloatingAiTutor() {
                       isAdminOrTeacher
                         ? currentThread.mode === "HUMAN"
                           ? `Trả lời ${currentThread.studentName}...`
-                          : "Hỏi AI hoặc chuyển sang Trực Tiếp để chat..."
+                          : "Chuyển sang hỗ trợ trực tiếp để trò chuyện..."
                         : currentThread.mode === "HUMAN"
                         ? "Nhập tin nhắn gửi đến Thầy Cô..."
                         : "Hỏi Trợ Lý Bánh Mì bất kỳ điều gì..."

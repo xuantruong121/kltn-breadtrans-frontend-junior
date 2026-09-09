@@ -176,7 +176,7 @@ export default function PublicCoursesPage() {
                     <span className="text-xs font-bold text-slate-800">
                       Tự học theo tiến độ
                     </span>
-                    <span className="text-[10px] font-medium text-slate-400">Hỗ trợ AI 24/7</span>
+                    <span className="text-[10px] font-medium text-slate-400">Hỗ trợ học tập 24/7</span>
                   </div>
                 </div>
 

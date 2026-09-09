@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Activity,
-  Bot,
+  Cpu,
   Mic,
   HardDrive,
   CheckCircle2,
@@ -93,7 +93,7 @@ export default function AdminCostsPage() {
       return res?.data || res;
     },
     onSuccess: (res: any) => {
-      toast.success(res?.message || "Đã làm sạch cache Gemini AI trên Redis!");
+      toast.success(res?.message || "Đã làm sạch cache dữ liệu trên Redis!");
       queryClient.invalidateQueries({ queryKey: ["admin", "system-costs"] });
     },
     onError: () => {
@@ -277,7 +277,7 @@ export default function AdminCostsPage() {
 
       {/* 2. 4 Core Services Grid (Light Mode) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* 1. Google Gemini AI */}
+        {/* 1. Dịch vụ LLM */}
         {services?.gemini && (
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
@@ -287,7 +287,7 @@ export default function AdminCostsPage() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-2xl text-blue-600">
-                  <Bot className="w-5 h-5" />
+                  <Cpu className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="font-black text-slate-800 text-base flex items-center gap-2">
@@ -347,7 +347,7 @@ export default function AdminCostsPage() {
           </motion.div>
         )}
 
-        {/* 2. Microsoft Azure AI Speech */}
+        {/* 2. Dịch vụ Speech */}
         {services?.azureSpeech && (
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
@@ -496,7 +496,7 @@ export default function AdminCostsPage() {
               className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-2xl text-xs font-black transition-all cursor-pointer disabled:opacity-50"
             >
               <Trash2 className={`w-4 h-4 ${isPurgingCache ? "animate-spin" : ""}`} />
-              {isPurgingCache ? "Đang xóa..." : "Xóa Cache AI (Redis)"}
+              {isPurgingCache ? "Đang xóa..." : "Xóa Cache Bộ Đệm (Redis)"}
             </button>
 
             <button
@@ -539,7 +539,7 @@ export default function AdminCostsPage() {
             <tbody className="divide-y divide-slate-100 font-semibold text-slate-600">
               <tr className="hover:bg-slate-50/60 transition-colors">
                 <td className="p-3.5 font-bold text-slate-800 flex items-center gap-2">
-                  <Bot className="w-4 h-4 text-blue-600" /> Google Gemini AI
+                  <Cpu className="w-4 h-4 text-blue-600" /> Dịch vụ xử lý nội dung văn bản (LLM)
                 </td>
                 <td className="p-3.5 text-emerald-600 font-black">$0 (Free Tier)</td>
                 <td className="p-3.5">$10 - $35 (~250K - 875K đ)</td>
@@ -548,7 +548,7 @@ export default function AdminCostsPage() {
               </tr>
               <tr className="hover:bg-slate-50/60 transition-colors">
                 <td className="p-3.5 font-bold text-slate-800 flex items-center gap-2">
-                  <Mic className="w-4 h-4 text-violet-600" /> Azure AI Speech
+                  <Mic className="w-4 h-4 text-violet-600" /> Dịch vụ xử lý phát âm & âm vị (Speech)
                 </td>
                 <td className="p-3.5 text-emerald-600 font-black">$0 (Free Tier)</td>
                 <td className="p-3.5">$20 - $60 (~500K - 1.5M đ)</td>

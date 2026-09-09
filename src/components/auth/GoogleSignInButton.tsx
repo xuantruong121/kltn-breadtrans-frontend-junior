@@ -8,6 +8,9 @@ import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { getDeviceId, persistDeviceId } from "@/lib/auth/deviceId";
+import { normalizeAuthResponse } from "@/lib/auth/authResponse";
+import { hydrateSession } from "@/lib/auth/hydrateSession";
 
 declare global {
   interface Window {
@@ -25,7 +28,10 @@ declare global {
 
 interface GoogleSignInButtonProps {
   redirectUrl?: string | null;
-  onAccountLinkRequired?: (data: { credential: string; message: string }) => void;
+  onAccountLinkRequired?: (data: {
+    credential: string;
+    message: string;
+  }) => void;
   onError?: (errMessage: string) => void;
 }
 
@@ -56,6 +62,7 @@ export default function GoogleSignInButton({
   const queryClient = useQueryClient();
   const { setAuth } = useAuthStore();
   const buttonRef = useRef<HTMLDivElement>(null);
+  const initializedRef = useRef(false);
   const [isReady, setIsReady] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -70,23 +77,22 @@ export default function GoogleSignInButton({
 
       setIsProcessing(true);
       try {
-        let deviceId =
-          typeof window !== "undefined" ? localStorage.getItem("deviceId") : null;
-        if (!deviceId && typeof window !== "undefined") {
-          deviceId = crypto.randomUUID();
-          localStorage.setItem("deviceId", deviceId);
-        }
+        const deviceId = getDeviceId();
 
-        const res: any = await axiosClient.post("/auth/google", {
-          credential: response.credential,
-          deviceId,
-        });
+        const res = normalizeAuthResponse(
+          await axiosClient.post("/auth/google", {
+            credential: response.credential,
+            deviceId,
+          }),
+        );
 
         // Clear previous cache & store
         queryClient.clear();
         useGamificationStore.getState().reset();
 
         setAuth(res.access_token, res.refresh_token, res.user);
+        persistDeviceId(res.deviceId || deviceId);
+        await hydrateSession(queryClient);
         toast.success("Đăng nhập bằng Google thành công!");
 
         const returnUrl = getSafeReturnUrl(redirectUrl);
@@ -97,26 +103,36 @@ export default function GoogleSignInButton({
         }
       } catch (err: any) {
         const data = err.response?.data;
-        if (data?.code === "ACCOUNT_LINK_REQUIRED") {
+        const messagePayload = data?.message;
+        const errorCode =
+          (typeof messagePayload === "object"
+            ? messagePayload?.code
+            : undefined) ?? data?.code;
+        if (errorCode === "ACCOUNT_LINK_REQUIRED") {
           if (onAccountLinkRequired) {
             onAccountLinkRequired({
               credential: response.credential,
               message:
-                data.message ||
+                (typeof messagePayload === "object"
+                  ? messagePayload?.message
+                  : messagePayload) ||
                 "Email này đã tồn tại trong hệ thống. Vui lòng nhập mật khẩu để liên kết tài khoản Google.",
             });
             return;
           }
         }
         const errorMsg =
-          data?.message || "Đăng nhập bằng Google thất bại. Vui lòng thử lại.";
+          (typeof messagePayload === "object"
+            ? messagePayload?.message
+            : messagePayload) ||
+          "Đăng nhập bằng Google thất bại. Vui lòng thử lại.";
         if (onError) onError(errorMsg);
         toast.error(errorMsg);
       } finally {
         setIsProcessing(false);
       }
     },
-    [clientId, onAccountLinkRequired, onError, queryClient, redirectUrl, router, setAuth]
+    [onAccountLinkRequired, onError, queryClient, redirectUrl, router, setAuth],
   );
 
   useEffect(() => {
@@ -127,6 +143,7 @@ export default function GoogleSignInButton({
 
     let intervalId: NodeJS.Timeout;
     const initGsi = () => {
+      if (initializedRef.current) return true;
       if (window.google?.accounts?.id && buttonRef.current) {
         try {
           window.google.accounts.id.initialize({
@@ -145,6 +162,7 @@ export default function GoogleSignInButton({
             logo_alignment: "left",
           });
           setIsReady(true);
+          initializedRef.current = true;
           return true;
         } catch (e) {
           console.error("Failed to render Google Sign-In button:", e);

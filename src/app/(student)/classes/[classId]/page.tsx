@@ -3,10 +3,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { 
-  ArrowLeft, 
   Loader2, 
   PlayCircle, 
-  Calendar, 
   FileText, 
   CheckCircle, 
   CheckCircle2, 
@@ -18,7 +16,6 @@ import {
   MessageSquare, 
   Send, 
   X, 
-  AlertCircle, 
   HelpCircle,
   FileCheck,
   Check,
@@ -26,8 +23,6 @@ import {
   UploadCloud,
   FileEdit,
   Trash2,
-  FileUp,
-  File
 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { BackButton, Button3D } from "@/components/ui";
@@ -389,7 +384,6 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
           const submission = selectedAssignment.submissions?.[0];
           const isSubmitted = !!submission;
           const isGraded = submission?.grade !== null && submission?.grade !== undefined;
-          const isLate = selectedAssignment.dueDate && submission?.submittedAt && dayjs(submission.submittedAt).isAfter(dayjs(selectedAssignment.dueDate));
           const isOverdue = selectedAssignment.dueDate && dayjs().isAfter(dayjs(selectedAssignment.dueDate)) && !isSubmitted;
           const wordCount = submissionText.trim() ? submissionText.trim().split(/\s+/).length : 0;
           const charCount = submissionText.length;
@@ -404,16 +398,16 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
             ));
 
           return (
-            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-4 sm:p-6 overflow-y-auto">
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[60] p-4 sm:p-6 overflow-hidden">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 15 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 15 }}
                 transition={{ duration: 0.2 }}
-                className="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.3)] border-4 border-slate-200/80 flex flex-col overflow-hidden my-auto"
+                className="bg-white rounded-2xl w-full max-w-3xl max-h-[min(90dvh,calc(100dvh-3rem))] shadow-2xl border border-slate-200 flex flex-col overflow-hidden my-auto"
               >
                 {/* Modal Header */}
-                <div className="p-5 sm:p-6 border-b-2 border-slate-100 bg-slate-50/70 flex items-start justify-between gap-4 sticky top-0 z-20 backdrop-blur-sm">
+                <div className="p-5 sm:p-6 border-b border-slate-100 bg-slate-50/70 flex items-start justify-between gap-4 shrink-0">
                   <div className="space-y-1.5 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
@@ -465,7 +459,7 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
                 </div>
 
                 {/* Modal Body */}
-                <div className="p-5 sm:p-7 overflow-y-auto space-y-6">
+                <div className="p-5 sm:p-7 overflow-y-auto space-y-6 flex-1 min-h-0">
                   {/* Yêu cầu bài tập (Mission Brief Card) */}
                   <div className="bg-blue-50/70 border border-blue-200 rounded-2xl p-4 sm:p-5 shadow-2xs">
                     <div className="flex items-center gap-2 mb-2">
@@ -783,7 +777,7 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
                 </div>
 
                 {/* Modal Footer */}
-                <div className="p-4 sm:p-6 border-t-2 border-slate-100 bg-slate-50 flex items-center justify-end gap-3 sticky bottom-0 z-20">
+                <div className="p-4 sm:p-6 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-3 shrink-0">
                   <button
                     onClick={() => setSelectedAssignment(null)}
                     className="px-6 py-2.5 rounded-xl font-black text-sm text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"

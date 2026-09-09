@@ -28,6 +28,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 
 const FloatingAiTutor = dynamic(() => import("@/components/FloatingAiTutor"), { ssr: false });
+import { AppFooter } from "@/components/navigation/AppFooter";
 
 interface NavItem {
   id: string;
@@ -46,11 +47,11 @@ const NAV_ITEMS: NavItem[] = [
   { id: "vocab", href: "/admin/vocab", label: "Từ vựng (Flashcard)", icon: Layers },
   { id: "grammar", href: "/admin/grammar", label: "Ngữ pháp (Video)", icon: GraduationCap },
   { id: "practice", href: "/admin/practice", label: "Luyện tập (Bánh mì)", icon: Gamepad2 },
-  { id: "speaking", href: "/admin/speaking", label: "Luyện phát âm AI", icon: Mic },
+  { id: "speaking", href: "/admin/speaking", label: "Luyện phát âm", icon: Mic },
   { id: "quizzes", href: "/admin/quizzes", label: "Đề thi & Quiz", icon: PenTool },
   { id: "market", href: "/admin/market", label: "Vật phẩm Market", icon: ShoppingBag },
   { id: "currency", href: "/admin/currency", label: "Giao dịch Bánh Mì", icon: Coins },
-  { id: "ai", href: "/admin/ai-tools", label: "Công cụ AI (PDF, Sinh đề)", icon: FileText },
+  { id: "ai", href: "/admin/ai-tools", label: "Công cụ tạo đề (PDF, Tự động)", icon: FileText },
   { id: "users", href: "/admin/users", label: "Người dùng", icon: Users },
 ];
 
@@ -80,6 +81,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       router.push("/");
     }
   }, [isReady, user, router]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsMobileNavOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   if (!isReady || !user) return null;
 
@@ -152,7 +163,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Mobile Drawer (< lg) */}
       <AnimatePresence>
         {isMobileNavOpen && (
-          <div className="lg:hidden fixed inset-0 z-50 flex">
+          <div className="lg:hidden fixed inset-0 z-[60] flex">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -174,7 +185,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </AnimatePresence>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
         {/* Mobile Header Bar */}
         <header className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-3 text-slate-900 lg:hidden">
           <div className="flex items-center gap-3">
@@ -194,8 +205,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8">
-          {children}
+        <div className="flex-1 min-w-0 overflow-y-auto flex flex-col justify-between">
+          <div className="p-4 md:p-8 flex-1 min-w-0">
+            {children}
+          </div>
+          <AppFooter />
         </div>
       </main>
 

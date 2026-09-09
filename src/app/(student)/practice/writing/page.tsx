@@ -17,13 +17,13 @@ export default function WritingTopicsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 uppercase tracking-wider">
-            <PenTool size={14} /> Luyện viết tiếng Anh với AI
+            <PenTool size={14} /> Luyện viết tiếng Anh chuẩn hóa
           </div>
           <h1 className="mt-1 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
-            Luyện Viết AI
+            Luyện Viết
           </h1>
           <p className="mt-1 text-sm text-slate-500 font-medium">
-            Viết bài theo các chủ đề thực tế trong môi trường làm việc và nhận đánh giá ngữ pháp, từ vựng chi tiết từ AI.
+            Viết bài theo các chủ đề thực tế trong môi trường làm việc và nhận đánh giá ngữ pháp, từ vựng chi tiết tự động.
           </p>
         </div>
       </div>

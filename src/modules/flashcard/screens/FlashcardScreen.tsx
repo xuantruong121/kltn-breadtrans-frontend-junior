@@ -12,7 +12,7 @@ export const FlashcardScreen = () => {
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
-      <header className="rounded-[2rem] border-4 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-6 shadow-[0_8px_0_0_#fde68a] sm:p-8">
+      <header className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-6 shadow-soft sm:p-8">
         <div className="flex items-start gap-3">
           <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-amber-400 text-amber-950" aria-hidden="true"><BookOpen size={24} /></span>
           <div>
@@ -34,7 +34,7 @@ export const FlashcardScreen = () => {
             const completed = topic.totalWords > 0 && topic.learnedCount >= topic.totalWords;
             const percent = topic.totalWords > 0 ? Math.round((topic.learnedCount / topic.totalWords) * 100) : 0;
             return (
-              <motion.article key={topic.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.04 }} whileHover={{ y: -4 }} className={`relative flex flex-col overflow-hidden rounded-[2rem] border-4 bg-white shadow-[0_6px_0_0_#e2e8f0] ${completed ? "border-emerald-300" : "border-slate-200"}`}>
+              <motion.article key={topic.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.04 }} whileHover={{ y: -4 }} className={`relative flex flex-col overflow-hidden rounded-2xl border bg-white shadow-soft hover:shadow-card transition-all ${completed ? "border-emerald-300" : "border-slate-200"}`}>
                 {completed && <span className="absolute right-4 top-4 z-10 flex size-9 items-center justify-center rounded-full bg-emerald-500 text-white" title="Đã thuộc toàn bộ từ"><CheckCircle2 size={19} aria-hidden="true" /></span>}
                 <div className="flex h-32 items-center justify-center bg-gradient-to-br from-amber-100 to-orange-100 text-amber-500"><Library size={54} aria-hidden="true" /></div>
                 <div className="flex flex-1 flex-col p-6">

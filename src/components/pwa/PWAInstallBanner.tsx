@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Share, PlusSquare, X, Smartphone, Sparkles } from "lucide-react";
+import { Download, Share, PlusSquare, X, Smartphone } from "lucide-react";
 import { Button3D } from "@/components/ui";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -80,7 +80,6 @@ export default function PWAInstallBanner() {
             <div>
               <div className="flex items-center gap-1.5">
                 <h4 className="font-black text-slate-800 text-sm">Cài Đặt BreadTrans App</h4>
-                <Sparkles size={14} className="text-amber-500" />
               </div>
               <p className="text-xs font-bold text-slate-500">
                 Học mượt mà, offline & nhận thông báo nhắc lịch học!

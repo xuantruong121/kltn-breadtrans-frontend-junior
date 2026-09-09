@@ -27,7 +27,7 @@ const SKILLS = [
   },
   {
     title: "Luyện nói",
-    description: "Ghi âm trực tiếp, luyện phản xạ và nhận nhận xét phát âm từ AI.",
+    description: "Ghi âm trực tiếp, luyện phản xạ và nhận nhận xét phát âm chuẩn IPA.",
     href: "/practice/speaking",
     icon: Mic,
     label: "Giao tiếp",
@@ -44,7 +44,7 @@ const SKILLS = [
     theme: "border-emerald-200 bg-emerald-50 text-emerald-700",
   },
   {
-    title: "Luyện viết với AI",
+    title: "Luyện viết học thuật",
     description: "Viết câu, email và đoạn văn; nhận góp ý rõ ràng để viết tự tin hơn.",
     href: "/practice/writing",
     icon: PenTool,

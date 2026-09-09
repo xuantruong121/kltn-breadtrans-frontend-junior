@@ -8,6 +8,7 @@ import {
   BookOpen,
   ChevronDown,
   Dumbbell,
+  GraduationCap,
   Headphones,
   Home,
   KeyRound,
@@ -27,6 +28,7 @@ import {
   LogOut,
   Flame,
   LineChart,
+  Heart,
   Loader2,
   ShieldCheck,
   CheckCheck,
@@ -369,12 +371,19 @@ export function AppHeader() {
         setProfileMenuOpen(false);
       }
     };
+    const onResize = () => {
+      if (window.innerWidth >= 1024) {
+        setMobileOpen(false);
+      }
+    };
     document.addEventListener("keydown", onKeyDown);
     document.addEventListener("mousedown", onPointerDown);
+    window.addEventListener("resize", onResize);
     document.body.style.overflow = mobileOpen ? "hidden" : "";
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       document.removeEventListener("mousedown", onPointerDown);
+      window.removeEventListener("resize", onResize);
       document.body.style.overflow = "";
     };
   }, [mobileOpen]);
@@ -401,7 +410,8 @@ export function AppHeader() {
   const primaryLinks = isStudent
     ? [
         { label: "Trang chủ", href: "/dashboard", icon: Home },
-        { label: "Khóa học của tôi", href: "/my-courses", icon: BookOpen },
+        { label: "Khóa học", href: "/courses", icon: BookOpen },
+        { label: "Khóa học của tôi", href: "/my-courses", icon: GraduationCap },
         { label: "Luyện đề", href: "/practice/quizzes", icon: Target },
         { label: "Cửa hàng", href: "/market", icon: ShoppingBag },
         { label: "Bảng xếp hạng", href: "/arena", icon: Trophy },
@@ -444,12 +454,12 @@ export function AppHeader() {
         {/* Center Desktop Navigation */}
         <nav
           aria-label="Menu chính"
-          className="hidden xl:flex items-center justify-center gap-1 xl:gap-1.5 2xl:gap-2.5 text-sm font-bold flex-nowrap shrink-0"
+          className="hidden lg:flex items-center justify-center gap-0.5 xl:gap-1.5 2xl:gap-2.5 text-xs xl:text-sm font-bold shrink min-w-0"
         >
           {/* Trang chủ */}
           <Link
             href={isStudent ? "/dashboard" : "/"}
-            className={`px-3 xl:px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap ${
+            className={`px-2 xl:px-3.5 py-2 rounded-xl flex items-center gap-1 xl:gap-1.5 transition-colors whitespace-nowrap ${
               isActivePath(pathname, isStudent ? "/dashboard" : "/")
                 ? "text-amber-800 bg-amber-50/90 font-black border border-amber-200/60"
                 : "text-slate-600 hover:text-amber-800 hover:bg-amber-50/50"
@@ -469,7 +479,7 @@ export function AppHeader() {
             <Link
               href="/practice"
               onClick={closeMenus}
-              className={`px-3 xl:px-3.5 py-2 rounded-l-xl flex items-center gap-1.5 transition-colors font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 shrink-0 whitespace-nowrap ${
+              className={`px-2 xl:px-3.5 py-2 rounded-l-xl flex items-center gap-1 xl:gap-1.5 transition-colors font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 whitespace-nowrap ${
                 isSkillsPath
                   ? "text-amber-800 bg-amber-50/80 font-black"
                   : "text-slate-600 hover:text-amber-800 hover:bg-amber-50/50"
@@ -485,7 +495,7 @@ export function AppHeader() {
               aria-expanded={skillsOpen}
               aria-controls="skills-navigation-menu"
               aria-haspopup="menu"
-              className={`-ml-2 flex min-h-11 min-w-11 items-center justify-center rounded-r-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
+              className={`-ml-2 flex min-h-11 min-w-8 xl:min-w-11 items-center justify-center rounded-r-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
                 isSkillsPath || skillsOpen
                   ? "bg-amber-50/80 text-amber-700"
                   : "text-slate-400 hover:bg-amber-50/50 hover:text-amber-700"
@@ -493,7 +503,7 @@ export function AppHeader() {
             >
               <ChevronDown
                 size={14}
-                className={`transition-transform duration-200 text-slate-400 shrink-0 ${
+                className={`transition-transform duration-200 ${
                   skillsOpen ? "rotate-180 text-amber-700" : "group-hover:rotate-180 group-hover:text-amber-700"
                 }`}
               />
@@ -501,7 +511,7 @@ export function AppHeader() {
 
             {/* Dropdown Menu (Opens on hover and on click) */}
             <div
-              className={`absolute top-full left-0 pt-1.5 w-[330px] z-50 transition-all duration-150 ${
+              className={`absolute top-full left-0 pt-1.5 w-[330px] max-w-[calc(100vw-2rem)] z-50 transition-all duration-150 ${
                 skillsOpen
                   ? "opacity-100 pointer-events-auto translate-y-0"
                   : "opacity-0 pointer-events-none -translate-y-1 group-hover:opacity-100 group-hover:pointer-events-auto group-hover:translate-y-0"
@@ -541,7 +551,7 @@ export function AppHeader() {
                       Luyện nói
                     </div>
                     <div className="text-xs font-semibold text-slate-500 leading-snug mt-0.5">
-                      Cải thiện phát âm, ngữ điệu và phản xạ với trợ lý AI.
+                      Cải thiện phát âm, ngữ điệu và phản xạ qua các bài tập tương tác.
                     </div>
                   </div>
                 </Link>
@@ -579,7 +589,7 @@ export function AppHeader() {
                       Luyện viết
                     </div>
                     <div className="text-xs font-semibold text-slate-500 leading-snug mt-0.5">
-                      Luyện viết câu, email và nhận góp ý chi tiết từ AI.
+                      Luyện viết câu, email và nhận gợi ý chỉnh sửa chi tiết.
                     </div>
                   </div>
                 </Link>
@@ -592,7 +602,7 @@ export function AppHeader() {
             <Link
               key={link.href}
               href={link.href}
-              className={`px-3 xl:px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap ${
+              className={`px-2 xl:px-3.5 py-2 rounded-xl flex items-center gap-1 xl:gap-1.5 transition-colors whitespace-nowrap ${
                 isActivePath(pathname, link.href)
                   ? "text-amber-800 bg-amber-50/90 font-black border border-amber-200/60"
                   : "text-slate-600 hover:text-amber-800 hover:bg-amber-50/50"
@@ -644,8 +654,15 @@ export function AppHeader() {
                   className="flex min-h-11 min-w-11 items-center gap-1.5 rounded-full bg-white px-1.5 ring-2 ring-amber-500/60 shadow-sm transition-all hover:bg-amber-50 hover:ring-amber-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-amber-700 cursor-pointer shrink-0"
                 >
                   <div className="w-8 h-8 rounded-full bg-amber-600 text-white font-black text-xs flex items-center justify-center overflow-hidden shrink-0">
-                    {user?.profile?.name ? (
-                      user.profile.name.charAt(0).toUpperCase()
+                    {user?.profile?.avatar ? (
+                      <img
+                        src={user.profile.avatar}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : user?.profile?.fullName ? (
+                      user.profile.fullName.charAt(0).toUpperCase()
                     ) : (
                       <User size={16} />
                     )}
@@ -654,10 +671,10 @@ export function AppHeader() {
                 </button>
 
                 {profileMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-slate-200/90 rounded-2xl shadow-xl p-2 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
+                  <div className="absolute right-0 top-full mt-2 w-56 max-w-[calc(100vw-1.5rem)] bg-white border border-slate-200/90 rounded-2xl shadow-xl p-2 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
                     <div className="px-3 py-2 border-b border-slate-100 mb-1">
                       <p className="text-xs font-bold text-slate-900 truncate">
-                        {user?.profile?.name || user?.email}
+                        {user?.profile?.fullName || user?.email}
                       </p>
                       <p className="text-[11px] font-semibold text-slate-400 truncate">{user?.email}</p>
                     </div>
@@ -670,6 +687,17 @@ export function AppHeader() {
                       <User size={16} className="text-amber-600 shrink-0" />
                       <span>Hồ sơ & Gói học</span>
                     </Link>
+
+                    {isStudent && (
+                      <Link
+                        href="/pet"
+                        onClick={closeMenus}
+                        className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-900 transition-colors whitespace-nowrap"
+                      >
+                        <Heart size={16} className="text-emerald-600 shrink-0" />
+                        <span>Thú cưng đồng hành</span>
+                      </Link>
+                    )}
 
                     <Link
                       href="/change-password"
@@ -738,7 +766,7 @@ export function AppHeader() {
             aria-expanded={mobileOpen}
             aria-controls="mobile-navigation"
             aria-label={mobileOpen ? "Đóng menu" : "Mở menu"}
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none xl:hidden shrink-0"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none lg:hidden shrink-0"
           >
             {mobileOpen ? <X size={23} /> : <Menu size={23} />}
           </button>
@@ -749,7 +777,7 @@ export function AppHeader() {
       {mobileOpen && (
         <div
           id="mobile-navigation"
-          className="fixed inset-x-0 top-20 bottom-0 z-50 overflow-y-auto border-t border-slate-200 bg-white px-5 py-6 shadow-2xl xl:hidden"
+          className="fixed inset-x-0 top-20 bottom-0 z-50 overflow-y-auto border-t border-slate-200 bg-white px-5 py-6 shadow-2xl lg:hidden"
         >
           <nav className="space-y-1.5" aria-label="Điều hướng di động">
             {primaryLinks.map((link) => (
@@ -757,7 +785,11 @@ export function AppHeader() {
                 key={link.href}
                 href={link.href}
                 onClick={closeMenus}
-                className="flex items-center gap-3 rounded-2xl px-4 py-3 text-base font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-900 transition-colors"
+                className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-base font-bold transition-colors ${
+                  isActivePath(pathname, link.href)
+                    ? "bg-amber-50 text-amber-900 font-black border border-amber-200/60"
+                    : "text-slate-700 hover:bg-amber-50 hover:text-amber-900"
+                }`}
               >
                 <link.icon size={19} className="text-amber-600" />
                 {link.label}
@@ -807,7 +839,7 @@ export function AppHeader() {
                 onClick={closeMenus}
                   className="flex items-center gap-2 p-3 rounded-xl bg-rose-50/70 border border-rose-200/50 text-xs font-bold text-rose-900"
                 >
-                  <PenTool size={16} aria-hidden="true" /> Luyện Viết AI
+                  <PenTool size={16} aria-hidden="true" /> Luyện Viết
               </Link>
             </div>
           </nav>

@@ -73,8 +73,8 @@ export const useChatAssistantStore = create<ChatAssistantState>()((set, get) => 
 
       const sysContent =
         mode === 'HUMAN'
-          ? `👨‍🏫 ${senderName ? `[${senderName}]` : 'Ban Quản Trị / Thầy Cô'} đã chuyển sang chế độ TRỰC TIẾP HỖ TRỢ. Mọi câu hỏi của bạn sẽ được phản hồi bởi thầy cô!`
-          : '🤖 Đã kích hoạt lại TRỢ LÝ AI. Bánh Mì Assistant sẽ tự động giải đáp mọi thắc mắc học tập ngay tức thì! 🍞';
+          ? `${senderName ? `[${senderName}]` : 'Ban Quản Trị / Thầy Cô'} đã chuyển sang chế độ hỗ trợ trực tiếp. Mọi câu hỏi của bạn sẽ được phản hồi bởi thầy cô!`
+          : 'Đã kích hoạt lại chế độ phản hồi tự động. Hệ thống sẽ tự động hỗ trợ giải đáp thắc mắc học tập của bạn!';
 
       const sysMsg: AssistantMessage = {
         id: `sys-${Date.now()}`,

@@ -93,7 +93,7 @@ export function AuthGateModal({
             </div>
             <div className="flex items-start gap-2 text-xs font-semibold text-slate-700">
               <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" />
-              <span>Nhận phân tích phát âm và sửa lỗi ngữ pháp từ AI</span>
+              <span>Nhận phân tích phát âm chuẩn âm vị và gợi ý sửa lỗi ngữ pháp</span>
             </div>
             <div className="flex items-start gap-2 text-xs font-semibold text-slate-700">
               <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" />

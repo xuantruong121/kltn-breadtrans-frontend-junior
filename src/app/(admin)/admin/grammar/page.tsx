@@ -282,8 +282,8 @@ export default function AdminGrammarPage() {
 
       {/* 👁️ TOPIC DETAIL & QUESTIONS VIEWER MODAL */}
       {isDetailModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xs">
-          <div className="bg-white max-w-3xl w-full rounded-[2.5rem] border-4 border-slate-200 shadow-[0_16px_0_0_#cbd5e1] p-6 md:p-8 space-y-6 max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xs">
+          <div className="bg-white max-w-3xl w-full rounded-2xl border border-slate-200 shadow-xl p-6 md:p-8 space-y-6 max-h-[min(90dvh,calc(100dvh-3rem))] flex flex-col overflow-hidden">
             {/* MODAL HEADER */}
             <div className="flex items-start justify-between pb-4 border-b border-slate-100 shrink-0">
               <div className="space-y-1">
@@ -320,7 +320,7 @@ export default function AdminGrammarPage() {
             </div>
 
             {/* QUESTIONS LIST CONTAINER */}
-            <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1">
               {isDetailLoading ? (
                 <div className="flex justify-center py-20">
                   <Loader2 className="animate-spin text-emerald-500" size={40} />
@@ -430,16 +430,16 @@ export default function AdminGrammarPage() {
 
       {/* ➕ CREATE TOPIC MODAL */}
       {isTopicModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white max-w-lg w-full rounded-[2.5rem] border-4 border-slate-200 shadow-[0_12px_0_0_#cbd5e1] p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white max-w-lg w-full rounded-2xl border border-slate-200 shadow-xl max-h-[min(90dvh,calc(100dvh-3rem))] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-6 pb-3 border-b border-slate-100 shrink-0">
               <h2 className="text-xl font-black text-slate-800">Tạo Chủ Đề Ngữ Pháp Mới</h2>
-              <button onClick={() => setIsTopicModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setIsTopicModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
                 <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleCreateTopic} className="space-y-3.5">
+            <form onSubmit={handleCreateTopic} className="p-6 pt-3 space-y-3.5 overflow-y-auto flex-1 min-h-0">
               <div>
                 <label className="text-xs font-black text-slate-500 uppercase mb-1 block">Tên chủ đề</label>
                 <input
@@ -516,16 +516,16 @@ export default function AdminGrammarPage() {
 
       {/* ❓ CREATE QUESTION MODAL */}
       {isQuestionModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white max-w-lg w-full rounded-[2.5rem] border-4 border-slate-200 shadow-[0_12px_0_0_#cbd5e1] p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white max-w-lg w-full rounded-2xl border border-slate-200 shadow-xl max-h-[min(90dvh,calc(100dvh-3rem))] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-6 pb-3 border-b border-slate-100 shrink-0">
               <h2 className="text-xl font-black text-slate-800">Thêm Câu Hỏi Trắc Nghiệm</h2>
               <button onClick={() => setIsQuestionModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
                 <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleCreateQuestion} className="space-y-3.5">
+            <form onSubmit={handleCreateQuestion} className="p-6 pt-3 space-y-3.5 overflow-y-auto flex-1 min-h-0">
               <div>
                 <label className="text-xs font-black text-slate-500 uppercase mb-1 block">Nội dung câu hỏi</label>
                 <textarea

@@ -1,17 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useMemo } from "react";
+import { motion } from "framer-motion";
 import { 
   Heart, 
   Smile, 
-  Sparkles, 
   Zap, 
-  RotateCcw, 
-  Award, 
-  Shield, 
-  ChevronRight,
-  Flame
+  RotateCcw
 } from "lucide-react";
 import { Pet } from "@/lib/api/services/gamification.service";
 import { PET_SPECIES_LIST, PetSpecies, getSpeciesIdFromPetName } from "../types";
@@ -86,7 +81,7 @@ const PetVisualCharacter: React.FC<{
         </span>
         <span className="text-7xl sm:text-8xl filter drop-shadow-md">🦉</span>
         <span className="absolute -bottom-1 -left-3 text-2xl drop-shadow animate-spin">
-          ✨
+          🌟
         </span>
         <span className="absolute -bottom-1 -right-3 text-2xl drop-shadow">
           🌟
@@ -119,7 +114,7 @@ const PetVisualCharacter: React.FC<{
       return (
         <div className="relative flex items-center justify-center">
           <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-2xl drop-shadow animate-pulse pointer-events-none">
-            ✨
+            🌟
           </span>
           <span className="text-7xl sm:text-8xl filter drop-shadow-md">😽</span>
           <span className="absolute -bottom-1 -left-3 text-3xl drop-shadow pointer-events-none">
@@ -216,7 +211,7 @@ const PetVisualCharacter: React.FC<{
         👑
       </span>
       <span className="text-7xl sm:text-8xl filter drop-shadow-md">🍞</span>
-      <span className="absolute -bottom-1 -right-2 text-2xl drop-shadow">✨</span>
+      <span className="absolute -bottom-1 -right-2 text-2xl drop-shadow">⭐</span>
     </div>
   );
 };
@@ -231,7 +226,7 @@ export const PetStage3D: React.FC<PetStage3DProps> = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [heartParticles, setHeartParticles] = useState<{ id: number; x: number; y: number }[]>([]);
-  const [speechText, setSpeechText] = useState("");
+  const [speechOverride, setSpeechOverride] = useState<string | null>(null);
   const [isEating, setIsEating] = useState(false);
 
   // Identify active pet species from pet.name
@@ -258,20 +253,20 @@ export const PetStage3D: React.FC<PetStage3DProps> = ({
       : activeSpecies.stages.stage1;
 
   // Dynamic Speech Bubble based on health and happiness
-  useEffect(() => {
+  const defaultSpeech = useMemo(() => {
     if (health < 40) {
-      setSpeechText("Mình đang đói quá, cho mình xin 1 mẩu bánh mì đi bạn ơi! 🥺");
-    } else if (happiness < 40) {
-      setSpeechText("Hôm nay bạn chưa vào học với mình... Hãy làm 1 bài tập nhé! 😢");
-    } else {
-      const quotes = [
-        activeSpecies.quote,
-        `Chào bạn! Hôm nay cùng ${activeSpecies.name} chinh phục bài học mới nhé! ✨`,
-        `Thú cưng ${activeSpecies.name} cấp ${petLevel} luôn đồng hành cùng bạn! 💖`,
-      ];
-      setSpeechText(quotes[Math.floor(Math.random() * quotes.length)]);
+      return "Mình đang đói quá, cho mình xin 1 mẩu bánh mì đi bạn ơi! 🥺";
     }
-  }, [pet?.name, health, happiness, petLevel, activeSpecies]);
+    if (happiness < 40) {
+      return "Hôm nay bạn chưa vào học với mình... Hãy làm 1 bài tập nhé! 😢";
+    }
+    return (
+      activeSpecies.quote ||
+      `Chào bạn! Hôm nay cùng ${activeSpecies.name} chinh phục bài học mới nhé!`
+    );
+  }, [health, happiness, activeSpecies]);
+
+  const speechText = speechOverride || defaultSpeech;
 
   // Click on Pet to Pet / Pat (Xoa đầu thả tim)
   const handlePetClick = (e: React.MouseEvent) => {
@@ -288,10 +283,10 @@ export const PetStage3D: React.FC<PetStage3DProps> = ({
 
     const happySayings = [
       "Thích quá đi! Cảm ơn bạn đã xoa đầu mình! ❤️",
-      "Meow! Cùng cố gắng học tập nhé! ✨",
+      "Meow! Cùng cố gắng học tập nhé!",
       "Bạn là người bạn tuyệt vời nhất! 🥰",
     ];
-    setSpeechText(happySayings[Math.floor(Math.random() * happySayings.length)]);
+    setSpeechOverride(happySayings[Math.floor(Math.random() * happySayings.length)]);
   };
 
   const handleFeedClick = () => {
@@ -301,7 +296,7 @@ export const PetStage3D: React.FC<PetStage3DProps> = ({
     }
 
     setIsEating(true);
-    setSpeechText("Măm măm... Ngon tuyệt cú mèo! Cảm ơn bạn nhiều! 🍞💖");
+    setSpeechOverride("Măm măm... Ngon tuyệt cú mèo! Cảm ơn bạn nhiều! 🍞💖");
     onFeed();
 
     setTimeout(() => {
@@ -314,7 +309,7 @@ export const PetStage3D: React.FC<PetStage3DProps> = ({
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-[2.5rem] border-4 border-slate-200 shadow-[0_10px_0_0_#e2e8f0] p-6 sm:p-8 relative overflow-hidden"
+        className="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 sm:p-8 relative overflow-hidden"
       >
         {/* Background Ambient Glow */}
         <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-amber-200/30 via-orange-200/20 to-transparent rounded-full blur-3xl -z-0 pointer-events-none" />
@@ -385,7 +380,7 @@ export const PetStage3D: React.FC<PetStage3DProps> = ({
                 {/* Sparkling Halo on High Happiness */}
                 {happiness >= 80 && (
                   <div className="absolute top-2 right-4 text-3xl animate-bounce z-10 pointer-events-none">
-                    ✨
+                    🌟
                   </div>
                 )}
               </motion.div>
@@ -393,7 +388,7 @@ export const PetStage3D: React.FC<PetStage3DProps> = ({
               {/* Stage Title & Pet Interaction Hint */}
               <div className="text-center mt-3 flex flex-col items-center gap-1.5">
                 <span className="bg-gradient-to-r from-slate-800 to-slate-900 text-white text-xs font-black px-3.5 py-1 rounded-full shadow-md border border-slate-700/60">
-                  ✨ {currentStage.name}
+                  {currentStage.name}
                 </span>
                 <span className="text-[10px] font-extrabold text-slate-400">
                   👉 Nhấp để vuốt ve & xoa đầu thú cưng!

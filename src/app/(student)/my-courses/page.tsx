@@ -8,14 +8,9 @@ import {
   Loader2,
   ArrowRight,
   CreditCard,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
   ChevronLeft,
   ChevronRight,
   GraduationCap,
-  Sparkles,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import axiosClient from "@/lib/api/axiosClient";
@@ -83,7 +78,7 @@ export default function MyCoursesPage() {
     return map;
   }, [payments]);
 
-  const allEnrolled = classes || [];
+  const allEnrolled = useMemo(() => classes || [], [classes]);
 
   const filteredClasses = useMemo(() => {
     if (selectedTab === "ALL") return allEnrolled;
@@ -222,7 +217,7 @@ export default function MyCoursesPage() {
                     {/* Meta info */}
                     <p className="mt-2 text-xs text-slate-500 leading-relaxed line-clamp-2">
                       {cls.course?.description ||
-                        "Lộ trình tự học theo bài giảng tuần tự, bài tập thực hành và hỗ trợ AI."}
+                        "Lộ trình tự học theo bài giảng tuần tự, bài tập thực hành và hướng dẫn chi tiết."}
                     </p>
 
                     {/* Progress Bar or Payment Info */}

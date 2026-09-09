@@ -82,15 +82,6 @@ export default function LearnScreen() {
     setProgressMap(nextMap);
       setResultMap((previous) => ({ ...previous, [currentTopicId]: result.questionsResult }));
 
-    // Call backend watch tracking API if available
-    try {
-      learnService.updateWatchTracking(currentTopic.topicId || String(currentTopic.id), {
-        completed: true,
-        correctCount,
-        total: currentTopic.exercises.length,
-      }).catch(() => {});
-    } catch {}
-
     if (result.rewardBanh > 0) {
       toast.success(`Chúc mừng! Bạn đã trả lời đúng ${correctCount}/${currentTopic.exercises.length} câu và nhận +${result.rewardBanh} 🍞 Bánh Mì!`, {
         icon: "🎉",

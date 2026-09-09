@@ -21,13 +21,15 @@ export const learnService = {
     return res?.data || res;
   },
 
-  async getWatchTracking(): Promise<Record<string, any>> {
-    const res: any = await axiosClient.get('/classes/watch-tracking');
+  async getWatchTracking(classId?: number): Promise<Record<string, any>> {
+    const query = classId ? `?classId=${classId}` : '';
+    const res: any = await axiosClient.get(`/classes/watch-tracking${query}`);
     return res?.data || res || {};
   },
 
-  async updateWatchTracking(videoKey: string, payload: any): Promise<any> {
+  async updateWatchTracking(videoKey: string, payload: any, classId?: number): Promise<any> {
     return axiosClient.patch('/classes/watch-tracking', {
+      classId,
       videoKey,
       data: payload,
     });

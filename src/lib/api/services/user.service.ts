@@ -33,6 +33,12 @@ export interface UserLearningStats {
   tier: string;
   masteredVocabCount: number;
   totalQuizzesDone: number;
+  hasCompletedPlacementTest?: boolean;
+  latestDiagnostic?: {
+    level: string;
+    percentage: number;
+    submittedAt: string;
+  } | null;
 }
 
 export interface LearningActivity {

@@ -13,7 +13,6 @@ import { useAuthStore } from "@/stores/authStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { QuickLoginModal } from "@/components/auth/QuickLoginModal";
 import { QuickRegisterModal } from "@/components/auth/QuickRegisterModal";
-import { MobileBottomNav } from "@/components/navigation/MobileBottomNav";
 
 export default function PublicLandingPage() {
   const router = useRouter();
@@ -209,7 +208,7 @@ export default function PublicLandingPage() {
               </div>
               <h3 className="text-xl font-bold text-slate-900">Tặng 50 Bánh Mì cho tài khoản mới</h3>
               <p className="text-xs font-semibold text-slate-600 mt-1 leading-relaxed">
-                Tích lũy Bánh Mì để mở khóa nội dung học, nhận lượt chấm phát âm AI và bắt đầu với bài kiểm tra đầu vào ngắn.
+                Tích lũy Bánh Mì để mở khóa nội dung học, nhận lượt chấm phát âm chuẩn âm vị và bắt đầu với bài kiểm tra đầu vào ngắn.
               </p>
               <div className="mt-4 bg-amber-50 border border-amber-200/70 p-4 rounded-2xl space-y-2">
                 <div className="flex items-center gap-2.5">
@@ -354,18 +353,18 @@ export default function PublicLandingPage() {
                     🎙️
                   </div>
                   <span className="text-[11px] font-black uppercase px-2.5 py-1 rounded-lg bg-violet-100 text-violet-800 tracking-wide">
-                    Luyện nói với AI
+                    Luyện phát âm
                   </span>
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 group-hover:text-violet-700 transition-colors">
                   Luyện nói
                 </h3>
                 <p className="text-sm font-semibold text-slate-600 mt-2 leading-relaxed">
-                  Cải thiện phát âm, ngữ điệu và phản xạ với trợ lý AI.
+                  Cải thiện phát âm, ngữ điệu và phản xạ qua các bài tập tương tác.
                 </p>
               </div>
               <div className="pt-5 mt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold">
-                <span className="text-violet-800 font-extrabold">Nhận góp ý từ AI</span>
+                <span className="text-violet-800 font-extrabold">Nhận góp ý tự động</span>
                 <button
                   onClick={() => handleProtectedAction("bài luyện nói và phát âm", "/practice/speaking")}
                   className="px-3 py-1.5 rounded-xl bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 transition-colors font-extrabold flex items-center gap-1 cursor-pointer"
@@ -414,14 +413,14 @@ export default function PublicLandingPage() {
                     ✏️
                   </div>
                   <span className="text-[11px] font-black uppercase px-2.5 py-1 rounded-lg bg-rose-100 text-rose-800 tracking-wide">
-                    AI Writing
+                    Luyện viết
                   </span>
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 group-hover:text-rose-700 transition-colors">
                   Luyện viết
                 </h3>
                 <p className="text-sm font-semibold text-slate-600 mt-2 leading-relaxed">
-                  Luyện viết câu, email và nhận góp ý chi tiết từ AI.
+                  Luyện viết câu, email và nhận góp ý tự động chi tiết.
                 </p>
               </div>
               <div className="pt-5 mt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold">
@@ -539,7 +538,7 @@ export default function PublicLandingPage() {
 
         {/* Footer note matching UI mockup */}
         <footer className="pt-8 pb-4 text-center text-xs font-semibold text-slate-400 border-t border-slate-200/80">
-          <p>© 2025 BreadTrans - Nền tảng tự học tiếng Anh với AI. Thiết kế lấy học viên làm trung tâm.</p>
+          <p>© 2025 BreadTrans - Nền tảng tự học tiếng Anh & Luyện thi TOEIC. Thiết kế lấy học viên làm trung tâm.</p>
         </footer>
       </div>
       {/* END: MainContentContainer */}
@@ -548,7 +547,7 @@ export default function PublicLandingPage() {
       <aside className="fixed bottom-20 md:bottom-6 right-6 z-40" data-purpose="floating-learning-assistant">
         <div className="group relative">
           <div className="absolute bottom-16 right-0 mb-2 w-64 bg-slate-900 text-white text-xs font-semibold rounded-2xl p-3.5 shadow-xl pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
-            <p className="font-bold text-amber-400 mb-0.5">Trợ lý học tập AI</p>
+            <p className="font-bold text-amber-400 mb-0.5">Trợ lý học tập</p>
             Hỏi nghĩa từ vựng, giải thích câu sai ngữ pháp hoặc dịch câu tức thì!
           </div>
           <button
@@ -556,10 +555,10 @@ export default function PublicLandingPage() {
               if (user) {
                 router.push("/practice/speaking");
               } else {
-                handleProtectedAction("trợ lý AI", "/practice/speaking");
+                handleProtectedAction("trợ lý học tập", "/practice/speaking");
               }
             }}
-            aria-label="Mở trợ lý ảo AI"
+            aria-label="Mở trợ lý học tập"
             className="w-14 h-14 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white shadow-soft flex items-center justify-center transition-transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-amber-200 cursor-pointer"
             type="button"
           >
@@ -568,18 +567,6 @@ export default function PublicLandingPage() {
         </div>
       </aside>
       {/* END: FloatingAssistant */}
-
-      {/* Mobile navigation bottom bar */}
-      <MobileBottomNav
-        onOpenSkills={() => handleProtectedAction("Trung tâm luyện kỹ năng", "/practice")}
-        onOpenAccount={() => {
-          if (user) {
-            router.push("/dashboard");
-          } else {
-            openDirectLogin("tài khoản học viên", "/dashboard");
-          }
-        }}
-      />
 
       {/* Auth Gate Modal */}
       <AuthGateModal

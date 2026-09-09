@@ -825,10 +825,10 @@ export default function AdminCoursesPage() {
 
       {/* ================= MODAL: EDIT CLASS (ADMIN) ================= */}
       {editingClass && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full shadow-xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150 max-h-[min(90dvh,calc(100dvh-3rem))] flex flex-col overflow-hidden">
             {/* Header with Status Badge */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+            <div className="flex items-center justify-between p-6 pb-3 border-b border-slate-100 shrink-0">
               <div>
                 <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                   Quản trị Lớp học
@@ -869,7 +869,8 @@ export default function AdminCoursesPage() {
               </div>
             </div>
 
-            {/* Status alerts */}
+            <div className="p-6 pt-3 overflow-y-auto flex-1 min-h-0">
+              {/* Status alerts */}
             {editingClass.status === "ONGOING" && (
               <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-xs text-green-900 flex items-start gap-2.5 mb-4">
                 <AlertTriangle size={16} className="shrink-0 text-green-700 mt-0.5" />
@@ -1124,6 +1125,7 @@ export default function AdminCoursesPage() {
                 )}
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}

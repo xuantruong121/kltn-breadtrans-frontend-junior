@@ -26,12 +26,12 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
   return (
     <nav
       aria-label="Điều hướng di động dưới cùng"
-      className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-lg border-t border-slate-200/90 py-2 px-3 flex items-center justify-around shadow-[0_-4px_16px_rgba(0,0,0,0.04)] lg:hidden"
+      className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-lg border-t border-slate-200/90 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] px-3 flex items-center justify-around shadow-[0_-4px_16px_rgba(0,0,0,0.04)] lg:hidden"
     >
       {/* 1. Trang chủ */}
       <Link
         href={user ? "/dashboard" : "/"}
-        className={`flex flex-col items-center gap-1 min-w-[56px] py-1 transition-colors ${
+        className={`flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 transition-colors ${
           isHome ? "text-amber-700 font-bold" : "text-slate-500 hover:text-slate-800"
         }`}
       >
@@ -40,21 +40,33 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
       </Link>
 
       {/* 2. Trung tâm kỹ năng */}
-      <button
-        type="button"
-        onClick={onOpenSkills}
-        className={`flex flex-col items-center gap-1 min-w-[56px] py-1 transition-colors cursor-pointer ${
-          isSkills ? "text-amber-700 font-bold" : "text-slate-500 hover:text-amber-700"
-        }`}
-      >
-        <Compass size={20} className={isSkills ? "stroke-[2.5]" : "stroke-2"} />
-        <span className="text-[11px] font-semibold">Kỹ năng</span>
-      </button>
+      {onOpenSkills ? (
+        <button
+          type="button"
+          onClick={onOpenSkills}
+          className={`flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 transition-colors cursor-pointer ${
+            isSkills ? "text-amber-700 font-bold" : "text-slate-500 hover:text-amber-700"
+          }`}
+        >
+          <Compass size={20} className={isSkills ? "stroke-[2.5]" : "stroke-2"} />
+          <span className="text-[11px] font-semibold">Kỹ năng</span>
+        </button>
+      ) : (
+        <Link
+          href="/practice"
+          className={`flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 transition-colors ${
+            isSkills ? "text-amber-700 font-bold" : "text-slate-500 hover:text-amber-700"
+          }`}
+        >
+          <Compass size={20} className={isSkills ? "stroke-[2.5]" : "stroke-2"} />
+          <span className="text-[11px] font-semibold">Kỹ năng</span>
+        </Link>
+      )}
 
       {/* 3. Luyện đề TOEIC */}
       <Link
         href="/practice/quizzes"
-        className={`flex flex-col items-center gap-1 min-w-[56px] py-1 transition-colors ${
+        className={`flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 transition-colors ${
           isToeic ? "text-amber-700 font-bold" : "text-slate-500 hover:text-slate-800"
         }`}
       >
@@ -65,7 +77,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
       {/* 4. Khóa học */}
       <Link
         href={user ? "/my-courses" : "/courses"}
-        className={`flex flex-col items-center gap-1 min-w-[56px] py-1 transition-colors ${
+        className={`flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 transition-colors ${
           isCourses ? "text-amber-700 font-bold" : "text-slate-500 hover:text-slate-800"
         }`}
       >
@@ -77,22 +89,30 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
       {user ? (
         <Link
           href="/student/profile"
-          className={`flex flex-col items-center gap-1 min-w-[56px] py-1 transition-colors ${
+          className={`flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 transition-colors ${
             isProfile ? "text-amber-700 font-bold" : "text-slate-500 hover:text-slate-800"
           }`}
         >
           <User size={20} className={isProfile ? "stroke-[2.5]" : "stroke-2"} />
           <span className="text-[11px]">Hồ sơ</span>
         </Link>
-      ) : (
+      ) : onOpenAccount ? (
         <button
           type="button"
           onClick={onOpenAccount}
-          className="flex flex-col items-center gap-1 min-w-[56px] py-1 text-slate-500 hover:text-amber-700 transition-colors cursor-pointer"
+          className="flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 text-slate-500 hover:text-amber-700 transition-colors cursor-pointer"
         >
           <User size={20} className="stroke-2" />
           <span className="text-[11px] font-semibold">Tài khoản</span>
         </button>
+      ) : (
+        <Link
+          href="/login"
+          className="flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 text-slate-500 hover:text-amber-700 transition-colors"
+        >
+          <User size={20} className="stroke-2" />
+          <span className="text-[11px] font-semibold">Tài khoản</span>
+        </Link>
       )}
     </nav>
   );

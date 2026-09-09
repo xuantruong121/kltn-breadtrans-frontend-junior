@@ -1,17 +1,22 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, BookOpen, Clock, ChevronRight, ListChecks } from "lucide-react";
+import { Loader2, BookOpen, Clock, ChevronRight, ListChecks } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { readingService } from "@/lib/api/services/reading.service";
+import { useAuthStore } from "@/stores/authStore";
 import { BackButton } from "@/components/ui";
+import { AuthGateModal } from "@/components/auth/AuthGateModal";
 
 export default function ReadingTopicDetailPage() {
   const params = useParams();
   const router = useRouter();
   const topicId = Number(params.id);
+  const { user } = useAuthStore();
+  const [authGate, setAuthGate] = useState<{ open: boolean; quizId?: number; quizTitle?: string }>({ open: false });
 
   const { data: topic, isLoading } = useQuery({
     queryKey: ["reading-topic", topicId],
@@ -22,7 +27,7 @@ export default function ReadingTopicDetailPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Loader2 className="animate-spin text-junior-green" size={48} />
+        <Loader2 className="animate-spin text-emerald-600" size={48} />
       </div>
     );
   }
@@ -39,9 +44,10 @@ export default function ReadingTopicDetailPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 pb-20">
+    <>
+      <div className="max-w-6xl mx-auto space-y-6 pb-20">
       {/* TOP HEADER BAR */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border-4 border-slate-100 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
         <div className="flex items-center gap-4">
           <BackButton href="/practice/reading" label="Quay lại danh sách chủ đề" />
           <div className="h-6 w-0.5 bg-slate-200 hidden sm:block"></div>
@@ -62,7 +68,7 @@ export default function ReadingTopicDetailPage() {
       <div className="grid grid-cols-12 gap-6 items-start">
         {/* LEFT COLUMN: ARTICLES LIST */}
         <div className="col-span-12 lg:col-span-8 space-y-4">
-          <div className="bg-white p-6 rounded-[2rem] border-4 border-slate-100 shadow-sm">
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
             <h2 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
               <ListChecks size={22} className="text-emerald-500" /> Danh Sách Bài Đọc Thuộc Chủ Đề
             </h2>
@@ -70,7 +76,9 @@ export default function ReadingTopicDetailPage() {
             {actualTopic.quizzes && actualTopic.quizzes.length > 0 ? (
               <div className="space-y-3">
                 {actualTopic.quizzes.map((quiz: any, index: number) => (
-                  <Link key={quiz.id} href={`/practice/quizzes/${quiz.id}`} className="block">
+                  <Link key={quiz.id} href={`/practice/quizzes/${quiz.id}`} className="block" onClick={(e) => {
+                    if (!user) { e.preventDefault(); setAuthGate({ open: true, quizId: quiz.id, quizTitle: quiz.title }); }
+                  }}>
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -166,5 +174,15 @@ export default function ReadingTopicDetailPage() {
         </div>
       </div>
     </div>
+
+      <AuthGateModal
+        isOpen={authGate.open}
+        onClose={() => setAuthGate({ open: false })}
+        targetLabel={authGate.quizTitle ? `bài đọc "${authGate.quizTitle}"` : "bài đọc này"}
+        targetRoute={authGate.quizId ? `/practice/quizzes/${authGate.quizId}` : "/practice"}
+        onOpenLogin={() => router.push("/login")}
+        onOpenRegister={() => router.push("/register")}
+      />
+    </>
   );
 }

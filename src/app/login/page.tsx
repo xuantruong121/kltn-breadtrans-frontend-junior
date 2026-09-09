@@ -10,6 +10,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AuthShell } from "@/components/auth/AuthShell";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import GoogleAccountLinkModal from "@/components/auth/GoogleAccountLinkModal";
+import { getDeviceId, persistDeviceId } from "@/lib/auth/deviceId";
+import { normalizeAuthResponse } from "@/lib/auth/authResponse";
+import { hydrateSession } from "@/lib/auth/hydrateSession";
 
 const emptySubscribe = () => () => {};
 
@@ -40,7 +43,9 @@ function LoginForm() {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const [showReturnBanner, setShowReturnBanner] = useState(Boolean(safeRedirect));
+  const [showReturnBanner, setShowReturnBanner] = useState(
+    Boolean(safeRedirect),
+  );
   const [linkModalData, setLinkModalData] = useState<{
     isOpen: boolean;
     credential: string;
@@ -50,7 +55,7 @@ function LoginForm() {
   const isReady = useSyncExternalStore(
     emptySubscribe,
     () => true,
-    () => false
+    () => false,
   );
 
   // Auto redirect if already logged in
@@ -75,17 +80,15 @@ function LoginForm() {
     setErrorMsg("");
 
     try {
-      let deviceId = typeof window !== "undefined" ? localStorage.getItem("deviceId") : null;
-      if (!deviceId && typeof window !== "undefined") {
-        deviceId = crypto.randomUUID();
-        localStorage.setItem("deviceId", deviceId);
-      }
+      const deviceId = getDeviceId();
 
-      const res: any = await axiosClient.post("/auth/login", {
-        email: email.trim().toLowerCase(),
-        password,
-        deviceId,
-      });
+      const res = normalizeAuthResponse(
+        await axiosClient.post("/auth/login", {
+          email: email.trim().toLowerCase(),
+          password,
+          deviceId,
+        }),
+      );
 
       // Clear any previous user's cached queries and gamification store
       queryClient.clear();
@@ -93,6 +96,8 @@ function LoginForm() {
 
       // Set user session in authStore
       setAuth(res.access_token, res.refresh_token, res.user);
+      persistDeviceId(res.deviceId || deviceId);
+      await hydrateSession(queryClient);
 
       if (res.user.role === "ADMIN") {
         router.push("/admin");
@@ -105,7 +110,7 @@ function LoginForm() {
       setErrorMsg(
         Array.isArray(msg)
           ? msg.join(". ")
-          : msg || "Email hoặc mật khẩu không chính xác. Vui lòng thử lại."
+          : msg || "Email hoặc mật khẩu không chính xác. Vui lòng thử lại.",
       );
     } finally {
       setIsLoading(false);
@@ -126,8 +131,8 @@ function LoginForm() {
               info
             </span>
             <div>
-              Bạn cần đăng nhập để truy cập tính năng vừa chọn. Hệ thống sẽ tự động chuyển tiếp ngay
-              sau khi xác thực thành công.
+              Bạn cần đăng nhập để truy cập tính năng vừa chọn. Hệ thống sẽ tự
+              động chuyển tiếp ngay sau khi xác thực thành công.
             </div>
           </div>
           <button
@@ -157,13 +162,17 @@ function LoginForm() {
             Đăng nhập BreadTrans
           </h1>
           <p className="text-sm text-on-surface-variant mt-1.5 leading-relaxed">
-            Chào mừng bạn quay trở lại! Tiếp tục hành trình học tiếng Anh của bạn.
+            Chào mừng bạn quay trở lại! Tiếp tục hành trình học tiếng Anh của
+            bạn.
           </p>
         </div>
 
         {/* Alert Notification Box */}
         {errorMsg && (
-          <div role="alert" className="mb-5 bg-error-container text-on-error-container border border-error/20 p-3 rounded-xl text-sm font-medium flex items-center justify-between gap-2 animate-in fade-in duration-150">
+          <div
+            role="alert"
+            className="mb-5 bg-error-container text-on-error-container border border-error/20 p-3 rounded-xl text-sm font-medium flex items-center justify-between gap-2 animate-in fade-in duration-150"
+          >
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-error text-[20px] shrink-0">
                 error
@@ -176,7 +185,9 @@ function LoginForm() {
               aria-label="Đóng thông báo lỗi"
               className="text-on-error-container/80 hover:text-on-error-container p-0.5 rounded-md transition-colors"
             >
-              <span className="material-symbols-outlined text-[18px]">close</span>
+              <span className="material-symbols-outlined text-[18px]">
+                close
+              </span>
             </button>
           </div>
         )}
@@ -185,12 +196,17 @@ function LoginForm() {
         <form className="space-y-4" onSubmit={handleLogin}>
           {/* Email Input Field */}
           <div className="space-y-1.5">
-            <label className="block text-sm font-semibold text-on-surface" htmlFor="emailInput">
+            <label
+              className="block text-sm font-semibold text-on-surface"
+              htmlFor="emailInput"
+            >
               Địa chỉ Email <span className="text-error">*</span>
             </label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-on-surface-variant/70">
-                <span className="material-symbols-outlined text-[20px]">mail</span>
+                <span className="material-symbols-outlined text-[20px]">
+                  mail
+                </span>
               </span>
               <input
                 id="emailInput"
@@ -208,12 +224,17 @@ function LoginForm() {
 
           {/* Password Input Field */}
           <div className="space-y-1.5">
-            <label className="block text-sm font-semibold text-on-surface" htmlFor="passwordInput">
+            <label
+              className="block text-sm font-semibold text-on-surface"
+              htmlFor="passwordInput"
+            >
               Mật khẩu <span className="text-error">*</span>
             </label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-on-surface-variant/70">
-                <span className="material-symbols-outlined text-[20px]">key</span>
+                <span className="material-symbols-outlined text-[20px]">
+                  key
+                </span>
               </span>
               <input
                 id="passwordInput"
@@ -296,7 +317,9 @@ function LoginForm() {
             ) : (
               <>
                 <span>Đăng nhập</span>
-                <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                <span className="material-symbols-outlined text-[20px]">
+                  arrow_forward
+                </span>
               </>
             )}
           </button>

@@ -313,21 +313,22 @@ export default function AdminVocabPage() {
 
       {/* MANAGE WORDS DRAWER / MODAL */}
       {selectedTopic && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white max-w-2xl w-full rounded-[2.5rem] border-4 border-slate-200 shadow-[0_12px_0_0_#cbd5e1] p-6 space-y-5 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white max-w-2xl w-full rounded-2xl border border-slate-200 shadow-xl max-h-[min(90dvh,calc(100dvh-3rem))] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-6 pb-3 border-b border-slate-100 shrink-0">
               <div>
                 <h2 className="text-xl font-black text-slate-800">
                   Từ Vựng: {selectedTopic.title}
                 </h2>
                 <span className="text-xs font-bold text-slate-400">{selectedTopic.categoryName}</span>
               </div>
-              <button onClick={() => setSelectedTopic(null)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setSelectedTopic(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
                 <X size={20} />
               </button>
             </div>
 
-            {/* FORM: ADD WORD */}
+            <div className="p-6 pt-3 space-y-5 overflow-y-auto flex-1 min-h-0">
+              {/* FORM: ADD WORD */}
             <form onSubmit={handleAddWord} className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 space-y-3">
               <h4 className="text-xs font-black text-slate-700 uppercase">Thêm từ mới vào chủ đề</h4>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -433,6 +434,7 @@ export default function AdminVocabPage() {
             </div>
           </div>
         </div>
+      </div>
       )}
     </div>
   );

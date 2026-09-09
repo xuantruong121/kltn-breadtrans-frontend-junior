@@ -93,8 +93,8 @@ export function AuthShell({ children }: AuthShellProps) {
                 <span className="text-xl font-bold text-primary tracking-tight">BreadTrans</span>
               </div>
               <p className="text-sm text-on-surface-variant max-w-md mb-4 leading-relaxed">
-                Nền tảng tự học tiếng Anh ứng dụng AI. Rèn luyện 4 kỹ năng, củng cố từ vựng
-                và ngữ pháp theo phương pháp tương tác tự nhiên.
+                Nền tảng tự học tiếng Anh tương tác. Rèn luyện 4 kỹ năng, củng cố từ vựng
+                và ngữ pháp theo phương pháp học chủ động.
               </p>
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-container-low text-on-surface-variant text-xs font-semibold">
                 <span className="material-symbols-outlined text-secondary text-[18px]">verified</span>
@@ -118,7 +118,7 @@ export function AuthShell({ children }: AuthShellProps) {
                     className="text-on-surface-variant hover:text-primary transition-colors"
                     href="/practice/speaking"
                   >
-                    Luyện nói với AI
+                    Luyện nói chuẩn âm vị
                   </Link>
                 </li>
                 <li>
@@ -134,7 +134,7 @@ export function AuthShell({ children }: AuthShellProps) {
                     className="text-on-surface-variant hover:text-primary transition-colors"
                     href="/practice/writing"
                   >
-                    Luyện Viết AI gợi ý sửa lỗi
+                    Luyện Viết gợi ý sửa lỗi
                   </Link>
                 </li>
               </ul>
@@ -222,7 +222,7 @@ export function AuthShell({ children }: AuthShellProps) {
             <div className="flex items-center gap-4">
               <span>Phiên bản Web 2.4.0</span>
               <span>•</span>
-              <span>AI Model Active</span>
+              <span>Hệ thống trực tuyến</span>
             </div>
           </div>
         </div>

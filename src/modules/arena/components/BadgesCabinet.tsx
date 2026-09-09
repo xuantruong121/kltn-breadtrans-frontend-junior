@@ -13,7 +13,7 @@ import {
   Heart, 
   CheckCircle2, 
   Lock, 
-  Sparkles,
+  BadgeCheck,
   Zap
 } from "lucide-react";
 import { BadgeDetailModal, BadgeItem } from "./BadgeDetailModal";
@@ -142,8 +142,8 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
     {
       id: 7,
       name: "Giọng Đọc Vàng",
-      category: "Luyện Nói AI",
-      description: "Đạt điểm phát âm 90+ trong 5 câu luyện nói AI",
+      category: "Luyện phát âm",
+      description: "Đạt điểm phát âm 90+ trong 5 câu luyện phát âm",
       icon: Mic,
       color: "text-emerald-600",
       bgColor: "bg-emerald-100",
@@ -215,7 +215,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
         <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-2xl p-3.5 text-white shadow-xs mb-4">
           <div className="flex justify-between items-center text-xs font-black mb-1.5">
             <span className="flex items-center gap-1.5">
-              <Sparkles size={14} /> Đã Mở Khóa: {unlockedBadgesCount}/{ALL_BADGES.length} Huy Hiệu
+              <BadgeCheck size={14} /> Đã Mở Khóa: {unlockedBadgesCount}/{ALL_BADGES.length} Huy Hiệu
             </span>
             <span className="bg-white/20 px-2 py-0.5 rounded-full text-[10px]">
               {progressTotalPercent}%

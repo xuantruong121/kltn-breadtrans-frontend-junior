@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Lock, X, ShieldAlert } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
@@ -8,6 +8,9 @@ import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { getDeviceId, persistDeviceId } from "@/lib/auth/deviceId";
+import { normalizeAuthResponse } from "@/lib/auth/authResponse";
+import { hydrateSession } from "@/lib/auth/hydrateSession";
 
 interface GoogleAccountLinkModalProps {
   isOpen: boolean;
@@ -33,6 +36,14 @@ export default function GoogleAccountLinkModal({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
+  useEffect(() => {
+    if (isOpen) {
+      setEmail(defaultEmail);
+      setPassword("");
+      setErrorMsg("");
+    }
+  }, [defaultEmail, isOpen]);
+
   if (!isOpen) return null;
 
   const handleLinkAccount = async (e: React.FormEvent) => {
@@ -46,23 +57,22 @@ export default function GoogleAccountLinkModal({
     setErrorMsg("");
 
     try {
-      let deviceId =
-        typeof window !== "undefined" ? localStorage.getItem("deviceId") : null;
-      if (!deviceId && typeof window !== "undefined") {
-        deviceId = crypto.randomUUID();
-        localStorage.setItem("deviceId", deviceId);
-      }
+      const deviceId = getDeviceId();
 
-      const res: any = await axiosClient.post("/auth/google/link", {
-        email,
-        password,
-        credential,
-        deviceId,
-      });
+      const res = normalizeAuthResponse(
+        await axiosClient.post("/auth/google/link", {
+          email,
+          password,
+          credential,
+          deviceId,
+        }),
+      );
 
       queryClient.clear();
       useGamificationStore.getState().reset();
       setAuth(res.access_token, res.refresh_token, res.user);
+      persistDeviceId(res.deviceId || deviceId);
+      await hydrateSession(queryClient);
 
       toast.success("Liên kết tài khoản Google thành công!");
       onClose();
@@ -74,8 +84,10 @@ export default function GoogleAccountLinkModal({
         router.replace(candidate);
       }
     } catch (err: any) {
+      const payload = err.response?.data?.message;
       const msg =
-        err.response?.data?.message || "Mật khẩu không chính xác hoặc liên kết thất bại.";
+        (typeof payload === "object" ? payload?.message : payload) ||
+        "Mật khẩu không chính xác hoặc liên kết thất bại.";
       setErrorMsg(msg);
     } finally {
       setIsLoading(false);
@@ -109,7 +121,8 @@ export default function GoogleAccountLinkModal({
         </div>
 
         <p className="mb-5 text-sm text-slate-600 leading-relaxed">
-          Email này đã được đăng ký trước đó bằng mật khẩu. Nhập mật khẩu BreadTrans để hoàn tất liên kết với tài khoản Google.
+          Email này đã được đăng ký trước đó bằng mật khẩu. Nhập mật khẩu
+          BreadTrans để hoàn tất liên kết với tài khoản Google.
         </p>
 
         {errorMsg && (

@@ -83,7 +83,7 @@ export default function WritingDetailPage(props: { params: Promise<{ id: string 
           <div>
             <h1 className="text-xl font-extrabold text-slate-900 line-clamp-1">Luyện viết: Email công việc</h1>
             <p className="text-xs text-slate-500 font-medium">
-              Viết bài theo tình huống thực tế & nhận phân tích chuyên sâu từ AI
+              Viết bài theo tình huống thực tế & nhận phân tích chuyên sâu tự động
             </p>
           </div>
         </div>
@@ -95,7 +95,7 @@ export default function WritingDetailPage(props: { params: Promise<{ id: string 
 
       {/* 2. 2-COLUMN MAIN LAYOUT */}
       <div className="grid grid-cols-12 gap-6 items-start">
-        {/* LEFT COLUMN: PROMPT, EDITOR & AI FEEDBACK */}
+        {/* LEFT COLUMN: PROMPT, EDITOR & FEEDBACK */}
         <div className="col-span-12 lg:col-span-8 space-y-6">
           {/* HEADER PROMPT */}
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-2xs space-y-4">

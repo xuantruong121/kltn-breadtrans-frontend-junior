@@ -151,7 +151,11 @@ export default function ToeicPapersPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             {paginatedQuizzes.map((quiz: any, index: number) => {
               const isCompleted = quiz.isCompleted;
-              const questionCount = quiz._count?.questions || quiz.questionsCount || 0;
+              const questionCount = quiz.questionsCount || quiz._count?.questions || 0;
+              const examFormat = quiz.bilingualContent?.examFormat;
+              const destination = examFormat === "FOUR_SKILL"
+                ? `/practice/toeic/bundle/${quiz.id}`
+                : `/practice/toeic/${quiz.bilingualContent?.examSetId || quiz.id}`;
 
               return (
                 <motion.div
@@ -159,7 +163,7 @@ export default function ToeicPapersPage() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.04 }}
-                  onClick={() => router.push(`/practice/quizzes/${quiz.id}`)}
+                  onClick={() => router.push(destination)}
                   className={`group relative rounded-2xl border p-5 flex flex-col justify-between cursor-pointer transition-all duration-200 ${
                     isCompleted
                       ? "bg-emerald-50/40 border-emerald-200 hover:border-emerald-300 hover:shadow-md"

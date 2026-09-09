@@ -19,7 +19,14 @@ export const aiService = {
     return { answer: replyText };
   },
 
-  explainError: async (questionId: number, userAnswer: string): Promise<any> => {
-    return await axiosClient.post(`/ai/explain-toeic-error/${questionId}`, { userAnswer });
+  explainError: async (
+    questionId: number,
+    payload: {
+      questionContent: unknown;
+      userAnswer: string;
+      correctAnswer: string;
+    },
+  ): Promise<{ success: boolean; explanation: string }> => {
+    return await axiosClient.post(`/ai/explain-toeic-error/${questionId}`, payload);
   },
 };

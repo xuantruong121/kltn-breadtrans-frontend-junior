@@ -135,8 +135,7 @@ export default function SocketProvider({ children }: { children: React.ReactNode
         }
       } else if (user?.role === "STUDENT") {
         if (fromRole === "ADMIN" && targetUserId === user.id) {
-          toast(`👨‍🏫 Thầy Cô vừa trả lời bạn: "${message.content.substring(0, 35)}..."`, {
-            icon: "💬",
+          toast(`Thầy Cô vừa trả lời bạn: "${message.content.substring(0, 35)}..."`, {
             duration: 5000,
           });
         }

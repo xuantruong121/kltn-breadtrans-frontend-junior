@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
 import { Layers, GraduationCap, PenTool, Mic, Film, PieChart } from "lucide-react";
 
 interface ContentBreakdown {

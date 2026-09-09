@@ -107,10 +107,10 @@ export function QuickRegisterModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-150">
       <div className="absolute inset-0" onClick={onClose} />
 
-      <div className="relative w-full max-w-md rounded-3xl bg-white p-6 sm:p-8 shadow-2xl border border-amber-100 z-10 animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-md rounded-2xl bg-white p-6 sm:p-8 shadow-2xl border border-amber-100 z-10 animate-in zoom-in-95 duration-150 max-h-[min(90dvh,calc(100dvh-3rem))] overflow-y-auto">
         <button
           type="button"
           onClick={onClose}

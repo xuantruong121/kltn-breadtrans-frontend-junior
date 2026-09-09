@@ -155,10 +155,10 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.2 }}
-          className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-xl w-full max-h-[90vh] flex flex-col overflow-hidden"
+          className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-xl w-full max-h-[min(90dvh,calc(100dvh-3rem))] flex flex-col overflow-hidden"
         >
           {/* Modal Header */}
-          <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-sky-100 text-sky-700">
                 <CreditCard size={22} />
@@ -181,7 +181,7 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
           </div>
 
           {/* Modal Body */}
-          <div className="p-5 overflow-y-auto space-y-5 flex-1">
+          <div className="p-5 overflow-y-auto space-y-5 flex-1 min-h-0">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-16 space-y-3">
                 <Loader2 className="animate-spin text-sky-600" size={36} />
@@ -496,7 +496,7 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
           </div>
 
           {/* Modal Footer */}
-          <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex justify-end">
+          <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex justify-end shrink-0">
             <button
               type="button"
               onClick={onClose}

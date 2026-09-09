@@ -5,12 +5,29 @@ import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppHeader } from "@/components/navigation/AppHeader";
+import { AppFooter } from "@/components/navigation/AppFooter";
+import { BackToTop } from "@/components/navigation/BackToTop";
+import { MobileBottomNav } from "@/components/navigation/MobileBottomNav";
 import { userService } from "@/lib/api/services/user.service";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 
 const FloatingAiTutor = dynamic(() => import("@/components/FloatingAiTutor"), { ssr: false });
 const emptySubscribe = () => () => {};
+
+function isGuestAllowedRoute(pathname: string): boolean {
+  const guestPrefixes = [
+    "/market",
+    "/arena",
+    "/practice",
+    "/flashcard",
+    "/grammar",
+    "/learn",
+    "/diagnostic",
+    "/vocabulary",
+  ];
+  return guestPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"));
+}
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -20,6 +37,8 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   const setStats = useGamificationStore((state) => state.setStats);
   const isReady = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
+  const isGuestAllowed = isGuestAllowedRoute(pathname);
+
   const { data: learningStats } = useQuery({
     queryKey: ["user-stats", user?.id],
     queryFn: userService.getStats,
@@ -28,10 +47,10 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   });
 
   useEffect(() => {
-    if (isReady && (!user || user.role !== "STUDENT")) {
+    if (isReady && (!user || user.role !== "STUDENT") && !isGuestAllowed) {
       router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
     }
-  }, [isReady, user, router, pathname]);
+  }, [isReady, user, router, pathname, isGuestAllowed]);
 
   useEffect(() => {
     if (!user || user.role !== "STUDENT") return;
@@ -53,21 +72,25 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     });
   }, [learningStats, setStats]);
 
-  if (!isReady || !user || user.role !== "STUDENT") return null;
+  if (!isReady) return null;
+  if ((!user || user.role !== "STUDENT") && !isGuestAllowed) return null;
 
   const isSpeakingPage = pathname.startsWith("/practice/speaking");
 
   return (
-    <div className="min-h-[100dvh] bg-[#fbfaf8] text-slate-800 antialiased selection:bg-amber-600 selection:text-white font-['Quicksand',sans-serif]">
+    <div className="min-h-[100dvh] flex flex-col bg-[#fbfaf8] text-slate-800 antialiased selection:bg-amber-600 selection:text-white font-['Quicksand',sans-serif]">
       <AppHeader />
       <main
-        className={`mx-auto min-h-[calc(100dvh-72px)] w-full px-4 py-4 sm:px-6 sm:py-6 lg:px-8 xl:px-10 2xl:px-12 ${
+        className={`mx-auto flex-1 min-w-0 w-full px-4 py-4 sm:px-6 sm:py-6 lg:px-8 xl:px-10 2xl:px-12 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-8 ${
           isSpeakingPage ? "max-w-[1820px]" : "max-w-7xl sm:py-8"
         }`}
       >
         {children}
       </main>
-      <FloatingAiTutor />
+      <AppFooter />
+      <BackToTop />
+      {user && <FloatingAiTutor />}
+      <MobileBottomNav />
     </div>
   );
 }

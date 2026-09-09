@@ -313,7 +313,7 @@ export default function PublicCourseDetailPage() {
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                 Hỗ trợ học tập
               </p>
-              <p className="text-sm font-bold text-slate-900">AI phân tích & chấm điểm</p>
+              <p className="text-sm font-bold text-slate-900">Phân tích & chấm điểm tự động</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -389,9 +389,9 @@ export default function PublicCourseDetailPage() {
             <h3 className="text-xl font-bold text-slate-900">Cam kết chất lượng đào tạo</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
-                <p className="font-bold text-sm text-slate-900">Tự học có hỗ trợ AI</p>
+                <p className="font-bold text-sm text-slate-900">Tự học có hướng dẫn</p>
                 <p className="text-xs text-slate-600">
-                  Luyện tập phát âm, ngữ pháp và nhận phản hồi trực tiếp từ trợ lý AI.
+                  Luyện tập phát âm, ngữ pháp và nhận phản hồi trực tiếp từ hệ thống.
                 </p>
               </div>
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
@@ -472,7 +472,7 @@ export default function PublicCourseDetailPage() {
                         <div className="flex items-center gap-2">
                           <ShieldCheck size={14} className="text-slate-400 shrink-0" />
                           <span>
-                            Hình thức: <strong className="text-slate-800">Tự học có hướng dẫn AI</strong>
+                            Hình thức: <strong className="text-slate-800">Tự học có hướng dẫn</strong>
                           </span>
                         </div>
                       </div>

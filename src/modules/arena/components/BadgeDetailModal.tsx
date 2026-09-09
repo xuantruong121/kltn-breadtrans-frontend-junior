@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, CheckCircle2, Lock, Sparkles, Award, Calendar, Zap, Shield, Flame, Crown, Star, Swords, Mic, Heart } from "lucide-react";
+import { X, CheckCircle2, Lock, BadgeCheck, Calendar } from "lucide-react";
 import { Button3D } from "@/components/ui";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import toast from "react-hot-toast";
@@ -55,18 +55,18 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
       toast.success(`Đã tháo huy hiệu ${badge.name}`);
     } else {
       equipBadge(`badge_${badge.id}`);
-      toast.success(`Đã đeo huy hiệu "${badge.name}" lên Avatar! ✨`);
+      toast.success(`Đã đeo huy hiệu "${badge.name}" lên Avatar!`);
     }
   };
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="bg-white rounded-[2.5rem] border-4 border-slate-200 shadow-[0_25px_50px_rgba(0,0,0,0.25)] max-w-md w-full p-6 sm:p-8 text-center relative overflow-hidden"
+          className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full max-h-[min(90dvh,calc(100dvh-3rem))] overflow-y-auto p-6 sm:p-8 text-center relative"
         >
           {/* Ambient Glow */}
           <div
@@ -185,11 +185,11 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
               >
                 {isEquipped ? (
                   <>
-                    <Sparkles size={16} /> Đang Đeo Trên Avatar (Bấm để gỡ)
+                    <BadgeCheck size={16} /> Đang Đeo Trên Avatar (Bấm để gỡ)
                   </>
                 ) : (
                   <>
-                    <Sparkles size={16} /> Đeo Huy Hiệu Này Lên Avatar
+                    <BadgeCheck size={16} /> Đeo Huy Hiệu Này Lên Avatar
                   </>
                 )}
               </Button3D>

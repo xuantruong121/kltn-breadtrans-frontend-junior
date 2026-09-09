@@ -18,7 +18,7 @@ export function PublicFooter() {
               </span>
             </div>
             <p className="text-sm leading-relaxed text-slate-500">
-              Nền tảng tự học tiếng Anh 4 kỹ năng, kết hợp Flashcard, ngữ pháp và AI hỗ trợ phát âm, viết câu.
+              Nền tảng tự học tiếng Anh 4 kỹ năng, kết hợp Flashcard, ngữ pháp cùng công cụ luyện phát âm và viết câu thông minh.
             </p>
           </div>
 
@@ -100,7 +100,7 @@ export function PublicFooter() {
             <Link href="/privacy" className="hover:text-amber-700">Chính sách bảo mật</Link>
             <Link href="/help" className="hover:text-amber-700">Trợ giúp</Link>
           </div>
-          <p>© {new Date().getFullYear()} BreadTrans - Nền tảng tự học tiếng Anh cùng AI. Thiết kế lấy học viên làm trung tâm.</p>
+          <p>© {new Date().getFullYear()} BreadTrans - Nền tảng tự học tiếng Anh & Luyện thi TOEIC. Thiết kế lấy học viên làm trung tâm.</p>
         </div>
       </div>
     </footer>

@@ -518,12 +518,12 @@ export default function AdminQuizzesPage() {
       {/* ================= MODAL / DRAWER: QUẢN LÝ CÂU HỎI TRONG ĐỀ THI ================= */}
       <AnimatePresence>
         {selectedQuizForQuestions && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-[2.5rem] border-4 border-slate-200 shadow-2xl p-6 md:p-8 max-w-3xl w-full max-h-[90vh] flex flex-col space-y-6"
+              className="bg-white rounded-2xl border border-slate-200 shadow-xl p-6 md:p-8 max-w-3xl w-full max-h-[min(90dvh,calc(100dvh-3rem))] flex flex-col space-y-6 overflow-hidden"
             >
               {/* HEADER */}
               <div className="flex items-center justify-between border-b-2 border-slate-100 pb-4 shrink-0">
@@ -537,14 +537,14 @@ export default function AdminQuizzesPage() {
                 </div>
                 <button
                   onClick={() => setSelectedQuizForQuestions(null)}
-                  className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100"
+                  className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 cursor-pointer"
                 >
                   <X size={24} />
                 </button>
               </div>
 
               {/* QUESTIONS LIST */}
-              <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+              <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1">
                 {isDetailLoading ? (
                   <div className="flex justify-center py-12">
                     <Loader2 className="animate-spin text-emerald-500" size={40} />

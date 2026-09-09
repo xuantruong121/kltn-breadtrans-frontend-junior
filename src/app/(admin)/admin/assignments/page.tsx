@@ -319,9 +319,9 @@ export default function AdminAssignmentsPage() {
 
       {/* Create Assignment Modal */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white z-10">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[min(90dvh,calc(100dvh-3rem))] shadow-xl border border-slate-200 flex flex-col overflow-hidden">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center shrink-0 bg-white">
               <h2 className="text-xl font-bold text-slate-800">
                 Giao Bài tập Mới
               </h2>
@@ -333,7 +333,7 @@ export default function AdminAssignmentsPage() {
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   Tiêu đề
@@ -502,7 +502,7 @@ export default function AdminAssignmentsPage() {
               )}
             </div>
 
-            <div className="p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50 mt-auto sticky bottom-0">
+            <div className="p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50 shrink-0">
               <button
                 onClick={() => setIsCreateModalOpen(false)}
                 className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg font-medium transition-colors cursor-pointer text-sm"
@@ -528,9 +528,9 @@ export default function AdminAssignmentsPage() {
 
       {/* Submissions Modal */}
       {isSubmissionsModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white z-10">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[min(90dvh,calc(100dvh-3rem))] shadow-xl border border-slate-200 flex flex-col overflow-hidden">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center shrink-0 bg-white">
               <div>
                 <h2 className="text-xl font-bold text-slate-800">
                   Chấm điểm: {selectedAssignment?.title}
@@ -555,7 +555,7 @@ export default function AdminAssignmentsPage() {
               </button>
             </div>
 
-            <div className="p-6 bg-slate-50 min-h-[300px]">
+            <div className="p-6 bg-slate-50 overflow-y-auto flex-1 min-h-0">
               {detailLoading ? (
                 <div className="text-center py-12 text-slate-500">
                   Đang tải danh sách nộp bài...
