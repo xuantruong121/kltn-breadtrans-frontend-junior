@@ -12,6 +12,9 @@ import { getDeviceId, persistDeviceId } from "@/lib/auth/deviceId";
 import { normalizeAuthResponse } from "@/lib/auth/authResponse";
 import { hydrateSession } from "@/lib/auth/hydrateSession";
 
+type GoogleCredentialResponse = { credential?: string };
+type GoogleCredentialHandler = (response: GoogleCredentialResponse) => void;
+
 declare global {
   interface Window {
     google?: {
@@ -22,6 +25,10 @@ declare global {
           prompt?: () => void;
         };
       };
+    };
+    __breadtransGoogleSignIn?: {
+      initializedClientId: string | null;
+      activeCredentialHandler: GoogleCredentialHandler | null;
     };
   }
 }
@@ -53,6 +60,16 @@ function getSafeReturnUrl(rawTarget?: string | null): string {
   return candidate;
 }
 
+function getGoogleRuntime() {
+  if (!window.__breadtransGoogleSignIn) {
+    window.__breadtransGoogleSignIn = {
+      initializedClientId: null,
+      activeCredentialHandler: null,
+    };
+  }
+  return window.__breadtransGoogleSignIn;
+}
+
 export default function GoogleSignInButton({
   redirectUrl,
   onAccountLinkRequired,
@@ -62,7 +79,6 @@ export default function GoogleSignInButton({
   const queryClient = useQueryClient();
   const { setAuth } = useAuthStore();
   const buttonRef = useRef<HTMLDivElement>(null);
-  const initializedRef = useRef(false);
   const [isReady, setIsReady] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -143,13 +159,24 @@ export default function GoogleSignInButton({
 
     let intervalId: NodeJS.Timeout;
     const initGsi = () => {
-      if (initializedRef.current) return true;
       if (window.google?.accounts?.id && buttonRef.current) {
         try {
-          window.google.accounts.id.initialize({
-            client_id: clientId,
-            callback: handleCredentialResponse,
-          });
+          const runtime = getGoogleRuntime();
+          if (!runtime.initializedClientId) {
+            window.google.accounts.id.initialize({
+              client_id: clientId,
+              callback: (response: GoogleCredentialResponse) =>
+                getGoogleRuntime().activeCredentialHandler?.(response),
+            });
+            runtime.initializedClientId = clientId;
+          }
+
+          if (runtime.initializedClientId !== clientId) {
+            console.error("Google Sign-In client ID changed after initialization.");
+            return false;
+          }
+
+          runtime.activeCredentialHandler = handleCredentialResponse;
 
           buttonRef.current.innerHTML = "";
           window.google.accounts.id.renderButton(buttonRef.current, {
@@ -162,7 +189,6 @@ export default function GoogleSignInButton({
             logo_alignment: "left",
           });
           setIsReady(true);
-          initializedRef.current = true;
           return true;
         } catch (e) {
           console.error("Failed to render Google Sign-In button:", e);
@@ -181,6 +207,10 @@ export default function GoogleSignInButton({
 
     return () => {
       if (intervalId) clearInterval(intervalId);
+      const runtime = window.__breadtransGoogleSignIn;
+      if (runtime?.activeCredentialHandler === handleCredentialResponse) {
+        runtime.activeCredentialHandler = null;
+      }
     };
   }, [clientId, handleCredentialResponse]);
 

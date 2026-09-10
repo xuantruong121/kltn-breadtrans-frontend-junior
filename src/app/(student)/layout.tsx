@@ -12,7 +12,14 @@ import { userService } from "@/lib/api/services/user.service";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 
-const FloatingAiTutor = dynamic(() => import("@/components/FloatingAiTutor"), { ssr: false });
+const FloatingAiTutor = dynamic(
+  () =>
+    import("@/components/FloatingAiTutor").catch((err) => {
+      console.warn("FloatingAiTutor chunk load failed (stale chunk after server restart):", err);
+      return { default: () => null };
+    }),
+  { ssr: false }
+);
 const emptySubscribe = () => () => {};
 
 function isGuestAllowedRoute(pathname: string): boolean {
@@ -75,19 +82,27 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   if (!isReady) return null;
   if ((!user || user.role !== "STUDENT") && !isGuestAllowed) return null;
 
-  const isSpeakingPage = pathname.startsWith("/practice/speaking");
+  const isSpeakingExercisePage = /^\/practice\/speaking\/\d+/.test(pathname);
+  const isQuizExercisePage = /^\/practice\/quizzes\/\d+/.test(pathname);
+  const isPracticeRoomPage = isSpeakingExercisePage || isQuizExercisePage;
+  const isPracticeCatalogPage =
+    pathname.startsWith("/practice");
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-[#fbfaf8] text-slate-800 antialiased selection:bg-amber-600 selection:text-white font-['Quicksand',sans-serif]">
       <AppHeader />
       <main
-        className={`mx-auto flex-1 min-w-0 w-full px-4 py-4 sm:px-6 sm:py-6 lg:px-8 xl:px-10 2xl:px-12 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-8 ${
-          isSpeakingPage ? "max-w-[1820px]" : "max-w-7xl sm:py-8"
+        className={`min-w-0 w-full ${
+          isPracticeRoomPage
+            ? "flex-1 flex flex-col max-w-none px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-2 sm:py-2.5 pb-2.5 sm:pb-3"
+            : isPracticeCatalogPage
+              ? "w-full flex-1 max-w-none px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-4 sm:py-6 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-8"
+              : "mx-auto flex-1 max-w-7xl px-4 py-4 sm:px-6 sm:py-8 lg:px-8 xl:px-10 2xl:px-12 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-8"
         }`}
       >
         {children}
       </main>
-      <AppFooter />
+      {!isPracticeRoomPage && <AppFooter />}
       <BackToTop />
       {user && <FloatingAiTutor />}
       <MobileBottomNav />

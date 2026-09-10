@@ -281,20 +281,28 @@ export default function FloatingAiTutor() {
 
   // Trigger loads on auth or modal open
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+    const loadTimer = window.setTimeout(() => {
       if (isAdminOrTeacher) {
-        loadAdminConversations();
+        void loadAdminConversations();
       } else if (user?.id) {
-        loadStudentConversation();
+        void loadStudentConversation();
       }
-    }
+    }, 0);
+    return () => window.clearTimeout(loadTimer);
+    // The functions intentionally read current store/auth state at invocation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, user?.id, isAdminOrTeacher]);
 
   // When admin selects a student to chat
   useEffect(() => {
-    if (isAdminOrTeacher && activeStudentId && adminView === "chat") {
-      loadAdminMessagesForStudent(activeStudentId);
-    }
+    if (!isAdminOrTeacher || !activeStudentId || adminView !== "chat") return;
+    const loadTimer = window.setTimeout(() => {
+      void loadAdminMessagesForStudent(activeStudentId);
+    }, 0);
+    return () => window.clearTimeout(loadTimer);
+    // The function intentionally reads the latest thread from the store.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdminOrTeacher, activeStudentId, adminView]);
 
   // Tổng số tin nhắn chưa đọc cho Admin

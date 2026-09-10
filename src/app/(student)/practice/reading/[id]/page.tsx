@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
-import { Loader2, BookOpen, Clock, ChevronRight, ListChecks } from "lucide-react";
+import { BookOpen, Clock, ChevronRight, ListChecks } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { readingService } from "@/lib/api/services/reading.service";
 import { useAuthStore } from "@/stores/authStore";
 import { BackButton } from "@/components/ui";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
+import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
 
 export default function ReadingTopicDetailPage() {
   const params = useParams();
@@ -17,6 +18,24 @@ export default function ReadingTopicDetailPage() {
   const topicId = Number(params.id);
   const { user } = useAuthStore();
   const [authGate, setAuthGate] = useState<{ open: boolean; quizId?: number; quizTitle?: string }>({ open: false });
+  const [launchingQuizId, setLaunchingQuizId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!launchingQuizId) return;
+
+    let animId2: number;
+
+    const animId1 = requestAnimationFrame(() => {
+      animId2 = requestAnimationFrame(() => {
+        router.push(`/practice/quizzes/${launchingQuizId}`);
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(animId1);
+      if (animId2) cancelAnimationFrame(animId2);
+    };
+  }, [launchingQuizId, router]);
 
   const { data: topic, isLoading } = useQuery({
     queryKey: ["reading-topic", topicId],
@@ -24,10 +43,10 @@ export default function ReadingTopicDetailPage() {
     enabled: !!topicId,
   });
 
-  if (isLoading) {
+  if (isLoading || launchingQuizId) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="animate-spin text-emerald-600" size={48} />
+      <div className="flex items-center justify-center min-h-[50vh] py-12">
+        <PracticeLoadingScreen skill="reading" className="max-w-4xl" />
       </div>
     );
   }
@@ -76,9 +95,20 @@ export default function ReadingTopicDetailPage() {
             {actualTopic.quizzes && actualTopic.quizzes.length > 0 ? (
               <div className="space-y-3">
                 {actualTopic.quizzes.map((quiz: any, index: number) => (
-                  <Link key={quiz.id} href={`/practice/quizzes/${quiz.id}`} className="block" onClick={(e) => {
-                    if (!user) { e.preventDefault(); setAuthGate({ open: true, quizId: quiz.id, quizTitle: quiz.title }); }
-                  }}>
+                  <Link
+                    key={quiz.id}
+                    href={`/practice/quizzes/${quiz.id}`}
+                    className="block"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (!user) {
+                        setAuthGate({ open: true, quizId: quiz.id, quizTitle: quiz.title });
+                        return;
+                      }
+                      if (launchingQuizId) return;
+                      setLaunchingQuizId(quiz.id);
+                    }}
+                  >
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}

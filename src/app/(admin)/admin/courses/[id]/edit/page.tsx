@@ -21,7 +21,6 @@ import {
   FileText,
   Video,
   BookOpen,
-  Send,
   Save,
   Loader2,
   RotateCcw,
@@ -147,7 +146,10 @@ export default function AdminCourseEditStudioPage() {
 
   // Populate form on load
   useEffect(() => {
-    if (course) {
+    if (!course) return;
+    let isActive = true;
+    queueMicrotask(() => {
+      if (!isActive) return;
       setBasicForm({
         title: course.title || "",
         level: course.level || "BEGINNER",
@@ -155,7 +157,10 @@ export default function AdminCourseEditStudioPage() {
         thumbnail: course.thumbnail || "",
       });
       setIsDirty(false);
-    }
+    });
+    return () => {
+      isActive = false;
+    };
   }, [course]);
 
   // Derived state

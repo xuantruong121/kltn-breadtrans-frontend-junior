@@ -6,7 +6,6 @@ import { useParams } from "next/navigation";
 import {
   ArrowLeft,
   Calendar,
-  User as UserIcon,
   Users,
   AlertCircle,
   ArrowRight,
@@ -41,7 +40,6 @@ export default function PublicCourseDetailPage() {
   const [studentEnrollments, setStudentEnrollments] = useState<
     Record<number, StudentCourseEnrollment>
   >({});
-  const [, setIsLoadingEnrollments] = useState(false);
 
   // Enrollment Confirmation Modal State
   const [selectedClassForEnroll, setSelectedClassForEnroll] =
@@ -50,16 +48,14 @@ export default function PublicCourseDetailPage() {
 
   useEffect(() => {
     if (!id || isNaN(id)) {
-      setNotFound(true);
-      setIsLoading(false);
+      queueMicrotask(() => {
+        setNotFound(true);
+        setIsLoading(false);
+      });
       return;
     }
 
     let isMounted = true;
-    setIsLoading(true);
-    setNotFound(false);
-    setError(null);
-
     courseService
       .getPublicCourseDetail(id)
       .then((data) => {
@@ -88,13 +84,11 @@ export default function PublicCourseDetailPage() {
   // Fetch current student's enrollments in this course
   useEffect(() => {
     if (!id || !user || user.role !== "STUDENT") {
-      setStudentEnrollments({});
+      queueMicrotask(() => setStudentEnrollments({}));
       return;
     }
 
     let isMounted = true;
-    setIsLoadingEnrollments(true);
-
     courseService
       .getMyCourseEnrollments(id)
       .then((enrollments) => {
@@ -104,13 +98,11 @@ export default function PublicCourseDetailPage() {
             mapping[e.classId] = e;
           });
           setStudentEnrollments(mapping);
-          setIsLoadingEnrollments(false);
         }
       })
       .catch((err) => {
         console.warn("Could not load user course enrollments:", err);
         if (isMounted) {
-          setIsLoadingEnrollments(false);
         }
       });
 

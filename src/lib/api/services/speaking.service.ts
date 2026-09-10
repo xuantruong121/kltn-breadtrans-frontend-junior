@@ -8,6 +8,8 @@ export interface SpeakingExercise {
   audioUrl?: string;
   difficulty: string;
   category: string;
+  translation?: string;
+  description?: string;
 }
 
 export interface SubmitSpeakingResponse {
@@ -19,7 +21,7 @@ export interface SubmitSpeakingResponse {
 
 export interface WordAssessmentItem {
   word: string;
-  accuracyScore: number;
+  accuracyScore?: number | null;
   errorType: "None" | "Mispronunciation" | "Omission" | "Insertion" | "Unspoken";
   isCorrect: boolean;
 }

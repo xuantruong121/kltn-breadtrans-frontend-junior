@@ -27,22 +27,24 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Normalize lookup word
+  // Normalize lookup word (preserve contractions, map curly apostrophes to straight for API dictionary compatibility)
   const cleanWord = word
     .trim()
+    .replace(/[’‘ʼ]/g, "'")
     .replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
 
   useEffect(() => {
     let isMounted = true;
     const controller = new AbortController();
-    setLoading(true);
-    setNotFound(false);
-    setMatch(null);
-    setSavedId(null);
-    setIsStarred(false);
+    const lookupTimer = window.setTimeout(() => {
+      setLoading(true);
+      setNotFound(false);
+      setMatch(null);
+      setSavedId(null);
+      setIsStarred(false);
 
-    vocabService
-      .lookupWord(cleanWord, controller.signal)
+      void vocabService
+        .lookupWord(cleanWord, controller.signal)
       .then((res) => {
         if (!isMounted) return;
         const externalMatches: VocabWord[] = (res.entries || []).map(
@@ -78,12 +80,14 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
         if (!isMounted) return;
         setNotFound(true);
       })
-      .finally(() => {
-        if (isMounted) setLoading(false);
-      });
+        .finally(() => {
+          if (isMounted) setLoading(false);
+        });
+    }, 0);
 
     return () => {
       isMounted = false;
+      window.clearTimeout(lookupTimer);
       controller.abort();
     };
   }, [cleanWord]);

@@ -71,9 +71,14 @@ export const toeicService = {
       readingScore: number | null;
       submittedAt: string | null;
     },
-  getGroupAudio: async (groupId: number, accent: "US" | "UK", rate: number): Promise<Blob> =>
+  getGroupAudio: async (
+    groupId: number,
+    accent: "US" | "UK",
+    rate: number,
+    signal?: AbortSignal,
+  ): Promise<Blob> =>
     (await axiosClient.get(
       `/toeic/groups/${groupId}/audio?accent=${accent}&rate=${rate}`,
-      { responseType: "blob" },
+      { responseType: "blob", signal },
     )) as unknown as Blob,
 };
