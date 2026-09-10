@@ -11,6 +11,7 @@ export interface BackButtonProps {
   href?: string;
   className?: string;
   variant?: "default" | "subtle" | "ghost";
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 export const BackButton: React.FC<BackButtonProps> = ({
@@ -18,6 +19,7 @@ export const BackButton: React.FC<BackButtonProps> = ({
   href,
   className = "",
   variant = "default",
+  onClick,
 }) => {
   const router = useRouter();
 
@@ -49,6 +51,18 @@ export const BackButton: React.FC<BackButtonProps> = ({
       <span className="tracking-wide">{label}</span>
     </motion.div>
   );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="inline-block"
+      >
+        {content}
+      </button>
+    );
+  }
 
   if (href) {
     return <Link href={href} className="inline-block">{content}</Link>;

@@ -37,11 +37,13 @@ export default function GoogleAccountLinkModal({
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+    const resetTimer = window.setTimeout(() => {
       setEmail(defaultEmail);
       setPassword("");
       setErrorMsg("");
-    }
+    }, 0);
+    return () => window.clearTimeout(resetTimer);
   }, [defaultEmail, isOpen]);
 
   if (!isOpen) return null;

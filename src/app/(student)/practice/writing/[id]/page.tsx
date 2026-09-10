@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, use } from "react";
+import React, { useState, useEffect, use } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   PenTool, 
@@ -13,17 +14,49 @@ import {
   BookOpen,
 } from "lucide-react";
 import { BackButton } from "@/components/ui";
+import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
+import { PracticeExitConfirmDialog } from "@/components/practice/PracticeExitConfirmDialog";
+import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
+import { writingService } from "@/lib/api/services/writing.service";
 import axiosClient from "@/lib/api/axiosClient";
 import toast from "react-hot-toast";
 
 export default function WritingDetailPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
+  const topicId = Number(params.id);
   const [content, setContent] = useState("");
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [feedback, setFeedback] = useState<any | null>(null);
 
+  const [minLaunchReady, setMinLaunchReady] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setMinLaunchReady(true), 350);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const { data: topicData, isLoading } = useQuery({
+    queryKey: ["writing-topic", topicId],
+    queryFn: () => writingService.getTopicById(topicId),
+    enabled: !!topicId,
+  });
+  const topic = (topicData as any)?.data || topicData;
+
   const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
   const charCount = content.length;
+
+  const shouldConfirmExit = !feedback;
+  const { confirmExit, exitDialogProps } = usePracticeExitGuard({
+    shouldConfirmExit,
+    defaultFallbackUrl: "/practice/writing",
+  });
+
+  if (isLoading || !minLaunchReady) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center py-12">
+        <PracticeLoadingScreen skill="writing" className="max-w-4xl" />
+      </div>
+    );
+  }
 
   const handleEvaluate = async () => {
     if (wordCount < 15) {
@@ -78,7 +111,11 @@ export default function WritingDetailPage(props: { params: Promise<{ id: string 
       {/* 1. TOP HEADER BAR */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-slate-200 shadow-2xs">
         <div className="flex items-center gap-4">
-          <BackButton href="/practice/writing" label="Quay lại danh sách bài viết" />
+          <BackButton
+            href="/practice/writing"
+            onClick={() => confirmExit("/practice/writing")}
+            label="Quay lại danh sách bài viết"
+          />
           <div className="h-6 w-px bg-slate-200 hidden sm:block" />
           <div>
             <h1 className="text-xl font-extrabold text-slate-900 line-clamp-1">Luyện viết: Email công việc</h1>
@@ -108,7 +145,7 @@ export default function WritingDetailPage(props: { params: Promise<{ id: string 
                   Chủ Đề Yêu Cầu
                 </span>
                 <h2 className="text-xl font-extrabold text-slate-900">
-                  Viết Email Cập Nhật Tiến Độ Dự Án
+                  {topic?.title || "Viết Email Cập Nhật Tiến Độ Dự Án"}
                 </h2>
               </div>
             </div>
@@ -116,7 +153,7 @@ export default function WritingDetailPage(props: { params: Promise<{ id: string 
             <div className="bg-rose-50/60 border border-rose-200/80 p-5 rounded-2xl space-y-2">
               <span className="text-xs font-extrabold text-rose-800 uppercase tracking-wide">Yêu cầu đề bài (Prompt):</span>
               <p className="text-sm font-semibold text-slate-800 leading-relaxed">
-                Write an email (at least 50 words) to your project manager explaining the current progress of your team&apos;s assignment, requesting feedback, and proposing a meeting time for tomorrow.
+                {topic?.description || "Write an email (at least 50 words) to your project manager explaining the current progress of your team's assignment, requesting feedback, and proposing a meeting time for tomorrow."}
               </p>
             </div>
           </div>
@@ -162,6 +199,16 @@ export default function WritingDetailPage(props: { params: Promise<{ id: string 
               </button>
             </div>
           </div>
+
+          {/* EVALUATING LOADING SCREEN */}
+          {isEvaluating && (
+            <div className="py-4">
+              <PracticeLoadingScreen
+                skill="writing"
+                className="max-w-2xl min-h-[260px]"
+              />
+            </div>
+          )}
 
           {/* FEEDBACK SECTION */}
           <AnimatePresence>
@@ -260,6 +307,9 @@ export default function WritingDetailPage(props: { params: Promise<{ id: string 
           </div>
         </div>
       </div>
+
+      {/* Shared Exit Confirmation Modal */}
+      <PracticeExitConfirmDialog {...exitDialogProps} />
     </div>
   );
 }

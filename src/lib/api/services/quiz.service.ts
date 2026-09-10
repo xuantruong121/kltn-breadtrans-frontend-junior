@@ -1,10 +1,35 @@
 import axiosClient from "../axiosClient";
 
+export interface StructuredExplanation {
+  vi: string;
+  evidence?: string;
+  keyPhrase?: string;
+  vocabularyNote?: string;
+}
+
+export type QuestionExplanation = string | StructuredExplanation;
+
+export interface QuestionContent {
+  text?: string;
+  options?: string[];
+  correct?: string;
+  correctIndex?: number;
+  explanation?: QuestionExplanation;
+  translation?: string;
+  audioText?: string;
+  accent?: string;
+  imageUrl?: string;
+  imageAlt?: string;
+  imagePurpose?: "TOPIC_CONTEXT";
+  category?: string;
+  section?: string;
+}
+
 export interface Question {
   id: number;
   quizId: number;
   type: string; // "MULTIPLE_CHOICE", "WRITING", etc.
-  content: any; // { text: string, options?: string[], correct?: string, category?: string }
+  content: QuestionContent | any;
   order: number;
 }
 
@@ -61,8 +86,36 @@ export interface SubmissionAnalytics {
   recommendation: string;
 }
 
+export interface ListeningPracticeCatalogItem {
+  id: number;
+  title: string;
+  description: string | null;
+  mode: "COMPREHENSION" | "DICTATION";
+  track?: string;
+  levels?: string[];
+  topics?: string[];
+  accents?: string[];
+  questionCount?: number;
+  durationMinutes?: number | null;
+  isCompleted?: boolean;
+  _count?: {
+    questions: number;
+  };
+  questionsCount?: number;
+  bilingualContent?: any;
+}
+
+export interface CheckPracticeQuestionResult {
+  questionId: number;
+  isCorrect: boolean;
+  submittedAnswer: string;
+  correctAnswer: string;
+  explanation: QuestionExplanation | null;
+  translation: string | null;
+}
+
 export const quizService = {
-  getListeningPractices: async (): Promise<Quiz[]> => {
+  getListeningPractices: async (): Promise<ListeningPracticeCatalogItem[]> => {
     return await axiosClient.get("/quizzes/listening-practice");
   },
 
@@ -72,6 +125,28 @@ export const quizService = {
 
   getQuizById: async (id: number): Promise<Quiz> => {
     return await axiosClient.get(`/quizzes/${id}`);
+  },
+
+  getQuestionAudioBlob: async (
+    quizId: number,
+    questionId: number,
+    signal?: AbortSignal,
+  ): Promise<Blob> => {
+    return await axiosClient.get(
+      `/quizzes/${quizId}/questions/${questionId}/audio`,
+      { responseType: "blob", signal },
+    );
+  },
+
+  checkPracticeQuestion: async (
+    quizId: number,
+    questionId: number,
+    answer: string,
+  ): Promise<CheckPracticeQuestionResult> => {
+    return await axiosClient.post(
+      `/quizzes/${quizId}/questions/${questionId}/check`,
+      { answer },
+    );
   },
 
   submitQuiz: async (id: number, answers: AnswerDto[]): Promise<SubmissionResult> => {

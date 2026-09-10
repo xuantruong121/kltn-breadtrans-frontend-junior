@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:listening-audio-race": "node --no-warnings --test --experimental-strip-types src/lib/audio/requestGeneration.test.ts",
+    "test:practice-exit-guard": "node --no-warnings --test --experimental-strip-types src/hooks/usePracticeExitGuard.test.ts",
+    "test:listening-explanation": "node --no-warnings --test --experimental-strip-types src/app/(student)/practice/listening/components/listeningExplanationUtils.test.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.4",

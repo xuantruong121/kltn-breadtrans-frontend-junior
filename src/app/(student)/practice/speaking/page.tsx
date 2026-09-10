@@ -1,21 +1,24 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Mic, 
-  Loader2, 
-  CheckCircle2, 
-  Search, 
-  ArrowUpDown,
-  Layers,
-  Award,
-  ChevronRight
-} from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { speakingService } from "@/lib/api/services/speaking.service";
+import { useQuery } from "@tanstack/react-query";
+import {
+  ArrowRight,
+  Award,
+  Filter,
+  Loader2,
+  Mic,
+  RotateCcw,
+  Search,
+} from "lucide-react";
+import { speakingService, type SpeakingExercise } from "@/lib/api/services/speaking.service";
 import { Pagination } from "@/components/ui";
+import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
+import { useAuthStore } from "@/stores/authStore";
+import { AuthGateModal } from "@/components/auth/AuthGateModal";
+import { SpeakingExerciseCard } from "./components/SpeakingExerciseCard";
 
 const DIFFICULTY_WEIGHT: Record<string, number> = {
   BEGINNER: 1,
@@ -23,22 +26,41 @@ const DIFFICULTY_WEIGHT: Record<string, number> = {
   ADVANCED: 3,
 };
 
-const DIFFICULTY_LABELS: Record<string, { label: string; color: string; bg: string; border: string; text: string; icon: string }> = {
-  ALL: { label: "Tất Cả", color: "slate", bg: "bg-slate-100", border: "border-slate-200", text: "text-slate-700", icon: "" },
-  BEGINNER: { label: "Cơ Bản (Dễ)", color: "emerald", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", icon: "🟢" },
-  INTERMEDIATE: { label: "Trung Cấp (Vừa)", color: "amber", bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700", icon: "🟡" },
-  ADVANCED: { label: "Nâng Cao (Khó)", color: "rose", bg: "bg-rose-50", border: "border-rose-200", text: "text-rose-700", icon: "🔴" },
-};
-
 export default function SpeakingExercisesPage() {
   const router = useRouter();
+  const { user } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("ALL");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
+  const [sortOrder, setSortOrder] = useState<string>("EASY_TO_HARD");
+  const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(6);
+  const [pageSize, setPageSize] = useState(12);
+  const [launchingExerciseId, setLaunchingExerciseId] = useState<number | null>(null);
+  const [authGate, setAuthGate] = useState<{
+    open: boolean;
+    exerciseId?: number;
+    title?: string;
+  }>({ open: false });
 
-  const { data: exercises, isLoading } = useQuery<any[]>({
+  useEffect(() => {
+    if (!launchingExerciseId) return;
+
+    let animId2: number;
+
+    const animId1 = requestAnimationFrame(() => {
+      animId2 = requestAnimationFrame(() => {
+        router.push(`/practice/speaking/${launchingExerciseId}`);
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(animId1);
+      if (animId2) cancelAnimationFrame(animId2);
+    };
+  }, [launchingExerciseId, router]);
+
+  const { data: exercises, isLoading } = useQuery<SpeakingExercise[]>({
     queryKey: ["speaking-exercises"],
     queryFn: async () => {
       const res: any = await speakingService.getExercises();
@@ -46,7 +68,7 @@ export default function SpeakingExercisesPage() {
     },
   });
 
-  // Extract available unique categories
+  // Extract unique categories
   const categories = useMemo(() => {
     if (!exercises) return [];
     const set = new Set<string>();
@@ -56,304 +78,365 @@ export default function SpeakingExercisesPage() {
     return Array.from(set);
   }, [exercises]);
 
-  // Filter & Sort from Easy to Hard
+  // Category counts
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    if (!exercises) return counts;
+    exercises.forEach((ex) => {
+      const cat = ex.category || "GENERAL";
+      counts[cat] = (counts[cat] || 0) + 1;
+    });
+    return counts;
+  }, [exercises]);
+
+  // Count completed
+  const completedCount = useMemo(() => {
+    if (!exercises) return 0;
+    return exercises.filter((ex: any) => Boolean(ex.isCompleted)).length;
+  }, [exercises]);
+
+  // Filter & Sort
   const filteredAndSortedExercises = useMemo(() => {
     if (!exercises) return [];
 
-    const list = exercises.filter((ex) => {
+    const list = exercises.filter((ex: any) => {
+      const q = searchTerm.trim().toLowerCase();
       const matchSearch =
-        ex.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ex.targetText?.toLowerCase().includes(searchTerm.toLowerCase());
-      
+        !q ||
+        ex.title?.toLowerCase().includes(q) ||
+        ex.targetText?.toLowerCase().includes(q) ||
+        ex.translation?.toLowerCase().includes(q);
+
       const matchDifficulty =
         selectedDifficulty === "ALL" ||
-        ex.difficulty?.toUpperCase() === selectedDifficulty;
+        (ex.difficulty || "").toUpperCase() === selectedDifficulty;
 
       const matchCategory =
         selectedCategory === "ALL" ||
-        ex.category?.toUpperCase() === selectedCategory.toUpperCase();
+        (ex.category || "").toUpperCase() === selectedCategory.toUpperCase();
 
-      return matchSearch && matchDifficulty && matchCategory;
+      const matchStatus =
+        selectedStatus === "ALL" ||
+        (selectedStatus === "COMPLETED" && Boolean(ex.isCompleted)) ||
+        (selectedStatus === "UNCOMPLETED" && !ex.isCompleted);
+
+      return matchSearch && matchDifficulty && matchCategory && matchStatus;
     });
 
-    // Sort order: BEGINNER (1) -> INTERMEDIATE (2) -> ADVANCED (3) -> by ID
     return list.sort((a, b) => {
-      const weightA = DIFFICULTY_WEIGHT[a.difficulty?.toUpperCase()] || 99;
-      const weightB = DIFFICULTY_WEIGHT[b.difficulty?.toUpperCase()] || 99;
-      if (weightA !== weightB) {
-        return weightA - weightB;
+      if (sortOrder === "EASY_TO_HARD") {
+        const weightA = DIFFICULTY_WEIGHT[(a.difficulty || "").toUpperCase()] || 99;
+        const weightB = DIFFICULTY_WEIGHT[(b.difficulty || "").toUpperCase()] || 99;
+        if (weightA !== weightB) return weightA - weightB;
+        return (a.id || 0) - (b.id || 0);
       }
-      return (a.id || 0) - (b.id || 0);
+      if (sortOrder === "HARD_TO_EASY") {
+        const weightA = DIFFICULTY_WEIGHT[(a.difficulty || "").toUpperCase()] || 0;
+        const weightB = DIFFICULTY_WEIGHT[(b.difficulty || "").toUpperCase()] || 0;
+        if (weightA !== weightB) return weightB - weightA;
+        return (b.id || 0) - (a.id || 0);
+      }
+      // NEWEST
+      return (b.id || 0) - (a.id || 0);
     });
-  }, [exercises, searchTerm, selectedDifficulty, selectedCategory]);
-
-  // Counts for tabs
-  const counts = useMemo(() => {
-    if (!exercises) return { ALL: 0, BEGINNER: 0, INTERMEDIATE: 0, ADVANCED: 0 };
-    return {
-      ALL: exercises.length,
-      BEGINNER: exercises.filter((e) => e.difficulty === "BEGINNER").length,
-      INTERMEDIATE: exercises.filter((e) => e.difficulty === "INTERMEDIATE").length,
-      ADVANCED: exercises.filter((e) => e.difficulty === "ADVANCED").length,
-    };
-  }, [exercises]);
+  }, [exercises, searchTerm, selectedDifficulty, selectedCategory, selectedStatus, sortOrder]);
 
   const totalPages = Math.ceil(filteredAndSortedExercises.length / pageSize);
-  const paginatedExercises = filteredAndSortedExercises.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const paginatedExercises = useMemo(() => {
+    return filteredAndSortedExercises.slice(
+      (currentPage - 1) * pageSize,
+      currentPage * pageSize
+    );
+  }, [filteredAndSortedExercises, currentPage, pageSize]);
+
+  const handleStartExercise = (exercise: SpeakingExercise) => {
+    if (!user) {
+      setAuthGate({ open: true, exerciseId: exercise.id, title: exercise.title });
+      return;
+    }
+    if (launchingExerciseId) return;
+    setLaunchingExerciseId(exercise.id);
+  };
+
+  if (launchingExerciseId) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center py-12">
+        <PracticeLoadingScreen skill="speaking" className="max-w-4xl" />
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-16">
-      {/* Header Banner */}
-      <div className="bg-white rounded-3xl p-6 md:p-8 text-slate-900 shadow-xs relative overflow-hidden border border-slate-200">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="p-4 bg-blue-50 rounded-2xl border border-blue-200 text-blue-700 shadow-xs">
-              <Mic size={32} />
+    <div className="space-y-6 pb-20 pt-2">
+      {/* Hero Banner */}
+      <section className="relative overflow-hidden rounded-2xl border border-purple-200/80 bg-gradient-to-r from-purple-50 via-white to-fuchsia-50/40 p-6 shadow-2xs sm:p-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="max-w-3xl space-y-3">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-purple-200 bg-white/90 px-3 py-1 text-xs font-extrabold text-purple-700">
+              <Mic size={14} aria-hidden="true" />
+              <span>Đánh giá chuẩn âm vị quốc tế</span>
+            </div>
+            <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+              Luyện phát âm & Giao tiếp tiếng Anh
+            </h1>
+            <p className="text-xs leading-relaxed text-slate-600 sm:text-sm">
+              Rèn luyện kỹ năng phát âm chuẩn IPA với công nghệ AI nhận diện âm vị tức thì, đối chiếu ngữ âm và chấm điểm từng từ chuẩn xác.
+            </p>
+            <div className="pt-1">
+              <Link
+                href="/practice/listening"
+                className="inline-flex items-center gap-1.5 text-xs font-extrabold text-purple-700 transition hover:text-purple-800 hover:underline"
+              >
+                Bạn muốn luyện nghe hiểu theo ngữ cảnh? Đi đến Luyện nghe
+                <ArrowRight size={13} aria-hidden="true" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Right KPI Card */}
+          <div className="flex items-center gap-3.5 rounded-2xl border border-purple-200/90 bg-white/95 px-5 py-4 shadow-2xs self-start md:self-auto shrink-0">
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-700">
+              <Award size={24} aria-hidden="true" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
-                  Đánh giá chuẩn âm vị quốc tế
+              <span className="block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                Tổng bài luyện nói
+              </span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xl font-black text-slate-900">
+                  {exercises?.length || 0} bài tập
                 </span>
+                {completedCount > 0 && (
+                  <span className="text-xs font-bold text-emerald-600">
+                    ({completedCount} đã xong)
+                  </span>
+                )}
               </div>
-              <h1 className="text-2xl md:text-3xl font-black mt-1 text-slate-900">Luyện Phát Âm Trực Tiếp</h1>
-              <p className="text-slate-600 text-xs md:text-sm font-medium mt-1">
-                Luyện nói tiếng Anh theo các cấp độ từ Dễ đến Khó với phản hồi tức thì
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 bg-slate-50 px-4 py-3 rounded-2xl border border-slate-200 self-start md:self-auto shadow-xs">
-            <Award className="text-amber-600 w-6 h-6 shrink-0" />
-            <div>
-              <span className="text-[11px] font-bold text-slate-500 block uppercase">Tổng Bài Tập</span>
-              <span className="text-lg font-black text-slate-900">{exercises?.length || 0} bài luyện nói</span>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Control Box: Filter Tabs, Category, and Search */}
-      <div className="bg-white rounded-[2rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] p-6 space-y-5">
-        {/* 1. Difficulty Level Tabs (Sort from Easy to Hard) */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <Layers size={18} className="text-purple-600" />
-            <h2 className="text-sm font-black uppercase text-slate-700 tracking-wider">
-              Cấp Độ Luyện Nói (Từ Dễ đến Khó)
-            </h2>
-          </div>
+      {/* Category Tabs */}
+      <div className="border-b border-slate-200">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedCategory("ALL");
+              setCurrentPage(1);
+            }}
+            className={`inline-flex items-center gap-2 border-b-2 px-4 py-3 text-xs font-black transition whitespace-nowrap cursor-pointer ${
+              selectedCategory === "ALL"
+                ? "border-purple-600 text-purple-900"
+                : "border-transparent text-slate-500 hover:text-slate-900"
+            }`}
+          >
+            <Mic size={15} aria-hidden="true" />
+            Tất cả bài nói ({exercises?.length || 0})
+          </button>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            {(["ALL", "BEGINNER", "INTERMEDIATE", "ADVANCED"] as const).map((diff) => {
-              const info = DIFFICULTY_LABELS[diff];
-              const isSelected = selectedDifficulty === diff;
-              const count = counts[diff];
-
-              return (
-                <button
-                  key={diff}
-                  onClick={() => {
-                    setSelectedDifficulty(diff);
-                    setCurrentPage(1);
-                  }}
-                  className={`px-4 py-3 rounded-2xl font-black text-xs md:text-sm transition-all flex items-center justify-between border-2 cursor-pointer ${
-                    isSelected
-                      ? "bg-purple-600 text-white border-purple-700 shadow-[0_4px_0_0_#7e22ce] translate-y-[-2px]"
-                      : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-purple-50/60 hover:border-purple-200"
-                  }`}
-                >
-                  <span className="flex items-center gap-1.5">
-                    <span>{info.icon}</span>
-                    <span>{info.label}</span>
-                  </span>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[11px] font-black ${
-                      isSelected
-                        ? "bg-white/20 text-white"
-                        : "bg-slate-200/80 text-slate-600"
-                    }`}
-                  >
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* 2. Search & Category Filters */}
-        <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center gap-3">
-          {/* Search Bar */}
-          <div className="relative flex-1 w-full">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input
-              type="text"
-              placeholder="Tìm kiếm bài tập theo tên hoặc câu tiếng Anh..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border-2 border-slate-200 rounded-xl outline-none focus:border-purple-400 font-bold text-sm text-slate-800"
-            />
-          </div>
-
-          {/* Category Filter */}
-          {categories.length > 0 && (
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <select
-                value={selectedCategory}
-                onChange={(e) => {
-                  setSelectedCategory(e.target.value);
+          {categories.map((cat) => {
+            const count = categoryCounts[cat] || 0;
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => {
+                  setSelectedCategory(cat);
                   setCurrentPage(1);
                 }}
-                className="w-full sm:w-auto px-4 py-2.5 bg-slate-50 border-2 border-slate-200 rounded-xl font-bold text-sm text-slate-700 outline-none focus:border-purple-400 cursor-pointer"
+                className={`inline-flex items-center gap-2 border-b-2 px-4 py-3 text-xs font-black transition whitespace-nowrap cursor-pointer ${
+                  selectedCategory === cat
+                    ? "border-purple-600 text-purple-900"
+                    : "border-transparent text-slate-500 hover:text-slate-900"
+                }`}
               >
-                <option value="ALL">📁 Tất cả chủ đề ({categories.length})</option>
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+                {cat} ({count})
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Exercises List */}
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center p-16 bg-white rounded-[2rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0]">
-          <Loader2 className="animate-spin text-purple-600 mb-3" size={44} />
-          <p className="text-slate-400 font-bold text-sm">Đang tải danh sách bài luyện nói...</p>
-        </div>
-      ) : filteredAndSortedExercises.length > 0 ? (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between px-2">
-            <span className="text-xs font-black uppercase tracking-wider text-slate-400">
-              Danh sách bài tập ({filteredAndSortedExercises.length} bài phù hợp)
-            </span>
-            <span className="text-xs font-bold text-purple-600 flex items-center gap-1">
-              <ArrowUpDown size={14} /> Sắp xếp: Dễ &rarr; Khó
-            </span>
+      {/* Filter Toolbar */}
+      <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs sm:p-5">
+        <div className="flex flex-col gap-3.5">
+          {/* Top row: Search & Level quick filter */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative flex-1 sm:max-w-xs">
+              <Search
+                size={16}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                aria-hidden="true"
+              />
+              <input
+                type="text"
+                placeholder="Tìm bài nói theo tên, câu tiếng Anh..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="min-h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-3.5 text-xs text-slate-800 transition placeholder:text-slate-400 focus:border-purple-500 focus:bg-white focus:outline-hidden"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs font-bold text-slate-400">Trình độ:</span>
+              {[
+                { id: "ALL", label: "Tất cả" },
+                { id: "BEGINNER", label: "Cơ bản" },
+                { id: "INTERMEDIATE", label: "Trung cấp" },
+                { id: "ADVANCED", label: "Nâng cao" },
+              ].map((lvl) => (
+                <button
+                  key={lvl.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedDifficulty(lvl.id);
+                    setCurrentPage(1);
+                  }}
+                  className={`min-h-9 rounded-lg px-2.5 text-xs font-extrabold transition cursor-pointer ${
+                    selectedDifficulty === lvl.id
+                      ? "bg-purple-600 text-white shadow-2xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900"
+                  }`}
+                >
+                  {lvl.label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="flex flex-col gap-3.5">
-            <AnimatePresence mode="popLayout">
-              {paginatedExercises.map((exercise: any, index: number) => {
-                const isCompleted = exercise.isCompleted;
-                const difficulty = exercise.difficulty?.toUpperCase() || "BEGINNER";
+          {/* Secondary filter row: Sort & Status */}
+          <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+            <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-500">
+              <Filter size={13} aria-hidden="true" />
+              Bộ lọc:
+            </span>
 
-                return (
-                  <motion.div
-                    key={exercise.id}
-                    layout
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.98 }}
-                    transition={{ delay: index * 0.04 }}
-                    whileHover={{ y: -2 }}
-                    className={`p-5 md:p-6 rounded-[1.8rem] border-4 flex items-center justify-between shadow-[0_6px_0_0_#e2e8f0] cursor-pointer transition-all ${
-                      isCompleted
-                        ? "bg-emerald-50/60 border-emerald-300 hover:border-emerald-400 shadow-[0_6px_0_0_#a7f3d0]"
-                        : "bg-white border-slate-200 hover:border-purple-300 hover:shadow-[0_6px_0_0_#e9d5ff]"
-                    }`}
-                    onClick={() => router.push(`/practice/speaking/${exercise.id}`)}
-                  >
-                    <div className="space-y-2 flex-1 pr-4">
-                      {/* Tags */}
-                      <div className="flex items-center flex-wrap gap-2">
-                        {/* Difficulty Badge */}
-                        <span
-                          className={`px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase border ${
-                            difficulty === "BEGINNER"
-                              ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                              : difficulty === "INTERMEDIATE"
-                              ? "bg-amber-100 text-amber-800 border-amber-300"
-                              : "bg-rose-100 text-rose-800 border-rose-300"
-                          }`}
-                        >
-                          {difficulty === "BEGINNER"
-                            ? "🟢 Cơ bản"
-                            : difficulty === "INTERMEDIATE"
-                            ? "🟡 Trung cấp"
-                            : "🔴 Nâng cao"}
-                        </span>
-
-                        {/* Category Badge */}
-                        <span className="bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase border border-slate-200">
-                          {exercise.category || "GENERAL"}
-                        </span>
-
-                        {isCompleted && (
-                          <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-[11px] font-black border border-emerald-200">
-                            <CheckCircle2 size={13} /> Đã hoàn thành
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Title */}
-                      <h3 className="text-lg md:text-xl font-black text-slate-800 leading-snug group-hover:text-purple-600 transition-colors">
-                        {exercise.title}
-                      </h3>
-
-                      {/* English Target Sentence Preview */}
-                      {exercise.targetText && (
-                        <p className="text-xs md:text-sm font-semibold text-slate-400 line-clamp-1 italic">
-                          &ldquo;{exercise.targetText}&rdquo;
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Right CTA Button */}
-                    <div className="flex items-center gap-2 shrink-0">
-                      <div
-                        className={`p-3.5 rounded-2xl border-2 transition-all flex items-center justify-center ${
-                          isCompleted
-                            ? "bg-emerald-100 text-emerald-700 border-emerald-300"
-                            : "bg-purple-50 text-purple-600 border-purple-200 group-hover:bg-purple-600 group-hover:text-white"
-                        }`}
-                      >
-                        <Mic size={24} />
-                      </div>
-                      <ChevronRight size={18} className="text-slate-300 hidden md:block" />
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
-          </div>
-
-          {/* 3D Standard Pagination */}
-          <div className="pt-4">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={filteredAndSortedExercises.length}
-              pageSize={pageSize}
-              onPageChange={setCurrentPage}
-              onPageSizeChange={(size) => {
-                setPageSize(size);
+            {/* Sắp xếp */}
+            <select
+              aria-label="Sắp xếp bài nói"
+              value={sortOrder}
+              onChange={(e) => {
+                setSortOrder(e.target.value);
                 setCurrentPage(1);
               }}
-            />
+              className="min-h-9 rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-xs font-bold text-slate-700 transition focus:border-purple-500 focus:bg-white focus:outline-hidden cursor-pointer"
+            >
+              <option value="EASY_TO_HARD">Sắp xếp: Dễ → Khó</option>
+              <option value="HARD_TO_EASY">Sắp xếp: Khó → Dễ</option>
+              <option value="NEWEST">Sắp xếp: Mới nhất</option>
+            </select>
+
+            {/* Trạng thái (nếu đã đăng nhập) */}
+            {user && (
+              <select
+                aria-label="Lọc theo trạng thái"
+                value={selectedStatus}
+                onChange={(e) => {
+                  setSelectedStatus(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="min-h-9 rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-xs font-bold text-slate-700 transition focus:border-purple-500 focus:bg-white focus:outline-hidden cursor-pointer"
+              >
+                <option value="ALL">Trạng thái: Tất cả</option>
+                <option value="UNCOMPLETED">Chưa làm</option>
+                <option value="COMPLETED">Đã hoàn thành</option>
+              </select>
+            )}
+
+            {/* Reset Filters */}
+            {(selectedDifficulty !== "ALL" ||
+              selectedCategory !== "ALL" ||
+              sortOrder !== "EASY_TO_HARD" ||
+              selectedStatus !== "ALL" ||
+              Boolean(searchTerm)) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedDifficulty("ALL");
+                  setSelectedCategory("ALL");
+                  setSortOrder("EASY_TO_HARD");
+                  setSelectedStatus("ALL");
+                  setSearchTerm("");
+                  setCurrentPage(1);
+                }}
+                className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
+              >
+                <RotateCcw size={12} aria-hidden="true" />
+                Đặt lại
+              </button>
+            )}
           </div>
         </div>
-      ) : (
-        <div className="bg-white p-12 rounded-[2rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] text-center space-y-3">
-          <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto text-slate-400">
-            <Search size={32} />
+      </section>
+
+      {/* Catalog Results Grid */}
+      <section>
+        {isLoading ? (
+          <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white">
+            <Loader2 size={32} className="animate-spin text-purple-600" aria-hidden="true" />
+            <p className="mt-3 text-xs font-bold text-slate-500">Đang tải danh sách bài luyện nói...</p>
           </div>
-          <p className="text-slate-700 font-black text-base">Không tìm thấy bài luyện nói phù hợp.</p>
-          <p className="text-slate-400 font-medium text-xs">
-            Hãy thử tìm bằng từ khóa khác hoặc chuyển sang tab cấp độ khác nhé!
-          </p>
-        </div>
-      )}
+        ) : filteredAndSortedExercises.length > 0 ? (
+          <div className="space-y-6">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+              {paginatedExercises.map((exercise) => (
+                <SpeakingExerciseCard
+                  key={exercise.id}
+                  exercise={exercise}
+                  isAuthenticated={Boolean(user)}
+                  onOpenAuthGate={(ex) =>
+                    setAuthGate({ open: true, exerciseId: ex.id, title: ex.title })
+                  }
+                  onStart={handleStartExercise}
+                  isLaunching={Boolean(launchingExerciseId)}
+                />
+              ))}
+            </div>
+
+            {/* Pagination if more than 1 page */}
+            {totalPages > 1 && (
+              <div className="pt-2">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={filteredAndSortedExercises.length}
+                  pageSize={pageSize}
+                  onPageChange={setCurrentPage}
+                  onPageSizeChange={(size) => {
+                    setPageSize(size);
+                    setCurrentPage(1);
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
+            <Mic size={32} className="mx-auto text-slate-400" aria-hidden="true" />
+            <h2 className="mt-3 text-base font-bold text-slate-800">
+              Không tìm thấy bài luyện nói phù hợp
+            </h2>
+            <p className="mt-1 text-xs text-slate-500">
+              Hãy thử chọn bộ lọc khác hoặc tìm kiếm với từ khóa khác.
+            </p>
+          </div>
+        )}
+      </section>
+
+      {/* Guest AuthGateModal */}
+      <AuthGateModal
+        isOpen={authGate.open}
+        onClose={() => setAuthGate({ open: false })}
+        targetLabel={authGate.title ? `bài luyện nói "${authGate.title}"` : "bài luyện nói này"}
+        targetRoute={authGate.exerciseId ? `/practice/speaking/${authGate.exerciseId}` : "/practice/speaking"}
+        onOpenLogin={() => router.push("/login")}
+        onOpenRegister={() => router.push("/register")}
+      />
     </div>
   );
 }

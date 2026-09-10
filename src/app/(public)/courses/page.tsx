@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { Search, Filter, ArrowRight, BookOpen, Users, Calendar, AlertCircle } from "lucide-react";
+import { Search, ArrowRight, BookOpen, Calendar, AlertCircle } from "lucide-react";
 import { courseService, PublicCourseCard } from "@/lib/api/services/course.service";
 
 export default function PublicCoursesPage() {
@@ -15,9 +15,6 @@ export default function PublicCoursesPage() {
 
   useEffect(() => {
     let isMounted = true;
-    setIsLoading(true);
-    setError(null);
-
     courseService
       .getPublicCatalog()
       .then((data) => {

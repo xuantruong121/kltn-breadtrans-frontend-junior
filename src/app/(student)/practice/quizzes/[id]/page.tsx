@@ -2,17 +2,36 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { use, useState } from "react";
+import { use, useState, useEffect, useSyncExternalStore } from "react";
 import { motion } from "framer-motion";
 import { Loader2, CheckCircle2, ChevronRight, Play, Square } from "lucide-react";
 import { quizService, AnswerDto } from "@/lib/api/services/quiz.service";
 import { BackButton } from "@/components/ui";
+import { useAuthStore } from "@/stores/authStore";
+import { AuthGateModal } from "@/components/auth/AuthGateModal";
+import { ListeningComprehensionWorkspace } from "../../listening/components/ListeningComprehensionWorkspace";
+import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
+import { PracticeExitConfirmDialog } from "@/components/practice/PracticeExitConfirmDialog";
+import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
+
+function useHydration() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+}
 
 export default function TakeQuizPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
   const router = useRouter();
   const queryClient = useQueryClient();
   const quizId = parseInt(params.id);
+
+  const hasMounted = useHydration();
+  const { user } = useAuthStore();
+  const [authModalDismissed, setAuthModalDismissed] = useState(false);
+  const showAuthModal = hasMounted && !user && !authModalDismissed;
 
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [currentStep, setCurrentStep] = useState(0);
@@ -23,7 +42,7 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
   const { data: quiz, isLoading } = useQuery({
     queryKey: ["quiz", quizId],
     queryFn: () => quizService.getQuizById(quizId),
-    enabled: !isNaN(quizId),
+    enabled: hasMounted && !!user && !Number.isNaN(quizId),
   });
 
   const submitMutation = useMutation({
@@ -34,32 +53,109 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       queryClient.invalidateQueries({ queryKey: ["daily-quests"] });
       queryClient.invalidateQueries({ queryKey: ["user-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["listeningPractices"] });
+      queryClient.invalidateQueries({ queryKey: ["listening-practices"] });
       
       // Redirect to analytics page
       router.push(`/practice/quizzes/submissions/${data.id}`);
     }
   });
 
-  if (isLoading) {
+  const isReading = quiz?.type === 'BILINGUAL_READING';
+  const isListening = quiz?.type === 'LISTENING_PRACTICE';
+  const backHref = isReading ? '/practice/reading' : '/practice/quizzes';
+
+  const [minLaunchReady, setMinLaunchReady] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setMinLaunchReady(true), 350);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Single ownership: TakeQuizPage owns exit guard only when NOT listening
+  const shouldConfirmExit = !submitMutation.isSuccess;
+  const { confirmExit, exitDialogProps } = usePracticeExitGuard({
+    shouldConfirmExit,
+    defaultFallbackUrl: backHref,
+    enabled: !isListening && hasMounted && !!user,
+  });
+
+  if (hasMounted && !user) {
     return (
-      <div className="flex items-center justify-center h-full min-h-[50vh]">
-        <Loader2 className="animate-spin text-junior-blue" size={48} />
+      <div className="flex min-h-[60vh] flex-col items-center justify-center p-6 text-center">
+        <Loader2 className="animate-spin text-blue-600 mb-4" size={36} />
+        <p className="text-sm font-bold text-slate-600">Đang chuyển hướng đăng nhập...</p>
+        <AuthGateModal
+          isOpen={showAuthModal}
+          onClose={() => {
+            setAuthModalDismissed(true);
+            router.push("/practice/listening");
+          }}
+          targetLabel="bài luyện tập này"
+          targetRoute={`/practice/quizzes/${quizId}`}
+          onOpenLogin={() => router.push("/login")}
+          onOpenRegister={() => router.push("/register")}
+        />
       </div>
     );
   }
 
-  if (!quiz) return <div>Không tìm thấy bài tập</div>;
+  if (isLoading || !hasMounted) {
+    return (
+      <div className="flex items-center justify-center h-full min-h-[50vh] py-12">
+        <PracticeLoadingScreen
+          skill={isReading ? "reading" : undefined}
+          className="max-w-4xl"
+        />
+      </div>
+    );
+  }
+
+  if (!quiz) return <div className="text-center p-12">Không tìm thấy bài tập</div>;
+
+  // Delegate LISTENING_PRACTICE exclusively to ListeningComprehensionWorkspace
+  // ListeningComprehensionWorkspace owns the 350ms minimum duration gate
+  if (quiz.type === 'LISTENING_PRACTICE') {
+    return (
+      <ListeningComprehensionWorkspace
+        quiz={quiz}
+        onBack={() => router.replace('/practice/listening')}
+      />
+    );
+  }
 
   const questions = quiz.questions || [];
   const currentQuestion = questions[currentStep];
+
+  // BILINGUAL_READING and generic quiz: quizzes/[id]/page.tsx owns the 350ms gate
+  if (!minLaunchReady || (!currentQuestion && questions.length > 0)) {
+    return (
+      <div className="flex items-center justify-center h-full min-h-[50vh] py-12">
+        <PracticeLoadingScreen
+          skill={isReading ? "reading" : undefined}
+          className="max-w-4xl"
+        />
+      </div>
+    );
+  }
+
+  if (questions.length === 0) {
+    return (
+      <div className="mx-auto max-w-2xl py-20 text-center">
+        <p className="text-base font-bold text-slate-700">
+          Bài tập này chưa có câu hỏi nào.
+        </p>
+        <button
+          type="button"
+          onClick={() => confirmExit(backHref)}
+          className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-extrabold text-white hover:bg-blue-700 cursor-pointer"
+        >
+          Quay lại danh sách
+        </button>
+      </div>
+    );
+  }
   const skillLabel = quiz.bilingualContent?.skillLabel || "TOEIC";
   const sectionLabel = currentQuestion?.content?.section;
-  const isReading = quiz.type === 'BILINGUAL_READING';
-  const backHref = quiz.type === 'LISTENING_PRACTICE'
-    ? '/practice/listening'
-    : isReading
-    ? '/practice/reading'
-    : '/practice/quizzes';
 
   const handleNext = () => {
     if (currentStep < questions.length - 1) {
@@ -149,7 +245,11 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
       {/* TOP HEADER BAR */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border-4 border-slate-100 shadow-sm">
         <div className="flex items-center gap-4">
-          <BackButton href={backHref} label="Thoát bài thi" />
+          <BackButton
+            href={backHref}
+            onClick={() => confirmExit(backHref)}
+            label="Thoát bài thi"
+          />
           <div className="h-6 w-0.5 bg-slate-200 hidden sm:block"></div>
           <div>
             <h1 className="text-xl font-black text-slate-800 line-clamp-1">{quiz.title}</h1>
@@ -497,6 +597,9 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
           </div>
         </div>
       </div>
+
+      {/* Shared Exit Confirmation Modal */}
+      <PracticeExitConfirmDialog {...exitDialogProps} />
     </div>
   );
 }

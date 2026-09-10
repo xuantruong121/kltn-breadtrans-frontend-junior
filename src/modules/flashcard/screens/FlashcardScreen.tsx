@@ -13,12 +13,15 @@ export const FlashcardScreen = () => {
   return (
     <div className="mx-auto max-w-6xl space-y-8">
       <header className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-6 shadow-soft sm:p-8">
-        <div className="flex items-start gap-3">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-3">
           <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-amber-400 text-amber-950" aria-hidden="true"><BookOpen size={24} /></span>
           <div>
             <h1 className="text-2xl font-black text-slate-900 sm:text-3xl">Flashcard & từ vựng</h1>
             <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-slate-600">Mỗi bộ từ dưới đây lấy trực tiếp từ hệ thống. Tiến độ đã thuộc, yêu thích và cần ôn được lưu riêng cho tài khoản của bạn.</p>
           </div>
+          </div>
+          <Link href="/vocabulary/saved" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-amber-200 bg-white px-4 text-sm font-bold text-amber-700 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500">Từ đã lưu</Link>
         </div>
       </header>
 

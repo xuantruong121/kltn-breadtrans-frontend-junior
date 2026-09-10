@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
@@ -16,15 +16,44 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { quizService } from "@/lib/api/services/quiz.service";
 import { Pagination } from "@/components/ui";
+import { useAuthStore } from "@/stores/authStore";
+import { AuthGateModal } from "@/components/auth/AuthGateModal";
+import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
+
+const EMPTY_QUIZZES: any[] = [];
 
 type PaperFilter = "ALL" | "TWO_SKILL" | "FOUR_SKILL";
 
 export default function ToeicPapersPage() {
   const router = useRouter();
+  const { user } = useAuthStore();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
   const [searchQuery, setSearchQuery] = useState("");
   const [paperFilter, setPaperFilter] = useState<PaperFilter>("ALL");
+  const [launchingDestination, setLaunchingDestination] = useState<string | null>(null);
+  const [authGate, setAuthGate] = useState<{
+    open: boolean;
+    title?: string;
+    destination?: string;
+  }>({ open: false });
+
+  useEffect(() => {
+    if (!launchingDestination) return;
+
+    let animId2: number;
+
+    const animId1 = requestAnimationFrame(() => {
+      animId2 = requestAnimationFrame(() => {
+        router.push(launchingDestination);
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(animId1);
+      if (animId2) cancelAnimationFrame(animId2);
+    };
+  }, [launchingDestination, router]);
 
   const { data: quizzes, isLoading } = useQuery({
     queryKey: ["toeic-papers"],
@@ -32,7 +61,7 @@ export default function ToeicPapersPage() {
   });
 
   const filteredQuizzes = useMemo(() => {
-    if (!quizzes) return [];
+    if (!quizzes) return EMPTY_QUIZZES;
     const byFormat = quizzes.filter((quiz: any) => {
       if (paperFilter === "ALL") return true;
       return quiz.bilingualContent?.examFormat === paperFilter;
@@ -49,6 +78,14 @@ export default function ToeicPapersPage() {
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
+
+  if (launchingDestination) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center py-12">
+        <PracticeLoadingScreen skill="listening" className="max-w-4xl" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto pb-16 px-4 sm:px-6">
@@ -157,14 +194,32 @@ export default function ToeicPapersPage() {
                 ? `/practice/toeic/bundle/${quiz.id}`
                 : `/practice/toeic/${quiz.bilingualContent?.examSetId || quiz.id}`;
 
+              const handleCardSelect = () => {
+                if (!user) {
+                  setAuthGate({ open: true, title: quiz.title, destination });
+                } else {
+                  if (launchingDestination) return;
+                  setLaunchingDestination(destination);
+                }
+              };
+
               return (
                 <motion.div
                   key={quiz.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${quiz.title}. ${isCompleted ? "Đã hoàn thành" : "Chưa làm"}. ${questionCount} câu hỏi.`}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.04 }}
-                  onClick={() => router.push(destination)}
-                  className={`group relative rounded-2xl border p-5 flex flex-col justify-between cursor-pointer transition-all duration-200 ${
+                  onClick={handleCardSelect}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleCardSelect();
+                    }
+                  }}
+                  className={`group relative rounded-2xl border p-5 flex flex-col justify-between cursor-pointer transition-all duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
                     isCompleted
                       ? "bg-emerald-50/40 border-emerald-200 hover:border-emerald-300 hover:shadow-md"
                       : "bg-white border-slate-200/80 hover:border-amber-400 hover:shadow-md"
@@ -243,6 +298,15 @@ export default function ToeicPapersPage() {
           </p>
         </div>
       )}
+
+      <AuthGateModal
+        isOpen={authGate.open}
+        onClose={() => setAuthGate({ open: false })}
+        targetLabel={authGate.title ? `đề thi "${authGate.title}"` : "đề thi TOEIC này"}
+        targetRoute={authGate.destination || "/practice/quizzes"}
+        onOpenLogin={() => router.push("/login")}
+        onOpenRegister={() => router.push("/register")}
+      />
     </div>
   );
 }
