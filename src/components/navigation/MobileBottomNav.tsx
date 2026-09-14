@@ -15,9 +15,9 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
   const { user } = useAuthStore();
 
   const isHome = pathname === "/" || pathname === "/dashboard";
-  const isToeic = pathname.startsWith("/practice/quizzes");
+  const isToeic = pathname.startsWith("/practice/quizzes") || pathname.startsWith("/practice/toeic");
   const isSkills =
-    (pathname.startsWith("/practice") && !pathname.startsWith("/practice/quizzes")) ||
+    (pathname.startsWith("/practice") && !isToeic) ||
     pathname.startsWith("/flashcard") ||
     pathname.startsWith("/grammar");
   const isCourses = pathname.startsWith("/courses") || pathname.startsWith("/my-courses");

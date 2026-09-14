@@ -402,8 +402,9 @@ export function AppHeader() {
 
   const isStudent = isReady && user?.role === "STUDENT";
   const isAdmin = isReady && user?.role === "ADMIN";
+  const isExamPath = pathname.startsWith("/practice/toeic") || pathname.startsWith("/practice/quizzes");
   const isSkillsPath =
-    (pathname.startsWith("/practice") && !pathname.startsWith("/practice/quizzes")) ||
+    (pathname.startsWith("/practice") && !isExamPath) ||
     pathname.startsWith("/flashcard") ||
     pathname.startsWith("/grammar");
 
@@ -603,7 +604,7 @@ export function AppHeader() {
               key={link.href}
               href={link.href}
               className={`px-2 xl:px-3.5 py-2 rounded-xl flex items-center gap-1 xl:gap-1.5 transition-colors whitespace-nowrap ${
-                isActivePath(pathname, link.href)
+                (link.label === "Luyện đề" ? isExamPath : isActivePath(pathname, link.href))
                   ? "text-amber-800 bg-amber-50/90 font-black border border-amber-200/60"
                   : "text-slate-600 hover:text-amber-800 hover:bg-amber-50/50"
               }`}
@@ -786,7 +787,7 @@ export function AppHeader() {
                 href={link.href}
                 onClick={closeMenus}
                 className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-base font-bold transition-colors ${
-                  isActivePath(pathname, link.href)
+                  (link.label === "Luyện đề" ? isExamPath : isActivePath(pathname, link.href))
                     ? "bg-amber-50 text-amber-900 font-black border border-amber-200/60"
                     : "text-slate-700 hover:bg-amber-50 hover:text-amber-900"
                 }`}

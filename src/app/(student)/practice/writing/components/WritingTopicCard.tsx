@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, CheckCircle2, Lock, PenTool, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, Lock, PenTool } from "lucide-react";
 import type { WritingTopic } from "@/lib/api/services/writing.service";
 
 export interface WritingTopicItem extends WritingTopic {

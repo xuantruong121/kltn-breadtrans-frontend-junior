@@ -15,6 +15,7 @@ export interface UserProfile {
     dateOfBirth?: string;
     phoneNumber?: string;
     address?: string;
+    targetScore?: string;
   };
   stats?: {
     totalBanhRan: number;
@@ -61,6 +62,29 @@ export interface LearningHistoryResponse {
   };
 }
 
+export interface SkillProgressSummary {
+  skill: "LISTENING" | "READING" | "SPEAKING" | "WRITING";
+  title: string;
+  categoryLabel: string;
+  totalItems: number;
+  completedItems: number;
+  progressPercent: number;
+  levelRange: string;
+  badge: string;
+  unitLabel: string;
+}
+
+export interface OverallSkillsProgress {
+  completedItems: number;
+  totalItems: number;
+  progressPercent: number;
+}
+
+export interface UserSkillsSummaryResponse {
+  skills: SkillProgressSummary[];
+  overall: OverallSkillsProgress;
+}
+
 export const userService = {
   getProfile: async (): Promise<UserProfile> => {
     return await axiosClient.get("/users/profile");
@@ -69,6 +93,11 @@ export const userService = {
   getStats: async (): Promise<UserLearningStats> => {
     return await axiosClient.get("/users/stats");
   },
+
+  getSkillsSummary: async (): Promise<UserSkillsSummaryResponse> => {
+    return await axiosClient.get("/users/skills-summary");
+  },
+
   getLearningHistory: async (type?: string): Promise<LearningHistoryResponse> =>
     axiosClient.get(`/users/learning-history${type && type !== "ALL" ? `?type=${encodeURIComponent(type)}` : ""}`),
 };

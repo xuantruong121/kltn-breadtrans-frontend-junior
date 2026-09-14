@@ -174,13 +174,13 @@ export default function SpeakingExercisesPage() {
           <div className="max-w-3xl space-y-3">
             <div className="inline-flex items-center gap-1.5 rounded-full border border-purple-200 bg-white/90 px-3 py-1 text-xs font-extrabold text-purple-700">
               <Mic size={14} aria-hidden="true" />
-              <span>Đánh giá chuẩn âm vị quốc tế</span>
+              <span>Đánh giá phát âm chuẩn xác</span>
             </div>
             <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
               Luyện phát âm & Giao tiếp tiếng Anh
             </h1>
             <p className="text-xs leading-relaxed text-slate-600 sm:text-sm">
-              Rèn luyện kỹ năng phát âm chuẩn IPA với công nghệ AI nhận diện âm vị tức thì, đối chiếu ngữ âm và chấm điểm từng từ chuẩn xác.
+              Rèn luyện kỹ năng phát âm tiếng Anh với công nghệ AI phân tích giọng nói, đánh giá độ chính xác, độ lưu loát và chấm điểm từng từ.
             </p>
             <div className="pt-1">
               <Link
