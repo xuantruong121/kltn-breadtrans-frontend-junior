@@ -50,7 +50,7 @@ export default function ToeicBundlePage({ params }: { params: Promise<{ quizId: 
 
   if (isLoading) return <div className="flex min-h-[50vh] items-center justify-center"><Loader2 className="animate-spin text-amber-600" /></div>;
   if (isError || !bundle) return <div className="mx-auto max-w-2xl py-20 text-center text-slate-600">Không tải được gói TOEIC 4 kỹ năng.</div>;
-  const lrCount = bundle.listeningReading.groups.reduce((total, group) => total + group.questions.length, 0);
+  const lrCount = bundle.listeningReading.parts?.reduce((total, part) => total + part.questionCount, 0) ?? 0;
 
   const handleStartLR = () => {
     if (!user) {
