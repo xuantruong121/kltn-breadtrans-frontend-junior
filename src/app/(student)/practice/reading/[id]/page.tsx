@@ -27,7 +27,7 @@ export default function ReadingTopicDetailPage() {
 
     const animId1 = requestAnimationFrame(() => {
       animId2 = requestAnimationFrame(() => {
-        router.push(`/practice/quizzes/${launchingQuizId}`);
+        router.push(`/practice/quizzes/${launchingQuizId}?topic=${topicId}`);
       });
     });
 
@@ -35,7 +35,7 @@ export default function ReadingTopicDetailPage() {
       cancelAnimationFrame(animId1);
       if (animId2) cancelAnimationFrame(animId2);
     };
-  }, [launchingQuizId, router]);
+  }, [launchingQuizId, router, topicId]);
 
   const { data: topic, isLoading } = useQuery({
     queryKey: ["reading-topic", topicId],
@@ -97,7 +97,7 @@ export default function ReadingTopicDetailPage() {
                 {actualTopic.quizzes.map((quiz: any, index: number) => (
                   <Link
                     key={quiz.id}
-                    href={`/practice/quizzes/${quiz.id}`}
+                    href={`/practice/quizzes/${quiz.id}?topic=${topicId}`}
                     className="block"
                     onClick={(e) => {
                       e.preventDefault();
@@ -209,7 +209,7 @@ export default function ReadingTopicDetailPage() {
         isOpen={authGate.open}
         onClose={() => setAuthGate({ open: false })}
         targetLabel={authGate.quizTitle ? `bài đọc "${authGate.quizTitle}"` : "bài đọc này"}
-        targetRoute={authGate.quizId ? `/practice/quizzes/${authGate.quizId}` : "/practice"}
+        targetRoute={authGate.quizId ? `/practice/quizzes/${authGate.quizId}?topic=${topicId}` : "/practice"}
         onOpenLogin={() => router.push("/login")}
         onOpenRegister={() => router.push("/register")}
       />
