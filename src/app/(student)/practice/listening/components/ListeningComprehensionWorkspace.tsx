@@ -175,16 +175,15 @@ export function ListeningComprehensionWorkspace({
   const level: string | undefined = currentQuestion?.content?.level;
 
   // Check mutation
-  const handleCheck = async () => {
-    if (!quiz || !currentQuestion || !selectedAnswer || isChecking || isChecked)
-      return;
+  const handleCheck = async (answer = selectedAnswer) => {
+    if (!quiz || !currentQuestion || !answer || isChecking || isChecked) return;
     setIsChecking(true);
     setValidationNotice(null);
     try {
       const res = await quizService.checkPracticeQuestion(
         quiz.id,
         currentQuestion.id,
-        selectedAnswer,
+        answer,
       );
       setCheckResults((prev) => ({
         ...prev,
@@ -195,6 +194,16 @@ export function ListeningComprehensionWorkspace({
     } finally {
       setIsChecking(false);
     }
+  };
+
+  const handleAnswerSelect = (answer: string) => {
+    if (!currentQuestion || isChecking || isChecked) return;
+
+    setAnswersByQuestionId((prev) => ({
+      ...prev,
+      [currentQuestion.id]: answer,
+    }));
+    void handleCheck(answer);
   };
 
   // Check if every question has an answer and has been checked
@@ -277,14 +286,13 @@ export function ListeningComprehensionWorkspace({
     }
   };
 
-  // Keyboard shortcut listeners (1-4 select option, Enter checks or advances)
+  // Keyboard shortcut listeners (1-4 select and check, Enter advances)
   const latestActionsRef = useRef({
     isChecked,
     currentQuestion,
     options,
-    selectedAnswer,
     isLastQuestion,
-    handleCheck,
+    handleAnswerSelect,
     handleFinalSubmit,
     handleNextQuestion,
   });
@@ -294,9 +302,8 @@ export function ListeningComprehensionWorkspace({
       isChecked,
       currentQuestion,
       options,
-      selectedAnswer,
       isLastQuestion,
-      handleCheck,
+      handleAnswerSelect,
       handleFinalSubmit,
       handleNextQuestion,
     };
@@ -315,19 +322,14 @@ export function ListeningComprehensionWorkspace({
           const chosen = actions.options[optIdx];
           if (chosen) {
             e.preventDefault();
-            setAnswersByQuestionId((prev) => ({
-              ...prev,
-              [actions.currentQuestion.id]: chosen,
-            }));
+            actions.handleAnswerSelect(chosen);
           }
         }
       }
 
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
-        if (!actions.isChecked && actions.selectedAnswer) {
-          void actions.handleCheck();
-        } else if (actions.isChecked) {
+        if (actions.isChecked) {
           if (actions.isLastQuestion) {
             actions.handleFinalSubmit();
           } else {
@@ -753,7 +755,7 @@ export function ListeningComprehensionWorkspace({
                         cardStyles =
                           "border-2 border-slate-200 bg-slate-50/60 text-slate-600 opacity-80";
                       }
-                    } else if (isSelected) {
+                    } else if (isSelected || (isChecking && isSelected)) {
                       cardStyles =
                         "border-2 border-sky-500 bg-sky-50/50 text-slate-900 shadow-xs";
                       keyStyles = "text-sky-700 font-bold";
@@ -761,28 +763,24 @@ export function ListeningComprehensionWorkspace({
                     }
 
                     return (
-                      <label
+                      <button
                         key={`${currentQuestion.id}-${idx}`}
-                        onClick={() => {
-                          if (!isChecked) {
-                            setAnswersByQuestionId((prev) => ({
-                              ...prev,
-                              [currentQuestion.id]: opt,
-                            }));
-                          }
-                        }}
-                        className={`w-full p-4 md:p-5 rounded-2xl border-2 flex items-center cursor-pointer transition-all ${cardStyles} ${
-                          isChecked ? "cursor-default" : ""
+                        type="button"
+                        onClick={() => handleAnswerSelect(opt)}
+                        disabled={isChecked || isChecking}
+                        aria-label={`Đáp án ${key}: ${opt}`}
+                        className={`w-full p-4 md:p-5 rounded-2xl border-2 flex items-center text-left transition-all ${cardStyles} ${
+                          isChecked || isChecking
+                            ? "cursor-default"
+                            : "cursor-pointer active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
                         }`}
                       >
-                        <input
-                          type="radio"
-                          name={`answer-${currentQuestion.id}`}
-                          checked={isSelected}
-                          onChange={() => {}}
-                          disabled={isChecked}
-                          className={`w-5 h-5 ${radioClass}`}
-                        />
+                        <span
+                          aria-hidden="true"
+                          className={`flex size-5 shrink-0 items-center justify-center rounded-full border-2 ${radioClass}`}
+                        >
+                          {isSelected && <span className="size-2 rounded-full bg-current" />}
+                        </span>
                         <span
                           className={`ml-3.5 mr-4 text-base md:text-lg ${keyStyles}`}
                         >
@@ -815,10 +813,24 @@ export function ListeningComprehensionWorkspace({
                             Đáp án đúng
                           </span>
                         )}
-                      </label>
+                      </button>
                     );
                   })}
                 </div>
+
+                <p
+                  className="sr-only"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  {isChecking
+                    ? "Đang kiểm tra đáp án."
+                    : isChecked
+                      ? currentCheck?.isCorrect
+                        ? "Chính xác. Đáp án và giải thích đã hiển thị."
+                        : "Chưa chính xác. Đáp án đúng và giải thích đã hiển thị."
+                      : ""}
+                </p>
 
                 {/* Structured Pedagogical Explanation Drawer (Post-Answer) */}
                 {isChecked && parsedExplanation && (
@@ -1067,27 +1079,22 @@ export function ListeningComprehensionWorkspace({
             </div>
           )}
 
-          {/* Action Button: Kiểm tra / Câu tiếp theo / Nộp bài */}
+          {/* Action Button: feedback is immediate after selecting an answer. */}
           {!isChecked ? (
-            <button
-              type="button"
-              onClick={() => void handleCheck()}
-              disabled={!selectedAnswer || isChecking}
-              className="px-5 sm:px-6 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-bold shadow-sm transition-all active:scale-95 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed inline-flex items-center gap-2 text-sm"
+            <div
+              role="status"
+              aria-live="polite"
+              className="inline-flex min-h-11 items-center gap-2 px-3 text-sm font-semibold text-slate-500"
             >
               {isChecking ? (
                 <>
-                  <Loader2
-                    size={16}
-                    className="animate-spin"
-                    aria-hidden="true"
-                  />
-                  Đang kiểm tra...
+                  <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                  Đang kiểm tra đáp án...
                 </>
               ) : (
-                "Kiểm tra đáp án"
+                "Chọn một đáp án để xem kết quả"
               )}
-            </button>
+            </div>
           ) : isLastQuestion ? (
             <button
               type="button"
