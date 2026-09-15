@@ -75,7 +75,7 @@ export default function SocketProvider({ children }: { children: React.ReactNode
         }
 
         // Invalidate profile query để đồng bộ toàn bộ app
-        queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+        queryClient.invalidateQueries({ queryKey: ["user-profile", user?.id] });
 
         // Hiển thị thông báo chúc mừng / thông tin
         if (data.amount > 0) {
@@ -98,7 +98,7 @@ export default function SocketProvider({ children }: { children: React.ReactNode
 
       if (user?.id && data.userId === user.id) {
         queryClient.invalidateQueries({ queryKey: ["market-orders"] });
-        queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+        queryClient.invalidateQueries({ queryKey: ["user-profile", user.id] });
 
         if (data.status === "approved") {
           toast.success(`🎁 Đơn đổi quà #${data.orderId} đã được DUYỆT bởi ${data.reviewerName || "Ban Quản Trị"}!`, {

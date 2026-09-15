@@ -178,7 +178,8 @@ export const MarketScreen: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["my-market-orders"] });
       queryClient.invalidateQueries({ queryKey: ["market-balance"] });
       queryClient.invalidateQueries({ queryKey: ["market-inventory"] });
-      queryClient.invalidateQueries({ queryKey: ["user-stats"] });
+      const currentUserId = useAuthStore.getState().user?.id;
+      queryClient.invalidateQueries({ queryKey: ["user-stats", currentUserId] });
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Có lỗi xảy ra khi đổi quà!");
     } finally {

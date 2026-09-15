@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuthStore } from "@/stores/authStore";
 import {
   Activity,
   ArrowLeft,
@@ -509,9 +510,10 @@ export default function SpeakingExerciseDetailPage() {
             toast.success("Đã hoàn thành đánh giá phát âm!");
 
             // Authoritative cache invalidation on completed
-            queryClient.invalidateQueries({ queryKey: ["dashboard-today"] });
-            queryClient.invalidateQueries({ queryKey: ["user-stats"] });
-            queryClient.invalidateQueries({ queryKey: ["user-skills-summary"] });
+            const currentUserId = useAuthStore.getState().user?.id;
+            queryClient.invalidateQueries({ queryKey: ["dashboard-today", currentUserId] });
+            queryClient.invalidateQueries({ queryKey: ["user-stats", currentUserId] });
+            queryClient.invalidateQueries({ queryKey: ["user-skills-summary", currentUserId] });
             queryClient.invalidateQueries({ queryKey: ["myPet"] });
           } else if (sub.status === "FAILED") {
             setPhase("FAILED");

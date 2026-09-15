@@ -6,6 +6,7 @@ import { CheckCircle2, XCircle } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button3D } from "@/components/ui";
 import { grammarService } from "@/lib/api/services/grammar.service";
+import { useAuthStore } from "@/stores/authStore";
 import { GrammarAttemptResult, GrammarQuestion } from "../types";
 
 interface GrammarQuizProps {
@@ -22,9 +23,10 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topicId, questions }) 
     mutationFn: () => grammarService.submitAttempt(topicId, answers),
     onSuccess: (data) => {
       setResult(data);
+      const currentUserId = useAuthStore.getState().user?.id;
       void Promise.all([
         queryClient.invalidateQueries({ queryKey: ["grammar-topics"] }),
-        queryClient.invalidateQueries({ queryKey: ["user-stats"] }),
+        queryClient.invalidateQueries({ queryKey: ["user-stats", currentUserId] }),
         queryClient.invalidateQueries({ queryKey: ["daily-quests"] }),
         queryClient.invalidateQueries({ queryKey: ["profile"] }),
       ]);

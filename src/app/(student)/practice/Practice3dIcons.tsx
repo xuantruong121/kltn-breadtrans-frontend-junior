@@ -459,7 +459,7 @@ export function BakeryBanhRan3d({ className = "", size = 32 }: IconProps) {
           <stop offset="100%" stopColor="#9a3412" />
         </radialGradient>
       </defs>
-      {/* 3D Round Golden Bánh Rán with sugar glaze */}
+      {/* 3D Round Golden Bánh Mì with sugar glaze */}
       <circle cx="16" cy="16" r="14" fill="url(#banhran-grad)" stroke="#9a3412" strokeWidth="1" />
       {/* Sesame / Sugar Crystals */}
       <ellipse cx="12" cy="11" rx="1.8" ry="1" fill="#ffffff" transform="rotate(-20 12 11)" opacity="0.9" />
