@@ -17,13 +17,18 @@ import { writingService } from "@/lib/api/services/writing.service";
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
 import { useAuthStore } from "@/stores/authStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
-import { WritingTopicCard, type WritingTopicItem } from "./components/WritingTopicCard";
+import {
+  WritingTopicCard,
+  type WritingTopicItem,
+} from "./components/WritingTopicCard";
 
 export default function WritingTopicsPage() {
   const router = useRouter();
   const { user } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedTab, setSelectedTab] = useState<"ALL" | "UNCOMPLETED" | "COMPLETED">("ALL");
+  const [selectedTab, setSelectedTab] = useState<
+    "ALL" | "UNCOMPLETED" | "COMPLETED"
+  >("ALL");
   const [sortOrder, setSortOrder] = useState<"DEFAULT" | "NAME_ASC">("DEFAULT");
   const [launchingTopicId, setLaunchingTopicId] = useState<number | null>(null);
   const [authGate, setAuthGate] = useState<{
@@ -49,14 +54,18 @@ export default function WritingTopicsPage() {
     };
   }, [launchingTopicId, router]);
 
-  const { data: topicsData, isLoading, isError, refetch } = useQuery({
+  const {
+    data: topicsData,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ["writing-topics"],
     queryFn: writingService.getTopics,
   });
 
   const topics: WritingTopicItem[] = useMemo(() => {
-    const raw = (topicsData as any)?.quizzes || topicsData || [];
-    return Array.isArray(raw) ? (raw as WritingTopicItem[]) : [];
+    return topicsData?.quizzes ?? [];
   }, [topicsData]);
 
   // Completed count
@@ -72,7 +81,8 @@ export default function WritingTopicsPage() {
       const desc = (t.description || "").toLowerCase();
       const matchSearch = !q || title.includes(q) || desc.includes(q);
 
-      if (selectedTab === "COMPLETED") return matchSearch && Boolean(t.isCompleted);
+      if (selectedTab === "COMPLETED")
+        return matchSearch && Boolean(t.isCompleted);
       if (selectedTab === "UNCOMPLETED") return matchSearch && !t.isCompleted;
       return matchSearch;
     });
@@ -122,7 +132,8 @@ export default function WritingTopicsPage() {
               Luyện viết tiếng Anh thực chiến
             </h1>
             <p className="text-xs leading-relaxed text-slate-600 sm:text-sm">
-              Viết bài theo các chủ đề thực tế trong môi trường làm việc, nhận phân tích từ vựng, ngữ pháp và gợi ý chỉnh sửa chi tiết tức thì.
+              Viết bài theo các chủ đề thực tế trong môi trường làm việc, nhận
+              phân tích từ vựng, ngữ pháp và gợi ý chỉnh sửa chi tiết tức thì.
             </p>
             <div className="pt-1">
               <Link
@@ -241,7 +252,9 @@ export default function WritingTopicsPage() {
             </select>
 
             {/* Reset filters */}
-            {(selectedTab !== "ALL" || sortOrder !== "DEFAULT" || Boolean(searchTerm)) && (
+            {(selectedTab !== "ALL" ||
+              sortOrder !== "DEFAULT" ||
+              Boolean(searchTerm)) && (
               <button
                 type="button"
                 onClick={() => {
@@ -263,8 +276,14 @@ export default function WritingTopicsPage() {
       <section>
         {isLoading ? (
           <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white">
-            <Loader2 size={32} className="animate-spin text-rose-600" aria-hidden="true" />
-            <p className="mt-3 text-xs font-bold text-slate-500">Đang tải danh sách bài viết...</p>
+            <Loader2
+              size={32}
+              className="animate-spin text-rose-600"
+              aria-hidden="true"
+            />
+            <p className="mt-3 text-xs font-bold text-slate-500">
+              Đang tải danh sách bài viết...
+            </p>
           </div>
         ) : isError ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
@@ -301,7 +320,11 @@ export default function WritingTopicsPage() {
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
-            <PenTool size={32} className="mx-auto text-slate-400" aria-hidden="true" />
+            <PenTool
+              size={32}
+              className="mx-auto text-slate-400"
+              aria-hidden="true"
+            />
             <h2 className="mt-3 text-base font-bold text-slate-800">
               Không tìm thấy bài viết phù hợp
             </h2>
@@ -316,8 +339,16 @@ export default function WritingTopicsPage() {
       <AuthGateModal
         isOpen={authGate.open}
         onClose={() => setAuthGate({ open: false })}
-        targetLabel={authGate.title ? `bài luyện viết "${authGate.title}"` : "bài luyện viết này"}
-        targetRoute={authGate.topicId ? `/practice/writing/${authGate.topicId}` : "/practice/writing"}
+        targetLabel={
+          authGate.title
+            ? `bài luyện viết "${authGate.title}"`
+            : "bài luyện viết này"
+        }
+        targetRoute={
+          authGate.topicId
+            ? `/practice/writing/${authGate.topicId}`
+            : "/practice/writing"
+        }
         onOpenLogin={() => router.push("/login")}
         onOpenRegister={() => router.push("/register")}
       />

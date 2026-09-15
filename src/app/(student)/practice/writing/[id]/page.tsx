@@ -3,12 +3,12 @@
 import React, { useState, useEffect, use } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  PenTool, 
-  Loader2, 
-  CheckCircle2, 
-  RotateCcw, 
-  Award, 
+import {
+  PenTool,
+  Loader2,
+  CheckCircle2,
+  RotateCcw,
+  Award,
   FileText,
   TrendingUp,
   BookOpen,
@@ -17,16 +17,20 @@ import { BackButton } from "@/components/ui";
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
 import { PracticeExitConfirmDialog } from "@/components/practice/PracticeExitConfirmDialog";
 import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
-import { writingService } from "@/lib/api/services/writing.service";
-import axiosClient from "@/lib/api/axiosClient";
+import {
+  writingService,
+  type WritingEvaluation,
+} from "@/lib/api/services/writing.service";
 import toast from "react-hot-toast";
 
-export default function WritingDetailPage(props: { params: Promise<{ id: string }> }) {
+export default function WritingDetailPage(props: {
+  params: Promise<{ id: string }>;
+}) {
   const params = use(props.params);
   const topicId = Number(params.id);
   const [content, setContent] = useState("");
   const [isEvaluating, setIsEvaluating] = useState(false);
-  const [feedback, setFeedback] = useState<any | null>(null);
+  const [feedback, setFeedback] = useState<WritingEvaluation | null>(null);
 
   const [minLaunchReady, setMinLaunchReady] = useState(false);
   useEffect(() => {
@@ -36,15 +40,17 @@ export default function WritingDetailPage(props: { params: Promise<{ id: string 
 
   const { data: topicData, isLoading } = useQuery({
     queryKey: ["writing-topic", topicId],
-    queryFn: () => writingService.getTopicById(topicId),
+    queryFn: () => writingService.getQuizDetails(topicId),
     enabled: !!topicId,
   });
-  const topic = (topicData as any)?.data || topicData;
+  const topic = topicData;
 
   const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
   const charCount = content.length;
+  const minimumWords =
+    topic?.wordRange?.[0] ?? (topic?.type === "WRITING_PICTURE" ? 1 : 15);
 
-  const shouldConfirmExit = !feedback;
+  const shouldConfirmExit = !feedback && content.trim().length > 0;
   const { confirmExit, exitDialogProps } = usePracticeExitGuard({
     shouldConfirmExit,
     defaultFallbackUrl: "/practice/writing",
@@ -59,8 +65,10 @@ export default function WritingDetailPage(props: { params: Promise<{ id: string 
   }
 
   const handleEvaluate = async () => {
-    if (wordCount < 15) {
-      toast.error("Vui lòng viết tối thiểu 15 từ để hệ thống có thể phân tích và chấm điểm!");
+    if (wordCount < minimumWords) {
+      toast.error(
+        `Vui lòng viết tối thiểu ${minimumWords} từ trước khi gửi bài.`,
+      );
       return;
     }
 
@@ -68,36 +76,8 @@ export default function WritingDetailPage(props: { params: Promise<{ id: string 
     setFeedback(null);
 
     try {
-      const res: any = await axiosClient.post("/writing/evaluate", {
-        topicId: params.id,
-        content: content.trim(),
-      }).catch(() => null);
-
-      if (res?.data) {
-        setFeedback(res.data);
-      } else {
-        setTimeout(() => {
-          setFeedback({
-            overallScore: 8.0,
-            toeicEstimated: "160 - 180 / 200",
-            breadsEarned: 15,
-            strengths: [
-              "Cấu trúc câu phong phú, diễn đạt đúng trọng tâm câu hỏi đề bài.",
-              "Sử dụng từ vựng công sở chuẩn xác trong ngữ cảnh viết email.",
-            ],
-            improvements: [
-              "Nên bổ sung thêm các liên từ tương phản (However, In contrast) để tăng tính gắn kết.",
-              "Chú ý sự hòa hợp giữa chủ ngữ số ít và động từ trong các mệnh đề phức.",
-            ],
-            grammarCorrections: [
-              { original: "The company provide", corrected: "The company provides", reason: "Chủ ngữ số ít đi kèm động từ thêm s/es" },
-            ],
-          });
-          setIsEvaluating(false);
-          toast.success("Hệ thống đã hoàn tất đánh giá bài viết!");
-        }, 1200);
-        return;
-      }
+      const result = await writingService.submit(topicId, content.trim());
+      setFeedback(result);
       setIsEvaluating(false);
       toast.success("Hệ thống đã hoàn tất đánh giá bài viết!");
     } catch {
@@ -118,15 +98,18 @@ export default function WritingDetailPage(props: { params: Promise<{ id: string 
           />
           <div className="h-6 w-px bg-slate-200 hidden sm:block" />
           <div>
-            <h1 className="text-xl font-extrabold text-slate-900 line-clamp-1">Luyện viết: Email công việc</h1>
+            <h1 className="text-xl font-extrabold text-slate-900 line-clamp-1">
+              {topic?.title || "Luyện viết"}
+            </h1>
             <p className="text-xs text-slate-500 font-medium">
-              Viết bài theo tình huống thực tế & nhận phân tích chuyên sâu tự động
+              Viết bài theo tình huống thực tế & nhận phân tích chuyên sâu tự
+              động
             </p>
           </div>
         </div>
 
         <span className="bg-rose-50 text-rose-700 border border-rose-200 px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider self-start sm:self-auto">
-          Part 1-3 Writing
+          {topic?.taskType || topic?.type || "Writing"}
         </span>
       </div>
 
@@ -145,15 +128,19 @@ export default function WritingDetailPage(props: { params: Promise<{ id: string 
                   Chủ Đề Yêu Cầu
                 </span>
                 <h2 className="text-xl font-extrabold text-slate-900">
-                  {topic?.title || "Viết Email Cập Nhật Tiến Độ Dự Án"}
+                  {topic?.title || "Bài luyện viết"}
                 </h2>
               </div>
             </div>
 
             <div className="bg-rose-50/60 border border-rose-200/80 p-5 rounded-2xl space-y-2">
-              <span className="text-xs font-extrabold text-rose-800 uppercase tracking-wide">Yêu cầu đề bài (Prompt):</span>
+              <span className="text-xs font-extrabold text-rose-800 uppercase tracking-wide">
+                Yêu cầu đề bài (Prompt):
+              </span>
               <p className="text-sm font-semibold text-slate-800 leading-relaxed">
-                {topic?.description || "Write an email (at least 50 words) to your project manager explaining the current progress of your team's assignment, requesting feedback, and proposing a meeting time for tomorrow."}
+                {topic?.prompt ||
+                  topic?.description ||
+                  "Đọc kỹ yêu cầu và viết câu trả lời phù hợp với tình huống."}
               </p>
             </div>
           </div>
@@ -162,10 +149,15 @@ export default function WritingDetailPage(props: { params: Promise<{ id: string 
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-2xs space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                <FileText size={18} className="text-blue-600" /> Bài Viết Của Bạn
+                <FileText size={18} className="text-blue-600" /> Bài Viết Của
+                Bạn
               </h3>
-              <span className={`text-xs font-extrabold px-3 py-1 rounded-xl transition-colors ${wordCount >= 50 ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-600 border border-slate-200"}`}>
-                {wordCount} / 50+ từ ({charCount} ký tự)
+              <span
+                className={`text-xs font-extrabold px-3 py-1 rounded-xl transition-colors ${wordCount >= 50 ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-600 border border-slate-200"}`}
+              >
+                {wordCount}
+                {topic?.wordRange?.[1] ? ` / ${topic.wordRange[1]}` : ""} từ (
+                {charCount} ký tự)
               </span>
             </div>
 
@@ -179,7 +171,9 @@ export default function WritingDetailPage(props: { params: Promise<{ id: string 
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
               <span className="text-xs font-semibold text-slate-500">
-                Gợi ý: Đảm bảo có đủ Mở đầu, Nội dung chính và Đề xuất thời gian gặp.
+                {topic?.wordRange?.length === 2
+                  ? `Mục tiêu ${topic.wordRange[0]}–${topic.wordRange[1]} từ.`
+                  : "Hãy trả lời đầy đủ yêu cầu và kiểm tra lại bài trước khi gửi."}
               </span>
 
               <button
@@ -189,7 +183,8 @@ export default function WritingDetailPage(props: { params: Promise<{ id: string 
               >
                 {isEvaluating ? (
                   <>
-                    <Loader2 className="animate-spin" size={16} /> Đang đánh giá bài viết...
+                    <Loader2 className="animate-spin" size={16} /> Đang đánh giá
+                    bài viết...
                   </>
                 ) : (
                   <>
@@ -225,33 +220,39 @@ export default function WritingDetailPage(props: { params: Promise<{ id: string 
                       <Award size={24} />
                     </div>
                     <div>
-                      <h3 className="text-lg font-extrabold text-slate-900">Báo Cáo Đánh Giá</h3>
-                      <p className="text-xs text-slate-500 font-medium">Theo các tiêu chí rõ ràng về ý, cấu trúc và cách dùng từ</p>
+                      <h3 className="text-lg font-extrabold text-slate-900">
+                        Báo Cáo Đánh Giá
+                      </h3>
+                      <p className="text-xs text-slate-500 font-medium">
+                        Theo các tiêu chí rõ ràng về ý, cấu trúc và cách dùng từ
+                      </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3">
                     <div className="text-right">
-                      <span className="text-[10px] font-bold uppercase text-slate-400 block">Mức độ hoàn thành</span>
-                      <span className="text-xs font-extrabold text-blue-600">{feedback.toeicEstimated}</span>
+                      <span className="text-[10px] font-bold uppercase text-slate-400 block">
+                        Mức độ hoàn thành
+                      </span>
+                      <span className="text-xs font-extrabold text-blue-600">
+                        {feedback.maxScore} điểm tối đa
+                      </span>
                     </div>
                     <div className="px-3.5 py-1.5 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-200 font-extrabold text-lg">
-                      {feedback.overallScore} / 10
+                      {feedback.score} / {feedback.maxScore}
                     </div>
                   </div>
                 </div>
 
-                {/* STRENGTHS & IMPROVEMENTS */}
+                {/* FEEDBACK & NEXT STEPS */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-2">
                     <h4 className="text-xs font-bold text-emerald-800 uppercase flex items-center gap-1.5">
                       <CheckCircle2 size={14} /> Điểm mạnh nổi bật
                     </h4>
-                    <ul className="space-y-1.5 text-xs font-semibold text-emerald-900 list-disc list-inside">
-                      {feedback.strengths?.map((s: string, i: number) => (
-                        <li key={i}>{s}</li>
-                      ))}
-                    </ul>
+                    <p className="text-sm font-semibold leading-relaxed text-emerald-900">
+                      {feedback.feedback}
+                    </p>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-2">
@@ -259,7 +260,7 @@ export default function WritingDetailPage(props: { params: Promise<{ id: string 
                       <TrendingUp size={14} /> Gợi ý hoàn thiện
                     </h4>
                     <ul className="space-y-1.5 text-xs font-semibold text-amber-900 list-disc list-inside">
-                      {feedback.improvements?.map((imp: string, i: number) => (
+                      {feedback.suggestions?.map((imp: string, i: number) => (
                         <li key={i}>{imp}</li>
                       ))}
                     </ul>
@@ -271,8 +272,8 @@ export default function WritingDetailPage(props: { params: Promise<{ id: string 
                   <div className="flex items-center gap-2 text-slate-800 font-bold text-xs">
                     <span>Đã hoàn thành phiên luyện tập</span>
                   </div>
-                  <button 
-                    onClick={() => setFeedback(null)} 
+                  <button
+                    onClick={() => setFeedback(null)}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-100 cursor-pointer"
                   >
                     <RotateCcw size={13} /> Viết lại
@@ -293,15 +294,23 @@ export default function WritingDetailPage(props: { params: Promise<{ id: string 
             <div className="space-y-3 text-xs">
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
                 <p className="font-bold text-slate-800">1. Mở đầu cập nhật</p>
-                <p className="text-slate-600 italic">&ldquo;I am writing to provide a brief update on...&rdquo;</p>
+                <p className="text-slate-600 italic">
+                  &ldquo;I am writing to provide a brief update on...&rdquo;
+                </p>
               </div>
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
                 <p className="font-bold text-slate-800">2. Đề xuất phản hồi</p>
-                <p className="text-slate-600 italic">&ldquo;Could you please review the draft and let me know your thoughts?&rdquo;</p>
+                <p className="text-slate-600 italic">
+                  &ldquo;Could you please review the draft and let me know your
+                  thoughts?&rdquo;
+                </p>
               </div>
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
                 <p className="font-bold text-slate-800">3. Hẹn lịch họp</p>
-                <p className="text-slate-600 italic">&ldquo;Would you be available for a 15-minute sync tomorrow morning?&rdquo;</p>
+                <p className="text-slate-600 italic">
+                  &ldquo;Would you be available for a 15-minute sync tomorrow
+                  morning?&rdquo;
+                </p>
               </div>
             </div>
           </div>

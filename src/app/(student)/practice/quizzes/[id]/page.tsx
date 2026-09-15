@@ -1,10 +1,10 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
-import { use, useState, useEffect, useSyncExternalStore } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { use, useState, useEffect, useSyncExternalStore, type MouseEvent } from "react";
 import { motion } from "framer-motion";
-import { Loader2, CheckCircle2, ChevronRight, Play, Square } from "lucide-react";
+import { BookOpen, CheckCircle2, ChevronRight, Cookie, Lightbulb, Loader2, Play, Square } from "lucide-react";
 import { quizService, AnswerDto } from "@/lib/api/services/quiz.service";
 import { BackButton } from "@/components/ui";
 import { useAuthStore } from "@/stores/authStore";
@@ -25,6 +25,7 @@ function useHydration() {
 export default function TakeQuizPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const quizId = parseInt(params.id);
 
@@ -63,7 +64,16 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
 
   const isReading = quiz?.type === 'BILINGUAL_READING';
   const isListening = quiz?.type === 'LISTENING_PRACTICE';
-  const backHref = isReading ? '/practice/reading' : '/practice/quizzes';
+  const readingTopicId = searchParams.get("topic");
+  const hasValidReadingTopic = Boolean(readingTopicId && /^\d+$/.test(readingTopicId));
+  const backHref = isReading
+    ? hasValidReadingTopic
+      ? `/practice/reading/${readingTopicId}`
+      : '/practice/reading'
+    : '/practice/quizzes';
+  const currentQuizRoute = hasValidReadingTopic
+    ? `/practice/quizzes/${quizId}?topic=${readingTopicId}`
+    : `/practice/quizzes/${quizId}`;
 
   const [minLaunchReady, setMinLaunchReady] = useState(false);
   useEffect(() => {
@@ -78,6 +88,11 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
     defaultFallbackUrl: backHref,
     enabled: !isListening && hasMounted && !!user,
   });
+  const handleExitRequest = (event?: MouseEvent) => {
+    event?.preventDefault();
+    event?.stopPropagation();
+    confirmExit(backHref);
+  };
 
   if (hasMounted && !user) {
     return (
@@ -91,7 +106,7 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
             router.push("/practice/listening");
           }}
           targetLabel="bài luyện tập này"
-          targetRoute={`/practice/quizzes/${quizId}`}
+          targetRoute={currentQuizRoute}
           onOpenLogin={() => router.push("/login")}
           onOpenRegister={() => router.push("/register")}
         />
@@ -241,20 +256,22 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 pb-20">
+    <div className="mx-auto w-full max-w-7xl space-y-6 pb-20 px-4 sm:px-6 lg:px-8">
       {/* TOP HEADER BAR */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border-4 border-slate-100 shadow-sm">
         <div className="flex items-center gap-4">
           <BackButton
             href={backHref}
-            onClick={() => confirmExit(backHref)}
-            label="Thoát bài thi"
+            onClick={handleExitRequest}
+            label={isReading ? "Thoát bài đọc" : "Thoát bài luyện"}
           />
           <div className="h-6 w-0.5 bg-slate-200 hidden sm:block"></div>
           <div>
             <h1 className="text-xl font-black text-slate-800 line-clamp-1">{quiz.title}</h1>
-            <p className="text-xs font-bold text-slate-400">
-              Đề TOEIC {skillLabel} • Làm bài theo từng phần
+            <p className="text-xs font-medium text-slate-500">
+              {isReading
+                ? "Đọc hiểu theo trình độ và chủ đề"
+                : `Luyện tập ${skillLabel} theo từng phần`}
             </p>
           </div>
         </div>
@@ -283,7 +300,7 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
             key={currentQuestion.id}
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white p-6 sm:p-8 rounded-[2.5rem] border-4 border-slate-100 shadow-sm"
+            className="bg-white p-5 sm:p-8 rounded-3xl border border-slate-200 shadow-sm"
           >
             {/* Render Audio */}
             {currentQuestion.content?.audioUrl ? (
@@ -330,9 +347,14 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
 
             {/* Reading Passage: show for BILINGUAL_READING quizzes */}
             {isReading && currentQuestion.content?.passage && (
-              <div className="mb-6 bg-emerald-50 border border-emerald-200 rounded-2xl p-5">
-                <p className="text-xs font-bold text-emerald-700 mb-2 uppercase tracking-wide">Đoạn văn</p>
-                <p className="text-sm leading-7 text-slate-700 font-medium">{currentQuestion.content.passage}</p>
+              <div className="mb-8 bg-emerald-50/70 border border-emerald-200 rounded-2xl p-5 sm:p-7">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-xs font-extrabold text-emerald-800 uppercase tracking-[0.14em]">Đoạn văn</p>
+                  <span className="text-xs font-medium text-emerald-700">Đọc kỹ trước khi chọn đáp án</span>
+                </div>
+                <p className="whitespace-pre-line text-lg leading-9 tracking-[0.01em] text-slate-800 font-medium sm:text-xl sm:leading-10 lg:text-[1.35rem]">
+                  {currentQuestion.content.passage}
+                </p>
               </div>
             )}
             
@@ -343,7 +365,7 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                 </span>
               </div>
             )}
-            <h3 className="text-xl font-bold text-slate-800 mb-6 text-center break-words max-w-full px-2">
+            <h3 className="text-2xl font-extrabold leading-snug text-slate-900 mb-7 text-center break-words max-w-3xl mx-auto px-2 sm:text-3xl">
               {currentQuestion.content?.text || "Nghe đoạn âm thanh và điền câu trả lời vào bên dưới:"}
             </h3>
 
@@ -449,7 +471,7 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                     <button
                       key={i}
                       onClick={() => setAnswers({ ...answers, [currentQuestion.id]: opt })}
-                      className={`p-5 rounded-2xl border-2 font-bold text-left transition-all cursor-pointer ${
+                      className={`min-h-[72px] p-5 rounded-2xl border-2 text-base sm:text-lg font-semibold text-left leading-relaxed transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
                         answers[currentQuestion.id] === opt 
                           ? "border-amber-500 bg-amber-50/70 text-amber-900 shadow-2xs" 
                           : "border-slate-200 bg-white text-slate-700 hover:border-amber-300"
@@ -546,8 +568,8 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
           {/* Tips & Keyboard Shortcuts */}
           {isReading ? (
             <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-6 rounded-2xl border border-emerald-100 space-y-4">
-              <h3 className="font-black text-emerald-900 text-base flex items-center gap-2">
-                <span>📖</span> Mẹo Đọc Hiểu
+              <h3 className="font-extrabold text-emerald-900 text-base flex items-center gap-2">
+                <BookOpen size={18} aria-hidden="true" /> Mẹo Đọc Hiểu
               </h3>
               <ul className="space-y-3 text-xs font-bold text-emerald-800">
                 <li className="flex items-start gap-2 bg-white/80 p-3 rounded-xl border border-emerald-100">
@@ -565,9 +587,9 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
               </ul>
             </div>
           ) : (
-          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-2xl border border-indigo-100/70 space-y-4">
-            <h3 className="font-black text-indigo-900 text-base flex items-center gap-2">
-              <span>⌨️</span> Phím Tắt & Mẹo Làm Bài
+              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4">
+            <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+              <Lightbulb size={18} aria-hidden="true" /> Phím Tắt & Mẹo Làm Bài
             </h3>
             <ul className="space-y-3 text-xs font-bold text-indigo-800">
               <li className="flex items-center justify-between bg-white/80 p-2.5 rounded-xl border border-indigo-100">
@@ -579,7 +601,7 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                 <kbd className="bg-slate-200 text-slate-700 px-2 py-1 rounded font-mono border-b border-slate-300">Enter</kbd>
               </li>
               <li className="bg-white/80 p-3 rounded-xl border border-indigo-100 text-[11px] leading-relaxed text-indigo-700 font-medium">
-                💡 <span className="font-bold">Mẹo:</span> Giảm tốc độ xuống 0.8x nếu câu có các từ phát âm nối đuôi nhanh.
+                <span className="font-bold">Mẹo:</span> Đọc câu hỏi trước, sau đó quay lại đoạn văn để tìm bằng chứng.
               </li>
             </ul>
           </div>
@@ -587,8 +609,8 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
 
           {/* Gamification Reward Card */}
           <div className="bg-amber-50 border-2 border-amber-200 p-5 rounded-[2rem] flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-amber-400 flex items-center justify-center text-2xl shadow-sm shrink-0">
-              🍞
+            <div className="w-12 h-12 rounded-2xl bg-amber-400 flex items-center justify-center shadow-sm shrink-0">
+              <Cookie size={24} aria-hidden="true" className="text-amber-950" />
             </div>
             <div>
               <p className="font-black text-slate-800 text-sm">Phần Thưởng Hoàn Thành</p>
