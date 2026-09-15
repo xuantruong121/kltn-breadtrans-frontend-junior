@@ -168,9 +168,11 @@ export const MarketScreen: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      await axiosClient.post("/market/orders", {
-        items: [{ id: product.id, slug: product.slug, quantity: 1 }],
-      });
+      await axiosClient.post(
+        "/market/orders",
+        { items: [{ id: product.id, slug: product.slug, quantity: 1 }] },
+        { headers: { "Idempotency-Key": crypto.randomUUID() } },
+      );
 
       unlockItem(product.slug || String(product.id));
       toast.success(`Đổi "${product.name}" thành công!`);
