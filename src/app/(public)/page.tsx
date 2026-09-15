@@ -32,6 +32,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { QuickLoginModal } from "@/components/auth/QuickLoginModal";
 import { QuickRegisterModal } from "@/components/auth/QuickRegisterModal";
+import { motion } from "framer-motion";
 
 // --- DATA CONSTANTS ---
 
@@ -442,14 +443,16 @@ export default function PublicLandingPage() {
                     <ArrowRight size={18} aria-hidden="true" />
                   </Link>
                 ) : (
-                  <button
+                  <motion.button
                     onClick={() => openDirectRegister("tài khoản học viên", "/dashboard")}
-                    className="inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl bg-amber-600 hover:bg-amber-700 active:scale-[0.98] text-white font-black text-base shadow-card transition-all cursor-pointer"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-black text-base shadow-[0_6px_0_0_#c2410c] active:translate-y-[6px] active:shadow-none transition-all cursor-pointer"
                     type="button"
                   >
                     <span>Bắt đầu học miễn phí ngay</span>
                     <ArrowRight size={18} aria-hidden="true" />
-                  </button>
+                  </motion.button>
                 )}
 
                 <button
@@ -1018,14 +1021,22 @@ export default function PublicLandingPage() {
                   </p>
                 </div>
 
-                <button
-                  onClick={() => openDirectRegister("lộ trình cá nhân hóa", "/dashboard")}
-                  className="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 active:scale-[0.99] text-white font-black text-sm sm:text-base py-3.5 rounded-2xl shadow-card transition-all cursor-pointer"
+                <motion.button
+                  onClick={() => {
+                    if (user) {
+                      router.push("/dashboard");
+                    } else {
+                      openDirectRegister("lộ trình cá nhân hóa", "/dashboard");
+                    }
+                  }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-black text-sm sm:text-base py-3.5 rounded-2xl shadow-[0_6px_0_0_#c2410c] active:translate-y-[6px] active:shadow-none transition-all cursor-pointer"
                   type="button"
                 >
                   <span>Bắt đầu theo lộ trình này miễn phí</span>
                   <ArrowRight size={18} aria-hidden="true" />
-                </button>
+                </motion.button>
               </div>
             </div>
           </div>
