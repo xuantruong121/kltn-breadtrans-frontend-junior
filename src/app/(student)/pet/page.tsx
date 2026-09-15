@@ -1,24 +1,27 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { gamificationService, Pet } from "@/lib/api/services/gamification.service";
 import { PetStage3D } from "@/modules/pet/components/PetStage3D";
 import { PetSelectorModal } from "@/modules/pet/components/PetSelectorModal";
 import { PET_SPECIES_LIST, getSpeciesIdFromPetName, PetSpecies } from "@/modules/pet/types";
 import toast from "react-hot-toast";
-import Link from "next/link";
 import { ArrowLeft, RefreshCw, Award, Heart, Zap } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function PetPage() {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Lấy dữ liệu pet từ backend
   const { data: pet, isLoading: isPetLoading } = useQuery<Pet>({
-    queryKey: ["my-pet"],
+    queryKey: ["my-pet", user?.id],
     queryFn: gamificationService.getMyPet,
+    enabled: !!user?.id,
   });
 
   // Lấy số dư Bánh Mì từ backend
@@ -33,7 +36,8 @@ export default function PetPage() {
   const feedMutation = useMutation({
     mutationFn: gamificationService.feedPet,
     onSuccess: (updatedPet) => {
-      queryClient.invalidateQueries({ queryKey: ["my-pet"] });
+      queryClient.invalidateQueries({ queryKey: ["my-pet", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["user-stats", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["market-balance"] });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
 
@@ -57,7 +61,7 @@ export default function PetPage() {
   const changeSpeciesMutation = useMutation({
     mutationFn: (petName: string) => gamificationService.changePetType(petName),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["my-pet"] });
+      queryClient.invalidateQueries({ queryKey: ["my-pet", user?.id] });
       setIsModalOpen(false);
       toast.success(`Đã đổi sang thú cưng đồng hành mới!`);
     },

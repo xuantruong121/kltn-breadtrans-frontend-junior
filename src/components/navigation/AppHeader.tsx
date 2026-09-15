@@ -347,6 +347,7 @@ export function AppHeader() {
   const { user, logout } = useAuthStore();
   const { breads, streak } = useGamificationStore();
 
+  const queryClient = useQueryClient();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [skillsOpen, setSkillsOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -395,6 +396,7 @@ export function AppHeader() {
   };
 
   const handleLogout = () => {
+    queryClient.clear();
     logout();
     closeMenus();
     router.push("/");

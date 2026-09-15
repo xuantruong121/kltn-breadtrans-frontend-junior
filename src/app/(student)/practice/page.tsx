@@ -349,7 +349,7 @@ export default function PracticeHubPage() {
               </div>
             </div>
 
-            {/* Bánh Rán / EXP Counter */}
+            {/* Bánh Mì / EXP Counter */}
             <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-white/95 px-4 py-3 shadow-xs">
               <div className="flex size-11 items-center justify-center rounded-xl bg-amber-500 text-white shadow-xs">
                 <BakeryBanhRan3d size={24} />
@@ -359,7 +359,7 @@ export default function PracticeHubPage() {
                   Tài sản & Cấp
                 </p>
                 <p className="text-base font-black text-amber-700 leading-tight">
-                  {isHydrated ? breads : 0} Bánh Rán
+                  {isHydrated ? breads : 0} Bánh Mì
                 </p>
               </div>
             </div>
@@ -545,7 +545,7 @@ export default function PracticeHubPage() {
                 </h3>
                 <p className="text-xs font-medium text-slate-600">
                   {firstIncompleteQuest.description ||
-                    "Hoàn thành bài tập để nhận điểm kinh nghiệm và bánh rán."}
+                    "Hoàn thành bài tập để nhận điểm kinh nghiệm và bánh mì."}
                 </p>
               </div>
             </div>
@@ -741,7 +741,7 @@ export default function PracticeHubPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500">Phần thưởng:</span>
-                  <span className="font-extrabold text-amber-700">+5 Bánh Rán / bài</span>
+                  <span className="font-extrabold text-amber-700">+5 Bánh Mì / bài</span>
                 </div>
               </div>
             </div>
@@ -944,7 +944,7 @@ export default function PracticeHubPage() {
                   Đấu Trường PvP: Thi Đấu Bấm Giờ Trực Tiếp
                 </h3>
                 <p className="text-sm font-medium text-slate-600 max-w-2xl">
-                  Thách đấu 1v1 đối kháng thời gian thực cùng bạn học toàn hệ thống. Tích lũy điểm xếp hạng để mở khóa danh hiệu và nhận thưởng Bánh Rán.
+                  Thách đấu 1v1 đối kháng thời gian thực cùng bạn học toàn hệ thống. Tích lũy điểm xếp hạng để mở khóa danh hiệu và nhận thưởng Bánh Mì.
                 </p>
               </div>
             </div>

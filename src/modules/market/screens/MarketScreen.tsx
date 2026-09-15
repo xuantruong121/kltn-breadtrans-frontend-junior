@@ -168,9 +168,11 @@ export const MarketScreen: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      await axiosClient.post("/market/orders", {
-        items: [{ id: product.id, slug: product.slug, quantity: 1 }],
-      });
+      await axiosClient.post(
+        "/market/orders",
+        { items: [{ id: product.id, slug: product.slug, quantity: 1 }] },
+        { headers: { "Idempotency-Key": crypto.randomUUID() } },
+      );
 
       unlockItem(product.slug || String(product.id));
       toast.success(`Đổi "${product.name}" thành công!`);
@@ -178,7 +180,8 @@ export const MarketScreen: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["my-market-orders"] });
       queryClient.invalidateQueries({ queryKey: ["market-balance"] });
       queryClient.invalidateQueries({ queryKey: ["market-inventory"] });
-      queryClient.invalidateQueries({ queryKey: ["user-stats"] });
+      const currentUserId = useAuthStore.getState().user?.id;
+      queryClient.invalidateQueries({ queryKey: ["user-stats", currentUserId] });
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Có lỗi xảy ra khi đổi quà!");
     } finally {

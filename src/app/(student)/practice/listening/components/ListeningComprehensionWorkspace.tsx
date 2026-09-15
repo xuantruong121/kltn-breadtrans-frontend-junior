@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthStore } from "@/stores/authStore";
 import {
   AlertCircle,
   ArrowLeft,
@@ -220,7 +221,8 @@ export function ListeningComprehensionWorkspace({
       queryClient.invalidateQueries({ queryKey: ["myQuests"] });
       queryClient.invalidateQueries({ queryKey: ["daily-quests"] });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
-      queryClient.invalidateQueries({ queryKey: ["user-stats"] });
+      const currentUserId = useAuthStore.getState().user?.id;
+      queryClient.invalidateQueries({ queryKey: ["user-stats", currentUserId] });
 
       // Navigate to submission result page
       router.push(`/practice/quizzes/submissions/${data.id}`);

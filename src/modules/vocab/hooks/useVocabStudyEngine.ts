@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthStore } from "@/stores/authStore";
 import { VocabWord, vocabService } from "@/lib/api/services/vocab.service";
 import { QueueItem, StudyMode, QuizOption, SrsRating, StudySettings } from "../types/study";
 import { playWordAudio, playChime, stopCurrentAudio } from "../utils/audio";
@@ -96,8 +97,9 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
     mutationFn: ({ wordId, isMastered }: { wordId: number; isMastered: boolean }) =>
       vocabService.masterWord(wordId, isMastered),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["dashboard-today"] });
-      queryClient.invalidateQueries({ queryKey: ["user-stats"] });
+      const currentUserId = useAuthStore.getState().user?.id;
+      queryClient.invalidateQueries({ queryKey: ["dashboard-today", currentUserId] });
+      queryClient.invalidateQueries({ queryKey: ["user-stats", currentUserId] });
       queryClient.invalidateQueries({ queryKey: ["vocab-topic", topicId] });
       queryClient.invalidateQueries({ queryKey: ["vocab-topics"] });
       queryClient.invalidateQueries({ queryKey: ["myQuests"] });

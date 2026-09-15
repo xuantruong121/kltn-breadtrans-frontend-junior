@@ -52,7 +52,7 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
       queryClient.invalidateQueries({ queryKey: ["myQuests"] });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       queryClient.invalidateQueries({ queryKey: ["daily-quests"] });
-      queryClient.invalidateQueries({ queryKey: ["user-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["user-stats", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["listeningPractices"] });
       queryClient.invalidateQueries({ queryKey: ["listening-practices"] });
       

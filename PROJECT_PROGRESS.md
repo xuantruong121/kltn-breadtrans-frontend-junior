@@ -58,6 +58,21 @@ Tài liệu này ghi chép lại toàn bộ tiến độ, kiến trúc và các 
 - **Học qua phim/nhạc:** Câu trả lời được gửi đến backend để chấm và ghi `ContentAttempt`; Bánh Mì được cộng trong transaction server, không cộng qua Zustand ở trình duyệt.
 - **Cửa hàng và huy hiệu:** Catalog, số dư, đơn đổi quà, bảng xếp hạng và huy hiệu đã đạt dùng API. UI không còn tự mở khóa hay trừ Bánh Mì từ state client.
 
+### G. Tái Thiết Kế Toàn Diện Landing Page (`/` — Public Home)
+- **Tách biệt bản sắc UI/UX:** Xóa bỏ hoàn toàn bố cục wireframe trùng lặp với `/dashboard`. Biến `/` thành một Landing Page EdTech SaaS đẳng cấp, sinh động, chuẩn Taste Skill & UI/UX Pro Max.
+- **10 Phân khu nội dung hoàn chỉnh:**
+  1. Hero bất đối xứng (Anti-center bias) tích hợp Card mô phỏng Live AI Pronunciation (sóng âm, chấm âm vị 98%, floating badges).
+  2. Dải số liệu uy tín (50.000+ học viên, 200+ bộ đề ETS, 94.8% tăng điểm, 4.9/5).
+  3. Bento Grid 4 trụ cột đột phá (Phòng luyện nói AI, Đấu trường TOEIC ETS, Ghi nhớ SRS, Thú cưng học tập).
+  4. Widget tương tác trực tiếp: Ước tính lộ trình & điểm số TOEIC theo trình độ và mục tiêu.
+  5. Lộ trình 4 bước từ mất gốc đến chinh phục 850+ TOEIC.
+  6. Bộ lọc khám phá giáo trình thực chiến (TOEIC, Giao tiếp công sở, Flashcard).
+  7. Câu chuyện thành công & Đánh giá chân thực từ học viên.
+  8. Bảng đối chiếu so sánh: Học truyền thống vs Tự học vs BreadTrans AI.
+  9. FAQ Accordion giải đáp thắc mắc thường gặp.
+  10. Bottom CTA Banner kích thích chuyển đổi (tặng 50 Bánh Mì tân thủ).
+- **Tương thích & Chuẩn hóa:** Responsive mượt mà (Mobile 375px đến Desktop), chuẩn WCAG AA, không dùng emoji làm icon chức năng, 100% SVG vector Lucide, tích hợp trơn tru AuthGateModal / QuickLoginModal / QuickRegisterModal.
+
 ## 3. Quy Ước Kiến Trúc (Architecture Rules)
 - Mọi route của Học Sinh phải nằm trong `(student)` để thừa hưởng UI.
 - Mọi route của Quản Trị phải nằm trong `(admin)` và của Giáo viên nằm trong `(teacher)`.

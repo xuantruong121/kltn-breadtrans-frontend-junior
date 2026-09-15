@@ -9,6 +9,7 @@ import {
   DiagnosticResult,
 } from "@/lib/api/services/diagnostic.service";
 import toast from "react-hot-toast";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function DiagnosticPage() {
   const queryClient = useQueryClient();
@@ -26,7 +27,8 @@ export default function DiagnosticPage() {
   const submit = useMutation({
     mutationFn: () => diagnosticService.submit(assessment!.id, answers),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user-stats"] });
+      const currentUserId = useAuthStore.getState().user?.id;
+      queryClient.invalidateQueries({ queryKey: ["user-stats", currentUserId] });
       queryClient.invalidateQueries({ queryKey: ["diagnostic-current"] });
       queryClient.invalidateQueries({ queryKey: ["learning-history"] });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
