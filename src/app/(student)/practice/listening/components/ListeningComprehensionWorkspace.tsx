@@ -13,7 +13,6 @@ import {
   ChevronDown,
   ChevronRight,
   FileText,
-  Flag,
   Keyboard,
   Languages,
   LayoutGrid,
@@ -40,6 +39,7 @@ import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScre
 import { PracticeExitConfirmDialog } from "@/components/practice/PracticeExitConfirmDialog";
 import { WordDictionaryPopup } from "@/components/speaking/WordDictionaryPopup";
 import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
+import { ReportIssueButton } from "@/components/issue-report";
 
 interface ListeningComprehensionWorkspaceProps {
   quiz?: Quiz | null;
@@ -231,7 +231,9 @@ export function ListeningComprehensionWorkspace({
       queryClient.invalidateQueries({ queryKey: ["daily-quests"] });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       const currentUserId = useAuthStore.getState().user?.id;
-      queryClient.invalidateQueries({ queryKey: ["user-stats", currentUserId] });
+      queryClient.invalidateQueries({
+        queryKey: ["user-stats", currentUserId],
+      });
 
       // Navigate to submission result page
       router.push(`/practice/quizzes/submissions/${data.id}`);
@@ -413,22 +415,6 @@ export function ListeningComprehensionWorkspace({
     }
 
     setLookupWord(word);
-  };
-
-  const handleReportQuestion = () => {
-    const subject = `Báo lỗi bài nghe: ${quiz.title}`;
-    const body = [
-      "Tôi cần báo lỗi câu hỏi.",
-      "",
-      `Bài luyện: ${quiz.title}`,
-      `Câu hỏi: ${currentIndex + 1}/${questions.length}`,
-      `Nội dung: ${currentQuestion.content?.text ?? "Không có"}`,
-      `Đường dẫn: ${window.location.href}`,
-      "",
-      "Mô tả lỗi:",
-    ].join("\n");
-
-    window.location.href = `mailto:luamoi2014@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
   const levelTag = level || quiz.bilingualContent?.skillLabel || "A1 BEGINNER";
@@ -779,7 +765,9 @@ export function ListeningComprehensionWorkspace({
                           aria-hidden="true"
                           className={`flex size-5 shrink-0 items-center justify-center rounded-full border-2 ${radioClass}`}
                         >
-                          {isSelected && <span className="size-2 rounded-full bg-current" />}
+                          {isSelected && (
+                            <span className="size-2 rounded-full bg-current" />
+                          )}
                         </span>
                         <span
                           className={`ml-3.5 mr-4 text-base md:text-lg ${keyStyles}`}
@@ -818,11 +806,7 @@ export function ListeningComprehensionWorkspace({
                   })}
                 </div>
 
-                <p
-                  className="sr-only"
-                  aria-live="polite"
-                  aria-atomic="true"
-                >
+                <p className="sr-only" aria-live="polite" aria-atomic="true">
                   {isChecking
                     ? "Đang kiểm tra đáp án."
                     : isChecked
@@ -928,16 +912,22 @@ export function ListeningComprehensionWorkspace({
       <footer className="w-full h-16 bg-white border-t border-slate-200 px-4 md:px-6 flex items-center justify-between shrink-0 shadow-sm z-30 select-none">
         {/* Left Actions: Quick utilities */}
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Report an issue through the configured support email */}
-          <button
-            type="button"
-            onClick={handleReportQuestion}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"
-            title="Báo cáo câu hỏi có vấn đề"
-          >
-            <Flag size={15} className="text-rose-500" />
-            <span className="hidden sm:inline">Báo lỗi</span>
-          </button>
+          <ReportIssueButton
+            area="LISTENING"
+            context={{
+              route:
+                typeof window !== "undefined"
+                  ? window.location.pathname
+                  : undefined,
+              sourceType: "QUIZ",
+              sourceId: quiz.id,
+              questionId: currentQuestion.id,
+              context: {
+                quizTitle: quiz.title,
+                questionNumber: currentIndex + 1,
+              },
+            }}
+          />
 
           {/* Dictionary lookup for a selected word */}
           <button
@@ -1088,7 +1078,11 @@ export function ListeningComprehensionWorkspace({
             >
               {isChecking ? (
                 <>
-                  <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                  <Loader2
+                    size={16}
+                    className="animate-spin"
+                    aria-hidden="true"
+                  />
                   Đang kiểm tra đáp án...
                 </>
               ) : (

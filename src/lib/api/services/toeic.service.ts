@@ -4,7 +4,7 @@ export interface ToeicQuestion {
   id: number;
   groupId: number;
   questionNumber: number;
-  text: string;
+  text: string | null;
   options: string[];
 }
 
@@ -44,6 +44,7 @@ export interface ToeicAttempt {
   mode: "PRACTICE" | "FULL_TEST";
   status: "PENDING_START" | "IN_PROGRESS" | "SUBMITTED";
   durationSeconds: number;
+  startedAt: string | null;
   deadline: string | null;
   exam: ToeicExam;
   answers: Array<{ questionId: number; selectedIndex: number | null }>;

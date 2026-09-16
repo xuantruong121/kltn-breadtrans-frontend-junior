@@ -45,7 +45,7 @@ export type CertificateId =
   | "THPT_QG"
   | "CAMBRIDGE";
 
-export type PaperFilter = "ALL" | "TWO_SKILL" | "FOUR_SKILL";
+export type PaperFilter = "ALL" | "TOEIC_LR" | "TOEIC_SW" | "TOEIC_4_SKILLS";
 
 export interface CertificateMeta {
   id: CertificateId;
@@ -83,7 +83,7 @@ const CERTIFICATES: CertificateMeta[] = [
     badgeText: "Sẵn sàng làm bài",
     targetLevel: "Mục tiêu 450 - 990 điểm",
     description:
-      "Bài thi đánh giá khả năng sử dụng tiếng Anh trong môi trường giao tiếp quốc tế và công việc, gồm định dạng 2 kỹ năng (Nghe - Đọc) và 4 kỹ năng chuẩn ETS.",
+      "Bài thi đánh giá khả năng sử dụng tiếng Anh trong môi trường giao tiếp quốc tế và công việc, gồm TOEIC L&R và bundle TOEIC 4 kỹ năng kết hợp L&R với S&W.",
     skills: [
       { label: "Nghe hiểu (Listening)", icon: Headphones },
       { label: "Đọc hiểu (Reading)", icon: BookOpen },
@@ -362,7 +362,9 @@ export default function ExamPracticeHubPage() {
     if (!quizzes) return EMPTY_QUIZZES;
     const byFormat = quizzes.filter((quiz: any) => {
       if (paperFilter === "ALL") return true;
-      return quiz.bilingualContent?.examFormat === paperFilter;
+      const rawFormat = quiz.bilingualContent?.examFormat;
+      const format = rawFormat === "TWO_SKILL" ? "TOEIC_LR" : rawFormat === "SPEAKING_WRITING" ? "TOEIC_SW" : rawFormat === "FOUR_SKILL" ? "TOEIC_4_SKILLS" : rawFormat;
+      return format === paperFilter;
     });
     if (!searchQuery.trim()) return byFormat;
     const q = searchQuery.toLowerCase().trim();
@@ -745,9 +747,10 @@ export default function ExamPracticeHubPage() {
               {/* Format Filter Pills */}
               <div className="flex flex-wrap items-center gap-2">
                 {([
-                  ["ALL", "Tất cả đề"],
-                  ["TWO_SKILL", "TOEIC 2 kỹ năng"],
-                  ["FOUR_SKILL", "TOEIC 4 kỹ năng"],
+                  ["ALL", "Tất cả"],
+                  ["TOEIC_LR", "TOEIC L&R"],
+                  ["TOEIC_SW", "TOEIC S&W"],
+                  ["TOEIC_4_SKILLS", "TOEIC 4 kỹ năng"],
                 ] as const).map(([value, label]) => (
                   <button
                     key={value}
@@ -793,7 +796,7 @@ export default function ExamPracticeHubPage() {
                 <span>
                   {filteredQuizzes.length} đề thi TOEIC khả dụng
                   {paperFilter !== "ALL" &&
-                    ` (${paperFilter === "TWO_SKILL" ? "2 kỹ năng" : "4 kỹ năng"})`}
+                    ` (${paperFilter === "TOEIC_LR" ? "Listening & Reading" : paperFilter === "TOEIC_SW" ? "Speaking & Writing" : "Listening · Reading · Speaking · Writing"})`}
                 </span>
               </span>
               <span className="inline-flex items-center gap-1.5 text-slate-400">
@@ -817,11 +820,18 @@ export default function ExamPracticeHubPage() {
                     const isCompleted = quiz.isCompleted;
                     const questionCount =
                       quiz.questionsCount || quiz._count?.questions || 0;
-                    const examFormat = quiz.bilingualContent?.examFormat;
-                    const isFourSkill = examFormat === "FOUR_SKILL";
-                    const destination = isFourSkill
-                      ? `/practice/toeic/bundle/${quiz.id}`
+                    const rawFormat = quiz.bilingualContent?.examFormat;
+                    const examFormat = rawFormat === "TWO_SKILL" ? "TOEIC_LR" : rawFormat === "SPEAKING_WRITING" ? "TOEIC_SW" : rawFormat === "FOUR_SKILL" ? "TOEIC_4_SKILLS" : rawFormat;
+                    const isFourSkill = examFormat === "TOEIC_4_SKILLS";
+                    const isSpeakingWriting = examFormat === "TOEIC_SW";
+                    const linkedBundle = (quizzes ?? []).find((candidate: any) => candidate.bilingualContent?.speakingWritingQuizId === quiz.id);
+                    const destination = isFourSkill || isSpeakingWriting
+                      ? `/practice/toeic/bundle/${isFourSkill ? quiz.id : linkedBundle?.id || quiz.id}`
                       : `/practice/toeic/${quiz.bilingualContent?.examSetId || quiz.id}`;
+                    const formatLabel = isFourSkill ? "TOEIC 4 kỹ năng" : isSpeakingWriting ? "TOEIC S&W" : "TOEIC L&R";
+                    const skillLabels = isFourSkill ? ["Listening", "Reading", "Speaking", "Writing"] : isSpeakingWriting ? ["Speaking", "Writing"] : ["Listening", "Reading"];
+                    const detailsLabel = isFourSkill ? "L&R + S&W" : isSpeakingWriting ? "11 Speaking · 8 Writing" : "200 câu · 120 phút";
+                    const cardDescription = isFourSkill ? "Bundle mô phỏng kết hợp TOEIC L&R và TOEIC S&W." : isSpeakingWriting ? "Bộ nhiệm vụ Speaking và Writing theo cấu trúc TOEIC." : "Bài thi Listening & Reading gồm 100 câu mỗi phần.";
 
                     const handleCardSelect = () => {
                       if (!user) {
@@ -868,9 +878,7 @@ export default function ExamPracticeHubPage() {
                             >
                               <BookOpen size={12} />
                               <span>
-                                {isFourSkill
-                                  ? "TOEIC 4 Kỹ Năng (Full Bundle)"
-                                  : "TOEIC 2 Kỹ Năng (L&R)"}
+                                {formatLabel}
                               </span>
                             </span>
 
@@ -890,25 +898,11 @@ export default function ExamPracticeHubPage() {
                           <h3 className="text-base font-bold text-slate-900 group-hover:text-amber-800 transition-colors line-clamp-2 leading-snug">
                             {quiz.title}
                           </h3>
+                          <p className="mt-2 text-xs leading-5 text-slate-500">{cardDescription}</p>
 
                           {/* Skills Breakdown pill */}
                           <div className="mt-2.5 flex flex-wrap items-center gap-1 text-[10px] font-bold text-slate-500">
-                            <span className="bg-slate-100 px-2 py-0.5 rounded-md">
-                              Listening
-                            </span>
-                            <span className="bg-slate-100 px-2 py-0.5 rounded-md">
-                              Reading
-                            </span>
-                            {isFourSkill && (
-                              <>
-                                <span className="bg-slate-100 px-2 py-0.5 rounded-md">
-                                  Speaking
-                                </span>
-                                <span className="bg-slate-100 px-2 py-0.5 rounded-md">
-                                  Writing
-                                </span>
-                              </>
-                            )}
+                            {skillLabels.map((label: string) => <span key={label} className="bg-slate-100 px-2 py-0.5 rounded-md">{label}</span>)}
                           </div>
                         </div>
 
@@ -916,7 +910,7 @@ export default function ExamPracticeHubPage() {
                         <div className="mt-5 pt-3.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-semibold">
                           <span className="flex items-center gap-1">
                             <BookOpen size={13} className="text-slate-400" />
-                            <span>{questionCount} câu hỏi</span>
+                            <span>{detailsLabel}</span>
                           </span>
 
                           <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 group-hover:translate-x-0.5 transition-transform">

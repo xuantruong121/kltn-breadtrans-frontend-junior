@@ -2,8 +2,8 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { BrandLogo } from "@/components/brand";
 
 interface AuthShellProps {
   children: ReactNode;
@@ -17,29 +17,12 @@ export function AuthShell({ children }: AuthShellProps) {
       <div className="w-full bg-white/90 backdrop-blur-md sticky top-0 z-30 shadow-xs border-b border-slate-200/70">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link
+            <BrandLogo
               href="/"
-              className="flex items-center gap-2.5 text-slate-900 hover:opacity-90 transition-opacity"
-            >
-              <div className="relative w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-200 flex items-center justify-center overflow-hidden">
-                <Image
-                  src="/logo.png"
-                  alt="BreadTrans Logo"
-                  width={28}
-                  height={28}
-                  className="object-contain"
-                  priority
-                />
-              </div>
-              <div className="flex flex-col">
-                <span className="font-extrabold text-xl text-amber-700 leading-tight tracking-tight">
-                  BreadTrans
-                </span>
-                <span className="text-xs text-slate-500 hidden sm:inline-block font-medium">
-                  Nền tảng Tự học Tiếng Anh &amp; Luyện 4 Kỹ năng
-                </span>
-              </div>
-            </Link>
+              variant="full"
+              size="md"
+              subtitle="Nền tảng Tự học Tiếng Anh & Luyện 4 Kỹ năng"
+            />
           </div>
           <Link
             href="/"
@@ -95,17 +78,8 @@ export function AuthShell({ children }: AuthShellProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
             <div className="lg:col-span-2">
-              <div className="flex items-center gap-2.5 mb-3">
-                <div className="relative w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-200 flex items-center justify-center overflow-hidden">
-                  <Image
-                    src="/logo.png"
-                    alt="BreadTrans Logo"
-                    width={24}
-                    height={24}
-                    className="object-contain"
-                  />
-                </div>
-                <span className="text-xl font-extrabold text-amber-700 tracking-tight">BreadTrans</span>
+              <div className="mb-3">
+                <BrandLogo href="/" variant="compact" size="md" />
               </div>
               <p className="text-sm text-slate-500 max-w-md mb-4 leading-relaxed">
                 Nền tảng tự học tiếng Anh tương tác. Rèn luyện 4 kỹ năng, củng cố từ vựng

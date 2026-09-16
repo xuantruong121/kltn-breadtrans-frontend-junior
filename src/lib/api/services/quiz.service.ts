@@ -39,7 +39,7 @@ export interface Quiz {
   description: string;
   type: string; // e.g. "LISTENING_PRACTICE"
   bilingualContent?: {
-    examFormat?: "TWO_SKILL" | "FOUR_SKILL";
+    examFormat?: "TOEIC_LR" | "TOEIC_SW" | "TOEIC_4_SKILLS" | "TWO_SKILL" | "SPEAKING_WRITING" | "FOUR_SKILL";
     examSetId?: number;
     isBundle?: boolean;
     skillLabel?: string;

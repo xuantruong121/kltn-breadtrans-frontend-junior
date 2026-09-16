@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -25,6 +25,9 @@ import { useGamificationStore } from "@/stores/gamificationStore";
 import { MarketProduct, MarketOrder, MarketInventoryResponse, MarketBalanceResponse } from "../types";
 import { MarketItemCard } from "../components/MarketItemCard";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
+import { MarketExchangeConfirmModal } from "../components/MarketExchangeConfirmModal";
+import { validateMarketExchange, buildMarketOrderPayload } from "../marketExchangeLogic";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 const CATEGORIES = [
   { id: "ALL", label: "Tất cả" },
@@ -46,6 +49,9 @@ export const MarketScreen: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [authGateOpen, setAuthGateOpen] = useState(false);
   const [pendingItemName, setPendingItemName] = useState<string>("vật phẩm này");
+  const [productToExchange, setProductToExchange] = useState<MarketProduct | null>(null);
+  const [exchangeError, setExchangeError] = useState<string | null>(null);
+  const triggerButtonRef = useRef<HTMLElement | null>(null);
 
   const {
     equippedAvatarFrame,
@@ -143,47 +149,68 @@ export const MarketScreen: React.FC = () => {
     }
   };
 
-  const handleRedeem = async (product: MarketProduct) => {
-    if (isGuest) {
-      setPendingItemName(product.name);
-      setAuthGateOpen(true);
-      return;
-    }
-
+  const handleRedeem = (product: MarketProduct) => {
     const currentBalance = balanceData?.totalBanh || 0;
-    if (currentBalance < product.price) {
-      toast.error("Bạn không đủ số Bánh Mì để đổi vật phẩm này!");
+    const validation = validateMarketExchange({
+      isGuest,
+      currentBalance,
+      product,
+    });
+
+    if (!validation.canOpenModal) {
+      if (validation.reason === "GUEST") {
+        setPendingItemName(product.name);
+        setAuthGateOpen(true);
+        return;
+      }
+      toast.error(validation.message);
       return;
     }
 
-    if (product.stock <= 0) {
-      toast.error("Vật phẩm hiện tại đã hết hàng!");
-      return;
+    if (typeof document !== "undefined") {
+      triggerButtonRef.current = document.activeElement as HTMLElement | null;
     }
 
-    const confirmed = window.confirm(
-      `Xác nhận đổi "${product.name}" với giá ${product.price} Bánh Mì?`
-    );
-    if (!confirmed) return;
+    setExchangeError(null);
+    setProductToExchange(product);
+  };
+
+  const handleCancelExchange = () => {
+    if (isSubmitting) return;
+    setProductToExchange(null);
+    setExchangeError(null);
+    triggerButtonRef.current?.focus();
+  };
+
+  const handleConfirmExchange = async () => {
+    if (!productToExchange || isSubmitting) return;
 
     setIsSubmitting(true);
+    setExchangeError(null);
+
     try {
       await axiosClient.post(
         "/market/orders",
-        { items: [{ id: product.id, slug: product.slug, quantity: 1 }] },
+        buildMarketOrderPayload(productToExchange),
         { headers: { "Idempotency-Key": crypto.randomUUID() } },
       );
 
-      unlockItem(product.slug || String(product.id));
-      toast.success(`Đổi "${product.name}" thành công!`);
+      unlockItem(productToExchange.slug || String(productToExchange.id));
+      toast.success(`Đổi "${productToExchange.name}" thành công!`);
 
       queryClient.invalidateQueries({ queryKey: ["my-market-orders"] });
       queryClient.invalidateQueries({ queryKey: ["market-balance"] });
       queryClient.invalidateQueries({ queryKey: ["market-inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["market-products"] });
       const currentUserId = useAuthStore.getState().user?.id;
       queryClient.invalidateQueries({ queryKey: ["user-stats", currentUserId] });
+
+      setProductToExchange(null);
+      triggerButtonRef.current?.focus();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Có lỗi xảy ra khi đổi quà!");
+      const friendlyMsg = getApiErrorMessage(err, "Có lỗi xảy ra khi đổi quà!");
+      setExchangeError(friendlyMsg);
+      toast.error(friendlyMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -518,6 +545,17 @@ export const MarketScreen: React.FC = () => {
         targetRoute="/market"
         onOpenLogin={() => router.push("/login?redirect=/market")}
         onOpenRegister={() => router.push("/register?redirect=/market")}
+      />
+
+      {/* Market Exchange Confirmation Modal */}
+      <MarketExchangeConfirmModal
+        isOpen={Boolean(productToExchange)}
+        product={productToExchange}
+        currentBalance={balanceData?.totalBanh || 0}
+        isPending={isSubmitting}
+        errorMessage={exchangeError}
+        onConfirm={handleConfirmExchange}
+        onCancel={handleCancelExchange}
       />
     </div>
   );

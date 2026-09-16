@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { BrandIcon } from "@/components/brand";
 
 export type PracticeSkill = "listening" | "speaking" | "reading" | "writing";
 
@@ -63,15 +64,9 @@ export function PracticeLoadingScreen({
       aria-live="polite"
       className={`mx-auto flex min-h-[380px] w-full max-w-3xl flex-col items-center justify-center rounded-3xl border border-slate-200/80 bg-slate-50/60 p-8 text-center sm:p-12 ${className}`}
     >
-      {/* Centered small BreadTrans mascot / brand asset */}
-      <div className="mb-4 flex size-14 items-center justify-center rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-2xs">
-        <img
-          src="/logo.png"
-          alt="BreadTrans"
-          className="size-full object-contain"
-          loading="eager"
-          decoding="async"
-        />
+      {/* Centered BreadTrans brand asset */}
+      <div className="mb-4">
+        <BrandIcon size="xl" hasContainer animated />
       </div>
 
       {/* Main text */}

@@ -7,11 +7,16 @@ import { Target, Plus, Loader2, Search, Trash2, X } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { Button3D } from "@/components/ui";
 import toast from "react-hot-toast";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 export default function AdminPracticePage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
 
   // Form State
   const [name, setName] = useState("");
@@ -51,6 +56,7 @@ export default function AdminPracticePage() {
     onSuccess: () => {
       toast.success("Đã xóa chủ đề luyện tập!");
       queryClient.invalidateQueries({ queryKey: ["admin-practice-topics"] });
+      setPendingDelete(null);
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message || "Có lỗi xảy ra");
@@ -144,15 +150,9 @@ export default function AdminPracticePage() {
                       {topic.name}
                     </h3>
                     <button
-                      onClick={() => {
-                        if (
-                          confirm(
-                            `Bạn có chắc muốn xóa chủ đề "${topic.name}"?`,
-                          )
-                        ) {
-                          deleteMutation.mutate(topic.id);
-                        }
-                      }}
+                      onClick={() =>
+                        setPendingDelete({ id: topic.id, name: topic.name })
+                      }
                       className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg transition-colors cursor-pointer shrink-0"
                       title="Xóa chủ đề"
                     >
@@ -298,6 +298,20 @@ export default function AdminPracticePage() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={!!pendingDelete}
+        title="Xóa chủ đề luyện tập?"
+        description={
+          pendingDelete
+            ? `Chủ đề "${pendingDelete.name}" sẽ bị xóa khỏi danh mục luyện tập. Thao tác này không thể hoàn tác.`
+            : ""
+        }
+        isPending={deleteMutation.isPending}
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => {
+          if (pendingDelete) deleteMutation.mutate(pendingDelete.id);
+        }}
+      />
     </div>
   );
 }

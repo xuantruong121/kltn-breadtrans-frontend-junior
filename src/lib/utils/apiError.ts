@@ -2,7 +2,10 @@
  * Helper to map backend error responses to user-friendly Vietnamese messages.
  * Prevents raw exceptions or technical errors from being displayed directly to users.
  */
-export function getApiErrorMessage(err: any, defaultMessage: string = "Thao tác thất bại. Vui lòng thử lại."): string {
+export function getApiErrorMessage(
+  err: any,
+  defaultMessage: string = "Thao tác thất bại. Vui lòng thử lại.",
+): string {
   if (!err) return defaultMessage;
 
   const response = err.response;
@@ -71,13 +74,18 @@ export function getApiErrorMessage(err: any, defaultMessage: string = "Thao tác
   // 6. Published course direct edit block
   if (
     lowerMsg.includes("đã xuất bản") &&
-    (lowerMsg.includes("tiêu đề") || lowerMsg.includes("cấp độ") || lowerMsg.includes("chuyển về bản nháp"))
+    (lowerMsg.includes("tiêu đề") ||
+      lowerMsg.includes("cấp độ") ||
+      lowerMsg.includes("chuyển về bản nháp"))
   ) {
     return "Khóa học đã xuất bản chỉ cho phép sửa trực tiếp ảnh bìa và mô tả. Để sửa tiêu đề, cấp độ hoặc giáo trình, vui lòng chuyển về Bản nháp.";
   }
 
   // 7. Enrollment specific errors
-  if (lowerMsg.includes("đã đủ số lượng học viên tối đa") || lowerMsg.includes("full capacity")) {
+  if (
+    lowerMsg.includes("đã đủ số lượng học viên tối đa") ||
+    lowerMsg.includes("full capacity")
+  ) {
     return "Lớp học đã đủ số lượng học viên tối đa. Vui lòng chọn lớp học khác hoặc liên hệ trung tâm để được hỗ trợ.";
   }
   if (lowerMsg.includes("đã ghi danh vào lớp học này rồi")) {
@@ -86,6 +94,11 @@ export function getApiErrorMessage(err: any, defaultMessage: string = "Thao tác
 
   // If there's an explicit custom backend message
   if (message && message.trim().length > 0) {
+    const technicalLeak =
+      /prisma|query|sqlstate|stack trace|exception|undefined|cannot read properties|internal server error/i.test(
+        message,
+      );
+    if (technicalLeak) return defaultMessage;
     return message;
   }
 

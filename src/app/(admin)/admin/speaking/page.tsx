@@ -3,17 +3,11 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { 
-  Mic, 
-  Plus, 
-  Loader2, 
-  Search, 
-  Trash2, 
-  X
-} from "lucide-react";
+import { Mic, Plus, Loader2, Search, Trash2, X } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { Button3D, Pagination } from "@/components/ui";
 import toast from "react-hot-toast";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 export default function AdminSpeakingPage() {
   const queryClient = useQueryClient();
@@ -21,6 +15,10 @@ export default function AdminSpeakingPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [pendingDelete, setPendingDelete] = useState<{
+    id: number;
+    title: string;
+  } | null>(null);
 
   // Form State
   const [title, setTitle] = useState("");
@@ -59,6 +57,7 @@ export default function AdminSpeakingPage() {
     onSuccess: () => {
       toast.success("Đã xóa bài tập phát âm!");
       queryClient.invalidateQueries({ queryKey: ["admin-speaking"] });
+      setPendingDelete(null);
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message || "Có lỗi xảy ra");
@@ -82,11 +81,14 @@ export default function AdminSpeakingPage() {
   const filtered = exercises?.filter(
     (ex) =>
       ex.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ex.targetText.toLowerCase().includes(searchTerm.toLowerCase())
+      ex.targetText.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const totalPages = Math.ceil((filtered?.length || 0) / pageSize);
-  const paginated = filtered?.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const paginated = filtered?.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
@@ -97,7 +99,9 @@ export default function AdminSpeakingPage() {
             <Mic size={28} />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-slate-800">Quản Lý Luyện Phát Âm</h1>
+            <h1 className="text-3xl font-black text-slate-800">
+              Quản Lý Luyện Phát Âm
+            </h1>
             <p className="text-slate-400 font-bold text-sm">
               Quản lý câu mẫu và tiêu chuẩn chấm điểm phát âm tự động
             </p>
@@ -116,7 +120,10 @@ export default function AdminSpeakingPage() {
       <div className="bg-white rounded-[2rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] p-6 space-y-6">
         {/* SEARCH BAR */}
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+          <Search
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+            size={20}
+          />
           <input
             type="text"
             placeholder="Tìm kiếm bài tập phát âm..."
@@ -153,8 +160,8 @@ export default function AdminSpeakingPage() {
                             ex.difficulty === "BEGINNER"
                               ? "bg-emerald-100 text-emerald-700 border-emerald-200"
                               : ex.difficulty === "INTERMEDIATE"
-                              ? "bg-amber-100 text-amber-700 border-amber-200"
-                              : "bg-rose-100 text-rose-700 border-rose-200"
+                                ? "bg-amber-100 text-amber-700 border-amber-200"
+                                : "bg-rose-100 text-rose-700 border-rose-200"
                           }`}
                         >
                           {ex.difficulty}
@@ -162,11 +169,9 @@ export default function AdminSpeakingPage() {
                       </div>
 
                       <button
-                        onClick={() => {
-                          if (confirm(`Bạn có chắc muốn xóa bài tập "${ex.title}"?`)) {
-                            deleteMutation.mutate(ex.id);
-                          }
-                        }}
+                        onClick={() =>
+                          setPendingDelete({ id: ex.id, title: ex.title })
+                        }
                         className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg transition-colors cursor-pointer"
                         title="Xóa bài tập"
                       >
@@ -174,11 +179,15 @@ export default function AdminSpeakingPage() {
                       </button>
                     </div>
 
-                    <h3 className="text-base font-black text-slate-800">{ex.title}</h3>
+                    <h3 className="text-base font-black text-slate-800">
+                      {ex.title}
+                    </h3>
                   </div>
 
                   <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-1">
-                    <span className="text-[10px] font-black uppercase text-slate-400">Câu mẫu đọc:</span>
+                    <span className="text-[10px] font-black uppercase text-slate-400">
+                      Câu mẫu đọc:
+                    </span>
                     <p className="text-sm font-extrabold text-purple-900 leading-relaxed italic">
                       &ldquo;{ex.targetText}&rdquo;
                     </p>
@@ -204,7 +213,8 @@ export default function AdminSpeakingPage() {
           </div>
         ) : (
           <div className="text-center py-16 text-slate-400 font-bold">
-            Chưa có bài tập phát âm nào. Hãy bấm &quot;Tạo Bài Tập Mới&quot; để thêm câu mẫu!
+            Chưa có bài tập phát âm nào. Hãy bấm &quot;Tạo Bài Tập Mới&quot; để
+            thêm câu mẫu!
           </div>
         )}
       </div>
@@ -214,15 +224,22 @@ export default function AdminSpeakingPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <div className="bg-white max-w-md w-full rounded-[2.5rem] border-4 border-slate-200 shadow-[0_12px_0_0_#cbd5e1] p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h2 className="text-xl font-black text-slate-800">Tạo Bài Tập Phát Âm Mới</h2>
-              <button onClick={() => setIsCreateModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <h2 className="text-xl font-black text-slate-800">
+                Tạo Bài Tập Phát Âm Mới
+              </h2>
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
                 <X size={20} />
               </button>
             </div>
 
             <form onSubmit={handleCreateExercise} className="space-y-4">
               <div>
-                <label className="text-xs font-black text-slate-500 uppercase mb-1 block">Tiêu đề bài tập</label>
+                <label className="text-xs font-black text-slate-500 uppercase mb-1 block">
+                  Tiêu đề bài tập
+                </label>
                 <input
                   type="text"
                   placeholder="VD: Giao tiếp văn phòng - Chào hỏi"
@@ -247,7 +264,9 @@ export default function AdminSpeakingPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-black text-slate-500 uppercase mb-1 block">Chủ đề</label>
+                  <label className="text-xs font-black text-slate-500 uppercase mb-1 block">
+                    Chủ đề
+                  </label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
@@ -261,14 +280,18 @@ export default function AdminSpeakingPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-black text-slate-500 uppercase mb-1 block">Độ khó</label>
+                  <label className="text-xs font-black text-slate-500 uppercase mb-1 block">
+                    Độ khó
+                  </label>
                   <select
                     value={difficulty}
                     onChange={(e) => setDifficulty(e.target.value)}
                     className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-2.5 font-bold text-xs outline-none"
                   >
                     <option value="BEGINNER">Cơ bản (Beginner)</option>
-                    <option value="INTERMEDIATE">Trung cấp (Intermediate)</option>
+                    <option value="INTERMEDIATE">
+                      Trung cấp (Intermediate)
+                    </option>
                     <option value="ADVANCED">Nâng cao (Advanced)</option>
                   </select>
                 </div>
@@ -282,7 +305,12 @@ export default function AdminSpeakingPage() {
                 >
                   Hủy
                 </button>
-                <Button3D type="submit" variant="purple" size="md" disabled={createMutation.isPending}>
+                <Button3D
+                  type="submit"
+                  variant="purple"
+                  size="md"
+                  disabled={createMutation.isPending}
+                >
                   {createMutation.isPending ? "Đang lưu..." : "Lưu Bài Tập"}
                 </Button3D>
               </div>
@@ -290,6 +318,20 @@ export default function AdminSpeakingPage() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={!!pendingDelete}
+        title="Xóa bài luyện phát âm?"
+        description={
+          pendingDelete
+            ? `Bài "${pendingDelete.title}" sẽ bị xóa khỏi danh mục luyện nói. Thao tác này không thể hoàn tác.`
+            : ""
+        }
+        isPending={deleteMutation.isPending}
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => {
+          if (pendingDelete) deleteMutation.mutate(pendingDelete.id);
+        }}
+      />
     </div>
   );
 }

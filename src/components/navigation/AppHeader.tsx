@@ -20,7 +20,6 @@ import {
   Target,
   Trophy,
   User,
-  Wheat,
   X,
   Bell,
   BellOff,
@@ -41,6 +40,7 @@ import { useGamificationStore } from "@/stores/gamificationStore";
 import { usePushNotification } from "@/lib/hooks/usePushNotification";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { notificationService, NotificationItem } from "@/lib/api/services/notification.service";
+import { BrandLogo } from "@/components/brand";
 
 const emptySubscribe = () => () => {};
 
@@ -559,25 +559,13 @@ export function AppHeader() {
         
         {/* Brand Logo & Role Tag */}
         <div className="flex items-center gap-3 shrink-0">
-          <Link
+          <BrandLogo
             href={isStudent ? "/dashboard" : "/"}
             onClick={closeMenus}
-            className="flex items-center gap-2.5 rounded-xl group focus:outline-none focus:ring-2 focus:ring-amber-500 shrink-0"
-          >
-            <div className="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-md shadow-amber-900/10 group-hover:scale-105 transition-transform shrink-0">
-              <Wheat size={22} strokeWidth={2.25} aria-hidden="true" />
-            </div>
-            <div className="flex flex-col shrink-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xl font-black tracking-tight text-slate-900 whitespace-nowrap">
-                  Bread<span className="text-amber-600">Trans</span>
-                </span>
-                <span className="px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-black uppercase tracking-wide whitespace-nowrap shrink-0">
-                  {isStudent ? "Học viên" : isAdmin ? "Quản trị" : "Khách"}
-                </span>
-              </div>
-            </div>
-          </Link>
+            variant="compact"
+            size="md"
+            roleBadge={isStudent ? "STUDENT" : isAdmin ? "ADMIN" : "GUEST"}
+          />
         </div>
 
         {/* Center Desktop Navigation */}
@@ -1042,21 +1030,13 @@ export function AppHeader() {
             >
               {/* Sticky Drawer Header */}
               <div className="h-18 px-5 sm:px-6 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-xs">
-                    <Wheat size={20} strokeWidth={2.25} aria-hidden="true" />
-                  </div>
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-base font-black text-slate-900 tracking-tight">
-                        Bread<span className="text-amber-600">Trans</span>
-                      </span>
-                      <span className="px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-black uppercase tracking-wide">
-                        {isStudent ? "Học viên" : isAdmin ? "Quản trị" : "Khách"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                <BrandLogo
+                  href={isStudent ? "/dashboard" : "/"}
+                  onClick={closeMenus}
+                  variant="compact"
+                  size="sm"
+                  roleBadge={isStudent ? "STUDENT" : isAdmin ? "ADMIN" : "GUEST"}
+                />
                 <button
                   type="button"
                   onClick={closeMenus}

@@ -9,7 +9,6 @@ import {
   ArrowLeft,
   BookOpen,
   ChevronDown,
-  Flag,
   Gauge,
   HelpCircle,
   Keyboard,
@@ -45,6 +44,7 @@ import { PronunciationReportCard } from "@/components/speaking/PronunciationRepo
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
 import { PracticeExitConfirmDialog } from "@/components/practice/PracticeExitConfirmDialog";
 import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
+import { ReportIssueButton } from "@/components/issue-report";
 import toast from "react-hot-toast";
 
 /**
@@ -511,9 +511,15 @@ export default function SpeakingExerciseDetailPage() {
 
             // Authoritative cache invalidation on completed
             const currentUserId = useAuthStore.getState().user?.id;
-            queryClient.invalidateQueries({ queryKey: ["dashboard-today", currentUserId] });
-            queryClient.invalidateQueries({ queryKey: ["user-stats", currentUserId] });
-            queryClient.invalidateQueries({ queryKey: ["user-skills-summary", currentUserId] });
+            queryClient.invalidateQueries({
+              queryKey: ["dashboard-today", currentUserId],
+            });
+            queryClient.invalidateQueries({
+              queryKey: ["user-stats", currentUserId],
+            });
+            queryClient.invalidateQueries({
+              queryKey: ["user-skills-summary", currentUserId],
+            });
             queryClient.invalidateQueries({ queryKey: ["myPet"] });
           } else if (sub.status === "FAILED") {
             setPhase("FAILED");
@@ -855,7 +861,12 @@ export default function SpeakingExerciseDetailPage() {
       if (!shouldHandle) return;
 
       // CRITICAL TECHNICAL GUARD: Prevent window jump/scroll when Space is pressed
-      if (e.key === " " || e.code === "Space" || e.key === "r" || e.key === "R") {
+      if (
+        e.key === " " ||
+        e.code === "Space" ||
+        e.key === "r" ||
+        e.key === "R"
+      ) {
         e.preventDefault();
       }
 
@@ -900,21 +911,6 @@ export default function SpeakingExerciseDetailPage() {
     }
 
     setSelectedWordForLookup(word);
-  };
-
-  const handleReportIssue = () => {
-    const subject = `Báo lỗi bài luyện nói: ${exercise?.title ?? ""}`;
-    const body = [
-      "Tôi cần báo lỗi bài luyện nói này.",
-      "",
-      `Bài luyện: ${exercise?.title ?? ""}`,
-      `Nội dung: ${exercise?.targetText ?? "Không có"}`,
-      `Đường dẫn: ${window.location.href}`,
-      "",
-      "Mô tả lỗi chi tiết:",
-    ].join("\n");
-
-    window.location.href = `mailto:luamoi2014@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
   /**
@@ -962,7 +958,11 @@ export default function SpeakingExerciseDetailPage() {
             : "bg-white border border-slate-200/90 text-slate-900 hover:bg-amber-100 hover:text-amber-800 hover:scale-105 active:scale-95 hover:border-amber-300 shadow-2xs px-3 py-1 m-1 rounded-2xl";
           let tooltip = `Nhấn để tra từ điển & phát âm: "${cleanLookupWord}"`;
 
-          if (!isStage1Mode && wordsAssessment && Array.isArray(wordsAssessment)) {
+          if (
+            !isStage1Mode &&
+            wordsAssessment &&
+            Array.isArray(wordsAssessment)
+          ) {
             const currentIdx = wordIndex;
             wordIndex++;
 
@@ -1227,23 +1227,30 @@ export default function SpeakingExerciseDetailPage() {
 
             {/* 1. Practice Sentence Canvas (Widened horizontal stretch, compact vertical padding) */}
             <div className="w-full bg-gradient-to-b from-white to-slate-50/60 py-4 px-5 sm:py-5 sm:px-8 lg:px-10 rounded-3xl border-2 border-slate-200/90 shadow-sm flex flex-col items-center justify-center">
-              {renderInteractiveTargetWords(exercise.targetText, undefined, true)}
+              {renderInteractiveTargetWords(
+                exercise.targetText,
+                undefined,
+                true,
+              )}
 
               {/* Optional Bilingual translation box */}
-              {isBilingual && (exercise.translation || exercise.description) && (
-                <div className="mt-2.5 w-full max-w-2xl rounded-2xl border border-amber-200/80 bg-amber-50/80 px-3.5 py-2 text-slate-800 text-center shadow-2xs">
-                  <span className="font-black text-amber-950 block uppercase tracking-wider text-xs">
-                    Bản dịch tham khảo
-                  </span>
-                  <p className="font-semibold text-slate-800 italic text-sm sm:text-base">
-                    "{exercise.translation || exercise.description}"
-                  </p>
-                </div>
-              )}
+              {isBilingual &&
+                (exercise.translation || exercise.description) && (
+                  <div className="mt-2.5 w-full max-w-2xl rounded-2xl border border-amber-200/80 bg-amber-50/80 px-3.5 py-2 text-slate-800 text-center shadow-2xs">
+                    <span className="font-black text-amber-950 block uppercase tracking-wider text-xs">
+                      Bản dịch tham khảo
+                    </span>
+                    <p className="font-semibold text-slate-800 italic text-sm sm:text-base">
+                      "{exercise.translation || exercise.description}"
+                    </p>
+                  </div>
+                )}
 
               <p className="mt-2.5 text-xs sm:text-sm text-slate-600 font-bold flex items-center justify-center gap-2">
                 <BookOpen size={14} className="text-amber-600" />
-                <span>Nhấp vào từ bất kỳ để tra phiên âm IPA &amp; nghe phát âm</span>
+                <span>
+                  Nhấp vào từ bất kỳ để tra phiên âm IPA &amp; nghe phát âm
+                </span>
               </p>
             </div>
 
@@ -1255,7 +1262,9 @@ export default function SpeakingExerciseDetailPage() {
                   type="button"
                   onClick={handleTogglePlayTTS}
                   aria-pressed={isPlayingTTS}
-                  aria-label={isPlayingTTS ? "Dừng nghe mẫu" : "Nghe mẫu phát âm"}
+                  aria-label={
+                    isPlayingTTS ? "Dừng nghe mẫu" : "Nghe mẫu phát âm"
+                  }
                   className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl font-extrabold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer shadow-xs ${
                     isPlayingTTS
                       ? "bg-rose-600 hover:bg-rose-700 text-white"
@@ -1356,14 +1365,22 @@ export default function SpeakingExerciseDetailPage() {
                   title="Bắt đầu thu âm (Phím Space / R)"
                   aria-label="Bắt đầu thu âm"
                 >
-                  <Mic size={30} className="transition-transform group-hover:scale-105" />
+                  <Mic
+                    size={30}
+                    className="transition-transform group-hover:scale-105"
+                  />
                 </button>
                 <div className="text-center space-y-0.5">
                   <p className="text-sm sm:text-base font-black text-slate-900">
-                    Nhấn nút Micro hoặc bấm phím <kbd className="px-2 py-0.5 rounded-lg bg-white border border-slate-300 font-mono text-xs font-black text-slate-800 shadow-2xs">Space</kbd> để nói
+                    Nhấn nút Micro hoặc bấm phím{" "}
+                    <kbd className="px-2 py-0.5 rounded-lg bg-white border border-slate-300 font-mono text-xs font-black text-slate-800 shadow-2xs">
+                      Space
+                    </kbd>{" "}
+                    để nói
                   </p>
                   <p className="text-xs sm:text-sm text-slate-600 font-semibold">
-                    Hệ thống tự động chuyển sang phân tích &amp; đối chiếu ngay khi dừng
+                    Hệ thống tự động chuyển sang phân tích &amp; đối chiếu ngay
+                    khi dừng
                   </p>
                 </div>
               </div>
@@ -1395,7 +1412,10 @@ export default function SpeakingExerciseDetailPage() {
                     title="Dừng & Chấm điểm (Phím Space / R)"
                     aria-label="Dừng ghi âm và chấm điểm"
                   >
-                    <StopCircle size={30} className="transition-transform group-hover:scale-105" />
+                    <StopCircle
+                      size={30}
+                      className="transition-transform group-hover:scale-105"
+                    />
                   </button>
 
                   <button
@@ -1410,7 +1430,8 @@ export default function SpeakingExerciseDetailPage() {
                 </div>
 
                 <p className="font-bold text-xs sm:text-sm text-rose-600 text-center">
-                  Đang thu âm... Bấm nút đỏ hoặc nhấn [Space] để hoàn tất &amp; chấm điểm
+                  Đang thu âm... Bấm nút đỏ hoặc nhấn [Space] để hoàn tất &amp;
+                  chấm điểm
                 </p>
               </div>
             )}
@@ -1442,26 +1463,33 @@ export default function SpeakingExerciseDetailPage() {
               <div className="mt-2.5 border-t border-slate-100 pt-2.5 space-y-2 text-xs sm:text-sm text-slate-700 animate-in fade-in duration-150">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                    <p className="font-black text-sm text-slate-900">1. Độ chính xác</p>
+                    <p className="font-black text-sm text-slate-900">
+                      1. Độ chính xác
+                    </p>
                     <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1 leading-relaxed">
                       Đọc rõ từng từ, đặc biệt là âm cuối (ending sounds).
                     </p>
                   </div>
                   <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                    <p className="font-black text-sm text-slate-900">2. Độ lưu loát</p>
+                    <p className="font-black text-sm text-slate-900">
+                      2. Độ lưu loát
+                    </p>
                     <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1 leading-relaxed">
                       Giữ nhịp điệu tự nhiên, không ngập ngừng quá lâu.
                     </p>
                   </div>
                   <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                    <p className="font-black text-sm text-slate-900">3. Độ toàn vẹn</p>
+                    <p className="font-black text-sm text-slate-900">
+                      3. Độ toàn vẹn
+                    </p>
                     <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1 leading-relaxed">
                       Không bỏ sót từ ngữ nào trong câu văn mẫu.
                     </p>
                   </div>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-600 font-semibold italic text-center pt-1">
-                  Mẹo: Giữ khoảng cách micro 10-15cm và tránh đọc trong phòng có tiếng vang.
+                  Mẹo: Giữ khoảng cách micro 10-15cm và tránh đọc trong phòng có
+                  tiếng vang.
                 </p>
               </div>
             )}
@@ -1558,21 +1586,25 @@ export default function SpeakingExerciseDetailPage() {
                   )}
 
                 {/* Optional Bilingual translation box */}
-                {isBilingual && (exercise.translation || exercise.description) && (
-                  <div className="mt-3.5 w-full max-w-xl rounded-2xl border border-amber-200/90 bg-amber-50/80 p-3.5 text-center shadow-2xs">
-                    <span className="font-black text-amber-950 block mb-1 uppercase tracking-wider text-xs">
-                      Bản dịch tham khảo
-                    </span>
-                    <p className="font-semibold text-slate-800 italic text-sm sm:text-base">
-                      "{exercise.translation || exercise.description}"
-                    </p>
-                  </div>
-                )}
+                {isBilingual &&
+                  (exercise.translation || exercise.description) && (
+                    <div className="mt-3.5 w-full max-w-xl rounded-2xl border border-amber-200/90 bg-amber-50/80 p-3.5 text-center shadow-2xs">
+                      <span className="font-black text-amber-950 block mb-1 uppercase tracking-wider text-xs">
+                        Bản dịch tham khảo
+                      </span>
+                      <p className="font-semibold text-slate-800 italic text-sm sm:text-base">
+                        "{exercise.translation || exercise.description}"
+                      </p>
+                    </div>
+                  )}
 
                 {/* Dictionary hint pill */}
                 <div className="mt-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100/90 text-slate-600 text-xs sm:text-sm font-semibold border border-slate-200/80 shadow-2xs">
                   <BookOpen size={14} className="text-amber-600 shrink-0" />
-                  <span>Nhấp vào từ bất kỳ để tra nghĩa, phiên âm IPA và nghe cách đọc mẫu</span>
+                  <span>
+                    Nhấp vào từ bất kỳ để tra nghĩa, phiên âm IPA và nghe cách
+                    đọc mẫu
+                  </span>
                 </div>
               </div>
             </div>
@@ -1603,19 +1635,25 @@ export default function SpeakingExerciseDetailPage() {
                 <div className="mt-2.5 border-t border-slate-100 pt-2.5 space-y-2 text-xs sm:text-sm text-slate-700 animate-in fade-in duration-150">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                      <p className="font-black text-sm text-slate-900">1. Độ chính xác</p>
+                      <p className="font-black text-sm text-slate-900">
+                        1. Độ chính xác
+                      </p>
                       <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1 leading-relaxed">
                         Đọc rõ từng từ, đặc biệt là âm cuối (ending sounds).
                       </p>
                     </div>
                     <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                      <p className="font-black text-sm text-slate-900">2. Độ lưu loát</p>
+                      <p className="font-black text-sm text-slate-900">
+                        2. Độ lưu loát
+                      </p>
                       <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1 leading-relaxed">
                         Giữ nhịp điệu tự nhiên, không ngập ngừng quá lâu.
                       </p>
                     </div>
                     <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                      <p className="font-black text-sm text-slate-900">3. Độ toàn vẹn</p>
+                      <p className="font-black text-sm text-slate-900">
+                        3. Độ toàn vẹn
+                      </p>
                       <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1 leading-relaxed">
                         Không bỏ sót từ ngữ nào trong câu văn mẫu.
                       </p>
@@ -1657,16 +1695,21 @@ export default function SpeakingExerciseDetailPage() {
       <footer className="w-full h-14 bg-white border-t border-slate-200 px-4 md:px-6 flex items-center justify-between shrink-0 shadow-sm z-30 select-none">
         {/* Left: Quick utilities */}
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Báo lỗi */}
-          <button
-            type="button"
-            onClick={handleReportIssue}
-            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-700 hover:text-slate-900 px-3 py-1.5 rounded-xl hover:bg-slate-100 transition cursor-pointer"
-            title="Báo cáo bài tập có lỗi"
-          >
-            <Flag size={15} className="text-rose-500" />
-            <span className="hidden sm:inline">Báo lỗi</span>
-          </button>
+          <ReportIssueButton
+            area="SPEAKING"
+            context={{
+              route:
+                typeof window !== "undefined"
+                  ? window.location.pathname
+                  : undefined,
+              sourceType: "SPEAKING_EXERCISE",
+              sourceId: exercise?.id,
+              context: {
+                exerciseTitle: exercise?.title,
+                targetText: exercise?.targetText,
+              },
+            }}
+          />
 
           {/* Tra từ */}
           <button
@@ -1743,7 +1786,9 @@ export default function SpeakingExerciseDetailPage() {
             >
               <Mic size={15} aria-hidden="true" />
               <span>Bắt đầu thu âm</span>
-              <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-amber-600/60 font-mono text-[10px] text-white">Space</kbd>
+              <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-amber-600/60 font-mono text-[10px] text-white">
+                Space
+              </kbd>
             </button>
           ) : phase === "RECORDING" ? (
             <div className="flex items-center gap-2">
@@ -1763,7 +1808,9 @@ export default function SpeakingExerciseDetailPage() {
               >
                 <StopCircle size={15} aria-hidden="true" />
                 <span>Dừng &amp; Chấm điểm</span>
-                <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-rose-700 font-mono text-[10px] text-white">Space</kbd>
+                <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-rose-700 font-mono text-[10px] text-white">
+                  Space
+                </kbd>
               </button>
             </div>
           ) : phase === "COMPLETED" ? (
@@ -1782,8 +1829,14 @@ export default function SpeakingExerciseDetailPage() {
                 onClick={handleNextExercise}
                 className="px-4 sm:px-5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1.5 text-xs sm:text-sm"
               >
-                <span>{isNextAvailable ? "Tiếp tục bài sau" : "Về danh sách"}</span>
-                <ArrowLeft size={14} className="rotate-180" aria-hidden="true" />
+                <span>
+                  {isNextAvailable ? "Tiếp tục bài sau" : "Về danh sách"}
+                </span>
+                <ArrowLeft
+                  size={14}
+                  className="rotate-180"
+                  aria-hidden="true"
+                />
               </button>
             </div>
           ) : (

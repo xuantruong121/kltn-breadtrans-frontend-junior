@@ -3,17 +3,11 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { 
-  Library, 
-  Plus, 
-  Loader2, 
-  Search, 
-  Trash2, 
-  X
-} from "lucide-react";
+import { Library, Plus, Loader2, Search, Trash2, X } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { Button3D, Pagination } from "@/components/ui";
 import toast from "react-hot-toast";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 export default function AdminVocabPage() {
   const queryClient = useQueryClient();
@@ -22,6 +16,10 @@ export default function AdminVocabPage() {
   const [selectedTopic, setSelectedTopic] = useState<any | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(6);
+  const [pendingDeleteTopic, setPendingDeleteTopic] = useState<{
+    id: number;
+    title: string;
+  } | null>(null);
 
   // Form: Create Topic
   const [topicTitle, setTopicTitle] = useState("");
@@ -47,7 +45,9 @@ export default function AdminVocabPage() {
   const { data: topicDetail, isLoading: isDetailLoading } = useQuery<any>({
     queryKey: ["admin-vocab-topic-detail", selectedTopic?.id],
     queryFn: async () => {
-      const res: any = await axiosClient.get(`/vocab/topics/${selectedTopic.id}`);
+      const res: any = await axiosClient.get(
+        `/vocab/topics/${selectedTopic.id}`,
+      );
       return res?.data || res;
     },
     enabled: !!selectedTopic,
@@ -75,6 +75,7 @@ export default function AdminVocabPage() {
     onSuccess: () => {
       toast.success("Đã xóa chủ đề từ vựng!");
       queryClient.invalidateQueries({ queryKey: ["admin-vocab-topics"] });
+      setPendingDeleteTopic(null);
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message || "Có lỗi xảy ra");
@@ -83,7 +84,10 @@ export default function AdminVocabPage() {
 
   const addWordMutation = useMutation({
     mutationFn: async (dto: any) => {
-      return axiosClient.post(`/admin/vocab/topics/${selectedTopic.id}/words`, dto);
+      return axiosClient.post(
+        `/admin/vocab/topics/${selectedTopic.id}/words`,
+        dto,
+      );
     },
     onSuccess: () => {
       toast.success("Thêm từ vựng mới thành công!");
@@ -92,7 +96,9 @@ export default function AdminVocabPage() {
       setMeaning("");
       setExampleEn("");
       setExampleVi("");
-      queryClient.invalidateQueries({ queryKey: ["admin-vocab-topic-detail", selectedTopic.id] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-vocab-topic-detail", selectedTopic.id],
+      });
       queryClient.invalidateQueries({ queryKey: ["admin-vocab-topics"] });
     },
     onError: (err: any) => {
@@ -106,7 +112,9 @@ export default function AdminVocabPage() {
     },
     onSuccess: () => {
       toast.success("Đã xóa từ vựng!");
-      queryClient.invalidateQueries({ queryKey: ["admin-vocab-topic-detail", selectedTopic.id] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-vocab-topic-detail", selectedTopic.id],
+      });
       queryClient.invalidateQueries({ queryKey: ["admin-vocab-topics"] });
     },
   });
@@ -141,11 +149,14 @@ export default function AdminVocabPage() {
   };
 
   const filteredTopics = topics?.filter((t) =>
-    t.title.toLowerCase().includes(searchTerm.toLowerCase())
+    t.title.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const totalPages = Math.ceil((filteredTopics?.length || 0) / pageSize);
-  const paginatedTopics = filteredTopics?.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const paginatedTopics = filteredTopics?.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
@@ -156,7 +167,9 @@ export default function AdminVocabPage() {
             <Library size={28} />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-slate-800">Quản Lý Bộ Từ Vựng</h1>
+            <h1 className="text-3xl font-black text-slate-800">
+              Quản Lý Bộ Từ Vựng
+            </h1>
             <p className="text-slate-400 font-bold text-sm">
               Thêm, sửa các chủ đề từ vựng flashcard và danh sách từ TOEIC
             </p>
@@ -175,7 +188,10 @@ export default function AdminVocabPage() {
       <div className="bg-white rounded-[2rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] p-6 space-y-6">
         {/* SEARCH BAR */}
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+          <Search
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+            size={20}
+          />
           <input
             type="text"
             placeholder="Tìm kiếm chủ đề từ vựng..."
@@ -205,11 +221,9 @@ export default function AdminVocabPage() {
                     <div className="flex items-center justify-between">
                       <span className="text-3xl">📚</span>
                       <button
-                        onClick={() => {
-                          if (confirm(`Bạn có chắc muốn xóa chủ đề "${t.title}"?`)) {
-                            deleteTopicMutation.mutate(t.id);
-                          }
-                        }}
+                        onClick={() =>
+                          setPendingDeleteTopic({ id: t.id, title: t.title })
+                        }
                         className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg transition-colors cursor-pointer"
                         title="Xóa chủ đề"
                       >
@@ -218,8 +232,12 @@ export default function AdminVocabPage() {
                     </div>
 
                     <div>
-                      <h3 className="text-lg font-black text-slate-800 leading-snug">{t.title}</h3>
-                      <p className="text-xs font-bold text-slate-400">{t.categoryName}</p>
+                      <h3 className="text-lg font-black text-slate-800 leading-snug">
+                        {t.title}
+                      </h3>
+                      <p className="text-xs font-bold text-slate-400">
+                        {t.categoryName}
+                      </p>
                     </div>
                   </div>
 
@@ -255,7 +273,8 @@ export default function AdminVocabPage() {
           </div>
         ) : (
           <div className="text-center py-16 text-slate-400 font-bold">
-            Chưa có chủ đề từ vựng nào. Hãy bấm &quot;Tạo Chủ Đề Mới&quot; để bắt đầu!
+            Chưa có chủ đề từ vựng nào. Hãy bấm &quot;Tạo Chủ Đề Mới&quot; để
+            bắt đầu!
           </div>
         )}
       </div>
@@ -265,15 +284,22 @@ export default function AdminVocabPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <div className="bg-white max-w-md w-full rounded-[2.5rem] border-4 border-slate-200 shadow-[0_12px_0_0_#cbd5e1] p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h2 className="text-xl font-black text-slate-800">Tạo Chủ Đề Từ Vựng Mới</h2>
-              <button onClick={() => setIsTopicModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <h2 className="text-xl font-black text-slate-800">
+                Tạo Chủ Đề Từ Vựng Mới
+              </h2>
+              <button
+                onClick={() => setIsTopicModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
                 <X size={20} />
               </button>
             </div>
 
             <form onSubmit={handleCreateTopic} className="space-y-4">
               <div>
-                <label className="text-xs font-black text-slate-500 uppercase mb-1 block">Tên chủ đề</label>
+                <label className="text-xs font-black text-slate-500 uppercase mb-1 block">
+                  Tên chủ đề
+                </label>
                 <input
                   type="text"
                   placeholder="VD: Contracts & Agreements"
@@ -284,7 +310,9 @@ export default function AdminVocabPage() {
               </div>
 
               <div>
-                <label className="text-xs font-black text-slate-500 uppercase mb-1 block">Tên danh mục</label>
+                <label className="text-xs font-black text-slate-500 uppercase mb-1 block">
+                  Tên danh mục
+                </label>
                 <input
                   type="text"
                   placeholder="VD: 600 TỪ VỰNG TOEIC"
@@ -302,7 +330,12 @@ export default function AdminVocabPage() {
                 >
                   Hủy
                 </button>
-                <Button3D type="submit" variant="orange" size="md" disabled={createTopicMutation.isPending}>
+                <Button3D
+                  type="submit"
+                  variant="orange"
+                  size="md"
+                  disabled={createTopicMutation.isPending}
+                >
                   {createTopicMutation.isPending ? "Đang lưu..." : "Tạo Chủ Đề"}
                 </Button3D>
               </div>
@@ -320,122 +353,165 @@ export default function AdminVocabPage() {
                 <h2 className="text-xl font-black text-slate-800">
                   Từ Vựng: {selectedTopic.title}
                 </h2>
-                <span className="text-xs font-bold text-slate-400">{selectedTopic.categoryName}</span>
+                <span className="text-xs font-bold text-slate-400">
+                  {selectedTopic.categoryName}
+                </span>
               </div>
-              <button onClick={() => setSelectedTopic(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+              <button
+                onClick={() => setSelectedTopic(null)}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
                 <X size={20} />
               </button>
             </div>
 
             <div className="p-6 pt-3 space-y-5 overflow-y-auto flex-1 min-h-0">
               {/* FORM: ADD WORD */}
-            <form onSubmit={handleAddWord} className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 space-y-3">
-              <h4 className="text-xs font-black text-slate-700 uppercase">Thêm từ mới vào chủ đề</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <input
-                  type="text"
-                  placeholder="Từ vựng (VD: contract)"
-                  value={word}
-                  onChange={(e) => setWord(e.target.value)}
-                  className="bg-white border border-slate-200 rounded-xl p-2.5 font-bold text-xs outline-none"
-                />
-                <select
-                  value={pos}
-                  onChange={(e) => setPos(e.target.value)}
-                  className="bg-white border border-slate-200 rounded-xl p-2.5 font-bold text-xs outline-none"
-                >
-                  <option value="noun">Danh từ (n)</option>
-                  <option value="verb">Động từ (v)</option>
-                  <option value="adjective">Tính từ (adj)</option>
-                  <option value="adverb">Trạng từ (adv)</option>
-                </select>
-                <input
-                  type="text"
-                  placeholder="Phiên âm IPA (/kɑːntrækt/)"
-                  value={ipaUs}
-                  onChange={(e) => setIpaUs(e.target.value)}
-                  className="bg-white border border-slate-200 rounded-xl p-2.5 font-bold text-xs outline-none font-mono"
-                />
-              </div>
-
-              <input
-                type="text"
-                placeholder="Định nghĩa tiếng Việt (VD: hợp đồng, giao kèo)"
-                value={meaning}
-                onChange={(e) => setMeaning(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-xl p-2.5 font-bold text-xs outline-none"
-              />
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <input
-                  type="text"
-                  placeholder="Ví dụ câu tiếng Anh..."
-                  value={exampleEn}
-                  onChange={(e) => setExampleEn(e.target.value)}
-                  className="bg-white border border-slate-200 rounded-xl p-2 font-bold text-xs outline-none"
-                />
-                <input
-                  type="text"
-                  placeholder="Dịch nghĩa câu ví dụ..."
-                  value={exampleVi}
-                  onChange={(e) => setExampleVi(e.target.value)}
-                  className="bg-white border border-slate-200 rounded-xl p-2 font-bold text-xs outline-none"
-                />
-              </div>
-
-              <div className="flex justify-end pt-1">
-                <Button3D type="submit" variant="orange" size="sm" disabled={addWordMutation.isPending}>
-                  {addWordMutation.isPending ? "Đang thêm..." : "+ Thêm từ vào danh sách"}
-                </Button3D>
-              </div>
-            </form>
-
-            {/* WORDS LIST */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-black text-slate-500 uppercase">
-                Danh sách từ hiện có ({topicDetail?.words?.length || 0})
-              </h4>
-
-              {isDetailLoading ? (
-                <div className="flex justify-center py-6">
-                  <Loader2 className="animate-spin text-orange-500" size={28} />
+              <form
+                onSubmit={handleAddWord}
+                className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 space-y-3"
+              >
+                <h4 className="text-xs font-black text-slate-700 uppercase">
+                  Thêm từ mới vào chủ đề
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <input
+                    type="text"
+                    placeholder="Từ vựng (VD: contract)"
+                    value={word}
+                    onChange={(e) => setWord(e.target.value)}
+                    className="bg-white border border-slate-200 rounded-xl p-2.5 font-bold text-xs outline-none"
+                  />
+                  <select
+                    value={pos}
+                    onChange={(e) => setPos(e.target.value)}
+                    className="bg-white border border-slate-200 rounded-xl p-2.5 font-bold text-xs outline-none"
+                  >
+                    <option value="noun">Danh từ (n)</option>
+                    <option value="verb">Động từ (v)</option>
+                    <option value="adjective">Tính từ (adj)</option>
+                    <option value="adverb">Trạng từ (adv)</option>
+                  </select>
+                  <input
+                    type="text"
+                    placeholder="Phiên âm IPA (/kɑːntrækt/)"
+                    value={ipaUs}
+                    onChange={(e) => setIpaUs(e.target.value)}
+                    className="bg-white border border-slate-200 rounded-xl p-2.5 font-bold text-xs outline-none font-mono"
+                  />
                 </div>
-              ) : topicDetail?.words && topicDetail.words.length > 0 ? (
-                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                  {topicDetail.words.map((w: any) => (
-                    <div
-                      key={w.id}
-                      className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between hover:bg-slate-50"
-                    >
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <strong className="text-sm text-slate-800">{w.word}</strong>
-                          <span className="text-[10px] font-bold text-slate-400 font-mono">/{w.ipaUs || w.ipa}/</span>
-                          <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-black">{w.pos}</span>
-                        </div>
-                        <p className="text-xs font-bold text-slate-600">{w.meaning}</p>
-                      </div>
 
-                      <button
-                        onClick={() => deleteWordMutation.mutate(w.id)}
-                        className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg"
-                        title="Xóa từ"
+                <input
+                  type="text"
+                  placeholder="Định nghĩa tiếng Việt (VD: hợp đồng, giao kèo)"
+                  value={meaning}
+                  onChange={(e) => setMeaning(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl p-2.5 font-bold text-xs outline-none"
+                />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    placeholder="Ví dụ câu tiếng Anh..."
+                    value={exampleEn}
+                    onChange={(e) => setExampleEn(e.target.value)}
+                    className="bg-white border border-slate-200 rounded-xl p-2 font-bold text-xs outline-none"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Dịch nghĩa câu ví dụ..."
+                    value={exampleVi}
+                    onChange={(e) => setExampleVi(e.target.value)}
+                    className="bg-white border border-slate-200 rounded-xl p-2 font-bold text-xs outline-none"
+                  />
+                </div>
+
+                <div className="flex justify-end pt-1">
+                  <Button3D
+                    type="submit"
+                    variant="orange"
+                    size="sm"
+                    disabled={addWordMutation.isPending}
+                  >
+                    {addWordMutation.isPending
+                      ? "Đang thêm..."
+                      : "+ Thêm từ vào danh sách"}
+                  </Button3D>
+                </div>
+              </form>
+
+              {/* WORDS LIST */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-black text-slate-500 uppercase">
+                  Danh sách từ hiện có ({topicDetail?.words?.length || 0})
+                </h4>
+
+                {isDetailLoading ? (
+                  <div className="flex justify-center py-6">
+                    <Loader2
+                      className="animate-spin text-orange-500"
+                      size={28}
+                    />
+                  </div>
+                ) : topicDetail?.words && topicDetail.words.length > 0 ? (
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                    {topicDetail.words.map((w: any) => (
+                      <div
+                        key={w.id}
+                        className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between hover:bg-slate-50"
                       >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-6 text-slate-400 text-xs font-bold border border-dashed border-slate-200 rounded-xl">
-                  Chủ đề này chưa có từ vựng nào. Hãy thêm từ ở khung trên!
-                </div>
-              )}
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <strong className="text-sm text-slate-800">
+                              {w.word}
+                            </strong>
+                            <span className="text-[10px] font-bold text-slate-400 font-mono">
+                              /{w.ipaUs || w.ipa}/
+                            </span>
+                            <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-black">
+                              {w.pos}
+                            </span>
+                          </div>
+                          <p className="text-xs font-bold text-slate-600">
+                            {w.meaning}
+                          </p>
+                        </div>
+
+                        <button
+                          onClick={() => deleteWordMutation.mutate(w.id)}
+                          className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg"
+                          title="Xóa từ"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-slate-400 text-xs font-bold border border-dashed border-slate-200 rounded-xl">
+                    Chủ đề này chưa có từ vựng nào. Hãy thêm từ ở khung trên!
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
       )}
+      <ConfirmDialog
+        open={!!pendingDeleteTopic}
+        title="Xóa chủ đề từ vựng?"
+        description={
+          pendingDeleteTopic
+            ? `Chủ đề "${pendingDeleteTopic.title}" và các dữ liệu liên quan sẽ bị xóa khỏi CMS. Thao tác này không thể hoàn tác.`
+            : ""
+        }
+        isPending={deleteTopicMutation.isPending}
+        onCancel={() => setPendingDeleteTopic(null)}
+        onConfirm={() => {
+          if (pendingDeleteTopic)
+            deleteTopicMutation.mutate(pendingDeleteTopic.id);
+        }}
+      />
     </div>
   );
 }
