@@ -120,10 +120,10 @@ export default function AdminCoursesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
       setClassToDelete(null);
-      toast.success("Đã xóa lớp học thành công!");
+      toast.success("Đã xóa gói học thành công!");
     },
     onError: (err: any) => {
-      toast.error(getApiErrorMessage(err, "Không thể xóa lớp học."));
+      toast.error(getApiErrorMessage(err, "Không thể xóa gói học."));
     },
   });
 
@@ -146,10 +146,10 @@ export default function AdminCoursesPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
       setEditingClass(null);
       setEditingClassCourse(null);
-      toast.success("Cập nhật lớp học thành công!");
+      toast.success("Cập nhật gói học thành công!");
     },
     onError: (err: any) =>
-      toast.error(getApiErrorMessage(err, "Cập nhật lớp học thất bại.")),
+      toast.error(getApiErrorMessage(err, "Cập nhật gói học thất bại.")),
   });
 
   const { data: courses, isLoading } = useQuery<Course[]>({
@@ -188,7 +188,7 @@ export default function AdminCoursesPage() {
       toast.error(
         getApiErrorMessage(
           err,
-          "Không thể xóa khóa học (có thể đang có lớp học).",
+          "Không thể xóa khóa học (có thể đang có gói học).",
         ),
       ),
   });
@@ -220,10 +220,10 @@ export default function AdminCoursesPage() {
         capacity: "30",
         tuitionFeeVnd: "0",
       });
-      toast.success("Tạo lớp học thành công!");
+      toast.success("Tạo gói học thành công!");
     },
     onError: (err: any) =>
-      toast.error(getApiErrorMessage(err, "Tạo lớp học thất bại.")),
+      toast.error(getApiErrorMessage(err, "Tạo gói học thất bại.")),
   });
 
   const filteredCourses = courses?.filter((c) => {
@@ -252,7 +252,7 @@ export default function AdminCoursesPage() {
       return;
     }
     if (parseInt(classForm.capacity) <= 0) {
-      toast.error("Sức chứa lớp học phải lớn hơn 0!");
+      toast.error("Giới hạn quyền truy cập phải lớn hơn 0!");
       return;
     }
     createClassMutation.mutate({
@@ -269,8 +269,7 @@ export default function AdminCoursesPage() {
   const isEditingClassTuitionLocked = Boolean(
     editingClass && (
       editingClass.hasEnrollments === true ||
-      (editingClass.totalEnrollmentCount ?? 0) > 0 ||
-      editingClass.status !== "UPCOMING"
+      (editingClass.totalEnrollmentCount ?? 0) > 0
     )
   );
   const editingClassActiveEnrolled = editingClass?.activeEnrollmentCount ?? 0;
@@ -284,7 +283,7 @@ export default function AdminCoursesPage() {
             Quản lý Khóa học
           </h1>
           <p className="text-slate-500 mt-1">
-            Tạo, thẩm định duyệt và quản lý toàn bộ khóa học, lớp học trong hệ thống.
+            Tạo, thẩm định và quản lý các khóa học cùng gói truy cập trong hệ thống.
           </p>
         </div>
         <button
@@ -331,7 +330,7 @@ export default function AdminCoursesPage() {
           />
           <input
             type="text"
-            placeholder="Tìm theo tên khóa học hoặc giáo viên..."
+            placeholder="Tìm theo tên khóa học hoặc gói học..."
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -406,7 +405,7 @@ export default function AdminCoursesPage() {
                               <BookOpen size={14} /> Soạn bài học (Studio)
                             </Link>
 
-                            {/* Create Class Button - strictly disabled unless PUBLISHED */}
+                            {/* Create access package - available after the course is published */}
                             {course.status === "PUBLISHED" ? (
                               <button
                                 onClick={() => {
@@ -418,14 +417,14 @@ export default function AdminCoursesPage() {
                                 }}
                                 className="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors"
                               >
-                                <Plus size={14} /> Thêm Lớp
+                                <Plus size={14} /> Thêm gói học
                               </button>
                             ) : (
                               <span
                                 className="px-2.5 py-1 bg-slate-100 text-slate-400 rounded-lg text-xs font-medium border border-slate-200 cursor-not-allowed"
-                                title="Cần duyệt khóa học (PUBLISHED) trước khi mở lớp"
+                                title="Cần duyệt khóa học (PUBLISHED) trước khi mở gói học"
                               >
-                                Cần duyệt trước khi mở lớp
+                                Cần duyệt trước khi mở gói học
                               </span>
                             )}
 
@@ -445,7 +444,7 @@ export default function AdminCoursesPage() {
                           </span>
                           <span className="flex items-center gap-1">
                             <Users size={13} className="text-slate-400" />{" "}
-                            {course._count.classes} lớp học
+                            {course._count.classes} gói học
                           </span>
                           <button
                             onClick={() =>
@@ -457,7 +456,7 @@ export default function AdminCoursesPage() {
                           >
                             {expandedCourse === course.id
                               ? "Thu gọn"
-                              : "Chi tiết lớp"}
+                              : "Chi tiết gói học"}
                             <ChevronRight
                               size={14}
                               className={`transition-transform ${
@@ -478,13 +477,13 @@ export default function AdminCoursesPage() {
                               <thead>
                                 <tr className="text-slate-400 text-xs border-b border-slate-200">
                                   <th className="p-3 text-left font-semibold">
-                                    Tên Lớp
+                                    Tên gói học
                                   </th>
                                   <th className="p-3 text-left font-semibold">
                                     Trạng thái
                                   </th>
                                   <th className="p-3 text-left font-semibold">
-                                    Học viên / Sức chứa
+                                    Quyền truy cập / Giới hạn
                                   </th>
                                   <th className="p-3 text-left font-semibold">
                                     Thời gian
@@ -516,10 +515,14 @@ export default function AdminCoursesPage() {
                                       >
                                         {cls.status === "ACTIVE" ||
                                         cls.status === "ONGOING"
-                                          ? "Đang diễn ra"
+                                          ? "Đang mở"
                                           : cls.status === "UPCOMING"
-                                            ? "Sắp khai giảng"
-                                            : cls.status}
+                                            ? "Sắp mở"
+                                            : cls.status === "COMPLETED"
+                                              ? "Đã đóng"
+                                              : cls.status === "CANCELLED"
+                                                ? "Đã ngừng"
+                                                : cls.status}
                                       </span>
                                     </td>
                                     <td className="p-3 text-slate-600">
@@ -551,14 +554,14 @@ export default function AdminCoursesPage() {
                                         <button
                                           onClick={() => handleOpenEditClass(cls, course)}
                                           className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded text-xs transition-colors cursor-pointer"
-                                          title="Chỉnh sửa thông tin lớp học"
+                                          title="Chỉnh sửa gói học"
                                         >
-                                          Sửa lớp
+                                          Sửa gói
                                         </button>
                                         <button
                                           onClick={() => setClassToDelete(cls)}
                                           className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors cursor-pointer"
-                                          title="Xóa lớp học"
+                                          title="Xóa gói học"
                                         >
                                           <Trash2 size={14} />
                                         </button>
@@ -566,7 +569,7 @@ export default function AdminCoursesPage() {
                                           href={`/admin/enroll?classId=${cls.id}`}
                                         >
                                           <button className="text-xs text-blue-600 hover:text-blue-800 font-medium underline cursor-pointer">
-                                            Quản lý ghi danh
+                                            Quản lý quyền truy cập
                                           </button>
                                         </Link>
                                       </div>
@@ -578,7 +581,7 @@ export default function AdminCoursesPage() {
                           </div>
                         ) : (
                           <div className="text-center py-6 text-slate-400 text-xs">
-                            Chưa có lớp học nào được mở cho khóa học này.
+                            Chưa có gói học nào được mở cho khóa học này.
                           </div>
                         )}
                       </div>
@@ -704,7 +707,7 @@ export default function AdminCoursesPage() {
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
             <div className="flex justify-between items-center mb-5">
               <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                <Users size={22} className="text-green-500" /> Tạo Lớp học mới
+                <Users size={22} className="text-green-500" /> Tạo gói học mới
               </h2>
               <button
                 onClick={() => setShowCreateClass(null)}
@@ -716,7 +719,7 @@ export default function AdminCoursesPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Tên lớp *
+                  Tên gói học *
                 </label>
                 <input
                   type="text"
@@ -762,7 +765,7 @@ export default function AdminCoursesPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Sức chứa tối đa (Capacity)
+                    Giới hạn quyền truy cập (tùy chọn)
                   </label>
                   <input
                     type="number"
@@ -777,7 +780,7 @@ export default function AdminCoursesPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Học phí (VNĐ)
+                    Giá gói (VNĐ)
                   </label>
                   <input
                     type="number"
@@ -791,7 +794,7 @@ export default function AdminCoursesPage() {
                     className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-blue-500"
                   />
                   <p className="text-[11px] text-slate-400 mt-1">
-                    0 = Lớp học miễn phí (FREE).
+                    0 = Gói học miễn phí.
                   </p>
                 </div>
               </div>
@@ -816,7 +819,7 @@ export default function AdminCoursesPage() {
                 ) : (
                   <Plus size={18} />
                 )}
-                Tạo Lớp học
+                Tạo gói học
               </button>
             </div>
           </div>
@@ -831,7 +834,7 @@ export default function AdminCoursesPage() {
             <div className="flex items-center justify-between p-6 pb-3 border-b border-slate-100 shrink-0">
               <div>
                 <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                  Quản trị Lớp học
+                  Quản trị gói học
                 </span>
                 <h3 className="font-bold text-slate-800 text-lg">
                   {editingClass.name}
@@ -850,12 +853,12 @@ export default function AdminCoursesPage() {
                   }`}
                 >
                   {editingClass.status === "ONGOING"
-                    ? "ONGOING - Đang diễn ra"
+                    ? "ACTIVE - Đang mở"
                     : editingClass.status === "UPCOMING"
-                      ? "UPCOMING - Sắp diễn ra"
+                      ? "UPCOMING - Sắp mở"
                       : editingClass.status === "COMPLETED"
-                        ? "COMPLETED - Đã kết thúc"
-                        : "CANCELLED - Đã hủy"}
+                        ? "COMPLETED - Đã đóng"
+                        : "CANCELLED - Đã ngừng"}
                 </span>
                 <button
                   onClick={() => {
@@ -875,7 +878,7 @@ export default function AdminCoursesPage() {
               <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-xs text-green-900 flex items-start gap-2.5 mb-4">
                 <AlertTriangle size={16} className="shrink-0 text-green-700 mt-0.5" />
                 <div>
-                  <strong>Lớp học đang diễn ra (ONGOING):</strong> Ngày bắt đầu đã khóa. Điều chỉnh ngày kết thúc phải đảm bảo sau buổi học cuối cùng đã lên lịch.
+                  <strong>Gói học đang mở:</strong> Nội dung đã được cung cấp cho người có quyền truy cập.
                 </div>
               </div>
             )}
@@ -884,7 +887,7 @@ export default function AdminCoursesPage() {
               <div className="p-3 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-600 flex items-start gap-2.5 mb-4">
                 <Lock size={16} className="shrink-0 text-slate-500 mt-0.5" />
                 <div>
-                  <strong>Lớp học ở chế độ chỉ đọc:</strong> Trạng thái {editingClass.status}. Toàn bộ thông tin không thể chỉnh sửa thêm.
+                  <strong>Gói học ở chế độ chỉ đọc:</strong> Trạng thái {editingClass.status}. Toàn bộ thông tin không thể chỉnh sửa thêm.
                 </div>
               </div>
             )}
@@ -898,11 +901,11 @@ export default function AdminCoursesPage() {
                 }
 
                 if (!editClassForm.name.trim()) {
-                  toast.error("Tên lớp học là bắt buộc.");
+                  toast.error("Tên gói học là bắt buộc.");
                   return;
                 }
                 if (Number(editClassForm.capacity) < editingClassActiveEnrolled) {
-                  toast.error(`Sức chứa không được nhỏ hơn số học viên đang hoạt động (${editingClassActiveEnrolled}).`);
+                  toast.error(`Giới hạn không được nhỏ hơn số quyền truy cập đang hoạt động (${editingClassActiveEnrolled}).`);
                   return;
                 }
                 if (
@@ -934,7 +937,7 @@ export default function AdminCoursesPage() {
               {/* Section 1: Thông tin cơ bản */}
               <div className="space-y-3 pb-3 border-b border-slate-100">
                 <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                  1. Thông tin lớp học
+                  1. Thông tin gói học
                 </h4>
                 <div>
                   <label className="block text-slate-700 font-bold mb-1">Khóa học</label>
@@ -949,7 +952,7 @@ export default function AdminCoursesPage() {
 
                 <div>
                   <label className="block text-slate-700 font-bold mb-1">
-                    Tên lớp học <span className="text-rose-500">*</span>
+                    Tên gói học <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -962,16 +965,16 @@ export default function AdminCoursesPage() {
                 </div>
               </div>
 
-              {/* Section 2: Sức chứa & Học phí */}
+              {/* Section 2: Quyền truy cập & Giá gói */}
               <div className="space-y-3 pb-3 border-b border-slate-100">
                 <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                  3. Sức chứa & Học phí
+                  3. Quyền truy cập & Giá gói
                 </h4>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="block text-slate-700 font-bold">
-                        Sức chứa tối đa <span className="text-rose-500">*</span>
+                        Giới hạn quyền truy cập <span className="text-rose-500">*</span>
                       </label>
                       <span className="text-[10px] font-semibold text-slate-500">
                         Đang học: <strong>{editingClassActiveEnrolled}</strong>
@@ -997,7 +1000,7 @@ export default function AdminCoursesPage() {
                     />
                     {Number(editClassForm.capacity) < editingClassActiveEnrolled && (
                       <p className="text-[11px] text-rose-500 font-semibold mt-1">
-                        Sức chứa không thể nhỏ hơn {editingClassActiveEnrolled} học viên đang hoạt động.
+                        Giới hạn không thể nhỏ hơn {editingClassActiveEnrolled} quyền truy cập đang hoạt động.
                       </p>
                     )}
                   </div>
@@ -1005,7 +1008,7 @@ export default function AdminCoursesPage() {
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="block text-slate-700 font-bold">
-                        Học phí (VNĐ) <span className="text-rose-500">*</span>
+                        Giá gói (VNĐ) <span className="text-rose-500">*</span>
                       </label>
                       {isEditingClassTuitionLocked && (
                         <span className="text-[10px] text-amber-700 font-semibold flex items-center gap-0.5">
@@ -1031,12 +1034,12 @@ export default function AdminCoursesPage() {
                       <p className="text-[10px] text-amber-600 mt-1 flex items-center gap-1">
                         <Lock size={10} />
                         {editingClass.status !== "UPCOMING"
-                          ? "Chỉ đổi học phí khi lớp Sắp diễn ra."
-                          : "Đã có người đăng ký (khóa học phí)."}
+                          ? "Chỉ đổi giá gói trước khi có quyền truy cập."
+                          : "Đã có người dùng quyền truy cập (đã khóa giá)."}
                       </p>
                     ) : (
                       <p className="text-[10px] text-slate-400 mt-1">
-                        0 = Miễn phí. Khóa khi có học viên đăng ký.
+                        0 = Miễn phí. Giá được khóa khi đã phát sinh quyền truy cập.
                       </p>
                     )}
                   </div>
@@ -1046,7 +1049,7 @@ export default function AdminCoursesPage() {
               {/* Section 3: Lịch học */}
               <div className="space-y-3 pb-2">
                 <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                  4. Thời gian & Phòng học
+                  4. Thời gian hiệu lực (tùy chọn)
                 </h4>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -1153,7 +1156,7 @@ export default function AdminCoursesPage() {
                 <li>Toàn bộ bài học và video đính kèm</li>
                 <li>Tài liệu học tập</li>
                 <li>Bài kiểm tra liên kết</li>
-                <li>Các lớp học liên quan</li>
+                <li>Các gói học liên quan</li>
               </ul>
               <strong className="block mt-1">Thao tác này không thể hoàn tác.</strong>
             </div>
@@ -1196,15 +1199,15 @@ export default function AdminCoursesPage() {
               </div>
               <div>
                 <h3 className="text-base font-bold text-slate-900">
-                  Không thể xóa lớp học này
+                  Không thể xóa gói học này
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Mã lớp #{classToDelete.id}: {classToDelete.name}
+                  Mã gói #{classToDelete.id}: {classToDelete.name}
                 </p>
               </div>
             </div>
             <p className="text-sm text-slate-600 mb-6 leading-relaxed">
-              Lớp đã có <strong>{classToDelete._count?.enrollments} học viên</strong> đăng ký. Hãy chuyển lớp sang <strong>CANCELLED</strong> thay vì xóa để bảo lưu lịch sử học tập và giao dịch.
+              Gói học đã có <strong>{classToDelete._count?.enrollments} quyền truy cập</strong>. Hãy chuyển sang <strong>CANCELLED</strong> thay vì xóa để bảo lưu lịch sử học tập và giao dịch.
             </p>
             <div className="flex justify-end">
               <button
@@ -1229,15 +1232,15 @@ export default function AdminCoursesPage() {
               </div>
               <div>
                 <h3 className="text-base font-bold text-slate-900">
-                  Xóa lớp học?
+                  Xóa gói học?
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Mã lớp #{classToDelete.id}: {classToDelete.name}
+                  Mã gói #{classToDelete.id}: {classToDelete.name}
                 </p>
               </div>
             </div>
             <p className="text-sm text-slate-600 mb-6 leading-relaxed">
-              Thao tác này không thể hoàn tác. Bạn có chắc chắn muốn xóa vĩnh viễn lớp học này không?
+              Thao tác này không thể hoàn tác. Bạn có chắc chắn muốn xóa vĩnh viễn gói học này không?
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -1257,7 +1260,7 @@ export default function AdminCoursesPage() {
                 {deleteClassMutation.isPending && (
                   <Loader2 size={16} className="animate-spin" />
                 )}
-                Xóa lớp học
+                Xóa gói học
               </button>
             </div>
           </div>

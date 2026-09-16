@@ -335,7 +335,7 @@ export default function PracticeHubPage() {
           {/* Right Column: Gamified Status Badges */}
           <div className="flex flex-wrap items-center gap-3">
             {/* Streak Counter */}
-            <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-white/95 px-4 py-3 shadow-xs">
+            <div className="flex flex-1 sm:flex-initial min-w-[140px] items-center gap-3 rounded-2xl border border-amber-200 bg-white/95 px-4 py-3 shadow-xs">
               <div className="flex size-11 items-center justify-center rounded-xl bg-orange-500 text-white shadow-xs">
                 <Flame size={22} className="animate-pulse" aria-hidden="true" />
               </div>
@@ -350,7 +350,7 @@ export default function PracticeHubPage() {
             </div>
 
             {/* Bánh Mì / EXP Counter */}
-            <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-white/95 px-4 py-3 shadow-xs">
+            <div className="flex flex-1 sm:flex-initial min-w-[140px] items-center gap-3 rounded-2xl border border-amber-200 bg-white/95 px-4 py-3 shadow-xs">
               <div className="flex size-11 items-center justify-center rounded-xl bg-amber-500 text-white shadow-xs">
                 <BakeryBanhRan3d size={24} />
               </div>
@@ -366,13 +366,13 @@ export default function PracticeHubPage() {
 
             {/* Daily Practice Goal Mini Card */}
             {isDashboardLoading ? (
-              <div className="flex min-w-[200px] flex-col justify-center rounded-2xl border border-amber-200 bg-white/95 px-4 py-2.5 shadow-xs animate-pulse">
+              <div className="flex w-full sm:w-auto sm:min-w-[200px] flex-col justify-center rounded-2xl border border-amber-200 bg-white/95 px-4 py-2.5 shadow-xs animate-pulse">
                 <div className="h-4 w-28 rounded bg-slate-100" />
                 <div className="mt-2 h-2 w-full rounded bg-slate-100" />
                 <div className="mt-1 h-3 w-20 rounded bg-slate-100" />
               </div>
             ) : isDashboardError ? (
-              <div className="flex min-w-[200px] flex-col justify-center rounded-2xl border border-rose-200 bg-rose-50/90 px-4 py-2.5 shadow-xs">
+              <div className="flex w-full sm:w-auto sm:min-w-[200px] flex-col justify-center rounded-2xl border border-rose-200 bg-rose-50/90 px-4 py-2.5 shadow-xs">
                 <div className="flex items-center justify-between text-xs font-bold text-rose-700">
                   <span>Lỗi tải mục tiêu</span>
                   <button
@@ -385,7 +385,7 @@ export default function PracticeHubPage() {
                 </div>
               </div>
             ) : !dailySummary || dailySummary.totalCount === 0 ? (
-              <div className="flex min-w-[200px] flex-col justify-center rounded-2xl border border-amber-200 bg-white/95 px-4 py-2.5 shadow-xs">
+              <div className="flex w-full sm:w-auto sm:min-w-[200px] flex-col justify-center rounded-2xl border border-amber-200 bg-white/95 px-4 py-2.5 shadow-xs">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-700">
                   <span className="inline-flex items-center gap-1.5">
                     <CheckCircle2 size={13} className="text-slate-400" aria-hidden="true" />
@@ -397,7 +397,7 @@ export default function PracticeHubPage() {
                 </p>
               </div>
             ) : (
-              <div className="flex min-w-[200px] flex-col justify-center rounded-2xl border border-amber-200 bg-white/95 px-4 py-2.5 shadow-xs">
+              <div className="flex w-full sm:w-auto sm:min-w-[200px] flex-col justify-center rounded-2xl border border-amber-200 bg-white/95 px-4 py-2.5 shadow-xs">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-700">
                   <span className="inline-flex items-center gap-1.5">
                     <CheckCircle2 size={13} className="text-emerald-600" aria-hidden="true" />

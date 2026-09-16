@@ -2,11 +2,11 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { 
-  Users, 
-  BookOpen, 
-  Clock, 
-  AlertTriangle, 
+import {
+  Users,
+  BookOpen,
+  Clock,
+  AlertTriangle,
   Loader2,
   Coins,
   TrendingUp,
@@ -15,7 +15,8 @@ import {
   UserPlus,
   ArrowUpRight,
   CheckCircle2,
-  FileText
+  FileText,
+  CreditCard,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuthStore } from "@/stores/authStore";
@@ -27,9 +28,12 @@ import AdminContentBreakdown from "@/components/admin/AdminContentBreakdown";
 type DashboardStats = {
   stats: {
     totalStudents: number;
+    activeStudents: number;
     totalCourses: number;
     pendingCourses: number;
     totalEnrollments: number;
+    activeEnrollments: number;
+    pendingPayments: number;
   };
   monthlyTrends?: {
     month: string;
@@ -47,6 +51,7 @@ type DashboardStats = {
     totalBreads: number;
     totalOrders: number;
     approvedOrders: number;
+    pendingOrders: number;
   };
   recentActivity: {
     id: number;
@@ -97,6 +102,10 @@ export default function AdminDashboardPage() {
     },
   });
 
+  const pendingTransactionsTotal =
+    (data?.stats?.pendingPayments || 0) +
+    (data?.gamification?.pendingOrders || 0);
+
   const STATS = data
     ? [
         {
@@ -107,7 +116,7 @@ export default function AdminDashboardPage() {
           color: "text-blue-600",
           bg: "bg-blue-50",
           borderColor: "border-blue-100",
-          sub: `+${data.stats.totalEnrollments.toLocaleString()} lượt ghi danh`,
+          sub: `${data.stats.activeStudents || 0} hoạt động (30 ngày) · ${data.stats.totalEnrollments.toLocaleString()} quyền truy cập`,
           trendPositive: true,
         },
         {
@@ -118,19 +127,33 @@ export default function AdminDashboardPage() {
           color: "text-indigo-600",
           bg: "bg-indigo-50",
           borderColor: "border-indigo-100",
-          sub: data.stats.pendingCourses > 0 ? `${data.stats.pendingCourses} khóa chờ duyệt` : "Đã kiểm duyệt 100%",
+          sub:
+            data.stats.pendingCourses > 0
+              ? `${data.stats.pendingCourses} khóa đang soạn thảo`
+              : "100% đã công khai",
           alert: data.stats.pendingCourses > 0,
+        },
+        {
+          id: "commerce",
+          name: "Giao Dịch Cần Duyệt",
+          value: pendingTransactionsTotal.toLocaleString(),
+          icon: CreditCard,
+          color: "text-amber-600",
+          bg: "bg-amber-50",
+          borderColor: "border-amber-100",
+          sub: `${data.stats.pendingPayments || 0} thanh toán · ${data.gamification?.pendingOrders || 0} đơn quà chờ duyệt`,
+          alert: pendingTransactionsTotal > 0,
         },
         {
           id: "gamification",
           name: "Điểm Thưởng Tích Lũy",
-          value: `${data.gamification?.totalBreads?.toLocaleString() || "1,250"}`,
+          value: (data.gamification?.totalBreads ?? 0).toLocaleString(),
           unit: "Bánh Mì",
           icon: Coins,
-          color: "text-amber-600",
-          bg: "bg-amber-50",
-          borderColor: "border-amber-100",
-          sub: `Tổng ví học viên · ${data.gamification?.approvedOrders || 0} đổi quà xong`,
+          color: "text-emerald-600",
+          bg: "bg-emerald-50",
+          borderColor: "border-emerald-100",
+          sub: `Tổng ví học viên · ${data.gamification?.approvedOrders || 0} đơn đổi quà xong`,
         },
       ]
     : [];
@@ -150,24 +173,18 @@ export default function AdminDashboardPage() {
           </div>
           <p className="text-slate-500 text-sm">
             Bảng điều khiển quản trị BreadTrans CMS &middot; Tài khoản:{" "}
-            <span className="font-semibold text-slate-800">{user?.email || "Admin"}</span>
+            <span className="font-semibold text-slate-800">
+              {user?.email || "Admin"}
+            </span>
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            Hệ thống trực tuyến
-          </div>
-
           <Link
             href="/admin/enroll"
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors"
           >
-            <UserPlus size={14} strokeWidth={2} /> Ghi danh mới
+            <UserPlus size={14} strokeWidth={2} /> Cấp quyền mới
           </Link>
         </div>
       </div>
@@ -175,7 +192,9 @@ export default function AdminDashboardPage() {
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-24 space-y-3 bg-white border border-slate-200/80 rounded-xl">
           <Loader2 className="animate-spin text-blue-600" size={36} />
-          <p className="text-xs font-medium text-slate-500">Đang đồng bộ dữ liệu quản trị...</p>
+          <p className="text-xs font-medium text-slate-500">
+            Đang đồng bộ dữ liệu quản trị...
+          </p>
         </div>
       ) : (
         <>
@@ -195,7 +214,9 @@ export default function AdminDashboardPage() {
                     <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                       {stat.name}
                     </span>
-                    <div className={`${stat.bg} ${stat.color} p-2 rounded-lg border ${stat.borderColor}`}>
+                    <div
+                      className={`${stat.bg} ${stat.color} p-2 rounded-lg border ${stat.borderColor}`}
+                    >
                       <Icon size={18} strokeWidth={2} />
                     </div>
                   </div>
@@ -212,7 +233,9 @@ export default function AdminDashboardPage() {
                   </div>
 
                   <div className="mt-2.5 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
-                    <span className={`font-medium ${stat.alert ? "text-amber-700 font-semibold" : "text-slate-500"}`}>
+                    <span
+                      className={`font-medium ${stat.alert ? "text-amber-700 font-semibold" : "text-slate-500"}`}
+                    >
                       {stat.sub}
                     </span>
                     {stat.trendPositive && (
@@ -238,8 +261,11 @@ export default function AdminDashboardPage() {
                   <AlertTriangle size={18} strokeWidth={2} />
                 </div>
                 <div className="text-sm">
-                  <span className="font-semibold text-amber-900">Nội dung chờ duyệt:</span> Hiện có{" "}
-                  <strong>{data.stats.pendingCourses}</strong> khóa học đang ở trạng thái chờ kiểm duyệt nội dung trước khi xuất bản.
+                  <span className="font-semibold text-amber-900">
+                    Nội dung chờ duyệt:
+                  </span>{" "}
+                  Hiện có <strong>{data.stats.pendingCourses}</strong> khóa học
+                  đang ở trạng thái chờ kiểm duyệt nội dung trước khi xuất bản.
                 </div>
               </div>
               <Link
@@ -277,9 +303,11 @@ export default function AdminDashboardPage() {
                       </div>
                       <div>
                         <h3 className="text-sm font-bold text-slate-900">
-                          Nhật Ký Hoạt Động
+                          Quyền Truy Cập Gần Đây
                         </h3>
-                        <p className="text-[11px] text-slate-400">Thời gian thực hệ thống</p>
+                        <p className="text-[11px] text-slate-400">
+                          Các quyền truy cập mới nhất
+                        </p>
                       </div>
                     </div>
                     <span className="text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200/70">
@@ -313,7 +341,9 @@ export default function AdminDashboardPage() {
                     ) : (
                       <div className="text-center py-12 text-slate-400">
                         <Clock size={24} className="mx-auto mb-2 opacity-40" />
-                        <p className="text-xs">Chưa có hoạt động nào được ghi nhận.</p>
+                        <p className="text-xs">
+                          Chưa có hoạt động nào được ghi nhận.
+                        </p>
                       </div>
                     )}
                   </div>
@@ -331,7 +361,7 @@ export default function AdminDashboardPage() {
                     href="/admin/enroll"
                     className="flex-1 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-xs rounded-lg border border-blue-200 transition-colors flex items-center justify-center gap-1 shadow-2xs"
                   >
-                    Ghi danh <UserPlus size={13} strokeWidth={2} />
+                    Cấp quyền <UserPlus size={13} strokeWidth={2} />
                   </Link>
                 </div>
               </div>

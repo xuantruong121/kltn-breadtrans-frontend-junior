@@ -32,6 +32,7 @@ type UserData = {
   role: "STUDENT" | "ADMIN";
   createdAt: string;
   lastLoginAt: string | null;
+  lastActivityAt: string | null;
   loginCount: number;
   profile: { fullName: string; avatar: string | null; phone: string | null } | null;
   stats?: { totalBanhRan: number; streakCount: number } | null;
@@ -177,8 +178,8 @@ export default function AdminUsersPage() {
     );
   };
 
-  const getActivityBadge = (lastLoginAt: string | null) => {
-    if (!lastLoginAt) {
+  const getActivityBadge = (lastActivityAt: string | null) => {
+    if (!lastActivityAt) {
       return (
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">
           <span className="w-2 h-2 rounded-full bg-slate-400"></span>
@@ -188,8 +189,8 @@ export default function AdminUsersPage() {
     }
 
     const now = new Date().getTime();
-    const loginTime = new Date(lastLoginAt).getTime();
-    const diffHours = Math.floor((now - loginTime) / (1000 * 60 * 60));
+    const activityTime = new Date(lastActivityAt).getTime();
+    const diffHours = Math.max(0, Math.floor((now - activityTime) / (1000 * 60 * 60)));
     const diffDays = Math.floor(diffHours / 24);
 
     if (diffHours < 24) {
@@ -210,7 +211,7 @@ export default function AdminUsersPage() {
       return (
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
           <span className="w-2 h-2 rounded-full bg-slate-400"></span>
-          {new Date(lastLoginAt).toLocaleDateString("vi-VN")}
+          {new Date(lastActivityAt).toLocaleDateString("vi-VN")}
         </span>
       );
     }
@@ -223,7 +224,7 @@ export default function AdminUsersPage() {
         <div>
           <h1 className="text-4xl font-black text-slate-800 tracking-tight">Quản lý Người dùng</h1>
           <p className="text-slate-400 font-bold text-sm mt-1">
-            Danh sách tất cả tài khoản học viên, giáo viên và quản trị viên trong hệ thống
+            Danh sách tài khoản học viên và quản trị viên trong hệ thống
           </p>
         </div>
         <button
@@ -344,7 +345,7 @@ export default function AdminUsersPage() {
                       </span>
                     </td>
                     <td className="py-4 px-6">
-                      {getActivityBadge(user.lastLoginAt)}
+                      {getActivityBadge(user.lastActivityAt)}
                     </td>
                     <td className="py-4 px-6 text-right">
                       <div className="flex items-center justify-end gap-1.5">

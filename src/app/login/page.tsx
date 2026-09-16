@@ -3,6 +3,18 @@
 import { useState, useEffect, useSyncExternalStore, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Lock,
+  Mail,
+  KeyRound,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  AlertCircle,
+  X,
+  Info,
+  Loader2,
+} from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
@@ -125,11 +137,9 @@ function LoginForm() {
     <>
       {/* Return URL Context Notification Banner */}
       {showReturnBanner && (
-        <div className="mb-4 bg-secondary-fixed/40 text-on-secondary-fixed border border-secondary-fixed-dim/40 p-3 rounded-xl shadow-xs flex items-start justify-between gap-2 transition-all duration-200">
-          <div className="flex items-start gap-2 text-xs sm:text-sm leading-snug">
-            <span className="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5">
-              info
-            </span>
+        <div className="mb-4 bg-amber-50 text-amber-900 border border-amber-200 p-3.5 rounded-2xl shadow-xs flex items-start justify-between gap-3 transition-all duration-200">
+          <div className="flex items-start gap-2.5 text-xs sm:text-sm leading-snug">
+            <Info className="text-amber-600 size-5 shrink-0 mt-0.5" />
             <div>
               Bạn cần đăng nhập để truy cập tính năng vừa chọn. Hệ thống sẽ tự
               động chuyển tiếp ngay sau khi xác thực thành công.
@@ -139,29 +149,24 @@ function LoginForm() {
             type="button"
             onClick={() => setShowReturnBanner(false)}
             aria-label="Đóng thông báo"
-            className="text-on-secondary-fixed/70 hover:text-on-secondary-fixed p-0.5 rounded-md hover:bg-secondary-fixed-dim/20 transition-colors shrink-0"
+            className="text-amber-700/70 hover:text-amber-900 p-1 rounded-lg hover:bg-amber-100 transition-colors shrink-0"
           >
-            <span className="material-symbols-outlined text-[18px]">close</span>
+            <X size={16} />
           </button>
         </div>
       )}
 
       {/* Authentication Card */}
-      <div className="bg-surface-container-lowest rounded-2xl shadow-xl p-6 sm:p-10 relative border border-surface-container-high/60">
+      <div className="bg-white rounded-3xl shadow-xl p-6 sm:p-10 relative border border-amber-100">
         {/* Header Info */}
         <div className="text-center mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-primary-fixed flex items-center justify-center mx-auto mb-3 shadow-xs">
-            <span
-              className="material-symbols-outlined text-primary text-[28px]"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >
-              lock_open
-            </span>
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-200 flex items-center justify-center mx-auto mb-3 shadow-xs text-amber-700">
+            <Lock size={22} />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
             Đăng nhập BreadTrans
           </h1>
-          <p className="text-sm text-on-surface-variant mt-1.5 leading-relaxed">
+          <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">
             Chào mừng bạn quay trở lại! Tiếp tục hành trình học tiếng Anh của
             bạn.
           </p>
@@ -171,23 +176,19 @@ function LoginForm() {
         {errorMsg && (
           <div
             role="alert"
-            className="mb-5 bg-error-container text-on-error-container border border-error/20 p-3 rounded-xl text-sm font-medium flex items-center justify-between gap-2 animate-in fade-in duration-150"
+            className="mb-5 bg-rose-50 text-rose-800 border border-rose-200 p-3.5 rounded-2xl text-sm font-medium flex items-center justify-between gap-3 animate-in fade-in duration-150"
           >
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-error text-[20px] shrink-0">
-                error
-              </span>
+            <div className="flex items-center gap-2.5">
+              <AlertCircle size={18} className="text-rose-600 shrink-0" />
               <span>{errorMsg}</span>
             </div>
             <button
               type="button"
               onClick={() => setErrorMsg("")}
               aria-label="Đóng thông báo lỗi"
-              className="text-on-error-container/80 hover:text-on-error-container p-0.5 rounded-md transition-colors"
+              className="text-rose-600 hover:text-rose-800 p-1 rounded-lg hover:bg-rose-100 transition-colors"
             >
-              <span className="material-symbols-outlined text-[18px]">
-                close
-              </span>
+              <X size={16} />
             </button>
           </div>
         )}
@@ -197,16 +198,14 @@ function LoginForm() {
           {/* Email Input Field */}
           <div className="space-y-1.5">
             <label
-              className="block text-sm font-semibold text-on-surface"
+              className="block text-sm font-bold text-slate-700"
               htmlFor="emailInput"
             >
-              Địa chỉ Email <span className="text-error">*</span>
+              Địa chỉ Email <span className="text-rose-500">*</span>
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-on-surface-variant/70">
-                <span className="material-symbols-outlined text-[20px]">
-                  mail
-                </span>
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                <Mail size={18} />
               </span>
               <input
                 id="emailInput"
@@ -217,7 +216,7 @@ function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
                 aria-invalid={Boolean(errorMsg)}
-                className="w-full pl-10 pr-4 py-3 bg-surface-container-low border border-transparent rounded-xl text-on-surface text-sm placeholder:text-on-surface-variant/50 focus:outline-none focus:bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
+                className="w-full pl-10 pr-4 py-3 bg-slate-50/70 border border-slate-200 rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all"
               />
             </div>
           </div>
@@ -225,16 +224,14 @@ function LoginForm() {
           {/* Password Input Field */}
           <div className="space-y-1.5">
             <label
-              className="block text-sm font-semibold text-on-surface"
+              className="block text-sm font-bold text-slate-700"
               htmlFor="passwordInput"
             >
-              Mật khẩu <span className="text-error">*</span>
+              Mật khẩu <span className="text-rose-500">*</span>
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-on-surface-variant/70">
-                <span className="material-symbols-outlined text-[20px]">
-                  key
-                </span>
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                <KeyRound size={18} />
               </span>
               <input
                 id="passwordInput"
@@ -245,39 +242,37 @@ function LoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 aria-invalid={Boolean(errorMsg)}
-                className="w-full pl-10 pr-11 py-3 bg-surface-container-low border border-transparent rounded-xl text-on-surface text-sm placeholder:text-on-surface-variant/50 focus:outline-none focus:bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
+                className="w-full pl-10 pr-11 py-3 bg-slate-50/70 border border-slate-200 rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all"
               />
               <button
                 type="button"
                 id="togglePassBtn"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 items-center justify-center text-on-surface-variant/70 hover:text-on-surface transition-colors"
+                className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
                 title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                 aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
               >
-                <span className="material-symbols-outlined text-[20px]">
-                  {showPassword ? "visibility_off" : "visibility"}
-                </span>
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
           </div>
 
           {/* Options Row: Remember & Forgot */}
           <div className="flex items-center justify-between text-xs sm:text-sm pt-1">
-            <label className="flex items-center gap-2 cursor-pointer select-none text-on-surface-variant hover:text-on-surface">
+            <label className="flex items-center gap-2 cursor-pointer select-none text-slate-600 hover:text-slate-800">
               <input
                 id="rememberMe"
                 name="remember"
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded bg-surface-container-low text-primary accent-primary cursor-pointer"
+                className="w-4 h-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
               />
               <span>Ghi nhớ đăng nhập</span>
             </label>
             <Link
               href="mailto:support@breadtrans.edu.vn?subject=Y%C3%AAu%20c%E1%BA%A7u%20h%E1%BB%97%20tr%E1%BB%A3%20%C4%91%E1%BA%B7t%20l%E1%BA%A1i%20m%E1%BA%ADt%20kh%E1%BA%A9u"
-              className="font-semibold text-primary hover:text-primary-container transition-colors"
+              className="font-bold text-amber-700 hover:underline transition-colors"
             >
               Quên mật khẩu?
             </Link>
@@ -288,38 +283,17 @@ function LoginForm() {
             type="submit"
             id="submitBtn"
             disabled={isLoading}
-            className="w-full py-3.5 px-6 rounded-xl font-bold text-sm sm:text-base bg-primary text-on-primary hover:bg-primary-container shadow-md transition-all duration-150 flex items-center justify-center gap-2 select-none active:scale-[0.99] disabled:opacity-75 disabled:cursor-not-allowed cursor-pointer"
+            className="btn-tactile-primary w-full py-3.5 px-6 rounded-xl font-bold text-sm sm:text-base bg-amber-600 hover:bg-amber-700 text-white shadow-md transition-all duration-150 flex items-center justify-center gap-2 select-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <>
-                <svg
-                  className="animate-spin h-5 w-5 text-on-primary"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    fill="currentColor"
-                  />
-                </svg>
+                <Loader2 size={18} className="animate-spin" />
                 <span>Đang xử lý...</span>
               </>
             ) : (
               <>
                 <span>Đăng nhập</span>
-                <span className="material-symbols-outlined text-[20px]">
-                  arrow_forward
-                </span>
+                <ArrowRight size={18} />
               </>
             )}
           </button>
@@ -327,8 +301,8 @@ function LoginForm() {
 
         {/* Divider with Text */}
         <div className="relative my-6 flex items-center justify-center">
-          <div className="w-full bg-surface-container-highest h-[1px]" />
-          <span className="absolute px-3 bg-surface-container-lowest text-xs font-semibold text-on-surface-variant/70 uppercase tracking-wider">
+          <div className="w-full bg-slate-200 h-[1px]" />
+          <span className="absolute px-3 bg-white text-xs font-bold text-slate-400 uppercase tracking-wider">
             Hoặc tiếp tục với
           </span>
         </div>
@@ -345,12 +319,12 @@ function LoginForm() {
         </div>
 
         {/* Footer Card Direction */}
-        <div className="mt-6 text-center pt-3 bg-surface-container-low/50 rounded-xl p-3">
-          <p className="text-sm text-on-surface-variant">
+        <div className="mt-6 text-center pt-3 bg-slate-50/80 border border-slate-100 rounded-2xl p-3.5">
+          <p className="text-sm text-slate-600">
             Chưa có tài khoản BreadTrans?{" "}
             <Link
               href={registerHref}
-              className="font-bold text-primary hover:underline ml-1 inline-block"
+              className="font-bold text-amber-700 hover:underline ml-1 inline-block"
             >
               Đăng ký ngay miễn phí
             </Link>

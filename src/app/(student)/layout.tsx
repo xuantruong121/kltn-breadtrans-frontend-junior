@@ -11,11 +11,22 @@ import { MobileBottomNav } from "@/components/navigation/MobileBottomNav";
 import { userService } from "@/lib/api/services/user.service";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
+import { LearningFocusProvider } from "@/contexts/LearningFocusContext";
+import { isLearningFocusRoute } from "@/lib/practice/focusMode";
 
 const FloatingAiTutor = dynamic(
   () =>
     import("@/components/FloatingAiTutor").catch((err) => {
       console.warn("FloatingAiTutor chunk load failed (stale chunk after server restart):", err);
+      return { default: () => null };
+    }),
+  { ssr: false }
+);
+
+const FloatingCompanionPet = dynamic(
+  () =>
+    import("@/modules/pet/components/FloatingCompanionPet").catch((err) => {
+      console.warn("FloatingCompanionPet chunk load failed (stale chunk after server restart):", err);
       return { default: () => null };
     }),
   { ssr: false }
@@ -82,30 +93,35 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   if (!isReady) return null;
   if ((!user || user.role !== "STUDENT") && !isGuestAllowed) return null;
 
-  const isSpeakingExercisePage = /^\/practice\/speaking\/\d+/.test(pathname);
-  const isQuizExercisePage = /^\/practice\/quizzes\/\d+/.test(pathname);
-  const isPracticeRoomPage = isSpeakingExercisePage || isQuizExercisePage;
+  const isPracticeRoomPage = isLearningFocusRoute(pathname);
   const isPracticeCatalogPage =
     pathname.startsWith("/practice");
+  const isDashboardPage = pathname === "/dashboard" || pathname === "/student-home";
+  const isPetManagementPage = pathname === "/pet";
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-[#fbfaf8] text-slate-800 antialiased selection:bg-amber-600 selection:text-white font-['Quicksand',sans-serif]">
-      <AppHeader />
-      <main
-        className={`min-w-0 w-full ${
-          isPracticeRoomPage
-            ? "flex-1 flex flex-col max-w-none px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-2 sm:py-2.5 pb-2.5 sm:pb-3"
-            : isPracticeCatalogPage
-              ? "w-full flex-1 max-w-none px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-4 sm:py-6 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-8"
-              : "mx-auto flex-1 max-w-7xl px-4 py-4 sm:px-6 sm:py-8 lg:px-8 xl:px-10 2xl:px-12 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-8"
-        }`}
-      >
-        {children}
-      </main>
-      {!isPracticeRoomPage && <AppFooter />}
-      <BackToTop />
-      {user && <FloatingAiTutor />}
-      <MobileBottomNav />
-    </div>
+    <LearningFocusProvider>
+      <div className="min-h-[100dvh] flex flex-col bg-[#fbfaf8] text-slate-800 antialiased selection:bg-amber-600 selection:text-white font-['Quicksand',sans-serif]">
+        <AppHeader />
+        <main
+          className={`min-w-0 w-full ${
+            isPracticeRoomPage
+              ? "flex-1 flex flex-col max-w-none px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-2 sm:py-2.5 pb-2.5 sm:pb-3"
+              : isPracticeCatalogPage
+                ? "w-full flex-1 max-w-none px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-4 sm:py-6 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-8"
+                : "mx-auto flex-1 max-w-7xl px-4 py-4 sm:px-6 sm:py-8 lg:px-8 xl:px-10 2xl:px-12 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-8"
+          }`}
+        >
+          {children}
+        </main>
+        {!isPracticeRoomPage && <AppFooter />}
+        <BackToTop />
+        {user && !isPracticeRoomPage && <FloatingAiTutor />}
+        {user && !isPracticeRoomPage && !isDashboardPage && !isPetManagementPage && (
+          <FloatingCompanionPet />
+        )}
+        <MobileBottomNav />
+      </div>
+    </LearningFocusProvider>
   );
 }

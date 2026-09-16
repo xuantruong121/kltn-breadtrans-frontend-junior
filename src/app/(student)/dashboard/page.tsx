@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   ArrowRight,
@@ -12,30 +12,24 @@ import {
   Flame,
   Gift,
   Headphones,
-  Heart,
   Layers,
-  Loader2,
   Mic,
   PenTool,
   RefreshCw,
   ShieldCheck,
-  Smile,
   TrendingUp,
   Trophy,
-  Utensils,
   Zap,
 } from "lucide-react";
-import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
 import { courseService, StudentLearningClass } from "@/lib/api/services/course.service";
 import {
   gamificationService,
-  Pet,
   TodayQuestItem,
 } from "@/lib/api/services/gamification.service";
 import { userService, SkillProgressSummary, UserProfile } from "@/lib/api/services/user.service";
 import { PlacementTestBanner } from "@/components/dashboard/PlacementTestBanner";
-import { getSpeciesIdFromPetName, PET_SPECIES_LIST } from "@/modules/pet/types";
+import { DashboardCompanionCard } from "@/modules/pet/components/DashboardCompanionCard";
 import {
   clampPercentage,
   getVietnamDayOfWeek,
@@ -416,20 +410,7 @@ export default function DashboardPage() {
     staleTime: 60_000,
   });
 
-  // 5. Pet Companion Data
-  const {
-    data: pet,
-    isLoading: isPetLoading,
-    isError: isPetError,
-    refetch: refetchPet,
-  } = useQuery<Pet | null>({
-    queryKey: ["my-pet", user?.id],
-    queryFn: gamificationService.getMyPet,
-    enabled,
-    staleTime: 30_000,
-  });
-
-  // 6. 4-Skills Summary Data
+  // 5. 4-Skills Summary Data
   const {
     data: skillsSummary,
     isLoading: isSkillsLoading,
@@ -440,29 +421,6 @@ export default function DashboardPage() {
     queryFn: userService.getSkillsSummary,
     enabled,
     staleTime: 60_000,
-  });
-
-  // Feed Pet Mutation
-  const feedPetMutation = useMutation({
-    mutationFn: gamificationService.feedPet,
-    onSuccess: (updatedPet) => {
-      queryClient.invalidateQueries({ queryKey: ["my-pet", user?.id] });
-      queryClient.invalidateQueries({ queryKey: ["user-stats", user?.id] });
-      queryClient.invalidateQueries({ queryKey: ["market-balance"] });
-
-      if (pet && updatedPet.level > pet.level) {
-        toast.success(
-          `Chúc mừng! Thú cưng đã thăng cấp lên Cấp ${updatedPet.level}! (-10 Bánh Mì, +50 EXP)`
-        );
-      } else {
-        toast.success(
-          "Thú cưng đã được cho ăn no nê! (-10 Bánh Mì, +50 EXP Thú Cưng, +20 Vui vẻ)"
-        );
-      }
-    },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Không thể cho thú cưng ăn lúc này!");
-    },
   });
 
   // Query invalidation on external learning events
@@ -546,17 +504,6 @@ export default function DashboardPage() {
     () => getVietnamDayOfWeek(todayData?.dateKey),
     [todayData?.dateKey]
   );
-
-  // Pet details strictly from API (No placeholder defaults)
-  const petSpeciesId = pet ? getSpeciesIdFromPetName(pet.name) : undefined;
-  const currentSpecies = useMemo(() => {
-    if (!petSpeciesId) return null;
-    return PET_SPECIES_LIST.find((s) => s.id === petSpeciesId) || PET_SPECIES_LIST[0];
-  }, [petSpeciesId]);
-
-  const petHealthSafe = pet ? Math.min(100, Math.max(0, pet.health ?? 0)) : 0;
-  const petHappinessSafe = pet ? Math.min(100, Math.max(0, pet.happiness ?? 0)) : 0;
-  const petHungerText = petHealthSafe >= 70 ? "No nê (Sẵn sàng)" : "Cần nạp năng lượng";
 
   return (
     <div className="space-y-8 pb-16 font-['Quicksand',sans-serif]" id="dashboard">
@@ -983,206 +930,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Right Column: Mini Pet Companion Widget (1 Col) */}
-        <aside className="rounded-3xl border border-slate-200/90 bg-gradient-to-b from-amber-50/40 via-white to-orange-50/20 p-6 sm:p-7 shadow-xs flex flex-col space-y-4 h-fit lg:self-start">
-          {/* Pet Card Header */}
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              <Heart size={16} className="text-rose-500 fill-rose-500" />
-              <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
-                Thú Cưng Đồng Hành
-              </h3>
-            </div>
-            {pet && (
-              <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-amber-100/90 text-amber-900 border border-amber-200">
-                Cấp {pet.level}
-              </span>
-            )}
-          </div>
-
-          {/* Pet Widget Body: Loading vs Error vs Empty vs Content */}
-          {isPetLoading ? (
-            <div className="space-y-3.5 animate-pulse" role="status" aria-label="Đang tải dữ liệu thú cưng">
-              <div className="flex items-center gap-4 p-3.5 rounded-2xl bg-white border border-slate-100">
-                <div className="size-16 rounded-2xl bg-slate-200 shrink-0" />
-                <div className="space-y-2 flex-1">
-                  <div className="h-4 w-28 rounded bg-slate-200" />
-                  <div className="h-3 w-36 rounded bg-slate-100" />
-                  <div className="h-2 w-20 rounded bg-slate-100" />
-                </div>
-              </div>
-              <div className="h-16 rounded-2xl bg-slate-100" />
-              <div className="h-11 rounded-2xl bg-slate-200" />
-            </div>
-          ) : isPetError ? (
-            <div className="rounded-2xl border border-rose-200 bg-rose-50/70 p-4 text-center space-y-2.5">
-              <AlertCircle size={20} className="mx-auto text-rose-500" />
-              <p className="text-xs font-bold text-rose-900">Không thể tải thông tin thú cưng</p>
-              <button
-                type="button"
-                onClick={() => refetchPet()}
-                className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-rose-600 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-rose-700 cursor-pointer"
-              >
-                <RefreshCw size={13} /> Thử lại
-              </button>
-            </div>
-          ) : !pet ? (
-            /* Honest Empty State for learners with no pet */
-            <div className="rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/50 p-5 text-center space-y-3">
-              <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 border border-amber-200">
-                <Heart size={22} />
-              </div>
-              <div>
-                <h4 className="text-sm font-black text-slate-900">Chưa nhận thú cưng</h4>
-                <p className="mt-1 text-xs text-slate-600 leading-relaxed">
-                  Chọn một người bạn đồng hành để cùng rèn luyện tiếng Anh mỗi ngày và mở khóa nhiều phần thưởng hấp dẫn.
-                </p>
-              </div>
-              <Link
-                href="/pet"
-                className="inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-2xl bg-amber-600 hover:bg-amber-700 active:scale-95 text-white text-xs font-black transition-all shadow-xs cursor-pointer"
-              >
-                <span>Nhận thú cưng ngay</span>
-                <ArrowRight size={14} />
-              </Link>
-            </div>
-          ) : (
-            /* Real Pet Data Display */
-            <>
-              {/* Pet Visual & Status */}
-              <div className="flex items-center gap-4 p-3.5 rounded-2xl bg-white border border-amber-200/70 shadow-2xs">
-                <div className="size-16 rounded-2xl bg-gradient-to-br from-amber-100 via-orange-100/70 to-amber-200/40 flex items-center justify-center text-3xl border border-amber-300/80 shrink-0 shadow-xs">
-                  <span>{currentSpecies?.icon || "🐾"}</span>
-                </div>
-                <div className="min-w-0">
-                  <h4 className="text-base font-black text-slate-900 truncate">
-                    {currentSpecies?.speciesName || pet.name}
-                  </h4>
-                  <p className="text-xs font-semibold text-slate-500 mt-0.5">
-                    {currentSpecies?.title || "Bạn đồng hành học tập"}
-                  </p>
-                  <div className="mt-1.5 flex items-center gap-1.5">
-                    <span
-                      className={`size-2 rounded-full ${
-                        petHealthSafe >= 70 ? "bg-emerald-500 animate-pulse" : "bg-orange-500"
-                      }`}
-                    />
-                    <span className="text-[11px] font-bold text-slate-700">{petHungerText}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Pet Quote Speech Bubble */}
-              {currentSpecies?.quote && (
-                <div className="relative rounded-2xl bg-amber-50/90 border border-amber-200/80 p-3 text-xs font-semibold text-amber-900 shadow-2xs">
-                  <span className="block not-italic text-[10px] font-black uppercase text-amber-700 tracking-wider mb-0.5">
-                    Lời nhắn từ {currentSpecies.name}:
-                  </span>
-                  &ldquo;{currentSpecies.quote}&rdquo;
-                </div>
-              )}
-
-              {/* Health & Happiness Gauges */}
-              <div className="space-y-2.5 text-xs font-bold text-slate-700 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs">
-                <div>
-                  <div className="flex justify-between text-[11px] mb-1">
-                    <span className="flex items-center gap-1 text-slate-600">
-                      <Heart size={12} className="text-rose-500 fill-rose-500" /> Sức khỏe (Health)
-                    </span>
-                    <span className="text-rose-700 font-extrabold">{petHealthSafe}%</span>
-                  </div>
-                  <div
-                    className="h-2 rounded-full bg-slate-100 overflow-hidden"
-                    role="progressbar"
-                    aria-valuenow={petHealthSafe}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-label="Sức khỏe thú cưng"
-                  >
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-rose-500 to-pink-500 transition-all duration-300"
-                      style={{ width: `${petHealthSafe}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between text-[11px] mb-1">
-                    <span className="flex items-center gap-1 text-slate-600">
-                      <Smile size={12} className="text-amber-600" /> Vui vẻ (Happiness)
-                    </span>
-                    <span className="text-amber-700 font-extrabold">{petHappinessSafe}%</span>
-                  </div>
-                  <div
-                    className="h-2 rounded-full bg-slate-100 overflow-hidden"
-                    role="progressbar"
-                    aria-valuenow={petHappinessSafe}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-label="Độ vui vẻ thú cưng"
-                  >
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-400 transition-all duration-300"
-                      style={{ width: `${petHappinessSafe}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Pet Buff description */}
-              {currentSpecies?.buff && (
-                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200/90 text-[11px] font-bold text-amber-900 shadow-2xs">
-                  <span className="font-black text-amber-800">Hiệu ứng đồng hành:</span>{" "}
-                  {currentSpecies.buff}
-                </div>
-              )}
-
-              {/* Action Buttons: Quick Feed & Full Pet Room */}
-              <div className="space-y-2 pt-1">
-                <button
-                  onClick={() => feedPetMutation.mutate()}
-                  disabled={feedPetMutation.isPending || (stats?.totalBanhRan ?? 0) < 10}
-                  className={`w-full inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl text-xs sm:text-sm font-black transition-all shadow-md cursor-pointer ${
-                    (stats?.totalBanhRan ?? 0) < 10
-                      ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
-                      : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 active:scale-95 text-white shadow-orange-500/20"
-                  }`}
-                  type="button"
-                >
-                  {feedPetMutation.isPending ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" />
-                      <span>Đang cho ăn...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Utensils size={15} />
-                      <span>Cho thú cưng ăn (10 Bánh Mì)</span>
-                    </>
-                  )}
-                </button>
-
-                {(stats?.totalBanhRan ?? 0) < 10 ? (
-                  <p className="text-center text-[11px] font-bold text-rose-600">
-                    Cần 10 Bánh Mì để cho ăn (Hiện có: {stats?.totalBanhRan ?? 0})
-                  </p>
-                ) : (
-                  <p className="text-center text-[10px] font-semibold text-slate-500">
-                    Tiêu hao 10 Bánh Mì • Thú cưng nhận +50 EXP & +20 Vui vẻ
-                  </p>
-                )}
-
-                <Link
-                  href="/pet"
-                  className="w-full inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-2xl border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-bold transition-all shadow-2xs cursor-pointer"
-                >
-                  <span>Vào phòng thú cưng 3D</span>
-                  <ArrowRight size={14} />
-                </Link>
-              </div>
-            </>
-          )}
-        </aside>
+        {/* Right Column: 2D Companion Pet Card */}
+        <DashboardCompanionCard className="lg:self-start" />
       </section>
 
       {/* ========================================================================= */}

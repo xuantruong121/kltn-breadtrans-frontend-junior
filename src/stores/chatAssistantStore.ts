@@ -21,6 +21,7 @@ export interface StudentThread {
   unreadForAdmin: number;
   lastMessageTime: number;
   loadedFromBackend?: boolean;
+  hasMoreHistory?: boolean;
 }
 
 interface ChatAssistantState {
@@ -41,7 +42,13 @@ interface ChatAssistantState {
     mode: 'AI' | 'HUMAN',
     messages: AssistantMessage[],
     unreadCount?: number,
+    hasMoreHistory?: boolean,
   ) => void;
+  prependMessagesToThread: (
+    studentId: string,
+    olderMessages: AssistantMessage[],
+  ) => void;
+  setThreadHasMore: (studentId: string, hasMore: boolean) => void;
   addMessageToThread: (
     studentId: string,
     studentMeta: { name: string; email?: string; avatar?: string },
@@ -73,7 +80,7 @@ export const useChatAssistantStore = create<ChatAssistantState>()((set, get) => 
 
       const sysContent =
         mode === 'HUMAN'
-          ? `${senderName ? `[${senderName}]` : 'Ban Quản Trị / Thầy Cô'} đã chuyển sang chế độ hỗ trợ trực tiếp. Mọi câu hỏi của bạn sẽ được phản hồi bởi thầy cô!`
+          ? `${senderName ? `[${senderName}]` : 'Quản trị viên'} đã chuyển sang chế độ hỗ trợ trực tiếp. Mọi thắc mắc của bạn sẽ được phản hồi trực tiếp bởi Quản trị viên!`
           : 'Đã kích hoạt lại chế độ phản hồi tự động. Hệ thống sẽ tự động hỗ trợ giải đáp thắc mắc học tập của bạn!';
 
       const sysMsg: AssistantMessage = {
@@ -97,7 +104,7 @@ export const useChatAssistantStore = create<ChatAssistantState>()((set, get) => 
     });
   },
 
-  loadThreadFromBackend: (studentId, conversationId, studentMeta, mode, messages, unreadCount = 0) => {
+  loadThreadFromBackend: (studentId, conversationId, studentMeta, mode, messages, unreadCount = 0, hasMoreHistory = false) => {
     set((state) => ({
       threads: {
         ...state.threads,
@@ -112,9 +119,52 @@ export const useChatAssistantStore = create<ChatAssistantState>()((set, get) => 
           unreadForAdmin: unreadCount,
           lastMessageTime: messages.length > 0 ? messages[messages.length - 1].timestamp : Date.now(),
           loadedFromBackend: true,
+          hasMoreHistory,
         },
       },
     }));
+  },
+
+  prependMessagesToThread: (studentId, olderMessages) => {
+    set((state) => {
+      const currentThread = state.threads[studentId];
+      if (!currentThread) return state;
+
+      const existingIds = new Set(
+        currentThread.messages.map((m) => String(m.clientMessageId || m.id))
+      );
+      const uniqueOlder = olderMessages.filter(
+        (m) => !existingIds.has(String(m.clientMessageId || m.id))
+      );
+
+      if (uniqueOlder.length === 0) return state;
+
+      return {
+        threads: {
+          ...state.threads,
+          [studentId]: {
+            ...currentThread,
+            messages: [...uniqueOlder, ...currentThread.messages],
+          },
+        },
+      };
+    });
+  },
+
+  setThreadHasMore: (studentId, hasMore) => {
+    set((state) => {
+      const currentThread = state.threads[studentId];
+      if (!currentThread) return state;
+      return {
+        threads: {
+          ...state.threads,
+          [studentId]: {
+            ...currentThread,
+            hasMoreHistory: hasMore,
+          },
+        },
+      };
+    });
   },
 
   addMessageToThread: (studentId, studentMeta, msg) => {

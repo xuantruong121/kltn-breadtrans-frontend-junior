@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   MessageCircle, 
@@ -13,7 +13,9 @@ import {
   ChevronLeft,
   Search,
   UserCheck,
-  Inbox
+  Inbox,
+  ArrowDown,
+  Loader2,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { aiService } from "@/lib/api/services/ai.service";
@@ -21,6 +23,7 @@ import { supportService } from "@/lib/api/services/support.service";
 import { useAuthStore } from "@/stores/authStore";
 import { useChatAssistantStore, StudentThread, AssistantMessage } from "@/stores/chatAssistantStore";
 import { useSocket } from "@/lib/providers/SocketProvider";
+import { useLearningFocusMode } from "@/contexts/LearningFocusContext";
 
 // 🌟 Component parse và format Markdown sạch đẹp (tránh lộ kí tự ***, **, gạch đầu dòng, chuẩn màu tương phản)
 function FormattedMessage({ content, isWhiteText = false }: { content: string; isWhiteText?: boolean }) {
@@ -128,6 +131,7 @@ function mapSupportMessageToAssistantMessage(msg: any): AssistantMessage {
 export default function FloatingAiTutor() {
   const pathname = usePathname();
   const { user } = useAuthStore();
+  const { isFocusMode } = useLearningFocusMode();
   const { 
     threads,
     activeStudentId,
@@ -138,6 +142,8 @@ export default function FloatingAiTutor() {
     setActiveStudentId,
     setThreadMode,
     loadThreadFromBackend,
+    prependMessagesToThread,
+    setThreadHasMore,
     addMessageToThread,
   } = useChatAssistantStore();
 
@@ -145,11 +151,21 @@ export default function FloatingAiTutor() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingHistory, setIsFetchingHistory] = useState(false);
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [conversationId, setConversationId] = useState<number | null>(null);
+  const [isNearBottom, setIsNearBottom] = useState(true);
+  const [newMessagesCount, setNewMessagesCount] = useState(0);
+
+  const messageListRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isNearBottomRef = useRef(true);
+  const prevScrollHeightRef = useRef<number | null>(null);
+  const prevMessagesLengthRef = useRef<number>(0);
+
   const { socket } = useSocket();
 
   const isAdminOrTeacher = user?.role === "ADMIN";
+  const isStudent = user?.role === "STUDENT";
   const currentDisplayName = user?.profile?.name || user?.email?.split("@")[0] || "Người dùng";
 
   // ID của học sinh đang trò chuyện
@@ -179,17 +195,18 @@ export default function FloatingAiTutor() {
       messages: [],
       unreadForAdmin: 0,
       lastMessageTime: 0,
+      hasMoreHistory: false,
     };
   }, [threads, studentThreadId, studentMetadata, conversationId]);
 
-  // Load student conversation from backend
+  // Load student conversation from backend (defaults to latest messages)
   const loadStudentConversation = async () => {
     if (!user?.id || isAdminOrTeacher) return;
     setIsFetchingHistory(true);
     try {
       const conv = await supportService.getMyConversation();
       setConversationId(conv.id);
-      const msgRes = await supportService.getMessages(conv.id, 1, 100);
+      const msgRes = await supportService.getMessages(conv.id, 1, 50);
       const mapped = (msgRes.data || []).map(mapSupportMessageToAssistantMessage);
       loadThreadFromBackend(
         `student_${user.id}`,
@@ -197,7 +214,8 @@ export default function FloatingAiTutor() {
         studentMetadata,
         conv.mode,
         mapped,
-        conv.unreadCount
+        conv.unreadCount,
+        msgRes.hasMore ?? false
       );
     } catch (err) {
       console.error("Failed to load student support conversation:", err);
@@ -225,7 +243,8 @@ export default function FloatingAiTutor() {
           },
           conv.mode,
           existingMessages,
-          conv.unreadCount
+          conv.unreadCount,
+          threads[sId]?.hasMoreHistory ?? false
         );
       });
     } catch (err) {
@@ -258,7 +277,7 @@ export default function FloatingAiTutor() {
 
     setIsFetchingHistory(true);
     try {
-      const msgRes = await supportService.getAdminMessages(targetConvId, 1, 100);
+      const msgRes = await supportService.getAdminMessages(targetConvId, 1, 50);
       const mapped = (msgRes.data || []).map(mapSupportMessageToAssistantMessage);
       loadThreadFromBackend(
         sId,
@@ -270,7 +289,8 @@ export default function FloatingAiTutor() {
         },
         thread?.mode || "AI",
         mapped,
-        0
+        0,
+        msgRes.hasMore ?? false
       );
     } catch (err) {
       console.error("Failed to load admin messages for student:", err);
@@ -278,6 +298,47 @@ export default function FloatingAiTutor() {
       setIsFetchingHistory(false);
     }
   };
+
+  // Load older messages (Reverse chronological pagination using beforeId cursor)
+  const handleLoadOlderMessages = async () => {
+    if (isLoadingOlder || !currentThread.conversationId) return;
+
+    const numericIds = currentThread.messages
+      .map((m) => (typeof m.id === "number" ? m.id : Number(m.id)))
+      .filter((id) => !isNaN(id) && id > 0);
+
+    if (numericIds.length === 0) return;
+    const beforeId = Math.min(...numericIds);
+
+    setIsLoadingOlder(true);
+    if (messageListRef.current) {
+      prevScrollHeightRef.current = messageListRef.current.scrollHeight;
+    }
+
+    try {
+      const res = isAdminOrTeacher
+        ? await supportService.getAdminMessages(currentThread.conversationId, 1, 50, beforeId)
+        : await supportService.getMessages(currentThread.conversationId, 1, 50, beforeId);
+
+      const olderMapped = (res.data || []).map(mapSupportMessageToAssistantMessage);
+      prependMessagesToThread(studentThreadId, olderMapped);
+      setThreadHasMore(studentThreadId, res.hasMore ?? false);
+    } catch (err) {
+      console.error("Failed to load older messages:", err);
+    } finally {
+      setIsLoadingOlder(false);
+    }
+  };
+
+  // Restore scroll position after prepending older messages so reading position does not jump
+  useLayoutEffect(() => {
+    if (prevScrollHeightRef.current !== null && messageListRef.current) {
+      const newHeight = messageListRef.current.scrollHeight;
+      const heightDiff = newHeight - prevScrollHeightRef.current;
+      messageListRef.current.scrollTop += heightDiff;
+      prevScrollHeightRef.current = null;
+    }
+  }, [currentThread.messages]);
 
   // Trigger loads on auth or modal open
   useEffect(() => {
@@ -290,7 +351,6 @@ export default function FloatingAiTutor() {
       }
     }, 0);
     return () => window.clearTimeout(loadTimer);
-    // The functions intentionally read current store/auth state at invocation.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, user?.id, isAdminOrTeacher]);
 
@@ -301,7 +361,6 @@ export default function FloatingAiTutor() {
       void loadAdminMessagesForStudent(activeStudentId);
     }, 0);
     return () => window.clearTimeout(loadTimer);
-    // The function intentionally reads the latest thread from the store.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdminOrTeacher, activeStudentId, adminView]);
 
@@ -327,25 +386,74 @@ export default function FloatingAiTutor() {
     pathname.match(/^\/practice\/[^\/]+\/.+/) || 
     pathname.includes("/lessons/");
 
-  // Tự động cuộn xuống dưới cùng khi mở cửa sổ chat hoặc có tin nhắn mới
+  // Smart scroll controls
   const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior });
+    if (messageListRef.current) {
+      messageListRef.current.scrollTo({
+        top: messageListRef.current.scrollHeight,
+        behavior,
+      });
     }
   };
 
+  const handleScroll = () => {
+    const el = messageListRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - (el.scrollTop + el.clientHeight);
+    const near = distanceFromBottom < 80;
+    setIsNearBottom(near);
+    isNearBottomRef.current = near;
+    if (near) {
+      setNewMessagesCount(0);
+    }
+  };
+
+  // Initial scroll to bottom when opening chat or switching thread
   useEffect(() => {
     if (isOpen && (!isAdminOrTeacher || adminView === "chat")) {
-      const timer = setTimeout(() => scrollToBottom("auto"), 80);
+      const timer = setTimeout(() => {
+        scrollToBottom("auto");
+        setIsNearBottom(true);
+        isNearBottomRef.current = true;
+        setNewMessagesCount(0);
+      }, 60);
       return () => clearTimeout(timer);
     }
   }, [isOpen, adminView, studentThreadId, isAdminOrTeacher]);
 
+  // Smart auto-scroll when new messages arrive
   useEffect(() => {
-    if (isOpen && (!isAdminOrTeacher || adminView === "chat")) {
-      scrollToBottom("smooth");
+    if (!isOpen || (isAdminOrTeacher && adminView !== "chat")) return;
+
+    const currentLen = currentThread.messages.length;
+    const prevLen = prevMessagesLengthRef.current;
+    prevMessagesLengthRef.current = currentLen;
+
+    if (currentLen > prevLen && prevLen > 0) {
+      const lastMsg = currentThread.messages[currentLen - 1];
+      const isMyMessage =
+        (isAdminOrTeacher && lastMsg?.role === "admin") ||
+        (!isAdminOrTeacher && lastMsg?.role === "user");
+
+      if (isMyMessage || isNearBottomRef.current) {
+        scrollToBottom("smooth");
+        setNewMessagesCount(0);
+      } else {
+        setNewMessagesCount((prev) => prev + 1);
+      }
     }
-  }, [currentThread?.messages, isLoading, isOpen, adminView, isAdminOrTeacher]);
+  }, [currentThread.messages, isOpen, adminView, isAdminOrTeacher]);
+
+  // Close on Escape key (A11y)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        setIsOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, setIsOpen]);
 
   if (isHiddenPath) return null;
 
@@ -581,10 +689,14 @@ export default function FloatingAiTutor() {
     setInput(question);
   };
 
+  if (isFocusMode) {
+    return null;
+  }
+
   return (
     <>
       {/* 🔘 NÚT NỔI FLOATING BUTTON */}
-      <motion.button
+      {!isStudent && <motion.button
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.92 }}
         onClick={() => setIsOpen(true)}
@@ -607,7 +719,7 @@ export default function FloatingAiTutor() {
             )
           )}
         </div>
-      </motion.button>
+      </motion.button>}
 
       {/* 💬 CỬA SỔ CHAT WINDOW */}
       <AnimatePresence>
@@ -617,6 +729,9 @@ export default function FloatingAiTutor() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.9 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            role="dialog"
+            aria-modal="true"
+            aria-label={isAdminOrTeacher ? "Trung tâm tin nhắn hỗ trợ học viên" : "Cửa sổ hỗ trợ trực tuyến BreadTrans"}
             className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-2 sm:right-4 md:bottom-8 md:right-8 w-[calc(100vw-1rem)] max-w-sm md:w-[420px] bg-white rounded-2xl shadow-2xl z-[50] border border-slate-200 overflow-hidden flex flex-col h-[min(78dvh,580px)] max-h-[calc(100dvh-5.5rem)]"
           >
             {/* ======================================================== */}
@@ -733,7 +848,7 @@ export default function FloatingAiTutor() {
               /* ======================================================== */
               /* 2. MÀN HÌNH CHAT 1-1 (VỚI HỌC SINH HOẶC DÀNH CHO HỌC SINH) */
               /* ======================================================== */
-              <div className="flex flex-col h-full">
+              <div className="relative flex flex-col h-full min-h-0">
                 {/* Header Chat */}
                 <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-4 text-white flex flex-col gap-2 shrink-0 shadow-md">
                   <div className="flex items-center justify-between">
@@ -808,14 +923,39 @@ export default function FloatingAiTutor() {
                   ) : (
                     currentThread.mode === "HUMAN" && (
                       <div className="bg-blue-600/40 border border-blue-300/40 rounded-xl px-2.5 py-1 text-[11px] font-bold text-blue-100 flex items-center gap-1.5">
-                        <UserCheck size={14} /> Thầy Cô / Quản Trị Viên đang trực tiếp hỗ trợ bạn.
+                        <UserCheck size={14} /> Quản Trị Viên đang trực tiếp hỗ trợ bạn.
                       </div>
                     )
                   )}
                 </div>
 
                 {/* Khung Tin Nhắn */}
-                <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3.5 bg-slate-50 scroll-smooth">
+                <div
+                  ref={messageListRef}
+                  onScroll={handleScroll}
+                  aria-live="polite"
+                  className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-3.5 bg-slate-50"
+                >
+                  {/* Tải tin nhắn trước đó (Reverse cursor pagination) */}
+                  {currentThread.hasMoreHistory && (
+                    <div className="flex justify-center pt-1 pb-1">
+                      <button
+                        onClick={handleLoadOlderMessages}
+                        disabled={isLoadingOlder}
+                        className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-200 rounded-full shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        {isLoadingOlder ? (
+                          <>
+                            <Loader2 size={13} className="animate-spin text-blue-600" />
+                            <span>Đang tải tin cũ...</span>
+                          </>
+                        ) : (
+                          <span>Tải tin nhắn trước đó</span>
+                        )}
+                      </button>
+                    </div>
+                  )}
+
                   {currentThread.messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center my-auto py-12 text-center text-slate-400 space-y-3">
                       <div className="w-14 h-14 rounded-3xl bg-amber-100 flex items-center justify-center text-3xl shadow-inner">
@@ -950,6 +1090,22 @@ export default function FloatingAiTutor() {
                   </div>
                 )}
 
+                {/* Floating "Tin mới nhất" Pill */}
+                {!isNearBottom && newMessagesCount > 0 && (
+                  <button
+                    onClick={() => {
+                      scrollToBottom("smooth");
+                      setNewMessagesCount(0);
+                      setIsNearBottom(true);
+                      isNearBottomRef.current = true;
+                    }}
+                    className="absolute bottom-18 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-bold rounded-full shadow-lg backdrop-blur-xs transition-all cursor-pointer animate-fade-in"
+                  >
+                    <ArrowDown size={13} strokeWidth={2.5} />
+                    <span>Tin mới nhất ({newMessagesCount})</span>
+                  </button>
+                )}
+
                 {/* Input Area */}
                 <div className="p-3.5 bg-white border-t-2 border-slate-100 flex items-center gap-2 shrink-0">
                   <input
@@ -963,7 +1119,7 @@ export default function FloatingAiTutor() {
                           ? `Trả lời ${currentThread.studentName}...`
                           : "Chuyển sang hỗ trợ trực tiếp để trò chuyện..."
                         : currentThread.mode === "HUMAN"
-                        ? "Nhập tin nhắn gửi đến Thầy Cô..."
+                        ? "Nhập tin nhắn gửi đến Quản Trị Viên..."
                         : "Hỏi Trợ Lý Bánh Mì bất kỳ điều gì..."
                     }
                     className="flex-1 bg-slate-100 rounded-2xl px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-orange-400/50 transition-all border border-slate-200"

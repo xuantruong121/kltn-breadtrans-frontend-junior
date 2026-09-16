@@ -7,7 +7,6 @@ import {
   Cpu,
   Mic,
   HardDrive,
-  CheckCircle2,
   Zap,
   TrendingDown,
   Trash2,
@@ -77,19 +76,22 @@ export default function AdminCostsPage() {
   const [isPurgingCache, setIsPurgingCache] = useState(false);
   const [isCleaningR2, setIsCleaningR2] = useState(false);
 
-  const { data, isLoading, refetch, isRefetching } = useQuery<SystemCostsResponse>({
-    queryKey: ["admin", "system-costs"],
-    queryFn: async () => {
-      const res: any = await axiosClient.get("/admin/system-costs");
-      return res?.data || res;
-    },
-    refetchInterval: 30000,
-  });
+  const { data, isLoading, refetch, isRefetching } =
+    useQuery<SystemCostsResponse>({
+      queryKey: ["admin", "system-costs"],
+      queryFn: async () => {
+        const res: any = await axiosClient.get("/admin/system-costs");
+        return res?.data || res;
+      },
+      refetchInterval: 30000,
+    });
 
   const purgeCacheMutation = useMutation({
     mutationFn: async () => {
       setIsPurgingCache(true);
-      const res: any = await axiosClient.post("/admin/system-costs/purge-ai-cache");
+      const res: any = await axiosClient.post(
+        "/admin/system-costs/purge-ai-cache",
+      );
       return res?.data || res;
     },
     onSuccess: (res: any) => {
@@ -107,7 +109,9 @@ export default function AdminCostsPage() {
   const cleanupR2Mutation = useMutation({
     mutationFn: async () => {
       setIsCleaningR2(true);
-      const res: any = await axiosClient.post("/admin/system-costs/trigger-r2-cleanup");
+      const res: any = await axiosClient.post(
+        "/admin/system-costs/trigger-r2-cleanup",
+      );
       return res?.data || res;
     },
     onSuccess: (res: any) => {
@@ -136,13 +140,14 @@ export default function AdminCostsPage() {
   const summary = data?.summary || {
     totalCostUsd: 0,
     totalCostVnd: 0,
-    savedCostUsd: 18.5,
-    savedCostVnd: 470000,
-    status: "FREE_TIER_ACTIVE",
-    activeUsers: 1,
+    savedCostUsd: 0,
+    savedCostVnd: 0,
+    status: "UNAVAILABLE",
+    activeUsers: 0,
   };
 
   const services = data?.services;
+  const hasMeasuredBilling = summary.status === "MEASURED";
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">
@@ -161,7 +166,8 @@ export default function AdminCostsPage() {
                 </span>
               </h1>
               <p className="text-slate-500 text-xs sm:text-sm font-medium mt-0.5">
-                Giám sát hạn mức Free Tier, hiệu năng Cache và tối ưu hóa ngân sách vận hành tự động.
+                Giám sát hạn mức Free Tier, hiệu năng Cache và tối ưu hóa ngân
+                sách vận hành tự động.
               </p>
             </div>
           </div>
@@ -173,7 +179,9 @@ export default function AdminCostsPage() {
             disabled={isRefetching}
             className="flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 rounded-2xl font-black text-xs transition-all border-2 border-slate-200 shadow-xs cursor-pointer disabled:opacity-50"
           >
-            <RefreshCw className={`w-4 h-4 ${isRefetching ? "animate-spin text-blue-500" : ""}`} />
+            <RefreshCw
+              className={`w-4 h-4 ${isRefetching ? "animate-spin text-blue-500" : ""}`}
+            />
             {isRefetching ? "Đang đồng bộ..." : "Làm mới dữ liệu"}
           </button>
         </div>
@@ -191,21 +199,26 @@ export default function AdminCostsPage() {
             <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
               Chi Phí Tháng Này
             </span>
-            <span className="inline-flex items-center gap-1 text-xs font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
-              <CheckCircle2 className="w-3.5 h-3.5" /> 100% Miễn Phí
+            <span className="inline-flex items-center gap-1 text-xs font-black text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
+              <Activity className="w-3.5 h-3.5" /> Chưa đủ dữ liệu billing
             </span>
           </div>
           <div className="mt-4 flex items-baseline gap-2">
             <span className="text-4xl font-black text-slate-800 tracking-tight">
-              ${summary.totalCostUsd.toFixed(2)}
+              {hasMeasuredBilling
+                ? `$${summary.totalCostUsd.toFixed(2)}`
+                : "Chưa xác định"}
             </span>
             <span className="text-slate-400 text-sm font-bold">
-              (~{summary.totalCostVnd.toLocaleString("vi-VN")} đ)
+              {hasMeasuredBilling
+                ? `(~${summary.totalCostVnd.toLocaleString("vi-VN")} đ)`
+                : ""}
             </span>
           </div>
           <p className="text-xs text-slate-500 font-medium mt-2.5 flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-            Tất cả dịch vụ đang chạy trọn vẹn trong các gói Free Tier.
+            <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
+            Chưa kết nối nguồn billing của Gemini, Azure và R2; các số chi phí
+            không được ước đoán.
           </p>
         </motion.div>
 
@@ -220,21 +233,25 @@ export default function AdminCostsPage() {
             <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
               Tiết Kiệm Nhờ Tối Ưu
             </span>
-            <span className="inline-flex items-center gap-1 text-xs font-black text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-full">
-              <TrendingDown className="w-3.5 h-3.5" /> Giảm 98%
+            <span className="inline-flex items-center gap-1 text-xs font-black text-slate-600 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full">
+              <TrendingDown className="w-3.5 h-3.5" /> Chưa tính được
             </span>
           </div>
           <div className="mt-4 flex items-baseline gap-2">
             <span className="text-4xl font-black text-blue-600 tracking-tight">
-              +${summary.savedCostUsd.toFixed(2)}
+              {hasMeasuredBilling
+                ? `+$${summary.savedCostUsd.toFixed(2)}`
+                : "--"}
             </span>
             <span className="text-slate-400 text-sm font-bold">
-              (~{summary.savedCostVnd.toLocaleString("vi-VN")} đ)
+              {hasMeasuredBilling
+                ? `(~${summary.savedCostVnd.toLocaleString("vi-VN")} đ)`
+                : ""}
             </span>
           </div>
           <p className="text-xs text-slate-500 font-medium mt-2.5 flex items-center gap-1.5">
             <Zap className="w-4 h-4 text-amber-500 shrink-0" />
-            Đã tiết kiệm nhờ Redis Cache 24h & Cloudflare R2 $0 Egress.
+            Chỉ hiển thị sau khi hệ thống nhận được số liệu billing thực tế.
           </p>
         </motion.div>
 
@@ -249,27 +266,27 @@ export default function AdminCostsPage() {
             <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
               Trạng Thái Hạ Tầng
             </span>
-            <span className="inline-flex items-center gap-1 text-xs font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-full">
-              <Server className="w-3.5 h-3.5" /> Khỏe Mạnh
+            <span className="inline-flex items-center gap-1 text-xs font-black text-slate-700 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full">
+              <Server className="w-3.5 h-3.5" /> Dữ liệu vận hành
             </span>
           </div>
           <div className="mt-4 flex items-baseline gap-2">
             <span className="text-3xl font-black text-slate-800 tracking-tight">
-              {summary.activeUsers} Người Dùng
+              {summary.activeUsers} người dùng trong hệ thống
             </span>
           </div>
           <div className="text-xs font-bold text-slate-600 mt-3 flex items-center gap-3">
             <span className="flex items-center gap-1 text-emerald-600">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-              Postgres OK
+              CSDL đang truy vấn
             </span>
             <span className="flex items-center gap-1 text-emerald-600">
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              Redis OK
+              Redis đã kiểm tra
             </span>
             <span className="flex items-center gap-1 text-emerald-600">
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              WebSockets OK
+              Billing chưa kết nối
             </span>
           </div>
         </motion.div>
@@ -305,25 +322,33 @@ export default function AdminCostsPage() {
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200/80 mb-4">
               <div>
-                <span className="text-[11px] font-bold text-slate-400 block">Tổng Request</span>
+                <span className="text-[11px] font-bold text-slate-400 block">
+                  Tổng Request
+                </span>
                 <span className="text-lg font-black text-slate-800">
                   {services.gemini.totalRequests}
                 </span>
               </div>
               <div>
-                <span className="text-[11px] font-bold text-slate-400 block">Cache Hit (Redis)</span>
+                <span className="text-[11px] font-bold text-slate-400 block">
+                  Cache Hit (Redis)
+                </span>
                 <span className="text-lg font-black text-blue-600">
                   {services.gemini.cacheHitCount}
                 </span>
               </div>
               <div>
-                <span className="text-[11px] font-bold text-slate-400 block">Tỷ Lệ Cache Hit</span>
+                <span className="text-[11px] font-bold text-slate-400 block">
+                  Tỷ Lệ Cache Hit
+                </span>
                 <span className="text-lg font-black text-emerald-600">
                   {services.gemini.cacheHitRate}%
                 </span>
               </div>
               <div>
-                <span className="text-[11px] font-bold text-slate-400 block">Chi Phí Thực</span>
+                <span className="text-[11px] font-bold text-slate-400 block">
+                  Chi Phí Thực
+                </span>
                 <span className="text-lg font-black text-slate-800">
                   ${services.gemini.costUsd.toFixed(2)}
                 </span>
@@ -375,34 +400,46 @@ export default function AdminCostsPage() {
 
             <div className="space-y-2 mb-4">
               <div className="flex justify-between text-xs font-bold">
-                <span className="text-slate-600">Hạn mức Free Tier đã dùng:</span>
+                <span className="text-slate-600">
+                  Hạn mức Free Tier đã dùng:
+                </span>
                 <span className="text-violet-700">
-                  {services.azureSpeech.audioMinutesThisMonth} / {services.azureSpeech.freeQuotaMinutes} phút ({services.azureSpeech.usedPercent}%)
+                  {services.azureSpeech.audioMinutesThisMonth} /{" "}
+                  {services.azureSpeech.freeQuotaMinutes} phút (
+                  {services.azureSpeech.usedPercent}%)
                 </span>
               </div>
               <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/60">
                 <div
                   className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full transition-all duration-500"
-                  style={{ width: `${Math.max(4, services.azureSpeech.usedPercent)}%` }}
+                  style={{
+                    width: `${Math.max(4, services.azureSpeech.usedPercent)}%`,
+                  }}
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
               <div>
-                <span className="text-[11px] font-bold text-slate-400 block">Lượt Chấm Tháng Này</span>
+                <span className="text-[11px] font-bold text-slate-400 block">
+                  Lượt Chấm Tháng Này
+                </span>
                 <span className="text-lg font-black text-slate-800">
                   {services.azureSpeech.submissionsThisMonth}
                 </span>
               </div>
               <div>
-                <span className="text-[11px] font-bold text-slate-400 block">Tổng Lượt Chấm</span>
+                <span className="text-[11px] font-bold text-slate-400 block">
+                  Tổng Lượt Chấm
+                </span>
                 <span className="text-lg font-black text-slate-700">
                   {services.azureSpeech.totalSubmissions}
                 </span>
               </div>
               <div>
-                <span className="text-[11px] font-bold text-slate-400 block">Chi Phí Vượt Mức</span>
+                <span className="text-[11px] font-bold text-slate-400 block">
+                  Chi Phí Vượt Mức
+                </span>
                 <span className="text-lg font-black text-emerald-600">
                   ${services.azureSpeech.costUsd.toFixed(2)}
                 </span>
@@ -441,32 +478,42 @@ export default function AdminCostsPage() {
               <div className="flex justify-between text-xs font-bold">
                 <span className="text-slate-600">Dung lượng lưu trữ:</span>
                 <span className="text-orange-700">
-                  {services.cloudflareR2.usedStorageMb} MB / {services.cloudflareR2.freeQuotaGb * 1024} MB ({services.cloudflareR2.usedPercent}%)
+                  {services.cloudflareR2.usedStorageMb} MB /{" "}
+                  {services.cloudflareR2.freeQuotaGb * 1024} MB (
+                  {services.cloudflareR2.usedPercent}%)
                 </span>
               </div>
               <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/60">
                 <div
                   className="h-full bg-gradient-to-r from-orange-500 to-rose-500 rounded-full transition-all duration-500"
-                  style={{ width: `${Math.max(4, services.cloudflareR2.usedPercent)}%` }}
+                  style={{
+                    width: `${Math.max(4, services.cloudflareR2.usedPercent)}%`,
+                  }}
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
               <div>
-                <span className="text-[11px] font-bold text-slate-400 block">Audio Đang Lưu</span>
+                <span className="text-[11px] font-bold text-slate-400 block">
+                  Audio Đang Lưu
+                </span>
                 <span className="text-lg font-black text-slate-800">
                   {services.cloudflareR2.activeAudioFiles}
                 </span>
               </div>
               <div>
-                <span className="text-[11px] font-bold text-slate-400 block">Đã Dọn Dẹp (TTL 90d)</span>
+                <span className="text-[11px] font-bold text-slate-400 block">
+                  Đã Dọn Dẹp (TTL 90d)
+                </span>
                 <span className="text-lg font-black text-blue-600">
                   {services.cloudflareR2.archivedAudioFiles}
                 </span>
               </div>
               <div>
-                <span className="text-[11px] font-bold text-slate-400 block">Phí Băng Thông Tải</span>
+                <span className="text-[11px] font-bold text-slate-400 block">
+                  Phí Băng Thông Tải
+                </span>
                 <span className="text-lg font-black text-emerald-600">
                   $0.00 (Free)
                 </span>
@@ -485,7 +532,8 @@ export default function AdminCostsPage() {
               Tác Vụ Tối Ưu Nhanh Dành Cho Quản Trị Viên (FinOps Quick Actions)
             </h3>
             <p className="text-xs text-slate-400 font-medium mt-1">
-              Thao tác dọn dẹp bộ nhớ tạm Redis và kích hoạt bảo trì Storage theo yêu cầu.
+              Thao tác dọn dẹp bộ nhớ tạm Redis và kích hoạt bảo trì Storage
+              theo yêu cầu.
             </p>
           </div>
 
@@ -495,7 +543,9 @@ export default function AdminCostsPage() {
               disabled={isPurgingCache}
               className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-2xl text-xs font-black transition-all cursor-pointer disabled:opacity-50"
             >
-              <Trash2 className={`w-4 h-4 ${isPurgingCache ? "animate-spin" : ""}`} />
+              <Trash2
+                className={`w-4 h-4 ${isPurgingCache ? "animate-spin" : ""}`}
+              />
               {isPurgingCache ? "Đang xóa..." : "Xóa Cache Bộ Đệm (Redis)"}
             </button>
 
@@ -504,7 +554,9 @@ export default function AdminCostsPage() {
               disabled={isCleaningR2}
               className="flex items-center gap-2 px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-2xl text-xs font-black transition-all cursor-pointer disabled:opacity-50"
             >
-              <RefreshCw className={`w-4 h-4 ${isCleaningR2 ? "animate-spin" : ""}`} />
+              <RefreshCw
+                className={`w-4 h-4 ${isCleaningR2 ? "animate-spin" : ""}`}
+              />
               {isCleaningR2 ? "Đang quét..." : "Quét & Dọn Dẹp R2 Ngay"}
             </button>
           </div>
@@ -517,10 +569,12 @@ export default function AdminCostsPage() {
           <div>
             <h3 className="text-base font-black text-slate-800 flex items-center gap-2">
               <Layers className="w-5 h-5 text-blue-600" />
-              Bảng Dự Toán Chi Phí Khi Mở Rộng Quy Mô (Traffic Scalability Matrix)
+              Bảng Dự Toán Chi Phí Khi Mở Rộng Quy Mô (Traffic Scalability
+              Matrix)
             </h3>
             <p className="text-xs text-slate-400 font-medium mt-0.5">
-              Dự toán chi phí từng thành phần theo 4 mốc tăng trưởng người dùng thực tế.
+              Dự toán chi phí từng thành phần theo 4 mốc tăng trưởng người dùng
+              thực tế.
             </p>
           </div>
         </div>
@@ -539,40 +593,61 @@ export default function AdminCostsPage() {
             <tbody className="divide-y divide-slate-100 font-semibold text-slate-600">
               <tr className="hover:bg-slate-50/60 transition-colors">
                 <td className="p-3.5 font-bold text-slate-800 flex items-center gap-2">
-                  <Cpu className="w-4 h-4 text-blue-600" /> Dịch vụ xử lý nội dung văn bản (LLM)
+                  <Cpu className="w-4 h-4 text-blue-600" /> Dịch vụ xử lý nội
+                  dung văn bản (LLM)
                 </td>
-                <td className="p-3.5 text-emerald-600 font-black">$0 (Free Tier)</td>
+                <td className="p-3.5 text-emerald-600 font-black">
+                  $0 (Free Tier)
+                </td>
                 <td className="p-3.5">$10 - $35 (~250K - 875K đ)</td>
                 <td className="p-3.5">$80 - $250 (~2M - 6.2M đ)</td>
                 <td className="p-3.5">$450 - $1.200</td>
               </tr>
               <tr className="hover:bg-slate-50/60 transition-colors">
                 <td className="p-3.5 font-bold text-slate-800 flex items-center gap-2">
-                  <Mic className="w-4 h-4 text-violet-600" /> Dịch vụ xử lý phát âm & âm vị (Speech)
+                  <Mic className="w-4 h-4 text-violet-600" /> Dịch vụ xử lý phát
+                  âm & âm vị (Speech)
                 </td>
-                <td className="p-3.5 text-emerald-600 font-black">$0 (Free Tier)</td>
+                <td className="p-3.5 text-emerald-600 font-black">
+                  $0 (Free Tier)
+                </td>
                 <td className="p-3.5">$20 - $60 (~500K - 1.5M đ)</td>
                 <td className="p-3.5">$150 - $450 (~3.7M - 11.2M đ)</td>
                 <td className="p-3.5">$800 - $2.000</td>
               </tr>
               <tr className="hover:bg-slate-50/60 transition-colors">
                 <td className="p-3.5 font-bold text-slate-800 flex items-center gap-2">
-                  <HardDrive className="w-4 h-4 text-orange-600" /> Cloudflare R2 Storage
+                  <HardDrive className="w-4 h-4 text-orange-600" /> Cloudflare
+                  R2 Storage
                 </td>
-                <td className="p-3.5 text-emerald-600 font-black">$0 ($0 Egress)</td>
+                <td className="p-3.5 text-emerald-600 font-black">
+                  $0 ($0 Egress)
+                </td>
                 <td className="p-3.5">$0 - $3</td>
                 <td className="p-3.5">$15 - $45</td>
                 <td className="p-3.5">$100 - $300</td>
               </tr>
               <tr className="bg-slate-50/80 font-black text-slate-800">
-                <td className="p-3.5 rounded-l-xl text-blue-700 font-black">TỔNG CHI PHÍ / THÁNG</td>
-                <td className="p-3.5 text-emerald-600 font-black">~$0 - $20 (0 - 500K đ)</td>
-                <td className="p-3.5 text-blue-700">~$117 - $305 (~2.9M - 7.6M đ)</td>
-                <td className="p-3.5 text-indigo-700">~$620 - $1.700 (~15.5M - 42.5M đ)</td>
-                <td className="p-3.5 rounded-r-xl text-amber-700">~$3.160 - $8.310</td>
+                <td className="p-3.5 rounded-l-xl text-blue-700 font-black">
+                  TỔNG CHI PHÍ / THÁNG
+                </td>
+                <td className="p-3.5 text-emerald-600 font-black">
+                  ~$0 - $20 (0 - 500K đ)
+                </td>
+                <td className="p-3.5 text-blue-700">
+                  ~$117 - $305 (~2.9M - 7.6M đ)
+                </td>
+                <td className="p-3.5 text-indigo-700">
+                  ~$620 - $1.700 (~15.5M - 42.5M đ)
+                </td>
+                <td className="p-3.5 rounded-r-xl text-amber-700">
+                  ~$3.160 - $8.310
+                </td>
               </tr>
               <tr className="text-emerald-700 font-black bg-emerald-50/40">
-                <td className="p-3.5 rounded-l-xl">Chi phí / 1 Học sinh / Tháng</td>
+                <td className="p-3.5 rounded-l-xl">
+                  Chi phí / 1 Học sinh / Tháng
+                </td>
                 <td className="p-3.5">~1.000 - 2.500 đ</td>
                 <td className="p-3.5">~1.500 - 2.900 đ</td>
                 <td className="p-3.5">~850 - 1.550 đ</td>

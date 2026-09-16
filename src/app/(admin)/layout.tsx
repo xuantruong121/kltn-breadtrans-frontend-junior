@@ -3,14 +3,14 @@
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { 
-  LayoutDashboard, 
-  Users, 
-  PenTool, 
-  LogOut, 
-  FileText, 
-  GraduationCap, 
-  ShoppingBag, 
+import {
+  LayoutDashboard,
+  Users,
+  PenTool,
+  LogOut,
+  FileText,
+  GraduationCap,
+  ShoppingBag,
   Coins,
   BookOpen,
   Layers,
@@ -18,8 +18,9 @@ import {
   Mic,
   Menu,
   X,
-  Activity,
   CreditCard,
+  UserPlus,
+  Cpu,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useQueryClient } from "@tanstack/react-query";
@@ -27,7 +28,9 @@ import { useSyncExternalStore, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 
-const FloatingAiTutor = dynamic(() => import("@/components/FloatingAiTutor"), { ssr: false });
+const FloatingAiTutor = dynamic(() => import("@/components/FloatingAiTutor"), {
+  ssr: false,
+});
 import { AppFooter } from "@/components/navigation/AppFooter";
 
 interface NavItem {
@@ -35,29 +38,128 @@ interface NavItem {
   href: string;
   label: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
-  roles?: ("ADMIN")[];
+  roles?: "ADMIN"[];
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { id: "overview", href: "/admin", label: "Tổng quan", icon: LayoutDashboard },
-  { id: "costs", href: "/admin/costs", label: "Quản lý Chi Phí (Cloud)", icon: Activity },
-  { id: "payments", href: "/admin/payments", label: "Thanh toán", icon: CreditCard, roles: ["ADMIN"] },
-  { id: "courses", href: "/admin/courses", label: "Khóa học & Gói học", icon: BookOpen },
-  { id: "assignments", href: "/admin/assignments", label: "Bài tập & Chấm điểm", icon: PenTool },
-  { id: "vocab", href: "/admin/vocab", label: "Từ vựng (Flashcard)", icon: Layers },
-  { id: "grammar", href: "/admin/grammar", label: "Ngữ pháp (Video)", icon: GraduationCap },
-  { id: "practice", href: "/admin/practice", label: "Luyện tập (Bánh mì)", icon: Gamepad2 },
-  { id: "speaking", href: "/admin/speaking", label: "Luyện phát âm", icon: Mic },
-  { id: "quizzes", href: "/admin/quizzes", label: "Đề thi & Quiz", icon: PenTool },
-  { id: "market", href: "/admin/market", label: "Vật phẩm Market", icon: ShoppingBag },
-  { id: "currency", href: "/admin/currency", label: "Giao dịch Bánh Mì", icon: Coins },
-  { id: "ai", href: "/admin/ai-tools", label: "Công cụ tạo đề (PDF, Tự động)", icon: FileText },
-  { id: "users", href: "/admin/users", label: "Người dùng", icon: Users },
+interface NavGroup {
+  title?: string;
+  items: NavItem[];
+}
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    items: [
+      {
+        id: "overview",
+        href: "/admin",
+        label: "Tổng quan",
+        icon: LayoutDashboard,
+      },
+    ],
+  },
+  {
+    title: "Nội Dung Học Tập",
+    items: [
+      {
+        id: "courses",
+        href: "/admin/courses",
+        label: "Khóa học & Gói học",
+        icon: BookOpen,
+      },
+      {
+        id: "speaking",
+        href: "/admin/speaking",
+        label: "Luyện phát âm",
+        icon: Mic,
+      },
+      {
+        id: "assignments",
+        href: "/admin/assignments",
+        label: "Bài tập & Chấm điểm",
+        icon: PenTool,
+      },
+      {
+        id: "vocab",
+        href: "/admin/vocab",
+        label: "Từ vựng (Flashcard)",
+        icon: Layers,
+      },
+      {
+        id: "grammar",
+        href: "/admin/grammar",
+        label: "Ngữ pháp",
+        icon: GraduationCap,
+      },
+      {
+        id: "quizzes",
+        href: "/admin/quizzes",
+        label: "Đề thi & Bộ câu hỏi",
+        icon: FileText,
+      },
+      {
+        id: "practice",
+        href: "/admin/practice",
+        label: "Chủ đề luyện tập",
+        icon: Gamepad2,
+      },
+    ],
+  },
+  {
+    title: "Người Học & Quyền Truy Cập",
+    items: [
+      {
+        id: "users",
+        href: "/admin/users",
+        label: "Quản lý người dùng",
+        icon: Users,
+      },
+      {
+        id: "enroll",
+        href: "/admin/enroll",
+        label: "Quyền truy cập khóa học",
+        icon: UserPlus,
+      },
+      {
+        id: "payments",
+        href: "/admin/payments",
+        label: "Thanh toán gói học",
+        icon: CreditCard,
+        roles: ["ADMIN"],
+      },
+    ],
+  },
+  {
+    title: "Thương Mại & Gamification",
+    items: [
+      {
+        id: "market",
+        href: "/admin/market",
+        label: "Cửa hàng đổi quà",
+        icon: ShoppingBag,
+      },
+      {
+        id: "currency",
+        href: "/admin/currency",
+        label: "Sổ Bánh Mì",
+        icon: Coins,
+      },
+    ],
+  },
+  {
+    title: "Vận Hành & Công Cụ",
+    items: [
+      { id: "ai", href: "/admin/ai-tools", label: "Soạn nội dung", icon: Cpu },
+    ],
+  },
 ];
 
 const emptySubscribe = () => () => {};
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -73,11 +175,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const isReady = useSyncExternalStore(
     emptySubscribe,
     () => true,
-    () => false
+    () => false,
   );
 
   useEffect(() => {
-    if (isReady && (!user || user.role !== 'ADMIN')) {
+    if (isReady && (!user || user.role !== "ADMIN")) {
       router.push("/");
     }
   }, [isReady, user, router]);
@@ -100,9 +202,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="flex items-center justify-between border-b border-slate-200 p-6 text-2xl font-bold text-slate-900">
           <div className="flex items-center gap-2">
             <Link href="/admin" onClick={() => setIsMobileNavOpen(false)}>
-              <Image src="/logo.png" alt="BreadTrans Logo" width={130} height={60} priority style={{ width: "auto", height: "auto" }} className="max-h-8 object-contain" />
+              <Image
+                src="/logo.png"
+                alt="BreadTrans Logo"
+                width={130}
+                height={60}
+                priority
+                style={{ width: "auto", height: "auto" }}
+                className="max-h-8 object-contain"
+              />
             </Link>
-            <span className="rounded bg-blue-50 px-2 py-0.5 text-xs font-black text-junior-blue">CMS</span>
+            <span className="rounded bg-blue-50 px-2 py-0.5 text-xs font-black text-junior-blue">
+              CMS
+            </span>
           </div>
           <button
             onClick={() => setIsMobileNavOpen(false)}
@@ -111,39 +223,56 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <X size={20} />
           </button>
         </div>
-        <nav className="p-4 flex flex-col gap-1.5 overflow-y-auto max-h-[calc(100vh-180px)]">
-          {NAV_ITEMS.filter(
-            (item) =>
-              !item.roles ||
-              (user && item.roles.includes(user.role as "ADMIN"))
-          ).map((item) => {
-            const isActive = item.href === "/admin" 
-              ? pathname === "/admin" 
-              : pathname.startsWith(item.href);
-              
+        <nav className="p-3 flex flex-col gap-3 overflow-y-auto max-h-[calc(100dvh-180px)]">
+          {NAV_GROUPS.map((group, groupIdx) => {
+            const filteredItems = group.items.filter(
+              (item) =>
+                !item.roles ||
+                (user && item.roles.includes(user.role as "ADMIN")),
+            );
+            if (filteredItems.length === 0) return null;
+
             return (
-              <Link 
-                key={item.id} 
-                href={item.href}
-                onClick={() => setIsMobileNavOpen(false)}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                  isActive 
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" 
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                }`}
-              >
-                <item.icon size={18} />
-                {item.label}
-              </Link>
+              <div key={groupIdx} className="flex flex-col gap-1">
+                {group.title && (
+                  <div className="px-3.5 pt-2 pb-1 text-[11px] font-bold tracking-wider text-slate-600 uppercase select-none">
+                    {group.title}
+                  </div>
+                )}
+                <div className="flex flex-col gap-1">
+                  {filteredItems.map((item) => {
+                    const isActive =
+                      item.href === "/admin"
+                        ? pathname === "/admin"
+                        : pathname.startsWith(item.href);
+
+                    return (
+                      <Link
+                        key={item.id}
+                        href={item.href}
+                        onClick={() => setIsMobileNavOpen(false)}
+                        className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                          isActive
+                            ? "bg-blue-600 text-white shadow-xs"
+                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                        }`}
+                      >
+                        <item.icon size={18} />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </nav>
       </div>
       <div className="border-t border-slate-200 p-4">
         <div className="mb-3 truncate px-2 text-xs font-bold text-slate-500">
-           {user?.email}
+          {user?.email}
         </div>
-        <button 
+        <button
           onClick={handleLogout}
           className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-100 p-2.5 text-xs font-bold text-slate-600 transition-colors hover:bg-rose-50 hover:text-rose-600"
         >
@@ -196,7 +325,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Menu size={22} />
             </button>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-slate-900">BreadTrans CMS</span>
+              <span className="text-sm font-bold text-slate-900">
+                BreadTrans CMS
+              </span>
             </div>
           </div>
           <span className="rounded border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-black uppercase text-junior-blue">
@@ -206,9 +337,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Scrollable Body */}
         <div className="flex-1 min-w-0 overflow-y-auto flex flex-col justify-between">
-          <div className="p-4 md:p-8 flex-1 min-w-0">
-            {children}
-          </div>
+          <div className="p-4 md:p-8 flex-1 min-w-0">{children}</div>
           <AppFooter />
         </div>
       </main>
