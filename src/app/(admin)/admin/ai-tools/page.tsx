@@ -910,17 +910,17 @@ export default function AdminAiToolsPage() {
                       <div className="bg-indigo-50 border border-indigo-200 p-6 rounded-2xl space-y-4">
                         <div>
                           <label className="block text-indigo-900 font-black text-xs uppercase mb-1.5">
-                            Giao Vào Lớp Học Nào?
+                            Gán vào gói học nào?
                           </label>
                           <select
                             value={selectedClassId}
                             onChange={(e) => setSelectedClassId(Number(e.target.value))}
                             className="w-full px-4 py-3 bg-white border border-indigo-200 rounded-lg outline-none focus:border-indigo-500 text-slate-800 font-bold"
                           >
-                            <option value="">-- Chọn lớp học đích --</option>
+                            <option value="">-- Chọn gói học đích --</option>
                             {classesList.map((c: any) => (
                               <option key={c.id} value={c.id}>
-                                {c.name} ({c.code || `Lớp #${c.id}`})
+                                {c.name} ({c.code || `Gói #${c.id}`})
                               </option>
                             ))}
                           </select>
@@ -985,7 +985,7 @@ export default function AdminAiToolsPage() {
                             onChange={(e) => setPubAssignment(e.target.checked)}
                             className="w-5 h-5 rounded accent-indigo-600"
                           />
-                          Giao Bài Tập Cho Lớp
+                          Gán bài thực hành cho gói học
                         </label>
                       </div>
 

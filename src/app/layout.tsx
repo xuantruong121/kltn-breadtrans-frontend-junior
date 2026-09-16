@@ -44,7 +44,7 @@ export default function RootLayout({
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=optional" />
       </head>
-      <body className={`${quicksand.className} min-h-screen antialiased text-slate-700`} suppressHydrationWarning>
+      <body className={`${quicksand.className} min-h-dvh antialiased text-slate-700`} suppressHydrationWarning>
         <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
         <QueryProvider>
 

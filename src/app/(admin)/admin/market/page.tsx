@@ -19,14 +19,20 @@ export default function AdminMarketOrdersPage() {
   });
 
   const reviewMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: "approved" | "rejected" }) => {
+    mutationFn: async ({
+      id,
+      status,
+    }: {
+      id: number;
+      status: "approved" | "rejected";
+    }) => {
       return axiosClient.patch(`/market/orders/${id}/review`, { status });
     },
     onSuccess: (_, vars) => {
       toast.success(
         vars.status === "approved"
           ? "Đã phê duyệt đơn hàng!"
-          : "Đã từ chối đơn hàng!"
+          : "Đã từ chối đơn hàng!",
       );
       queryClient.invalidateQueries({ queryKey: ["admin-market-orders"] });
     },
@@ -49,9 +55,12 @@ export default function AdminMarketOrdersPage() {
             <ShoppingBag size={28} />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-slate-800">Quản Lý Đơn Hàng Đổi Quà</h1>
+            <h1 className="text-3xl font-black text-slate-800">
+              Quản Lý Đơn Hàng Đổi Quà
+            </h1>
             <p className="text-slate-400 font-bold text-sm">
-              Xem và phê duyệt các yêu cầu đổi Bánh Mì lấy quà/voucher của học viên
+              Xem và phê duyệt các yêu cầu đổi Bánh Mì lấy quà/voucher của học
+              viên
             </p>
           </div>
         </div>
@@ -68,7 +77,13 @@ export default function AdminMarketOrdersPage() {
                   : "text-slate-500 hover:bg-slate-100"
               }`}
             >
-              {st === "all" ? "Tất cả" : st === "pending" ? "Chờ duyệt" : st === "approved" ? "Đã duyệt" : "Từ chối"}
+              {st === "all"
+                ? "Tất cả"
+                : st === "pending"
+                  ? "Chờ duyệt"
+                  : st === "approved"
+                    ? "Đã duyệt"
+                    : "Từ chối"}
             </button>
           ))}
         </div>
@@ -97,18 +112,35 @@ export default function AdminMarketOrdersPage() {
               <tbody className="divide-y divide-slate-100 font-bold text-sm">
                 {filteredOrders.map((ord) => {
                   const itemsList = Array.isArray(ord.items)
-                    ? ord.items.map((i: any) => `${i.name} (x${i.quantity || 1})`).join(", ")
+                    ? ord.items
+                        .map((i: any) => `${i.name} (x${i.quantity || 1})`)
+                        .join(", ")
                     : "Vật phẩm";
 
                   return (
-                    <tr key={ord.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-4 px-6 text-slate-400 font-mono text-xs">#{ord.id}</td>
-                      <td className="py-4 px-6">
-                        <div className="text-slate-800 font-extrabold">{ord.studentName || ord.user?.profile?.fullName || "Học viên"}</div>
-                        <div className="text-xs text-slate-400 font-normal">{ord.user?.email}</div>
+                    <tr
+                      key={ord.id}
+                      className="hover:bg-slate-50/80 transition-colors"
+                    >
+                      <td className="py-4 px-6 text-slate-400 font-mono text-xs">
+                        #{ord.id}
                       </td>
-                      <td className="py-4 px-6 text-slate-700 max-w-xs truncate">{itemsList}</td>
-                      <td className="py-4 px-6 font-black text-amber-600">-{ord.totalBanh} 🍞</td>
+                      <td className="py-4 px-6">
+                        <div className="text-slate-800 font-extrabold">
+                          {ord.studentName ||
+                            ord.user?.profile?.fullName ||
+                            "Học viên"}
+                        </div>
+                        <div className="text-xs text-slate-400 font-normal">
+                          {ord.user?.email}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 text-slate-700 max-w-xs truncate">
+                        {itemsList}
+                      </td>
+                      <td className="py-4 px-6 font-black text-amber-600">
+                        -{ord.totalBanh} Bánh Mì
+                      </td>
                       <td className="py-4 px-6 text-xs text-slate-400">
                         {new Date(ord.createdAt).toLocaleDateString("vi-VN")}
                       </td>
@@ -118,11 +150,15 @@ export default function AdminMarketOrdersPage() {
                             ord.status === "approved"
                               ? "bg-emerald-100 text-emerald-800 border-emerald-200"
                               : ord.status === "rejected"
-                              ? "bg-rose-100 text-rose-800 border-rose-200"
-                              : "bg-amber-100 text-amber-800 border-amber-200"
+                                ? "bg-rose-100 text-rose-800 border-rose-200"
+                                : "bg-amber-100 text-amber-800 border-amber-200"
                           }`}
                         >
-                          {ord.status === "approved" ? "Đã duyệt" : ord.status === "rejected" ? "Từ chối" : "Chờ duyệt"}
+                          {ord.status === "approved"
+                            ? "Đã duyệt"
+                            : ord.status === "rejected"
+                              ? "Từ chối"
+                              : "Chờ duyệt"}
                         </span>
                       </td>
                       <td className="py-4 px-6 text-right">
@@ -130,7 +166,12 @@ export default function AdminMarketOrdersPage() {
                           <div className="flex items-center justify-end gap-2">
                             <button
                               disabled={reviewMutation.isPending}
-                              onClick={() => reviewMutation.mutate({ id: ord.id, status: "approved" })}
+                              onClick={() =>
+                                reviewMutation.mutate({
+                                  id: ord.id,
+                                  status: "approved",
+                                })
+                              }
                               className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-colors cursor-pointer shadow-xs"
                               title="Duyệt đơn"
                             >
@@ -138,7 +179,12 @@ export default function AdminMarketOrdersPage() {
                             </button>
                             <button
                               disabled={reviewMutation.isPending}
-                              onClick={() => reviewMutation.mutate({ id: ord.id, status: "rejected" })}
+                              onClick={() =>
+                                reviewMutation.mutate({
+                                  id: ord.id,
+                                  status: "rejected",
+                                })
+                              }
                               className="p-2 bg-rose-500 hover:bg-rose-600 text-white rounded-xl transition-colors cursor-pointer shadow-xs"
                               title="Từ chối"
                             >
@@ -146,7 +192,9 @@ export default function AdminMarketOrdersPage() {
                             </button>
                           </div>
                         ) : (
-                          <span className="text-xs text-slate-300">Hoàn tất</span>
+                          <span className="text-xs text-slate-300">
+                            Hoàn tất
+                          </span>
                         )}
                       </td>
                     </tr>

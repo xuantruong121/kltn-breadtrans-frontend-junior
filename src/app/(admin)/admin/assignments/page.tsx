@@ -163,7 +163,7 @@ export default function AdminAssignmentsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Class Selection Sidebar */}
+        {/* Course package selection */}
         <div className="col-span-1 bg-white rounded-xl shadow-xs border border-slate-200 p-4">
           <h2 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
             <BookOpen size={18} /> Chọn gói học

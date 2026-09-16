@@ -41,7 +41,7 @@ export const PET_SPECIES_LIST: PetSpecies[] = [
     themeColor: {
       bg: "from-amber-400 via-orange-400 to-amber-500",
       border: "border-amber-400",
-      shadow: "shadow-[0_8px_0_0_#d97706]",
+      shadow: "shadow-xs",
       accent: "bg-amber-500",
       text: "text-amber-950",
     },
@@ -67,7 +67,7 @@ export const PET_SPECIES_LIST: PetSpecies[] = [
     themeColor: {
       bg: "from-purple-500 via-indigo-500 to-purple-600",
       border: "border-purple-400",
-      shadow: "shadow-[0_8px_0_0_#7c3aed]",
+      shadow: "shadow-xs",
       accent: "bg-purple-500",
       text: "text-purple-950",
     },
@@ -93,7 +93,7 @@ export const PET_SPECIES_LIST: PetSpecies[] = [
     themeColor: {
       bg: "from-rose-400 via-pink-400 to-rose-500",
       border: "border-rose-400",
-      shadow: "shadow-[0_8px_0_0_#e11d48]",
+      shadow: "shadow-xs",
       accent: "bg-rose-500",
       text: "text-rose-950",
     },
@@ -119,7 +119,7 @@ export const PET_SPECIES_LIST: PetSpecies[] = [
     themeColor: {
       bg: "from-sky-400 via-cyan-500 to-blue-500",
       border: "border-sky-400",
-      shadow: "shadow-[0_8px_0_0_#0284c7]",
+      shadow: "shadow-xs",
       accent: "bg-sky-500",
       text: "text-sky-950",
     },

@@ -62,8 +62,20 @@ export interface Pet {
       health: number;
       happiness: number;
       lastFedAt: string | null;
+      dailyFeedDateKey?: string | null;
+      dailyFeedCount?: number;
+      dailyRewardedFeedCount?: number;
     }
   > | null;
+  /** Feeding eligibility and satiety are derived server-side. */
+  canFeed?: boolean;
+  nextFeedAt?: string | null;
+  feedCost?: number;
+  satietyState?: "FULL" | "NORMAL" | "HUNGRY" | "VERY_HUNGRY";
+  dailyFeedCount?: number;
+  dailyRewardedFeedCount?: number;
+  dailyRewardLimit?: number;
+  feedExpReward?: number;
 }
 
 export interface DailyQuest {

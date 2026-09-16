@@ -934,7 +934,7 @@ export default function SpeakingExerciseDetailPage() {
       <div
         className={`flex flex-wrap items-center justify-center font-black tracking-tight select-none text-center ${
           isStage1Mode
-            ? "text-2xl sm:text-3xl md:text-4xl lg:text-[2.5rem] xl:text-[2.75rem] text-slate-900 leading-snug py-2 px-2 max-w-5xl xl:max-w-6xl mx-auto"
+            ? "text-2xl sm:text-3xl md:text-5xl lg:text-6xl text-slate-900 leading-tight py-2 px-2 max-w-5xl xl:max-w-6xl mx-auto"
             : "text-2xl sm:text-3xl md:text-3xl lg:text-4xl text-slate-900 leading-snug py-3 px-1 max-w-2xl mx-auto"
         }`}
       >

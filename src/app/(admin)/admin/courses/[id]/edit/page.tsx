@@ -215,7 +215,7 @@ export default function AdminCourseEditStudioPage() {
       toast.error(
         getApiErrorMessage(
           err,
-          "Không thể chuyển về Bản nháp. Khóa học có thể đang có lớp học ONGOING.",
+          "Không thể chuyển về Bản nháp. Khóa học có thể đang có gói truy cập ACTIVE.",
         ),
       );
     },
@@ -505,7 +505,7 @@ export default function AdminCourseEditStudioPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-16">
+    <div className="min-h-dvh bg-slate-50 pb-16">
       {/* Top Navigation Bar */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -598,7 +598,7 @@ export default function AdminCourseEditStudioPage() {
                 className="px-3 py-1.5 bg-slate-100 text-slate-500 rounded-lg text-xs font-medium border border-slate-200 shrink-0 cursor-not-allowed"
                 title="Khóa học đang có lớp diễn ra, không thể chuyển về bản nháp"
               >
-                Đang có {ongoingClassCount} lớp ONGOING (Khóa sửa giáo trình)
+                Đang có {ongoingClassCount} gói học đang mở (khóa sửa giáo trình)
               </span>
             ) : (
               <button

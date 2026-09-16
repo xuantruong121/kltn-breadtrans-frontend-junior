@@ -4,56 +4,80 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { gamificationService, Pet } from "@/lib/api/services/gamification.service";
-import { PetStage3D } from "@/modules/pet/components/PetStage3D";
+import { CompanionPetStage2D } from "@/modules/pet/components/CompanionPetStage2D";
 import { PetSelectorModal } from "@/modules/pet/components/PetSelectorModal";
 import { PET_SPECIES_LIST, getSpeciesIdFromPetName, PetSpecies } from "@/modules/pet/types";
 import toast from "react-hot-toast";
-import { ArrowLeft, RefreshCw, Award, Heart, Zap } from "lucide-react";
+import { ArrowLeft, RefreshCw, Award, Heart, Zap, AlertCircle, Loader2 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { useAuthStore } from "@/stores/authStore";
+import { canFeedPet, handleFeedFailure } from "@/modules/pet/petLogic";
 
 export default function PetPage() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isJustFed, setIsJustFed] = useState(false);
+  const [isLevelUp, setIsLevelUp] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
-  // Lấy dữ liệu pet từ backend
-  const { data: pet, isLoading: isPetLoading } = useQuery<Pet>({
+  // 1. Authoritative Pet data from backend
+  const {
+    data: pet,
+    isLoading: isPetLoading,
+    isError: isPetError,
+    refetch: refetchPet,
+  } = useQuery<Pet | null>({
     queryKey: ["my-pet", user?.id],
     queryFn: gamificationService.getMyPet,
     enabled: !!user?.id,
   });
 
-  // Lấy số dư Bánh Mì từ backend
-  const { data: balance } = useQuery<{ totalBanh: number }>({
+  // 2. Authoritative Bánh Mì balance
+  const { data: balanceData } = useQuery<{ totalBanh: number }>({
     queryKey: ["market-balance"],
-    queryFn: () => axiosClient.get("/market/currency/balance"),
+    queryFn: async (): Promise<{ totalBanh: number }> => {
+      const res = (await axiosClient.get("/market/currency/balance")) as any;
+      return res ?? { totalBanh: 0 };
+    },
+    enabled: !!user?.id,
   });
 
-  const banhRanBalance = balance?.totalBanh ?? 0;
+  const banhRanBalance = balanceData?.totalBanh ?? 0;
+  const feedCost = pet?.feedCost ?? 10;
 
   // Mutation cho pet ăn
   const feedMutation = useMutation({
     mutationFn: gamificationService.feedPet,
     onSuccess: (updatedPet) => {
+      // Invalidate authoritative cache keys
       queryClient.invalidateQueries({ queryKey: ["my-pet", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["user-stats", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-today", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["market-balance"] });
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
 
-      if (pet && updatedPet.level > pet.level) {
-        toast.success(
-          `🎉 Chúc mừng! Thú cưng của bạn đã thăng cấp lên Cấp ${updatedPet.level}!`,
-          { duration: 6000 }
-        );
+      const prevLevel = pet?.level ?? 1;
+      const leveledUp = updatedPet.level > prevLevel;
+
+      if (leveledUp) {
+        setIsLevelUp(true);
+        const msg = `Chúc mừng! Thú cưng đã thăng cấp lên Cấp ${updatedPet.level}!`;
+        setStatusMessage(msg);
+        toast.success(msg, { duration: 5000 });
+        setTimeout(() => setIsLevelUp(false), 5000);
       } else {
-        toast.success("Thú cưng đã được cho ăn no nê! (+50 EXP, +20 Vui vẻ)");
+        setIsJustFed(true);
+        const msg = `Thú cưng đã được chăm sóc! (+${updatedPet.feedExpReward ?? 0} EXP)`;
+        setStatusMessage(msg);
+        toast.success(msg);
+        setTimeout(() => setIsJustFed(false), 4000);
       }
     },
     onError: (err: any) => {
-      toast.error(
-        err?.response?.data?.message || "Không thể cho thú cưng ăn lúc này!"
-      );
+      const failure = handleFeedFailure(err, banhRanBalance);
+      setStatusMessage(failure.errorMessage);
+      toast.error(failure.errorMessage);
     },
   });
 
@@ -63,7 +87,7 @@ export default function PetPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-pet", user?.id] });
       setIsModalOpen(false);
-      toast.success(`Đã đổi sang thú cưng đồng hành mới!`);
+      toast.success("Đã đổi sang thú cưng đồng hành mới!");
     },
     onError: (err: any) => {
       toast.error(
@@ -78,8 +102,11 @@ export default function PetPage() {
     PET_SPECIES_LIST[0];
 
   const handleFeed = () => {
-    if (banhRanBalance < 10) {
-      toast.error("Bạn cần ít nhất 10 Bánh Mì để cho thú cưng ăn!");
+    const eligibility = canFeedPet(pet, banhRanBalance);
+    if (!eligibility.allowed) {
+      if (eligibility.reason) {
+        toast.error(eligibility.reason);
+      }
       return;
     }
     feedMutation.mutate();
@@ -91,21 +118,27 @@ export default function PetPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">
+      {/* Screen reader live region */}
+      <div className="sr-only" role="status" aria-live="polite">
+        {statusMessage}
+      </div>
+
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link
             href="/dashboard"
-            className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-600 flex items-center justify-center hover:bg-slate-50 transition-colors shadow-xs"
+            aria-label="Quay về trang tổng quan"
+            className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-600 flex items-center justify-center hover:bg-slate-50 transition-colors shadow-xs focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
           >
-            <ArrowLeft size={18} />
+            <ArrowLeft size={18} aria-hidden="true" />
           </Link>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
               Thú Cưng Đồng Hành
             </h1>
-            <p className="text-xs sm:text-sm font-medium text-slate-500">
-              Chăm sóc thú cưng mỗi ngày để nhận các hiệu ứng bổ trợ học tập
+            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+              Chăm sóc thú cưng mỗi ngày để kích hoạt các hiệu ứng bổ trợ học tập
             </p>
           </div>
         </div>
@@ -113,50 +146,101 @@ export default function PetPage() {
         <div className="flex items-center gap-3 self-start sm:self-auto">
           <Link
             href="/market"
-            className="flex items-center gap-2 bg-amber-50 border border-amber-200 px-3.5 py-2 rounded-xl text-amber-900 font-bold text-xs hover:bg-amber-100 transition-colors"
+            className="flex items-center gap-2 bg-amber-50 border border-amber-200 px-3.5 py-2 rounded-xl text-amber-900 font-bold text-xs hover:bg-amber-100 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
           >
-            <span>🍞</span>
+            <span className="font-semibold text-slate-700">Số dư:</span>
             <span>{banhRanBalance} Bánh Mì</span>
           </Link>
           <button
+            type="button"
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-bold text-xs px-3.5 py-2 rounded-xl transition-all shadow-xs cursor-pointer"
+            aria-label="Mở cửa sổ đổi thú cưng"
+            className="flex items-center gap-2 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-bold text-xs px-3.5 py-2 rounded-xl transition-all shadow-xs cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
           >
-            <RefreshCw size={14} />
+            <RefreshCw size={14} aria-hidden="true" />
             <span>Đổi Thú Cưng</span>
           </button>
         </div>
       </div>
 
-      {/* Main Pet Stage */}
+      {/* Main Pet Stage / States */}
       {isPetLoading ? (
-        <div className="bg-white rounded-3xl border border-slate-200 p-16 text-center shadow-xs">
-          <div className="animate-spin text-3xl mb-3">🐾</div>
-          <p className="text-slate-500 font-bold text-sm">
-            Đang gọi thú cưng của bạn ra chào...
+        /* Loading skeleton */
+        <div
+          className="bg-white rounded-2xl border border-slate-200 p-16 text-center shadow-xs animate-pulse"
+          role="status"
+          aria-label="Đang tải dữ liệu thú cưng"
+        >
+          <Loader2 size={32} className="animate-spin mx-auto text-amber-600 mb-3" aria-hidden="true" />
+          <p className="text-slate-600 font-medium text-sm">
+            Đang tải thông tin thú cưng đồng hành...
           </p>
         </div>
+      ) : isPetError ? (
+        /* Error state */
+        <div className="bg-white rounded-2xl border border-rose-200 p-12 text-center shadow-xs space-y-3">
+          <AlertCircle size={36} className="mx-auto text-rose-500" aria-hidden="true" />
+          <h2 className="text-base font-bold text-slate-900">
+            Không thể tải thông tin thú cưng
+          </h2>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
+            Đã có lỗi xảy ra khi kết nối tới máy chủ. Vui lòng kiểm tra lại đường truyền và thử lại.
+          </p>
+          <button
+            type="button"
+            onClick={() => refetchPet()}
+            className="inline-flex min-h-[44px] items-center gap-2 px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none"
+          >
+            <RefreshCw size={14} aria-hidden="true" />
+            <span>Thử lại</span>
+          </button>
+        </div>
+      ) : !pet ? (
+        /* Empty state */
+        <div className="bg-white rounded-2xl border-2 border-dashed border-slate-200 p-12 text-center shadow-xs space-y-4">
+          <div className="size-16 mx-auto rounded-2xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center">
+            <Heart size={28} aria-hidden="true" />
+          </div>
+          <div className="max-w-md mx-auto">
+            <h2 className="text-lg font-bold text-slate-900">
+              Bạn chưa có thú cưng đồng hành
+            </h2>
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              Hãy chọn một người bạn 2D đồng hành để hỗ trợ quá trình học tập, tăng điểm kinh nghiệm và nhận các hiệu ứng bổ trợ thú vị.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex min-h-[44px] items-center gap-2 px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold shadow-xs cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
+          >
+            <span>Chọn thú cưng ngay</span>
+          </button>
+        </div>
       ) : (
+        /* Real 2D Pet Stage & Details */
         <div className="space-y-6">
-          <PetStage3D
+          <CompanionPetStage2D
             pet={pet}
             banhRan={banhRanBalance}
             onFeed={handleFeed}
             onChangeSpecies={() => setIsModalOpen(true)}
             isFeeding={feedMutation.isPending}
             isChangingSpecies={changeSpeciesMutation.isPending}
+            isJustFed={isJustFed}
+            isLevelUp={isLevelUp}
           />
 
           {/* Species Details & Active Buff */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* Buff Card */}
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
-              <div className="flex items-center gap-2 text-amber-700">
-                <Zap size={18} />
+              <div className="flex items-center gap-2 text-amber-800">
+                <Zap size={18} aria-hidden="true" />
                 <h3 className="font-bold text-sm">Nội Tại Bổ Trợ Hiện Tại</h3>
               </div>
-              <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-100 space-y-1">
-                <span className="font-black text-amber-900 text-sm block">
+              <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/70 space-y-1">
+                <span className="font-bold text-amber-900 text-sm block">
                   {currentSpecies.buff}
                 </span>
                 <p className="text-xs text-amber-800 leading-relaxed">
@@ -167,36 +251,42 @@ export default function PetPage() {
 
             {/* Lore & Quote Card */}
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
-              <div className="flex items-center gap-2 text-indigo-700">
-                <Award size={18} />
+              <div className="flex items-center gap-2 text-indigo-800">
+                <Award size={18} aria-hidden="true" />
                 <h3 className="font-bold text-sm">Truyền Thuyết Loài</h3>
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">
                 {currentSpecies.lore}
               </p>
-              <div className="p-2.5 rounded-xl bg-indigo-50/80 border border-indigo-100 text-indigo-900 text-xs italic">
-                "{currentSpecies.quote}"
+              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-xs italic">
+                &ldquo;{currentSpecies.quote}&rdquo;
               </div>
             </div>
 
             {/* Feeding Tips */}
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
-              <div className="flex items-center gap-2 text-emerald-700">
-                <Heart size={18} />
-                <h3 className="font-bold text-sm">Mẹo Nuôi Dưỡng</h3>
+              <div className="flex items-center gap-2 text-emerald-800">
+                <Heart size={18} aria-hidden="true" />
+                <h3 className="font-bold text-sm">Quy Tắc Nuôi Dưỡng</h3>
               </div>
               <ul className="text-xs text-slate-600 space-y-2">
                 <li className="flex items-start gap-2">
-                  <span className="text-emerald-600 font-bold">•</span>
-                  <span>Mỗi lần cho ăn tiêu tốn <strong>10 Bánh Mì</strong> và tăng <strong>50 EXP</strong> cùng <strong>20 Vui vẻ</strong>.</span>
+                  <span className="text-emerald-600 font-bold" aria-hidden="true">•</span>
+                  <span>
+                    Chi phí thay đổi theo lượt ăn trong ngày ({feedCost} Bánh Mì). Ba lượt đầu có thể nhận EXP; các lượt sau áp dụng hiệu quả giảm dần.
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-emerald-600 font-bold">•</span>
-                  <span>Khi đạt <strong>Cấp 2</strong>, bạn sẽ tự động mở khóa huy hiệu <strong>Chuyên Gia Nuôi Thú</strong>!</span>
+                  <span className="text-emerald-600 font-bold" aria-hidden="true">•</span>
+                  <span>
+                    Pet chuyển từ đói sang no theo trạng thái thực tế; không có cooldown 24 giờ cố định.
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-emerald-600 font-bold">•</span>
-                  <span>Làm quiz và luyện phát âm hàng ngày để thu thập thêm nhiều Bánh Mì nhé!</span>
+                  <span className="text-emerald-600 font-bold" aria-hidden="true">•</span>
+                  <span>
+                    Hoàn thành bài tập và luyện nghe nói hàng ngày để tích lũy thêm nhiều Bánh Mì.
+                  </span>
                 </li>
               </ul>
             </div>

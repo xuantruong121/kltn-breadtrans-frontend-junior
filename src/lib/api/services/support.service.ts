@@ -39,6 +39,7 @@ export interface SupportPaginatedMessages {
   limit: number;
   totalPages: number;
   mode: "AI" | "HUMAN";
+  hasMore?: boolean;
 }
 
 export interface SupportPaginatedConversations {
@@ -58,9 +59,10 @@ export const supportService = {
     conversationId: number,
     page = 1,
     limit = 50,
+    beforeId?: number,
   ): Promise<SupportPaginatedMessages> =>
     axiosClient.get(`/support/conversations/${conversationId}/messages`, {
-      params: { page, limit },
+      params: { page, limit, beforeId },
     }),
 
   sendMessage: (
@@ -107,9 +109,10 @@ export const supportService = {
     conversationId: number,
     page = 1,
     limit = 50,
+    beforeId?: number,
   ): Promise<SupportPaginatedMessages> =>
     axiosClient.get(`/admin/support/conversations/${conversationId}/messages`, {
-      params: { page, limit },
+      params: { page, limit, beforeId },
     }),
 
   sendAdminMessage: (

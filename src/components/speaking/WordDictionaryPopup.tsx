@@ -165,7 +165,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
     >
       <div
         ref={modalRef}
-        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl transition-all border border-slate-200 animate-in fade-in zoom-in-95"
+        className="w-full max-w-md max-w-[calc(100vw-2rem)] max-h-[85dvh] overflow-y-auto rounded-2xl bg-white p-5 sm:p-6 shadow-2xl transition-all border border-slate-200 animate-in fade-in zoom-in-95"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -178,7 +178,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
             ref={closeButtonRef}
             onClick={onClose}
             aria-label="Đóng bảng tra cứu"
-            className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-400"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer"
           >
             <X className="h-5 w-5" />
           </button>

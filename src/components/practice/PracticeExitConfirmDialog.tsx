@@ -90,7 +90,7 @@ export function PracticeExitConfirmDialog({
         aria-modal="true"
         aria-labelledby="exit-confirm-title"
         aria-describedby="exit-confirm-description"
-        className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl animate-in zoom-in-95 duration-150"
+        className="w-full max-w-md max-w-[calc(100vw-2rem)] max-h-[85dvh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-xl animate-in zoom-in-95 duration-150"
       >
         <h3
           id="exit-confirm-title"

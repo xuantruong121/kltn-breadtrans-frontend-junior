@@ -94,7 +94,7 @@ export default function AdminPaymentsPage() {
   const router = useRouter();
   const { user } = useAuthStore();
 
-  // Teacher manual access protection
+  // Admin-only route guard
   useEffect(() => {
     if (user && user.role !== "ADMIN") {
       router.replace("/admin");
@@ -165,7 +165,7 @@ export default function AdminPaymentsPage() {
             Đối Soát Thanh Toán
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Hàng đợi kiểm tra biên lai và đối soát chuyển khoản học phí của học viên
+            Hàng đợi kiểm tra giao dịch và đối soát thanh toán gói học
           </p>
         </div>
         <button
@@ -250,7 +250,7 @@ export default function AdminPaymentsPage() {
                 <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                   <th className="py-3 px-4">Mã Chuyển Khoản</th>
                   <th className="py-3 px-4">Học Viên</th>
-                  <th className="py-3 px-4">Khóa Học & Lớp</th>
+                  <th className="py-3 px-4">Khóa học & Gói học</th>
                   <th className="py-3 px-4 text-right">Số Tiền (Snapshot)</th>
                   <th className="py-3 px-4 text-center">Trạng Thái</th>
                   <th className="py-3 px-4">Thời Gian Báo</th>

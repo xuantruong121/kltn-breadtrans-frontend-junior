@@ -17,11 +17,11 @@ interface AdminContentBreakdownProps {
 
 export default function AdminContentBreakdown({ data }: AdminContentBreakdownProps) {
   const content = data || {
-    vocab: 12,
-    grammar: 6,
-    quizzes: 8,
-    speaking: 15,
-    media: 4,
+    vocab: 0,
+    grammar: 0,
+    quizzes: 0,
+    speaking: 0,
+    media: 0,
   };
 
   const totalItems =
@@ -109,24 +109,29 @@ export default function AdminContentBreakdown({ data }: AdminContentBreakdownPro
 
       {/* MULTI-SEGMENT PROGRESS BAR */}
       <div className="w-full bg-slate-100 h-3 rounded-md overflow-hidden flex border border-slate-200/80">
-        {CATEGORIES.map((cat) => {
-          const widthPct = Math.max(3, (cat.count / totalItems) * 100);
-          return (
-            <div
-              key={cat.id}
-              className={`${cat.barColor} h-full transition-all duration-300 hover:opacity-90`}
-              style={{ width: `${widthPct}%` }}
-              title={`${cat.label}: ${cat.count} ${cat.unit}`}
-            />
-          );
-        })}
+        {totalItems > 0 ? (
+          CATEGORIES.map((cat) => {
+            if (cat.count === 0) return null;
+            const widthPct = (cat.count / totalItems) * 100;
+            return (
+              <div
+                key={cat.id}
+                className={`${cat.barColor} h-full transition-all duration-300 hover:opacity-90`}
+                style={{ width: `${widthPct}%` }}
+                title={`${cat.label}: ${cat.count} ${cat.unit}`}
+              />
+            );
+          })
+        ) : (
+          <div className="w-full h-full bg-slate-100" title="Chưa có dữ liệu học liệu" />
+        )}
       </div>
 
       {/* CATEGORY GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-3.5 pt-1">
         {CATEGORIES.map((cat) => {
           const Icon = cat.icon;
-          const percentage = Math.round((cat.count / totalItems) * 100);
+          const percentage = totalItems > 0 ? Math.round((cat.count / totalItems) * 100) : 0;
 
           return (
             <div
