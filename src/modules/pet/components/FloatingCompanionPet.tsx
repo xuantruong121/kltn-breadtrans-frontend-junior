@@ -181,7 +181,11 @@ export const FloatingCompanionPet: React.FC = () => {
   const health = Math.min(100, Math.max(0, pet?.health ?? 100));
   const happiness = Math.min(100, Math.max(0, pet?.happiness ?? 100));
   const exp = pet?.exp ?? 0;
-  const expPercentage = Math.min(100, Math.max(0, exp % 100));
+  const expPerLevel = 1000;
+  const expPercentage = Math.min(
+    100,
+    Math.max(0, Math.round(((exp % expPerLevel) / expPerLevel) * 100)),
+  );
 
   return (
     <div

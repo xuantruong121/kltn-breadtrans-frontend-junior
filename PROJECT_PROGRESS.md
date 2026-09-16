@@ -15,8 +15,8 @@ Tài liệu này ghi chép lại toàn bộ tiến độ, kiến trúc và các 
 - Hoàn thiện trang Login (`src/app/page.tsx`).
 - Xử lý JWT (Access Token, Refresh Token) lưu trữ qua `authStore` và interceptor của `axiosClient`.
 - Phân quyền (Role-based Routing): 
-  - `STUDENT` vào thẳng `/dashboard`.
-  - `TEACHER` & `ADMIN` được tự động chuyển hướng vào `/admin/users`.
+  - `STUDENT` (Học viên) vào thẳng `/dashboard`.
+  - `ADMIN` (Quản trị viên) được tự động chuyển hướng vào `/admin`.
 
 ### B. Khu Vực Học Sinh (Student - B2C)
 **Layout chung:** `src/app/(student)/layout.tsx` sử dụng thiết kế Bento Grid, bo góc lớn, phối màu rực rỡ (Glassmorphism), có Sidebar điều hướng và `FloatingAiTutor` tích hợp.
@@ -32,15 +32,17 @@ Tài liệu này ghi chép lại toàn bộ tiến độ, kiến trúc và các 
   - Phòng thi 200 câu (`/toeic/exam/[examId]`).
   - Phân tích đáp án (`/toeic/result/[attemptId]`).
 
-### C. Khu Vực Quản Trị & Giáo Viên (Admin / Teacher - CMS)
-- **Layout chung:** Tách biệt layout cho `(admin)` và `(teacher)`. Cả hai đều có cơ chế chống lỗi Hydration của Zustand (chờ `useAuthStore.persist.onFinishHydration`) trước khi bảo vệ route.
-- **Admin (`/admin`):**
-  - Quản lý Users (`/admin/users`): Bảng danh sách học sinh, bộ lọc, phân trang.
-  - Quản lý Khóa Học (`/admin/courses`): Hiển thị danh sách, phân trang theo Tab (Đã xuất bản, Chờ duyệt, Bị từ chối). Cung cấp nút Duyệt/Từ chối và nút Xóa khóa học.
-  - Các module `quizzes` và `ai-tools` hiện đang là trang "Coming Soon" (Placeholder).
-- **Teacher (`/teacher`):**
-  - Quản lý Khóa học (`/teacher/courses`): Cho phép Giáo viên soạn giáo trình, tạo Khóa học (DRAFT) để Admin duyệt.
-  - Quản lý Lớp học (`/teacher/classes`): Mô hình Khóa học Hybrid - chia lớp học ra thành các **Buổi học (Session)**. Quản lý thời gian, link Meet cụ thể cho từng Session thay vì gộp chung.
+### C. Khu Vực Quản Trị Hệ Thống (Admin CMS)
+- **Layout chung:** `(admin)` có cơ chế chống lỗi Hydration của Zustand (chờ `useSyncExternalStore` / `isReady`) trước khi bảo vệ route. Hệ thống tinh gọn tối ưu với 2 vai trò chuẩn: `ADMIN` và `STUDENT`.
+- **Tổng quan (`/admin`):** Bảng dashboard thống kê tổng số học viên, doanh thu, khóa học và các chỉ số hoạt động.
+- **Quản lý Học viên & Người dùng (`/admin/users`):** Bảng danh sách người dùng, phân quyền, trạng thái tài khoản, bộ lọc và phân trang.
+- **Quản lý Khóa học & Gói học (`/admin/courses`):** Quản lý toàn diện cây nội dung khóa học, các gói học/lớp học, tài liệu giảng dạy, bài giảng và xuất bản.
+- **Cấp quyền Khóa học (`/admin/enroll`):** Combobox tìm kiếm gom nhóm theo khóa học, cấp quyền học viên đơn lẻ hoặc hàng loạt, thu hồi quyền an toàn với cơ chế bảo vệ giao dịch (Delete Guards).
+- **Thanh toán Gói học (`/admin/payments`):** Đối soát biên lai chuyển khoản, xác nhận thanh toán và tự động kích hoạt ghi danh học viên tức thì.
+- **Đề thi & Bộ câu hỏi (`/admin/quizzes`):** Quản lý ngân hàng câu hỏi TOEIC, ma trận đề thi và giải thích chi tiết.
+- **Bài tập & Chấm điểm (`/admin/assignments`):** Quản lý bài tập nói, viết và hệ thống chấm tự động AI.
+- **Luyện phát âm & AI Tools (`/admin/speaking`, `/admin/ai-tools`):** Công cụ biên soạn hội thoại và trợ lý giọng nói.
+- **Vận hành & Giám sát Chi phí (`/admin/costs`):** Giám sát chi phí token AI (Gemini), tỷ lệ cache hit, dung lượng lưu trữ Cloudflare R2, thao tác dọn dẹp cache và FinOps.
 
 ### D. Hệ Thống Hồ Sơ (Profile)
 - **Backend API:** `GET /users/profile` và `PATCH /users/profile` xử lý update Avatar, Full Name, Phone, Target Score... bằng model `Profile` (One-to-One với `User`).
@@ -71,11 +73,22 @@ Tài liệu này ghi chép lại toàn bộ tiến độ, kiến trúc và các 
   8. Bảng đối chiếu so sánh: Học truyền thống vs Tự học vs BreadTrans AI.
   9. FAQ Accordion giải đáp thắc mắc thường gặp.
   10. Bottom CTA Banner kích thích chuyển đổi (tặng 50 Bánh Mì tân thủ).
-- **Tương thích & Chuẩn hóa:** Responsive mượt mà (Mobile 375px đến Desktop), chuẩn WCAG AA, không dùng emoji làm icon chức năng, 100% SVG vector Lucide, tích hợp trơn tru AuthGateModal / QuickLoginModal / QuickRegisterModal.
+
+### H. Hệ Thống Thú Cưng Học Tập Đồng Hành (Companion Pet Module & Focus Mode)
+- **Kiến trúc Runtime (`useCompanionPetRuntime`):** Quản lý vòng đời dữ liệu thú cưng, đồng bộ số dư Bánh Mì, nhiệm vụ hôm nay và trạng thái cho ăn.
+- **Cơ chế Chế Độ Tập Trung (`LearningFocusMode`):** Tự động phát hiện môi trường làm bài thi, luyện tập chuyên sâu để ẩn hoàn toàn thú cưng nổi và trợ lý AI, chống xao nhãng học viên.
+- **Widget Thú Cưng Nổi (`FloatingCompanionPet`):** 4 trạng thái máy hữu hạn (`COLLAPSED`, `MESSAGE`, `EXPANDED`, `HIDDEN`). Gợi ý bài học ngữ cảnh, cho ăn tại chỗ, thanh tiến trình EXP chuẩn hóa (1.000 EXP / cấp).
+- **Sân khấu Thú Cưng 2D & 3D (`/pet`):** Tương tác hoạt họa cảm xúc (vui vẻ, đói, no, lên cấp), hệ thống chủng loài thú cưng và đổi trang phục.
+
+### I. Cải Tiến CMS Quản Trị & Vận Hành (Admin CMS & Operations)
+- **Cấp Quyền Truy Cập Khóa Học (`/admin/enroll`):** Combobox gom nhóm theo khóa học, tìm kiếm đa trường, cấp quyền đơn lẻ hoặc hàng loạt, modal xác nhận thu hồi và xử lý lỗi ràng buộc thanh toán (409 Conflict).
+- **Giám Sát Chi Phí & Tối Ưu Hệ Thống (`/admin/costs`):** Giám sát chi phí token AI (Gemini), tỷ lệ cache hit, dung lượng lưu trữ Cloudflare R2, thao tác dọn dẹp cache và tối ưu FinOps.
+- **Hệ Thống Điều Hướng Đa Tầng (Adaptive Navigation):** Header áp dụng Priority+ Navigation (thu gọn linh hoạt vào menu "Khác ⌄"), ngăn chặn tràn chữ trên màn hình laptop và tablet.
 
 ## 3. Quy Ước Kiến Trúc (Architecture Rules)
-- Mọi route của Học Sinh phải nằm trong `(student)` để thừa hưởng UI.
-- Mọi route của Quản Trị phải nằm trong `(admin)` và của Giáo viên nằm trong `(teacher)`.
+- Mọi route của Học Sinh nằm trong `(student)` để thừa hưởng UI học tập.
+- Mọi route của Quản Trị viên nằm trong `(admin)`.
+- Hệ thống chỉ duy trì 2 vai trò cốt lõi: `STUDENT` và `ADMIN`.
 - Không sử dụng trực tiếp Fetch/Axios trong Component mà nên bọc bằng `@tanstack/react-query` và sử dụng instance từ `axiosClient` (đã đính kèm token).
 - Cần chú ý lỗi **Hydration Mismatch**:
   - Với Animation (Framer Motion): Tránh dùng biến client (`useReducedMotion`) vào prop `initial`.

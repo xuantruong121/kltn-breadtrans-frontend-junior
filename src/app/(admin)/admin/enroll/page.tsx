@@ -324,62 +324,72 @@ export default function AdminEnrollPage() {
 
             {/* Combobox Trigger */}
             <div className="relative max-w-2xl">
-              <button
-                type="button"
-                onClick={() => (isComboboxOpen ? handleCloseCombobox() : handleOpenCombobox())}
-                aria-haspopup="listbox"
-                aria-expanded={isComboboxOpen}
-                className={`w-full text-left px-4 py-3 rounded-xl border transition-all flex items-center justify-between gap-3 bg-white cursor-pointer ${
+              <div
+                className={`w-full text-left rounded-xl border transition-all flex items-center justify-between bg-white ${
                   isComboboxOpen
                     ? "border-blue-500 ring-4 ring-blue-500/10 shadow-xs"
                     : "border-slate-300 hover:border-slate-400"
                 }`}
               >
-                {currentSelectedClass ? (
-                  <div className="min-w-0 flex-1 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center shrink-0 border border-blue-100">
-                      <BookOpen size={18} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 truncate max-w-[200px]">
-                          {currentSelectedClass.course?.title}
-                        </span>
-                        <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md">
-                          #{currentSelectedClass.id}
-                        </span>
+                <button
+                  type="button"
+                  onClick={() => (isComboboxOpen ? handleCloseCombobox() : handleOpenCombobox())}
+                  aria-haspopup="listbox"
+                  aria-expanded={isComboboxOpen}
+                  className="flex-1 text-left px-4 py-3 flex items-center gap-3 cursor-pointer focus-visible:outline-none min-w-0"
+                >
+                  {currentSelectedClass ? (
+                    <div className="min-w-0 flex-1 flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center shrink-0 border border-blue-100">
+                        <BookOpen size={18} />
                       </div>
-                      <p className="font-bold text-slate-900 text-sm truncate mt-0.5">
-                        {currentSelectedClass.name}
-                      </p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 truncate max-w-[200px]">
+                            {currentSelectedClass.course?.title}
+                          </span>
+                          <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md">
+                            #{currentSelectedClass.id}
+                          </span>
+                        </div>
+                        <p className="font-bold text-slate-900 text-sm truncate mt-0.5">
+                          {currentSelectedClass.name}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2.5 text-slate-400 text-sm">
-                    <Search size={18} />
-                    <span>-- Tìm &amp; chọn gói học --</span>
-                  </div>
-                )}
+                  ) : (
+                    <div className="flex items-center gap-2.5 text-slate-400 text-sm">
+                      <Search size={18} />
+                      <span>-- Tìm &amp; chọn gói học --</span>
+                    </div>
+                  )}
+                </button>
 
-                <div className="flex items-center gap-1.5 shrink-0 text-slate-400">
+                <div className="flex items-center gap-1.5 pr-3 text-slate-400 shrink-0">
                   {selectedClassId && (
                     <button
                       type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
+                      onClick={() => {
                         setSelectedClassId("");
                         setSelectedStudentIds([]);
                       }}
                       title="Bỏ chọn gói học"
                       aria-label="Bỏ chọn gói học"
-                      className="p-1 hover:bg-slate-100 rounded-md text-slate-400 hover:text-slate-600 transition"
+                      className="p-1 hover:bg-slate-100 rounded-md text-slate-400 hover:text-slate-600 transition cursor-pointer"
                     >
                       <X size={16} />
                     </button>
                   )}
-                  <ChevronsUpDown size={18} />
+                  <button
+                    type="button"
+                    onClick={() => (isComboboxOpen ? handleCloseCombobox() : handleOpenCombobox())}
+                    aria-label={isComboboxOpen ? "Đóng danh sách gói học" : "Mở danh sách gói học"}
+                    className="p-1 hover:bg-slate-100 rounded-md text-slate-400 hover:text-slate-600 transition cursor-pointer"
+                  >
+                    <ChevronsUpDown size={18} />
+                  </button>
                 </div>
-              </button>
+              </div>
 
               {/* Combobox Dropdown Popover */}
               {isComboboxOpen && (

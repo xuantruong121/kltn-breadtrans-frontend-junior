@@ -382,15 +382,52 @@ export default function ExamPracticeHubPage() {
     return CERTIFICATES.find((c) => c.id === selectedCert) || null;
   }, [selectedCert]);
 
+  // Load persisted registered certificate waitlists
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        const storageKey = user?.id
+          ? `breadtrans_notified_certs_${user.id}`
+          : "breadtrans_notified_certs";
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            setNotifiedCerts(new Set(parsed));
+          }
+        }
+      } catch {
+        // ignore localStorage parse errors
+      }
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [user?.id]);
+
   const handleNotifyMe = (certId: string, certName: string) => {
     setNotifiedCerts((prev) => {
       const next = new Set(prev);
-      next.add(certId);
+      const isAlreadyRegistered = next.has(certId);
+      if (isAlreadyRegistered) {
+        next.delete(certId);
+        setToastMessage(
+          `Đã hủy đăng ký nhận thông báo cho đề thi ${certName}.`
+        );
+      } else {
+        next.add(certId);
+        setToastMessage(
+          `Đã ghi nhận đăng ký! Bạn sẽ nhận được thông báo ngay khi đề thi ${certName} mở làm bài.`
+        );
+      }
+      try {
+        const storageKey = user?.id
+          ? `breadtrans_notified_certs_${user.id}`
+          : "breadtrans_notified_certs";
+        localStorage.setItem(storageKey, JSON.stringify(Array.from(next)));
+      } catch {
+        // ignore storage write errors
+      }
       return next;
     });
-    setToastMessage(
-      `Đã ghi nhận đăng ký! Bạn sẽ nhận được thông báo ngay khi đề thi ${certName} mở làm bài.`
-    );
   };
 
   if (launchingDestination) {

@@ -21,6 +21,7 @@ import {
   CreditCard,
   UserPlus,
   Cpu,
+  Activity,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useQueryClient } from "@tanstack/react-query";
@@ -149,6 +150,7 @@ const NAV_GROUPS: NavGroup[] = [
     title: "Vận Hành & Công Cụ",
     items: [
       { id: "ai", href: "/admin/ai-tools", label: "Soạn nội dung", icon: Cpu },
+      { id: "costs", href: "/admin/costs", label: "Chi phí & Vận hành", icon: Activity },
     ],
   },
 ];
