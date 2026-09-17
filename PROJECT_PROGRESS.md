@@ -53,6 +53,7 @@ Tài liệu này ghi chép lại toàn bộ tiến độ, kiến trúc và các 
 - **Flashcard (`/flashcard`):** Bỏ sách Flashcard 3D mock; dùng trực tiếp `VocabTopic`, `VocabWord`, `UserVocabWordProgress`. Tiến độ đã thuộc/yêu thích được lưu theo user ở backend.
 - **Seed:** `prisma/seed.ts` có nội dung từ vựng và ngữ pháp thực, thay cho các bản ghi placeholder dạng đánh số.
 - **Luyện nói:** Cụm nghe mẫu có nút nghe icon-only, chuyển tốc độ 0.75×/0.9×/1× và đổi giọng US/UK bằng Web Speech API.
+- **Tra cứu từ trong bài luyện:** Popup hiển thị dữ liệu local ngay, sau đó tải bổ sung IPA US/UK, nhiều loại từ, cách dùng, ví dụ, cụm từ và từ đồng/trái nghĩa qua endpoint progressive `/vocab/lookup/details`; request được hủy khi đổi từ hoặc đóng popup để tránh dữ liệu cũ ghi đè.
 
 ### F. Dữ Liệu Thật — Lịch sử, kiểm tra đầu vào và nội dung học
 - **Kiểm tra đầu vào (`/diagnostic`):** Câu hỏi được tải từ backend; đáp án đúng không được đưa xuống trước khi nộp. Backend chấm, lưu `DiagnosticAttempt` và ghi hoạt động học.

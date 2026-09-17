@@ -23,6 +23,29 @@ const CATEGORY_LABEL_MAP: Record<string, string> = {
   PHYSICAL: "Quà hiện vật",
 };
 
+const RARITY_MAP: Record<string, { label: string; badgeClass: string; stageBg: string }> = {
+  COMMON: {
+    label: "Phổ biến",
+    badgeClass: "bg-slate-100 text-slate-700 border-slate-200",
+    stageBg: "bg-gradient-to-b from-slate-100 to-slate-50 border-slate-200/80",
+  },
+  RARE: {
+    label: "Hiếm",
+    badgeClass: "bg-sky-50 text-sky-700 border-sky-200 font-bold",
+    stageBg: "bg-gradient-to-b from-sky-50 to-white border-sky-200/80",
+  },
+  EPIC: {
+    label: "Sử thi",
+    badgeClass: "bg-purple-50 text-purple-700 border-purple-200 font-bold",
+    stageBg: "bg-gradient-to-b from-purple-50 to-white border-purple-200/80",
+  },
+  LEGENDARY: {
+    label: "Huyền thoại",
+    badgeClass: "bg-amber-50 text-amber-800 border-amber-300 font-extrabold shadow-2xs",
+    stageBg: "bg-gradient-to-b from-amber-50 to-white border-amber-300/80",
+  },
+};
+
 export const MarketExchangeConfirmModal: React.FC<MarketExchangeConfirmModalProps> = ({
   isOpen,
   product,
@@ -90,6 +113,7 @@ export const MarketExchangeConfirmModal: React.FC<MarketExchangeConfirmModalProp
 
   const remainingBalance = calculateRemainingBalance(currentBalance, product.price);
   const categoryLabel = CATEGORY_LABEL_MAP[product.category?.toUpperCase()] || product.category;
+  const rarity = RARITY_MAP[product.rarity?.toUpperCase()] || RARITY_MAP.COMMON;
 
   return (
     <div
@@ -142,26 +166,29 @@ export const MarketExchangeConfirmModal: React.FC<MarketExchangeConfirmModalProp
         </div>
 
         {/* Product Visual & Info */}
-        <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50/70 p-4 flex items-center gap-4">
-          <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-white border border-slate-200/80 p-2">
+        <div className="mt-4 rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 flex items-center gap-4">
+          <div className={`relative flex h-20 w-20 shrink-0 items-center justify-center rounded-xl border p-2 shadow-2xs ${rarity.stageBg}`}>
             <Image
               src={displayImage}
               alt={product.name}
-              width={56}
-              height={56}
-              className="h-12 w-12 object-contain"
+              width={72}
+              height={72}
+              className="h-16 w-16 object-contain drop-shadow-sm"
               onError={() => setHasImageError(true)}
               loading="lazy"
             />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2 mb-1">
-              <span className="inline-block rounded-md bg-amber-50 border border-amber-200 px-2 py-0.5 text-[11px] font-bold text-amber-900">
+            <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+              <span className={`inline-block rounded-md border px-2 py-0.5 text-[10px] font-bold ${rarity.badgeClass}`}>
+                {rarity.label}
+              </span>
+              <span className="inline-block rounded-md bg-slate-100 border border-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
                 {categoryLabel}
               </span>
               {product.stock > 0 && (
-                <span className="text-[11px] font-medium text-emerald-700">
-                  Còn {product.stock} sản phẩm
+                <span className="text-[11px] font-medium text-emerald-700 ml-auto">
+                  Còn {product.stock}
                 </span>
               )}
             </div>

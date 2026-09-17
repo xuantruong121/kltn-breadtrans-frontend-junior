@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import {
@@ -122,8 +122,10 @@ export const IS_WORD_REGEX = /[\p{L}\p{N}]/u;
 
 export default function SpeakingExerciseDetailPage() {
   const { id } = useParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const exerciseId = Number(id);
+  const practiceSetKey = searchParams.get("set");
   const queryClient = useQueryClient();
 
   // Explicit Attempt State Machine
@@ -270,10 +272,37 @@ export default function SpeakingExerciseDetailPage() {
     staleTime: 60_000,
   });
 
+  const practiceSetExercises = useMemo(() => {
+    if (!allExercises || !practiceSetKey) return [];
+    return allExercises
+      .filter((item) => item.practiceSet?.key === practiceSetKey)
+      .sort(
+        (a, b) =>
+          (a.practiceSet?.position ?? 0) - (b.practiceSet?.position ?? 0),
+      );
+  }, [allExercises, practiceSetKey]);
+
+  const orderedExercises = useMemo(
+    () =>
+      practiceSetKey && practiceSetExercises.length > 0
+        ? practiceSetExercises
+        : allExercises ?? [],
+    [allExercises, practiceSetExercises, practiceSetKey],
+  );
+
+  const activeCatalogExercise = useMemo(
+    () => allExercises?.find((item) => item.id === exerciseId),
+    [allExercises, exerciseId],
+  );
+  const activePracticeSet = activeCatalogExercise?.practiceSet;
+  const currentPracticeSetPosition = activePracticeSet
+    ? practiceSetExercises.findIndex((item) => item.id === exerciseId) + 1
+    : 0;
+
   const isNextAvailable = useMemo(() => {
-    if (!allExercises || !exerciseId) return false;
-    return Boolean(getNextExerciseId(exerciseId, allExercises));
-  }, [allExercises, exerciseId]);
+    if (!orderedExercises.length || !exerciseId) return false;
+    return Boolean(getNextExerciseId(exerciseId, orderedExercises));
+  }, [orderedExercises, exerciseId]);
 
   const [minLaunchReady, setMinLaunchReady] = useState(false);
   useEffect(() => {
@@ -747,9 +776,21 @@ export default function SpeakingExerciseDetailPage() {
   const handleNextExercise = useCallback(async () => {
     try {
       const exercises = await speakingService.getExercises();
-      const nextId = getNextExerciseId(exerciseId, exercises);
+      const sessionExercises = practiceSetKey
+        ? exercises
+            .filter((item) => item.practiceSet?.key === practiceSetKey)
+            .sort(
+              (a, b) =>
+                (a.practiceSet?.position ?? 0) -
+                (b.practiceSet?.position ?? 0),
+            )
+        : exercises;
+      const nextId = getNextExerciseId(exerciseId, sessionExercises);
       if (nextId) {
-        router.push(`/practice/speaking/${nextId}`);
+        const query = practiceSetKey
+          ? `?set=${encodeURIComponent(practiceSetKey)}`
+          : "";
+        router.push(`/practice/speaking/${nextId}${query}`);
       } else {
         router.push("/practice/speaking");
       }
@@ -758,7 +799,7 @@ export default function SpeakingExerciseDetailPage() {
       toast.error("Không thể tải bài tập tiếp theo. Đang quay về danh sách.");
       router.push("/practice/speaking");
     }
-  }, [exerciseId, router]);
+  }, [exerciseId, practiceSetKey, router]);
 
   /**
    * Browser SpeechSynthesis fallback when neural TTS server is unreachable.
@@ -1089,11 +1130,16 @@ export default function SpeakingExerciseDetailPage() {
 
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-sm font-bold text-slate-100 truncate max-w-[200px] sm:max-w-[320px] md:max-w-[480px]">
-              {exercise.title}
+              {activePracticeSet?.title ?? exercise.title}
             </span>
             <span className="shrink-0 rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider">
               {exercise.difficulty}
             </span>
+            {activePracticeSet && (
+              <span className="shrink-0 rounded bg-amber-500/15 border border-amber-400/30 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+                Câu {currentPracticeSetPosition}/{activePracticeSet.exerciseCount}
+              </span>
+            )}
             <span className="hidden sm:inline-block shrink-0 rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-[10px] font-bold text-slate-300 uppercase tracking-wider">
               {exercise.category}
             </span>
@@ -1830,7 +1876,11 @@ export default function SpeakingExerciseDetailPage() {
                 className="px-4 sm:px-5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1.5 text-xs sm:text-sm"
               >
                 <span>
-                  {isNextAvailable ? "Tiếp tục bài sau" : "Về danh sách"}
+                  {isNextAvailable
+                    ? activePracticeSet
+                      ? "Câu tiếp theo"
+                      : "Tiếp tục bài sau"
+                    : "Về danh sách"}
                 </span>
                 <ArrowLeft
                   size={14}

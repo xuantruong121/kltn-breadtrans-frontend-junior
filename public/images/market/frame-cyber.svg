@@ -1,9 +1,54 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
-  <rect width="120" height="120" rx="24" fill="#F0FDFA"/>
-  <circle cx="60" cy="60" r="42" stroke="#0D9488" stroke-width="5"/>
-  <rect x="24" y="24" width="16" height="16" stroke="#06B6D4" stroke-width="3" fill="none"/>
-  <rect x="80" y="24" width="16" height="16" stroke="#06B6D4" stroke-width="3" fill="none"/>
-  <rect x="24" y="80" width="16" height="16" stroke="#06B6D4" stroke-width="3" fill="none"/>
-  <rect x="80" y="80" width="16" height="16" stroke="#06B6D4" stroke-width="3" fill="none"/>
-  <circle cx="60" cy="60" r="32" stroke="#14B8A6" stroke-width="2" stroke-dasharray="8 6"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none">
+  <defs>
+    <radialGradient id="fcb-aura" cx="80" cy="80" r="70" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#A5F3FC" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#06B6D4" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#3B82F6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fcb-cyan" x1="20" y1="20" x2="140" y2="140" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#E0F2FE"/>
+      <stop offset="35%" stop-color="#06B6D4"/>
+      <stop offset="70%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+    <filter id="fcb-shadow" x="10" y="10" width="140" height="140" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#06B6D4" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <!-- Ambient Hologram Glow -->
+  <circle cx="80" cy="80" r="68" fill="url(#fcb-aura)"/>
+
+  <g filter="url(#fcb-shadow)">
+    <!-- Main Circular Reticle -->
+    <circle cx="80" cy="80" r="54" stroke="url(#fcb-cyan)" stroke-width="5"/>
+    <!-- Inner Telemetry Track -->
+    <circle cx="80" cy="80" r="48" stroke="#E0F2FE" stroke-width="1.5" stroke-dasharray="8 6" opacity="0.8"/>
+
+    <!-- Outer Octagonal Cyber Bracket -->
+    <path d="M46 22H114L138 46V114L114 138H46L22 114V46L46 22Z"
+          stroke="url(#fcb-cyan)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+
+    <!-- 4 Corner Precision Brackets -->
+    <!-- Top-Left Bracket -->
+    <path d="M30 46V30H46" stroke="#00F2FE" stroke-width="3" stroke-linecap="square"/>
+    <!-- Top-Right Bracket -->
+    <path d="M130 46V30H114" stroke="#00F2FE" stroke-width="3" stroke-linecap="square"/>
+    <!-- Bottom-Left Bracket -->
+    <path d="M30 114V130H46" stroke="#00F2FE" stroke-width="3" stroke-linecap="square"/>
+    <!-- Bottom-Right Bracket -->
+    <path d="M130 114V130H114" stroke="#00F2FE" stroke-width="3" stroke-linecap="square"/>
+
+    <!-- Crosshair Ticks -->
+    <line x1="80" y1="18" x2="80" y2="28" stroke="#00F2FE" stroke-width="2"/>
+    <line x1="80" y1="132" x2="80" y2="142" stroke="#00F2FE" stroke-width="2"/>
+    <line x1="18" y1="80" x2="28" y2="80" stroke="#00F2FE" stroke-width="2"/>
+    <line x1="132" y1="80" x2="142" y2="80" stroke="#00F2FE" stroke-width="2"/>
+
+    <!-- Neon Circuit Nodes -->
+    <circle cx="46" cy="22" r="2.5" fill="#00F2FE"/>
+    <circle cx="114" cy="22" r="2.5" fill="#00F2FE"/>
+    <circle cx="138" cy="46" r="2.5" fill="#A855F7"/>
+    <circle cx="22" cy="114" r="2.5" fill="#A855F7"/>
+  </g>
 </svg>

@@ -1,6 +1,55 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
-  <rect width="120" height="120" rx="24" fill="#FEFCE8"/>
-  <circle cx="60" cy="60" r="40" stroke="#EAB308" stroke-width="6" stroke-dasharray="6 4"/>
-  <circle cx="60" cy="60" r="32" fill="#FEF9C3" stroke="#CA8A04" stroke-width="2"/>
-  <path d="M42 46L48 56L60 38L72 56L78 46V62H42V46Z" fill="#EAB308" stroke="#A16207" stroke-width="3" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none">
+  <defs>
+    <radialGradient id="fc-aura" cx="80" cy="80" r="70" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FEF08A" stop-opacity="0.8"/>
+      <stop offset="65%" stop-color="#F59E0B" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#B45309" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fc-gold" x1="20" y1="20" x2="140" y2="140" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFBEB"/>
+      <stop offset="25%" stop-color="#FDE047"/>
+      <stop offset="55%" stop-color="#F59E0B"/>
+      <stop offset="85%" stop-color="#D97706"/>
+      <stop offset="100%" stop-color="#92400E"/>
+    </linearGradient>
+    <filter id="fc-shadow" x="10" y="10" width="140" height="140" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#78350F" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Ambient Glow -->
+  <circle cx="80" cy="80" r="68" fill="url(#fc-aura)"/>
+
+  <g filter="url(#fc-shadow)">
+    <!-- Ornate Beveled Outer Ring -->
+    <circle cx="80" cy="80" r="54" stroke="url(#fc-gold)" stroke-width="7"/>
+    <!-- Inner Fine Bevel Ring -->
+    <circle cx="80" cy="80" r="47" stroke="#FFFBEB" stroke-width="1.8" opacity="0.85"/>
+    <!-- Outer Delicate Filigree Dots -->
+    <circle cx="80" cy="80" r="60" stroke="#FBBF24" stroke-width="1.5" stroke-dasharray="4 6" opacity="0.75"/>
+
+    <!-- Gemstone Studs Around Ring (Left, Right, Bottom) -->
+    <circle cx="26" cy="80" r="4" fill="#EF4444" stroke="#FFFBEB" stroke-width="1"/>
+    <circle cx="134" cy="80" r="4" fill="#EF4444" stroke="#FFFBEB" stroke-width="1"/>
+    <circle cx="80" cy="134" r="5" fill="#3B82F6" stroke="#FFFBEB" stroke-width="1.2"/>
+
+    <!-- Royal Crown at Top Peak -->
+    <!-- Crown Base -->
+    <path d="M56 36L62 44H98L104 36L96 34H64L56 36Z" fill="#B45309"/>
+    <rect x="62" y="38" width="36" height="4" rx="2" fill="#FDE047"/>
+
+    <!-- Crown Peaks -->
+    <path d="M60 40L64 24L72 34L80 18L88 34L96 24L100 40Z"
+          fill="url(#fc-gold)" stroke="#78350F" stroke-width="1.5" stroke-linejoin="round"/>
+
+    <!-- Jewels on Crown Peaks -->
+    <circle cx="80" cy="18" r="3.5" fill="#EF4444" stroke="#FFFFFF" stroke-width="1"/>
+    <circle cx="64" cy="24" r="2.8" fill="#3B82F6" stroke="#FFFFFF" stroke-width="0.8"/>
+    <circle cx="96" cy="24" r="2.8" fill="#3B82F6" stroke="#FFFFFF" stroke-width="0.8"/>
+
+    <!-- Bottom Golden Laurel Flourish -->
+    <path d="M50 114C60 128 72 134 80 134C88 134 100 128 110 114" stroke="url(#fc-gold)" stroke-width="3" stroke-linecap="round"/>
+    <ellipse cx="62" cy="126" rx="4" ry="2.2" fill="#FDE047" transform="rotate(-35 62 126)"/>
+    <ellipse cx="98" cy="126" rx="4" ry="2.2" fill="#FDE047" transform="rotate(35 98 126)"/>
+  </g>
 </svg>

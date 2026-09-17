@@ -10,6 +10,21 @@ export interface SpeakingExercise {
   category: string;
   translation?: string;
   description?: string;
+  isCompleted?: boolean;
+  practiceSet?: SpeakingPracticeSetSummary;
+}
+
+export interface SpeakingPracticeSetSummary {
+  key: string;
+  title: string;
+  description: string;
+  category: string;
+  exerciseCount: number;
+  completedCount: number;
+  exerciseIds: number[];
+  difficultyLabel: string;
+  position: number;
+  isCompleted: boolean;
 }
 
 export interface SubmitSpeakingResponse {

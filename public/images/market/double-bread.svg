@@ -1,6 +1,74 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
-  <rect width="120" height="120" rx="24" fill="#FFFBEB"/>
-  <rect x="26" y="44" width="68" height="42" rx="14" fill="#F59E0B" stroke="#D97706" stroke-width="4"/>
-  <path d="M40 44C40 32 50 26 60 26C70 26 80 32 80 44" fill="#FDE68A" stroke="#D97706" stroke-width="4"/>
-  <path d="M62 48L52 66H66L58 84L76 62H62L70 48H62Z" fill="#EF4444" stroke="#B91C1C" stroke-width="2" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none">
+  <defs>
+    <radialGradient id="db-aura" cx="80" cy="85" r="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FDE68A" stop-opacity="0.7"/>
+      <stop offset="60%" stop-color="#F59E0B" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#D97706" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="db-crust" x1="80" y1="35" x2="80" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="35%" stop-color="#D97706"/>
+      <stop offset="85%" stop-color="#92400E"/>
+      <stop offset="100%" stop-color="#78350F"/>
+    </linearGradient>
+    <linearGradient id="db-inner" x1="80" y1="42" x2="80" y2="95" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FEF3C7"/>
+      <stop offset="60%" stop-color="#FDE68A"/>
+      <stop offset="100%" stop-color="#FCD34D"/>
+    </linearGradient>
+    <linearGradient id="db-coin-rim" x1="60" y1="70" x2="120" y2="135" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FEF08A"/>
+      <stop offset="40%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+    <linearGradient id="db-coin-face" x1="75" y1="75" x2="115" y2="125" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFBEB"/>
+      <stop offset="50%" stop-color="#FBBF24"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+    <filter id="db-shadow" x="15" y="30" width="130" height="115" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#78350F" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Ambient Glow -->
+  <circle cx="80" cy="85" r="58" fill="url(#db-aura)"/>
+
+  <!-- Loaf Shadow Group -->
+  <g filter="url(#db-shadow)">
+    <!-- Main Baked Bread Loaf -->
+    <path d="M36 68C36 48 54 38 80 38C106 38 124 48 124 68C124 78 126 95 116 104C106 112 54 112 44 104C34 95 36 78 36 68Z"
+          fill="url(#db-crust)"/>
+
+    <!-- Upper Golden Crumb Crown -->
+    <path d="M42 66C42 50 56 42 80 42C104 42 118 50 118 66C118 72 116 80 110 82C96 86 64 86 50 82C44 80 42 72 42 66Z"
+          fill="url(#db-inner)"/>
+
+    <!-- Baker's Signature Slash Cuts -->
+    <path d="M54 52C58 48 64 48 68 56" stroke="#B45309" stroke-width="3" stroke-linecap="round"/>
+    <path d="M74 50C78 46 84 46 88 54" stroke="#B45309" stroke-width="3" stroke-linecap="round"/>
+    <path d="M94 52C98 48 104 48 108 56" stroke="#B45309" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Crust Highlights -->
+    <path d="M52 45C60 41 72 40 80 40C88 40 100 41 108 45" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" opacity="0.65"/>
+  </g>
+
+  <!-- Golden 2X Power Medallion (Right Foreground) -->
+  <g filter="url(#db-shadow)">
+    <!-- Medallion Outer Rim -->
+    <circle cx="102" cy="98" r="26" fill="url(#db-coin-rim)"/>
+    <!-- Medallion Inner Face -->
+    <circle cx="102" cy="98" r="22" fill="url(#db-coin-face)"/>
+    <circle cx="102" cy="98" r="19" stroke="#FDE68A" stroke-width="1" stroke-dasharray="2 2"/>
+
+    <!-- 2X Emblem -->
+    <text x="102" y="105" text-anchor="middle" font-family="'Outfit', 'Inter', system-ui, sans-serif" font-weight="900" font-size="20" fill="#78350F" letter-spacing="-1">2X</text>
+    <text x="102" y="104" text-anchor="middle" font-family="'Outfit', 'Inter', system-ui, sans-serif" font-weight="900" font-size="20" fill="#FFFFFF" letter-spacing="-1">2X</text>
+  </g>
+
+  <!-- Golden Energy Sparkles -->
+  <path d="M30 46L33 38L36 46L44 49L36 52L33 60L30 52L22 49Z" fill="#FBBF24" opacity="0.9"/>
+  <path d="M128 32L130 26L132 32L138 34L132 36L130 42L128 36L122 34Z" fill="#FDE68A" opacity="0.85"/>
+  <circle cx="40" cy="116" r="2.5" fill="#F59E0B"/>
+  <circle cx="68" cy="122" r="2" fill="#FCD34D"/>
 </svg>
