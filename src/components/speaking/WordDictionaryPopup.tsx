@@ -29,6 +29,28 @@ const POS_LABELS: Record<string, string> = {
   "modal verb": "Động từ khuyết thiếu",
 };
 
+const POS_EN_LABELS: Record<string, string> = {
+  adjective: "Adjective",
+  adverb: "Adverb",
+  conjunction: "Conjunction",
+  determiner: "Determiner",
+  interjection: "Interjection",
+  noun: "Noun",
+  number: "Number",
+  preposition: "Preposition",
+  pronoun: "Pronoun",
+  verb: "Verb",
+  "modal verb": "Modal verb",
+};
+
+const formatPartOfSpeech = (partOfSpeech: string | null) => {
+  if (!partOfSpeech) return "Nghĩa khác";
+  const key = partOfSpeech.toLowerCase();
+  const vi = POS_LABELS[key] || partOfSpeech;
+  const en = POS_EN_LABELS[key];
+  return en ? `${vi} (${en})` : vi;
+};
+
 const normalizeEntries = (response: VocabLookupResponse): DictionaryEntry[] => {
   if (response.entries?.length) return response.entries;
   return (response.matches || []).map((match) => ({
@@ -94,7 +116,6 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
   const [loading, setLoading] = useState(true);
   const [enriching, setEnriching] = useState(false);
   const [entries, setEntries] = useState<DictionaryEntry[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState(0);
   const [canonicalWord, setCanonicalWord] = useState(cleanWord);
   const [isInflectionMatch, setIsInflectionMatch] = useState(false);
   const [isStarred, setIsStarred] = useState(false);
@@ -106,7 +127,11 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
-  const selectedEntry = entries[selectedIndex] || entries[0];
+  const primaryEntry = entries[0];
+  const selectedEntry = primaryEntry;
+  const definitions = hasExpandedDetails
+    ? selectedEntry?.definitions.filter((item) => item.definition).slice(0, 3) || []
+    : [];
 
   useEffect(() => {
     let mounted = true;
@@ -116,7 +141,6 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
       setLoading(true);
       setEnriching(false);
       setEntries([]);
-      setSelectedIndex(0);
       setHasExpandedDetails(false);
       try {
         const base = await vocabService.lookupWord(
@@ -218,10 +242,9 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
     }
   };
 
-  const handlePlayAudio = (accent: "US" | "UK") => {
-    if (!selectedEntry) return;
+  const handlePlayAudio = (entry: DictionaryEntry, accent: "US" | "UK") => {
     const url =
-      accent === "US" ? selectedEntry.audio.us : selectedEntry.audio.uk;
+      accent === "US" ? entry.audio.us : entry.audio.uk;
     setPlayingAccent(accent);
     if (url) {
       const audio = new Audio(url.startsWith("//") ? `https:${url}` : url);
@@ -232,7 +255,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
     }
     if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(canonicalWord);
+      const utterance = new SpeechSynthesisUtterance(entry.word || canonicalWord);
       utterance.lang = accent === "US" ? "en-US" : "en-GB";
       utterance.onend = () => setPlayingAccent(null);
       utterance.onerror = () => setPlayingAccent(null);
@@ -241,12 +264,6 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
       setPlayingAccent(null);
     }
   };
-
-  const definitions = hasExpandedDetails
-    ? selectedEntry?.definitions
-        .filter((item) => item.definition)
-        .slice(0, 3) || []
-    : [];
 
   return (
     <div
@@ -285,7 +302,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
         <main className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">
           {loading ? (
             <div
-              id="dictionary-status"
+              id="dictionary-loading-status"
               role="status"
               className="flex min-h-64 flex-col items-center justify-center text-slate-600"
             >
@@ -358,7 +375,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
                     <button
                       key={accent}
                       type="button"
-                      onClick={() => handlePlayAudio(accent)}
+                      onClick={() => handlePlayAudio(selectedEntry, accent)}
                       disabled={playingAccent !== null}
                       className="flex min-h-12 items-center gap-3 rounded-xl border border-slate-200 px-3 text-left hover:border-amber-300 hover:bg-amber-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                     >
@@ -383,33 +400,6 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
                 })}
               </section>
 
-              {entries.length > 1 && (
-                <section aria-label="Chọn loại từ">
-                  <p className="mb-2 text-sm font-semibold text-slate-700">
-                    Loại từ và nghĩa
-                  </p>
-                  <div className="flex gap-2 overflow-x-auto pb-1">
-                    {entries.map((entry, index) => (
-                      <button
-                        key={`${entry.partOfSpeech || "unknown"}-${index}`}
-                        type="button"
-                        onClick={() => setSelectedIndex(index)}
-                        aria-pressed={selectedIndex === index}
-                        className={`min-h-11 shrink-0 rounded-xl border px-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
-                          selectedIndex === index
-                            ? "border-amber-500 bg-amber-50 text-amber-800"
-                            : "border-slate-200 text-slate-600 hover:bg-slate-50"
-                        }`}
-                      >
-                        {POS_LABELS[entry.partOfSpeech?.toLowerCase() || ""] ||
-                          entry.partOfSpeech ||
-                          "Nghĩa khác"}
-                      </button>
-                    ))}
-                  </div>
-                </section>
-              )}
-
               <section className="rounded-xl border border-amber-200 bg-amber-50/70 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">
@@ -417,8 +407,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
                   </p>
                   {selectedEntry.partOfSpeech && (
                     <span className="rounded-md bg-white/80 px-2 py-1 text-xs font-semibold text-slate-600">
-                      {POS_LABELS[selectedEntry.partOfSpeech.toLowerCase()] ||
-                        selectedEntry.partOfSpeech}
+                      {formatPartOfSpeech(selectedEntry.partOfSpeech)}
                     </span>
                   )}
                 </div>
@@ -427,6 +416,98 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
                     "Nghĩa tiếng Việt đang được bổ sung."}
                 </p>
               </section>
+
+              {entries.length > 1 && (
+                <section aria-label="Các từ loại khác" className="space-y-3">
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-900">
+                      Các từ loại khác
+                    </h4>
+                    <p className="mt-1 text-sm leading-6 text-slate-500">
+                      Nghĩa được trình bày đồng thời để bạn học ngay trong ngữ cảnh.
+                    </p>
+                  </div>
+                  {entries.slice(1).map((entry, entryIndex) => (
+                    <article
+                      key={`${entry.partOfSpeech || "unknown"}-${entryIndex}`}
+                      className="rounded-xl border border-slate-200 bg-slate-50/70 p-4"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h5 className="text-base font-semibold text-slate-900">
+                          {formatPartOfSpeech(entry.partOfSpeech)}
+                        </h5>
+                        <span className="text-xs font-medium text-slate-500">
+                          {entry.word}
+                        </span>
+                      </div>
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                        {(["US", "UK"] as const).map((accent) => {
+                          const ipa =
+                            accent === "US" ? entry.ipaUs : entry.ipaUk;
+                          return (
+                            <button
+                              key={accent}
+                              type="button"
+                              onClick={() => handlePlayAudio(entry, accent)}
+                              disabled={playingAccent !== null}
+                              className="flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-left hover:border-amber-300 hover:bg-amber-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                            >
+                              <Volume2
+                                className={`size-4 shrink-0 ${
+                                  playingAccent === accent
+                                    ? "animate-pulse text-amber-600 motion-reduce:animate-none"
+                                    : "text-slate-500"
+                                }`}
+                                aria-hidden="true"
+                              />
+                              <span>
+                                <span className="block text-xs font-semibold text-slate-500">
+                                  {accent === "US" ? "Giọng Mỹ" : "Giọng Anh"}
+                                </span>
+                                <span className="block text-sm font-medium text-slate-800">
+                                  {ipa || "Chưa có phiên âm IPA"}
+                                </span>
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">
+                          Nghĩa tiếng Việt
+                        </p>
+                        <p className="mt-1 text-sm font-semibold leading-6 text-slate-900">
+                          {entry.meaningVi || "Nghĩa đang được bổ sung."}
+                        </p>
+                      </div>
+                      {hasExpandedDetails && entry.definitions.length > 0 && (
+                        <div className="mt-3 space-y-2">
+                          {entry.definitions.slice(0, 3).map((definition, index) => (
+                            <div
+                              key={`${definition.definition}-${index}`}
+                              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6"
+                            >
+                              {definition.meaningVi && (
+                                <p className="font-semibold text-slate-900">
+                                  {definition.meaningVi}
+                                </p>
+                              )}
+                              <p className="text-slate-600">
+                                {definition.definition}
+                              </p>
+                              {definition.example && (
+                                <p className="mt-1 italic text-slate-500">
+                                  “{definition.example}”
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </article>
+                  ))}
+                </section>
+              )}
 
               {definitions.length > 0 && (
                 <section>
@@ -532,13 +613,10 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
                 id="dictionary-status"
                 role="status"
                 aria-live="polite"
-                className="min-h-5 text-sm text-slate-500"
+                className="sr-only"
               >
                 {enriching && (
-                  <span className="inline-flex items-center gap-2">
-                    <Loader2 className="size-4 animate-spin motion-reduce:animate-none" />
-                    Đang bổ sung IPA và các nghĩa khác…
-                  </span>
+                  <span>Đang cập nhật thêm nghĩa và phiên âm.</span>
                 )}
               </div>
             </div>
