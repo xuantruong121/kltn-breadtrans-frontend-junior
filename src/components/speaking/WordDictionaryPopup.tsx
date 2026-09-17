@@ -1,8 +1,16 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { AlertCircle, BookOpen, Loader2, Star, Volume2, X } from "lucide-react";
+import {
+  AlertCircle,
+  BookOpen,
+  Loader2,
+  Star,
+  Volume2,
+  X,
+} from "lucide-react";
 import toast from "react-hot-toast";
+import clsx from "clsx";
 import {
   DictionaryEntry,
   VocabLookupResponse,
@@ -44,7 +52,7 @@ const POS_EN_LABELS: Record<string, string> = {
 };
 
 const formatPartOfSpeech = (partOfSpeech: string | null) => {
-  if (!partOfSpeech) return "Nghĩa khác";
+  if (!partOfSpeech) return "Từ vựng";
   const key = partOfSpeech.toLowerCase();
   const vi = POS_LABELS[key] || partOfSpeech;
   const en = POS_EN_LABELS[key];
@@ -82,6 +90,7 @@ const mergeEntries = (
     );
     return {
       ...entry,
+      word: local?.word || entry.word,
       meaningVi: entry.meaningVi || local?.meaningVi || null,
       exampleVi: entry.exampleVi || local?.exampleVi || null,
       collocations: entry.collocations?.length
@@ -100,6 +109,131 @@ const mergeEntries = (
   ];
 };
 
+const highlightTargetWord = (
+  text: string,
+  targets: Array<string | undefined | null>,
+): React.ReactNode => {
+  if (!text) return text;
+
+  const validTargets = Array.from(
+    new Set(
+      targets
+        .map((t) => t?.trim())
+        .filter((t): t is string => Boolean(t && t.length > 0)),
+    ),
+  );
+
+  if (validTargets.length === 0) return text;
+
+  const allVariants = new Set<string>();
+  for (const target of validTargets) {
+    allVariants.add(target);
+    const lower = target.toLowerCase();
+    // Only generate morphological inflections for single words with length >= 3
+    if (!lower.includes(" ") && lower.length >= 3) {
+      allVariants.add(`${lower}s`);
+      allVariants.add(`${lower}es`);
+      if (lower.endsWith("e")) {
+        allVariants.add(`${lower}d`);
+        allVariants.add(`${lower.slice(0, -1)}ing`);
+      } else {
+        allVariants.add(`${lower}ed`);
+        allVariants.add(`${lower}ing`);
+      }
+      if (lower.endsWith("y") && lower.length > 2) {
+        const stem = lower.slice(0, -1);
+        allVariants.add(`${stem}ies`);
+        allVariants.add(`${stem}ied`);
+      }
+      if (
+        /^[a-z]+[^aeiou][aeiou][^aeiouwxy]$/.test(lower) &&
+        lower.length >= 3
+      ) {
+        const lastChar = lower[lower.length - 1];
+        allVariants.add(`${lower}${lastChar}ed`);
+        allVariants.add(`${lower}${lastChar}ing`);
+      }
+    }
+  }
+
+  const sorted = Array.from(allVariants).sort((a, b) => b.length - a.length);
+  const escaped = sorted.map((item) =>
+    item.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+  );
+
+  const regex = new RegExp(`\\b(${escaped.join("|")})\\b`, "gi");
+
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+    parts.push(
+      <mark
+        key={`${match.index}-${match[0]}`}
+        className="not-italic font-bold text-amber-950 bg-amber-200/90 px-2 py-0.5 rounded-md border border-amber-300/80 shadow-2xs"
+      >
+        {match[0]}
+      </mark>,
+    );
+    lastIndex = regex.lastIndex;
+    if (match[0].length === 0) {
+      regex.lastIndex++;
+    }
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : text;
+};
+
+const resolveEntryWord = (
+  entry: DictionaryEntry,
+  canonical: string,
+  searched: string,
+): { displayWord: string; isVariant: boolean } => {
+  const canonLower = canonical.trim().toLowerCase();
+  const searchedLower = searched.trim().toLowerCase();
+
+  // 1. If entry.word is explicitly defined and differs from canonicalWord
+  if (entry.word && entry.word.trim().toLowerCase() !== canonLower) {
+    return { displayWord: entry.word.trim(), isVariant: true };
+  }
+
+  // 2. If user searched an inflection (e.g. "updated") and this entry's examples use it
+  if (searchedLower !== canonLower) {
+    const escaped = searchedLower.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const inExample = entry.examples?.some((ex) =>
+      new RegExp(`\\b${escaped}\\b`, "i").test(ex),
+    );
+    if (inExample) {
+      return { displayWord: searched.trim(), isVariant: true };
+    }
+  }
+
+  // 3. Check if example sentence has an inflected form starting with canon stem
+  if (entry.examples?.[0]) {
+    const escapedStem = canonLower.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const m = new RegExp(`\\b(${escapedStem}[a-zA-Z]+)\\b`, "i").exec(
+      entry.examples[0],
+    );
+    if (m && m[1].toLowerCase() !== canonLower) {
+      return { displayWord: m[1], isVariant: true };
+    }
+  }
+
+  // 4. Default to entry.word or canonicalWord
+  return {
+    displayWord: entry.word?.trim() || canonical,
+    isVariant: false,
+  };
+};
+
 export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
   word,
   onClose,
@@ -113,6 +247,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
         .replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""),
     [word],
   );
+
   const [loading, setLoading] = useState(true);
   const [enriching, setEnriching] = useState(false);
   const [entries, setEntries] = useState<DictionaryEntry[]>([]);
@@ -127,11 +262,39 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  // Primary entry used for top-level phonetics & audio
   const primaryEntry = entries[0];
-  const selectedEntry = primaryEntry;
-  const definitions = hasExpandedDetails
-    ? selectedEntry?.definitions.filter((item) => item.definition).slice(0, 3) || []
-    : [];
+
+  // Aggregate all collocations across entries
+  const allCollocations = useMemo(() => {
+    const map = new Map<string, { phrase: string; meaningVi: string }>();
+    for (const entry of entries) {
+      for (const col of entry.collocations || []) {
+        if (col.phrase && !map.has(col.phrase.toLowerCase())) {
+          map.set(col.phrase.toLowerCase(), col);
+        }
+      }
+    }
+    return Array.from(map.values()).slice(0, 6);
+  }, [entries]);
+
+  // Aggregate synonyms and antonyms across entries
+  const allSynonyms = useMemo(() => {
+    const set = new Set<string>();
+    for (const entry of entries) {
+      for (const syn of entry.synonyms || []) set.add(syn);
+    }
+    return Array.from(set).slice(0, 6);
+  }, [entries]);
+
+  const allAntonyms = useMemo(() => {
+    const set = new Set<string>();
+    for (const entry of entries) {
+      for (const ant of entry.antonyms || []) set.add(ant);
+    }
+    return Array.from(set).slice(0, 6);
+  }, [entries]);
 
   useEffect(() => {
     let mounted = true;
@@ -142,6 +305,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
       setEnriching(false);
       setEntries([]);
       setHasExpandedDetails(false);
+
       try {
         const base = await vocabService.lookupWord(
           cleanWord,
@@ -188,7 +352,9 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
     return () => {
       mounted = false;
       controller.abort();
-      window.speechSynthesis?.cancel();
+      if (typeof window !== "undefined") {
+        window.speechSynthesis?.cancel();
+      }
     };
   }, [cleanWord]);
 
@@ -234,7 +400,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
         setSavedId(saved.id);
       }
       setIsStarred((current) => !current);
-      toast.success(isStarred ? "Đã bỏ lưu từ vựng." : "Đã lưu để ôn tập.");
+      toast.success(isStarred ? "Đã bỏ lưu từ vựng." : "Đã lưu từ vào sổ ôn tập.");
     } catch {
       toast.error("Không thể cập nhật từ đã lưu");
     } finally {
@@ -243,9 +409,9 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
   };
 
   const handlePlayAudio = (entry: DictionaryEntry, accent: "US" | "UK") => {
-    const url =
-      accent === "US" ? entry.audio.us : entry.audio.uk;
+    const url = accent === "US" ? entry.audio.us : entry.audio.uk;
     setPlayingAccent(accent);
+
     if (url) {
       const audio = new Audio(url.startsWith("//") ? `https:${url}` : url);
       audio.onended = () => setPlayingAccent(null);
@@ -253,7 +419,8 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
       void audio.play().catch(() => setPlayingAccent(null));
       return;
     }
-    if ("speechSynthesis" in window) {
+
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(entry.word || canonicalWord);
       utterance.lang = accent === "US" ? "en-US" : "en-GB";
@@ -267,7 +434,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-2 backdrop-blur-sm sm:p-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 sm:p-6 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
       onClick={onClose}
       role="presentation"
     >
@@ -279,361 +446,313 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
         aria-describedby="dictionary-status"
         onKeyDown={handleDialogKeyDown}
         onClick={(event) => event.stopPropagation()}
-        className="flex max-h-[min(90dvh,760px)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+        className="flex max-h-[min(88dvh,840px)] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-2xl transition-all"
       >
-        <header className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-2 text-slate-800">
-            <BookOpen className="size-5 text-amber-600" aria-hidden="true" />
-            <h2 id="dictionary-title" className="text-base font-semibold">
-              Tra cứu từ vựng
+        {/* Header Bar */}
+        <header className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-6">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 text-amber-800 shadow-2xs">
+              <BookOpen size={16} aria-hidden="true" />
+            </div>
+            <h2 id="dictionary-title" className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500">
+              Tra từ trong bài luyện
             </h2>
           </div>
-          <button
-            ref={closeButtonRef}
-            type="button"
-            onClick={onClose}
-            aria-label="Đóng bảng tra cứu"
-            className="flex size-11 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
-          >
-            <X className="size-5" aria-hidden="true" />
-          </button>
+
+          <div className="flex items-center gap-1.5">
+            {/* Star / Bookmark action */}
+            {primaryEntry && (
+              <button
+                type="button"
+                onClick={handleToggleStar}
+                disabled={starLoading}
+                aria-label={isStarred ? "Bỏ lưu từ vựng" : "Lưu từ vựng"}
+                aria-pressed={isStarred}
+                className={clsx(
+                  "flex h-10 w-10 items-center justify-center rounded-xl border transition-all cursor-pointer",
+                  isStarred
+                    ? "border-amber-300 bg-amber-50 text-amber-600 shadow-2xs"
+                    : "border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                )}
+                title={isStarred ? "Bỏ lưu từ" : "Lưu từ để ôn tập"}
+              >
+                {starLoading ? (
+                  <Loader2 size={16} className="animate-spin text-amber-600" />
+                ) : (
+                  <Star size={17} className={clsx(isStarred && "fill-current")} />
+                )}
+              </button>
+            )}
+
+            {/* Close button */}
+            <button
+              ref={closeButtonRef}
+              type="button"
+              onClick={onClose}
+              aria-label="Đóng bảng tra cứu"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 transition-colors cursor-pointer"
+            >
+              <X size={18} aria-hidden="true" />
+            </button>
+          </div>
         </header>
 
-        <main className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">
+        {/* Scrollable Main Content - Single continuous page without tabs */}
+        <main className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6 space-y-4">
           {loading ? (
             <div
               id="dictionary-loading-status"
               role="status"
-              className="flex min-h-64 flex-col items-center justify-center text-slate-600"
+              className="flex min-h-60 flex-col items-center justify-center text-slate-500 space-y-3"
             >
-              <Loader2 className="size-8 animate-spin text-amber-600 motion-reduce:animate-none" />
-              <p className="mt-3 text-sm">Đang tra cứu “{cleanWord}”…</p>
+              <Loader2 className="size-8 animate-spin text-amber-600" />
+              <p className="text-sm font-medium">Đang tra cứu “{cleanWord}”…</p>
             </div>
-          ) : !selectedEntry ? (
-            <div className="flex min-h-64 flex-col items-center justify-center text-center">
-              <AlertCircle
-                className="size-10 text-slate-400"
-                aria-hidden="true"
-              />
-              <p className="mt-3 text-base font-semibold text-slate-800">
-                Chưa tìm thấy “{cleanWord}”
+          ) : entries.length === 0 ? (
+            <div className="flex min-h-60 flex-col items-center justify-center text-center px-4 py-8">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 mb-3">
+                <AlertCircle size={24} aria-hidden="true" />
+              </div>
+              <p className="text-base font-bold text-slate-800">
+                Chưa có dữ liệu cho “{cleanWord}”
               </p>
-              <p className="mt-1 max-w-sm text-sm leading-6 text-slate-500">
-                Nguồn từ điển đang tạm thời chưa có dữ liệu cho từ này.
+              <p className="mt-1 max-w-xs text-xs leading-relaxed text-slate-500">
+                Hệ thống từ điển đang cập nhật thêm mục từ này. Bạn vẫn có thể tiếp tục bài luyện bình thường.
               </p>
             </div>
           ) : (
-            <div className="space-y-5">
-              <section className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-3xl font-bold capitalize tracking-tight text-slate-950">
-                      {canonicalWord}
-                    </h3>
-                    {isInflectionMatch && (
-                      <span className="rounded-lg bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">
-                        Dạng gốc
-                      </span>
-                    )}
-                  </div>
+            <div className="space-y-4">
+              {/* Word & Base Form Showcase */}
+              <div className="flex flex-col gap-1">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h3 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight lowercase first-letter:uppercase">
+                    {canonicalWord}
+                  </h3>
                   {isInflectionMatch && (
-                    <p className="mt-1 text-sm text-slate-500">
-                      Dạng trong câu: <strong>{cleanWord}</strong>
-                    </p>
+                    <span className="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs sm:text-sm font-semibold text-blue-700">
+                      Dạng gốc của "{cleanWord}"
+                    </span>
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={handleToggleStar}
-                  disabled={starLoading}
-                  aria-label={isStarred ? "Bỏ lưu từ vựng" : "Lưu từ vựng"}
-                  aria-pressed={isStarred}
-                  className={`flex size-11 shrink-0 items-center justify-center rounded-xl border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
-                    isStarred
-                      ? "border-amber-300 bg-amber-50 text-amber-600"
-                      : "border-slate-200 text-slate-500 hover:bg-slate-50"
-                  }`}
-                >
-                  {starLoading ? (
-                    <Loader2 className="size-5 animate-spin motion-reduce:animate-none" />
-                  ) : (
-                    <Star
-                      className={`size-5 ${isStarred ? "fill-current" : ""}`}
-                    />
-                  )}
-                </button>
-              </section>
+              </div>
 
-              <section
-                aria-label="Phiên âm và phát âm"
-                className="grid gap-2 sm:grid-cols-2"
-              >
+              {/* Primary Pronunciation & Audio Action Chips (US & UK) */}
+              <section aria-label="Phiên âm và phát âm" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {(["US", "UK"] as const).map((accent) => {
-                  const ipa =
-                    accent === "US" ? selectedEntry.ipaUs : selectedEntry.ipaUk;
+                  const ipa = accent === "US" ? primaryEntry?.ipaUs : primaryEntry?.ipaUk;
+                  const isPlaying = playingAccent === accent;
+
                   return (
                     <button
                       key={accent}
                       type="button"
-                      onClick={() => handlePlayAudio(selectedEntry, accent)}
+                      onClick={() => primaryEntry && handlePlayAudio(primaryEntry, accent)}
                       disabled={playingAccent !== null}
-                      className="flex min-h-12 items-center gap-3 rounded-xl border border-slate-200 px-3 text-left hover:border-amber-300 hover:bg-amber-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                      className={clsx(
+                        "group flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition-all duration-200 cursor-pointer",
+                        isPlaying
+                          ? "border-amber-400 bg-amber-50/90 text-amber-950 shadow-xs ring-2 ring-amber-400/30"
+                          : "border-slate-200/90 bg-slate-50/70 hover:border-amber-300 hover:bg-amber-50/40 text-slate-800"
+                      )}
                     >
-                      <Volume2
-                        className={`size-4 shrink-0 ${
-                          playingAccent === accent
-                            ? "animate-pulse text-amber-600 motion-reduce:animate-none"
-                            : "text-slate-500"
-                        }`}
-                        aria-hidden="true"
-                      />
-                      <span>
-                        <span className="block text-xs font-semibold text-slate-500">
-                          {accent === "US" ? "Giọng Mỹ" : "Giọng Anh"}
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="shrink-0 rounded-lg bg-white border border-slate-200/80 px-2.5 py-1 text-xs font-black tracking-wider text-slate-600 uppercase shadow-2xs">
+                          {accent}
                         </span>
-                        <span className="block text-sm font-medium text-slate-800">
-                          {ipa || "Chưa có phiên âm IPA"}
+                        <span className="font-mono text-sm sm:text-base font-semibold text-slate-800 truncate">
+                          {ipa || "Chưa có IPA"}
                         </span>
-                      </span>
+                      </div>
+                      <div
+                        className={clsx(
+                          "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all shadow-2xs",
+                          isPlaying
+                            ? "bg-amber-600 text-white shadow-xs"
+                            : "bg-white text-amber-700 border border-amber-200/80 group-hover:bg-amber-100/60"
+                        )}
+                      >
+                        <Volume2 size={18} className={clsx(isPlaying && "animate-pulse")} />
+                      </div>
                     </button>
                   );
                 })}
               </section>
 
-              <section className="rounded-xl border border-amber-200 bg-amber-50/70 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">
-                    Nghĩa tiếng Việt
-                  </p>
-                  {selectedEntry.partOfSpeech && (
-                    <span className="rounded-md bg-white/80 px-2 py-1 text-xs font-semibold text-slate-600">
-                      {formatPartOfSpeech(selectedEntry.partOfSpeech)}
-                    </span>
-                  )}
-                </div>
-                <p className="mt-2 text-base font-semibold leading-7 text-slate-900">
-                  {selectedEntry.meaningVi ||
-                    "Nghĩa tiếng Việt đang được bổ sung."}
-                </p>
-              </section>
+              {/* All Parts of Speech & Meanings - Rendered together on 1 page */}
+              <section aria-label="Các từ loại và ý nghĩa" className="space-y-3.5 pt-1">
+                {entries.map((entry, idx) => {
+                  const definitions = hasExpandedDetails
+                    ? entry.definitions?.filter((d) => d.definition).slice(0, 2) || []
+                    : [];
+                  const { displayWord, isVariant } = resolveEntryWord(
+                    entry,
+                    canonicalWord,
+                    cleanWord,
+                  );
 
-              {entries.length > 1 && (
-                <section aria-label="Các từ loại khác" className="space-y-3">
-                  <div>
-                    <h4 className="text-sm font-semibold text-slate-900">
-                      Các từ loại khác
-                    </h4>
-                    <p className="mt-1 text-sm leading-6 text-slate-500">
-                      Nghĩa được trình bày đồng thời để bạn học ngay trong ngữ cảnh.
-                    </p>
-                  </div>
-                  {entries.slice(1).map((entry, entryIndex) => (
-                    <article
-                      key={`${entry.partOfSpeech || "unknown"}-${entryIndex}`}
-                      className="rounded-xl border border-slate-200 bg-slate-50/70 p-4"
+                  return (
+                    <div
+                      key={`${entry.partOfSpeech || "pos"}-${idx}`}
+                      className="rounded-2xl border border-amber-200/90 bg-gradient-to-br from-amber-50/80 via-orange-50/25 to-white p-4 sm:p-5 shadow-2xs space-y-3"
                     >
+                      {/* POS Header & Variant Audio (if different) */}
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <h5 className="text-base font-semibold text-slate-900">
-                          {formatPartOfSpeech(entry.partOfSpeech)}
-                        </h5>
-                        <span className="text-xs font-medium text-slate-500">
-                          {entry.word}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300/80 bg-white/95 px-3 py-1 text-xs sm:text-sm font-bold text-amber-900 shadow-2xs">
+                            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                            {entries.length > 1 ? `${idx + 1}. ` : ""}
+                            {formatPartOfSpeech(entry.partOfSpeech)}
+                          </span>
+
+                          {isVariant && (
+                            <span className="inline-flex items-center rounded-md border border-amber-300/70 bg-amber-100/90 px-2 py-0.5 text-[11px] sm:text-xs font-bold text-amber-900 shadow-2xs">
+                              Dạng biến thể
+                            </span>
+                          )}
+                        </div>
+
+                        {/* If this variant has custom audio/IPA distinct from primary, show inline quick play */}
+                        {idx > 0 && (entry.audio.us || entry.audio.uk || (entry.ipaUs && entry.ipaUs !== primaryEntry?.ipaUs)) && (
+                          <button
+                            type="button"
+                            onClick={() => handlePlayAudio(entry, "US")}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200/90 bg-white px-2.5 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-100/60 transition-colors cursor-pointer shadow-2xs"
+                            title="Nghe phát âm từ loại này"
+                          >
+                            <Volume2 size={14} className={playingAccent === "US" ? "animate-pulse text-amber-600" : ""} />
+                            <span>{entry.ipaUs || "Phát âm"}</span>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* English Word Form / Variant for this POS */}
+                      <div className="flex flex-wrap items-baseline gap-2.5 pt-0.5">
+                        <span className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight lowercase first-letter:uppercase">
+                          {displayWord}
                         </span>
+                        {entry.ipaUs && entry.ipaUs !== primaryEntry?.ipaUs && (
+                          <span className="font-mono text-xs sm:text-sm font-medium text-slate-500">
+                            /{entry.ipaUs.replace(/^\/|\/$/g, "")}/
+                          </span>
+                        )}
                       </div>
-                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                        {(["US", "UK"] as const).map((accent) => {
-                          const ipa =
-                            accent === "US" ? entry.ipaUs : entry.ipaUk;
-                          return (
-                            <button
-                              key={accent}
-                              type="button"
-                              onClick={() => handlePlayAudio(entry, accent)}
-                              disabled={playingAccent !== null}
-                              className="flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-left hover:border-amber-300 hover:bg-amber-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
-                            >
-                              <Volume2
-                                className={`size-4 shrink-0 ${
-                                  playingAccent === accent
-                                    ? "animate-pulse text-amber-600 motion-reduce:animate-none"
-                                    : "text-slate-500"
-                                }`}
-                                aria-hidden="true"
-                              />
-                              <span>
-                                <span className="block text-xs font-semibold text-slate-500">
-                                  {accent === "US" ? "Giọng Mỹ" : "Giọng Anh"}
-                                </span>
-                                <span className="block text-sm font-medium text-slate-800">
-                                  {ipa || "Chưa có phiên âm IPA"}
-                                </span>
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">
-                          Nghĩa tiếng Việt
-                        </p>
-                        <p className="mt-1 text-sm font-semibold leading-6 text-slate-900">
-                          {entry.meaningVi || "Nghĩa đang được bổ sung."}
-                        </p>
-                      </div>
-                      {hasExpandedDetails && entry.definitions.length > 0 && (
-                        <div className="mt-3 space-y-2">
-                          {entry.definitions.slice(0, 3).map((definition, index) => (
+
+                      {/* Vietnamese Meaning */}
+                      <p className="text-base sm:text-lg font-bold text-slate-800 leading-snug">
+                        {entry.meaningVi || "Nghĩa tiếng Việt đang được bổ sung."}
+                      </p>
+
+                      {/* Example Sentence */}
+                      {entry.examples?.[0] && (
+                        <div className="rounded-xl border border-slate-200/70 bg-white/90 p-3.5 sm:p-4 text-sm sm:text-base space-y-1.5">
+                          <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 block">
+                            Ví dụ trong câu
+                          </span>
+                          <p className="font-medium text-slate-800 italic leading-relaxed text-sm sm:text-base">
+                            “{highlightTargetWord(entry.examples[0], [canonicalWord, cleanWord, displayWord, entry.word])}”
+                          </p>
+                          {entry.exampleVi && (
+                            <p className="text-xs sm:text-sm text-slate-600 font-medium pt-1 border-t border-slate-100">
+                              → {entry.exampleVi}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Detailed Definitions (if enriched) */}
+                      {definitions.length > 0 && (
+                        <div className="space-y-2 pt-1">
+                          {definitions.map((def, defIdx) => (
                             <div
-                              key={`${definition.definition}-${index}`}
-                              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6"
+                              key={`${def.definition}-${defIdx}`}
+                              className="rounded-xl border border-slate-200/70 bg-white/80 p-3 text-xs sm:text-sm leading-relaxed"
                             >
-                              {definition.meaningVi && (
-                                <p className="font-semibold text-slate-900">
-                                  {definition.meaningVi}
-                                </p>
+                              {def.meaningVi && def.meaningVi !== entry.meaningVi && (
+                                <p className="font-bold text-slate-900 mb-0.5 text-sm sm:text-base">{def.meaningVi}</p>
                               )}
-                              <p className="text-slate-600">
-                                {definition.definition}
-                              </p>
-                              {definition.example && (
-                                <p className="mt-1 italic text-slate-500">
-                                  “{definition.example}”
+                              <p className="text-slate-600 font-medium">{def.definition}</p>
+                              {def.example && (
+                                <p className="mt-1 text-slate-500 italic">
+                                  “{highlightTargetWord(def.example, [canonicalWord, cleanWord, displayWord, entry.word])}”
                                 </p>
                               )}
                             </div>
                           ))}
                         </div>
                       )}
-                    </article>
-                  ))}
-                </section>
-              )}
+                    </div>
+                  );
+                })}
+              </section>
 
-              {definitions.length > 0 && (
-                <section>
-                  <h4 className="text-sm font-semibold text-slate-800">
-                    Các cách dùng phổ biến
+              {/* Common Collocations */}
+              {allCollocations.length > 0 && (
+                <section className="space-y-2 pt-1">
+                  <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-400">
+                    Cụm từ thường gặp (Collocations)
                   </h4>
-                  <ol className="mt-2 space-y-3">
-                    {definitions.map((definition, index) => (
-                      <li
-                        key={`${definition.definition}-${index}`}
-                        className="rounded-xl border border-slate-200 p-3"
-                      >
-                        <div className="flex gap-3">
-                          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">
-                            {index + 1}
-                          </span>
-                          <div className="min-w-0 text-sm leading-6">
-                            {definition.meaningVi &&
-                              definition.meaningVi !==
-                                selectedEntry.meaningVi && (
-                                <p className="font-semibold text-slate-900">
-                                  {definition.meaningVi}
-                                </p>
-                              )}
-                            <p className="text-slate-600">
-                              {definition.definition}
-                            </p>
-                            {definition.example && (
-                              <p className="mt-1 italic text-slate-500">
-                                “{definition.example}”
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-                </section>
-              )}
-
-              {!hasExpandedDetails && selectedEntry.examples[0] && (
-                <section className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Ví dụ trong bài luyện
-                  </p>
-                  <p className="mt-2 text-sm italic leading-6 text-slate-700">
-                    “{selectedEntry.examples[0]}”
-                  </p>
-                  {selectedEntry.exampleVi && (
-                    <p className="mt-1 text-sm leading-6 text-slate-500">
-                      {selectedEntry.exampleVi}
-                    </p>
-                  )}
-                </section>
-              )}
-
-              {!!selectedEntry.collocations?.length && (
-                <section>
-                  <h4 className="text-sm font-semibold text-slate-800">
-                    Cụm từ thường gặp
-                  </h4>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {selectedEntry.collocations.slice(0, 5).map((item) => (
+                  <div className="flex flex-wrap gap-2">
+                    {allCollocations.map((item) => (
                       <span
                         key={item.phrase}
-                        className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900"
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-sky-200/80 bg-sky-50/70 px-3 py-1.5 text-xs sm:text-sm text-sky-950 font-medium"
                       >
-                        <strong>{item.phrase}</strong>
-                        {item.meaningVi ? ` — ${item.meaningVi}` : ""}
+                        <strong className="font-bold text-sky-900">{item.phrase}</strong>
+                        {item.meaningVi && (
+                          <span className="text-sky-700 opacity-80">— {item.meaningVi}</span>
+                        )}
                       </span>
                     ))}
                   </div>
                 </section>
               )}
 
-              {(selectedEntry.synonyms.length > 0 ||
-                selectedEntry.antonyms.length > 0) && (
-                <section className="grid gap-3 sm:grid-cols-2">
-                  {selectedEntry.synonyms.length > 0 && (
-                    <div className="rounded-xl border border-slate-200 p-3">
-                      <p className="text-xs font-semibold text-slate-500">
+              {/* Synonyms / Antonyms */}
+              {(allSynonyms.length > 0 || allAntonyms.length > 0) && (
+                <section className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  {allSynonyms.length > 0 && (
+                    <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-3.5">
+                      <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">
                         Từ đồng nghĩa
-                      </p>
-                      <p className="mt-1 text-sm text-slate-800">
-                        {selectedEntry.synonyms.slice(0, 6).join(", ")}
+                      </span>
+                      <p className="text-xs sm:text-sm font-semibold text-slate-800">
+                        {allSynonyms.join(", ")}
                       </p>
                     </div>
                   )}
-                  {selectedEntry.antonyms.length > 0 && (
-                    <div className="rounded-xl border border-slate-200 p-3">
-                      <p className="text-xs font-semibold text-slate-500">
+                  {allAntonyms.length > 0 && (
+                    <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-3.5">
+                      <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">
                         Từ trái nghĩa
-                      </p>
-                      <p className="mt-1 text-sm text-slate-800">
-                        {selectedEntry.antonyms.slice(0, 6).join(", ")}
+                      </span>
+                      <p className="text-xs sm:text-sm font-semibold text-slate-800">
+                        {allAntonyms.join(", ")}
                       </p>
                     </div>
                   )}
                 </section>
               )}
 
-              <div
-                id="dictionary-status"
-                role="status"
-                aria-live="polite"
-                className="sr-only"
-              >
-                {enriching && (
-                  <span>Đang cập nhật thêm nghĩa và phiên âm.</span>
-                )}
+              <div id="dictionary-status" role="status" aria-live="polite" className="sr-only">
+                {enriching && <span>Đang cập nhật thêm nghĩa và phiên âm.</span>}
               </div>
             </div>
           )}
         </main>
 
-        {selectedEntry && onPracticeWord && (
-          <footer className="shrink-0 border-t border-slate-200 bg-white px-4 py-3 sm:px-6">
+        {/* Footer Action: Practice Word in Speaking */}
+        {entries.length > 0 && onPracticeWord && (
+          <footer className="shrink-0 border-t border-slate-100 bg-slate-50/50 px-5 py-4 sm:px-6">
             <button
               type="button"
               onClick={() => {
                 onPracticeWord(canonicalWord);
                 onClose();
               }}
-              className="min-h-11 w-full rounded-xl bg-amber-600 px-4 text-sm font-semibold text-white hover:bg-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+              className="min-h-12 w-full rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-sm sm:text-base shadow-xs shadow-amber-600/20 active:scale-[0.99] flex items-center justify-center gap-2.5 cursor-pointer transition-all"
             >
-              Luyện phát âm từ này
+              <Volume2 size={18} />
+              <span>Luyện phát âm từ này</span>
             </button>
           </footer>
         )}
@@ -641,3 +760,5 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
     </div>
   );
 };
+
+export default WordDictionaryPopup;
