@@ -39,6 +39,13 @@ import {
   shouldHandleSpeakingShortcut,
   getNextExerciseId,
 } from "@/lib/speaking/speakingPracticeLogic";
+import {
+  createWorkletFlushController,
+  isAudioWorkletSupported,
+  validateChunkSequence,
+  mergeAudioChunks,
+  type WorkletFlushController,
+} from "@/lib/speaking/speakingAudioWorkletLogic";
 import { WordDictionaryPopup } from "@/components/speaking/WordDictionaryPopup";
 import { PronunciationReportCard } from "@/components/speaking/PronunciationReportCard";
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
@@ -146,12 +153,16 @@ export default function SpeakingExerciseDetailPage() {
   // Audio recording hardware nodes
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
-  const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const workletNodeRef = useRef<AudioWorkletNode | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const recordedSamplesRef = useRef<Float32Array[]>([]);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const animFrameRef = useRef<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const workletFlushControllerRef =
+    useRef<WorkletFlushController | null>(null);
+  const lastChunkSequenceRef = useRef<number | null>(null);
+  const inputSampleRateRef = useRef<number>(44100);
 
   // TTS State
   const [isPlayingTTS, setIsPlayingTTS] = useState(false);
@@ -286,7 +297,7 @@ export default function SpeakingExerciseDetailPage() {
     () =>
       practiceSetKey && practiceSetExercises.length > 0
         ? practiceSetExercises
-        : allExercises ?? [],
+        : (allExercises ?? []),
     [allExercises, practiceSetExercises, practiceSetKey],
   );
 
@@ -328,11 +339,13 @@ export default function SpeakingExerciseDetailPage() {
       cancelAnimationFrame(animFrameRef.current);
       animFrameRef.current = null;
     }
-    if (processorRef.current) {
+    if (workletNodeRef.current) {
       try {
-        processorRef.current.disconnect();
+        workletNodeRef.current.onprocessorerror = null;
+        workletNodeRef.current.port.onmessage = null;
+        workletNodeRef.current.disconnect();
       } catch {}
-      processorRef.current = null;
+      workletNodeRef.current = null;
     }
     if (mediaStreamRef.current) {
       try {
@@ -348,6 +361,9 @@ export default function SpeakingExerciseDetailPage() {
       } catch {}
       audioContextRef.current = null;
     }
+    workletFlushControllerRef.current?.cancel();
+    workletFlushControllerRef.current = null;
+    lastChunkSequenceRef.current = null;
   }, []);
 
   const { confirmExit, exitDialogProps } = usePracticeExitGuard({
@@ -448,10 +464,19 @@ export default function SpeakingExerciseDetailPage() {
   const startRecording = useCallback(async () => {
     if (phase !== "READY") return;
 
+    if (!isAudioWorkletSupported()) {
+      toast.error(
+        "Trình duyệt hiện tại chưa hỗ trợ chế độ ghi âm ổn định. Vui lòng dùng Chrome, Edge, Firefox hoặc Safari phiên bản mới.",
+        { duration: 5000 },
+      );
+      return;
+    }
+
     try {
       setQualityWarning(null);
       setRecordingSeconds(0);
       recordedSamplesRef.current = [];
+      lastChunkSequenceRef.current = null;
       stopInFlightRef.current = false;
       submissionInFlightRef.current = false;
 
@@ -469,6 +494,11 @@ export default function SpeakingExerciseDetailPage() {
         window.AudioContext || (window as any).webkitAudioContext;
       const audioCtx = new AudioCtx();
       audioContextRef.current = audioCtx;
+      inputSampleRateRef.current = audioCtx.sampleRate || 44100;
+
+      await audioCtx.audioWorklet.addModule(
+        "/worklets/breadtrans-recorder-processor.js",
+      );
 
       const source = audioCtx.createMediaStreamSource(stream);
 
@@ -479,32 +509,77 @@ export default function SpeakingExerciseDetailPage() {
       analyserRef.current = analyser;
       source.connect(analyser);
 
-      // ScriptProcessorNode for pure PCM chunk extraction
-      const processor = audioCtx.createScriptProcessor(4096, 1, 1);
-      processorRef.current = processor;
+      // AudioWorkletNode for off-main-thread PCM chunk extraction
+      const workletNode = new AudioWorkletNode(
+        audioCtx,
+        "breadtrans-recorder-processor",
+      );
+      workletNodeRef.current = workletNode;
+      const flushController = createWorkletFlushController(workletNode);
+      workletFlushControllerRef.current = flushController;
 
-      processor.onaudioprocess = (e) => {
-        const inputData = e.inputBuffer.getChannelData(0);
-        recordedSamplesRef.current.push(new Float32Array(inputData));
+      workletNode.onprocessorerror = () => {
+        if (
+          !isMountedRef.current ||
+          workletNodeRef.current !== workletNode ||
+          stopInFlightRef.current
+        ) {
+          return;
+        }
+
+        setQualityWarning(
+          "Bộ ghi âm gặp lỗi ngoài dự kiến. Bản ghi chưa được gửi; vui lòng thu lại.",
+        );
+        stopInFlightRef.current = true;
+        submissionInFlightRef.current = false;
+        releaseMediaStream();
+        stopInFlightRef.current = false;
+        setPhase("INVALID_AUDIO");
+      };
+
+      workletNode.port.onmessage = (e: MessageEvent) => {
+        const data = e.data;
+        if (!data) return;
+
+        if (data.type === "audio") {
+          const chunk = new Float32Array(data.samples);
+          recordedSamplesRef.current.push(chunk);
+
+          const seqResult = validateChunkSequence(
+            lastChunkSequenceRef.current,
+            data.sequence,
+          );
+          if (!seqResult.valid) {
+            console.warn(
+              `[AudioWorklet] Sequence discontinuity detected: expected ${seqResult.expected}, got ${data.sequence} (gap: ${seqResult.gap})`,
+            );
+          }
+          lastChunkSequenceRef.current = data.sequence;
+        } else if (data.type === "flushed") {
+          flushController.onFlushedMessage();
+        }
       };
 
       // Connect to a Zero-Gain node to strictly avoid microphone audio loopback into speakers!
       const zeroGain = audioCtx.createGain();
       zeroGain.gain.value = 0.0;
 
-      source.connect(processor);
-      processor.connect(zeroGain);
+      source.connect(workletNode);
+      workletNode.connect(zeroGain);
       zeroGain.connect(audioCtx.destination);
 
       setPhase("RECORDING");
     } catch (err) {
-      console.error("Error accessing microphone:", err);
+      console.error("Error accessing microphone or loading AudioWorklet:", err);
+      releaseMediaStream();
+      recordedSamplesRef.current = [];
+      stopInFlightRef.current = false;
       toast.error(
-        "Không thể truy cập Microphone. Vui lòng kiểm tra và cấp quyền micro trong cài đặt trình duyệt.",
+        "Không thể truy cập Microphone hoặc khởi tạo bộ ghi âm. Vui lòng kiểm tra và cấp quyền micro trong cài đặt trình duyệt.",
       );
       setPhase("READY");
     }
-  }, [phase]);
+  }, [phase, releaseMediaStream]);
 
   /**
    * Polls GET /speaking/submissions/:id every 1.5s until terminal status.
@@ -613,30 +688,39 @@ export default function SpeakingExerciseDetailPage() {
     if (stopInFlightRef.current) return;
     stopInFlightRef.current = true;
 
-    const audioCtx = audioContextRef.current;
-    const inputSampleRate = audioCtx?.sampleRate || 44100;
+    // Stop timer immediately
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+
+    setPhase("ENCODING");
+
+    // Graceful flush: reject incomplete recordings instead of silently submitting truncated audio.
+    const flushController = workletFlushControllerRef.current;
+    const flushed = await (flushController?.flush() ?? Promise.resolve(false));
+    if (!flushed) {
+      setQualityWarning(
+        "Không thể hoàn tất dữ liệu ghi âm. Vui lòng thu lại để đảm bảo bản ghi đầy đủ.",
+      );
+      releaseMediaStream();
+      stopInFlightRef.current = false;
+      setPhase("INVALID_AUDIO");
+      return;
+    }
+
+    const inputSampleRate = inputSampleRateRef.current || 44100;
 
     // Disconnect and stop media hardware immediately so mic indicator turns OFF
     releaseMediaStream();
 
-    setPhase("ENCODING");
+    const merged = mergeAudioChunks(recordedSamplesRef.current);
 
-    const chunks = recordedSamplesRef.current;
-    let totalLength = 0;
-    for (const chunk of chunks) totalLength += chunk.length;
-
-    if (totalLength === 0) {
+    if (merged.length === 0) {
       setQualityWarning("Bản ghi âm rỗng. Vui lòng nói to rõ và thu lại.");
       setPhase("INVALID_AUDIO");
       stopInFlightRef.current = false;
       return;
-    }
-
-    const merged = new Float32Array(totalLength);
-    let offset = 0;
-    for (const chunk of chunks) {
-      merged.set(chunk, offset);
-      offset += chunk.length;
     }
 
     // 1. Resample strictly to 16,000 Hz.
@@ -781,8 +865,7 @@ export default function SpeakingExerciseDetailPage() {
             .filter((item) => item.practiceSet?.key === practiceSetKey)
             .sort(
               (a, b) =>
-                (a.practiceSet?.position ?? 0) -
-                (b.practiceSet?.position ?? 0),
+                (a.practiceSet?.position ?? 0) - (b.practiceSet?.position ?? 0),
             )
         : exercises;
       const nextId = getNextExerciseId(exerciseId, sessionExercises);
@@ -1137,7 +1220,8 @@ export default function SpeakingExerciseDetailPage() {
             </span>
             {activePracticeSet && (
               <span className="shrink-0 rounded bg-amber-500/15 border border-amber-400/30 px-2 py-0.5 text-[10px] font-bold text-amber-300">
-                Câu {currentPracticeSetPosition}/{activePracticeSet.exerciseCount}
+                Câu {currentPracticeSetPosition}/
+                {activePracticeSet.exerciseCount}
               </span>
             )}
             <span className="hidden sm:inline-block shrink-0 rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-[10px] font-bold text-slate-300 uppercase tracking-wider">
