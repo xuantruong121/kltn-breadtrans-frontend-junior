@@ -68,7 +68,11 @@ export default function PetPage() {
         setTimeout(() => setIsLevelUp(false), 5000);
       } else {
         setIsJustFed(true);
-        const msg = `Thú cưng đã được chăm sóc! (+${updatedPet.feedExpReward ?? 0} EXP)`;
+        const expReward = updatedPet.feedExpReward ?? 0;
+        const msg =
+          expReward > 0
+            ? `Thú cưng đã được cho ăn! (+${expReward} EXP)`
+            : `Thú cưng đã được cho ăn no nê!`;
         setStatusMessage(msg);
         toast.success(msg);
         setTimeout(() => setIsJustFed(false), 4000);
@@ -237,7 +241,7 @@ export default function PetPage() {
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
               <div className="flex items-center gap-2 text-amber-800">
                 <Zap size={18} aria-hidden="true" />
-                <h3 className="font-bold text-sm">Nội Tại Bổ Trợ Hiện Tại</h3>
+                <h3 className="font-bold text-sm">Đặc điểm thú cưng</h3>
               </div>
               <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/70 space-y-1">
                 <span className="font-bold text-amber-900 text-sm block">

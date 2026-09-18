@@ -34,8 +34,8 @@ export const PET_SPECIES_LIST: PetSpecies[] = [
     element: "Hệ Chiến Binh",
     elementColor: "bg-amber-100 text-amber-900 border-amber-300",
     icon: "🥖",
-    buff: "+5% EXP Đấu Trường 1v1",
-    buffDetail: "Tăng thêm 5% điểm kinh nghiệm khi bạn giành chiến thắng trong các trận so tài Đấu Trường 1v1.",
+    buff: "Tinh thần chiến đấu",
+    buffDetail: "Luôn cổ vũ bạn kiên trì trong các bài luyện tập và thử thách.",
     lore: "Chú bánh mì dũng cảm luôn mang theo thanh kiếm Baguette sắc bén, sẵn sàng cổ vũ bạn vượt qua mọi thử thách ngữ pháp và bài thi khó!",
     quote: "Tiến lên nào hiệp sĩ! Chiến thắng hôm nay thuộc về chúng ta!",
     themeColor: {
@@ -60,8 +60,8 @@ export const PET_SPECIES_LIST: PetSpecies[] = [
     element: "Hệ Học Thuật",
     elementColor: "bg-purple-100 text-purple-900 border-purple-300",
     icon: "🦉",
-    buff: "+10% Bánh Mì khi đạt điểm 10 Quiz",
-    buffDetail: "Thưởng thêm 10% số lượng Bánh Mì mỗi khi bạn giải đúng 100% câu hỏi trong các bài kiểm tra trắc nghiệm.",
+    buff: "Tinh thần học thuật",
+    buffDetail: "Khuyến khích bạn ôn lại kiến thức và hoàn thành bài kiểm tra cẩn thận.",
     lore: "Cú mèo thông thái với cuốn từ điển cổ thư ma thuật, luôn sẵn sàng nhắc nhở bạn những mẹo ghi nhớ từ vựng và cấu trúc ngữ pháp đỉnh cao.",
     quote: "Kiến thức là sức mạnh! Cùng mình khám phá thêm bài học mới nhé!",
     themeColor: {
@@ -86,8 +86,8 @@ export const PET_SPECIES_LIST: PetSpecies[] = [
     element: "Hệ Giao Tiếp",
     elementColor: "bg-rose-100 text-rose-900 border-rose-300",
     icon: "🐱",
-    buff: "Khiên Bảo Vệ Chuỗi Streak 1 ngày",
-    buffDetail: "Tự động cứu chuỗi ngày học của bạn 1 lần mỗi tuần nếu chẳng may bạn bận rộn quên học 1 ngày.",
+    buff: "Người bạn đồng hành",
+    buffDetail: "Nhắc bạn duy trì thói quen học tập đều đặn mỗi ngày.",
     lore: "Cô mèo bánh cá nhỏ nhắn từ Nhật Bản với chiếc nón bánh cá giòn rụm, cực kỳ yêu thích những bạn học sinh siêng năng luyện phát âm chuẩn xác!",
     quote: "Meow meow! Hôm nay bạn phát âm tiếng Anh cực kỳ chuẩn luôn đó!",
     themeColor: {
@@ -112,8 +112,8 @@ export const PET_SPECIES_LIST: PetSpecies[] = [
     element: "Hệ Giải Trí",
     elementColor: "bg-sky-100 text-sky-900 border-sky-300",
     icon: "🦊",
-    buff: "+15 EXP khi học qua Phim & Nhạc",
-    buffDetail: "Nhận thêm 15 điểm kinh nghiệm cho mỗi bài hát tiếng Anh hoặc đoạn trích phim luyện nghe bạn hoàn thành.",
+    buff: "Cảm hứng nghe hiểu",
+    buffDetail: "Khuyến khích bạn luyện nghe qua các nội dung gần gũi và giàu ngữ cảnh.",
     lore: "Cáo Foxy cực chất với chiếc tai nghe Gaming RGB, đam mê những giai điệu tiếng Anh sôi động và các bộ phim bom tấn đỉnh cao.",
     quote: "Bật nhạc lên nào! Vừa giải trí vừa giỏi tiếng Anh cùng Foxy nhé!",
     themeColor: {

@@ -637,6 +637,7 @@ export default function AdminQuizzesPage() {
               <div className="border-t-2 border-slate-100 pt-4 shrink-0">
                 <QuickAddQuestionForm
                   quizId={selectedQuizForQuestions.id}
+                  quizType={selectedQuizForQuestions.type}
                   onAdd={(data) =>
                     addQuestionMutation.mutate({
                       quizId: selectedQuizForQuestions.id,
@@ -658,8 +659,10 @@ export default function AdminQuizzesPage() {
 function QuickAddQuestionForm({
   onAdd,
   isLoading,
+  quizType,
 }: {
   quizId?: number;
+  quizType?: string;
   onAdd: (data: any) => void;
   isLoading: boolean;
 }) {
@@ -671,10 +674,19 @@ function QuickAddQuestionForm({
   const [optD, setOptD] = useState("");
   const [correctKey, setCorrectKey] = useState<"A" | "B" | "C" | "D">("A");
   const [explanation, setExplanation] = useState("");
+  const [practiceKind, setPracticeKind] = useState<"MULTIPLE_CHOICE" | "DICTATION" | "DIALOGUE">("MULTIPLE_CHOICE");
+  const [audioText, setAudioText] = useState("");
+  const [accent, setAccent] = useState("US");
+  const [dictationMode, setDictationMode] = useState<"STANDARD" | "STRICT">("STANDARD");
+  const [transcriptJson, setTranscriptJson] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!questionText.trim() || !optA.trim() || !optB.trim()) {
+    if (!questionText.trim() || (!audioText.trim() && quizType === "LISTENING_PRACTICE")) {
+      toast.error("Vui lòng nhập nội dung câu hỏi và audio text cho bài luyện nghe.");
+      return;
+    }
+    if (practiceKind === "MULTIPLE_CHOICE" && (!optA.trim() || !optB.trim())) {
       toast.error("Vui lòng nhập nội dung câu hỏi và ít nhất 2 đáp án A, B!");
       return;
     }
@@ -686,12 +698,32 @@ function QuickAddQuestionForm({
     const optionMap: Record<string, string> = { A: optA.trim(), B: optB.trim(), C: optC.trim(), D: optD.trim() };
     const correctValue = optionMap[correctKey] || optA.trim();
 
+    let transcriptSegments: unknown;
+    if (practiceKind === "DIALOGUE" && transcriptJson.trim()) {
+      try {
+        transcriptSegments = JSON.parse(transcriptJson);
+        if (!Array.isArray(transcriptSegments)) throw new Error("not array");
+      } catch {
+        toast.error("Transcript phải là JSON array gồm speaker và text.");
+        return;
+      }
+    }
+
     onAdd({
-      type: "MULTIPLE_CHOICE",
+      type: practiceKind,
       content: {
         text: questionText.trim(),
-        options,
-        correct: correctValue,
+        ...(practiceKind === "MULTIPLE_CHOICE" ? { options, correct: correctValue } : {}),
+        ...(quizType === "LISTENING_PRACTICE"
+          ? {
+              audioText: audioText.trim(),
+              accent,
+              ...(practiceKind === "DICTATION"
+                ? { correctAnswer: audioText.trim(), dictationMode }
+                : {}),
+              ...(practiceKind === "DIALOGUE" ? { transcriptSegments } : {}),
+            }
+          : {}),
         explanation: explanation.trim(),
       },
     });
@@ -703,6 +735,9 @@ function QuickAddQuestionForm({
     setOptC("");
     setOptD("");
     setExplanation("");
+    setAudioText("");
+    setTranscriptJson("");
+    setPracticeKind("MULTIPLE_CHOICE");
     setIsOpen(false);
   };
 
@@ -720,11 +755,49 @@ function QuickAddQuestionForm({
   return (
     <form onSubmit={handleSubmit} className="bg-slate-50 border-2 border-emerald-200 rounded-2xl p-4 space-y-3 text-xs font-bold">
       <div className="flex items-center justify-between">
-        <h4 className="font-black text-slate-800 text-sm text-emerald-700">Thêm Câu Hỏi Trắc Nghiệm Mới</h4>
+        <h4 className="font-black text-slate-800 text-sm text-emerald-700">Thêm câu hỏi mới</h4>
         <button type="button" onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-slate-600">
           <X size={16} />
         </button>
       </div>
+
+      {quizType === "LISTENING_PRACTICE" && (
+        <div className="grid grid-cols-3 gap-2">
+          <label className="text-slate-600">Dạng bài
+            <select value={practiceKind} onChange={(e) => setPracticeKind(e.target.value as typeof practiceKind)} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-800">
+              <option value="MULTIPLE_CHOICE">Nghe hiểu</option>
+              <option value="DICTATION">Nghe chép</option>
+              <option value="DIALOGUE">Hội thoại</option>
+            </select>
+          </label>
+          <label className="text-slate-600">Giọng đọc
+            <select value={accent} onChange={(e) => setAccent(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-800">
+              <option value="US">US</option><option value="UK">UK</option>
+            </select>
+          </label>
+          {practiceKind === "DICTATION" && (
+            <label className="text-slate-600">Chế độ
+              <select value={dictationMode} onChange={(e) => setDictationMode(e.target.value as typeof dictationMode)} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-800">
+                <option value="STANDARD">STANDARD</option><option value="STRICT">STRICT</option>
+              </select>
+            </label>
+          )}
+        </div>
+      )}
+
+      {quizType === "LISTENING_PRACTICE" && (
+        <div>
+          <label className="block text-slate-600 mb-1">Nội dung audio / đáp án nghe chép <span className="text-rose-500">*</span></label>
+          <textarea value={audioText} onChange={(e) => setAudioText(e.target.value)} rows={2} placeholder="Văn bản dùng để phát TTS hoặc đáp án chuẩn..." className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-800" />
+        </div>
+      )}
+
+      {quizType === "LISTENING_PRACTICE" && practiceKind === "DIALOGUE" && (
+        <div>
+          <label className="block text-slate-600 mb-1">Transcript theo lượt lời (JSON)</label>
+          <textarea value={transcriptJson} onChange={(e) => setTranscriptJson(e.target.value)} rows={3} placeholder='[{"speaker":"A","text":"...","translation":"..."}]' className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 font-mono text-[11px] text-slate-800" />
+        </div>
+      )}
 
       <div>
         <label className="block text-slate-600 mb-1">Nội dung câu hỏi <span className="text-rose-500">*</span></label>
@@ -738,7 +811,7 @@ function QuickAddQuestionForm({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
+      {practiceKind === "MULTIPLE_CHOICE" && <div className="grid grid-cols-2 gap-2">
         <div>
           <label className="block text-slate-600 mb-1">Đáp án A <span className="text-rose-500">*</span></label>
           <input
@@ -781,9 +854,9 @@ function QuickAddQuestionForm({
             className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-500 text-slate-800"
           />
         </div>
-      </div>
+      </div>}
 
-      <div className="grid grid-cols-2 gap-2">
+      {practiceKind === "MULTIPLE_CHOICE" && <div className="grid grid-cols-2 gap-2">
         <div>
           <label className="block text-slate-600 mb-1">Đáp án đúng <span className="text-rose-500">*</span></label>
           <select
@@ -807,7 +880,7 @@ function QuickAddQuestionForm({
             className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-500 text-slate-800"
           />
         </div>
-      </div>
+      </div>}
 
       <div className="flex items-center justify-end gap-2 pt-2">
         <button

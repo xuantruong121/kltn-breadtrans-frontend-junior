@@ -22,6 +22,7 @@ import { gamificationService } from "@/lib/api/services/gamification.service";
 import { useCompanionPetRuntime } from "../useCompanionPetRuntime";
 import {
   getPetVisualState,
+  getPetStatusCopy,
   canFeedPet,
   handleFeedFailure,
   getPetRecommendation,
@@ -72,16 +73,20 @@ export const FloatingCompanionPet: React.FC = () => {
     return PET_SPECIES_LIST.find((s) => s.id === speciesId) || PET_SPECIES_LIST[0];
   }, [speciesId]);
 
+  const satiety = Math.min(100, Math.max(0, pet?.satiety ?? 80));
+  const petDisplayName = pet?.name || speciesInfo.speciesName || "Bready";
+
   const visualEmotion = useMemo(() => {
     return getPetVisualState({
       health: pet?.health,
       happiness: pet?.happiness,
+      satiety,
       canFeed: pet?.canFeed,
       satietyState: pet?.satietyState,
       isJustFed,
       isLevelUp,
     });
-  }, [pet?.health, pet?.happiness, pet?.canFeed, pet?.satietyState, isJustFed, isLevelUp]);
+  }, [pet?.health, pet?.happiness, satiety, pet?.canFeed, pet?.satietyState, isJustFed, isLevelUp]);
 
   // Feed eligibility
   const feedEligibility = useMemo(() => {
@@ -89,11 +94,15 @@ export const FloatingCompanionPet: React.FC = () => {
   }, [pet, balance]);
 
   const feedCost = pet?.feedCost ?? 10;
-  const satietyText = pet?.satietyState === "FULL"
-    ? "Bready đang no, chưa cần ăn thêm"
-    : pet?.satietyState === "NORMAL"
-      ? "Bready đã ăn vừa đủ"
-      : "Bready đang đói, có thể cho ăn";
+  const satietyText = useMemo(() => {
+    return getPetStatusCopy({
+      petName: petDisplayName,
+      satietyState: pet?.satietyState,
+      satiety,
+      health: pet?.health,
+      happiness: pet?.happiness,
+    });
+  }, [petDisplayName, pet?.satietyState, satiety, pet?.health, pet?.happiness]);
 
   // Keyboard accessibility (Escape key closes popover or message)
   useEffect(() => {
@@ -360,6 +369,29 @@ export const FloatingCompanionPet: React.FC = () => {
                 />
               </div>
             </div>
+
+            {/* Satiety */}
+            <div>
+              <div className="flex justify-between text-[11px] font-medium mb-1">
+                <span className="flex items-center gap-1 text-slate-600">
+                  <Utensils size={12} className="text-orange-500" aria-hidden="true" /> Độ no
+                </span>
+                <span className="text-orange-700 font-bold">{satiety}%</span>
+              </div>
+              <div
+                className="h-2 rounded-full bg-slate-200/80 overflow-hidden"
+                role="progressbar"
+                aria-valuenow={satiety}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Độ no thú cưng"
+              >
+                <div
+                  className="h-full rounded-full bg-orange-500 transition-all duration-300 motion-reduce:transition-none"
+                  style={{ width: `${satiety}%` }}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Current Bánh Mì Balance */}
@@ -430,7 +462,7 @@ export const FloatingCompanionPet: React.FC = () => {
               )}
             </button>
 
-            {pet?.satietyState === "FULL" ? (
+            {!feedEligibility.allowed && (pet?.satietyState === "FULL" || satiety >= 80) ? (
               <p className="text-center text-[11px] font-medium text-slate-500">{satietyText}</p>
             ) : balance < feedCost ? (
               <p className="text-center text-[11px] font-semibold text-rose-600">
@@ -468,7 +500,7 @@ export const FloatingCompanionPet: React.FC = () => {
       >
         <CompanionPet2D speciesId={speciesId} state={visualEmotion} level={level} size="sm" />
 
-        {/* Small badge if quest is pending or on cooldown */}
+        {/* Small badge when a learning quest is pending */}
         {recommendation && !hasDismissedMessage && (
           <span
             className="absolute -top-1 -right-1 size-4 bg-amber-500 border-2 border-white rounded-full flex items-center justify-center animate-pulse"

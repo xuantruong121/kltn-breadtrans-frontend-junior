@@ -55,6 +55,19 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
 
   if (!analytics) return <div>Không tìm thấy kết quả.</div>;
 
+  const wrongQuestionIds = (analytics.results || [])
+    .filter((result: any) => result?.isCorrect !== true)
+    .map((result: any) => Number(result.questionId))
+    .filter((id: number, index: number, ids: number[]) =>
+      Number.isInteger(id) && id > 0 && ids.indexOf(id) === index,
+    );
+  const isListeningResult = analytics.questions?.some(
+    (question: any) => question?.type === "DICTATION" || question?.content?.audioText,
+  );
+  const wrongReviewHref = isListeningResult && wrongQuestionIds.length > 0
+    ? `/practice/quizzes/${analytics.quizId}?review=wrong&questionIds=${wrongQuestionIds.join(",")}`
+    : null;
+
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-20 relative">
       {showConfetti && <Confetti width={windowDimension.width} height={windowDimension.height} />}
@@ -183,6 +196,13 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
             </div>
 
             <div className="pt-2 flex flex-col gap-2">
+              {wrongReviewHref && (
+                <Link href={wrongReviewHref} className="w-full">
+                  <button className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-black py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer text-sm">
+                    <Target size={18} /> Ôn lại {wrongQuestionIds.length} câu sai
+                  </button>
+                </Link>
+              )}
               <button 
                 onClick={() => router.back()}
                 className="w-full flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-black py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer text-sm"

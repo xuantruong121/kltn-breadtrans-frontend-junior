@@ -21,6 +21,13 @@ export interface QuestionContent {
   imageUrl?: string;
   imageAlt?: string;
   imagePurpose?: "TOPIC_CONTEXT";
+  transcriptSegments?: Array<{
+    speaker: string;
+    text: string;
+    translation?: string;
+    startMs?: number;
+    endMs?: number;
+  }>;
   category?: string;
   section?: string;
 }
@@ -68,6 +75,7 @@ export interface SubmissionResult {
 
 export interface SubmissionAnalytics {
   submissionId: number;
+  quizId: number;
   quizTitle: string;
   overallScore: number;
   totalQuestions: number;
@@ -90,7 +98,7 @@ export interface ListeningPracticeCatalogItem {
   id: number;
   title: string;
   description: string | null;
-  mode: "COMPREHENSION" | "DICTATION";
+  mode: "COMPREHENSION" | "DICTATION" | "DIALOGUE";
   track?: string;
   levels?: string[];
   topics?: string[];
@@ -110,8 +118,21 @@ export interface CheckPracticeQuestionResult {
   isCorrect: boolean;
   submittedAnswer: string;
   correctAnswer: string;
+  evaluationMode?: "STANDARD" | "STRICT";
+  wordAccuracy?: number;
   explanation: QuestionExplanation | null;
   translation: string | null;
+}
+
+export interface ListeningPracticeAttempt {
+  id: number;
+  quizId: number;
+  currentQuestionId: number | null;
+  answers: Record<string, string>;
+  questionStates: Record<string, unknown>;
+  status: "IN_PROGRESS" | "COMPLETED" | "ABANDONED";
+  startedAt: string;
+  updatedAt: string;
 }
 
 export const quizService = {
@@ -149,8 +170,36 @@ export const quizService = {
     );
   },
 
-  submitQuiz: async (id: number, answers: AnswerDto[]): Promise<SubmissionResult> => {
-    return await axiosClient.post(`/quizzes/${id}/submit`, { answers });
+  getOrCreateListeningAttempt: async (
+    quizId: number,
+  ): Promise<ListeningPracticeAttempt> => {
+    return await axiosClient.post(`/quizzes/${quizId}/listening-attempts`);
+  },
+
+  saveListeningAttempt: async (
+    quizId: number,
+    attemptId: number,
+    payload: {
+      currentQuestionId?: number;
+      answers?: Record<string, string>;
+      questionStates?: Record<string, unknown>;
+    },
+  ): Promise<ListeningPracticeAttempt> => {
+    return await axiosClient.patch(
+      `/quizzes/${quizId}/listening-attempts/${attemptId}`,
+      payload,
+    );
+  },
+
+  submitQuiz: async (
+    id: number,
+    answers: AnswerDto[],
+    attemptId?: number,
+  ): Promise<SubmissionResult> => {
+    return await axiosClient.post(`/quizzes/${id}/submit`, {
+      answers,
+      ...(attemptId ? { attemptId } : {}),
+    });
   },
 
   getAnalytics: async (submissionId: number): Promise<SubmissionAnalytics> => {

@@ -488,7 +488,7 @@ export const PetStage3D: React.FC<PetStage3DProps> = ({
               </div>
               <div className="min-w-0 flex-1">
                 <h4 className="text-xs font-black text-amber-900 leading-tight">
-                  Kỹ Năng Nội Tại: {activeSpecies.buff}
+                        Đặc điểm thú cưng: {activeSpecies.buff}
                 </h4>
                 <p className="text-[11px] font-medium text-amber-800/80 mt-0.5 leading-snug">
                   {activeSpecies.buffDetail}

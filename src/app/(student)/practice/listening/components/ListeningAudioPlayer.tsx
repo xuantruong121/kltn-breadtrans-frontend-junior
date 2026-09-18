@@ -10,6 +10,8 @@ interface ListeningAudioPlayerProps {
   accent?: string;
   muted?: boolean;
   className?: string;
+  onProgress?: (currentTime: number, duration: number) => void;
+  onPlaybackChange?: (isPlaying: boolean) => void;
 }
 
 function formatTime(seconds: number): string {
@@ -25,6 +27,8 @@ export function ListeningAudioPlayer({
   accent,
   muted = false,
   className,
+  onProgress,
+  onPlaybackChange,
 }: ListeningAudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const objectUrlRef = useRef<string | null>(null);
@@ -149,11 +153,37 @@ export function ListeningAudioPlayer({
   });
 
   useEffect(() => {
+    const onToggle = () => togglePlayRef.current();
+    const onReplay = () => {
+      if (!audioRef.current || isLoading || error) return;
+      audioRef.current.currentTime = 0;
+      void audioRef.current.play().catch(() => setIsPlaying(false));
+    };
+    const onSpeed = (event: Event) => {
+      const direction = (event as CustomEvent<{ direction?: string }>).detail?.direction;
+      const rates = [0.75, 1, 1.25, 1.5];
+      const index = rates.indexOf(playbackRateRef.current);
+      const nextIndex = direction === "up"
+        ? Math.min(rates.length - 1, index + 1)
+        : Math.max(0, index - 1);
+      handleRateChange(rates[nextIndex < 0 ? 1 : nextIndex]);
+    };
+    window.addEventListener("breadtrans:toggle-listening-audio", onToggle);
+    window.addEventListener("breadtrans:replay-listening-audio", onReplay);
+    window.addEventListener("breadtrans:change-listening-speed", onSpeed);
+    return () => {
+      window.removeEventListener("breadtrans:toggle-listening-audio", onToggle);
+      window.removeEventListener("breadtrans:replay-listening-audio", onReplay);
+      window.removeEventListener("breadtrans:change-listening-speed", onSpeed);
+    };
+  }, [error, isLoading]);
+
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeTag = (document.activeElement?.tagName || "").toLowerCase();
       if (activeTag === "input" || activeTag === "textarea") return;
 
-      if (e.code === "Space") {
+      if (e.ctrlKey && e.code === "Space") {
         e.preventDefault();
         togglePlayRef.current();
       } else if (e.shiftKey && e.code === "ArrowLeft") {
@@ -179,20 +209,31 @@ export function ListeningAudioPlayer({
         muted={muted}
         onTimeUpdate={() => {
           if (audioRef.current) {
-            setCurrentTime(audioRef.current.currentTime);
+            const nextTime = audioRef.current.currentTime;
+            setCurrentTime(nextTime);
+            onProgress?.(nextTime, audioRef.current.duration || 0);
           }
         }}
         onLoadedMetadata={() => {
           if (audioRef.current) {
             setDuration(audioRef.current.duration || 0);
             audioRef.current.playbackRate = playbackRateRef.current;
+            onProgress?.(audioRef.current.currentTime, audioRef.current.duration || 0);
           }
         }}
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
+        onPlay={() => {
+          setIsPlaying(true);
+          onPlaybackChange?.(true);
+        }}
+        onPause={() => {
+          setIsPlaying(false);
+          onPlaybackChange?.(false);
+        }}
         onEnded={() => {
           setIsPlaying(false);
           setCurrentTime(0);
+          onPlaybackChange?.(false);
+          onProgress?.(0, audioRef.current?.duration || 0);
         }}
         onEmptied={() => {
           setIsPlaying(false);
@@ -276,9 +317,10 @@ export function ListeningAudioPlayer({
             {/* Playback speed selector pills */}
             <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1">
               {[
-                { rate: 0.8, label: "0.8x" },
+                { rate: 0.75, label: "0.75x" },
                 { rate: 1.0, label: "1.0x (Chuẩn)" },
-                { rate: 1.2, label: "1.2x" },
+                { rate: 1.25, label: "1.25x" },
+                { rate: 1.5, label: "1.5x" },
               ].map(({ rate, label }) => (
                 <button
                   key={rate}

@@ -9,6 +9,7 @@ import {
   Filter,
   Headphones,
   Loader2,
+  MessageCircleMore,
   PenLine,
   RotateCcw,
   Search,
@@ -112,6 +113,10 @@ function ListeningCatalogContent() {
     () => quizzes.filter((q) => (q.mode || "").toUpperCase() === "DICTATION").length,
     [quizzes],
   );
+  const dialogueCount = useMemo(
+    () => quizzes.filter((q) => (q.mode || "").toUpperCase() === "DIALOGUE").length,
+    [quizzes],
+  );
 
   // Filter quizzes
   const filteredQuizzes = useMemo(() => {
@@ -120,6 +125,7 @@ function ListeningCatalogContent() {
       const qMode = (q.mode || "COMPREHENSION").toUpperCase();
       if (modeParam === "COMPREHENSION" && qMode !== "COMPREHENSION") return false;
       if (modeParam === "DICTATION" && qMode !== "DICTATION") return false;
+      if (modeParam === "DIALOGUE" && qMode !== "DIALOGUE") return false;
 
       // Level filter
       if (levelParam !== "ALL") {
@@ -181,7 +187,7 @@ function ListeningCatalogContent() {
             Luyện nghe theo ngữ cảnh thực tế
           </h1>
           <p className="text-xs leading-relaxed text-slate-600 sm:text-sm">
-            Nâng cao khả năng phản xạ và nắm bắt ý chính qua các đoạn hội thoại thường ngày, du lịch và công việc.
+            Chọn chủ đề bạn quan tâm để nghe hiểu, nghe chép hoặc theo dõi hội thoại theo từng lượt lời. Nội dung này phục vụ luyện 4 kỹ năng tiếng Anh độc lập.
           </p>
 
           {/* Secondary link to TOEIC */}
@@ -199,7 +205,7 @@ function ListeningCatalogContent() {
 
       {/* Mode Tabs */}
       <div className="border-b border-slate-200">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:thin]">
           <button
             type="button"
             onClick={() => setQueryParam("mode", "ALL")}
@@ -238,8 +244,60 @@ function ListeningCatalogContent() {
             <PenLine size={15} aria-hidden="true" />
             Nghe chép ({dictationCount})
           </button>
+
+          <button
+            type="button"
+            onClick={() => setQueryParam("mode", "DIALOGUE")}
+            className={`inline-flex items-center gap-2 border-b-2 px-4 py-3 text-xs font-black transition ${
+              modeParam === "DIALOGUE"
+                ? "border-blue-600 text-blue-700"
+                : "border-transparent text-slate-500 hover:text-slate-900"
+            }`}
+          >
+            <MessageCircleMore size={15} aria-hidden="true" />
+            Hội thoại ({dialogueCount})
+          </button>
         </div>
       </div>
+
+      {allTopics.length > 0 && (
+        <section aria-labelledby="listening-topic-heading" className="space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="listening-topic-heading" className="text-sm font-extrabold text-slate-900">
+              Khám phá theo chủ đề
+            </h2>
+            {topicParam !== "ALL" && (
+              <button
+                type="button"
+                onClick={() => setQueryParam("topic", "ALL")}
+                className="min-h-9 rounded-lg px-2 text-xs font-bold text-blue-700 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+              >
+                Xem tất cả
+              </button>
+            )}
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:thin]">
+            {allTopics.map((topic) => {
+              const selected = topicParam === topic;
+              return (
+                <button
+                  key={topic}
+                  type="button"
+                  onClick={() => setQueryParam("topic", selected ? "ALL" : topic)}
+                  aria-pressed={selected}
+                  className={`min-h-11 shrink-0 rounded-xl border px-3.5 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
+                    selected
+                      ? "border-blue-600 bg-blue-600 text-white"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50"
+                  }`}
+                >
+                  {topic}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Filter Toolbar */}
       <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs sm:p-5">

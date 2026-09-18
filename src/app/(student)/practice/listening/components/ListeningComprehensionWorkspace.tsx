@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
@@ -17,6 +17,8 @@ import {
   Languages,
   LayoutGrid,
   Loader2,
+  MessageCircleMore,
+  PenLine,
   Star,
   StickyNote,
   Volume2,
@@ -40,29 +42,94 @@ import { PracticeExitConfirmDialog } from "@/components/practice/PracticeExitCon
 import { WordDictionaryPopup } from "@/components/speaking/WordDictionaryPopup";
 import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
 import { ReportIssueButton } from "@/components/issue-report";
+import {
+  diffDictationAnswer,
+  type DictationDiffToken,
+} from "./listeningDictationUtils";
 
 interface ListeningComprehensionWorkspaceProps {
   quiz?: Quiz | null;
   isLoading?: boolean;
   onBack: () => void;
+  reviewOnly?: boolean;
+  reviewQuestionIds?: number[];
+}
+
+interface DictationAttemptMetrics {
+  attemptCount: number;
+  firstTryCorrect: boolean | null;
+  bestWordAccuracy: number;
+  hintCount: number;
+  replayCount: number;
+  revealed: boolean;
+}
+
+function getActiveTranscriptSegmentIndex(
+  segments: NonNullable<QuestionContent["transcriptSegments"]>,
+  currentTime: number,
+  duration: number,
+): number {
+  if (segments.length === 0 || duration <= 0) return 0;
+
+  const hasTiming = segments.every(
+    (segment) =>
+      Number.isFinite(segment.startMs) &&
+      Number.isFinite(segment.endMs) &&
+      (segment.endMs ?? 0) >= (segment.startMs ?? 0),
+  );
+  if (hasTiming) {
+    const currentMs = currentTime * 1000;
+    const activeIndex = segments.findIndex(
+      (segment) =>
+        currentMs >= (segment.startMs ?? 0) &&
+        currentMs <= (segment.endMs ?? Number.POSITIVE_INFINITY),
+    );
+    if (activeIndex >= 0) return activeIndex;
+    return currentMs < (segments[0].startMs ?? 0) ? 0 : segments.length - 1;
+  }
+
+  const wordsPerSegment = segments.map((segment) =>
+    segment.text.trim().split(/\s+/).filter(Boolean).length,
+  );
+  const totalWords = wordsPerSegment.reduce((total, count) => total + count, 0);
+  if (totalWords === 0) return 0;
+
+  const playedWords = Math.min(1, Math.max(0, currentTime / duration)) * totalWords;
+  let cumulativeWords = 0;
+  for (let index = 0; index < wordsPerSegment.length; index += 1) {
+    cumulativeWords += wordsPerSegment[index];
+    if (playedWords <= cumulativeWords) return index;
+  }
+  return segments.length - 1;
 }
 
 export function ListeningComprehensionWorkspace({
   quiz,
   isLoading,
   onBack,
+  reviewOnly = false,
+  reviewQuestionIds = [],
 }: ListeningComprehensionWorkspaceProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const questions: Question[] = quiz?.questions || [];
+  const questions: Question[] = useMemo(() => {
+    const allQuestions = quiz?.questions || [];
+    if (!reviewOnly || reviewQuestionIds.length === 0) return allQuestions;
+    const allowed = new Set(reviewQuestionIds);
+    return allQuestions.filter((question) => allowed.has(question.id));
+  }, [quiz?.questions, reviewOnly, reviewQuestionIds]);
   const quizId = quiz?.id;
+  const sessionKey = `breadtrans:listening-session:${quizId ?? "unknown"}${reviewOnly ? ":wrong-review" : ""}`;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answersByQuestionId, setAnswersByQuestionId] = useState<
     Record<number, string>
   >({});
   const [checkResults, setCheckResults] = useState<
     Record<number, CheckPracticeQuestionResult>
+  >({});
+  const [dictationMetrics, setDictationMetrics] = useState<
+    Record<number, DictationAttemptMetrics>
   >({});
   const [isChecking, setIsChecking] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -82,10 +149,108 @@ export function ListeningComprehensionWorkspace({
   const [soundMuted, setSoundMuted] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [transcriptOpen, setTranscriptOpen] = useState(false);
+  const [showFullTranscript, setShowFullTranscript] = useState(false);
+  const [revealedQuestionIds, setRevealedQuestionIds] = useState<Record<number, boolean>>({});
+  const [skippedQuestionIds, setSkippedQuestionIds] = useState<Record<number, boolean>>({});
+  const [sessionHydrated, setSessionHydrated] = useState(false);
+  const [listeningAttemptId, setListeningAttemptId] = useState<number | null>(null);
   const [lookupWord, setLookupWord] = useState<string | null>(null);
+  const [failedImageKey, setFailedImageKey] = useState<string | null>(null);
   const [loadedUtilityQuizId, setLoadedUtilityQuizId] = useState<number | null>(
     null,
   );
+  const [audioProgress, setAudioProgress] = useState({
+    currentTime: 0,
+    duration: 0,
+  });
+
+  useEffect(() => {
+    if (!quizId || questions.length === 0) return;
+    const timer = window.setTimeout(() => {
+      try {
+        const raw = localStorage.getItem(sessionKey);
+        const stored = raw ? JSON.parse(raw) : {};
+        setCurrentIndex(
+          Number.isInteger(stored.currentIndex)
+            ? Math.min(Math.max(stored.currentIndex, 0), questions.length - 1)
+            : 0,
+        );
+        setAnswersByQuestionId(stored.answersByQuestionId ?? {});
+        setCheckResults(stored.checkResults ?? {});
+        setDictationMetrics(stored.dictationMetrics ?? {});
+        setRevealedQuestionIds(stored.revealedQuestionIds ?? {});
+        setSkippedQuestionIds(stored.skippedQuestionIds ?? {});
+      } catch {
+        setCurrentIndex(0);
+        setAnswersByQuestionId({});
+        setCheckResults({});
+        setDictationMetrics({});
+        setRevealedQuestionIds({});
+        setSkippedQuestionIds({});
+      }
+      setSessionHydrated(true);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [quizId, questions.length, sessionKey]);
+
+  useEffect(() => {
+    if (!quizId || !sessionHydrated) return;
+    localStorage.setItem(
+      sessionKey,
+      JSON.stringify({
+        currentIndex,
+        answersByQuestionId,
+        checkResults,
+        dictationMetrics,
+        revealedQuestionIds,
+        skippedQuestionIds,
+      }),
+    );
+  }, [
+    answersByQuestionId,
+    checkResults,
+    currentIndex,
+    dictationMetrics,
+    quizId,
+    revealedQuestionIds,
+    sessionHydrated,
+    sessionKey,
+    skippedQuestionIds,
+  ]);
+
+  useEffect(() => {
+    if (
+      !quizId ||
+      reviewOnly ||
+      !sessionHydrated ||
+      !useAuthStore.getState().user
+    ) return;
+    let cancelled = false;
+    void quizService.getOrCreateListeningAttempt(quizId).then((attempt) => {
+      if (cancelled) return;
+      setListeningAttemptId(attempt.id);
+      const localRaw = localStorage.getItem(sessionKey);
+      if (localRaw) return;
+      if (attempt.currentQuestionId) {
+        const restoredIndex = questions.findIndex(
+          (question) => question.id === attempt.currentQuestionId,
+        );
+        if (restoredIndex >= 0) setCurrentIndex(restoredIndex);
+      }
+      if (attempt.answers && typeof attempt.answers === "object") {
+        setAnswersByQuestionId(
+          Object.fromEntries(
+            Object.entries(attempt.answers).map(([key, value]) => [key, String(value)]),
+          ) as Record<number, string>,
+        );
+      }
+    }).catch(() => {
+      // Local persistence remains available when the optional server checkpoint is unavailable.
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [quizId, questions, reviewOnly, sessionHydrated, sessionKey]);
 
   const shortcutsRef = useRef<HTMLDivElement | null>(null);
   const matrixPopoverRef = useRef<HTMLDivElement | null>(null);
@@ -151,10 +316,20 @@ export function ListeningComprehensionWorkspace({
   }, []);
 
   const currentQuestion = questions[currentIndex];
+
   const currentCheck = currentQuestion
     ? checkResults[currentQuestion.id]
     : undefined;
   const isChecked = Boolean(currentCheck);
+  const isDictationQuestion = currentQuestion?.type === "DICTATION";
+  const canRetryDictation = Boolean(
+    isDictationQuestion &&
+      isChecked &&
+      currentCheck &&
+      !currentCheck.isCorrect &&
+      !revealedQuestionIds[currentQuestion?.id ?? -1],
+  );
+  const isAnswerLocked = isChecked && !canRetryDictation;
   const parsedExplanation = parseQuestionExplanation(currentCheck?.explanation);
   const selectedAnswer = currentQuestion
     ? answersByQuestionId[currentQuestion.id] || ""
@@ -176,7 +351,13 @@ export function ListeningComprehensionWorkspace({
 
   // Check mutation
   const handleCheck = async (answer = selectedAnswer) => {
-    if (!quiz || !currentQuestion || !answer || isChecking || isChecked) return;
+    if (
+      !quiz ||
+      !currentQuestion ||
+      !answer ||
+      isChecking ||
+      (isChecked && !canRetryDictation)
+    ) return;
     setIsChecking(true);
     setValidationNotice(null);
     try {
@@ -189,6 +370,40 @@ export function ListeningComprehensionWorkspace({
         ...prev,
         [currentQuestion.id]: res,
       }));
+      checkpointAttempt({
+        currentQuestionId: currentQuestion.id,
+        answers: { ...answersByQuestionId, [currentQuestion.id]: answer },
+        questionStates: { ...checkResults, [currentQuestion.id]: res },
+      });
+      if (currentQuestion.type === "DICTATION") {
+        setDictationMetrics((previous) => {
+          const prior = previous[currentQuestion.id] ?? {
+            attemptCount: 0,
+            firstTryCorrect: null,
+            bestWordAccuracy: 0,
+            hintCount: 0,
+            replayCount: 0,
+            revealed: false,
+          };
+          const wordAccuracy = Number.isFinite(res.wordAccuracy)
+            ? res.wordAccuracy ?? 0
+            : res.isCorrect
+              ? 100
+              : 0;
+          return {
+            ...previous,
+            [currentQuestion.id]: {
+              ...prior,
+              attemptCount: prior.attemptCount + 1,
+              firstTryCorrect:
+                prior.attemptCount === 0
+                  ? res.isCorrect
+                  : prior.firstTryCorrect,
+              bestWordAccuracy: Math.max(prior.bestWordAccuracy, wordAccuracy),
+            },
+          };
+        });
+      }
     } catch {
       setValidationNotice("Không thể kiểm tra câu trả lời. Vui lòng thử lại.");
     } finally {
@@ -197,13 +412,34 @@ export function ListeningComprehensionWorkspace({
   };
 
   const handleAnswerSelect = (answer: string) => {
-    if (!currentQuestion || isChecking || isChecked) return;
+    if (
+      !currentQuestion ||
+      isChecking ||
+      (isChecked && !canRetryDictation)
+    ) return;
 
     setAnswersByQuestionId((prev) => ({
       ...prev,
       [currentQuestion.id]: answer,
     }));
     void handleCheck(answer);
+  };
+
+  const checkpointAttempt = (
+    overrides: {
+      currentQuestionId?: number;
+      answers?: Record<number, string>;
+      questionStates?: Record<number, unknown>;
+    } = {},
+  ) => {
+    if (reviewOnly || !quizId || !listeningAttemptId) return;
+    void quizService.saveListeningAttempt(quizId, listeningAttemptId, {
+      currentQuestionId: overrides.currentQuestionId ?? currentQuestion?.id,
+      answers: overrides.answers ?? answersByQuestionId,
+      questionStates: overrides.questionStates ?? checkResults,
+    }).catch(() => {
+      // Local session storage remains the immediate recovery path if checkpointing is offline.
+    });
   };
 
   // Check if every question has an answer and has been checked
@@ -221,9 +457,10 @@ export function ListeningComprehensionWorkspace({
 
   // Final submit mutation
   const submitMutation = useMutation({
-    mutationFn: (payload: AnswerDto[]) =>
-      quizService.submitQuiz(quiz?.id ?? 0, payload),
+    mutationFn: (input: { payload: AnswerDto[]; attemptId: number | null }) =>
+      quizService.submitQuiz(quiz?.id ?? 0, input.payload, input.attemptId ?? undefined),
     onSuccess: (data) => {
+      localStorage.removeItem(sessionKey);
       // Invalidate relevant query caches
       queryClient.invalidateQueries({ queryKey: ["listeningPractices"] });
       queryClient.invalidateQueries({ queryKey: ["listening-practices"] });
@@ -257,6 +494,10 @@ export function ListeningComprehensionWorkspace({
 
   // Handle final submission with client-side double-click guard
   const handleFinalSubmit = () => {
+    if (reviewOnly) {
+      confirmExit("/practice/listening");
+      return;
+    }
     if (isSubmitting || submitMutation.isPending) return;
 
     const { isComplete, firstUnresolvedIndex } = checkIsAllComplete();
@@ -277,48 +518,143 @@ export function ListeningComprehensionWorkspace({
       answer: answersByQuestionId[q.id],
     }));
 
-    submitMutation.mutate(payload);
+    checkpointAttempt({
+      currentQuestionId: currentQuestion?.id,
+      answers: answersByQuestionId,
+      questionStates: checkResults,
+    });
+    submitMutation.mutate({ payload, attemptId: listeningAttemptId });
   };
 
   // Advance to next question
   const handleNextQuestion = () => {
     setValidationNotice(null);
     if (currentIndex < questions.length - 1) {
+      checkpointAttempt({ currentQuestionId: questions[currentIndex + 1]?.id });
       setCurrentIndex((prev) => prev + 1);
     }
+  };
+
+  const handleSkipQuestion = () => {
+    if (
+      !currentQuestion ||
+      (isChecked && !canRetryDictation) ||
+      isChecking
+    ) return;
+    setSkippedQuestionIds((previous) => ({ ...previous, [currentQuestion.id]: true }));
+    checkpointAttempt({
+      currentQuestionId: questions[currentIndex + 1]?.id ?? currentQuestion.id,
+      questionStates: { ...checkResults, [currentQuestion.id]: { skipped: true } },
+    });
+    setValidationNotice(null);
+    if (currentIndex < questions.length - 1) {
+      setCurrentIndex((previous) => previous + 1);
+    } else {
+      setValidationNotice("Bạn đã bỏ qua câu cuối. Hãy quay lại hoàn thành trước khi nộp bài.");
+    }
+  };
+
+  const toggleRevealAnswer = () => {
+    if (!currentQuestion || !currentCheck) return;
+    setRevealedQuestionIds((previous) => ({
+      ...previous,
+      [currentQuestion.id]: !previous[currentQuestion.id],
+    }));
   };
 
   // Keyboard shortcut listeners (1-4 select and check, Enter advances)
   const latestActionsRef = useRef({
     isChecked,
+    canRetryDictation,
     currentQuestion,
+    currentAnswer: selectedAnswer,
     options,
     isLastQuestion,
     handleAnswerSelect,
+    handleCheck,
     handleFinalSubmit,
     handleNextQuestion,
+    handleSkipQuestion,
+    toggleRevealAnswer,
   });
 
   useEffect(() => {
     latestActionsRef.current = {
       isChecked,
+      canRetryDictation,
       currentQuestion,
+      currentAnswer: selectedAnswer,
       options,
       isLastQuestion,
       handleAnswerSelect,
+      handleCheck,
       handleFinalSubmit,
       handleNextQuestion,
+      handleSkipQuestion,
+      toggleRevealAnswer,
     };
   });
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeTag = (document.activeElement?.tagName || "").toLowerCase();
-      if (activeTag === "input" || activeTag === "textarea") return;
-
       const actions = latestActionsRef.current;
+      const isTyping = activeTag === "input" || activeTag === "textarea" ||
+        (document.activeElement as HTMLElement | null)?.isContentEditable;
 
-      if (!actions.isChecked && actions.currentQuestion) {
+      if (e.ctrlKey && e.code === "Enter") {
+        e.preventDefault();
+        if (actions.isChecked && !actions.canRetryDictation) {
+          if (actions.isLastQuestion) actions.handleFinalSubmit();
+          else actions.handleNextQuestion();
+        } else if (actions.currentQuestion?.type === "DICTATION") {
+          const answer = actions.currentAnswer;
+          if (answer.trim()) void actions.handleCheck(answer);
+        }
+        return;
+      }
+
+      if (e.ctrlKey && e.code === "Space") {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent("breadtrans:toggle-listening-audio"));
+        return;
+      }
+
+      if (e.altKey && e.key.toLowerCase() === "r") {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent("breadtrans:replay-listening-audio"));
+        return;
+      }
+      if (e.altKey && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        actions.handleSkipQuestion();
+        return;
+      }
+      if (e.altKey && e.key.toLowerCase() === "a") {
+        e.preventDefault();
+        actions.toggleRevealAnswer();
+        return;
+      }
+      if (e.altKey && e.key.toLowerCase() === "t") {
+        e.preventDefault();
+        setShowFullTranscript((value) => !value);
+        return;
+      }
+      if (e.altKey && (e.key === "[" || e.key === "]")) {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent("breadtrans:change-listening-speed", {
+          detail: { direction: e.key === "]" ? "up" : "down" },
+        }));
+        return;
+      }
+
+      if (isTyping) return;
+
+      if (
+        !actions.isChecked &&
+        actions.currentQuestion &&
+        actions.currentQuestion.type !== "DICTATION"
+      ) {
         if (["1", "2", "3", "4"].includes(e.key)) {
           const optIdx = parseInt(e.key, 10) - 1;
           const chosen = actions.options[optIdx];
@@ -331,7 +667,7 @@ export function ListeningComprehensionWorkspace({
 
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
-        if (actions.isChecked) {
+        if (actions.isChecked && !actions.canRetryDictation) {
           if (actions.isLastQuestion) {
             actions.handleFinalSubmit();
           } else {
@@ -389,6 +725,8 @@ export function ListeningComprehensionWorkspace({
     questionContent.imageUrl.trim()
       ? questionContent.imageUrl.trim()
       : null;
+  const imageKey = currentQuestion ? `${currentQuestion.id}:${imageUrl ?? ""}` : "";
+  const imageLoadFailed = imageKey.length > 0 && failedImageKey === imageKey;
   const imageAlt =
     typeof questionContent.imageAlt === "string" &&
     questionContent.imageAlt.trim()
@@ -397,6 +735,27 @@ export function ListeningComprehensionWorkspace({
   const hasBilingualTranslation =
     typeof questionContent.translation === "string" &&
     questionContent.translation.trim().length > 0;
+  const transcriptSegments = Array.isArray(questionContent.transcriptSegments)
+    ? questionContent.transcriptSegments.filter(
+        (segment) =>
+          segment &&
+          typeof segment.speaker === "string" &&
+          typeof segment.text === "string" &&
+          segment.text.trim().length > 0,
+      )
+    : [];
+  const isDialogue = transcriptSegments.length > 0;
+  const isDictation = currentQuestion.type === "DICTATION";
+  const isRevealed = Boolean(currentQuestion && revealedQuestionIds[currentQuestion.id]);
+  const dictationDiff: DictationDiffToken[] =
+    isDictation && currentCheck
+      ? diffDictationAnswer(currentCheck.correctAnswer, currentCheck.submittedAnswer)
+      : [];
+  const activeTranscriptSegmentIndex = getActiveTranscriptSegmentIndex(
+    transcriptSegments,
+    audioProgress.currentTime,
+    audioProgress.duration,
+  );
 
   const showToast = (message: string, duration = 3000) => {
     setToastMessage(message);
@@ -441,7 +800,7 @@ export function ListeningComprehensionWorkspace({
               {quiz.title}
             </span>
             <span className="shrink-0 rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider">
-              {levelTag}
+              {reviewOnly ? "ÔN CÂU SAI" : levelTag}
             </span>
           </div>
         </div>
@@ -516,7 +875,7 @@ export function ListeningComprehensionWorkspace({
                   <li className="flex items-center justify-between">
                     <span>Phát / Dừng audio:</span>
                     <kbd className="rounded border border-slate-200 bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800">
-                      Space
+                      Ctrl + Space
                     </kbd>
                   </li>
                   <li className="flex items-center justify-between">
@@ -528,13 +887,19 @@ export function ListeningComprehensionWorkspace({
                   <li className="flex items-center justify-between">
                     <span>Kiểm tra / Câu tiếp:</span>
                     <kbd className="rounded border border-slate-200 bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800">
-                      Enter
+                      Ctrl + Enter
                     </kbd>
                   </li>
                   <li className="flex items-center justify-between">
                     <span>Tua lại 5 giây:</span>
                     <kbd className="rounded border border-slate-200 bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800">
                       Shift + ←
+                    </kbd>
+                  </li>
+                  <li className="flex items-center justify-between">
+                    <span>Nghe lại / Bỏ qua / Hiện đáp án:</span>
+                    <kbd className="rounded border border-slate-200 bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800">
+                      Alt + R / S / A
                     </kbd>
                   </li>
                 </ul>
@@ -557,6 +922,22 @@ export function ListeningComprehensionWorkspace({
             <span className="hidden md:inline">Âm thanh</span>
           </button>
 
+          {(isDialogue || (isDictation && isChecked)) && (
+            <button
+              type="button"
+              onClick={() => setShowFullTranscript((value) => !value)}
+              aria-pressed={showFullTranscript}
+              className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors ${
+                showFullTranscript
+                  ? "border-sky-500/40 bg-sky-500/20 text-sky-200"
+                  : "border-slate-700 bg-slate-800 text-slate-300 hover:text-white"
+              }`}
+            >
+              <FileText size={14} aria-hidden="true" />
+              <span className="hidden md:inline">Transcript</span>
+            </button>
+          )}
+
           {/* Live Progress Counter Badge */}
           <div className="flex items-center gap-1.5 rounded-lg bg-slate-800 border border-slate-700 px-3 py-1 text-xs font-bold text-amber-400 shrink-0">
             <span>
@@ -573,8 +954,11 @@ export function ListeningComprehensionWorkspace({
           <div className="flex-1 flex flex-col min-h-0">
             {/* Instruction text */}
             <p className="text-sm font-medium text-slate-600 mb-3 shrink-0">
-              Select the one statement that best describes what you see in the
-              picture.
+              {isDictation
+                ? "Nghe câu hoặc đoạn ngắn, sau đó chép lại điều bạn nghe được."
+                : isDialogue
+                  ? "Theo dõi từng lượt lời trong hội thoại khi âm thanh đang phát."
+                  : "Listen carefully, then choose the answer that best matches the recording."}
             </p>
 
             {/* Audio Control Station */}
@@ -585,18 +969,84 @@ export function ListeningComprehensionWorkspace({
               accent={accent}
               muted={soundMuted}
               className="p-0 border-0 bg-transparent shadow-none shrink-0"
+              onProgress={(currentTime, duration) =>
+                setAudioProgress({ currentTime, duration })
+              }
             />
 
-            {/* Large Contextual Image */}
-            {imageUrl && (
+            {showFullTranscript && isDictation && isChecked && currentCheck && (
+              <section className="my-4 rounded-2xl border border-sky-100 bg-white p-4" aria-label="Transcript câu nghe chép">
+                <div className="flex items-center gap-2 text-sm font-extrabold text-slate-900">
+                  <FileText size={16} className="text-sky-600" aria-hidden="true" />
+                  Transcript câu nghe
+                </div>
+                <p className="mt-2 text-base leading-relaxed text-slate-800">{currentCheck.correctAnswer}</p>
+              </section>
+            )}
+
+            {/* Dialogue transcript follows decoded audio progress, rather than static timestamps. */}
+            {isDialogue && (
+              <section
+                aria-label="Lời thoại hội thoại đồng bộ với âm thanh"
+                className="my-4 flex-1 overflow-y-auto rounded-2xl border border-sky-100 bg-white p-3 shadow-xs sm:p-4"
+              >
+                <div className="mb-3 flex items-center gap-2 border-b border-slate-100 pb-3">
+                  <MessageCircleMore size={17} className="text-sky-600" aria-hidden="true" />
+                  <div>
+                    <h2 className="text-sm font-extrabold text-slate-900">Hội thoại đang nghe</h2>
+                    <p className="text-xs text-slate-500">Dòng đang phát được làm nổi bật theo tiến độ audio.</p>
+                  </div>
+                </div>
+                <ol className="space-y-2.5">
+                  {transcriptSegments.map((segment, index) => {
+                    const isActive = index === activeTranscriptSegmentIndex;
+                    return (
+                      <li
+                        key={`${currentQuestion.id}-${index}-${segment.speaker}`}
+                        aria-current={isActive ? "true" : undefined}
+                        className={`rounded-xl border p-3.5 transition-colors motion-reduce:transition-none ${
+                          isActive
+                            ? "border-sky-300 bg-sky-50 shadow-xs"
+                            : "border-slate-200 bg-white"
+                        }`}
+                      >
+                        <span className="mb-1.5 inline-flex rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-extrabold text-slate-700">
+                          {segment.speaker}
+                        </span>
+                        <p className="text-sm font-semibold leading-relaxed text-slate-900">{segment.text}</p>
+                        {isBilingual && segment.translation && (
+                          <p className="mt-1.5 text-xs leading-relaxed text-slate-500">{segment.translation}</p>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ol>
+              </section>
+            )}
+
+            {/* Large contextual image is intentionally secondary to a dialogue transcript. */}
+            {!isDialogue && imageUrl && !imageLoadFailed && (
               <div className="w-full flex-1 flex items-center justify-center my-4 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xs min-h-0">
                 <img
                   src={imageUrl}
                   alt={imageAlt || "TOEIC Listening Context"}
                   loading="eager"
                   decoding="async"
+                  onError={() => setFailedImageKey(imageKey)}
                   className="w-full h-full max-h-[calc(100dvh-260px)] object-contain rounded-xl"
                 />
+              </div>
+            )}
+            {!isDialogue && imageUrl && imageLoadFailed && (
+              <div
+                role="img"
+                aria-label={imageAlt || "Hình minh họa ngữ cảnh bài nghe"}
+                className="w-full flex-1 flex items-center justify-center my-4 overflow-hidden rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center min-h-[180px]"
+              >
+                <p className="max-w-sm text-sm font-medium leading-relaxed text-slate-500">
+                  Hình minh họa hiện chưa tải được. Bạn vẫn có thể tiếp tục nghe
+                  và trả lời câu hỏi.
+                </p>
               </div>
             )}
           </div>
@@ -704,11 +1154,98 @@ export function ListeningComprehensionWorkspace({
                 className="flex-1 flex flex-col"
               >
                 <h2 className="text-xl md:text-2xl font-bold text-slate-900 mt-1 mb-6 tracking-tight leading-snug">
-                  {currentQuestion.content?.text ||
-                    "Nghe đoạn hội thoại và chọn đáp án chính xác:"}
+                  {isDictation
+                    ? "Nghe và chép lại chính xác câu hoặc đoạn bạn nghe được."
+                    : currentQuestion.content?.text ||
+                      "Nghe đoạn hội thoại và chọn đáp án chính xác:"}
                 </h2>
 
                 {/* Answer Selection Rows (Full-Width Edge-to-Edge Cards) */}
+                {isDictation ? (
+                  <div className="flex-1 space-y-4">
+                    <label htmlFor={`dictation-${currentQuestion.id}`} className="text-sm font-bold text-slate-700">
+                      Nội dung bạn nghe được
+                    </label>
+                    <textarea
+                      id={`dictation-${currentQuestion.id}`}
+                      value={selectedAnswer}
+                      onChange={(event) => {
+                        if (isAnswerLocked) return;
+                        setAnswersByQuestionId((previous) => ({
+                          ...previous,
+                          [currentQuestion.id]: event.target.value,
+                        }));
+                      }}
+                      disabled={isAnswerLocked || isChecking}
+                      placeholder="Gõ lại câu tiếng Anh bạn nghe được…"
+                      className="min-h-40 w-full resize-y rounded-2xl border-2 border-slate-200 bg-white p-4 text-base leading-relaxed text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 disabled:cursor-default disabled:bg-slate-50"
+                    />
+                    {!isAnswerLocked && (
+                      <button
+                        type="button"
+                        onClick={() => void handleCheck()}
+                        disabled={isChecking || selectedAnswer.trim().length === 0}
+                        className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-sky-600 px-4 text-sm font-extrabold text-white shadow-xs transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
+                      >
+                        {isChecking ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : <PenLine size={16} aria-hidden="true" />}
+                        {isChecked ? "Kiểm tra lại" : "Kiểm tra phần nghe chép"}
+                      </button>
+                    )}
+                    {isChecked && (
+                      <div className={`rounded-2xl border p-4 ${currentCheck?.isCorrect ? "border-emerald-200 bg-emerald-50" : "border-rose-200 bg-rose-50"}`}>
+                        <p className="text-xs font-extrabold uppercase tracking-wider text-slate-600">
+                          {currentCheck?.isCorrect ? "Chính xác" : "Chưa chính xác — đối chiếu từng từ"}
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs font-semibold text-slate-600">
+                          <span>
+                            Độ chính xác từ: {Math.round(currentCheck?.wordAccuracy ?? (currentCheck?.isCorrect ? 100 : 0))}%
+                          </span>
+                          <span>
+                            Lần thử: {dictationMetrics[currentQuestion.id]?.attemptCount ?? 1}
+                          </span>
+                          {dictationMetrics[currentQuestion.id]?.firstTryCorrect !== null && (
+                            <span>
+                              {dictationMetrics[currentQuestion.id]?.firstTryCorrect
+                                ? "Đúng ngay lần đầu"
+                                : "Đã ghi nhận lần sửa"}
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-1.5 text-sm font-semibold leading-relaxed">
+                          {dictationDiff.map((token, index) => (
+                            <span
+                              key={`${token.text}-${index}`}
+                              className={
+                                token.kind === "same"
+                                  ? "text-slate-800"
+                                  : token.kind === "missing"
+                                    ? "rounded-md bg-rose-100 px-1.5 text-rose-800 line-through decoration-rose-500"
+                                    : "rounded-md bg-amber-100 px-1.5 text-amber-900"
+                              }
+                            >
+                              {token.text}
+                              {token.kind === "missing" ? " (thiếu)" : token.kind === "extra" ? " (thừa)" : ""}
+                            </span>
+                          ))}
+                        </div>
+                        {!currentCheck?.isCorrect && (
+                          <button
+                            type="button"
+                            onClick={toggleRevealAnswer}
+                            className="mt-3 inline-flex min-h-10 items-center rounded-lg border border-rose-200 bg-white px-3 text-xs font-bold text-rose-700 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
+                          >
+                        {isRevealed ? "Ẩn đáp án chuẩn" : "Hiện toàn bộ đáp án"}
+                          </button>
+                        )}
+                        {isRevealed && (
+                          <p className="mt-3 rounded-xl border border-slate-200 bg-white p-3 text-base font-semibold leading-relaxed text-slate-900">
+                            {currentCheck?.correctAnswer}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
                 <div className="space-y-3.5 flex-1">
                   {options.map((opt, idx) => {
                     const key = String.fromCharCode(65 + idx);
@@ -753,10 +1290,10 @@ export function ListeningComprehensionWorkspace({
                         key={`${currentQuestion.id}-${idx}`}
                         type="button"
                         onClick={() => handleAnswerSelect(opt)}
-                        disabled={isChecked || isChecking}
+                        disabled={isAnswerLocked || isChecking}
                         aria-label={`Đáp án ${key}: ${opt}`}
                         className={`w-full p-4 md:p-5 rounded-2xl border-2 flex items-center text-left transition-all ${cardStyles} ${
-                          isChecked || isChecking
+                          isAnswerLocked || isChecking
                             ? "cursor-default"
                             : "cursor-pointer active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
                         }`}
@@ -805,6 +1342,7 @@ export function ListeningComprehensionWorkspace({
                     );
                   })}
                 </div>
+                )}
 
                 <p className="sr-only" aria-live="polite" aria-atomic="true">
                   {isChecking
@@ -1071,23 +1609,31 @@ export function ListeningComprehensionWorkspace({
 
           {/* Action Button: feedback is immediate after selecting an answer. */}
           {!isChecked ? (
-            <div
-              role="status"
-              aria-live="polite"
-              className="inline-flex min-h-11 items-center gap-2 px-3 text-sm font-semibold text-slate-500"
-            >
-              {isChecking ? (
-                <>
-                  <Loader2
-                    size={16}
-                    className="animate-spin"
-                    aria-hidden="true"
-                  />
-                  Đang kiểm tra đáp án...
-                </>
-              ) : (
-                "Chọn một đáp án để xem kết quả"
-              )}
+            <div className="flex items-center gap-2">
+              <div
+                role="status"
+                aria-live="polite"
+                className="inline-flex min-h-11 items-center gap-2 px-3 text-sm font-semibold text-slate-500"
+              >
+                {isChecking ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                    Đang kiểm tra đáp án...
+                  </>
+                ) : (
+                  isDictation
+                    ? "Nhập phần nghe chép, rồi kiểm tra trong khung câu hỏi"
+                    : "Chọn một đáp án để xem kết quả"
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={handleSkipQuestion}
+                disabled={isChecking}
+                className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                Bỏ qua
+              </button>
             </div>
           ) : isLastQuestion ? (
             <button
@@ -1096,7 +1642,12 @@ export function ListeningComprehensionWorkspace({
               disabled={isSubmitting || submitMutation.isPending}
               className="px-5 sm:px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm transition-all active:scale-95 disabled:opacity-60 cursor-pointer inline-flex items-center gap-2 text-sm"
             >
-              {isSubmitting || submitMutation.isPending ? (
+              {reviewOnly ? (
+                <>
+                  Kết thúc ôn lại
+                  <CheckCircle2 size={16} aria-hidden="true" />
+                </>
+              ) : isSubmitting || submitMutation.isPending ? (
                 <>
                   <Loader2
                     size={16}

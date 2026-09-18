@@ -51,9 +51,11 @@ export interface Pet {
   name: string;
   health: number;
   happiness: number;
+  satiety: number;
   level: number;
   exp: number;
   lastFedAt: string | null;
+  stateUpdatedAt?: string;
   roster?: Record<
     string,
     {
@@ -61,7 +63,9 @@ export interface Pet {
       exp: number;
       health: number;
       happiness: number;
+      satiety?: number;
       lastFedAt: string | null;
+      stateUpdatedAt?: string;
       dailyFeedDateKey?: string | null;
       dailyFeedCount?: number;
       dailyRewardedFeedCount?: number;
@@ -69,7 +73,7 @@ export interface Pet {
   > | null;
   /** Feeding eligibility and satiety are derived server-side. */
   canFeed?: boolean;
-  nextFeedAt?: string | null;
+  nextFeedAt?: null;
   feedCost?: number;
   satietyState?: "FULL" | "NORMAL" | "HUNGRY" | "VERY_HUNGRY";
   dailyFeedCount?: number;
