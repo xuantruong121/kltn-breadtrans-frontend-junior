@@ -974,6 +974,29 @@ export function ListeningComprehensionWorkspace({
               }
             />
 
+            {currentQuestion.diagnosticClips && currentQuestion.diagnosticClips.length > 0 && (
+              <section
+                className="my-4 rounded-2xl border border-amber-200 bg-amber-50/60 p-4"
+                aria-label="Đoạn audio luyện nghe theo lỗi cần chú ý"
+              >
+                <div className="mb-3 flex items-center gap-2">
+                  <AlertCircle size={16} className="text-amber-600" aria-hidden="true" />
+                  <div>
+                    <h2 className="text-sm font-extrabold text-slate-900">Đoạn nghe cần luyện thêm</h2>
+                    <p className="text-xs text-slate-600">Nghe lại từng đoạn ngắn do người biên soạn đánh dấu.</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {currentQuestion.diagnosticClips.map((clip) => (
+                    <div key={clip.id} className="flex flex-col gap-2 rounded-xl border border-amber-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
+                      <span className="text-sm font-semibold text-slate-800">{clip.label}</span>
+                      <audio controls preload="none" src={clip.url} className="h-9 w-full max-w-sm" />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {showFullTranscript && isDictation && isChecked && currentCheck && (
               <section className="my-4 rounded-2xl border border-sky-100 bg-white p-4" aria-label="Transcript câu nghe chép">
                 <div className="flex items-center gap-2 text-sm font-extrabold text-slate-900">

@@ -199,19 +199,19 @@ export const FloatingCompanionPet: React.FC = () => {
   return (
     <div
       ref={containerRef}
-      className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-3.5 sm:bottom-8 sm:right-6 md:right-8 z-[45]"
+      className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-3.5 md:bottom-6 md:right-6 lg:bottom-8 lg:right-8 z-[45]"
     >
       {/* Live Region for Screen Readers */}
       <div className="sr-only" role="status" aria-live="polite">
         {ariaFeedback}
       </div>
 
-      {/* 1. MESSAGE STATE: Proactive Contextual Speech Bubble */}
+      {/* 1. MESSAGE STATE: Proactive Contextual Speech Bubble (Desktop/Tablet safe; hidden on mobile to prevent filter collisions, indicator dot shown on avatar) */}
       {uiState === "MESSAGE" && recommendation && (
         <div
           role="dialog"
           aria-label="Gợi ý học tập từ thú cưng"
-          className="absolute bottom-full right-0 mb-3 w-72 sm:w-80 rounded-2xl bg-white border border-amber-200/90 shadow-lg p-3.5 text-xs text-slate-800 animate-in fade-in slide-in-from-bottom-2 duration-200"
+          className="hidden sm:block absolute bottom-full right-0 mb-3 w-72 sm:w-80 rounded-2xl bg-white border border-amber-200/90 shadow-lg p-3.5 text-xs text-slate-800 animate-in fade-in slide-in-from-bottom-2 duration-200"
         >
           <div className="flex items-start justify-between gap-2 mb-1">
             <span className="font-bold text-amber-900 flex items-center gap-1.5">
@@ -260,14 +260,21 @@ export const FloatingCompanionPet: React.FC = () => {
         </div>
       )}
 
-      {/* 2. EXPANDED STATE: Full Popover Card (Desktop popover, Mobile-safe popover) */}
+      {/* 2. EXPANDED STATE: Full Popover Card (Desktop popover, Mobile-safe bottom sheet) */}
       {uiState === "EXPANDED" && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="floating-pet-dialog-title"
-          className="fixed inset-x-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] sm:inset-auto sm:absolute sm:bottom-full sm:right-0 sm:mb-3 w-auto sm:w-88 rounded-2xl bg-white border border-slate-200 shadow-2xl p-4 sm:p-5 max-h-[calc(100dvh-6rem)] overflow-y-auto z-50 animate-in fade-in zoom-in-95 duration-200"
-        >
+        <>
+          {/* Mobile backdrop scrim */}
+          <div
+            className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-50 sm:hidden animate-in fade-in"
+            onClick={() => setIsExpanded(false)}
+            aria-hidden="true"
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="floating-pet-dialog-title"
+            className="fixed inset-x-0 bottom-0 rounded-t-3xl bg-white border-t border-slate-200 shadow-2xl p-5 max-h-[85dvh] pb-[calc(1.5rem+env(safe-area-inset-bottom))] overflow-y-auto z-50 animate-in slide-in-from-bottom duration-300 sm:inset-auto sm:absolute sm:bottom-full sm:right-0 sm:mb-3 sm:w-88 sm:rounded-2xl sm:border sm:p-5 sm:max-h-[calc(100dvh-6rem)] sm:pb-5 sm:animate-in sm:fade-in sm:zoom-in-95 sm:duration-200"
+          >
           {/* Header */}
           <div className="flex items-start justify-between pb-3 border-b border-slate-100 mb-3.5">
             <div className="flex items-center gap-3">
@@ -485,6 +492,7 @@ export const FloatingCompanionPet: React.FC = () => {
             </Link>
           </div>
         </div>
+      </>
       )}
 
       {/* 3. COLLAPSED STATE: 48px Semantic Avatar Button */}

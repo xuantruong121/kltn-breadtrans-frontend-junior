@@ -38,6 +38,21 @@ export interface Question {
   type: string; // "MULTIPLE_CHOICE", "WRITING", etc.
   content: QuestionContent | any;
   order: number;
+  audioAssets?: Array<{
+    id: number;
+    version: number;
+    url: string;
+    mimeType: string;
+    durationMs?: number | null;
+    isActive: boolean;
+  }>;
+  diagnosticClips?: Array<{
+    id: number;
+    label: string;
+    url: string;
+    startMs?: number | null;
+    endMs?: number | null;
+  }>;
 }
 
 export interface Quiz {

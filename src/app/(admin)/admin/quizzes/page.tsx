@@ -44,6 +44,8 @@ export default function AdminQuizzesPage() {
   const [editingQuiz, setEditingQuiz] = useState<any | null>(null);
   const [deleteQuizTarget, setDeleteQuizTarget] = useState<any | null>(null);
   const [selectedQuizForQuestions, setSelectedQuizForQuestions] = useState<any | null>(null);
+  const [diagnosticClipQuestionId, setDiagnosticClipQuestionId] = useState<number | null>(null);
+  const [diagnosticClipForm, setDiagnosticClipForm] = useState({ label: "", key: "", url: "" });
 
   // Form State for Quiz
   const [quizForm, setQuizForm] = useState({
@@ -60,6 +62,12 @@ export default function AdminQuizzesPage() {
       const res: any = await axiosClient.get("/quizzes");
       return Array.isArray(res) ? res : res?.data || [];
     },
+  });
+
+  const { data: listeningAnalytics } = useQuery<any>({
+    queryKey: ["admin-listening-analytics"],
+    queryFn: async () => axiosClient.get("/admin/listening-analytics"),
+    staleTime: 30_000,
   });
 
   // Query Detail for Selected Quiz Questions
@@ -114,6 +122,17 @@ export default function AdminQuizzesPage() {
     },
   });
 
+  const publishQuizMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: "DRAFT" | "PUBLISHED" | "ARCHIVED" }) =>
+      axiosClient.patch(`/quizzes/${id}/publication`, { status }),
+    onSuccess: () => {
+      toast.success("Đã cập nhật trạng thái xuất bản");
+      queryClient.invalidateQueries({ queryKey: ["admin-quizzes"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-listening-analytics"] });
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể cập nhật trạng thái"),
+  });
+
   // Add Question Mutation
   const addQuestionMutation = useMutation({
     mutationFn: async ({ quizId, questionData }: { quizId: number; questionData: any }) => {
@@ -142,6 +161,35 @@ export default function AdminQuizzesPage() {
     onError: (err: any) => {
       toast.error(err?.response?.data?.message || "Không thể xóa câu hỏi");
     },
+  });
+
+  const audioUploadMutation = useMutation({
+    mutationFn: async ({ questionId, file }: { questionId: number; file: File }) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      return axiosClient.post(`/quizzes/questions/${questionId}/audio-assets`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Đã tải phiên bản audio mới lên kho học liệu");
+      refetchDetail();
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || "Không thể tải audio lên");
+    },
+  });
+
+  const diagnosticClipMutation = useMutation({
+    mutationFn: async ({ questionId, payload }: { questionId: number; payload: typeof diagnosticClipForm }) =>
+      axiosClient.post(`/quizzes/questions/${questionId}/diagnostic-clips`, payload),
+    onSuccess: () => {
+      toast.success("Đã gắn clip chẩn đoán cho câu hỏi");
+      setDiagnosticClipQuestionId(null);
+      setDiagnosticClipForm({ label: "", key: "", url: "" });
+      refetchDetail();
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể gắn clip chẩn đoán"),
   });
 
   // Open Create Modal
@@ -204,6 +252,22 @@ export default function AdminQuizzesPage() {
         </button>
       </div>
 
+      {listeningAnalytics?.totals && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            ["Bài luyện nghe", listeningAnalytics.totals.quizzes],
+            ["Câu hỏi", listeningAnalytics.totals.questions],
+            ["Lượt bắt đầu", listeningAnalytics.totals.attempts],
+            ["Lượt nộp bài", listeningAnalytics.totals.submissions],
+          ].map(([label, value]) => (
+            <div key={String(label)} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+              <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{label}</p>
+              <p className="mt-1 text-2xl font-black text-slate-800">{value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* FILTER & SEARCH */}
       <div className="bg-white rounded-[2.5rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] overflow-hidden p-6 md:p-8 space-y-6">
         <div className="flex flex-col md:flex-row items-center gap-4">
@@ -261,6 +325,7 @@ export default function AdminQuizzesPage() {
                   <th className="py-4 px-6 rounded-l-2xl">Mã Đề</th>
                   <th className="py-4 px-6">Tên Đề Thi</th>
                   <th className="py-4 px-6">Thể Loại</th>
+                  <th className="py-4 px-6">Xuất bản</th>
                   <th className="py-4 px-6 text-center">Số Câu Hỏi</th>
                   <th className="py-4 px-6 text-center">Thời Gian Làm Bài</th>
                   <th className="py-4 px-6 text-right rounded-r-2xl">Thao Tác</th>
@@ -288,6 +353,23 @@ export default function AdminQuizzesPage() {
                         <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-1 rounded-xl text-xs font-black uppercase">
                           {quiz.type}
                         </span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <button
+                          type="button"
+                          disabled={publishQuizMutation.isPending}
+                          onClick={() => publishQuizMutation.mutate({
+                            id: quiz.id,
+                            status: quiz.publicationStatus === "PUBLISHED" ? "DRAFT" : "PUBLISHED",
+                          })}
+                          className={`rounded-xl border px-3 py-1 text-xs font-black transition-colors ${
+                            quiz.publicationStatus === "PUBLISHED"
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                              : "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                          }`}
+                        >
+                          {quiz.publicationStatus === "PUBLISHED" ? "Đang hiển thị" : "Bản nháp"}
+                        </button>
                       </td>
                       <td className="py-4 px-6 text-center">
                         <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-xl font-black text-xs inline-flex items-center gap-1">
@@ -586,6 +668,68 @@ export default function AdminQuizzesPage() {
                             <audio controls src={content.audioUrl} className="h-7 max-w-xs" />
                           </div>
                         )}
+
+                        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-slate-300 bg-white px-3 py-2">
+                          <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-bold text-slate-700 transition hover:border-emerald-300 hover:bg-emerald-50">
+                            <Volume2 size={15} className="text-emerald-600" />
+                            {audioUploadMutation.isPending ? "Đang tải..." : "Tải audio phiên bản mới"}
+                            <input
+                              type="file"
+                              accept="audio/mpeg,audio/wav,audio/ogg,audio/webm"
+                              className="sr-only"
+                              disabled={audioUploadMutation.isPending}
+                              onChange={(event) => {
+                                const file = event.target.files?.[0];
+                                if (file) audioUploadMutation.mutate({ questionId: q.id, file });
+                                event.target.value = "";
+                              }}
+                            />
+                          </label>
+                          {q.audioAssets?.[0] && (
+                            <span className="text-xs text-slate-500">
+                              Phiên bản v{q.audioAssets[0].version} đang hoạt động
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="rounded-xl border border-dashed border-amber-200 bg-amber-50/50 p-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-black text-amber-900">Clip chẩn đoán</span>
+                            <button
+                              type="button"
+                              className="text-xs font-bold text-amber-700 underline"
+                              onClick={() => {
+                                setDiagnosticClipQuestionId((current) => current === q.id ? null : q.id);
+                                setDiagnosticClipForm({ label: "", key: "", url: "" });
+                              }}
+                            >
+                              {diagnosticClipQuestionId === q.id ? "Đóng" : "Gắn clip"}
+                            </button>
+                          </div>
+                          {q.diagnosticClips?.length > 0 && (
+                            <p className="mt-1 text-xs text-slate-600">Đã gắn {q.diagnosticClips.length} clip</p>
+                          )}
+                          {diagnosticClipQuestionId === q.id && (
+                            <form
+                              className="mt-3 grid gap-2 sm:grid-cols-3"
+                              onSubmit={(event) => {
+                                event.preventDefault();
+                                if (!diagnosticClipForm.label.trim() || !diagnosticClipForm.key.trim() || !diagnosticClipForm.url.trim()) {
+                                  toast.error("Vui lòng nhập nhãn, key R2 và URL clip");
+                                  return;
+                                }
+                                diagnosticClipMutation.mutate({ questionId: q.id, payload: diagnosticClipForm });
+                              }}
+                            >
+                              <input className="min-h-10 rounded-lg border border-slate-200 px-3 text-xs" placeholder="Nhãn clip" value={diagnosticClipForm.label} onChange={(event) => setDiagnosticClipForm((current) => ({ ...current, label: event.target.value }))} />
+                              <input className="min-h-10 rounded-lg border border-slate-200 px-3 text-xs" placeholder="Key R2" value={diagnosticClipForm.key} onChange={(event) => setDiagnosticClipForm((current) => ({ ...current, key: event.target.value }))} />
+                              <div className="flex gap-2">
+                                <input className="min-h-10 min-w-0 flex-1 rounded-lg border border-slate-200 px-3 text-xs" placeholder="URL clip" value={diagnosticClipForm.url} onChange={(event) => setDiagnosticClipForm((current) => ({ ...current, url: event.target.value }))} />
+                                <button type="submit" disabled={diagnosticClipMutation.isPending} className="min-h-10 rounded-lg bg-amber-500 px-3 text-xs font-black text-white disabled:opacity-50">Lưu</button>
+                              </div>
+                            </form>
+                          )}
+                        </div>
 
                         {/* Options A/B/C/D */}
                         {options.length > 0 && (

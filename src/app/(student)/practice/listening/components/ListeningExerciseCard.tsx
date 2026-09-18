@@ -75,7 +75,7 @@ export function ListeningExerciseCard({
         </div>
 
         {/* Title */}
-        <h3 className="text-base font-extrabold leading-snug text-slate-900 transition-colors group-hover:text-blue-700 sm:text-lg">
+        <h3 className="text-base font-extrabold leading-snug text-slate-900 transition-colors group-hover:text-blue-700 sm:text-lg min-w-0 break-words">
           {quiz.title}
         </h3>
 
@@ -101,7 +101,7 @@ export function ListeningExerciseCard({
 
       {/* Bottom Row */}
       <div className="mt-5 border-t border-slate-100 pt-4">
-        <div className="flex items-center justify-between gap-3 text-xs font-semibold text-slate-500">
+        <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-semibold text-slate-500">
           <div className="flex items-center gap-3">
             <span className="inline-flex items-center gap-1">
               <Headphones size={13} className="text-slate-400" aria-hidden="true" />

@@ -88,8 +88,8 @@ export function BrandLogo({
       badge: "text-[9px] px-1 py-0.2",
     },
     md: {
-      gap: "gap-2.5",
-      wordmark: "text-xl",
+      gap: "gap-2 sm:gap-2.5",
+      wordmark: "text-lg sm:text-xl",
       subtitle: "text-xs",
       badge: "text-[10px] px-1.5 py-0.5",
     },
@@ -144,15 +144,15 @@ export function BrandLogo({
 
             {/* Admin CMS Badge */}
             {variant === "admin" && (
-              <span className="rounded-md bg-blue-50 border border-blue-200/80 px-1.5 py-0.5 text-[10px] font-black tracking-wide text-blue-700 uppercase shrink-0">
+              <span className="hidden sm:inline-flex rounded-md bg-blue-50 border border-blue-200/80 px-1.5 py-0.5 text-[10px] font-black tracking-wide text-blue-700 uppercase shrink-0">
                 CMS
               </span>
             )}
 
-            {/* Custom Role Badge */}
+            {/* Custom Role Badge (compact on mobile to prevent header overflow) */}
             {resolvedBadge && variant !== "admin" && (
               <span
-                className={`rounded-md font-black uppercase tracking-wide border whitespace-nowrap shrink-0 ${sizeStyles.badge} ${resolvedBadge.bg} ${resolvedBadge.text} ${resolvedBadge.border}`}
+                className={`hidden sm:inline-flex rounded-md font-black uppercase tracking-wide border whitespace-nowrap shrink-0 ${sizeStyles.badge} ${resolvedBadge.bg} ${resolvedBadge.text} ${resolvedBadge.border}`}
               >
                 {resolvedBadge.label}
               </span>

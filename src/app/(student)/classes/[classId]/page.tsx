@@ -193,10 +193,10 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-slate-200 pt-2 gap-4">
+        <div className="flex border-b border-slate-200 pt-2 gap-4 overflow-x-auto no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <button 
             onClick={() => setActiveTab("lessons")}
-            className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 cursor-pointer ${
+            className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 cursor-pointer shrink-0 whitespace-nowrap ${
               activeTab === "lessons" 
                 ? "border-blue-600 text-blue-600" 
                 : "border-transparent text-slate-500 hover:text-slate-900"
@@ -206,7 +206,7 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
           </button>
           <button 
             onClick={() => setActiveTab("assignments")}
-            className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 cursor-pointer ${
+            className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 cursor-pointer shrink-0 whitespace-nowrap ${
               activeTab === "assignments" 
                 ? "border-blue-600 text-blue-600" 
                 : "border-transparent text-slate-500 hover:text-slate-900"

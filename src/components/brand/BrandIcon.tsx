@@ -24,7 +24,7 @@ export interface BrandIconProps {
 const SIZE_MAP: Record<string, { iconSize: number; containerSize: string; rounded: string }> = {
   xs: { iconSize: 18, containerSize: "w-6 h-6", rounded: "rounded-lg" },
   sm: { iconSize: 24, containerSize: "w-8 h-8", rounded: "rounded-xl" },
-  md: { iconSize: 30, containerSize: "w-10 h-10", rounded: "rounded-xl" },
+  md: { iconSize: 30, containerSize: "w-8 h-8 sm:w-10 sm:h-10", rounded: "rounded-xl" },
   lg: { iconSize: 38, containerSize: "w-12 h-12", rounded: "rounded-2xl" },
   xl: { iconSize: 52, containerSize: "w-16 h-16", rounded: "rounded-3xl" },
 };
@@ -52,7 +52,7 @@ export function BrandIcon({
       width={pixelSize}
       height={pixelSize}
       fill="none"
-      className={`shrink-0 transition-transform duration-200 ${animated ? "group-hover:scale-105" : ""} ${className}`}
+      className={`shrink-0 transition-transform duration-200 ${size === "md" ? "w-6 h-6 sm:w-[30px] sm:h-[30px]" : ""} ${animated ? "group-hover:scale-105" : ""} ${className}`}
       aria-hidden="true"
     >
       <defs>
