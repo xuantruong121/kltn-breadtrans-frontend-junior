@@ -167,9 +167,13 @@ export const quizService = {
     quizId: number,
     questionId: number,
     signal?: AbortSignal,
+    audioVersion?: number,
   ): Promise<Blob> => {
+    const versionQuery = Number.isFinite(audioVersion)
+      ? `?v=${audioVersion}`
+      : "";
     return await axiosClient.get(
-      `/quizzes/${quizId}/questions/${questionId}/audio`,
+      `/quizzes/${quizId}/questions/${questionId}/audio${versionQuery}`,
       { responseType: "blob", signal },
     );
   },
@@ -203,6 +207,15 @@ export const quizService = {
     return await axiosClient.patch(
       `/quizzes/${quizId}/listening-attempts/${attemptId}`,
       payload,
+    );
+  },
+
+  cancelListeningAttempt: async (
+    quizId: number,
+    attemptId: number,
+  ): Promise<{ id: number; status: string; discarded: boolean }> => {
+    return await axiosClient.post(
+      `/quizzes/${quizId}/listening-attempts/${attemptId}/cancel`,
     );
   },
 

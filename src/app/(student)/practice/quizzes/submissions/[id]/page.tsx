@@ -62,11 +62,19 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
       Number.isInteger(id) && id > 0 && ids.indexOf(id) === index,
     );
   const isListeningResult = analytics.questions?.some(
-    (question: any) => question?.type === "DICTATION" || question?.content?.audioText,
+    (question: any) =>
+      question?.type === "DICTATION" ||
+      question?.content?.audioText ||
+      Array.isArray(question?.content?.transcriptSegments),
   );
   const wrongReviewHref = isListeningResult && wrongQuestionIds.length > 0
     ? `/practice/quizzes/${analytics.quizId}?review=wrong&questionIds=${wrongQuestionIds.join(",")}`
     : null;
+  const practiceCatalogHref = isListeningResult ? "/practice/listening" : "/practice/quizzes";
+  const practiceCatalogLabel = isListeningResult
+    ? "Quay lại danh sách bài luyện nghe"
+    : "Quay lại danh sách bài thi";
+  const retryHref = `/practice/quizzes/${analytics.quizId}`;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-20 relative">
@@ -75,7 +83,7 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
       {/* TOP HEADER BAR */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border-4 border-slate-100 shadow-sm">
         <div className="flex items-center gap-4">
-          <BackButton href="/practice/quizzes" label="Quay lại danh sách bài thi" />
+          <BackButton href={practiceCatalogHref} label={practiceCatalogLabel} />
           <div className="h-6 w-0.5 bg-slate-200 hidden sm:block"></div>
           <div>
             <h1 className="text-xl font-black text-slate-800 line-clamp-1">{analytics.quizTitle}</h1>
@@ -85,12 +93,6 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
           </div>
         </div>
 
-        <button 
-          onClick={() => router.back()}
-          className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black py-2 px-4 rounded-2xl transition-all cursor-pointer text-xs self-start sm:self-auto"
-        >
-          <RefreshCw size={16} /> Làm lại bài thi
-        </button>
       </div>
 
       {/* 2-COLUMN MAIN LAYOUT */}
@@ -204,14 +206,14 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
                 </Link>
               )}
               <button 
-                onClick={() => router.back()}
+                onClick={() => router.push(retryHref)}
                 className="w-full flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-black py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer text-sm"
               >
                 <RefreshCw size={18} /> Làm lại bài thi này
               </button>
-              <Link href="/practice/quizzes" className="w-full">
+              <Link href={practiceCatalogHref} className="w-full">
                 <button className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 px-4 rounded-xl transition-all cursor-pointer text-xs">
-                  Chọn bài tập khác
+                  {isListeningResult ? "Chọn bài luyện nghe khác" : "Chọn bài tập khác"}
                 </button>
               </Link>
             </div>

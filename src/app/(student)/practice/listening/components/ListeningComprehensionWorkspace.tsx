@@ -50,7 +50,6 @@ import {
 interface ListeningComprehensionWorkspaceProps {
   quiz?: Quiz | null;
   isLoading?: boolean;
-  onBack: () => void;
   reviewOnly?: boolean;
   reviewQuestionIds?: number[];
 }
@@ -103,10 +102,24 @@ function getActiveTranscriptSegmentIndex(
   return segments.length - 1;
 }
 
+function getDialogueSpeakerLabel(speaker: string): string {
+  const normalized = speaker.trim().toLocaleLowerCase("vi-VN");
+  if (normalized.includes("khách") || normalized.includes("customer")) {
+    return "Customer";
+  }
+  if (
+    normalized.includes("nhân viên") ||
+    normalized.includes("agent") ||
+    normalized.includes("support")
+  ) {
+    return "Agent";
+  }
+  return speaker.trim() || "Speaker";
+}
+
 export function ListeningComprehensionWorkspace({
   quiz,
   isLoading,
-  onBack,
   reviewOnly = false,
   reviewQuestionIds = [],
 }: ListeningComprehensionWorkspaceProps) {
@@ -163,6 +176,10 @@ export function ListeningComprehensionWorkspace({
     currentTime: 0,
     duration: 0,
   });
+  const discardSessionRef = useRef(false);
+  const listeningAttemptIdRef = useRef<number | null>(null);
+  const listeningAttemptPromiseRef = useRef<Promise<number | null> | null>(null);
+  const listeningAttemptRequestKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!quizId || questions.length === 0) return;
@@ -194,7 +211,7 @@ export function ListeningComprehensionWorkspace({
   }, [quizId, questions.length, sessionKey]);
 
   useEffect(() => {
-    if (!quizId || !sessionHydrated) return;
+    if (!quizId || !sessionHydrated || discardSessionRef.current) return;
     localStorage.setItem(
       sessionKey,
       JSON.stringify({
@@ -225,12 +242,18 @@ export function ListeningComprehensionWorkspace({
       !sessionHydrated ||
       !useAuthStore.getState().user
     ) return;
+    const requestKey = String(quizId);
+    if (listeningAttemptRequestKeyRef.current === requestKey) return;
+    listeningAttemptRequestKeyRef.current = requestKey;
     let cancelled = false;
-    void quizService.getOrCreateListeningAttempt(quizId).then((attempt) => {
-      if (cancelled) return;
+    const attemptPromise = quizService.getOrCreateListeningAttempt(quizId).then((attempt) => {
+      // Keep the id even when navigation has already started so confirmed exit
+      // can cancel a just-created server attempt instead of resuming it later.
+      listeningAttemptIdRef.current = attempt.id;
+      if (cancelled) return attempt.id;
       setListeningAttemptId(attempt.id);
       const localRaw = localStorage.getItem(sessionKey);
-      if (localRaw) return;
+      if (localRaw) return attempt.id;
       if (attempt.currentQuestionId) {
         const restoredIndex = questions.findIndex(
           (question) => question.id === attempt.currentQuestionId,
@@ -244,9 +267,12 @@ export function ListeningComprehensionWorkspace({
           ) as Record<number, string>,
         );
       }
+      return attempt.id;
     }).catch(() => {
       // Local persistence remains available when the optional server checkpoint is unavailable.
+      return null;
     });
+    listeningAttemptPromiseRef.current = attemptPromise;
     return () => {
       cancelled = true;
     };
@@ -483,17 +509,47 @@ export function ListeningComprehensionWorkspace({
     },
   });
 
+  // Confirmed exit must discard both local and server checkpoints. Otherwise
+  // re-entering the same quiz would restore an answer the learner abandoned.
+  const handleConfirmedExit = async () => {
+    discardSessionRef.current = true;
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(sessionKey);
+    }
+    setCurrentIndex(0);
+    setAnswersByQuestionId({});
+    setCheckResults({});
+    setDictationMetrics({});
+    setRevealedQuestionIds({});
+    setSkippedQuestionIds({});
+    let attemptIdToCancel = listeningAttemptIdRef.current ?? listeningAttemptId;
+    if (
+      !reviewOnly &&
+      quizId &&
+      !attemptIdToCancel &&
+      listeningAttemptPromiseRef.current
+    ) {
+      attemptIdToCancel = await listeningAttemptPromiseRef.current;
+    }
+    if (!reviewOnly && quizId && attemptIdToCancel) {
+      await quizService.cancelListeningAttempt(quizId, attemptIdToCancel).catch(() => {
+        // The local checkpoint is already discarded; a transient server
+        // failure must not block the learner from leaving the page.
+      });
+    }
+  };
+
   // Mandatory exit confirmation: session is active and has not been successfully submitted
   const shouldConfirmExit = !submitMutation.isSuccess;
   const { confirmExit, exitDialogProps } = usePracticeExitGuard({
     shouldConfirmExit,
-    onConfirmExit: onBack,
+    onConfirmExit: handleConfirmedExit,
     defaultFallbackUrl: "/practice/listening",
     enabled: true,
   });
 
   // Handle final submission with client-side double-click guard
-  const handleFinalSubmit = () => {
+  const handleFinalSubmit = async () => {
     if (reviewOnly) {
       confirmExit("/practice/listening");
       return;
@@ -523,7 +579,19 @@ export function ListeningComprehensionWorkspace({
       answers: answersByQuestionId,
       questionStates: checkResults,
     });
-    submitMutation.mutate({ payload, attemptId: listeningAttemptId });
+    // A very fast learner can reach the last answer before the initial
+    // get-or-create request resolves. Wait for that request so the final
+    // submission always completes the same persisted server attempt.
+    let attemptIdToSubmit = listeningAttemptIdRef.current ?? listeningAttemptId;
+    if (!attemptIdToSubmit && listeningAttemptPromiseRef.current) {
+      attemptIdToSubmit = await listeningAttemptPromiseRef.current;
+    }
+    if (!attemptIdToSubmit) {
+      setIsSubmitting(false);
+      setSubmitError("Chưa khởi tạo được phiên luyện tập. Vui lòng thử lại.");
+      return;
+    }
+    submitMutation.mutate({ payload, attemptId: attemptIdToSubmit });
   };
 
   // Advance to next question
@@ -732,9 +800,6 @@ export function ListeningComprehensionWorkspace({
     questionContent.imageAlt.trim()
       ? questionContent.imageAlt.trim()
       : "";
-  const hasBilingualTranslation =
-    typeof questionContent.translation === "string" &&
-    questionContent.translation.trim().length > 0;
   const transcriptSegments = Array.isArray(questionContent.transcriptSegments)
     ? questionContent.transcriptSegments.filter(
         (segment) =>
@@ -744,6 +809,14 @@ export function ListeningComprehensionWorkspace({
           segment.text.trim().length > 0,
       )
     : [];
+  const hasBilingualTranslation =
+    (typeof questionContent.translation === "string" &&
+      questionContent.translation.trim().length > 0) ||
+    transcriptSegments.some(
+      (segment) =>
+        typeof segment.translation === "string" &&
+        segment.translation.trim().length > 0,
+    );
   const isDialogue = transcriptSegments.length > 0;
   const isDictation = currentQuestion.type === "DICTATION";
   const isRevealed = Boolean(currentQuestion && revealedQuestionIds[currentQuestion.id]);
@@ -790,7 +863,7 @@ export function ListeningComprehensionWorkspace({
             className="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer shrink-0"
           >
             <ArrowLeft size={16} aria-hidden="true" />
-            <span>Thoát</span>
+            <span>Thoát bài luyện</span>
           </button>
 
           <span className="text-slate-600 hidden sm:inline">|</span>
@@ -925,10 +998,16 @@ export function ListeningComprehensionWorkspace({
           {(isDialogue || (isDictation && isChecked)) && (
             <button
               type="button"
-              onClick={() => setShowFullTranscript((value) => !value)}
-              aria-pressed={showFullTranscript}
+              onClick={() => {
+                if (isDialogue) {
+                  setTranscriptOpen((value) => !value);
+                } else {
+                  setShowFullTranscript((value) => !value);
+                }
+              }}
+              aria-pressed={isDialogue ? transcriptOpen : showFullTranscript}
               className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors ${
-                showFullTranscript
+                (isDialogue ? transcriptOpen : showFullTranscript)
                   ? "border-sky-500/40 bg-sky-500/20 text-sky-200"
                   : "border-slate-700 bg-slate-800 text-slate-300 hover:text-white"
               }`}
@@ -947,25 +1026,26 @@ export function ListeningComprehensionWorkspace({
         </div>
       </header>
 
-      {/* 2. Main Split Workspace (50/50 Edge-to-Edge Grid) */}
-      <main className="flex-1 w-full grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 overflow-hidden min-h-0">
-        {/* Left Panel — Media & Context (50% Width) */}
-        <section className="w-full h-full p-6 md:p-8 flex flex-col justify-between overflow-y-auto bg-slate-50/50 min-h-0">
+      {/* 2. Main Listening Workspace (70/30 on desktop, stacked on mobile) */}
+      <main className="flex-1 w-full grid grid-cols-1 lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)] divide-y lg:divide-y-0 lg:divide-x divide-slate-200 overflow-hidden min-h-0">
+        {/* Left Panel — Audio & Conversation (70% Width) */}
+        <section className="w-full min-w-0 h-full p-6 md:p-8 flex flex-col justify-between overflow-y-auto bg-slate-50/50 min-h-0">
           <div className="flex-1 flex flex-col min-h-0">
-            {/* Instruction text */}
-            <p className="text-sm font-medium text-slate-600 mb-3 shrink-0">
-              {isDictation
-                ? "Nghe câu hoặc đoạn ngắn, sau đó chép lại điều bạn nghe được."
-                : isDialogue
-                  ? "Theo dõi từng lượt lời trong hội thoại khi âm thanh đang phát."
+            {/* Keep the dialogue itself as the primary instruction. */}
+            {!isDialogue && (
+              <p className="mb-3 shrink-0 text-sm font-medium text-slate-600">
+                {isDictation
+                  ? "Nghe câu hoặc đoạn ngắn, sau đó chép lại điều bạn nghe được."
                   : "Listen carefully, then choose the answer that best matches the recording."}
-            </p>
+              </p>
+            )}
 
             {/* Audio Control Station */}
             <ListeningAudioPlayer
               key={currentQuestion.id}
               quizId={quiz.id}
               questionId={currentQuestion.id}
+              audioVersion={currentQuestion.audioAssets?.find((asset) => asset.isActive)?.version}
               accent={accent}
               muted={soundMuted}
               className="p-0 border-0 bg-transparent shadow-none shrink-0"
@@ -1011,35 +1091,32 @@ export function ListeningComprehensionWorkspace({
             {isDialogue && (
               <section
                 aria-label="Lời thoại hội thoại đồng bộ với âm thanh"
-                className="my-4 flex-1 overflow-y-auto rounded-2xl border border-sky-100 bg-white p-3 shadow-xs sm:p-4"
+                className="my-4 flex-1 min-h-0 overflow-y-auto rounded-2xl border border-sky-100 bg-white p-4 shadow-xs sm:p-5"
               >
-                <div className="mb-3 flex items-center gap-2 border-b border-slate-100 pb-3">
+                <div className="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
                   <MessageCircleMore size={17} className="text-sky-600" aria-hidden="true" />
-                  <div>
-                    <h2 className="text-sm font-extrabold text-slate-900">Hội thoại đang nghe</h2>
-                    <p className="text-xs text-slate-500">Dòng đang phát được làm nổi bật theo tiến độ audio.</p>
-                  </div>
+                  <h2 className="text-base font-extrabold text-slate-900 sm:text-lg">Hội thoại</h2>
                 </div>
-                <ol className="space-y-2.5">
+                <ol className="space-y-3">
                   {transcriptSegments.map((segment, index) => {
                     const isActive = index === activeTranscriptSegmentIndex;
+                    const speakerLabel = getDialogueSpeakerLabel(segment.speaker);
                     return (
                       <li
                         key={`${currentQuestion.id}-${index}-${segment.speaker}`}
                         aria-current={isActive ? "true" : undefined}
-                        className={`rounded-xl border p-3.5 transition-colors motion-reduce:transition-none ${
+                        className={`rounded-xl border p-4 transition-colors motion-reduce:transition-none sm:p-5 ${
                           isActive
                             ? "border-sky-300 bg-sky-50 shadow-xs"
                             : "border-slate-200 bg-white"
                         }`}
                       >
-                        <span className="mb-1.5 inline-flex rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-extrabold text-slate-700">
-                          {segment.speaker}
-                        </span>
-                        <p className="text-sm font-semibold leading-relaxed text-slate-900">{segment.text}</p>
-                        {isBilingual && segment.translation && (
-                          <p className="mt-1.5 text-xs leading-relaxed text-slate-500">{segment.translation}</p>
-                        )}
+                        <p className="text-base font-semibold leading-8 text-slate-900 sm:text-lg md:text-xl">
+                          <span className="font-extrabold text-sky-700">
+                            {speakerLabel}:
+                          </span>{" "}
+                          {segment.text}
+                        </p>
                       </li>
                     );
                   })}
@@ -1078,10 +1155,12 @@ export function ListeningComprehensionWorkspace({
           <div className="mt-auto rounded-2xl border border-slate-200/80 bg-white p-4 transition-all shrink-0 shadow-xs">
             <button
               type="button"
-              onClick={() => isChecked && setTranscriptOpen((prev) => !prev)}
-              disabled={!isChecked}
+              onClick={() => {
+                if (isDialogue || isChecked) setTranscriptOpen((prev) => !prev);
+              }}
+              disabled={!isDialogue && !isChecked}
               className={`w-full flex items-center justify-between text-xs font-bold transition ${
-                isChecked
+                isDialogue || isChecked
                   ? "text-slate-800 hover:text-slate-900 cursor-pointer"
                   : "text-slate-400 cursor-not-allowed opacity-75"
               }`}
@@ -1089,11 +1168,11 @@ export function ListeningComprehensionWorkspace({
               <span className="flex items-center gap-2">
                 <FileText
                   size={15}
-                  className={isChecked ? "text-sky-600" : "text-slate-400"}
+                  className={isDialogue || isChecked ? "text-sky-600" : "text-slate-400"}
                 />
-                <span>Bản ghi âm &amp; Lời thoại (Transcript)</span>
+                <span>{isDialogue ? "Transcript song ngữ" : "Bản ghi âm &amp; Lời thoại (Transcript)"}</span>
               </span>
-              {isChecked ? (
+              {isDialogue || isChecked ? (
                 <span className="flex items-center gap-1 text-[11px] font-medium text-slate-500">
                   {transcriptOpen ? "Thu gọn" : "Xem nội dung"}
                   <ChevronDown
@@ -1110,19 +1189,37 @@ export function ListeningComprehensionWorkspace({
               )}
             </button>
 
-            {isChecked && transcriptOpen && (
+            {transcriptOpen && (isDialogue || isChecked) && (
               <div className="mt-3 border-t border-slate-100 pt-3 text-xs leading-relaxed text-slate-700 animate-in fade-in duration-200">
-                <p className="font-bold text-slate-900 mb-1">
-                  Nội dung đoạn ghi âm:
-                </p>
-                <p className="italic text-slate-800 bg-slate-50 p-3 rounded-xl border border-slate-200/80">
-                  {currentQuestion.content?.audioText ||
-                    currentCheck?.translation ||
-                    (typeof currentCheck?.explanation === "string"
-                      ? currentCheck.explanation
-                      : currentCheck?.explanation?.vi) ||
-                    "Chưa có bản ghi âm bằng văn bản cho câu hỏi này."}
-                </p>
+                {isDialogue ? (
+                  <ol className="space-y-2.5" aria-label="Transcript song ngữ của đoạn hội thoại">
+                    {transcriptSegments.map((segment, index) => (
+                      <li key={`transcript-${currentQuestion.id}-${index}`} className="rounded-xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
+                        <p className="text-sm font-semibold leading-6 text-slate-900 sm:text-base">
+                          <span className="font-extrabold text-sky-700">{getDialogueSpeakerLabel(segment.speaker)}:</span>{" "}
+                          {segment.text}
+                        </p>
+                        {isBilingual && segment.translation && (
+                          <p className="mt-1.5 text-sm leading-6 text-slate-600 sm:text-base">
+                            {segment.translation}
+                          </p>
+                        )}
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <>
+                    <p className="font-bold text-slate-900 mb-1">Nội dung đoạn ghi âm:</p>
+                    <p className="italic text-slate-800 bg-slate-50 p-3 rounded-xl border border-slate-200/80">
+                      {currentQuestion.content?.audioText ||
+                        currentCheck?.translation ||
+                        (typeof currentCheck?.explanation === "string"
+                          ? currentCheck.explanation
+                          : currentCheck?.explanation?.vi) ||
+                        "Chưa có bản ghi âm bằng văn bản cho câu hỏi này."}
+                    </p>
+                  </>
+                )}
                 {isBilingual && hasBilingualTranslation && (
                   <p className="mt-3 rounded-xl border border-sky-100 bg-sky-50/70 p-3 text-slate-700">
                     <span className="mb-1 block font-bold text-sky-900">
@@ -1136,8 +1233,8 @@ export function ListeningComprehensionWorkspace({
           </div>
         </section>
 
-        {/* Right Panel — Questions & Answer Options (50% Width) */}
-        <section className="w-full h-full p-6 md:p-10 flex flex-col justify-between overflow-y-auto bg-white min-h-0">
+        {/* Right Panel — Questions & Answer Options (30% Width) */}
+        <section className="w-full min-w-0 h-full p-5 md:p-6 lg:p-7 flex flex-col justify-between overflow-y-auto bg-white min-h-0">
           <div className="flex-1 flex flex-col">
             {/* Question Header */}
             <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3 mb-4 shrink-0">
@@ -1315,7 +1412,7 @@ export function ListeningComprehensionWorkspace({
                         onClick={() => handleAnswerSelect(opt)}
                         disabled={isAnswerLocked || isChecking}
                         aria-label={`Đáp án ${key}: ${opt}`}
-                        className={`w-full p-4 md:p-5 rounded-2xl border-2 flex items-center text-left transition-all ${cardStyles} ${
+                        className={`w-full min-w-0 p-3.5 md:p-4 rounded-2xl border-2 flex items-center text-left transition-all ${cardStyles} ${
                           isAnswerLocked || isChecking
                             ? "cursor-default"
                             : "cursor-pointer active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
@@ -1330,11 +1427,11 @@ export function ListeningComprehensionWorkspace({
                           )}
                         </span>
                         <span
-                          className={`ml-3.5 mr-4 text-base md:text-lg ${keyStyles}`}
+                          className={`ml-3 mr-3 text-base md:text-lg ${keyStyles}`}
                         >
                           ({key})
                         </span>
-                        <span className="text-base md:text-lg font-medium flex-1 break-words">
+                        <span className="min-w-0 text-base md:text-lg font-medium leading-7 flex-1 break-words">
                           {opt}
                         </span>
 
@@ -1473,6 +1570,16 @@ export function ListeningComprehensionWorkspace({
       <footer className="w-full h-16 bg-white border-t border-slate-200 px-4 md:px-6 flex items-center justify-between shrink-0 shadow-sm z-30 select-none">
         {/* Left Actions: Quick utilities */}
         <div className="flex items-center gap-1.5 sm:gap-2">
+          <button
+            type="button"
+            onClick={() => confirmExit("/practice/listening")}
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
+            aria-label="Thoát bài luyện và quay lại danh sách bài nghe"
+          >
+            <ArrowLeft size={15} aria-hidden="true" />
+            <span className="hidden sm:inline">Thoát bài luyện</span>
+          </button>
+
           <ReportIssueButton
             area="LISTENING"
             context={{

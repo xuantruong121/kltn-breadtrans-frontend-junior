@@ -144,7 +144,6 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
         quiz={quiz}
         reviewOnly={isWrongAnswerReview}
         reviewQuestionIds={reviewQuestionIds}
-        onBack={() => router.replace('/practice/listening')}
       />
     );
   }

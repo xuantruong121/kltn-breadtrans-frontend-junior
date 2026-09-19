@@ -7,6 +7,7 @@ import { quizService } from "@/lib/api/services/quiz.service";
 interface ListeningAudioPlayerProps {
   quizId: number;
   questionId: number;
+  audioVersion?: number;
   accent?: string;
   muted?: boolean;
   className?: string;
@@ -24,6 +25,7 @@ function formatTime(seconds: number): string {
 export function ListeningAudioPlayer({
   quizId,
   questionId,
+  audioVersion,
   accent,
   muted = false,
   className,
@@ -57,7 +59,7 @@ export function ListeningAudioPlayer({
     let isMounted = true;
 
     quizService
-      .getQuestionAudioBlob(quizId, questionId, controller.signal)
+      .getQuestionAudioBlob(quizId, questionId, controller.signal, audioVersion)
       .then((blob) => {
         if (!isMounted) return;
         if (objectUrlRef.current) {
@@ -98,7 +100,7 @@ export function ListeningAudioPlayer({
         objectUrlRef.current = null;
       }
     };
-  }, [quizId, questionId, fetchKey]);
+  }, [audioVersion, quizId, questionId, fetchKey]);
 
   // Handle Play/Pause
   const togglePlay = () => {
@@ -242,18 +244,15 @@ export function ListeningAudioPlayer({
         }}
       />
 
-      {/* Header bar of audio player */}
-      <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
+      {/* A quiet header keeps attention on the transcript below. */}
+      <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2">
         <div className="flex items-center gap-2.5">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-            <Volume2 size={18} aria-hidden="true" />
+          <div className="flex size-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+            <Volume2 size={16} aria-hidden="true" />
           </div>
-          <div>
-            <span className="text-xs font-black uppercase tracking-wider text-amber-700">
-              ĐOẠN GHI ÂM
-            </span>
-            <p className="text-xs text-slate-500 font-medium">Nghe kỹ thông tin để trả lời câu hỏi</p>
-          </div>
+          <span className="text-xs font-black uppercase tracking-wider text-amber-700">
+            ĐOẠN GHI ÂM
+          </span>
         </div>
 
         {accent && (
@@ -282,8 +281,8 @@ export function ListeningAudioPlayer({
           </button>
         </div>
       ) : (
-        <div className="space-y-4">
-          {/* Main Controls: Play/Pause, Rewind, Speed Selector */}
+        <div className="space-y-3">
+          {/* Compact controls: one primary action, one rewind action, one speed menu. */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
               <button
@@ -291,14 +290,14 @@ export function ListeningAudioPlayer({
                 onClick={togglePlay}
                 disabled={isLoading}
                 aria-label={isPlaying ? "Tạm dừng" : "Phát âm thanh"}
-                className="flex size-14 items-center justify-center rounded-2xl bg-amber-500 hover:bg-amber-600 text-white shadow-md transition-all active:scale-95 disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 cursor-pointer"
+                className="flex size-12 items-center justify-center rounded-xl bg-amber-500 text-white shadow-sm transition-all hover:bg-amber-600 active:scale-95 disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 cursor-pointer"
               >
                 {isLoading ? (
-                  <Loader2 size={24} className="animate-spin" aria-hidden="true" />
+                  <Loader2 size={21} className="animate-spin" aria-hidden="true" />
                 ) : isPlaying ? (
-                  <Pause size={24} fill="currentColor" aria-hidden="true" />
+                  <Pause size={21} fill="currentColor" aria-hidden="true" />
                 ) : (
-                  <Play size={24} fill="currentColor" className="ml-0.5" aria-hidden="true" />
+                  <Play size={21} fill="currentColor" className="ml-0.5" aria-hidden="true" />
                 )}
               </button>
 
@@ -314,28 +313,20 @@ export function ListeningAudioPlayer({
               </button>
             </div>
 
-            {/* Playback speed selector pills */}
-            <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1">
-              {[
-                { rate: 0.75, label: "0.75x" },
-                { rate: 1.0, label: "1.0x (Chuẩn)" },
-                { rate: 1.25, label: "1.25x" },
-                { rate: 1.5, label: "1.5x" },
-              ].map(({ rate, label }) => (
-                <button
-                  key={rate}
-                  type="button"
-                  onClick={() => handleRateChange(rate)}
-                  className={`min-h-9 rounded-lg px-2.5 text-xs font-extrabold transition cursor-pointer ${
-                    playbackRate === rate
-                      ? "bg-amber-500 text-white shadow-xs"
-                      : "text-slate-600 hover:text-slate-900"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+            <label className="flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-slate-600">
+              <span>Tốc độ</span>
+              <select
+                value={playbackRate}
+                onChange={(event) => handleRateChange(Number(event.target.value))}
+                aria-label="Tốc độ phát audio"
+                className="cursor-pointer bg-transparent font-extrabold text-slate-800 outline-none"
+              >
+                <option value={0.75}>0.75x</option>
+                <option value={1}>1.0x (Chuẩn)</option>
+                <option value={1.25}>1.25x</option>
+                <option value={1.5}>1.5x</option>
+              </select>
+            </label>
           </div>
 
           {/* Timeline & Scrubber */}

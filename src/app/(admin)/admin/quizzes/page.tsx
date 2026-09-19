@@ -180,6 +180,18 @@ export default function AdminQuizzesPage() {
     },
   });
 
+  const dialogueAudioMutation = useMutation({
+    mutationFn: async (questionId: number) =>
+      axiosClient.post(`/quizzes/questions/${questionId}/audio-assets/generate-dialogue`),
+    onSuccess: () => {
+      toast.success("Đã sinh audio hội thoại với giọng đọc phân biệt theo người nói");
+      refetchDetail();
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || "Không thể sinh audio hội thoại");
+    },
+  });
+
   const diagnosticClipMutation = useMutation({
     mutationFn: async ({ questionId, payload }: { questionId: number; payload: typeof diagnosticClipForm }) =>
       axiosClient.post(`/quizzes/questions/${questionId}/diagnostic-clips`, payload),
@@ -669,6 +681,38 @@ export default function AdminQuizzesPage() {
                           </div>
                         )}
 
+                        {Array.isArray(content.transcriptSegments) && content.transcriptSegments.length > 0 && (
+                          <div className="rounded-xl border border-sky-200 bg-sky-50/70 p-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div>
+                                <p className="text-xs font-black text-sky-900">
+                                  Hội thoại {content.transcriptSegments.length} lượt lời
+                                </p>
+                                <p className="mt-1 text-[11px] text-sky-800">
+                                  {Array.from(new Set(content.transcriptSegments.map((segment: any) => segment.speaker).filter(Boolean))).join(" · ")}
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                disabled={dialogueAudioMutation.isPending}
+                                onClick={() => dialogueAudioMutation.mutate(q.id)}
+                                className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-sky-300 bg-white px-3 text-xs font-black text-sky-700 transition hover:bg-sky-100 disabled:cursor-wait disabled:opacity-60"
+                              >
+                                {dialogueAudioMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Volume2 size={14} />}
+                                {q.audioAssets?.[0] ? "Tạo lại audio đa giọng" : "Sinh audio đa giọng"}
+                              </button>
+                            </div>
+                            <div className="mt-2 space-y-1 text-xs text-slate-700">
+                              {content.transcriptSegments.slice(0, 3).map((segment: any, segmentIndex: number) => (
+                                <p key={`${q.id}-segment-${segmentIndex}`} className="truncate">
+                                  <span className="font-black text-sky-800">{segment.speaker}:</span> {segment.text}
+                                </p>
+                              ))}
+                              {content.transcriptSegments.length > 3 && <p className="text-slate-500">… và {content.transcriptSegments.length - 3} lượt lời khác</p>}
+                            </div>
+                          </div>
+                        )}
+
                         <div className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-slate-300 bg-white px-3 py-2">
                           <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-bold text-slate-700 transition hover:border-emerald-300 hover:bg-emerald-50">
                             <Volume2 size={15} className="text-emerald-600" />
@@ -782,12 +826,16 @@ export default function AdminQuizzesPage() {
                 <QuickAddQuestionForm
                   quizId={selectedQuizForQuestions.id}
                   quizType={selectedQuizForQuestions.type}
-                  onAdd={(data) =>
-                    addQuestionMutation.mutate({
+                  onAdd={async (data) => {
+                    const created: any = await addQuestionMutation.mutateAsync({
                       quizId: selectedQuizForQuestions.id,
                       questionData: data,
-                    })
-                  }
+                    });
+                    const createdQuestion = created?.data || created;
+                    if (data.type === "DIALOGUE" && createdQuestion?.id) {
+                      dialogueAudioMutation.mutate(createdQuestion.id);
+                    }
+                  }}
                   isLoading={addQuestionMutation.isPending}
                 />
               </div>
@@ -807,7 +855,7 @@ function QuickAddQuestionForm({
 }: {
   quizId?: number;
   quizType?: string;
-  onAdd: (data: any) => void;
+  onAdd: (data: any) => void | Promise<void>;
   isLoading: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -822,12 +870,28 @@ function QuickAddQuestionForm({
   const [audioText, setAudioText] = useState("");
   const [accent, setAccent] = useState("US");
   const [dictationMode, setDictationMode] = useState<"STANDARD" | "STRICT">("STANDARD");
-  const [transcriptJson, setTranscriptJson] = useState("");
+  const [dialogueSegments, setDialogueSegments] = useState([
+    { speaker: "Customer", text: "", translation: "" },
+    { speaker: "Agent", text: "", translation: "" },
+  ]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!questionText.trim() || (!audioText.trim() && quizType === "LISTENING_PRACTICE")) {
-      toast.error("Vui lòng nhập nội dung câu hỏi và audio text cho bài luyện nghe.");
+    const isDialogue = practiceKind === "DIALOGUE" && quizType === "LISTENING_PRACTICE";
+    const normalizedSegments = dialogueSegments
+      .map((segment) => ({
+        speaker: segment.speaker.trim(),
+        text: segment.text.trim(),
+        translation: segment.translation.trim(),
+      }))
+      .filter((segment) => segment.speaker && segment.text)
+      .map((segment) => ({
+        ...segment,
+        ...(segment.translation ? { translation: segment.translation } : {}),
+      }));
+
+    if (!questionText.trim() || (!audioText.trim() && quizType === "LISTENING_PRACTICE" && !isDialogue)) {
+      toast.error("Vui lòng nhập nội dung câu hỏi và nội dung audio.");
       return;
     }
     if (practiceKind === "MULTIPLE_CHOICE" && (!optA.trim() || !optB.trim())) {
@@ -842,35 +906,35 @@ function QuickAddQuestionForm({
     const optionMap: Record<string, string> = { A: optA.trim(), B: optB.trim(), C: optC.trim(), D: optD.trim() };
     const correctValue = optionMap[correctKey] || optA.trim();
 
-    let transcriptSegments: unknown;
-    if (practiceKind === "DIALOGUE" && transcriptJson.trim()) {
-      try {
-        transcriptSegments = JSON.parse(transcriptJson);
-        if (!Array.isArray(transcriptSegments)) throw new Error("not array");
-      } catch {
-        toast.error("Transcript phải là JSON array gồm speaker và text.");
-        return;
-      }
+    if (isDialogue && (normalizedSegments.length < 2 || new Set(normalizedSegments.map((segment) => segment.speaker.toLowerCase())).size < 2)) {
+      toast.error("Hội thoại cần ít nhất 2 lượt lời thuộc 2 người nói khác nhau.");
+      return;
     }
 
-    onAdd({
-      type: practiceKind,
-      content: {
-        text: questionText.trim(),
-        ...(practiceKind === "MULTIPLE_CHOICE" ? { options, correct: correctValue } : {}),
-        ...(quizType === "LISTENING_PRACTICE"
-          ? {
-              audioText: audioText.trim(),
-              accent,
-              ...(practiceKind === "DICTATION"
-                ? { correctAnswer: audioText.trim(), dictationMode }
-                : {}),
-              ...(practiceKind === "DIALOGUE" ? { transcriptSegments } : {}),
-            }
-          : {}),
-        explanation: explanation.trim(),
-      },
-    });
+    const derivedAudioText = normalizedSegments.map((segment) => segment.text).join(" ");
+
+    try {
+      await onAdd({
+        type: practiceKind,
+        content: {
+          text: questionText.trim(),
+          ...(practiceKind === "MULTIPLE_CHOICE" ? { options, correct: correctValue } : {}),
+          ...(quizType === "LISTENING_PRACTICE"
+            ? {
+                audioText: isDialogue ? derivedAudioText : audioText.trim(),
+                accent,
+                ...(practiceKind === "DICTATION"
+                  ? { correctAnswer: audioText.trim(), dictationMode }
+                  : {}),
+                ...(isDialogue ? { transcriptSegments: normalizedSegments } : {}),
+              }
+            : {}),
+          explanation: explanation.trim(),
+        },
+      });
+    } catch {
+      return;
+    }
 
     // Reset form
     setQuestionText("");
@@ -880,7 +944,10 @@ function QuickAddQuestionForm({
     setOptD("");
     setExplanation("");
     setAudioText("");
-    setTranscriptJson("");
+    setDialogueSegments([
+      { speaker: "Customer", text: "", translation: "" },
+      { speaker: "Agent", text: "", translation: "" },
+    ]);
     setPracticeKind("MULTIPLE_CHOICE");
     setIsOpen(false);
   };
@@ -891,7 +958,7 @@ function QuickAddQuestionForm({
         onClick={() => setIsOpen(true)}
         className="w-full py-3 bg-slate-50 hover:bg-emerald-50 text-emerald-600 hover:text-emerald-700 font-black rounded-2xl border-2 border-dashed border-emerald-300 flex items-center justify-center gap-2 transition-all cursor-pointer text-sm"
       >
-        <Plus size={18} /> Thêm câu hỏi trắc nghiệm mới vào đề
+        <Plus size={18} /> Thêm câu hỏi mới vào đề
       </button>
     );
   }
@@ -929,7 +996,7 @@ function QuickAddQuestionForm({
         </div>
       )}
 
-      {quizType === "LISTENING_PRACTICE" && (
+      {quizType === "LISTENING_PRACTICE" && practiceKind !== "DIALOGUE" && (
         <div>
           <label className="block text-slate-600 mb-1">Nội dung audio / đáp án nghe chép <span className="text-rose-500">*</span></label>
           <textarea value={audioText} onChange={(e) => setAudioText(e.target.value)} rows={2} placeholder="Văn bản dùng để phát TTS hoặc đáp án chuẩn..." className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-800" />
@@ -937,9 +1004,54 @@ function QuickAddQuestionForm({
       )}
 
       {quizType === "LISTENING_PRACTICE" && practiceKind === "DIALOGUE" && (
-        <div>
-          <label className="block text-slate-600 mb-1">Transcript theo lượt lời (JSON)</label>
-          <textarea value={transcriptJson} onChange={(e) => setTranscriptJson(e.target.value)} rows={3} placeholder='[{"speaker":"A","text":"...","translation":"..."}]' className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 font-mono text-[11px] text-slate-800" />
+        <div className="space-y-2 rounded-xl border border-sky-200 bg-sky-50/60 p-3">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <label className="block text-slate-700">Các lượt lời trong hội thoại</label>
+              <p className="mt-0.5 text-[11px] font-normal text-slate-500">Nhập lời thoại tiếng Anh; bản dịch chỉ dùng để hiển thị transcript song ngữ.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDialogueSegments((segments) => [...segments, { speaker: segments.length % 2 === 0 ? "Customer" : "Agent", text: "", translation: "" }])}
+              className="inline-flex min-h-10 items-center gap-1 rounded-lg border border-sky-300 bg-white px-3 text-xs font-black text-sky-700 hover:bg-sky-100"
+            >
+              <Plus size={14} /> Thêm lượt lời
+            </button>
+          </div>
+          {dialogueSegments.map((segment, index) => (
+            <div key={`dialogue-draft-${index}`} className="grid gap-2 rounded-lg border border-sky-100 bg-white p-2 sm:grid-cols-[8rem_1fr_1fr_auto]">
+              <input
+                value={segment.speaker}
+                onChange={(event) => setDialogueSegments((segments) => segments.map((item, itemIndex) => itemIndex === index ? { ...item, speaker: event.target.value } : item))}
+                placeholder="Người nói"
+                aria-label={`Người nói lượt ${index + 1}`}
+                className="min-h-10 rounded-lg border border-slate-200 px-3 text-xs text-slate-800"
+              />
+              <input
+                value={segment.text}
+                onChange={(event) => setDialogueSegments((segments) => segments.map((item, itemIndex) => itemIndex === index ? { ...item, text: event.target.value } : item))}
+                placeholder="English dialogue"
+                aria-label={`Lời thoại tiếng Anh lượt ${index + 1}`}
+                className="min-h-10 rounded-lg border border-slate-200 px-3 text-xs text-slate-800"
+              />
+              <input
+                value={segment.translation}
+                onChange={(event) => setDialogueSegments((segments) => segments.map((item, itemIndex) => itemIndex === index ? { ...item, translation: event.target.value } : item))}
+                placeholder="Bản dịch tiếng Việt (tùy chọn)"
+                aria-label={`Bản dịch lượt ${index + 1}`}
+                className="min-h-10 rounded-lg border border-slate-200 px-3 text-xs text-slate-800"
+              />
+              <button
+                type="button"
+                disabled={dialogueSegments.length <= 2}
+                onClick={() => setDialogueSegments((segments) => segments.filter((_, itemIndex) => itemIndex !== index))}
+                aria-label={`Xóa lượt lời ${index + 1}`}
+                className="min-h-10 rounded-lg px-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ))}
         </div>
       )}
 
