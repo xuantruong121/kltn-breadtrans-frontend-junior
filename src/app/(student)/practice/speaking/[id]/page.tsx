@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import {
@@ -9,7 +9,6 @@ import {
   ArrowLeft,
   BookOpen,
   ChevronDown,
-  Flag,
   Gauge,
   HelpCircle,
   Keyboard,
@@ -40,11 +39,19 @@ import {
   shouldHandleSpeakingShortcut,
   getNextExerciseId,
 } from "@/lib/speaking/speakingPracticeLogic";
+import {
+  createWorkletFlushController,
+  isAudioWorkletSupported,
+  validateChunkSequence,
+  mergeAudioChunks,
+  type WorkletFlushController,
+} from "@/lib/speaking/speakingAudioWorkletLogic";
 import { WordDictionaryPopup } from "@/components/speaking/WordDictionaryPopup";
 import { PronunciationReportCard } from "@/components/speaking/PronunciationReportCard";
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
 import { PracticeExitConfirmDialog } from "@/components/practice/PracticeExitConfirmDialog";
 import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
+import { ReportIssueButton } from "@/components/issue-report";
 import toast from "react-hot-toast";
 
 /**
@@ -122,8 +129,10 @@ export const IS_WORD_REGEX = /[\p{L}\p{N}]/u;
 
 export default function SpeakingExerciseDetailPage() {
   const { id } = useParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const exerciseId = Number(id);
+  const practiceSetKey = searchParams.get("set");
   const queryClient = useQueryClient();
 
   // Explicit Attempt State Machine
@@ -144,12 +153,16 @@ export default function SpeakingExerciseDetailPage() {
   // Audio recording hardware nodes
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
-  const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const workletNodeRef = useRef<AudioWorkletNode | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const recordedSamplesRef = useRef<Float32Array[]>([]);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const animFrameRef = useRef<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const workletFlushControllerRef =
+    useRef<WorkletFlushController | null>(null);
+  const lastChunkSequenceRef = useRef<number | null>(null);
+  const inputSampleRateRef = useRef<number>(44100);
 
   // TTS State
   const [isPlayingTTS, setIsPlayingTTS] = useState(false);
@@ -270,10 +283,37 @@ export default function SpeakingExerciseDetailPage() {
     staleTime: 60_000,
   });
 
+  const practiceSetExercises = useMemo(() => {
+    if (!allExercises || !practiceSetKey) return [];
+    return allExercises
+      .filter((item) => item.practiceSet?.key === practiceSetKey)
+      .sort(
+        (a, b) =>
+          (a.practiceSet?.position ?? 0) - (b.practiceSet?.position ?? 0),
+      );
+  }, [allExercises, practiceSetKey]);
+
+  const orderedExercises = useMemo(
+    () =>
+      practiceSetKey && practiceSetExercises.length > 0
+        ? practiceSetExercises
+        : (allExercises ?? []),
+    [allExercises, practiceSetExercises, practiceSetKey],
+  );
+
+  const activeCatalogExercise = useMemo(
+    () => allExercises?.find((item) => item.id === exerciseId),
+    [allExercises, exerciseId],
+  );
+  const activePracticeSet = activeCatalogExercise?.practiceSet;
+  const currentPracticeSetPosition = activePracticeSet
+    ? practiceSetExercises.findIndex((item) => item.id === exerciseId) + 1
+    : 0;
+
   const isNextAvailable = useMemo(() => {
-    if (!allExercises || !exerciseId) return false;
-    return Boolean(getNextExerciseId(exerciseId, allExercises));
-  }, [allExercises, exerciseId]);
+    if (!orderedExercises.length || !exerciseId) return false;
+    return Boolean(getNextExerciseId(exerciseId, orderedExercises));
+  }, [orderedExercises, exerciseId]);
 
   const [minLaunchReady, setMinLaunchReady] = useState(false);
   useEffect(() => {
@@ -299,11 +339,13 @@ export default function SpeakingExerciseDetailPage() {
       cancelAnimationFrame(animFrameRef.current);
       animFrameRef.current = null;
     }
-    if (processorRef.current) {
+    if (workletNodeRef.current) {
       try {
-        processorRef.current.disconnect();
+        workletNodeRef.current.onprocessorerror = null;
+        workletNodeRef.current.port.onmessage = null;
+        workletNodeRef.current.disconnect();
       } catch {}
-      processorRef.current = null;
+      workletNodeRef.current = null;
     }
     if (mediaStreamRef.current) {
       try {
@@ -319,6 +361,9 @@ export default function SpeakingExerciseDetailPage() {
       } catch {}
       audioContextRef.current = null;
     }
+    workletFlushControllerRef.current?.cancel();
+    workletFlushControllerRef.current = null;
+    lastChunkSequenceRef.current = null;
   }, []);
 
   const { confirmExit, exitDialogProps } = usePracticeExitGuard({
@@ -419,10 +464,19 @@ export default function SpeakingExerciseDetailPage() {
   const startRecording = useCallback(async () => {
     if (phase !== "READY") return;
 
+    if (!isAudioWorkletSupported()) {
+      toast.error(
+        "Trình duyệt hiện tại chưa hỗ trợ chế độ ghi âm ổn định. Vui lòng dùng Chrome, Edge, Firefox hoặc Safari phiên bản mới.",
+        { duration: 5000 },
+      );
+      return;
+    }
+
     try {
       setQualityWarning(null);
       setRecordingSeconds(0);
       recordedSamplesRef.current = [];
+      lastChunkSequenceRef.current = null;
       stopInFlightRef.current = false;
       submissionInFlightRef.current = false;
 
@@ -440,6 +494,11 @@ export default function SpeakingExerciseDetailPage() {
         window.AudioContext || (window as any).webkitAudioContext;
       const audioCtx = new AudioCtx();
       audioContextRef.current = audioCtx;
+      inputSampleRateRef.current = audioCtx.sampleRate || 44100;
+
+      await audioCtx.audioWorklet.addModule(
+        "/worklets/breadtrans-recorder-processor.js",
+      );
 
       const source = audioCtx.createMediaStreamSource(stream);
 
@@ -450,32 +509,77 @@ export default function SpeakingExerciseDetailPage() {
       analyserRef.current = analyser;
       source.connect(analyser);
 
-      // ScriptProcessorNode for pure PCM chunk extraction
-      const processor = audioCtx.createScriptProcessor(4096, 1, 1);
-      processorRef.current = processor;
+      // AudioWorkletNode for off-main-thread PCM chunk extraction
+      const workletNode = new AudioWorkletNode(
+        audioCtx,
+        "breadtrans-recorder-processor",
+      );
+      workletNodeRef.current = workletNode;
+      const flushController = createWorkletFlushController(workletNode);
+      workletFlushControllerRef.current = flushController;
 
-      processor.onaudioprocess = (e) => {
-        const inputData = e.inputBuffer.getChannelData(0);
-        recordedSamplesRef.current.push(new Float32Array(inputData));
+      workletNode.onprocessorerror = () => {
+        if (
+          !isMountedRef.current ||
+          workletNodeRef.current !== workletNode ||
+          stopInFlightRef.current
+        ) {
+          return;
+        }
+
+        setQualityWarning(
+          "Bộ ghi âm gặp lỗi ngoài dự kiến. Bản ghi chưa được gửi; vui lòng thu lại.",
+        );
+        stopInFlightRef.current = true;
+        submissionInFlightRef.current = false;
+        releaseMediaStream();
+        stopInFlightRef.current = false;
+        setPhase("INVALID_AUDIO");
+      };
+
+      workletNode.port.onmessage = (e: MessageEvent) => {
+        const data = e.data;
+        if (!data) return;
+
+        if (data.type === "audio") {
+          const chunk = new Float32Array(data.samples);
+          recordedSamplesRef.current.push(chunk);
+
+          const seqResult = validateChunkSequence(
+            lastChunkSequenceRef.current,
+            data.sequence,
+          );
+          if (!seqResult.valid) {
+            console.warn(
+              `[AudioWorklet] Sequence discontinuity detected: expected ${seqResult.expected}, got ${data.sequence} (gap: ${seqResult.gap})`,
+            );
+          }
+          lastChunkSequenceRef.current = data.sequence;
+        } else if (data.type === "flushed") {
+          flushController.onFlushedMessage();
+        }
       };
 
       // Connect to a Zero-Gain node to strictly avoid microphone audio loopback into speakers!
       const zeroGain = audioCtx.createGain();
       zeroGain.gain.value = 0.0;
 
-      source.connect(processor);
-      processor.connect(zeroGain);
+      source.connect(workletNode);
+      workletNode.connect(zeroGain);
       zeroGain.connect(audioCtx.destination);
 
       setPhase("RECORDING");
     } catch (err) {
-      console.error("Error accessing microphone:", err);
+      console.error("Error accessing microphone or loading AudioWorklet:", err);
+      releaseMediaStream();
+      recordedSamplesRef.current = [];
+      stopInFlightRef.current = false;
       toast.error(
-        "Không thể truy cập Microphone. Vui lòng kiểm tra và cấp quyền micro trong cài đặt trình duyệt.",
+        "Không thể truy cập Microphone hoặc khởi tạo bộ ghi âm. Vui lòng kiểm tra và cấp quyền micro trong cài đặt trình duyệt.",
       );
       setPhase("READY");
     }
-  }, [phase]);
+  }, [phase, releaseMediaStream]);
 
   /**
    * Polls GET /speaking/submissions/:id every 1.5s until terminal status.
@@ -511,9 +615,15 @@ export default function SpeakingExerciseDetailPage() {
 
             // Authoritative cache invalidation on completed
             const currentUserId = useAuthStore.getState().user?.id;
-            queryClient.invalidateQueries({ queryKey: ["dashboard-today", currentUserId] });
-            queryClient.invalidateQueries({ queryKey: ["user-stats", currentUserId] });
-            queryClient.invalidateQueries({ queryKey: ["user-skills-summary", currentUserId] });
+            queryClient.invalidateQueries({
+              queryKey: ["dashboard-today", currentUserId],
+            });
+            queryClient.invalidateQueries({
+              queryKey: ["user-stats", currentUserId],
+            });
+            queryClient.invalidateQueries({
+              queryKey: ["user-skills-summary", currentUserId],
+            });
             queryClient.invalidateQueries({ queryKey: ["myPet"] });
           } else if (sub.status === "FAILED") {
             setPhase("FAILED");
@@ -578,30 +688,39 @@ export default function SpeakingExerciseDetailPage() {
     if (stopInFlightRef.current) return;
     stopInFlightRef.current = true;
 
-    const audioCtx = audioContextRef.current;
-    const inputSampleRate = audioCtx?.sampleRate || 44100;
+    // Stop timer immediately
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+
+    setPhase("ENCODING");
+
+    // Graceful flush: reject incomplete recordings instead of silently submitting truncated audio.
+    const flushController = workletFlushControllerRef.current;
+    const flushed = await (flushController?.flush() ?? Promise.resolve(false));
+    if (!flushed) {
+      setQualityWarning(
+        "Không thể hoàn tất dữ liệu ghi âm. Vui lòng thu lại để đảm bảo bản ghi đầy đủ.",
+      );
+      releaseMediaStream();
+      stopInFlightRef.current = false;
+      setPhase("INVALID_AUDIO");
+      return;
+    }
+
+    const inputSampleRate = inputSampleRateRef.current || 44100;
 
     // Disconnect and stop media hardware immediately so mic indicator turns OFF
     releaseMediaStream();
 
-    setPhase("ENCODING");
+    const merged = mergeAudioChunks(recordedSamplesRef.current);
 
-    const chunks = recordedSamplesRef.current;
-    let totalLength = 0;
-    for (const chunk of chunks) totalLength += chunk.length;
-
-    if (totalLength === 0) {
+    if (merged.length === 0) {
       setQualityWarning("Bản ghi âm rỗng. Vui lòng nói to rõ và thu lại.");
       setPhase("INVALID_AUDIO");
       stopInFlightRef.current = false;
       return;
-    }
-
-    const merged = new Float32Array(totalLength);
-    let offset = 0;
-    for (const chunk of chunks) {
-      merged.set(chunk, offset);
-      offset += chunk.length;
     }
 
     // 1. Resample strictly to 16,000 Hz.
@@ -741,9 +860,20 @@ export default function SpeakingExerciseDetailPage() {
   const handleNextExercise = useCallback(async () => {
     try {
       const exercises = await speakingService.getExercises();
-      const nextId = getNextExerciseId(exerciseId, exercises);
+      const sessionExercises = practiceSetKey
+        ? exercises
+            .filter((item) => item.practiceSet?.key === practiceSetKey)
+            .sort(
+              (a, b) =>
+                (a.practiceSet?.position ?? 0) - (b.practiceSet?.position ?? 0),
+            )
+        : exercises;
+      const nextId = getNextExerciseId(exerciseId, sessionExercises);
       if (nextId) {
-        router.push(`/practice/speaking/${nextId}`);
+        const query = practiceSetKey
+          ? `?set=${encodeURIComponent(practiceSetKey)}`
+          : "";
+        router.push(`/practice/speaking/${nextId}${query}`);
       } else {
         router.push("/practice/speaking");
       }
@@ -752,7 +882,7 @@ export default function SpeakingExerciseDetailPage() {
       toast.error("Không thể tải bài tập tiếp theo. Đang quay về danh sách.");
       router.push("/practice/speaking");
     }
-  }, [exerciseId, router]);
+  }, [exerciseId, practiceSetKey, router]);
 
   /**
    * Browser SpeechSynthesis fallback when neural TTS server is unreachable.
@@ -855,7 +985,12 @@ export default function SpeakingExerciseDetailPage() {
       if (!shouldHandle) return;
 
       // CRITICAL TECHNICAL GUARD: Prevent window jump/scroll when Space is pressed
-      if (e.key === " " || e.code === "Space" || e.key === "r" || e.key === "R") {
+      if (
+        e.key === " " ||
+        e.code === "Space" ||
+        e.key === "r" ||
+        e.key === "R"
+      ) {
         e.preventDefault();
       }
 
@@ -900,21 +1035,6 @@ export default function SpeakingExerciseDetailPage() {
     }
 
     setSelectedWordForLookup(word);
-  };
-
-  const handleReportIssue = () => {
-    const subject = `Báo lỗi bài luyện nói: ${exercise?.title ?? ""}`;
-    const body = [
-      "Tôi cần báo lỗi bài luyện nói này.",
-      "",
-      `Bài luyện: ${exercise?.title ?? ""}`,
-      `Nội dung: ${exercise?.targetText ?? "Không có"}`,
-      `Đường dẫn: ${window.location.href}`,
-      "",
-      "Mô tả lỗi chi tiết:",
-    ].join("\n");
-
-    window.location.href = `mailto:luamoi2014@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
   /**
@@ -962,7 +1082,11 @@ export default function SpeakingExerciseDetailPage() {
             : "bg-white border border-slate-200/90 text-slate-900 hover:bg-amber-100 hover:text-amber-800 hover:scale-105 active:scale-95 hover:border-amber-300 shadow-2xs px-3 py-1 m-1 rounded-2xl";
           let tooltip = `Nhấn để tra từ điển & phát âm: "${cleanLookupWord}"`;
 
-          if (!isStage1Mode && wordsAssessment && Array.isArray(wordsAssessment)) {
+          if (
+            !isStage1Mode &&
+            wordsAssessment &&
+            Array.isArray(wordsAssessment)
+          ) {
             const currentIdx = wordIndex;
             wordIndex++;
 
@@ -1089,11 +1213,17 @@ export default function SpeakingExerciseDetailPage() {
 
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-sm font-bold text-slate-100 truncate max-w-[200px] sm:max-w-[320px] md:max-w-[480px]">
-              {exercise.title}
+              {activePracticeSet?.title ?? exercise.title}
             </span>
             <span className="shrink-0 rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider">
               {exercise.difficulty}
             </span>
+            {activePracticeSet && (
+              <span className="shrink-0 rounded bg-amber-500/15 border border-amber-400/30 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+                Câu {currentPracticeSetPosition}/
+                {activePracticeSet.exerciseCount}
+              </span>
+            )}
             <span className="hidden sm:inline-block shrink-0 rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-[10px] font-bold text-slate-300 uppercase tracking-wider">
               {exercise.category}
             </span>
@@ -1227,23 +1357,30 @@ export default function SpeakingExerciseDetailPage() {
 
             {/* 1. Practice Sentence Canvas (Widened horizontal stretch, compact vertical padding) */}
             <div className="w-full bg-gradient-to-b from-white to-slate-50/60 py-4 px-5 sm:py-5 sm:px-8 lg:px-10 rounded-3xl border-2 border-slate-200/90 shadow-sm flex flex-col items-center justify-center">
-              {renderInteractiveTargetWords(exercise.targetText, undefined, true)}
+              {renderInteractiveTargetWords(
+                exercise.targetText,
+                undefined,
+                true,
+              )}
 
               {/* Optional Bilingual translation box */}
-              {isBilingual && (exercise.translation || exercise.description) && (
-                <div className="mt-2.5 w-full max-w-2xl rounded-2xl border border-amber-200/80 bg-amber-50/80 px-3.5 py-2 text-slate-800 text-center shadow-2xs">
-                  <span className="font-black text-amber-950 block uppercase tracking-wider text-xs">
-                    Bản dịch tham khảo
-                  </span>
-                  <p className="font-semibold text-slate-800 italic text-sm sm:text-base">
-                    "{exercise.translation || exercise.description}"
-                  </p>
-                </div>
-              )}
+              {isBilingual &&
+                (exercise.translation || exercise.description) && (
+                  <div className="mt-2.5 w-full max-w-2xl rounded-2xl border border-amber-200/80 bg-amber-50/80 px-3.5 py-2 text-slate-800 text-center shadow-2xs">
+                    <span className="font-black text-amber-950 block uppercase tracking-wider text-xs">
+                      Bản dịch tham khảo
+                    </span>
+                    <p className="font-semibold text-slate-800 italic text-sm sm:text-base">
+                      "{exercise.translation || exercise.description}"
+                    </p>
+                  </div>
+                )}
 
               <p className="mt-2.5 text-xs sm:text-sm text-slate-600 font-bold flex items-center justify-center gap-2">
                 <BookOpen size={14} className="text-amber-600" />
-                <span>Nhấp vào từ bất kỳ để tra phiên âm IPA &amp; nghe phát âm</span>
+                <span>
+                  Nhấp vào từ bất kỳ để tra phiên âm IPA &amp; nghe phát âm
+                </span>
               </p>
             </div>
 
@@ -1255,7 +1392,9 @@ export default function SpeakingExerciseDetailPage() {
                   type="button"
                   onClick={handleTogglePlayTTS}
                   aria-pressed={isPlayingTTS}
-                  aria-label={isPlayingTTS ? "Dừng nghe mẫu" : "Nghe mẫu phát âm"}
+                  aria-label={
+                    isPlayingTTS ? "Dừng nghe mẫu" : "Nghe mẫu phát âm"
+                  }
                   className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl font-extrabold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer shadow-xs ${
                     isPlayingTTS
                       ? "bg-rose-600 hover:bg-rose-700 text-white"
@@ -1356,14 +1495,22 @@ export default function SpeakingExerciseDetailPage() {
                   title="Bắt đầu thu âm (Phím Space / R)"
                   aria-label="Bắt đầu thu âm"
                 >
-                  <Mic size={30} className="transition-transform group-hover:scale-105" />
+                  <Mic
+                    size={30}
+                    className="transition-transform group-hover:scale-105"
+                  />
                 </button>
                 <div className="text-center space-y-0.5">
                   <p className="text-sm sm:text-base font-black text-slate-900">
-                    Nhấn nút Micro hoặc bấm phím <kbd className="px-2 py-0.5 rounded-lg bg-white border border-slate-300 font-mono text-xs font-black text-slate-800 shadow-2xs">Space</kbd> để nói
+                    Nhấn nút Micro hoặc bấm phím{" "}
+                    <kbd className="px-2 py-0.5 rounded-lg bg-white border border-slate-300 font-mono text-xs font-black text-slate-800 shadow-2xs">
+                      Space
+                    </kbd>{" "}
+                    để nói
                   </p>
                   <p className="text-xs sm:text-sm text-slate-600 font-semibold">
-                    Hệ thống tự động chuyển sang phân tích &amp; đối chiếu ngay khi dừng
+                    Hệ thống tự động chuyển sang phân tích &amp; đối chiếu ngay
+                    khi dừng
                   </p>
                 </div>
               </div>
@@ -1395,7 +1542,10 @@ export default function SpeakingExerciseDetailPage() {
                     title="Dừng & Chấm điểm (Phím Space / R)"
                     aria-label="Dừng ghi âm và chấm điểm"
                   >
-                    <StopCircle size={30} className="transition-transform group-hover:scale-105" />
+                    <StopCircle
+                      size={30}
+                      className="transition-transform group-hover:scale-105"
+                    />
                   </button>
 
                   <button
@@ -1410,7 +1560,8 @@ export default function SpeakingExerciseDetailPage() {
                 </div>
 
                 <p className="font-bold text-xs sm:text-sm text-rose-600 text-center">
-                  Đang thu âm... Bấm nút đỏ hoặc nhấn [Space] để hoàn tất &amp; chấm điểm
+                  Đang thu âm... Bấm nút đỏ hoặc nhấn [Space] để hoàn tất &amp;
+                  chấm điểm
                 </p>
               </div>
             )}
@@ -1442,26 +1593,33 @@ export default function SpeakingExerciseDetailPage() {
               <div className="mt-2.5 border-t border-slate-100 pt-2.5 space-y-2 text-xs sm:text-sm text-slate-700 animate-in fade-in duration-150">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                    <p className="font-black text-sm text-slate-900">1. Độ chính xác</p>
+                    <p className="font-black text-sm text-slate-900">
+                      1. Độ chính xác
+                    </p>
                     <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1 leading-relaxed">
                       Đọc rõ từng từ, đặc biệt là âm cuối (ending sounds).
                     </p>
                   </div>
                   <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                    <p className="font-black text-sm text-slate-900">2. Độ lưu loát</p>
+                    <p className="font-black text-sm text-slate-900">
+                      2. Độ lưu loát
+                    </p>
                     <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1 leading-relaxed">
                       Giữ nhịp điệu tự nhiên, không ngập ngừng quá lâu.
                     </p>
                   </div>
                   <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                    <p className="font-black text-sm text-slate-900">3. Độ toàn vẹn</p>
+                    <p className="font-black text-sm text-slate-900">
+                      3. Độ toàn vẹn
+                    </p>
                     <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1 leading-relaxed">
                       Không bỏ sót từ ngữ nào trong câu văn mẫu.
                     </p>
                   </div>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-600 font-semibold italic text-center pt-1">
-                  Mẹo: Giữ khoảng cách micro 10-15cm và tránh đọc trong phòng có tiếng vang.
+                  Mẹo: Giữ khoảng cách micro 10-15cm và tránh đọc trong phòng có
+                  tiếng vang.
                 </p>
               </div>
             )}
@@ -1558,21 +1716,25 @@ export default function SpeakingExerciseDetailPage() {
                   )}
 
                 {/* Optional Bilingual translation box */}
-                {isBilingual && (exercise.translation || exercise.description) && (
-                  <div className="mt-3.5 w-full max-w-xl rounded-2xl border border-amber-200/90 bg-amber-50/80 p-3.5 text-center shadow-2xs">
-                    <span className="font-black text-amber-950 block mb-1 uppercase tracking-wider text-xs">
-                      Bản dịch tham khảo
-                    </span>
-                    <p className="font-semibold text-slate-800 italic text-sm sm:text-base">
-                      "{exercise.translation || exercise.description}"
-                    </p>
-                  </div>
-                )}
+                {isBilingual &&
+                  (exercise.translation || exercise.description) && (
+                    <div className="mt-3.5 w-full max-w-xl rounded-2xl border border-amber-200/90 bg-amber-50/80 p-3.5 text-center shadow-2xs">
+                      <span className="font-black text-amber-950 block mb-1 uppercase tracking-wider text-xs">
+                        Bản dịch tham khảo
+                      </span>
+                      <p className="font-semibold text-slate-800 italic text-sm sm:text-base">
+                        "{exercise.translation || exercise.description}"
+                      </p>
+                    </div>
+                  )}
 
                 {/* Dictionary hint pill */}
                 <div className="mt-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100/90 text-slate-600 text-xs sm:text-sm font-semibold border border-slate-200/80 shadow-2xs">
                   <BookOpen size={14} className="text-amber-600 shrink-0" />
-                  <span>Nhấp vào từ bất kỳ để tra nghĩa, phiên âm IPA và nghe cách đọc mẫu</span>
+                  <span>
+                    Nhấp vào từ bất kỳ để tra nghĩa, phiên âm IPA và nghe cách
+                    đọc mẫu
+                  </span>
                 </div>
               </div>
             </div>
@@ -1603,19 +1765,25 @@ export default function SpeakingExerciseDetailPage() {
                 <div className="mt-2.5 border-t border-slate-100 pt-2.5 space-y-2 text-xs sm:text-sm text-slate-700 animate-in fade-in duration-150">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                      <p className="font-black text-sm text-slate-900">1. Độ chính xác</p>
+                      <p className="font-black text-sm text-slate-900">
+                        1. Độ chính xác
+                      </p>
                       <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1 leading-relaxed">
                         Đọc rõ từng từ, đặc biệt là âm cuối (ending sounds).
                       </p>
                     </div>
                     <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                      <p className="font-black text-sm text-slate-900">2. Độ lưu loát</p>
+                      <p className="font-black text-sm text-slate-900">
+                        2. Độ lưu loát
+                      </p>
                       <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1 leading-relaxed">
                         Giữ nhịp điệu tự nhiên, không ngập ngừng quá lâu.
                       </p>
                     </div>
                     <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                      <p className="font-black text-sm text-slate-900">3. Độ toàn vẹn</p>
+                      <p className="font-black text-sm text-slate-900">
+                        3. Độ toàn vẹn
+                      </p>
                       <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1 leading-relaxed">
                         Không bỏ sót từ ngữ nào trong câu văn mẫu.
                       </p>
@@ -1657,16 +1825,21 @@ export default function SpeakingExerciseDetailPage() {
       <footer className="w-full h-14 bg-white border-t border-slate-200 px-4 md:px-6 flex items-center justify-between shrink-0 shadow-sm z-30 select-none">
         {/* Left: Quick utilities */}
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Báo lỗi */}
-          <button
-            type="button"
-            onClick={handleReportIssue}
-            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-700 hover:text-slate-900 px-3 py-1.5 rounded-xl hover:bg-slate-100 transition cursor-pointer"
-            title="Báo cáo bài tập có lỗi"
-          >
-            <Flag size={15} className="text-rose-500" />
-            <span className="hidden sm:inline">Báo lỗi</span>
-          </button>
+          <ReportIssueButton
+            area="SPEAKING"
+            context={{
+              route:
+                typeof window !== "undefined"
+                  ? window.location.pathname
+                  : undefined,
+              sourceType: "SPEAKING_EXERCISE",
+              sourceId: exercise?.id,
+              context: {
+                exerciseTitle: exercise?.title,
+                targetText: exercise?.targetText,
+              },
+            }}
+          />
 
           {/* Tra từ */}
           <button
@@ -1743,7 +1916,9 @@ export default function SpeakingExerciseDetailPage() {
             >
               <Mic size={15} aria-hidden="true" />
               <span>Bắt đầu thu âm</span>
-              <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-amber-600/60 font-mono text-[10px] text-white">Space</kbd>
+              <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-amber-600/60 font-mono text-[10px] text-white">
+                Space
+              </kbd>
             </button>
           ) : phase === "RECORDING" ? (
             <div className="flex items-center gap-2">
@@ -1763,7 +1938,9 @@ export default function SpeakingExerciseDetailPage() {
               >
                 <StopCircle size={15} aria-hidden="true" />
                 <span>Dừng &amp; Chấm điểm</span>
-                <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-rose-700 font-mono text-[10px] text-white">Space</kbd>
+                <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-rose-700 font-mono text-[10px] text-white">
+                  Space
+                </kbd>
               </button>
             </div>
           ) : phase === "COMPLETED" ? (
@@ -1782,8 +1959,18 @@ export default function SpeakingExerciseDetailPage() {
                 onClick={handleNextExercise}
                 className="px-4 sm:px-5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1.5 text-xs sm:text-sm"
               >
-                <span>{isNextAvailable ? "Tiếp tục bài sau" : "Về danh sách"}</span>
-                <ArrowLeft size={14} className="rotate-180" aria-hidden="true" />
+                <span>
+                  {isNextAvailable
+                    ? activePracticeSet
+                      ? "Câu tiếp theo"
+                      : "Tiếp tục bài sau"
+                    : "Về danh sách"}
+                </span>
+                <ArrowLeft
+                  size={14}
+                  className="rotate-180"
+                  aria-hidden="true"
+                />
               </button>
             </div>
           ) : (

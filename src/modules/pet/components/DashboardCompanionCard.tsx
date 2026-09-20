@@ -19,6 +19,7 @@ import axiosClient from "@/lib/api/axiosClient";
 import { getSpeciesIdFromPetName, PET_SPECIES_LIST } from "../types";
 import {
   getPetVisualState,
+  getPetStatusCopy,
   canFeedPet,
   handleFeedFailure,
 } from "../petLogic";
@@ -77,23 +78,30 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
     return canFeedPet(pet, userBalance);
   }, [pet, userBalance]);
 
-  const satietyText = pet?.satietyState === "FULL"
-    ? "Bready đang no, chưa cần ăn thêm"
-    : pet?.satietyState === "NORMAL"
-      ? "Bready đã ăn vừa đủ"
-      : "Bready đang đói, có thể cho ăn";
+  const satiety = Math.min(100, Math.max(0, pet?.satiety ?? 80));
+  const petDisplayName = pet?.name || speciesInfo.speciesName || "Bready";
+  const satietyText = useMemo(() => {
+    return getPetStatusCopy({
+      petName: petDisplayName,
+      satietyState: pet?.satietyState,
+      satiety,
+      health: pet?.health,
+      happiness: pet?.happiness,
+    });
+  }, [petDisplayName, pet?.satietyState, satiety, pet?.health, pet?.happiness]);
 
   // Visual pose state
   const visualState = useMemo(() => {
     return getPetVisualState({
       health: pet?.health,
       happiness: pet?.happiness,
+      satiety,
       canFeed: pet?.canFeed,
       satietyState: pet?.satietyState,
       isJustFed,
       isLevelUp,
     });
-  }, [pet?.health, pet?.happiness, pet?.canFeed, pet?.satietyState, isJustFed, isLevelUp]);
+  }, [pet?.health, pet?.happiness, satiety, pet?.canFeed, pet?.satietyState, isJustFed, isLevelUp]);
 
   // Feed Pet Mutation
   const feedMutation = useMutation({
@@ -240,26 +248,24 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
               <div className="mt-1.5 flex items-center gap-1.5">
                 <span
                   className={`size-2 rounded-full ${
-                    pet.canFeed
-                      ? (pet.health ?? 0) >= 50
-                        ? "bg-emerald-500"
-                        : "bg-amber-500"
+                    feedEligibility.allowed
+                      ? "bg-emerald-500"
                       : "bg-slate-400"
                   }`}
                   aria-hidden="true"
                 />
                 <span className="text-[11px] font-semibold text-slate-700">
-                  {pet.canFeed
-                    ? (pet.health ?? 0) >= 50
-                        ? "Có thể cho ăn"
-                      : "Cần nạp năng lượng"
-                    : pet.satietyState === "FULL" ? "Đang no" : "Chưa thể cho ăn"}
+                  {feedEligibility.allowed
+                    ? "Có thể cho ăn"
+                    : !feedEligibility.allowed && (pet.satietyState === "FULL" || satiety >= 80)
+                      ? "Đang no"
+                      : "Chưa thể cho ăn"}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Health & Happiness Progress Meters */}
+          {/* Health & Happiness & Satiety Progress Meters */}
           <div className="space-y-2.5 bg-slate-50/50 p-3 rounded-xl border border-slate-200/60">
             {/* Health Meter */}
             <div>
@@ -306,12 +312,35 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
                 />
               </div>
             </div>
+
+            {/* Satiety Meter */}
+            <div>
+              <div className="flex justify-between text-[11px] font-medium mb-1">
+                <span className="flex items-center gap-1 text-slate-600">
+                  <Utensils size={12} className="text-orange-500" aria-hidden="true" /> Độ no
+                </span>
+                <span className="text-orange-700 font-bold">{satiety}%</span>
+              </div>
+              <div
+                className="h-2 rounded-full bg-slate-200/80 overflow-hidden"
+                role="progressbar"
+                aria-valuenow={satiety}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Độ no thú cưng"
+              >
+                <div
+                  className="h-full rounded-full bg-orange-500 transition-all duration-300 motion-reduce:transition-none"
+                  style={{ width: `${satiety}%` }}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Passive Buff Note */}
           {speciesInfo.buff && (
             <div className="px-3 py-2 rounded-xl bg-amber-50/70 border border-amber-200/60 text-[11px] text-amber-900">
-              <span className="font-bold">Nội tại:</span> {speciesInfo.buff}
+              <span className="font-bold">Đặc điểm:</span> {speciesInfo.buff}
             </div>
           )}
 
@@ -342,7 +371,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
             </button>
 
             {/* Satiety or Requirement Message */}
-            {pet.satietyState === "FULL" ? (
+            {!feedEligibility.allowed && (pet.satietyState === "FULL" || satiety >= 80) ? (
               <p className="text-center text-[11px] font-medium text-slate-500">{satietyText}</p>
             ) : userBalance < feedCost ? (
               <p className="text-center text-[11px] font-semibold text-rose-600">

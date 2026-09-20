@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Mail, Phone, MapPin, Wheat } from "lucide-react";
+import { Mail, Phone, MapPin } from "lucide-react";
+import { BrandLogo } from "@/components/brand";
 
 export function PublicFooter() {
   return (
@@ -7,16 +8,8 @@ export function PublicFooter() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
           {/* Brand Col */}
-          {/* Brand Col */}
           <div className="md:col-span-1 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-600 flex items-center justify-center text-white shadow-xs">
-                <Wheat size={22} aria-hidden="true" />
-              </div>
-              <span className="text-2xl font-black tracking-tight text-slate-900">
-                Bread<span className="text-amber-600">Trans</span>
-              </span>
-            </div>
+            <BrandLogo href="/" variant="compact" size="lg" />
             <p className="text-sm leading-relaxed text-slate-500">
               Nền tảng tự học tiếng Anh 4 kỹ năng, kết hợp Flashcard, ngữ pháp cùng công cụ luyện phát âm và viết câu thông minh.
             </p>

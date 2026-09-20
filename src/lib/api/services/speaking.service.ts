@@ -10,6 +10,21 @@ export interface SpeakingExercise {
   category: string;
   translation?: string;
   description?: string;
+  isCompleted?: boolean;
+  practiceSet?: SpeakingPracticeSetSummary;
+}
+
+export interface SpeakingPracticeSetSummary {
+  key: string;
+  title: string;
+  description: string;
+  category: string;
+  exerciseCount: number;
+  completedCount: number;
+  exerciseIds: number[];
+  difficultyLabel: string;
+  position: number;
+  isCompleted: boolean;
 }
 
 export interface SubmitSpeakingResponse {
@@ -22,7 +37,12 @@ export interface SubmitSpeakingResponse {
 export interface WordAssessmentItem {
   word: string;
   accuracyScore?: number | null;
-  errorType: "None" | "Mispronunciation" | "Omission" | "Insertion" | "Unspoken";
+  errorType:
+    | "None"
+    | "Mispronunciation"
+    | "Omission"
+    | "Insertion"
+    | "Unspoken";
   isCorrect: boolean;
 }
 
@@ -98,21 +118,31 @@ export const speakingService = {
     const formData = new FormData();
     formData.append("audio", audioBlob, "recording.wav");
 
-    const key = idempotencyKey || `spk-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const key =
+      idempotencyKey ||
+      `spk-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
-    return await axiosClient.post(`/speaking/exercises/${id}/submit`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-        "Idempotency-Key": key,
+    return await axiosClient.post(
+      `/speaking/exercises/${id}/submit`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          "Idempotency-Key": key,
+        },
       },
-    });
+    );
   },
 
-  getSubmission: async (submissionId: number): Promise<SpeakingSubmissionDetail> => {
+  getSubmission: async (
+    submissionId: number,
+  ): Promise<SpeakingSubmissionDetail> => {
     return await axiosClient.get(`/speaking/submissions/${submissionId}`);
   },
 
-  getAudioSignedUrl: async (submissionId: number): Promise<{ audioUrl: string }> => {
+  getAudioSignedUrl: async (
+    submissionId: number,
+  ): Promise<{ audioUrl: string }> => {
     return await axiosClient.get(`/speaking/submissions/${submissionId}/audio`);
   },
 

@@ -14,7 +14,8 @@ const quicksand = Quicksand({
 
 export const metadata: Metadata = {
   title: "BreadTrans - Học tiếng Anh & Luyện đề TOEIC",
-  description: "Nền tảng tự học tiếng Anh 4 kỹ năng, từ vựng, ngữ pháp và luyện đề TOEIC tương tác",
+  description:
+    "Nền tảng tự học tiếng Anh 4 kỹ năng, từ vựng, ngữ pháp và luyện đề TOEIC tương tác",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -39,19 +40,37 @@ export default function RootLayout({
   return (
     <html lang="vi" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/icons/logo-mark.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
         {/* Material Symbols is an icon font; next/font does not support this variable icon family. */}
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=optional" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=optional"
+        />
       </head>
-      <body className={`${quicksand.className} min-h-dvh antialiased text-slate-700`} suppressHydrationWarning>
-        <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
+      <body
+        className={`${quicksand.className} min-h-dvh antialiased text-slate-700`}
+        suppressHydrationWarning
+      >
+        <Script
+          src="https://accounts.google.com/gsi/client"
+          strategy="afterInteractive"
+        />
         <QueryProvider>
-
           <SocketProvider>
             {children}
             <PWAInstallBanner />
-            <Toaster position="top-center" />
+            <Toaster
+              position="top-center"
+              toastOptions={{
+                duration: 4200,
+                className:
+                  "!rounded-xl !border !border-slate-200 !bg-white !px-4 !py-3 !text-sm !font-semibold !text-slate-800 !shadow-lg",
+                success: { className: "!border-emerald-200 !text-emerald-800" },
+                error: { className: "!border-rose-200 !text-rose-800" },
+              }}
+            />
           </SocketProvider>
         </QueryProvider>
       </body>

@@ -86,6 +86,10 @@ const lookupCache = new Map<
   { expiresAt: number; value: VocabLookupResponse }
 >();
 const lookupInflight = new Map<string, Promise<VocabLookupResponse>>();
+const expandedLookupCache = new Map<
+  string,
+  { expiresAt: number; value: VocabLookupResponse }
+>();
 
 export const vocabService = {
   getTopics: async (): Promise<VocabTopicsResponse> => {
@@ -143,5 +147,24 @@ export const vocabService = {
       .finally(() => lookupInflight.delete(key));
     lookupInflight.set(key, request);
     return request;
+  },
+
+  lookupWordDetails: async (
+    word: string,
+    signal?: AbortSignal,
+  ): Promise<VocabLookupResponse> => {
+    const key = word.trim().toLowerCase();
+    const cached = expandedLookupCache.get(key);
+    if (cached && cached.expiresAt > Date.now()) return cached.value;
+
+    const value = (await axiosClient.get(`/vocab/lookup/details`, {
+      params: { word },
+      signal,
+    })) as unknown as VocabLookupResponse;
+    expandedLookupCache.set(key, {
+      expiresAt: Date.now() + 30 * 60 * 1000,
+      value,
+    });
+    return value;
   },
 };

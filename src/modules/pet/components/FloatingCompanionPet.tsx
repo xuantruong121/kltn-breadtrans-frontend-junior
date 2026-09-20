@@ -22,6 +22,7 @@ import { gamificationService } from "@/lib/api/services/gamification.service";
 import { useCompanionPetRuntime } from "../useCompanionPetRuntime";
 import {
   getPetVisualState,
+  getPetStatusCopy,
   canFeedPet,
   handleFeedFailure,
   getPetRecommendation,
@@ -40,7 +41,7 @@ export const FloatingCompanionPet: React.FC = () => {
 
   // Floating UI state machine
   const [isExpanded, setIsExpanded] = useState(false);
-  const [hasDismissedMessage, setHasDismissedMessage] = useState(false);
+  const [hasDismissedMessage, setHasDismissedMessage] = useState(true);
   const [isJustFed, setIsJustFed] = useState(false);
   const [isLevelUp, setIsLevelUp] = useState(false);
   const [ariaFeedback, setAriaFeedback] = useState<string | null>(null);
@@ -72,16 +73,20 @@ export const FloatingCompanionPet: React.FC = () => {
     return PET_SPECIES_LIST.find((s) => s.id === speciesId) || PET_SPECIES_LIST[0];
   }, [speciesId]);
 
+  const satiety = Math.min(100, Math.max(0, pet?.satiety ?? 80));
+  const petDisplayName = pet?.name || speciesInfo.speciesName || "Bready";
+
   const visualEmotion = useMemo(() => {
     return getPetVisualState({
       health: pet?.health,
       happiness: pet?.happiness,
+      satiety,
       canFeed: pet?.canFeed,
       satietyState: pet?.satietyState,
       isJustFed,
       isLevelUp,
     });
-  }, [pet?.health, pet?.happiness, pet?.canFeed, pet?.satietyState, isJustFed, isLevelUp]);
+  }, [pet?.health, pet?.happiness, satiety, pet?.canFeed, pet?.satietyState, isJustFed, isLevelUp]);
 
   // Feed eligibility
   const feedEligibility = useMemo(() => {
@@ -89,11 +94,15 @@ export const FloatingCompanionPet: React.FC = () => {
   }, [pet, balance]);
 
   const feedCost = pet?.feedCost ?? 10;
-  const satietyText = pet?.satietyState === "FULL"
-    ? "Bready đang no, chưa cần ăn thêm"
-    : pet?.satietyState === "NORMAL"
-      ? "Bready đã ăn vừa đủ"
-      : "Bready đang đói, có thể cho ăn";
+  const satietyText = useMemo(() => {
+    return getPetStatusCopy({
+      petName: petDisplayName,
+      satietyState: pet?.satietyState,
+      satiety,
+      health: pet?.health,
+      happiness: pet?.happiness,
+    });
+  }, [petDisplayName, pet?.satietyState, satiety, pet?.health, pet?.happiness]);
 
   // Keyboard accessibility (Escape key closes popover or message)
   useEffect(() => {
@@ -181,24 +190,28 @@ export const FloatingCompanionPet: React.FC = () => {
   const health = Math.min(100, Math.max(0, pet?.health ?? 100));
   const happiness = Math.min(100, Math.max(0, pet?.happiness ?? 100));
   const exp = pet?.exp ?? 0;
-  const expPercentage = Math.min(100, Math.max(0, exp % 100));
+  const expPerLevel = 1000;
+  const expPercentage = Math.min(
+    100,
+    Math.max(0, Math.round(((exp % expPerLevel) / expPerLevel) * 100)),
+  );
 
   return (
     <div
       ref={containerRef}
-      className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-3.5 sm:bottom-8 sm:right-6 md:right-8 z-[45]"
+      className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-3.5 md:bottom-6 md:right-6 lg:bottom-8 lg:right-8 z-[45]"
     >
       {/* Live Region for Screen Readers */}
       <div className="sr-only" role="status" aria-live="polite">
         {ariaFeedback}
       </div>
 
-      {/* 1. MESSAGE STATE: Proactive Contextual Speech Bubble */}
+      {/* 1. MESSAGE STATE: Proactive Contextual Speech Bubble (Desktop/Tablet safe; hidden on mobile to prevent filter collisions, indicator dot shown on avatar) */}
       {uiState === "MESSAGE" && recommendation && (
         <div
           role="dialog"
           aria-label="Gợi ý học tập từ thú cưng"
-          className="absolute bottom-full right-0 mb-3 w-72 sm:w-80 rounded-2xl bg-white border border-amber-200/90 shadow-lg p-3.5 text-xs text-slate-800 animate-in fade-in slide-in-from-bottom-2 duration-200"
+          className="hidden sm:block absolute bottom-full right-0 mb-3 w-72 sm:w-80 rounded-2xl bg-white border border-amber-200/90 shadow-lg p-3.5 text-xs text-slate-800 animate-in fade-in slide-in-from-bottom-2 duration-200"
         >
           <div className="flex items-start justify-between gap-2 mb-1">
             <span className="font-bold text-amber-900 flex items-center gap-1.5">
@@ -247,14 +260,21 @@ export const FloatingCompanionPet: React.FC = () => {
         </div>
       )}
 
-      {/* 2. EXPANDED STATE: Full Popover Card (Desktop popover, Mobile-safe popover) */}
+      {/* 2. EXPANDED STATE: Full Popover Card (Desktop popover, Mobile-safe bottom sheet) */}
       {uiState === "EXPANDED" && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="floating-pet-dialog-title"
-          className="fixed inset-x-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] sm:inset-auto sm:absolute sm:bottom-full sm:right-0 sm:mb-3 w-auto sm:w-88 rounded-2xl bg-white border border-slate-200 shadow-2xl p-4 sm:p-5 max-h-[calc(100dvh-6rem)] overflow-y-auto z-50 animate-in fade-in zoom-in-95 duration-200"
-        >
+        <>
+          {/* Mobile backdrop scrim */}
+          <div
+            className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-50 sm:hidden animate-in fade-in"
+            onClick={() => setIsExpanded(false)}
+            aria-hidden="true"
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="floating-pet-dialog-title"
+            className="fixed inset-x-0 bottom-0 rounded-t-3xl bg-white border-t border-slate-200 shadow-2xl p-5 max-h-[85dvh] pb-[calc(1.5rem+env(safe-area-inset-bottom))] overflow-y-auto z-50 animate-in slide-in-from-bottom duration-300 sm:inset-auto sm:absolute sm:bottom-full sm:right-0 sm:mb-3 sm:w-88 sm:rounded-2xl sm:border sm:p-5 sm:max-h-[calc(100dvh-6rem)] sm:pb-5 sm:animate-in sm:fade-in sm:zoom-in-95 sm:duration-200"
+          >
           {/* Header */}
           <div className="flex items-start justify-between pb-3 border-b border-slate-100 mb-3.5">
             <div className="flex items-center gap-3">
@@ -356,6 +376,29 @@ export const FloatingCompanionPet: React.FC = () => {
                 />
               </div>
             </div>
+
+            {/* Satiety */}
+            <div>
+              <div className="flex justify-between text-[11px] font-medium mb-1">
+                <span className="flex items-center gap-1 text-slate-600">
+                  <Utensils size={12} className="text-orange-500" aria-hidden="true" /> Độ no
+                </span>
+                <span className="text-orange-700 font-bold">{satiety}%</span>
+              </div>
+              <div
+                className="h-2 rounded-full bg-slate-200/80 overflow-hidden"
+                role="progressbar"
+                aria-valuenow={satiety}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Độ no thú cưng"
+              >
+                <div
+                  className="h-full rounded-full bg-orange-500 transition-all duration-300 motion-reduce:transition-none"
+                  style={{ width: `${satiety}%` }}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Current Bánh Mì Balance */}
@@ -426,7 +469,7 @@ export const FloatingCompanionPet: React.FC = () => {
               )}
             </button>
 
-            {pet?.satietyState === "FULL" ? (
+            {!feedEligibility.allowed && (pet?.satietyState === "FULL" || satiety >= 80) ? (
               <p className="text-center text-[11px] font-medium text-slate-500">{satietyText}</p>
             ) : balance < feedCost ? (
               <p className="text-center text-[11px] font-semibold text-rose-600">
@@ -449,6 +492,7 @@ export const FloatingCompanionPet: React.FC = () => {
             </Link>
           </div>
         </div>
+      </>
       )}
 
       {/* 3. COLLAPSED STATE: 48px Semantic Avatar Button */}
@@ -464,7 +508,7 @@ export const FloatingCompanionPet: React.FC = () => {
       >
         <CompanionPet2D speciesId={speciesId} state={visualEmotion} level={level} size="sm" />
 
-        {/* Small badge if quest is pending or on cooldown */}
+        {/* Small badge when a learning quest is pending */}
         {recommendation && !hasDismissedMessage && (
           <span
             className="absolute -top-1 -right-1 size-4 bg-amber-500 border-2 border-white rounded-full flex items-center justify-center animate-pulse"

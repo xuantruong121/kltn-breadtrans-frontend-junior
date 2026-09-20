@@ -16,7 +16,7 @@ export interface UsePracticeExitGuardOptions {
   /**
    * Optional callback fired when the user explicitly confirms exit.
    */
-  onConfirmExit?: () => void;
+  onConfirmExit?: () => void | Promise<void>;
   /**
    * Whether this guard is enabled (default: true).
    * Ensures exactly ONE component owns the guard per practice session.
@@ -187,14 +187,14 @@ export function usePracticeExitGuard({
   }, []);
 
   // 6. User choice: "Thoát bài luyện" (confirm exit)
-  const handleConfirmExit = useCallback(() => {
+  const handleConfirmExit = useCallback(async () => {
     if (isNavigatingRef.current) return;
     setIsNavigating(true);
     isBypassingGuardRef.current = true;
     setShowExitDialog(false);
 
     try {
-      onConfirmExit?.();
+      await onConfirmExit?.();
     } catch {
       // Ignore errors in exit callback to guarantee navigation proceeds
     }

@@ -14,6 +14,7 @@ import { Pet } from "@/lib/api/services/gamification.service";
 import { getSpeciesIdFromPetName, PET_SPECIES_LIST } from "../types";
 import {
   getPetVisualState,
+  getPetStatusCopy,
   canFeedPet,
   PetVisualState,
 } from "../petLogic";
@@ -59,28 +60,35 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
 
   const health = Math.min(100, Math.max(0, pet?.health ?? 100));
   const happiness = Math.min(100, Math.max(0, pet?.happiness ?? 100));
+  const satiety = Math.min(100, Math.max(0, pet?.satiety ?? 80));
 
   const feedCost = pet?.feedCost ?? 10;
   const feedEligibility = useMemo(() => {
     return canFeedPet(pet, banhRan);
   }, [pet, banhRan]);
 
-  const satietyText = pet?.satietyState === "FULL"
-    ? "Bready đang no rồi, hãy quay lại khi pet đói nhé."
-    : pet?.satietyState === "NORMAL"
-      ? "Bready đã ăn vừa đủ; có thể cho ăn khi đói hơn."
-      : "Bready đang đói và có thể ăn.";
+  const petDisplayName = currentSpecies.speciesName || pet?.name || "Bready";
+  const satietyText = useMemo(() => {
+    return getPetStatusCopy({
+      petName: petDisplayName,
+      satietyState: pet?.satietyState,
+      satiety,
+      health,
+      happiness,
+    });
+  }, [petDisplayName, pet?.satietyState, satiety, health, happiness]);
 
   const visualState: PetVisualState = useMemo(() => {
     return getPetVisualState({
       health,
       happiness,
+      satiety,
       canFeed: pet?.canFeed,
       satietyState: pet?.satietyState,
       isJustFed,
       isLevelUp,
     });
-  }, [health, happiness, pet?.canFeed, pet?.satietyState, isJustFed, isLevelUp]);
+  }, [health, happiness, satiety, pet?.canFeed, pet?.satietyState, isJustFed, isLevelUp]);
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
@@ -204,7 +212,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                 <p className="text-[11px] text-slate-500">
                   {health >= 70
                     ? "Thú cưng tràn đầy năng lượng sẵn sàng học tập."
-                    : "Sức khỏe đang giảm, hãy cho thú cưng ăn để hồi phục."}
+                    : "Sức khỏe đang thấp; hãy duy trì việc học và theo dõi trạng thái thú cưng."}
                 </p>
               </div>
 
@@ -233,7 +241,39 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                 <p className="text-[11px] text-slate-500">
                   {happiness >= 70
                     ? "Tâm trạng rất phấn khởi, sẵn sàng đồng hành cùng bạn."
-                    : "Cần được chăm sóc để tăng tinh thần vui vẻ."}
+                    : "Tâm trạng đang thấp; hãy quay lại tương tác cùng thú cưng sau."}
+                </p>
+              </div>
+              {/* Satiety Meter */}
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-1.5 font-semibold text-slate-700">
+                    <Utensils size={15} className="text-orange-500" aria-hidden="true" />
+                    <span>Độ no (Satiety)</span>
+                  </span>
+                  <span className="font-bold text-orange-700">{satiety}%</span>
+                </div>
+                <div
+                  className="h-2.5 rounded-full bg-slate-200/80 overflow-hidden"
+                  role="progressbar"
+                  aria-valuenow={satiety}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label="Độ no của thú cưng"
+                >
+                  <div
+                    className="h-full rounded-full bg-orange-500 transition-all duration-300 motion-reduce:transition-none"
+                    style={{ width: `${satiety}%` }}
+                  />
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  {satiety >= 80
+                    ? "Thú cưng đã no căng, chưa cần nạp thêm năng lượng."
+                    : satiety >= 50
+                      ? "Thú cưng đã ăn vừa đủ, có thể ăn thêm khi đói hơn."
+                      : satiety >= 20
+                        ? "Thú cưng đang đói bụng, hãy cho ăn để bổ sung năng lượng."
+                        : "Thú cưng đang rất đói! Cần cho ăn ngay để tránh giảm sức khỏe."}
                 </p>
               </div>
             </div>
@@ -242,7 +282,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
             <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/70">
               <div className="flex items-center gap-2 text-xs font-bold text-amber-900 mb-1">
                 <ShieldCheck size={16} className="text-amber-600" aria-hidden="true" />
-                <span>Hiệu ứng kích hoạt: {currentSpecies.buff}</span>
+                <span>Đặc điểm thú cưng: {currentSpecies.buff}</span>
               </div>
               <p className="text-xs text-amber-800 leading-relaxed">
                 {currentSpecies.buffDetail}
@@ -284,7 +324,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
             </button>
 
             {/* Satiety or balance status */}
-            {pet?.satietyState === "FULL" ? (
+            {!feedEligibility.allowed && (pet?.satietyState === "FULL" || satiety >= 80) ? (
               <p className="text-center text-xs font-medium text-slate-500">{satietyText}</p>
             ) : banhRan < feedCost ? (
               <p className="text-center text-xs font-semibold text-rose-600">

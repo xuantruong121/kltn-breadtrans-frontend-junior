@@ -31,6 +31,7 @@ export default function WritingDetailPage(props: {
   const [content, setContent] = useState("");
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [feedback, setFeedback] = useState<WritingEvaluation | null>(null);
+  const [imageLoadFailed, setImageLoadFailed] = useState(false);
 
   const [minLaunchReady, setMinLaunchReady] = useState(false);
   useEffect(() => {
@@ -143,6 +144,35 @@ export default function WritingDetailPage(props: {
                   "Đọc kỹ yêu cầu và viết câu trả lời phù hợp với tình huống."}
               </p>
             </div>
+
+            {/* Contextual prompt image (only displayed when imageUrl is provided) */}
+            {topic?.imageUrl && !imageLoadFailed && (
+              <div className="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-2xs">
+                <img
+                  src={topic.imageUrl}
+                  alt={
+                    topic.title
+                      ? `Hình minh họa cho đề bài: ${topic.title}`
+                      : "Hình minh họa bài viết"
+                  }
+                  loading="eager"
+                  decoding="async"
+                  onError={() => setImageLoadFailed(true)}
+                  className="w-full max-h-[380px] object-contain rounded-xl"
+                />
+              </div>
+            )}
+            {topic?.imageUrl && imageLoadFailed && (
+              <div
+                role="img"
+                aria-label="Hình minh họa đề bài viết hiện chưa tải được"
+                className="w-full overflow-hidden rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center"
+              >
+                <p className="text-xs font-medium leading-relaxed text-slate-500">
+                  Hình minh họa hiện chưa tải được. Bạn vẫn có thể tiếp tục đọc yêu cầu đề bài và hoàn thành bài viết.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* ESSAY EDITOR */}

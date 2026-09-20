@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 140" fill="none">
+  <!-- Container background (transparent) -->
+  <g transform="translate(16, 16)">
+    <!-- Squircle icon container -->
+    <rect width="108" height="108" rx="28" fill="#FFFDF7" stroke="#FDE68A" stroke-width="2.5" />
+    <g transform="translate(14, 14) scale(1.25)">
+      
+  <defs>
+    <!-- Warm Golden Wheat Gradient -->
+    <linearGradient id="wheat-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047" />
+      <stop offset="40%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+    <linearGradient id="wheat-stem" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#B45309" />
+    </linearGradient>
+
+    <!-- Warm Bread 'B' Gradient -->
+    <linearGradient id="bread-body" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FB923C" />
+      <stop offset="35%" stop-color="#F97316" />
+      <stop offset="85%" stop-color="#EA580C" />
+      <stop offset="100%" stop-color="#C2410C" />
+    </linearGradient>
+
+    <!-- Tech Blue Translation Arc Gradient -->
+    <linearGradient id="tech-blue" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1E40AF" />
+      <stop offset="40%" stop-color="#2563EB" />
+      <stop offset="80%" stop-color="#0284C7" />
+      <stop offset="100%" stop-color="#38BDF8" />
+    </linearGradient>
+
+    <!-- Inner Glow / Highlight -->
+    <linearGradient id="bread-highlight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </linearGradient>
+
+    <filter id="soft-depth" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#78350F" flood-opacity="0.12" />
+    </filter>
+  </defs>
+
+  <g filter="url(#soft-depth)">
+    <!-- 1. LEFT: Golden Wheat Stalk (Cành lúa mì tri thức) -->
+    <!-- Central stalk stem -->
+    <path d="M17 56V11" stroke="url(#wheat-stem)" stroke-width="2.5" stroke-linecap="round" />
+    <!-- Stalk base leaves -->
+    <path d="M9 51C12 47 15.5 48.5 17 51" stroke="url(#wheat-stem)" stroke-width="2" stroke-linecap="round" fill="none" />
+    <path d="M25 51C22 47 18.5 48.5 17 51" stroke="url(#wheat-stem)" stroke-width="2" stroke-linecap="round" fill="none" />
+
+    <!-- Wheat grains (4 graceful tiers) -->
+    <!-- Tier 1 (Bottom) -->
+    <path d="M17 47C12.5 47 10 42 12.5 37.5C15 33 17 37 17 47Z" fill="url(#wheat-gold)" />
+    <path d="M17 47C21.5 47 24 42 21.5 37.5C19 33 17 37 17 47Z" fill="url(#wheat-gold)" />
+    <!-- Tier 2 -->
+    <path d="M17 37.5C12.5 37.5 10.2 32.5 12.5 28C14.8 23.5 17 27.5 17 37.5Z" fill="url(#wheat-gold)" />
+    <path d="M17 37.5C21.5 37.5 23.8 32.5 21.5 28C19.2 23.5 17 27.5 17 37.5Z" fill="url(#wheat-gold)" />
+    <!-- Tier 3 -->
+    <path d="M17 28C13 28 11.2 23.5 13 19.5C14.8 15.5 17 19 17 28Z" fill="url(#wheat-gold)" />
+    <path d="M17 28C21 28 22.8 23.5 21 19.5C19.2 15.5 17 19 17 28Z" fill="url(#wheat-gold)" />
+    <!-- Tip grain -->
+    <path d="M17 18.5C15 14.5 15.8 9.5 17 6.5C18.2 9.5 19 14.5 17 18.5Z" fill="url(#wheat-gold)" />
+
+    <!-- 2. CENTER: Stylized Warm Bread 'B' -->
+    <!-- Upper loop of B -->
+    <path d="M18 14H31C37 14 41.5 18 41.5 23.5C41.5 29 37 32.5 31 32.5H18" 
+          stroke="url(#bread-body)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    
+    <!-- Lower loop of B -->
+    <path d="M18 32.5H33C40 32.5 45 37 45 43C45 49 39.5 53 32 53H18" 
+          stroke="url(#bread-body)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+
+    <!-- Subtle Bread Crust Inner Highlights -->
+    <path d="M22 16.5H30.5C34.5 16.5 37.5 19 37.5 22.5" 
+          stroke="url(#bread-highlight)" stroke-width="1.8" stroke-linecap="round" fill="none" />
+    <path d="M22 35H32C36.5 35 40 38 40 42" 
+          stroke="url(#bread-highlight)" stroke-width="1.8" stroke-linecap="round" fill="none" />
+
+    <!-- 3. RIGHT: Dynamic Translation Arc & Ascending Arrow -->
+    <path d="M35 53C46 51 53 43 53 31C53 24 49 18 44 14.5" 
+          stroke="url(#tech-blue)" stroke-width="4.8" stroke-linecap="round" fill="none" />
+
+    <!-- Sharp Dynamic Arrowhead -->
+    <path d="M55.5 18L44 13.5L46 25.5L49 21.2L55.5 18Z" fill="url(#tech-blue)" />
+
+    <!-- 4. Tech / AI Circuit Connectors (Cầu nối tri thức & công nghệ) -->
+    <circle cx="36" cy="23.5" r="2.2" fill="#F59E0B" />
+    <circle cx="37" cy="42.5" r="2.2" fill="#2563EB" />
+    <circle cx="43" cy="32.5" r="2.4" fill="#0284C7" />
+    <path d="M36 23.5L43 32.5L37 42.5" stroke="#38BDF8" stroke-width="1.6" stroke-dasharray="2.5 2" stroke-linecap="round" />
+  </g>
+
+    </g>
+  </g>
+
+  <!-- Wordmark typography -->
+  <g transform="translate(144, 38)">
+    <text x="0" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Quicksand', 'Segoe UI', Roboto, sans-serif" font-size="52" font-weight="900" letter-spacing="-1.5">
+      <tspan fill="#0F172A">Bread</tspan><tspan fill="#2563EB">Trans</tspan>
+    </text>
+    <text x="2" y="70" font-family="-apple-system, BlinkMacSystemFont, 'Quicksand', 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="800" fill="#64748B" letter-spacing="1">
+      ENGLISH LEARNING PLATFORM
+    </text>
+  </g>
+</svg>

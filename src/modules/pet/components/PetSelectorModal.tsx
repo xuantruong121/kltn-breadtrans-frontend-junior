@@ -156,11 +156,11 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
                       {species.lore}
                     </p>
 
-                    {/* Passive Buff Card */}
+                    {/* Descriptive companion trait; no gameplay reward is implied. */}
                     <div className="bg-amber-50/60 p-2.5 rounded-xl border border-amber-200/70 mb-2.5">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
                         <Zap size={13} className="text-amber-600 fill-amber-600 shrink-0" aria-hidden="true" />
-                        <span>Nội tại: {species.buff}</span>
+                        <span>Đặc điểm: {species.buff}</span>
                       </div>
                       <p className="text-[11px] text-slate-600 mt-0.5 leading-snug">
                         {species.buffDetail}

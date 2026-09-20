@@ -3,13 +3,59 @@
  * Authoritative feeding checks, satiety formatting, and visual state mapping.
  */
 
+export type PetSatietyState = "FULL" | "NORMAL" | "HUNGRY" | "VERY_HUNGRY";
+
+export function getPetSatietyState(satiety: number): PetSatietyState {
+  const safeSatiety = Math.min(100, Math.max(0, satiety));
+  if (safeSatiety >= 80) return "FULL";
+  if (safeSatiety >= 50) return "NORMAL";
+  if (safeSatiety >= 20) return "HUNGRY";
+  return "VERY_HUNGRY";
+}
+
+export interface PetStatusCopyOptions {
+  petName?: string;
+  satietyState?: PetSatietyState;
+  satiety?: number;
+  health?: number;
+  happiness?: number;
+}
+
+/**
+ * State-aware Vietnamese copy for pet companions.
+ * Clearly differentiates hunger (satiety) from emotional/physical condition (health & happiness).
+ */
+export function getPetStatusCopy(options: PetStatusCopyOptions): string {
+  const name = options.petName?.trim() || "Bready";
+  const satietyState =
+    options.satietyState ??
+    (options.satiety !== undefined ? getPetSatietyState(options.satiety) : "NORMAL");
+  const health = options.health ?? 100;
+  const happiness = options.happiness ?? 100;
+
+  if (satietyState === "FULL") {
+    if (health < 70 || happiness < 70) {
+      return `${name} đã no nhưng vẫn hơi mệt và buồn.`;
+    }
+    return `${name} đã no, chưa cần ăn thêm.`;
+  }
+  if (satietyState === "NORMAL") {
+    return `${name} đã ăn vừa đủ.`;
+  }
+  if (satietyState === "VERY_HUNGRY") {
+    return `${name} đang rất đói.`;
+  }
+  return `${name} đang đói và có thể ăn.`;
+}
+
 export type PetVisualState = "idle" | "learning" | "hungry" | "fed" | "cooldown" | "levelup";
 
 export interface PetVisualStateOptions {
   health?: number;
   happiness?: number;
+  satiety?: number;
   canFeed?: boolean;
-  satietyState?: "FULL" | "NORMAL" | "HUNGRY" | "VERY_HUNGRY";
+  satietyState?: PetSatietyState;
   isLearningRoute?: boolean;
   isJustFed?: boolean;
   isLevelUp?: boolean;
@@ -31,53 +77,29 @@ export function getPetVisualState(options: PetVisualStateOptions): PetVisualStat
   }
   const health = options.health ?? 100;
   const happiness = options.happiness ?? 100;
-  if (health < 40 || happiness < 40 || options.satietyState === "HUNGRY" || options.satietyState === "VERY_HUNGRY") {
+  const satietyState =
+    options.satietyState ??
+    (options.satiety !== undefined ? getPetSatietyState(options.satiety) : undefined);
+
+  if (
+    health < 40 ||
+    happiness < 40 ||
+    satietyState === "HUNGRY" ||
+    satietyState === "VERY_HUNGRY"
+  ) {
     return "hungry";
   }
-  if (options.satietyState === "FULL" || options.canFeed === false) {
+  if (satietyState === "FULL" || options.canFeed === false) {
     return "fed";
   }
   return "idle";
 }
 
-/**
- * Legacy formatter retained for old callers; new UI renders satiety labels instead.
- */
-export function formatPetCooldown(nextFeedAt?: string | null, now: Date = new Date()): string {
-  if (!nextFeedAt) {
-    return "Sẵn sàng cho ăn";
-  }
-
-  const targetDate = new Date(nextFeedAt);
-  if (Number.isNaN(targetDate.getTime())) {
-    return "Sẵn sàng cho ăn";
-  }
-
-  const diffMs = targetDate.getTime() - now.getTime();
-  if (diffMs <= 0) {
-    return "Sẵn sàng cho ăn";
-  }
-
-  const totalMinutes = Math.floor(diffMs / (1000 * 60));
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-
-  if (hours > 0 && minutes > 0) {
-    return `Có thể cho ăn sau ${hours} giờ ${minutes} phút`;
-  }
-  if (hours > 0) {
-    return `Có thể cho ăn sau ${hours} giờ`;
-  }
-  if (minutes > 0) {
-    return `Có thể cho ăn sau ${minutes} phút`;
-  }
-  return "Có thể cho ăn sau ít hơn 1 phút";
-}
-
 export interface PetFeedEligibilityInput {
   canFeed?: boolean;
   feedCost?: number;
-  satietyState?: "FULL" | "NORMAL" | "HUNGRY" | "VERY_HUNGRY";
+  satiety?: number;
+  satietyState?: PetSatietyState;
 }
 
 export interface PetFeedEligibilityResult {
@@ -103,7 +125,12 @@ export function canFeedPet(
     };
   }
 
-  if (pet.canFeed === false) {
+  const isFull =
+    pet.canFeed === false ||
+    pet.satietyState === "FULL" ||
+    (pet.satiety !== undefined && pet.satiety >= 80);
+
+  if (isFull) {
     return {
       allowed: false,
       reason: "Thú cưng đang no, chưa cần ăn thêm",

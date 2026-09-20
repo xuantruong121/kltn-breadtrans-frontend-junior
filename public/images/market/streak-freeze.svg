@@ -1,5 +1,92 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
-  <rect width="120" height="120" rx="24" fill="#ECFDF5"/>
-  <path d="M60 20L88 32V60C88 77.67 76.08 94.02 60 99C43.92 94.02 32 77.67 32 60V32L60 20Z" fill="#10B981" stroke="#059669" stroke-width="4" stroke-linejoin="round"/>
-  <path d="M60 36V82M46 52L74 66M74 52L46 66" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none">
+  <defs>
+    <linearGradient id="sf-glow" x1="80" y1="10" x2="80" y2="150" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#0284C7" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="sf-aura" cx="80" cy="75" r="65" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#BAE6FD" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#38BDF8" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#0EA5E9" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sf-shield-border" x1="30" y1="15" x2="130" y2="140" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#E0F2FE"/>
+      <stop offset="40%" stop-color="#7DD3FC"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+    <linearGradient id="sf-facet-left" x1="40" y1="25" x2="80" y2="130" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="50%" stop-color="#0284C7"/>
+      <stop offset="100%" stop-color="#0369A1"/>
+    </linearGradient>
+    <linearGradient id="sf-facet-right" x1="120" y1="25" x2="80" y2="130" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7DD3FC"/>
+      <stop offset="40%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#0EA5E9"/>
+    </linearGradient>
+    <linearGradient id="sf-facet-center" x1="80" y1="30" x2="80" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F0F9FF"/>
+      <stop offset="60%" stop-color="#BAE6FD"/>
+      <stop offset="100%" stop-color="#38BDF8"/>
+    </linearGradient>
+    <linearGradient id="sf-flame" x1="80" y1="45" x2="80" y2="95" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="35%" stop-color="#FDE047"/>
+      <stop offset="70%" stop-color="#F97316"/>
+      <stop offset="100%" stop-color="#DC2626"/>
+    </linearGradient>
+    <filter id="sf-shadow" x="15" y="10" width="130" height="145" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0369A1" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Ambient Frost Aura -->
+  <circle cx="80" cy="78" r="60" fill="url(#sf-aura)"/>
+
+  <!-- Main Shield Body with Shadow -->
+  <g filter="url(#sf-shadow)">
+    <!-- Outer Shield Rim -->
+    <path d="M80 18L126 34C126 34 128 82 80 138C32 82 34 34 34 34L80 18Z"
+          fill="url(#sf-shield-border)"/>
+
+    <!-- Left Main Facet -->
+    <path d="M80 22L38 36.5C38 36.5 36.5 78 80 132V22Z"
+          fill="url(#sf-facet-left)"/>
+
+    <!-- Right Main Facet -->
+    <path d="M80 22L122 36.5C122 36.5 123.5 78 80 132V22Z"
+          fill="url(#sf-facet-right)"/>
+
+    <!-- Inner Geometric Crystal Cut (Upper) -->
+    <path d="M80 28L112 40L80 75L48 40L80 28Z"
+          fill="url(#sf-facet-center)" opacity="0.85"/>
+
+    <!-- Inner Lower Diamond -->
+    <path d="M80 75L110 52C106 82 80 122 80 122C80 122 54 82 50 52L80 75Z"
+          fill="#0284C7" opacity="0.45"/>
+
+    <!-- Crystal Bevel Highlights -->
+    <path d="M80 28L80 122" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" opacity="0.75"/>
+    <path d="M48 40L112 40" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+  </g>
+
+  <!-- Central Streak Flame Protected in Ice -->
+  <path d="M80 48C84 58 92 64 92 76C92 85 86 91 80 94C74 91 68 85 68 76C68 64 76 58 80 48Z"
+        fill="url(#sf-flame)"/>
+  <path d="M80 58C82 64 87 68 87 75C87 80 83 84 80 86C77 84 73 80 73 75C73 68 78 64 80 58Z"
+        fill="#FEF08A"/>
+  <circle cx="80" cy="74" r="3.5" fill="#FFFFFF"/>
+
+  <!-- Ice Crystal Shards Around Shield -->
+  <!-- Left top shard -->
+  <polygon points="26,45 32,38 34,48 28,52" fill="#BAE6FD" opacity="0.85"/>
+  <!-- Right top shard -->
+  <polygon points="134,45 128,38 126,48 132,52" fill="#E0F2FE" opacity="0.85"/>
+  <!-- Left mid sparkle -->
+  <path d="M22 82L28 85L22 88L16 85Z" fill="#7DD3FC"/>
+  <!-- Right mid sparkle -->
+  <path d="M138 78L144 81L138 84L132 81Z" fill="#BAE6FD"/>
+  <!-- Little bottom frozen droplets -->
+  <circle cx="44" cy="116" r="2.5" fill="#BAE6FD" opacity="0.7"/>
+  <circle cx="116" cy="116" r="2.5" fill="#BAE6FD" opacity="0.7"/>
 </svg>

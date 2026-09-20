@@ -6,8 +6,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  getPetSatietyState,
+  getPetStatusCopy,
   getPetVisualState,
-  formatPetCooldown,
   canFeedPet,
   getFeedingInvalidationKeys,
   handleFeedFailure,
@@ -18,6 +19,59 @@ import {
   getFloatingPetBoundingBox,
 } from "./petLogic.ts";
 import { isLearningFocusRoute } from "../../lib/practice/focusMode.ts";
+
+test("getPetSatietyState: maps thresholds to deterministic states", () => {
+  assert.equal(getPetSatietyState(100), "FULL");
+  assert.equal(getPetSatietyState(80), "FULL");
+  assert.equal(getPetSatietyState(79), "NORMAL");
+  assert.equal(getPetSatietyState(50), "NORMAL");
+  assert.equal(getPetSatietyState(49), "HUNGRY");
+  assert.equal(getPetSatietyState(20), "HUNGRY");
+  assert.equal(getPetSatietyState(19), "VERY_HUNGRY");
+  assert.equal(getPetSatietyState(0), "VERY_HUNGRY");
+});
+
+test("getPetStatusCopy: generates state-aware Vietnamese copy", () => {
+  // Case 1: Full but low health or happiness -> tired and unhappy
+  assert.equal(
+    getPetStatusCopy({
+      petName: "Bready",
+      satietyState: "FULL",
+      health: 40,
+      happiness: 30,
+    }),
+    "Bready đã no nhưng vẫn hơi mệt và buồn.",
+  );
+
+  // Case 2: Full and healthy
+  assert.equal(
+    getPetStatusCopy({
+      petName: "Bready",
+      satietyState: "FULL",
+      health: 85,
+      happiness: 90,
+    }),
+    "Bready đã no, chưa cần ăn thêm.",
+  );
+
+  // Case 3: Normal
+  assert.equal(
+    getPetStatusCopy({ petName: "Owly", satietyState: "NORMAL" }),
+    "Owly đã ăn vừa đủ.",
+  );
+
+  // Case 4: Hungry
+  assert.equal(
+    getPetStatusCopy({ petName: "Mimi", satietyState: "HUNGRY" }),
+    "Mimi đang đói và có thể ăn.",
+  );
+
+  // Case 5: Very hungry
+  assert.equal(
+    getPetStatusCopy({ petName: "Foxy", satietyState: "VERY_HUNGRY" }),
+    "Foxy đang rất đói.",
+  );
+});
 
 test("Pet Visual State: resolves deterministic poses with correct priority", () => {
   // 1. Level up has highest priority
@@ -87,6 +141,7 @@ test("Pet Visual State: resolves deterministic poses with correct priority", () 
       health: 85,
       happiness: 90,
       canFeed: true,
+      satietyState: "NORMAL",
     }),
     "idle",
   );
@@ -94,9 +149,13 @@ test("Pet Visual State: resolves deterministic poses with correct priority", () 
 
 test("canFeedPet: evaluates eligibility strictly from backend metadata and user balance", () => {
   // Case: canFeed === true and sufficient balance
-  const resultEligible = canFeedPet({ canFeed: true, feedCost: 10 }, 50);
+  const resultEligible = canFeedPet({ canFeed: true, satiety: 60, feedCost: 10 }, 50);
   assert.equal(resultEligible.allowed, true);
   assert.equal(resultEligible.feedCost, 10);
+
+  // Case: satiety = 79 (< 80) is eligible to feed
+  const resultSatiety79 = canFeedPet({ canFeed: true, satiety: 79, feedCost: 20 }, 50);
+  assert.equal(resultSatiety79.allowed, true);
 
   // Case: canFeed === true but custom backend feedCost (e.g. 15) and insufficient balance
   const resultLowBalance = canFeedPet({ canFeed: true, feedCost: 15 }, 12);
@@ -104,51 +163,23 @@ test("canFeedPet: evaluates eligibility strictly from backend metadata and user 
   assert.equal(resultLowBalance.feedCost, 15);
   assert.match(resultLowBalance.reason || "", /cần ít nhất 15 Bánh Mì/i);
 
-  // Case: canFeed === false because the pet is full
-  const resultOnCooldown = canFeedPet({ canFeed: false, satietyState: "FULL", feedCost: 10 }, 100);
-  assert.equal(resultOnCooldown.allowed, false);
-  assert.match(resultOnCooldown.reason || "", /đang no/);
+  // Case: satiety = 80 is FULL -> rejected
+  const resultSatiety80 = canFeedPet({ satiety: 80, feedCost: 10 }, 100);
+  assert.equal(resultSatiety80.allowed, false);
+  assert.match(resultSatiety80.reason || "", /đang no/);
+
+  // Case: low health (40) but satiety 95 (FULL) -> low health does NOT make full pet hungry!
+  const resultFullLowHealth = canFeedPet(
+    { canFeed: false, satiety: 95, satietyState: "FULL", feedCost: 10 },
+    100,
+  );
+  assert.equal(resultFullLowHealth.allowed, false);
+  assert.match(resultFullLowHealth.reason || "", /đang no/);
 
   // Case: null or undefined pet data
   const resultNoPet = canFeedPet(null, 50);
   assert.equal(resultNoPet.allowed, false);
   assert.match(resultNoPet.reason || "", /Chưa có thông tin/);
-});
-
-test("formatPetCooldown: produces friendly, deterministic Vietnamese strings", () => {
-  const baseTime = new Date("2026-09-15T12:00:00.000Z");
-
-  // No nextFeedAt or past time
-  assert.equal(formatPetCooldown(null, baseTime), "Sẵn sàng cho ăn");
-  assert.equal(
-    formatPetCooldown("2026-09-15T11:59:00.000Z", baseTime),
-    "Sẵn sàng cho ăn",
-  );
-
-  // Exact hours and minutes
-  const future3h25m = new Date("2026-09-15T15:25:00.000Z").toISOString();
-  assert.equal(
-    formatPetCooldown(future3h25m, baseTime),
-    "Có thể cho ăn sau 3 giờ 25 phút",
-  );
-
-  // Exact hours only
-  const future2h = new Date("2026-09-15T14:00:00.000Z").toISOString();
-  assert.equal(formatPetCooldown(future2h, baseTime), "Có thể cho ăn sau 2 giờ");
-
-  // Minutes only
-  const future45m = new Date("2026-09-15T12:45:00.000Z").toISOString();
-  assert.equal(
-    formatPetCooldown(future45m, baseTime),
-    "Có thể cho ăn sau 45 phút",
-  );
-
-  // Under 1 minute
-  const future30s = new Date("2026-09-15T12:00:30.000Z").toISOString();
-  assert.equal(
-    formatPetCooldown(future30s, baseTime),
-    "Có thể cho ăn sau ít hơn 1 phút",
-  );
 });
 
 test("Feed Success Invalidation Keys: includes all required query keys", () => {

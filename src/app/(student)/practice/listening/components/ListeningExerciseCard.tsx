@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, Clock, Headphones, Lock, Volume2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, Headphones, Lock, MessageCircleMore, PenLine, Volume2 } from "lucide-react";
 import type { ListeningPracticeCatalogItem } from "@/lib/api/services/quiz.service";
 
 interface ListeningExerciseCardProps {
@@ -25,6 +25,14 @@ export function ListeningExerciseCard({
   const levels = Array.isArray(quiz.levels) ? quiz.levels : [];
   const topics = Array.isArray(quiz.topics) ? quiz.topics : [];
   const accents = Array.isArray(quiz.accents) ? quiz.accents : [];
+  const mode = quiz.mode || "COMPREHENSION";
+  const modeMeta =
+    mode === "DICTATION"
+      ? { label: "Nghe chép", icon: PenLine, cta: "Bắt đầu nghe chép" }
+      : mode === "DIALOGUE"
+        ? { label: "Hội thoại", icon: MessageCircleMore, cta: "Mở hội thoại" }
+        : { label: "Nghe hiểu", icon: Volume2, cta: "Bắt đầu bài nghe" };
+  const ModeIcon = modeMeta.icon;
 
   const handleCardClick = (e: React.MouseEvent) => {
     if (!isAuthenticated) {
@@ -40,7 +48,7 @@ export function ListeningExerciseCard({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="inline-flex items-center gap-1 rounded-lg border border-blue-200/80 bg-blue-50 px-2.5 py-0.5 text-[11px] font-extrabold text-blue-700">
-              <Volume2 size={12} aria-hidden="true" /> Nghe hiểu
+              <ModeIcon size={12} aria-hidden="true" /> {modeMeta.label}
             </span>
 
             {levels.map((lvl) => (
@@ -67,7 +75,7 @@ export function ListeningExerciseCard({
         </div>
 
         {/* Title */}
-        <h3 className="text-base font-extrabold leading-snug text-slate-900 transition-colors group-hover:text-blue-700 sm:text-lg">
+        <h3 className="text-base font-extrabold leading-snug text-slate-900 transition-colors group-hover:text-blue-700 sm:text-lg min-w-0 break-words">
           {quiz.title}
         </h3>
 
@@ -93,7 +101,7 @@ export function ListeningExerciseCard({
 
       {/* Bottom Row */}
       <div className="mt-5 border-t border-slate-100 pt-4">
-        <div className="flex items-center justify-between gap-3 text-xs font-semibold text-slate-500">
+        <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-semibold text-slate-500">
           <div className="flex items-center gap-3">
             <span className="inline-flex items-center gap-1">
               <Headphones size={13} className="text-slate-400" aria-hidden="true" />
@@ -113,7 +121,7 @@ export function ListeningExerciseCard({
                 disabled={isLaunching}
                 className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 text-xs font-extrabold text-white shadow-xs transition-colors hover:bg-blue-700 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-60 cursor-pointer"
               >
-                {isCompleted ? "Luyện tập lại" : "Bắt đầu bài nghe"}
+                {isCompleted ? "Luyện tập lại" : modeMeta.cta}
                 <ArrowRight size={13} aria-hidden="true" />
               </button>
             ) : (
@@ -121,7 +129,7 @@ export function ListeningExerciseCard({
                 href={`/practice/quizzes/${quiz.id}`}
                 className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 text-xs font-extrabold text-white shadow-xs transition-colors hover:bg-blue-700 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
               >
-                {isCompleted ? "Luyện tập lại" : "Bắt đầu bài nghe"}
+                {isCompleted ? "Luyện tập lại" : modeMeta.cta}
                 <ArrowRight size={13} aria-hidden="true" />
               </Link>
             )

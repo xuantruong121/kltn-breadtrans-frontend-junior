@@ -20,7 +20,6 @@ import {
   Target,
   Trophy,
   User,
-  Wheat,
   X,
   Bell,
   BellOff,
@@ -41,6 +40,7 @@ import { useGamificationStore } from "@/stores/gamificationStore";
 import { usePushNotification } from "@/lib/hooks/usePushNotification";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { notificationService, NotificationItem } from "@/lib/api/services/notification.service";
+import { BrandLogo } from "@/components/brand";
 
 const emptySubscribe = () => () => {};
 
@@ -339,19 +339,20 @@ function StudentNotificationMenu() {
         aria-label="Mở thông báo"
         aria-expanded={open}
         aria-controls="student-notification-menu-desktop"
-        className={`relative flex min-h-11 min-w-11 items-center justify-center rounded-xl border transition-all focus-visible:outline-none ${
+        className={`relative flex size-9 sm:size-10 sm:min-h-11 sm:min-w-11 items-center justify-center rounded-xl border transition-all focus-visible:outline-none ${
           open
-            ? "border-amber-200 bg-amber-50 text-amber-800 shadow-sm"
+            ? "border-amber-200 bg-amber-50 text-amber-800 shadow-2xs"
             : "border-transparent text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-800"
         }`}
       >
-        <Bell size={20} aria-hidden="true" />
+        <Bell size={18} className="sm:hidden" aria-hidden="true" />
+        <Bell size={20} className="hidden sm:inline-block" aria-hidden="true" />
         {unreadCount > 0 ? (
-          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white ring-2 ring-white">
+          <span className="absolute -right-1 -top-1 flex h-4.5 min-w-4.5 sm:h-5 sm:min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] sm:text-[10px] font-black text-white ring-2 ring-white">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         ) : !isSubscribed && isSupported && permission !== "denied" ? (
-          <span className="absolute right-2 top-2 size-2 rounded-full bg-amber-500 ring-2 ring-white" aria-label="Chưa thiết lập thông báo" />
+          <span className="absolute right-1.5 top-1.5 sm:right-2 sm:top-2 size-2 rounded-full bg-amber-500 ring-2 ring-white" aria-label="Chưa thiết lập thông báo" />
         ) : null}
       </button>
 
@@ -555,35 +556,23 @@ export function AppHeader() {
 
   return (
     <header className="sticky top-0 z-[70] w-full bg-white/95 backdrop-blur-md border-b border-slate-200/80 transition-all duration-200 shadow-xs">
-      <div className="w-full px-4 sm:px-6 lg:px-6 xl:px-8 2xl:px-12 h-20 flex items-center justify-between gap-2 sm:gap-4">
+      <div className="w-full px-3 sm:px-6 lg:px-6 xl:px-8 2xl:px-12 h-16 sm:h-20 flex items-center justify-between gap-1.5 sm:gap-4">
         
         {/* Brand Logo & Role Tag */}
-        <div className="flex items-center gap-3 shrink-0">
-          <Link
+        <div className="flex items-center shrink-0">
+          <BrandLogo
             href={isStudent ? "/dashboard" : "/"}
             onClick={closeMenus}
-            className="flex items-center gap-2.5 rounded-xl group focus:outline-none focus:ring-2 focus:ring-amber-500 shrink-0"
-          >
-            <div className="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-md shadow-amber-900/10 group-hover:scale-105 transition-transform shrink-0">
-              <Wheat size={22} strokeWidth={2.25} aria-hidden="true" />
-            </div>
-            <div className="flex flex-col shrink-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xl font-black tracking-tight text-slate-900 whitespace-nowrap">
-                  Bread<span className="text-amber-600">Trans</span>
-                </span>
-                <span className="px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-black uppercase tracking-wide whitespace-nowrap shrink-0">
-                  {isStudent ? "Học viên" : isAdmin ? "Quản trị" : "Khách"}
-                </span>
-              </div>
-            </div>
-          </Link>
+            variant="compact"
+            size="md"
+            roleBadge={isAdmin ? "ADMIN" : undefined}
+          />
         </div>
 
-        {/* Center Desktop Navigation */}
+        {/* Center Desktop Navigation (Activates at xl: 1280px+ to ensure tablets have ample breathing space) */}
         <nav
           aria-label="Menu chính"
-          className="hidden lg:flex items-center justify-center gap-1 xl:gap-1.5 2xl:gap-2 text-xs 2xl:text-sm font-bold shrink-0"
+          className="hidden xl:flex items-center justify-center gap-1 2xl:gap-2 text-xs 2xl:text-sm font-bold shrink-0"
         >
           {/* Trang chủ */}
           <Link
@@ -852,18 +841,18 @@ export function AppHeader() {
         </nav>
 
         {/* Right Header Utilities */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 xl:gap-3 shrink-0">
           {/* If Student: Show Gamification badges & Profile Menu */}
           {isStudent && (
             <>
-              {/* Mobile Compact Pill: Bánh Mì & Streak */}
+              {/* Mobile Compact Pill: Bánh Mì */}
               <Link
                 href="/student/profile?tab=quotas"
                 title={`Số dư: ${breads || 0} Bánh Mì`}
-                className="flex sm:hidden items-center gap-1 bg-amber-50/90 border border-amber-200/90 px-2 py-1 rounded-xl shadow-2xs text-amber-900 shrink-0 whitespace-nowrap"
+                className="flex sm:hidden items-center gap-1 bg-amber-50/90 border border-amber-200/90 px-2 py-1 rounded-xl shadow-2xs text-amber-900 shrink-0 whitespace-nowrap text-xs font-black"
               >
                 <span className="text-sm shrink-0" role="img" aria-label="Bánh Mì">🥖</span>
-                <span className="text-xs font-black tracking-tight">{breads || 0}</span>
+                <span>{breads || 0}</span>
               </Link>
 
               {/* Badge Bánh Mì */}
@@ -899,9 +888,9 @@ export function AppHeader() {
                   onClick={() => setProfileMenuOpen((prev) => !prev)}
                   aria-expanded={profileMenuOpen}
                   aria-label="Menu tài khoản"
-                  className="flex min-h-11 min-w-11 items-center gap-1.5 rounded-full bg-white px-1.5 ring-2 ring-amber-500/60 shadow-sm transition-all hover:bg-amber-50 hover:ring-amber-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-amber-700 cursor-pointer shrink-0"
+                  className="flex size-9 sm:size-auto sm:min-h-11 sm:min-w-11 items-center justify-center sm:gap-1.5 rounded-full bg-white p-0.5 sm:px-1.5 ring-2 ring-amber-500/60 shadow-2xs transition-all hover:bg-amber-50 hover:ring-amber-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-amber-700 cursor-pointer shrink-0"
                 >
-                  <div className="w-8 h-8 rounded-full bg-amber-600 text-white font-black text-xs flex items-center justify-center overflow-hidden shrink-0">
+                  <div className="size-7.5 sm:size-8 rounded-full bg-amber-600 text-white font-black text-xs flex items-center justify-center overflow-hidden shrink-0">
                     {user?.profile?.avatar ? (
                       <img
                         src={user.profile.avatar}
@@ -915,7 +904,7 @@ export function AppHeader() {
                       <User size={16} />
                     )}
                   </div>
-                  <ChevronDown size={14} className="text-slate-400 mr-0.5 shrink-0" />
+                  <ChevronDown size={14} className="hidden sm:inline-block text-slate-400 mr-0.5 shrink-0" />
                 </button>
 
                 {profileMenuOpen && (
@@ -983,9 +972,10 @@ export function AppHeader() {
           {isAdmin && (
             <Link
               href="/admin"
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-primary-container shrink-0 whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 sm:gap-2 rounded-xl bg-primary px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-bold text-white transition-colors hover:bg-primary-container shrink-0 whitespace-nowrap"
             >
-              <LayoutDashboard size={15} /> Quản trị
+              <LayoutDashboard size={15} />
+              <span className="hidden sm:inline">Quản trị</span>
             </Link>
           )}
 
@@ -994,15 +984,16 @@ export function AppHeader() {
             <>
               <Link
                 href="/login"
-                className="shrink-0 whitespace-nowrap border border-slate-300 hover:border-slate-400 text-slate-700 hover:bg-slate-50 rounded-xl px-4 py-2 font-bold text-sm transition-colors text-center cursor-pointer"
+                className="shrink-0 whitespace-nowrap border border-slate-300 hover:border-slate-400 text-slate-700 hover:bg-slate-50 rounded-xl px-2.5 sm:px-4 py-1.5 sm:py-2 font-bold text-xs sm:text-sm transition-colors text-center cursor-pointer"
               >
                 Đăng nhập
               </Link>
               <Link
                 href="/register"
-                className="shrink-0 whitespace-nowrap btn-tactile-primary bg-amber-600 hover:bg-amber-700 text-white font-extrabold rounded-xl px-4 sm:px-5 py-2 text-sm transition-all text-center cursor-pointer"
+                className="shrink-0 whitespace-nowrap btn-tactile-primary bg-amber-600 hover:bg-amber-700 text-white font-extrabold rounded-xl px-3 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm transition-all text-center cursor-pointer"
               >
-                Đăng ký miễn phí
+                <span>Đăng ký</span>
+                <span className="hidden sm:inline"> miễn phí</span>
               </Link>
             </>
           )}
@@ -1014,9 +1005,21 @@ export function AppHeader() {
             aria-expanded={mobileOpen}
             aria-controls="mobile-navigation"
             aria-label={mobileOpen ? "Đóng menu" : "Mở menu"}
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none lg:hidden shrink-0 cursor-pointer"
+            className={`size-9 sm:size-10 sm:min-h-11 sm:min-w-11 items-center justify-center rounded-xl text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none xl:hidden shrink-0 cursor-pointer ${
+              user ? "hidden md:inline-flex" : "inline-flex"
+            }`}
           >
-            {mobileOpen ? <X size={23} /> : <Menu size={23} />}
+            {mobileOpen ? (
+              <>
+                <X size={20} className="sm:hidden" aria-hidden="true" />
+                <X size={23} className="hidden sm:inline-block" aria-hidden="true" />
+              </>
+            ) : (
+              <>
+                <Menu size={20} className="sm:hidden" aria-hidden="true" />
+                <Menu size={23} className="hidden sm:inline-block" aria-hidden="true" />
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -1042,21 +1045,13 @@ export function AppHeader() {
             >
               {/* Sticky Drawer Header */}
               <div className="h-18 px-5 sm:px-6 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-xs">
-                    <Wheat size={20} strokeWidth={2.25} aria-hidden="true" />
-                  </div>
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-base font-black text-slate-900 tracking-tight">
-                        Bread<span className="text-amber-600">Trans</span>
-                      </span>
-                      <span className="px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-black uppercase tracking-wide">
-                        {isStudent ? "Học viên" : isAdmin ? "Quản trị" : "Khách"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                <BrandLogo
+                  href={isStudent ? "/dashboard" : "/"}
+                  onClick={closeMenus}
+                  variant="compact"
+                  size="sm"
+                  roleBadge={isStudent ? "STUDENT" : isAdmin ? "ADMIN" : "GUEST"}
+                />
                 <button
                   type="button"
                   onClick={closeMenus}

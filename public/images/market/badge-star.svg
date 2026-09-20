@@ -1,7 +1,79 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
-  <rect width="120" height="120" rx="24" fill="#FEFCE8"/>
-  <circle cx="60" cy="56" r="28" fill="#EAB308" stroke="#CA8A04" stroke-width="4"/>
-  <polygon points="60,38 65,50 78,50 68,58 72,70 60,63 48,70 52,58 42,50 55,50" fill="#FFFFFF"/>
-  <path d="M46 78L38 98L52 92L60 98L56 82" fill="#CA8A04"/>
-  <path d="M74 78L82 98L68 92L60 98L64 82" fill="#A16207"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none">
+  <defs>
+    <radialGradient id="bs-aura" cx="80" cy="72" r="55" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FEF08A" stop-opacity="0.8"/>
+      <stop offset="60%" stop-color="#F59E0B" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#D97706" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bs-ribbon-l" x1="45" y1="80" x2="35" y2="145" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#DC2626"/>
+      <stop offset="50%" stop-color="#B91C1C"/>
+      <stop offset="100%" stop-color="#7F1D1D"/>
+    </linearGradient>
+    <linearGradient id="bs-ribbon-r" x1="115" y1="80" x2="125" y2="145" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#EF4444"/>
+      <stop offset="50%" stop-color="#DC2626"/>
+      <stop offset="100%" stop-color="#991B1B"/>
+    </linearGradient>
+    <linearGradient id="bs-gold-outer" x1="40" y1="30" x2="120" y2="115" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFBEB"/>
+      <stop offset="25%" stop-color="#FDE047"/>
+      <stop offset="60%" stop-color="#D97706"/>
+      <stop offset="100%" stop-color="#78350F"/>
+    </linearGradient>
+    <linearGradient id="bs-gold-inner" x1="80" y1="36" x2="80" y2="108" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FEF3C7"/>
+      <stop offset="40%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+    <filter id="bs-shadow" x="15" y="15" width="130" height="135" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#92400E" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Ambient Golden Halo -->
+  <circle cx="80" cy="72" r="54" fill="url(#bs-aura)"/>
+
+  <!-- Medal Group with Shadow -->
+  <g filter="url(#bs-shadow)">
+    <!-- Silk Ribbons (Background) -->
+    <!-- Left Ribbon -->
+    <path d="M62 88L40 138L58 132L72 138L68 96Z" fill="url(#bs-ribbon-l)"/>
+    <path d="M42 136L40 138L58 132L60 130" stroke="#FDE047" stroke-width="2"/>
+
+    <!-- Right Ribbon -->
+    <path d="M98 88L120 138L102 132L88 138L92 96Z" fill="url(#bs-ribbon-r)"/>
+    <path d="M118 136L120 138L102 132L100 130" stroke="#FDE047" stroke-width="2"/>
+
+    <!-- Outer Heavy Gold Coin -->
+    <circle cx="80" cy="72" r="42" fill="url(#bs-gold-outer)"/>
+
+    <!-- Concentric Engraved Ring -->
+    <circle cx="80" cy="72" r="37" fill="url(#bs-gold-inner)"/>
+    <circle cx="80" cy="72" r="34" stroke="#FFFBEB" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.8"/>
+
+    <!-- 3D Faceted 5-Point Star -->
+    <!-- Facet 1 (Top-Left) -->
+    <polygon points="80,44 80,72 62,60" fill="#FFFBEB"/>
+    <!-- Facet 2 (Top-Right) -->
+    <polygon points="80,44 80,72 98,60" fill="#FDE047"/>
+    <!-- Facet 3 (Right-Top) -->
+    <polygon points="108,72 80,72 98,60" fill="#F59E0B"/>
+    <!-- Facet 4 (Right-Bottom) -->
+    <polygon points="108,72 80,72 92,94" fill="#D97706"/>
+    <!-- Facet 5 (Bottom-Right) -->
+    <polygon points="80,100 80,72 92,94" fill="#B45309"/>
+    <!-- Facet 6 (Bottom-Left) -->
+    <polygon points="80,100 80,72 68,94" fill="#92400E"/>
+    <!-- Facet 7 (Left-Bottom) -->
+    <polygon points="52,72 80,72 68,94" fill="#B45309"/>
+    <!-- Facet 8 (Left-Top) -->
+    <polygon points="52,72 80,72 62,60" fill="#FDE047"/>
+
+    <!-- Star Core Highlight -->
+    <circle cx="80" cy="72" r="3.5" fill="#FFFFFF"/>
+
+    <!-- Specular Arc Reflection -->
+    <path d="M50 60C54 48 66 40 80 40C94 40 106 48 110 60" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" opacity="0.6"/>
+  </g>
 </svg>

@@ -9,6 +9,7 @@ import {
   Filter,
   Headphones,
   Loader2,
+  MessageCircleMore,
   PenLine,
   RotateCcw,
   Search,
@@ -112,6 +113,10 @@ function ListeningCatalogContent() {
     () => quizzes.filter((q) => (q.mode || "").toUpperCase() === "DICTATION").length,
     [quizzes],
   );
+  const dialogueCount = useMemo(
+    () => quizzes.filter((q) => (q.mode || "").toUpperCase() === "DIALOGUE").length,
+    [quizzes],
+  );
 
   // Filter quizzes
   const filteredQuizzes = useMemo(() => {
@@ -120,6 +125,7 @@ function ListeningCatalogContent() {
       const qMode = (q.mode || "COMPREHENSION").toUpperCase();
       if (modeParam === "COMPREHENSION" && qMode !== "COMPREHENSION") return false;
       if (modeParam === "DICTATION" && qMode !== "DICTATION") return false;
+      if (modeParam === "DIALOGUE" && qMode !== "DIALOGUE") return false;
 
       // Level filter
       if (levelParam !== "ALL") {
@@ -171,26 +177,26 @@ function ListeningCatalogContent() {
   return (
     <div className="space-y-6 pb-20 pt-2">
       {/* Hero Banner */}
-      <section className="relative overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50 via-white to-sky-50 p-6 shadow-2xs sm:p-8">
+      <section className="relative overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50 via-white to-sky-50 p-5 sm:p-7 md:p-8 shadow-2xs">
         <div className="max-w-3xl space-y-3">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/90 px-3 py-1 text-xs font-extrabold text-blue-700">
             <Headphones size={14} aria-hidden="true" />
             <span>Kỹ năng nghe hiểu tiếng Anh</span>
           </div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-slate-900">
             Luyện nghe theo ngữ cảnh thực tế
           </h1>
           <p className="text-xs leading-relaxed text-slate-600 sm:text-sm">
-            Nâng cao khả năng phản xạ và nắm bắt ý chính qua các đoạn hội thoại thường ngày, du lịch và công việc.
+            Chọn chủ đề bạn quan tâm để nghe hiểu, nghe chép hoặc theo dõi hội thoại theo từng lượt lời. Nội dung này phục vụ luyện 4 kỹ năng tiếng Anh độc lập.
           </p>
 
           {/* Secondary link to TOEIC */}
           <div className="pt-1">
             <Link
               href="/practice/quizzes"
-              className="inline-flex items-center gap-1.5 text-xs font-extrabold text-blue-700 transition hover:text-blue-800 hover:underline"
+              className="inline-flex flex-wrap items-center gap-1.5 text-xs font-extrabold text-blue-700 transition hover:text-blue-800 hover:underline"
             >
-              Bạn muốn làm bài thi TOEIC đầy đủ? Đi đến Kho đề TOEIC
+              <span>Bạn muốn làm bài thi TOEIC đầy đủ? Đi đến Kho đề TOEIC</span>
               <ArrowRight size={13} aria-hidden="true" />
             </Link>
           </div>
@@ -199,11 +205,11 @@ function ListeningCatalogContent() {
 
       {/* Mode Tabs */}
       <div className="border-b border-slate-200">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <button
             type="button"
             onClick={() => setQueryParam("mode", "ALL")}
-            className={`inline-flex items-center gap-2 border-b-2 px-4 py-3 text-xs font-black transition ${
+            className={`inline-flex shrink-0 whitespace-nowrap items-center gap-2 border-b-2 px-3.5 sm:px-4 py-3 text-xs font-black transition ${
               modeParam === "ALL"
                 ? "border-blue-600 text-blue-700"
                 : "border-transparent text-slate-500 hover:text-slate-900"
@@ -216,7 +222,7 @@ function ListeningCatalogContent() {
           <button
             type="button"
             onClick={() => setQueryParam("mode", "COMPREHENSION")}
-            className={`inline-flex items-center gap-2 border-b-2 px-4 py-3 text-xs font-black transition ${
+            className={`inline-flex shrink-0 whitespace-nowrap items-center gap-2 border-b-2 px-3.5 sm:px-4 py-3 text-xs font-black transition ${
               modeParam === "COMPREHENSION"
                 ? "border-blue-600 text-blue-700"
                 : "border-transparent text-slate-500 hover:text-slate-900"
@@ -229,7 +235,7 @@ function ListeningCatalogContent() {
           <button
             type="button"
             onClick={() => setQueryParam("mode", "DICTATION")}
-            className={`inline-flex items-center gap-2 border-b-2 px-4 py-3 text-xs font-black transition ${
+            className={`inline-flex shrink-0 whitespace-nowrap items-center gap-2 border-b-2 px-3.5 sm:px-4 py-3 text-xs font-black transition ${
               modeParam === "DICTATION"
                 ? "border-blue-600 text-blue-700"
                 : "border-transparent text-slate-500 hover:text-slate-900"
@@ -238,16 +244,68 @@ function ListeningCatalogContent() {
             <PenLine size={15} aria-hidden="true" />
             Nghe chép ({dictationCount})
           </button>
+
+          <button
+            type="button"
+            onClick={() => setQueryParam("mode", "DIALOGUE")}
+            className={`inline-flex shrink-0 whitespace-nowrap items-center gap-2 border-b-2 px-3.5 sm:px-4 py-3 text-xs font-black transition ${
+              modeParam === "DIALOGUE"
+                ? "border-blue-600 text-blue-700"
+                : "border-transparent text-slate-500 hover:text-slate-900"
+            }`}
+          >
+            <MessageCircleMore size={15} aria-hidden="true" />
+            Hội thoại ({dialogueCount})
+          </button>
         </div>
       </div>
+
+      {allTopics.length > 0 && (
+        <section aria-labelledby="listening-topic-heading" className="space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="listening-topic-heading" className="text-sm font-extrabold text-slate-900">
+              Khám phá theo chủ đề
+            </h2>
+            {topicParam !== "ALL" && (
+              <button
+                type="button"
+                onClick={() => setQueryParam("topic", "ALL")}
+                className="min-h-9 rounded-lg px-2 text-xs font-bold text-blue-700 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+              >
+                Xem tất cả
+              </button>
+            )}
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {allTopics.map((topic) => {
+              const selected = topicParam === topic;
+              return (
+                <button
+                  key={topic}
+                  type="button"
+                  onClick={() => setQueryParam("topic", selected ? "ALL" : topic)}
+                  aria-pressed={selected}
+                  className={`min-h-11 shrink-0 whitespace-nowrap rounded-xl border px-3.5 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
+                    selected
+                      ? "border-blue-600 bg-blue-600 text-white"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50"
+                  }`}
+                >
+                  {topic}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Filter Toolbar */}
       <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs sm:p-5">
         <div className="flex flex-col gap-3.5">
           {/* Top filter row: Search & Level */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             {/* Search Input */}
-            <div className="relative flex-1 sm:max-w-xs">
+            <div className="relative w-full md:max-w-xs">
               <Search
                 size={16}
                 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
@@ -264,7 +322,7 @@ function ListeningCatalogContent() {
 
             {/* Level Quick Filter Buttons */}
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs font-bold text-slate-400">Trình độ:</span>
+              <span className="text-xs font-bold text-slate-400 mr-1">Trình độ:</span>
               {["ALL", "A1", "A2", "B1", "B2"].map((lvl) => (
                 <button
                   key={lvl}
@@ -284,7 +342,7 @@ function ListeningCatalogContent() {
 
           {/* Secondary filter row: Topic, Accent, Status */}
           <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
-            <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-500">
+            <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 shrink-0">
               <Filter size={13} aria-hidden="true" />
               Bộ lọc:
             </span>
@@ -295,7 +353,7 @@ function ListeningCatalogContent() {
                 aria-label="Lọc theo chủ đề"
                 value={topicParam}
                 onChange={(e) => setQueryParam("topic", e.target.value)}
-                className="min-h-9 rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-xs font-bold text-slate-700 transition focus:border-blue-500 focus:bg-white focus:outline-hidden"
+                className="min-h-9 w-full sm:w-auto flex-1 sm:flex-initial min-w-[130px] rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-xs font-bold text-slate-700 transition focus:border-blue-500 focus:bg-white focus:outline-hidden"
               >
                 <option value="ALL">Chủ đề: Tất cả</option>
                 {allTopics.map((topic) => (
@@ -311,7 +369,7 @@ function ListeningCatalogContent() {
               aria-label="Lọc theo giọng đọc"
               value={accentParam}
               onChange={(e) => setQueryParam("accent", e.target.value)}
-              className="min-h-9 rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-xs font-bold text-slate-700 transition focus:border-blue-500 focus:bg-white focus:outline-hidden"
+              className="min-h-9 w-full sm:w-auto flex-1 sm:flex-initial min-w-[130px] rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-xs font-bold text-slate-700 transition focus:border-blue-500 focus:bg-white focus:outline-hidden"
             >
               <option value="ALL">Giọng đọc: Tất cả</option>
               <option value="US">Giọng Mỹ (US)</option>
@@ -324,7 +382,7 @@ function ListeningCatalogContent() {
                 aria-label="Lọc theo trạng thái"
                 value={statusParam}
                 onChange={(e) => setQueryParam("status", e.target.value)}
-                className="min-h-9 rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-xs font-bold text-slate-700 transition focus:border-blue-500 focus:bg-white focus:outline-hidden"
+                className="min-h-9 w-full sm:w-auto flex-1 sm:flex-initial min-w-[130px] rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-xs font-bold text-slate-700 transition focus:border-blue-500 focus:bg-white focus:outline-hidden"
               >
                 <option value="ALL">Trạng thái: Tất cả</option>
                 <option value="UNCOMPLETED">Chưa làm</option>
@@ -345,7 +403,7 @@ function ListeningCatalogContent() {
                   if (modeParam !== "ALL") params.set("mode", modeParam);
                   router.replace(`${pathname}?${params.toString()}`, { scroll: false });
                 }}
-                className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+                className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 shrink-0"
               >
                 <RotateCcw size={12} aria-hidden="true" />
                 Đặt lại
@@ -398,7 +456,7 @@ function ListeningCatalogContent() {
             </button>
           </div>
         ) : filteredQuizzes.length > 0 ? (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {filteredQuizzes.map((quiz) => (
               <ListeningExerciseCard
                 key={quiz.id}

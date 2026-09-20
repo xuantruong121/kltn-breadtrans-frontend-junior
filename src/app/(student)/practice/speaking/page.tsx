@@ -13,7 +13,11 @@ import {
   RotateCcw,
   Search,
 } from "lucide-react";
-import { speakingService, type SpeakingExercise } from "@/lib/api/services/speaking.service";
+import {
+  speakingService,
+  type SpeakingExercise,
+  type SpeakingPracticeSetSummary,
+} from "@/lib/api/services/speaking.service";
 import { Pagination } from "@/components/ui";
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
 import { useAuthStore } from "@/stores/authStore";
@@ -24,6 +28,10 @@ const DIFFICULTY_WEIGHT: Record<string, number> = {
   BEGINNER: 1,
   INTERMEDIATE: 2,
   ADVANCED: 3,
+};
+
+type SpeakingPracticeSetCard = SpeakingExercise & {
+  practiceSet: SpeakingPracticeSetSummary;
 };
 
 export default function SpeakingExercisesPage() {
@@ -37,10 +45,12 @@ export default function SpeakingExercisesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
   const [launchingExerciseId, setLaunchingExerciseId] = useState<number | null>(null);
+  const [launchingPracticeSetKey, setLaunchingPracticeSetKey] = useState<string | null>(null);
   const [authGate, setAuthGate] = useState<{
     open: boolean;
     exerciseId?: number;
     title?: string;
+    practiceSetKey?: string;
   }>({ open: false });
 
   useEffect(() => {
@@ -50,7 +60,10 @@ export default function SpeakingExercisesPage() {
 
     const animId1 = requestAnimationFrame(() => {
       animId2 = requestAnimationFrame(() => {
-        router.push(`/practice/speaking/${launchingExerciseId}`);
+        const query = launchingPracticeSetKey
+          ? `?set=${encodeURIComponent(launchingPracticeSetKey)}`
+          : "";
+        router.push(`/practice/speaking/${launchingExerciseId}${query}`);
       });
     });
 
@@ -58,7 +71,7 @@ export default function SpeakingExercisesPage() {
       cancelAnimationFrame(animId1);
       if (animId2) cancelAnimationFrame(animId2);
     };
-  }, [launchingExerciseId, router]);
+  }, [launchingExerciseId, launchingPracticeSetKey, router]);
 
   const { data: exercises, isLoading } = useQuery<SpeakingExercise[]>({
     queryKey: ["speaking-exercises"],
@@ -68,38 +81,73 @@ export default function SpeakingExercisesPage() {
     },
   });
 
-  // Extract unique categories
-  const categories = useMemo(() => {
+  const practiceSets = useMemo<SpeakingPracticeSetCard[]>(() => {
     if (!exercises) return [];
+    const byKey = new Map<string, SpeakingExercise[]>();
+    for (const exercise of exercises) {
+      const key = exercise.practiceSet?.key ?? `legacy-${exercise.id}`;
+      byKey.set(key, [...(byKey.get(key) ?? []), exercise]);
+    }
+
+    return Array.from(byKey.values()).map((items) => {
+      const first = items[0];
+      const summary = first.practiceSet ?? {
+        key: `legacy-${first.id}`,
+        title: first.title,
+        description: first.description ?? "Bài luyện nói theo câu.",
+        category: first.category,
+        exerciseCount: 1,
+        completedCount: first.isCompleted ? 1 : 0,
+        exerciseIds: [first.id],
+        difficultyLabel: first.difficulty,
+        position: 1,
+        isCompleted: Boolean(first.isCompleted),
+      };
+
+      return {
+        ...first,
+        title: summary.title,
+        description: summary.description,
+        category: summary.category,
+        difficulty: summary.difficultyLabel,
+        isCompleted: summary.isCompleted,
+        practiceSet: summary,
+      };
+    });
+  }, [exercises]);
+
+  // Extract unique categories from practice sets (not individual sentences).
+  const categories = useMemo(() => {
+    if (!practiceSets) return [];
     const set = new Set<string>();
-    exercises.forEach((ex) => {
+    practiceSets.forEach((ex) => {
       if (ex.category) set.add(ex.category);
     });
     return Array.from(set);
-  }, [exercises]);
+  }, [practiceSets]);
 
   // Category counts
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    if (!exercises) return counts;
-    exercises.forEach((ex) => {
+    if (!practiceSets) return counts;
+    practiceSets.forEach((ex) => {
       const cat = ex.category || "GENERAL";
       counts[cat] = (counts[cat] || 0) + 1;
     });
     return counts;
-  }, [exercises]);
+  }, [practiceSets]);
 
   // Count completed
   const completedCount = useMemo(() => {
-    if (!exercises) return 0;
-    return exercises.filter((ex: any) => Boolean(ex.isCompleted)).length;
-  }, [exercises]);
+    if (!practiceSets) return 0;
+    return practiceSets.filter((ex) => Boolean(ex.isCompleted)).length;
+  }, [practiceSets]);
 
   // Filter & Sort
   const filteredAndSortedExercises = useMemo(() => {
-    if (!exercises) return [];
+    if (!practiceSets) return [];
 
-    const list = exercises.filter((ex: any) => {
+    const list = practiceSets.filter((ex) => {
       const q = searchTerm.trim().toLowerCase();
       const matchSearch =
         !q ||
@@ -139,7 +187,7 @@ export default function SpeakingExercisesPage() {
       // NEWEST
       return (b.id || 0) - (a.id || 0);
     });
-  }, [exercises, searchTerm, selectedDifficulty, selectedCategory, selectedStatus, sortOrder]);
+  }, [practiceSets, searchTerm, selectedDifficulty, selectedCategory, selectedStatus, sortOrder]);
 
   const totalPages = Math.ceil(filteredAndSortedExercises.length / pageSize);
   const paginatedExercises = useMemo(() => {
@@ -149,12 +197,20 @@ export default function SpeakingExercisesPage() {
     );
   }, [filteredAndSortedExercises, currentPage, pageSize]);
 
-  const handleStartExercise = (exercise: SpeakingExercise) => {
+  const handleStartExercise = (
+    exercise: SpeakingExercise & { practiceSet?: SpeakingPracticeSetSummary },
+  ) => {
     if (!user) {
-      setAuthGate({ open: true, exerciseId: exercise.id, title: exercise.title });
+      setAuthGate({
+        open: true,
+        exerciseId: exercise.id,
+        title: exercise.title,
+        practiceSetKey: exercise.practiceSet?.key,
+      });
       return;
     }
     if (launchingExerciseId) return;
+    setLaunchingPracticeSetKey(exercise.practiceSet?.key ?? null);
     setLaunchingExerciseId(exercise.id);
   };
 
@@ -204,7 +260,7 @@ export default function SpeakingExercisesPage() {
               </span>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-xl font-black text-slate-900">
-                  {exercises?.length || 0} bài tập
+                  {practiceSets.length} bộ luyện · {exercises?.length || 0} câu
                 </span>
                 {completedCount > 0 && (
                   <span className="text-xs font-bold text-emerald-600">
@@ -233,7 +289,7 @@ export default function SpeakingExercisesPage() {
             }`}
           >
             <Mic size={15} aria-hidden="true" />
-            Tất cả bài nói ({exercises?.length || 0})
+            Tất cả bộ luyện ({practiceSets.length})
           </button>
 
           {categories.map((cat) => {
@@ -390,7 +446,12 @@ export default function SpeakingExercisesPage() {
                   exercise={exercise}
                   isAuthenticated={Boolean(user)}
                   onOpenAuthGate={(ex) =>
-                    setAuthGate({ open: true, exerciseId: ex.id, title: ex.title })
+                    setAuthGate({
+                      open: true,
+                      exerciseId: ex.id,
+                      title: ex.title,
+                      practiceSetKey: ex.practiceSet?.key,
+                    })
                   }
                   onStart={handleStartExercise}
                   isLaunching={Boolean(launchingExerciseId)}
@@ -433,7 +494,15 @@ export default function SpeakingExercisesPage() {
         isOpen={authGate.open}
         onClose={() => setAuthGate({ open: false })}
         targetLabel={authGate.title ? `bài luyện nói "${authGate.title}"` : "bài luyện nói này"}
-        targetRoute={authGate.exerciseId ? `/practice/speaking/${authGate.exerciseId}` : "/practice/speaking"}
+        targetRoute={
+          authGate.exerciseId
+            ? `/practice/speaking/${authGate.exerciseId}${
+                authGate.practiceSetKey
+                  ? `?set=${encodeURIComponent(authGate.practiceSetKey)}`
+                  : ""
+              }`
+            : "/practice/speaking"
+        }
         onOpenLogin={() => router.push("/login")}
         onOpenRegister={() => router.push("/register")}
       />

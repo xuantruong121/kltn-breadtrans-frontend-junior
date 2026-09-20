@@ -1,13 +1,13 @@
 "use client";
 
-import { ArrowRight, CheckCircle2, Clock, Lock, Mic, Type } from "lucide-react";
-import type { SpeakingExercise } from "@/lib/api/services/speaking.service";
+import { ArrowRight, CheckCircle2, Clock, Layers3, Lock, Type } from "lucide-react";
+import type { SpeakingExercise, SpeakingPracticeSetSummary } from "@/lib/api/services/speaking.service";
 
 interface SpeakingExerciseCardProps {
-  exercise: SpeakingExercise & { isCompleted?: boolean };
+  exercise: SpeakingExercise & { isCompleted?: boolean; practiceSet?: SpeakingPracticeSetSummary };
   isAuthenticated: boolean;
   onOpenAuthGate: (exercise: SpeakingExercise) => void;
-  onStart?: (exercise: SpeakingExercise) => void;
+  onStart?: (exercise: SpeakingExercise & { practiceSet?: SpeakingPracticeSetSummary }) => void;
   isLaunching?: boolean;
 }
 
@@ -37,7 +37,8 @@ export function SpeakingExerciseCard({
   isLaunching = false,
 }: SpeakingExerciseCardProps) {
   const isCompleted = exercise.isCompleted;
-  const difficulty = (exercise.difficulty || "BEGINNER").toUpperCase();
+  const practiceSet = exercise.practiceSet;
+  const difficulty = (practiceSet?.difficultyLabel || exercise.difficulty || "BEGINNER").toUpperCase();
   const diffConfig = DIFFICULTY_CONFIG[difficulty] || {
     label: exercise.difficulty || "Cơ bản",
     badgeClass: "border-slate-200 bg-slate-50 text-slate-700",
@@ -63,8 +64,8 @@ export function SpeakingExerciseCard({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="inline-flex items-center gap-1 rounded-lg border border-purple-200/80 bg-purple-50 px-2.5 py-0.5 text-[11px] font-extrabold text-purple-700">
-              <Mic size={12} aria-hidden="true" />
-              {exercise.category || "GENERAL"}
+              <Layers3 size={12} aria-hidden="true" />
+              {practiceSet ? "BỘ LUYỆN" : exercise.category || "GENERAL"}
             </span>
 
             <span
@@ -83,7 +84,7 @@ export function SpeakingExerciseCard({
 
         {/* Title */}
         <h3 className="text-base font-extrabold leading-snug text-slate-900 transition-colors group-hover:text-purple-700 sm:text-lg">
-          {exercise.title}
+          {practiceSet?.title || exercise.title}
         </h3>
 
         {/* Target Sentence Preview Box */}
@@ -100,6 +101,12 @@ export function SpeakingExerciseCard({
           </div>
         )}
 
+        {practiceSet && (
+          <p className="text-xs font-semibold text-purple-700">
+            {practiceSet.exerciseCount} câu · {practiceSet.completedCount}/{practiceSet.exerciseCount} đã hoàn thành
+          </p>
+        )}
+
         {/* Description fallback if no targetText */}
         {!exercise.targetText && exercise.description && (
           <p className="line-clamp-2 text-xs leading-5 text-slate-600 sm:text-sm">
@@ -114,11 +121,11 @@ export function SpeakingExerciseCard({
           <div className="flex items-center gap-3">
             <span className="inline-flex items-center gap-1">
               <Type size={13} className="text-slate-400" aria-hidden="true" />
-              {wordCount} từ
+              {practiceSet ? `${practiceSet.exerciseCount} câu` : `${wordCount} từ`}
             </span>
             <span className="inline-flex items-center gap-1">
               <Clock size={13} className="text-slate-400" aria-hidden="true" />
-              ~{estimatedSeconds}s
+              {practiceSet ? `~${Math.max(1, Math.ceil((wordCount * practiceSet.exerciseCount) / 35))} phút` : `~${estimatedSeconds}s`}
             </span>
           </div>
 

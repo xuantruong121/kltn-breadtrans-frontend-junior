@@ -26,7 +26,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
   return (
     <nav
       aria-label="Điều hướng di động dưới cùng"
-      className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-lg border-t border-slate-200/90 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] px-3 flex items-center justify-around shadow-[0_-4px_16px_rgba(0,0,0,0.04)] lg:hidden"
+      className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-lg border-t border-slate-200/90 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] px-3 flex items-center justify-around shadow-[0_-4px_16px_rgba(0,0,0,0.04)] md:hidden"
     >
       {/* 1. Trang chủ */}
       <Link

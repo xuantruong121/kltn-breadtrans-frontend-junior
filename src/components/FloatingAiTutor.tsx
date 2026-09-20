@@ -128,6 +128,27 @@ function mapSupportMessageToAssistantMessage(msg: any): AssistantMessage {
   };
 }
 
+function deriveHasMore(res?: {
+  hasMore?: boolean;
+  totalPages?: number;
+  page?: number;
+  total?: number;
+  data?: unknown[];
+}): boolean {
+  if (!res) return false;
+  if (typeof res.hasMore === "boolean") return res.hasMore;
+  if (typeof res.totalPages === "number" && typeof res.page === "number") {
+    return res.page < res.totalPages;
+  }
+  if (typeof res.totalPages === "number") {
+    return res.totalPages > 1;
+  }
+  if (typeof res.total === "number" && Array.isArray(res.data)) {
+    return res.total > res.data.length;
+  }
+  return false;
+}
+
 export default function FloatingAiTutor() {
   const pathname = usePathname();
   const { user } = useAuthStore();
@@ -215,7 +236,7 @@ export default function FloatingAiTutor() {
         conv.mode,
         mapped,
         conv.unreadCount,
-        msgRes.hasMore ?? false
+        deriveHasMore(msgRes)
       );
     } catch (err) {
       console.error("Failed to load student support conversation:", err);
@@ -290,7 +311,7 @@ export default function FloatingAiTutor() {
         thread?.mode || "AI",
         mapped,
         0,
-        msgRes.hasMore ?? false
+        deriveHasMore(msgRes)
       );
     } catch (err) {
       console.error("Failed to load admin messages for student:", err);
@@ -322,7 +343,7 @@ export default function FloatingAiTutor() {
 
       const olderMapped = (res.data || []).map(mapSupportMessageToAssistantMessage);
       prependMessagesToThread(studentThreadId, olderMapped);
-      setThreadHasMore(studentThreadId, res.hasMore ?? false);
+      setThreadHasMore(studentThreadId, deriveHasMore(res));
     } catch (err) {
       console.error("Failed to load older messages:", err);
     } finally {

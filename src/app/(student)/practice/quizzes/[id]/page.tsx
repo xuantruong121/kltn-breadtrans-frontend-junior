@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
-import { use, useState, useEffect, useSyncExternalStore, type MouseEvent } from "react";
+import { use, useState, useEffect, useMemo, useSyncExternalStore, type MouseEvent } from "react";
 import { motion } from "framer-motion";
 import { BookOpen, CheckCircle2, ChevronRight, Cookie, Lightbulb, Loader2, Play, Square } from "lucide-react";
 import { quizService, AnswerDto } from "@/lib/api/services/quiz.service";
@@ -39,6 +39,7 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [dictationResults, setDictationResults] = useState<Record<number, { isChecked: boolean, isCorrect: boolean, diff: any[] }>>({});
+  const [failedImageKeys, setFailedImageKeys] = useState<Set<string>>(new Set());
 
   const { data: quiz, isLoading } = useQuery({
     queryKey: ["quiz", quizId],
@@ -64,6 +65,14 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
 
   const isReading = quiz?.type === 'BILINGUAL_READING';
   const isListening = quiz?.type === 'LISTENING_PRACTICE';
+  const reviewQuestionIds = useMemo(() => {
+    if (searchParams.get("review") !== "wrong") return [];
+    return (searchParams.get("questionIds") || "")
+      .split(",")
+      .map((value) => Number(value))
+      .filter((value, index, values) => Number.isInteger(value) && value > 0 && values.indexOf(value) === index);
+  }, [searchParams]);
+  const isWrongAnswerReview = isListening && reviewQuestionIds.length > 0;
   const readingTopicId = searchParams.get("topic");
   const hasValidReadingTopic = Boolean(readingTopicId && /^\d+$/.test(readingTopicId));
   const backHref = isReading
@@ -133,7 +142,8 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
     return (
       <ListeningComprehensionWorkspace
         quiz={quiz}
-        onBack={() => router.replace('/practice/listening')}
+        reviewOnly={isWrongAnswerReview}
+        reviewQuestionIds={reviewQuestionIds}
       />
     );
   }
@@ -357,6 +367,50 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                 </p>
               </div>
             )}
+
+            {/* Question Illustration / Visual Context (rendered only when imageUrl is provided) */}
+            {currentQuestion.content?.imageUrl &&
+              !failedImageKeys.has(
+                `${currentQuestion.id}:${currentQuestion.content.imageUrl}`,
+              ) && (
+                <div className="mb-6 flex justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-2xs">
+                  <img
+                    src={currentQuestion.content.imageUrl}
+                    alt={
+                      currentQuestion.content.imageAlt ||
+                      (isReading
+                        ? "Hình minh họa ngữ cảnh bài đọc"
+                        : "Hình minh họa câu hỏi")
+                    }
+                    loading="eager"
+                    decoding="async"
+                    onError={() =>
+                      setFailedImageKeys(
+                        (prev) =>
+                          new Set(prev).add(
+                            `${currentQuestion.id}:${currentQuestion.content.imageUrl}`,
+                          ),
+                      )
+                    }
+                    className="max-h-[380px] w-full object-contain rounded-xl"
+                  />
+                </div>
+              )}
+            {currentQuestion.content?.imageUrl &&
+              failedImageKeys.has(
+                `${currentQuestion.id}:${currentQuestion.content.imageUrl}`,
+              ) && (
+                <div
+                  role="img"
+                  aria-label="Hình minh họa bài tập hiện chưa tải được"
+                  className="mb-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-center"
+                >
+                  <p className="text-xs font-medium text-slate-500">
+                    Hình minh họa hiện chưa tải được. Bạn vẫn có thể tiếp tục
+                    đọc và hoàn thành câu hỏi.
+                  </p>
+                </div>
+              )}
             
             {sectionLabel && (
               <div className="mb-4 flex justify-center">

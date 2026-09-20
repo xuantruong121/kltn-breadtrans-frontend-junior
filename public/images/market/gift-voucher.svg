@@ -1,8 +1,53 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
-  <rect width="120" height="120" rx="24" fill="#FDF4FF"/>
-  <rect x="22" y="38" width="76" height="44" rx="8" fill="#A855F7" stroke="#7E22CE" stroke-width="4"/>
-  <circle cx="22" cy="60" r="8" fill="#FDF4FF" stroke="#7E22CE" stroke-width="3"/>
-  <circle cx="98" cy="60" r="8" fill="#FDF4FF" stroke="#7E22CE" stroke-width="3"/>
-  <line x1="48" y1="46" x2="48" y2="74" stroke="#E9D5FF" stroke-width="3" stroke-dasharray="4 3"/>
-  <text x="56" y="66" font-family="sans-serif" font-weight="900" font-size="16" fill="#FFFFFF">30K</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none">
+  <defs>
+    <radialGradient id="gv-aura" cx="80" cy="80" r="65" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#BBF7D0" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#10B981" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#047857" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gv-body" x1="20" y1="40" x2="140" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#065F46"/>
+      <stop offset="45%" stop-color="#047857"/>
+      <stop offset="100%" stop-color="#064E3B"/>
+    </linearGradient>
+    <linearGradient id="gv-gold" x1="30" y1="40" x2="130" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FEF08A"/>
+      <stop offset="40%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+    <filter id="gv-shadow" x="12" y="30" width="136" height="100" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#064E3B" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Ambient Glow -->
+  <circle cx="80" cy="80" r="60" fill="url(#gv-aura)"/>
+
+  <g filter="url(#gv-shadow)">
+    <!-- Voucher Main Ticket Base -->
+    <path d="M24 50C24 46 27 42 32 42H128C133 42 136 46 136 50V72C130 72 126 76 126 80C126 84 130 88 136 88V110C136 114 133 118 128 118H32C27 118 24 114 24 110V88C30 88 34 84 34 80C34 76 30 72 24 72V50Z"
+          fill="url(#gv-body)"/>
+
+    <!-- Gold Foil Filigree Outer Border -->
+    <path d="M28 52C28 49 30 46 34 46H126C130 46 132 49 132 52V71C124 73 122 76 122 80C122 84 124 87 132 89V108C132 111 130 114 126 114H34C30 114 28 111 28 108V89C36 87 38 84 38 80C38 76 36 73 28 71V52Z"
+          stroke="url(#gv-gold)" stroke-width="1.8"/>
+
+    <!-- Tear-off Perforation Line (Left Stub) -->
+    <line x1="58" y1="46" x2="58" y2="114" stroke="#FDE68A" stroke-width="2" stroke-dasharray="4 4" opacity="0.8"/>
+
+    <!-- Left Stub: Golden Tea Leaf Crest -->
+    <circle cx="44" cy="74" r="10" fill="#064E3B" stroke="url(#gv-gold)" stroke-width="1.2"/>
+    <path d="M44 68C48 70 50 76 44 80C38 76 40 70 44 68Z" fill="url(#gv-gold)"/>
+    <text x="44" y="94" text-anchor="middle" font-family="'Outfit', 'Inter', system-ui, sans-serif" font-weight="800" font-size="7" fill="#FEF08A" letter-spacing="1">TEA VIP</text>
+
+    <!-- Right Main Body: Voucher Typography -->
+    <text x="96" y="64" text-anchor="middle" font-family="'Outfit', 'Inter', system-ui, sans-serif" font-weight="900" font-size="11" fill="#FEF08A" letter-spacing="1">E-VOUCHER 30.000Đ</text>
+
+    <!-- Big 30K Medallion Badge -->
+    <rect x="76" y="70" width="40" height="24" rx="6" fill="#064E3B" stroke="url(#gv-gold)" stroke-width="1.5"/>
+    <text x="96" y="87" text-anchor="middle" font-family="'Outfit', 'Inter', system-ui, sans-serif" font-weight="900" font-size="16" fill="#FFFFFF" letter-spacing="-0.5">30K</text>
+
+    <!-- Subtext -->
+    <text x="96" y="104" text-anchor="middle" font-family="'Outfit', 'Inter', system-ui, sans-serif" font-weight="600" font-size="7" fill="#A7F3D0" letter-spacing="0.5">PHÚC LONG COFFEE &amp; TEA</text>
+  </g>
 </svg>

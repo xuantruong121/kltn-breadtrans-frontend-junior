@@ -2,14 +2,9 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import {
-  Volume2,
-  RotateCw,
-  Check,
-  Settings,
-  AlertTriangle,
-} from "lucide-react";
+import { Volume2, RotateCw, Check, Settings } from "lucide-react";
 import { VocabWord } from "@/lib/api/services/vocab.service";
+import { ReportIssueButton } from "@/components/issue-report";
 
 interface FlashcardStageProps {
   word: VocabWord;
@@ -31,8 +26,12 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
   onOpenSettings,
 }) => {
   // Format phonetics
-  const ipaUsText = word.ipaUs ? `/${word.ipaUs.replace(/^\/|\/$/g, "")}/` : "/US/";
-  const ipaUkText = word.ipaUk ? `/${word.ipaUk.replace(/^\/|\/$/g, "")}/` : "/UK/";
+  const ipaUsText = word.ipaUs
+    ? `/${word.ipaUs.replace(/^\/|\/$/g, "")}/`
+    : "/US/";
+  const ipaUkText = word.ipaUk
+    ? `/${word.ipaUk.replace(/^\/|\/$/g, "")}/`
+    : "/UK/";
 
   return (
     <div className="flex flex-col items-center w-full max-w-xl mx-auto space-y-6">
@@ -80,15 +79,11 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
                     <Settings size={16} />
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={() => alert("Cảm ơn bạn đã phản hồi về từ vựng này.")}
-                  className="min-h-11 min-w-11 p-1.5 rounded-xl hover:bg-rose-50 hover:text-rose-500 transition-colors"
-                  title="Báo cáo lỗi từ vựng"
-                  aria-label="Báo cáo lỗi từ vựng"
-                >
-                  <AlertTriangle size={15} />
-                </button>
+                <ReportIssueButton
+                  area="VOCABULARY"
+                  compact
+                  context={{ sourceType: "VOCAB_WORD", sourceId: word.id }}
+                />
               </div>
             </div>
 
@@ -247,7 +242,10 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
                       <span className="text-amber-700/80 border-l border-amber-300/80 pl-1.5 font-normal text-[11px]">
                         {collocation.meaningVi}
                       </span>
-                      <Volume2 size={12} className="text-amber-600/80 shrink-0" />
+                      <Volume2
+                        size={12}
+                        className="text-amber-600/80 shrink-0"
+                      />
                     </button>
                   ))}
                 </div>

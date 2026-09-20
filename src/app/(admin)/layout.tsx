@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
+import { BrandLogo } from "@/components/brand";
 import {
   LayoutDashboard,
   Users,
@@ -21,6 +21,8 @@ import {
   CreditCard,
   UserPlus,
   Cpu,
+  Activity,
+  Flag,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useQueryClient } from "@tanstack/react-query";
@@ -148,7 +150,19 @@ const NAV_GROUPS: NavGroup[] = [
   {
     title: "Vận Hành & Công Cụ",
     items: [
+      {
+        id: "issue-reports",
+        href: "/admin/issue-reports",
+        label: "Báo cáo lỗi",
+        icon: Flag,
+      },
       { id: "ai", href: "/admin/ai-tools", label: "Soạn nội dung", icon: Cpu },
+      {
+        id: "costs",
+        href: "/admin/costs",
+        label: "Chi phí & Vận hành",
+        icon: Activity,
+      },
     ],
   },
 ];
@@ -199,23 +213,13 @@ export default function AdminLayout({
   const sidebarNav = (
     <div className="flex flex-col h-full justify-between">
       <div>
-        <div className="flex items-center justify-between border-b border-slate-200 p-6 text-2xl font-bold text-slate-900">
-          <div className="flex items-center gap-2">
-            <Link href="/admin" onClick={() => setIsMobileNavOpen(false)}>
-              <Image
-                src="/logo.png"
-                alt="BreadTrans Logo"
-                width={130}
-                height={60}
-                priority
-                style={{ width: "auto", height: "auto" }}
-                className="max-h-8 object-contain"
-              />
-            </Link>
-            <span className="rounded bg-blue-50 px-2 py-0.5 text-xs font-black text-junior-blue">
-              CMS
-            </span>
-          </div>
+        <div className="flex items-center justify-between border-b border-slate-200 p-6">
+          <BrandLogo
+            href="/admin"
+            onClick={() => setIsMobileNavOpen(false)}
+            variant="admin"
+            size="md"
+          />
           <button
             onClick={() => setIsMobileNavOpen(false)}
             className="cursor-pointer p-1 text-slate-500 hover:text-slate-900 lg:hidden"
