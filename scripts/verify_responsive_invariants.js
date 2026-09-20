@@ -10,10 +10,8 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { execSync } from "node:child_process";
 
 const FRONTEND_ROOT = path.resolve(import.meta.dirname ? path.dirname(import.meta.dirname) : ".");
-const SRC = path.join(FRONTEND_ROOT, "src");
 
 console.log("===================================================================");
 console.log("  BREADTRANS MULTI-DEVICE RESPONSIVE INVARIANTS VERIFICATION       ");

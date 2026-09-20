@@ -88,7 +88,7 @@ export default function AdminAiToolsPage() {
 
   // ================= OLD TABS STATE =================
   const [topic, setTopic] = useState("");
-  const [count, setCount] = useState(5);
+  const [count, setCount] = useState(20);
   const [part, setPart] = useState(5);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
@@ -1046,15 +1046,20 @@ export default function AdminAiToolsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-600 mb-1.5">Số lượng câu thoại</label>
+                  <label className="block text-slate-600 mb-1.5">Số câu nghe chép (tối thiểu 20)</label>
                   <input
                     type="number"
                     value={count}
-                    onChange={(e) => setCount(Number(e.target.value))}
-                    min={1}
-                    max={15}
+                    onChange={(e) =>
+                      setCount(Math.min(50, Math.max(20, Number(e.target.value) || 20)))
+                    }
+                    min={20}
+                    max={50}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:bg-white text-slate-800 font-bold"
                   />
+                  <p className="mt-1.5 text-xs font-medium text-slate-500">
+                    Mỗi bài Dictation phải có ít nhất 20 câu để người học có đủ thời lượng luyện tập.
+                  </p>
                 </div>
               </div>
 

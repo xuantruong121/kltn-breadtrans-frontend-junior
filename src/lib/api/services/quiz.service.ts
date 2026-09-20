@@ -139,6 +139,18 @@ export interface CheckPracticeQuestionResult {
   translation: string | null;
 }
 
+export interface ListeningTranscriptItem {
+  questionId: number;
+  order: number;
+  transcript: string;
+  translation: string | null;
+}
+
+export interface ListeningTranscriptResponse {
+  quizId: number;
+  items: ListeningTranscriptItem[];
+}
+
 export interface ListeningPracticeAttempt {
   id: number;
   quizId: number;
@@ -187,6 +199,12 @@ export const quizService = {
       `/quizzes/${quizId}/questions/${questionId}/check`,
       { answer },
     );
+  },
+
+  getListeningTranscript: async (
+    quizId: number,
+  ): Promise<ListeningTranscriptResponse> => {
+    return await axiosClient.get(`/quizzes/${quizId}/transcript`);
   },
 
   getOrCreateListeningAttempt: async (

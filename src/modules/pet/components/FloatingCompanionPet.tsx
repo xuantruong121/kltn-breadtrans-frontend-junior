@@ -41,7 +41,7 @@ export const FloatingCompanionPet: React.FC = () => {
 
   // Floating UI state machine
   const [isExpanded, setIsExpanded] = useState(false);
-  const [hasDismissedMessage, setHasDismissedMessage] = useState(false);
+  const [hasDismissedMessage, setHasDismissedMessage] = useState(true);
   const [isJustFed, setIsJustFed] = useState(false);
   const [isLevelUp, setIsLevelUp] = useState(false);
   const [ariaFeedback, setAriaFeedback] = useState<string | null>(null);

@@ -565,7 +565,7 @@ export function AppHeader() {
             onClick={closeMenus}
             variant="compact"
             size="md"
-            roleBadge={isStudent ? "STUDENT" : isAdmin ? "ADMIN" : "GUEST"}
+            roleBadge={isAdmin ? "ADMIN" : undefined}
           />
         </div>
 
@@ -1005,7 +1005,9 @@ export function AppHeader() {
             aria-expanded={mobileOpen}
             aria-controls="mobile-navigation"
             aria-label={mobileOpen ? "Đóng menu" : "Mở menu"}
-            className="inline-flex size-9 sm:size-10 sm:min-h-11 sm:min-w-11 items-center justify-center rounded-xl text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none xl:hidden shrink-0 cursor-pointer"
+            className={`size-9 sm:size-10 sm:min-h-11 sm:min-w-11 items-center justify-center rounded-xl text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none xl:hidden shrink-0 cursor-pointer ${
+              user ? "hidden md:inline-flex" : "inline-flex"
+            }`}
           >
             {mobileOpen ? (
               <>

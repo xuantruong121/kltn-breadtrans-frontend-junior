@@ -46,6 +46,7 @@ import {
   diffDictationAnswer,
   type DictationDiffToken,
 } from "./listeningDictationUtils";
+import { DailyDictationWorkspace } from "./DailyDictationWorkspace";
 
 interface ListeningComprehensionWorkspaceProps {
   quiz?: Quiz | null;
@@ -117,6 +118,18 @@ function getDialogueSpeakerLabel(speaker: string): string {
   return speaker.trim() || "Speaker";
 }
 
+function maskDictationAnswer(answer: string): string {
+  return answer
+    .trim()
+    .split(/\s+/)
+    .map((word, index) =>
+      index === 0
+        ? word
+        : word.replace(/[A-Za-z0-9À-ỹ]/g, "*"),
+    )
+    .join(" ");
+}
+
 export function ListeningComprehensionWorkspace({
   quiz,
   isLoading,
@@ -163,6 +176,7 @@ export function ListeningComprehensionWorkspace({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [transcriptOpen, setTranscriptOpen] = useState(false);
   const [showFullTranscript, setShowFullTranscript] = useState(false);
+  const [showAnswerImmediately, setShowAnswerImmediately] = useState(true);
   const [revealedQuestionIds, setRevealedQuestionIds] = useState<Record<number, boolean>>({});
   const [skippedQuestionIds, setSkippedQuestionIds] = useState<Record<number, boolean>>({});
   const [sessionHydrated, setSessionHydrated] = useState(false);
@@ -380,8 +394,8 @@ export function ListeningComprehensionWorkspace({
     if (
       !quiz ||
       !currentQuestion ||
-      !answer ||
       isChecking ||
+      (answer.trim().length === 0 && currentQuestion.type !== "DICTATION") ||
       (isChecked && !canRetryDictation)
     ) return;
     setIsChecking(true);
@@ -603,6 +617,15 @@ export function ListeningComprehensionWorkspace({
     }
   };
 
+  // Return to previous question
+  const handlePrevQuestion = () => {
+    setValidationNotice(null);
+    if (currentIndex > 0) {
+      checkpointAttempt({ currentQuestionId: questions[currentIndex - 1]?.id });
+      setCurrentIndex((prev) => prev - 1);
+    }
+  };
+
   const handleSkipQuestion = () => {
     if (
       !currentQuestion ||
@@ -677,7 +700,7 @@ export function ListeningComprehensionWorkspace({
           else actions.handleNextQuestion();
         } else if (actions.currentQuestion?.type === "DICTATION") {
           const answer = actions.currentAnswer;
-          if (answer.trim()) void actions.handleCheck(answer);
+          void actions.handleCheck(answer);
         }
         return;
       }
@@ -784,9 +807,9 @@ export function ListeningComprehensionWorkspace({
   }
 
   const questionContent = (currentQuestion?.content ?? {}) as QuestionContent;
-  const isTopicContext =
-    questionContent.imagePurpose === "TOPIC_CONTEXT" ||
-    !questionContent.imagePurpose;
+  // A visual is opt-in. General listening questions must not inherit a
+  // quiz-level image that is unrelated to their audio/question context.
+  const isTopicContext = questionContent.imagePurpose === "TOPIC_CONTEXT";
   const imageUrl =
     isTopicContext &&
     typeof questionContent.imageUrl === "string" &&
@@ -851,35 +874,89 @@ export function ListeningComprehensionWorkspace({
 
   const levelTag = level || quiz.bilingualContent?.skillLabel || "A1 BEGINNER";
 
+  if (isDictation) {
+    return (
+      <>
+        <DailyDictationWorkspace
+          quiz={quiz}
+          questions={questions}
+          currentQuestion={currentQuestion}
+          currentIndex={currentIndex}
+          onSelectIndex={(idx) => {
+            setValidationNotice(null);
+            setCurrentIndex(idx);
+          }}
+          selectedAnswer={selectedAnswer}
+          onChangeAnswer={(val) => {
+            if (isAnswerLocked) return;
+            setAnswersByQuestionId((prev) => ({
+              ...prev,
+              [currentQuestion.id]: val,
+            }));
+          }}
+          onCheck={handleCheck}
+          isChecking={isChecking}
+          isChecked={isChecked}
+          currentCheck={currentCheck}
+          dictationDiff={dictationDiff}
+          dictationMetrics={dictationMetrics}
+          isRevealed={isRevealed}
+          onToggleReveal={toggleRevealAnswer}
+          showAnswerImmediately={showAnswerImmediately}
+          onToggleShowAnswerImmediately={() => setShowAnswerImmediately((value) => !value)}
+          onSkip={handleSkipQuestion}
+          onNext={handleNextQuestion}
+          onPrev={handlePrevQuestion}
+          onFinalSubmit={handleFinalSubmit}
+          isSubmitting={isSubmitting || submitMutation.isPending}
+          submitError={submitError}
+          reviewOnly={reviewOnly}
+          onExit={confirmExit}
+          notes={notes}
+          onSaveNotes={setNotes}
+          accent={accent}
+          level={level}
+        />
+        <PracticeExitConfirmDialog {...exitDialogProps} />
+        {lookupWord && (
+          <WordDictionaryPopup
+            word={lookupWord}
+            onClose={() => setLookupWord(null)}
+          />
+        )}
+      </>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-[45] w-screen h-[100dvh] flex flex-col bg-white overflow-hidden">
       {/* 1. Full-Width Top Exam Header */}
-      <header className="w-full h-14 bg-slate-900 text-white px-4 md:px-6 flex items-center justify-between shrink-0 select-none border-b border-slate-800 z-30">
+      <header className="w-full h-14 bg-slate-900 text-white px-3 sm:px-6 flex items-center justify-between shrink-0 select-none border-b border-slate-800 z-30">
         {/* Left Section: Thoát button + Breadcrumb / Section Tag */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             type="button"
             onClick={() => confirmExit("/practice/listening")}
-            className="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer shrink-0"
+            className="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-2.5 sm:px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer shrink-0"
           >
             <ArrowLeft size={16} aria-hidden="true" />
-            <span>Thoát bài luyện</span>
+            <span>Thoát<span className="hidden sm:inline"> bài luyện</span></span>
           </button>
 
           <span className="text-slate-600 hidden sm:inline">|</span>
 
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-sm font-bold text-slate-100 truncate max-w-[200px] sm:max-w-[320px] md:max-w-[480px]">
+            <span className="text-xs sm:text-sm font-bold text-slate-100 truncate max-w-[120px] xs:max-w-[200px] sm:max-w-[320px] md:max-w-[480px]">
               {quiz.title}
             </span>
-            <span className="shrink-0 rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider">
+            <span className="hidden xs:inline-flex shrink-0 rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider">
               {reviewOnly ? "ÔN CÂU SAI" : levelTag}
             </span>
           </div>
         </div>
 
         {/* Right Section: Utility Tools + Live Counter */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {/* Song ngữ pill */}
           <button
             type="button"
@@ -917,8 +994,8 @@ export function ListeningComprehensionWorkspace({
             <span className="hidden md:inline">Ghi chú</span>
           </button>
 
-          {/* Phím tắt pill with popover */}
-          <div className="relative" ref={shortcutsRef}>
+          {/* Phím tắt pill with popover (hidden on mobile touchscreen) */}
+          <div className="relative hidden sm:block" ref={shortcutsRef}>
             <button
               type="button"
               onClick={() => setShowShortcuts((v) => !v)}
@@ -1026,11 +1103,29 @@ export function ListeningComprehensionWorkspace({
         </div>
       </header>
 
-      {/* 2. Main Listening Workspace (70/30 on desktop, stacked on mobile) */}
-      <main className="flex-1 w-full grid grid-cols-1 lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)] divide-y lg:divide-y-0 lg:divide-x divide-slate-200 overflow-hidden min-h-0">
-        {/* Left Panel — Audio & Conversation (70% Width) */}
-        <section className="w-full min-w-0 h-full p-6 md:p-8 flex flex-col justify-between overflow-y-auto bg-slate-50/50 min-h-0">
-          <div className="flex-1 flex flex-col min-h-0">
+      {/* 2. Main Listening Workspace. Dictation keeps audio and input in one focused vertical flow. */}
+      <main
+        className={`flex-1 w-full min-h-0 ${
+          isDictation
+            ? "grid grid-cols-1 content-start gap-0 overflow-y-auto bg-slate-50/70 px-4 py-6 sm:px-6 lg:px-8"
+            : "grid grid-cols-1 divide-y overflow-hidden lg:divide-y-0 lg:divide-x divide-slate-200 lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)]"
+        }`}
+      >
+        {/* Left Panel — Audio & Conversation */}
+        <section
+          className={`w-full min-w-0 p-6 md:p-8 flex flex-col ${
+            isDictation
+              ? "mx-auto max-w-4xl justify-start rounded-t-3xl border border-slate-200 bg-white shadow-sm"
+              : "h-full justify-between overflow-y-auto bg-slate-50/50 min-h-0"
+          }`}
+        >
+          <div
+            className={
+              isDictation
+                ? "mx-auto flex w-full max-w-3xl flex-col justify-start"
+                : "flex-1 flex flex-col min-h-0"
+            }
+          >
             {/* Keep the dialogue itself as the primary instruction. */}
             {!isDialogue && (
               <p className="mb-3 shrink-0 text-sm font-medium text-slate-600">
@@ -1038,6 +1133,34 @@ export function ListeningComprehensionWorkspace({
                   ? "Nghe câu hoặc đoạn ngắn, sau đó chép lại điều bạn nghe được."
                   : "Listen carefully, then choose the answer that best matches the recording."}
               </p>
+            )}
+
+            {isDictation && (
+              <div className="mb-4 flex items-center justify-between gap-3 border-b border-slate-200 pb-3">
+                <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 shadow-xs" role="tablist" aria-label="Chế độ bài nghe chép">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected="true"
+                    className="min-h-10 rounded-lg bg-sky-50 px-4 text-sm font-extrabold text-sky-700"
+                  >
+                    Dictation
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={showFullTranscript}
+                    disabled={!isChecked}
+                    onClick={() => setShowFullTranscript(true)}
+                    className="min-h-10 rounded-lg px-4 text-sm font-semibold text-slate-500 transition hover:bg-slate-50 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Full transcript
+                  </button>
+                </div>
+                <span className="shrink-0 text-xs font-bold text-slate-500">
+                  {currentIndex + 1} / {questions.length}
+                </span>
+              </div>
             )}
 
             {/* Audio Control Station */}
@@ -1048,7 +1171,11 @@ export function ListeningComprehensionWorkspace({
               audioVersion={currentQuestion.audioAssets?.find((asset) => asset.isActive)?.version}
               accent={accent}
               muted={soundMuted}
-              className="p-0 border-0 bg-transparent shadow-none shrink-0"
+              className={
+                isDictation
+                  ? "rounded-2xl border border-sky-100 bg-white p-5 shadow-sm sm:p-6 shrink-0"
+                  : "p-0 border-0 bg-transparent shadow-none shrink-0"
+              }
               onProgress={(currentTime, duration) =>
                 setAudioProgress({ currentTime, duration })
               }
@@ -1149,10 +1276,34 @@ export function ListeningComprehensionWorkspace({
                 </p>
               </div>
             )}
+
+            {!isDialogue && !isDictation && !imageUrl && (
+              <section
+                aria-label="Khu vực tập trung nghe"
+                className="my-4 flex min-h-[220px] flex-1 items-center justify-center rounded-2xl border border-sky-100 bg-sky-50/60 px-6 py-10 text-center shadow-xs sm:min-h-[280px]"
+              >
+                <div className="max-w-md">
+                  <div className="mx-auto flex size-14 items-center justify-center rounded-2xl border border-sky-200 bg-white text-sky-600 shadow-xs">
+                    <Volume2 size={24} aria-hidden="true" />
+                  </div>
+                  <h2 className="mt-4 text-lg font-extrabold text-slate-900 sm:text-xl">
+                    Tập trung nghe đoạn ghi âm
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
+                    Bài này không dùng hình minh họa. Hãy nghe kỹ nội dung và
+                    chọn đáp án phù hợp ở bên phải.
+                  </p>
+                  <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-sky-100 bg-white px-3 py-1.5 text-xs font-semibold text-sky-700">
+                    <span className="size-1.5 rounded-full bg-sky-500" aria-hidden="true" />
+                    Audio là nội dung chính của bài luyện
+                  </div>
+                </div>
+              </section>
+            )}
           </div>
 
           {/* Audio Transcript / Hint Drawer (Bottom of Left Panel) */}
-          <div className="mt-auto rounded-2xl border border-slate-200/80 bg-white p-4 transition-all shrink-0 shadow-xs">
+          {!isDictation && <div className="mt-auto rounded-2xl border border-slate-200/80 bg-white p-4 transition-all shrink-0 shadow-xs">
             <button
               type="button"
               onClick={() => {
@@ -1230,11 +1381,17 @@ export function ListeningComprehensionWorkspace({
                 )}
               </div>
             )}
-          </div>
+          </div>}
         </section>
 
         {/* Right Panel — Questions & Answer Options (30% Width) */}
-        <section className="w-full min-w-0 h-full p-5 md:p-6 lg:p-7 flex flex-col justify-between overflow-y-auto bg-white min-h-0">
+        <section
+          className={`w-full min-w-0 p-5 md:p-6 lg:p-7 flex flex-col ${
+            isDictation
+              ? "mx-auto max-w-4xl rounded-b-3xl border-x border-b border-slate-200 bg-white shadow-sm"
+              : "h-full justify-between overflow-y-auto bg-white min-h-0"
+          }`}
+        >
           <div className="flex-1 flex flex-col">
             {/* Question Header */}
             <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3 mb-4 shrink-0">
@@ -1298,17 +1455,25 @@ export function ListeningComprehensionWorkspace({
                       }}
                       disabled={isAnswerLocked || isChecking}
                       placeholder="Gõ lại câu tiếng Anh bạn nghe được…"
-                      className="min-h-40 w-full resize-y rounded-2xl border-2 border-slate-200 bg-white p-4 text-base leading-relaxed text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 disabled:cursor-default disabled:bg-slate-50"
+                      aria-describedby={`dictation-help-${currentQuestion.id}`}
+                      className="min-h-52 w-full resize-y rounded-2xl border-2 border-slate-200 bg-white p-4 text-base leading-relaxed text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 disabled:cursor-default disabled:bg-slate-50"
                     />
+                    <p id={`dictation-help-${currentQuestion.id}`} className="text-xs leading-5 text-slate-500">
+                      Nghe lại nếu cần, sau đó nhập đúng những gì bạn nghe được bằng tiếng Anh.
+                    </p>
                     {!isAnswerLocked && (
                       <button
                         type="button"
                         onClick={() => void handleCheck()}
-                        disabled={isChecking || selectedAnswer.trim().length === 0}
+                        disabled={isChecking}
                         className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-sky-600 px-4 text-sm font-extrabold text-white shadow-xs transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
                       >
                         {isChecking ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : <PenLine size={16} aria-hidden="true" />}
-                        {isChecked ? "Kiểm tra lại" : "Kiểm tra phần nghe chép"}
+                        {isChecking
+                          ? "Đang kiểm tra..."
+                          : isChecked
+                            ? "Kiểm tra lại"
+                            : "Kiểm tra phần nghe chép"}
                       </button>
                     )}
                     {isChecked && (
@@ -1356,6 +1521,36 @@ export function ListeningComprehensionWorkspace({
                           >
                         {isRevealed ? "Ẩn đáp án chuẩn" : "Hiện toàn bộ đáp án"}
                           </button>
+                        )}
+                        <div className="mt-4 space-y-2 border-t border-slate-200 pt-3">
+                          <label className="flex min-h-11 items-center gap-3 text-sm font-semibold text-slate-700">
+                            <input
+                              type="checkbox"
+                              checked={showAnswerImmediately}
+                              onChange={(event) => setShowAnswerImmediately(event.target.checked)}
+                              className="size-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                            />
+                            Hiện gợi ý đáp án ngay
+                          </label>
+                          <label className="flex min-h-11 items-center gap-3 text-sm font-semibold text-slate-700">
+                            <input
+                              type="checkbox"
+                              checked={isRevealed}
+                              onChange={(event) => {
+                                setRevealedQuestionIds((previous) => ({
+                                  ...previous,
+                                  [currentQuestion.id]: event.target.checked,
+                                }));
+                              }}
+                              className="size-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                            />
+                            Hiện toàn bộ đáp án
+                          </label>
+                        </div>
+                        {showAnswerImmediately && !isRevealed && currentCheck?.correctAnswer && (
+                          <p className="mt-3 rounded-xl border border-sky-100 bg-sky-50/70 p-3 text-base font-semibold leading-relaxed text-slate-800">
+                            {maskDictationAnswer(currentCheck.correctAnswer)}
+                          </p>
                         )}
                         {isRevealed && (
                           <p className="mt-3 rounded-xl border border-slate-200 bg-white p-3 text-base font-semibold leading-relaxed text-slate-900">

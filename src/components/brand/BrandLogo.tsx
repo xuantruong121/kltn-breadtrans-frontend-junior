@@ -88,8 +88,8 @@ export function BrandLogo({
       badge: "text-[9px] px-1 py-0.2",
     },
     md: {
-      gap: "gap-2 sm:gap-2.5",
-      wordmark: "text-lg sm:text-xl",
+      gap: "gap-1.5 sm:gap-2.5",
+      wordmark: "text-base sm:text-xl",
       subtitle: "text-xs",
       badge: "text-[10px] px-1.5 py-0.5",
     },
