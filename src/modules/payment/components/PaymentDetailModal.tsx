@@ -155,7 +155,7 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.2 }}
-          className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-xl w-full max-h-[min(90dvh,calc(100dvh-3rem))] flex flex-col overflow-hidden"
+          className="bg-card dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl max-w-xl w-full max-h-[min(90dvh,calc(100dvh-3rem))] flex flex-col overflow-hidden"
         >
           {/* Modal Header */}
           <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">

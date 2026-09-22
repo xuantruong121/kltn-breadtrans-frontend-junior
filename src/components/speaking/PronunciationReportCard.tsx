@@ -436,7 +436,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
               <button
                 type="button"
                 onClick={onCancelRecording}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-rose-600 bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition-all cursor-pointer shadow-2xs active:scale-95"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-300 bg-card dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-slate-200 dark:border-slate-700 hover:border-rose-200 dark:hover:border-rose-800 transition-all cursor-pointer shadow-2xs active:scale-95"
                 title="Hủy lượt thu âm này"
               >
                 <X size={14} className="text-rose-500" />

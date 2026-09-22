@@ -49,7 +49,7 @@ export default function RootLayout({
         {/* Anti-FOUC Early Theme Script: Runs before First Paint */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('breadtrans-theme');var d=t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark');}catch(e){}})();`,
+            __html: `(function(){try{var p=window.location.pathname;var a=p==='/admin'||p.indexOf('/admin/')===0;var t=localStorage.getItem('breadtrans-theme');var d=!a&&(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches));if(d)document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark');}catch(e){}})();`,
           }}
         />
         {/* Material Symbols is an icon font; next/font does not support this variable icon family. */}

@@ -24,6 +24,7 @@ import {
   Award,
   Zap,
   Star,
+  Languages,
   Users,
   Check,
   Target,
@@ -59,10 +60,10 @@ const STATS_DATA = [
     color: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60",
   },
   {
-    value: "4.9 / 5.0",
-    label: "Đánh giá hài lòng",
-    desc: "Dựa trên hơn 12.000 phản hồi từ người học",
-    icon: Star,
+    value: "4",
+    label: "Kỹ năng tiếng Anh",
+    desc: "Nghe, Nói, Đọc và Viết trong một lộ trình",
+    icon: Languages,
     color: "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-900/60",
   },
 ];
@@ -477,16 +478,11 @@ export default function PublicLandingPage() {
                 </div>
               )}
 
-              {/* Trust & Social Proof Micro-strip */}
+              {/* Factual product benefit strip */}
               <div className="pt-3 flex flex-wrap items-center gap-4 sm:gap-6 text-xs font-bold text-slate-600 dark:text-slate-400 border-t border-slate-200/70 dark:border-slate-800">
-                <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
-                  <div className="flex -space-x-1" aria-hidden="true">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <Star key={s} size={15} className="fill-amber-500 text-amber-500" />
-                    ))}
-                  </div>
-                  <span className="font-black text-slate-900 dark:text-slate-100 ml-1">4.9/5</span>
-                  <span className="text-slate-500 dark:text-slate-400 font-semibold">(10.000+ học viên tin dùng)</span>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                  <span className="font-black text-slate-900 dark:text-slate-100">Luyện đủ 4 kỹ năng theo tiến độ cá nhân</span>
                 </div>
 
                 <div className="flex items-center gap-2">

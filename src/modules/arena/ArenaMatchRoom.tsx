@@ -141,7 +141,7 @@ export default function ArenaMatchRoom({
       </AnimatePresence>
 
       {/* HEADER SCOREBOARD 1v1 */}
-      <div className="bg-white rounded-3xl sm:rounded-[2.5rem] border-4 border-slate-200 shadow-[0_10px_0_0_#e2e8f0] p-4 sm:p-6 relative overflow-hidden">
+      <div className="bg-card dark:bg-slate-900 rounded-3xl sm:rounded-[2.5rem] border-4 border-slate-200 dark:border-slate-800 shadow-[0_10px_0_0_#e2e8f0] dark:shadow-none p-4 sm:p-6 relative overflow-hidden">
         <div className="flex items-center justify-between gap-2 sm:gap-4">
           {/* My Player Panel */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -154,11 +154,11 @@ export default function ArenaMatchRoom({
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1">
-                <span className="font-black text-slate-800 text-xs sm:text-lg truncate max-w-[70px] sm:max-w-[130px]">{myInfo.userName}</span>
+                <span className="font-black text-slate-800 dark:text-slate-100 text-xs sm:text-lg truncate max-w-[70px] sm:max-w-[130px]">{myInfo.userName}</span>
                 <span className="text-[10px] bg-sky-500 text-white font-extrabold px-1.5 py-0.2 rounded shrink-0">BẠN</span>
               </div>
               <p className="font-black text-sky-600 text-base sm:text-2xl tracking-tight">
-                {myProgress?.score || 0} <span className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase">Điểm</span>
+                {myProgress?.score || 0} <span className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">Điểm</span>
               </p>
             </div>
           </div>
@@ -184,10 +184,10 @@ export default function ArenaMatchRoom({
             <div className="min-w-0">
               <div className="flex items-center justify-end gap-1">
                 <span className="text-[10px] bg-rose-100 text-rose-700 font-extrabold px-1.5 py-0.2 rounded shrink-0">ĐỐI THỦ</span>
-                <span className="font-black text-slate-800 text-xs sm:text-lg truncate max-w-[70px] sm:max-w-[130px]">{opponentInfo.userName}</span>
+                <span className="font-black text-slate-800 dark:text-slate-100 text-xs sm:text-lg truncate max-w-[70px] sm:max-w-[130px]">{opponentInfo.userName}</span>
               </div>
               <p className="font-black text-rose-500 text-base sm:text-2xl tracking-tight">
-                {opponentProgress?.score || 0} <span className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase">Điểm</span>
+                {opponentProgress?.score || 0} <span className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">Điểm</span>
               </p>
             </div>
             <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-2xl bg-rose-100 border-2 sm:border-3 border-rose-400 flex items-center justify-center text-lg sm:text-2xl font-black shadow-inner shrink-0">
@@ -201,8 +201,8 @@ export default function ArenaMatchRoom({
         </div>
 
         {/* Live Race Progress Bar */}
-        <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t-2 border-slate-100">
-          <div className="flex justify-between text-[11px] sm:text-xs font-black text-slate-400 mb-1.5">
+        <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t-2 border-slate-100 dark:border-slate-800">
+          <div className="flex justify-between text-[11px] sm:text-xs font-black text-slate-400 dark:text-slate-500 mb-1.5">
             <span>Bạn: {myProgress?.answered || 0}/{totalRounds}</span>
             <span className="bg-amber-100 text-amber-800 px-2 sm:px-2.5 py-0.5 rounded-full font-extrabold border border-amber-200 text-[10px] sm:text-xs">
               Cược: {matchData.stake} 🍞
@@ -210,13 +210,13 @@ export default function ArenaMatchRoom({
             <span>Đối thủ: {opponentProgress?.answered || 0}/{totalRounds}</span>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:gap-3">
-            <div className="w-full bg-slate-100 h-2.5 sm:h-3.5 rounded-full overflow-hidden border border-slate-200">
+            <div className="w-full bg-slate-100 dark:bg-slate-800 h-2.5 sm:h-3.5 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
               <div
                 className="bg-sky-500 h-full rounded-full transition-all duration-300"
                 style={{ width: `${((myProgress?.answered || 0) / totalRounds) * 100}%` }}
               />
             </div>
-            <div className="w-full bg-slate-100 h-2.5 sm:h-3.5 rounded-full overflow-hidden border border-slate-200">
+            <div className="w-full bg-slate-100 dark:bg-slate-800 h-2.5 sm:h-3.5 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
               <div
                 className="bg-rose-500 h-full rounded-full transition-all duration-300 ml-auto"
                 style={{ width: `${((opponentProgress?.answered || 0) / totalRounds) * 100}%` }}
@@ -232,20 +232,20 @@ export default function ArenaMatchRoom({
           key={roundIdx}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-[2.5rem] border-4 border-slate-200 shadow-[0_10px_0_0_#e2e8f0] p-6 sm:p-8 space-y-6"
+          className="bg-card dark:bg-slate-900 rounded-[2.5rem] border-4 border-slate-200 dark:border-slate-800 shadow-[0_10px_0_0_#e2e8f0] dark:shadow-none p-6 sm:p-8 space-y-6"
         >
           <div className="flex items-center justify-between">
             <span className="bg-purple-100 text-purple-800 font-extrabold text-xs px-3.5 py-1.5 rounded-full border border-purple-200 flex items-center gap-1.5">
               <Flame size={14} /> Hiệp {roundIdx + 1} / {totalRounds}
             </span>
             {currentQ.ipa && (
-              <span className="text-slate-400 font-bold text-sm tracking-wider bg-slate-100 px-3 py-1 rounded-xl">
+              <span className="text-slate-400 dark:text-slate-500 font-bold text-sm tracking-wider bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-xl">
                 /{currentQ.ipa}/
               </span>
             )}
           </div>
 
-          <h3 className="text-xl sm:text-2xl font-black text-slate-800 text-center leading-relaxed py-2 break-words max-w-full px-2">
+          <h3 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 text-center leading-relaxed py-2 break-words max-w-full px-2">
             {currentQ.prompt}
           </h3>
 
@@ -255,7 +255,7 @@ export default function ArenaMatchRoom({
               const isSelected = selectedOption === opt;
               const isCorrectOpt = roundResult?.correctAnswer === opt;
 
-              let btnStyle = "bg-slate-50 border-slate-200 hover:border-sky-300 hover:bg-sky-50 text-slate-700";
+              let btnStyle = "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-sky-300 hover:bg-sky-50 dark:hover:bg-sky-950/30 text-slate-700 dark:text-slate-200";
 
               if (roundResult) {
                 // Server revealed results
@@ -264,14 +264,14 @@ export default function ArenaMatchRoom({
                 } else if (isSelected && !isCorrectOpt) {
                   btnStyle = "bg-rose-100 border-rose-400 text-rose-800";
                 } else {
-                  btnStyle = "opacity-40 border-slate-200 bg-slate-50";
+                  btnStyle = "opacity-40 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800";
                 }
               } else if (hasSubmitted) {
                 // Waiting for round to end
                 if (isSelected) {
                   btnStyle = "bg-sky-50 border-sky-400 text-sky-800 ring-2 ring-sky-300";
                 } else {
-                  btnStyle = "opacity-50 border-slate-200";
+                  btnStyle = "opacity-50 border-slate-200 dark:border-slate-700";
                 }
               }
 
@@ -322,7 +322,7 @@ export default function ArenaMatchRoom({
                   <span className="text-xs font-bold text-indigo-500">Chuẩn bị hiệp tiếp theo...</span>
                 </div>
                 {roundResult.explanation && (
-                  <p className="text-xs font-bold text-slate-600 leading-relaxed">
+                  <p className="text-xs font-bold text-slate-600 dark:text-slate-300 leading-relaxed">
                     💡 <b>Giải thích:</b> {roundResult.explanation}
                   </p>
                 )}
@@ -334,12 +334,12 @@ export default function ArenaMatchRoom({
 
       {/* WAITING OVERLAY IF ROUND NOT YET STARTED */}
       {!matchResult && !currentQ && (
-        <div className="bg-white rounded-[2.5rem] border-4 border-slate-200 shadow-sm p-12 text-center space-y-4">
+        <div className="bg-card dark:bg-slate-900 rounded-[2.5rem] border-4 border-slate-200 dark:border-slate-800 shadow-sm p-12 text-center space-y-4">
           <div className="w-16 h-16 bg-amber-100 border-4 border-amber-300 rounded-3xl mx-auto flex items-center justify-center text-3xl animate-bounce">
             ⚔️
           </div>
-          <h3 className="text-2xl font-black text-slate-800">Trận Đấu Đang Khởi Động</h3>
-          <p className="text-sm font-bold text-slate-400">
+          <h3 className="text-2xl font-black text-slate-800 dark:text-slate-100">Trận Đấu Đang Khởi Động</h3>
+          <p className="text-sm font-bold text-slate-400 dark:text-slate-500">
             Hệ thống đang chuẩn bị câu hỏi và đồng bộ đồng hồ thi đấu với đối thủ...
           </p>
         </div>
@@ -355,16 +355,16 @@ export default function ArenaMatchRoom({
           >
             {isMeWinner && <Confetti recycle={false} numberOfPieces={350} />}
 
-            <div className="bg-white max-w-md w-full rounded-[2.5rem] border-4 border-slate-200 shadow-[0_12px_0_0_#cbd5e1] p-8 text-center space-y-6">
+            <div className="bg-card dark:bg-slate-900 max-w-md w-full rounded-[2.5rem] border-4 border-slate-200 dark:border-slate-800 shadow-[0_12px_0_0_#cbd5e1] dark:shadow-none p-8 text-center space-y-6">
               <div className="w-24 h-24 mx-auto rounded-3xl bg-amber-100 border-4 border-amber-300 flex items-center justify-center text-5xl shadow-lg">
                 {isMeWinner ? "🏆" : isDraw ? "🤝" : "💔"}
               </div>
 
               <div>
-                <h2 className="text-3xl font-black text-slate-800">
+                <h2 className="text-3xl font-black text-slate-800 dark:text-slate-100">
                   {isMeWinner ? "CHIẾN THẮNG!" : isDraw ? "HÒA NHAU!" : "THUA CUỘC!"}
                 </h2>
-                <p className="font-bold text-slate-400 text-sm mt-1">
+                <p className="font-bold text-slate-400 dark:text-slate-500 text-sm mt-1">
                   {isMeWinner
                     ? matchResult.isForfeit
                       ? `Đối thủ đã bỏ cuộc sau 15s mất mạng. Bạn giành chiến thắng!`
@@ -377,14 +377,14 @@ export default function ArenaMatchRoom({
 
               <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 flex items-center justify-around">
                 <div>
-                  <span className="text-xs font-bold text-slate-400 uppercase">Điểm của bạn</span>
+                  <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Điểm của bạn</span>
                   <p className="text-2xl font-black text-sky-600">
                     {isPlayer1 ? matchResult.p1.score : matchResult.p2.score}
                   </p>
                 </div>
                 <div className="h-10 w-0.5 bg-amber-200" />
                 <div>
-                  <span className="text-xs font-bold text-slate-400 uppercase">Bánh Mì</span>
+                  <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Bánh Mì</span>
                   <p className="text-2xl font-black text-amber-600">
                     {isMeWinner ? `+${matchResult.reward} 🍞` : isDraw ? `Hoàn cược` : `-${matchData.stake} 🍞`}
                   </p>
