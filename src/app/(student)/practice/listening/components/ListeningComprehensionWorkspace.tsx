@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
@@ -43,6 +43,7 @@ import { WordDictionaryPopup } from "@/components/speaking/WordDictionaryPopup";
 import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
 import { ReportIssueButton } from "@/components/issue-report";
 import {
+  canonicalizeSubmittedDictation,
   diffDictationAnswer,
   type DictationDiffToken,
 } from "./listeningDictationUtils";
@@ -180,6 +181,7 @@ export function ListeningComprehensionWorkspace({
   const [revealedQuestionIds, setRevealedQuestionIds] = useState<Record<number, boolean>>({});
   const [skippedQuestionIds, setSkippedQuestionIds] = useState<Record<number, boolean>>({});
   const [sessionHydrated, setSessionHydrated] = useState(false);
+  const [attemptRestoreReady, setAttemptRestoreReady] = useState(reviewOnly);
   const [listeningAttemptId, setListeningAttemptId] = useState<number | null>(null);
   const [lookupWord, setLookupWord] = useState<string | null>(null);
   const [failedImageKey, setFailedImageKey] = useState<string | null>(null);
@@ -201,16 +203,27 @@ export function ListeningComprehensionWorkspace({
       try {
         const raw = localStorage.getItem(sessionKey);
         const stored = raw ? JSON.parse(raw) : {};
-        setCurrentIndex(
-          Number.isInteger(stored.currentIndex)
-            ? Math.min(Math.max(stored.currentIndex, 0), questions.length - 1)
-            : 0,
-        );
-        setAnswersByQuestionId(stored.answersByQuestionId ?? {});
-        setCheckResults(stored.checkResults ?? {});
+        const restoredIndex = Number.isInteger(stored.currentIndex)
+          ? Math.min(Math.max(stored.currentIndex, 0), questions.length - 1)
+          : 0;
+        setCurrentIndex(restoredIndex);
+
+        const restoredAnswers = { ...(stored.answersByQuestionId ?? {}) };
+        const restoredSkipped = { ...(stored.skippedQuestionIds ?? {}) };
+
+        // Active question at restoredIndex is the sentence currently being practiced.
+        // On F5 refresh, it must return to its initial fresh state (neither skipped nor prefilled).
+        const activeQ = questions[restoredIndex];
+        if (activeQ) {
+          delete restoredSkipped[activeQ.id];
+          delete restoredAnswers[activeQ.id];
+        }
+
+        setAnswersByQuestionId(restoredAnswers);
+        setCheckResults({});
         setDictationMetrics(stored.dictationMetrics ?? {});
-        setRevealedQuestionIds(stored.revealedQuestionIds ?? {});
-        setSkippedQuestionIds(stored.skippedQuestionIds ?? {});
+        setRevealedQuestionIds({});
+        setSkippedQuestionIds(restoredSkipped);
       } catch {
         setCurrentIndex(0);
         setAnswersByQuestionId({});
@@ -219,34 +232,46 @@ export function ListeningComprehensionWorkspace({
         setRevealedQuestionIds({});
         setSkippedQuestionIds({});
       }
+      if (!useAuthStore.getState().user) setAttemptRestoreReady(true);
       setSessionHydrated(true);
     }, 0);
     return () => window.clearTimeout(timer);
   }, [quizId, questions.length, sessionKey]);
 
   useEffect(() => {
-    if (!quizId || !sessionHydrated || discardSessionRef.current) return;
+    if (
+      !quizId ||
+      !sessionHydrated ||
+      !attemptRestoreReady ||
+      discardSessionRef.current
+    ) return;
+    // Only commit skipped states for questions the learner has moved away from.
+    // The active question stays in clean draft until moving to another question.
+    const persistedSkipped = { ...skippedQuestionIds };
+    const activeQuestion = questions[currentIndex];
+    if (activeQuestion) {
+      delete persistedSkipped[activeQuestion.id];
+    }
+
     localStorage.setItem(
       sessionKey,
       JSON.stringify({
         currentIndex,
         answersByQuestionId,
-        checkResults,
         dictationMetrics,
-        revealedQuestionIds,
-        skippedQuestionIds,
+        skippedQuestionIds: persistedSkipped,
       }),
     );
   }, [
     answersByQuestionId,
-    checkResults,
     currentIndex,
     dictationMetrics,
     quizId,
-    revealedQuestionIds,
     sessionHydrated,
     sessionKey,
     skippedQuestionIds,
+    attemptRestoreReady,
+    questions,
   ]);
 
   useEffect(() => {
@@ -275,16 +300,22 @@ export function ListeningComprehensionWorkspace({
         if (restoredIndex >= 0) setCurrentIndex(restoredIndex);
       }
       if (attempt.answers && typeof attempt.answers === "object") {
-        setAnswersByQuestionId(
-          Object.fromEntries(
-            Object.entries(attempt.answers).map(([key, value]) => [key, String(value)]),
-          ) as Record<number, string>,
-        );
+        const serverAnswers = Object.fromEntries(
+          Object.entries(attempt.answers).map(([key, value]) => [key, String(value)]),
+        ) as Record<number, string>;
+        const activeQId = questions[currentIndex]?.id;
+        if (activeQId && serverAnswers[activeQId]) {
+          delete serverAnswers[activeQId];
+        }
+        setAnswersByQuestionId(serverAnswers);
       }
       return attempt.id;
     }).catch(() => {
       // Local persistence remains available when the optional server checkpoint is unavailable.
+      listeningAttemptRequestKeyRef.current = null;
       return null;
+    }).finally(() => {
+      if (!cancelled) setAttemptRestoreReady(true);
     });
     listeningAttemptPromiseRef.current = attemptPromise;
     return () => {
@@ -362,14 +393,19 @@ export function ListeningComprehensionWorkspace({
     : undefined;
   const isChecked = Boolean(currentCheck);
   const isDictationQuestion = currentQuestion?.type === "DICTATION";
+  const isSkipped = Boolean(
+    currentQuestion && skippedQuestionIds[currentQuestion.id],
+  );
+  const isRevealed = Boolean(currentQuestion && revealedQuestionIds[currentQuestion.id]);
   const canRetryDictation = Boolean(
     isDictationQuestion &&
+      !isSkipped &&
       isChecked &&
       currentCheck &&
       !currentCheck.isCorrect &&
       !revealedQuestionIds[currentQuestion?.id ?? -1],
   );
-  const isAnswerLocked = isChecked && !canRetryDictation;
+  const isAnswerLocked = isSkipped || (isChecked && !canRetryDictation);
   const parsedExplanation = parseQuestionExplanation(currentCheck?.explanation);
   const selectedAnswer = currentQuestion
     ? answersByQuestionId[currentQuestion.id] || ""
@@ -390,14 +426,16 @@ export function ListeningComprehensionWorkspace({
   const level: string | undefined = currentQuestion?.content?.level;
 
   // Check mutation
-  const handleCheck = async (answer = selectedAnswer) => {
+  const handleCheck = async (
+    answer = selectedAnswer,
+  ): Promise<CheckPracticeQuestionResult | null> => {
     if (
       !quiz ||
       !currentQuestion ||
       isChecking ||
       (answer.trim().length === 0 && currentQuestion.type !== "DICTATION") ||
       (isChecked && !canRetryDictation)
-    ) return;
+    ) return null;
     setIsChecking(true);
     setValidationNotice(null);
     try {
@@ -406,13 +444,29 @@ export function ListeningComprehensionWorkspace({
         currentQuestion.id,
         answer,
       );
+      let canonicalizedSubmitted = answer;
+      if (currentQuestion.type === "DICTATION") {
+        const canonical =
+          res?.correctAnswer ||
+          (currentQuestion.content as any)?.correctAnswer ||
+          (currentQuestion.content as any)?.audioText ||
+          "";
+        canonicalizedSubmitted = canonicalizeSubmittedDictation(canonical, answer);
+        if (canonicalizedSubmitted !== answer) {
+          setAnswersByQuestionId((prev) => ({
+            ...prev,
+            [currentQuestion.id]: canonicalizedSubmitted,
+          }));
+        }
+      }
+
       setCheckResults((prev) => ({
         ...prev,
         [currentQuestion.id]: res,
       }));
       checkpointAttempt({
         currentQuestionId: currentQuestion.id,
-        answers: { ...answersByQuestionId, [currentQuestion.id]: answer },
+        answers: { ...answersByQuestionId, [currentQuestion.id]: canonicalizedSubmitted },
         questionStates: { ...checkResults, [currentQuestion.id]: res },
       });
       if (currentQuestion.type === "DICTATION") {
@@ -444,8 +498,10 @@ export function ListeningComprehensionWorkspace({
           };
         });
       }
+      return res;
     } catch {
       setValidationNotice("Không thể kiểm tra câu trả lời. Vui lòng thử lại.");
+      return null;
     } finally {
       setIsChecking(false);
     }
@@ -488,7 +544,24 @@ export function ListeningComprehensionWorkspace({
       const q = questions[i];
       const ans = answersByQuestionId[q.id];
       const chk = checkResults[q.id];
-      if (!ans || ans.trim().length === 0 || !chk) {
+      if (skippedQuestionIds[q.id]) continue;
+      if (!chk) {
+        return { isComplete: false, firstUnresolvedIndex: i };
+      }
+      // Revealed answers are terminal learning outcomes even when the learner
+      // checked an empty draft. They are not counted as correct, but they do
+      // not block completion of the practice session.
+      if (q.type === "DICTATION" && revealedQuestionIds[q.id]) continue;
+      if (!ans || ans.trim().length === 0) {
+        return { isComplete: false, firstUnresolvedIndex: i };
+      }
+      // Dictation is a learning loop: an incorrect check remains
+      // editable/retryable and must not count as completed.
+      if (
+        q.type === "DICTATION" &&
+        !chk.isCorrect &&
+        !revealedQuestionIds[q.id]
+      ) {
         return { isComplete: false, firstUnresolvedIndex: i };
       }
     }
@@ -562,6 +635,24 @@ export function ListeningComprehensionWorkspace({
     enabled: true,
   });
 
+  const retryListeningAttemptCreation = async (): Promise<number | null> => {
+    if (!quizId || reviewOnly) return null;
+    listeningAttemptRequestKeyRef.current = null;
+    const retryPromise = quizService
+      .getOrCreateListeningAttempt(quizId)
+      .then((attempt) => {
+        listeningAttemptIdRef.current = attempt.id;
+        setListeningAttemptId(attempt.id);
+        return attempt.id;
+      })
+      .catch(() => {
+        listeningAttemptRequestKeyRef.current = null;
+        return null;
+      });
+    listeningAttemptPromiseRef.current = retryPromise;
+    return retryPromise;
+  };
+
   // Handle final submission with client-side double-click guard
   const handleFinalSubmit = async () => {
     if (reviewOnly) {
@@ -585,13 +676,27 @@ export function ListeningComprehensionWorkspace({
 
     const payload: AnswerDto[] = questions.map((q) => ({
       questionId: q.id,
-      answer: answersByQuestionId[q.id],
+      answer: skippedQuestionIds[q.id] ? "" : answersByQuestionId[q.id],
     }));
 
     checkpointAttempt({
       currentQuestionId: currentQuestion?.id,
-      answers: answersByQuestionId,
-      questionStates: checkResults,
+      answers: questions.reduce<Record<number, string>>((answers, question) => {
+        answers[question.id] = skippedQuestionIds[question.id]
+          ? ""
+          : answersByQuestionId[question.id] ?? "";
+        return answers;
+      }, {}),
+      questionStates: Object.entries(checkResults).reduce<Record<number, unknown>>(
+        (states, [questionId, state]) => {
+          const numericQuestionId = Number(questionId);
+          states[numericQuestionId] = skippedQuestionIds[numericQuestionId]
+            ? { ...state, skipped: true }
+            : state;
+          return states;
+        },
+        {},
+      ),
     });
     // A very fast learner can reach the last answer before the initial
     // get-or-create request resolves. Wait for that request so the final
@@ -601,18 +706,31 @@ export function ListeningComprehensionWorkspace({
       attemptIdToSubmit = await listeningAttemptPromiseRef.current;
     }
     if (!attemptIdToSubmit) {
-      setIsSubmitting(false);
-      setSubmitError("Chưa khởi tạo được phiên luyện tập. Vui lòng thử lại.");
-      return;
+      attemptIdToSubmit = await retryListeningAttemptCreation();
     }
     submitMutation.mutate({ payload, attemptId: attemptIdToSubmit });
   };
 
-  // Advance to next question
+  // Advance to next question - commit state when transitioning
   const handleNextQuestion = () => {
     setValidationNotice(null);
     if (currentIndex < questions.length - 1) {
-      checkpointAttempt({ currentQuestionId: questions[currentIndex + 1]?.id });
+      const nextQ = questions[currentIndex + 1];
+      // Clear failed (not-yet-correct) check so error panel doesn't persist on return
+      if (currentQuestion && checkResults[currentQuestion.id] && !checkResults[currentQuestion.id]?.isCorrect && !checkResults[currentQuestion.id]?.skipped) {
+        setCheckResults((prev) => {
+          const next = { ...prev };
+          delete next[currentQuestion.id];
+          return next;
+        });
+      }
+      checkpointAttempt({
+        currentQuestionId: nextQ?.id,
+        answers: skippedQuestionIds[currentQuestion.id]
+          ? { ...answersByQuestionId, [currentQuestion.id]: "" }
+          : answersByQuestionId,
+        questionStates: checkResults,
+      });
       setCurrentIndex((prev) => prev + 1);
     }
   };
@@ -621,27 +739,84 @@ export function ListeningComprehensionWorkspace({
   const handlePrevQuestion = () => {
     setValidationNotice(null);
     if (currentIndex > 0) {
+      // Clear failed check so error panel hides when returning to prev question
+      if (currentQuestion && checkResults[currentQuestion.id] && !checkResults[currentQuestion.id]?.isCorrect && !checkResults[currentQuestion.id]?.skipped) {
+        setCheckResults((prev) => {
+          const next = { ...prev };
+          delete next[currentQuestion.id];
+          return next;
+        });
+      }
       checkpointAttempt({ currentQuestionId: questions[currentIndex - 1]?.id });
       setCurrentIndex((prev) => prev - 1);
     }
   };
 
-  const handleSkipQuestion = () => {
+  const handleSkipQuestion = async () => {
     if (
       !currentQuestion ||
+      isSkipped ||
       (isChecked && !canRetryDictation) ||
       isChecking
     ) return;
+
+    let canonical =
+      checkResults[currentQuestion.id]?.correctAnswer ||
+      (currentQuestion.content as any)?.correctAnswer ||
+      (currentQuestion.content as any)?.audioText ||
+      "";
+    let trans =
+      checkResults[currentQuestion.id]?.translation ||
+      (currentQuestion.content as any)?.translation ||
+      "";
+
+    if ((!canonical || !trans) && quizId && isDictationQuestion) {
+      setIsChecking(true);
+      try {
+        const res = await quizService.checkPracticeQuestion(
+          quizId,
+          currentQuestion.id,
+          answersByQuestionId[currentQuestion.id] || "",
+        );
+        if (res?.correctAnswer) canonical = res.correctAnswer;
+        if (res?.translation) trans = res.translation;
+      } catch (err) {
+        console.error("Failed to query canonical answer on skip:", err);
+      } finally {
+        setIsChecking(false);
+      }
+    }
+
     setSkippedQuestionIds((previous) => ({ ...previous, [currentQuestion.id]: true }));
-    checkpointAttempt({
-      currentQuestionId: questions[currentIndex + 1]?.id ?? currentQuestion.id,
-      questionStates: { ...checkResults, [currentQuestion.id]: { skipped: true } },
-    });
+    setRevealedQuestionIds((previous) => ({ ...previous, [currentQuestion.id]: true }));
+
+    if (canonical) {
+      setAnswersByQuestionId((previous) => ({
+        ...previous,
+        [currentQuestion.id]: canonical,
+      }));
+    }
+
+    setCheckResults((previous) => ({
+      ...previous,
+      [currentQuestion.id]: {
+        isCorrect: false,
+        skipped: true,
+        submittedAnswer: canonical || "",
+        correctAnswer: canonical,
+        translation: trans,
+        diff: [],
+        wordAccuracy: 0,
+      } as any,
+    }));
     setValidationNotice(null);
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex((previous) => previous + 1);
-    } else {
-      setValidationNotice("Bạn đã bỏ qua câu cuối. Hãy quay lại hoàn thành trước khi nộp bài.");
+
+    if (!isDictationQuestion) {
+      if (currentIndex < questions.length - 1) {
+        setCurrentIndex((previous) => previous + 1);
+      } else {
+        setValidationNotice("Đã bỏ qua câu cuối. Bạn có thể xem lại câu này trong bảng câu hỏi.");
+      }
     }
   };
 
@@ -653,10 +828,44 @@ export function ListeningComprehensionWorkspace({
     }));
   };
 
+  const handleRetryQuestion = useCallback(() => {
+    if (!currentQuestion) return;
+    const qId = currentQuestion.id;
+    setValidationNotice(null);
+    setCheckResults((prev) => {
+      const next = { ...prev };
+      delete next[qId];
+      return next;
+    });
+    setSkippedQuestionIds((prev) => {
+      const next = { ...prev };
+      delete next[qId];
+      return next;
+    });
+    setRevealedQuestionIds((prev) => {
+      const next = { ...prev };
+      delete next[qId];
+      return next;
+    });
+    setAnswersByQuestionId((prev) => {
+      const next = { ...prev };
+      delete next[qId];
+      return next;
+    });
+    checkpointAttempt({
+      currentQuestionId: qId,
+      answers: { ...answersByQuestionId, [qId]: "" },
+      questionStates: { ...checkResults, [qId]: null },
+    });
+  }, [currentQuestion, answersByQuestionId, checkResults]);
+
   // Keyboard shortcut listeners (1-4 select and check, Enter advances)
   const latestActionsRef = useRef({
     isChecked,
     canRetryDictation,
+    isSkipped,
+    isRevealed,
+    currentCheck,
     currentQuestion,
     currentAnswer: selectedAnswer,
     options,
@@ -673,6 +882,9 @@ export function ListeningComprehensionWorkspace({
     latestActionsRef.current = {
       isChecked,
       canRetryDictation,
+      isSkipped,
+      isRevealed,
+      currentCheck,
       currentQuestion,
       currentAnswer: selectedAnswer,
       options,
@@ -757,8 +969,16 @@ export function ListeningComprehensionWorkspace({
       }
 
       if (e.key === "Enter" && !e.shiftKey) {
+        if (actions.currentQuestion?.type === "DICTATION") {
+          return;
+        }
         e.preventDefault();
-        if (actions.isChecked && !actions.canRetryDictation) {
+        const canAdvance =
+          actions.isSkipped ||
+          actions.isRevealed ||
+          (actions.isChecked && actions.currentCheck?.isCorrect) ||
+          (actions.isChecked && !actions.canRetryDictation);
+        if (canAdvance) {
           if (actions.isLastQuestion) {
             actions.handleFinalSubmit();
           } else {
@@ -842,10 +1062,9 @@ export function ListeningComprehensionWorkspace({
     );
   const isDialogue = transcriptSegments.length > 0;
   const isDictation = currentQuestion.type === "DICTATION";
-  const isRevealed = Boolean(currentQuestion && revealedQuestionIds[currentQuestion.id]);
   const dictationDiff: DictationDiffToken[] =
     isDictation && currentCheck
-      ? diffDictationAnswer(currentCheck.correctAnswer, currentCheck.submittedAnswer)
+      ? diffDictationAnswer(currentCheck.correctAnswer ?? "", currentCheck.submittedAnswer ?? "")
       : [];
   const activeTranscriptSegmentIndex = getActiveTranscriptSegmentIndex(
     transcriptSegments,
@@ -884,19 +1103,38 @@ export function ListeningComprehensionWorkspace({
           currentIndex={currentIndex}
           onSelectIndex={(idx) => {
             setValidationNotice(null);
+            // Clear non-correct, non-skipped result so the error panel doesn't linger
+            if (currentQuestion && checkResults[currentQuestion.id] && !checkResults[currentQuestion.id]?.isCorrect && !checkResults[currentQuestion.id]?.skipped) {
+              setCheckResults((prev) => {
+                const next = { ...prev };
+                delete next[currentQuestion.id];
+                return next;
+              });
+            }
             setCurrentIndex(idx);
           }}
           selectedAnswer={selectedAnswer}
           onChangeAnswer={(val) => {
-            if (isAnswerLocked) return;
+            if (isAnswerLocked || isSkipped || isRevealed) return;
             setAnswersByQuestionId((prev) => ({
               ...prev,
               [currentQuestion.id]: val,
             }));
+
+            // When user types or edits answer after a check, dismiss the check error feedback
+            // panel so it never diffs in real-time. Check feedback only appears when pressing Enter / Check.
+            if (currentQuestion && checkResults[currentQuestion.id] && !checkResults[currentQuestion.id]?.isCorrect) {
+              setCheckResults((prev) => {
+                const next = { ...prev };
+                delete next[currentQuestion.id];
+                return next;
+              });
+            }
           }}
           onCheck={handleCheck}
           isChecking={isChecking}
           isChecked={isChecked}
+          isSkipped={isSkipped}
           currentCheck={currentCheck}
           dictationDiff={dictationDiff}
           dictationMetrics={dictationMetrics}
@@ -905,6 +1143,7 @@ export function ListeningComprehensionWorkspace({
           showAnswerImmediately={showAnswerImmediately}
           onToggleShowAnswerImmediately={() => setShowAnswerImmediately((value) => !value)}
           onSkip={handleSkipQuestion}
+          onRetry={handleRetryQuestion}
           onNext={handleNextQuestion}
           onPrev={handlePrevQuestion}
           onFinalSubmit={handleFinalSubmit}
@@ -912,8 +1151,6 @@ export function ListeningComprehensionWorkspace({
           submitError={submitError}
           reviewOnly={reviewOnly}
           onExit={confirmExit}
-          notes={notes}
-          onSaveNotes={setNotes}
           accent={accent}
           level={level}
         />
@@ -1959,6 +2196,14 @@ export function ListeningComprehensionWorkspace({
               >
                 Bỏ qua
               </button>
+            </div>
+          ) : isDictation && isChecked && !currentCheck?.isCorrect && !isSkipped && !isRevealed ? (
+            <div
+              role="status"
+              aria-live="polite"
+              className="inline-flex min-h-11 items-center px-3 text-sm font-semibold text-rose-700"
+            >
+              Sửa phần chép rồi bấm “Kiểm tra lại” để tiếp tục.
             </div>
           ) : isLastQuestion ? (
             <button

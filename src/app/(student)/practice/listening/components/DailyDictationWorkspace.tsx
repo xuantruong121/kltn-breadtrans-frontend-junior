@@ -1,16 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import {
   ArrowLeft,
   ArrowRight,
+  BookOpen,
   Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock,
   Download,
+  Globe,
   Keyboard,
   Languages,
   Lightbulb,
@@ -19,17 +20,22 @@ import {
   MicOff,
   MoreHorizontal,
   Pause,
+  Pencil,
   Play,
+  Plus,
   RefreshCw,
   RotateCcw,
+  Send,
   Settings,
   Share2,
   Star,
-  StickyNote,
   Volume2,
   VolumeX,
   X,
 } from "lucide-react";
+import toast from "react-hot-toast";
+import { WordDictionaryPopup } from "@/components/speaking/WordDictionaryPopup";
+import { issueReportService } from "@/lib/api/services/issue-report.service";
 import {
   type CheckPracticeQuestionResult,
   type ListeningTranscriptItem,
@@ -39,6 +45,10 @@ import {
 } from "@/lib/api/services/quiz.service";
 import {
   type DictationDiffToken,
+  buildProgressiveAnswer,
+  canonicalizeSubmittedDictation,
+  maskWord,
+  normalizeDictationToken,
 } from "./listeningDictationUtils";
 
 export interface DictationAttemptMetrics {
@@ -58,9 +68,10 @@ interface DailyDictationWorkspaceProps {
   onSelectIndex: (index: number) => void;
   selectedAnswer: string;
   onChangeAnswer: (value: string) => void;
-  onCheck: () => Promise<void>;
+  onCheck: () => Promise<CheckPracticeQuestionResult | null>;
   isChecking: boolean;
   isChecked: boolean;
+  isSkipped: boolean;
   currentCheck?: CheckPracticeQuestionResult;
   dictationDiff: DictationDiffToken[];
   dictationMetrics: Record<number, DictationAttemptMetrics>;
@@ -68,7 +79,8 @@ interface DailyDictationWorkspaceProps {
   onToggleReveal: () => void;
   showAnswerImmediately: boolean;
   onToggleShowAnswerImmediately: () => void;
-  onSkip: () => void;
+  onSkip: () => void | Promise<void>;
+  onRetry?: () => void;
   onNext: () => void;
   onPrev: () => void;
   onFinalSubmit: () => void;
@@ -76,8 +88,6 @@ interface DailyDictationWorkspaceProps {
   submitError: string | null;
   reviewOnly?: boolean;
   onExit: (href?: string) => void;
-  notes: string;
-  onSaveNotes: (notes: string) => void;
   accent?: string;
   onChangeAccent?: (accent: string) => void;
   level?: string;
@@ -99,49 +109,25 @@ function formatTime(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
-function normalizeDictationToken(value: string): string {
-  return value
-    .toLocaleLowerCase("en-US")
-    .replace(/[’‘ʼ]/g, "'")
-    .replace(/[^\p{L}\p{N}']/gu, "");
-}
-
-function maskWord(value: string): string {
-  return value.replace(/\S/g, "*");
-}
-
-function buildProgressiveAnswer(
-  expected: string,
-  submitted: string,
-  showAnswerImmediately: boolean,
-  showFullAnswer: boolean,
-): Array<{ text: string; state: "correct" | "wrong" | "hint" | "masked" | "answer" }> {
-  const expectedWords = expected.trim().split(/\s+/).filter(Boolean);
-  const submittedWords = submitted.trim().split(/\s+/).filter(Boolean);
-  const hintIndex = Math.min(submittedWords.length, Math.max(expectedWords.length - 1, 0));
-  const result = expectedWords.map((expectedWord, index) => {
-    const typedWord = submittedWords[index];
-    if (typedWord) {
-      return {
-        text: typedWord,
-        state: normalizeDictationToken(typedWord) === normalizeDictationToken(expectedWord) ? "correct" as const : "wrong" as const,
-      };
-    }
-    if (showFullAnswer) return { text: expectedWord, state: "answer" as const };
-    if (showAnswerImmediately && index === hintIndex) return { text: expectedWord, state: "hint" as const };
-    return { text: maskWord(expectedWord), state: "masked" as const };
-  });
-
-  if (submittedWords.length > expectedWords.length) {
-    result.push(
-      ...submittedWords.slice(expectedWords.length).map((word) => ({
-        text: word,
-        state: "wrong" as const,
-      })),
-    );
+function resolveTranscriptIndex(
+  currentTime: number,
+  duration: number,
+  items: ListeningTranscriptItem[],
+): number {
+  if (!Number.isFinite(duration) || duration <= 0 || items.length === 0) return -1;
+  const totalWeight = items.reduce(
+    (sum, item) => sum + Math.max(item.transcript.trim().length, 1),
+    0,
+  );
+  const target = Math.min(1, Math.max(0, currentTime / duration)) * totalWeight;
+  let accumulated = 0;
+  for (let index = 0; index < items.length; index += 1) {
+    accumulated += Math.max(items[index].transcript.trim().length, 1);
+    if (target <= accumulated || index === items.length - 1) return index;
   }
-  return result;
+  return 0;
 }
+
 
 export function DailyDictationWorkspace({
   quiz,
@@ -154,6 +140,7 @@ export function DailyDictationWorkspace({
   onCheck,
   isChecking,
   isChecked,
+  isSkipped,
   currentCheck,
   dictationDiff,
   isRevealed,
@@ -161,27 +148,50 @@ export function DailyDictationWorkspace({
   showAnswerImmediately,
   onToggleShowAnswerImmediately,
   onSkip,
+  onRetry,
   onNext,
   onPrev,
   onFinalSubmit,
   isSubmitting,
   onExit,
-  notes,
-  onSaveNotes,
   accent = "US",
   onChangeAccent,
   level,
 }: DailyDictationWorkspaceProps) {
+  const canonicalAnswer =
+    currentCheck?.correctAnswer ||
+    (currentQuestion?.content as any)?.correctAnswer ||
+    (currentQuestion?.content as any)?.audioText ||
+    "";
+  const displayedAnswer = (isSkipped || isRevealed)
+    ? (canonicalAnswer || currentCheck?.correctAnswer || selectedAnswer)
+    : selectedAnswer;
+  const isLastQuestion = currentIndex === questions.length - 1;
+  const isCompletedOrRevealed = isSkipped || isRevealed || Boolean(isChecked && currentCheck?.isCorrect);
   const [activeTab, setActiveTab] = useState<"dictation" | "transcript">("dictation");
   const [isStarred, setIsStarred] = useState(false);
   const [elapsedMinutes, setElapsedMinutes] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
-  const [showNotesModal, setShowNotesModal] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [showAudioMenu, setShowAudioMenu] = useState(false);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [tipIndex, setTipIndex] = useState(0);
+  const [selectedWordForLookup, setSelectedWordForLookup] = useState<string | null>(null);
+
+  // Translation Card Actions State (Edit suggestion, Language dropdown, etc.)
+  const [showTranslationMenu, setShowTranslationMenu] = useState(false);
+  const [showEditTranslationModal, setShowEditTranslationModal] = useState(false);
+  const [showChangeLanguageModal, setShowChangeLanguageModal] = useState(false);
+  const [showAddLanguageModal, setShowAddLanguageModal] = useState(false);
+  const [suggestedTranslation, setSuggestedTranslation] = useState("");
+  const [suggestionNote, setSuggestionNote] = useState("");
+  const [isSubmittingSuggestion, setIsSubmittingSuggestion] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState("vi");
+  const [addLangName, setAddLangName] = useState("");
+  const [addLangTranslation, setAddLangTranslation] = useState("");
+  const [isSubmittingAddLang, setIsSubmittingAddLang] = useState(false);
+  const translationMenuRef = useRef<HTMLDivElement | null>(null);
 
   // Audio Player State
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -214,11 +224,7 @@ export function DailyDictationWorkspace({
   const transcriptSpeedMenuRef = useRef<HTMLDivElement | null>(null);
   const activeTranscriptRowRef = useRef<HTMLButtonElement | null>(null);
   const transcriptListRef = useRef<HTMLDivElement | null>(null);
-  const transcriptAudioCacheRef = useRef<Map<number, string>>(new Map());
   const transcriptAudioRequestRef = useRef<AbortController | null>(null);
-  const transcriptPlaybackIndexRef = useRef(-1);
-  const transcriptLoadedIndexRef = useRef(-1);
-  const transcriptPlaybackRef = useRef(false);
   const activeAudioVersion = currentQuestion?.audioAssets?.find((asset) => asset.isActive)?.version;
 
   // Speech Recognition (Mic)
@@ -239,6 +245,50 @@ export function DailyDictationWorkspace({
     return () => clearInterval(timer);
   }, []);
 
+  const focusInputAtEnd = useCallback(() => {
+    if (isCompletedOrRevealed || activeTab !== "dictation") return;
+    const el = textareaRef.current;
+    if (!el) return;
+    el.focus();
+    const len = el.value.length;
+    try {
+      el.setSelectionRange(len, len);
+    } catch {
+      // ignore
+    }
+  }, [isCompletedOrRevealed, activeTab]);
+
+  const handlePerformCheck = useCallback(async () => {
+    if (isChecking || isCompletedOrRevealed) return;
+    const res = await onCheck();
+    if (!res?.isCorrect) {
+      focusInputAtEnd();
+      requestAnimationFrame(() => {
+        focusInputAtEnd();
+      });
+      setTimeout(() => {
+        focusInputAtEnd();
+      }, 50);
+    }
+  }, [isChecking, isCompletedOrRevealed, onCheck, focusInputAtEnd]);
+
+  // Keep dictation textarea focused for uninterrupted typing UX (on mount, check completion, sentence change)
+  useEffect(() => {
+    if (!isCompletedOrRevealed && activeTab === "dictation") {
+      focusInputAtEnd();
+      const frame = requestAnimationFrame(() => {
+        focusInputAtEnd();
+      });
+      const timer = setTimeout(() => {
+        focusInputAtEnd();
+      }, 50);
+      return () => {
+        cancelAnimationFrame(frame);
+        clearTimeout(timer);
+      };
+    }
+  }, [isChecking, isChecked, isCompletedOrRevealed, activeTab, currentIndex, focusInputAtEnd]);
+
   // Rotate the study tip automatically so the banner remains useful during a
   // longer dictation session. The manual refresh button still advances it on
   // demand.
@@ -248,6 +298,152 @@ export function DailyDictationWorkspace({
     }, 15000);
     return () => clearInterval(timer);
   }, []);
+
+  // Word lookup from text selection or custom event (matching Speaking mechanism)
+  const handleDictionaryLookup = useCallback(() => {
+    const selected = window.getSelection()?.toString().trim() ?? "";
+    const word = selected
+      .replace(/[’‘ʼ]/g, "'")
+      .replace(/^[^A-Za-z']+|[^A-Za-z']+$/g, "");
+
+    if (!/^[A-Za-z]+(?:'[A-Za-z]+)?$/.test(word)) {
+      toast("Bôi đen một từ tiếng Anh, rồi chọn Tra từ.");
+      return;
+    }
+
+    setSelectedWordForLookup(word);
+  }, []);
+
+  useEffect(() => {
+    const handleCustomLookup = (e: Event) => {
+      const customEvent = e as CustomEvent<{ word?: string }>;
+      const targetWord = customEvent.detail?.word;
+      if (targetWord && typeof targetWord === "string") {
+        const cleaned = targetWord.trim().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "") || targetWord;
+        setSelectedWordForLookup(cleaned);
+      }
+    };
+    window.addEventListener("breadtrans:lookup-word", handleCustomLookup);
+    return () => {
+      window.removeEventListener("breadtrans:lookup-word", handleCustomLookup);
+    };
+  }, []);
+
+  // Redo current question: reset check state & draft answer, rewind audio, and re-focus input
+  const handleRetryCurrentSentence = useCallback(() => {
+    if (onRetry) {
+      onRetry();
+    } else {
+      onChangeAnswer("");
+    }
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      setCurrentTime(0);
+      void audioRef.current.play().catch(() => undefined);
+    }
+    focusInputAtEnd();
+    requestAnimationFrame(() => {
+      focusInputAtEnd();
+    });
+    setTimeout(() => {
+      focusInputAtEnd();
+    }, 60);
+  }, [onRetry, onChangeAnswer, focusInputAtEnd]);
+
+  // Skip current question: perform skip and immediately focus textarea so caret is visible
+  const handleSkipSentence = useCallback(async () => {
+    await onSkip();
+    setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 50);
+  }, [onSkip]);
+
+  // Close translation menu on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (translationMenuRef.current && !translationMenuRef.current.contains(e.target as Node)) {
+        setShowTranslationMenu(false);
+      }
+    };
+    if (showTranslationMenu) {
+      document.addEventListener("mousedown", handleOutsideClick);
+      return () => document.removeEventListener("mousedown", handleOutsideClick);
+    }
+  }, [showTranslationMenu]);
+
+  // Submit suggested translation to admin (does NOT modify current live translation directly)
+  const handleSubmitTranslationSuggestion = async () => {
+    const trimmed = suggestedTranslation.trim();
+    if (!trimmed) {
+      toast.error("Vui lòng nhập bản dịch đề xuất.");
+      return;
+    }
+    setIsSubmittingSuggestion(true);
+    try {
+      await issueReportService.create({
+        area: "LISTENING",
+        category: "CONTENT_ERROR",
+        impact: "NON_BLOCKING",
+        description: `[Đề xuất cải thiện bản dịch]\n- Câu gốc: "${canonicalAnswer}"\n- Bản dịch hiện tại: "${translationText || "Chưa có"}"\n- Bản dịch đề xuất: "${trimmed}"${suggestionNote.trim() ? `\n- Ghi chú: ${suggestionNote.trim()}` : ""}`,
+        sourceType: "QUIZ",
+        sourceId: quiz.id,
+        questionId: currentQuestion.id,
+        context: {
+          quizTitle: quiz.title,
+          questionNumber: currentIndex + 1,
+          canonicalAnswer,
+          currentTranslation: translationText,
+          suggestedTranslation: trimmed,
+          note: suggestionNote.trim() || undefined,
+        },
+      });
+      toast.success("Đã gửi đề xuất bản dịch tới Admin. Cảm ơn đóng góp của bạn!");
+      setShowEditTranslationModal(false);
+      setSuggestedTranslation("");
+      setSuggestionNote("");
+    } catch {
+      toast.error("Không thể gửi bản dịch đề xuất. Vui lòng thử lại sau.");
+    } finally {
+      setIsSubmittingSuggestion(false);
+    }
+  };
+
+  // Submit new language translation to admin
+  const handleSubmitAddLanguage = async () => {
+    const lang = addLangName.trim();
+    const trans = addLangTranslation.trim();
+    if (!lang || !trans) {
+      toast.error("Vui lòng nhập tên ngôn ngữ và bản dịch.");
+      return;
+    }
+    setIsSubmittingAddLang(true);
+    try {
+      await issueReportService.create({
+        area: "LISTENING",
+        category: "CONTENT_ERROR",
+        impact: "NON_BLOCKING",
+        description: `[Đóng góp bản dịch ngôn ngữ mới: ${lang}]\n- Câu gốc: "${canonicalAnswer}"\n- Bản dịch (${lang}): "${trans}"`,
+        sourceType: "QUIZ",
+        sourceId: quiz.id,
+        questionId: currentQuestion.id,
+        context: {
+          quizTitle: quiz.title,
+          questionNumber: currentIndex + 1,
+          canonicalAnswer,
+          language: lang,
+          translation: trans,
+        },
+      });
+      toast.success(`Đã gửi bản dịch tiếng ${lang} tới Admin. Cảm ơn bạn!`);
+      setShowAddLanguageModal(false);
+      setAddLangName("");
+      setAddLangTranslation("");
+    } catch {
+      toast.error("Không thể gửi bản dịch mới. Vui lòng thử lại sau.");
+    } finally {
+      setIsSubmittingAddLang(false);
+    }
+  };
 
   // Fetch audio blob when question changes
   useEffect(() => {
@@ -315,88 +511,57 @@ export function DailyDictationWorkspace({
   // dictation script only when the learner explicitly opens this tab.
   useEffect(() => {
     if (activeTab !== "transcript") return;
+    const controller = new AbortController();
+    transcriptAudioRequestRef.current = controller;
     let cancelled = false;
-    quizService
-      .getListeningTranscript(quiz.id)
-      .then((response) => {
+    const loadingFrame = window.setTimeout(() => {
+      if (!cancelled) {
+        setIsTranscriptLoading(true);
+        setTranscriptError(null);
+      }
+    }, 0);
+    Promise.all([
+      quizService.getListeningTranscript(quiz.id),
+      quizService.getListeningTranscriptAudioBlob(quiz.id, controller.signal),
+    ])
+      .then(([response, audioBlob]) => {
         if (cancelled) return;
         setFullTranscript(response.items);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setTranscriptError("Chưa tải được toàn bộ kịch bản. Bạn hãy thử lại.");
+        if (audioBlobUrlRef.current) URL.revokeObjectURL(audioBlobUrlRef.current);
+        const url = URL.createObjectURL(audioBlob);
+        audioBlobUrlRef.current = url;
+        setAudioBlobUrl(url);
+        setAudioLoading(false);
+        setAudioError(false);
+        if (audioRef.current) {
+          audioRef.current.src = url;
+          audioRef.current.playbackRate = playbackRateRef.current;
+          audioRef.current.load();
         }
+      })
+      .catch((error) => {
+        if (cancelled || error?.name === "AbortError" || error?.name === "CanceledError") return;
+        setTranscriptError("Chưa tải được toàn bộ kịch bản. Bạn hãy thử lại.");
+        setAudioError(true);
+        setAudioLoading(false);
       })
       .finally(() => {
         if (!cancelled) setIsTranscriptLoading(false);
       });
     return () => {
       cancelled = true;
-    };
-  }, [activeTab, quiz.id, transcriptReloadKey]);
-
-  const loadTranscriptAudio = useCallback(async (questionIndex: number) => {
-    const question = questions[questionIndex];
-    if (!question) throw new Error("Không tìm thấy câu trong kịch bản");
-
-    const cachedUrl = transcriptAudioCacheRef.current.get(question.id);
-    if (cachedUrl) return cachedUrl;
-
-    transcriptAudioRequestRef.current?.abort();
-    const controller = new AbortController();
-    transcriptAudioRequestRef.current = controller;
-    setAudioLoading(true);
-    setAudioError(false);
-
-    try {
-      const blob = await quizService.getQuestionAudioBlob(
-        quiz.id,
-        question.id,
-        controller.signal,
-        question.audioAssets?.find((asset) => asset.isActive)?.version,
-      );
-      const url = URL.createObjectURL(blob);
-      transcriptAudioCacheRef.current.set(question.id, url);
-      return url;
-    } finally {
+      window.clearTimeout(loadingFrame);
+      controller.abort();
       if (transcriptAudioRequestRef.current === controller) {
         transcriptAudioRequestRef.current = null;
       }
-    }
-  }, [questions, quiz.id]);
-
-  const playTranscriptSentence = useCallback(async (questionIndex: number) => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    try {
-      const url = await loadTranscriptAudio(questionIndex);
-      audio.src = url;
-      audio.playbackRate = playbackRateRef.current;
-      audio.currentTime = 0;
-      audio.load();
-      transcriptLoadedIndexRef.current = questionIndex;
-      setCurrentTime(0);
-      setDuration(0);
-      await audio.play();
-      setAudioLoading(false);
-    } catch (error) {
-      if ((error as { name?: string })?.name === "AbortError") return;
-      setAudioLoading(false);
-      setAudioError(true);
-      setIsPlaying(false);
-    }
-  }, [loadTranscriptAudio]);
+    };
+  }, [activeTab, quiz.id, transcriptReloadKey]);
 
   // Cleanup object url on unmount
   useEffect(() => {
-    const transcriptAudioCache = transcriptAudioCacheRef.current;
     return () => {
       transcriptAudioRequestRef.current?.abort();
-      for (const url of transcriptAudioCache.values()) {
-        URL.revokeObjectURL(url);
-      }
-      transcriptAudioCache.clear();
       if (audioBlobUrlRef.current) {
         URL.revokeObjectURL(audioBlobUrlRef.current);
         audioBlobUrlRef.current = null;
@@ -414,39 +579,19 @@ export function DailyDictationWorkspace({
     }
   }, [activeTab, autoScrollTranscript, currentIndex]);
 
-  useEffect(() => {
-    if (activeTab !== "transcript") {
-      transcriptPlaybackRef.current = false;
-      transcriptPlaybackIndexRef.current = -1;
-      transcriptLoadedIndexRef.current = -1;
-    }
-  }, [activeTab]);
-
   const handleSelectTranscriptSentence = (questionIndex: number) => {
     onSelectIndex(questionIndex);
-    // Selecting a row changes the highlighted sentence. If playback is
-    // paused, start from that sentence; active full-script playback continues
-    // uninterrupted and advances automatically on each ended event.
-    if (!isPlaying) {
-      transcriptPlaybackRef.current = true;
-      transcriptPlaybackIndexRef.current = questionIndex;
-      void playTranscriptSentence(questionIndex);
-    }
   };
 
   const handleTranscriptPrev = () => {
     if (currentIndex > 0) {
-      const nextIndex = currentIndex - 1;
       onPrev();
-      if (!isPlaying) transcriptPlaybackIndexRef.current = nextIndex;
     }
   };
 
   const handleTranscriptNext = () => {
     if (currentIndex < questions.length - 1) {
-      const nextIndex = currentIndex + 1;
       onNext();
-      if (!isPlaying) transcriptPlaybackIndexRef.current = nextIndex;
     }
   };
 
@@ -458,19 +603,7 @@ export function DailyDictationWorkspace({
         audioRef.current.pause();
         return;
       }
-      transcriptPlaybackRef.current = true;
-      if (transcriptPlaybackIndexRef.current < 0) {
-        transcriptPlaybackIndexRef.current = currentIndex;
-      }
-      if (
-        transcriptLoadedIndexRef.current !== transcriptPlaybackIndexRef.current ||
-        !audioRef.current.src ||
-        audioRef.current.ended
-      ) {
-        void playTranscriptSentence(transcriptPlaybackIndexRef.current);
-      } else {
-        void audioRef.current.play().catch(() => setIsPlaying(false));
-      }
+      void audioRef.current.play().catch(() => setIsPlaying(false));
       return;
     }
 
@@ -480,21 +613,21 @@ export function DailyDictationWorkspace({
     } else {
       audioRef.current.play().catch(() => setIsPlaying(false));
     }
-  }, [activeTab, audioError, audioLoading, currentIndex, isPlaying, playTranscriptSentence]);
+  }, [activeTab, audioError, audioLoading, isPlaying]);
 
   const replayAudio = useCallback(() => {
     if (activeTab === "transcript") {
-      transcriptPlaybackRef.current = true;
-      transcriptPlaybackIndexRef.current = 0;
-      onSelectIndex(0);
-      void playTranscriptSentence(0);
+      if (!audioRef.current) return;
+      audioRef.current.currentTime = 0;
+      setCurrentTime(0);
+      void audioRef.current.play().catch(() => setIsPlaying(false));
       return;
     }
     if (!audioRef.current) return;
     audioRef.current.currentTime = 0;
     setCurrentTime(0);
     void audioRef.current.play().catch(() => setIsPlaying(false));
-  }, [activeTab, onSelectIndex, playTranscriptSentence]);
+  }, [activeTab]);
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const target = Number(e.target.value);
@@ -600,23 +733,43 @@ export function DailyDictationWorkspace({
         return;
       }
 
+      // Modal open guards
+      if (showSettings || showShortcutsModal) {
+        return;
+      }
+
+      // If the question is already completed, correct, or skipped (revealed), Enter advances to the next question
+      if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.altKey) {
+        if (isCompletedOrRevealed) {
+          e.preventDefault();
+          if (isLastQuestion) {
+            onFinalSubmit();
+          } else {
+            onNext();
+          }
+          return;
+        }
+
+        // If in dictation mode, Enter checks answer and keeps focus in textarea
+        if (activeTab === "dictation") {
+          e.preventDefault();
+          if (!isChecking) {
+            void handlePerformCheck();
+          } else {
+            focusInputAtEnd();
+          }
+          return;
+        }
+      }
+
       const playPausePressed =
         playPauseKey === "Space"
           ? e.code === "Space" && !e.ctrlKey && !e.altKey
-          : playPauseKey === "Enter"
-            ? e.key === "Enter"
-            : e.key === "`" || e.code === "Backquote";
-      const checkPressed = activeElement === textareaRef.current && e.key === "Enter" && !e.shiftKey;
-
-      // Enter in the answer box is reserved for checking. This avoids an
-      // ambiguous configuration when Enter is also selected as play/pause.
-      if (checkPressed) {
-        e.preventDefault();
-        if (!isChecking) {
-          void onCheck();
-        }
-        return;
-      }
+          : playPauseKey === "`"
+            ? e.key === "`" || e.code === "Backquote"
+            : playPauseKey === "Enter" && activeTab !== "dictation"
+              ? e.key === "Enter"
+              : e.key === "`" || e.code === "Backquote";
 
       // Configured playback shortcuts are intentional controls, so they must
       // still work while the learner is focused in the dictation textarea.
@@ -685,7 +838,25 @@ export function DailyDictationWorkspace({
       window.removeEventListener("breadtrans:toggle-listening-audio", handleSharedToggle);
       window.removeEventListener("breadtrans:replay-listening-audio", handleSharedReplay);
     };
-  }, [activeTab, isChecking, currentIndex, questions.length, playPauseKey, replayKey, onCheck, onNext, onPrev, replayAudio, togglePlay]);
+  }, [
+    activeTab,
+    isChecking,
+    isCompletedOrRevealed,
+    isLastQuestion,
+    currentIndex,
+    questions.length,
+    playPauseKey,
+    replayKey,
+    showSettings,
+    showShortcutsModal,
+    handlePerformCheck,
+    focusInputAtEnd,
+    onNext,
+    onPrev,
+    onFinalSubmit,
+    replayAudio,
+    togglePlay,
+  ]);
 
   // Click outside listener for popovers
   useEffect(() => {
@@ -708,18 +879,22 @@ export function DailyDictationWorkspace({
   }, []);
 
   useEffect(() => {
-    if (!showSettings && !showNotesModal && !showShortcutsModal) return;
+    if (!showSettings && !showShortcutsModal) return;
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       if (showSettings) setShowSettings(false);
-      else if (showNotesModal) setShowNotesModal(false);
       else setShowShortcutsModal(false);
     };
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [showSettings, showNotesModal, showShortcutsModal]);
+  }, [showSettings, showShortcutsModal]);
 
-  const isLastQuestion = currentIndex === questions.length - 1;
+  const activeTranscriptItem = fullTranscript.find((item) => item.questionId === currentQuestion?.id);
+  const translationText =
+    (currentCheck as any)?.translation ||
+    (currentQuestion?.content as any)?.translation ||
+    activeTranscriptItem?.translation ||
+    null;
   const vocabLevel = level || quiz.bilingualContent?.skillLabel || "A1";
   const categoryTitle =
     (currentQuestion?.content as any)?.category ||
@@ -740,21 +915,22 @@ export function DailyDictationWorkspace({
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto py-5 sm:py-7 px-4 sm:px-6 flex flex-col justify-start font-sans antialiased text-slate-800">
+    <div className="w-full max-w-7xl xl:max-w-[1560px] 2xl:max-w-[1720px] mx-auto flex-1 flex flex-col pt-1 sm:pt-2 pb-8 px-3 sm:px-5 lg:px-6 font-sans antialiased text-slate-800">
       {/* 1. Header / Breadcrumbs & Action Row */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm">
+      <div className="mb-2.5 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm">
         {/* Breadcrumb path */}
         <nav
           aria-label="Thanh điều hướng phân cấp"
           className="flex flex-wrap items-center gap-2 text-slate-500 font-medium"
         >
-          <Link
-            href="/practice/listening"
-            className="hover:text-blue-600 transition-colors flex items-center gap-1 font-semibold"
+          <button
+            type="button"
+            onClick={() => onExit("/practice/listening")}
+            className="hover:text-blue-600 transition-colors flex items-center gap-1 font-semibold cursor-pointer"
           >
             <ArrowLeft size={14} />
             <span>Luyện nghe</span>
-          </Link>
+          </button>
           <span className="text-slate-300">/</span>
           <span className="text-slate-600">{categoryTitle}</span>
           <span className="text-slate-300">/</span>
@@ -763,40 +939,18 @@ export function DailyDictationWorkspace({
           </span>
         </nav>
 
-        {/* Right Action Utilities */}
+        {/* Keep the header quiet so the learner's attention stays on the audio and answer field. */}
         <div className="flex items-center gap-3">
           {/* Practice Timer */}
           <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
             <Clock size={14} className="text-slate-400" aria-hidden="true" />
             <span>{elapsedMinutes} phút</span>
           </div>
-
-          {/* Notes Toggle */}
-          <button
-            type="button"
-            onClick={() => setShowNotesModal(true)}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white border border-slate-200 px-2.5 py-1 rounded-lg hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
-          >
-            <StickyNote size={13} className="text-amber-500" />
-            <span>Ghi chú</span>
-          </button>
-
-          {/* Exit / Close button */}
-          <button
-            type="button"
-            onClick={() => onExit?.("/practice/listening")}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-lg hover:bg-rose-100/70 transition-colors cursor-pointer"
-            title="Thoát bài luyện"
-            aria-label="Thoát bài luyện"
-          >
-            <X size={13} />
-            <span>Thoát</span>
-          </button>
         </div>
       </div>
 
       {/* 2. Title & Meta Row */}
-      <div className="mb-5 flex items-center justify-between gap-3">
+      <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           {/* Star button */}
           <button
@@ -813,7 +967,7 @@ export function DailyDictationWorkspace({
           </button>
 
           {/* Title */}
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight truncate">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight truncate">
             {quiz.title}
           </h1>
 
@@ -897,7 +1051,23 @@ export function DailyDictationWorkspace({
         preload="metadata"
         className="hidden"
         onTimeUpdate={() => {
-          if (audioRef.current) setCurrentTime(audioRef.current.currentTime);
+          const audio = audioRef.current;
+          if (!audio) return;
+          setCurrentTime(audio.currentTime);
+          if (activeTab === "transcript" && fullTranscript.length > 0) {
+            const transcriptIndex = resolveTranscriptIndex(
+              audio.currentTime,
+              audio.duration,
+              fullTranscript,
+            );
+            const item = fullTranscript[transcriptIndex];
+            const questionIndex = item
+              ? questions.findIndex((question) => question.id === item.questionId)
+              : -1;
+            if (questionIndex >= 0 && questionIndex !== currentIndex) {
+              onSelectIndex(questionIndex);
+            }
+          }
         }}
         onLoadedMetadata={() => {
           if (audioRef.current) setDuration(audioRef.current.duration || 0);
@@ -907,22 +1077,6 @@ export function DailyDictationWorkspace({
         onEnded={() => {
           setIsPlaying(false);
           setCurrentTime(0);
-          if (activeTab === "transcript" && transcriptPlaybackRef.current) {
-            const nextIndex = transcriptPlaybackIndexRef.current + 1;
-            if (nextIndex < questions.length) {
-              transcriptPlaybackIndexRef.current = nextIndex;
-              onSelectIndex(nextIndex);
-              void playTranscriptSentence(nextIndex);
-            } else if (repeatTranscript && questions.length > 0) {
-              transcriptPlaybackIndexRef.current = 0;
-              onSelectIndex(0);
-              void playTranscriptSentence(0);
-            } else {
-              transcriptPlaybackRef.current = false;
-              transcriptPlaybackIndexRef.current = -1;
-            }
-            return;
-          }
           if (activeTab === "transcript" && repeatTranscript) {
             window.setTimeout(() => {
               void audioRef.current?.play().catch(() => undefined);
@@ -937,380 +1091,569 @@ export function DailyDictationWorkspace({
 
       {/* 4. Main Exercise Card */}
       {activeTab === "dictation" ? (
-        <div className="w-full rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs transition-all">
-          {/* Sentence Navigator & Settings Row */}
-          <div className="mb-5 flex items-center justify-between gap-4">
-            {/* Left: ← Câu 1 / 21 → */}
-            <div className="flex items-center gap-2.5 text-sm font-bold text-slate-700">
-              <button
-                type="button"
-                onClick={onPrev}
-                disabled={currentIndex === 0}
-                title="Câu trước"
-                aria-label="Câu trước"
-                className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
-              >
-                <ArrowLeft size={16} />
-              </button>
+        <div className="w-full rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-6 lg:p-7 shadow-xs transition-all">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 lg:gap-7 items-start">
+            {/* Left Column (lg:col-span-7): Player & Dictation Input */}
+            <div className="lg:col-span-7 flex flex-col">
+              {/* Sentence Navigator & Settings Row */}
+              <div className="mb-3.5 flex items-center justify-between gap-4">
+                {/* Left: ← Câu 1 / 21 → */}
+                <div className="flex items-center gap-2.5 text-sm font-bold text-slate-700">
+                  <button
+                    type="button"
+                    onClick={onPrev}
+                    disabled={currentIndex === 0}
+                    title="Câu trước"
+                    aria-label="Câu trước"
+                    className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
+                  >
+                    <ArrowLeft size={16} />
+                  </button>
 
-              <span className="font-extrabold text-slate-900 bg-slate-100 px-3 py-1 rounded-lg text-xs">
-                Câu {currentIndex + 1} / {questions.length}
-              </span>
+                  <span className="font-extrabold text-slate-900 bg-slate-100 px-3 py-1 rounded-lg text-xs">
+                    Câu {currentIndex + 1} / {questions.length}
+                  </span>
 
-              <button
-                type="button"
-                onClick={onNext}
-                disabled={currentIndex === questions.length - 1}
-                title="Câu tiếp theo"
-                aria-label="Câu tiếp theo"
-                className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
-              >
-                <ArrowRight size={16} />
-              </button>
-            </div>
+                  <button
+                    type="button"
+                    onClick={onNext}
+                    disabled={currentIndex === questions.length - 1}
+                    title="Câu tiếp theo"
+                    aria-label="Câu tiếp theo"
+                    className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
+                  >
+                    <ArrowRight size={16} />
+                  </button>
+                </div>
 
-            {/* Right: ⚙ Settings */}
-            <div className="relative" ref={settingsRef}>
-              <button
-                type="button"
-                onClick={() => setShowSettings((s) => !s)}
-                className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
-                title="Cài đặt phát âm thanh"
-                aria-expanded={showSettings}
-              >
-                <Settings size={14} />
-                <span>Cài đặt</span>
-              </button>
-            </div>
-          </div>
+                {/* Right: Tra từ & ⚙ Settings */}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleDictionaryLookup}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                    title="Bôi đen một từ tiếng Anh rồi bấm Tra từ"
+                  >
+                    <BookOpen size={14} className="text-sky-600" />
+                    <span className="hidden sm:inline">Tra từ</span>
+                  </button>
 
-          {/* Audio Player (BreadTrans clean light inline player) */}
-          <div className="mb-6 rounded-2xl bg-slate-50 border border-slate-200 p-4 sm:p-5 flex flex-wrap items-center gap-3 sm:gap-4">
-            {/* Play / Pause button */}
-            <button
-              type="button"
-              onClick={togglePlay}
-              disabled={audioLoading || audioError}
-              title={isPlaying ? "Tạm dừng" : "Phát câu"}
-              aria-label={isPlaying ? "Tạm dừng" : "Phát câu"}
-              className="flex size-11 items-center justify-center rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-all active:scale-95 disabled:opacity-40 cursor-pointer shrink-0"
-            >
-              {audioLoading ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : isPlaying ? (
-                <Pause size={17} fill="currentColor" />
-              ) : (
-                <Play size={17} fill="currentColor" className="ml-0.5" />
-              )}
-            </button>
-
-            {/* Monospace Timestamp */}
-            <span className="font-mono text-xs font-semibold text-slate-500 shrink-0 select-none">
-              {formatTime(currentTime)} / {formatTime(duration)}
-            </span>
-
-            {/* Range Scrubber Bar */}
-            <input
-              type="range"
-              min={0}
-              max={duration || 100}
-              step={0.1}
-              value={currentTime}
-              onChange={handleSeek}
-              disabled={audioLoading || duration === 0}
-              aria-label="Thanh thời gian nghe"
-              className="flex-1 h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-blue-600 focus:outline-none"
-            />
-
-            {/* Volume control: mute toggle + accessible volume slider */}
-            <div className="flex items-center gap-1.5 shrink-0">
-              <button
-                type="button"
-                onClick={toggleMute}
-                title={isMuted ? "Bật âm thanh" : "Tắt tiếng"}
-                aria-label={isMuted ? "Bật âm thanh" : "Tắt tiếng"}
-                className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-white hover:text-slate-800 cursor-pointer"
-              >
-                {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
-              </button>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.05}
-                value={isMuted ? 0 : volume}
-                onChange={handleVolumeChange}
-                aria-label="Âm lượng audio"
-                className="w-20 accent-blue-600 cursor-pointer"
-              />
-            </div>
-
-            {/* DailyDictation-style speed selector */}
-            <div className="relative shrink-0" ref={speedMenuRef}>
-              <button
-                type="button"
-                onClick={() => setShowSpeedMenu((value) => !value)}
-                aria-haspopup="listbox"
-                aria-expanded={showSpeedMenu}
-                className="inline-flex min-h-10 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-bold text-slate-700 shadow-2xs transition-colors hover:bg-slate-50 cursor-pointer"
-                title="Chọn tốc độ phát"
-              >
-                {playbackRate}x <ChevronDown size={14} />
-              </button>
-              {showSpeedMenu && (
-                <div className="absolute right-0 top-full z-50 mt-2 max-h-72 w-44 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl" role="listbox" aria-label="Tốc độ phát">
-                  {[0.25, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.75, 2].map((rate) => (
+                  <div className="relative" ref={settingsRef}>
                     <button
-                      key={rate}
                       type="button"
-                      role="option"
-                      aria-selected={playbackRate === rate}
-                      onClick={() => {
-                        handleRateChange(rate);
-                        setShowSpeedMenu(false);
-                      }}
-                      className={`flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm transition-colors cursor-pointer ${
-                        playbackRate === rate ? "bg-blue-600 font-bold text-white" : "text-slate-700 hover:bg-slate-100"
+                      onClick={() => setShowSettings((s) => !s)}
+                      className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                      title="Cài đặt phát âm thanh"
+                      aria-expanded={showSettings}
+                    >
+                      <Settings size={14} />
+                      <span>Cài đặt</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Audio Player (BreadTrans clean light inline player) */}
+              <div className="mb-3.5 rounded-xl bg-slate-50 border border-slate-200 p-2.5 sm:p-3 flex flex-wrap items-center gap-2.5 sm:gap-3">
+                {/* Play / Pause button */}
+                <button
+                  type="button"
+                  onClick={togglePlay}
+                  disabled={audioLoading || audioError}
+                  title={isPlaying ? "Tạm dừng" : "Phát câu"}
+                  aria-label={isPlaying ? "Tạm dừng" : "Phát câu"}
+                  className="flex size-11 items-center justify-center rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-all active:scale-95 disabled:opacity-40 cursor-pointer shrink-0"
+                >
+                  {audioLoading ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : isPlaying ? (
+                    <Pause size={17} fill="currentColor" />
+                  ) : (
+                    <Play size={17} fill="currentColor" className="ml-0.5" />
+                  )}
+                </button>
+
+                {/* Monospace Timestamp */}
+                <span className="font-mono text-xs font-semibold text-slate-500 shrink-0 select-none">
+                  {formatTime(currentTime)} / {formatTime(duration)}
+                </span>
+
+                {/* Range Scrubber Bar */}
+                <input
+                  type="range"
+                  min={0}
+                  max={duration || 100}
+                  step={0.1}
+                  value={currentTime}
+                  onChange={handleSeek}
+                  disabled={audioLoading || duration === 0}
+                  aria-label="Thanh thời gian nghe"
+                  className="flex-1 h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-blue-600 focus:outline-none"
+                />
+
+                {/* Volume control: mute toggle + accessible volume slider */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={toggleMute}
+                    title={isMuted ? "Bật âm thanh" : "Tắt tiếng"}
+                    aria-label={isMuted ? "Bật âm thanh" : "Tắt tiếng"}
+                    className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-white hover:text-slate-800 cursor-pointer"
+                  >
+                    {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                  </button>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    value={isMuted ? 0 : volume}
+                    onChange={handleVolumeChange}
+                    aria-label="Âm lượng audio"
+                    className="w-16 accent-blue-600 cursor-pointer"
+                  />
+                </div>
+
+                {/* Speed selector */}
+                <div className="relative shrink-0" ref={speedMenuRef}>
+                  <button
+                    type="button"
+                    onClick={() => setShowSpeedMenu((value) => !value)}
+                    aria-haspopup="listbox"
+                    aria-expanded={showSpeedMenu}
+                    className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-bold text-slate-700 shadow-2xs transition-colors hover:bg-slate-50 cursor-pointer"
+                    title="Chọn tốc độ phát"
+                  >
+                    {playbackRate}x <ChevronDown size={14} />
+                  </button>
+                  {showSpeedMenu && (
+                    <div className="absolute right-0 top-full z-50 mt-2 max-h-72 w-44 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl" role="listbox" aria-label="Tốc độ phát">
+                      {[0.25, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.75, 2].map((rate) => (
+                        <button
+                          key={rate}
+                          type="button"
+                          role="option"
+                          aria-selected={playbackRate === rate}
+                          onClick={() => {
+                            handleRateChange(rate);
+                            setShowSpeedMenu(false);
+                          }}
+                          className={`flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm transition-colors cursor-pointer ${
+                            playbackRate === rate ? "bg-blue-600 font-bold text-white" : "text-slate-700 hover:bg-slate-100"
+                          }`}
+                        >
+                          Tốc độ: {rate}x
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Three-dot audio actions */}
+                <div className="relative shrink-0" ref={audioMenuRef}>
+                  <button
+                    type="button"
+                    onClick={() => setShowAudioMenu((value) => !value)}
+                    aria-label="Tùy chọn audio"
+                    aria-expanded={showAudioMenu}
+                    className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-white hover:text-slate-800 cursor-pointer"
+                  >
+                    <MoreHorizontal size={18} />
+                  </button>
+                  {showAudioMenu && (
+                    <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-slate-200 bg-white p-1.5 text-sm shadow-xl">
+                      <button
+                        type="button"
+                        disabled={!audioBlobUrl}
+                        onClick={downloadAudio}
+                        className="flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-left text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+                      >
+                        <Download size={15} />
+                        <span>{audioBlobUrl ? "Tải audio" : "Audio đang tải"}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (audioRef.current) audioRef.current.currentTime = 0;
+                          setCurrentTime(0);
+                          setShowAudioMenu(false);
+                          void audioRef.current?.play().catch(() => undefined);
+                        }}
+                        className="flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-left text-slate-700 hover:bg-slate-100 cursor-pointer"
+                      >
+                        <RotateCcw size={15} />
+                        <span>Phát lại từ đầu</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleRateChange(1);
+                          setShowAudioMenu(false);
+                        }}
+                        className="flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-left text-slate-700 hover:bg-slate-100 cursor-pointer"
+                      >
+                        <RefreshCw size={15} />
+                        <span>Đặt tốc độ chuẩn 1x</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Textarea Input */}
+              <div className="relative mb-3.5">
+                <textarea
+                  ref={textareaRef}
+                  value={displayedAnswer}
+                  onChange={(e) => {
+                    if (isCompletedOrRevealed) return;
+                    onChangeAnswer(e.target.value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.altKey) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (isCompletedOrRevealed) {
+                        if (isLastQuestion) {
+                          onFinalSubmit();
+                        } else {
+                          onNext();
+                        }
+                        return;
+                      }
+                      if (!isChecking) {
+                        void handlePerformCheck();
+                      }
+                    }
+                  }}
+                  placeholder="Nhập những gì bạn nghe được (Type what you hear)..."
+                  rows={3}
+                  wrap="soft"
+                  autoFocus
+                  readOnly={Boolean(isCompletedOrRevealed)}
+                  spellCheck={wordSuggestions}
+                  className={`w-full resize-none min-h-[92px] sm:min-h-[105px] rounded-xl border-2 p-3.5 sm:p-4 text-base sm:text-lg leading-relaxed placeholder:text-slate-400 focus:outline-none transition-all shadow-2xs font-medium break-words cursor-text ${
+                    isCompletedOrRevealed
+                      ? "border-emerald-500 bg-emerald-50/15 text-slate-900 font-bold focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      : "border-slate-200 bg-white text-slate-900 focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                  }`}
+                />
+
+                {/* Mic Icon for Speech Input & subtle check indicator */}
+                {!isCompletedOrRevealed && (
+                  <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
+                    {isChecking && (
+                      <Loader2 size={16} className="animate-spin text-blue-500" aria-label="Đang kiểm tra..." />
+                    )}
+                    <button
+                      type="button"
+                      onClick={toggleSpeechRecognition}
+                      disabled={isChecking}
+                      title={isListeningSpeech ? "Đang lắng nghe..." : "Nhập bằng giọng nói"}
+                      aria-label={isListeningSpeech ? "Đang lắng nghe..." : "Nhập bằng giọng nói"}
+                      className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                        isListeningSpeech
+                          ? "bg-rose-500 text-white animate-pulse"
+                          : "text-slate-400 hover:text-slate-700 hover:bg-slate-100"
                       }`}
                     >
-                      Tốc độ: {rate}x
+                      {isListeningSpeech ? <MicOff size={18} /> : <Mic size={18} />}
                     </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Three-dot audio actions */}
-            <div className="relative shrink-0" ref={audioMenuRef}>
-              <button
-                type="button"
-                onClick={() => setShowAudioMenu((value) => !value)}
-                aria-label="Tùy chọn audio"
-                aria-expanded={showAudioMenu}
-                className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-white hover:text-slate-800 cursor-pointer"
-              >
-                <MoreHorizontal size={18} />
-              </button>
-              {showAudioMenu && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-slate-200 bg-white p-1.5 text-sm shadow-xl">
-                  <button
-                    type="button"
-                    disabled={!audioBlobUrl}
-                    onClick={downloadAudio}
-                    className="flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-left text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
-                  >
-                    <Download size={15} />
-                    <span>{audioBlobUrl ? "Tải audio" : "Audio đang tải"}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (audioRef.current) audioRef.current.currentTime = 0;
-                      setCurrentTime(0);
-                      setShowAudioMenu(false);
-                      void audioRef.current?.play().catch(() => undefined);
-                    }}
-                    className="flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-left text-slate-700 hover:bg-slate-100 cursor-pointer"
-                  >
-                    <RotateCcw size={15} />
-                    <span>Phát lại từ đầu</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleRateChange(1);
-                      setShowAudioMenu(false);
-                    }}
-                    className="flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-left text-slate-700 hover:bg-slate-100 cursor-pointer"
-                  >
-                    <RefreshCw size={15} />
-                    <span>Đặt tốc độ chuẩn 1x</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Textarea Input */}
-          <div className="relative mb-5">
-            <textarea
-              ref={textareaRef}
-              value={selectedAnswer}
-              onChange={(e) => onChangeAnswer(e.target.value)}
-              placeholder="Nhập những gì bạn nghe được (Type what you hear)..."
-              rows={4}
-              autoFocus
-              spellCheck={wordSuggestions}
-              className="w-full resize-y rounded-xl border-2 border-slate-200 bg-white p-5 pr-12 text-lg leading-relaxed text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all shadow-2xs font-medium"
-            />
-
-            {/* Mic Icon for Speech Input */}
-            <button
-              type="button"
-              onClick={toggleSpeechRecognition}
-              title={isListeningSpeech ? "Đang lắng nghe..." : "Nhập bằng giọng nói"}
-              aria-label={isListeningSpeech ? "Đang lắng nghe..." : "Nhập bằng giọng nói"}
-              className={`absolute bottom-3.5 right-3.5 p-2 rounded-lg transition-colors cursor-pointer ${
-                isListeningSpeech
-                  ? "bg-rose-500 text-white animate-pulse"
-                  : "text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-              }`}
-            >
-              {isListeningSpeech ? <MicOff size={18} /> : <Mic size={18} />}
-            </button>
-          </div>
-          {showShortcutTips && (
-            <p className="-mt-3 mb-4 text-xs text-slate-500">
-               {playPauseKey === "Space" ? "Space" : playPauseKey} để phát / dừng · {replayKey} để phát lại câu · Enter để kiểm tra
-            </p>
-          )}
-
-          {/* Action Buttons Row */}
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Check Button */}
-            <button
-              type="button"
-              onClick={() => void onCheck()}
-              disabled={isChecking}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-7 py-2.5 text-sm font-bold text-white shadow-xs transition-all hover:bg-blue-700 active:scale-98 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
-            >
-              {isChecking && <Loader2 size={15} className="animate-spin" />}
-              <span>{isChecked ? "Kiểm tra lại" : "Kiểm tra"}</span>
-            </button>
-
-            {/* Skip Button */}
-            <button
-              type="button"
-              onClick={onSkip}
-              disabled={isChecking}
-              className="min-h-11 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50 cursor-pointer shadow-2xs"
-            >
-              Bỏ qua
-            </button>
-
-            {/* Final Submit Button if on last question and checked */}
-            {isChecked && isLastQuestion && (
-              <button
-                type="button"
-                onClick={onFinalSubmit}
-                disabled={isSubmitting}
-                className="ml-auto inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white shadow-xs transition-all hover:bg-emerald-700 active:scale-98 cursor-pointer disabled:opacity-50"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 size={15} className="animate-spin" />
-                    <span>Đang nộp bài...</span>
-                  </>
-                ) : (
-                  <>
-                    <Check size={16} />
-                    <span>Hoàn thành bài tập</span>
-                  </>
+                  </div>
                 )}
-              </button>
-            )}
-
-            {/* Next Sentence CTA if checked and not last */}
-            {isChecked && !isLastQuestion && (
-              <button
-                type="button"
-                onClick={onNext}
-                className="ml-auto inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 px-5 py-2.5 text-sm font-bold text-white shadow-xs transition-colors cursor-pointer"
-              >
-                <span>Câu tiếp theo</span>
-                <ArrowRight size={15} />
-              </button>
-            )}
-          </div>
-
-          {/* Check Feedback Panel (Word-by-word diff) */}
-          {isChecked && (
-            <div className="mt-5 pt-5 border-t border-slate-100 space-y-3">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg border ${
-                      currentCheck?.isCorrect
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                        : "bg-rose-50 text-rose-700 border-rose-200"
-                    }`}
-                  >
-                    {currentCheck?.isCorrect ? "✓ Chính xác" : "✗ Chưa chính xác"}
-                  </span>
-                  <span className="text-xs font-semibold text-slate-500">
-                    Độ chính xác: {Math.round(currentCheck?.wordAccuracy ?? (currentCheck?.isCorrect ? 100 : 0))}%
-                  </span>
-                </div>
-
               </div>
 
-              {/* Progressive answer review: preserve left-to-right input and mask words not reached. */}
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="mb-2 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
-                  Đối chiếu theo thứ tự nghe
-                </p>
-                <div className="flex flex-wrap gap-x-2 gap-y-1 text-base font-semibold leading-relaxed">
-                  {buildProgressiveAnswer(
-                    currentCheck?.correctAnswer ?? "",
-                    selectedAnswer,
-                    showAnswerImmediately,
-                    isRevealed,
-                  ).map((token, index) => (
-                    <span
-                      key={`${token.text}-${index}`}
-                      className={
-                        token.state === "wrong"
-                          ? "rounded-md bg-rose-100 px-1.5 text-rose-800 ring-1 ring-rose-200"
-                          : token.state === "correct"
-                            ? "text-emerald-700"
-                            : token.state === "hint"
-                              ? "rounded-md bg-amber-100 px-1.5 text-amber-900 ring-1 ring-amber-200"
-                              : token.state === "answer"
-                                ? "text-slate-900"
-                                : "text-slate-400 tracking-[0.18em]"
-                      }
+              {/* Action Buttons Row before checking/skipping */}
+              {!isCompletedOrRevealed && !isChecked && (
+                <div className="flex items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    onClick={() => void handlePerformCheck()}
+                    disabled={isChecking}
+                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2 text-sm font-bold text-white shadow-xs transition-all hover:bg-blue-700 active:scale-98 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                  >
+                    {isChecking && <Loader2 size={15} className="animate-spin" />}
+                    <span>Kiểm tra</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSkipSentence}
+                    disabled={isChecking}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50 cursor-pointer shadow-2xs"
+                  >
+                    {isChecking ? <Loader2 size={13} className="animate-spin" /> : null}
+                    <span>Bỏ qua</span>
+                  </button>
+                </div>
+              )}
+
+              {/* When Completed or Revealed or Skipped: show Next button & replay control */}
+              {isCompletedOrRevealed && (
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    {isRevealed ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-lg border bg-blue-50 text-blue-700 border-blue-200">
+                        Đã xem đáp án
+                      </span>
+                    ) : !isSkipped ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-lg border bg-emerald-50 text-emerald-800 border-emerald-200">
+                        ✓ Chính xác
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleRetryCurrentSentence}
+                      title="Làm lại câu này"
+                      aria-label="Làm lại câu này"
+                      className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer border border-slate-200/90 bg-white shadow-2xs"
                     >
-                      {token.text}
-                    </span>
-                  ))}
+                      <RotateCcw size={16} />
+                    </button>
+
+                    {isLastQuestion ? (
+                      <button
+                        type="button"
+                        onClick={onFinalSubmit}
+                        disabled={isSubmitting}
+                        className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-6 py-2 text-sm font-bold text-white shadow-xs transition-all active:scale-98 cursor-pointer disabled:opacity-50"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 size={15} className="animate-spin" />
+                            <span>Đang nộp bài...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Check size={16} />
+                            <span>Hoàn thành bài tập</span>
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={onNext}
+                        className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-6 py-2.5 text-sm font-bold text-white shadow-xs transition-colors cursor-pointer"
+                      >
+                        <span>Câu tiếp theo</span>
+                        <ArrowRight size={15} />
+                      </button>
+                    )}
+                  </div>
                 </div>
-                {dictationDiff.some((token) => token.kind !== "same") && (
-                  <p className="mt-2 text-xs text-slate-500">
-                    Từ màu đỏ là phần bạn nhập chưa khớp; các dấu * là phần chưa được chạm tới.
-                  </p>
-                )}
-              </div>
+              )}
 
-              <div className="space-y-1 border-t border-slate-200 pt-3">
-                <label className="flex min-h-11 items-center gap-3 text-sm font-semibold text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={showAnswerImmediately}
-                    onChange={onToggleShowAnswerImmediately}
-                    className="size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  Show answer immediately
-                </label>
-                <label className="flex min-h-11 items-center gap-3 text-sm font-semibold text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={isRevealed}
-                    onChange={onToggleReveal}
-                    className="size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  Show full answer
-                </label>
-              </div>
-
-              {/* Correct Answer text if revealed */}
-              {isRevealed && (
-                <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-3.5 text-sm text-blue-900">
-                  <span className="text-xs font-bold text-blue-700 block mb-1">Đáp án đúng:</span>
-                  <p className="font-semibold">{currentCheck?.correctAnswer}</p>
+              {/* Check Feedback Panel (Word-by-word diff) when checked and incorrect */}
+              {isChecked && !isCompletedOrRevealed && (
+                <div
+                  className="mt-3.5 pt-3.5 border-t border-slate-100"
+                  role="alert"
+                  aria-live="polite"
+                >
+                  {/* Progressive answer review */}
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5 sm:p-4">
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                        Đối chiếu theo thứ tự nghe
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={handleSkipSentence}
+                          disabled={isChecking}
+                          className="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50 cursor-pointer shadow-2xs"
+                        >
+                          Bỏ qua
+                        </button>
+                        <button
+                          type="button"
+                          onClick={onToggleReveal}
+                          className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
+                        >
+                          {isRevealed ? "Ẩn đáp án" : "Xem đáp án"}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-x-2.5 gap-y-1.5 text-lg sm:text-xl md:text-2xl font-bold leading-relaxed">
+                      {buildProgressiveAnswer(
+                        currentCheck?.correctAnswer ?? canonicalAnswer,
+                        currentCheck?.submittedAnswer ?? displayedAnswer,
+                        isRevealed,
+                      ).map((token, index) => (
+                        <span
+                          key={`${token.text}-${index}`}
+                          className={
+                            token.state === "hint"
+                              ? "rounded-md bg-amber-100 px-2.5 py-0.5 text-amber-950 ring-1 ring-amber-300 font-bold inline-block shadow-2xs"
+                              : token.state === "correct"
+                                ? "text-emerald-700 font-bold"
+                                : token.state === "answer"
+                                  ? "text-slate-900 font-bold"
+                                  : "text-slate-400 tracking-[0.2em] font-mono"
+                          }
+                        >
+                          {token.text}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
-          )}
+
+            {/* Right Column (lg:col-span-5): Translation & Pronunciation */}
+            <div className="lg:col-span-5 flex flex-col gap-3.5 sm:gap-4">
+              {isCompletedOrRevealed ? (
+                <>
+                  {/* Card 1: Vietnamese Translation */}
+                  <div className="rounded-xl border border-slate-200/90 bg-slate-50/80 p-4 sm:p-4.5 shadow-2xs flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
+                          Bản dịch {selectedLanguage === "vi" ? "tiếng Việt" : selectedLanguage === "en" ? "tiếng Anh" : "bản địa"}
+                        </span>
+                        <span className="text-[11px] font-semibold text-slate-400 bg-white border border-slate-200 px-1.5 py-0.5 rounded">
+                          AI Bilingual
+                        </span>
+                      </div>
+                      <p className="text-base sm:text-lg font-bold text-slate-800 leading-relaxed">
+                        {selectedLanguage === "en" ? (
+                          canonicalAnswer || (
+                            <span className="text-slate-400 font-normal italic">
+                              (Chưa có bản dịch cho câu này)
+                            </span>
+                          )
+                        ) : (
+                          translationText || (
+                            <span className="text-slate-400 font-normal italic">
+                              (Chưa có bản dịch cho câu này)
+                            </span>
+                          )
+                        )}
+                      </p>
+                    </div>
+
+                    {/* Translation Actions Bar (Translated by ChatGPT4.1 + Edit + More options) */}
+                    <div className="mt-3.5 pt-2.5 border-t border-slate-200/60 flex items-center justify-between gap-3 text-xs">
+                      <span className="text-slate-400 font-medium text-xs select-none">
+                        Translated by ChatGPT4.1
+                      </span>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {/* Edit button: user provides improved translation to admin */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSuggestedTranslation(translationText || "");
+                            setShowEditTranslationModal(true);
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer shadow-2xs"
+                          title="Cung cấp bản dịch cải thiện cho Admin"
+                        >
+                          <Pencil size={12} className="text-slate-500" />
+                          <span>Edit</span>
+                        </button>
+
+                        {/* More options: Change language, Add another language */}
+                        <div className="relative" ref={translationMenuRef}>
+                          <button
+                            type="button"
+                            onClick={() => setShowTranslationMenu((prev) => !prev)}
+                            className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-1 text-xs text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer shadow-2xs"
+                            title="Tùy chọn ngôn ngữ dịch"
+                            aria-expanded={showTranslationMenu}
+                          >
+                            <MoreHorizontal size={14} />
+                          </button>
+
+                          {showTranslationMenu && (
+                            <div className="absolute right-0 top-full mt-1.5 z-40 w-44 rounded-xl border border-slate-200 bg-white p-1 text-xs font-semibold text-slate-700 shadow-xl animate-in fade-in zoom-in-95 duration-100">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowTranslationMenu(false);
+                                  setShowChangeLanguageModal(true);
+                                }}
+                                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
+                              >
+                                <Globe size={13} className="text-slate-500 shrink-0" />
+                                <span>Change language</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowTranslationMenu(false);
+                                  setShowAddLanguageModal(true);
+                                }}
+                                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
+                              >
+                                <Plus size={13} className="text-slate-500 shrink-0" />
+                                <span>Add another language</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card 2: Pronunciation */}
+                  <div className="rounded-xl border border-slate-200/90 bg-slate-50/80 p-4 sm:p-5 shadow-2xs">
+                    <div className="flex items-center justify-between mb-2.5">
+                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
+                        Phát âm (Pronunciation)
+                      </span>
+                      <span className="text-xs font-semibold text-slate-400">
+                        Nhấp vào từ để tra từ điển
+                      </span>
+                    </div>
+                    <div className="text-base sm:text-lg font-bold text-slate-900 leading-loose">
+                      {canonicalAnswer ? (
+                        String(canonicalAnswer).split(/\s+/).filter(Boolean).map((word: string, wordIdx: number) => {
+                          const cleanWord = word.trim().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "") || word;
+                          return (
+                            <button
+                              key={`${word}-${wordIdx}`}
+                              type="button"
+                              className="inline-block border-b border-dotted border-slate-400 pb-0.5 mr-2 text-slate-900 hover:text-blue-600 hover:border-blue-600 hover:bg-blue-50/70 rounded-xs px-1 py-0.5 cursor-pointer transition-all font-bold text-base sm:text-lg"
+                              title={`Nhấn để tra từ điển & phát âm: "${cleanWord}"`}
+                              onClick={() => {
+                                if (cleanWord) {
+                                  setSelectedWordForLookup(cleanWord);
+                                }
+                              }}
+                            >
+                              {word}
+                            </button>
+                          );
+                        })
+                      ) : (
+                        <span className="text-slate-400 font-normal italic">
+                          (Đang cập nhật phát âm)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col justify-center items-center h-full min-h-[220px] rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-6 text-center">
+                  <div className="size-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-2.5">
+                    <Languages size={18} />
+                  </div>
+                  <p className="text-sm font-bold text-slate-700">
+                    Bản dịch & Giải thích phát âm
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1.5 max-w-xs leading-relaxed">
+                    Sẽ tự động hiển thị sau khi bạn bấm Kiểm tra hoặc Bỏ qua.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       ) : (
         /* 4b. Full Transcript Tab View (BreadTrans Light Theme Two-Column Split Layout) */
@@ -1525,6 +1868,7 @@ export function DailyDictationWorkspace({
                           (q.content as any)?.audioText ||
                           (q.content as any)?.text ||
                           `Câu ${idx + 1}`,
+                        speaker: (q.content as any)?.speaker || null,
                         translation: (q.content as any)?.translation || null,
                       }));
 
@@ -1572,7 +1916,6 @@ export function DailyDictationWorkspace({
                       const questionIndex = questions.findIndex((q) => q.id === item.questionId);
                       const resolvedIndex = questionIndex >= 0 ? questionIndex : idx;
                       const isCurrent = resolvedIndex === currentIndex;
-                      const itemIsPlaying = isCurrent && isPlaying;
 
                       return (
                         <button
@@ -1586,7 +1929,7 @@ export function DailyDictationWorkspace({
                               : "bg-white hover:bg-stone-50/90 border-stone-200/60 text-stone-700"
                           }`}
                         >
-                          {/* Circular Play button */}
+                          {/* The full script uses one continuous audio track; rows select the highlighted line. */}
                           <span
                             className={`size-7 sm:size-8 rounded-full flex items-center justify-center shrink-0 transition-colors mt-0.5 ${
                               isCurrent
@@ -1595,16 +1938,17 @@ export function DailyDictationWorkspace({
                             }`}
                             aria-hidden="true"
                           >
-                            {itemIsPlaying ? (
-                              <Pause size={13} fill="currentColor" />
-                            ) : (
-                              <Play size={13} fill="currentColor" className="ml-0.5" />
-                            )}
+                            {idx + 1}
                           </span>
 
                           {/* Text content */}
                           <div className="min-w-0 flex-1">
                             <p className={`text-sm leading-relaxed ${isCurrent ? "font-bold text-amber-950" : "font-medium text-stone-800 group-hover:text-stone-900"}`}>
+                              {item.speaker && (
+                                <span className="mr-1 text-[11px] font-bold uppercase tracking-wide text-amber-700">
+                                  {item.speaker}:
+                                </span>
+                              )}
                               {item.transcript}
                             </p>
                             {selectedTranslationLanguage === "vi" && item.translation && (
@@ -1647,25 +1991,23 @@ export function DailyDictationWorkspace({
         </div>
       )}
 
-      {/* 5. Motivational Tip Banner below Workspace */}
+      {/* 5. Motivational Tip Banner below Workspace (compact pill hugging content) */}
       <aside
         aria-label="Lời khuyên luyện nghe"
-        className="mt-6 flex items-center justify-between gap-3 rounded-xl border border-amber-200/80 bg-amber-50/70 px-5 py-3.5 text-xs text-amber-900 shadow-2xs font-medium"
+        className="mt-4 inline-flex max-w-2xl flex-wrap items-center gap-2 self-start rounded-lg border border-amber-200/80 bg-amber-50/70 px-3.5 py-1.5 text-sm font-medium text-amber-900 shadow-2xs"
       >
-        <div className="flex items-center gap-2.5 min-w-0">
-          <Lightbulb size={16} className="text-amber-600 shrink-0" aria-hidden="true" />
-          <p className="truncate sm:whitespace-normal">
-            {DICTATION_TIPS[tipIndex]}
-          </p>
-        </div>
+        <Lightbulb size={14} className="shrink-0 text-amber-600" aria-hidden="true" />
+        <span className="leading-relaxed">
+          {DICTATION_TIPS[tipIndex]}
+        </span>
         <button
           type="button"
           onClick={handleRotateTip}
           title="Xem lời khuyên khác"
           aria-label="Xem lời khuyên khác"
-          className="shrink-0 p-1 text-amber-700 hover:text-amber-900 transition-colors cursor-pointer"
+          className="ml-0.5 shrink-0 rounded p-1 text-amber-700/80 transition-colors hover:bg-amber-100 hover:text-amber-950 cursor-pointer"
         >
-          <RefreshCw size={13} />
+          <RefreshCw size={12} />
         </button>
       </aside>
 
@@ -1747,43 +2089,6 @@ export function DailyDictationWorkspace({
         </div>
       )}
 
-      {/* Notes Modal */}
-      {showNotesModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl text-slate-800 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-              <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-                <StickyNote size={17} className="text-amber-500" />
-                Ghi chú bài học
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowNotesModal(false)}
-                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            <textarea
-              value={notes}
-              onChange={(e) => onSaveNotes(e.target.value)}
-              placeholder="Ghi lại từ mới, cấu trúc nghe được..."
-              rows={6}
-              className="w-full rounded-xl border-2 border-slate-200 bg-slate-50/50 p-3 text-sm text-slate-800 focus:border-blue-600 focus:bg-white focus:outline-none"
-            />
-            <div className="mt-4 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setShowNotesModal(false)}
-                className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 text-xs font-bold shadow-xs cursor-pointer"
-              >
-                Lưu & Đóng
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Shortcuts Modal */}
       {showShortcutsModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
@@ -1834,6 +2139,290 @@ export function DailyDictationWorkspace({
             </div>
           </div>
         </div>
+      )}
+
+      {/* 1. Edit Translation Suggestion Modal (Submits feedback to Admin, does not mutate live) */}
+      {showEditTranslationModal && (
+        <div
+          className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/45 backdrop-blur-[2px] animate-in fade-in duration-150"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+              <div>
+                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                  <Pencil size={16} className="text-blue-600" />
+                  Đề xuất bản dịch cải thiện
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Bản dịch của bạn sẽ được gửi tới Admin để kiểm duyệt và nâng cấp bài học.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEditTranslationModal(false)}
+                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-3.5 text-xs">
+              <div>
+                <span className="font-bold text-slate-700 block mb-1">Câu tiếng Anh gốc:</span>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-semibold text-slate-900 leading-relaxed">
+                  {canonicalAnswer || "(Không có câu gốc)"}
+                </div>
+              </div>
+
+              <div>
+                <span className="font-bold text-slate-700 block mb-1">Bản dịch hiện tại:</span>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs text-slate-600 leading-relaxed">
+                  {translationText || "(Chưa có bản dịch)"}
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-800 block mb-1">
+                  Bản dịch đề xuất của bạn <span className="text-rose-500">*</span>:
+                </label>
+                <textarea
+                  value={suggestedTranslation}
+                  onChange={(e) => setSuggestedTranslation(e.target.value)}
+                  placeholder="Nhập bản dịch tiếng Việt chuẩn xác hơn theo ý bạn..."
+                  rows={3}
+                  className="w-full rounded-xl border-2 border-slate-200 bg-white p-3 text-sm text-slate-900 focus:border-blue-600 focus:outline-none"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">
+                  Ghi chú thêm (tùy chọn):
+                </label>
+                <input
+                  type="text"
+                  value={suggestionNote}
+                  onChange={(e) => setSuggestionNote(e.target.value)}
+                  placeholder="Ví dụ: Dịch tự nhiên hơn theo ngữ cảnh giao tiếp hàng ngày..."
+                  className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-800 focus:border-blue-600 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="mt-5 flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowEditTranslationModal(false)}
+                disabled={isSubmittingSuggestion}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmitTranslationSuggestion}
+                disabled={isSubmittingSuggestion || !suggestedTranslation.trim()}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-xs font-bold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {isSubmittingSuggestion ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin" />
+                    <span>Đang gửi...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send size={13} />
+                    <span>Gửi đề xuất cho Admin</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Change Language Modal */}
+      {showChangeLanguageModal && (
+        <div
+          className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/45 backdrop-blur-[2px] animate-in fade-in duration-150"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+              <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                <Globe size={16} className="text-blue-600" />
+                Change language
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowChangeLanguageModal(false)}
+                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 mb-3">
+              Chọn ngôn ngữ hiển thị bản dịch cho câu này:
+            </p>
+
+            <div className="space-y-1.5 text-xs">
+              {[
+                { code: "vi", label: "Tiếng Việt (Mặc định)" },
+                { code: "en", label: "English (Nguyên bản tiếng Anh)" },
+                { code: "ja", label: "日本語 (Japanese)" },
+                { code: "ko", label: "한국어 (Korean)" },
+                { code: "fr", label: "Français (French)" },
+                { code: "zh", label: "中文 (Chinese)" },
+              ].map((item) => (
+                <button
+                  key={item.code}
+                  type="button"
+                  onClick={() => {
+                    setSelectedLanguage(item.code);
+                    setShowChangeLanguageModal(false);
+                    if (item.code !== "vi" && item.code !== "en") {
+                      toast(`Đã chọn ${item.label}. Ngôn ngữ này đang được cập nhật thêm.`);
+                    }
+                  }}
+                  className={`flex w-full items-center justify-between p-2.5 rounded-xl border text-left transition-colors cursor-pointer ${
+                    selectedLanguage === item.code
+                      ? "border-blue-600 bg-blue-50/70 text-blue-900 font-bold"
+                      : "border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold"
+                  }`}
+                >
+                  <span>{item.label}</span>
+                  {selectedLanguage === item.code && <Check size={14} className="text-blue-600" />}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowChangeLanguageModal(false)}
+                className="rounded-xl bg-slate-900 text-white px-4 py-2 text-xs font-bold hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Add Another Language Modal */}
+      {showAddLanguageModal && (
+        <div
+          className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/45 backdrop-blur-[2px] animate-in fade-in duration-150"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+              <div>
+                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                  <Plus size={16} className="text-blue-600" />
+                  Add another language
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Đóng góp bản dịch ngôn ngữ mới cho câu này tới Admin.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddLanguageModal(false)}
+                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-3.5 text-xs">
+              <div>
+                <span className="font-bold text-slate-700 block mb-1">Câu tiếng Anh gốc:</span>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-semibold text-slate-900 leading-relaxed">
+                  {canonicalAnswer || "(Không có câu gốc)"}
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-800 block mb-1">
+                  Tên ngôn ngữ <span className="text-rose-500">*</span>:
+                </label>
+                <input
+                  type="text"
+                  value={addLangName}
+                  onChange={(e) => setAddLangName(e.target.value)}
+                  placeholder="Ví dụ: Japanese, Korean, French, German..."
+                  className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-800 focus:border-blue-600 focus:outline-none"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-800 block mb-1">
+                  Bản dịch tương ứng <span className="text-rose-500">*</span>:
+                </label>
+                <textarea
+                  value={addLangTranslation}
+                  onChange={(e) => setAddLangTranslation(e.target.value)}
+                  placeholder="Nhập bản dịch bằng ngôn ngữ trên..."
+                  rows={3}
+                  className="w-full rounded-xl border-2 border-slate-200 bg-white p-3 text-sm text-slate-900 focus:border-blue-600 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="mt-5 flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowAddLanguageModal(false)}
+                disabled={isSubmittingAddLang}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmitAddLanguage}
+                disabled={isSubmittingAddLang || !addLangName.trim() || !addLangTranslation.trim()}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-xs font-bold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {isSubmittingAddLang ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin" />
+                    <span>Đang gửi...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send size={13} />
+                    <span>Gửi bản dịch cho Admin</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Interactive Word Dictionary Popup (matching Speaking module) */}
+      {selectedWordForLookup && (
+        <WordDictionaryPopup
+          word={selectedWordForLookup}
+          onClose={() => setSelectedWordForLookup(null)}
+          onPracticeWord={(w) => {
+            if (typeof window !== "undefined" && "speechSynthesis" in window) {
+              window.speechSynthesis.cancel();
+              const utterance = new SpeechSynthesisUtterance(w);
+              utterance.rate = 0.9;
+              utterance.lang = accent === "UK" ? "en-GB" : "en-US";
+              window.speechSynthesis.speak(utterance);
+            }
+          }}
+        />
       )}
     </div>
   );

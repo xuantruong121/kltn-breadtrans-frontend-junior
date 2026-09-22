@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle2,
+  ChevronLeft,
   ChevronRight,
   Loader2,
   Search,
@@ -39,12 +40,14 @@ export default function IssueReportsPage() {
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<IssueReportStatus | "">("");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<IssueReportItem | null>(null);
   const [resolutionNote, setResolutionNote] = useState("");
   const query = useQuery({
-    queryKey: ["admin-issue-reports", status, search],
+    queryKey: ["admin-issue-reports", status, search, page],
     queryFn: () =>
       issueReportService.list({
+        page,
         status: status || undefined,
         search: search || undefined,
       }),
@@ -100,14 +103,20 @@ export default function IssueReportsPage() {
           />
           <input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             placeholder="Tìm theo mã hoặc mô tả..."
             className="min-h-11 w-full rounded-xl border border-slate-300 pl-10 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           />
         </label>
         <select
           value={status}
-          onChange={(e) => setStatus(e.target.value as IssueReportStatus | "")}
+          onChange={(e) => {
+            setStatus(e.target.value as IssueReportStatus | "");
+            setPage(1);
+          }}
           className="min-h-11 rounded-xl border border-slate-300 px-3 text-sm"
         >
           <option value="">Tất cả trạng thái</option>
@@ -197,6 +206,43 @@ export default function IssueReportsPage() {
           </table>
         </div>
       </section>
+      {(query.data?.totalPages ?? 0) > 1 && (
+        <nav
+          aria-label="Phân trang báo cáo lỗi"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3"
+        >
+          <p className="text-sm text-slate-500">
+            Trang {query.data?.page ?? page} / {query.data?.totalPages ?? 1}
+            {typeof query.data?.total === "number" && (
+              <> · {query.data.total} báo cáo</>
+            )}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={page <= 1 || query.isFetching}
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+              className="inline-flex min-h-10 items-center gap-1 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ChevronLeft size={16} />
+              Trước
+            </button>
+            <button
+              type="button"
+              disabled={page >= (query.data?.totalPages ?? 1) || query.isFetching}
+              onClick={() =>
+                setPage((current) =>
+                  Math.min(query.data?.totalPages ?? current, current + 1),
+                )
+              }
+              className="inline-flex min-h-10 items-center gap-1 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Sau
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </nav>
+      )}
       {selected && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4"

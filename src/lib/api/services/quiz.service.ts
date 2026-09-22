@@ -137,12 +137,15 @@ export interface CheckPracticeQuestionResult {
   wordAccuracy?: number;
   explanation: QuestionExplanation | null;
   translation: string | null;
+  /** True when the user chose to skip this question without a correct answer */
+  skipped?: boolean;
 }
 
 export interface ListeningTranscriptItem {
   questionId: number;
   order: number;
   transcript: string;
+  speaker?: string | null;
   translation: string | null;
 }
 
@@ -205,6 +208,16 @@ export const quizService = {
     quizId: number,
   ): Promise<ListeningTranscriptResponse> => {
     return await axiosClient.get(`/quizzes/${quizId}/transcript`);
+  },
+
+  getListeningTranscriptAudioBlob: async (
+    quizId: number,
+    signal?: AbortSignal,
+  ): Promise<Blob> => {
+    return await axiosClient.get(`/quizzes/${quizId}/transcript/audio`, {
+      responseType: "blob",
+      signal,
+    });
   },
 
   getOrCreateListeningAttempt: async (
