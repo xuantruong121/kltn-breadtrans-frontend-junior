@@ -117,21 +117,21 @@ export function IssueReportDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="issue-report-title"
-        className="w-full max-w-lg rounded-t-3xl border border-slate-200 bg-white p-5 shadow-2xl sm:rounded-3xl sm:p-6"
+        className="w-full max-w-lg rounded-t-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xl sm:rounded-3xl sm:p-6"
       >
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
           <div className="flex gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-rose-50 text-rose-600">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
               <AlertTriangle size={20} />
             </span>
             <div>
               <h2
                 id="issue-report-title"
-                className="text-lg font-bold text-slate-900"
+                className="text-lg font-bold text-slate-900 dark:text-slate-100"
               >
                 {title}
               </h2>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 Thông tin này sẽ được gửi đến đội ngũ BreadTrans.
               </p>
             </div>
@@ -139,7 +139,7 @@ export function IssueReportDialog({
           <button
             type="button"
             onClick={onClose}
-            className="grid min-h-11 min-w-11 place-items-center rounded-xl text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+            className="grid min-h-11 min-w-11 place-items-center rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
             aria-label="Đóng cửa sổ báo lỗi"
           >
             <X size={20} />
@@ -147,13 +147,13 @@ export function IssueReportDialog({
         </div>
         {reportCode ? (
           <div className="py-8 text-center">
-            <CheckCircle2 className="mx-auto text-emerald-600" size={40} />
-            <h3 className="mt-3 text-lg font-bold text-slate-900">
+            <CheckCircle2 className="mx-auto text-emerald-600 dark:text-emerald-400" size={40} />
+            <h3 className="mt-3 text-lg font-bold text-slate-900 dark:text-slate-100">
               Đã gửi báo lỗi
             </h3>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               Mã tiếp nhận:{" "}
-              <strong className="text-slate-900">{reportCode}</strong>
+              <strong className="text-slate-900 dark:text-slate-100">{reportCode}</strong>
             </p>
             <button
               type="button"
@@ -168,7 +168,7 @@ export function IssueReportDialog({
             <div>
               <label
                 htmlFor="issue-category"
-                className="mb-1.5 block text-sm font-semibold text-slate-800"
+                className="mb-1.5 block text-sm font-semibold text-slate-800 dark:text-slate-200"
               >
                 Bạn gặp vấn đề gì?
               </label>
@@ -179,7 +179,7 @@ export function IssueReportDialog({
                 onChange={(e) =>
                   setCategory(e.target.value as IssueReportCategory)
                 }
-                className="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
+                className="min-h-11 w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-900/40"
               >
                 {categoryOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -189,7 +189,7 @@ export function IssueReportDialog({
               </select>
             </div>
             <fieldset>
-              <legend className="mb-1.5 text-sm font-semibold text-slate-800">
+              <legend className="mb-1.5 text-sm font-semibold text-slate-800 dark:text-slate-200">
                 Mức độ ảnh hưởng
               </legend>
               <div className="grid grid-cols-2 gap-2">
@@ -201,7 +201,7 @@ export function IssueReportDialog({
                 ).map(([value, label]) => (
                   <label
                     key={value}
-                    className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border px-3 text-sm ${impact === value ? "border-amber-500 bg-amber-50 text-amber-900" : "border-slate-200 text-slate-600"}`}
+                    className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border px-3 text-sm ${impact === value ? "border-amber-500 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300" : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400"}`}
                   >
                     <input
                       type="radio"
@@ -218,7 +218,7 @@ export function IssueReportDialog({
             <div>
               <label
                 htmlFor="issue-description"
-                className="mb-1.5 block text-sm font-semibold text-slate-800"
+                className="mb-1.5 block text-sm font-semibold text-slate-800 dark:text-slate-200"
               >
                 Mô tả chi tiết
               </label>
@@ -229,12 +229,12 @@ export function IssueReportDialog({
                 rows={5}
                 maxLength={1500}
                 placeholder="Ví dụ: Ở câu 3, nút phát âm không có tiếng dù tôi đã thử tải lại trang."
-                className="w-full resize-y rounded-xl border border-slate-300 px-3 py-2.5 text-sm leading-6 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
+                className="w-full resize-y rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 leading-6 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-900/40"
                 aria-describedby="issue-description-help"
               />
               <div
                 id="issue-description-help"
-                className="mt-1 flex justify-between text-xs text-slate-500"
+                className="mt-1 flex justify-between text-xs text-slate-500 dark:text-slate-400"
               >
                 <span>Không cần dùng thuật ngữ kỹ thuật.</span>
                 <span>{description.length}/1500</span>
@@ -243,16 +243,16 @@ export function IssueReportDialog({
             {error && (
               <p
                 role="alert"
-                className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700"
+                className="rounded-xl bg-rose-50 dark:bg-rose-950/40 px-3 py-2 text-sm text-rose-700 dark:text-rose-300"
               >
                 {error}
               </p>
             )}
-            <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+            <div className="flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800 pt-4">
               <button
                 type="button"
                 onClick={onClose}
-                className="min-h-11 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                className="min-h-11 rounded-xl border border-slate-300 dark:border-slate-700 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
               >
                 Huỷ
               </button>

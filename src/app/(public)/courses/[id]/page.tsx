@@ -177,14 +177,14 @@ export default function PublicCourseDetailPage() {
   if (isLoading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8 animate-pulse">
-        <div className="h-6 bg-slate-200 rounded w-48" />
-        <div className="h-10 bg-slate-200 rounded-xl w-3/4" />
+        <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-48" />
+        <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded-xl w-3/4" />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-6">
           <div className="lg:col-span-2 space-y-6">
-            <div className="h-40 bg-slate-100 rounded-3xl" />
-            <div className="h-64 bg-slate-100 rounded-3xl" />
+            <div className="h-40 bg-slate-100 dark:bg-slate-800/60 rounded-3xl" />
+            <div className="h-64 bg-slate-100 dark:bg-slate-800/60 rounded-3xl" />
           </div>
-          <div className="h-96 bg-slate-100 rounded-3xl" />
+          <div className="h-96 bg-slate-100 dark:bg-slate-800/60 rounded-3xl" />
         </div>
       </div>
     );
@@ -193,13 +193,13 @@ export default function PublicCourseDetailPage() {
   if (error && !notFound) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-24 text-center space-y-6">
-        <div className="w-16 h-16 rounded-3xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto">
+        <div className="w-16 h-16 rounded-3xl bg-rose-50 border border-rose-200 text-rose-600 dark:bg-rose-950/40 dark:border-rose-900/60 dark:text-rose-400 flex items-center justify-center mx-auto">
           <AlertCircle size={32} />
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100">
           Không thể tải thông tin khóa học
         </h1>
-        <p className="text-slate-600 max-w-md mx-auto text-base">{error}</p>
+        <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto text-base">{error}</p>
         <div className="pt-2">
           <Link
             href="/courses"
@@ -216,13 +216,13 @@ export default function PublicCourseDetailPage() {
   if (notFound || !course) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-24 text-center space-y-6">
-        <div className="w-16 h-16 rounded-3xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto">
+        <div className="w-16 h-16 rounded-3xl bg-amber-50 border border-amber-200 text-amber-600 dark:bg-amber-950/40 dark:border-amber-900/60 dark:text-amber-400 flex items-center justify-center mx-auto">
           <AlertCircle size={32} />
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100">
           Khóa học không tồn tại hoặc chưa được công khai
         </h1>
-        <p className="text-slate-600 max-w-md mx-auto text-base">
+        <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto text-base">
           Nội dung bạn đang tìm kiếm có thể đã được gỡ bỏ hoặc đang trong quá trình biên tập nội dung.
         </p>
         <div className="pt-2">
@@ -248,7 +248,7 @@ export default function PublicCourseDetailPage() {
       <div>
         <Link
           href="/courses"
-          className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors"
+          className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
         >
           <ArrowLeft size={16} />
           Tất cả khóa học
@@ -256,67 +256,67 @@ export default function PublicCourseDetailPage() {
       </div>
 
       {/* 2. Hero Section */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-xs space-y-6">
+      <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl p-6 sm:p-10 shadow-xs space-y-6">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-junior-blue border border-blue-200/60 uppercase tracking-wide">
+          <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-junior-blue border border-blue-200/60 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-900/50 uppercase tracking-wide">
             {course.level || "Cơ bản"}
           </span>
-          <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/50">
             Chương trình chuẩn hóa
           </span>
           {course.classes.length > 0 ? (
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900/50">
               {course.classes.length} lớp sắp khai giảng
             </span>
           ) : (
-            <span className="px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
+            <span className="px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
               Đang cập nhật lịch khai giảng
             </span>
           )}
         </div>
 
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
           {course.title}
         </h1>
 
-        <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-4xl">
+        <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed max-w-4xl">
           {course.description ||
             "Khóa học cung cấp kiến thức nền tảng vững vàng, phát triển toàn diện các kỹ năng nghe nói đọc viết và tự tin ứng dụng trong môi trường học tập."}
         </p>
 
         {/* Self-paced learning highlight */}
-        <div className="pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-base">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 flex items-center justify-center font-bold text-base">
               <Clock size={20} />
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                 Thời gian
               </p>
-              <p className="text-sm font-bold text-slate-900">Tự học 24/7 linh hoạt</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Tự học 24/7 linh hoạt</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-base">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 flex items-center justify-center font-bold text-base">
               <ShieldCheck size={20} />
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                 Hỗ trợ học tập
               </p>
-              <p className="text-sm font-bold text-slate-900">Phân tích & chấm điểm tự động</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Phân tích & chấm điểm tự động</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-base">
+            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400 flex items-center justify-center font-bold text-base">
               <CheckCircle2 size={20} />
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                 Lộ trình
               </p>
-              <p className="text-sm font-bold text-slate-900">Tuần tự theo từng bài</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Tuần tự theo từng bài</p>
             </div>
           </div>
         </div>
@@ -327,17 +327,17 @@ export default function PublicCourseDetailPage() {
         {/* LEFT COLUMN: Curriculum Outline & Highlights */}
         <div className="lg:col-span-7 space-y-8">
           {/* Curriculum Section */}
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+          <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
                   Khung chương trình học
                 </h2>
-                <p className="text-xs font-semibold text-slate-500 mt-1">
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1">
                   Tổng quan nội dung đào tạo theo từng bài học
                 </p>
               </div>
-              <div className="px-3 py-1 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">
+              <div className="px-3 py-1 rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 text-xs font-bold">
                 {course.lessons.length} bài học
               </div>
             </div>
@@ -347,15 +347,15 @@ export default function PublicCourseDetailPage() {
                 {course.lessons.map((lesson, idx) => (
                   <div
                     key={lesson.id}
-                    className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-start gap-4 hover:bg-slate-100/70 transition-colors"
+                    className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 hover:bg-slate-100/70 dark:bg-slate-800/40 dark:border-slate-800 dark:hover:bg-slate-800/70 transition-colors flex items-start gap-4"
                   >
-                    <div className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-bold text-xs text-slate-700 shrink-0 mt-0.5">
+                    <div className="w-8 h-8 rounded-xl bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-700 flex items-center justify-center font-bold text-xs text-slate-700 dark:text-slate-300 shrink-0 mt-0.5">
                       {lesson.order || idx + 1}
                     </div>
                     <div className="space-y-1">
-                      <h4 className="text-base font-bold text-slate-900">{lesson.title}</h4>
+                      <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">{lesson.title}</h4>
                       {lesson.description && (
-                        <p className="text-sm text-slate-600 leading-relaxed">
+                        <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                           {lesson.description}
                         </p>
                       )}
@@ -364,31 +364,31 @@ export default function PublicCourseDetailPage() {
                 ))}
               </div>
             ) : (
-              <div className="p-8 text-center text-slate-500 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+              <div className="p-8 text-center text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
                 Khung giáo trình đang được hoàn thiện cập nhật.
               </div>
             )}
 
-            <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-100 text-xs text-slate-600 leading-relaxed">
-              <span className="font-bold text-slate-800">Lưu ý:</span> Khung chương trình trên là
+            <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-100 text-xs text-slate-600 dark:bg-blue-950/30 dark:border-blue-900/40 dark:text-slate-400 leading-relaxed">
+              <span className="font-bold text-slate-800 dark:text-slate-200">Lưu ý:</span> Khung chương trình trên là
               nội dung tổng quan. Tài liệu độc quyền, video hướng dẫn và hệ thống bài tập thực hành
               sẽ được mở trong tài khoản của học viên sau khi nhập học vào lớp.
             </div>
           </div>
 
           {/* Value Highlights */}
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-4">
-            <h3 className="text-xl font-bold text-slate-900">Cam kết chất lượng đào tạo</h3>
+          <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl p-6 sm:p-8 space-y-4">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Cam kết chất lượng đào tạo</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
-                <p className="font-bold text-sm text-slate-900">Tự học có hướng dẫn</p>
-                <p className="text-xs text-slate-600">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 dark:bg-slate-800/40 dark:border-slate-800 space-y-1.5">
+                <p className="font-bold text-sm text-slate-900 dark:text-slate-100">Tự học có hướng dẫn</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
                   Luyện tập phát âm, ngữ pháp và nhận phản hồi trực tiếp từ hệ thống.
                 </p>
               </div>
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
-                <p className="font-bold text-sm text-slate-900">Bài tập & Đánh giá</p>
-                <p className="text-xs text-slate-600">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 dark:bg-slate-800/40 dark:border-slate-800 space-y-1.5">
+                <p className="font-bold text-sm text-slate-900 dark:text-slate-100">Bài tập & Đánh giá</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
                   Hệ thống chấm trắc nghiệm tự động và phản hồi bài viết chuẩn hóa.
                 </p>
               </div>
@@ -398,12 +398,12 @@ export default function PublicCourseDetailPage() {
 
         {/* RIGHT COLUMN: Offerings (Sidebar) */}
         <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-28">
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
-            <div className="pb-4 border-b border-slate-100">
-              <h3 className="text-xl font-bold text-slate-900 tracking-tight">
+          <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+            <div className="pb-4 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
                 Danh sách Gói học đang mở
               </h3>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Lựa chọn gói khóa học phù hợp để bắt đầu học ngay
               </p>
             </div>
@@ -419,28 +419,28 @@ export default function PublicCourseDetailPage() {
                   return (
                     <div
                       key={cls.id}
-                      className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-3 hover:border-slate-300 transition-colors"
+                      className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-800/30 dark:hover:border-slate-700 space-y-3 transition-colors"
                     >
                       {/* Class Header: Name + Badges */}
                       <div className="flex items-start justify-between gap-2">
                         <div className="space-y-1">
-                          <h4 className="text-base font-bold text-slate-900">{cls.name}</h4>
+                          <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">{cls.name}</h4>
                           <div className="flex flex-wrap items-center gap-1.5">
                             {isFree ? (
-                              <span className="px-2 py-0.5 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                              <span className="px-2 py-0.5 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800">
                                 Miễn phí
                               </span>
                             ) : (
-                              <span className="px-2 py-0.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                              <span className="px-2 py-0.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800">
                                 {formatVnd(cls.tuitionFeeVnd)}
                               </span>
                             )}
                             {cls.isSoldOut ? (
-                              <span className="px-2 py-0.5 rounded-lg text-xs font-bold bg-slate-200 text-slate-600">
+                              <span className="px-2 py-0.5 rounded-lg text-xs font-bold bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                                 Hết chỗ
                               </span>
                             ) : (
-                              <span className="px-2 py-0.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span className="px-2 py-0.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-900/50">
                                 Còn {cls.remainingSeats} chỗ
                               </span>
                             )}
@@ -449,22 +449,22 @@ export default function PublicCourseDetailPage() {
                       </div>
 
                       {/* Class Details */}
-                      <div className="space-y-1.5 text-xs text-slate-600 pt-1">
+                      <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-400 pt-1">
                         <div className="flex items-center gap-2">
-                          <Calendar size={14} className="text-slate-400 shrink-0" />
+                          <Calendar size={14} className="text-slate-400 dark:text-slate-500 shrink-0" />
                           <span>
                             Khai giảng:{" "}
-                            <strong className="text-slate-800">{formatDate(cls.startDate)}</strong>
+                            <strong className="text-slate-800 dark:text-slate-200">{formatDate(cls.startDate)}</strong>
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Users size={14} className="text-slate-400 shrink-0" />
+                          <Users size={14} className="text-slate-400 dark:text-slate-500 shrink-0" />
                           <span>Sĩ số tối đa: {cls.capacity} học viên</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <ShieldCheck size={14} className="text-slate-400 shrink-0" />
+                          <ShieldCheck size={14} className="text-slate-400 dark:text-slate-500 shrink-0" />
                           <span>
-                            Hình thức: <strong className="text-slate-800">Tự học có hướng dẫn</strong>
+                            Hình thức: <strong className="text-slate-800 dark:text-slate-200">Tự học có hướng dẫn</strong>
                           </span>
                         </div>
                       </div>
@@ -482,7 +482,7 @@ export default function PublicCourseDetailPage() {
                           </Link>
                         ) : user.role !== "STUDENT" ? (
                           /* 2. Teacher or Admin */
-                          <div className="p-2.5 rounded-xl bg-slate-100 text-slate-500 text-xs text-center font-medium">
+                          <div className="p-2.5 rounded-xl bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 text-xs text-center font-medium">
                             Tài khoản quản trị viên (quản lý tại Dashboard)
                           </div>
                         ) : isEnrolledActive ? (
@@ -497,13 +497,13 @@ export default function PublicCourseDetailPage() {
                         ) : isEnrolledPending ? (
                           /* 4. Student PENDING_PAYMENT */
                           <div className="space-y-1.5">
-                            <div className="w-full py-2.5 rounded-xl text-xs font-bold bg-amber-100 border border-amber-300 text-amber-800 text-center flex items-center justify-center gap-1.5">
+                            <div className="w-full py-2.5 rounded-xl text-xs font-bold bg-amber-100 border border-amber-300 text-amber-800 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-300 text-center flex items-center justify-center gap-1.5">
                               <Clock size={14} />
                               Đang chờ thanh toán
                             </div>
-                            <p className="text-[11px] text-slate-500 text-center">
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 text-center">
                               Vui lòng xem thông tin tại{" "}
-                              <Link href="/my-courses" className="text-junior-blue font-bold hover:underline">
+                              <Link href="/my-courses" className="text-junior-blue dark:text-blue-400 font-bold hover:underline">
                                 Khóa học của tôi
                               </Link>
                             </p>
@@ -512,7 +512,7 @@ export default function PublicCourseDetailPage() {
                           /* 5. Sold out */
                           <button
                             disabled
-                            className="w-full py-2.5 rounded-xl text-xs font-bold bg-slate-200 text-slate-400 cursor-not-allowed text-center"
+                            className="w-full py-2.5 rounded-xl text-xs font-bold bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-600 cursor-not-allowed text-center"
                           >
                             Lớp đã đủ học viên
                           </button>
@@ -541,10 +541,10 @@ export default function PublicCourseDetailPage() {
                 })}
               </div>
             ) : (
-              <div className="p-6 text-center space-y-3 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                <Calendar className="mx-auto text-slate-300" size={36} />
-                <p className="text-sm font-bold text-slate-700">Chưa có lịch mở lớp mới</p>
-                <p className="text-xs text-slate-500 leading-relaxed">
+              <div className="p-6 text-center space-y-3 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+                <Calendar className="mx-auto text-slate-300 dark:text-slate-600" size={36} />
+                <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Chưa có lịch mở lớp mới</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                   Trung tâm đang hoàn thiện lịch khai giảng cho khóa học này. Hãy đăng ký tài khoản hoặc
                   liên hệ hotline để nhận thông báo sớm nhất.
                 </p>
@@ -553,13 +553,13 @@ export default function PublicCourseDetailPage() {
 
             {/* Bottom Guidance Note */}
             {!user && (
-              <div className="pt-4 border-t border-slate-100 space-y-3">
-                <p className="text-xs text-slate-500 leading-relaxed">
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                   Đăng nhập tài khoản học viên để tự ghi danh vào các lớp học sắp khai giảng.
                 </p>
                 <Link
                   href={loginCtaUrl}
-                  className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold bg-slate-900 text-white hover:bg-slate-800 transition-colors"
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 transition-colors"
                 >
                   Đăng nhập tài khoản học viên
                   <ArrowRight size={16} />
@@ -572,22 +572,22 @@ export default function PublicCourseDetailPage() {
 
       {/* 4. Enrollment Confirmation Modal */}
       {selectedClassForEnroll && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-100 space-y-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-800 space-y-6">
             {/* Modal Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="space-y-0.5">
-                <h3 className="text-lg font-bold text-slate-900">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
                   {selectedClassForEnroll.tuitionFeeVnd === 0
                     ? "Xác nhận ghi danh miễn phí"
                     : "Xác nhận đăng ký lớp học"}
                 </h3>
-                <p className="text-xs text-slate-500">{course.title}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{course.title}</p>
               </div>
               <button
                 onClick={() => !isEnrolling && setSelectedClassForEnroll(null)}
                 disabled={isEnrolling}
-                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:text-slate-800 dark:bg-slate-800 dark:text-slate-400 dark:hover:text-slate-200 flex items-center justify-center transition-colors cursor-pointer"
               >
                 <X size={16} />
               </button>
@@ -595,31 +595,31 @@ export default function PublicCourseDetailPage() {
 
             {/* Modal Body */}
             <div className="space-y-4">
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2 text-sm">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 dark:bg-slate-800/40 dark:border-slate-800 space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-slate-500 text-xs">Lớp học:</span>
-                  <strong className="text-slate-900">{selectedClassForEnroll.name}</strong>
+                  <span className="text-slate-500 dark:text-slate-400 text-xs">Lớp học:</span>
+                  <strong className="text-slate-900 dark:text-slate-100">{selectedClassForEnroll.name}</strong>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500 text-xs">Khai giảng:</span>
-                  <span className="text-slate-700 font-medium">
+                  <span className="text-slate-500 dark:text-slate-400 text-xs">Khai giảng:</span>
+                  <span className="text-slate-700 dark:text-slate-300 font-medium">
                     {formatDate(selectedClassForEnroll.startDate)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500 text-xs">Giảng viên:</span>
-                  <span className="text-slate-700 font-medium">
+                  <span className="text-slate-500 dark:text-slate-400 text-xs">Giảng viên:</span>
+                  <span className="text-slate-700 dark:text-slate-300 font-medium">
                     {selectedClassForEnroll.teacher?.fullName || "Ban Học Thuật BreadTrans"}
                   </span>
                 </div>
-                <div className="flex justify-between items-center pt-2 border-t border-slate-200/60">
-                  <span className="text-slate-500 text-xs">Học phí:</span>
+                <div className="flex justify-between items-center pt-2 border-t border-slate-200/60 dark:border-slate-700">
+                  <span className="text-slate-500 dark:text-slate-400 text-xs">Học phí:</span>
                   {selectedClassForEnroll.tuitionFeeVnd === 0 ? (
-                    <span className="font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-lg text-xs">
+                    <span className="font-bold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-300 px-2.5 py-0.5 rounded-lg text-xs">
                       Miễn phí
                     </span>
                   ) : (
-                    <span className="font-bold text-slate-900 text-base">
+                    <span className="font-bold text-slate-900 dark:text-slate-100 text-base">
                       {formatVnd(selectedClassForEnroll.tuitionFeeVnd)}
                     </span>
                   )}
@@ -628,16 +628,16 @@ export default function PublicCourseDetailPage() {
 
               {/* Specific notice for Free vs Paid */}
               {selectedClassForEnroll.tuitionFeeVnd === 0 ? (
-                <div className="p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200 text-xs text-emerald-800 leading-relaxed flex items-start gap-2.5">
-                  <ShieldCheck size={18} className="shrink-0 mt-0.5 text-emerald-600" />
+                <div className="p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200 text-xs text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-900/60 dark:text-emerald-300 leading-relaxed flex items-start gap-2.5">
+                  <ShieldCheck size={18} className="shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
                   <span>
                     Lớp học hoàn toàn miễn phí. Sau khi xác nhận, bạn sẽ được cấp quyền truy cập
                     bài giảng và tài liệu học tập ngay lập tức.
                   </span>
                 </div>
               ) : (
-                <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-800 leading-relaxed flex items-start gap-2.5">
-                  <AlertCircle size={18} className="shrink-0 mt-0.5 text-amber-600" />
+                <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-800 dark:bg-amber-950/40 dark:border-amber-900/60 dark:text-amber-300 leading-relaxed flex items-start gap-2.5">
+                  <AlertCircle size={18} className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
                   <span>
                     <strong>Lưu ý quan trọng:</strong> Đăng ký sẽ tạo yêu cầu ở trạng thái{" "}
                     <strong>Chờ thanh toán</strong> và <strong>chưa giữ chỗ học chính thức</strong>.
@@ -653,7 +653,7 @@ export default function PublicCourseDetailPage() {
                 type="button"
                 onClick={() => setSelectedClassForEnroll(null)}
                 disabled={isEnrolling}
-                className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 transition-colors cursor-pointer"
+                className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 font-bold text-xs transition-colors cursor-pointer"
               >
                 Đóng
               </button>

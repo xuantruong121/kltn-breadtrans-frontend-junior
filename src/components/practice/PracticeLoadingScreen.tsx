@@ -62,7 +62,7 @@ export function PracticeLoadingScreen({
     <div
       role="status"
       aria-live="polite"
-      className={`mx-auto flex min-h-[380px] w-full max-w-3xl flex-col items-center justify-center rounded-3xl border border-slate-200/80 bg-slate-50/60 p-8 text-center sm:p-12 ${className}`}
+      className={`mx-auto flex min-h-[380px] w-full max-w-3xl flex-col items-center justify-center rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 p-8 text-center sm:p-12 ${className}`}
     >
       {/* Centered BreadTrans brand asset */}
       <div className="mb-4">
@@ -70,12 +70,12 @@ export function PracticeLoadingScreen({
       </div>
 
       {/* Main text */}
-      <h2 className="text-base font-extrabold text-slate-800 sm:text-lg">
+      <h2 className="text-base font-extrabold text-slate-800 dark:text-slate-100 sm:text-lg">
         {mainText}
       </h2>
 
       {/* Contextual secondary text by skill */}
-      <p className="mt-1 text-xs font-semibold text-slate-500 sm:text-sm">
+      <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400 sm:text-sm">
         {resolvedSecondaryText}
       </p>
 

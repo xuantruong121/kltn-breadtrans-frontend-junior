@@ -7,12 +7,10 @@ import { VocabWord, vocabService } from "@/lib/api/services/vocab.service";
 import { QueueItem, StudyMode, QuizOption, SrsRating, StudySettings } from "../types/study";
 import { playWordAudio, playChime, stopCurrentAudio } from "../utils/audio";
 
-function seededShuffle<T>(arr: T[], seed: number): T[] {
+function shuffleArray<T>(arr: T[]): T[] {
   const result = [...arr];
-  let s = Math.abs(seed) || 1234567;
   for (let i = result.length - 1; i > 0; i--) {
-    s = (s * 16807) % 2147483647;
-    const j = Math.floor((s / 2147483647) * (i + 1));
+    const j = Math.floor(Math.random() * (i + 1));
     const temp = result[i]!;
     result[i] = result[j]!;
     result[j] = temp;
@@ -36,23 +34,22 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
     preferUkAccent: false,
   });
 
-  // Mastered & Escalated tracking sets
+  // Mastered in DB (for word drawer / persistent status)
   const [masteredIds, setMasteredIds] = useState<Set<number>>(
     () => new Set(initialWords.filter((w) => w.isMastered).map((w) => w.id))
   );
+  // Mastered in THIS study session (for live progress bar and learned count)
+  const [sessionMasteredIds, setSessionMasteredIds] = useState<Set<number>>(new Set());
   const [reviewIds, setReviewIds] = useState<Set<number>>(new Set());
 
-  // Active study queue
-  // Initially, queue contains words that are not yet mastered (or all words if all are mastered)
-  const [queue, setQueue] = useState<QueueItem[]>(() => {
-    const unmastered = initialWords.filter((w) => !w.isMastered);
-    const pool = unmastered.length > 0 ? unmastered : initialWords;
-    return pool.map((word) => ({
+  // Active study queue always starts with all initial words in order
+  const [queue, setQueue] = useState<QueueItem[]>(() =>
+    initialWords.map((word) => ({
       word,
       mode: "FLASHCARD" as StudyMode,
       stepCount: 1,
-    }));
-  });
+    }))
+  );
 
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [direction, setDirection] = useState<number>(1); // 1 = slide forward, -1 = slide back
@@ -71,6 +68,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
   const [spokenTranscript, setSpokenTranscript] = useState<string>("");
   const [speechScore, setSpeechScore] = useState<number | null>(null);
   const [speechFeedback, setSpeechFeedback] = useState<string | null>(null);
+  const [isSpeakingSkipped, setIsSpeakingSkipped] = useState<boolean>(false);
   const recognitionRef = useRef<any>(null);
 
   // Reset helper called during transitions to avoid setState within effect
@@ -85,6 +83,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
     setSpokenTranscript("");
     setSpeechScore(null);
     setSpeechFeedback(null);
+    setIsSpeakingSkipped(false);
   }, []);
 
   // Active current item
@@ -141,30 +140,38 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
     };
   }, []);
 
-  // Generate 4 Multiple Choice Options for Mode 2 deterministically without impure Math.random
+  // Generate 4 Multiple Choice Options for Mode 2 (uniformly distributed across keys 1, 2, 3, 4)
   const quizOptions = useMemo<QuizOption[]>(() => {
     if (!currentWord) return [];
 
-    const correctMeaning = currentWord.meaning;
-    const otherWords = initialWords.filter((w) => w.id !== currentWord.id);
+    const correctMeaning = currentWord.meaning.trim();
+    const otherWords = initialWords.filter(
+      (w) => w.id !== currentWord.id && w.meaning.trim() !== correctMeaning
+    );
 
-    // Deterministically shuffle other words using word id as seed
-    const shuffledOthers = seededShuffle(otherWords, currentWord.id * 17 + 101);
-    const distractorMeanings = shuffledOthers.slice(0, 3).map((w) => w.meaning);
+    const shuffledOthers = shuffleArray(otherWords);
+    const distractorMeanings: string[] = [];
+    for (const w of shuffledOthers) {
+      const cleanM = w.meaning.trim();
+      if (!distractorMeanings.includes(cleanM)) {
+        distractorMeanings.push(cleanM);
+      }
+      if (distractorMeanings.length === 3) break;
+    }
 
-    // If less than 3 distractors exist in the deck, add sensible generic fallbacks
+    // Generic fallbacks if fewer than 3 unique other words exist
     const fallbackMeanings = [
       "đồng ý, tán thành",
       "thực hiện, tiến hành",
       "thông báo, tuyên bố",
       "sắp xếp, lên kế hoạch",
+      "phát triển, mở rộng",
+      "hoàn thành, kết thúc",
     ];
-    while (distractorMeanings.length < 3) {
-      const fb = fallbackMeanings[distractorMeanings.length];
-      if (fb && !distractorMeanings.includes(fb) && fb !== correctMeaning) {
+    for (const fb of fallbackMeanings) {
+      if (distractorMeanings.length >= 3) break;
+      if (fb !== correctMeaning && !distractorMeanings.includes(fb)) {
         distractorMeanings.push(fb);
-      } else {
-        distractorMeanings.push(`Ý nghĩa ${distractorMeanings.length + 1}`);
       }
     }
 
@@ -172,7 +179,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
       { text: correctMeaning, isCorrect: true },
       ...distractorMeanings.map((m) => ({ text: m, isCorrect: false })),
     ];
-    const allOptions = seededShuffle(allUnshuffled, currentWord.id * 31 + 203);
+    const allOptions = shuffleArray(allUnshuffled);
 
     const keys: ("1" | "2" | "3" | "4")[] = ["1", "2", "3", "4"];
     return allOptions.map((opt, idx) => ({
@@ -214,6 +221,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
 
     // 1. Mark as mastered in state & backend
     setMasteredIds((prev) => new Set(prev).add(currentWord.id));
+    setSessionMasteredIds((prev) => new Set(prev).add(currentWord.id));
     setReviewIds((prev) => {
       const updated = new Set(prev);
       updated.delete(currentWord.id);
@@ -223,7 +231,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
     toggleMasteredMut.mutate({ wordId: currentWord.id, isMastered: true });
 
     // 2. Remove word from active queue
-    const remainingQueue = queue.filter((item, idx) => idx !== currentIndex);
+    const remainingQueue = queue.filter((_, idx) => idx !== currentIndex);
     setQueue(remainingQueue);
 
     if (remainingQueue.length === 0) {
@@ -355,13 +363,13 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognitionClass) {
-      // Fallback: simulate realistic evaluation if speech API is unavailable
+      // Fallback if speech API is unavailable
       setIsRecording(true);
       setTimeout(() => {
         setIsRecording(false);
         setSpokenTranscript(currentWord.word);
-        setSpeechScore(92);
-        setSpeechFeedback("Phát âm rất chuẩn xác! Hãy đánh giá độ khó:");
+        setSpeechScore(100);
+        setSpeechFeedback("Phát âm chính xác!");
         playChime("success");
       }, 1600);
       return;
@@ -382,26 +390,34 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
 
       recognition.onresult = (event: any) => {
         const transcript = event.results?.[0]?.[0]?.transcript || "";
-        const cleanTranscript = transcript.trim().toLowerCase();
-        const cleanTarget = currentWord.word.trim().toLowerCase();
+        const cleanTranscript = transcript.trim().toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()?]/g, "");
+        const cleanTarget = currentWord.word.trim().toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()?]/g, "");
 
         setSpokenTranscript(transcript);
 
-        if (cleanTranscript === cleanTarget || cleanTranscript.includes(cleanTarget)) {
-          setSpeechScore(95);
-          setSpeechFeedback("Phát âm tuyệt vời! Chuẩn âm điệu.");
+        const transcriptTokens = cleanTranscript.split(/\s+/);
+        const isMatch =
+          cleanTranscript === cleanTarget ||
+          transcriptTokens.includes(cleanTarget) ||
+          cleanTranscript.startsWith(cleanTarget + " ") ||
+          cleanTranscript.endsWith(" " + cleanTarget) ||
+          cleanTranscript.includes(" " + cleanTarget + " ");
+
+        if (isMatch) {
+          setSpeechScore(100);
+          setSpeechFeedback("Phát âm chính xác!");
           playChime("success");
         } else {
-          setSpeechScore(60);
-          setSpeechFeedback(`Máy nghe nhận dạng: "${transcript}". Bạn có thể thử lại hoặc chọn mức nhớ bên dưới.`);
+          setSpeechScore(0);
+          setSpeechFeedback("Chưa chính xác, cần cải thiện thêm.");
           playChime("error");
         }
       };
 
       recognition.onerror = () => {
         setIsRecording(false);
-        setSpeechScore(80);
-        setSpeechFeedback("Không thể truy cập microphone. Bạn có thể tự đánh giá mức độ ghi nhớ:");
+        setSpeechScore(null);
+        setSpeechFeedback("Không thể nhận diện âm thanh. Bạn hãy thử lại hoặc chọn mức nhớ bên dưới:");
       };
 
       recognition.onend = () => {
@@ -412,10 +428,23 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
       recognition.start();
     } catch {
       setIsRecording(false);
-      setSpeechScore(85);
-      setSpeechFeedback("Hoàn thành bài luyện phát âm. Chọn đánh giá bên dưới:");
+      setSpeechScore(null);
+      setSpeechFeedback("Không thể truy cập microphone. Bạn hãy thử lại hoặc chọn mức nhớ bên dưới:");
     }
   }, [currentWord, isRecording, settings.preferUkAccent]);
+
+  // Skip speaking action (reveals SRS ratings without recording)
+  const handleSkipSpeaking = useCallback(() => {
+    setIsSpeakingSkipped(true);
+    if (isRecording && recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {
+        // ignore
+      }
+      setIsRecording(false);
+    }
+  }, [isRecording]);
 
   // SRS Rating Selection
   const handleSrsRate = useCallback(
@@ -426,19 +455,18 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
         playChime("step");
         setDirection(1);
 
-        // Re-queue the word at the end of the queue for reinforcement
-        setQueue((prevQueue) => {
-          const updated = prevQueue.filter((_, idx) => idx !== currentIndex);
-          return [
-            ...updated,
-            {
-              word: currentWord,
-              mode: "FLASHCARD",
-              stepCount: 1,
-            },
-          ];
-        });
-        advanceQueue(queue, currentIndex < queue.length - 1 ? currentIndex : 0);
+        const withoutCurrent = queue.filter((_, idx) => idx !== currentIndex);
+        const nextQueue = [
+          ...withoutCurrent,
+          {
+            word: currentWord,
+            mode: "FLASHCARD" as StudyMode,
+            stepCount: 1,
+          },
+        ];
+        setQueue(nextQueue);
+        const nextIdx = currentIndex < withoutCurrent.length ? currentIndex : 0;
+        advanceQueue(nextQueue, nextIdx);
       } else {
         // HARD, GOOD, EASY -> Mark as mastered and remove from review queue
         handleMarkMastered();
@@ -494,15 +522,24 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
     setQueue(
       initialWords.map((word) => ({
         word,
-        mode: "FLASHCARD",
+        mode: "FLASHCARD" as StudyMode,
         stepCount: 1,
       }))
     );
     setCurrentIndex(0);
     setIsCompleted(false);
-    setMasteredIds(new Set());
+    setSessionMasteredIds(new Set());
     setReviewIds(new Set());
   }, [initialWords, resetModeInputs]);
+
+  // Sync if topicId changes
+  const prevTopicIdRef = useRef<number>(topicId);
+  useEffect(() => {
+    if (prevTopicIdRef.current !== topicId) {
+      prevTopicIdRef.current = topicId;
+      handleRestart();
+    }
+  }, [topicId, handleRestart]);
 
   // Global Keyboard Shortcuts
   useEffect(() => {
@@ -552,15 +589,17 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
             handleMarkMastered();
           }
         } else if (currentMode === "SPEAKING") {
-          const srsMap: Record<string, SrsRating> = {
-            "1": "AGAIN",
-            "2": "HARD",
-            "3": "GOOD",
-            "4": "EASY",
-          };
-          if (srsMap[e.key]) {
-            e.preventDefault();
-            handleSrsRate(srsMap[e.key]);
+          if (speechScore !== null || speechFeedback !== null || isSpeakingSkipped) {
+            const srsMap: Record<string, SrsRating> = {
+              "1": "AGAIN",
+              "2": "HARD",
+              "3": "GOOD",
+              "4": "EASY",
+            };
+            if (srsMap[e.key]) {
+              e.preventDefault();
+              handleSrsRate(srsMap[e.key]);
+            }
           }
         }
       }
@@ -571,6 +610,9 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
   }, [
     currentMode,
     quizAnswered,
+    speechScore,
+    speechFeedback,
+    isSpeakingSkipped,
     handleCheckTyping,
     handleMarkMastered,
     handleEscalateMode,
@@ -581,10 +623,13 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
 
   // Derived metrics for UI
   const totalWordsCount = initialWords.length;
-  const learnedCount = masteredIds.size;
+  const learnedCount = sessionMasteredIds.size;
   const reviewCount = reviewIds.size;
   const newCount = Math.max(0, totalWordsCount - learnedCount - reviewCount);
-  const completionPercentage = totalWordsCount > 0 ? Math.min(100, Math.round((learnedCount / totalWordsCount) * 100)) : 0;
+  const completionPercentage =
+    totalWordsCount > 0
+      ? Math.min(100, Math.round((learnedCount / totalWordsCount) * 100))
+      : 0;
 
   return {
     currentWord,
@@ -623,7 +668,9 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
     spokenTranscript,
     speechScore,
     speechFeedback,
+    isSpeakingSkipped,
     handleToggleRecordSpeech,
+    handleSkipSpeaking,
     handleSrsRate,
     // General Actions
     handlePlayAudio,

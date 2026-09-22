@@ -150,7 +150,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
 
   return (
     <aside
-      className={`rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs flex flex-col space-y-4 h-fit ${className}`}
+      className={`rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xs flex flex-col space-y-4 h-fit ${className}`}
       aria-label="Thẻ thông tin thú cưng đồng hành"
     >
       {/* Accessible live region for feeding status */}
@@ -159,15 +159,15 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
       </div>
 
       {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-2">
           <Heart size={16} className="text-rose-500 fill-rose-500" aria-hidden="true" />
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
             Thú Cưng Đồng Hành
           </h3>
         </div>
         {pet && (
-          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200">
+          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
             Cấp {pet.level}
           </span>
         )}
@@ -177,21 +177,21 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
       {isPetLoading ? (
         /* Loading Skeleton */
         <div className="space-y-4 animate-pulse" role="status" aria-label="Đang tải dữ liệu thú cưng">
-          <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 border border-slate-100">
-            <div className="size-16 rounded-xl bg-slate-200 shrink-0" />
+          <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+            <div className="size-16 rounded-xl bg-slate-200 dark:bg-slate-700 shrink-0" />
             <div className="space-y-2 flex-1">
-              <div className="h-4 w-24 rounded bg-slate-200" />
-              <div className="h-3 w-32 rounded bg-slate-100" />
+              <div className="h-4 w-24 rounded bg-slate-200 dark:bg-slate-700" />
+              <div className="h-3 w-32 rounded bg-slate-100 dark:bg-slate-800" />
             </div>
           </div>
-          <div className="h-16 rounded-xl bg-slate-100" />
-          <div className="h-11 rounded-xl bg-slate-200" />
+          <div className="h-16 rounded-xl bg-slate-100 dark:bg-slate-800" />
+          <div className="h-11 rounded-xl bg-slate-200 dark:bg-slate-700" />
         </div>
       ) : isPetError ? (
         /* Error State */
-        <div className="rounded-xl border border-rose-200 bg-rose-50/70 p-4 text-center space-y-2.5">
+        <div className="rounded-xl border border-rose-200 dark:border-rose-800/60 bg-rose-50/70 dark:bg-rose-950/30 p-4 text-center space-y-2.5">
           <AlertCircle size={20} className="mx-auto text-rose-500" aria-hidden="true" />
-          <p className="text-xs font-bold text-rose-900">Không thể tải thông tin thú cưng</p>
+          <p className="text-xs font-bold text-rose-900 dark:text-rose-300">Không thể tải thông tin thú cưng</p>
           <button
             type="button"
             onClick={() => refetchPet()}
@@ -203,13 +203,13 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
         </div>
       ) : !pet ? (
         /* Empty State */
-        <div className="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-5 text-center space-y-3">
-          <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-amber-50 text-amber-700 border border-amber-200">
+        <div className="rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 p-5 text-center space-y-3">
+          <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
             <Heart size={22} aria-hidden="true" />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-slate-900">Chưa có thú cưng đồng hành</h4>
-            <p className="mt-1 text-xs text-slate-600 leading-relaxed">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Chưa có thú cưng đồng hành</h4>
+            <p className="mt-1 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
               Chọn một người bạn đồng hành 2D để rèn luyện tiếng Anh mỗi ngày và nhận buff học tập.
             </p>
           </div>
@@ -225,7 +225,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
         /* Real Pet Content */
         <div className="space-y-4">
           {/* Top Pet Hero Display */}
-          <div className="flex items-center gap-3.5 p-3 rounded-xl bg-slate-50/80 border border-slate-200/80">
+          <div className="flex items-center gap-3.5 p-3 rounded-xl bg-slate-50/80 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
             <div className="shrink-0">
               <CompanionPet2D
                 speciesId={speciesId}
@@ -236,11 +236,11 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <h4 className="text-sm font-bold text-slate-900 truncate">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
                   {speciesInfo.speciesName || pet.name}
                 </h4>
               </div>
-              <p className="text-[11px] font-medium text-slate-500 mt-0.5">
+              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                 {speciesInfo.title || "Bạn đồng hành học tập"}
               </p>
 
@@ -250,11 +250,11 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
                   className={`size-2 rounded-full ${
                     feedEligibility.allowed
                       ? "bg-emerald-500"
-                      : "bg-slate-400"
+                      : "bg-slate-400 dark:bg-slate-600"
                   }`}
                   aria-hidden="true"
                 />
-                <span className="text-[11px] font-semibold text-slate-700">
+                <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                   {feedEligibility.allowed
                     ? "Có thể cho ăn"
                     : !feedEligibility.allowed && (pet.satietyState === "FULL" || satiety >= 80)
@@ -266,17 +266,17 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
           </div>
 
           {/* Health & Happiness & Satiety Progress Meters */}
-          <div className="space-y-2.5 bg-slate-50/50 p-3 rounded-xl border border-slate-200/60">
+          <div className="space-y-2.5 bg-slate-50/50 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
             {/* Health Meter */}
             <div>
               <div className="flex justify-between text-[11px] font-medium mb-1">
-                <span className="flex items-center gap-1 text-slate-600">
+                <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
                   <Heart size={12} className="text-rose-500 fill-rose-500" aria-hidden="true" /> Sức khỏe
                 </span>
-                <span className="text-rose-700 font-bold">{pet.health}%</span>
+                <span className="text-rose-600 dark:text-rose-400 font-bold">{pet.health}%</span>
               </div>
               <div
-                className="h-2 rounded-full bg-slate-200/80 overflow-hidden"
+                className="h-2 rounded-full bg-slate-200/80 dark:bg-slate-700 overflow-hidden"
                 role="progressbar"
                 aria-valuenow={pet.health}
                 aria-valuemin={0}
@@ -293,13 +293,13 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
             {/* Happiness Meter */}
             <div>
               <div className="flex justify-between text-[11px] font-medium mb-1">
-                <span className="flex items-center gap-1 text-slate-600">
-                  <Smile size={12} className="text-amber-600" aria-hidden="true" /> Vui vẻ
+                <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
+                  <Smile size={12} className="text-amber-600 dark:text-amber-400" aria-hidden="true" /> Vui vẻ
                 </span>
-                <span className="text-amber-700 font-bold">{pet.happiness}%</span>
+                <span className="text-amber-600 dark:text-amber-400 font-bold">{pet.happiness}%</span>
               </div>
               <div
-                className="h-2 rounded-full bg-slate-200/80 overflow-hidden"
+                className="h-2 rounded-full bg-slate-200/80 dark:bg-slate-700 overflow-hidden"
                 role="progressbar"
                 aria-valuenow={pet.happiness}
                 aria-valuemin={0}
@@ -316,13 +316,13 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
             {/* Satiety Meter */}
             <div>
               <div className="flex justify-between text-[11px] font-medium mb-1">
-                <span className="flex items-center gap-1 text-slate-600">
-                  <Utensils size={12} className="text-orange-500" aria-hidden="true" /> Độ no
+                <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
+                  <Utensils size={12} className="text-orange-500 dark:text-orange-400" aria-hidden="true" /> Độ no
                 </span>
-                <span className="text-orange-700 font-bold">{satiety}%</span>
+                <span className="text-orange-600 dark:text-orange-400 font-bold">{satiety}%</span>
               </div>
               <div
-                className="h-2 rounded-full bg-slate-200/80 overflow-hidden"
+                className="h-2 rounded-full bg-slate-200/80 dark:bg-slate-700 overflow-hidden"
                 role="progressbar"
                 aria-valuenow={satiety}
                 aria-valuemin={0}
@@ -339,7 +339,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
 
           {/* Passive Buff Note */}
           {speciesInfo.buff && (
-            <div className="px-3 py-2 rounded-xl bg-amber-50/70 border border-amber-200/60 text-[11px] text-amber-900">
+            <div className="px-3 py-2 rounded-xl bg-amber-50/70 dark:bg-amber-950/60 border border-amber-200/60 dark:border-amber-800/80 text-[11px] text-amber-900 dark:text-amber-300">
               <span className="font-bold">Đặc điểm:</span> {speciesInfo.buff}
             </div>
           )}
@@ -354,7 +354,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
               className={`w-full inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none ${
                 feedEligibility.allowed
                   ? "bg-amber-600 hover:bg-amber-700 text-white shadow-xs active:scale-[0.98]"
-                  : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-400 border border-slate-200 dark:border-slate-700 cursor-not-allowed"
               }`}
             >
               {feedMutation.isPending ? (
@@ -372,13 +372,13 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
 
             {/* Satiety or Requirement Message */}
             {!feedEligibility.allowed && (pet.satietyState === "FULL" || satiety >= 80) ? (
-              <p className="text-center text-[11px] font-medium text-slate-500">{satietyText}</p>
+              <p className="text-center text-[11px] font-medium text-slate-500 dark:text-slate-400">{satietyText}</p>
             ) : userBalance < feedCost ? (
-              <p className="text-center text-[11px] font-semibold text-rose-600">
+              <p className="text-center text-[11px] font-semibold text-rose-600 dark:text-rose-400">
                 Cần {feedCost} Bánh Mì (Hiện có: {userBalance})
               </p>
             ) : (
-              <p className="text-center text-[10px] text-slate-500">
+              <p className="text-center text-[10px] text-slate-500 dark:text-slate-400">
                 Tiêu hao {feedCost} Bánh Mì • {satietyText} • EXP hôm nay {pet.dailyRewardedFeedCount ?? 0}/{pet.dailyRewardLimit ?? 3}
               </p>
             )}
@@ -386,7 +386,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
             {/* Link to Full Pet Room */}
             <Link
               href="/pet"
-              className="w-full inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
+              className="w-full inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
             >
               <span>Xem chi tiết thú cưng</span>
               <ArrowRight size={14} aria-hidden="true" />

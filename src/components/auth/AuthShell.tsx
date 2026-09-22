@@ -5,6 +5,8 @@ import Link from "next/link";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { BrandLogo } from "@/components/brand";
 
+import { ThemeToggle } from "@/components/navigation/ThemeToggle";
+
 interface AuthShellProps {
   children: ReactNode;
   contentPosition?: "center" | "start";
@@ -12,9 +14,9 @@ interface AuthShellProps {
 
 export function AuthShell({ children }: AuthShellProps) {
   return (
-    <div className="min-h-dvh flex flex-col bg-[#fbfaf8] text-slate-900 selection:bg-amber-100 selection:text-amber-900">
+    <div className="min-h-dvh flex flex-col bg-background text-foreground selection:bg-amber-100 selection:text-amber-900 transition-colors duration-150">
       {/* Minimalist Auth Top Bar */}
-      <div className="w-full bg-white/90 backdrop-blur-md sticky top-0 z-30 shadow-xs border-b border-slate-200/70">
+      <div className="w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md sticky top-0 z-30 shadow-xs border-b border-slate-200/70 dark:border-slate-800/70">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <BrandLogo
@@ -24,31 +26,34 @@ export function AuthShell({ children }: AuthShellProps) {
               subtitle="Nền tảng Tự học Tiếng Anh & Luyện 4 Kỹ năng"
             />
           </div>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-amber-700 transition-colors py-1.5 px-3 rounded-xl hover:bg-slate-100"
-          >
-            <ArrowLeft size={16} />
-            <span>Quay lại Trang chủ</span>
-          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-amber-700 dark:hover:text-amber-400 transition-colors py-1.5 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              <ArrowLeft size={16} />
+              <span>Quay lại Trang chủ</span>
+            </Link>
+          </div>
         </div>
       </div>
 
       {/* Main Authentication Canvas */}
       <main className="w-full flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-12 relative overflow-hidden">
         {/* Subtle Ambient Background Accents */}
-        <div className="absolute -top-24 -left-20 w-80 h-80 rounded-full bg-amber-200/30 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -right-20 w-96 h-96 rounded-full bg-orange-200/20 blur-3xl pointer-events-none" />
+        <div className="absolute -top-24 -left-20 w-80 h-80 rounded-full bg-amber-200/30 dark:bg-amber-500/10 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -right-20 w-96 h-96 rounded-full bg-orange-200/20 dark:bg-orange-500/10 blur-3xl pointer-events-none" />
 
         <div className="w-full max-w-md mx-auto my-4 z-10">
           {children}
 
           {/* Quick Platform Support Credentials Note */}
           <div className="mt-6 text-center">
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Gặp sự cố khi đăng nhập hoặc đăng ký? Liên hệ đội ngũ học thuật:{" "}
               <a
-                className="text-amber-700 hover:underline font-semibold"
+                className="text-amber-700 dark:text-amber-400 hover:underline font-semibold"
                 href="mailto:support@breadtrans.edu.vn"
               >
                 support@breadtrans.edu.vn
@@ -57,16 +62,16 @@ export function AuthShell({ children }: AuthShellProps) {
           </div>
 
           {/* Policy & Legal Links Footer */}
-          <div className="mt-6 flex items-center justify-center gap-3 sm:gap-4 text-xs text-slate-500">
-            <Link href="/terms" className="hover:text-amber-700 transition-colors">
+          <div className="mt-6 flex items-center justify-center gap-3 sm:gap-4 text-xs text-slate-500 dark:text-slate-400">
+            <Link href="/terms" className="hover:text-amber-700 dark:hover:text-amber-400 transition-colors">
               Điều khoản dịch vụ
             </Link>
             <span>•</span>
-            <Link href="/privacy" className="hover:text-amber-700 transition-colors">
+            <Link href="/privacy" className="hover:text-amber-700 dark:hover:text-amber-400 transition-colors">
               Chính sách bảo mật
             </Link>
             <span>•</span>
-            <Link href="/help" className="hover:text-amber-700 transition-colors">
+            <Link href="/help" className="hover:text-amber-700 dark:hover:text-amber-400 transition-colors">
               Trợ giúp
             </Link>
           </div>
@@ -74,29 +79,29 @@ export function AuthShell({ children }: AuthShellProps) {
       </main>
 
       {/* Brand Footer */}
-      <footer className="w-full bg-white shadow-[0_-1px_6px_rgba(0,0,0,0.03)] border-t border-slate-200/70 mt-auto">
+      <footer className="w-full bg-white dark:bg-slate-900 shadow-[0_-1px_6px_rgba(0,0,0,0.03)] border-t border-slate-200/70 dark:border-slate-800 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
             <div className="lg:col-span-2">
               <div className="mb-3">
                 <BrandLogo href="/" variant="compact" size="md" />
               </div>
-              <p className="text-sm text-slate-500 max-w-md mb-4 leading-relaxed">
+              <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-4 leading-relaxed">
                 Nền tảng tự học tiếng Anh tương tác. Rèn luyện 4 kỹ năng, củng cố từ vựng
                 và ngữ pháp theo phương pháp học chủ động.
               </p>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-semibold">
-                <CheckCircle2 size={16} className="text-amber-600 shrink-0" />
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold">
+                <CheckCircle2 size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
                 <span>Học theo lộ trình phù hợp với bạn</span>
               </div>
             </div>
 
             <div>
-              <h4 className="text-sm font-bold text-slate-900 mb-3">Luyện 4 Kỹ Năng</h4>
+              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-3">Luyện 4 Kỹ Năng</h4>
               <ul className="space-y-2 text-sm">
                 <li>
                   <Link
-                    className="text-slate-600 hover:text-amber-700 transition-colors"
+                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
                     href="/practice/listening"
                   >
                     Luyện Nghe chép chính tả
@@ -104,7 +109,7 @@ export function AuthShell({ children }: AuthShellProps) {
                 </li>
                 <li>
                   <Link
-                    className="text-slate-600 hover:text-amber-700 transition-colors"
+                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
                     href="/practice/speaking"
                   >
                     Luyện nói chuẩn âm vị
@@ -112,7 +117,7 @@ export function AuthShell({ children }: AuthShellProps) {
                 </li>
                 <li>
                   <Link
-                    className="text-slate-600 hover:text-amber-700 transition-colors"
+                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
                     href="/practice/reading"
                   >
                     Luyện Đọc tra từ thông minh
@@ -120,7 +125,7 @@ export function AuthShell({ children }: AuthShellProps) {
                 </li>
                 <li>
                   <Link
-                    className="text-slate-600 hover:text-amber-700 transition-colors"
+                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
                     href="/practice/writing"
                   >
                     Luyện Viết gợi ý sửa lỗi
@@ -130,11 +135,11 @@ export function AuthShell({ children }: AuthShellProps) {
             </div>
 
             <div>
-              <h4 className="text-sm font-bold text-slate-900 mb-3">Chương Trình Học</h4>
+              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-3">Chương Trình Học</h4>
               <ul className="space-y-2 text-sm">
                 <li>
                   <Link
-                    className="text-slate-600 hover:text-amber-700 transition-colors"
+                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
                     href="/courses"
                   >
                     Khóa học cốt lõi
@@ -142,7 +147,7 @@ export function AuthShell({ children }: AuthShellProps) {
                 </li>
                 <li>
                   <Link
-                    className="text-slate-600 hover:text-amber-700 transition-colors"
+                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
                     href="/practice/quizzes"
                   >
                     Thi thử TOEIC Full Test
@@ -150,7 +155,7 @@ export function AuthShell({ children }: AuthShellProps) {
                 </li>
                 <li>
                   <Link
-                    className="text-slate-600 hover:text-amber-700 transition-colors"
+                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
                     href="/courses"
                   >
                     Đánh giá trình độ ban đầu
@@ -158,7 +163,7 @@ export function AuthShell({ children }: AuthShellProps) {
                 </li>
                 <li>
                   <Link
-                    className="text-slate-600 hover:text-amber-700 transition-colors"
+                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
                     href="/market"
                   >
                     Gói hội viên &amp; Bánh Mì
@@ -168,11 +173,11 @@ export function AuthShell({ children }: AuthShellProps) {
             </div>
 
             <div>
-              <h4 className="text-sm font-bold text-slate-900 mb-3">Hỗ Trợ &amp; Pháp Lý</h4>
+              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-3">Hỗ Trợ &amp; Pháp Lý</h4>
               <ul className="space-y-2 text-sm">
                 <li>
                   <Link
-                    className="text-slate-600 hover:text-amber-700 transition-colors"
+                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
                     href="/help"
                   >
                     Trung tâm trợ giúp
@@ -180,7 +185,7 @@ export function AuthShell({ children }: AuthShellProps) {
                 </li>
                 <li>
                   <Link
-                    className="text-slate-600 hover:text-amber-700 transition-colors"
+                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
                     href="/privacy"
                   >
                     Chính sách bảo mật
@@ -188,7 +193,7 @@ export function AuthShell({ children }: AuthShellProps) {
                 </li>
                 <li>
                   <Link
-                    className="text-slate-600 hover:text-amber-700 transition-colors"
+                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
                     href="/terms"
                   >
                     Điều khoản sử dụng
@@ -196,7 +201,7 @@ export function AuthShell({ children }: AuthShellProps) {
                 </li>
                 <li>
                   <Link
-                    className="text-slate-600 hover:text-amber-700 transition-colors"
+                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
                     href="/contact"
                   >
                     Liên hệ góp ý
@@ -206,7 +211,7 @@ export function AuthShell({ children }: AuthShellProps) {
             </div>
           </div>
 
-          <div className="pt-6 border-t border-slate-200/70 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+          <div className="pt-6 border-t border-slate-200/70 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
             <p>© {new Date().getFullYear()} BreadTrans EdTech. Nền tảng tự học tiếng Anh phản xạ 4 kỹ năng.</p>
             <div className="flex items-center gap-4">
               <span>Phiên bản Web 2.4.0</span>

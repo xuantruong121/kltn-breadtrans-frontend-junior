@@ -66,16 +66,16 @@ export default function ToeicBundlePage({ params }: { params: Promise<{ quizId: 
   };
   return (
     <main className="mx-auto max-w-5xl space-y-8 px-4 pb-20 pt-8">
-      <header className="rounded-3xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-8">
-        <p className="text-xs font-black uppercase tracking-widest text-amber-700">TOEIC 4 kỹ năng · Bundle đánh giá</p>
-        <h1 className="mt-3 text-3xl font-black text-slate-900">{bundle.title}</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">{bundle.description}</p>
+      <header className="rounded-3xl border border-amber-200 dark:border-amber-900/60 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/30 p-8">
+        <p className="text-xs font-black uppercase tracking-widest text-amber-700 dark:text-amber-300">TOEIC 4 kỹ năng · Bundle đánh giá</p>
+        <h1 className="mt-3 text-3xl font-black text-slate-900 dark:text-slate-100">{bundle.title}</h1>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">{bundle.description}</p>
       </header>
       <div className="grid gap-5 md:grid-cols-2">
-        <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <BookOpen className="text-sky-600" size={28} />
-          <h2 className="mt-4 text-xl font-black">TOEIC L&amp;R</h2>
-          <p className="mt-2 text-sm text-slate-600">Listening + Reading · {lrCount} câu · 45 phút Listening + 75 phút Reading.</p>
+        <article className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+          <BookOpen className="text-sky-600 dark:text-sky-400" size={28} />
+          <h2 className="mt-4 text-xl font-black text-slate-900 dark:text-slate-100">TOEIC L&amp;R</h2>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Listening + Reading · {lrCount} câu · 45 phút Listening + 75 phút Reading.</p>
           <button
             type="button"
             disabled={isLaunching}
@@ -85,28 +85,28 @@ export default function ToeicBundlePage({ params }: { params: Promise<{ quizId: 
             Bắt đầu phần L&amp;R <ArrowRight size={16} />
           </button>
         </article>
-        <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <article className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
           <div className="flex gap-2">
-            <Mic className="text-violet-600" size={28} />
-            <PenLine className="text-rose-600" size={28} />
+            <Mic className="text-violet-600 dark:text-violet-400" size={28} />
+            <PenLine className="text-rose-600 dark:text-rose-400" size={28} />
           </div>
-          <h2 className="mt-4 text-xl font-black">TOEIC S&amp;W</h2>
-          <p className="mt-2 text-sm text-slate-600">Speaking + Writing · {speakingTasks.length} Speaking · {writingTasks.length} Writing · khoảng 80 phút.</p>
+          <h2 className="mt-4 text-xl font-black text-slate-900 dark:text-slate-100">TOEIC S&amp;W</h2>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Speaking + Writing · {speakingTasks.length} Speaking · {writingTasks.length} Writing · khoảng 80 phút.</p>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <button type="button" onClick={() => router.push("/practice/speaking")} className="inline-flex min-h-11 items-center justify-between rounded-xl border border-violet-200 bg-violet-50 px-3 text-sm font-bold text-violet-800 hover:bg-violet-100">Speaking ({speakingTasks.length}) <ChevronRight size={16} /></button>
-            <button type="button" onClick={() => router.push("/practice/writing")} className="inline-flex min-h-11 items-center justify-between rounded-xl border border-rose-200 bg-rose-50 px-3 text-sm font-bold text-rose-800 hover:bg-rose-100">Writing ({writingTasks.length}) <ChevronRight size={16} /></button>
+            <button type="button" onClick={() => router.push("/practice/speaking")} className="inline-flex min-h-11 items-center justify-between rounded-xl border border-violet-200 dark:border-violet-900/50 bg-violet-50 dark:bg-violet-950/40 px-3 text-sm font-bold text-violet-800 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-900/40">Speaking ({speakingTasks.length}) <ChevronRight size={16} /></button>
+            <button type="button" onClick={() => router.push("/practice/writing")} className="inline-flex min-h-11 items-center justify-between rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/40 px-3 text-sm font-bold text-rose-800 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/40">Writing ({writingTasks.length}) <ChevronRight size={16} /></button>
           </div>
-          <p className="mt-4 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-600">Bundle giữ hai bài đánh giá độc lập để kết quả Speaking và Writing được chấm đúng module, sau đó tổng hợp cùng phần L&amp;R.</p>
+          <p className="mt-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 p-3 text-xs leading-5 text-slate-600 dark:text-slate-300">Bundle giữ hai bài đánh giá độc lập để kết quả Speaking và Writing được chấm đúng module, sau đó tổng hợp cùng phần L&amp;R.</p>
         </article>
       </div>
       <div className="grid gap-5 lg:grid-cols-2">
-        <section className="rounded-3xl border border-violet-200 bg-white p-6 shadow-sm" aria-labelledby="bundle-speaking-groups">
-          <div className="flex items-center justify-between gap-3"><h2 id="bundle-speaking-groups" className="text-lg font-black text-slate-900">Speaking · 11 nhiệm vụ</h2><button type="button" onClick={() => router.push("/practice/speaking")} className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-violet-200 px-3 text-xs font-bold text-violet-800 hover:bg-violet-50">Mở luyện nói <ArrowRight size={14} /></button></div>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">{speakingGroups.map((group) => <div key={group[0]} className="rounded-xl border border-violet-100 bg-violet-50/50 p-3"><p className="text-sm font-bold text-violet-900">Câu {group[0]}–{group[group.length - 1]}</p><p className="mt-1 text-xs text-slate-600">{group.length === 1 ? "Express an opinion" : group[0] <= 2 ? "Read aloud" : group[0] <= 4 ? "Describe a picture" : group[0] <= 7 ? "Respond to questions" : "Respond using information"}</p></div>)}</div>
+        <section className="rounded-3xl border border-violet-200 dark:border-violet-900/60 bg-white dark:bg-slate-900 p-6 shadow-sm" aria-labelledby="bundle-speaking-groups">
+          <div className="flex items-center justify-between gap-3"><h2 id="bundle-speaking-groups" className="text-lg font-black text-slate-900 dark:text-slate-100">Speaking · 11 nhiệm vụ</h2><button type="button" onClick={() => router.push("/practice/speaking")} className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-violet-200 dark:border-violet-900/50 bg-white dark:bg-slate-800 px-3 text-xs font-bold text-violet-800 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-950/40">Mở luyện nói <ArrowRight size={14} /></button></div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">{speakingGroups.map((group) => <div key={group[0]} className="rounded-xl border border-violet-100 dark:border-violet-900/40 bg-violet-50/50 dark:bg-violet-950/25 p-3"><p className="text-sm font-bold text-violet-900 dark:text-violet-200">Câu {group[0]}–{group[group.length - 1]}</p><p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{group.length === 1 ? "Express an opinion" : group[0] <= 2 ? "Read aloud" : group[0] <= 4 ? "Describe a picture" : group[0] <= 7 ? "Respond to questions" : "Respond using information"}</p></div>)}</div>
         </section>
-        <section className="rounded-3xl border border-rose-200 bg-white p-6 shadow-sm" aria-labelledby="bundle-writing-groups">
-          <div className="flex items-center justify-between gap-3"><h2 id="bundle-writing-groups" className="text-lg font-black text-slate-900">Writing · 8 nhiệm vụ</h2><button type="button" onClick={() => router.push("/practice/writing")} className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-rose-200 px-3 text-xs font-bold text-rose-800 hover:bg-rose-50">Mở luyện viết <ArrowRight size={14} /></button></div>
-          <div className="mt-4 grid gap-2 sm:grid-cols-3">{writingGroups.map((group) => <div key={group[0]} className="rounded-xl border border-rose-100 bg-rose-50/50 p-3"><p className="text-sm font-bold text-rose-900">Câu {group[0]}–{group[group.length - 1]}</p><p className="mt-1 text-xs text-slate-600">{group[0] === 1 ? "Picture sentence" : group[0] === 6 ? "Written request" : "Opinion essay"}</p></div>)}</div>
+        <section className="rounded-3xl border border-rose-200 dark:border-rose-900/60 bg-white dark:bg-slate-900 p-6 shadow-sm" aria-labelledby="bundle-writing-groups">
+          <div className="flex items-center justify-between gap-3"><h2 id="bundle-writing-groups" className="text-lg font-black text-slate-900 dark:text-slate-100">Writing · 8 nhiệm vụ</h2><button type="button" onClick={() => router.push("/practice/writing")} className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-white dark:bg-slate-800 px-3 text-xs font-bold text-rose-800 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40">Mở luyện viết <ArrowRight size={14} /></button></div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">{writingGroups.map((group) => <div key={group[0]} className="rounded-xl border border-rose-100 dark:border-rose-900/40 bg-rose-50/50 dark:bg-rose-950/25 p-3"><p className="text-sm font-bold text-rose-900 dark:text-rose-200">Câu {group[0]}–{group[group.length - 1]}</p><p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{group[0] === 1 ? "Picture sentence" : group[0] === 6 ? "Written request" : "Opinion essay"}</p></div>)}</div>
         </section>
       </div>
       <AuthGateModal

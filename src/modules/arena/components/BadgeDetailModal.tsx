@@ -66,7 +66,7 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full max-h-[min(90dvh,calc(100dvh-3rem))] overflow-y-auto p-6 sm:p-8 text-center relative"
+          className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-md w-full max-h-[min(90dvh,calc(100dvh-3rem))] overflow-y-auto p-6 sm:p-8 text-center relative"
         >
           {/* Ambient Glow */}
           <div
@@ -76,7 +76,7 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute top-5 right-5 w-9 h-9 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors cursor-pointer z-10"
+            className="absolute top-5 right-5 w-9 h-9 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors cursor-pointer z-10"
           >
             <X size={18} />
           </button>
@@ -88,8 +88,8 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
               transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
               className={`w-28 h-28 rounded-full border-4 flex items-center justify-center relative shadow-lg ${
                 hasUnlocked
-                  ? `${badge.bgColor} ${badge.borderColor} ${badge.color}`
-                  : "bg-slate-100 border-slate-300 text-slate-400 grayscale"
+                  ? `${badge.bgColor} ${badge.borderColor} ${badge.color} dark:bg-opacity-20`
+                  : "bg-slate-100 border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-slate-400 dark:text-slate-500 grayscale"
               }`}
             >
               {/* Shine effect */}
@@ -100,7 +100,7 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
               <Icon size={52} className="drop-shadow-md" />
 
               {/* Status Badge */}
-              <div className="absolute -bottom-2 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider text-white shadow-xs flex items-center gap-1 bg-slate-800">
+              <div className="absolute -bottom-2 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider text-white shadow-xs flex items-center gap-1 bg-slate-800 dark:bg-slate-700">
                 {hasUnlocked ? (
                   <>
                     <CheckCircle2 size={12} className="text-emerald-400" /> ĐÃ MỞ KHÓA
@@ -116,22 +116,22 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
 
           {/* Title & Category */}
           <div className="mb-4">
-            <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+            <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
               {badge.category}
             </span>
-            <h3 className="text-2xl font-black text-slate-800 mt-1 mb-1">
+            <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-1 mb-1">
               {badge.name}
             </h3>
-            <p className="text-xs sm:text-sm font-semibold text-slate-500 px-2 leading-relaxed">
+            <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 px-2 leading-relaxed">
               {badge.description}
             </p>
           </div>
 
           {/* Progress / Status Card */}
-          <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 mb-5 text-left">
-            <div className="flex justify-between items-center text-xs font-black mb-1.5">
-              <span className="text-slate-600">Tiến trình thử thách:</span>
-              <span className={hasUnlocked ? "text-emerald-600" : "text-purple-600"}>
+          <div className="bg-slate-50 dark:bg-slate-850/70 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 mb-5 text-left">
+            <div className="flex justify-between items-center text-xs font-bold mb-1.5">
+              <span className="text-slate-600 dark:text-slate-400">Tiến trình thử thách:</span>
+              <span className={hasUnlocked ? "text-emerald-600 dark:text-emerald-400" : "text-purple-600 dark:text-purple-400"}>
                 {hasUnlocked
                   ? "Hoàn thành 100%"
                   : `${badge.currentValue || 0} / ${badge.targetValue} ${badge.unit} (${progressPercent}%)`}
@@ -139,7 +139,7 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
             </div>
 
             {/* Bar */}
-            <div className="w-full bg-slate-200 h-3 rounded-full overflow-hidden border border-slate-300">
+            <div className="w-full bg-slate-200 dark:bg-slate-750 h-3 rounded-full overflow-hidden border border-slate-300 dark:border-slate-700">
               <div
                 className={`h-full rounded-full transition-all ${
                   hasUnlocked
@@ -151,13 +151,13 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
             </div>
 
             {/* Rewards */}
-            <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-200 text-xs font-bold text-slate-600">
+            <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-600 dark:text-slate-400">
               <span>Phần thưởng danh dự:</span>
               <div className="flex items-center gap-3">
-                <span className="flex items-center gap-1 text-amber-600 font-black">
+                <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold">
                   🍞 +{badge.rewardBreads}
                 </span>
-                <span className="flex items-center gap-1 text-purple-600 font-black">
+                <span className="flex items-center gap-1 text-purple-600 dark:text-purple-400 font-bold">
                   ⭐ +{badge.rewardExp} EXP
                 </span>
               </div>
@@ -165,7 +165,7 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
 
             {/* Date if unlocked */}
             {hasUnlocked && unlockedAt && (
-              <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400 mt-2">
+              <div className="flex items-center gap-1 text-[11px] font-medium text-slate-400 dark:text-slate-500 mt-2">
                 <Calendar size={12} />
                 <span>
                   Đạt được ngày {new Date(unlockedAt).toLocaleDateString("vi-VN")}

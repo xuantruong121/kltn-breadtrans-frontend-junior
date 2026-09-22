@@ -217,15 +217,15 @@ export default function GoogleSignInButton({
   return (
     <div className="w-full">
       {isProcessing && (
-        <div className="mb-3 flex items-center justify-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 py-3 text-sm font-semibold text-blue-700">
-          <Loader2 className="animate-spin text-blue-600" size={18} />
+        <div className="mb-3 flex items-center justify-center gap-2 rounded-2xl border border-blue-200 dark:border-blue-900/60 bg-blue-50 dark:bg-blue-950/40 py-3 text-sm font-semibold text-blue-700 dark:text-blue-300">
+          <Loader2 className="animate-spin text-blue-600 dark:text-blue-400" size={18} />
           Đang xác thực tài khoản Google...
         </div>
       )}
       <div
         ref={buttonRef}
         className={`flex w-full justify-center ${
-          !isReady ? "h-[44px] animate-pulse rounded-full bg-slate-100" : ""
+          !isReady ? "h-[44px] animate-pulse rounded-full bg-slate-100 dark:bg-slate-800" : ""
         }`}
       />
     </div>

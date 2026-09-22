@@ -133,15 +133,15 @@ export default function PetPage() {
           <Link
             href="/dashboard"
             aria-label="Quay về trang tổng quan"
-            className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-600 flex items-center justify-center hover:bg-slate-50 transition-colors shadow-xs focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
+            className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-xs focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
           >
             <ArrowLeft size={18} aria-hidden="true" />
           </Link>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
               Thú Cưng Đồng Hành
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
               Chăm sóc thú cưng mỗi ngày để kích hoạt các hiệu ứng bổ trợ học tập
             </p>
           </div>
@@ -150,16 +150,16 @@ export default function PetPage() {
         <div className="flex items-center gap-3 self-start sm:self-auto">
           <Link
             href="/market"
-            className="flex items-center gap-2 bg-amber-50 border border-amber-200 px-3.5 py-2 rounded-xl text-amber-900 font-bold text-xs hover:bg-amber-100 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
+            className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 px-3.5 py-2 rounded-xl text-amber-900 dark:text-amber-300 font-bold text-xs hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
           >
-            <span className="font-semibold text-slate-700">Số dư:</span>
+            <span className="font-semibold text-slate-700 dark:text-slate-300">Số dư:</span>
             <span>{banhRanBalance} Bánh Mì</span>
           </Link>
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
             aria-label="Mở cửa sổ đổi thú cưng"
-            className="flex items-center gap-2 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-bold text-xs px-3.5 py-2 rounded-xl transition-all shadow-xs cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
+            className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs px-3.5 py-2 rounded-xl transition-all shadow-xs cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
           >
             <RefreshCw size={14} aria-hidden="true" />
             <span>Đổi Thú Cưng</span>
@@ -171,23 +171,23 @@ export default function PetPage() {
       {isPetLoading ? (
         /* Loading skeleton */
         <div
-          className="bg-white rounded-2xl border border-slate-200 p-16 text-center shadow-xs animate-pulse"
+          className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-16 text-center shadow-xs animate-pulse"
           role="status"
           aria-label="Đang tải dữ liệu thú cưng"
         >
           <Loader2 size={32} className="animate-spin mx-auto text-amber-600 mb-3" aria-hidden="true" />
-          <p className="text-slate-600 font-medium text-sm">
+          <p className="text-slate-600 dark:text-slate-400 font-medium text-sm">
             Đang tải thông tin thú cưng đồng hành...
           </p>
         </div>
       ) : isPetError ? (
         /* Error state */
-        <div className="bg-white rounded-2xl border border-rose-200 p-12 text-center shadow-xs space-y-3">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-rose-200 dark:border-rose-900/60 p-12 text-center shadow-xs space-y-3">
           <AlertCircle size={36} className="mx-auto text-rose-500" aria-hidden="true" />
-          <h2 className="text-base font-bold text-slate-900">
+          <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
             Không thể tải thông tin thú cưng
           </h2>
-          <p className="text-xs text-slate-500 max-w-md mx-auto">
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
             Đã có lỗi xảy ra khi kết nối tới máy chủ. Vui lòng kiểm tra lại đường truyền và thử lại.
           </p>
           <button
@@ -201,15 +201,15 @@ export default function PetPage() {
         </div>
       ) : !pet ? (
         /* Empty state */
-        <div className="bg-white rounded-2xl border-2 border-dashed border-slate-200 p-12 text-center shadow-xs space-y-4">
-          <div className="size-16 mx-auto rounded-2xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 p-12 text-center shadow-xs space-y-4">
+          <div className="size-16 mx-auto rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 flex items-center justify-center">
             <Heart size={28} aria-hidden="true" />
           </div>
           <div className="max-w-md mx-auto">
-            <h2 className="text-lg font-bold text-slate-900">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
               Bạn chưa có thú cưng đồng hành
             </h2>
-            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
               Hãy chọn một người bạn 2D đồng hành để hỗ trợ quá trình học tập, tăng điểm kinh nghiệm và nhận các hiệu ứng bổ trợ thú vị.
             </p>
           </div>
@@ -238,40 +238,40 @@ export default function PetPage() {
           {/* Species Details & Active Buff */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* Buff Card */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
-              <div className="flex items-center gap-2 text-amber-800">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-3">
+              <div className="flex items-center gap-2 text-amber-800 dark:text-amber-400">
                 <Zap size={18} aria-hidden="true" />
-                <h3 className="font-bold text-sm">Đặc điểm thú cưng</h3>
+                <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">Đặc điểm thú cưng</h3>
               </div>
-              <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/70 space-y-1">
-                <span className="font-bold text-amber-900 text-sm block">
+              <div className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/50 border border-amber-200/70 dark:border-amber-800/60 space-y-1">
+                <span className="font-bold text-amber-900 dark:text-amber-200 text-sm block">
                   {currentSpecies.buff}
                 </span>
-                <p className="text-xs text-amber-800 leading-relaxed">
+                <p className="text-xs text-amber-800 dark:text-amber-300/90 leading-relaxed">
                   {currentSpecies.buffDetail}
                 </p>
               </div>
             </div>
 
             {/* Lore & Quote Card */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
-              <div className="flex items-center gap-2 text-indigo-800">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-3">
+              <div className="flex items-center gap-2 text-indigo-800 dark:text-indigo-400">
                 <Award size={18} aria-hidden="true" />
-                <h3 className="font-bold text-sm">Truyền Thuyết Loài</h3>
+                <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">Truyền Thuyết Loài</h3>
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                 {currentSpecies.lore}
               </p>
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-xs italic">
+              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs italic">
                 &ldquo;{currentSpecies.quote}&rdquo;
               </div>
             </div>
 
             {/* Feeding Tips */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
-              <div className="flex items-center gap-2 text-emerald-800">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-3">
+              <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-400">
                 <Heart size={18} aria-hidden="true" />
-                <h3 className="font-bold text-sm">Quy Tắc Nuôi Dưỡng</h3>
+                <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">Quy Tắc Nuôi Dưỡng</h3>
               </div>
               <ul className="text-xs text-slate-600 space-y-2">
                 <li className="flex items-start gap-2">

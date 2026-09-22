@@ -1,7 +1,17 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: var(--font-quicksand), ui-sans-serif, system-ui, sans-serif;
+
+  /* Theme Surfaces & Semantic Colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
   
   /* BreadTrans Warm Bakery & Brand Palette */
   --color-brand-50: #fff7ed;
@@ -20,6 +30,10 @@
   --color-skill-speaking: #7c3aed;
   --color-skill-reading: #059669;
   --color-skill-writing: #e11d48;
+
+  /* Intermediate Slate Shades for Smooth Dark Mode Hierarchy */
+  --color-slate-750: #243247;
+  --color-slate-850: #141f33;
 
   /* Shadows */
   --shadow-soft: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
@@ -85,10 +99,43 @@
   :root {
     --background: #fbfaf8;
     --foreground: #172033;
+    --card: #ffffff;
+    --card-foreground: #172033;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --border: #e2e8f0;
+    --input: #ffffff;
+    --input-border: #cbd5e1;
+  }
+
+  .dark {
+    --background: #0b1120;
+    --foreground: #f8fafc;
+    --card: #131d31;
+    --card-foreground: #f8fafc;
+    --muted: #1e293b;
+    --muted-foreground: #94a3b8;
+    --border: #22314e;
+    --input: #131d31;
+    --input-border: #334155;
+  }
+
+  /* Strict Admin CMS Light Isolation */
+  [data-theme="light"],
+  [data-theme="light"] * {
+    --background: #fbfaf8;
+    --foreground: #172033;
+    --card: #ffffff;
+    --card-foreground: #172033;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --border: #e2e8f0;
+    --input: #ffffff;
+    --input-border: #cbd5e1;
   }
 
   * {
-    border-color: #e2e8f0;
+    border-color: var(--border, #e2e8f0);
   }
 
   :focus-visible {

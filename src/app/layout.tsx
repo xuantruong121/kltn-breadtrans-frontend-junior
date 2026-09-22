@@ -4,6 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 import QueryProvider from "@/lib/providers/QueryProvider";
 import SocketProvider from "@/lib/providers/SocketProvider";
+import { ThemeProvider } from "@/lib/theme/ThemeProvider";
 import { Toaster } from "react-hot-toast";
 import PWAInstallBanner from "@/components/pwa/PWAInstallBanner";
 
@@ -25,7 +26,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f97316",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fbfaf8" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b1120" },
+  ],
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -42,6 +46,12 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/icons/logo-mark.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+        {/* Anti-FOUC Early Theme Script: Runs before First Paint */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('breadtrans-theme');var d=t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark');}catch(e){}})();`,
+          }}
+        />
         {/* Material Symbols is an icon font; next/font does not support this variable icon family. */}
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
@@ -50,7 +60,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${quicksand.className} min-h-dvh antialiased text-slate-700`}
+        className={`${quicksand.className} min-h-dvh antialiased bg-background text-foreground transition-colors duration-150`}
         suppressHydrationWarning
       >
         <Script
@@ -58,20 +68,28 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
         <QueryProvider>
-          <SocketProvider>
-            {children}
-            <PWAInstallBanner />
-            <Toaster
-              position="top-center"
-              toastOptions={{
-                duration: 4200,
-                className:
-                  "!rounded-xl !border !border-slate-200 !bg-white !px-4 !py-3 !text-sm !font-semibold !text-slate-800 !shadow-lg",
-                success: { className: "!border-emerald-200 !text-emerald-800" },
-                error: { className: "!border-rose-200 !text-rose-800" },
-              }}
-            />
-          </SocketProvider>
+          <ThemeProvider>
+            <SocketProvider>
+              {children}
+              <PWAInstallBanner />
+              <Toaster
+                position="top-center"
+                toastOptions={{
+                  duration: 4200,
+                  className:
+                    "!rounded-xl !border !border-slate-200 dark:!border-slate-800 !bg-white dark:!bg-slate-900 !px-4 !py-3 !text-sm !font-semibold !text-slate-800 dark:!text-slate-100 !shadow-lg",
+                  success: {
+                    className:
+                      "!border-emerald-200 dark:!border-emerald-800/60 !text-emerald-800 dark:!text-emerald-300",
+                  },
+                  error: {
+                    className:
+                      "!border-rose-200 dark:!border-rose-800/60 !text-rose-800 dark:!text-rose-300",
+                  },
+                }}
+              />
+            </SocketProvider>
+          </ThemeProvider>
         </QueryProvider>
       </body>
     </html>

@@ -49,10 +49,10 @@ const SKILLS_CONFIG = [
     href: "/practice/listening",
     icon: Headphones,
     tone: "blue",
-    borderClass: "border-blue-200/90 hover:border-blue-300",
-    bgClass: "bg-blue-50/70 text-blue-700",
+    borderClass: "border-blue-200/90 dark:border-blue-800/80 hover:border-blue-300 dark:hover:border-blue-600",
+    bgClass: "bg-blue-50/70 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300",
     progressClass: "bg-blue-500",
-    badgeClass: "bg-blue-100/90 text-blue-800 border-blue-200",
+    badgeClass: "bg-blue-100/90 dark:bg-blue-950/70 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800",
     btnClass: "bg-blue-600 hover:bg-blue-700 text-white",
   },
   {
@@ -62,10 +62,10 @@ const SKILLS_CONFIG = [
     href: "/practice/speaking",
     icon: Mic,
     tone: "violet",
-    borderClass: "border-violet-200/90 hover:border-violet-300",
-    bgClass: "bg-violet-50/70 text-violet-700",
+    borderClass: "border-violet-200/90 dark:border-violet-800/80 hover:border-violet-300 dark:hover:border-violet-600",
+    bgClass: "bg-violet-50/70 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300",
     progressClass: "bg-violet-500",
-    badgeClass: "bg-violet-100/90 text-violet-800 border-violet-200",
+    badgeClass: "bg-violet-100/90 dark:bg-violet-950/70 text-violet-800 dark:text-violet-200 border-violet-200 dark:border-violet-800",
     btnClass: "bg-violet-600 hover:bg-violet-700 text-white",
   },
   {
@@ -75,10 +75,10 @@ const SKILLS_CONFIG = [
     href: "/practice/reading",
     icon: BookOpen,
     tone: "emerald",
-    borderClass: "border-emerald-200/90 hover:border-emerald-300",
-    bgClass: "bg-emerald-50/70 text-emerald-700",
+    borderClass: "border-emerald-200/90 dark:border-emerald-800/80 hover:border-emerald-300 dark:hover:border-emerald-600",
+    bgClass: "bg-emerald-50/70 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300",
     progressClass: "bg-emerald-500",
-    badgeClass: "bg-emerald-100/90 text-emerald-800 border-emerald-200",
+    badgeClass: "bg-emerald-100/90 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800",
     btnClass: "bg-emerald-600 hover:bg-emerald-700 text-white",
   },
   {
@@ -88,10 +88,10 @@ const SKILLS_CONFIG = [
     href: "/practice/writing",
     icon: PenTool,
     tone: "rose",
-    borderClass: "border-rose-200/90 hover:border-rose-300",
-    bgClass: "bg-rose-50/70 text-rose-700",
+    borderClass: "border-rose-200/90 dark:border-rose-800/80 hover:border-rose-300 dark:hover:border-rose-600",
+    bgClass: "bg-rose-50/70 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300",
     progressClass: "bg-rose-500",
-    badgeClass: "bg-rose-100/90 text-rose-800 border-rose-200",
+    badgeClass: "bg-rose-100/90 dark:bg-rose-950/70 text-rose-800 dark:text-rose-200 border-rose-200 dark:border-rose-800",
     btnClass: "bg-rose-600 hover:bg-rose-700 text-white",
   },
 ];
@@ -152,7 +152,7 @@ function getQuestCategoryMeta(type?: string) {
     case "DO_VOCAB":
       return {
         label: "Từ vựng",
-        badgeClass: "bg-amber-100 text-amber-900 border-amber-200",
+        badgeClass: "bg-amber-100 dark:bg-amber-950/70 text-amber-900 dark:text-amber-300 border-amber-200 dark:border-amber-800",
         btnClass: "bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/20",
         progressFill: "bg-amber-500",
         icon: BookOpen,
@@ -160,7 +160,7 @@ function getQuestCategoryMeta(type?: string) {
     case "DO_LISTENING":
       return {
         label: "Luyện nghe",
-        badgeClass: "bg-blue-100 text-blue-900 border-blue-200",
+        badgeClass: "bg-blue-100 dark:bg-blue-950/70 text-blue-900 dark:text-blue-300 border-blue-200 dark:border-blue-800",
         btnClass: "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20",
         progressFill: "bg-blue-500",
         icon: Headphones,
@@ -168,7 +168,7 @@ function getQuestCategoryMeta(type?: string) {
     case "COMPLETE_QUIZ":
       return {
         label: "Bài kiểm tra",
-        badgeClass: "bg-indigo-100 text-indigo-900 border-indigo-200",
+        badgeClass: "bg-indigo-100 dark:bg-indigo-950/70 text-indigo-900 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800",
         btnClass: "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/20",
         progressFill: "bg-indigo-500",
         icon: CheckCircle2,
@@ -177,7 +177,7 @@ function getQuestCategoryMeta(type?: string) {
     case "PRACTICE_SPEAKING":
       return {
         label: "Luyện nói",
-        badgeClass: "bg-violet-100 text-violet-900 border-violet-200",
+        badgeClass: "bg-violet-100 dark:bg-violet-950/70 text-violet-900 dark:text-violet-300 border-violet-200 dark:border-violet-800",
         btnClass: "bg-violet-600 hover:bg-violet-700 text-white shadow-violet-600/20",
         progressFill: "bg-violet-500",
         icon: Mic,
@@ -185,7 +185,7 @@ function getQuestCategoryMeta(type?: string) {
     default:
       return {
         label: "Bài học",
-        badgeClass: "bg-emerald-100 text-emerald-900 border-emerald-200",
+        badgeClass: "bg-emerald-100 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
         btnClass: "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20",
         progressFill: "bg-emerald-500",
         icon: CheckCircle2,
@@ -210,23 +210,23 @@ function LearningCourseCard({
   if (isLoading) {
     return (
       <div
-        className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-7 shadow-xs animate-pulse space-y-4"
+        className="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-xs animate-pulse space-y-4"
         role="status"
         aria-label="Đang tải khóa học"
       >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className="size-14 rounded-2xl bg-slate-200 shrink-0" />
+            <div className="size-14 rounded-2xl bg-slate-200 dark:bg-slate-800 shrink-0" />
             <div className="space-y-2">
-              <div className="h-4 w-28 rounded bg-slate-200" />
-              <div className="h-5 w-48 rounded bg-slate-200" />
-              <div className="h-3 w-36 rounded bg-slate-100" />
+              <div className="h-4 w-28 rounded bg-slate-200 dark:bg-slate-800" />
+              <div className="h-5 w-48 rounded bg-slate-200 dark:bg-slate-800" />
+              <div className="h-3 w-36 rounded bg-slate-100 dark:bg-slate-800/60" />
             </div>
           </div>
           <div className="space-y-2 sm:w-56">
-            <div className="h-3 w-24 rounded bg-slate-100" />
-            <div className="h-3 rounded-full bg-slate-200" />
-            <div className="h-10 rounded-2xl bg-slate-200" />
+            <div className="h-3 w-24 rounded bg-slate-100 dark:bg-slate-800/60" />
+            <div className="h-3 rounded-full bg-slate-200 dark:bg-slate-800" />
+            <div className="h-10 rounded-2xl bg-slate-200 dark:bg-slate-800" />
           </div>
         </div>
       </div>
@@ -235,11 +235,11 @@ function LearningCourseCard({
 
   if (isError) {
     return (
-      <div className="rounded-3xl border border-rose-200 bg-rose-50/70 p-6 text-center space-y-3 shadow-xs">
+      <div className="rounded-3xl border border-rose-200 dark:border-rose-800/60 bg-rose-50/70 dark:bg-rose-950/30 p-6 text-center space-y-3 shadow-xs">
         <AlertCircle size={24} className="mx-auto text-rose-500" aria-hidden="true" />
         <div>
-          <p className="text-sm font-bold text-rose-900">Không thể tải lộ trình khóa học</p>
-          <p className="mt-0.5 text-xs text-rose-700">Đã xảy ra lỗi khi kết nối tới máy chủ khóa học.</p>
+          <p className="text-sm font-bold text-rose-900 dark:text-rose-300">Không thể tải lộ trình khóa học</p>
+          <p className="mt-0.5 text-xs text-rose-700 dark:text-rose-400">Đã xảy ra lỗi khi kết nối tới máy chủ khóa học.</p>
         </div>
         {onRetry && (
           <button
@@ -256,12 +256,12 @@ function LearningCourseCard({
 
   if (!learningClass) {
     return (
-      <div className="rounded-3xl border-2 border-dashed border-amber-200/90 bg-gradient-to-br from-amber-50/40 via-white to-orange-50/20 p-6 text-center shadow-xs sm:p-8">
-        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-800 border border-amber-200">
+      <div className="rounded-3xl border-2 border-dashed border-amber-200/90 dark:border-amber-900/50 bg-gradient-to-br from-amber-50/40 via-white to-orange-50/20 dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 p-6 text-center shadow-xs sm:p-8">
+        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
           <BookOpen size={28} aria-hidden="true" />
         </div>
-        <h3 className="mt-3 text-lg font-black text-slate-900">Bạn chưa ghi danh khóa học nào</h3>
-        <p className="mx-auto mt-1 max-w-md text-xs sm:text-sm leading-relaxed text-slate-600">
+        <h3 className="mt-3 text-lg font-black text-slate-900 dark:text-slate-100">Bạn chưa ghi danh khóa học nào</h3>
+        <p className="mx-auto mt-1 max-w-md text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-400">
           Khám phá các khóa học tiếng Anh toàn diện 4 kỹ năng hoặc luyện thi TOEIC để có lộ trình rõ ràng và tiến bộ nhanh hơn mỗi tuần.
         </p>
         <Link
@@ -279,9 +279,9 @@ function LearningCourseCard({
   const isCompleted = learningClass.enrollmentStatus === "COMPLETED";
 
   return (
-    <div className="flex flex-col gap-5 rounded-3xl border-2 border-amber-200/90 bg-white p-6 shadow-xs sm:flex-row sm:items-center sm:justify-between sm:p-7 transition-colors hover:border-amber-300">
+    <div className="flex flex-col gap-5 rounded-3xl border-2 border-amber-200/90 dark:border-amber-900/50 bg-white dark:bg-slate-900 p-6 shadow-xs sm:flex-row sm:items-center sm:justify-between sm:p-7 transition-colors hover:border-amber-300 dark:hover:border-amber-700">
       <div className="flex items-start gap-4">
-        <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-800 border border-amber-200">
+        <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
           <BookOpen size={26} aria-hidden="true" />
         </span>
         <div>
@@ -289,31 +289,31 @@ function LearningCourseCard({
             <span
               className={`text-[11px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
                 isCompleted
-                  ? "text-emerald-800 bg-emerald-100/80 border-emerald-200"
-                  : "text-amber-800 bg-amber-100/80 border-amber-200"
+                  ? "text-emerald-800 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800"
+                  : "text-amber-800 dark:text-amber-300 bg-amber-100/80 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800"
               }`}
             >
               {isCompleted ? "Đã hoàn thành khóa" : "Lộ trình đang học"}
             </span>
-            <span className="text-xs font-extrabold text-slate-500">
+            <span className="text-xs font-extrabold text-slate-500 dark:text-slate-400">
               {learningClass.course?.level || "Mọi cấp độ"}
             </span>
           </div>
-          <h3 className="mt-1.5 text-lg sm:text-xl font-black text-slate-900 leading-snug">
+          <h3 className="mt-1.5 text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100 leading-snug">
             {learningClass.course?.title || learningClass.name}
           </h3>
-          <p className="mt-1 text-xs sm:text-sm font-semibold text-slate-600">{learningClass.name}</p>
+          <p className="mt-1 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400">{learningClass.name}</p>
         </div>
       </div>
 
-      <div className="flex flex-col gap-3.5 sm:min-w-64 sm:items-end border-t sm:border-t-0 pt-4 sm:pt-0 border-slate-100">
+      <div className="flex flex-col gap-3.5 sm:min-w-64 sm:items-end border-t sm:border-t-0 pt-4 sm:pt-0 border-slate-100 dark:border-slate-800">
         <div className="w-full sm:w-56 space-y-1.5">
-          <div className="flex justify-between text-xs font-bold text-slate-600">
+          <div className="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-400">
             <span>Tiến độ bài học</span>
-            <span className="text-amber-800 font-black">{progress}%</span>
+            <span className="text-amber-800 dark:text-amber-400 font-black">{progress}%</span>
           </div>
           <div
-            className="h-2.5 overflow-hidden rounded-full bg-slate-100"
+            className="h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
             role="progressbar"
             aria-valuenow={progress}
             aria-valuemin={0}
@@ -512,7 +512,7 @@ export default function DashboardPage() {
       {/* ========================================================================= */}
       <section
         aria-label="Tổng quan học tập sinh viên"
-        className="relative overflow-hidden rounded-3xl border border-amber-200/90 bg-gradient-to-br from-white via-amber-50/40 to-orange-50/20 p-6 sm:p-8 shadow-xs text-slate-800"
+        className="relative overflow-hidden rounded-3xl border border-amber-200/90 dark:border-amber-900/50 bg-gradient-to-br from-white via-amber-50/40 to-orange-50/20 dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 p-6 sm:p-8 shadow-xs text-slate-800 dark:text-slate-200"
       >
         {/* Subtle decorative warmth */}
         <div
@@ -530,10 +530,10 @@ export default function DashboardPage() {
             <Link
               href="/student/profile"
               aria-label="Mở hồ sơ cá nhân"
-              className="group relative flex size-16 sm:size-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl ring-2 ring-amber-400/40 border border-amber-300 bg-amber-100 text-2xl sm:text-3xl font-black text-amber-800 shadow-xs transition-transform hover:scale-105"
+              className="group relative flex size-16 sm:size-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl ring-2 ring-amber-400/40 border border-amber-300 dark:border-amber-700 bg-amber-100 dark:bg-amber-950 text-2xl sm:text-3xl font-black text-amber-800 dark:text-amber-300 shadow-xs transition-transform hover:scale-105"
             >
               {isProfileLoading && !studentAvatar ? (
-                <span className="size-full rounded-2xl bg-slate-200 animate-pulse" />
+                <span className="size-full rounded-2xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
               ) : studentAvatar ? (
                 <img src={studentAvatar} alt={studentName || "Avatar"} className="size-full object-cover" />
               ) : (
@@ -541,7 +541,7 @@ export default function DashboardPage() {
               )}
               {/* Online presence dot */}
               <span
-                className="absolute bottom-1 right-1 size-3.5 rounded-full bg-emerald-500 ring-2 ring-white"
+                className="absolute bottom-1 right-1 size-3.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900"
                 title="Đang hoạt động"
                 aria-hidden="true"
               />
@@ -549,9 +549,9 @@ export default function DashboardPage() {
 
             <div className="space-y-1.5">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[11px] font-black uppercase tracking-wider text-amber-900 bg-amber-100/90 px-3 py-0.5 rounded-full border border-amber-300/80 shadow-2xs">
+                <span className="text-[11px] font-black uppercase tracking-wider text-amber-900 dark:text-amber-300 bg-amber-100/90 dark:bg-amber-950/60 px-3 py-0.5 rounded-full border border-amber-300/80 dark:border-amber-800/60 shadow-2xs">
                   {isStatsLoading ? (
-                    <span className="inline-block h-3.5 w-16 rounded bg-slate-200 animate-pulse align-middle" />
+                    <span className="inline-block h-3.5 w-16 rounded bg-slate-200 dark:bg-slate-800 animate-pulse align-middle" />
                   ) : stats?.tier ? (
                     `Hạng ${stats.tier}`
                   ) : (
@@ -559,38 +559,38 @@ export default function DashboardPage() {
                   )}
                 </span>
                 {stats?.latestDiagnostic?.level && (
-                  <span className="text-[11px] font-bold text-indigo-900 bg-indigo-50 px-3 py-0.5 rounded-full border border-indigo-200">
+                  <span className="text-[11px] font-bold text-indigo-900 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-3 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800/60">
                     Trình độ: {stats.latestDiagnostic.level}
                   </span>
                 )}
               </div>
 
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-slate-100">
                 {greetingGreeting},{" "}
                 {isProfileLoading && !studentName ? (
-                  <span className="inline-block h-8 w-36 rounded bg-slate-200 animate-pulse align-middle" />
+                  <span className="inline-block h-8 w-36 rounded bg-slate-200 dark:bg-slate-800 animate-pulse align-middle" />
                 ) : (
-                  <span className="text-amber-800">{studentName || "Học viên"}</span>
+                  <span className="text-amber-800 dark:text-amber-400">{studentName || "Học viên"}</span>
                 )}
                 !
               </h1>
 
               {isProfileError && (
                 <div className="flex items-center gap-2 pt-0.5">
-                  <span className="text-xs font-semibold text-rose-600">
+                  <span className="text-xs font-semibold text-rose-600 dark:text-rose-400">
                     Không thể đồng bộ hồ sơ máy chủ.
                   </span>
                   <button
                     type="button"
                     onClick={() => refetchProfile()}
-                    className="inline-flex min-h-[44px] items-center gap-1 text-xs font-bold text-rose-700 bg-rose-50 px-3 py-1 rounded-xl border border-rose-200 hover:bg-rose-100 transition cursor-pointer"
+                    className="inline-flex min-h-[44px] items-center gap-1 text-xs font-bold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/50 px-3 py-1 rounded-xl border border-rose-200 dark:border-rose-800 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition cursor-pointer"
                   >
                     <RefreshCw size={12} aria-hidden="true" /> Tải lại hồ sơ
                   </button>
                 </div>
               )}
 
-              <p className="text-xs sm:text-sm font-semibold text-slate-600 max-w-xl leading-relaxed">
+              <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 max-w-xl leading-relaxed">
                 Luyện tiếng Anh toàn diện theo 4 kỹ năng: Nghe, Nói, Đọc và Viết. Theo dõi tiến độ học tập và duy trì nhịp rèn luyện mỗi ngày.
               </p>
             </div>
@@ -601,34 +601,34 @@ export default function DashboardPage() {
             {/* 3 Core Stats Badges */}
             <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full sm:w-auto">
               {/* Streak */}
-              <div className="rounded-2xl border border-orange-200/90 bg-white/90 p-3 sm:p-3.5 text-center shadow-2xs transition-all hover:border-orange-300">
-                <span className="text-[11px] font-bold text-slate-600 flex items-center justify-center gap-1">
+              <div className="rounded-2xl border border-orange-200/90 dark:border-orange-900/50 bg-white/90 dark:bg-slate-900 p-3 sm:p-3.5 text-center shadow-2xs transition-all hover:border-orange-300 dark:hover:border-orange-700">
+                <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 flex items-center justify-center gap-1">
                   <Flame size={14} className="text-orange-500 fill-orange-500" />
                   Chuỗi học
                 </span>
                 {isStatsLoading ? (
-                  <span className="inline-block h-6 w-14 rounded bg-slate-200 animate-pulse mt-1" />
+                  <span className="inline-block h-6 w-14 rounded bg-slate-200 dark:bg-slate-800 animate-pulse mt-1" />
                 ) : isStatsError ? (
                   <span className="text-xs font-bold text-slate-400 mt-1 block">Không khả dụng</span>
                 ) : (
-                  <strong className="mt-1 block text-lg sm:text-xl font-black text-orange-600">
+                  <strong className="mt-1 block text-lg sm:text-xl font-black text-orange-600 dark:text-orange-400">
                     {stats?.streakCount ?? 0} ngày
                   </strong>
                 )}
               </div>
 
               {/* Weekly EXP */}
-              <div className="rounded-2xl border border-emerald-200/90 bg-white/90 p-3 sm:p-3.5 text-center shadow-2xs transition-all hover:border-emerald-300">
-                <span className="text-[11px] font-bold text-slate-600 flex items-center justify-center gap-1">
-                  <TrendingUp size={14} className="text-emerald-600" />
+              <div className="rounded-2xl border border-emerald-200/90 dark:border-emerald-900/50 bg-white/90 dark:bg-slate-900 p-3 sm:p-3.5 text-center shadow-2xs transition-all hover:border-emerald-300 dark:hover:border-emerald-700">
+                <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 flex items-center justify-center gap-1">
+                  <TrendingUp size={14} className="text-emerald-600 dark:text-emerald-400" />
                   Điểm tuần
                 </span>
                 {isStatsLoading ? (
-                  <span className="inline-block h-6 w-14 rounded bg-slate-200 animate-pulse mt-1" />
+                  <span className="inline-block h-6 w-14 rounded bg-slate-200 dark:bg-slate-800 animate-pulse mt-1" />
                 ) : isStatsError ? (
                   <span className="text-xs font-bold text-slate-400 mt-1 block">Không khả dụng</span>
                 ) : (
-                  <strong className="mt-1 block text-lg sm:text-xl font-black text-emerald-700">
+                  <strong className="mt-1 block text-lg sm:text-xl font-black text-emerald-700 dark:text-emerald-400">
                     {stats?.weeklyExp ?? 0} EXP
                   </strong>
                 )}
@@ -637,19 +637,19 @@ export default function DashboardPage() {
               {/* Bánh Mì */}
               <Link
                 href="/student/profile?tab=quotas"
-                className="rounded-2xl border border-amber-200/90 bg-white/90 p-3 sm:p-3.5 text-center shadow-2xs transition-all hover:border-amber-300 block group"
+                className="rounded-2xl border border-amber-200/90 dark:border-amber-900/50 bg-white/90 dark:bg-slate-900 p-3 sm:p-3.5 text-center shadow-2xs transition-all hover:border-amber-300 dark:hover:border-amber-700 block group"
                 title="Xem lịch sử và đổi quà Bánh Mì"
               >
-                <span className="text-[11px] font-bold text-slate-600 flex items-center justify-center gap-1 group-hover:text-amber-800 transition-colors">
-                  <Gift size={14} className="text-amber-600" />
+                <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 flex items-center justify-center gap-1 group-hover:text-amber-800 dark:group-hover:text-amber-300 transition-colors">
+                  <Gift size={14} className="text-amber-600 dark:text-amber-400" />
                   Bánh mì
                 </span>
                 {isStatsLoading ? (
-                  <span className="inline-block h-6 w-14 rounded bg-slate-200 animate-pulse mt-1" />
+                  <span className="inline-block h-6 w-14 rounded bg-slate-200 dark:bg-slate-800 animate-pulse mt-1" />
                 ) : isStatsError ? (
                   <span className="text-xs font-bold text-slate-400 mt-1 block">Không khả dụng</span>
                 ) : (
-                  <strong className="mt-1 block text-lg sm:text-xl font-black text-amber-700">
+                  <strong className="mt-1 block text-lg sm:text-xl font-black text-amber-700 dark:text-amber-400">
                     {stats?.totalBanhRan ?? 0}
                   </strong>
                 )}
@@ -658,9 +658,9 @@ export default function DashboardPage() {
 
             {/* Error retry notice if stats failed */}
             {isStatsError && (
-              <div className="rounded-2xl border border-rose-200 bg-rose-50/90 p-2.5 flex items-center justify-between gap-3 text-xs font-bold text-rose-800 self-stretch sm:self-auto shadow-2xs">
+              <div className="rounded-2xl border border-rose-200 dark:border-rose-800/60 bg-rose-50/90 dark:bg-rose-950/40 p-2.5 flex items-center justify-between gap-3 text-xs font-bold text-rose-800 dark:text-rose-300 self-stretch sm:self-auto shadow-2xs">
                 <span className="flex items-center gap-1.5">
-                  <AlertCircle size={14} className="text-rose-600 shrink-0" />
+                  <AlertCircle size={14} className="text-rose-600 dark:text-rose-400 shrink-0" />
                   Không thể đồng bộ chỉ số học tập
                 </span>
                 <button
@@ -674,8 +674,8 @@ export default function DashboardPage() {
             )}
 
             {/* 7-Day Weekly Habit Flame Tracker (Vietnam Day Aligned) */}
-            <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/90 border border-slate-200/90 text-xs font-bold self-stretch sm:self-auto justify-between sm:justify-end shadow-2xs">
-              <span className="text-[11px] text-slate-500 font-bold hidden sm:inline">Tuần này:</span>
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/90 dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-xs font-bold self-stretch sm:self-auto justify-between sm:justify-end shadow-2xs">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold hidden sm:inline">Tuần này:</span>
               <div className="flex items-center gap-1.5">
                 {DAY_LABELS.map((day, idx) => {
                   const isPastOrToday = idx <= currentDayOfWeek;
@@ -687,10 +687,10 @@ export default function DashboardPage() {
                         isToday
                           ? safeCompleted > 0
                             ? "bg-amber-500 text-white font-black shadow-xs"
-                            : "ring-2 ring-amber-400 bg-amber-50 text-amber-800 font-black"
+                            : "ring-2 ring-amber-400 bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-black"
                           : isPastOrToday
-                            ? "bg-slate-100 text-slate-700 border border-slate-200 font-bold"
-                            : "bg-slate-50 text-slate-400 border border-slate-100 font-medium"
+                            ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-bold"
+                            : "bg-slate-50 dark:bg-slate-900/60 text-slate-400 dark:text-slate-500 border border-slate-100 dark:border-slate-800 font-medium"
                       }`}
                       title={isToday ? "Hôm nay (Giờ Việt Nam)" : `Thứ ${day}`}
                     >
@@ -701,10 +701,10 @@ export default function DashboardPage() {
               </div>
               {stats?.streakFreezes ? (
                 <span
-                  className="inline-flex items-center gap-1 text-[11px] text-amber-800 font-bold ml-1 pl-2.5 border-l border-slate-200"
+                  className="inline-flex items-center gap-1 text-[11px] text-amber-800 dark:text-amber-300 font-bold ml-1 pl-2.5 border-l border-slate-200 dark:border-slate-700"
                   title={`Bạn đang có ${stats.streakFreezes} khiên bảo vệ chuỗi`}
                 >
-                  <ShieldCheck size={13} className="text-amber-600" />
+                  <ShieldCheck size={13} className="text-amber-600 dark:text-amber-400" />
                   <span>{stats.streakFreezes} khiên</span>
                 </span>
               ) : null}
@@ -725,24 +725,24 @@ export default function DashboardPage() {
       {/* ========================================================================= */}
       <section className="grid gap-6 lg:grid-cols-3" aria-labelledby="today-quests-heading">
         {/* Left Column: Today's Quests List (2 Cols) */}
-        <div className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs lg:col-span-2 sm:p-7 space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
+        <div className="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs lg:col-span-2 sm:p-7 space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
             <div>
-              <span className="text-xs font-black uppercase tracking-wider text-emerald-800 bg-emerald-100/80 px-2.5 py-0.5 rounded-full border border-emerald-200">
+              <span className="text-xs font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
                 Mục Tiêu Mỗi Ngày
               </span>
-              <h2 id="today-quests-heading" className="mt-1.5 text-xl font-black text-slate-900">
+              <h2 id="today-quests-heading" className="mt-1.5 text-xl font-black text-slate-900 dark:text-slate-100">
                 Nhiệm vụ hôm nay
               </h2>
             </div>
 
             {!isTodayLoading && !isTodayError && (
               <div className="flex items-center gap-2">
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-800 border border-slate-200">
+                <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1 text-xs font-black text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
                   {safeCompleted}/{safeTotal} hoàn thành
                 </span>
                 {summary.earnedBanh > 0 && (
-                  <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-amber-800 border border-amber-200 shadow-2xs">
+                  <span className="rounded-full bg-amber-50 dark:bg-amber-950/60 px-3 py-1 text-xs font-black text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shadow-2xs">
                     +{summary.earnedBanh} Bánh Mì hôm nay
                   </span>
                 )}
@@ -751,18 +751,18 @@ export default function DashboardPage() {
           </div>
 
           {/* Daily Progress Energy Bar */}
-          <div className="space-y-1.5 bg-gradient-to-r from-slate-50 via-emerald-50/25 to-teal-50/20 p-3.5 sm:p-4 rounded-2xl border border-slate-200/90">
-            <div className="flex justify-between text-xs font-bold text-slate-700">
+          <div className="space-y-1.5 bg-gradient-to-r from-slate-50 via-emerald-50/25 to-teal-50/20 dark:from-slate-900 dark:via-emerald-950/20 dark:to-slate-950 p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800">
+            <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
               <span className="flex items-center gap-1.5">
-                <Zap size={15} className="text-emerald-600 fill-emerald-600" />
+                <Zap size={15} className="text-emerald-600 fill-emerald-600 dark:text-emerald-400 dark:fill-emerald-400" />
                 Tiến độ năng lượng ngày:
               </span>
-              <strong className="text-emerald-700 font-black">
+              <strong className="text-emerald-700 dark:text-emerald-400 font-black">
                 {isTodayLoading ? "—" : `${derivedDailyPercent}%`}
               </strong>
             </div>
             <div
-              className="h-3 overflow-hidden rounded-full bg-slate-100 border border-slate-200/80"
+              className="h-3 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700"
               role="progressbar"
               aria-valuenow={derivedDailyPercent}
               aria-valuemin={0}
@@ -781,26 +781,26 @@ export default function DashboardPage() {
             {isTodayLoading ? (
               <div className="space-y-3" role="status" aria-label="Đang tải nhiệm vụ hôm nay">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="animate-pulse rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+                  <div key={i} className="animate-pulse rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="size-7 shrink-0 rounded-xl bg-slate-200" />
+                        <div className="size-7 shrink-0 rounded-xl bg-slate-200 dark:bg-slate-700" />
                         <div className="space-y-1.5">
-                          <div className="h-4 w-40 rounded bg-slate-200" />
-                          <div className="h-3 w-56 rounded bg-slate-100" />
+                          <div className="h-4 w-40 rounded bg-slate-200 dark:bg-slate-700" />
+                          <div className="h-3 w-56 rounded bg-slate-100 dark:bg-slate-800" />
                         </div>
                       </div>
-                      <div className="h-10 w-28 rounded-xl bg-slate-200" />
+                      <div className="h-10 w-28 rounded-xl bg-slate-200 dark:bg-slate-700" />
                     </div>
                   </div>
                 ))}
               </div>
             ) : isTodayError ? (
-              <div className="rounded-2xl border border-rose-200 bg-rose-50/70 p-5 text-center space-y-3">
+              <div className="rounded-2xl border border-rose-200 dark:border-rose-800/60 bg-rose-50/70 dark:bg-rose-950/30 p-5 text-center space-y-3">
                 <AlertCircle size={24} className="mx-auto text-rose-500" aria-hidden="true" />
                 <div>
-                  <p className="text-sm font-bold text-rose-900">Không thể tải hoạt động hôm nay</p>
-                  <p className="mt-0.5 text-xs text-rose-700">Đã xảy ra lỗi khi đồng bộ dữ liệu từ máy chủ.</p>
+                  <p className="text-sm font-bold text-rose-900 dark:text-rose-300">Không thể tải hoạt động hôm nay</p>
+                  <p className="mt-0.5 text-xs text-rose-700 dark:text-rose-400">Đã xảy ra lỗi khi đồng bộ dữ liệu từ máy chủ.</p>
                 </div>
                 <button
                   type="button"
@@ -831,8 +831,8 @@ export default function DashboardPage() {
                     key={item.id}
                     className={`rounded-2xl border-2 p-4 transition-all ${
                       item.isCompleted
-                        ? "border-emerald-200 bg-emerald-50/20 shadow-2xs"
-                        : "border-slate-200/90 bg-white hover:border-slate-300 hover:shadow-xs"
+                        ? "border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/20 dark:bg-emerald-950/20 shadow-2xs"
+                        : "border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs"
                     }`}
                   >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -856,9 +856,9 @@ export default function DashboardPage() {
                               {categoryMeta.label}
                             </span>
                           </div>
-                          <h3 className="text-sm font-black text-slate-900">{title}</h3>
+                          <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">{title}</h3>
                           {description && (
-                            <p className="text-xs font-semibold text-slate-500 line-clamp-1">
+                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 line-clamp-1">
                               {description}
                             </p>
                           )}
@@ -866,13 +866,13 @@ export default function DashboardPage() {
                       </div>
 
                       <div className="flex shrink-0 items-center gap-3">
-                        <span className="text-xs font-black text-amber-900 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200/90 shadow-2xs">
+                        <span className="text-xs font-black text-amber-900 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2.5 py-1 rounded-lg border border-amber-200/90 dark:border-amber-800/60 shadow-2xs">
                           +{rewardBanh} Bánh Mì
                         </span>
 
                         {item.isCompleted ? (
-                          <span className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-100/80 px-3.5 text-xs font-black text-emerald-800">
-                            <CheckCircle2 size={15} aria-hidden="true" className="text-emerald-600" />
+                          <span className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-100/80 dark:bg-emerald-950/60 px-3.5 text-xs font-black text-emerald-800 dark:text-emerald-300">
+                            <CheckCircle2 size={15} aria-hidden="true" className="text-emerald-600 dark:text-emerald-400" />
                             Đã hoàn thành
                           </span>
                         ) : (
@@ -889,14 +889,14 @@ export default function DashboardPage() {
 
                     {/* Progress indicator */}
                     <div className="mt-3 space-y-1">
-                      <div className="flex justify-between text-xs font-bold text-slate-500">
+                      <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
                         <span>
-                          Tiến độ: <strong className="text-slate-800">{progressText}</strong>
+                          Tiến độ: <strong className="text-slate-800 dark:text-slate-200">{progressText}</strong>
                         </span>
                         <span>{progressPercent}%</span>
                       </div>
                       <div
-                        className="h-2 overflow-hidden rounded-full bg-slate-100"
+                        className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
                         role="progressbar"
                         aria-valuenow={progressPercent}
                         aria-valuemin={0}
@@ -915,15 +915,15 @@ export default function DashboardPage() {
                 );
               })
             ) : (
-              <p className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-center text-xs sm:text-sm font-semibold text-slate-600">
+              <p className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-5 text-center text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400">
                 Chưa có nhiệm vụ nào được thiết lập cho hôm nay.
               </p>
             )}
 
             {/* 100% Completed Celebration State */}
             {allQuestsCompleted && (
-              <div className="flex items-center justify-center gap-2 p-3.5 rounded-2xl bg-emerald-100/90 border border-emerald-300 text-center text-xs sm:text-sm font-black text-emerald-800">
-                <CheckCircle2 size={18} className="text-emerald-600 shrink-0" />
+              <div className="flex items-center justify-center gap-2 p-3.5 rounded-2xl bg-emerald-100/90 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-center text-xs sm:text-sm font-black text-emerald-800 dark:text-emerald-200">
+                <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <span>Xuất sắc! Bạn đã hoàn thành toàn bộ mục tiêu học tập hôm nay!</span>
               </div>
             )}
@@ -940,16 +940,16 @@ export default function DashboardPage() {
       <section aria-labelledby="course-heading" className="space-y-4">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <span className="text-xs font-black uppercase tracking-wider text-amber-800 bg-amber-100/70 px-2.5 py-0.5 rounded-full border border-amber-200">
+            <span className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/60 px-2.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
               Lộ Trình Tự Học
             </span>
-            <h2 id="course-heading" className="mt-1.5 text-xl sm:text-2xl font-black text-slate-900">
+            <h2 id="course-heading" className="mt-1.5 text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100">
               Khóa học đang học
             </h2>
           </div>
           <Link
             href="/my-courses"
-            className="inline-flex min-h-[44px] items-center gap-1 text-xs sm:text-sm font-black text-slate-700 transition-colors hover:text-amber-800 cursor-pointer"
+            className="inline-flex min-h-[44px] items-center gap-1 text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 transition-colors hover:text-amber-800 dark:hover:text-amber-400 cursor-pointer"
           >
             <span>Tất cả khóa học</span>
             <ChevronRight size={16} aria-hidden="true" />
@@ -970,16 +970,16 @@ export default function DashboardPage() {
       <section aria-labelledby="skills-heading" className="space-y-4">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <span className="text-xs font-black uppercase tracking-wider text-blue-800 bg-blue-100/70 px-2.5 py-0.5 rounded-full border border-blue-200">
+            <span className="text-xs font-black uppercase tracking-wider text-blue-800 dark:text-blue-300 bg-blue-100/70 dark:bg-blue-950/60 px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
               Bốn Kỹ Năng Cốt Lõi
             </span>
-            <h2 id="skills-heading" className="mt-1.5 text-xl sm:text-2xl font-black text-slate-900">
+            <h2 id="skills-heading" className="mt-1.5 text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100">
               Luyện tiếng Anh theo 4 kỹ năng
             </h2>
           </div>
           <Link
             href="/practice"
-            className="inline-flex min-h-[44px] items-center gap-1 text-xs sm:text-sm font-black text-slate-700 transition-colors hover:text-blue-700 cursor-pointer"
+            className="inline-flex min-h-[44px] items-center gap-1 text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 transition-colors hover:text-blue-700 dark:hover:text-blue-400 cursor-pointer"
           >
             <span>Trung tâm kỹ năng</span>
             <ChevronRight size={16} aria-hidden="true" />
@@ -987,11 +987,11 @@ export default function DashboardPage() {
         </div>
 
         {isSkillsError ? (
-          <div className="rounded-3xl border border-rose-200 bg-rose-50/70 p-6 text-center space-y-3">
+          <div className="rounded-3xl border border-rose-200 dark:border-rose-800/60 bg-rose-50/70 dark:bg-rose-950/30 p-6 text-center space-y-3">
             <AlertCircle size={24} className="mx-auto text-rose-500" />
             <div>
-              <p className="text-sm font-bold text-rose-900">Không thể tải ma trận kỹ năng</p>
-              <p className="mt-0.5 text-xs text-rose-700">Đã xảy ra sự cố khi kết nối tới máy chủ dữ liệu kỹ năng.</p>
+              <p className="text-sm font-bold text-rose-900 dark:text-rose-300">Không thể tải ma trận kỹ năng</p>
+              <p className="mt-0.5 text-xs text-rose-700 dark:text-rose-400">Đã xảy ra sự cố khi kết nối tới máy chủ dữ liệu kỹ năng.</p>
             </div>
             <button
               type="button"
@@ -1022,20 +1022,20 @@ export default function DashboardPage() {
                 return (
                   <div
                     key={skill.href}
-                    className="rounded-3xl border border-slate-200/90 bg-white p-5 shadow-xs flex flex-col justify-between animate-pulse space-y-4"
+                    className="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs flex flex-col justify-between animate-pulse space-y-4"
                     role="status"
                     aria-label={`Đang tải ${skill.title}`}
                   >
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
-                        <div className="size-12 rounded-2xl bg-slate-200" />
-                        <div className="h-5 w-20 rounded-full bg-slate-200" />
+                        <div className="size-12 rounded-2xl bg-slate-200 dark:bg-slate-800" />
+                        <div className="h-5 w-20 rounded-full bg-slate-200 dark:bg-slate-800" />
                       </div>
-                      <div className="h-5 w-28 rounded bg-slate-200" />
-                      <div className="h-3 w-48 rounded bg-slate-100" />
-                      <div className="h-2 rounded-full bg-slate-100" />
+                      <div className="h-5 w-28 rounded bg-slate-200 dark:bg-slate-800" />
+                      <div className="h-3 w-48 rounded bg-slate-100 dark:bg-slate-800/60" />
+                      <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800" />
                     </div>
-                    <div className="h-10 rounded-xl bg-slate-200" />
+                    <div className="h-10 rounded-xl bg-slate-200 dark:bg-slate-800" />
                   </div>
                 );
               }
@@ -1043,7 +1043,7 @@ export default function DashboardPage() {
               return (
                 <div
                   key={skill.href}
-                  className={`group rounded-3xl border-2 bg-white p-5 shadow-xs flex flex-col justify-between transition-all hover:-translate-y-1 hover:shadow-md ${skill.borderClass}`}
+                  className={`group rounded-3xl border-2 bg-white dark:bg-slate-900 p-5 shadow-xs flex flex-col justify-between transition-all hover:-translate-y-1 hover:shadow-md ${skill.borderClass}`}
                 >
                   <div className="space-y-3.5">
                     <div className="flex items-center justify-between">
@@ -1060,15 +1060,15 @@ export default function DashboardPage() {
                     </div>
 
                     <div>
-                      <h3 className="text-base sm:text-lg font-black text-slate-900">{skill.title}</h3>
-                      <p className="mt-1 text-xs sm:text-sm font-semibold text-slate-600 leading-relaxed">
+                      <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100">{skill.title}</h3>
+                      <p className="mt-1 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 leading-relaxed">
                         {skill.description}
                       </p>
                     </div>
 
                     {/* Skill Progress Bar */}
                     <div className="space-y-1 pt-1">
-                      <div className="flex justify-between text-[11px] font-bold text-slate-500">
+                      <div className="flex justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
                         <span>
                           {totalCount > 0
                             ? `Tiến độ: ${completedCount}/${totalCount} ${unitLabel}`
@@ -1077,7 +1077,7 @@ export default function DashboardPage() {
                         <span>{progressPercent}%</span>
                       </div>
                       <div
-                        className="h-2 rounded-full bg-slate-100 overflow-hidden"
+                        className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden"
                         role="progressbar"
                         aria-valuenow={progressPercent}
                         aria-valuemin={0}
@@ -1092,7 +1092,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  <div className="pt-4 mt-4 border-t border-slate-100">
+                  <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800">
                     <Link
                       href={skill.href}
                       className={`w-full inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl text-xs font-black transition-all shadow-2xs hover:scale-[1.02] active:scale-95 cursor-pointer ${skill.btnClass}`}
@@ -1113,55 +1113,55 @@ export default function DashboardPage() {
       {/* ========================================================================= */}
       <section aria-labelledby="tools-heading" className="space-y-4">
         <div>
-          <span className="text-xs font-black uppercase tracking-wider text-orange-800 bg-orange-100/70 px-2.5 py-0.5 rounded-full border border-orange-200">
+          <span className="text-xs font-black uppercase tracking-wider text-orange-800 dark:text-orange-300 bg-orange-100/70 dark:bg-orange-950/60 px-2.5 py-0.5 rounded-full border border-orange-200 dark:border-orange-800">
             Trung Tâm Luyện Đề &amp; Công Cụ Bổ Trợ
           </span>
-          <h2 id="tools-heading" className="mt-1.5 text-xl sm:text-2xl font-black text-slate-900">
+          <h2 id="tools-heading" className="mt-1.5 text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100">
             Luyện đề TOEIC &amp; Tăng tốc ghi nhớ
           </h2>
         </div>
 
         <div className="grid gap-5 md:grid-cols-3">
           {/* Card 1: ETS TOEIC Simulation Arena */}
-          <div className="rounded-3xl border-2 border-orange-200/90 bg-gradient-to-br from-orange-50/70 via-white to-amber-50/40 p-6 shadow-xs flex flex-col justify-between hover:border-orange-300 transition-colors">
+          <div className="rounded-3xl border-2 border-orange-200/90 dark:border-orange-900/50 bg-gradient-to-br from-orange-50/70 via-white to-amber-50/40 dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 p-6 shadow-xs flex flex-col justify-between hover:border-orange-300 dark:hover:border-orange-700 transition-colors">
             <div className="space-y-3.5">
               <div className="flex items-center justify-between">
                 <span className="flex size-12 items-center justify-center rounded-2xl bg-orange-500 text-white shadow-xs">
                   <Trophy size={22} aria-hidden="true" />
                 </span>
-                <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-900 border border-orange-200">
+                <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-900 dark:text-orange-300 border border-orange-200 dark:border-orange-800">
                   Format ETS 2024
                 </span>
               </div>
 
               <div>
-                <h3 className="text-lg font-black text-slate-900">Đấu Trường Luyện Đề TOEIC</h3>
-                <p className="mt-1 text-xs sm:text-sm font-semibold text-slate-600 leading-relaxed">
+                <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">Đấu Trường Luyện Đề TOEIC</h3>
+                <p className="mt-1 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 leading-relaxed">
                   Thi thử 200 câu bấm giờ 120 phút mô phỏng áp lực phòng thi thực tế. Báo cáo điểm mạnh yếu từng Part.
                 </p>
               </div>
 
-              <div className="p-3 rounded-2xl bg-white border border-orange-200/80 text-xs font-bold text-slate-700 space-y-1">
+              <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-orange-200/80 dark:border-slate-700/80 text-xs font-bold text-slate-700 dark:text-slate-300 space-y-1">
                 <p className="flex justify-between">
                   <span>Đề thi đã hoàn thành:</span>
                   {isStatsLoading ? (
-                    <span className="inline-block h-4 w-12 rounded bg-slate-200 animate-pulse" />
+                    <span className="inline-block h-4 w-12 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
                   ) : isStatsError ? (
                     <strong className="text-slate-400 font-bold">—</strong>
                   ) : (
-                    <strong className="text-orange-800 font-black">
+                    <strong className="text-orange-800 dark:text-orange-400 font-black">
                       {stats?.totalQuizzesDone ?? 0} bộ đề
                     </strong>
                   )}
                 </p>
-                <p className="flex justify-between text-slate-500">
+                <p className="flex justify-between text-slate-500 dark:text-slate-400">
                   <span>Độ chính xác trung bình:</span>
                   {isStatsLoading ? (
-                    <span className="inline-block h-4 w-12 rounded bg-slate-200 animate-pulse" />
+                    <span className="inline-block h-4 w-12 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
                   ) : isStatsError ? (
                     <strong className="text-slate-400 font-bold">—</strong>
                   ) : (
-                    <strong className="text-slate-900 font-bold">
+                    <strong className="text-slate-900 dark:text-slate-100 font-bold">
                       {stats?.quizAccuracy ? `${stats.quizAccuracy}%` : "Chưa có bài thi"}
                     </strong>
                   )}
@@ -1169,7 +1169,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="pt-4 mt-4 border-t border-orange-100">
+            <div className="pt-4 mt-4 border-t border-orange-100 dark:border-slate-800">
               <Link
                 href="/practice/quizzes"
                 className="w-full inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-orange-600 hover:bg-orange-700 active:scale-95 text-white font-black text-xs sm:text-sm shadow-xs transition-all cursor-pointer"
@@ -1181,45 +1181,45 @@ export default function DashboardPage() {
           </div>
 
           {/* Card 2: Spaced Repetition Flashcards */}
-          <div className="rounded-3xl border-2 border-amber-200/90 bg-gradient-to-br from-amber-50/70 via-white to-orange-50/30 p-6 shadow-xs flex flex-col justify-between hover:border-amber-300 transition-colors">
+          <div className="rounded-3xl border-2 border-amber-200/90 dark:border-amber-900/50 bg-gradient-to-br from-amber-50/70 via-white to-orange-50/30 dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 p-6 shadow-xs flex flex-col justify-between hover:border-amber-300 dark:hover:border-amber-700 transition-colors">
             <div className="space-y-3.5">
               <div className="flex items-center justify-between">
                 <span className="flex size-12 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-xs">
                   <Layers size={22} aria-hidden="true" />
                 </span>
-                <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
+                <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
                   Thuật toán SRS Leitner
                 </span>
               </div>
 
               <div>
-                <h3 className="text-lg font-black text-slate-900">Flashcard Ghi Nhớ Siêu Tốc</h3>
-                <p className="mt-1 text-xs sm:text-sm font-semibold text-slate-600 leading-relaxed">
+                <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">Flashcard Ghi Nhớ Siêu Tốc</h3>
+                <p className="mt-1 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 leading-relaxed">
                   Lặp ngắt quãng thông minh: từ nào hay quên sẽ được nhắc lại thường xuyên hơn để ghi nhớ vĩnh viễn.
                 </p>
               </div>
 
-              <div className="p-3 rounded-2xl bg-white border border-amber-200/80 text-xs font-bold text-slate-700 space-y-1">
+              <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-amber-200/80 dark:border-slate-700/80 text-xs font-bold text-slate-700 dark:text-slate-300 space-y-1">
                 <p className="flex justify-between">
                   <span>Từ vựng đã làm chủ:</span>
                   {isStatsLoading ? (
-                    <span className="inline-block h-4 w-12 rounded bg-slate-200 animate-pulse" />
+                    <span className="inline-block h-4 w-12 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
                   ) : isStatsError ? (
                     <strong className="text-slate-400 font-bold">—</strong>
                   ) : (
-                    <strong className="text-amber-800 font-black">
+                    <strong className="text-amber-800 dark:text-amber-400 font-black">
                       {stats?.masteredVocabCount ?? 0} từ
                     </strong>
                   )}
                 </p>
-                <p className="flex justify-between text-slate-500">
+                <p className="flex justify-between text-slate-500 dark:text-slate-400">
                   <span>Kho từ học thuật:</span>
-                  <strong className="text-slate-900 font-bold">3.000+ từ công sở</strong>
+                  <strong className="text-slate-900 dark:text-slate-100 font-bold">3.000+ từ công sở</strong>
                 </p>
               </div>
             </div>
 
-            <div className="pt-4 mt-4 border-t border-amber-100">
+            <div className="pt-4 mt-4 border-t border-amber-100 dark:border-slate-800">
               <Link
                 href="/flashcard"
                 className="w-full inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-black text-xs sm:text-sm shadow-xs transition-all cursor-pointer"
@@ -1231,37 +1231,37 @@ export default function DashboardPage() {
           </div>
 
           {/* Card 3: 24 Core Grammar Topics */}
-          <div className="rounded-3xl border-2 border-emerald-200/90 bg-gradient-to-br from-emerald-50/70 via-white to-teal-50/30 p-6 shadow-xs flex flex-col justify-between hover:border-emerald-300 transition-colors">
+          <div className="rounded-3xl border-2 border-emerald-200/90 dark:border-emerald-900/50 bg-gradient-to-br from-emerald-50/70 via-white to-teal-50/30 dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 p-6 shadow-xs flex flex-col justify-between hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors">
             <div className="space-y-3.5">
               <div className="flex items-center justify-between">
                 <span className="flex size-12 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-xs">
                   <BookOpen size={22} aria-hidden="true" />
                 </span>
-                <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-200">
+                <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                   Sơ đồ tư duy
                 </span>
               </div>
 
               <div>
-                <h3 className="text-lg font-black text-slate-900">24 Chuyên Đề Ngữ Pháp</h3>
-                <p className="mt-1 text-xs sm:text-sm font-semibold text-slate-600 leading-relaxed">
+                <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">24 Chuyên Đề Ngữ Pháp</h3>
+                <p className="mt-1 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 leading-relaxed">
                   Bản đồ tư duy tóm tắt cấu trúc ngữ pháp trọng tâm, ví dụ thực chiến và bài tập giải thích chi tiết.
                 </p>
               </div>
 
-              <div className="p-3 rounded-2xl bg-white border border-emerald-200/80 text-xs font-bold text-slate-700 space-y-1">
+              <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-emerald-200/80 dark:border-slate-700/80 text-xs font-bold text-slate-700 dark:text-slate-300 space-y-1">
                 <p className="flex justify-between">
                   <span>Chuyên đề trọng tâm:</span>
-                  <strong className="text-emerald-800 font-black">24 chủ điểm</strong>
+                  <strong className="text-emerald-800 dark:text-emerald-400 font-black">24 chủ điểm</strong>
                 </p>
-                <p className="flex justify-between text-slate-500">
+                <p className="flex justify-between text-slate-500 dark:text-slate-400">
                   <span>Bám sát format:</span>
-                  <strong className="text-slate-900 font-bold">TOEIC Part 5 - 6</strong>
+                  <strong className="text-slate-900 dark:text-slate-100 font-bold">TOEIC Part 5 - 6</strong>
                 </p>
               </div>
             </div>
 
-            <div className="pt-4 mt-4 border-t border-emerald-100">
+            <div className="pt-4 mt-4 border-t border-emerald-100 dark:border-slate-800">
               <Link
                 href="/grammar"
                 className="w-full inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs sm:text-sm shadow-xs transition-all cursor-pointer"

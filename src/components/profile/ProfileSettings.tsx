@@ -109,25 +109,25 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Header & Tabs Navigation */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-2 border-slate-100 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
             Hồ Sơ & Trang Bị Cá Nhân
           </h1>
-          <p className="text-slate-500 text-sm font-medium mt-0.5">
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-0.5">
             Quản lý thông tin tài khoản, danh hiệu và trang bị ngoại trang của bạn
           </p>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center bg-slate-100 p-1.5 rounded-2xl border border-slate-200 self-start sm:self-auto">
+        <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 self-start sm:self-auto">
           <button
             type="button"
             onClick={() => setActiveTab("profile")}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
               activeTab === "profile"
-                ? "bg-white text-slate-800 shadow-sm border border-slate-200/80"
-                : "text-slate-500 hover:text-slate-800"
+                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm border border-slate-200/80 dark:border-slate-700"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
             <User size={16} className={activeTab === "profile" ? "text-blue-500" : ""} />
@@ -139,13 +139,13 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
             onClick={() => setActiveTab("inventory")}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
               activeTab === "inventory"
-                ? "bg-white text-slate-800 shadow-sm border border-slate-200/80"
-                : "text-slate-500 hover:text-slate-800"
+                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm border border-slate-200/80 dark:border-slate-700"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
             <Backpack size={16} className={activeTab === "inventory" ? "text-amber-500" : ""} />
             Túi Đồ & Trang Bị
-            <span className="text-[10px] font-black bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-black bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-full">
               {myUnlockedList.length}
             </span>
           </button>
@@ -165,7 +165,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
           >
             {/* Cột trái: Identity Card */}
             <div className="md:col-span-1 space-y-6">
-              <div className="bg-white rounded-3xl shadow-sm border-2 border-slate-200 p-6 flex flex-col items-center text-center relative overflow-hidden">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 flex flex-col items-center text-center relative overflow-hidden">
                 <div className="relative mb-3 mt-2">
                   <UserAvatarWithFrame
                     avatarUrl={formData.avatar}
@@ -175,26 +175,26 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                   />
                 </div>
 
-                <h2 className="text-xl font-black text-slate-800 mt-1">
+                <h2 className="text-xl font-black text-slate-900 dark:text-slate-100 mt-1">
                   {formData.fullName || "Tên của bạn"}
                 </h2>
 
-                <p className="text-slate-400 text-xs font-black mt-0.5 uppercase tracking-wider">
+                <p className="text-slate-400 dark:text-slate-500 text-xs font-black mt-0.5 uppercase tracking-wider">
                   {user?.role === "STUDENT" ? "Học Sinh" : user?.role || "Thành viên"}
                 </p>
 
                 {activeBadgeItem ? (
-                  <div className="mt-3 px-3 py-1 bg-amber-50 border border-amber-200 rounded-full text-amber-800 text-xs font-bold flex items-center gap-1.5 shadow-xs">
+                  <div className="mt-3 px-3 py-1 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 rounded-full text-amber-800 dark:text-amber-300 text-xs font-bold flex items-center gap-1.5 shadow-xs">
                     <span>{activeBadgeItem.icon}</span> {activeBadgeItem.name}
                   </div>
                 ) : (
-                  <div className="mt-3 px-3 py-1 bg-slate-50 border border-slate-200 rounded-full text-slate-400 text-xs font-medium">
+                  <div className="mt-3 px-3 py-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-slate-400 dark:text-slate-500 text-xs font-medium">
                     Chưa đeo danh hiệu nào
                   </div>
                 )}
 
                 {/* Short cut to Inventory Tab */}
-                <div className="w-full mt-6 pt-4 border-t border-slate-100">
+                <div className="w-full mt-6 pt-4 border-t border-slate-100 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={() => setActiveTab("inventory")}
@@ -208,53 +208,53 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
 
             {/* Cột phải: Form thông tin */}
             <div className="md:col-span-2 space-y-6">
-              <div className="bg-white rounded-3xl shadow-sm border-2 border-slate-200 overflow-hidden">
-                <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-                  <h3 className="font-extrabold text-base text-slate-800 flex items-center gap-2">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+                <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <h3 className="font-extrabold text-base text-slate-800 dark:text-slate-100 flex items-center gap-2">
                     <User size={18} className="text-blue-500" /> Thông tin tài khoản
                   </h3>
-                  <span className="text-xs font-bold text-slate-400">
-                    Email: <strong className="text-slate-600">{user?.email}</strong>
+                  <span className="text-xs font-bold text-slate-400 dark:text-slate-500">
+                    Email: <strong className="text-slate-600 dark:text-slate-300">{user?.email}</strong>
                   </span>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                   <div>
-                    <label className="block text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-extrabold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
                       Họ và tên
                     </label>
                     <input
                       type="text"
                       value={formData.fullName}
                       onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                      className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+                      className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40 transition-all"
                       placeholder="Nhập họ và tên của bạn"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                      <label className="block text-xs font-extrabold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
                         <Phone size={13} /> Số điện thoại
                       </label>
                       <input
                         type="tel"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+                        className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40 transition-all"
                         placeholder="0912345678"
                       />
                     </div>
                     {user?.role === "STUDENT" && (
                       <div>
-                        <label className="block text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                        <label className="block text-xs font-extrabold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
                           <Target size={13} /> Mục tiêu (IELTS/TOEIC)
                         </label>
                         <input
                           type="text"
                           value={formData.targetScore}
                           onChange={(e) => setFormData({ ...formData, targetScore: e.target.value })}
-                          className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+                          className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40 transition-all"
                           placeholder="Vd: TOEIC 750 / IELTS 6.5"
                         />
                       </div>
@@ -262,14 +262,14 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                    <label className="block text-xs font-extrabold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
                       <MapPin size={13} /> Địa chỉ
                     </label>
                     <textarea
                       value={formData.address}
                       onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                       rows={2}
-                      className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all resize-none"
+                      className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40 transition-all resize-none"
                       placeholder="Nhập địa chỉ sinh sống của bạn"
                     />
                   </div>
@@ -309,9 +309,9 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
             className="space-y-6"
           >
             {/* 1. Phòng Thử Đồ & Gương Soi Nhân Vật (Clean Elegant Hero Card) */}
-            <div className="bg-white rounded-3xl p-6 sm:p-7 border-2 border-slate-200 shadow-sm relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
-                <div className="p-3 bg-slate-50 rounded-3xl border border-slate-200 shrink-0">
+                <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shrink-0">
                   <UserAvatarWithFrame
                     avatarUrl={formData.avatar}
                     name={formData.fullName || user?.email}
@@ -321,25 +321,25 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-center sm:justify-start gap-2">
-                    <h2 className="text-2xl font-black text-slate-800">
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100">
                       {formData.fullName || "Học viên BreadTrans"}
                     </h2>
-                    <span className="text-[11px] font-black uppercase tracking-wider bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-md">
+                    <span className="text-[11px] font-black uppercase tracking-wider bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 px-2.5 py-0.5 rounded-md">
                       {user?.role === "STUDENT" ? "Học Sinh" : user?.role || "Thành viên"}
                     </span>
                   </div>
 
-                  <p className="text-xs text-slate-400 font-medium">
+                  <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
                     Xem trước diện mạo nhân vật và tùy chỉnh trang bị đang hiển thị trong lớp học.
                   </p>
 
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
-                    <span className="text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1.5 bg-amber-50 text-amber-800 border border-amber-200">
-                      <Crown size={14} className="text-amber-600" />
+                    <span className="text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1.5 bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/60">
+                      <Crown size={14} className="text-amber-600 dark:text-amber-400" />
                       {activeFrameItem ? activeFrameItem.name : "Chưa đeo Khung Avatar"}
                     </span>
-                    <span className="text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1.5 bg-indigo-50 text-indigo-800 border border-indigo-200">
-                      <Medal size={14} className="text-indigo-600" />
+                    <span className="text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1.5 bg-indigo-50 text-indigo-800 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-900/60">
+                      <Medal size={14} className="text-indigo-600 dark:text-indigo-400" />
                       {activeBadgeItem ? activeBadgeItem.name : "Chưa đeo Huy Hiệu"}
                     </span>
                   </div>
@@ -357,15 +357,15 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
             </div>
 
             {/* 2. Bộ Lọc Danh Mục (Clean Pill Filter Bar) */}
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border-2 border-slate-200 shadow-xs">
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
               <div className="flex flex-wrap items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => setInventoryCategory("all")}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
                     inventoryCategory === "all"
-                      ? "bg-slate-800 text-white shadow-xs"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      ? "bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-750"
                   }`}
                 >
                   Tất cả ({myUnlockedList.length})
@@ -376,7 +376,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
                     inventoryCategory === "avatar"
                       ? "bg-amber-500 text-white shadow-xs"
-                      : "bg-amber-50 text-amber-800 hover:bg-amber-100"
+                      : "bg-amber-50 text-amber-800 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-900/50"
                   }`}
                 >
                   👑 Khung Avatar ({framesCount})
@@ -387,7 +387,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
                     inventoryCategory === "badge"
                       ? "bg-indigo-600 text-white shadow-xs"
-                      : "bg-indigo-50 text-indigo-800 hover:bg-indigo-100"
+                      : "bg-indigo-50 text-indigo-800 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
                   }`}
                 >
                   🏅 Huy Hiệu ({badgesCount})
@@ -398,29 +398,29 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
                     inventoryCategory === "boost"
                       ? "bg-emerald-600 text-white shadow-xs"
-                      : "bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+                      : "bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
                   }`}
                 >
                   ⚡ Vật Phẩm ({boostsCount})
                 </button>
               </div>
 
-              <span className="text-xs font-bold text-slate-400">
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500">
                 Hiển thị {filteredInventory.length} vật phẩm
               </span>
             </div>
 
             {/* 3. Lưới Hiển Thị Vật Phẩm Rộng Rãi (Spacious Items Grid) */}
             {filteredInventory.length === 0 ? (
-              <div className="bg-white rounded-3xl border-2 border-slate-200 p-12 text-center space-y-4">
-                <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto text-2xl">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-4">
+                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-full flex items-center justify-center mx-auto text-2xl">
                   🎒
                 </div>
                 <div className="space-y-1">
-                  <h3 className="font-black text-slate-700 text-base">
+                  <h3 className="font-black text-slate-700 dark:text-slate-300 text-base">
                     Không tìm thấy vật phẩm nào trong mục này
                   </h3>
-                  <p className="text-slate-400 text-xs font-medium">
+                  <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">
                     Hãy tham gia làm bài tập hoặc tích lũy Bánh Mì để mở khóa thêm vật phẩm nhé!
                   </p>
                 </div>
@@ -445,10 +445,10 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                   return (
                     <div
                       key={item.id}
-                      className={`bg-white rounded-3xl border-2 p-5 flex flex-col justify-between transition-all relative overflow-hidden shadow-xs hover:shadow-md ${
+                      className={`bg-white dark:bg-slate-900 rounded-3xl border p-5 flex flex-col justify-between transition-all relative overflow-hidden shadow-xs hover:shadow-md ${
                         isEquipped
-                          ? "border-amber-400 bg-gradient-to-b from-amber-50/50 to-white ring-2 ring-amber-300 ring-offset-2"
-                          : "border-slate-200 hover:border-slate-300"
+                          ? "border-amber-400 bg-gradient-to-b from-amber-50/50 to-white dark:from-amber-950/30 dark:to-slate-900 ring-2 ring-amber-300 dark:ring-amber-700/60"
+                          : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                       }`}
                     >
                       {isEquipped && (
@@ -459,7 +459,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
 
                       <div className="space-y-3">
                         <div className="flex items-center gap-3.5">
-                          <div className="w-14 h-14 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center p-2 shadow-inner shrink-0">
+                          <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center p-2 shadow-inner shrink-0">
                             {item.icon?.startsWith("/") ? (
                               <img src={item.icon} alt={item.name} className="w-10 h-10 object-contain" />
                             ) : (
@@ -470,27 +470,27 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                             <span
                               className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${
                                 isFrame
-                                  ? "bg-amber-100 text-amber-800"
+                                  ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
                                   : isBadge
-                                  ? "bg-indigo-100 text-indigo-800"
-                                  : "bg-emerald-100 text-emerald-800"
+                                  ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300"
+                                  : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
                               }`}
                             >
                               {isFrame ? "Khung Avatar" : isBadge ? "Huy Hiệu" : "Hỗ Trợ"}
                             </span>
-                            <h4 className="font-black text-slate-800 text-sm mt-1">
+                            <h4 className="font-black text-slate-800 dark:text-slate-100 text-sm mt-1">
                               {item.name}
                             </h4>
                           </div>
                         </div>
 
-                        <p className="text-slate-500 text-xs font-medium leading-relaxed">
+                        <p className="text-slate-500 dark:text-slate-400 text-xs font-medium leading-relaxed">
                           {item.description}
                         </p>
                       </div>
 
                       {/* Action Button */}
-                      <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
+                      <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                         {isFrame && (
                           <button
                             type="button"
@@ -506,7 +506,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                             className={`w-full py-2.5 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
                               isEquipped
                                 ? "bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20"
-                                : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                                : "bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-750 dark:text-slate-300"
                             }`}
                           >
                             {isEquipped ? (
@@ -536,7 +536,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                             className={`w-full py-2.5 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
                               isEquipped
                                 ? "bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20"
-                                : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                                : "bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-750 dark:text-slate-300"
                             }`}
                           >
                             {isEquipped ? (
@@ -552,7 +552,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                         )}
 
                         {isBoost && (
-                          <div className="w-full py-2 text-center text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-center gap-1.5">
+                          <div className="w-full py-2 text-center text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 rounded-xl flex items-center justify-center gap-1.5">
                             <Zap size={14} className="text-emerald-500" /> Tự động kích hoạt khi học
                           </div>
                         )}

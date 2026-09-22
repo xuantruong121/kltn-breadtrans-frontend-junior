@@ -177,16 +177,16 @@ function ListeningCatalogContent() {
   return (
     <div className="space-y-6 pb-20 pt-2">
       {/* Hero Banner */}
-      <section className="relative overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50 via-white to-sky-50 p-5 sm:p-7 md:p-8 shadow-2xs">
+      <section className="relative overflow-hidden rounded-2xl border border-blue-100 dark:border-blue-950/60 bg-gradient-to-r from-blue-50 via-white to-sky-50 dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 p-5 sm:p-7 md:p-8 shadow-2xs">
         <div className="max-w-3xl space-y-3">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-white/90 px-3 py-1 text-xs font-extrabold text-blue-700">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 dark:border-blue-800/60 bg-white/90 dark:bg-slate-800 px-3 py-1 text-xs font-extrabold text-blue-700 dark:text-blue-300">
             <Headphones size={14} aria-hidden="true" />
             <span>Kỹ năng nghe hiểu tiếng Anh</span>
           </div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-slate-900">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">
             Luyện nghe theo ngữ cảnh thực tế
           </h1>
-          <p className="text-xs leading-relaxed text-slate-600 sm:text-sm">
+          <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-400 sm:text-sm">
             Chọn chủ đề bạn quan tâm để nghe hiểu, nghe chép hoặc theo dõi hội thoại theo từng lượt lời. Nội dung này phục vụ luyện 4 kỹ năng tiếng Anh độc lập.
           </p>
 
@@ -194,7 +194,7 @@ function ListeningCatalogContent() {
           <div className="pt-1">
             <Link
               href="/practice/quizzes"
-              className="inline-flex flex-wrap items-center gap-1.5 text-xs font-extrabold text-blue-700 transition hover:text-blue-800 hover:underline"
+              className="inline-flex flex-wrap items-center gap-1.5 text-xs font-extrabold text-blue-700 dark:text-blue-400 transition hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
             >
               <span>Bạn muốn làm bài thi TOEIC đầy đủ? Đi đến Kho đề TOEIC</span>
               <ArrowRight size={13} aria-hidden="true" />
@@ -204,15 +204,15 @@ function ListeningCatalogContent() {
       </section>
 
       {/* Mode Tabs */}
-      <div className="border-b border-slate-200">
+      <div className="border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <button
             type="button"
             onClick={() => setQueryParam("mode", "ALL")}
             className={`inline-flex shrink-0 whitespace-nowrap items-center gap-2 border-b-2 px-3.5 sm:px-4 py-3 text-xs font-black transition ${
               modeParam === "ALL"
-                ? "border-blue-600 text-blue-700"
-                : "border-transparent text-slate-500 hover:text-slate-900"
+                ? "border-blue-600 text-blue-700 dark:text-blue-400"
+                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
             }`}
           >
             <Headphones size={15} aria-hidden="true" />
@@ -224,8 +224,8 @@ function ListeningCatalogContent() {
             onClick={() => setQueryParam("mode", "COMPREHENSION")}
             className={`inline-flex shrink-0 whitespace-nowrap items-center gap-2 border-b-2 px-3.5 sm:px-4 py-3 text-xs font-black transition ${
               modeParam === "COMPREHENSION"
-                ? "border-blue-600 text-blue-700"
-                : "border-transparent text-slate-500 hover:text-slate-900"
+                ? "border-blue-600 text-blue-700 dark:text-blue-400"
+                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
             }`}
           >
             <Volume2 size={15} aria-hidden="true" />
@@ -237,8 +237,8 @@ function ListeningCatalogContent() {
             onClick={() => setQueryParam("mode", "DICTATION")}
             className={`inline-flex shrink-0 whitespace-nowrap items-center gap-2 border-b-2 px-3.5 sm:px-4 py-3 text-xs font-black transition ${
               modeParam === "DICTATION"
-                ? "border-blue-600 text-blue-700"
-                : "border-transparent text-slate-500 hover:text-slate-900"
+                ? "border-blue-600 text-blue-700 dark:text-blue-400"
+                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
             }`}
           >
             <PenLine size={15} aria-hidden="true" />
@@ -250,8 +250,8 @@ function ListeningCatalogContent() {
             onClick={() => setQueryParam("mode", "DIALOGUE")}
             className={`inline-flex shrink-0 whitespace-nowrap items-center gap-2 border-b-2 px-3.5 sm:px-4 py-3 text-xs font-black transition ${
               modeParam === "DIALOGUE"
-                ? "border-blue-600 text-blue-700"
-                : "border-transparent text-slate-500 hover:text-slate-900"
+                ? "border-blue-600 text-blue-700 dark:text-blue-400"
+                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
             }`}
           >
             <MessageCircleMore size={15} aria-hidden="true" />
@@ -263,14 +263,14 @@ function ListeningCatalogContent() {
       {allTopics.length > 0 && (
         <section aria-labelledby="listening-topic-heading" className="space-y-2">
           <div className="flex items-center justify-between gap-3">
-            <h2 id="listening-topic-heading" className="text-sm font-extrabold text-slate-900">
+            <h2 id="listening-topic-heading" className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
               Khám phá theo chủ đề
             </h2>
             {topicParam !== "ALL" && (
               <button
                 type="button"
                 onClick={() => setQueryParam("topic", "ALL")}
-                className="min-h-9 rounded-lg px-2 text-xs font-bold text-blue-700 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                className="min-h-9 rounded-lg px-2 text-xs font-bold text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
               >
                 Xem tất cả
               </button>
@@ -288,7 +288,7 @@ function ListeningCatalogContent() {
                   className={`min-h-11 shrink-0 whitespace-nowrap rounded-xl border px-3.5 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
                     selected
                       ? "border-blue-600 bg-blue-600 text-white"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50"
+                      : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50 dark:hover:bg-slate-800"
                   }`}
                 >
                   {topic}
@@ -300,7 +300,7 @@ function ListeningCatalogContent() {
       )}
 
       {/* Filter Toolbar */}
-      <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs sm:p-5">
+      <section className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xs sm:p-5">
         <div className="flex flex-col gap-3.5">
           {/* Top filter row: Search & Level */}
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -308,7 +308,7 @@ function ListeningCatalogContent() {
             <div className="relative w-full md:max-w-xs">
               <Search
                 size={16}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
                 aria-hidden="true"
               />
               <input
@@ -316,13 +316,13 @@ function ListeningCatalogContent() {
                 placeholder="Tìm kiếm bài nghe..."
                 value={searchQuery}
                 onChange={(e) => setQueryParam("q", e.target.value)}
-                className="min-h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-3.5 text-xs text-slate-800 transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-hidden"
+                className="min-h-11 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 pl-10 pr-3.5 text-xs text-slate-800 dark:text-slate-100 transition placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-hidden"
               />
             </div>
 
             {/* Level Quick Filter Buttons */}
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs font-bold text-slate-400 mr-1">Trình độ:</span>
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 mr-1">Trình độ:</span>
               {["ALL", "A1", "A2", "B1", "B2"].map((lvl) => (
                 <button
                   key={lvl}
@@ -331,7 +331,7 @@ function ListeningCatalogContent() {
                   className={`min-h-9 rounded-lg px-2.5 text-xs font-extrabold transition ${
                     levelParam === lvl
                       ? "bg-blue-600 text-white shadow-2xs"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100"
                   }`}
                 >
                   {lvl === "ALL" ? "Tất cả" : lvl}
@@ -341,8 +341,8 @@ function ListeningCatalogContent() {
           </div>
 
           {/* Secondary filter row: Topic, Accent, Status */}
-          <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
-            <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 dark:border-slate-800 pt-3">
+            <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-slate-400 shrink-0">
               <Filter size={13} aria-hidden="true" />
               Bộ lọc:
             </span>
@@ -353,7 +353,7 @@ function ListeningCatalogContent() {
                 aria-label="Lọc theo chủ đề"
                 value={topicParam}
                 onChange={(e) => setQueryParam("topic", e.target.value)}
-                className="min-h-9 w-full sm:w-auto flex-1 sm:flex-initial min-w-[130px] rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-xs font-bold text-slate-700 transition focus:border-blue-500 focus:bg-white focus:outline-hidden"
+                className="min-h-9 w-full sm:w-auto flex-1 sm:flex-initial min-w-[130px] rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 transition focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-hidden"
               >
                 <option value="ALL">Chủ đề: Tất cả</option>
                 {allTopics.map((topic) => (
@@ -369,7 +369,7 @@ function ListeningCatalogContent() {
               aria-label="Lọc theo giọng đọc"
               value={accentParam}
               onChange={(e) => setQueryParam("accent", e.target.value)}
-              className="min-h-9 w-full sm:w-auto flex-1 sm:flex-initial min-w-[130px] rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-xs font-bold text-slate-700 transition focus:border-blue-500 focus:bg-white focus:outline-hidden"
+              className="min-h-9 w-full sm:w-auto flex-1 sm:flex-initial min-w-[130px] rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 transition focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-hidden"
             >
               <option value="ALL">Giọng đọc: Tất cả</option>
               <option value="US">Giọng Mỹ (US)</option>
@@ -382,7 +382,7 @@ function ListeningCatalogContent() {
                 aria-label="Lọc theo trạng thái"
                 value={statusParam}
                 onChange={(e) => setQueryParam("status", e.target.value)}
-                className="min-h-9 w-full sm:w-auto flex-1 sm:flex-initial min-w-[130px] rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-xs font-bold text-slate-700 transition focus:border-blue-500 focus:bg-white focus:outline-hidden"
+                className="min-h-9 w-full sm:w-auto flex-1 sm:flex-initial min-w-[130px] rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 transition focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-hidden"
               >
                 <option value="ALL">Trạng thái: Tất cả</option>
                 <option value="UNCOMPLETED">Chưa làm</option>
@@ -403,7 +403,7 @@ function ListeningCatalogContent() {
                   if (modeParam !== "ALL") params.set("mode", modeParam);
                   router.replace(`${pathname}?${params.toString()}`, { scroll: false });
                 }}
-                className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 shrink-0"
+                className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 transition hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 shrink-0"
               >
                 <RotateCcw size={12} aria-hidden="true" />
                 Đặt lại
@@ -416,13 +416,13 @@ function ListeningCatalogContent() {
       {/* Catalog Results Grid */}
       <section>
         {isLoading ? (
-          <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white">
+          <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
             <Loader2 size={32} className="animate-spin text-blue-600" aria-hidden="true" />
-            <p className="mt-3 text-xs font-bold text-slate-500">Đang tải danh sách bài nghe...</p>
+            <p className="mt-3 text-xs font-bold text-slate-500 dark:text-slate-400">Đang tải danh sách bài nghe...</p>
           </div>
         ) : isError ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
-            <p className="text-sm font-bold text-slate-700">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center">
+            <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
               Không thể tải danh sách bài nghe. Vui lòng thử lại.
             </p>
             <button
@@ -436,14 +436,14 @@ function ListeningCatalogContent() {
           </div>
         ) : modeParam === "DICTATION" && dictationCount === 0 ? (
           /* Honest Empty State for Dictation */
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center sm:p-16">
-            <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+          <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center sm:p-16">
+            <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
               <PenLine size={28} aria-hidden="true" />
             </div>
-            <h2 className="mt-4 text-base font-extrabold text-slate-900 sm:text-lg">
+            <h2 className="mt-4 text-base font-extrabold text-slate-900 dark:text-slate-100 sm:text-lg">
               Chưa có bài tập Nghe chép chính tả
             </h2>
-            <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-slate-600 sm:text-sm">
+            <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-slate-600 dark:text-slate-400 sm:text-sm">
               Đội ngũ học thuật đang biên soạn nội dung nghe chép theo từng chủ đề. Bạn có thể luyện tập các bài Nghe hiểu trong khi chờ đợi.
             </p>
             <button
@@ -469,12 +469,12 @@ function ListeningCatalogContent() {
             ))}
           </div>
         ) : (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
-            <Headphones size={32} className="mx-auto text-slate-400" aria-hidden="true" />
-            <h2 className="mt-3 text-base font-bold text-slate-800">
+          <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center">
+            <Headphones size={32} className="mx-auto text-slate-400 dark:text-slate-500" aria-hidden="true" />
+            <h2 className="mt-3 text-base font-bold text-slate-800 dark:text-slate-200">
               Không tìm thấy bài nghe phù hợp
             </h2>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               Hãy thử chọn bộ lọc khác hoặc tìm kiếm với từ khóa khác.
             </p>
           </div>

@@ -42,28 +42,28 @@ const STATS_DATA = [
     label: "Học viên năng động",
     desc: "Đang rèn luyện mỗi ngày trên nền tảng",
     icon: Users,
-    color: "text-amber-600 bg-amber-50 border-amber-200",
+    color: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60",
   },
   {
     value: "200+",
     label: "Bộ đề ETS chuẩn hoá",
     desc: "Cập nhật format mới nhất kèm giải chi tiết",
     icon: GraduationCap,
-    color: "text-blue-600 bg-blue-50 border-blue-200",
+    color: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900/60",
   },
   {
     value: "94.8%",
     label: "Tăng 150+ điểm sau 60 ngày",
     desc: "Tỷ lệ học viên đạt hoặc vượt mục tiêu cam kết",
     icon: TrendingUp,
-    color: "text-emerald-600 bg-emerald-50 border-emerald-200",
+    color: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60",
   },
   {
     value: "4.9 / 5.0",
     label: "Đánh giá hài lòng",
     desc: "Dựa trên hơn 12.000 phản hồi từ người học",
     icon: Star,
-    color: "text-orange-600 bg-orange-50 border-orange-200",
+    color: "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-900/60",
   },
 ];
 
@@ -393,11 +393,11 @@ export default function PublicLandingPage() {
   }, []);
 
   return (
-    <div className="min-h-full bg-[#fbfaf8] text-slate-800 antialiased selection:bg-amber-600 selection:text-white font-['Quicksand',sans-serif]">
+    <div className="min-h-full bg-background text-foreground antialiased selection:bg-amber-600 selection:text-white font-['Quicksand',sans-serif] transition-colors duration-150">
       {/* ========================================================================= */}
       {/* 1. DYNAMIC ASYMMETRIC HERO SECTION (Anti-Center Bias, High Energy)       */}
       {/* ========================================================================= */}
-      <section className="relative overflow-hidden pt-6 sm:pt-10 pb-16 lg:pb-24 border-b border-amber-100/60 bg-gradient-to-b from-amber-50/70 via-[#fdfbf7] to-[#fbfaf8]">
+      <section className="relative overflow-hidden pt-6 sm:pt-10 pb-16 lg:pb-24 border-b border-amber-100/60 dark:border-slate-800/60 bg-gradient-to-b from-amber-50/70 via-[#fdfbf7] to-[#fbfaf8] dark:from-slate-900/90 dark:via-slate-900 dark:to-background">
         {/* Subtle Ambient Decorative Glows */}
         <div
           className="pointer-events-none absolute -left-20 top-0 size-96 rounded-full bg-amber-200/30 blur-3xl"
@@ -413,21 +413,21 @@ export default function PublicLandingPage() {
             {/* Left Column: Core Value Proposition & CTAs (7 Cols) */}
             <div className="lg:col-span-7 space-y-6 sm:space-y-7">
               {/* Product Badge */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-100/80 border border-amber-200/80 text-amber-900 text-xs font-black tracking-wide shadow-2xs">
-                <Zap className="size-3.5 text-amber-600 shrink-0 fill-amber-600" aria-hidden="true" />
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-100/80 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-900/60 text-amber-900 dark:text-amber-300 text-xs font-black tracking-wide shadow-2xs">
+                <Zap className="size-3.5 text-amber-600 dark:text-amber-400 shrink-0 fill-amber-600 dark:fill-amber-400" aria-hidden="true" />
                 <span>Nền tảng Học Tiếng Anh &amp; Luyện Thi TOEIC AI Thế Hệ Mới</span>
               </div>
 
               {/* Main Headline */}
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-black tracking-tight text-slate-900 leading-[1.18]">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-black tracking-tight text-slate-900 dark:text-slate-100 leading-[1.18]">
                 Chinh phục Tiếng Anh &amp; Bứt phá TOEIC cùng{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 dark:from-amber-400 dark:via-orange-400 dark:to-amber-500">
                   Gia sư AI thông minh
                 </span>
               </h1>
 
               {/* Subheadline */}
-              <p className="text-slate-600 text-base sm:text-lg font-semibold leading-relaxed max-w-2xl">
+              <p className="text-slate-600 dark:text-slate-300 text-base sm:text-lg font-semibold leading-relaxed max-w-2xl">
                 Học tập phản xạ 4 kỹ năng Nghe - Nói - Đọc - Viết, chấm phát âm chi tiết từng âm vị, cọ xát
                 hơn 200+ bộ đề thi ETS chuẩn hóa và duy trì cảm hứng bền bỉ cùng thú cưng đồng hành mỗi ngày.
               </p>
@@ -457,10 +457,10 @@ export default function PublicLandingPage() {
 
                 <button
                   onClick={() => handleProtectedAction("bài kiểm tra chẩn đoán trình độ", "/diagnostic")}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-white hover:bg-amber-50/60 border-2 border-amber-200/90 text-slate-800 font-extrabold text-base transition-colors cursor-pointer shadow-2xs"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-white dark:bg-slate-850 hover:bg-amber-50/60 dark:hover:bg-slate-800 border-2 border-amber-200/90 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-extrabold text-base transition-colors cursor-pointer shadow-2xs"
                   type="button"
                 >
-                  <Clock size={18} className="text-amber-600" aria-hidden="true" />
+                  <Clock size={18} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
                   <span>Làm test chẩn đoán 5 phút</span>
                 </button>
               </div>
@@ -469,7 +469,7 @@ export default function PublicLandingPage() {
                 <div className="pt-0.5">
                   <button
                     onClick={() => openDirectLogin("bài học", "/dashboard")}
-                    className="text-xs font-bold text-slate-500 hover:text-amber-800 transition-colors underline underline-offset-4 cursor-pointer"
+                    className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-amber-800 dark:hover:text-amber-300 transition-colors underline underline-offset-4 cursor-pointer"
                     type="button"
                   >
                     Đã có tài khoản học viên? Đăng nhập ngay →
@@ -478,21 +478,21 @@ export default function PublicLandingPage() {
               )}
 
               {/* Trust & Social Proof Micro-strip */}
-              <div className="pt-3 flex flex-wrap items-center gap-4 sm:gap-6 text-xs font-bold text-slate-600 border-t border-slate-200/70">
-                <div className="flex items-center gap-1.5 text-amber-600">
+              <div className="pt-3 flex flex-wrap items-center gap-4 sm:gap-6 text-xs font-bold text-slate-600 dark:text-slate-400 border-t border-slate-200/70 dark:border-slate-800">
+                <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
                   <div className="flex -space-x-1" aria-hidden="true">
                     {[1, 2, 3, 4, 5].map((s) => (
                       <Star key={s} size={15} className="fill-amber-500 text-amber-500" />
                     ))}
                   </div>
-                  <span className="font-black text-slate-900 ml-1">4.9/5</span>
-                  <span className="text-slate-500 font-semibold">(10.000+ học viên tin dùng)</span>
+                  <span className="font-black text-slate-900 dark:text-slate-100 ml-1">4.9/5</span>
+                  <span className="text-slate-500 dark:text-slate-400 font-semibold">(10.000+ học viên tin dùng)</span>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
-                  <span className="text-emerald-700 font-black">Tặng 50 Bánh Mì khi đăng ký</span>
-                  <span className="text-slate-400 font-medium">• Không cần thẻ tín dụng</span>
+                  <span className="text-emerald-700 dark:text-emerald-400 font-black">Tặng 50 Bánh Mì khi đăng ký</span>
+                  <span className="text-slate-400 dark:text-slate-500 font-medium">• Không cần thẻ tín dụng</span>
                 </div>
               </div>
             </div>
@@ -502,50 +502,50 @@ export default function PublicLandingPage() {
               <div className="relative mx-auto max-w-md lg:max-w-none">
                 {/* Decorative Background Offset */}
                 <div
-                  className="absolute inset-0 bg-gradient-to-tr from-amber-300 to-orange-400 rounded-3xl rotate-2 scale-[1.02] opacity-30 blur-xs"
+                  className="absolute inset-0 bg-gradient-to-tr from-amber-300 to-orange-400 rounded-3xl rotate-2 scale-[1.02] opacity-30 dark:opacity-15 blur-xs"
                   aria-hidden="true"
                 />
 
                 {/* Main Interactive Showcase Card */}
-                <div className="relative bg-white border-2 border-amber-200/90 rounded-3xl p-6 sm:p-7 pt-7 sm:pt-8 shadow-card space-y-5">
+                <div className="relative bg-white dark:bg-slate-900 border-2 border-amber-200/90 dark:border-slate-800 rounded-3xl p-6 sm:p-7 pt-7 sm:pt-8 shadow-card space-y-5">
                   {/* Card Header: Live AI Status */}
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                     <div className="flex items-center gap-2.5">
                       <span className="relative flex size-3">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                         <span className="relative inline-flex rounded-full size-3 bg-emerald-500" />
                       </span>
-                      <span className="text-xs font-black uppercase tracking-wider text-slate-800">
+                      <span className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100">
                         BreadTrans AI Tutor
                       </span>
                     </div>
-                    <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                       Chấm điểm âm vị thời gian thực
                     </span>
                   </div>
 
                   {/* Practice Prompt Preview */}
                   <div className="space-y-2">
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                       Câu luyện nói thực chiến:
                     </span>
-                    <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/80">
-                      <p className="text-base font-bold text-slate-900 leading-snug">
+                    <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-slate-800/60 border border-amber-200/80 dark:border-slate-700">
+                      <p className="text-base font-bold text-slate-900 dark:text-slate-100 leading-snug">
                         &ldquo;Could you please send me the financial report by tomorrow?&rdquo;
                       </p>
-                      <p className="text-xs font-semibold text-slate-500 mt-1 italic">
+                      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1 italic">
                         (Bạn có thể gửi cho tôi bản báo cáo tài chính trước ngày mai không?)
                       </p>
                     </div>
                   </div>
 
                   {/* Simulated Waveform & Audio Playback */}
-                  <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3">
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 flex items-center justify-between gap-3">
                     <button
                       onClick={toggleDemoPlay}
                       className={`size-11 rounded-xl flex items-center justify-center shrink-0 shadow-2xs transition-all cursor-pointer ${
                         isPlayingDemo
-                          ? "bg-amber-700 text-white ring-4 ring-amber-300 scale-95"
+                          ? "bg-amber-700 text-white ring-4 ring-amber-300 dark:ring-amber-800 scale-95"
                           : "bg-amber-600 hover:bg-amber-700 text-white hover:scale-105 active:scale-95"
                       }`}
                       title={isPlayingDemo ? "Bấm để dừng phát âm" : "Bấm để nghe phát âm mẫu chuẩn US"}
@@ -565,7 +565,7 @@ export default function PublicLandingPage() {
                         <span
                           key={i}
                           className={`w-1 rounded-full transition-all duration-300 ${
-                            isPlayingDemo ? "bg-amber-600 animate-pulse" : "bg-slate-300"
+                            isPlayingDemo ? "bg-amber-600 animate-pulse" : "bg-slate-300 dark:bg-slate-600"
                           }`}
                           style={{
                             height: isPlayingDemo ? `${PLAYING_WAVE_HEIGHTS[i]}%` : `${h}%`,
@@ -574,72 +574,72 @@ export default function PublicLandingPage() {
                       ))}
                     </div>
 
-                    <span className="text-xs font-black text-amber-800 bg-amber-100/80 px-2.5 py-1 rounded-lg shrink-0">
+                    <span className="text-xs font-black text-amber-800 dark:text-amber-300 bg-amber-100/80 dark:bg-amber-950/60 px-2.5 py-1 rounded-lg shrink-0">
                       Chuẩn US 100%
                     </span>
                   </div>
 
                   {/* Phoneme Breakdown Chips */}
                   <div className="space-y-1.5">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                       Phân tích từng từ &amp; âm vị:
                     </span>
                     <div className="flex flex-wrap gap-1.5 text-xs font-bold">
-                      <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200">
+                      <span className="px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                         Could [kʊd] 99%
                       </span>
-                      <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200">
+                      <span className="px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                         please [pliːz] 98%
                       </span>
-                      <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200">
+                      <span className="px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                         financial [faɪˈnænʃl] 96%
                       </span>
-                      <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200">
+                      <span className="px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                         report 97%
                       </span>
                     </div>
                   </div>
 
                   {/* Interactive Result Badges Footer */}
-                  <div className="pt-2 border-t border-slate-100 grid grid-cols-3 gap-2 text-center">
-                    <div className="p-2 rounded-xl bg-amber-50/50 border border-amber-200/60">
-                      <span className="block text-[10px] font-bold text-slate-500 uppercase">Phát âm</span>
-                      <strong className="text-base font-black text-emerald-700">98%</strong>
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 grid grid-cols-3 gap-2 text-center">
+                    <div className="p-2 rounded-xl bg-amber-50/50 dark:bg-slate-800/60 border border-amber-200/60 dark:border-slate-700/60">
+                      <span className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Phát âm</span>
+                      <strong className="text-base font-black text-emerald-700 dark:text-emerald-400">98%</strong>
                     </div>
-                    <div className="p-2 rounded-xl bg-amber-50/50 border border-amber-200/60">
-                      <span className="block text-[10px] font-bold text-slate-500 uppercase">Trôi chảy</span>
-                      <strong className="text-base font-black text-amber-700">95 / 100</strong>
+                    <div className="p-2 rounded-xl bg-amber-50/50 dark:bg-slate-800/60 border border-amber-200/60 dark:border-slate-700/60">
+                      <span className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Trôi chảy</span>
+                      <strong className="text-base font-black text-amber-700 dark:text-amber-400">95 / 100</strong>
                     </div>
-                    <div className="p-2 rounded-xl bg-amber-50/50 border border-amber-200/60">
-                      <span className="block text-[10px] font-bold text-slate-500 uppercase">Dự đoán TOEIC</span>
-                      <strong className="text-base font-black text-blue-700">820+</strong>
+                    <div className="p-2 rounded-xl bg-amber-50/50 dark:bg-slate-800/60 border border-amber-200/60 dark:border-slate-700/60">
+                      <span className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Dự đoán TOEIC</span>
+                      <strong className="text-base font-black text-blue-700 dark:text-blue-400">820+</strong>
                     </div>
                   </div>
                 </div>
 
-                {/* Floating Micro-Badge: Daily Streak (Safely placed at top-left border to NEVER overlap audio button or stats) */}
+                {/* Floating Micro-Badge: Daily Streak */}
                 <div
-                  className="hidden sm:flex absolute -top-4 -left-2 sm:-left-4 bg-white border border-amber-200/90 rounded-2xl px-3.5 py-2 shadow-soft items-center gap-2 z-20 transition-transform hover:scale-105"
+                  className="hidden sm:flex absolute -top-4 -left-2 sm:-left-4 bg-white dark:bg-slate-850 border border-amber-200/90 dark:border-slate-700 rounded-2xl px-3.5 py-2 shadow-soft items-center gap-2 z-20 transition-transform hover:scale-105"
                   aria-hidden="true"
                 >
-                  <div className="size-6 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
+                  <div className="size-6 rounded-lg bg-orange-100 dark:bg-orange-950/50 flex items-center justify-center text-orange-600 dark:text-orange-400 shrink-0">
                     <Flame size={14} className="fill-orange-500" />
                   </div>
-                  <p className="text-xs font-black text-slate-800">
-                    Chuỗi <span className="text-orange-600 font-extrabold">14 ngày</span>
-                    <span className="hidden md:inline ml-1 text-[11px] font-bold text-orange-700">(+350 XP &amp; Bánh Mì)</span>
-                    <span className="inline md:hidden ml-1 text-[11px] font-bold text-orange-700">(+350 XP)</span>
+                  <p className="text-xs font-black text-slate-800 dark:text-slate-100">
+                    Chuỗi <span className="text-orange-600 dark:text-orange-400 font-extrabold">14 ngày</span>
+                    <span className="hidden md:inline ml-1 text-[11px] font-bold text-orange-700 dark:text-orange-300">(+350 XP &amp; Bánh Mì)</span>
+                    <span className="inline md:hidden ml-1 text-[11px] font-bold text-orange-700 dark:text-orange-300">(+350 XP)</span>
                   </p>
                 </div>
 
                 {/* Floating Micro-Badge: Pet Companion */}
                 <div
-                  className="hidden sm:flex absolute -top-4 -right-2 sm:-right-4 bg-white border border-amber-200/90 rounded-2xl px-3.5 py-2 shadow-soft items-center gap-2 z-20 transition-transform hover:scale-105"
+                  className="hidden sm:flex absolute -top-4 -right-2 sm:-right-4 bg-white dark:bg-slate-850 border border-amber-200/90 dark:border-slate-700 rounded-2xl px-3.5 py-2 shadow-soft items-center gap-2 z-20 transition-transform hover:scale-105"
                   aria-hidden="true"
                 >
                   <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <p className="text-xs font-black text-slate-800">
-                    Thú cưng: <span className="text-amber-700 font-extrabold">Cấp 5 (No bụng)</span>
+                  <p className="text-xs font-black text-slate-800 dark:text-slate-100">
+                    Thú cưng: <span className="text-amber-700 dark:text-amber-400 font-extrabold">Cấp 5 (No bụng)</span>
                   </p>
                 </div>
               </div>
@@ -652,7 +652,7 @@ export default function PublicLandingPage() {
       {/* 2. REAL-TIME STATS & SOCIAL PROOF STRIP                                   */}
       {/* ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 sm:-mt-8 relative z-20">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-7 shadow-card">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-card">
           {STATS_DATA.map((item, idx) => {
             const Icon = item.icon;
             return (
@@ -661,11 +661,11 @@ export default function PublicLandingPage() {
                   <Icon size={22} aria-hidden="true" />
                 </div>
                 <div>
-                  <strong className="block text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
+                  <strong className="block text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
                     {item.value}
                   </strong>
-                  <p className="text-xs sm:text-sm font-bold text-slate-700 mt-0.5">{item.label}</p>
-                  <p className="hidden sm:block text-[11px] font-semibold text-slate-400 mt-0.5">{item.desc}</p>
+                  <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 mt-0.5">{item.label}</p>
+                  <p className="hidden sm:block text-[11px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5">{item.desc}</p>
                 </div>
               </div>
             );
@@ -678,13 +678,13 @@ export default function PublicLandingPage() {
       {/* ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 space-y-8">
         <div className="text-center max-w-3xl mx-auto space-y-3">
-          <span className="text-xs font-black uppercase tracking-wider text-amber-800 bg-amber-100/70 px-3.5 py-1.5 rounded-full border border-amber-200">
+          <span className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50 px-3.5 py-1.5 rounded-full border border-amber-200 dark:border-amber-900/60">
             Trụ Cột Đột Phá
           </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
             Mọi công cụ bạn cần để làm chủ tiếng Anh &amp; TOEIC
           </h2>
-          <p className="text-sm sm:text-base font-semibold text-slate-600">
+          <p className="text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-300">
             Tạm biệt phương pháp học nhồi nhét truyền thống. BreadTrans kết hợp AI phân tích âm vị,
             đấu trường luyện đề chuẩn ETS và động lực gamification giữ lửa mỗi ngày.
           </p>
@@ -692,21 +692,21 @@ export default function PublicLandingPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Card 1: AI Speaking & Pronunciation Lab (Spans 2 cols) */}
-          <div className="md:col-span-2 bg-gradient-to-br from-violet-50/50 via-white to-amber-50/30 border border-violet-200/80 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-soft hover:border-violet-300 transition-colors">
+          <div className="md:col-span-2 bg-gradient-to-br from-violet-50/50 via-white to-amber-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-slate-850 border border-violet-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-soft hover:border-violet-300 dark:hover:border-slate-700 transition-colors">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="size-14 rounded-2xl bg-violet-100 text-violet-700 flex items-center justify-center border border-violet-200">
+                <div className="size-14 rounded-2xl bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 flex items-center justify-center border border-violet-200 dark:border-violet-900/60">
                   <Mic size={28} aria-hidden="true" />
                 </div>
-                <span className="px-3 py-1 rounded-full bg-violet-100 text-violet-800 border border-violet-200 text-xs font-black">
+                <span className="px-3 py-1 rounded-full bg-violet-100 dark:bg-violet-950/50 text-violet-800 dark:text-violet-300 border border-violet-200 dark:border-violet-900/60 text-xs font-black">
                   Công nghệ Gemini &amp; Speech-to-Phoneme
                 </span>
               </div>
               <div>
-                <h3 className="text-xl sm:text-2xl font-black text-slate-900">
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100">
                   Phòng Luyện Nói &amp; Chấm Điểm Âm Vị Tức Thì
                 </h3>
-                <p className="text-sm sm:text-base font-semibold text-slate-600 mt-2 leading-relaxed">
+                <p className="text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
                   Không còn mơ hồ về phát âm của mình. Hệ thống nhận diện từng âm vị (Phonemes) bạn đọc sai
                   như các âm khó /θ/, /ð/, /ʃ/, /tʃ/, đo lường ngữ điệu và hướng dẫn khẩu hình sửa lỗi ngay lập tức.
                 </p>
@@ -714,23 +714,23 @@ export default function PublicLandingPage() {
 
               {/* Visual Feature Pill list */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                <div className="p-3 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
-                  <span className="text-xs font-extrabold text-violet-800 block">Độ chính xác âm học</span>
-                  <span className="text-xs font-semibold text-slate-500">Đối chiếu trực tiếp với phát âm US/UK chuẩn</span>
+                <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 shadow-2xs">
+                  <span className="text-xs font-extrabold text-violet-800 dark:text-violet-300 block">Độ chính xác âm học</span>
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Đối chiếu trực tiếp với phát âm US/UK chuẩn</span>
                 </div>
-                <div className="p-3 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
-                  <span className="text-xs font-extrabold text-violet-800 block">Sửa lỗi trong 2s</span>
-                  <span className="text-xs font-semibold text-slate-500">Phản hồi ngữ điệu và trọng âm không độ trễ</span>
+                <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 shadow-2xs">
+                  <span className="text-xs font-extrabold text-violet-800 dark:text-violet-300 block">Sửa lỗi trong 2s</span>
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Phản hồi ngữ điệu và trọng âm không độ trễ</span>
                 </div>
-                <div className="p-3 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
-                  <span className="text-xs font-extrabold text-violet-800 block">Đổi giọng &amp; Tốc độ</span>
-                  <span className="text-xs font-semibold text-slate-500">Lựa chọn 0.75x, 0.9x, 1x và chất giọng linh hoạt</span>
+                <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 shadow-2xs">
+                  <span className="text-xs font-extrabold text-violet-800 dark:text-violet-300 block">Đổi giọng &amp; Tốc độ</span>
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Lựa chọn 0.75x, 0.9x, 1x và chất giọng linh hoạt</span>
                 </div>
               </div>
             </div>
 
-            <div className="pt-6 mt-6 border-t border-slate-200/70 flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500">Hơn 500+ bài tập hội thoại thực tế</span>
+            <div className="pt-6 mt-6 border-t border-slate-200/70 dark:border-slate-800 flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Hơn 500+ bài tập hội thoại thực tế</span>
               <button
                 onClick={() => handleProtectedAction("phòng luyện nói", "/practice/speaking")}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-extrabold text-xs transition-colors shadow-2xs cursor-pointer"
@@ -743,39 +743,39 @@ export default function PublicLandingPage() {
           </div>
 
           {/* Card 2: ETS Simulation TOEIC Arena (1 Col) */}
-          <div className="bg-gradient-to-br from-blue-50/50 via-white to-slate-50 border border-blue-200/80 rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-soft hover:border-blue-300 transition-colors">
+          <div className="bg-gradient-to-br from-blue-50/50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-850 border border-blue-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-soft hover:border-blue-300 dark:hover:border-slate-700 transition-colors">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="size-14 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center border border-blue-200">
+                <div className="size-14 rounded-2xl bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 flex items-center justify-center border border-blue-200 dark:border-blue-900/60">
                   <Trophy size={28} aria-hidden="true" />
                 </div>
-                <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 border border-blue-200 text-xs font-black">
+                <span className="px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-900/60 text-xs font-black">
                   Format ETS 2024
                 </span>
               </div>
               <div>
-                <h3 className="text-lg sm:text-xl font-black text-slate-900">
+                <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100">
                   Đấu Trường Thi Thử TOEIC 200 Câu
                 </h3>
-                <p className="text-xs sm:text-sm font-semibold text-slate-600 mt-2 leading-relaxed">
+                <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
                   Trải nghiệm áp lực làm bài 120 phút với đồng hồ đếm ngược đồng bộ server.
                   Báo cáo phân tích điểm mạnh - điểm yếu từng Part 1 đến Part 7 tự động.
                 </p>
               </div>
-              <div className="p-3 rounded-xl bg-white border border-slate-200/80 space-y-1.5 text-xs font-bold">
-                <div className="flex justify-between text-slate-700">
+              <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 space-y-1.5 text-xs font-bold">
+                <div className="flex justify-between text-slate-700 dark:text-slate-300">
                   <span>Listening Part 1-4</span>
-                  <span className="text-blue-700">100 câu • 45 phút</span>
+                  <span className="text-blue-700 dark:text-blue-400">100 câu • 45 phút</span>
                 </div>
-                <div className="flex justify-between text-slate-700">
+                <div className="flex justify-between text-slate-700 dark:text-slate-300">
                   <span>Reading Part 5-7</span>
-                  <span className="text-blue-700">100 câu • 75 phút</span>
+                  <span className="text-blue-700 dark:text-blue-400">100 câu • 75 phút</span>
                 </div>
               </div>
             </div>
 
-            <div className="pt-5 mt-5 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500">200+ đề thi có giải</span>
+            <div className="pt-5 mt-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">200+ đề thi có giải</span>
               <button
                 onClick={() => handleProtectedAction("phòng thi TOEIC", "/practice/quizzes")}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs transition-colors shadow-2xs cursor-pointer"
@@ -788,39 +788,39 @@ export default function PublicLandingPage() {
           </div>
 
           {/* Card 3: Spaced Repetition Flashcards & Grammar (1 Col) */}
-          <div className="bg-gradient-to-br from-emerald-50/50 via-white to-slate-50 border border-emerald-200/80 rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-soft hover:border-emerald-300 transition-colors">
+          <div className="bg-gradient-to-br from-emerald-50/50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-850 border border-emerald-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-soft hover:border-emerald-300 dark:hover:border-slate-700 transition-colors">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="size-14 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center border border-emerald-200">
+                <div className="size-14 rounded-2xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 flex items-center justify-center border border-emerald-200 dark:border-emerald-900/60">
                   <BookOpen size={28} aria-hidden="true" />
                 </div>
-                <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-black">
+                <span className="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/60 text-xs font-black">
                   Thuật toán SRS Leitner
                 </span>
               </div>
               <div>
-                <h3 className="text-lg sm:text-xl font-black text-slate-900">
+                <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100">
                   Ghi Nhớ Siêu Tốc &amp; 24 Chuyên Đề Ngữ Pháp
                 </h3>
-                <p className="text-xs sm:text-sm font-semibold text-slate-600 mt-2 leading-relaxed">
+                <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
                   Luyện từ vựng theo chu kỳ ngắt quãng thông minh: từ nào hay quên sẽ tự động lặp lại nhiều hơn.
                   Bản đồ tư duy 24 chủ điểm ngữ pháp cốt lõi bám sát kỳ thi.
                 </p>
               </div>
-              <div className="p-3 rounded-xl bg-white border border-slate-200/80 space-y-1.5 text-xs font-bold text-slate-700">
-                <p className="flex items-center gap-1.5 text-emerald-800">
-                  <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
+              <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 space-y-1.5 text-xs font-bold text-slate-700 dark:text-slate-300">
+                <p className="flex items-center gap-1.5 text-emerald-800 dark:text-emerald-300">
+                  <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span>3.000+ từ vựng học thuật &amp; công sở</span>
                 </p>
-                <p className="flex items-center gap-1.5 text-emerald-800">
-                  <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
+                <p className="flex items-center gap-1.5 text-emerald-800 dark:text-emerald-300">
+                  <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span>Sơ đồ tư duy ngữ pháp tương tác</span>
                 </p>
               </div>
             </div>
 
-            <div className="pt-5 mt-5 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500">Đã thuộc &amp; Yêu thích</span>
+            <div className="pt-5 mt-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Đã thuộc &amp; Yêu thích</span>
               <button
                 onClick={() => handleProtectedAction("kho từ vựng flashcard", "/flashcard")}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs transition-colors shadow-2xs cursor-pointer"
@@ -833,53 +833,53 @@ export default function PublicLandingPage() {
           </div>
 
           {/* Card 4: Gamification & Pet Companion (Spans 2 cols) */}
-          <div className="md:col-span-2 bg-gradient-to-br from-amber-50/60 via-white to-orange-50/40 border border-amber-200/90 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-soft hover:border-amber-300 transition-colors">
+          <div className="md:col-span-2 bg-gradient-to-br from-amber-50/60 via-white to-orange-50/40 dark:from-slate-900 dark:via-slate-900 dark:to-slate-850 border border-amber-200/90 dark:border-slate-800 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-soft hover:border-amber-300 dark:hover:border-slate-700 transition-colors">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="size-14 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center border border-amber-200 text-2xl font-black">
+                <div className="size-14 rounded-2xl bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 flex items-center justify-center border border-amber-200 dark:border-amber-900/60 text-2xl font-black">
                   <span>🍞</span>
                 </div>
-                <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-200 text-xs font-black">
+                <span className="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-900/60 text-xs font-black">
                   Học Mà Chơi • Chơi Mà Tiến Bộ
                 </span>
               </div>
               <div>
-                <h3 className="text-xl sm:text-2xl font-black text-slate-900">
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100">
                   Hệ Thống Gamification &amp; Thú Cưng Học Tập (Pet Companion)
                 </h3>
-                <p className="text-sm sm:text-base font-semibold text-slate-600 mt-2 leading-relaxed">
+                <p className="text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
                   Nuôi thú cưng học tập ảo: mỗi bài luyện Nghe, Nói, Flashcard bạn hoàn thành sẽ là một phần ăn
                   giúp Pet tăng cấp và mở khóa diện mạo mới. Thu thập điểm Bánh Mì đổi quà và thi đua trên Bảng xếp hạng tuần.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                <div className="p-3 rounded-xl bg-white border border-amber-200/70 shadow-2xs">
-                  <span className="text-xs font-black text-amber-800 flex items-center gap-1.5">
-                    <Flame size={16} className="text-orange-600 fill-orange-500" />
+                <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-amber-200/70 dark:border-slate-700 shadow-2xs">
+                  <span className="text-xs font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                    <Flame size={16} className="text-orange-600 dark:text-orange-400 fill-orange-500" />
                     Chuỗi Streak rực lửa
                   </span>
-                  <p className="text-xs font-semibold text-slate-500 mt-0.5">Duy trì thói quen học tập không ngắt quãng</p>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">Duy trì thói quen học tập không ngắt quãng</p>
                 </div>
-                <div className="p-3 rounded-xl bg-white border border-amber-200/70 shadow-2xs">
-                  <span className="text-xs font-black text-amber-800 flex items-center gap-1.5">
-                    <Award size={16} className="text-amber-600" />
+                <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-amber-200/70 dark:border-slate-700 shadow-2xs">
+                  <span className="text-xs font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                    <Award size={16} className="text-amber-600 dark:text-amber-400" />
                     Đấu trường 1v1 Arena
                   </span>
-                  <p className="text-xs font-semibold text-slate-500 mt-0.5">So tài từ vựng và ngữ pháp nhanh cùng bạn bè</p>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">So tài từ vựng và ngữ pháp nhanh cùng bạn bè</p>
                 </div>
-                <div className="p-3 rounded-xl bg-white border border-amber-200/70 shadow-2xs">
-                  <span className="text-xs font-black text-amber-800 flex items-center gap-1.5">
-                    <Gift size={16} className="text-amber-600" />
+                <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-amber-200/70 dark:border-slate-700 shadow-2xs">
+                  <span className="text-xs font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                    <Gift size={16} className="text-amber-600 dark:text-amber-400" />
                     Cửa Hàng Đổi Quà
                   </span>
-                  <p className="text-xs font-semibold text-slate-500 mt-0.5">Dùng Bánh Mì đổi avatar, freeze streak và voucher</p>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">Dùng Bánh Mì đổi avatar, freeze streak và voucher</p>
                 </div>
               </div>
             </div>
 
-            <div className="pt-6 mt-6 border-t border-slate-200/70 flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500">Tặng ngay 50 Bánh Mì cho tân thủ</span>
+            <div className="pt-6 mt-6 border-t border-slate-200/70 dark:border-slate-800 flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Tặng ngay 50 Bánh Mì cho tân thủ</span>
               <button
                 onClick={() => handleProtectedAction("đấu trường và cửa hàng", "/arena")}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs transition-colors shadow-2xs cursor-pointer"
@@ -935,7 +935,7 @@ export default function PublicLandingPage() {
                       onClick={() => setCalcLevel(lvl.id as "BEGINNER" | "INTERMEDIATE" | "ADVANCED")}
                       className={`p-3 rounded-2xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer text-center ${
                         calcLevel === lvl.id
-                          ? "bg-white text-amber-900 shadow-md scale-[1.02]"
+                          ? "bg-white dark:bg-amber-400 text-amber-900 dark:text-amber-950 shadow-md scale-[1.02]"
                           : "bg-white/15 text-white hover:bg-white/25 border border-white/20"
                       }`}
                       type="button"
@@ -962,7 +962,7 @@ export default function PublicLandingPage() {
                       onClick={() => setCalcTarget(sc.val as 600 | 750 | 850)}
                       className={`p-3 rounded-2xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer text-center ${
                         calcTarget === sc.val
-                          ? "bg-white text-amber-900 shadow-md scale-[1.02]"
+                          ? "bg-white dark:bg-amber-400 text-amber-900 dark:text-amber-950 shadow-md scale-[1.02]"
                           : "bg-white/15 text-white hover:bg-white/25 border border-white/20"
                       }`}
                       type="button"
@@ -976,47 +976,47 @@ export default function PublicLandingPage() {
 
             {/* Right Column: Calculated Dynamic Result Card (6 Cols) */}
             <div className="lg:col-span-6">
-              <div className="bg-white text-slate-900 rounded-3xl p-6 sm:p-7 shadow-xl space-y-5 border-2 border-amber-200">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-3xl p-6 sm:p-7 shadow-xl space-y-5 border-2 border-amber-200 dark:border-slate-800">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-2">
-                    <Route className="text-amber-600 size-5" />
-                    <h3 className="text-base font-black text-slate-900">Lộ Trình Đề Xuất Cá Nhân Hóa</h3>
+                    <Route className="text-amber-600 dark:text-amber-400 size-5" />
+                    <h3 className="text-base font-black text-slate-900 dark:text-slate-100">Lộ Trình Đề Xuất Cá Nhân Hóa</h3>
                   </div>
-                  <span className="text-xs font-black px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  <span className="text-xs font-black px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                     Tỷ lệ đạt 96.2%
                   </span>
                 </div>
 
                 {/* Calculation Outputs Grid */}
                 <div className="grid grid-cols-2 gap-3.5">
-                  <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/80">
-                    <span className="block text-xs font-bold text-slate-500 uppercase">Thời gian dự kiến</span>
-                    <strong className="text-2xl font-black text-amber-800 tracking-tight">
+                  <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-slate-800/60 border border-amber-200/80 dark:border-slate-700">
+                    <span className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Thời gian dự kiến</span>
+                    <strong className="text-2xl font-black text-amber-800 dark:text-amber-300 tracking-tight">
                       {calcResult.weeks} tuần
                     </strong>
-                    <span className="block text-[11px] font-semibold text-slate-500 mt-0.5">
+                    <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
                       ~ {calcResult.dailyMins} phút luyện tập / ngày
                     </span>
                   </div>
 
-                  <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/80">
-                    <span className="block text-xs font-bold text-slate-500 uppercase">Bộ đề thực chiến</span>
-                    <strong className="text-lg font-black text-slate-900 tracking-tight block">
+                  <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-slate-800/60 border border-amber-200/80 dark:border-slate-700">
+                    <span className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Bộ đề thực chiến</span>
+                    <strong className="text-lg font-black text-slate-900 dark:text-slate-100 tracking-tight block">
                       {calcResult.examSet}
                     </strong>
-                    <span className="block text-[11px] font-semibold text-slate-500 mt-0.5">
+                    <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
                       200 câu chuẩn ETS bấm giờ
                     </span>
                   </div>
                 </div>
 
-                <div className="space-y-2 text-xs font-bold text-slate-700 bg-slate-50 p-4 rounded-2xl border border-slate-200/70">
+                <div className="space-y-2 text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/70 dark:border-slate-700">
                   <p className="flex items-center gap-2">
-                    <Headphones size={16} className="text-amber-600 shrink-0" />
+                    <Headphones size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
                     <span>Trọng tâm Nghe: <strong>{calcResult.listeningP}</strong></span>
                   </p>
                   <p className="flex items-center gap-2">
-                    <BookOpen size={16} className="text-blue-600 shrink-0" />
+                    <BookOpen size={16} className="text-blue-600 dark:text-blue-400 shrink-0" />
                     <span>Trọng tâm Đọc: <strong>{calcResult.readingP}</strong></span>
                   </p>
                 </div>
@@ -1048,13 +1048,13 @@ export default function PublicLandingPage() {
       {/* ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 space-y-10">
         <div className="text-center max-w-2xl mx-auto space-y-3">
-          <span className="text-xs font-black uppercase tracking-wider text-amber-800 bg-amber-100/70 px-3.5 py-1.5 rounded-full border border-amber-200">
+          <span className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50 px-3.5 py-1.5 rounded-full border border-amber-200 dark:border-amber-900/60">
             Hành Trình Chinh Phục
           </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
             4 Bước Đơn Giản Để Bứt Phá Năng Lực Tiếng Anh
           </h2>
-          <p className="text-sm sm:text-base font-semibold text-slate-600">
+          <p className="text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-300">
             Từng bước đi rõ ràng, có đo lường cụ thể, không lo học lan man mất định hướng.
           </p>
         </div>
@@ -1065,24 +1065,24 @@ export default function PublicLandingPage() {
             return (
               <div
                 key={idx}
-                className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-soft relative group hover:border-amber-300 transition-colors"
+                className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-soft relative group hover:border-amber-300 dark:hover:border-slate-700 transition-colors"
               >
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-2xl sm:text-3xl font-black text-amber-600/30 group-hover:text-amber-600 transition-colors">
+                    <span className="text-2xl sm:text-3xl font-black text-amber-600/30 dark:text-amber-500/30 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
                       {step.step}
                     </span>
-                    <span className="text-[11px] font-black px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                    <span className="text-[11px] font-black px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/60">
                       {step.badge}
                     </span>
                   </div>
 
-                  <div className="size-12 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-800 flex items-center justify-center">
+                  <div className="size-12 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-900/60 text-amber-800 dark:text-amber-300 flex items-center justify-center">
                     <Icon size={22} aria-hidden="true" />
                   </div>
 
-                  <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug">{step.title}</h3>
-                  <p className="text-xs sm:text-sm font-semibold text-slate-600 leading-relaxed">{step.desc}</p>
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 leading-snug">{step.title}</h3>
+                  <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 leading-relaxed">{step.desc}</p>
                 </div>
               </div>
             );
@@ -1096,19 +1096,19 @@ export default function PublicLandingPage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 space-y-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-2">
-            <span className="text-xs font-black uppercase tracking-wider text-amber-800 bg-amber-100/70 px-3.5 py-1.5 rounded-full border border-amber-200">
+            <span className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50 px-3.5 py-1.5 rounded-full border border-amber-200 dark:border-amber-900/60">
               Giáo Trình Thực Chiến
             </span>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
               Khám phá các lộ trình học tiêu biểu
             </h2>
-            <p className="text-sm font-semibold text-slate-600">
+            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
               Được thiết kế bài bản theo từng mục tiêu: thi chứng chỉ, giao tiếp công sở hoặc củng cố gốc tiếng Anh.
             </p>
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex flex-wrap items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+          <div className="flex flex-wrap items-center gap-2 bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700">
             {[
               { id: "all", label: "Tất cả" },
               { id: "toeic", label: "Luyện thi TOEIC" },
@@ -1120,8 +1120,8 @@ export default function PublicLandingPage() {
                 onClick={() => setActiveCourseTab(tab.id as "all" | "toeic" | "comm" | "vocab")}
                 className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition-colors cursor-pointer ${
                   activeCourseTab === tab.id
-                    ? "bg-white text-slate-900 shadow-xs border border-slate-200"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs border border-slate-200 dark:border-slate-700"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                 }`}
                 type="button"
               >
@@ -1136,30 +1136,30 @@ export default function PublicLandingPage() {
           {filteredCourses.map((course) => (
             <div
               key={course.id}
-              className="bg-white border-2 border-slate-200/90 rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-soft hover:border-amber-300 transition-colors group"
+              className="bg-white dark:bg-slate-900 border-2 border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-soft hover:border-amber-300 dark:hover:border-slate-700 transition-colors group"
             >
               <div className="space-y-3.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-black px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
+                  <span className="text-xs font-black px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-900/60">
                     {course.highlight}
                   </span>
-                  <span className="text-xs font-extrabold text-slate-500">{course.level}</span>
+                  <span className="text-xs font-extrabold text-slate-500 dark:text-slate-400">{course.level}</span>
                 </div>
-                <h3 className="text-lg sm:text-xl font-black text-slate-900 group-hover:text-amber-700 transition-colors">
+                <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100 group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors">
                   {course.title}
                 </h3>
-                <p className="text-xs sm:text-sm font-semibold text-slate-600 leading-relaxed">{course.desc}</p>
-                <div className="flex items-center gap-4 text-xs font-bold text-slate-500 pt-1">
+                <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 leading-relaxed">{course.desc}</p>
+                <div className="flex items-center gap-4 text-xs font-bold text-slate-500 dark:text-slate-400 pt-1">
                   <span>{course.lessonsCount}</span>
                   <span>•</span>
                   <span>{course.duration}</span>
                 </div>
               </div>
 
-              <div className="pt-5 mt-5 border-t border-slate-100 flex items-center justify-between">
+              <div className="pt-5 mt-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <Link
                   href="/courses"
-                  className="text-xs font-bold text-slate-600 hover:text-amber-800 transition-colors"
+                  className="text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-amber-800 dark:hover:text-amber-300 transition-colors"
                 >
                   Xem chi tiết giáo trình
                 </Link>
@@ -1182,13 +1182,13 @@ export default function PublicLandingPage() {
       {/* ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 space-y-8">
         <div className="text-center max-w-2xl mx-auto space-y-3">
-          <span className="text-xs font-black uppercase tracking-wider text-amber-800 bg-amber-100/70 px-3.5 py-1.5 rounded-full border border-amber-200">
+          <span className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50 px-3.5 py-1.5 rounded-full border border-amber-200 dark:border-amber-900/60">
             Câu Chuyện Thành Công
           </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
             Học viên nói gì về trải nghiệm cùng BreadTrans?
           </h2>
-          <p className="text-sm font-semibold text-slate-600">
+          <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
             Hơn 10.000 học viên đã vượt qua nỗi sợ tiếng Anh và đạt được chứng chỉ mong muốn.
           </p>
         </div>
@@ -1197,7 +1197,7 @@ export default function PublicLandingPage() {
           {TESTIMONIALS.map((item, idx) => (
             <div
               key={idx}
-              className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-soft space-y-5"
+              className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-soft space-y-5"
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -1206,16 +1206,16 @@ export default function PublicLandingPage() {
                       <Star key={s} size={15} className="fill-amber-500 text-amber-500" />
                     ))}
                   </div>
-                  <span className="text-[11px] font-black px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="text-[11px] font-black px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                     {item.tag}
                   </span>
                 </div>
-                <p className="text-xs sm:text-sm font-semibold text-slate-700 leading-relaxed italic">
+                <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 leading-relaxed italic">
                   &ldquo;{item.quote}&rdquo;
                 </p>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex items-center gap-3">
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center gap-3">
                 <div className="size-11 rounded-full bg-amber-600 text-white font-black flex items-center justify-center text-sm shrink-0 overflow-hidden">
                   {item.avatar ? (
                     <img src={item.avatar} alt={item.name} className="size-full object-cover" />
@@ -1224,9 +1224,9 @@ export default function PublicLandingPage() {
                   )}
                 </div>
                 <div>
-                  <h3 className="text-sm font-black text-slate-900">{item.name}</h3>
-                  <p className="text-[11px] font-bold text-slate-500">{item.role}</p>
-                  <span className="text-[10px] font-bold text-amber-700">{item.timeframe}</span>
+                  <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">{item.name}</h3>
+                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400">{item.role}</p>
+                  <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400">{item.timeframe}</span>
                 </div>
               </div>
             </div>
@@ -1239,38 +1239,38 @@ export default function PublicLandingPage() {
       {/* ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 space-y-8">
         <div className="text-center max-w-2xl mx-auto space-y-3">
-          <span className="text-xs font-black uppercase tracking-wider text-amber-800 bg-amber-100/70 px-3.5 py-1.5 rounded-full border border-amber-200">
+          <span className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50 px-3.5 py-1.5 rounded-full border border-amber-200 dark:border-amber-900/60">
             Sự Khác Biệt
           </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
             Tại sao BreadTrans là lựa chọn thông minh hơn?
           </h2>
-          <p className="text-sm font-semibold text-slate-600">
+          <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
             Bảng đối chiếu minh bạch giữa học truyền thống, tự học và giải pháp toàn diện tại BreadTrans.
           </p>
         </div>
 
-        <div className="overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-soft">
+        <div className="overflow-x-auto rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-soft">
           <table className="w-full text-left border-collapse min-w-[650px]">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/80 text-xs uppercase tracking-wider font-black text-slate-600">
+              <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-850/80 text-xs uppercase tracking-wider font-black text-slate-600 dark:text-slate-300">
                 <th className="p-4 sm:p-5">Tiêu chí so sánh</th>
-                <th className="p-4 sm:p-5 text-slate-500">Trung tâm truyền thống</th>
-                <th className="p-4 sm:p-5 text-slate-500">Tự học tự phát</th>
-                <th className="p-4 sm:p-5 bg-amber-50/70 text-amber-900 font-black border-l border-amber-200">
+                <th className="p-4 sm:p-5 text-slate-500 dark:text-slate-400">Trung tâm truyền thống</th>
+                <th className="p-4 sm:p-5 text-slate-500 dark:text-slate-400">Tự học tự phát</th>
+                <th className="p-4 sm:p-5 bg-amber-50/70 dark:bg-amber-950/30 text-amber-900 dark:text-amber-300 font-black border-l border-amber-200 dark:border-amber-900/50">
                   Nền tảng BreadTrans
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-xs sm:text-sm font-semibold text-slate-700">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
               {COMPARISON_ROWS.map((row, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
-                  <td className="p-4 sm:p-5 font-black text-slate-900">{row.feature}</td>
-                  <td className="p-4 sm:p-5 text-slate-500">{row.traditional}</td>
-                  <td className="p-4 sm:p-5 text-slate-500">{row.selfStudy}</td>
-                  <td className="p-4 sm:p-5 bg-amber-50/40 font-extrabold text-amber-900 border-l border-amber-200">
+                <tr key={idx} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/50 transition-colors">
+                  <td className="p-4 sm:p-5 font-black text-slate-900 dark:text-slate-100">{row.feature}</td>
+                  <td className="p-4 sm:p-5 text-slate-500 dark:text-slate-400">{row.traditional}</td>
+                  <td className="p-4 sm:p-5 text-slate-500 dark:text-slate-400">{row.selfStudy}</td>
+                  <td className="p-4 sm:p-5 bg-amber-50/40 dark:bg-amber-950/20 font-extrabold text-amber-900 dark:text-amber-300 border-l border-amber-200 dark:border-amber-900/50">
                     <div className="flex items-center gap-2">
-                      <Check className="size-4 text-emerald-600 shrink-0 stroke-[3]" />
+                      <Check className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0 stroke-[3]" />
                       <span>{row.breadtrans}</span>
                     </div>
                   </td>
@@ -1279,7 +1279,7 @@ export default function PublicLandingPage() {
             </tbody>
           </table>
         </div>
-        <p className="sm:hidden text-xs font-semibold text-slate-400 text-center">
+        <p className="sm:hidden text-xs font-semibold text-slate-400 dark:text-slate-500 text-center">
           ← Vuốt ngang để xem toàn bộ bảng so sánh →
         </p>
       </section>
@@ -1289,13 +1289,13 @@ export default function PublicLandingPage() {
       {/* ========================================================================= */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 space-y-8">
         <div className="text-center space-y-3">
-          <span className="text-xs font-black uppercase tracking-wider text-amber-800 bg-amber-100/70 px-3.5 py-1.5 rounded-full border border-amber-200">
+          <span className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50 px-3.5 py-1.5 rounded-full border border-amber-200 dark:border-amber-900/60">
             Hỗ Trợ &amp; Giải Đáp
           </span>
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
             Câu hỏi thường gặp trước khi bắt đầu
           </h2>
-          <p className="text-sm font-semibold text-slate-600">
+          <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
             Mọi điều bạn cần biết về phương pháp học và chính sách tại BreadTrans.
           </p>
         </div>
@@ -1306,24 +1306,24 @@ export default function PublicLandingPage() {
             return (
               <div
                 key={index}
-                className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden transition-colors shadow-2xs"
+                className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl overflow-hidden transition-colors shadow-2xs"
               >
                 <button
                   onClick={() => toggleFaq(index)}
-                  className="w-full flex items-center justify-between p-5 text-left font-black text-slate-900 text-sm sm:text-base hover:text-amber-700 transition-colors cursor-pointer"
+                  className="w-full flex items-center justify-between p-5 text-left font-black text-slate-900 dark:text-slate-100 text-sm sm:text-base hover:text-amber-700 dark:hover:text-amber-400 transition-colors cursor-pointer"
                   type="button"
                   aria-expanded={isOpen}
                 >
                   <span className="pr-4">{faq.q}</span>
                   <ChevronDown
                     size={18}
-                    className={`shrink-0 transition-transform duration-200 text-slate-400 ${
-                      isOpen ? "rotate-180 text-amber-600" : ""
+                    className={`shrink-0 transition-transform duration-200 text-slate-400 dark:text-slate-500 ${
+                      isOpen ? "rotate-180 text-amber-600 dark:text-amber-400" : ""
                     }`}
                   />
                 </button>
                 {isOpen && (
-                  <div className="px-5 pb-5 pt-0 text-xs sm:text-sm font-semibold text-slate-600 leading-relaxed border-t border-slate-100 mt-1">
+                  <div className="px-5 pb-5 pt-0 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 mt-1">
                     <p className="pt-3">{faq.a}</p>
                   </div>
                 )}
@@ -1363,7 +1363,7 @@ export default function PublicLandingPage() {
               {user ? (
                 <Link
                   href="/dashboard"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-white text-amber-900 font-black text-base hover:bg-amber-50 shadow-lg active:scale-95 transition-all cursor-pointer"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-white dark:bg-slate-900 text-amber-900 dark:text-amber-300 font-black text-base hover:bg-amber-50 dark:hover:bg-slate-800 shadow-lg active:scale-95 transition-all cursor-pointer"
                 >
                   <span>Vào bàn học tập của bạn</span>
                   <ArrowRight size={18} aria-hidden="true" />
@@ -1371,7 +1371,7 @@ export default function PublicLandingPage() {
               ) : (
                 <button
                   onClick={() => openDirectRegister("tài khoản học viên", "/dashboard")}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-white text-amber-900 font-black text-base hover:bg-amber-50 shadow-lg active:scale-95 transition-all cursor-pointer"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-white dark:bg-slate-900 text-amber-900 dark:text-amber-300 font-black text-base hover:bg-amber-50 dark:hover:bg-slate-800 shadow-lg active:scale-95 transition-all cursor-pointer"
                   type="button"
                 >
                   <span>Đăng ký học miễn phí ngay</span>

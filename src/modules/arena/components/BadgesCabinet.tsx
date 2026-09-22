@@ -193,18 +193,18 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
 
   return (
     <>
-      <div className="bg-white rounded-[2.5rem] border-4 border-slate-200 p-6 md:p-7 shadow-[0_10px_0_0_#e2e8f0] relative overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-xs relative overflow-hidden">
         {/* Header Title */}
         <div className="flex items-center justify-between gap-2 mb-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center border-2 border-amber-300 shadow-xs">
+            <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 flex items-center justify-center border border-amber-200 dark:border-amber-900/60 shadow-xs">
               <Award size={22} />
             </div>
             <div>
-              <h2 className="text-xl font-black text-slate-800 leading-tight">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 leading-tight">
                 Tủ Huy Hiệu Của Tôi
               </h2>
-              <p className="text-[11px] font-bold text-slate-400">
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                 Bảng vàng vinh danh & thành tích học tập
               </p>
             </div>
@@ -212,7 +212,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
         </div>
 
         {/* Overall Completion Progress Banner */}
-        <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-2xl p-3.5 text-white shadow-xs mb-4">
+        <div className="bg-gradient-to-r from-amber-500 via-amber-600 to-orange-600 dark:from-amber-600 dark:via-amber-700 dark:to-orange-700 rounded-2xl p-3.5 text-white shadow-xs mb-4">
           <div className="flex justify-between items-center text-xs font-black mb-1.5">
             <span className="flex items-center gap-1.5">
               <BadgeCheck size={14} /> Đã Mở Khóa: {unlockedBadgesCount}/{ALL_BADGES.length} Huy Hiệu
@@ -230,13 +230,13 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex gap-1.5 p-1 bg-slate-100 rounded-xl mb-4 text-xs font-extrabold">
+        <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4 text-xs font-bold">
           <button
             onClick={() => setFilterTab("all")}
             className={`flex-1 py-1.5 rounded-lg transition-all cursor-pointer text-center ${
               filterTab === "all"
-                ? "bg-white text-slate-800 shadow-xs font-black"
-                : "text-slate-500 hover:text-slate-700"
+                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs font-black"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
             Tất cả ({ALL_BADGES.length})
@@ -245,8 +245,8 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
             onClick={() => setFilterTab("unlocked")}
             className={`flex-1 py-1.5 rounded-lg transition-all cursor-pointer text-center ${
               filterTab === "unlocked"
-                ? "bg-white text-amber-600 shadow-xs font-black"
-                : "text-slate-500 hover:text-slate-700"
+                ? "bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-xs font-black"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
             Đã đạt ({unlockedBadgesCount})
@@ -255,8 +255,8 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
             onClick={() => setFilterTab("locked")}
             className={`flex-1 py-1.5 rounded-lg transition-all cursor-pointer text-center ${
               filterTab === "locked"
-                ? "bg-white text-purple-600 shadow-xs font-black"
-                : "text-slate-500 hover:text-slate-700"
+                ? "bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 shadow-xs font-black"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
             Đang khóa ({ALL_BADGES.length - unlockedBadgesCount})
@@ -276,13 +276,13 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
             return (
               <motion.div
                 key={badge.id}
-                whileHover={{ scale: 1.03, y: -3 }}
+                whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setSelectedBadge(badge)}
-                className={`relative flex flex-col justify-between p-3.5 rounded-2xl border-2 transition-all cursor-pointer text-center select-none group ${
+                className={`relative flex flex-col justify-between p-3.5 rounded-2xl border transition-all cursor-pointer text-center select-none group ${
                   hasUnlocked
-                    ? `bg-white ${badge.borderColor} ${badge.shadowColor}`
-                    : "bg-slate-50/80 border-slate-200 opacity-75 hover:opacity-100"
+                    ? `bg-white dark:bg-slate-850/80 border-slate-200 dark:border-slate-700 shadow-2xs`
+                    : "bg-slate-50/80 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 opacity-75 hover:opacity-100"
                 }`}
               >
                 {/* Equipped Ribbon or Status Tag */}
@@ -293,8 +293,8 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
                     <div
                       className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:rotate-6 ${
                         hasUnlocked
-                          ? `${badge.bgColor} ${badge.color} border-2 ${badge.borderColor} shadow-xs`
-                          : "bg-slate-200 text-slate-400 border border-slate-300 grayscale"
+                          ? `${badge.bgColor} ${badge.color} border-2 ${badge.borderColor} shadow-xs dark:bg-opacity-20`
+                          : "bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-500 border border-slate-300 dark:border-slate-700 grayscale"
                       }`}
                     >
                       <Icon size={24} />
@@ -302,7 +302,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
 
                     {/* Mini lock indicator */}
                     {!hasUnlocked && (
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-slate-800 text-white flex items-center justify-center text-[10px] border border-white">
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-slate-800 dark:bg-slate-700 text-white flex items-center justify-center text-[10px] border border-white dark:border-slate-800">
                         <Lock size={10} />
                       </div>
                     )}
@@ -311,7 +311,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
                   {/* Badge Name */}
                   <h4
                     className={`font-black text-xs leading-tight mb-1 truncate ${
-                      hasUnlocked ? "text-slate-800" : "text-slate-600"
+                      hasUnlocked ? "text-slate-900 dark:text-slate-100" : "text-slate-600 dark:text-slate-400"
                     }`}
                     title={badge.name}
                   >
@@ -319,24 +319,24 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
                   </h4>
 
                   {/* Description */}
-                  <p className="text-[10px] font-medium text-slate-400 line-clamp-2 leading-snug mb-2">
+                  <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 line-clamp-2 leading-snug mb-2">
                     {badge.description}
                   </p>
                 </div>
 
                 {/* Bottom Progress Bar / Status Pill */}
-                <div className="pt-2 border-t border-slate-100">
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                   {hasUnlocked ? (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-900/60">
                       <CheckCircle2 size={11} /> Đã Mở Khóa
                     </span>
                   ) : (
                     <div>
-                      <div className="flex justify-between text-[9px] font-bold text-slate-400 mb-0.5">
+                      <div className="flex justify-between text-[9px] font-bold text-slate-500 dark:text-slate-400 mb-0.5">
                         <span>{badge.currentValue || 0}/{badge.targetValue}</span>
                         <span>{progress}%</span>
                       </div>
-                      <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                      <div className="w-full bg-slate-200 dark:bg-slate-750 h-1.5 rounded-full overflow-hidden">
                         <div
                           className="bg-purple-500 h-full rounded-full"
                           style={{ width: `${progress}%` }}
@@ -351,8 +351,8 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
         </div>
 
         {/* Footer Note */}
-        <div className="mt-4 pt-3 border-t-2 border-slate-100 text-center">
-          <p className="text-[11px] font-bold text-slate-400">
+        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-center">
+          <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
             👉 Nhấp vào huy hiệu để soi chi tiết 3D & đeo lên Avatar!
           </p>
         </div>

@@ -69,23 +69,23 @@ export function ConfirmDialog({
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
         aria-describedby="confirm-dialog-description"
-        className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
+        className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl"
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-rose-50 text-rose-600">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
               <AlertTriangle size={20} />
             </span>
             <div>
               <h2
                 id="confirm-dialog-title"
-                className="text-lg font-bold text-slate-900"
+                className="text-lg font-bold text-slate-900 dark:text-slate-100"
               >
                 {title}
               </h2>
               <p
                 id="confirm-dialog-description"
-                className="mt-2 text-sm leading-6 text-slate-600"
+                className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400"
               >
                 {description}
               </p>
@@ -96,7 +96,7 @@ export function ConfirmDialog({
             onClick={onCancel}
             disabled={isPending}
             aria-label="Đóng hộp thoại"
-            className="grid min-h-11 min-w-11 place-items-center rounded-xl text-slate-500 hover:bg-slate-100 disabled:opacity-50"
+            className="grid min-h-11 min-w-11 place-items-center rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
           >
             <X size={19} />
           </button>
@@ -107,7 +107,7 @@ export function ConfirmDialog({
             type="button"
             onClick={onCancel}
             disabled={isPending}
-            className="min-h-11 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            className="min-h-11 rounded-xl border border-slate-300 dark:border-slate-700 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
           >
             {cancelLabel}
           </button>

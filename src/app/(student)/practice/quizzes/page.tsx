@@ -105,12 +105,12 @@ const CERTIFICATES: CertificateMeta[] = [
     roadmapDate: "Đã phát hành",
     theme: {
       tabActiveBg: "bg-amber-500 text-white",
-      badgeBg: "bg-emerald-50",
-      badgeText: "text-emerald-700",
-      badgeBorder: "border-emerald-200",
-      tagBg: "bg-amber-50",
-      tagText: "text-amber-800",
-      accentBorder: "hover:border-amber-400",
+      badgeBg: "bg-emerald-50 dark:bg-emerald-950/60",
+      badgeText: "text-emerald-700 dark:text-emerald-300",
+      badgeBorder: "border-emerald-200 dark:border-emerald-800/60",
+      tagBg: "bg-amber-50 dark:bg-amber-950/60",
+      tagText: "text-amber-800 dark:text-amber-300",
+      accentBorder: "hover:border-amber-400 dark:hover:border-amber-600",
     },
   },
   {
@@ -145,12 +145,12 @@ const CERTIFICATES: CertificateMeta[] = [
     roadmapDate: "Dự kiến: Quý 4/2026",
     theme: {
       tabActiveBg: "bg-blue-600 text-white",
-      badgeBg: "bg-blue-50",
-      badgeText: "text-blue-700",
-      badgeBorder: "border-blue-200",
-      tagBg: "bg-blue-50",
-      tagText: "text-blue-800",
-      accentBorder: "hover:border-blue-400",
+      badgeBg: "bg-blue-50 dark:bg-blue-950/60",
+      badgeText: "text-blue-700 dark:text-blue-300",
+      badgeBorder: "border-blue-200 dark:border-blue-800/60",
+      tagBg: "bg-blue-50 dark:bg-blue-950/60",
+      tagText: "text-blue-800 dark:text-blue-300",
+      accentBorder: "hover:border-blue-400 dark:hover:border-blue-600",
     },
   },
   {
@@ -185,12 +185,12 @@ const CERTIFICATES: CertificateMeta[] = [
     roadmapDate: "Dự kiến: Quý 4/2026",
     theme: {
       tabActiveBg: "bg-purple-600 text-white",
-      badgeBg: "bg-purple-50",
-      badgeText: "text-purple-700",
-      badgeBorder: "border-purple-200",
-      tagBg: "bg-purple-50",
-      tagText: "text-purple-800",
-      accentBorder: "hover:border-purple-400",
+      badgeBg: "bg-purple-50 dark:bg-purple-950/60",
+      badgeText: "text-purple-700 dark:text-purple-300",
+      badgeBorder: "border-purple-200 dark:border-purple-800/60",
+      tagBg: "bg-purple-50 dark:bg-purple-950/60",
+      tagText: "text-purple-800 dark:text-purple-300",
+      accentBorder: "hover:border-purple-400 dark:hover:border-purple-600",
     },
   },
   {
@@ -224,12 +224,12 @@ const CERTIFICATES: CertificateMeta[] = [
     roadmapDate: "Dự kiến: Quý 1/2027",
     theme: {
       tabActiveBg: "bg-indigo-600 text-white",
-      badgeBg: "bg-indigo-50",
-      badgeText: "text-indigo-700",
-      badgeBorder: "border-indigo-200",
-      tagBg: "bg-indigo-50",
-      tagText: "text-indigo-800",
-      accentBorder: "hover:border-indigo-400",
+      badgeBg: "bg-indigo-50 dark:bg-indigo-950/60",
+      badgeText: "text-indigo-700 dark:text-indigo-300",
+      badgeBorder: "border-indigo-200 dark:border-indigo-800/60",
+      tagBg: "bg-indigo-50 dark:bg-indigo-950/60",
+      tagText: "text-indigo-800 dark:text-indigo-300",
+      accentBorder: "hover:border-indigo-400 dark:hover:border-indigo-600",
     },
   },
   {
@@ -263,12 +263,12 @@ const CERTIFICATES: CertificateMeta[] = [
     roadmapDate: "Dự kiến: Quý 4/2026",
     theme: {
       tabActiveBg: "bg-amber-600 text-white",
-      badgeBg: "bg-amber-50",
-      badgeText: "text-amber-700",
-      badgeBorder: "border-amber-200",
-      tagBg: "bg-amber-50",
-      tagText: "text-amber-800",
-      accentBorder: "hover:border-amber-400",
+      badgeBg: "bg-amber-50 dark:bg-amber-950/60",
+      badgeText: "text-amber-700 dark:text-amber-300",
+      badgeBorder: "border-amber-200 dark:border-amber-800/60",
+      tagBg: "bg-amber-50 dark:bg-amber-950/60",
+      tagText: "text-amber-800 dark:text-amber-300",
+      accentBorder: "hover:border-amber-400 dark:hover:border-amber-600",
     },
   },
   {
@@ -302,12 +302,12 @@ const CERTIFICATES: CertificateMeta[] = [
     roadmapDate: "Dự kiến: Quý 1/2027",
     theme: {
       tabActiveBg: "bg-teal-600 text-white",
-      badgeBg: "bg-teal-50",
-      badgeText: "text-teal-700",
-      badgeBorder: "border-teal-200",
-      tagBg: "bg-teal-50",
-      tagText: "text-teal-800",
-      accentBorder: "hover:border-teal-400",
+      badgeBg: "bg-teal-50 dark:bg-teal-950/60",
+      badgeText: "text-teal-700 dark:text-teal-300",
+      badgeBorder: "border-teal-200 dark:border-teal-800/60",
+      tagBg: "bg-teal-50 dark:bg-teal-950/60",
+      tagText: "text-teal-800 dark:text-teal-300",
+      accentBorder: "hover:border-teal-400 dark:hover:border-teal-600",
     },
   },
 ];
@@ -525,7 +525,7 @@ export default function ExamPracticeHubPage() {
 
       {/* Certificate Selector Navigation (Interactive Tab Bar) */}
       <div className="mb-6 space-y-2">
-        <div className="flex items-center justify-between text-xs font-black text-slate-500 uppercase tracking-wider px-1">
+        <div className="flex items-center justify-between text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider px-1">
           <span>Chọn hệ thống chứng chỉ luyện thi</span>
           <span className="text-[11px] normal-case font-medium text-slate-400">
             {selectedCert === "ALL"
@@ -544,8 +544,8 @@ export default function ExamPracticeHubPage() {
             }}
             className={`shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer ${
               selectedCert === "ALL"
-                ? "bg-slate-900 text-white shadow-md shadow-slate-900/15"
-                : "bg-white border border-slate-200/90 text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300"
+                ? "bg-slate-900 dark:bg-amber-500 text-white shadow-md shadow-slate-900/15 dark:shadow-amber-500/20"
+                : "bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-700"
             }`}
           >
             <Compass size={15} />
@@ -568,7 +568,7 @@ export default function ExamPracticeHubPage() {
                 className={`shrink-0 flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer border ${
                   isSelected
                     ? "bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-500/20"
-                    : "bg-white border-slate-200/90 text-slate-700 hover:bg-amber-50/50 hover:border-amber-300 hover:text-amber-900"
+                    : "bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-amber-50/50 dark:hover:bg-amber-950/30 hover:border-amber-300 dark:hover:border-amber-800 hover:text-amber-900 dark:hover:text-amber-300"
                 }`}
               >
                 <span>{cert.name}</span>
@@ -587,7 +587,7 @@ export default function ExamPracticeHubPage() {
                     className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                       isSelected
                         ? "bg-white/20 text-white border-white/30"
-                        : "bg-slate-100 text-slate-500 border-slate-200"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700"
                     }`}
                   >
                     Sắp ra mắt
@@ -610,8 +610,8 @@ export default function ExamPracticeHubPage() {
           className="space-y-6"
         >
           {/* Certificate Overview Showcase Banner */}
-          <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-2xs">
-            <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-6 border-b border-slate-100">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-8 shadow-2xs">
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
               <div className="space-y-2.5 max-w-2xl">
                 <div className="flex flex-wrap items-center gap-2">
                   <span
@@ -620,7 +620,7 @@ export default function ExamPracticeHubPage() {
                     <AlertCircle size={13} />
                     {selectedCertMeta.badgeText}
                   </span>
-                  <span className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
                     {selectedCertMeta.targetLevel}
                   </span>
                   <span className="text-xs font-semibold text-slate-400">
@@ -628,11 +628,11 @@ export default function ExamPracticeHubPage() {
                   </span>
                 </div>
 
-                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
                   Bộ đề thi {selectedCertMeta.fullName}
                 </h2>
 
-                <p className="text-sm text-slate-600 leading-relaxed">
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                   {selectedCertMeta.description}
                 </p>
               </div>
@@ -646,13 +646,13 @@ export default function ExamPracticeHubPage() {
                   }
                   className={`px-4 py-2.5 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm ${
                     notifiedCerts.has(selectedCertMeta.id)
-                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                      : "bg-slate-900 text-white hover:bg-slate-800"
+                      ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60"
+                      : "bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 dark:hover:bg-slate-700"
                   }`}
                 >
                   {notifiedCerts.has(selectedCertMeta.id) ? (
                     <>
-                      <Check size={14} className="text-emerald-600" />
+                      <Check size={14} className="text-emerald-600 dark:text-emerald-400" />
                       <span>Đã đăng ký nhận tin</span>
                     </>
                   ) : (
@@ -666,7 +666,7 @@ export default function ExamPracticeHubPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedCert("TOEIC")}
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200/80 dark:border-amber-800/60 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <span>Luyện đề TOEIC có sẵn</span>
                   <ArrowRight size={13} />
@@ -677,16 +677,16 @@ export default function ExamPracticeHubPage() {
             {/* Feature and Format Details Grid */}
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-6">
               {/* Column 1: Skills */}
-              <div className="bg-slate-50/70 rounded-2xl p-4 border border-slate-200/70 space-y-3">
-                <div className="flex items-center gap-2 text-xs font-black text-slate-800 uppercase tracking-wider">
-                  <Award size={15} className="text-amber-600" />
+              <div className="bg-slate-50/70 dark:bg-slate-850/70 rounded-2xl p-4 border border-slate-200/70 dark:border-slate-800 space-y-3">
+                <div className="flex items-center gap-2 text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                  <Award size={15} className="text-amber-600 dark:text-amber-400" />
                   <span>Kỹ năng đánh giá</span>
                 </div>
                 <div className="space-y-2">
                   {selectedCertMeta.skills.map((skill, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center gap-2.5 text-xs font-bold text-slate-700 bg-white px-3 py-2 rounded-xl border border-slate-200/60"
+                      className="flex items-center gap-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 px-3 py-2 rounded-xl border border-slate-200/60 dark:border-slate-800"
                     >
                       <skill.icon size={14} className="text-slate-400 shrink-0" />
                       <span>{skill.label}</span>
@@ -696,35 +696,35 @@ export default function ExamPracticeHubPage() {
               </div>
 
               {/* Column 2: Exam Structure */}
-              <div className="bg-slate-50/70 rounded-2xl p-4 border border-slate-200/70 space-y-3">
-                <div className="flex items-center gap-2 text-xs font-black text-slate-800 uppercase tracking-wider">
-                  <FileText size={15} className="text-blue-600" />
-                  <span>Cấu trúc đề thi dự kiến</span>
+              <div className="bg-slate-50/70 dark:bg-slate-850/70 rounded-2xl p-4 border border-slate-200/70 dark:border-slate-800 space-y-3">
+                <div className="flex items-center gap-2 text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                  <FileText size={15} className="text-blue-600 dark:text-blue-400" />
+                  <span>Cấu trúc bài thi</span>
                 </div>
                 <ul className="space-y-2">
                   {selectedCertMeta.examStructure.map((struct, idx) => (
                     <li
                       key={idx}
-                      className="flex items-start gap-2 text-xs font-medium text-slate-600 bg-white p-2.5 rounded-xl border border-slate-200/60 leading-snug"
+                      className="flex items-start gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800 leading-snug"
                     >
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />
+                      <ChevronRight size={14} className="text-amber-500 mt-0.5 shrink-0" />
                       <span>{struct}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              {/* Column 3: Simulator Features */}
-              <div className="bg-slate-50/70 rounded-2xl p-4 border border-slate-200/70 space-y-3 sm:col-span-2 lg:col-span-1">
-                <div className="flex items-center gap-2 text-xs font-black text-slate-800 uppercase tracking-wider">
-                  <ShieldCheck size={15} className="text-emerald-600" />
+              {/* Column 3: Expected Features */}
+              <div className="bg-slate-50/70 dark:bg-slate-850/70 rounded-2xl p-4 border border-slate-200/70 dark:border-slate-800 space-y-3 sm:col-span-2 lg:col-span-1">
+                <div className="flex items-center gap-2 text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                  <ShieldCheck size={15} className="text-emerald-600 dark:text-emerald-400" />
                   <span>Tính năng đang phát triển</span>
                 </div>
                 <ul className="space-y-2">
                   {selectedCertMeta.expectedFeatures.map((feat, idx) => (
                     <li
                       key={idx}
-                      className="flex items-start gap-2 text-xs font-medium text-slate-600 bg-white p-2.5 rounded-xl border border-slate-200/60 leading-snug"
+                      className="flex items-start gap-2 text-xs font-medium text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800 leading-snug"
                     >
                       <CheckCircle2 size={14} className="text-emerald-500 mt-0.5 shrink-0" />
                       <span>{feat}</span>
@@ -743,7 +743,7 @@ export default function ExamPracticeHubPage() {
           {/* Active TOEIC Exam Section */}
           <div className="space-y-5">
             {/* Filter Bar & Controls */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               {/* Format Filter Pills */}
               <div className="flex flex-wrap items-center gap-2">
                 {([
@@ -762,7 +762,7 @@ export default function ExamPracticeHubPage() {
                     className={`rounded-xl px-3.5 py-2 text-xs font-black transition-colors cursor-pointer ${
                       paperFilter === value
                         ? "bg-amber-500 text-white shadow-xs"
-                        : "bg-slate-50 text-slate-600 hover:bg-amber-50 hover:text-amber-800"
+                        : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-750 hover:text-amber-800 dark:hover:text-amber-300"
                     }`}
                   >
                     {label}
@@ -784,15 +784,15 @@ export default function ExamPracticeHubPage() {
                     setSearchQuery(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full pl-10 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 focus:bg-white transition-all font-medium text-slate-800"
+                  className="w-full pl-10 pr-4 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-amber-500 focus:bg-white dark:focus:bg-slate-800/90 transition-all font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               </div>
             </div>
 
             {/* List Header Count & Timer info */}
-            <div className="flex items-center justify-between text-xs font-bold text-slate-500 px-1">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400 px-1">
               <span className="flex items-center gap-1.5">
-                <BookmarkCheck size={14} className="text-amber-700" />
+                <BookmarkCheck size={14} className="text-amber-700 dark:text-amber-400" />
                 <span>
                   {filteredQuizzes.length} đề thi TOEIC khả dụng
                   {paperFilter !== "ALL" &&
@@ -807,9 +807,9 @@ export default function ExamPracticeHubPage() {
 
             {/* Loading / Cards Grid */}
             {isLoading ? (
-              <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-slate-200">
-                <Loader2 className="animate-spin text-amber-600 mb-3" size={32} />
-                <p className="text-xs font-bold text-slate-500">
+              <div className="flex flex-col items-center justify-center py-16 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+                <Loader2 className="animate-spin text-amber-600 dark:text-amber-400 mb-3" size={32} />
+                <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
                   Đang tải danh sách đề thi...
                 </p>
               </div>
@@ -862,8 +862,8 @@ export default function ExamPracticeHubPage() {
                         }}
                         className={`group relative rounded-2xl border p-5 flex flex-col justify-between cursor-pointer transition-all duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
                           isCompleted
-                            ? "bg-emerald-50/30 border-emerald-200 hover:border-emerald-300 hover:shadow-md"
-                            : "bg-white border-slate-200/80 hover:border-amber-400 hover:shadow-md"
+                            ? "bg-emerald-50/30 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md"
+                            : "bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-amber-400 dark:hover:border-amber-600 hover:shadow-md"
                         }`}
                       >
                         <div>
@@ -872,8 +872,8 @@ export default function ExamPracticeHubPage() {
                             <span
                               className={`inline-flex items-center gap-1.5 text-[11px] font-black px-2.5 py-0.5 rounded-lg border ${
                                 isFourSkill
-                                  ? "bg-purple-50 text-purple-800 border-purple-200"
-                                  : "bg-amber-50 text-amber-800 border-amber-200/70"
+                                  ? "bg-purple-50 dark:bg-purple-950/50 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-800/60"
+                                  : "bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border-amber-200/70 dark:border-amber-800/60"
                               }`}
                             >
                               <BookOpen size={12} />
@@ -883,7 +883,7 @@ export default function ExamPracticeHubPage() {
                             </span>
 
                             {isCompleted ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full">
                                 <CheckCircle2 size={13} />
                                 <span>Đã hoàn thành</span>
                               </span>
@@ -895,25 +895,25 @@ export default function ExamPracticeHubPage() {
                           </div>
 
                           {/* Title */}
-                          <h3 className="text-base font-bold text-slate-900 group-hover:text-amber-800 transition-colors line-clamp-2 leading-snug">
+                          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 group-hover:text-amber-800 dark:group-hover:text-amber-400 transition-colors line-clamp-2 leading-snug">
                             {quiz.title}
                           </h3>
-                          <p className="mt-2 text-xs leading-5 text-slate-500">{cardDescription}</p>
+                          <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">{cardDescription}</p>
 
                           {/* Skills Breakdown pill */}
-                          <div className="mt-2.5 flex flex-wrap items-center gap-1 text-[10px] font-bold text-slate-500">
-                            {skillLabels.map((label: string) => <span key={label} className="bg-slate-100 px-2 py-0.5 rounded-md">{label}</span>)}
+                          <div className="mt-2.5 flex flex-wrap items-center gap-1 text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                            {skillLabels.map((label: string) => <span key={label} className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">{label}</span>)}
                           </div>
                         </div>
 
                         {/* Bottom Row: Metadata & Button */}
-                        <div className="mt-5 pt-3.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-semibold">
+                        <div className="mt-5 pt-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold">
                           <span className="flex items-center gap-1">
                             <BookOpen size={13} className="text-slate-400" />
                             <span>{detailsLabel}</span>
                           </span>
 
-                          <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 group-hover:translate-x-0.5 transition-transform">
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform">
                             {isCompleted ? "Luyện lại" : "Bắt đầu làm bài"}
                             <ArrowRight size={13} />
                           </span>
@@ -941,16 +941,16 @@ export default function ExamPracticeHubPage() {
                 )}
               </div>
             ) : (
-              <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center mx-auto">
+              <div className="bg-white dark:bg-slate-900 p-12 rounded-2xl border border-slate-200 dark:border-slate-800 text-center space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 flex items-center justify-center mx-auto">
                   <Target size={24} />
                 </div>
-                <h3 className="text-base font-bold text-slate-800">
+                <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">
                   {searchQuery || paperFilter !== "ALL"
                     ? "Không tìm thấy đề thi phù hợp"
                     : "Chưa có đề thi nào trong danh mục này"}
                 </h3>
-                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
                   {searchQuery
                     ? "Hãy thử tìm kiếm với từ khóa khác hoặc bỏ chọn bộ lọc."
                     : "Các bộ đề thi mới sẽ sớm được cập nhật trên hệ thống."}
@@ -961,14 +961,14 @@ export default function ExamPracticeHubPage() {
 
           {/* If "ALL" is selected, also showcase the upcoming certificates catalog */}
           {selectedCert === "ALL" && (
-            <div className="pt-6 border-t border-slate-200/80 space-y-5">
+            <div className="pt-6 border-t border-slate-200/80 dark:border-slate-800 space-y-5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
-                  <h2 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
-                    <GraduationCap size={20} className="text-amber-600" />
+                  <h2 className="text-lg font-black text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2">
+                    <GraduationCap size={20} className="text-amber-600 dark:text-amber-400" />
                     <span>Hệ sinh thái chứng chỉ đang biên soạn</span>
                   </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Các bộ đề thi thử quốc tế đang được đội ngũ chuyên gia hoàn thiện ngân hàng đề và hệ thống chấm điểm tự động.
                   </p>
                 </div>
@@ -982,7 +982,7 @@ export default function ExamPracticeHubPage() {
                     return (
                       <div
                         key={cert.id}
-                        className="bg-white rounded-2xl border border-slate-200/80 p-5 flex flex-col justify-between hover:border-slate-300 hover:shadow-sm transition-all"
+                        className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm transition-all"
                       >
                         <div className="space-y-2.5">
                           <div className="flex items-center justify-between gap-2">
@@ -997,10 +997,10 @@ export default function ExamPracticeHubPage() {
                           </div>
 
                           <div>
-                            <h3 className="text-base font-bold text-slate-900 leading-snug">
+                            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 leading-snug">
                               {cert.name}
                             </h3>
-                            <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">
                               {cert.description}
                             </p>
                           </div>
@@ -1010,13 +1010,13 @@ export default function ExamPracticeHubPage() {
                             {cert.skills.slice(0, 3).map((s, idx) => (
                               <span
                                 key={idx}
-                                className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md"
+                                className="text-[10px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md"
                               >
                                 {s.label.split(" (")[0]}
                               </span>
                             ))}
                             {cert.skills.length > 3 && (
-                              <span className="text-[10px] font-semibold text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-md">
+                              <span className="text-[10px] font-semibold text-slate-400 bg-slate-50 dark:bg-slate-800/60 px-1.5 py-0.5 rounded-md">
                                 +{cert.skills.length - 3}
                               </span>
                             )}
@@ -1024,11 +1024,11 @@ export default function ExamPracticeHubPage() {
                         </div>
 
                         {/* Actions */}
-                        <div className="mt-5 pt-3.5 border-t border-slate-100 flex items-center justify-between gap-2">
+                        <div className="mt-5 pt-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
                           <button
                             type="button"
                             onClick={() => setSelectedCert(cert.id)}
-                            className="text-xs font-bold text-amber-700 hover:text-amber-800 transition-colors flex items-center gap-1 cursor-pointer"
+                            className="text-xs font-bold text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 transition-colors flex items-center gap-1 cursor-pointer"
                           >
                             <span>Xem lộ trình</span>
                             <ChevronRight size={13} />
@@ -1039,8 +1039,8 @@ export default function ExamPracticeHubPage() {
                             onClick={() => handleNotifyMe(cert.id, cert.name)}
                             className={`text-[11px] font-bold px-2.5 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
                               isRegistered
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                                ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50"
+                                : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
                             }`}
                           >
                             {isRegistered ? (

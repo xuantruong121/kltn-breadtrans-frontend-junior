@@ -101,7 +101,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
   return (
     <LearningFocusProvider>
-      <div className="min-h-[100dvh] flex flex-col bg-[#fbfaf8] text-slate-800 antialiased selection:bg-amber-600 selection:text-white font-['Quicksand',sans-serif]">
+      <div className="min-h-[100dvh] flex flex-col bg-background text-foreground antialiased selection:bg-amber-600 selection:text-white font-['Quicksand',sans-serif] transition-colors duration-150">
         <AppHeader />
         <main
           className={`min-w-0 w-full ${

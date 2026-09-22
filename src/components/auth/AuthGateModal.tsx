@@ -59,43 +59,43 @@ export function AuthGateModal({
       <div className="absolute inset-0" onClick={onClose} />
 
       {/* Modal Card */}
-      <div className="relative w-full max-w-md rounded-3xl bg-white p-6 sm:p-8 shadow-2xl border border-amber-100 z-10 animate-in zoom-in-95 duration-150">
+      <div className="relative w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-2xl border border-amber-100 dark:border-slate-800 z-10 animate-in zoom-in-95 duration-150">
         <button
           type="button"
           onClick={onClose}
           aria-label="Đóng"
-          className="absolute top-5 right-5 flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors"
+          className="absolute top-5 right-5 flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
         >
           <X size={18} />
         </button>
 
         <div className="flex flex-col items-center text-center">
-          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-200 flex items-center justify-center text-amber-700 mb-4 shadow-xs">
+          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 flex items-center justify-center text-amber-700 dark:text-amber-400 mb-4 shadow-xs">
             <Lock size={26} />
           </div>
 
-          <span className="px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-xs font-bold text-amber-800 mb-2">
+          <span className="px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs font-bold text-amber-800 dark:text-amber-300 mb-2">
             Yêu cầu tài khoản học viên
           </span>
 
-          <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">
+          <h3 className="text-xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
             Đăng nhập để tiếp tục
           </h3>
 
-          <p className="text-sm font-semibold text-slate-600 mt-2 leading-relaxed">
-            Đăng nhập để bắt đầu <strong className="text-amber-700">{targetLabel}</strong> và lưu lại tiến độ học tập của bạn.
+          <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
+            Đăng nhập để bắt đầu <strong className="text-amber-700 dark:text-amber-400">{targetLabel}</strong> và lưu lại tiến độ học tập của bạn.
           </p>
 
-          <div className="w-full bg-amber-50/70 border border-amber-100 rounded-2xl p-4 my-5 text-left space-y-2">
-            <div className="flex items-start gap-2 text-xs font-semibold text-slate-700">
+          <div className="w-full bg-amber-50/70 dark:bg-slate-800/60 border border-amber-100 dark:border-slate-700 rounded-2xl p-4 my-5 text-left space-y-2">
+            <div className="flex items-start gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
               <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" />
               <span>Lưu lịch sử làm bài và theo dõi lộ trình tiến bộ</span>
             </div>
-            <div className="flex items-start gap-2 text-xs font-semibold text-slate-700">
+            <div className="flex items-start gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
               <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" />
               <span>Nhận phân tích phát âm chuẩn âm vị và gợi ý sửa lỗi ngữ pháp</span>
             </div>
-            <div className="flex items-start gap-2 text-xs font-semibold text-slate-700">
+            <div className="flex items-start gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
               <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" />
               <span>Tích lũy Bánh Mì và duy trì chuỗi học tập (Streak)</span>
             </div>
@@ -114,7 +114,7 @@ export function AuthGateModal({
             <button
               type="button"
               onClick={handleRegisterClick}
-              className="w-full py-3 px-4 rounded-xl border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-slate-700 font-bold text-sm transition-colors cursor-pointer"
+              className="w-full py-3 px-4 rounded-xl border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200 font-bold text-sm transition-colors cursor-pointer"
             >
               Tạo tài khoản mới miễn phí
             </button>

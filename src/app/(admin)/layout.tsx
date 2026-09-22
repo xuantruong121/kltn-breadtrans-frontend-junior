@@ -23,6 +23,9 @@ import {
   Cpu,
   Activity,
   Flag,
+  ChevronDown,
+  BookMarked,
+  Settings,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useQueryClient } from "@tanstack/react-query";
@@ -33,7 +36,6 @@ import dynamic from "next/dynamic";
 const FloatingAiTutor = dynamic(() => import("@/components/FloatingAiTutor"), {
   ssr: false,
 });
-import { AppFooter } from "@/components/navigation/AppFooter";
 
 interface NavItem {
   id: string;
@@ -43,24 +45,25 @@ interface NavItem {
   roles?: "ADMIN"[];
 }
 
-interface NavGroup {
-  title?: string;
+interface NavCategory {
+  id: string;
+  title: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
   items: NavItem[];
 }
 
-const NAV_GROUPS: NavGroup[] = [
+const OVERVIEW_ITEM: NavItem = {
+  id: "overview",
+  href: "/admin",
+  label: "Tổng quan",
+  icon: LayoutDashboard,
+};
+
+const NAV_GROUPS: NavCategory[] = [
   {
-    items: [
-      {
-        id: "overview",
-        href: "/admin",
-        label: "Tổng quan",
-        icon: LayoutDashboard,
-      },
-    ],
-  },
-  {
-    title: "Nội Dung Học Tập",
+    id: "courses-group",
+    title: "Đào Tạo & Khóa Học",
+    icon: GraduationCap,
     items: [
       {
         id: "courses",
@@ -69,10 +72,10 @@ const NAV_GROUPS: NavGroup[] = [
         icon: BookOpen,
       },
       {
-        id: "speaking",
-        href: "/admin/speaking",
-        label: "Luyện phát âm",
-        icon: Mic,
+        id: "practice",
+        href: "/admin/practice",
+        label: "Chủ đề luyện tập",
+        icon: Gamepad2,
       },
       {
         id: "assignments",
@@ -80,6 +83,13 @@ const NAV_GROUPS: NavGroup[] = [
         label: "Bài tập & Chấm điểm",
         icon: PenTool,
       },
+    ],
+  },
+  {
+    id: "content-group",
+    title: "Kho Học Liệu & Kỹ Năng",
+    icon: BookMarked,
+    items: [
       {
         id: "vocab",
         href: "/admin/vocab",
@@ -93,21 +103,23 @@ const NAV_GROUPS: NavGroup[] = [
         icon: GraduationCap,
       },
       {
-        id: "quizzes",
-        href: "/admin/quizzes",
-        label: "Đề thi & Bộ câu hỏi",
-        icon: FileText,
+        id: "speaking",
+        href: "/admin/speaking",
+        label: "Luyện phát âm",
+        icon: Mic,
       },
       {
-        id: "practice",
-        href: "/admin/practice",
-        label: "Chủ đề luyện tập",
-        icon: Gamepad2,
+        id: "quizzes",
+        href: "/admin/quizzes",
+        label: "Đề thi & Trắc nghiệm",
+        icon: FileText,
       },
     ],
   },
   {
-    title: "Người Học & Quyền Truy Cập",
+    id: "users-group",
+    title: "Học Viên & Doanh Thu",
+    icon: Users,
     items: [
       {
         id: "users",
@@ -118,7 +130,7 @@ const NAV_GROUPS: NavGroup[] = [
       {
         id: "enroll",
         href: "/admin/enroll",
-        label: "Quyền truy cập khóa học",
+        label: "Quyền vào khóa học",
         icon: UserPlus,
       },
       {
@@ -131,7 +143,9 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    id: "market-group",
     title: "Thương Mại & Gamification",
+    icon: ShoppingBag,
     items: [
       {
         id: "market",
@@ -142,13 +156,15 @@ const NAV_GROUPS: NavGroup[] = [
       {
         id: "currency",
         href: "/admin/currency",
-        label: "Sổ Bánh Mì",
+        label: "Sổ Bánh Mì (Coin)",
         icon: Coins,
       },
     ],
   },
   {
-    title: "Vận Hành & Công Cụ",
+    id: "system-group",
+    title: "Vận Hành & Hệ Thống",
+    icon: Settings,
     items: [
       {
         id: "issue-reports",
@@ -156,11 +172,16 @@ const NAV_GROUPS: NavGroup[] = [
         label: "Báo cáo lỗi",
         icon: Flag,
       },
-      { id: "ai", href: "/admin/ai-tools", label: "Soạn nội dung", icon: Cpu },
+      {
+        id: "ai",
+        href: "/admin/ai-tools",
+        label: "Soạn nội dung AI",
+        icon: Cpu,
+      },
       {
         id: "costs",
         href: "/admin/costs",
-        label: "Chi phí & Vận hành",
+        label: "Chi phí & Hiệu năng",
         icon: Activity,
       },
     ],
@@ -179,6 +200,15 @@ export default function AdminLayout({
   const queryClient = useQueryClient();
   const { user, logout } = useAuthStore();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+  // User manual collapsed state; default is all open (!collapsedGroups[group.id])
+  const [collapsedGroups, setCollapsedGroups] = useState<
+    Record<string, boolean>
+  >({});
+
+  const toggleGroup = (groupId: string) => {
+    setCollapsedGroups((prev) => ({ ...prev, [groupId]: !prev[groupId] }));
+  };
 
   const handleLogout = () => {
     queryClient.clear();
@@ -210,10 +240,12 @@ export default function AdminLayout({
 
   if (!isReady || !user) return null;
 
+  const isOverviewActive = pathname === "/admin";
+
   const sidebarNav = (
     <div className="flex flex-col h-full justify-between">
-      <div>
-        <div className="flex items-center justify-between border-b border-slate-200 p-6">
+      <div className="flex flex-col flex-1 min-h-0">
+        <div className="flex items-center justify-between border-b border-slate-200 p-6 shrink-0">
           <BrandLogo
             href="/admin"
             onClick={() => setIsMobileNavOpen(false)}
@@ -223,12 +255,31 @@ export default function AdminLayout({
           <button
             onClick={() => setIsMobileNavOpen(false)}
             className="cursor-pointer p-1 text-slate-500 hover:text-slate-900 lg:hidden"
+            aria-label="Đóng thanh điều hướng"
           >
             <X size={20} />
           </button>
         </div>
-        <nav className="p-3 flex flex-col gap-3 overflow-y-auto max-h-[calc(100dvh-180px)]">
-          {NAV_GROUPS.map((group, groupIdx) => {
+
+        <nav className="p-3 flex flex-col gap-1.5 overflow-y-auto flex-1 min-h-0">
+          {/* Standalone Tổng quan Link */}
+          <Link
+            href={OVERVIEW_ITEM.href}
+            onClick={() => setIsMobileNavOpen(false)}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+              isOverviewActive
+                ? "bg-blue-600 text-white shadow-xs"
+                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            }`}
+          >
+            <OVERVIEW_ITEM.icon size={18} className={isOverviewActive ? "text-white" : "text-slate-500"} />
+            <span>{OVERVIEW_ITEM.label}</span>
+          </Link>
+
+          <div className="h-px bg-slate-200/80 my-1 mx-2 shrink-0" />
+
+          {/* Categorized Dropdowns */}
+          {NAV_GROUPS.map((group) => {
             const filteredItems = group.items.filter(
               (item) =>
                 !item.roles ||
@@ -236,43 +287,91 @@ export default function AdminLayout({
             );
             if (filteredItems.length === 0) return null;
 
-            return (
-              <div key={groupIdx} className="flex flex-col gap-1">
-                {group.title && (
-                  <div className="px-3.5 pt-2 pb-1 text-[11px] font-bold tracking-wider text-slate-600 uppercase select-none">
-                    {group.title}
-                  </div>
-                )}
-                <div className="flex flex-col gap-1">
-                  {filteredItems.map((item) => {
-                    const isActive =
-                      item.href === "/admin"
-                        ? pathname === "/admin"
-                        : pathname.startsWith(item.href);
+            const isGroupActive = filteredItems.some((item) =>
+              item.href === "/admin"
+                ? pathname === "/admin"
+                : pathname.startsWith(item.href),
+            );
+            const isOpen = !collapsedGroups[group.id];
 
-                    return (
-                      <Link
-                        key={item.id}
-                        href={item.href}
-                        onClick={() => setIsMobileNavOpen(false)}
-                        className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-sm font-semibold transition-colors ${
-                          isActive
-                            ? "bg-blue-600 text-white shadow-xs"
-                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                        }`}
-                      >
-                        <item.icon size={18} />
-                        {item.label}
-                      </Link>
-                    );
-                  })}
-                </div>
+            return (
+              <div key={group.id} className="flex flex-col">
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group.id)}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer select-none ${
+                    isGroupActive
+                      ? "text-blue-700 bg-blue-50/70 hover:bg-blue-50"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  }`}
+                  aria-expanded={isOpen}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <group.icon
+                      size={16}
+                      className={isGroupActive ? "text-blue-600 shrink-0" : "text-slate-400 shrink-0"}
+                    />
+                    <span className="truncate uppercase tracking-wider text-[11px] font-bold text-left">
+                      {group.title}
+                    </span>
+                    {isGroupActive && (
+                      <span className="size-1.5 rounded-full bg-blue-600 shrink-0" />
+                    )}
+                  </div>
+                  <ChevronDown
+                    size={14}
+                    className={`text-slate-400 shrink-0 ml-1 transition-transform duration-200 ${
+                      isOpen ? "rotate-180 text-blue-600" : ""
+                    }`}
+                  />
+                </button>
+
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      key={`content-${group.id}`}
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2, ease: "easeInOut" }}
+                      className="overflow-hidden"
+                    >
+                      <div className="ml-4 pl-3.5 border-l-2 border-slate-200/80 space-y-1 pt-1 pb-1">
+                        {filteredItems.map((item) => {
+                          const isActive =
+                            item.href === "/admin"
+                              ? pathname === "/admin"
+                              : pathname.startsWith(item.href);
+
+                          return (
+                            <Link
+                              key={item.id}
+                              href={item.href}
+                              onClick={() => setIsMobileNavOpen(false)}
+                              className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                                isActive
+                                  ? "bg-blue-600 text-white shadow-xs"
+                                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                              }`}
+                            >
+                              <item.icon
+                                size={15}
+                                className={isActive ? "text-white shrink-0" : "text-slate-400 shrink-0"}
+                              />
+                              <span className="truncate">{item.label}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             );
           })}
         </nav>
       </div>
-      <div className="border-t border-slate-200 p-4">
+      <div className="border-t border-slate-200 p-4 shrink-0">
         <div className="mb-3 truncate px-2 text-xs font-bold text-slate-500">
           {user?.email}
         </div>
@@ -287,7 +386,10 @@ export default function AdminLayout({
   );
 
   return (
-    <div className="flex h-[100dvh] bg-slate-50 overflow-hidden text-slate-800">
+    <div
+      data-theme="light"
+      className="light flex h-[100dvh] bg-slate-50 overflow-hidden text-slate-800"
+    >
       {/* Desktop Sidebar (lg+) */}
       <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-200 bg-white text-slate-700 lg:flex">
         {sidebarNav}
@@ -340,9 +442,8 @@ export default function AdminLayout({
         </header>
 
         {/* Scrollable Body */}
-        <div className="flex-1 min-w-0 overflow-y-auto flex flex-col justify-between">
+        <div className="flex-1 min-w-0 overflow-y-auto">
           <div className="p-4 md:p-8 flex-1 min-w-0">{children}</div>
-          <AppFooter />
         </div>
       </main>
 

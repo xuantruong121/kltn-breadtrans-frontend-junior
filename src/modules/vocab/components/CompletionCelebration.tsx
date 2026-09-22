@@ -23,44 +23,44 @@ export const CompletionCelebration: React.FC<CompletionCelebrationProps> = ({
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.96 }}
-      className="w-full max-w-xl mx-auto bg-white rounded-3xl border border-slate-200 p-8 sm:p-10 shadow-sm text-center space-y-6"
+      className="w-full max-w-xl mx-auto bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 sm:p-10 shadow-sm text-center space-y-6"
     >
       {/* Icon Badge */}
-      <div className="size-18 bg-sky-50 text-sky-600 rounded-3xl flex items-center justify-center mx-auto border border-sky-200/80 shadow-2xs">
+      <div className="size-18 bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 rounded-3xl flex items-center justify-center mx-auto border border-sky-200/80 dark:border-sky-800/60 shadow-2xs">
         <Trophy size={36} />
       </div>
 
       {/* Title & Description */}
       <div className="space-y-1.5">
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
           Hoàn Thành Lượt Học!
         </h2>
-        <p className="text-sm font-medium text-slate-500 max-w-md mx-auto">
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 max-w-md mx-auto">
           Tuyệt vời! Bạn đã vượt qua tất cả các bước trong bài học từ vựng hôm nay.
         </p>
       </div>
 
       {/* KPI Stats Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
-        <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-2xl text-center">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tổng từ</p>
-          <p className="text-2xl font-black text-slate-800 mt-1">{totalWordsCount}</p>
+        <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 p-4 rounded-2xl text-center">
+          <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Tổng từ</p>
+          <p className="text-2xl font-black text-slate-800 dark:text-slate-100 mt-1">{totalWordsCount}</p>
         </div>
 
-        <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl text-center">
-          <p className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">Đã thuộc</p>
-          <p className="text-2xl font-black text-emerald-800 mt-1">{learnedCount}</p>
+        <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 p-4 rounded-2xl text-center">
+          <p className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Đã thuộc</p>
+          <p className="text-2xl font-black text-emerald-800 dark:text-emerald-300 mt-1">{learnedCount}</p>
         </div>
 
-        <div className="bg-orange-50 border border-orange-200 p-4 rounded-2xl text-center col-span-2 sm:col-span-1">
-          <p className="text-[11px] font-bold text-orange-700 uppercase tracking-wider">Cần ôn lại</p>
-          <p className="text-2xl font-black text-orange-800 mt-1">{reviewCount}</p>
+        <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/60 p-4 rounded-2xl text-center col-span-2 sm:col-span-1">
+          <p className="text-[11px] font-bold text-orange-700 dark:text-orange-400 uppercase tracking-wider">Cần ôn lại</p>
+          <p className="text-2xl font-black text-orange-800 dark:text-orange-300 mt-1">{reviewCount}</p>
         </div>
       </div>
 
       {/* Rewarded Progress Banner */}
-      <div className="flex items-center justify-center gap-2 p-3 bg-sky-50 border border-sky-200 rounded-2xl text-xs font-bold text-sky-800">
-        <CheckCircle2 size={16} className="text-sky-600 shrink-0" />
+      <div className="flex items-center justify-center gap-2 p-3 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 rounded-2xl text-xs font-bold text-sky-800 dark:text-sky-300">
+        <CheckCircle2 size={16} className="text-sky-600 dark:text-sky-400 shrink-0" />
         <span>Tiến độ đã được đồng bộ với nhiệm vụ hàng ngày của bạn</span>
       </div>
 
@@ -78,7 +78,7 @@ export const CompletionCelebration: React.FC<CompletionCelebrationProps> = ({
         <Link href="/flashcard" className="w-full sm:w-auto">
           <button
             type="button"
-            className="w-full inline-flex min-h-[46px] items-center justify-center gap-2 px-6 py-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold text-sm rounded-2xl transition-colors cursor-pointer"
+            className="w-full inline-flex min-h-[46px] items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/70 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-bold text-sm rounded-2xl transition-colors cursor-pointer"
           >
             <ArrowLeft size={16} />
             <span>Về danh mục từ</span>

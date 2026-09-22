@@ -37,23 +37,23 @@ export const StudySettingsModal: React.FC<StudySettingsModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="relative w-full max-w-lg bg-white rounded-3xl border border-slate-200 shadow-2xl p-6 space-y-5 z-10"
+          className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-5 z-10"
         >
           {/* Header */}
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-2">
-              <div className="p-2 bg-sky-50 text-sky-600 rounded-xl border border-sky-200/80">
+              <div className="p-2 bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 rounded-xl border border-sky-200/80 dark:border-sky-800/60">
                 <SlidersHorizontal size={18} />
               </div>
               <div>
-                <h3 className="text-base font-extrabold text-slate-900">Cài đặt phòng học từ vựng</h3>
-                <p className="text-xs text-slate-500 font-medium">Tùy biến âm thanh và trải nghiệm học</p>
+                <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100">Cài đặt phòng học từ vựng</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Tùy biến âm thanh và trải nghiệm học</p>
               </div>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
+              className="p-2 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
               aria-label="Đóng cài đặt"
             >
               <X size={18} />
@@ -63,14 +63,14 @@ export const StudySettingsModal: React.FC<StudySettingsModalProps> = ({
           {/* Settings Options List */}
           <div className="space-y-4">
             {/* 1. Tự động phát âm */}
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-200/80">
+            <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-slate-700">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-white rounded-xl text-sky-600 border border-slate-200">
+                <div className="p-2 bg-white dark:bg-slate-800 rounded-xl text-sky-600 dark:text-sky-400 border border-slate-200 dark:border-slate-700">
                   <Play size={16} />
                 </div>
                 <div>
-                  <span className="text-sm font-bold text-slate-800">Tự động phát âm</span>
-                  <p className="text-xs text-slate-500 font-medium">Tự động đọc từ khi chuyển sang từ mới</p>
+                  <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Tự động phát âm</span>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Tự động đọc từ khi chuyển sang từ mới</p>
                 </div>
               </div>
               <button
@@ -79,7 +79,7 @@ export const StudySettingsModal: React.FC<StudySettingsModalProps> = ({
                 aria-checked={settings.autoPlayAudio}
                 onClick={() => onUpdateSettings({ autoPlayAudio: !settings.autoPlayAudio })}
                 className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
-                  settings.autoPlayAudio ? "bg-sky-500" : "bg-slate-300"
+                  settings.autoPlayAudio ? "bg-sky-500" : "bg-slate-300 dark:bg-slate-700"
                 }`}
               >
                 <span
@@ -91,14 +91,14 @@ export const StudySettingsModal: React.FC<StudySettingsModalProps> = ({
             </div>
 
             {/* 2. Âm thanh hiệu ứng */}
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-200/80">
+            <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-slate-700">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-white rounded-xl text-emerald-600 border border-slate-200">
+                <div className="p-2 bg-white dark:bg-slate-800 rounded-xl text-emerald-600 dark:text-emerald-400 border border-slate-200 dark:border-slate-700">
                   <Volume2 size={16} />
                 </div>
                 <div>
-                  <span className="text-sm font-bold text-slate-800">Âm thanh phản hồi</span>
-                  <p className="text-xs text-slate-500 font-medium">Hiệu ứng chuông khi đúng, sai, lật thẻ</p>
+                  <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Âm thanh phản hồi</span>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Hiệu ứng chuông khi đúng, sai, lật thẻ</p>
                 </div>
               </div>
               <button
@@ -107,7 +107,7 @@ export const StudySettingsModal: React.FC<StudySettingsModalProps> = ({
                 aria-checked={settings.soundEnabled}
                 onClick={() => onUpdateSettings({ soundEnabled: !settings.soundEnabled })}
                 className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
-                  settings.soundEnabled ? "bg-sky-500" : "bg-slate-300"
+                  settings.soundEnabled ? "bg-sky-500" : "bg-slate-300 dark:bg-slate-700"
                 }`}
               >
                 <span
@@ -119,13 +119,13 @@ export const StudySettingsModal: React.FC<StudySettingsModalProps> = ({
             </div>
 
             {/* 3. Tốc độ đọc audio */}
-            <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2">
+            <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-slate-700 space-y-2">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
-                  <Gauge size={15} className="text-slate-500" />
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200">
+                  <Gauge size={15} className="text-slate-500 dark:text-slate-400" />
                   <span>Tốc độ đọc phát âm</span>
                 </div>
-                <span className="text-xs font-extrabold text-sky-600">{settings.speechRate}x</span>
+                <span className="text-xs font-extrabold text-sky-600 dark:text-sky-400">{settings.speechRate}x</span>
               </div>
               <div className="grid grid-cols-3 gap-2 pt-1">
                 {[0.75, 1.0, 1.25].map((rate) => (
@@ -133,10 +133,10 @@ export const StudySettingsModal: React.FC<StudySettingsModalProps> = ({
                     key={rate}
                     type="button"
                     onClick={() => onUpdateSettings({ speechRate: rate })}
-                    className={`py-1.5 rounded-xl text-xs font-bold border transition-colors ${
+                    className={`py-1.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer ${
                       settings.speechRate === rate
                         ? "bg-sky-500 text-white border-sky-600 shadow-2xs"
-                        : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                        : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750"
                     }`}
                   >
                     {rate === 0.75 ? "0.75x (Chậm)" : rate === 1.0 ? "1.0x (Chuẩn)" : "1.25x (Nhanh)"}
@@ -146,19 +146,19 @@ export const StudySettingsModal: React.FC<StudySettingsModalProps> = ({
             </div>
 
             {/* 4. Giọng ưu tiên */}
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-200/80">
+            <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-slate-700">
               <div>
-                <span className="text-sm font-bold text-slate-800">Giọng đọc ưu tiên</span>
-                <p className="text-xs text-slate-500 font-medium">Lựa chọn phát âm mặc định</p>
+                <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Giọng đọc ưu tiên</span>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Lựa chọn phát âm mặc định</p>
               </div>
-              <div className="inline-flex rounded-xl border border-slate-200 bg-white p-0.5">
+              <div className="inline-flex rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-0.5">
                 <button
                   type="button"
                   onClick={() => onUpdateSettings({ preferUkAccent: false })}
-                  className={`px-3 py-1 text-xs font-bold rounded-lg transition-colors ${
+                  className={`px-3 py-1 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
                     !settings.preferUkAccent
                       ? "bg-blue-600 text-white shadow-2xs"
-                      : "text-slate-600 hover:text-slate-900"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                   }`}
                 >
                   Mỹ (US)
@@ -166,10 +166,10 @@ export const StudySettingsModal: React.FC<StudySettingsModalProps> = ({
                 <button
                   type="button"
                   onClick={() => onUpdateSettings({ preferUkAccent: true })}
-                  className={`px-3 py-1 text-xs font-bold rounded-lg transition-colors ${
+                  className={`px-3 py-1 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
                     settings.preferUkAccent
                       ? "bg-rose-600 text-white shadow-2xs"
-                      : "text-slate-600 hover:text-slate-900"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                   }`}
                 >
                   Anh (UK)
@@ -179,26 +179,26 @@ export const StudySettingsModal: React.FC<StudySettingsModalProps> = ({
           </div>
 
           {/* Quick Cheatsheet Section */}
-          <div className="pt-2 border-t border-slate-100">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 mb-2">
-              <Keyboard size={14} className="text-slate-500" />
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
+              <Keyboard size={14} className="text-slate-500 dark:text-slate-400" />
               <span>Phím tắt thao tác nhanh:</span>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-[11px] font-medium text-slate-600">
+            <div className="grid grid-cols-2 gap-2 text-[11px] font-medium text-slate-600 dark:text-slate-400">
               <div className="flex items-center gap-1.5">
-                <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border text-slate-800 font-mono">Space</kbd>
+                <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-mono">Space</kbd>
                 <span>Lật thẻ / Thu âm</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border text-slate-800 font-mono">Tab / 2</kbd>
+                <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-mono">Tab / 2</kbd>
                 <span>Đã thuộc từ này</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border text-slate-800 font-mono">Enter / 1</kbd>
+                <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-mono">Enter / 1</kbd>
                 <span>Chưa nhớ / Kiểm tra</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border text-slate-800 font-mono">1, 2, 3, 4</kbd>
+                <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-mono">1, 2, 3, 4</kbd>
                 <span>Chọn đáp án / Đánh giá SRS</span>
               </div>
             </div>
@@ -209,7 +209,7 @@ export const StudySettingsModal: React.FC<StudySettingsModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
+              className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
             >
               Hoàn tất
             </button>

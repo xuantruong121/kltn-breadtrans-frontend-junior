@@ -71,17 +71,17 @@ export default function PWAInstallBanner() {
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 50 }}
-          className="fixed bottom-5 left-4 right-4 md:left-auto md:right-8 z-50 max-w-md bg-white rounded-3xl border-4 border-orange-400 shadow-[0_10px_0_0_#f97316] p-4.5 flex items-center justify-between gap-3.5"
+          className="fixed bottom-5 left-4 right-4 md:left-auto md:right-8 z-50 max-w-md bg-white dark:bg-slate-900 rounded-3xl border-4 border-orange-400 dark:border-orange-500 shadow-[0_10px_0_0_#f97316] p-4.5 flex items-center justify-between gap-3.5"
         >
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-orange-100 border-2 border-orange-300 flex items-center justify-center text-2xl shrink-0 shadow-inner">
+            <div className="w-12 h-12 rounded-2xl bg-orange-100 dark:bg-orange-950/60 border-2 border-orange-300 dark:border-orange-800 flex items-center justify-center text-2xl shrink-0 shadow-inner">
               🍞
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <h4 className="font-black text-slate-800 text-sm">Cài Đặt BreadTrans App</h4>
+                <h4 className="font-black text-slate-800 dark:text-slate-100 text-sm">Cài Đặt BreadTrans App</h4>
               </div>
-              <p className="text-xs font-bold text-slate-500">
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
                 Học mượt mà, offline & nhận thông báo nhắc lịch học!
               </p>
             </div>
@@ -93,7 +93,7 @@ export default function PWAInstallBanner() {
             </Button3D>
             <button
               onClick={handleDismiss}
-              className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
+              className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               <X size={18} />
             </button>
@@ -107,34 +107,34 @@ export default function PWAInstallBanner() {
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 50 }}
-          className="fixed bottom-5 left-4 right-4 z-50 max-w-md mx-auto bg-white rounded-3xl border-4 border-sky-400 shadow-[0_10px_0_0_#0284c7] p-5 space-y-3"
+          className="fixed bottom-5 left-4 right-4 z-50 max-w-md mx-auto bg-white dark:bg-slate-900 rounded-3xl border-4 border-sky-400 dark:border-sky-500 shadow-[0_10px_0_0_#0284c7] p-5 space-y-3"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-sky-100 border-2 border-sky-300 flex items-center justify-center text-xl shrink-0">
-                <Smartphone size={20} className="text-sky-600" />
+              <div className="w-10 h-10 rounded-xl bg-sky-100 dark:bg-sky-950/60 border-2 border-sky-300 dark:border-sky-800 flex items-center justify-center text-xl shrink-0">
+                <Smartphone size={20} className="text-sky-600 dark:text-sky-400" />
               </div>
               <div>
-                <h4 className="font-black text-slate-800 text-sm">Cài đặt ứng dụng trên iPhone / iPad</h4>
-                <p className="text-xs font-bold text-slate-400">Trải nghiệm toàn màn hình như App Store</p>
+                <h4 className="font-black text-slate-800 dark:text-slate-100 text-sm">Cài đặt ứng dụng trên iPhone / iPad</h4>
+                <p className="text-xs font-bold text-slate-400 dark:text-slate-500">Trải nghiệm toàn màn hình như App Store</p>
               </div>
             </div>
             <button
               onClick={handleDismiss}
-              className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+              className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               <X size={18} />
             </button>
           </div>
 
-          <div className="bg-sky-50 border-2 border-sky-200 rounded-2xl p-3 text-xs font-bold text-slate-700 space-y-2">
+          <div className="bg-sky-50 dark:bg-sky-950/50 border-2 border-sky-200 dark:border-sky-800 rounded-2xl p-3 text-xs font-bold text-slate-700 dark:text-slate-300 space-y-2">
             <div className="flex items-center gap-2">
               <span className="w-5 h-5 rounded-full bg-sky-500 text-white flex items-center justify-center text-[10px] shrink-0 font-black">1</span>
-              <span>Nhấn nút <Share size={14} className="inline text-sky-600 mx-1" /> <b>Chia sẻ</b> (Share) ở thanh dưới Safari</span>
+              <span>Nhấn nút <Share size={14} className="inline text-sky-600 dark:text-sky-400 mx-1" /> <b>Chia sẻ</b> (Share) ở thanh dưới Safari</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-5 h-5 rounded-full bg-sky-500 text-white flex items-center justify-center text-[10px] shrink-0 font-black">2</span>
-              <span>Cuộn xuống và chọn <PlusSquare size={14} className="inline text-sky-600 mx-1" /> <b>Thêm vào MH chính</b> (Add to Home Screen)</span>
+              <span>Cuộn xuống và chọn <PlusSquare size={14} className="inline text-sky-600 dark:text-sky-400 mx-1" /> <b>Thêm vào MH chính</b> (Add to Home Screen)</span>
             </div>
           </div>
         </motion.div>

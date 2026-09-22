@@ -90,14 +90,14 @@ function StepProgressBar({ current }: { current: 1 | 2 }) {
   return (
     <div className="mb-6" aria-label={`Bước ${current} trên 2`}>
       <div className="mb-2 flex items-center justify-between text-xs font-bold">
-        <span className={current === 1 ? "text-amber-700 font-bold" : "text-slate-400"}>
+        <span className={current === 1 ? "text-amber-700 dark:text-amber-400 font-bold" : "text-slate-400 dark:text-slate-500"}>
           1. Thông tin tài khoản
         </span>
-        <span className={current === 2 ? "text-amber-700 font-bold" : "text-slate-400"}>
+        <span className={current === 2 ? "text-amber-700 dark:text-amber-400 font-bold" : "text-slate-400 dark:text-slate-500"}>
           2. Xác thực email
         </span>
       </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-slate-100" aria-hidden="true">
+      <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800" aria-hidden="true">
         <motion.div
           initial={false}
           animate={{ width: current === 1 ? "50%" : "100%" }}
@@ -288,35 +288,35 @@ export default function RegisterFlow() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.2 }}
-            className="bg-white rounded-3xl shadow-xl p-6 sm:p-10 relative border border-amber-100"
+            className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl p-6 sm:p-10 relative border border-amber-100 dark:border-slate-800"
           >
             <StepProgressBar current={1} />
 
             {/* Header Info */}
             <div className="text-center mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-200 flex items-center justify-center mx-auto mb-3 shadow-xs text-amber-700">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-200 dark:bg-amber-950/40 dark:border-amber-900/50 flex items-center justify-center mx-auto mb-3 shadow-xs text-amber-700 dark:text-amber-400">
                 <UserPlus size={22} />
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
                 Đăng ký BreadTrans
               </h1>
-              <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
                 Tạo tài khoản học viên để bắt đầu hành trình nâng cao 4 kỹ năng tiếng Anh.
               </p>
             </div>
 
             {/* Error Alert Box */}
             {error && (
-              <div className="mb-5 bg-rose-50 text-rose-800 border border-rose-200 p-3.5 rounded-2xl text-sm font-medium flex items-center justify-between gap-3 animate-in fade-in duration-150">
+              <div className="mb-5 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50 p-3.5 rounded-2xl text-sm font-medium flex items-center justify-between gap-3 animate-in fade-in duration-150">
                 <div className="flex items-center gap-2.5">
-                  <AlertCircle size={18} className="text-rose-600 shrink-0" />
+                  <AlertCircle size={18} className="text-rose-600 dark:text-rose-400 shrink-0" />
                   <span>{error}</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setError("")}
                   aria-label="Đóng thông báo lỗi"
-                  className="text-rose-600 hover:text-rose-800 p-1 rounded-lg hover:bg-rose-100 transition-colors"
+                  className="text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-200 p-1 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors"
                 >
                   <X size={16} />
                 </button>
@@ -327,11 +327,11 @@ export default function RegisterFlow() {
             <form onSubmit={submitDetails} noValidate className="space-y-4">
               {/* Full Name Field */}
               <div className="space-y-1.5">
-                <label className="block text-sm font-bold text-slate-700" htmlFor="register-full-name">
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300" htmlFor="register-full-name">
                   Họ và tên <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 dark:text-slate-500">
                     <User size={18} />
                   </span>
                   <input
@@ -343,25 +343,25 @@ export default function RegisterFlow() {
                     value={form.fullName}
                     onChange={(e) => updateField("fullName", e.target.value)}
                     placeholder="Ví dụ: Nguyễn Minh Anh"
-                    className={`w-full pl-10 pr-4 py-3 bg-slate-50/70 border rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:bg-white transition-all ${
+                    className={`w-full pl-10 pr-4 py-3 bg-slate-50/70 dark:bg-slate-850 border rounded-xl text-slate-900 dark:text-slate-100 text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:bg-white dark:focus:bg-slate-800 transition-all ${
                       fieldErrors.fullName
-                        ? "border-rose-300 focus:ring-4 focus:ring-rose-500/10"
-                        : "border-slate-200 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
+                        ? "border-rose-300 dark:border-rose-700 focus:ring-4 focus:ring-rose-500/10"
+                        : "border-slate-200 dark:border-slate-700 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
                     }`}
                   />
                 </div>
                 {fieldErrors.fullName && (
-                  <p className="text-xs text-rose-600 font-medium mt-1">{fieldErrors.fullName}</p>
+                  <p className="text-xs text-rose-600 dark:text-rose-400 font-medium mt-1">{fieldErrors.fullName}</p>
                 )}
               </div>
 
               {/* Email Field */}
               <div className="space-y-1.5">
-                <label className="block text-sm font-bold text-slate-700" htmlFor="register-email">
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300" htmlFor="register-email">
                   Địa chỉ Email <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 dark:text-slate-500">
                     <Mail size={18} />
                   </span>
                   <input
@@ -374,25 +374,25 @@ export default function RegisterFlow() {
                     value={form.email}
                     onChange={(e) => updateField("email", e.target.value)}
                     placeholder="name@example.com"
-                    className={`w-full pl-10 pr-4 py-3 bg-slate-50/70 border rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:bg-white transition-all ${
+                    className={`w-full pl-10 pr-4 py-3 bg-slate-50/70 dark:bg-slate-850 border rounded-xl text-slate-900 dark:text-slate-100 text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:bg-white dark:focus:bg-slate-800 transition-all ${
                       fieldErrors.email
-                        ? "border-rose-300 focus:ring-4 focus:ring-rose-500/10"
-                        : "border-slate-200 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
+                        ? "border-rose-300 dark:border-rose-700 focus:ring-4 focus:ring-rose-500/10"
+                        : "border-slate-200 dark:border-slate-700 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
                     }`}
                   />
                 </div>
                 {fieldErrors.email && (
-                  <p className="text-xs text-rose-600 font-medium mt-1">{fieldErrors.email}</p>
+                  <p className="text-xs text-rose-600 dark:text-rose-400 font-medium mt-1">{fieldErrors.email}</p>
                 )}
               </div>
 
               {/* Password Field */}
               <div className="space-y-1.5">
-                <label className="block text-sm font-bold text-slate-700" htmlFor="register-password">
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300" htmlFor="register-password">
                   Mật khẩu <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 dark:text-slate-500">
                     <KeyRound size={18} />
                   </span>
                   <input
@@ -404,16 +404,16 @@ export default function RegisterFlow() {
                     value={form.password}
                     onChange={(e) => updateField("password", e.target.value)}
                     placeholder="Tối thiểu 6 ký tự"
-                    className={`w-full pl-10 pr-11 py-3 bg-slate-50/70 border rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:bg-white transition-all ${
+                    className={`w-full pl-10 pr-11 py-3 bg-slate-50/70 dark:bg-slate-850 border rounded-xl text-slate-900 dark:text-slate-100 text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:bg-white dark:focus:bg-slate-800 transition-all ${
                       fieldErrors.password
-                        ? "border-rose-300 focus:ring-4 focus:ring-rose-500/10"
-                        : "border-slate-200 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
+                        ? "border-rose-300 dark:border-rose-700 focus:ring-4 focus:ring-rose-500/10"
+                        : "border-slate-200 dark:border-slate-700 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
                     }`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+                    className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                     title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                     aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                   >
@@ -421,9 +421,9 @@ export default function RegisterFlow() {
                   </button>
                 </div>
                 {fieldErrors.password ? (
-                  <p className="text-xs text-rose-600 font-medium mt-1">{fieldErrors.password}</p>
+                  <p className="text-xs text-rose-600 dark:text-rose-400 font-medium mt-1">{fieldErrors.password}</p>
                 ) : (
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                     Mật khẩu gồm ít nhất 6 ký tự để bảo vệ tài khoản của bạn.
                   </p>
                 )}
@@ -451,8 +451,8 @@ export default function RegisterFlow() {
 
             {/* Divider with Text */}
             <div className="relative my-6 flex items-center justify-center">
-              <div className="w-full bg-slate-200 h-[1px]" />
-              <span className="absolute px-3 bg-white text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <div className="w-full bg-slate-200 dark:bg-slate-800 h-[1px]" />
+              <span className="absolute px-3 bg-white dark:bg-slate-900 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                 Hoặc tiếp tục với
               </span>
             </div>
@@ -469,12 +469,12 @@ export default function RegisterFlow() {
             </div>
 
             {/* Footer Card Direction */}
-            <div className="mt-6 text-center pt-3 bg-slate-50/80 border border-slate-100 rounded-2xl p-3.5">
-              <p className="text-sm text-slate-600">
+            <div className="mt-6 text-center pt-3 bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 rounded-2xl p-3.5">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Đã có tài khoản BreadTrans?{" "}
                 <Link
                   href={loginHref}
-                  className="font-bold text-amber-700 hover:underline ml-1 inline-block"
+                  className="font-bold text-amber-700 dark:text-amber-400 hover:underline ml-1 inline-block"
                 >
                   Đăng nhập ngay
                 </Link>
@@ -490,34 +490,34 @@ export default function RegisterFlow() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.2 }}
-            className="bg-white rounded-3xl shadow-xl p-6 sm:p-10 relative border border-amber-100"
+            className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl p-6 sm:p-10 relative border border-amber-100 dark:border-slate-800"
           >
             <StepProgressBar current={2} />
 
             <div className="text-center mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-200 flex items-center justify-center mx-auto mb-3 shadow-xs text-amber-700">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-200 dark:bg-amber-950/40 dark:border-amber-900/50 flex items-center justify-center mx-auto mb-3 shadow-xs text-amber-700 dark:text-amber-400">
                 <MailCheck size={22} />
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
                 Kiểm tra email nhé!
               </h1>
-              <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
                 BreadTrans đã gửi mã xác thực 6 chữ số tới địa chỉ
               </p>
-              <div className="mt-1 font-bold text-amber-700 break-all text-sm">{form.email}</div>
+              <div className="mt-1 font-bold text-amber-700 dark:text-amber-400 break-all text-sm">{form.email}</div>
             </div>
 
             {error && (
-              <div className="mb-5 bg-rose-50 text-rose-800 border border-rose-200 p-3.5 rounded-2xl text-sm font-medium flex items-center justify-between gap-3 animate-in fade-in duration-150">
+              <div className="mb-5 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50 p-3.5 rounded-2xl text-sm font-medium flex items-center justify-between gap-3 animate-in fade-in duration-150">
                 <div className="flex items-center gap-2.5">
-                  <AlertCircle size={18} className="text-rose-600 shrink-0" />
+                  <AlertCircle size={18} className="text-rose-600 dark:text-rose-400 shrink-0" />
                   <span>{error}</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setError("")}
                   aria-label="Đóng thông báo lỗi"
-                  className="text-rose-600 hover:text-rose-800 p-1 rounded-lg hover:bg-rose-100 transition-colors"
+                  className="text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-200 p-1 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors"
                 >
                   <X size={16} />
                 </button>
@@ -526,7 +526,7 @@ export default function RegisterFlow() {
 
             <form onSubmit={verifyOtp} className="space-y-6">
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 text-center">
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 text-center">
                   Nhập mã 6 chữ số
                 </label>
                 <div className="grid grid-cols-6 gap-2 sm:gap-3">
@@ -546,11 +546,11 @@ export default function RegisterFlow() {
                       onKeyDown={(e) => handleOtpKeyDown(index, e)}
                       onPaste={handleOtpPaste}
                       aria-label={`Chữ số OTP thứ ${index + 1}`}
-                      className="h-13 sm:h-14 min-w-0 rounded-xl bg-slate-50/70 border border-slate-200 text-center text-xl sm:text-2xl font-bold text-slate-900 focus:outline-none focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all"
+                      className="h-13 sm:h-14 min-w-0 rounded-xl bg-slate-50/70 dark:bg-slate-850 border border-slate-200 dark:border-slate-700 text-center text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all"
                     />
                   ))}
                 </div>
-                <p className="mt-3 text-center text-xs text-slate-400">
+                <p className="mt-3 text-center text-xs text-slate-400 dark:text-slate-500">
                   Mã có hiệu lực trong 5 phút. Bạn có thể dán toàn bộ mã vào bất kỳ ô nào.
                 </p>
               </div>
@@ -574,14 +574,14 @@ export default function RegisterFlow() {
               </button>
             </form>
 
-            <div className="mt-6 pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
               <button
                 type="button"
                 onClick={() => {
                   setError("");
                   setStep("details");
                 }}
-                className="inline-flex items-center gap-1.5 font-semibold text-slate-600 hover:text-amber-700 transition-colors py-1 px-2 rounded-lg hover:bg-slate-100"
+                className="inline-flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors py-1 px-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 <ArrowLeft size={16} />
                 <span>Thay đổi email</span>
@@ -591,7 +591,7 @@ export default function RegisterFlow() {
                 type="button"
                 onClick={resendOtp}
                 disabled={resendSeconds > 0 || isResending}
-                className="inline-flex items-center gap-1.5 font-semibold text-amber-700 hover:underline disabled:text-slate-400 disabled:no-underline disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-1.5 font-semibold text-amber-700 dark:text-amber-400 hover:underline disabled:text-slate-400 dark:disabled:text-slate-600 disabled:no-underline disabled:cursor-not-allowed"
               >
                 <RotateCcw size={16} />
                 <span>
@@ -608,22 +608,22 @@ export default function RegisterFlow() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.2 }}
-            className="bg-white rounded-3xl shadow-xl p-6 sm:p-10 relative border border-amber-100 text-center"
+            className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl p-6 sm:p-10 relative border border-amber-100 dark:border-slate-800 text-center"
           >
-            <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4 shadow-xs border border-emerald-200">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-4 shadow-xs border border-emerald-200 dark:border-emerald-900/50">
               <CheckCircle2 size={32} />
             </div>
 
-            <div className="inline-block px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold uppercase tracking-wider mb-2">
+            <div className="inline-block px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 text-xs font-bold uppercase tracking-wider mb-2">
               Hoàn tất đăng ký
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
               Tài khoản đã sẵn sàng!
             </h1>
 
-            <p className="text-sm text-slate-500 mt-2 max-w-sm mx-auto leading-relaxed">
-              Chào mừng <strong className="text-slate-900 font-bold">{form.fullName.trim()}</strong> đến
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-sm mx-auto leading-relaxed">
+              Chào mừng <strong className="text-slate-900 dark:text-slate-100 font-bold">{form.fullName.trim()}</strong> đến
               với BreadTrans. Bạn có thể đăng nhập và bắt đầu học tập ngay bây giờ.
             </p>
 

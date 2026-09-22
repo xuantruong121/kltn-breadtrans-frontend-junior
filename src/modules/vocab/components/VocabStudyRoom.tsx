@@ -86,7 +86,9 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
     spokenTranscript,
     speechScore,
     speechFeedback,
+    isSpeakingSkipped,
     handleToggleRecordSpeech,
+    handleSkipSpeaking,
     handleSrsRate,
     handlePlayAudio,
     handleMarkMastered,
@@ -102,7 +104,7 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-slate-50/60 flex flex-col justify-between selection:bg-sky-100 selection:text-sky-900">
+    <div className="min-h-[100dvh] bg-background text-foreground flex flex-col justify-between selection:bg-sky-100 selection:text-sky-900 transition-colors duration-150">
       {/* 1. Top Navigation Bar with Pill Switcher & Live Progress */}
       <StudyTopHeader
         topicTitle={topic.title}
@@ -113,8 +115,8 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
-      {/* 2. Main Active Canvas */}
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col items-center justify-center">
+      {/* 2. Main Active Canvas (Pulled up closer to header, no excessive vertical blank space) */}
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 pt-4 sm:pt-6 pb-12 flex flex-col items-center">
         {/* Sequential Stage Tab Pills */}
         {!isCompleted && (
           <div className="w-full mb-6">
@@ -197,15 +199,17 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
                     transcript={spokenTranscript}
                     score={speechScore}
                     feedback={speechFeedback}
+                    isSkipped={isSpeakingSkipped}
                     onToggleRecord={handleToggleRecordSpeech}
                     onPlayAudio={handlePlayAudio}
                     onRateSrs={handleSrsRate}
+                    onSkipSpeaking={handleSkipSpeaking}
                     onSkip={handleMarkMastered}
                   />
                 )}
               </motion.div>
             ) : (
-              <div className="text-center py-16 text-slate-400 text-sm font-semibold">
+              <div className="text-center py-16 text-slate-400 dark:text-slate-500 text-sm font-semibold">
                 Không tìm thấy từ vựng trong chủ đề
               </div>
             )}

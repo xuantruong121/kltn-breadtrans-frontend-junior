@@ -34,7 +34,7 @@ export function BackToTop() {
       type="button"
       onClick={scrollToTop}
       aria-label="Cuộn lên đầu trang"
-      className="fixed bottom-[calc(8.5rem+env(safe-area-inset-bottom))] right-4 sm:bottom-40 sm:right-6 md:bottom-24 md:right-8 z-[45] flex h-11 w-11 items-center justify-center rounded-full bg-white/95 text-slate-700 shadow-md ring-1 ring-slate-200 backdrop-blur-sm transition-all duration-200 hover:bg-amber-50 hover:text-amber-700 hover:ring-amber-300 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 active:scale-95 cursor-pointer"
+      className="fixed bottom-[calc(8.5rem+env(safe-area-inset-bottom))] right-4 sm:bottom-40 sm:right-6 md:bottom-24 md:right-8 z-[45] flex h-11 w-11 items-center justify-center rounded-full bg-white/95 dark:bg-slate-850/95 text-slate-700 dark:text-slate-200 shadow-md ring-1 ring-slate-200 dark:ring-slate-700 backdrop-blur-sm transition-all duration-200 hover:bg-amber-50 dark:hover:bg-slate-800 hover:text-amber-700 dark:hover:text-amber-400 hover:ring-amber-300 dark:hover:ring-amber-500 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 active:scale-95 cursor-pointer"
     >
       <ArrowUp size={20} strokeWidth={2.25} aria-hidden="true" />
     </button>

@@ -66,19 +66,19 @@ export default function ReadingTopicDetailPage() {
     <>
       <div className="max-w-6xl mx-auto space-y-6 pb-20">
       {/* TOP HEADER BAR */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="flex items-center gap-4">
           <BackButton href="/practice/reading" label="Quay lại danh sách chủ đề" />
-          <div className="h-6 w-0.5 bg-slate-200 hidden sm:block"></div>
+          <div className="h-6 w-0.5 bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
           <div>
-            <h1 className="text-xl font-black text-slate-800 line-clamp-1">{actualTopic.name || actualTopic.title}</h1>
-            <p className="text-xs font-bold text-slate-400">
+            <h1 className="text-xl font-black text-slate-800 dark:text-slate-100 line-clamp-1">{actualTopic.name || actualTopic.title}</h1>
+            <p className="text-xs font-bold text-slate-400 dark:text-slate-500">
               Luyện đọc hiểu song ngữ Anh - Việt thông minh
             </p>
           </div>
         </div>
 
-        <span className="bg-emerald-100 text-emerald-800 px-3.5 py-1.5 rounded-2xl text-xs font-black self-start sm:self-auto">
+        <span className="bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50 px-3.5 py-1.5 rounded-2xl text-xs font-black self-start sm:self-auto">
           {actualTopic.quizzes?.length || 0} Bài đọc
         </span>
       </div>
@@ -87,8 +87,8 @@ export default function ReadingTopicDetailPage() {
       <div className="grid grid-cols-12 gap-6 items-start">
         {/* LEFT COLUMN: ARTICLES LIST */}
         <div className="col-span-12 lg:col-span-8 space-y-4">
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-            <h2 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
               <ListChecks size={22} className="text-emerald-500" /> Danh Sách Bài Đọc Thuộc Chủ Đề
             </h2>
             
@@ -114,30 +114,30 @@ export default function ReadingTopicDetailPage() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
                       whileHover={{ x: 6 }}
-                      className="bg-slate-50 hover:bg-emerald-50/50 p-5 rounded-2xl border-2 border-slate-200 hover:border-emerald-300 shadow-xs flex items-center justify-between group cursor-pointer transition-all"
+                      className="bg-slate-50 dark:bg-slate-850 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 p-5 rounded-2xl border-2 border-slate-200 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700 shadow-xs flex items-center justify-between group cursor-pointer transition-all"
                     >
                       <div className="flex-1 pr-4">
-                        <h3 className="text-base font-black text-slate-800 group-hover:text-emerald-700 transition-colors mb-1">
+                        <h3 className="text-base font-black text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors mb-1">
                           Bài {index + 1}: {quiz.title}
                         </h3>
                         {quiz.description && (
-                          <p className="text-slate-500 text-xs line-clamp-2 mb-3 font-medium">{quiz.description}</p>
+                          <p className="text-slate-500 dark:text-slate-400 text-xs line-clamp-2 mb-3 font-medium">{quiz.description}</p>
                         )}
                         
                         <div className="flex items-center gap-3">
                           {quiz.timeLimit && (
-                            <div className="flex items-center gap-1 text-slate-500 text-xs font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200">
+                            <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 text-xs font-bold bg-white dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
                               <Clock size={13} className="text-slate-400" /> {quiz.timeLimit} phút
                             </div>
                           )}
                           {quiz._count?.questions > 0 && (
-                            <div className="flex items-center gap-1 text-emerald-700 text-xs font-bold bg-emerald-100/60 px-2.5 py-1 rounded-lg border border-emerald-200">
+                            <div className="flex items-center gap-1 text-emerald-700 dark:text-emerald-300 text-xs font-bold bg-emerald-100/60 dark:bg-emerald-950/40 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-900/50">
                               <BookOpen size={13} /> {quiz._count.questions} câu hỏi
                             </div>
                           )}
                         </div>
                       </div>
-                      <div className="bg-white text-slate-400 group-hover:bg-emerald-500 group-hover:text-white p-3 rounded-2xl shadow-xs transition-colors shrink-0">
+                      <div className="bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 group-hover:bg-emerald-500 group-hover:text-white dark:group-hover:text-white p-3 rounded-2xl shadow-xs transition-colors shrink-0">
                         <ChevronRight size={20} />
                       </div>
                     </motion.div>
@@ -145,7 +145,7 @@ export default function ReadingTopicDetailPage() {
                 ))}
               </div>
             ) : (
-              <div className="text-center p-12 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl text-slate-500 font-bold text-sm">
+              <div className="text-center p-12 bg-slate-50 dark:bg-slate-850 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-slate-500 dark:text-slate-400 font-bold text-sm">
                 Chủ đề này hiện tại chưa có bài đọc nào.
               </div>
             )}
@@ -155,50 +155,50 @@ export default function ReadingTopicDetailPage() {
         {/* RIGHT COLUMN: TOPIC CONTEXT & READING TIPS */}
         <div className="col-span-12 lg:col-span-4 space-y-6">
           {/* Topic Overview Card */}
-          <div className="bg-white p-6 rounded-[2rem] border-4 border-slate-100 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-emerald-500 text-white rounded-2xl shadow-sm">
                 <BookOpen size={24} />
               </div>
               <div>
-                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-wider">Thông Tin Chủ Đề</span>
-                <h3 className="text-base font-black text-slate-800">{actualTopic.name || actualTopic.title}</h3>
+                <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Thông Tin Chủ Đề</span>
+                <h3 className="text-base font-black text-slate-800 dark:text-slate-100">{actualTopic.name || actualTopic.title}</h3>
               </div>
             </div>
-            <p className="text-slate-600 text-xs leading-relaxed font-medium">
+            <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed font-medium">
               {actualTopic.vietnameseName || actualTopic.description || "Hãy chọn một bài đọc bên cạnh để bắt đầu làm quen với từ vựng và cấu trúc ngữ pháp thực tế."}
             </p>
           </div>
 
           {/* Reading Pro Tips */}
-          <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-6 rounded-[2rem] border-2 border-emerald-100 space-y-3">
-            <h3 className="font-black text-emerald-950 text-base flex items-center gap-2">
+          <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/30 p-6 rounded-2xl border border-emerald-200 dark:border-emerald-900/50 space-y-3">
+            <h3 className="font-black text-emerald-950 dark:text-emerald-200 text-base flex items-center gap-2">
               <span>💡</span> Kỹ Năng Đọc Hiểu
             </h3>
-            <ul className="space-y-2.5 text-xs font-bold text-emerald-900">
+            <ul className="space-y-2.5 text-xs font-bold text-emerald-900 dark:text-emerald-300">
               <li className="flex items-start gap-2">
-                <span className="text-emerald-600 font-black">1.</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-black">1.</span>
                 <span>Đọc lướt (Skimming) toàn bài để nắm ý chính trước khi trả lời câu hỏi.</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-emerald-600 font-black">2.</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-black">2.</span>
                 <span>Tìm từ khóa (Scanning) trong câu hỏi và đối chiếu với đoạn văn tương ứng.</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-emerald-600 font-black">3.</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-black">3.</span>
                 <span>Sử dụng chế độ song ngữ để hiểu sâu ngữ cảnh từ vựng mới.</span>
               </li>
             </ul>
           </div>
 
           {/* Gamification Reward Card */}
-          <div className="bg-emerald-50 border-2 border-emerald-200 p-5 rounded-[2rem] flex items-center gap-4">
+          <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 p-5 rounded-2xl flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center text-2xl shadow-sm shrink-0">
               📖
             </div>
             <div>
-              <p className="font-black text-slate-800 text-sm">Phần Thưởng Luyện Đọc</p>
-              <p className="text-xs font-bold text-emerald-800 mt-0.5">+15 EXP mỗi bài đọc hoàn thành</p>
+              <p className="font-black text-slate-800 dark:text-slate-100 text-sm">Phần Thưởng Luyện Đọc</p>
+              <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300 mt-0.5">+15 EXP mỗi bài đọc hoàn thành</p>
             </div>
           </div>
         </div>

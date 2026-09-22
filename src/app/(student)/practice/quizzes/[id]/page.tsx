@@ -75,11 +75,13 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
   const isWrongAnswerReview = isListening && reviewQuestionIds.length > 0;
   const readingTopicId = searchParams.get("topic");
   const hasValidReadingTopic = Boolean(readingTopicId && /^\d+$/.test(readingTopicId));
-  const backHref = isReading
-    ? hasValidReadingTopic
-      ? `/practice/reading/${readingTopicId}`
-      : '/practice/reading'
-    : '/practice/quizzes';
+  const backHref = isListening
+    ? '/practice/listening'
+    : isReading
+      ? hasValidReadingTopic
+        ? `/practice/reading/${readingTopicId}`
+        : '/practice/reading'
+      : '/practice/quizzes';
   const currentQuizRoute = hasValidReadingTopic
     ? `/practice/quizzes/${quizId}?topic=${readingTopicId}`
     : `/practice/quizzes/${quizId}`;
@@ -166,7 +168,7 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
   if (questions.length === 0) {
     return (
       <div className="mx-auto max-w-2xl py-20 text-center">
-        <p className="text-base font-bold text-slate-700">
+        <p className="text-base font-bold text-slate-700 dark:text-slate-300">
           Bài tập này chưa có câu hỏi nào.
         </p>
         <button
@@ -262,23 +264,23 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
   const isLastStep = currentStep === questions.length - 1;
 
   if (questions.length === 0) {
-    return <div className="text-center p-12">Đề thi này chưa có câu hỏi nào.</div>;
+    return <div className="text-center p-12 dark:text-slate-400">Đề thi này chưa có câu hỏi nào.</div>;
   }
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 pb-20 px-4 sm:px-6 lg:px-8">
       {/* TOP HEADER BAR */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border-4 border-slate-100 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="flex items-center gap-4">
           <BackButton
             href={backHref}
             onClick={handleExitRequest}
             label={isReading ? "Thoát bài đọc" : "Thoát bài luyện"}
           />
-          <div className="h-6 w-0.5 bg-slate-200 hidden sm:block"></div>
+          <div className="h-6 w-0.5 bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
           <div>
-            <h1 className="text-xl font-black text-slate-800 line-clamp-1">{quiz.title}</h1>
-            <p className="text-xs font-medium text-slate-500">
+            <h1 className="text-xl font-black text-slate-800 dark:text-slate-100 line-clamp-1">{quiz.title}</h1>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
               {isReading
                 ? "Đọc hiểu theo trình độ và chủ đề"
                 : `Luyện tập ${skillLabel} theo từng phần`}
@@ -287,15 +289,15 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
         </div>
 
         {/* Progress Pill */}
-        <div className="flex items-center gap-3 bg-sky-50 px-4 py-2 rounded-2xl border-2 border-sky-200 shrink-0">
-          <div className="w-24 bg-slate-200 h-2.5 rounded-full overflow-hidden">
+        <div className="flex items-center gap-3 bg-sky-50 dark:bg-sky-950/40 px-4 py-2 rounded-2xl border border-sky-200 dark:border-sky-900/50 shrink-0">
+          <div className="w-24 bg-slate-200 dark:bg-slate-700 h-2.5 rounded-full overflow-hidden">
             <motion.div 
               className="bg-junior-blue h-full"
               initial={{ width: 0 }}
               animate={{ width: `${((currentStep + 1) / questions.length) * 100}%` }}
             />
           </div>
-          <span className="text-xs font-black text-sky-700">
+          <span className="text-xs font-black text-sky-700 dark:text-sky-300">
             Câu {currentStep + 1}/{questions.length}
           </span>
         </div>
@@ -310,15 +312,15 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
             key={currentQuestion.id}
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white p-5 sm:p-8 rounded-3xl border border-slate-200 shadow-sm"
+            className="bg-white dark:bg-slate-900 p-5 sm:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"
           >
             {/* Render Audio */}
             {currentQuestion.content?.audioUrl ? (
-              <div className="mb-6 flex justify-center bg-slate-50 p-6 rounded-3xl border-2 border-slate-100">
+              <div className="mb-6 flex justify-center bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700">
                 <audio controls src={currentQuestion.content.audioUrl} className="w-full max-w-md rounded-full" />
               </div>
             ) : currentQuestion.content?.audioText ? (
-              <div className="mb-8 flex flex-col items-center gap-4 bg-gradient-to-b from-sky-50/60 to-slate-50 p-8 rounded-3xl border-2 border-sky-100 relative overflow-hidden">
+              <div className="mb-8 flex flex-col items-center gap-4 bg-gradient-to-b from-sky-50/60 to-slate-50 dark:from-sky-950/40 dark:to-slate-850 p-8 rounded-2xl border border-sky-100 dark:border-sky-900/50 relative overflow-hidden">
                 <button
                   onClick={() => playAudio(currentQuestion.content.audioText, playbackRate)}
                   className={`flex items-center justify-center w-24 h-24 rounded-full transition-all shadow-md active:scale-95 border-4 cursor-pointer ${
@@ -331,8 +333,8 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                   {isPlaying ? <Square size={36} fill="currentColor" /> : <Play size={36} fill="currentColor" className="ml-1.5" />}
                 </button>
 
-                <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-xs">
-                  <span className="text-xs font-bold text-slate-400 px-1">Tốc độ:</span>
+                <div className="flex items-center gap-2 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 shadow-xs">
+                  <span className="text-xs font-bold text-slate-400 dark:text-slate-500 px-1">Tốc độ:</span>
                   {[0.8, 1, 1.2].map((rate) => (
                     <button
                       key={rate}
@@ -345,7 +347,7 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                       className={`px-3 py-1 rounded-full font-black text-xs transition-colors cursor-pointer ${
                         playbackRate === rate 
                           ? 'bg-sky-600 text-white shadow-xs' 
-                          : 'text-slate-500 hover:bg-slate-100'
+                          : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                       }`}
                     >
                       {rate}x
@@ -357,12 +359,12 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
 
             {/* Reading Passage: show for BILINGUAL_READING quizzes */}
             {isReading && currentQuestion.content?.passage && (
-              <div className="mb-8 bg-emerald-50/70 border border-emerald-200 rounded-2xl p-5 sm:p-7">
+              <div className="mb-8 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 rounded-2xl p-5 sm:p-7">
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <p className="text-xs font-extrabold text-emerald-800 uppercase tracking-[0.14em]">Đoạn văn</p>
-                  <span className="text-xs font-medium text-emerald-700">Đọc kỹ trước khi chọn đáp án</span>
+                  <p className="text-xs font-extrabold text-emerald-800 dark:text-emerald-300 uppercase tracking-[0.14em]">Đoạn văn</p>
+                  <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Đọc kỹ trước khi chọn đáp án</span>
                 </div>
-                <p className="whitespace-pre-line text-lg leading-9 tracking-[0.01em] text-slate-800 font-medium sm:text-xl sm:leading-10 lg:text-[1.35rem]">
+                <p className="whitespace-pre-line text-lg leading-9 tracking-[0.01em] text-slate-800 dark:text-slate-100 font-medium sm:text-xl sm:leading-10 lg:text-[1.35rem]">
                   {currentQuestion.content.passage}
                 </p>
               </div>
@@ -373,7 +375,7 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
               !failedImageKeys.has(
                 `${currentQuestion.id}:${currentQuestion.content.imageUrl}`,
               ) && (
-                <div className="mb-6 flex justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-2xs">
+                <div className="mb-6 flex justify-center overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2 shadow-2xs">
                   <img
                     src={currentQuestion.content.imageUrl}
                     alt={
@@ -403,9 +405,9 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                 <div
                   role="img"
                   aria-label="Hình minh họa bài tập hiện chưa tải được"
-                  className="mb-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-center"
+                  className="mb-6 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-850 p-4 text-center"
                 >
-                  <p className="text-xs font-medium text-slate-500">
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                     Hình minh họa hiện chưa tải được. Bạn vẫn có thể tiếp tục
                     đọc và hoàn thành câu hỏi.
                   </p>
@@ -414,12 +416,12 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
             
             {sectionLabel && (
               <div className="mb-4 flex justify-center">
-                <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-amber-800 border border-amber-200">
+                <span className="rounded-full bg-amber-50 dark:bg-amber-950/50 px-3 py-1 text-xs font-black text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50">
                   {sectionLabel}
                 </span>
               </div>
             )}
-            <h3 className="text-2xl font-extrabold leading-snug text-slate-900 mb-7 text-center break-words max-w-3xl mx-auto px-2 sm:text-3xl">
+            <h3 className="text-2xl font-extrabold leading-snug text-slate-900 dark:text-slate-100 mb-7 text-center break-words max-w-3xl mx-auto px-2 sm:text-3xl">
               {currentQuestion.content?.text || "Nghe đoạn âm thanh và điền câu trả lời vào bên dưới:"}
             </h3>
 
@@ -428,7 +430,7 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                 value={answers[currentQuestion.id] || ""}
                 onChange={(e) => setAnswers({ ...answers, [currentQuestion.id]: e.target.value })}
                 placeholder="Nhập câu trả lời của bạn vào đây..."
-                className="w-full bg-slate-50 border-4 border-slate-200 rounded-2xl p-6 text-lg font-medium text-slate-700 outline-none focus:border-junior-blue transition-colors min-h-[160px]"
+                className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl p-6 text-lg font-medium text-slate-700 dark:text-slate-200 outline-none focus:border-junior-blue transition-colors min-h-[160px]"
               />
             ) : quiz.type === 'LISTENING_PRACTICE' ? (
               <div className="flex flex-col gap-4">
@@ -462,20 +464,20 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                     }
                   }}
                   placeholder="Nhập những gì bạn vừa nghe được vào đây..."
-                  className={`w-full bg-slate-50 border-2 rounded-2xl p-6 text-lg font-medium outline-none transition-colors min-h-[160px] ${
+                  className={`w-full bg-slate-50 dark:bg-slate-850 border-2 rounded-2xl p-6 text-lg font-medium outline-none transition-colors min-h-[160px] ${
                     dictationResults[currentQuestion.id]?.isChecked
                       ? dictationResults[currentQuestion.id].isCorrect
-                        ? "border-emerald-400 text-emerald-800 bg-emerald-50/50"
-                        : "border-rose-300 text-slate-800 bg-rose-50/30"
-                      : "border-slate-200 text-slate-700 focus:border-amber-500 focus:bg-white"
+                        ? "border-emerald-400 dark:border-emerald-600 text-emerald-800 dark:text-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/30"
+                        : "border-rose-300 dark:border-rose-900/60 text-slate-800 dark:text-slate-100 bg-rose-50/30 dark:bg-rose-950/30"
+                      : "border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 focus:border-amber-500 focus:bg-white dark:focus:bg-slate-800"
                   }`}
                 />
                 
                 {dictationResults[currentQuestion.id]?.isChecked && (
-                  <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200">
+                  <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700">
                     {!dictationResults[currentQuestion.id].isCorrect ? (
-                      <div className="bg-white p-6 rounded-2xl border border-rose-200 shadow-2xs">
-                        <div className="flex items-center gap-2 text-rose-600 font-bold mb-3 text-base">
+                      <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-rose-200 dark:border-rose-900/50 shadow-2xs">
+                        <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-bold mb-3 text-base">
                           <span className="text-lg">⚠️</span> Cần chỉnh sửa một chút:
                         </div>
                         <div className="text-xl font-medium leading-relaxed font-mono flex flex-wrap gap-x-2 gap-y-2 break-words max-w-full">
@@ -496,12 +498,12 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
 
                             return origCWords.map((word: string, idx: number) => {
                               if (idx < firstWrongIdx) {
-                                return <span key={idx} className="text-emerald-600 font-bold break-words">{word}</span>;
+                                return <span key={idx} className="text-emerald-600 dark:text-emerald-400 font-bold break-words">{word}</span>;
                               } else if (idx === firstWrongIdx) {
-                                return <span key={idx} className="text-rose-600 font-black underline decoration-wavy break-words">{word}</span>;
+                                return <span key={idx} className="text-rose-600 dark:text-rose-400 font-black underline decoration-wavy break-words">{word}</span>;
                               } else {
                                 const masked = word.replace(/[\p{L}\p{N}]/gu, '*');
-                                return <span key={idx} className="text-slate-400 tracking-widest break-words">{masked}</span>;
+                                return <span key={idx} className="text-slate-400 dark:text-slate-500 tracking-widest break-words">{masked}</span>;
                               }
                             });
                           })()}
@@ -509,10 +511,10 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                       </div>
                     ) : (
                       <div className="text-lg font-medium leading-relaxed">
-                        <span className="text-emerald-600 block mb-2 text-sm font-black uppercase">🎉 Hoàn hảo! Bạn chép đúng 100%:</span>
-                        <span className="text-slate-800 font-bold block mb-1 break-words">{currentQuestion.content?.correctAnswer}</span>
+                        <span className="text-emerald-600 dark:text-emerald-400 block mb-2 text-sm font-black uppercase">🎉 Hoàn hảo! Bạn chép đúng 100%:</span>
+                        <span className="text-slate-800 dark:text-slate-100 font-bold block mb-1 break-words">{currentQuestion.content?.correctAnswer}</span>
                         {currentQuestion.content?.translation && (
-                          <span className="text-slate-500 block text-sm italic break-words">{currentQuestion.content.translation}</span>
+                          <span className="text-slate-500 dark:text-slate-400 block text-sm italic break-words">{currentQuestion.content.translation}</span>
                         )}
                       </div>
                     )}
@@ -527,8 +529,8 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                       onClick={() => setAnswers({ ...answers, [currentQuestion.id]: opt })}
                       className={`min-h-[72px] p-5 rounded-2xl border-2 text-base sm:text-lg font-semibold text-left leading-relaxed transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
                         answers[currentQuestion.id] === opt 
-                          ? "border-amber-500 bg-amber-50/70 text-amber-900 shadow-2xs" 
-                          : "border-slate-200 bg-white text-slate-700 hover:border-amber-300"
+                          ? "border-amber-500 bg-amber-50/70 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 shadow-2xs" 
+                          : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 text-slate-700 dark:text-slate-200 hover:border-amber-300 dark:hover:border-amber-600"
                       }`}
                     >
                       <span className="break-words">{opt}</span>
@@ -545,7 +547,7 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                 if (currentStep > 0) setCurrentStep(currentStep - 1);
               }}
               disabled={currentStep === 0}
-              className="px-6 py-3.5 rounded-2xl font-bold text-slate-500 bg-white border border-slate-200 hover:bg-slate-100 transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+              className="px-6 py-3.5 rounded-2xl font-bold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
             >
               ← Câu trước
             </button>
@@ -584,10 +586,10 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
         {/* RIGHT COLUMN: QUESTION NAVIGATOR & SIDEBAR WIDGETS */}
         <div className="col-span-12 lg:col-span-4 space-y-6">
           {/* Question Matrix Card */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-extrabold text-slate-800 text-base">Danh Sách Câu Hỏi</h3>
-              <span className="text-xs font-bold text-slate-400">
+              <h3 className="font-extrabold text-slate-800 dark:text-slate-100 text-base">Danh Sách Câu Hỏi</h3>
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500">
                 {Object.keys(answers).length}/{questions.length} Đã làm
               </span>
             </div>
@@ -606,10 +608,10 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
                       isCurrent
                         ? "bg-amber-500 text-white border-amber-600 shadow-2xs"
                         : isPassed
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+                        ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800"
                         : isAnswered
-                        ? "bg-amber-50 text-amber-800 border-amber-300"
-                        : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                        ? "bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800"
+                        : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
                     }`}
                   >
                     {idx + 1}
@@ -621,40 +623,40 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
 
           {/* Tips & Keyboard Shortcuts */}
           {isReading ? (
-            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-6 rounded-2xl border border-emerald-100 space-y-4">
-              <h3 className="font-extrabold text-emerald-900 text-base flex items-center gap-2">
+            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/30 p-6 rounded-2xl border border-emerald-100 dark:border-emerald-900/50 space-y-4">
+              <h3 className="font-extrabold text-emerald-900 dark:text-emerald-200 text-base flex items-center gap-2">
                 <BookOpen size={18} aria-hidden="true" /> Mẹo Đọc Hiểu
               </h3>
-              <ul className="space-y-3 text-xs font-bold text-emerald-800">
-                <li className="flex items-start gap-2 bg-white/80 p-3 rounded-xl border border-emerald-100">
+              <ul className="space-y-3 text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                <li className="flex items-start gap-2 bg-white/80 dark:bg-slate-850/80 p-3 rounded-xl border border-emerald-100 dark:border-emerald-900/40">
                   <span className="text-emerald-500 mt-0.5 shrink-0">1.</span>
                   <span>Đọc câu hỏi <strong>trước</strong> rồi mới đọc đoạn văn để tìm thông tin cần thiết.</span>
                 </li>
-                <li className="flex items-start gap-2 bg-white/80 p-3 rounded-xl border border-emerald-100">
+                <li className="flex items-start gap-2 bg-white/80 dark:bg-slate-850/80 p-3 rounded-xl border border-emerald-100 dark:border-emerald-900/40">
                   <span className="text-emerald-500 mt-0.5 shrink-0">2.</span>
                   <span>Chú ý <strong>từ khóa</strong> trong câu hỏi và tìm chúng trong đoạn văn.</span>
                 </li>
-                <li className="flex items-start gap-2 bg-white/80 p-3 rounded-xl border border-emerald-100">
+                <li className="flex items-start gap-2 bg-white/80 dark:bg-slate-850/80 p-3 rounded-xl border border-emerald-100 dark:border-emerald-900/40">
                   <span className="text-emerald-500 mt-0.5 shrink-0">3.</span>
                   <span>Loại trừ các đáp án sai dựa trên thông tin được nêu rõ trong đoạn văn.</span>
                 </li>
               </ul>
             </div>
           ) : (
-              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4">
-            <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+              <div className="bg-slate-50 dark:bg-slate-850 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-base flex items-center gap-2">
               <Lightbulb size={18} aria-hidden="true" /> Phím Tắt & Mẹo Làm Bài
             </h3>
-            <ul className="space-y-3 text-xs font-bold text-indigo-800">
-              <li className="flex items-center justify-between bg-white/80 p-2.5 rounded-xl border border-indigo-100">
+            <ul className="space-y-3 text-xs font-bold text-indigo-800 dark:text-indigo-300">
+              <li className="flex items-center justify-between bg-white/80 dark:bg-slate-800/80 p-2.5 rounded-xl border border-indigo-100 dark:border-indigo-900/40">
                 <span>Nghe lại audio:</span>
-                <kbd className="bg-slate-200 text-slate-700 px-2 py-1 rounded font-mono border-b border-slate-300">Ctrl</kbd>
+                <kbd className="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 px-2 py-1 rounded font-mono border-b border-slate-300 dark:border-slate-600">Ctrl</kbd>
               </li>
-              <li className="flex items-center justify-between bg-white/80 p-2.5 rounded-xl border border-indigo-100">
+              <li className="flex items-center justify-between bg-white/80 dark:bg-slate-800/80 p-2.5 rounded-xl border border-indigo-100 dark:border-indigo-900/40">
                 <span>Kiểm tra / Sang câu:</span>
-                <kbd className="bg-slate-200 text-slate-700 px-2 py-1 rounded font-mono border-b border-slate-300">Enter</kbd>
+                <kbd className="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 px-2 py-1 rounded font-mono border-b border-slate-300 dark:border-slate-600">Enter</kbd>
               </li>
-              <li className="bg-white/80 p-3 rounded-xl border border-indigo-100 text-[11px] leading-relaxed text-indigo-700 font-medium">
+              <li className="bg-white/80 dark:bg-slate-800/80 p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/40 text-[11px] leading-relaxed text-indigo-700 dark:text-indigo-300 font-medium">
                 <span className="font-bold">Mẹo:</span> Đọc câu hỏi trước, sau đó quay lại đoạn văn để tìm bằng chứng.
               </li>
             </ul>
@@ -662,13 +664,13 @@ export default function TakeQuizPage(props: { params: Promise<{ id: string }> })
           )}
 
           {/* Gamification Reward Card */}
-          <div className="bg-amber-50 border-2 border-amber-200 p-5 rounded-[2rem] flex items-center gap-4">
+          <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 p-5 rounded-2xl flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-amber-400 flex items-center justify-center shadow-sm shrink-0">
               <Cookie size={24} aria-hidden="true" className="text-amber-950" />
             </div>
             <div>
-              <p className="font-black text-slate-800 text-sm">Phần Thưởng Hoàn Thành</p>
-              <p className="text-xs font-bold text-amber-800 mt-0.5">+20 EXP • +1 Điểm Nhiệm Vụ Ngày</p>
+              <p className="font-black text-slate-800 dark:text-slate-100 text-sm">Phần Thưởng Hoàn Thành</p>
+              <p className="text-xs font-bold text-amber-800 dark:text-amber-300 mt-0.5">+20 EXP • +1 Điểm Nhiệm Vụ Ngày</p>
             </div>
           </div>
         </div>

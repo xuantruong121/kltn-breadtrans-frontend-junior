@@ -25,8 +25,8 @@ export default function VocabTopicsPage() {
           <Library size={32} />
         </div>
         <div>
-          <h1 className="text-4xl font-bold text-slate-800">Từ Vựng (Flashcards)</h1>
-          <p className="text-slate-500 font-medium mt-1">Chọn một bộ từ vựng để bắt đầu học nhé!</p>
+          <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-100">Từ Vựng (Flashcards)</h1>
+          <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">Chọn một bộ từ vựng để bắt đầu học nhé!</p>
         </div>
       </div>
 
@@ -47,41 +47,41 @@ export default function VocabTopicsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
               whileHover={{ y: -6 }}
-              className={`bg-white rounded-[2rem] border-4 overflow-hidden shadow-sm flex flex-col relative ${isCompleted ? 'border-green-400' : 'border-slate-200'}`}
+              className={`bg-white dark:bg-slate-900 rounded-2xl border-2 overflow-hidden shadow-sm flex flex-col relative ${isCompleted ? 'border-emerald-400 dark:border-emerald-700' : 'border-slate-200 dark:border-slate-800'}`}
             >
               {isCompleted && (
-                <div className="absolute top-4 right-4 z-10 bg-green-500 text-white p-2 rounded-full shadow-lg" title="Đã hoàn thành">
+                <div className="absolute top-4 right-4 z-10 bg-emerald-500 text-white p-2 rounded-full shadow-lg" title="Đã hoàn thành">
                   <CheckCircle2 size={24} />
                 </div>
               )}
-              <div className={`h-40 relative ${isCompleted ? 'bg-green-50' : 'bg-orange-100'}`}>
+              <div className={`h-40 relative ${isCompleted ? 'bg-emerald-50 dark:bg-emerald-950/40' : 'bg-orange-100 dark:bg-orange-950/30'}`}>
                 {topic.iconUrl ? (
                   <div className="absolute inset-0 flex items-center justify-center text-6xl">
                     {topic.iconUrl}
                   </div>
                 ) : (
-                  <div className={`absolute inset-0 flex items-center justify-center ${isCompleted ? 'text-green-300' : 'text-orange-300'}`}>
+                  <div className={`absolute inset-0 flex items-center justify-center ${isCompleted ? 'text-emerald-300 dark:text-emerald-600' : 'text-orange-300 dark:text-orange-600'}`}>
                     <Library size={64} />
                   </div>
                 )}
               </div>
               <div className="p-6 flex-1 flex flex-col">
-                <h3 className="text-xl font-bold text-slate-800 mb-2 line-clamp-1">{topic.title}</h3>
-                <div className="text-slate-500 font-medium text-sm mb-4 flex-1">
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2 line-clamp-1">{topic.title}</h3>
+                <div className="text-slate-500 dark:text-slate-400 font-medium text-sm mb-4 flex-1">
                   <p className="mb-2">{topic.categoryName}</p>
                   
                   {/* Progress Bar */}
-                  <div className="w-full bg-slate-100 rounded-full h-3 mb-1 overflow-hidden">
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 mb-1 overflow-hidden">
                     <div 
-                      className={`h-full rounded-full transition-all duration-500 ${isCompleted ? 'bg-green-500' : 'bg-junior-orange'}`} 
+                      className={`h-full rounded-full transition-all duration-500 ${isCompleted ? 'bg-emerald-500' : 'bg-junior-orange'}`} 
                       style={{ width: `${progressPercent}%` }} 
                     />
                   </div>
                   <div className="flex justify-between text-xs font-bold mt-1">
-                    <span className={isCompleted ? 'text-green-600' : 'text-orange-500'}>
+                    <span className={isCompleted ? 'text-emerald-600 dark:text-emerald-400' : 'text-orange-500 dark:text-orange-400'}>
                       {topic.learnedCount || 0} / {topic.totalWords} từ
                     </span>
-                    <span className="text-slate-400">{progressPercent}%</span>
+                    <span className="text-slate-400 dark:text-slate-500">{progressPercent}%</span>
                   </div>
                 </div>
                 
@@ -89,7 +89,7 @@ export default function VocabTopicsPage() {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className={`w-full btn-orange-3d flex items-center justify-center gap-2 text-white font-bold p-3 rounded-xl ${isCompleted ? 'bg-green-500 hover:bg-green-600 border-green-700' : 'bg-junior-orange hover:bg-orange-500 border-orange-700'}`}
+                    className={`w-full btn-orange-3d flex items-center justify-center gap-2 text-white font-bold p-3 rounded-xl cursor-pointer ${isCompleted ? 'bg-emerald-500 hover:bg-emerald-600 border-emerald-700' : 'bg-junior-orange hover:bg-orange-500 border-orange-700'}`}
                   >
                     {isCompleted ? 'Ôn Tập Lại' : 'Học Ngay'} <PlayCircle size={20} strokeWidth={3} />
                   </motion.button>
