@@ -41,11 +41,11 @@ export const StageTabIndicator: React.FC<StageTabIndicatorProps> = ({
             className={`inline-flex items-center gap-1.5 text-xs transition-all duration-200 cursor-pointer focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none whitespace-nowrap ${
               isActive
                 ? "bg-sky-500 text-white shadow-sm font-semibold rounded-full px-4 py-1.5 scale-102"
-                : "bg-slate-100 text-slate-500 hover:text-slate-800 hover:bg-slate-200/80 rounded-full px-4 py-1.5 font-medium border border-transparent"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 rounded-full px-4 py-1.5 font-medium border border-transparent dark:border-slate-700/60"
             }`}
             aria-current={isActive ? "step" : undefined}
           >
-            <Icon size={14} className={isActive ? "text-white" : "text-slate-400"} />
+            <Icon size={14} className={isActive ? "text-white" : "text-slate-400 dark:text-slate-500"} />
             <span>{stage.label}</span>
           </button>
         );

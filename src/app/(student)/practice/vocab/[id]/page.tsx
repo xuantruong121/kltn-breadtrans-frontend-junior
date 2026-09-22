@@ -28,9 +28,9 @@ export default function VocabPracticePage() {
 
   if (!topic || !topic.words || topic.words.length === 0) {
     return (
-      <div className="max-w-md mx-auto text-center mt-20 space-y-4 bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
-        <h2 className="text-lg font-extrabold text-slate-800">Chưa có từ vựng</h2>
-        <p className="text-xs text-slate-500 font-medium">Chủ đề này hiện tại chưa có từ vựng nào để học.</p>
+      <div className="max-w-md mx-auto text-center mt-20 space-y-4 bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <h2 className="text-lg font-extrabold text-slate-800 dark:text-slate-100">Chưa có từ vựng</h2>
+        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Chủ đề này hiện tại chưa có từ vựng nào để học.</p>
         <div className="flex justify-center pt-2">
           <BackButton href="/flashcard" label="Quay lại danh mục" />
         </div>

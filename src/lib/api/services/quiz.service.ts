@@ -22,6 +22,7 @@ export interface QuestionContent {
   imageAlt?: string;
   imagePurpose?: "TOPIC_CONTEXT";
   transcriptSegments?: Array<{
+    turnId?: string;
     speaker: string;
     text: string;
     translation?: string;
@@ -74,6 +75,14 @@ export interface Quiz {
   };
   questionsCount?: number;
   isBundle?: boolean;
+  listeningAudioArtifact?: ListeningAudioArtifactIdentity | null;
+}
+
+export interface ListeningAudioArtifactIdentity {
+  id: number;
+  version: number;
+  checksumSha256?: string | null;
+  durationMs?: number | null;
 }
 
 export interface AnswerDto {
@@ -137,18 +146,24 @@ export interface CheckPracticeQuestionResult {
   wordAccuracy?: number;
   explanation: QuestionExplanation | null;
   translation: string | null;
+  /** True when the user chose to skip this question without a correct answer */
+  skipped?: boolean;
 }
 
 export interface ListeningTranscriptItem {
   questionId: number;
   order: number;
   transcript: string;
+  speaker?: string | null;
   translation: string | null;
+  startMs?: number | null;
+  endMs?: number | null;
 }
 
 export interface ListeningTranscriptResponse {
   quizId: number;
   items: ListeningTranscriptItem[];
+  audioArtifact?: ListeningAudioArtifactIdentity | null;
 }
 
 export interface ListeningPracticeAttempt {
@@ -180,12 +195,16 @@ export const quizService = {
     questionId: number,
     signal?: AbortSignal,
     audioVersion?: number,
+    artifact?: ListeningAudioArtifactIdentity | null,
   ): Promise<Blob> => {
-    const versionQuery = Number.isFinite(audioVersion)
-      ? `?v=${audioVersion}`
-      : "";
+    const params = new URLSearchParams();
+    if (artifact?.id) params.set("artifactId", String(artifact.id));
+    if (artifact?.version) params.set("v", String(artifact.version));
+    if (artifact?.checksumSha256) params.set("checksum", artifact.checksumSha256);
+    if (!artifact && Number.isFinite(audioVersion)) params.set("v", String(audioVersion));
+    const query = params.toString() ? `?${params.toString()}` : "";
     return await axiosClient.get(
-      `/quizzes/${quizId}/questions/${questionId}/audio${versionQuery}`,
+      `/quizzes/${quizId}/questions/${questionId}/audio${query}`,
       { responseType: "blob", signal },
     );
   },
@@ -205,6 +224,26 @@ export const quizService = {
     quizId: number,
   ): Promise<ListeningTranscriptResponse> => {
     return await axiosClient.get(`/quizzes/${quizId}/transcript`);
+  },
+
+  revealListeningTranscript: async (quizId: number): Promise<{ revealedAt: string }> => {
+    return await axiosClient.post(`/quizzes/${quizId}/transcript/reveal`);
+  },
+
+  getListeningTranscriptAudioBlob: async (
+    quizId: number,
+    signal?: AbortSignal,
+    artifact?: ListeningAudioArtifactIdentity | null,
+  ): Promise<Blob> => {
+    const params = new URLSearchParams();
+    if (artifact?.id) params.set("artifactId", String(artifact.id));
+    if (artifact?.version) params.set("v", String(artifact.version));
+    if (artifact?.checksumSha256) params.set("checksum", artifact.checksumSha256);
+    const query = params.toString() ? `?${params.toString()}` : "";
+    return await axiosClient.get(`/quizzes/${quizId}/transcript/audio${query}`, {
+      responseType: "blob",
+      signal,
+    });
   },
 
   getOrCreateListeningAttempt: async (

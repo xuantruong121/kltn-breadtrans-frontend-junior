@@ -20,11 +20,12 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axiosClient from "@/lib/api/axiosClient";
 import toast from "react-hot-toast";
 import { Pagination } from "@/components/ui";
+import { useAuthStore } from "@/stores/authStore";
 
 type UserData = {
   id: number;
@@ -46,6 +47,7 @@ const ROLE_FILTER_OPTIONS = [
 
 export default function AdminUsersPage() {
   const queryClient = useQueryClient();
+  const currentUser = useAuthStore((state) => state.user);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -75,7 +77,7 @@ export default function AdminUsersPage() {
   });
 
   // Query Users
-  const { data: users, isLoading } = useQuery<UserData[]>({
+  const { data: users, isLoading, isError, error, refetch } = useQuery<UserData[]>({
     queryKey: ["admin-users", roleFilter],
     queryFn: async () => {
       const res: any = await axiosClient.get("/admin/users", {
@@ -157,6 +159,12 @@ export default function AdminUsersPage() {
 
   const totalPages = Math.ceil((filteredUsers?.length || 0) / pageSize);
   const paginatedUsers = filteredUsers?.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
 
   const roleBadge = (role: string) => {
     const map: Record<string, string> = {
@@ -276,6 +284,21 @@ export default function AdminUsersPage() {
           <div className="flex justify-center p-16">
             <Loader2 className="animate-spin text-blue-600" size={48} />
           </div>
+        ) : isError ? (
+          <div className="p-16 text-center text-slate-400 space-y-3">
+            <AlertTriangle size={40} className="text-rose-500 mx-auto" />
+            <h3 className="text-lg font-black text-slate-700">Không thể tải danh sách người dùng</h3>
+            <p className="text-sm text-rose-500">
+              {(error as any)?.response?.data?.message || "Đã xảy ra lỗi khi kết nối tới máy chủ."}
+            </p>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black transition-colors"
+            >
+              Thử lại
+            </button>
+          </div>
         ) : filteredUsers && filteredUsers.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -350,6 +373,7 @@ export default function AdminUsersPage() {
                     <td className="py-4 px-6 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
+                          type="button"
                           onClick={() => handleOpenEdit(user)}
                           title="Chỉnh sửa thông tin / phân quyền"
                           className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all border border-blue-200 cursor-pointer"
@@ -357,6 +381,7 @@ export default function AdminUsersPage() {
                           <Edit2 size={16} />
                         </button>
                         <button
+                          type="button"
                           onClick={() => setDeleteTarget(user)}
                           title="Xóa tài khoản"
                           className="p-2 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-all border border-rose-200 cursor-pointer"
@@ -546,11 +571,19 @@ export default function AdminUsersPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-600 mb-1">Vai trò</label>
+                  <label className="block text-slate-600 mb-1">
+                    Vai trò
+                    {currentUser?.id === editingUser.id && (
+                      <span className="text-xs text-amber-600 font-normal ml-2">
+                        (Không thể hạ quyền tài khoản của chính bạn)
+                      </span>
+                    )}
+                  </label>
                   <select
                     value={editForm.role}
+                    disabled={currentUser?.id === editingUser.id}
                     onChange={(e) => setEditForm({ ...editForm, role: e.target.value as any })}
-                    className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-blue-500 bg-white text-slate-800 font-bold"
+                    className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-blue-500 bg-white text-slate-800 font-bold disabled:bg-slate-100 disabled:text-slate-400"
                   >
                     <option value="STUDENT">Học viên</option>
                     <option value="ADMIN">Quản trị viên (Admin)</option>

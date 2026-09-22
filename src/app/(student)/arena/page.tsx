@@ -129,25 +129,25 @@ export default function ArenaPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
       {/* 1V1 REAL-TIME MATCHMAKING BANNER */}
-      <div className="relative overflow-hidden rounded-3xl border border-amber-200/90 bg-gradient-to-br from-amber-500/15 via-orange-50/50 to-white p-6 sm:p-8 shadow-xs">
+      <div className="relative overflow-hidden rounded-3xl border border-amber-200/90 bg-gradient-to-br from-amber-500/15 via-orange-50/50 to-white dark:border-amber-900/60 dark:from-amber-950/40 dark:via-slate-900 dark:to-slate-900 p-6 sm:p-8 shadow-xs">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-white/90 px-3.5 py-1 text-xs font-bold text-amber-900 shadow-2xs">
-              <Swords size={14} className="text-amber-600" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-white/90 dark:border-amber-800/80 dark:bg-slate-900/90 px-3.5 py-1 text-xs font-bold text-amber-900 dark:text-amber-300 shadow-2xs">
+              <Swords size={14} className="text-amber-600 dark:text-amber-400" />
               <span>Đấu trường học tập thời gian thực</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
               Thách đấu từ vựng 1v1
             </h2>
-            <p className="text-sm text-slate-600 leading-relaxed">
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
               Thi đấu trực tiếp cùng các học viên khác. Trả lời 5 câu hỏi từ vựng nhanh nhất và chuẩn xác nhất để giành chiến thắng và nhận thưởng Bánh Mì.
             </p>
           </div>
 
           {/* Controls: Stake selector & Match button */}
-          <div className="flex flex-col items-stretch sm:items-end gap-3.5 rounded-2xl border border-amber-200 bg-white p-4 shadow-xs shrink-0">
+          <div className="flex flex-col items-stretch sm:items-end gap-3.5 rounded-2xl border border-amber-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-xs shrink-0">
             <div className="flex items-center justify-between sm:justify-end gap-3 w-full">
-              <span className="text-xs font-bold text-slate-600">Mức cược:</span>
+              <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Mức cược:</span>
               <div className="flex gap-1.5">
                 {STAKES.map((stake) => (
                   <button
@@ -157,8 +157,8 @@ export default function ArenaPage() {
                     onClick={() => setSelectedStake(stake)}
                     className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                       selectedStake === stake
-                        ? "bg-amber-600 text-white shadow-xs"
-                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                        ? "bg-amber-600 text-white dark:bg-amber-500 dark:text-slate-950 shadow-xs"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-750"
                     }`}
                   >
                     {stake} Bánh
@@ -169,14 +169,14 @@ export default function ArenaPage() {
 
             {isSearching ? (
               <div className="flex items-center gap-2.5 w-full">
-                <div className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-amber-50 px-4 py-2.5 text-xs font-bold text-amber-900 animate-pulse border border-amber-200">
+                <div className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 px-4 py-2.5 text-xs font-bold text-amber-900 dark:text-amber-200 animate-pulse border border-amber-200 dark:border-amber-900/60">
                   <Loader2 className="animate-spin" size={15} />
                   <span>Đang tìm đối thủ ({selectedStake} Bánh)…</span>
                 </div>
                 <button
                   type="button"
                   onClick={cancelQueue}
-                  className="rounded-xl border border-rose-200 bg-rose-50 p-2.5 text-rose-700 hover:bg-rose-100 transition-colors cursor-pointer"
+                  className="rounded-xl border border-rose-200 bg-rose-50 dark:border-rose-900/60 dark:bg-rose-950/40 p-2.5 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors cursor-pointer"
                   title="Hủy tìm trận"
                 >
                   <X size={16} />
@@ -186,7 +186,7 @@ export default function ArenaPage() {
               <button
                 type="button"
                 onClick={handleStartMatch}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 py-2.5 text-xs font-extrabold text-white shadow-xs hover:bg-amber-700 transition-colors cursor-pointer active:scale-98"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 py-2.5 text-xs font-extrabold text-white shadow-xs hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-950 transition-colors cursor-pointer active:scale-98"
               >
                 <Swords size={16} />
                 <span>{isGuest ? "Đăng nhập để thách đấu" : "Tìm đối thủ ngay"}</span>
@@ -199,19 +199,19 @@ export default function ArenaPage() {
       {/* HEADER TITLE & USER RANK SUMMARY */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-800">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
             <Trophy size={24} aria-hidden="true" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Bảng vinh danh & Thành tích</h1>
-            <p className="text-xs text-slate-500 font-medium">
+            <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Bảng vinh danh & Thành tích</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
               Xếp hạng học viên chăm chỉ và bộ sưu tập huy hiệu tích lũy
             </p>
           </div>
         </div>
 
         {!isGuest && currentUserRank && typeof currentUserRank.rank === "number" && (
-          <div className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-2 text-xs font-bold text-amber-900 shadow-2xs">
+          <div className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50/70 dark:border-amber-900/60 dark:bg-amber-950/40 px-4 py-2 text-xs font-bold text-amber-900 dark:text-amber-200 shadow-2xs">
             <span>Thứ hạng của bạn:</span>
             <span className="rounded-lg bg-amber-500 text-white px-2 py-0.5 font-extrabold">
               #{currentUserRank.rank}
@@ -233,8 +233,8 @@ export default function ArenaPage() {
                 onClick={() => setSelectedTier(tier.id)}
                 className={`rounded-xl px-3.5 py-1.5 text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
                   selectedTier === tier.id
-                    ? "bg-slate-900 text-white shadow-2xs"
-                    : "bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:text-slate-900"
+                    ? "bg-slate-900 text-white dark:bg-amber-500 dark:text-slate-950 shadow-2xs"
+                    : "bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:text-slate-900 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:text-slate-200"
                 }`}
               >
                 {tier.label}
@@ -242,13 +242,13 @@ export default function ArenaPage() {
             ))}
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+          <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 sm:p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Crown size={18} className="text-amber-500" />
                 <span>Bảng xếp hạng tuần này</span>
               </h2>
-              <span className="text-xs text-slate-400 font-medium">
+              <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
                 {entries.length} học viên
               </span>
             </div>
@@ -258,17 +258,17 @@ export default function ArenaPage() {
                 {[...Array(5)].map((_, i) => (
                   <div
                     key={i}
-                    className="animate-pulse flex items-center justify-between rounded-xl border border-slate-100 p-3.5"
+                    className="animate-pulse flex items-center justify-between rounded-xl border border-slate-100 dark:border-slate-800 p-3.5"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-lg bg-slate-100" />
-                      <div className="h-10 w-10 rounded-full bg-slate-100" />
+                      <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800" />
+                      <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800" />
                       <div className="space-y-1">
-                        <div className="h-4 w-28 bg-slate-100 rounded" />
-                        <div className="h-3 w-16 bg-slate-100 rounded" />
+                        <div className="h-4 w-28 bg-slate-100 dark:bg-slate-800 rounded" />
+                        <div className="h-3 w-16 bg-slate-100 dark:bg-slate-800 rounded" />
                       </div>
                     </div>
-                    <div className="h-5 w-16 bg-slate-100 rounded" />
+                    <div className="h-5 w-16 bg-slate-100 dark:bg-slate-800 rounded" />
                   </div>
                 ))}
               </div>
@@ -281,13 +281,13 @@ export default function ArenaPage() {
                   const isTop3 = rank === 3;
                   const isMe = !isGuest && (item.isCurrentUser || item.userId === user?.id);
 
-                  let rankBorderClass = "border-slate-100 bg-white hover:bg-slate-50/80";
+                  let rankBorderClass = "border-slate-100 bg-white hover:bg-slate-50/80 dark:border-slate-800 dark:bg-slate-850/60 dark:hover:bg-slate-800";
                   if (isTop1) {
-                    rankBorderClass = "border-amber-300 bg-amber-50/40 shadow-xs";
+                    rankBorderClass = "border-amber-300 bg-amber-50/40 shadow-xs dark:border-amber-800/80 dark:bg-amber-950/30";
                   } else if (isTop2) {
-                    rankBorderClass = "border-slate-300 bg-slate-50/70";
+                    rankBorderClass = "border-slate-300 bg-slate-50/70 dark:border-slate-700 dark:bg-slate-800/60";
                   } else if (isTop3) {
-                    rankBorderClass = "border-orange-200 bg-orange-50/30";
+                    rankBorderClass = "border-orange-200 bg-orange-50/30 dark:border-orange-900/60 dark:bg-orange-950/25";
                   }
 
                   if (isMe) {
@@ -312,12 +312,12 @@ export default function ArenaPage() {
                           ) : isTop3 ? (
                             <Medal size={20} className="text-orange-500 mx-auto" />
                           ) : (
-                            <span className="text-slate-400">#{rank}</span>
+                            <span className="text-slate-400 dark:text-slate-500">#{rank}</span>
                           )}
                         </div>
 
                         {/* Avatar */}
-                        <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-700 text-sm overflow-hidden shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 flex items-center justify-center font-bold text-slate-700 dark:text-slate-300 text-sm overflow-hidden shrink-0">
                           {item.avatarUrl ? (
                             <img src={item.avatarUrl} alt={item.displayName} className="w-full h-full object-cover" />
                           ) : (
@@ -328,16 +328,16 @@ export default function ArenaPage() {
                         {/* Name & Tier */}
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <h3 className="font-bold text-sm text-slate-900 truncate">
+                            <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100 truncate">
                               {item.displayName || "Học viên"}
                             </h3>
                             {isMe && (
-                              <span className="text-[10px] font-extrabold bg-amber-100 text-amber-900 px-1.5 py-0.2 rounded shrink-0">
+                              <span className="text-[10px] font-extrabold bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 px-1.5 py-0.2 rounded shrink-0">
                                 BẠN
                               </span>
                             )}
                           </div>
-                          <p className="text-[11px] text-slate-400 font-medium">
+                          <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                             Hạng: {item.tier || "Đồng"}
                           </p>
                         </div>
@@ -345,11 +345,11 @@ export default function ArenaPage() {
 
                       {/* Points */}
                       <div className="text-right shrink-0">
-                        <div className="flex items-center gap-1 font-extrabold text-sm text-amber-700">
+                        <div className="flex items-center gap-1 font-extrabold text-sm text-amber-700 dark:text-amber-400">
                           <span>{(item.weeklyExp || item.totalPoints || 0).toLocaleString("vi-VN")}</span>
                           <Star size={14} className="fill-amber-500 text-amber-500" />
                         </div>
-                        <span className="text-[10px] text-slate-400 font-medium block uppercase tracking-wider">
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium block uppercase tracking-wider">
                           EXP
                         </span>
                       </div>
@@ -359,9 +359,9 @@ export default function ArenaPage() {
               </div>
             ) : (
               <div className="text-center py-12 space-y-2">
-                <Trophy size={32} className="mx-auto text-slate-300" />
-                <p className="text-sm font-bold text-slate-600">Chưa có dữ liệu cho hạng này</p>
-                <p className="text-xs text-slate-400">Hãy tham gia luyện tập để ghi tên mình lên bảng vàng nhé!</p>
+                <Trophy size={32} className="mx-auto text-slate-300 dark:text-slate-600" />
+                <p className="text-sm font-bold text-slate-600 dark:text-slate-300">Chưa có dữ liệu cho hạng này</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">Hãy tham gia luyện tập để ghi tên mình lên bảng vàng nhé!</p>
               </div>
             )}
           </div>

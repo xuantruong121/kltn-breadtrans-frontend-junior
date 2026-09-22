@@ -103,7 +103,7 @@ const CircularGauge: React.FC<{
           fill="transparent"
         />
       </svg>
-      <span className="absolute font-black text-sm sm:text-base text-slate-900">
+      <span className="absolute font-black text-sm sm:text-base text-slate-900 dark:text-slate-100">
         {Math.round(clampedValue)}%
       </span>
     </div>
@@ -335,7 +335,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
       : null;
 
   return (
-    <div className="h-full flex-1 flex flex-col justify-between space-y-3.5 rounded-3xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-xs animate-in fade-in duration-300 min-h-0 overflow-y-auto">
+    <div className="h-full flex-1 flex flex-col justify-between space-y-3.5 rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs animate-in fade-in duration-300 min-h-0 overflow-y-auto">
       {/* Hidden audio element for learner recording */}
       {activeLearnerSrc && (
         <audio
@@ -356,23 +356,23 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
       )}
 
       {/* 1. Header Studio Bar */}
-      <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5 shrink-0">
-        <span className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-          <Headphones size={16} className="text-amber-600" />
+      <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2.5 shrink-0">
+        <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+          <Headphones size={16} className="text-amber-600 dark:text-amber-400" />
           <span>Phòng thu âm &amp; Đánh giá phát âm</span>
         </span>
 
         {phase === "COMPLETED" ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-black border border-emerald-200 bg-emerald-50 text-emerald-800 shadow-2xs">
+          <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-black border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 shadow-2xs">
             <CheckCircle2 size={13} aria-hidden="true" /> Đã hoàn thành
           </span>
         ) : phase === "RECORDING" ? (
-          <span className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-black border border-rose-200 bg-rose-50 text-rose-700 shadow-2xs">
+          <span className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-black border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 shadow-2xs">
             <span className="size-2 rounded-full bg-rose-500 animate-ping" />
             <span>Đang thu âm</span>
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-extrabold border border-slate-200 bg-slate-50 text-slate-700 shadow-2xs">
+          <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-extrabold border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 shadow-2xs">
             Sẵn sàng
           </span>
         )}
@@ -380,7 +380,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
 
       {/* 2. DYNAMIC COMMAND DECK (Clean, accessible BreadTrans controls) */}
       {phase === "READY" && (
-        <div className="bg-slate-50/80 p-4 sm:p-5 rounded-2xl border border-slate-200 flex flex-col items-center justify-center gap-3 shrink-0 shadow-2xs">
+        <div className="bg-slate-50/80 dark:bg-slate-850 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center gap-3 shrink-0 shadow-2xs">
           <button
             type="button"
             onClick={onStartRecording}
@@ -391,10 +391,10 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
             <Mic size={28} />
           </button>
           <div className="text-center space-y-1">
-            <p className="text-sm sm:text-base font-black text-slate-900">
-              Nhấn vào Micro hoặc bấm phím <kbd className="px-2 py-0.5 rounded-lg bg-white border border-slate-300 font-mono text-xs font-black text-slate-800 shadow-2xs">Space</kbd> để bắt đầu đọc
+            <p className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">
+              Nhấn vào Micro hoặc bấm phím <kbd className="px-2 py-0.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-mono text-xs font-black text-slate-800 dark:text-slate-200 shadow-2xs">Space</kbd> để bắt đầu đọc
             </p>
-            <p className="text-xs font-semibold text-slate-600">
+            <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
               Chuẩn hóa 16kHz mono WAV • Tự động chấm điểm và đánh giá ngay khi dừng
             </p>
           </div>
@@ -402,7 +402,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
       )}
 
       {phase === "RECORDING" && (
-        <div className="bg-rose-50/60 p-4 sm:p-5 rounded-2xl border border-rose-200 flex flex-col items-center justify-center gap-3 shrink-0 shadow-2xs animate-in fade-in">
+        <div className="bg-rose-50/60 dark:bg-rose-950/30 p-4 sm:p-5 rounded-2xl border border-rose-200 dark:border-rose-900/60 flex flex-col items-center justify-center gap-3 shrink-0 shadow-2xs animate-in fade-in">
           {/* Timer pill */}
           <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-900 text-white font-mono font-bold text-xs shadow-xs">
             <span className="size-2 rounded-full bg-rose-500 animate-ping" />
@@ -436,7 +436,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
               <button
                 type="button"
                 onClick={onCancelRecording}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-rose-600 bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition-all cursor-pointer shadow-2xs active:scale-95"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-300 bg-card dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-slate-200 dark:border-slate-700 hover:border-rose-200 dark:hover:border-rose-800 transition-all cursor-pointer shadow-2xs active:scale-95"
                 title="Hủy lượt thu âm này"
               >
                 <X size={14} className="text-rose-500" />
@@ -519,7 +519,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
             <button
               type="button"
               onClick={onRetryRecord}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white border border-slate-300 text-slate-700 font-bold text-xs cursor-pointer shadow-2xs"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs cursor-pointer shadow-2xs"
             >
               <RotateCcw size={13} />
               <span>Thu mới</span>
@@ -529,23 +529,23 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
       )}
 
       {phase === "COMPLETED" && (
-        <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/90 flex items-center justify-between gap-3 shrink-0 shadow-2xs">
+        <div className="bg-slate-50/80 dark:bg-slate-850 p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0 shadow-2xs">
           <div className="flex items-center gap-3.5">
             <div
               className={`flex size-15 sm:size-16 flex-col items-center justify-center rounded-2xl border text-center shadow-inner shrink-0 ${
                 isNoSpeech
-                  ? "border-slate-300 bg-slate-100 text-slate-600"
+                  ? "border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
                   : displayScore >= 8
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300"
                   : displayScore >= 6
-                  ? "border-blue-200 bg-blue-50 text-blue-700"
-                  : "border-amber-200 bg-amber-50 text-amber-800"
+                  ? "border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300"
+                  : "border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300"
               }`}
             >
               <span className="text-2xl sm:text-3xl font-black leading-none tracking-tight">
                 {isNoSpeech ? "—" : displayScore.toFixed(1)}
               </span>
-              <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-500 mt-0.5">
+              <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mt-0.5">
                 Điểm / 10
               </span>
             </div>
@@ -555,17 +555,17 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
               return (
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base sm:text-lg font-black text-slate-900 truncate">
+                    <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 truncate">
                       {scoreMeta.title}
                     </h3>
                     {scoreMeta.isStandard && (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-black bg-emerald-100 text-emerald-800 shadow-2xs">
-                        <Award size={13} className="text-emerald-700 shrink-0" />
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-black bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 shadow-2xs">
+                        <Award size={13} className="text-emerald-700 dark:text-emerald-400 shrink-0" />
                         <span>Đạt chuẩn</span>
                       </span>
                     )}
                   </div>
-                  <p className="text-xs sm:text-sm font-semibold text-slate-600 mt-0.5">
+                  <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 mt-0.5">
                     {scoreMeta.subtitle}
                   </p>
                 </div>
@@ -573,26 +573,26 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
             })()}
           </div>
 
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-900 text-xs sm:text-sm font-extrabold shrink-0 shadow-2xs">
-            <Flame size={15} className="text-amber-600" />
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/60 text-amber-900 dark:text-amber-300 text-xs sm:text-sm font-extrabold shrink-0 shadow-2xs">
+            <Flame size={15} className="text-amber-600 dark:text-amber-400" />
             <span>Luyện phát âm</span>
           </div>
         </div>
       )}
 
       {/* 3. INTERACTIVE DUAL AUDIO TRACKS & SEQUENTIAL COMPARISON */}
-      <div className="rounded-2xl bg-white border border-slate-200 p-4 sm:p-5 space-y-4 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-100">
+      <div className="rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 space-y-4 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-100 dark:border-slate-800">
           <div>
             <div className="flex items-center gap-2">
-              <span className="flex size-7 items-center justify-center rounded-lg bg-blue-50 text-blue-700 shrink-0">
+              <span className="flex size-7 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 shrink-0">
                 <Headphones size={16} />
               </span>
-              <h4 className="text-sm sm:text-base font-black text-slate-900">
+              <h4 className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">
                 Nghe đối chiếu mẫu và bản ghi
               </h4>
             </div>
-            <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1">
               Hệ thống sẽ phát audio mẫu trước, sau đó tự động phát bản ghi của bạn.
             </p>
           </div>
@@ -649,14 +649,14 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
             }`}
           >
             <div className="flex items-center justify-between mb-2.5">
-              <div className="flex items-center gap-2 font-black text-slate-900 truncate text-xs sm:text-sm">
-                <Volume2 size={16} className="text-blue-600 shrink-0" />
+              <div className="flex items-center gap-2 font-black text-slate-900 dark:text-slate-100 truncate text-xs sm:text-sm">
+                <Volume2 size={16} className="text-blue-600 dark:text-blue-400 shrink-0" />
                 <span className="truncate">Audio mẫu</span>
-                <span className="text-[11px] px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 font-extrabold uppercase">
+                <span className="text-[11px] px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 font-extrabold uppercase">
                   {ttsAccent}
                 </span>
               </div>
-              <span className="text-xs sm:text-sm font-mono font-bold text-slate-700 bg-white px-2 py-0.5 rounded-md border border-slate-200/80 shadow-2xs shrink-0">
+              <span className="text-xs sm:text-sm font-mono font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200/80 dark:border-slate-700 shadow-2xs shrink-0">
                 {formatAudioTime(nativeCurrentTime)} / {formatAudioTime(nativeDuration)}
               </span>
             </div>
@@ -679,8 +679,8 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
               </button>
 
               {/* Truthful Audio Progress Bar */}
-              <div className="flex-1 flex items-center h-8 bg-white rounded-xl border border-slate-200/80 px-3 shadow-2xs">
-                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div className="flex-1 flex items-center h-8 bg-white dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 px-3 shadow-2xs">
+                <div className="w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-blue-500 rounded-full transition-all duration-150"
                     style={{
@@ -696,19 +696,19 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
           <div
             className={`p-3.5 sm:p-4 rounded-xl border transition-all ${
               comparingTrack === "learner" || isPlayingLearner
-                ? "bg-amber-50/80 border-amber-300 ring-2 ring-amber-500/20 shadow-xs"
-                : "bg-slate-50/70 border-slate-200/90 hover:bg-slate-50"
+                ? "bg-amber-50/80 dark:bg-amber-950/40 border-amber-300 dark:border-amber-700 ring-2 ring-amber-500/20 shadow-xs"
+                : "bg-slate-50/70 dark:bg-slate-800/60 border-slate-200/90 dark:border-slate-750 hover:bg-slate-50 dark:hover:bg-slate-800"
             }`}
           >
             <div className="flex items-center justify-between mb-2.5">
-              <div className="flex items-center gap-2 font-black text-slate-900 truncate text-xs sm:text-sm">
-                <Mic size={16} className="text-amber-700 shrink-0" />
+              <div className="flex items-center gap-2 font-black text-slate-900 dark:text-slate-100 truncate text-xs sm:text-sm">
+                <Mic size={16} className="text-amber-700 dark:text-amber-400 shrink-0" />
                 <span className="truncate">Bản ghi của bạn</span>
-                <span className="text-[11px] px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 font-extrabold uppercase">
+                <span className="text-[11px] px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 font-extrabold uppercase">
                   {activeLearnerSrc ? "Ghi âm" : "Chờ thu"}
                 </span>
               </div>
-              <span className="text-xs sm:text-sm font-mono font-bold text-slate-700 bg-white px-2 py-0.5 rounded-md border border-slate-200/80 shadow-2xs shrink-0">
+              <span className="text-xs sm:text-sm font-mono font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200/80 dark:border-slate-700 shadow-2xs shrink-0">
                 {activeLearnerSrc
                   ? `${formatAudioTime(learnerCurrentTime)} / ${formatAudioTime(learnerDuration)}`
                   : "0:00 / 0:00"}
@@ -727,8 +727,8 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
               </button>
 
               {/* Truthful Audio Progress Bar */}
-              <div className="flex-1 flex items-center h-8 bg-white rounded-xl border border-slate-200/80 px-3 shadow-2xs">
-                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div className="flex-1 flex items-center h-8 bg-white dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 px-3 shadow-2xs">
+                <div className="w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-amber-500 rounded-full transition-all duration-150"
                     style={{
@@ -747,20 +747,20 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
         {/* Row A: 3 Provider-Backed Numeric Dimension Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {/* Dimension 1: Độ chính xác (Accuracy) */}
-          <div className="rounded-2xl bg-white p-4 border border-slate-200/90 flex flex-col items-center justify-between text-center shadow-xs">
-            <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-700">
+          <div className="rounded-2xl bg-white dark:bg-slate-850 p-4 border border-slate-200/90 dark:border-slate-800 flex flex-col items-center justify-between text-center shadow-xs">
+            <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Độ chính xác (Accuracy)
             </span>
             <div className="my-2.5">
               {phase === "COMPLETED" && !isNoSpeech && Number.isFinite(accuracy) ? (
                 <CircularGauge value={accuracy!} colorClass={accuracyTier.ring} size={68} />
               ) : (
-                <div className="flex size-17 items-center justify-center rounded-full border-2 border-dashed border-slate-300 text-sm font-black text-slate-400">
+                <div className="flex size-17 items-center justify-center rounded-full border-2 border-dashed border-slate-300 dark:border-slate-700 text-sm font-black text-slate-400">
                   &ge; 80%
                 </div>
               )}
             </div>
-            <span className="text-xs sm:text-sm font-bold text-slate-700 truncate">
+            <span className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 truncate">
               {phase === "COMPLETED" && !isNoSpeech && Number.isFinite(accuracy)
                 ? accuracy! >= 80 ? "Đạt chuẩn" : "Cần rèn luyện"
                 : "Mục tiêu chuẩn"}
@@ -768,20 +768,20 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
           </div>
 
           {/* Dimension 2: Độ trôi chảy (Fluency) */}
-          <div className="rounded-2xl bg-white p-4 border border-slate-200/90 flex flex-col items-center justify-between text-center shadow-xs">
-            <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-700">
+          <div className="rounded-2xl bg-white dark:bg-slate-850 p-4 border border-slate-200/90 dark:border-slate-800 flex flex-col items-center justify-between text-center shadow-xs">
+            <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Độ trôi chảy (Fluency)
             </span>
             <div className="my-2.5">
               {phase === "COMPLETED" && !isNoSpeech && Number.isFinite(fluency) ? (
                 <CircularGauge value={fluency!} colorClass="text-blue-500" size={68} />
               ) : (
-                <div className="flex size-17 items-center justify-center rounded-full border-2 border-dashed border-slate-300 text-sm font-black text-slate-400">
+                <div className="flex size-17 items-center justify-center rounded-full border-2 border-dashed border-slate-300 dark:border-slate-700 text-sm font-black text-slate-400">
                   Tự nhiên
                 </div>
               )}
             </div>
-            <span className="text-xs sm:text-sm font-bold text-slate-700 truncate">
+            <span className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 truncate">
               {phase === "COMPLETED" && !isNoSpeech && Number.isFinite(fluency)
                 ? "Nhịp điệu câu"
                 : "Mục tiêu lưu loát"}
@@ -789,20 +789,20 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
           </div>
 
           {/* Dimension 3: Độ hoàn thiện (Completeness) */}
-          <div className="rounded-2xl bg-white p-4 border border-slate-200/90 flex flex-col items-center justify-between text-center shadow-xs">
-            <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-700">
+          <div className="rounded-2xl bg-white dark:bg-slate-850 p-4 border border-slate-200/90 dark:border-slate-800 flex flex-col items-center justify-between text-center shadow-xs">
+            <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Độ hoàn thiện (Completeness)
             </span>
             <div className="my-2.5">
               {phase === "COMPLETED" && !isNoSpeech && Number.isFinite(completeness) ? (
                 <CircularGauge value={completeness!} colorClass="text-amber-500" size={68} />
               ) : (
-                <div className="flex size-17 items-center justify-center rounded-full border-2 border-dashed border-slate-300 text-sm font-black text-slate-400">
+                <div className="flex size-17 items-center justify-center rounded-full border-2 border-dashed border-slate-300 dark:border-slate-700 text-sm font-black text-slate-400">
                   100%
                 </div>
               )}
             </div>
-            <span className="text-xs sm:text-sm font-bold text-slate-700 truncate">
+            <span className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 truncate">
               {phase === "COMPLETED" && !isNoSpeech && Number.isFinite(completeness)
                 ? "Đủ các từ trong câu"
                 : "Đọc đủ từng từ"}
@@ -811,21 +811,21 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
         </div>
 
         {/* Row B: Dedicated Rhythm Guidance Card (Full width, clear legible typography) */}
-        <div className="rounded-2xl border border-amber-200/90 bg-gradient-to-r from-amber-50/90 via-amber-50/60 to-orange-50/40 p-4 sm:p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 shadow-xs">
+        <div className="rounded-2xl border border-amber-200/90 dark:border-amber-900/60 bg-gradient-to-r from-amber-50/90 via-amber-50/60 to-orange-50/40 dark:from-amber-950/40 dark:via-amber-950/20 dark:to-orange-950/30 p-4 sm:p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 shadow-xs">
           <div className="flex items-start sm:items-center gap-3.5 min-w-0">
             <div className="size-11 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
               <BookOpen size={20} />
             </div>
             <div className="min-w-0 space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-950">
+                <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-950 dark:text-amber-300">
                   Gợi ý về nhịp điệu &amp; ngữ điệu
                 </span>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-200/80 text-amber-900">
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-200/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-300">
                   Hướng dẫn phát âm tự nhiên
                 </span>
               </div>
-              <p className="text-sm sm:text-base font-semibold text-slate-800 leading-relaxed">
+              <p className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200 leading-relaxed">
                 {RHYTHM_GUIDANCE_TEXT}
               </p>
             </div>
@@ -834,10 +834,10 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
           <button
             type="button"
             onClick={handleTogglePlayNative}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-amber-100/80 border border-amber-200 text-xs sm:text-sm font-extrabold text-amber-900 transition-all shadow-2xs cursor-pointer active:scale-95 shrink-0 self-start sm:self-auto"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-amber-100/80 dark:hover:bg-slate-700 border border-amber-200 dark:border-amber-800 text-xs sm:text-sm font-extrabold text-amber-900 dark:text-amber-300 transition-all shadow-2xs cursor-pointer active:scale-95 shrink-0 self-start sm:self-auto"
             title="Nghe lại audio mẫu để cảm nhận nhịp điệu"
           >
-            <Volume2 size={15} className="text-amber-700" />
+            <Volume2 size={15} className="text-amber-700 dark:text-amber-400" />
             <span>Nghe nhịp mẫu</span>
           </button>
         </div>
@@ -845,13 +845,13 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
 
       {/* 5. BOTTOM DIAGNOSTIC DECK: Word-Level Assessment */}
       {phase === "COMPLETED" && !isNoSpeech ? (
-        <div className="space-y-3 rounded-2xl bg-slate-50/80 p-4 sm:p-5 border border-slate-200/90 shadow-xs">
+        <div className="space-y-3 rounded-2xl bg-slate-50/80 dark:bg-slate-850 p-4 sm:p-5 border border-slate-200/90 dark:border-slate-800 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
-            <span className="text-sm sm:text-base font-black text-slate-900 flex items-center gap-2">
-              <Activity size={18} className="text-amber-700" />
+            <span className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <Activity size={18} className="text-amber-700 dark:text-amber-400" />
               <span>Đánh giá theo từng từ</span>
             </span>
-            <span className="text-xs sm:text-sm font-semibold text-slate-600">
+            <span className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400">
               Nhấp vào từ để xem chi tiết và tra từ điển
             </span>
           </div>
@@ -865,15 +865,15 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
                 const isCorrect = !isOmitted && (item.accuracyScore ?? 0) >= 80 && item.errorType === "None";
                 const isMispronounced = !isOmitted && !isCorrect && item.errorType === "Mispronunciation";
 
-                let tokenStyle = "bg-white text-slate-800 border-slate-200 hover:border-slate-300";
+                let tokenStyle = "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600";
                 if (isCorrect) {
-                  tokenStyle = "bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100";
+                  tokenStyle = "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-900 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-950/80";
                 } else if (isMispronounced) {
-                  tokenStyle = "bg-amber-50 text-amber-950 border-amber-300 hover:bg-amber-100";
+                  tokenStyle = "bg-amber-50 dark:bg-amber-950/50 text-amber-950 dark:text-amber-300 border-amber-300 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-950/80";
                 } else if (isOmitted) {
-                  tokenStyle = "bg-rose-50 text-rose-800 border-rose-300 line-through opacity-80";
+                  tokenStyle = "bg-rose-50 dark:bg-rose-950/50 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-800 line-through opacity-80";
                 } else {
-                  tokenStyle = "bg-red-50 text-red-800 border-red-300 underline decoration-red-400";
+                  tokenStyle = "bg-red-50 dark:bg-red-950/50 text-red-800 dark:text-red-300 border-red-300 dark:border-red-800 underline decoration-red-400";
                 }
 
                 if (isSelected) {
@@ -906,10 +906,10 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
           {selectedWordItem && (() => {
             const details = getWordDiagnosticDetails(selectedWordItem);
             return (
-              <div className="mt-3 p-4 rounded-xl bg-white border border-amber-200 shadow-xs space-y-3 animate-in zoom-in-95 duration-150">
+              <div className="mt-3 p-4 rounded-xl bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-900/60 shadow-xs space-y-3 animate-in zoom-in-95 duration-150">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-2.5">
-                    <span className="font-black text-lg sm:text-xl text-slate-900">
+                    <span className="font-black text-lg sm:text-xl text-slate-900 dark:text-slate-100">
                       {selectedWordItem.word}
                     </span>
                     <span
@@ -924,7 +924,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
                       <button
                         type="button"
                         onClick={() => onPlaySample(selectedWordItem.word)}
-                        className="size-9 rounded-xl bg-amber-50 text-amber-800 hover:bg-amber-100 flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
+                        className="size-9 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
                         title={`Nghe phát âm chuẩn: ${selectedWordItem.word}`}
                       >
                         <Volume2 size={16} />
@@ -944,7 +944,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
                   </div>
                 </div>
 
-                <p className="text-sm sm:text-base text-slate-800 font-semibold leading-relaxed">
+                <p className="text-sm sm:text-base text-slate-800 dark:text-slate-200 font-semibold leading-relaxed">
                   {details.explanation}
                 </p>
               </div>
@@ -953,12 +953,12 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
 
           {/* Suggestions Accordion if present */}
           {feedback?.suggestions && feedback.suggestions.length > 0 && (
-            <div className="rounded-2xl bg-amber-50/90 p-4 border border-amber-200 mt-3">
-              <div className="flex items-center gap-2 text-sm sm:text-base font-black text-amber-950 uppercase tracking-wider mb-2">
-                <Activity size={16} className="text-amber-700" />
+            <div className="rounded-2xl bg-amber-50/90 dark:bg-amber-950/40 p-4 border border-amber-200 dark:border-amber-900/60 mt-3">
+              <div className="flex items-center gap-2 text-sm sm:text-base font-black text-amber-950 dark:text-amber-300 uppercase tracking-wider mb-2">
+                <Activity size={16} className="text-amber-700 dark:text-amber-400" />
                 <span>Gợi ý cải thiện phát âm</span>
               </div>
-              <ul className="space-y-2 text-slate-800 text-sm sm:text-base font-semibold pl-5 list-disc leading-relaxed">
+              <ul className="space-y-2 text-slate-800 dark:text-slate-200 text-sm sm:text-base font-semibold pl-5 list-disc leading-relaxed">
                 {feedback.suggestions.map((sug, i) => (
                   <li key={i}>{sug}</li>
                 ))}
@@ -967,11 +967,11 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
           )}
 
           {/* Result Actions: [ ↺ Thử đọc lại ] and [ Bài tiếp theo → ] */}
-          <div className="pt-3 border-t border-slate-200/80 flex items-center gap-3">
+          <div className="pt-3 border-t border-slate-200/80 dark:border-slate-800 flex items-center gap-3">
             <button
               type="button"
               onClick={onRetryRecord}
-              className="flex-1 py-3 px-4 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 font-extrabold text-sm sm:text-base text-slate-800 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shadow-xs hover:shadow-sm"
+              className="flex-1 py-3 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-200 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shadow-xs hover:shadow-sm"
             >
               <RotateCcw size={16} />
               <span>Thử đọc lại</span>
@@ -991,13 +991,13 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
         </div>
       ) : (
         /* READY / RECORDING Phase: Key words for pronunciation practice */
-        <div className="rounded-2xl bg-slate-50/80 p-3 border border-slate-200/80 space-y-2">
+        <div className="rounded-2xl bg-slate-50/80 dark:bg-slate-850 p-3 border border-slate-200/80 dark:border-slate-800 space-y-2">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-              <Target size={13} className="text-amber-600" />
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <Target size={13} className="text-amber-600 dark:text-amber-400" />
               <span>Trọng tâm phát âm trong câu này</span>
             </span>
-            <span className="text-[11px] text-slate-500">Nhấp để nghe âm mẫu</span>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400">Nhấp để nghe âm mẫu</span>
           </div>
 
           <div className="flex flex-wrap gap-1.5">
@@ -1009,10 +1009,10 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
                   if (onPlaySample) onPlaySample(word);
                   if (onSelectWord) onSelectWord(word);
                 }}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white border border-slate-200 hover:border-amber-300 hover:bg-amber-50 text-xs font-bold text-slate-800 transition-all shadow-2xs cursor-pointer active:scale-95"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 transition-all shadow-2xs cursor-pointer active:scale-95"
                 title={`Nghe phát âm từ "${word}"`}
               >
-                <Volume2 size={12} className="text-amber-600" />
+                <Volume2 size={12} className="text-amber-600 dark:text-amber-400" />
                 <span>{word}</span>
               </button>
             ))}

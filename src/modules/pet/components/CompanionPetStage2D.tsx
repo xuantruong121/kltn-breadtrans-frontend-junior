@@ -91,10 +91,10 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
   }, [health, happiness, satiety, pet?.canFeed, pet?.satietyState, isJustFed, isLevelUp]);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
       <div className="grid grid-cols-1 lg:grid-cols-12">
         {/* Left / Center: 2D Interactive Companion Stage (7 cols) */}
-        <div className="lg:col-span-7 p-6 sm:p-10 flex flex-col items-center justify-center bg-gradient-to-b from-amber-50/40 via-white to-orange-50/30 border-b lg:border-b-0 lg:border-r border-slate-100 relative">
+        <div className="lg:col-span-7 p-6 sm:p-10 flex flex-col items-center justify-center bg-gradient-to-b from-amber-50/40 via-white to-orange-50/30 dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-slate-800 relative">
           {/* Top Stage Badges */}
           <div className="w-full flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -103,7 +103,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
               >
                 {currentSpecies.element}
               </span>
-              <span className="text-[11px] font-bold text-amber-900 bg-amber-100/90 px-3 py-1 rounded-full border border-amber-200">
+              <span className="text-[11px] font-bold text-amber-900 dark:text-amber-300 bg-amber-100/90 dark:bg-amber-950/60 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-800">
                 Cấp {level}
               </span>
             </div>
@@ -113,7 +113,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
               onClick={onChangeSpecies}
               disabled={isChangingSpecies}
               aria-label="Đổi sang loài thú cưng khác"
-              className="inline-flex min-h-[44px] items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white text-slate-700 hover:text-slate-900 text-xs font-semibold shadow-2xs transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
+              className="inline-flex min-h-[44px] items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white text-xs font-semibold shadow-2xs transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
             >
               <RefreshCw size={14} className={isChangingSpecies ? "animate-spin" : ""} aria-hidden="true" />
               <span>Đổi thú cưng</span>
@@ -132,14 +132,14 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
 
             {/* Pet Title & Quote */}
             <div className="mt-4 text-center max-w-sm">
-              <h2 className="text-xl font-bold text-slate-900">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
                 {currentSpecies.speciesName || pet?.name}
               </h2>
-              <p className="text-xs font-medium text-slate-500 mt-0.5">
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                 {currentSpecies.title}
               </p>
               {currentSpecies.quote && (
-                <p className="text-xs text-amber-900/80 italic mt-2 bg-amber-50/80 px-3 py-1.5 rounded-xl border border-amber-200/60">
+                <p className="text-xs text-amber-900/80 dark:text-amber-300/80 italic mt-2 bg-amber-50/80 dark:bg-amber-950/50 px-3 py-1.5 rounded-xl border border-amber-200/60 dark:border-amber-800/60">
                   &ldquo;{currentSpecies.quote}&rdquo;
                 </p>
               )}
@@ -147,18 +147,18 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
           </div>
 
           {/* Level & EXP Progress Bar */}
-          <div className="w-full max-w-md mt-2 space-y-1.5 bg-slate-50/80 p-3 rounded-xl border border-slate-200/70">
+          <div className="w-full max-w-md mt-2 space-y-1.5 bg-slate-50/80 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200/70 dark:border-slate-700">
             <div className="flex justify-between items-center text-xs font-medium">
-              <span className="flex items-center gap-1.5 text-slate-700">
-                <TrendingUp size={14} className="text-amber-600" aria-hidden="true" />
+              <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                <TrendingUp size={14} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
                 <span>Tiến trình cấp độ</span>
               </span>
-              <span className="font-bold text-amber-900">
+              <span className="font-bold text-amber-900 dark:text-amber-300">
                 {expPercentage}% ({exp} EXP)
               </span>
             </div>
             <div
-              className="h-2.5 rounded-full bg-slate-200/80 overflow-hidden"
+              className="h-2.5 rounded-full bg-slate-200/80 dark:bg-slate-700 overflow-hidden"
               role="progressbar"
               aria-valuenow={expPercentage}
               aria-valuemin={0}
@@ -174,13 +174,13 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
         </div>
 
         {/* Right: Care & Feeding Dashboard Panel (5 cols) */}
-        <div className="lg:col-span-5 p-6 sm:p-8 flex flex-col justify-between space-y-6 bg-white">
+        <div className="lg:col-span-5 p-6 sm:p-8 flex flex-col justify-between space-y-6 bg-white dark:bg-slate-900">
           <div className="space-y-6">
             <div>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
                 Chỉ Số Nuôi Dưỡng
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Duy trì sức khỏe và độ vui vẻ để giữ trọn hiệu ứng bổ trợ học tập
               </p>
             </div>
@@ -188,16 +188,16 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
             {/* Health & Happiness Meters */}
             <div className="space-y-4">
               {/* Health Meter */}
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5 font-semibold text-slate-700">
+                  <span className="flex items-center gap-1.5 font-semibold text-slate-700 dark:text-slate-300">
                     <Heart size={15} className="text-rose-500 fill-rose-500" aria-hidden="true" />
                     <span>Sức khỏe (Health)</span>
                   </span>
-                  <span className="font-bold text-rose-700">{health}%</span>
+                  <span className="font-bold text-rose-600 dark:text-rose-400">{health}%</span>
                 </div>
                 <div
-                  className="h-2.5 rounded-full bg-slate-200/80 overflow-hidden"
+                  className="h-2.5 rounded-full bg-slate-200/80 dark:bg-slate-700 overflow-hidden"
                   role="progressbar"
                   aria-valuenow={health}
                   aria-valuemin={0}
@@ -209,7 +209,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                     style={{ width: `${health}%` }}
                   />
                 </div>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   {health >= 70
                     ? "Thú cưng tràn đầy năng lượng sẵn sàng học tập."
                     : "Sức khỏe đang thấp; hãy duy trì việc học và theo dõi trạng thái thú cưng."}
@@ -217,16 +217,16 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
               </div>
 
               {/* Happiness Meter */}
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5 font-semibold text-slate-700">
-                    <Smile size={15} className="text-amber-600" aria-hidden="true" />
+                  <span className="flex items-center gap-1.5 font-semibold text-slate-700 dark:text-slate-300">
+                    <Smile size={15} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
                     <span>Vui vẻ (Happiness)</span>
                   </span>
-                  <span className="font-bold text-amber-700">{happiness}%</span>
+                  <span className="font-bold text-amber-600 dark:text-amber-400">{happiness}%</span>
                 </div>
                 <div
-                  className="h-2.5 rounded-full bg-slate-200/80 overflow-hidden"
+                  className="h-2.5 rounded-full bg-slate-200/80 dark:bg-slate-700 overflow-hidden"
                   role="progressbar"
                   aria-valuenow={happiness}
                   aria-valuemin={0}
@@ -238,23 +238,23 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                     style={{ width: `${happiness}%` }}
                   />
                 </div>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   {happiness >= 70
                     ? "Tâm trạng rất phấn khởi, sẵn sàng đồng hành cùng bạn."
                     : "Tâm trạng đang thấp; hãy quay lại tương tác cùng thú cưng sau."}
                 </p>
               </div>
               {/* Satiety Meter */}
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5 font-semibold text-slate-700">
-                    <Utensils size={15} className="text-orange-500" aria-hidden="true" />
+                  <span className="flex items-center gap-1.5 font-semibold text-slate-700 dark:text-slate-300">
+                    <Utensils size={15} className="text-orange-500 dark:text-orange-400" aria-hidden="true" />
                     <span>Độ no (Satiety)</span>
                   </span>
-                  <span className="font-bold text-orange-700">{satiety}%</span>
+                  <span className="font-bold text-orange-600 dark:text-orange-400">{satiety}%</span>
                 </div>
                 <div
-                  className="h-2.5 rounded-full bg-slate-200/80 overflow-hidden"
+                  className="h-2.5 rounded-full bg-slate-200/80 dark:bg-slate-700 overflow-hidden"
                   role="progressbar"
                   aria-valuenow={satiety}
                   aria-valuemin={0}
@@ -266,7 +266,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                     style={{ width: `${satiety}%` }}
                   />
                 </div>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   {satiety >= 80
                     ? "Thú cưng đã no căng, chưa cần nạp thêm năng lượng."
                     : satiety >= 50
@@ -279,22 +279,22 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
             </div>
 
             {/* Active Passive Buff Card */}
-            <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/70">
-              <div className="flex items-center gap-2 text-xs font-bold text-amber-900 mb-1">
-                <ShieldCheck size={16} className="text-amber-600" aria-hidden="true" />
+            <div className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/50 border border-amber-200/70 dark:border-amber-800/70">
+              <div className="flex items-center gap-2 text-xs font-bold text-amber-900 dark:text-amber-300 mb-1">
+                <ShieldCheck size={16} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
                 <span>Đặc điểm thú cưng: {currentSpecies.buff}</span>
               </div>
-              <p className="text-xs text-amber-800 leading-relaxed">
+              <p className="text-xs text-amber-800 dark:text-amber-300/90 leading-relaxed">
                 {currentSpecies.buffDetail}
               </p>
             </div>
           </div>
 
           {/* Feeding Panel */}
-          <div className="space-y-3 pt-2 border-t border-slate-100">
+          <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-600 font-medium">Chi phí mỗi bữa ăn:</span>
-              <span className="font-bold text-amber-900 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+              <span className="text-slate-600 dark:text-slate-400 font-medium">Chi phí mỗi bữa ăn:</span>
+              <span className="font-bold text-amber-900 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2.5 py-1 rounded-lg border border-amber-200 dark:border-amber-800">
                 {feedCost} Bánh Mì
               </span>
             </div>
@@ -307,7 +307,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
               className={`w-full min-h-[48px] px-5 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none ${
                 feedEligibility.allowed
                   ? "bg-amber-600 hover:bg-amber-700 active:scale-[0.98] text-white shadow-xs"
-                  : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700 cursor-not-allowed"
               }`}
             >
               {isFeeding ? (
@@ -325,13 +325,13 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
 
             {/* Satiety or balance status */}
             {!feedEligibility.allowed && (pet?.satietyState === "FULL" || satiety >= 80) ? (
-              <p className="text-center text-xs font-medium text-slate-500">{satietyText}</p>
+              <p className="text-center text-xs font-medium text-slate-500 dark:text-slate-400">{satietyText}</p>
             ) : banhRan < feedCost ? (
-              <p className="text-center text-xs font-semibold text-rose-600">
+              <p className="text-center text-xs font-semibold text-rose-600 dark:text-rose-400">
                 Bạn cần {feedCost} Bánh Mì (Số dư hiện tại: {banhRan})
               </p>
             ) : (
-              <p className="text-center text-[11px] text-slate-500">
+              <p className="text-center text-[11px] text-slate-500 dark:text-slate-400">
                 {satietyText} • Lượt nhận EXP hôm nay: {pet?.dailyRewardedFeedCount ?? 0}/{pet?.dailyRewardLimit ?? 3}
               </p>
             )}

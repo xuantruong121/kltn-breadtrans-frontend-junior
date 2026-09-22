@@ -11,12 +11,12 @@ interface CardJuniorProps extends HTMLMotionProps<"div"> {
 }
 
 const VARIANT_MAP = {
-  white: "bg-white border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0]",
-  "pastel-blue": "bg-sky-50 border-4 border-sky-200 shadow-[0_8px_0_0_#bae6fd]",
-  "pastel-green": "bg-emerald-50 border-4 border-emerald-200 shadow-[0_8px_0_0_#a7f3d0]",
-  "pastel-orange": "bg-orange-50 border-4 border-orange-200 shadow-[0_8px_0_0_#fed7aa]",
-  "pastel-purple": "bg-purple-50 border-4 border-purple-200 shadow-[0_8px_0_0_#e9d5ff]",
-  "pastel-yellow": "bg-amber-50 border-4 border-amber-200 shadow-[0_8px_0_0_#fde68a]",
+  white: "bg-white dark:bg-slate-900 border-4 border-slate-200 dark:border-slate-800 shadow-[0_8px_0_0_#e2e8f0] dark:shadow-[0_8px_0_0_#1e293b]",
+  "pastel-blue": "bg-sky-50 dark:bg-sky-950/40 border-4 border-sky-200 dark:border-sky-800 shadow-[0_8px_0_0_#bae6fd] dark:shadow-[0_8px_0_0_#075985]",
+  "pastel-green": "bg-emerald-50 dark:bg-emerald-950/40 border-4 border-emerald-200 dark:border-emerald-800 shadow-[0_8px_0_0_#a7f3d0] dark:shadow-[0_8px_0_0_#065f46]",
+  "pastel-orange": "bg-orange-50 dark:bg-orange-950/40 border-4 border-orange-200 dark:border-orange-800 shadow-[0_8px_0_0_#fed7aa] dark:shadow-[0_8px_0_0_#9a3412]",
+  "pastel-purple": "bg-purple-50 dark:bg-purple-950/40 border-4 border-purple-200 dark:border-purple-800 shadow-[0_8px_0_0_#e9d5ff] dark:shadow-[0_8px_0_0_#6b21a8]",
+  "pastel-yellow": "bg-amber-50 dark:bg-amber-950/40 border-4 border-amber-200 dark:border-amber-800 shadow-[0_8px_0_0_#fde68a] dark:shadow-[0_8px_0_0_#92400e]",
 };
 
 export const CardJunior: React.FC<CardJuniorProps> = ({

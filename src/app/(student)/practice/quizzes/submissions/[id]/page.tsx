@@ -81,13 +81,13 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
       {showConfetti && <Confetti width={windowDimension.width} height={windowDimension.height} />}
       
       {/* TOP HEADER BAR */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border-4 border-slate-100 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="flex items-center gap-4">
           <BackButton href={practiceCatalogHref} label={practiceCatalogLabel} />
-          <div className="h-6 w-0.5 bg-slate-200 hidden sm:block"></div>
+          <div className="h-6 w-0.5 bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
           <div>
-            <h1 className="text-xl font-black text-slate-800 line-clamp-1">{analytics.quizTitle}</h1>
-            <p className="text-xs font-bold text-slate-400">
+            <h1 className="text-xl font-black text-slate-800 dark:text-slate-100 line-clamp-1">{analytics.quizTitle}</h1>
+            <p className="text-xs font-bold text-slate-400 dark:text-slate-500">
               Báo cáo kết quả & phân tích chi tiết đáp án
             </p>
           </div>
@@ -99,8 +99,8 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
       <div className="grid grid-cols-12 gap-6 items-start">
         {/* LEFT COLUMN: QUESTION BREAKDOWN */}
         <div className="col-span-12 lg:col-span-8 space-y-4">
-          <div className="bg-white p-6 sm:p-8 rounded-[2.5rem] border-4 border-slate-100 shadow-sm space-y-4">
-            <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
+          <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+            <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
               <span>📝</span> Chi Tiết Từng Câu Hỏi
             </h2>
 
@@ -116,7 +116,7 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05 }}
                     className={`p-5 rounded-2xl border-2 transition-all ${
-                      isCorrect ? 'bg-emerald-50/40 border-emerald-200' : 'bg-rose-50/40 border-rose-200'
+                      isCorrect ? 'bg-emerald-50/40 dark:bg-emerald-950/25 border-emerald-200 dark:border-emerald-900/50' : 'bg-rose-50/40 dark:bg-rose-950/25 border-rose-200 dark:border-rose-900/50'
                     }`}
                   >
                     <div className="flex items-start gap-3.5">
@@ -126,24 +126,24 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
                         {idx + 1}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-black text-slate-800 mb-3 break-words">
+                        <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 mb-3 break-words">
                           {q.content?.text || "Nghe đoạn âm thanh và điền câu trả lời:"}
                         </h3>
                         
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                          <div className="p-3 bg-white rounded-xl border border-slate-200">
-                            <span className="text-[10px] font-black text-slate-400 uppercase block mb-1">Bạn đã trả lời:</span>
-                            <span className={`font-bold text-sm break-words block ${isCorrect ? 'text-emerald-700' : 'text-rose-600 line-through'}`}>
+                          <div className="p-3 bg-white dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase block mb-1">Bạn đã trả lời:</span>
+                            <span className={`font-bold text-sm break-words block ${isCorrect ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-400 line-through'}`}>
                               {result?.answer || "(Bỏ trống)"}
                             </span>
                           </div>
-                          <div className="p-3 bg-white rounded-xl border border-slate-200">
-                            <span className="text-[10px] font-black text-sky-600 uppercase block mb-1">Đáp án chuẩn:</span>
-                            <span className="font-bold text-sm text-sky-800 break-words block">
+                          <div className="p-3 bg-white dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <span className="text-[10px] font-black text-sky-600 dark:text-sky-400 uppercase block mb-1">Đáp án chuẩn:</span>
+                            <span className="font-bold text-sm text-sky-800 dark:text-sky-200 break-words block">
                               {q.content?.correct || q.content?.correctAnswer}
                             </span>
                             {q.content?.translation && (
-                              <span className="block mt-1.5 text-xs text-slate-500 italic break-words">
+                              <span className="block mt-1.5 text-xs text-slate-500 dark:text-slate-400 italic break-words">
                                 Dịch: {q.content.translation}
                               </span>
                             )}
@@ -164,34 +164,34 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
           <motion.div 
             initial={{ y: -10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="bg-white rounded-[2rem] p-6 border-4 border-slate-100 shadow-sm text-center relative overflow-hidden space-y-4"
+            className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm text-center relative overflow-hidden space-y-4"
           >
-            <div className="absolute -top-4 -right-4 text-amber-100 opacity-60 pointer-events-none">
+            <div className="absolute -top-4 -right-4 text-amber-100 dark:text-amber-900/30 opacity-60 pointer-events-none">
               <Trophy size={130} />
             </div>
 
-            <div className="w-16 h-16 bg-amber-100 text-amber-500 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+            <div className="w-16 h-16 bg-amber-100 dark:bg-amber-950/60 text-amber-500 dark:text-amber-400 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
               <Trophy size={32} />
             </div>
 
             <div>
-              <h2 className="text-xl font-black text-slate-800">Tổng Điểm Của Bạn</h2>
-              <p className="text-xs font-bold text-slate-400 mt-0.5">Hoàn thành bài luyện tập xuất sắc</p>
+              <h2 className="text-xl font-black text-slate-800 dark:text-slate-100">Tổng Điểm Của Bạn</h2>
+              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 mt-0.5">Hoàn thành bài luyện tập xuất sắc</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3 pt-2">
-              <div className="p-4 bg-sky-50 rounded-2xl border border-sky-200 flex flex-col items-center">
-                <Target className="text-sky-600 mb-1" size={24} />
-                <span className="text-[10px] font-black text-slate-500 uppercase">Câu đúng</span>
-                <span className="text-2xl font-black text-sky-700">
-                  {analytics.totalCorrect} <span className="text-sm text-sky-400">/{analytics.totalQuestions}</span>
+              <div className="p-4 bg-sky-50 dark:bg-sky-950/40 rounded-2xl border border-sky-200 dark:border-sky-900/50 flex flex-col items-center">
+                <Target className="text-sky-600 dark:text-sky-400 mb-1" size={24} />
+                <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase">Câu đúng</span>
+                <span className="text-2xl font-black text-sky-700 dark:text-sky-300">
+                  {analytics.totalCorrect} <span className="text-sm text-sky-400 dark:text-sky-500">/{analytics.totalQuestions}</span>
                 </span>
               </div>
 
-              <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 flex flex-col items-center">
-                <Star className="text-emerald-500 mb-1" size={24} />
-                <span className="text-[10px] font-black text-slate-500 uppercase">Chính xác</span>
-                <span className="text-2xl font-black text-emerald-600">
+              <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl border border-emerald-200 dark:border-emerald-900/50 flex flex-col items-center">
+                <Star className="text-emerald-500 dark:text-emerald-400 mb-1" size={24} />
+                <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase">Chính xác</span>
+                <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
                   {analytics.overallAccuracyPercent}%
                 </span>
               </div>
@@ -212,7 +212,7 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
                 <RefreshCw size={18} /> Làm lại bài thi này
               </button>
               <Link href={practiceCatalogHref} className="w-full">
-                <button className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 px-4 rounded-xl transition-all cursor-pointer text-xs">
+                <button className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold py-3 px-4 rounded-xl transition-all cursor-pointer text-xs">
                   {isListeningResult ? "Chọn bài luyện nghe khác" : "Chọn bài tập khác"}
                 </button>
               </Link>
@@ -220,13 +220,13 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
           </motion.div>
 
           {/* Gamification Reward Card */}
-          <div className="bg-amber-50 border-2 border-amber-200 p-5 rounded-[2rem] flex items-center gap-4">
+          <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 p-5 rounded-2xl flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-amber-400 flex items-center justify-center text-2xl shadow-sm shrink-0">
               🍞
             </div>
             <div>
-              <p className="font-black text-slate-800 text-sm">Điểm Thưởng Đã Nhận</p>
-              <p className="text-xs font-bold text-amber-800 mt-0.5">+20 EXP • Đã ghi nhận vào Nhiệm Vụ Ngày</p>
+              <p className="font-black text-slate-800 dark:text-slate-100 text-sm">Điểm Thưởng Đã Nhận</p>
+              <p className="text-xs font-bold text-amber-800 dark:text-amber-300 mt-0.5">+20 EXP • Đã ghi nhận vào Nhiệm Vụ Ngày</p>
             </div>
           </div>
         </div>

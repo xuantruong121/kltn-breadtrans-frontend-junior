@@ -137,9 +137,9 @@ function LoginForm() {
     <>
       {/* Return URL Context Notification Banner */}
       {showReturnBanner && (
-        <div className="mb-4 bg-amber-50 text-amber-900 border border-amber-200 p-3.5 rounded-2xl shadow-xs flex items-start justify-between gap-3 transition-all duration-200">
+        <div className="mb-4 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-200 dark:border-amber-900/60 p-3.5 rounded-2xl shadow-xs flex items-start justify-between gap-3 transition-all duration-200">
           <div className="flex items-start gap-2.5 text-xs sm:text-sm leading-snug">
-            <Info className="text-amber-600 size-5 shrink-0 mt-0.5" />
+            <Info className="text-amber-600 dark:text-amber-400 size-5 shrink-0 mt-0.5" />
             <div>
               Bạn cần đăng nhập để truy cập tính năng vừa chọn. Hệ thống sẽ tự
               động chuyển tiếp ngay sau khi xác thực thành công.
@@ -149,7 +149,7 @@ function LoginForm() {
             type="button"
             onClick={() => setShowReturnBanner(false)}
             aria-label="Đóng thông báo"
-            className="text-amber-700/70 hover:text-amber-900 p-1 rounded-lg hover:bg-amber-100 transition-colors shrink-0"
+            className="text-amber-700/70 hover:text-amber-900 p-1 rounded-lg hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-900/50 transition-colors shrink-0 cursor-pointer"
           >
             <X size={16} />
           </button>
@@ -157,16 +157,16 @@ function LoginForm() {
       )}
 
       {/* Authentication Card */}
-      <div className="bg-white rounded-3xl shadow-xl p-6 sm:p-10 relative border border-amber-100">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl p-6 sm:p-10 relative border border-amber-100 dark:border-slate-800">
         {/* Header Info */}
         <div className="text-center mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-200 flex items-center justify-center mx-auto mb-3 shadow-xs text-amber-700">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 flex items-center justify-center mx-auto mb-3 shadow-xs text-amber-700 dark:text-amber-400">
             <Lock size={22} />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
             Đăng nhập BreadTrans
           </h1>
-          <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
             Chào mừng bạn quay trở lại! Tiếp tục hành trình học tiếng Anh của
             bạn.
           </p>
@@ -176,17 +176,17 @@ function LoginForm() {
         {errorMsg && (
           <div
             role="alert"
-            className="mb-5 bg-rose-50 text-rose-800 border border-rose-200 p-3.5 rounded-2xl text-sm font-medium flex items-center justify-between gap-3 animate-in fade-in duration-150"
+            className="mb-5 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-200 border border-rose-200 dark:border-rose-900/60 p-3.5 rounded-2xl text-sm font-medium flex items-center justify-between gap-3 animate-in fade-in duration-150"
           >
             <div className="flex items-center gap-2.5">
-              <AlertCircle size={18} className="text-rose-600 shrink-0" />
+              <AlertCircle size={18} className="text-rose-600 dark:text-rose-400 shrink-0" />
               <span>{errorMsg}</span>
             </div>
             <button
               type="button"
               onClick={() => setErrorMsg("")}
               aria-label="Đóng thông báo lỗi"
-              className="text-rose-600 hover:text-rose-800 p-1 rounded-lg hover:bg-rose-100 transition-colors"
+              className="text-rose-600 hover:text-rose-800 p-1 rounded-lg hover:bg-rose-100 dark:text-rose-300 dark:hover:bg-rose-900/50 transition-colors cursor-pointer"
             >
               <X size={16} />
             </button>
@@ -198,13 +198,13 @@ function LoginForm() {
           {/* Email Input Field */}
           <div className="space-y-1.5">
             <label
-              className="block text-sm font-bold text-slate-700"
+              className="block text-sm font-bold text-slate-700 dark:text-slate-300"
               htmlFor="emailInput"
             >
               Địa chỉ Email <span className="text-rose-500">*</span>
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 dark:text-slate-500">
                 <Mail size={18} />
               </span>
               <input
@@ -216,7 +216,7 @@ function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
                 aria-invalid={Boolean(errorMsg)}
-                className="w-full pl-10 pr-4 py-3 bg-slate-50/70 border border-slate-200 rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all"
+                className="w-full pl-10 pr-4 py-3 bg-slate-50/70 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all"
               />
             </div>
           </div>
@@ -224,13 +224,13 @@ function LoginForm() {
           {/* Password Input Field */}
           <div className="space-y-1.5">
             <label
-              className="block text-sm font-bold text-slate-700"
+              className="block text-sm font-bold text-slate-700 dark:text-slate-300"
               htmlFor="passwordInput"
             >
               Mật khẩu <span className="text-rose-500">*</span>
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 dark:text-slate-500">
                 <KeyRound size={18} />
               </span>
               <input
@@ -242,13 +242,13 @@ function LoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 aria-invalid={Boolean(errorMsg)}
-                className="w-full pl-10 pr-11 py-3 bg-slate-50/70 border border-slate-200 rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all"
+                className="w-full pl-10 pr-11 py-3 bg-slate-50/70 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all"
               />
               <button
                 type="button"
                 id="togglePassBtn"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+                className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 items-center justify-center text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors cursor-pointer"
                 title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                 aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
               >
@@ -259,20 +259,20 @@ function LoginForm() {
 
           {/* Options Row: Remember & Forgot */}
           <div className="flex items-center justify-between text-xs sm:text-sm pt-1">
-            <label className="flex items-center gap-2 cursor-pointer select-none text-slate-600 hover:text-slate-800">
+            <label className="flex items-center gap-2 cursor-pointer select-none text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200">
               <input
                 id="rememberMe"
                 name="remember"
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                className="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-amber-600 focus:ring-amber-500 cursor-pointer"
               />
               <span>Ghi nhớ đăng nhập</span>
             </label>
             <Link
               href="mailto:support@breadtrans.edu.vn?subject=Y%C3%AAu%20c%E1%BA%A7u%20h%E1%BB%97%20tr%E1%BB%A3%20%C4%91%E1%BA%B7t%20l%E1%BA%A1i%20m%E1%BA%ADt%20kh%E1%BA%A9u"
-              className="font-bold text-amber-700 hover:underline transition-colors"
+              className="font-bold text-amber-700 dark:text-amber-400 hover:underline transition-colors"
             >
               Quên mật khẩu?
             </Link>
@@ -283,7 +283,7 @@ function LoginForm() {
             type="submit"
             id="submitBtn"
             disabled={isLoading}
-            className="btn-tactile-primary w-full py-3.5 px-6 rounded-xl font-bold text-sm sm:text-base bg-amber-600 hover:bg-amber-700 text-white shadow-md transition-all duration-150 flex items-center justify-center gap-2 select-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-tactile-primary w-full py-3.5 px-6 rounded-xl font-bold text-sm sm:text-base bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white dark:text-slate-950 shadow-md transition-all duration-150 flex items-center justify-center gap-2 select-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <>
@@ -301,8 +301,8 @@ function LoginForm() {
 
         {/* Divider with Text */}
         <div className="relative my-6 flex items-center justify-center">
-          <div className="w-full bg-slate-200 h-[1px]" />
-          <span className="absolute px-3 bg-white text-xs font-bold text-slate-400 uppercase tracking-wider">
+          <div className="w-full bg-slate-200 dark:bg-slate-800 h-[1px]" />
+          <span className="absolute px-3 bg-white dark:bg-slate-900 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
             Hoặc tiếp tục với
           </span>
         </div>
@@ -319,12 +319,12 @@ function LoginForm() {
         </div>
 
         {/* Footer Card Direction */}
-        <div className="mt-6 text-center pt-3 bg-slate-50/80 border border-slate-100 rounded-2xl p-3.5">
-          <p className="text-sm text-slate-600">
+        <div className="mt-6 text-center pt-3 bg-slate-50/80 dark:bg-slate-850/60 border border-slate-100 dark:border-slate-800 rounded-2xl p-3.5">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             Chưa có tài khoản BreadTrans?{" "}
             <Link
               href={registerHref}
-              className="font-bold text-amber-700 hover:underline ml-1 inline-block"
+              className="font-bold text-amber-700 dark:text-amber-400 hover:underline ml-1 inline-block"
             >
               Đăng ký ngay miễn phí
             </Link>

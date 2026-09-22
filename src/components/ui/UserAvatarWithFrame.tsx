@@ -200,9 +200,9 @@ export const UserAvatarWithFrame: React.FC<UserAvatarWithFrameProps> = ({
           ======================================================== */}
       {showBadge && activeBadge && (
         <div
-          className={`absolute ${badgeSizeClasses[size]} bg-white rounded-full shadow-md border border-slate-200 z-20 flex items-center justify-center leading-none select-none`}
-        >
-          <span title={activeBadge}>{getBadgeIcon(activeBadge)}</span>
+          className={`absolute ${badgeSizeClasses[size]} bg-white dark:bg-slate-900 rounded-full shadow-md border border-slate-200 dark:border-slate-700 z-20 flex items-center justify-center leading-none select-none`}
+          title={activeBadge}
+        >  <span title={activeBadge}>{getBadgeIcon(activeBadge)}</span>
         </div>
       )}
     </div>

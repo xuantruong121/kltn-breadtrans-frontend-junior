@@ -51,9 +51,9 @@ function StudyRoomContent() {
 
   if (!activeTopic || !activeTopic.words || activeTopic.words.length === 0) {
     return (
-      <div className="max-w-md mx-auto text-center mt-20 space-y-4 bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
-        <h2 className="text-lg font-extrabold text-slate-800">Không tìm thấy bài học</h2>
-        <p className="text-xs text-slate-500 font-medium">
+      <div className="max-w-md mx-auto text-center mt-20 space-y-4 bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <h2 className="text-lg font-extrabold text-slate-800 dark:text-slate-100">Không tìm thấy bài học</h2>
+        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
           Vui lòng chọn một chủ đề từ vựng từ danh mục để bắt đầu.
         </p>
         <div className="flex justify-center pt-2">

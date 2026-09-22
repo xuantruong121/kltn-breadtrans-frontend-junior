@@ -65,13 +65,13 @@ function FormattedMessage({ content, isWhiteText = false }: { content: string; i
         const token = match[0];
         if (token.startsWith("**") && token.endsWith("**")) {
           parts.push(
-            <strong key={`b-${match.index}`} className={`font-black ${isWhiteText ? "text-white underline decoration-white/30" : "text-slate-900"}`}>
+            <strong key={`b-${match.index}`} className={`font-black ${isWhiteText ? "text-white underline decoration-white/30" : "text-slate-900 dark:text-slate-100"}`}>
               {token.slice(2, -2)}
             </strong>
           );
         } else if (token.startsWith("*") && token.endsWith("*")) {
           parts.push(
-            <em key={`i-${match.index}`} className={`italic font-medium ${isWhiteText ? "text-amber-100" : "text-slate-700"}`}>
+            <em key={`i-${match.index}`} className={`italic font-medium ${isWhiteText ? "text-amber-100" : "text-slate-700 dark:text-slate-300"}`}>
               {token.slice(1, -1)}
             </em>
           );
@@ -93,12 +93,12 @@ function FormattedMessage({ content, isWhiteText = false }: { content: string; i
         elements.push(
           <div key={`line-${lineIdx}`} className="flex items-start gap-2 ml-1 my-1">
             <span className={`font-black mt-0.5 text-xs ${isWhiteText ? "text-amber-200" : "text-junior-orange"}`}>●</span>
-            <div className={`flex-1 leading-relaxed ${isWhiteText ? "text-white font-medium" : "text-slate-800"}`}>{parts}</div>
+            <div className={`flex-1 leading-relaxed ${isWhiteText ? "text-white font-medium" : "text-slate-800 dark:text-slate-200"}`}>{parts}</div>
           </div>
         );
       } else {
         elements.push(
-          <p key={`line-${lineIdx}`} className={`leading-relaxed my-0.5 ${isWhiteText ? "text-white font-medium" : "text-slate-800"}`}>
+          <p key={`line-${lineIdx}`} className={`leading-relaxed my-0.5 ${isWhiteText ? "text-white font-medium" : "text-slate-800 dark:text-slate-200"}`}>
             {parts}
           </p>
         );
@@ -753,13 +753,13 @@ export default function FloatingAiTutor() {
             role="dialog"
             aria-modal="true"
             aria-label={isAdminOrTeacher ? "Trung tâm tin nhắn hỗ trợ học viên" : "Cửa sổ hỗ trợ trực tuyến BreadTrans"}
-            className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-2 sm:right-4 md:bottom-8 md:right-8 w-[calc(100vw-1rem)] max-w-sm md:w-[420px] bg-white rounded-2xl shadow-2xl z-[50] border border-slate-200 overflow-hidden flex flex-col h-[min(78dvh,580px)] max-h-[calc(100dvh-5.5rem)]"
+            className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-2 sm:right-4 md:bottom-8 md:right-8 w-[calc(100vw-1rem)] max-w-sm md:w-[420px] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl z-[50] border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col h-[min(78dvh,580px)] max-h-[calc(100dvh-5.5rem)]"
           >
             {/* ======================================================== */}
             {/* 1. MÀN HÌNH DANH SÁCH HỌC SINH (DÀNH CHO ADMIN/TEACHER) */}
             {/* ======================================================== */}
             {isAdminOrTeacher && adminView === "list" ? (
-              <div className="flex flex-col h-full bg-slate-50">
+              <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900">
                 {/* Header Inbox */}
                 <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-4 text-white shrink-0 shadow-md">
                   <div className="flex items-center justify-between">
@@ -807,7 +807,7 @@ export default function FloatingAiTutor() {
                         <div
                           key={thread.studentId}
                           onClick={() => setActiveStudentId(thread.studentId)}
-                          className="bg-white hover:bg-orange-50/60 p-3 rounded-2xl border-2 border-slate-200 hover:border-orange-300 transition-all cursor-pointer shadow-2xs flex items-start gap-3 relative group"
+                          className="bg-white dark:bg-slate-800 hover:bg-orange-50/60 dark:hover:bg-slate-750 p-3 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-orange-300 dark:hover:border-orange-400 transition-all cursor-pointer shadow-2xs flex items-start gap-3 relative group"
                         >
                           {/* Avatar */}
                           <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-600 text-white font-black flex items-center justify-center shrink-0 shadow-xs">
@@ -817,7 +817,7 @@ export default function FloatingAiTutor() {
                           {/* Info & Snippet */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-1">
-                              <h4 className="font-extrabold text-slate-800 text-xs truncate">
+                              <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-xs truncate">
                                 {thread.studentName}
                               </h4>
                               <span className="text-[10px] font-bold text-slate-400 shrink-0">
@@ -825,7 +825,7 @@ export default function FloatingAiTutor() {
                               </span>
                             </div>
 
-                            <p className="text-xs font-semibold text-slate-500 truncate mt-0.5">
+                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate mt-0.5">
                               {lastMsg ? lastMsg.content : "Chưa có tin nhắn"}
                             </p>
 
@@ -955,7 +955,7 @@ export default function FloatingAiTutor() {
                   ref={messageListRef}
                   onScroll={handleScroll}
                   aria-live="polite"
-                  className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-3.5 bg-slate-50"
+                  className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-3.5 bg-slate-50 dark:bg-slate-950"
                 >
                   {/* Tải tin nhắn trước đó (Reverse cursor pagination) */}
                   {currentThread.hasMoreHistory && (
@@ -963,7 +963,7 @@ export default function FloatingAiTutor() {
                       <button
                         onClick={handleLoadOlderMessages}
                         disabled={isLoadingOlder}
-                        className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-200 rounded-full shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        className="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-full shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                       >
                         {isLoadingOlder ? (
                           <>
@@ -979,14 +979,14 @@ export default function FloatingAiTutor() {
 
                   {currentThread.messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center my-auto py-12 text-center text-slate-400 space-y-3">
-                      <div className="w-14 h-14 rounded-3xl bg-amber-100 flex items-center justify-center text-3xl shadow-inner">
+                      <div className="w-14 h-14 rounded-3xl bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center text-3xl shadow-inner">
                         🍞
                       </div>
                       <div className="space-y-1">
-                        <h4 className="font-black text-slate-700 text-sm">
+                        <h4 className="font-black text-slate-700 dark:text-slate-200 text-sm">
                           {isAdminOrTeacher ? "Chưa có tin nhắn nào" : "Chào mừng bạn đến với BreadTrans!"}
                         </h4>
-                        <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
                           {isAdminOrTeacher
                             ? `Chưa có lịch sử tin nhắn với học viên ${currentThread.studentName || "này"}.`
                             : "Bạn cần giải đáp thắc mắc về bài học, từ vựng, ngữ pháp hay lộ trình học? Hãy nhập câu hỏi bên dưới để bắt đầu nhé!"}
@@ -1056,8 +1056,8 @@ export default function FloatingAiTutor() {
                                     ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-tr-xs shadow-md border border-blue-400"
                                     : "bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-tr-xs shadow-md border border-emerald-500"
                                   : isAdminMsg
-                                  ? "bg-emerald-50/95 border-2 border-emerald-300 text-emerald-950 rounded-tl-xs shadow-xs"
-                                  : "bg-white border-2 border-slate-200 text-slate-800 rounded-tl-xs shadow-xs"
+                                  ? "bg-emerald-50/95 dark:bg-emerald-950/60 border-2 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200 rounded-tl-xs shadow-xs"
+                                  : "bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-tl-xs shadow-xs"
                               }`}
                             >
                               <FormattedMessage content={msg.content} isWhiteText={isRightBubble} />
@@ -1074,8 +1074,8 @@ export default function FloatingAiTutor() {
                       <div className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center shrink-0 mt-1">
                         <Headphones size={14} />
                       </div>
-                      <div className="p-3 bg-white border-2 border-slate-200 rounded-2xl rounded-tl-xs text-slate-400 flex items-center gap-1.5 shadow-2xs">
-                        <span className="text-xs font-bold text-slate-500 mr-1">Bánh Mì đang soạn câu trả lời</span>
+                      <div className="p-3 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl rounded-tl-xs text-slate-400 flex items-center gap-1.5 shadow-2xs">
+                        <span className="text-xs font-bold text-slate-500 dark:text-slate-300 mr-1">Bánh Mì đang soạn câu trả lời</span>
                         <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-bounce" />
                         <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
                         <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: "0.4s" }} />
@@ -1088,23 +1088,23 @@ export default function FloatingAiTutor() {
 
                 {/* Quick Chips (Dành cho học sinh) */}
                 {!isAdminOrTeacher && currentThread.messages.length <= 2 && (
-                  <div className="px-4 py-2 bg-slate-100/70 border-t border-slate-200 flex items-center gap-1.5 overflow-x-auto text-[11px] shrink-0 no-scrollbar">
-                    <span className="text-slate-400 font-bold shrink-0">Gợi ý:</span>
+                  <div className="px-4 py-2 bg-slate-100/70 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto text-[11px] shrink-0 no-scrollbar">
+                    <span className="text-slate-400 dark:text-slate-500 font-bold shrink-0">Gợi ý:</span>
                     <button
                       onClick={() => handleQuickQuestion("Giải thích thì hiện tại đơn")}
-                      className="px-2.5 py-1 bg-white hover:bg-orange-50 hover:text-orange-600 text-slate-600 border border-slate-200 rounded-lg font-bold shrink-0 transition-colors cursor-pointer"
+                      className="px-2.5 py-1 bg-white dark:bg-slate-800 hover:bg-orange-50 dark:hover:bg-slate-700 hover:text-orange-600 dark:hover:text-orange-300 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg font-bold shrink-0 transition-colors cursor-pointer"
                     >
                       Thì Hiện Tại Đơn
                     </button>
                     <button
                       onClick={() => handleQuickQuestion("Mẹo học từ vựng nhớ lâu")}
-                      className="px-2.5 py-1 bg-white hover:bg-orange-50 hover:text-orange-600 text-slate-600 border border-slate-200 rounded-lg font-bold shrink-0 transition-colors cursor-pointer"
+                      className="px-2.5 py-1 bg-white dark:bg-slate-800 hover:bg-orange-50 dark:hover:bg-slate-700 hover:text-orange-600 dark:hover:text-orange-300 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg font-bold shrink-0 transition-colors cursor-pointer"
                     >
                       Mẹo Nhớ Từ Vựng
                     </button>
                     <button
                       onClick={() => handleQuickQuestion("Phân biệt 'since' và 'for'")}
-                      className="px-2.5 py-1 bg-white hover:bg-orange-50 hover:text-orange-600 text-slate-600 border border-slate-200 rounded-lg font-bold shrink-0 transition-colors cursor-pointer"
+                      className="px-2.5 py-1 bg-white dark:bg-slate-800 hover:bg-orange-50 dark:hover:bg-slate-700 hover:text-orange-600 dark:hover:text-orange-300 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg font-bold shrink-0 transition-colors cursor-pointer"
                     >
                       Since vs For
                     </button>
@@ -1128,7 +1128,7 @@ export default function FloatingAiTutor() {
                 )}
 
                 {/* Input Area */}
-                <div className="p-3.5 bg-white border-t-2 border-slate-100 flex items-center gap-2 shrink-0">
+                <div className="p-3.5 bg-white dark:bg-slate-900 border-t-2 border-slate-100 dark:border-slate-800 flex items-center gap-2 shrink-0">
                   <input
                     type="text"
                     value={input}
@@ -1143,7 +1143,7 @@ export default function FloatingAiTutor() {
                         ? "Nhập tin nhắn gửi đến Quản Trị Viên..."
                         : "Hỏi Trợ Lý Bánh Mì bất kỳ điều gì..."
                     }
-                    className="flex-1 bg-slate-100 rounded-2xl px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-orange-400/50 transition-all border border-slate-200"
+                    className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-2xl px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-orange-400/50 transition-all border border-slate-200 dark:border-slate-700"
                   />
                   <button
                     onClick={handleSend}

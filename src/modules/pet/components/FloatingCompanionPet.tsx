@@ -211,7 +211,7 @@ export const FloatingCompanionPet: React.FC = () => {
         <div
           role="dialog"
           aria-label="Gợi ý học tập từ thú cưng"
-          className="hidden sm:block absolute bottom-full right-0 mb-3 w-72 sm:w-80 rounded-2xl bg-white border border-amber-200/90 shadow-lg p-3.5 text-xs text-slate-800 animate-in fade-in slide-in-from-bottom-2 duration-200"
+          className="hidden sm:block absolute bottom-full right-0 mb-3 w-72 sm:w-80 rounded-2xl bg-card dark:bg-slate-900 border border-amber-200/90 dark:border-amber-800/70 shadow-lg p-3.5 text-xs text-slate-800 dark:text-slate-100 animate-in fade-in slide-in-from-bottom-2 duration-200"
         >
           <div className="flex items-start justify-between gap-2 mb-1">
             <span className="font-bold text-amber-900 flex items-center gap-1.5">
@@ -254,7 +254,7 @@ export const FloatingCompanionPet: React.FC = () => {
 
           {/* Speech bubble pointer notch */}
           <div
-            className="absolute -bottom-2 right-6 w-3.5 h-3.5 bg-white border-b border-r border-amber-200/90 rotate-45"
+            className="absolute -bottom-2 right-6 w-3.5 h-3.5 bg-card dark:bg-slate-900 border-b border-r border-amber-200/90 dark:border-amber-800/70 rotate-45"
             aria-hidden="true"
           />
         </div>
@@ -273,7 +273,7 @@ export const FloatingCompanionPet: React.FC = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="floating-pet-dialog-title"
-            className="fixed inset-x-0 bottom-0 rounded-t-3xl bg-white border-t border-slate-200 shadow-2xl p-5 max-h-[85dvh] pb-[calc(1.5rem+env(safe-area-inset-bottom))] overflow-y-auto z-50 animate-in slide-in-from-bottom duration-300 sm:inset-auto sm:absolute sm:bottom-full sm:right-0 sm:mb-3 sm:w-88 sm:rounded-2xl sm:border sm:p-5 sm:max-h-[calc(100dvh-6rem)] sm:pb-5 sm:animate-in sm:fade-in sm:zoom-in-95 sm:duration-200"
+            className="fixed inset-x-0 bottom-0 rounded-t-3xl bg-card dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-2xl p-5 max-h-[85dvh] pb-[calc(1.5rem+env(safe-area-inset-bottom))] overflow-y-auto z-50 animate-in slide-in-from-bottom duration-300 sm:inset-auto sm:absolute sm:bottom-full sm:right-0 sm:mb-3 sm:w-88 sm:rounded-2xl sm:border sm:p-5 sm:max-h-[calc(100dvh-6rem)] sm:pb-5 sm:animate-in sm:fade-in sm:zoom-in-95 sm:duration-200"
           >
           {/* Header */}
           <div className="flex items-start justify-between pb-3 border-b border-slate-100 mb-3.5">
@@ -409,7 +409,7 @@ export const FloatingCompanionPet: React.FC = () => {
 
           {/* Daily Quest Recommendation Card */}
           {recommendation && (
-            <div className="p-3 rounded-xl bg-white border border-slate-200 mb-3.5 shadow-2xs">
+            <div className="p-3 rounded-xl bg-card dark:bg-slate-800 border border-slate-200 dark:border-slate-700 mb-3.5 shadow-2xs">
               <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 block mb-1">
                 Nhiệm vụ hôm nay
               </span>
@@ -485,7 +485,7 @@ export const FloatingCompanionPet: React.FC = () => {
             <Link
               href="/pet"
               onClick={() => setIsExpanded(false)}
-              className="w-full min-h-[38px] inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
+              className="w-full min-h-[38px] inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-card dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
             >
               <span>Vào trang quản lý thú cưng</span>
               <ExternalLink size={13} aria-hidden="true" />
@@ -504,7 +504,7 @@ export const FloatingCompanionPet: React.FC = () => {
         }}
         aria-expanded={isExpanded}
         aria-label={`Thú cưng đồng hành ${petName}, cấp ${level}. Nhấn để mở thông tin nhanh.`}
-        className="relative size-12 sm:size-14 rounded-full bg-white border-2 border-amber-300 shadow-md hover:shadow-lg hover:border-amber-400 active:scale-95 flex items-center justify-center transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none group"
+        className="relative size-12 sm:size-14 rounded-full bg-card dark:bg-slate-800 border-2 border-amber-300 dark:border-amber-700 shadow-md hover:shadow-lg hover:border-amber-400 active:scale-95 flex items-center justify-center transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none group"
       >
         <CompanionPet2D speciesId={speciesId} state={visualEmotion} level={level} size="sm" />
 

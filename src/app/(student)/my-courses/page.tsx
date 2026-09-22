@@ -114,27 +114,27 @@ export default function MyCoursesPage() {
       {/* 1. Header & Summary */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 uppercase tracking-wider">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
             <GraduationCap size={15} /> Thư viện khóa học của bạn
           </div>
-          <h1 className="mt-1 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="mt-1 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
             Khóa học của tôi
           </h1>
-          <p className="mt-1 text-sm text-slate-500 font-medium">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 font-medium">
             Quản lý lộ trình học tập, theo dõi tiến độ bài giảng và truy cập vào không gian học.
           </p>
         </div>
 
         <Link
           href="/courses"
-          className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-extrabold text-slate-700 shadow-2xs hover:border-blue-300 hover:text-blue-600"
+          className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 px-4 py-2 text-xs font-extrabold text-slate-700 dark:text-slate-300 shadow-2xs hover:border-blue-300 hover:text-blue-600 dark:hover:border-slate-700 dark:hover:text-blue-400"
         >
           Khám phá thêm khóa học <ArrowRight size={14} />
         </Link>
       </div>
 
       {/* 2. Filter Tabs */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3">
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
         {[
           { key: "ALL", label: "Tất cả khóa học", count: allEnrolled.length },
           {
@@ -165,14 +165,14 @@ export default function MyCoursesPage() {
               }}
               className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-colors cursor-pointer ${
                 isActive
-                  ? "bg-blue-600 text-white shadow-xs"
-                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+                  ? "bg-blue-600 text-white dark:bg-blue-500 shadow-xs"
+                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:text-slate-900 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
               }`}
             >
               <span>{tab.label}</span>
               <span
                 className={`rounded-full px-1.5 py-0.2 text-[10px] font-extrabold ${
-                  isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+                  isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
                 }`}
               >
                 {tab.count}
@@ -195,36 +195,36 @@ export default function MyCoursesPage() {
               return (
                 <div
                   key={cls.classId}
-                  className="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-2xs transition duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+                  className="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 shadow-2xs transition duration-200 hover:-translate-y-0.5 hover:border-blue-200 dark:hover:border-blue-900/60 hover:shadow-md"
                 >
                   <div>
                     {/* Header: Level & Status badge */}
                     <div className="flex items-center justify-between gap-2 mb-3">
-                      <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-bold text-blue-700">
+                      <span className="rounded-full bg-blue-50 dark:bg-blue-950/50 px-2.5 py-0.5 text-[11px] font-bold text-blue-700 dark:text-blue-300">
                         {cls.course?.level || "Cơ bản"}
                       </span>
                       <StatusBadge status={cls.enrollmentStatus} size="sm" />
                     </div>
 
                     {/* Course Title */}
-                    <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">
+                    <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
                       {cls.course?.title || "Khóa học"}
                     </p>
-                    <h3 className="mt-1 text-lg font-extrabold text-slate-900 line-clamp-2">
+                    <h3 className="mt-1 text-lg font-extrabold text-slate-900 dark:text-slate-100 line-clamp-2">
                       {cls.className}
                     </h3>
 
                     {/* Meta info */}
-                    <p className="mt-2 text-xs text-slate-500 leading-relaxed line-clamp-2">
+                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
                       {cls.course?.description ||
                         "Lộ trình tự học theo bài giảng tuần tự, bài tập thực hành và hướng dẫn chi tiết."}
                     </p>
 
                     {/* Progress Bar or Payment Info */}
-                    <div className="mt-6 pt-4 border-t border-slate-100">
+                    <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800">
                       {isPending ? (
-                        <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-3.5 space-y-1">
-                          <div className="flex items-center justify-between text-xs font-bold text-amber-900">
+                        <div className="rounded-2xl border border-amber-200 bg-amber-50/70 dark:border-amber-900/60 dark:bg-amber-950/40 p-3.5 space-y-1">
+                          <div className="flex items-center justify-between text-xs font-bold text-amber-900 dark:text-amber-200">
                             <span>Học phí:</span>
                             <span>
                               {new Intl.NumberFormat("vi-VN").format(
@@ -233,7 +233,7 @@ export default function MyCoursesPage() {
                               đ
                             </span>
                           </div>
-                          <p className="text-[11px] text-amber-700">
+                          <p className="text-[11px] text-amber-700 dark:text-amber-300">
                             {payment?.status === "REPORTED"
                               ? "Đã báo chuyển khoản. Quản trị viên đang duyệt."
                               : "Vui lòng hoàn tất thanh toán để mở khóa toàn bộ bài học."}
@@ -241,15 +241,15 @@ export default function MyCoursesPage() {
                         </div>
                       ) : (
                         <div>
-                          <div className="flex justify-between text-xs font-bold text-slate-600 mb-1.5">
+                          <div className="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
                             <span>Tiến độ nội dung</span>
-                            <span className="text-blue-600 font-extrabold">
+                            <span className="text-blue-600 dark:text-blue-400 font-extrabold">
                               {cls.progress}%
                             </span>
                           </div>
-                          <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                          <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                             <div
-                              className="h-full bg-blue-600 rounded-full transition-all duration-300"
+                              className="h-full bg-blue-600 dark:bg-blue-500 rounded-full transition-all duration-300"
                               style={{ width: `${Math.min(100, cls.progress)}%` }}
                             />
                           </div>
@@ -278,14 +278,14 @@ export default function MyCoursesPage() {
                             : "Xem hướng dẫn thanh toán"}
                         </button>
                       ) : (
-                        <div className="w-full rounded-2xl bg-amber-50 p-2.5 text-center text-xs font-bold text-amber-800 border border-amber-200">
+                        <div className="w-full rounded-2xl bg-amber-50 dark:bg-amber-950/40 p-2.5 text-center text-xs font-bold text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-900/60">
                           Chờ thông tin thanh toán
                         </div>
                       )
                     ) : isCompleted ? (
                       <Link
                         href={`/classes/${cls.classId}`}
-                        className="w-full inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-extrabold text-slate-800 shadow-2xs transition hover:bg-slate-50 hover:text-blue-600"
+                        className="w-full inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 px-4 py-2.5 text-xs font-extrabold text-slate-800 dark:text-slate-200 shadow-2xs transition hover:bg-slate-50 dark:hover:bg-slate-750 hover:text-blue-600 dark:hover:text-blue-400"
                       >
                         Xem lại bài học <ArrowRight size={14} />
                       </Link>
@@ -309,7 +309,7 @@ export default function MyCoursesPage() {
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="p-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition-colors cursor-pointer"
+                className="p-2.5 rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-750 disabled:opacity-40 transition-colors cursor-pointer"
               >
                 <ChevronLeft size={18} />
               </button>
@@ -320,8 +320,8 @@ export default function MyCoursesPage() {
                     onClick={() => setCurrentPage(i + 1)}
                     className={`h-9 w-9 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
                       currentPage === i + 1
-                        ? "bg-blue-600 text-white shadow-xs"
-                        : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                        ? "bg-blue-600 text-white dark:bg-blue-500 shadow-xs"
+                        : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-750"
                     }`}
                   >
                     {i + 1}
@@ -331,7 +331,7 @@ export default function MyCoursesPage() {
               <button
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="p-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition-colors cursor-pointer"
+                className="p-2.5 rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-750 disabled:opacity-40 transition-colors cursor-pointer"
               >
                 <ChevronRight size={18} />
               </button>
@@ -340,14 +340,14 @@ export default function MyCoursesPage() {
         </>
       ) : (
         /* Empty State */
-        <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center max-w-lg mx-auto space-y-4">
-          <BookOpen className="mx-auto text-slate-300" size={44} />
-          <h3 className="text-lg font-extrabold text-slate-900">
+        <div className="rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-12 text-center max-w-lg mx-auto space-y-4">
+          <BookOpen className="mx-auto text-slate-300 dark:text-slate-600" size={44} />
+          <h3 className="text-lg font-extrabold text-slate-900 dark:text-slate-100">
             {selectedTab === "ALL"
               ? "Bạn chưa đăng ký khóa học nào"
               : "Không có khóa học trong mục này"}
           </h3>
-          <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
             Khám phá các lộ trình tự học tiếng Anh và luyện đề TOEIC để bắt đầu nâng cao trình độ của bạn ngay hôm nay.
           </p>
           <div className="pt-2">

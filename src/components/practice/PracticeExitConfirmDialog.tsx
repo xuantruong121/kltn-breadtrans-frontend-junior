@@ -90,18 +90,18 @@ export function PracticeExitConfirmDialog({
         aria-modal="true"
         aria-labelledby="exit-confirm-title"
         aria-describedby="exit-confirm-description"
-        className="w-full max-w-md max-w-[calc(100vw-2rem)] max-h-[85dvh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-xl animate-in zoom-in-95 duration-150"
+        className="w-full max-w-md max-w-[calc(100vw-2rem)] max-h-[85dvh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xl animate-in zoom-in-95 duration-150"
       >
         <h3
           id="exit-confirm-title"
-          className="text-lg font-extrabold text-slate-900"
+          className="text-lg font-extrabold text-slate-900 dark:text-slate-100"
         >
           Thoát bài luyện?
         </h3>
 
         <p
           id="exit-confirm-description"
-          className="mt-2 text-sm leading-relaxed text-slate-600"
+          className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400"
         >
           Nếu thoát lúc này, toàn bộ tiến độ của bài luyện này sẽ bị xoá và bạn sẽ phải làm lại từ đầu.
         </p>
@@ -113,7 +113,7 @@ export function PracticeExitConfirmDialog({
             type="button"
             onClick={onStay}
             disabled={isNavigating}
-            className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-5 text-sm font-bold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-50 cursor-pointer"
+            className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-5 text-sm font-bold text-slate-700 dark:text-slate-300 transition hover:bg-slate-100 dark:hover:bg-slate-750 hover:text-slate-900 dark:hover:text-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-50 cursor-pointer"
           >
             Ở lại học tiếp
           </button>
@@ -124,7 +124,7 @@ export function PracticeExitConfirmDialog({
             type="button"
             onClick={onConfirmExit}
             disabled={isNavigating}
-            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-slate-800 px-5 text-sm font-bold text-white shadow-xs transition hover:bg-slate-900 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-700 focus-visible:ring-offset-2 disabled:opacity-50 cursor-pointer"
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-slate-800 dark:bg-slate-700 px-5 text-sm font-bold text-white shadow-xs transition hover:bg-slate-900 dark:hover:bg-slate-600 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-700 focus-visible:ring-offset-2 disabled:opacity-50 cursor-pointer"
           >
             {isNavigating ? (
               <>

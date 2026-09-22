@@ -18,11 +18,11 @@ export function PlacementTestBanner({ hasCompleted = false }: PlacementTestBanne
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, height: 0, overflow: "hidden", marginBottom: 0, transition: { duration: 0.3 } }}
         aria-label="Kiểm tra năng lực đầu vào"
-        className="relative overflow-hidden rounded-3xl border border-blue-200/80 bg-gradient-to-r from-blue-50/90 via-indigo-50/50 to-white p-6 sm:p-7 shadow-xs"
+        className="relative overflow-hidden rounded-3xl border border-blue-200/80 dark:border-blue-900/60 bg-gradient-to-r from-blue-50/90 via-indigo-50/50 to-white dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 p-6 sm:p-7 shadow-xs"
       >
         {/* Subtle decorative blurred orb */}
         <div
-          className="pointer-events-none absolute -right-10 -bottom-10 size-48 rounded-full bg-blue-200/30 blur-3xl"
+          className="pointer-events-none absolute -right-10 -bottom-10 size-48 rounded-full bg-blue-200/30 dark:bg-blue-900/20 blur-3xl"
           aria-hidden="true"
         />
 
@@ -35,20 +35,20 @@ export function PlacementTestBanner({ hasCompleted = false }: PlacementTestBanne
 
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100/90 border border-blue-200/90 px-3 py-1 text-xs font-black uppercase tracking-wider text-blue-900">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100/90 dark:bg-blue-950/70 border border-blue-200/90 dark:border-blue-800/60 px-3 py-1 text-xs font-black uppercase tracking-wider text-blue-900 dark:text-blue-200">
                   Kiểm tra năng lực đầu vào
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200/90 bg-amber-100/90 px-3 py-1 text-xs font-bold text-amber-900 shadow-2xs">
-                  <Gift size={13} className="text-amber-700 shrink-0" aria-hidden="true" />
+                <span className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200/90 dark:border-amber-800/60 bg-amber-100/90 dark:bg-amber-950/70 px-3 py-1 text-xs font-bold text-amber-900 dark:text-amber-200 shadow-2xs">
+                  <Gift size={13} className="text-amber-700 dark:text-amber-400 shrink-0" aria-hidden="true" />
                   <span>Thưởng ngay +50 Bánh mì & Huy hiệu Tân thủ</span>
                 </span>
               </div>
 
-              <h2 className="text-lg font-black text-slate-900 sm:text-xl leading-snug">
+              <h2 className="text-lg font-black text-slate-900 dark:text-slate-100 sm:text-xl leading-snug">
                 Xác định trình độ của bạn để nhận lộ trình cá nhân hóa
               </h2>
 
-              <p className="max-w-3xl text-xs sm:text-sm text-slate-600 leading-relaxed">
+              <p className="max-w-3xl text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                 Chỉ mất 10-15 phút để kiểm tra nhanh trình độ từ vựng, ngữ pháp và phát âm. Hoàn thành ngay để mở khóa toàn bộ bài học phù hợp và nhận quà thưởng!
               </p>
             </div>

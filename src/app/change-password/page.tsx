@@ -24,7 +24,7 @@ function PasswordField({ id, label, value, show, onToggle, onChange, autoComplet
     <div className="space-y-1.5">
       <label htmlFor={id} className="block text-sm font-bold text-on-surface">{label}</label>
       <div className="relative">
-        <input id={id} required minLength={id === "new-password" ? 8 : undefined} type={show ? "text" : "password"} value={value} onChange={(event) => onChange(event.target.value)} autoComplete={autoComplete} aria-invalid={hasError} className="w-full rounded-xl border border-surface-container-high bg-surface-container-low px-4 py-3 pr-12 text-sm text-on-surface outline-none transition-all placeholder:text-on-surface-variant/55 focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10" />
+        <input id={id} required minLength={id === "new-password" ? 8 : undefined} type={show ? "text" : "password"} value={value} onChange={(event) => onChange(event.target.value)} autoComplete={autoComplete} aria-invalid={hasError} className="w-full rounded-xl border border-surface-container-high bg-surface-container-low px-4 py-3 pr-12 text-sm text-on-surface outline-none transition-all placeholder:text-on-surface-variant/55 focus:border-primary focus:bg-surface-elevated dark:focus:bg-slate-800 focus:ring-4 focus:ring-primary/10" />
         <button type="button" onClick={onToggle} aria-label={show ? `Ẩn ${label.toLowerCase()}` : `Hiện ${label.toLowerCase()}`} aria-pressed={show} className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 items-center justify-center rounded-r-xl text-on-surface-variant hover:text-primary">
           {show ? <EyeOff size={19} aria-hidden="true" /> : <Eye size={19} aria-hidden="true" />}
         </button>

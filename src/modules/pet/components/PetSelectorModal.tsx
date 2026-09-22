@@ -62,7 +62,7 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 12 }}
           transition={{ duration: 0.2 }}
-          className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-4xl w-full p-5 sm:p-7 max-h-[min(90dvh,calc(100dvh-3rem))] overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent]"
+          className="bg-card dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl max-w-4xl w-full p-5 sm:p-7 max-h-[min(90dvh,calc(100dvh-3rem))] overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent]"
         >
           {/* Header */}
           <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-5">
@@ -111,7 +111,7 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
                   className={`p-4 sm:p-5 rounded-2xl border transition-all flex flex-col justify-between ${
                     isSelected
                       ? "bg-amber-50/40 border-amber-400 ring-1 ring-amber-400/40 shadow-xs"
-                      : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-2xs"
+                      : "bg-card dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-2xs"
                   }`}
                 >
                   <div>

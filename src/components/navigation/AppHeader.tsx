@@ -41,6 +41,8 @@ import { usePushNotification } from "@/lib/hooks/usePushNotification";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { notificationService, NotificationItem } from "@/lib/api/services/notification.service";
 import { BrandLogo } from "@/components/brand";
+import { isExamRoute, isSkillsRoute } from "./navUtils";
+import { ThemeToggle } from "./ThemeToggle";
 
 const emptySubscribe = () => () => {};
 
@@ -167,14 +169,14 @@ function StudentNotificationMenu() {
   const renderMenuContent = (isMobile: boolean = false) => (
     <div className="flex flex-col overflow-hidden">
       {/* TABS HEADER */}
-      <div className="flex border-b border-slate-100 bg-slate-50/80 p-1.5 shrink-0">
+      <div className="flex border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/80 p-1.5 shrink-0">
         <button
           type="button"
           onClick={() => setActiveTab("inbox")}
           className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition-all cursor-pointer ${
             activeTab === "inbox"
-              ? "bg-white text-amber-900 shadow-sm"
-              : "text-slate-500 hover:text-slate-800"
+              ? "bg-white dark:bg-slate-900 text-amber-900 dark:text-amber-400 shadow-sm"
+              : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
           }`}
         >
           <Inbox size={15} />
@@ -190,8 +192,8 @@ function StudentNotificationMenu() {
           onClick={() => setActiveTab("settings")}
           className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition-all cursor-pointer ${
             activeTab === "settings"
-              ? "bg-white text-amber-900 shadow-sm"
-              : "text-slate-500 hover:text-slate-800"
+              ? "bg-white dark:bg-slate-900 text-amber-900 dark:text-amber-400 shadow-sm"
+              : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
           }`}
         >
           <Settings size={15} />
@@ -203,8 +205,8 @@ function StudentNotificationMenu() {
       {activeTab === "inbox" && (
         <div className="flex flex-col min-h-0">
           {/* Inbox Subheader */}
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2.5 shrink-0 bg-white">
-            <span className="text-xs font-bold text-slate-500">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-4 py-2.5 shrink-0 bg-white dark:bg-slate-900">
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
               {unreadCount > 0 ? `${unreadCount} thông báo chưa đọc` : "Đã đọc tất cả"}
             </span>
             {unreadCount > 0 && (
@@ -212,7 +214,7 @@ function StudentNotificationMenu() {
                 type="button"
                 disabled={markAllReadMut.isPending}
                 onClick={() => markAllReadMut.mutate()}
-                className="flex items-center gap-1 text-[11px] font-bold text-amber-700 hover:text-amber-900 disabled:opacity-50 cursor-pointer"
+                className="flex items-center gap-1 text-[11px] font-bold text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300 disabled:opacity-50 cursor-pointer"
               >
                 <CheckCheck size={13} />
                 <span>Đọc tất cả</span>
@@ -221,7 +223,7 @@ function StudentNotificationMenu() {
           </div>
 
           {/* Notification List */}
-          <div className={`${isMobile ? "max-h-[50dvh]" : "max-h-[360px]"} overflow-y-auto divide-y divide-slate-100`}>
+          <div className={`${isMobile ? "max-h-[50dvh]" : "max-h-[360px]"} overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800`}>
             {isInboxLoading ? (
               <div className="flex items-center justify-center py-8 text-slate-400">
                 <Loader2 size={24} className="animate-spin text-amber-500" />
@@ -244,17 +246,19 @@ function StudentNotificationMenu() {
                     key={item.id}
                     onClick={() => handleItemClick(item, isMobile)}
                     className={`group relative flex items-start gap-3 p-3.5 transition-colors cursor-pointer ${
-                      item.isRead ? "bg-white hover:bg-slate-50/80" : "bg-amber-50/50 hover:bg-amber-50"
+                      item.isRead
+                        ? "bg-white dark:bg-slate-900 hover:bg-slate-50/80 dark:hover:bg-slate-800/60"
+                        : "bg-amber-50/50 dark:bg-amber-950/30 hover:bg-amber-50 dark:hover:bg-amber-950/50"
                     }`}
                   >
                     {/* Icon */}
                     <div
                       className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl text-xs ${
                         isVocab
-                          ? "bg-amber-100 text-amber-800"
+                          ? "bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300"
                           : isStreak
-                          ? "bg-orange-100 text-orange-700"
-                          : "bg-blue-100 text-blue-700"
+                          ? "bg-orange-100 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300"
+                          : "bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300"
                       }`}
                     >
                       {isVocab ? (
@@ -271,7 +275,9 @@ function StudentNotificationMenu() {
                       <div className="flex items-center justify-between gap-1">
                         <p
                           className={`text-xs leading-snug line-clamp-1 ${
-                            item.isRead ? "font-semibold text-slate-700" : "font-extrabold text-slate-900"
+                            item.isRead
+                              ? "font-semibold text-slate-700 dark:text-slate-300"
+                              : "font-extrabold text-slate-900 dark:text-slate-100"
                           }`}
                         >
                           {item.title}
@@ -299,25 +305,25 @@ function StudentNotificationMenu() {
       {/* TAB 2: PUSH SETTINGS */}
       {activeTab === "settings" && (
         <div className="overflow-y-auto max-h-[50dvh] sm:max-h-none">
-          <div className="flex items-start gap-3 border-b border-slate-100 bg-slate-50/70 p-4">
-            <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${isSubscribed ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+          <div className="flex items-start gap-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 p-4">
+            <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${isSubscribed ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300" : "bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300"}`}>
               {isSubscribed ? <ShieldCheck size={20} aria-hidden="true" /> : <BellOff size={20} aria-hidden="true" />}
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-extrabold text-slate-900">Thông báo trình duyệt</h2>
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${isSubscribed ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800"}`}>{status}</span>
+                <h2 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">Thông báo trình duyệt</h2>
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${isSubscribed ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300" : "bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300"}`}>{status}</span>
               </div>
-              <p className="mt-1 text-xs leading-5 text-slate-500">Nhận nhắc ôn tập từ vựng Spaced Repetition và duy trì ngọn lửa streak ngay trên thiết bị này.</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Nhận nhắc ôn tập từ vựng Spaced Repetition và duy trì ngọn lửa streak ngay trên thiết bị này.</p>
             </div>
           </div>
           <div className="space-y-3 p-4">
             {!isSupported ? (
-              <p className="rounded-xl bg-slate-50 p-3 text-xs font-semibold leading-5 text-slate-500">Trình duyệt hiện tại không hỗ trợ thông báo đẩy.</p>
+              <p className="rounded-xl bg-slate-50 dark:bg-slate-800 p-3 text-xs font-semibold leading-5 text-slate-500 dark:text-slate-400">Trình duyệt hiện tại không hỗ trợ thông báo đẩy.</p>
             ) : permission === "denied" ? (
-              <p className="rounded-xl bg-rose-50 p-3 text-xs font-semibold leading-5 text-rose-700">Bạn đã chặn thông báo. Hãy bật lại quyền thông báo trong cài đặt trình duyệt để tiếp tục.</p>
+              <p className="rounded-xl bg-rose-50 dark:bg-rose-950/40 p-3 text-xs font-semibold leading-5 text-rose-700 dark:text-rose-300">Bạn đã chặn thông báo. Hãy bật lại quyền thông báo trong cài đặt trình duyệt để tiếp tục.</p>
             ) : isSubscribed ? (
-              <button type="button" disabled={isPushLoading} onClick={unsubscribeFromPush} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-extrabold text-slate-700 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer">
+              <button type="button" disabled={isPushLoading} onClick={unsubscribeFromPush} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 text-sm font-extrabold text-slate-700 dark:text-slate-200 transition-colors hover:border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer">
                 {isPushLoading ? <Loader2 size={17} className="animate-spin" aria-hidden="true" /> : <BellOff size={17} aria-hidden="true" />} Tắt thông báo đẩy
               </button>
             ) : (
@@ -341,8 +347,8 @@ function StudentNotificationMenu() {
         aria-controls="student-notification-menu-desktop"
         className={`relative flex size-9 sm:size-10 sm:min-h-11 sm:min-w-11 items-center justify-center rounded-xl border transition-all focus-visible:outline-none ${
           open
-            ? "border-amber-200 bg-amber-50 text-amber-800 shadow-2xs"
-            : "border-transparent text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-800"
+            ? "border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 shadow-2xs"
+            : "border-transparent text-slate-500 dark:text-slate-400 hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200"
         }`}
       >
         <Bell size={18} className="sm:hidden" aria-hidden="true" />
@@ -360,7 +366,7 @@ function StudentNotificationMenu() {
       {open && (
         <section
           id="student-notification-menu-desktop"
-          className="hidden sm:block absolute right-0 top-full z-50 mt-2 w-96 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in slide-in-from-top-2 duration-150"
+          className="hidden sm:block absolute right-0 top-full z-50 mt-2 w-96 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-150"
         >
           {renderMenuContent(false)}
         </section>
@@ -382,17 +388,17 @@ function StudentNotificationMenu() {
             <section
               ref={mobilePanelRef}
               id="student-notification-menu-mobile"
-              className="fixed top-20 inset-x-3 z-[9995] max-w-[420px] mx-auto overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[calc(100dvh-6rem)] flex flex-col"
+              className="fixed top-20 inset-x-3 z-[9995] max-w-[420px] mx-auto overflow-hidden rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[calc(100dvh-6rem)] flex flex-col"
             >
               {/* Mobile Header Bar */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-white shrink-0">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-400 flex items-center justify-center shrink-0">
                     <Bell size={17} />
                   </div>
                   <div>
-                    <h3 className="text-sm font-black text-slate-900">Thông báo</h3>
-                    <p className="text-[11px] font-semibold text-slate-500">
+                    <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">Thông báo</h3>
+                    <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                       {unreadCount > 0 ? `${unreadCount} thông báo chưa đọc` : "Đã đọc tất cả"}
                     </p>
                   </div>
@@ -401,7 +407,7 @@ function StudentNotificationMenu() {
                   type="button"
                   onClick={() => setOpen(false)}
                   aria-label="Đóng thông báo"
-                  className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors cursor-pointer"
+                  className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
                 >
                   <X size={18} />
                 </button>
@@ -487,11 +493,8 @@ export function AppHeader() {
 
   const isStudent = isReady && user?.role === "STUDENT";
   const isAdmin = isReady && user?.role === "ADMIN";
-  const isExamPath = pathname.startsWith("/practice/toeic") || pathname.startsWith("/practice/quizzes");
-  const isSkillsPath =
-    (pathname.startsWith("/practice") && !isExamPath) ||
-    pathname.startsWith("/flashcard") ||
-    pathname.startsWith("/grammar");
+  const isExamPath = isExamRoute(pathname);
+  const isSkillsPath = isSkillsRoute(pathname);
 
   interface HeaderNavLink {
     label: string;
@@ -555,7 +558,7 @@ export function AppHeader() {
   );
 
   return (
-    <header className="sticky top-0 z-[70] w-full bg-white/95 backdrop-blur-md border-b border-slate-200/80 transition-all duration-200 shadow-xs">
+    <header className="sticky top-0 z-[70] w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 transition-all duration-200 shadow-xs">
       <div className="w-full px-3 sm:px-6 lg:px-6 xl:px-8 2xl:px-12 h-16 sm:h-20 flex items-center justify-between gap-1.5 sm:gap-4">
         
         {/* Brand Logo & Role Tag */}
@@ -579,8 +582,8 @@ export function AppHeader() {
             href={isStudent ? "/dashboard" : "/"}
             className={`px-2 xl:px-3 py-1.5 2xl:py-2 rounded-xl flex items-center gap-1 xl:gap-1.5 transition-colors shrink-0 whitespace-nowrap ${
               isActivePath(pathname, isStudent ? "/dashboard" : "/")
-                ? "text-amber-800 bg-amber-50/90 font-black border border-amber-200/60"
-                : "text-slate-600 hover:text-amber-800 hover:bg-amber-50/50"
+                ? "text-amber-800 dark:text-amber-400 bg-amber-50/90 dark:bg-amber-950/50 font-black border border-amber-200/60 dark:border-amber-800/60"
+                : "text-slate-600 dark:text-slate-300 hover:text-amber-800 dark:hover:text-amber-400 hover:bg-amber-50/50 dark:hover:bg-slate-800/60"
             }`}
           >
             <Home size={16} className="shrink-0" aria-hidden="true" />
@@ -590,17 +593,19 @@ export function AppHeader() {
           {/* Trung tâm luyện kỹ năng + lối tắt theo từng kỹ năng */}
           <div
             ref={skillsRef}
-            className="relative flex shrink-0 group"
+            className={`relative flex items-stretch shrink-0 group rounded-xl transition-colors ${
+              isSkillsPath
+                ? "bg-amber-50/90 dark:bg-amber-950/50 border border-amber-200/60 dark:border-amber-800/60 text-amber-800 dark:text-amber-400"
+                : "hover:bg-amber-50/50 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-300"
+            }`}
             onMouseEnter={() => setSkillsOpen(true)}
             onMouseLeave={() => setSkillsOpen(false)}
           >
             <Link
               href="/practice"
               onClick={closeMenus}
-              className={`px-2 xl:px-3 py-1.5 2xl:py-2 rounded-l-xl flex items-center gap-1 xl:gap-1.5 transition-colors font-bold shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 whitespace-nowrap ${
-                isSkillsPath
-                  ? "text-amber-800 bg-amber-50/80 font-black"
-                  : "text-slate-600 hover:text-amber-800 hover:bg-amber-50/50"
+              className={`pl-2 xl:pl-3 pr-1 py-1.5 2xl:py-2 flex items-center gap-1 xl:gap-1.5 transition-colors font-bold shrink-0 focus-visible:outline-none whitespace-nowrap rounded-l-xl ${
+                isSkillsPath ? "font-black" : "hover:text-amber-800 dark:hover:text-amber-400"
               }`}
             >
               <Dumbbell size={16} className="shrink-0" aria-hidden="true" />
@@ -613,16 +618,16 @@ export function AppHeader() {
               aria-expanded={skillsOpen}
               aria-controls="skills-navigation-menu"
               aria-haspopup="menu"
-              className={`-ml-2 flex min-h-10 min-w-7 xl:min-w-9 items-center justify-center rounded-r-xl transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 cursor-pointer ${
-                isSkillsPath || skillsOpen
-                  ? "bg-amber-50/80 text-amber-700"
-                  : "text-slate-400 hover:bg-amber-50/50 hover:text-amber-700"
-              }`}
+              className="pr-2 xl:pr-2.5 pl-0.5 flex items-center justify-center rounded-r-xl transition-colors shrink-0 focus-visible:outline-none cursor-pointer"
             >
               <ChevronDown
                 size={14}
                 className={`transition-transform duration-200 ${
-                  skillsOpen ? "rotate-180 text-amber-700" : "group-hover:rotate-180 group-hover:text-amber-700"
+                  skillsOpen
+                    ? "rotate-180 text-amber-700 dark:text-amber-400"
+                    : isSkillsPath
+                      ? "text-amber-700 dark:text-amber-400 group-hover:rotate-180"
+                      : "text-slate-400 dark:text-slate-400 group-hover:rotate-180 group-hover:text-amber-700 dark:group-hover:text-amber-400"
                 }`}
               />
             </button>
@@ -635,21 +640,21 @@ export function AppHeader() {
                   : "opacity-0 pointer-events-none -translate-y-1 group-hover:opacity-100 group-hover:pointer-events-auto group-hover:translate-y-0"
               }`}
             >
-              <div id="skills-navigation-menu" role="menu" className="bg-white border border-slate-200/90 rounded-2xl shadow-xl p-2 space-y-1">
+              <div id="skills-navigation-menu" role="menu" className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-xl p-2 space-y-1">
                 {/* 1. Luyện nghe */}
                 <Link
                   href="/practice/listening"
                   onClick={closeMenus}
-                  className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-blue-50/70 text-slate-800 transition-colors group/item"
+                  className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-blue-50/70 dark:hover:bg-blue-950/40 text-slate-800 dark:text-slate-200 transition-colors group/item"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 border border-blue-100/80 dark:border-blue-800/60 flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform">
                     <Headphones size={20} />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-slate-900 group-hover/item:text-blue-700 transition-colors">
+                    <div className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover/item:text-blue-700 dark:group-hover/item:text-blue-400 transition-colors">
                       Luyện nghe
                     </div>
-                    <div className="text-xs font-semibold text-slate-500 leading-snug mt-0.5">
+                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 leading-snug mt-0.5">
                       Rèn khả năng nghe hiểu qua hội thoại và tình huống thực tế.
                     </div>
                   </div>
@@ -659,16 +664,16 @@ export function AppHeader() {
                 <Link
                   href="/practice/speaking"
                   onClick={closeMenus}
-                  className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-purple-50/70 text-slate-800 transition-colors group/item"
+                  className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-purple-50/70 dark:hover:bg-purple-950/40 text-slate-800 dark:text-slate-200 transition-colors group/item"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform">
+                  <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/70 text-purple-600 dark:text-purple-400 border border-purple-100/80 dark:border-purple-800/60 flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform">
                     <Mic size={20} />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-slate-900 group-hover/item:text-purple-700 transition-colors">
+                    <div className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover/item:text-purple-700 dark:group-hover/item:text-purple-400 transition-colors">
                       Luyện nói
                     </div>
-                    <div className="text-xs font-semibold text-slate-500 leading-snug mt-0.5">
+                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 leading-snug mt-0.5">
                       Cải thiện phát âm, ngữ điệu và phản xạ qua các bài tập tương tác.
                     </div>
                   </div>
@@ -678,16 +683,16 @@ export function AppHeader() {
                 <Link
                   href="/practice/reading"
                   onClick={closeMenus}
-                  className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-emerald-50/70 text-slate-800 transition-colors group/item"
+                  className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-emerald-50/70 dark:hover:bg-emerald-950/40 text-slate-800 dark:text-slate-200 transition-colors group/item"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 border border-emerald-100/80 dark:border-emerald-800/60 flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform">
                     <BookOpen size={20} />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-slate-900 group-hover/item:text-emerald-700 transition-colors">
+                    <div className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover/item:text-emerald-700 dark:group-hover/item:text-emerald-400 transition-colors">
                       Luyện đọc
                     </div>
-                    <div className="text-xs font-semibold text-slate-500 leading-snug mt-0.5">
+                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 leading-snug mt-0.5">
                       Phát triển kỹ năng đọc hiểu, tìm ý chính và xử lý thông tin.
                     </div>
                   </div>
@@ -697,16 +702,16 @@ export function AppHeader() {
                 <Link
                   href="/practice/writing"
                   onClick={closeMenus}
-                  className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-rose-50/70 text-slate-800 transition-colors group/item"
+                  className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-rose-50/70 dark:hover:bg-rose-950/40 text-slate-800 dark:text-slate-200 transition-colors group/item"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform">
+                  <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/70 text-rose-600 dark:text-rose-400 border border-rose-100/80 dark:border-rose-800/60 flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform">
                     <PenTool size={20} />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-slate-900 group-hover/item:text-rose-700 transition-colors">
+                    <div className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover/item:text-rose-700 dark:group-hover/item:text-rose-400 transition-colors">
                       Luyện viết
                     </div>
-                    <div className="text-xs font-semibold text-slate-500 leading-snug mt-0.5">
+                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 leading-snug mt-0.5">
                       Luyện viết câu, email và nhận gợi ý chỉnh sửa chi tiết.
                     </div>
                   </div>
@@ -724,8 +729,8 @@ export function AppHeader() {
                 href={link.href}
                 className={`px-2 xl:px-3 py-1.5 2xl:py-2 rounded-xl flex items-center gap-1 xl:gap-1.5 transition-colors shrink-0 whitespace-nowrap ${
                   active
-                    ? "text-amber-800 bg-amber-50/90 font-black border border-amber-200/60"
-                    : "text-slate-600 hover:text-amber-800 hover:bg-amber-50/50"
+                    ? "text-amber-800 dark:text-amber-400 bg-amber-50/90 dark:bg-amber-950/50 font-black border border-amber-200/60 dark:border-amber-800/60"
+                    : "text-slate-600 dark:text-slate-300 hover:text-amber-800 dark:hover:text-amber-400 hover:bg-amber-50/50 dark:hover:bg-slate-800/60"
                 }`}
               >
                 <link.icon size={16} className="shrink-0" />
@@ -743,8 +748,8 @@ export function AppHeader() {
                 href={link.href}
                 className={`hidden 2xl:flex px-2.5 2xl:px-3 py-1.5 2xl:py-2 rounded-xl items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap ${
                   active
-                    ? "text-amber-800 bg-amber-50/90 font-black border border-amber-200/60"
-                    : "text-slate-600 hover:text-amber-800 hover:bg-amber-50/50"
+                    ? "text-amber-800 dark:text-amber-400 bg-amber-50/90 dark:bg-amber-950/50 font-black border border-amber-200/60 dark:border-amber-800/60"
+                    : "text-slate-600 dark:text-slate-300 hover:text-amber-800 dark:hover:text-amber-400 hover:bg-amber-50/50 dark:hover:bg-slate-800/60"
                 }`}
               >
                 <link.icon size={16} className="shrink-0" />
@@ -769,8 +774,8 @@ export function AppHeader() {
               aria-haspopup="menu"
               className={`px-2 xl:px-3 py-1.5 2xl:py-2 rounded-xl flex items-center gap-1 xl:gap-1.5 transition-colors shrink-0 whitespace-nowrap font-bold cursor-pointer ${
                 isAnyOverflowActive
-                  ? "text-amber-800 bg-amber-50/90 font-black border border-amber-200/60"
-                  : "text-slate-600 hover:text-amber-800 hover:bg-amber-50/50"
+                  ? "text-amber-800 dark:text-amber-400 bg-amber-50/90 dark:bg-amber-950/50 font-black border border-amber-200/60 dark:border-amber-800/60"
+                  : "text-slate-600 dark:text-slate-300 hover:text-amber-800 dark:hover:text-amber-400 hover:bg-amber-50/50 dark:hover:bg-slate-800/60"
               }`}
             >
               <MoreHorizontal size={16} className="shrink-0" aria-hidden="true" />
@@ -778,7 +783,7 @@ export function AppHeader() {
               <ChevronDown
                 size={14}
                 className={`shrink-0 transition-transform duration-200 ${
-                  moreOpen ? "rotate-180 text-amber-700" : "text-slate-400 group-hover:rotate-180 group-hover:text-amber-700"
+                  moreOpen ? "rotate-180 text-amber-700 dark:text-amber-400" : "text-slate-400 dark:text-slate-400 group-hover:rotate-180 group-hover:text-amber-700 dark:group-hover:text-amber-400"
                 }`}
               />
             </button>
@@ -794,7 +799,7 @@ export function AppHeader() {
               <div
                 id="more-navigation-menu"
                 role="menu"
-                className="bg-white border border-slate-200/90 rounded-2xl shadow-xl p-1.5 space-y-0.5"
+                className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-xl p-1.5 space-y-0.5"
               >
                 {overflowLinks.map((link) => {
                   const active = link.isExam ? isExamPath : isActivePath(pathname, link.href);
@@ -806,15 +811,15 @@ export function AppHeader() {
                       role="menuitem"
                       className={`flex items-center gap-3 p-2 rounded-xl transition-colors ${
                         active
-                          ? "bg-amber-50/90 text-amber-950 font-bold"
-                          : "text-slate-700 hover:bg-slate-50 hover:text-slate-900 font-semibold"
+                          ? "bg-amber-50/90 dark:bg-amber-950/60 text-amber-950 dark:text-amber-300 font-bold"
+                          : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 font-semibold"
                       }`}
                     >
                       <div
                         className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                           active
                             ? "bg-amber-600 text-white"
-                            : link.iconBg || "bg-slate-100 text-slate-600"
+                            : link.iconBg || "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
                         }`}
                       >
                         <link.icon size={16} />
@@ -823,11 +828,11 @@ export function AppHeader() {
                         <div className="text-xs font-bold truncate flex items-center justify-between">
                           <span>{link.label}</span>
                           {active && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-600 shrink-0" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-600 dark:bg-amber-500 shrink-0" />
                           )}
                         </div>
                         {link.description && (
-                          <div className="text-[10px] text-slate-400 truncate mt-0.5">
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
                             {link.description}
                           </div>
                         )}
@@ -849,7 +854,7 @@ export function AppHeader() {
               <Link
                 href="/student/profile?tab=quotas"
                 title={`Số dư: ${breads || 0} Bánh Mì`}
-                className="flex sm:hidden items-center gap-1 bg-amber-50/90 border border-amber-200/90 px-2 py-1 rounded-xl shadow-2xs text-amber-900 shrink-0 whitespace-nowrap text-xs font-black"
+                className="flex sm:hidden items-center gap-1 bg-amber-50/90 dark:bg-amber-950/50 border border-amber-200/90 dark:border-amber-800/70 px-2 py-1 rounded-xl shadow-2xs text-amber-900 dark:text-amber-300 shrink-0 whitespace-nowrap text-xs font-black"
               >
                 <span className="text-sm shrink-0" role="img" aria-label="Bánh Mì">🥖</span>
                 <span>{breads || 0}</span>
@@ -859,10 +864,10 @@ export function AppHeader() {
               <Link
                 href="/student/profile?tab=quotas"
                 title={`Số dư: ${breads || 0} Bánh Mì`}
-                className="group hidden items-center gap-1 sm:gap-1.5 bg-amber-50/90 border border-amber-200/90 px-2 sm:px-2.5 2xl:px-3 py-1 2xl:py-1.5 rounded-2xl shadow-2xs hover:border-amber-400 transition-colors shrink-0 whitespace-nowrap sm:flex"
+                className="group hidden items-center gap-1 sm:gap-1.5 bg-amber-50/90 dark:bg-amber-950/50 border border-amber-200/90 dark:border-amber-800/70 px-2 sm:px-2.5 2xl:px-3 py-1 2xl:py-1.5 rounded-2xl shadow-2xs hover:border-amber-400 dark:hover:border-amber-600 transition-colors shrink-0 whitespace-nowrap sm:flex"
               >
                 <span className="text-base shrink-0" role="img" aria-label="Bánh Mì">🥖</span>
-                <span className="text-xs font-black text-amber-900 tracking-tight whitespace-nowrap">
+                <span className="text-xs font-black text-amber-900 dark:text-amber-300 tracking-tight whitespace-nowrap">
                   {breads || 0}
                 </span>
               </Link>
@@ -870,7 +875,7 @@ export function AppHeader() {
               {/* Badge Streak */}
               <div
                 title={`Chuỗi học tập liên tục: ${streak || 1} ngày`}
-                className="hidden items-center gap-1 sm:gap-1.5 bg-orange-50/90 border border-orange-200/90 px-2 sm:px-2.5 2xl:px-3 py-1 2xl:py-1.5 rounded-2xl shadow-2xs text-orange-700 shrink-0 whitespace-nowrap sm:flex"
+                className="hidden items-center gap-1 sm:gap-1.5 bg-orange-50/90 dark:bg-orange-950/50 border border-orange-200/90 dark:border-orange-800/70 px-2 sm:px-2.5 2xl:px-3 py-1 2xl:py-1.5 rounded-2xl shadow-2xs text-orange-700 dark:text-orange-300 shrink-0 whitespace-nowrap sm:flex"
               >
                 <Flame size={16} className="fill-orange-500 text-orange-500 shrink-0" />
                 <span className="text-xs font-black tracking-tight whitespace-nowrap">
@@ -878,6 +883,9 @@ export function AppHeader() {
                   <span className="hidden xl:inline"> ngày</span>
                 </span>
               </div>
+
+              {/* Theme Toggle placed immediately left of Notification Menu */}
+              <ThemeToggle className="hidden sm:inline-flex" />
 
               <StudentNotificationMenu />
 
@@ -888,7 +896,7 @@ export function AppHeader() {
                   onClick={() => setProfileMenuOpen((prev) => !prev)}
                   aria-expanded={profileMenuOpen}
                   aria-label="Menu tài khoản"
-                  className="flex size-9 sm:size-auto sm:min-h-11 sm:min-w-11 items-center justify-center sm:gap-1.5 rounded-full bg-white p-0.5 sm:px-1.5 ring-2 ring-amber-500/60 shadow-2xs transition-all hover:bg-amber-50 hover:ring-amber-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-amber-700 cursor-pointer shrink-0"
+                  className="flex size-9 sm:size-auto sm:min-h-11 sm:min-w-11 items-center justify-center sm:gap-1.5 rounded-full bg-white dark:bg-slate-800/90 p-0.5 sm:px-1.5 ring-2 ring-amber-500/60 dark:ring-amber-500/50 shadow-2xs transition-all hover:bg-amber-50 dark:hover:bg-slate-750 hover:ring-amber-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-amber-700 cursor-pointer shrink-0"
                 >
                   <div className="size-7.5 sm:size-8 rounded-full bg-amber-600 text-white font-black text-xs flex items-center justify-center overflow-hidden shrink-0">
                     {user?.profile?.avatar ? (
@@ -904,13 +912,13 @@ export function AppHeader() {
                       <User size={16} />
                     )}
                   </div>
-                  <ChevronDown size={14} className="hidden sm:inline-block text-slate-400 mr-0.5 shrink-0" />
+                  <ChevronDown size={14} className="hidden sm:inline-block text-slate-400 dark:text-slate-300 mr-0.5 shrink-0" />
                 </button>
 
                 {profileMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-56 max-w-[calc(100vw-1.5rem)] bg-white border border-slate-200/90 rounded-2xl shadow-xl p-2 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
-                    <div className="px-3 py-2 border-b border-slate-100 mb-1">
-                      <p className="text-xs font-bold text-slate-900 truncate">
+                  <div className="absolute right-0 top-full mt-2 w-56 max-w-[calc(100vw-1.5rem)] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-xl p-2 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
+                    <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 mb-1">
+                      <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
                         {user?.profile?.fullName || user?.email}
                       </p>
                       <p className="text-[11px] font-semibold text-slate-400 truncate">{user?.email}</p>
@@ -919,7 +927,7 @@ export function AppHeader() {
                     <Link
                       href="/student/profile"
                       onClick={closeMenus}
-                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-900 transition-colors whitespace-nowrap"
+                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-slate-800 hover:text-amber-900 dark:hover:text-amber-400 transition-colors whitespace-nowrap"
                     >
                       <User size={16} className="text-amber-600 shrink-0" />
                       <span>Hồ sơ & Gói học</span>
@@ -929,7 +937,7 @@ export function AppHeader() {
                       <Link
                         href="/pet"
                         onClick={closeMenus}
-                        className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-900 transition-colors whitespace-nowrap"
+                        className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-900 dark:hover:text-emerald-400 transition-colors whitespace-nowrap"
                       >
                         <Heart size={16} className="text-emerald-600 shrink-0" />
                         <span>Thú cưng đồng hành</span>
@@ -939,7 +947,7 @@ export function AppHeader() {
                     <Link
                       href="/change-password"
                       onClick={closeMenus}
-                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-900 transition-colors whitespace-nowrap"
+                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-slate-800 hover:text-amber-900 dark:hover:text-amber-400 transition-colors whitespace-nowrap"
                     >
                       <KeyRound size={16} className="text-slate-400 shrink-0" />
                       <span>Đổi mật khẩu</span>
@@ -948,7 +956,7 @@ export function AppHeader() {
                     <Link
                       href="/history"
                       onClick={closeMenus}
-                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-sky-50 hover:text-sky-900 transition-colors whitespace-nowrap"
+                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-sky-50 dark:hover:bg-slate-800 hover:text-sky-900 dark:hover:text-sky-400 transition-colors whitespace-nowrap"
                     >
                       <LineChart size={16} className="text-sky-600 shrink-0" />
                       <span>Lịch sử luyện tập</span>
@@ -957,7 +965,7 @@ export function AppHeader() {
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors text-left cursor-pointer mt-1 pt-2 border-t border-slate-100 whitespace-nowrap"
+                      className="w-full flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors text-left cursor-pointer mt-1 pt-2 border-t border-slate-100 dark:border-slate-800 whitespace-nowrap"
                     >
                       <LogOut size={16} className="shrink-0" />
                       <span>Đăng xuất</span>
@@ -982,9 +990,10 @@ export function AppHeader() {
           {/* If Guest */}
           {!user && (
             <>
+              <ThemeToggle className="hidden sm:inline-flex" />
               <Link
                 href="/login"
-                className="shrink-0 whitespace-nowrap border border-slate-300 hover:border-slate-400 text-slate-700 hover:bg-slate-50 rounded-xl px-2.5 sm:px-4 py-1.5 sm:py-2 font-bold text-xs sm:text-sm transition-colors text-center cursor-pointer"
+                className="shrink-0 whitespace-nowrap border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl px-2.5 sm:px-4 py-1.5 sm:py-2 font-bold text-xs sm:text-sm transition-colors text-center cursor-pointer"
               >
                 Đăng nhập
               </Link>
@@ -1005,7 +1014,7 @@ export function AppHeader() {
             aria-expanded={mobileOpen}
             aria-controls="mobile-navigation"
             aria-label={mobileOpen ? "Đóng menu" : "Mở menu"}
-            className={`size-9 sm:size-10 sm:min-h-11 sm:min-w-11 items-center justify-center rounded-xl text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none xl:hidden shrink-0 cursor-pointer ${
+            className={`size-9 sm:size-10 sm:min-h-11 sm:min-w-11 items-center justify-center rounded-xl text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:outline-none xl:hidden shrink-0 cursor-pointer ${
               user ? "hidden md:inline-flex" : "inline-flex"
             }`}
           >
@@ -1041,10 +1050,10 @@ export function AppHeader() {
               role="dialog"
               aria-modal="true"
               aria-label="Menu điều hướng"
-              className="fixed top-0 right-0 bottom-0 h-dvh w-[88vw] sm:w-[26rem] max-w-[420px] bg-white shadow-2xl flex flex-col border-l border-slate-200 z-[10000] animate-in slide-in-from-right duration-300 ease-out"
+              className="fixed top-0 right-0 bottom-0 h-dvh w-[88vw] sm:w-[26rem] max-w-[420px] bg-white dark:bg-slate-900 shadow-2xl flex flex-col border-l border-slate-200 dark:border-slate-800 z-[10000] animate-in slide-in-from-right duration-300 ease-out"
             >
               {/* Sticky Drawer Header */}
-              <div className="h-18 px-5 sm:px-6 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
+              <div className="h-18 px-5 sm:px-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 bg-white dark:bg-slate-900">
                 <BrandLogo
                   href={isStudent ? "/dashboard" : "/"}
                   onClick={closeMenus}
@@ -1052,21 +1061,24 @@ export function AppHeader() {
                   size="sm"
                   roleBadge={isStudent ? "STUDENT" : isAdmin ? "ADMIN" : "GUEST"}
                 />
-                <button
-                  type="button"
-                  onClick={closeMenus}
-                  className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
-                  aria-label="Đóng menu"
-                >
-                  <X size={22} aria-hidden="true" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <ThemeToggle />
+                  <button
+                    type="button"
+                    onClick={closeMenus}
+                    className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                    aria-label="Đóng menu"
+                  >
+                    <X size={22} aria-hidden="true" />
+                  </button>
+                </div>
               </div>
 
               {/* Scrollable Drawer Body */}
               <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-5 space-y-4 [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent] pb-[calc(5rem+env(safe-area-inset-bottom))]">
                 {/* Student Status Summary Card */}
                 {user && isStudent && (
-                  <div className="rounded-2xl bg-amber-50/80 border border-amber-200/90 p-3.5 flex items-center justify-between gap-3 shadow-2xs">
+                  <div className="rounded-2xl bg-amber-50/80 dark:bg-slate-800/80 border border-amber-200/90 dark:border-slate-700 p-3.5 flex items-center justify-between gap-3 shadow-2xs">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-10 h-10 rounded-full bg-amber-600 text-white font-black text-xs flex items-center justify-center overflow-hidden shrink-0">
                         {user?.profile?.avatar ? (
@@ -1078,26 +1090,31 @@ export function AppHeader() {
                         )}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-slate-900 truncate">{user?.profile?.fullName || user?.email}</p>
-                        <p className="text-[11px] text-slate-500 truncate">{user?.email}</p>
+                        <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">{user?.profile?.fullName || user?.email}</p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <Link
                         href="/student/profile?tab=quotas"
                         onClick={closeMenus}
-                        className="flex items-center gap-1 bg-white border border-amber-200 px-2.5 py-1.5 rounded-xl text-xs font-black text-amber-900 shadow-2xs hover:border-amber-400 transition-colors"
+                        className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 px-2.5 py-1.5 rounded-xl text-xs font-black text-amber-900 dark:text-amber-300 shadow-2xs hover:border-amber-400 dark:hover:border-amber-600 transition-colors"
                       >
                         <span role="img" aria-label="Bánh Mì">🥖</span>
                         <span>{breads || 0}</span>
                       </Link>
-                      <div className="flex items-center gap-1 bg-white border border-orange-200 px-2.5 py-1.5 rounded-xl text-xs font-black text-orange-700 shadow-2xs">
+                      <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-orange-200 dark:border-orange-800 px-2.5 py-1.5 rounded-xl text-xs font-black text-orange-700 dark:text-orange-300 shadow-2xs">
                         <Flame size={14} className="fill-orange-500 text-orange-500" />
                         <span>{streak || 1}d</span>
                       </div>
                     </div>
                   </div>
                 )}
+
+                {/* Theme Switcher Row in Drawer */}
+                <div className="pt-1 pb-1">
+                  <ThemeToggle variant="row" />
+                </div>
 
                 {/* Primary Navigation Links */}
                 <nav className="space-y-1" aria-label="Điều hướng chính">
@@ -1111,11 +1128,11 @@ export function AppHeader() {
                     onClick={closeMenus}
                     className={`flex min-h-[48px] items-center gap-3 rounded-2xl px-4 py-2.5 text-sm font-bold transition-colors ${
                       isActivePath(pathname, isStudent ? "/dashboard" : "/")
-                        ? "bg-amber-50 text-amber-900 font-black border border-amber-200/80 shadow-2xs"
-                        : "text-slate-700 hover:bg-amber-50/70 hover:text-amber-900"
+                        ? "bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 font-black border border-amber-200/80 dark:border-amber-800/70 shadow-2xs"
+                        : "text-slate-700 dark:text-slate-200 hover:bg-amber-50/70 dark:hover:bg-slate-800 hover:text-amber-900 dark:hover:text-amber-300"
                     }`}
                   >
-                    <Home size={19} className={isActivePath(pathname, isStudent ? "/dashboard" : "/") ? "text-amber-700" : "text-amber-600"} />
+                    <Home size={19} className={isActivePath(pathname, isStudent ? "/dashboard" : "/") ? "text-amber-700 dark:text-amber-400" : "text-amber-600 dark:text-amber-500"} />
                     <span>Trang chủ</span>
                   </Link>
 
@@ -1126,11 +1143,11 @@ export function AppHeader() {
                       onClick={closeMenus}
                       className={`flex min-h-[48px] items-center gap-3 rounded-2xl px-4 py-2.5 text-sm font-bold transition-colors ${
                         isSkillsPath
-                          ? "bg-amber-50 text-amber-900 font-black border border-amber-200/80 shadow-2xs"
-                          : "text-slate-700 hover:bg-amber-50/70 hover:text-amber-900"
+                          ? "bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 font-black border border-amber-200/80 dark:border-amber-800/70 shadow-2xs"
+                          : "text-slate-700 dark:text-slate-200 hover:bg-amber-50/70 dark:hover:bg-slate-800 hover:text-amber-900 dark:hover:text-amber-300"
                       }`}
                     >
-                      <Dumbbell size={19} className={isSkillsPath ? "text-amber-700" : "text-amber-600"} />
+                      <Dumbbell size={19} className={isSkillsPath ? "text-amber-700 dark:text-amber-400" : "text-amber-600 dark:text-amber-500"} />
                       <span>Luyện tập kỹ năng</span>
                     </Link>
 
@@ -1140,33 +1157,33 @@ export function AppHeader() {
                         <Link
                           href="/practice/listening"
                           onClick={closeMenus}
-                          className="flex items-center gap-2 p-2.5 rounded-xl bg-blue-50/70 border border-blue-200/60 text-xs font-bold text-blue-900 hover:bg-blue-100/70 transition-colors"
+                          className="flex items-center gap-2 p-2.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/60 text-xs font-bold text-blue-900 dark:text-blue-300 hover:bg-blue-100/70 dark:hover:bg-blue-900/60 transition-colors"
                         >
-                          <Headphones size={16} className="text-blue-600 shrink-0" aria-hidden="true" />
+                          <Headphones size={16} className="text-blue-600 dark:text-blue-400 shrink-0" aria-hidden="true" />
                           <span>Luyện Nghe</span>
                         </Link>
                         <Link
                           href="/practice/speaking"
                           onClick={closeMenus}
-                          className="flex items-center gap-2 p-2.5 rounded-xl bg-purple-50/70 border border-purple-200/60 text-xs font-bold text-purple-900 hover:bg-purple-100/70 transition-colors"
+                          className="flex items-center gap-2 p-2.5 rounded-xl bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200/60 dark:border-purple-800/60 text-xs font-bold text-purple-900 dark:text-purple-300 hover:bg-purple-100/70 dark:hover:bg-purple-900/60 transition-colors"
                         >
-                          <Mic size={16} className="text-purple-600 shrink-0" aria-hidden="true" />
+                          <Mic size={16} className="text-purple-600 dark:text-purple-400 shrink-0" aria-hidden="true" />
                           <span>Luyện Nói</span>
                         </Link>
                         <Link
                           href="/practice/reading"
                           onClick={closeMenus}
-                          className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200/60 text-xs font-bold text-emerald-900 hover:bg-emerald-100/70 transition-colors"
+                          className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/60 text-xs font-bold text-emerald-900 dark:text-emerald-300 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/60 transition-colors"
                         >
-                          <BookOpen size={16} className="text-emerald-600 shrink-0" aria-hidden="true" />
+                          <BookOpen size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
                           <span>Luyện Đọc</span>
                         </Link>
                         <Link
                           href="/practice/writing"
                           onClick={closeMenus}
-                          className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-50/70 border border-rose-200/60 text-xs font-bold text-rose-900 hover:bg-rose-100/70 transition-colors"
+                          className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-50/70 dark:bg-rose-950/40 border border-rose-200/60 dark:border-rose-800/60 text-xs font-bold text-rose-900 dark:text-rose-300 hover:bg-rose-100/70 dark:hover:bg-rose-900/60 transition-colors"
                         >
-                          <PenTool size={16} className="text-rose-600 shrink-0" aria-hidden="true" />
+                          <PenTool size={16} className="text-rose-600 dark:text-rose-400 shrink-0" aria-hidden="true" />
                           <span>Luyện Viết</span>
                         </Link>
                       </div>
@@ -1183,11 +1200,11 @@ export function AppHeader() {
                         onClick={closeMenus}
                         className={`flex min-h-[48px] items-center gap-3 rounded-2xl px-4 py-2.5 text-sm font-bold transition-colors ${
                           active
-                            ? "bg-amber-50 text-amber-900 font-black border border-amber-200/80 shadow-2xs"
-                            : "text-slate-700 hover:bg-amber-50/70 hover:text-amber-900"
+                            ? "bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 font-black border border-amber-200/80 dark:border-amber-800/70 shadow-2xs"
+                            : "text-slate-700 dark:text-slate-200 hover:bg-amber-50/70 dark:hover:bg-slate-800 hover:text-amber-900 dark:hover:text-amber-300"
                         }`}
                       >
-                        <link.icon size={19} className={active ? "text-amber-700" : "text-amber-600"} />
+                        <link.icon size={19} className={active ? "text-amber-700 dark:text-amber-400" : "text-amber-600 dark:text-amber-500"} />
                         <span>{link.label}</span>
                       </Link>
                     );
@@ -1196,24 +1213,24 @@ export function AppHeader() {
                   {/* Learning Tools */}
                   {isStudent && (
                     <div className="pt-2">
-                      <p className="px-3 pb-2 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                      <p className="px-3 pb-2 text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                         Tiện ích học tập
                       </p>
                       <div className="space-y-1">
                         <Link
                           href="/pet"
                           onClick={closeMenus}
-                          className="flex min-h-[44px] items-center gap-3 rounded-2xl px-4 py-2 text-xs font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-900 transition-colors"
+                          className="flex min-h-[44px] items-center gap-3 rounded-2xl px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-900 dark:hover:text-emerald-300 transition-colors"
                         >
-                          <Heart size={17} className="text-emerald-600" />
+                          <Heart size={17} className="text-emerald-600 dark:text-emerald-400" />
                           <span>Thú cưng đồng hành</span>
                         </Link>
                         <Link
                           href="/history"
                           onClick={closeMenus}
-                          className="flex min-h-[44px] items-center gap-3 rounded-2xl px-4 py-2 text-xs font-bold text-slate-700 hover:bg-sky-50 hover:text-sky-900 transition-colors"
+                          className="flex min-h-[44px] items-center gap-3 rounded-2xl px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-sky-50 dark:hover:bg-slate-800 hover:text-sky-900 dark:hover:text-sky-300 transition-colors"
                         >
-                          <LineChart size={17} className="text-sky-600" />
+                          <LineChart size={17} className="text-sky-600 dark:text-sky-400" />
                           <span>Lịch sử luyện tập</span>
                         </Link>
                       </div>
@@ -1222,13 +1239,13 @@ export function AppHeader() {
                 </nav>
 
                 {/* Bottom Account / Auth Actions */}
-                <div className="border-t border-slate-100 pt-4 space-y-2">
+                <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-2">
                   {isStudent && (
                     <>
                       <Link
                         href="/student/profile"
                         onClick={closeMenus}
-                        className="flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-amber-50 border border-amber-200 px-4 py-2.5 text-xs font-bold text-amber-900 hover:bg-amber-100 transition-colors"
+                        className="flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/70 px-4 py-2.5 text-xs font-bold text-amber-900 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors"
                       >
                         <User size={16} />
                         <span>Hồ sơ & Gói học</span>
@@ -1236,7 +1253,7 @@ export function AppHeader() {
                       <button
                         type="button"
                         onClick={handleLogout}
-                        className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
+                        className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-2xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/40 px-4 py-2.5 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-colors cursor-pointer"
                       >
                         <LogOut size={16} />
                         <span>Đăng xuất</span>

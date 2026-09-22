@@ -9,7 +9,7 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-[#fbfaf8] text-slate-800 selection:bg-amber-600 selection:text-white">
+    <div className="min-h-[100dvh] flex flex-col bg-background text-foreground selection:bg-amber-600 selection:text-white transition-colors duration-150">
       <AppHeader />
       <main className="flex-1 min-w-0 pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-0">
         {children}

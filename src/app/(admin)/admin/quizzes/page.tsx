@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -32,6 +32,15 @@ const QUIZ_TYPES = [
   { value: "WRITING_EMAIL", label: "Viết Thư / Email" },
 ];
 
+function formatQuestionExplanation(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (!value || typeof value !== "object") return "";
+  const explanation = value as { vi?: unknown; evidence?: unknown; keyPhrase?: unknown; vocabularyNote?: unknown };
+  return [explanation.vi, explanation.evidence, explanation.keyPhrase, explanation.vocabularyNote]
+    .filter((part): part is string => typeof part === "string" && part.trim().length > 0)
+    .join(" · ");
+}
+
 export default function AdminQuizzesPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,6 +55,9 @@ export default function AdminQuizzesPage() {
   const [selectedQuizForQuestions, setSelectedQuizForQuestions] = useState<any | null>(null);
   const [diagnosticClipQuestionId, setDiagnosticClipQuestionId] = useState<number | null>(null);
   const [diagnosticClipForm, setDiagnosticClipForm] = useState({ label: "", key: "", url: "" });
+  const isListeningQuiz = selectedQuizForQuestions?.type === "LISTENING_PRACTICE";
+  const previewAudioRefs = useRef<Record<number, HTMLAudioElement | null>>({});
+  const [expandedTimelineArtifactId, setExpandedTimelineArtifactId] = useState<number | null>(null);
 
   // Form State for Quiz
   const [quizForm, setQuizForm] = useState({
@@ -83,6 +95,16 @@ export default function AdminQuizzesPage() {
       return res?.data || res;
     },
     enabled: !!selectedQuizForQuestions?.id,
+  });
+
+  const { data: listeningArtifacts, refetch: refetchListeningArtifacts } = useQuery<any[]>({
+    queryKey: ["admin-listening-artifacts", selectedQuizForQuestions?.id],
+    queryFn: async () => {
+      if (!selectedQuizForQuestions?.id) return [];
+      const response: any = await axiosClient.get(`/quizzes/${selectedQuizForQuestions.id}/listening-audio`);
+      return Array.isArray(response) ? response : response?.data || [];
+    },
+    enabled: isListeningQuiz,
   });
 
   // Save / Update Quiz Mutation
@@ -202,6 +224,28 @@ export default function AdminQuizzesPage() {
       refetchDetail();
     },
     onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể gắn clip chẩn đoán"),
+  });
+
+  const listeningAudioAction = useMutation({
+    mutationFn: async ({ action, artifactId }: { action: "validate" | "generate-preview" | "approve" | "publish"; artifactId?: number }) => {
+      const quizId = selectedQuizForQuestions?.id;
+      if (!quizId) throw new Error("Chưa chọn bài luyện nghe");
+      if (action === "approve" || action === "publish") {
+        return axiosClient.post(`/quizzes/${quizId}/listening-audio/${artifactId}/${action}`);
+      }
+      return axiosClient.post(`/quizzes/${quizId}/listening-audio/${action}`);
+    },
+    onSuccess: (_data, variables) => {
+      const messages = {
+        validate: "Nội dung hội thoại hợp lệ.",
+        "generate-preview": "Đã tạo preview audio; hãy nghe và duyệt trước khi phát hành.",
+        approve: "Đã duyệt artifact audio.",
+        publish: "Đã phát hành audio production.",
+      };
+      toast.success(messages[variables.action]);
+      void refetchListeningArtifacts();
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || err?.message || "Không thể thực hiện thao tác audio"),
   });
 
   // Open Create Modal
@@ -637,6 +681,81 @@ export default function AdminQuizzesPage() {
                 </button>
               </div>
 
+              {isListeningQuiz && (
+                <section className="shrink-0 rounded-2xl border border-sky-200 bg-sky-50/60 p-4" aria-label="Audio production">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h4 className="text-sm font-black text-slate-800">Audio production toàn bài</h4>
+                      <p className="mt-1 text-xs text-slate-600">Tạo preview bằng Azure, kiểm tra timeline rồi duyệt và phát hành lên R2. Học viên chỉ dùng artifact PUBLISHED.</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button type="button" onClick={() => listeningAudioAction.mutate({ action: "validate" })} disabled={listeningAudioAction.isPending} className="min-h-10 rounded-lg border border-sky-300 bg-white px-3 text-xs font-black text-sky-700 hover:bg-sky-100 disabled:opacity-50">Kiểm tra nội dung</button>
+                      <button type="button" onClick={() => listeningAudioAction.mutate({ action: "generate-preview" })} disabled={listeningAudioAction.isPending} className="min-h-10 rounded-lg bg-sky-600 px-3 text-xs font-black text-white hover:bg-sky-700 disabled:opacity-50">{listeningAudioAction.isPending ? "Đang xử lý..." : "Tạo preview audio"}</button>
+                    </div>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {listeningArtifacts?.length ? listeningArtifacts.map((artifact: any) => (
+                      <div key={artifact.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white bg-white px-3 py-2 text-xs">
+                        <div className="min-w-0">
+                          <span className="font-black text-slate-800">v{artifact.version} · {artifact.isStale ? "STALE" : artifact.status}</span>
+                          <span className="ml-2 text-slate-500">{artifact.durationMs ? `${Math.round(artifact.durationMs / 1000)}s` : "Chưa có thời lượng"}</span>
+                          <p className="truncate text-[11px] text-slate-500">Hash: {artifact.synthesisHash?.slice(0, 16) || "—"} · {artifact.r2Key || "Chưa có R2 object"}</p>
+                          {artifact.isStale && <p className="mt-1 text-[11px] font-bold text-amber-700">Nội dung đã đổi; cần tạo và duyệt artifact mới.</p>}
+                        </div>
+                        <div className="flex shrink-0 gap-2">
+                          {artifact.status === "PREVIEW_READY" && <button type="button" onClick={() => listeningAudioAction.mutate({ action: "approve", artifactId: artifact.id })} disabled={listeningAudioAction.isPending} className="min-h-9 rounded-lg border border-emerald-300 px-2.5 font-black text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">Duyệt</button>}
+                          {artifact.status === "APPROVED" && <button type="button" onClick={() => listeningAudioAction.mutate({ action: "publish", artifactId: artifact.id })} disabled={listeningAudioAction.isPending} className="min-h-9 rounded-lg bg-emerald-600 px-2.5 font-black text-white hover:bg-emerald-700 disabled:opacity-50">Phát hành</button>}
+                          {artifact.r2Url && <a href={artifact.r2Url} target="_blank" rel="noreferrer" className="inline-flex min-h-9 items-center rounded-lg border border-slate-200 px-2.5 font-black text-slate-600 hover:bg-slate-50">Mở audio</a>}
+                        </div>
+                        {artifact.r2Url && (
+                          <div className="basis-full space-y-2 border-t border-slate-100 pt-2">
+                            <audio
+                              ref={(element) => { previewAudioRefs.current[artifact.id] = element; }}
+                              controls
+                              preload="metadata"
+                              src={artifact.r2Url}
+                              className="h-9 w-full"
+                              aria-label={`Preview audio phiên bản ${artifact.version}`}
+                            />
+                            {Array.isArray(artifact.timeline) && artifact.timeline.length > 0 && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedTimelineArtifactId((current) => current === artifact.id ? null : artifact.id)}
+                                  className="text-xs font-bold text-sky-700 hover:underline"
+                                >
+                                  {expandedTimelineArtifactId === artifact.id ? "Ẩn timeline" : `Xem timeline (${artifact.timeline.length} lượt lời)`}
+                                </button>
+                                {expandedTimelineArtifactId === artifact.id && (
+                                  <div className="max-h-36 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-2">
+                                    {artifact.timeline.map((turn: any) => (
+                                      <button
+                                        key={turn.turnId}
+                                        type="button"
+                                        onClick={() => {
+                                          const audio = previewAudioRefs.current[artifact.id];
+                                          if (!audio || typeof turn.startMs !== "number") return;
+                                          audio.currentTime = turn.startMs / 1000;
+                                          void audio.play();
+                                        }}
+                                        className="flex min-h-8 w-full items-center justify-between rounded px-2 text-left text-[11px] text-slate-700 hover:bg-white"
+                                      >
+                                        <span className="font-semibold">{turn.turnId}</span>
+                                        <span>{turn.startMs}–{turn.endMs} ms</span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )) : <p className="text-xs text-slate-500">Chưa có artifact. Hãy kiểm tra nội dung trước khi tạo preview.</p>}
+                  </div>
+                </section>
+              )}
+
               {/* QUESTIONS LIST */}
               <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1">
                 {isDetailLoading ? (
@@ -805,10 +924,10 @@ export default function AdminQuizzesPage() {
                         )}
 
                         {/* Explanation / Translation */}
-                        {(content.explanation || content.translate) && (
+                        {formatQuestionExplanation(content.explanation || content.translate) && (
                           <div className="bg-amber-50/60 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 font-medium">
                             <span className="font-black text-amber-800">💡 Giải thích: </span>
-                            {content.explanation || content.translate}
+                            {formatQuestionExplanation(content.explanation || content.translate)}
                           </div>
                         )}
                       </div>

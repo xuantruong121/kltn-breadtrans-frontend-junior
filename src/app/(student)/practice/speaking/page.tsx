@@ -225,23 +225,23 @@ export default function SpeakingExercisesPage() {
   return (
     <div className="space-y-6 pb-20 pt-2">
       {/* Hero Banner */}
-      <section className="relative overflow-hidden rounded-2xl border border-purple-200/80 bg-gradient-to-r from-purple-50 via-white to-fuchsia-50/40 p-6 shadow-2xs sm:p-8">
+      <section className="relative overflow-hidden rounded-2xl border border-purple-200/80 dark:border-purple-900/40 bg-gradient-to-r from-purple-50 via-white to-fuchsia-50/40 dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 p-6 shadow-2xs sm:p-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="max-w-3xl space-y-3">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-purple-200 bg-white/90 px-3 py-1 text-xs font-extrabold text-purple-700">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-purple-200 dark:border-purple-800/60 bg-white/90 dark:bg-slate-800 px-3 py-1 text-xs font-extrabold text-purple-700 dark:text-purple-300">
               <Mic size={14} aria-hidden="true" />
               <span>Đánh giá phát âm chuẩn xác</span>
             </div>
-            <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
               Luyện phát âm & Giao tiếp tiếng Anh
             </h1>
-            <p className="text-xs leading-relaxed text-slate-600 sm:text-sm">
+            <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-400 sm:text-sm">
               Rèn luyện kỹ năng phát âm tiếng Anh với công nghệ AI phân tích giọng nói, đánh giá độ chính xác, độ lưu loát và chấm điểm từng từ.
             </p>
             <div className="pt-1">
               <Link
                 href="/practice/listening"
-                className="inline-flex items-center gap-1.5 text-xs font-extrabold text-purple-700 transition hover:text-purple-800 hover:underline"
+                className="inline-flex items-center gap-1.5 text-xs font-extrabold text-purple-700 dark:text-purple-400 transition hover:text-purple-800 dark:hover:text-purple-300 hover:underline"
               >
                 Bạn muốn luyện nghe hiểu theo ngữ cảnh? Đi đến Luyện nghe
                 <ArrowRight size={13} aria-hidden="true" />
@@ -250,8 +250,8 @@ export default function SpeakingExercisesPage() {
           </div>
 
           {/* Right KPI Card */}
-          <div className="flex items-center gap-3.5 rounded-2xl border border-purple-200/90 bg-white/95 px-5 py-4 shadow-2xs self-start md:self-auto shrink-0">
-            <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-700">
+          <div className="flex items-center gap-3.5 rounded-2xl border border-purple-200/90 dark:border-purple-900/50 bg-white/95 dark:bg-slate-900/95 px-5 py-4 shadow-2xs self-start md:self-auto shrink-0">
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400">
               <Award size={24} aria-hidden="true" />
             </div>
             <div>
@@ -259,11 +259,11 @@ export default function SpeakingExercisesPage() {
                 Tổng bài luyện nói
               </span>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-xl font-black text-slate-900">
+                <span className="text-xl font-black text-slate-900 dark:text-slate-100">
                   {practiceSets.length} bộ luyện · {exercises?.length || 0} câu
                 </span>
                 {completedCount > 0 && (
-                  <span className="text-xs font-bold text-emerald-600">
+                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
                     ({completedCount} đã xong)
                   </span>
                 )}
@@ -274,7 +274,7 @@ export default function SpeakingExercisesPage() {
       </section>
 
       {/* Category Tabs */}
-      <div className="border-b border-slate-200">
+      <div className="border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
           <button
             type="button"
@@ -284,8 +284,8 @@ export default function SpeakingExercisesPage() {
             }}
             className={`inline-flex items-center gap-2 border-b-2 px-4 py-3 text-xs font-black transition whitespace-nowrap cursor-pointer ${
               selectedCategory === "ALL"
-                ? "border-purple-600 text-purple-900"
-                : "border-transparent text-slate-500 hover:text-slate-900"
+                ? "border-purple-600 text-purple-900 dark:text-purple-400"
+                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
             }`}
           >
             <Mic size={15} aria-hidden="true" />
@@ -304,8 +304,8 @@ export default function SpeakingExercisesPage() {
                 }}
                 className={`inline-flex items-center gap-2 border-b-2 px-4 py-3 text-xs font-black transition whitespace-nowrap cursor-pointer ${
                   selectedCategory === cat
-                    ? "border-purple-600 text-purple-900"
-                    : "border-transparent text-slate-500 hover:text-slate-900"
+                    ? "border-purple-600 text-purple-900 dark:text-purple-400"
+                    : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                 }`}
               >
                 {cat} ({count})
@@ -316,14 +316,14 @@ export default function SpeakingExercisesPage() {
       </div>
 
       {/* Filter Toolbar */}
-      <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs sm:p-5">
+      <section className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xs sm:p-5">
         <div className="flex flex-col gap-3.5">
           {/* Top row: Search & Level quick filter */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative flex-1 sm:max-w-xs">
               <Search
                 size={16}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
                 aria-hidden="true"
               />
               <input
@@ -334,12 +334,12 @@ export default function SpeakingExercisesPage() {
                   setSearchTerm(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="min-h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-3.5 text-xs text-slate-800 transition placeholder:text-slate-400 focus:border-purple-500 focus:bg-white focus:outline-hidden"
+                className="min-h-11 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 pl-10 pr-3.5 text-xs text-slate-800 dark:text-slate-100 transition placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-purple-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-hidden"
               />
             </div>
 
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs font-bold text-slate-400">Trình độ:</span>
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500">Trình độ:</span>
               {[
                 { id: "ALL", label: "Tất cả" },
                 { id: "BEGINNER", label: "Cơ bản" },
@@ -356,7 +356,7 @@ export default function SpeakingExercisesPage() {
                   className={`min-h-9 rounded-lg px-2.5 text-xs font-extrabold transition cursor-pointer ${
                     selectedDifficulty === lvl.id
                       ? "bg-purple-600 text-white shadow-2xs"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100"
                   }`}
                 >
                   {lvl.label}
@@ -366,8 +366,8 @@ export default function SpeakingExercisesPage() {
           </div>
 
           {/* Secondary filter row: Sort & Status */}
-          <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
-            <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-500">
+          <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 dark:border-slate-800 pt-3">
+            <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-slate-400">
               <Filter size={13} aria-hidden="true" />
               Bộ lọc:
             </span>
@@ -380,7 +380,7 @@ export default function SpeakingExercisesPage() {
                 setSortOrder(e.target.value);
                 setCurrentPage(1);
               }}
-              className="min-h-9 rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-xs font-bold text-slate-700 transition focus:border-purple-500 focus:bg-white focus:outline-hidden cursor-pointer"
+              className="min-h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 transition focus:border-purple-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-hidden cursor-pointer"
             >
               <option value="EASY_TO_HARD">Sắp xếp: Dễ → Khó</option>
               <option value="HARD_TO_EASY">Sắp xếp: Khó → Dễ</option>
@@ -396,7 +396,7 @@ export default function SpeakingExercisesPage() {
                   setSelectedStatus(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="min-h-9 rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-xs font-bold text-slate-700 transition focus:border-purple-500 focus:bg-white focus:outline-hidden cursor-pointer"
+                className="min-h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 transition focus:border-purple-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-hidden cursor-pointer"
               >
                 <option value="ALL">Trạng thái: Tất cả</option>
                 <option value="UNCOMPLETED">Chưa làm</option>
@@ -420,7 +420,7 @@ export default function SpeakingExercisesPage() {
                   setSearchTerm("");
                   setCurrentPage(1);
                 }}
-                className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
+                className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 transition hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 cursor-pointer"
               >
                 <RotateCcw size={12} aria-hidden="true" />
                 Đặt lại
@@ -433,9 +433,9 @@ export default function SpeakingExercisesPage() {
       {/* Catalog Results Grid */}
       <section>
         {isLoading ? (
-          <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white">
+          <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
             <Loader2 size={32} className="animate-spin text-purple-600" aria-hidden="true" />
-            <p className="mt-3 text-xs font-bold text-slate-500">Đang tải danh sách bài luyện nói...</p>
+            <p className="mt-3 text-xs font-bold text-slate-500 dark:text-slate-400">Đang tải danh sách bài luyện nói...</p>
           </div>
         ) : filteredAndSortedExercises.length > 0 ? (
           <div className="space-y-6">
@@ -477,12 +477,12 @@ export default function SpeakingExercisesPage() {
             )}
           </div>
         ) : (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
+          <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center">
             <Mic size={32} className="mx-auto text-slate-400" aria-hidden="true" />
-            <h2 className="mt-3 text-base font-bold text-slate-800">
+            <h2 className="mt-3 text-base font-bold text-slate-800 dark:text-slate-200">
               Không tìm thấy bài luyện nói phù hợp
             </h2>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               Hãy thử chọn bộ lọc khác hoặc tìm kiếm với từ khóa khác.
             </p>
           </div>

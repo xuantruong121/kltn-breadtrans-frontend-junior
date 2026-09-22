@@ -219,41 +219,41 @@ export const MarketScreen: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">
       {/* HEADER BANNER */}
-      <div className="relative overflow-hidden rounded-3xl border border-amber-200/80 bg-gradient-to-br from-amber-500/10 via-amber-100/40 to-white p-6 sm:p-8">
+      <div className="relative overflow-hidden rounded-3xl border border-amber-200/80 bg-gradient-to-br from-amber-500/10 via-amber-100/40 to-white dark:border-amber-900/40 dark:from-amber-950/40 dark:via-slate-900 dark:to-slate-900 p-6 sm:p-8">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-xl">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/80 bg-white/80 px-3 py-1 text-xs font-bold text-amber-900 shadow-2xs backdrop-blur-xs">
-              <Wheat size={14} className="text-amber-600" />
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/80 bg-white/80 dark:border-amber-800/60 dark:bg-slate-900/80 px-3 py-1 text-xs font-bold text-amber-900 dark:text-amber-300 shadow-2xs backdrop-blur-xs">
+              <Wheat size={14} className="text-amber-600 dark:text-amber-400" />
               <span>Cửa hàng phần thưởng BreadTrans</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
               Đổi quà từ Bánh Mì tích lũy
             </h1>
-            <p className="text-sm text-slate-600 leading-relaxed">
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
               Hoàn thành các bài tập rèn kỹ năng và đề thi TOEIC để nhận Bánh Mì, sau đó mở khóa các vật phẩm hỗ trợ học tập và quà tặng gửi tận nhà.
             </p>
           </div>
 
           {/* User Balance Card or Guest Prompt */}
           {!isGuest ? (
-            <div className="flex items-center gap-3.5 rounded-2xl border border-amber-200 bg-white p-4 shadow-xs shrink-0">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+            <div className="flex items-center gap-3.5 rounded-2xl border border-amber-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-xs shrink-0">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400">
                 <Wheat size={24} aria-hidden="true" />
               </div>
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   Số dư Bánh Mì
                 </span>
-                <p className="text-2xl font-black text-amber-900 leading-tight">
+                <p className="text-2xl font-black text-amber-900 dark:text-amber-400 leading-tight">
                   {(balanceData?.totalBanh || 0).toLocaleString("vi-VN")}
                   <span className="text-xs font-semibold text-slate-500 ml-1">bánh</span>
                 </p>
               </div>
             </div>
           ) : (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 rounded-2xl border border-amber-200/80 bg-white/90 p-4 shadow-xs shrink-0">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 rounded-2xl border border-amber-200/80 bg-white/90 dark:border-slate-800 dark:bg-slate-900 p-4 shadow-xs shrink-0">
               <div>
-                <span className="text-xs font-bold text-slate-700">Bạn đang duyệt ở chế độ Khách</span>
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-200">Bạn đang duyệt ở chế độ Khách</span>
                 <p className="text-[11px] text-slate-500">Đăng nhập để tích lũy Bánh Mì và nhận quà.</p>
               </div>
               <Link
@@ -270,14 +270,14 @@ export const MarketScreen: React.FC = () => {
       {/* TOP NAVIGATION TABS & QUICK LINKS */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         {/* Main Tabs */}
-        <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-2xs">
+        <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-1 shadow-2xs">
           <button
             type="button"
             onClick={() => setActiveTab("shop")}
             className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition-colors cursor-pointer ${
               activeTab === "shop"
                 ? "bg-amber-600 text-white shadow-2xs"
-                : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/60"
             }`}
           >
             <ShoppingBag size={15} />
@@ -291,7 +291,7 @@ export const MarketScreen: React.FC = () => {
               className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition-colors cursor-pointer ${
                 activeTab === "orders"
                   ? "bg-amber-600 text-white shadow-2xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/60"
               }`}
             >
               <PackageCheck size={15} />
@@ -305,17 +305,17 @@ export const MarketScreen: React.FC = () => {
           {!isGuest && (
             <Link
               href="/student/profile?tab=inventory"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-amber-50 hover:text-amber-800 hover:border-amber-300 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 px-3.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 shadow-2xs hover:bg-amber-50 hover:text-amber-800 hover:border-amber-300 dark:hover:bg-slate-800/80 dark:hover:text-amber-400 transition-colors"
             >
-              <Backpack size={15} className="text-amber-600" />
+              <Backpack size={15} className="text-amber-600 dark:text-amber-400" />
               <span>Kho đồ của tôi</span>
             </Link>
           )}
           <Link
             href="/arena"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-amber-50 hover:text-amber-800 hover:border-amber-300 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 px-3.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 shadow-2xs hover:bg-amber-50 hover:text-amber-800 hover:border-amber-300 dark:hover:bg-slate-800/80 dark:hover:text-amber-400 transition-colors"
           >
-            <Trophy size={15} className="text-amber-600" />
+            <Trophy size={15} className="text-amber-600 dark:text-amber-400" />
             <span>Bảng xếp hạng</span>
           </Link>
         </div>
@@ -335,8 +335,8 @@ export const MarketScreen: React.FC = () => {
                   onClick={() => setSelectedCategory(cat.id)}
                   className={`rounded-xl px-3.5 py-2 text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
                     selectedCategory === cat.id
-                      ? "bg-slate-900 text-white shadow-2xs"
-                      : "bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:text-slate-900"
+                      ? "bg-slate-900 text-white dark:bg-amber-500 dark:text-slate-950 shadow-2xs"
+                      : "bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:text-slate-900 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:text-slate-200"
                   }`}
                 >
                   {cat.label}
@@ -352,13 +352,13 @@ export const MarketScreen: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Tìm kiếm vật phẩm..."
-                className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-8 text-xs font-medium text-slate-800 placeholder-slate-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                className="w-full rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 py-2 pl-9 pr-8 text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                 >
                   <X size={14} />
                 </button>
@@ -373,28 +373,28 @@ export const MarketScreen: React.FC = () => {
               {[...Array(6)].map((_, i) => (
                 <div
                   key={i}
-                  className="animate-pulse rounded-2xl border border-slate-200 bg-white p-5 space-y-4"
+                  className="animate-pulse rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 space-y-4"
                 >
                   <div className="flex justify-between">
-                    <div className="h-4 w-16 bg-slate-100 rounded" />
-                    <div className="h-4 w-20 bg-slate-100 rounded" />
+                    <div className="h-4 w-16 bg-slate-100 dark:bg-slate-800 rounded" />
+                    <div className="h-4 w-20 bg-slate-100 dark:bg-slate-800 rounded" />
                   </div>
-                  <div className="h-28 w-full bg-slate-100 rounded-xl" />
-                  <div className="h-5 w-3/4 bg-slate-100 rounded" />
-                  <div className="h-4 w-full bg-slate-100 rounded" />
-                  <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
-                    <div className="h-6 w-16 bg-slate-100 rounded" />
-                    <div className="h-8 w-24 bg-slate-100 rounded-xl" />
+                  <div className="h-28 w-full bg-slate-100 dark:bg-slate-800 rounded-xl" />
+                  <div className="h-5 w-3/4 bg-slate-100 dark:bg-slate-800 rounded" />
+                  <div className="h-4 w-full bg-slate-100 dark:bg-slate-800 rounded" />
+                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                    <div className="h-6 w-16 bg-slate-100 dark:bg-slate-800 rounded" />
+                    <div className="h-8 w-24 bg-slate-100 dark:bg-slate-800 rounded-xl" />
                   </div>
                 </div>
               ))}
             </div>
           ) : isProductsError ? (
             /* Error State */
-            <div className="rounded-2xl border border-rose-200 bg-rose-50/50 p-8 text-center space-y-3">
+            <div className="rounded-2xl border border-rose-200 bg-rose-50/50 dark:border-rose-900/60 dark:bg-rose-950/40 p-8 text-center space-y-3">
               <AlertCircle size={32} className="mx-auto text-rose-500" />
-              <h3 className="text-base font-bold text-rose-900">Không thể tải danh sách vật phẩm</h3>
-              <p className="text-xs text-rose-700 max-w-sm mx-auto">
+              <h3 className="text-base font-bold text-rose-900 dark:text-rose-200">Không thể tải danh sách vật phẩm</h3>
+              <p className="text-xs text-rose-700 dark:text-rose-300 max-w-sm mx-auto">
                 Đã xảy ra lỗi khi kết nối với máy chủ cửa hàng. Vui lòng thử lại sau.
               </p>
               <button
@@ -407,9 +407,9 @@ export const MarketScreen: React.FC = () => {
             </div>
           ) : filteredProducts.length === 0 ? (
             /* Empty State */
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center space-y-3">
-              <ShoppingBag size={36} className="mx-auto text-slate-300" />
-              <h3 className="text-base font-bold text-slate-700">Không tìm thấy vật phẩm</h3>
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-12 text-center space-y-3">
+              <ShoppingBag size={36} className="mx-auto text-slate-300 dark:text-slate-600" />
+              <h3 className="text-base font-bold text-slate-700 dark:text-slate-200">Không tìm thấy vật phẩm</h3>
               <p className="text-xs text-slate-400 max-w-sm mx-auto">
                 {searchQuery
                   ? `Không có kết quả nào khớp với từ khóa "${searchQuery}". Hãy thử tìm kiếm bằng từ khác.`
@@ -419,7 +419,7 @@ export const MarketScreen: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors"
+                  className="rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors"
                 >
                   Xóa bộ lọc tìm kiếm
                 </button>
@@ -456,10 +456,10 @@ export const MarketScreen: React.FC = () => {
 
       {/* TAB CONTENT: ORDERS */}
       {!isGuest && activeTab === "orders" && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-5">
-          <div className="border-b border-slate-100 pb-4">
-            <h2 className="text-lg font-bold text-slate-900">Lịch sử đổi quà của bạn</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+        <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-5">
+          <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Lịch sử đổi quà của bạn</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Theo dõi trạng thái các phần quà hiện vật và voucher từ quản trị viên.
             </p>
           </div>
@@ -470,8 +470,8 @@ export const MarketScreen: React.FC = () => {
             </div>
           ) : myOrders.length === 0 ? (
             <div className="py-12 text-center space-y-2">
-              <PackageCheck size={36} className="mx-auto text-slate-300" />
-              <p className="text-sm font-bold text-slate-600">Bạn chưa có đơn đổi quà nào</p>
+              <PackageCheck size={36} className="mx-auto text-slate-300 dark:text-slate-600" />
+              <p className="text-sm font-bold text-slate-600 dark:text-slate-300">Bạn chưa có đơn đổi quà nào</p>
               <p className="text-xs text-slate-400">Hãy tích lũy Bánh Mì để nhận những phần quà ý nghĩa nhé.</p>
             </div>
           ) : (
@@ -489,12 +489,12 @@ export const MarketScreen: React.FC = () => {
                 return (
                   <div
                     key={order.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50/70 p-4 transition-colors hover:bg-slate-50"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-800/50 p-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-xs font-bold text-slate-400">#{order.id}</span>
-                        <h4 className="text-sm font-bold text-slate-900">{itemsText}</h4>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">{itemsText}</h4>
                       </div>
                       <p className="text-xs text-slate-400">
                         Thời gian: {new Date(order.createdAt).toLocaleString("vi-VN")}
@@ -506,24 +506,24 @@ export const MarketScreen: React.FC = () => {
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
                           Chi phí
                         </span>
-                        <span className="text-sm font-bold text-amber-900">
+                        <span className="text-sm font-bold text-amber-900 dark:text-amber-400">
                           {order.totalPrice.toLocaleString("vi-VN")} Bánh Mì
                         </span>
                       </div>
 
                       <div>
                         {isPending && (
-                          <span className="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800">
+                          <span className="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800/60 dark:bg-amber-950/40 px-2.5 py-1 text-xs font-bold text-amber-800 dark:text-amber-300">
                             <Clock size={13} className="animate-spin" /> Đang chờ duyệt
                           </span>
                         )}
                         {isApproved && (
-                          <span className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800">
+                          <span className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 dark:border-emerald-800/60 dark:bg-emerald-950/40 px-2.5 py-1 text-xs font-bold text-emerald-800 dark:text-emerald-300">
                             <CheckCircle2 size={13} /> Đã phê duyệt
                           </span>
                         )}
                         {(isRejected || isRefunded) && (
-                          <span className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-800">
+                          <span className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 dark:border-rose-800/60 dark:bg-rose-950/40 px-2.5 py-1 text-xs font-bold text-rose-800 dark:text-rose-300">
                             <AlertCircle size={13} /> Từ chối (Đã hoàn bánh)
                           </span>
                         )}

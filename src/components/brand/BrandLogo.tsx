@@ -88,8 +88,8 @@ export function BrandLogo({
       badge: "text-[9px] px-1 py-0.2",
     },
     md: {
-      gap: "gap-1.5 sm:gap-2.5",
-      wordmark: "text-base sm:text-xl",
+      gap: "gap-2 sm:gap-2.5",
+      wordmark: "text-lg sm:text-xl",
       subtitle: "text-xs",
       badge: "text-[10px] px-1.5 py-0.5",
     },
@@ -135,7 +135,11 @@ export function BrandLogo({
             {/* Wordmark: "Bread" (Warm Navy/Slate) + "Trans" (Royal Blue) */}
             <span
               className={`font-black tracking-tight whitespace-nowrap ${sizeStyles.wordmark} ${
-                isDark ? "text-white" : "text-slate-900"
+                isDark
+                  ? "text-white"
+                  : variant === "admin"
+                    ? "text-slate-900"
+                    : "text-slate-900 dark:text-white"
               } ${textClassName}`}
             >
               Bread
@@ -163,7 +167,11 @@ export function BrandLogo({
           {(subtitle || variant === "full") && (
             <span
               className={`font-medium tracking-normal mt-0.5 truncate ${sizeStyles.subtitle} ${
-                isDark ? "text-slate-400" : "text-slate-500"
+                isDark
+                  ? "text-slate-400"
+                  : variant === "admin"
+                    ? "text-slate-500"
+                    : "text-slate-500 dark:text-slate-400"
               }`}
             >
               {subtitle || "Nền tảng Tự học Tiếng Anh & Luyện thi TOEIC"}

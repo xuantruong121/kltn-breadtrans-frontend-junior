@@ -1,7 +1,31 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: var(--font-quicksand), ui-sans-serif, system-ui, sans-serif;
+
+  /* Theme Surfaces & Semantic Colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-muted: var(--surface-muted);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-ring: var(--ring);
   
   /* BreadTrans Warm Bakery & Brand Palette */
   --color-brand-50: #fff7ed;
@@ -21,32 +45,35 @@
   --color-skill-reading: #059669;
   --color-skill-writing: #e11d48;
 
+  /* Intermediate Slate Shades for Smooth Dark Mode Hierarchy */
+  --color-slate-750: #243247;
+  --color-slate-850: #141f33;
+
   /* Shadows */
   --shadow-soft: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
   --shadow-card: 0 10px 30px -5px rgba(249, 115, 22, 0.06), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
   --shadow-glow: 0 10px 25px -3px rgba(249, 115, 22, 0.25);
 
   /* Material 3 / Modern Theme Tokens from Design Mockup */
-  --color-surface: #f9f9ff;
-  --color-surface-bright: #f9f9ff;
-  --color-surface-dim: #cfdaf2;
-  --color-surface-variant: #d8e3fb;
-  --color-surface-container-lowest: #ffffff;
-  --color-surface-container-low: #f0f3ff;
-  --color-surface-container: #e7eeff;
-  --color-surface-container-high: #dee8ff;
-  --color-surface-container-highest: #d8e3fb;
-  --color-on-surface: #111c2d;
-  --color-on-surface-variant: #554336;
+  --color-surface-bright: var(--surface-elevated);
+  --color-surface-dim: var(--surface-muted);
+  --color-surface-variant: var(--surface-muted);
+  --color-surface-container-lowest: var(--surface-elevated);
+  --color-surface-container-low: var(--surface-muted);
+  --color-surface-container: var(--surface);
+  --color-surface-container-high: var(--surface-elevated);
+  --color-surface-container-highest: var(--surface-elevated);
+  --color-on-surface: var(--foreground);
+  --color-on-surface-variant: var(--muted-foreground);
 
-  --color-primary: #8d4b00;
-  --color-primary-container: #b15f00;
-  --color-on-primary: #ffffff;
-  --color-on-primary-container: #fffbff;
-  --color-primary-fixed: #ffdcc3;
-  --color-primary-fixed-dim: #ffb77d;
-  --color-on-primary-fixed: #2f1500;
-  --color-on-primary-fixed-variant: #6e3900;
+  --color-primary: var(--primary);
+  --color-primary-container: var(--primary-container);
+  --color-on-primary: var(--on-primary);
+  --color-on-primary-container: var(--on-primary-container);
+  --color-primary-fixed: var(--primary-fixed);
+  --color-primary-fixed-dim: var(--primary-fixed-dim);
+  --color-on-primary-fixed: var(--on-primary-fixed);
+  --color-on-primary-fixed-variant: var(--on-primary-fixed-variant);
 
   --color-secondary: #855300;
   --color-secondary-container: #fea619;
@@ -65,10 +92,10 @@
   --color-on-tertiary-fixed: #370e00;
   --color-on-tertiary-fixed-variant: #7f2b00;
 
-  --color-error: #ba1a1a;
-  --color-error-container: #ffdad6;
-  --color-on-error: #ffffff;
-  --color-on-error-container: #93000a;
+  --color-error: var(--danger);
+  --color-error-container: var(--danger-container);
+  --color-on-error: var(--danger-foreground);
+  --color-on-error-container: var(--on-danger-container);
 
   --color-outline: #887364;
   --color-outline-variant: #dbc2b0;
@@ -83,17 +110,141 @@
 
 @layer base {
   :root {
+    color-scheme: light;
     --background: #fbfaf8;
     --foreground: #172033;
+    --card: #ffffff;
+    --card-foreground: #172033;
+    --surface: #f8fafc;
+    --surface-elevated: #ffffff;
+    --surface-muted: #f1f5f9;
+    --popover: #ffffff;
+    --popover-foreground: #172033;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --border: #e2e8f0;
+    --input: #ffffff;
+    --input-border: #cbd5e1;
+    --ring: #d97706;
+    --primary: #b45309;
+    --primary-container: #d97706;
+    --on-primary: #ffffff;
+    --on-primary-container: #451a03;
+    --primary-fixed: #ffedd5;
+    --primary-fixed-dim: #fed7aa;
+    --on-primary-fixed: #431407;
+    --on-primary-fixed-variant: #9a3412;
+    --success: #059669;
+    --success-foreground: #ffffff;
+    --warning: #d97706;
+    --warning-foreground: #ffffff;
+    --danger: #dc2626;
+    --danger-foreground: #ffffff;
+    --info: #2563eb;
+    --info-foreground: #ffffff;
+    --danger-container: #fee2e2;
+    --on-danger-container: #7f1d1d;
+  }
+
+  .dark {
+    color-scheme: dark;
+    --background: #0b1120;
+    --foreground: #f8fafc;
+    --card: #131d31;
+    --card-foreground: #f8fafc;
+    --surface: #111a2c;
+    --surface-elevated: #18243a;
+    --surface-muted: #1e293b;
+    --popover: #162138;
+    --popover-foreground: #f8fafc;
+    --muted: #1e293b;
+    --muted-foreground: #94a3b8;
+    --border: #22314e;
+    --input: #131d31;
+    --input-border: #334155;
+    --ring: #fbbf24;
+    --primary: #fb923c;
+    --primary-container: #f97316;
+    --on-primary: #431407;
+    --on-primary-container: #ffedd5;
+    --primary-fixed: #7c2d12;
+    --primary-fixed-dim: #9a3412;
+    --on-primary-fixed: #fff7ed;
+    --on-primary-fixed-variant: #fed7aa;
+    --success: #34d399;
+    --success-foreground: #052e1a;
+    --warning: #fbbf24;
+    --warning-foreground: #3a2200;
+    --danger: #fb7185;
+    --danger-foreground: #4c0519;
+    --info: #60a5fa;
+    --info-foreground: #0b1b36;
+    --danger-container: #4c0519;
+    --on-danger-container: #fecdd3;
+  }
+
+  /* Strict Admin CMS Light Isolation */
+  [data-theme="light"],
+  [data-theme="light"] * {
+    --background: #fbfaf8;
+    --foreground: #172033;
+    --card: #ffffff;
+    --card-foreground: #172033;
+    --surface: #f8fafc;
+    --surface-elevated: #ffffff;
+    --surface-muted: #f1f5f9;
+    --popover: #ffffff;
+    --popover-foreground: #172033;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --border: #e2e8f0;
+    --input: #ffffff;
+    --input-border: #cbd5e1;
+    --ring: #d97706;
+    --primary: #b45309;
+    --primary-container: #d97706;
+    --on-primary: #ffffff;
+    --on-primary-container: #451a03;
+    --primary-fixed: #ffedd5;
+    --primary-fixed-dim: #fed7aa;
+    --on-primary-fixed: #431407;
+    --on-primary-fixed-variant: #9a3412;
+    --success: #059669;
+    --success-foreground: #ffffff;
+    --warning: #d97706;
+    --warning-foreground: #ffffff;
+    --danger: #dc2626;
+    --danger-foreground: #ffffff;
+    --info: #2563eb;
+    --info-foreground: #ffffff;
+    --danger-container: #fee2e2;
+    --on-danger-container: #7f1d1d;
   }
 
   * {
-    border-color: #e2e8f0;
+    border-color: var(--border, #e2e8f0);
   }
 
   :focus-visible {
-    outline: 3px solid color-mix(in srgb, var(--color-primary) 62%, white);
+    outline: 3px solid color-mix(in srgb, var(--ring) 62%, white);
     outline-offset: 3px;
+  }
+
+  ::selection {
+    color: var(--foreground);
+    background: color-mix(in srgb, var(--ring) 28%, transparent);
+  }
+
+  input,
+  textarea,
+  select {
+    color-scheme: inherit;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--muted-foreground);
+    opacity: 0.78;
   }
 }
 
@@ -104,6 +255,10 @@ html, body {
   background-color: var(--background);
   min-height: 100dvh;
   overflow-x: clip;
+}
+
+* {
+  scrollbar-color: color-mix(in srgb, var(--muted-foreground) 48%, transparent) var(--background);
 }
 
 button,
