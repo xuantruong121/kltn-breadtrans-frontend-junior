@@ -263,7 +263,6 @@ test("Route Focus Visibility: low-focus discovery routes show companion, active 
     "/grammar",
     "/flashcard",
     "/learn",
-    "/history",
     "/market",
     "/arena",
     "/pet",

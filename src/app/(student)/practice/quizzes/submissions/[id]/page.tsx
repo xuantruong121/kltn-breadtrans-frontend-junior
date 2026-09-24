@@ -9,6 +9,11 @@ import { quizService } from "@/lib/api/services/quiz.service";
 import { BackButton } from "@/components/ui";
 import Confetti from "react-confetti";
 import { motion } from "framer-motion";
+import {
+  formatReadingExplanation,
+  formatReadingValue,
+  resolveReadingCorrectAnswer,
+} from "../../readingQuizUtils";
 
 export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
@@ -106,8 +111,12 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
 
             <div className="flex flex-col gap-4">
               {analytics.questions?.map((q: any, idx: number) => {
-                const result = analytics.results?.find((r: any) => r.questionId === q.id);
-                const isCorrect = result?.isCorrect;
+                const result = analytics.results?.find(
+                  (r: any) => Number(r.questionId) === Number(q.id),
+                );
+                const isCorrect = result?.isCorrect === true;
+                const correctAnswer = resolveReadingCorrectAnswer(q.content);
+                const explanation = formatReadingExplanation(q.content);
                 
                 return (
                   <motion.div 
@@ -134,17 +143,24 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
                           <div className="p-3 bg-white dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700">
                             <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase block mb-1">Bạn đã trả lời:</span>
                             <span className={`font-bold text-sm break-words block ${isCorrect ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-400 line-through'}`}>
-                              {result?.answer || "(Bỏ trống)"}
+                              {formatReadingValue(result?.answer)}
                             </span>
                           </div>
                           <div className="p-3 bg-white dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700">
                             <span className="text-[10px] font-black text-sky-600 dark:text-sky-400 uppercase block mb-1">Đáp án chuẩn:</span>
                             <span className="font-bold text-sm text-sky-800 dark:text-sky-200 break-words block">
-                              {q.content?.correct || q.content?.correctAnswer}
+                              {correctAnswer.available
+                                ? correctAnswer.answer
+                                : "Đáp án chuẩn chưa khả dụng"}
                             </span>
                             {q.content?.translation && (
                               <span className="block mt-1.5 text-xs text-slate-500 dark:text-slate-400 italic break-words">
                                 Dịch: {q.content.translation}
+                              </span>
+                            )}
+                            {explanation && (
+                              <span className="block mt-2 text-xs text-slate-600 dark:text-slate-300 whitespace-pre-line break-words">
+                                Giải thích: {explanation}
                               </span>
                             )}
                           </div>

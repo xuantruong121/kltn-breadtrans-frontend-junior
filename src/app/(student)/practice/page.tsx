@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   Compass,
   Flame,
-  History,
   Layers,
   Play,
   RotateCcw,
@@ -960,12 +959,12 @@ export default function PracticeHubPage() {
           </div>
         </div>
 
-        {/* 4 Companion Toolkit Cards */}
+        {/* 3 Companion Toolkit Cards */}
         <div>
           <h3 id="companion-heading" className="text-xl font-black text-slate-900 dark:text-slate-100 mb-4">
             Công Cụ Bổ Trợ Nền Tảng
           </h3>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-3">
             {/* Tool 1: Flashcard */}
             <Link
               href="/flashcard"
@@ -1026,27 +1025,6 @@ export default function PracticeHubPage() {
               </div>
               <span className="mt-4 inline-flex items-center gap-1 text-xs font-extrabold text-blue-700 dark:text-blue-400">
                 Làm bài test <ArrowRight size={13} aria-hidden="true" />
-              </span>
-            </Link>
-
-            {/* Tool 4: History */}
-            <Link
-              href="/history"
-              className="group relative flex flex-col justify-between rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-violet-300 dark:hover:border-violet-600 hover:shadow-md transition duration-200"
-            >
-              <div>
-                <div className="flex size-11 items-center justify-center rounded-xl border border-violet-200 dark:border-violet-900/60 bg-violet-50 dark:bg-violet-950/60 text-violet-700 dark:text-violet-400">
-                  <History size={20} aria-hidden="true" />
-                </div>
-                <h4 className="mt-3 text-base font-black text-slate-900 dark:text-slate-100 group-hover:text-violet-700 dark:group-hover:text-violet-400 transition-colors">
-                  Lịch Sử Luyện Tập
-                </h4>
-                <p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Theo dõi biểu đồ phong độ, tỷ lệ chính xác và xem lại các câu đã làm sai.
-                </p>
-              </div>
-              <span className="mt-4 inline-flex items-center gap-1 text-xs font-extrabold text-violet-700 dark:text-violet-400">
-                Xem lịch sử <ArrowRight size={13} aria-hidden="true" />
               </span>
             </Link>
           </div>

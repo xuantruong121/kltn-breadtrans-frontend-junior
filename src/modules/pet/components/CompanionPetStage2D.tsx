@@ -139,7 +139,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                 {currentSpecies.title}
               </p>
               {currentSpecies.quote && (
-                <p className="text-xs text-amber-900/80 dark:text-amber-300/80 italic mt-2 bg-amber-50/80 dark:bg-amber-950/50 px-3 py-1.5 rounded-xl border border-amber-200/60 dark:border-amber-800/60">
+                <p className="text-xs text-amber-900/80 dark:text-amber-200/90 italic mt-2 bg-amber-50/80 dark:bg-amber-950/50 px-3 py-1.5 rounded-xl border border-amber-200/60 dark:border-amber-800/60 leading-relaxed font-normal">
                   &ldquo;{currentSpecies.quote}&rdquo;
                 </p>
               )}
@@ -209,7 +209,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                     style={{ width: `${health}%` }}
                   />
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                <p className="text-[11px] text-slate-500 dark:text-slate-300 leading-relaxed">
                   {health >= 70
                     ? "Thú cưng tràn đầy năng lượng sẵn sàng học tập."
                     : "Sức khỏe đang thấp; hãy duy trì việc học và theo dõi trạng thái thú cưng."}
@@ -238,7 +238,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                     style={{ width: `${happiness}%` }}
                   />
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                <p className="text-[11px] text-slate-500 dark:text-slate-300 leading-relaxed">
                   {happiness >= 70
                     ? "Tâm trạng rất phấn khởi, sẵn sàng đồng hành cùng bạn."
                     : "Tâm trạng đang thấp; hãy quay lại tương tác cùng thú cưng sau."}
@@ -266,7 +266,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                     style={{ width: `${satiety}%` }}
                   />
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                <p className="text-[11px] text-slate-500 dark:text-slate-300 leading-relaxed">
                   {satiety >= 80
                     ? "Thú cưng đã no căng, chưa cần nạp thêm năng lượng."
                     : satiety >= 50

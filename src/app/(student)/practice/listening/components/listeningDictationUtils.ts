@@ -237,21 +237,69 @@ export function moveTranscriptIndex(
 export interface TranscriptTimingItem {
   startMs?: number | null;
   endMs?: number | null;
+  speakerTurnId?: string | null;
 }
 
-/** Returns the active timed turn, or -1 while audio is in an intentional pause gap. */
-export function resolveActiveTranscriptIndex(
+export interface TranscriptPlaybackState {
+  /** The chunk currently spoken, or the last chunk while between adjacent chunks. */
+  activeChunkIndex: number;
+  /** The grouped speaker contribution that owns the visual active window. */
+  activeSpeakerTurnId: string | null;
+}
+
+/**
+ * Resolve one deterministic Full Transcript cursor. Chunk bookmarks remain
+ * authoritative for Dictation playback; the transcript uses HOLD_PREVIOUS
+ * presentation semantics across short gaps so a speaker-turn card cannot flash.
+ */
+export function resolveTranscriptPlaybackState(
   currentTimeMs: number,
   items: TranscriptTimingItem[],
-): number {
-  if (!Number.isFinite(currentTimeMs) || items.length === 0) return -1;
-  return items.findIndex(
+): TranscriptPlaybackState {
+  if (!Number.isFinite(currentTimeMs) || items.length === 0) {
+    return { activeChunkIndex: -1, activeSpeakerTurnId: null };
+  }
+
+  const exactIndex = items.findIndex(
     (item) =>
       Number.isFinite(item.startMs) &&
       Number.isFinite(item.endMs) &&
       currentTimeMs >= Number(item.startMs) &&
       currentTimeMs < Number(item.endMs),
   );
+
+  if (exactIndex >= 0) {
+    return {
+      activeChunkIndex: exactIndex,
+      activeSpeakerTurnId: items[exactIndex].speakerTurnId ?? null,
+    };
+  }
+
+  // Keep the previous chunk/turn visually active until the next authoritative
+  // chunk begins. The media `ended` handler clears the final tail explicitly.
+  let previousIndex = -1;
+  for (let index = 0; index < items.length; index += 1) {
+    const startMs = Number(items[index].startMs);
+    if (!Number.isFinite(startMs) || startMs > currentTimeMs) break;
+    previousIndex = index;
+  }
+
+  if (previousIndex < 0) {
+    return { activeChunkIndex: -1, activeSpeakerTurnId: null };
+  }
+
+  return {
+    activeChunkIndex: previousIndex,
+    activeSpeakerTurnId: items[previousIndex].speakerTurnId ?? null,
+  };
+}
+
+/** Backward-compatible chunk cursor helper. */
+export function resolveActiveTranscriptIndex(
+  currentTimeMs: number,
+  items: TranscriptTimingItem[],
+): number {
+  return resolveTranscriptPlaybackState(currentTimeMs, items).activeChunkIndex;
 }
 
 /**

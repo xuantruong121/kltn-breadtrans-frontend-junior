@@ -23,9 +23,13 @@ export interface QuestionContent {
   imagePurpose?: "TOPIC_CONTEXT";
   transcriptSegments?: Array<{
     turnId?: string;
+    speakerTurnId?: string;
+    speakerId?: string;
     speaker: string;
     text: string;
     translation?: string;
+    dialogueAct?: string;
+    delivery?: string;
     startMs?: number;
     endMs?: number;
   }>;
@@ -155,6 +159,9 @@ export interface ListeningTranscriptItem {
   order: number;
   transcript: string;
   speaker?: string | null;
+  speakerId?: string | null;
+  /** Several dictation chunks can belong to one conversational contribution. */
+  speakerTurnId?: string | null;
   translation: string | null;
   startMs?: number | null;
   endMs?: number | null;

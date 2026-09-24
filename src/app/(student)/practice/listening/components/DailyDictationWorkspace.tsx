@@ -48,7 +48,7 @@ import {
   buildProgressiveAnswer,
   clampTranscriptIndex,
   moveTranscriptIndex,
-  resolveActiveTranscriptIndex,
+  resolveTranscriptPlaybackState,
 } from "./listeningDictationUtils";
 
 export interface DictationAttemptMetrics {
@@ -106,6 +106,21 @@ function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
+function groupTranscriptItems(items: ListeningTranscriptItem[]) {
+  const groups: Array<{
+    key: string;
+    startIndex: number;
+    items: ListeningTranscriptItem[];
+  }> = [];
+  items.forEach((item, idx) => {
+    const key = item.speakerTurnId || `chunk-${idx}`;
+    const previous = groups[groups.length - 1];
+    if (previous?.key === key) previous.items.push(item);
+    else groups.push({ key, startIndex: idx, items: [item] });
+  });
+  return groups;
 }
 
 export function DailyDictationWorkspace({
@@ -193,6 +208,7 @@ export function DailyDictationWorkspace({
   const [fullTranscript, setFullTranscript] = useState<ListeningTranscriptItem[]>([]);
   const [selectedTranscriptItemIndex, setSelectedTranscriptItemIndex] = useState(-1);
   const [activeTranscriptItemIndex, setActiveTranscriptItemIndex] = useState(-1);
+  const [activeTranscriptSpeakerTurnId, setActiveTranscriptSpeakerTurnId] = useState<string | null>(null);
   const [isTranscriptLoading, setIsTranscriptLoading] = useState(false);
   const [transcriptError, setTranscriptError] = useState<string | null>(null);
   const [transcriptReloadKey, setTranscriptReloadKey] = useState(0);
@@ -258,32 +274,25 @@ export function DailyDictationWorkspace({
     if (isChecking || isCompletedOrRevealed) return;
     const res = await onCheck();
     if (!res?.isCorrect) {
-      focusInputAtEnd();
-      requestAnimationFrame(() => {
-        focusInputAtEnd();
-      });
-      setTimeout(() => {
-        focusInputAtEnd();
-      }, 50);
+      const el = textareaRef.current;
+      if (el && document.activeElement !== el) {
+        el.focus({ preventScroll: true });
+      }
     }
-  }, [isChecking, isCompletedOrRevealed, onCheck, focusInputAtEnd]);
+  }, [isChecking, isCompletedOrRevealed, onCheck]);
 
-  // Keep dictation textarea focused for uninterrupted typing UX (on mount, check completion, sentence change)
+  // Keep dictation textarea focused on mount, tab switch, or sentence change without overriding active typing caret
   useEffect(() => {
     if (!isCompletedOrRevealed && activeTab === "dictation") {
       focusInputAtEnd();
       const frame = requestAnimationFrame(() => {
         focusInputAtEnd();
       });
-      const timer = setTimeout(() => {
-        focusInputAtEnd();
-      }, 50);
       return () => {
         cancelAnimationFrame(frame);
-        clearTimeout(timer);
       };
     }
-  }, [isChecking, isChecked, isCompletedOrRevealed, activeTab, currentIndex, focusInputAtEnd]);
+  }, [isCompletedOrRevealed, activeTab, currentIndex, focusInputAtEnd]);
 
   // Rotate the study tip automatically so the banner remains useful during a
   // longer dictation session. The manual refresh button still advances it on
@@ -353,6 +362,23 @@ export function DailyDictationWorkspace({
       textareaRef.current?.focus();
     }, 50);
   }, [onSkip]);
+
+  const displayTranscriptItems: ListeningTranscriptItem[] =
+    fullTranscript.length > 0
+      ? fullTranscript
+      : questions.map((q, idx) => ({
+          questionId: q.id,
+          order: q.order || idx + 1,
+          transcript:
+            (q.content as any)?.correctAnswer ||
+            (q.content as any)?.audioText ||
+            (q.content as any)?.text ||
+            `Câu ${idx + 1}`,
+          speaker: (q.content as any)?.speaker || null,
+          speakerTurnId: null,
+          translation: (q.content as any)?.translation || null,
+        }));
+  const transcriptGroups = groupTranscriptItems(displayTranscriptItems);
 
   // Close translation menu on outside click
   useEffect(() => {
@@ -542,6 +568,7 @@ export function DailyDictationWorkspace({
         setFullTranscript(transcriptResult.items);
         setSelectedTranscriptItemIndex(0);
         setActiveTranscriptItemIndex(0);
+        setActiveTranscriptSpeakerTurnId(transcriptResult.items[0]?.speakerTurnId ?? null);
         setTranscriptError(null);
         setAudioLoading(false);
         setAudioError(audioResult.status === "rejected");
@@ -594,7 +621,11 @@ export function DailyDictationWorkspace({
     };
   }, []);
 
-  // Auto-scroll active sentence in transcript playlist
+  const activeTranscriptScrollKey =
+    activeTranscriptSpeakerTurnId ?? String(activeTranscriptItemIndex);
+
+  // Auto-scroll only when the active speaker-turn row changes. Consecutive
+  // chunks inside one grouped turn must not re-center the same row.
   useEffect(() => {
     if (activeTab === "transcript" && autoScrollTranscript && activeTranscriptRowRef.current) {
       activeTranscriptRowRef.current.scrollIntoView({
@@ -602,7 +633,7 @@ export function DailyDictationWorkspace({
         block: "nearest",
       });
     }
-  }, [activeTab, autoScrollTranscript, activeTranscriptItemIndex]);
+  }, [activeTab, autoScrollTranscript, activeTranscriptScrollKey]);
 
   const handleSelectTranscriptSentence = (transcriptIndex: number) => {
     const itemIndex = transcriptIndex >= 0 && transcriptIndex < fullTranscript.length
@@ -614,6 +645,7 @@ export function DailyDictationWorkspace({
       setCurrentTime(audioRef.current.currentTime);
       setSelectedTranscriptItemIndex(itemIndex);
       setActiveTranscriptItemIndex(itemIndex);
+      setActiveTranscriptSpeakerTurnId(item.speakerTurnId ?? null);
     }
   };
 
@@ -830,7 +862,10 @@ export function DailyDictationWorkspace({
           if (!isChecking) {
             void handlePerformCheck();
           } else {
-            focusInputAtEnd();
+            const el = textareaRef.current;
+            if (el && document.activeElement !== el) {
+              el.focus({ preventScroll: true });
+            }
           }
           return;
         }
@@ -1145,11 +1180,12 @@ export function DailyDictationWorkspace({
             setCurrentTime(audio.currentTime);
           }
           if (activeTab === "transcript" && fullTranscript.length > 0) {
-            const transcriptIndex = resolveActiveTranscriptIndex(
+            const playbackState = resolveTranscriptPlaybackState(
               audio.currentTime * 1000,
               fullTranscript,
             );
-            setActiveTranscriptItemIndex(transcriptIndex);
+            setActiveTranscriptItemIndex(playbackState.activeChunkIndex);
+            setActiveTranscriptSpeakerTurnId(playbackState.activeSpeakerTurnId);
           }
         }}
         onLoadedMetadata={() => {
@@ -1169,6 +1205,10 @@ export function DailyDictationWorkspace({
         onEnded={() => {
           setIsPlaying(false);
           setCurrentTime(0);
+          if (activeTab === "transcript") {
+            setActiveTranscriptItemIndex(-1);
+            setActiveTranscriptSpeakerTurnId(null);
+          }
           if (activeTab === "transcript" && repeatTranscript) {
             window.setTimeout(() => {
               void audioRef.current?.play().catch(() => undefined);
@@ -1957,34 +1997,13 @@ export function DailyDictationWorkspace({
 
             {/* Right Column: Scrollable Playlist of Sentences */}
             <div className="lg:col-span-6 flex flex-col justify-between rounded-xl bg-stone-50/40 dark:bg-slate-800/40 border border-stone-200/80 dark:border-slate-700/80 p-3 sm:p-4 min-h-[460px]">
-              {(() => {
-                const displayTranscriptItems =
-                  fullTranscript.length > 0
-                    ? fullTranscript
-                    : questions.map((q, idx) => ({
-                        questionId: q.id,
-                        order: q.order || idx + 1,
-                        transcript:
-                          (q.content as any)?.correctAnswer ||
-                          (q.content as any)?.audioText ||
-                          (q.content as any)?.text ||
-                          `Câu ${idx + 1}`,
-                        speaker: (q.content as any)?.speaker || null,
-                        translation: (q.content as any)?.translation || null,
-                      }));
-
-                if (isTranscriptLoading && fullTranscript.length === 0) {
-                  return (
+              {isTranscriptLoading && fullTranscript.length === 0 ? (
                     <div className="space-y-2 p-2" aria-live="polite" aria-label="Đang tải kịch bản">
                       {questions.slice(0, Math.min(6, questions.length)).map((question) => (
                         <div key={question.id} className="h-12 animate-pulse rounded-xl bg-stone-100 dark:bg-slate-800" />
                       ))}
                     </div>
-                  );
-                }
-
-                if (transcriptError && fullTranscript.length === 0) {
-                  return (
+              ) : transcriptError && fullTranscript.length === 0 ? (
                     <div className="rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 p-4 text-sm text-rose-800 dark:text-rose-300" role="alert">
                       <p>{transcriptError}</p>
                       <button
@@ -1995,36 +2014,33 @@ export function DailyDictationWorkspace({
                         Thử lại
                       </button>
                     </div>
-                  );
-                }
-
-                if (displayTranscriptItems.length === 0) {
-                  return (
+              ) : displayTranscriptItems.length === 0 ? (
                     <div className="rounded-xl border border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800 p-5 text-sm text-stone-600 dark:text-slate-400 text-center">
                       Bài này chưa có dữ liệu kịch bản để hiển thị.
                     </div>
-                  );
-                }
-
-                return (
+              ) : (
                   <div
                     ref={transcriptListRef}
                     className="h-[360px] sm:h-[400px] overflow-y-auto space-y-1.5 pr-1.5 custom-scrollbar"
                     role="list"
                     aria-label="Danh sách câu kịch bản"
                   >
-                    {displayTranscriptItems.map((item, idx) => {
+                    {transcriptGroups.map((group, groupIndex) => {
                       const isCurrent =
-                        fullTranscript.length > 0 && activeTranscriptItemIndex >= 0
-                          ? idx === activeTranscriptItemIndex
-                          : false;
+                        fullTranscript.length > 0 &&
+                        (activeTranscriptSpeakerTurnId
+                          ? group.key === activeTranscriptSpeakerTurnId
+                          : activeTranscriptItemIndex >= 0
+                            ? group.items.some((_, offset) => group.startIndex + offset === activeTranscriptItemIndex)
+                            : false);
+                      const lead = group.items[0];
 
                       return (
                         <button
-                          key={item.questionId || idx}
+                          key={`${group.key}-${group.startIndex}`}
                           type="button"
                           ref={isCurrent ? activeTranscriptRowRef : null}
-                          onClick={() => handleSelectTranscriptSentence(idx)}
+                          onClick={() => handleSelectTranscriptSentence(group.startIndex)}
                           className={`group w-full text-left flex items-start gap-3 p-3 rounded-xl transition-all cursor-pointer border ${
                             isCurrent
                               ? "bg-amber-50/90 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800/70 text-amber-950 dark:text-amber-200 shadow-2xs"
@@ -2040,22 +2056,26 @@ export function DailyDictationWorkspace({
                             }`}
                             aria-hidden="true"
                           >
-                            {idx + 1}
+                            {groupIndex + 1}
                           </span>
 
                           {/* Text content */}
                           <div className="min-w-0 flex-1">
                             <p className={`text-sm leading-relaxed ${isCurrent ? "font-bold text-amber-950 dark:text-amber-200" : "font-medium text-stone-800 group-hover:text-stone-900 dark:text-slate-200 dark:group-hover:text-slate-100"}`}>
-                              {item.speaker && (
+                              {lead.speaker && (
                                 <span className="mr-1 text-[11px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-400">
-                                  {item.speaker}:
+                                  {lead.speaker}:
                                 </span>
                               )}
-                              {item.transcript}
+                              {group.items.map((item, index) => (
+                                <span key={`${item.questionId}-${index}`} className={index > 0 ? "mt-1 block" : ""}>
+                                  {item.transcript}
+                                </span>
+                              ))}
                             </p>
-                            {selectedTranslationLanguage === "vi" && item.translation && (
-                              <p className="mt-1 text-xs text-amber-800/85 dark:text-amber-300/85 font-normal leading-relaxed line-clamp-2">
-                                {item.translation}
+                            {selectedTranslationLanguage === "vi" && group.items.some((item) => item.translation) && (
+                              <p className="mt-1 text-xs text-amber-800/85 dark:text-amber-300/85 font-normal leading-relaxed">
+                                {group.items.map((item, index) => item.translation ? <span key={`${item.questionId}-translation-${index}`} className={index > 0 ? "mt-1 block" : ""}>{item.translation}</span> : null)}
                               </p>
                             )}
                           </div>
@@ -2063,8 +2083,7 @@ export function DailyDictationWorkspace({
                       );
                     })}
                   </div>
-                );
-              })()}
+              )}
 
               {/* Right Column Bottom Bar */}
               <div className="pt-3 border-t border-stone-200/70 dark:border-slate-700/70 flex flex-col gap-2">

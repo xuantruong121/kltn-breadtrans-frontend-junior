@@ -77,14 +77,26 @@ export default function RootLayout({
                 toastOptions={{
                   duration: 4200,
                   className:
-                    "!rounded-xl !border !border-slate-200 dark:!border-slate-800 !bg-white dark:!bg-slate-900 !px-4 !py-3 !text-sm !font-semibold !text-slate-800 dark:!text-slate-100 !shadow-lg",
+                    "!rounded-2xl !border !border-slate-200 dark:!border-slate-800 !bg-white dark:!bg-slate-900 !px-4 !py-3 !text-sm !font-semibold !text-slate-900 dark:!text-slate-100 !shadow-lg",
                   success: {
                     className:
-                      "!border-emerald-200 dark:!border-emerald-800/60 !text-emerald-800 dark:!text-emerald-300",
+                      "!rounded-2xl !border !border-emerald-300 dark:!border-emerald-500/50 !bg-white dark:!bg-slate-900 !px-4 !py-3 !text-sm !font-semibold !text-slate-900 dark:!text-slate-100 !shadow-lg",
+                    iconTheme: {
+                      primary: "#10b981",
+                      secondary: "#ffffff",
+                    },
                   },
                   error: {
                     className:
-                      "!border-rose-200 dark:!border-rose-800/60 !text-rose-800 dark:!text-rose-300",
+                      "!rounded-2xl !border !border-rose-300 dark:!border-rose-500/50 !bg-white dark:!bg-slate-900 !px-4 !py-3 !text-sm !font-semibold !text-slate-900 dark:!text-slate-100 !shadow-lg",
+                    iconTheme: {
+                      primary: "#f43f5e",
+                      secondary: "#ffffff",
+                    },
+                  },
+                  loading: {
+                    className:
+                      "!rounded-2xl !border !border-sky-300 dark:!border-sky-500/50 !bg-white dark:!bg-slate-900 !px-4 !py-3 !text-sm !font-semibold !text-slate-900 dark:!text-slate-100 !shadow-lg",
                   },
                 }}
               />
