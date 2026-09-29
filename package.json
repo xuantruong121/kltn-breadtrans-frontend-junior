@@ -18,6 +18,7 @@
     "test:market-exchange": "node --no-warnings --test --experimental-strip-types src/modules/market/marketExchangeLogic.test.ts",
     "test:nav-utils": "node --no-warnings --test --experimental-strip-types src/components/navigation/navUtils.test.ts",
     "test:theme": "node --no-warnings --test --experimental-strip-types src/lib/theme/theme.test.ts",
+    "test:practice-card": "node --no-warnings --test --experimental-strip-types \"src/app/(student)/practice/speaking/components/PracticeCard.test.ts\"",
     "test:responsive-invariants": "node scripts/verify_responsive_invariants.mjs"
   },
   "dependencies": {
