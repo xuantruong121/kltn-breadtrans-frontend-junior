@@ -109,8 +109,11 @@ export function isValidPhaseTransition(
  */
 export function generateSpeakingIdempotencyKey(exerciseId: number): string {
   const ts = Date.now();
-  const rand = Math.random().toString(36).substring(2, 9);
-  return `spk-${exerciseId}-${ts}-${rand}`;
+  const uuid =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : Math.random().toString(36).substring(2, 10);
+  return `spk-${exerciseId}-${ts}-${uuid}`;
 }
 
 /**

@@ -143,8 +143,7 @@ export const speakingService = {
       contentType: string;
       sizeBytes: number;
       durationMs: number;
-      idempotencyKey?: string;
-      checksum?: string;
+      idempotencyKey: string;
     },
     traceId?: string,
   ): Promise<UploadIntentResponse> => {

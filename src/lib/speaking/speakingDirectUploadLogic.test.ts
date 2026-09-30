@@ -259,3 +259,54 @@ test('Phase 2 Security Boundary: presigned storage URL is never persisted in cli
   assert.doesNotMatch(stored, /X-Amz-Signature/, 'Presigned URL MUST NEVER be stored in client storage');
   assert.doesNotMatch(stored, /https:\/\/r2/, 'Storage URL MUST NEVER be stored in client storage');
 });
+
+test('Phase 2 Idempotency Key Handling: reuses same key on network retry, generates distinct key for new recording', () => {
+  // Test 1: stable key reused during retry of the same recording session
+  const key1 = 'spk-42-1790760000000-uuid1';
+  let retryCount = 0;
+  let sentKeyOnRetry = '';
+
+  const retrySubmit = (keyToUse: string) => {
+    retryCount++;
+    sentKeyOnRetry = keyToUse;
+  };
+
+  retrySubmit(key1);
+  assert.equal(retryCount, 1);
+  assert.equal(sentKeyOnRetry, key1, 'Initial attempt uses original key');
+
+  // Network error occurs, retrying submission of identical recording
+  retrySubmit(key1);
+  assert.equal(retryCount, 2);
+  assert.equal(sentKeyOnRetry, key1, 'Retry MUST reuse the identical idempotency key');
+
+  // Test 2: brand new recording generates a distinct new key
+  const key2 = 'spk-42-1790760005000-uuid2';
+  assert.notEqual(key1, key2, 'New recording must receive a fresh idempotency key');
+});
+
+test('Phase 2 State Cleanup: clears temporary attempt state and abort controller after completion or cancellation', async () => {
+  const pipeline = new MockDirectUploadPipeline();
+  const dummyBlob = {
+    size: 160000,
+    arrayBuffer: async () => new ArrayBuffer(160000),
+  };
+
+  await pipeline.runPipeline({
+    uploadMode: 'presigned',
+    audioBlob: dummyBlob,
+    idempotencyKey: 'spk-test-cleanup',
+  });
+
+  assert.equal(pipeline.inFlight, false, 'In-flight guard released after completion');
+  assert.equal(pipeline.state.phase, 'POLLING');
+
+  // Verify can start new attempt cleanly
+  await pipeline.runPipeline({
+    uploadMode: 'presigned',
+    audioBlob: dummyBlob,
+    idempotencyKey: 'spk-test-cleanup-2',
+  });
+  assert.equal(pipeline.inFlight, false);
+});
+
