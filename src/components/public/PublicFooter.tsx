@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, GraduationCap, MapPin } from "lucide-react";
 import { BrandLogo } from "@/components/brand";
 
 export function PublicFooter() {
@@ -71,18 +71,18 @@ export function PublicFooter() {
 
           {/* Contact */}
           <div className="space-y-3">
-            <h4 className="mb-4 text-base font-bold text-slate-900 dark:text-slate-100">Liên hệ trung tâm</h4>
-            <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 font-medium">
-              <Phone size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
-              <span>Hotline: 1900 6868</span>
+            <h4 className="mb-4 text-base font-bold text-slate-900 dark:text-slate-100">Thông tin dự án</h4>
+            <div className="flex items-start gap-3 text-sm text-slate-500 dark:text-slate-400 font-medium">
+              <GraduationCap size={16} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <span>Đồ án Khóa luận Tốt nghiệp Kỹ thuật Phần mềm — Nhóm 139</span>
             </div>
             <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 font-medium">
               <Mail size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
-              <span>contact@breadtrans.edu.vn</span>
+              <span>contact@breadtrans.online</span>
             </div>
             <div className="flex items-start gap-3 text-sm text-slate-500 dark:text-slate-400 font-medium">
               <MapPin size={16} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-              <span>Tầng 5, Tòa nhà Tri Thức, Quận Cầu Giấy, Hà Nội</span>
+              <span>Khoa Công nghệ Thông tin, Trường Đại học Công nghiệp TP.HCM (IUH) — 12 Nguyễn Văn Bảo, Phường 4, Quận Gò Vấp, TP. Hồ Chí Minh</span>
             </div>
           </div>
         </div>

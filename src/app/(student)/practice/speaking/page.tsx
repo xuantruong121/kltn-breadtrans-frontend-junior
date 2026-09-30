@@ -412,10 +412,10 @@ export default function SpeakingExercisesPage() {
               <span>Tổng số câu: {exercises?.length || 0} câu</span>
               <Link
                 href="/practice/listening"
-                className="inline-flex items-center gap-1 font-bold text-violet-700 dark:text-violet-400 hover:underline"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-violet-700 dark:text-violet-300 hover:text-violet-800 dark:hover:text-violet-200 bg-violet-50 dark:bg-violet-950/60 hover:bg-violet-100 dark:hover:bg-violet-900/60 border border-violet-200/60 dark:border-violet-800/60 px-2.5 py-1 rounded-md transition-colors duration-150"
               >
                 Luyện nghe
-                <ArrowRight size={12} aria-hidden="true" />
+                <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
               </Link>
             </div>
           </div>
@@ -429,8 +429,8 @@ export default function SpeakingExercisesPage() {
           {/* Search Input */}
           <div className="relative flex-1 lg:max-w-md">
             <Search
-              size={16}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+              size={18}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
               aria-hidden="true"
             />
             <input
@@ -442,7 +442,7 @@ export default function SpeakingExercisesPage() {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
-              className="min-h-11 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 pl-10 pr-20 text-xs text-slate-800 dark:text-slate-100 transition placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-violet-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-hidden"
+              className="min-h-11 w-full rounded-xl border border-slate-300/80 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-800/90 pl-10.5 pr-20 text-sm font-medium text-slate-900 dark:text-slate-100 transition-all duration-150 placeholder:text-slate-500 dark:placeholder:text-slate-400 placeholder:font-normal focus:border-violet-600 dark:focus:border-violet-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/20 focus:outline-hidden shadow-2xs"
             />
             <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
               {searchTerm ? (
@@ -458,7 +458,7 @@ export default function SpeakingExercisesPage() {
                   <X size={13} aria-hidden="true" />
                 </button>
               ) : (
-                <kbd className="hidden sm:inline-block rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-slate-400 dark:text-slate-500">
+                <kbd className="hidden sm:inline-block rounded-md border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-0.5 text-[11px] font-mono font-bold text-slate-600 dark:text-slate-400 shadow-2xs">
                   ⌘K
                 </kbd>
               )}

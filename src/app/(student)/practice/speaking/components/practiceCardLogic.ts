@@ -71,10 +71,18 @@ export function resolveFormatTag(exercise: PracticeExerciseItem): string {
     return "Bày tỏ quan điểm";
   }
   if (title.includes("pronunciation") || title.includes("phát âm")) {
-    return "Nền tảng phát âm";
+    return "Âm vị học";
+  }
+  if (
+    title.includes("toeic speaking") ||
+    title.includes("toeic") ||
+    title.includes("ets") ||
+    title.includes("nhiệm vụ")
+  ) {
+    return "Mô phỏng ETS";
   }
   if (exercise.practiceSet) {
-    return "BỘ LUYỆN";
+    return "Mô phỏng ETS";
   }
   return exercise.category || "LUYỆN NÓI";
 }

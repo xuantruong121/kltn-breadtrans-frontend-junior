@@ -76,7 +76,29 @@ test("PracticeCard Format Tag: resolves format badge accurately", () => {
     difficulty: "BEGINNER",
     category: "GENERAL",
   };
-  assert.equal(resolveFormatTag(pronunciationEx), "Nền tảng phát âm");
+  assert.equal(resolveFormatTag(pronunciationEx), "Âm vị học");
+
+  const toeicEx: PracticeExerciseItem = {
+    id: 7,
+    title: "Luyện nhiệm vụ TOEIC Speaking",
+    targetText: "Another secret prompt",
+    difficulty: "INTERMEDIATE",
+    category: "TOEIC",
+    practiceSet: {
+      key: "toeic-speaking-practice",
+      title: "Luyện nhiệm vụ TOEIC Speaking",
+      description:
+        "Luyện theo nhóm nhiệm vụ đọc thành tiếng, mô tả và phản hồi trong TOEIC Speaking.",
+      category: "TOEIC",
+      exerciseCount: 4,
+      completedCount: 0,
+      exerciseIds: [25, 26, 27, 28],
+      difficultyLabel: "Trung cấp",
+      position: 7,
+      isCompleted: false,
+    },
+  };
+  assert.equal(resolveFormatTag(toeicEx), "Mô phỏng ETS");
 });
 
 test("PracticeCard Pedagogical Description: produces concise objective without content leakage", () => {
