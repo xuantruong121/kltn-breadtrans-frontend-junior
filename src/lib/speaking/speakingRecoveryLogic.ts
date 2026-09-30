@@ -92,3 +92,10 @@ export function calculatePollingInterval(attempt: number): number {
 export function isTerminalSpeakingStatus(status: string): boolean {
   return status === 'COMPLETED' || status === 'FAILED';
 }
+
+export function getSpeakingFailureMessage(errorCode?: string | null): string {
+  if (errorCode === 'AUDIO_OBJECT_NOT_FOUND') {
+    return 'Không tìm thấy tệp ghi âm của bài nộp. Vui lòng ghi âm và gửi lại.';
+  }
+  return 'Đánh giá phát âm chưa thành công. Bạn vui lòng thử lại.';
+}

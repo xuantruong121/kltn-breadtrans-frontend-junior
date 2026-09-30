@@ -281,7 +281,7 @@ export const speakingService = {
   },
 
   getMySubmissions: async (): Promise<SpeakingSubmissionSummary[]> => {
-    return await axiosClient.get("/speaking/my-submissions");
+    return await axiosClient.get("/speaking/submissions/my");
   },
 
   generateTts: async (

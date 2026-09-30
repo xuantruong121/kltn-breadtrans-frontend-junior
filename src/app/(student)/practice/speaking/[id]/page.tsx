@@ -40,6 +40,7 @@ import {
   shouldHandleSpeakingShortcut,
   getNextExerciseId,
 } from "@/lib/speaking/speakingPracticeLogic";
+import { getSpeakingFailureMessage } from "@/lib/speaking/speakingRecoveryLogic";
 import {
   createWorkletFlushController,
   isAudioWorkletSupported,
@@ -651,9 +652,7 @@ export default function SpeakingExerciseDetailPage() {
                 );
               } catch {}
             }
-            toast.error(
-              "Đánh giá phát âm chưa thành công. Bạn vui lòng thử lại.",
-            );
+            toast.error(getSpeakingFailureMessage(sub.lastErrorCode));
           }
         } catch (fetchErr) {
           console.error("Failed to fetch completed submission:", fetchErr);
@@ -682,9 +681,7 @@ export default function SpeakingExerciseDetailPage() {
             );
           } catch {}
         }
-        toast.error(
-          "Đánh giá phát âm chưa thành công. Bạn vui lòng thử lại.",
-        );
+        toast.error("Đánh giá phát âm chưa thành công. Bạn vui lòng thử lại.");
       }
     };
 
@@ -779,9 +776,7 @@ export default function SpeakingExerciseDetailPage() {
                 );
               } catch {}
             }
-            toast.error(
-              "Đánh giá phát âm chưa thành công. Bạn vui lòng thử lại.",
-            );
+            toast.error(getSpeakingFailureMessage(sub.lastErrorCode));
           } else {
             pollSubmissionStatus(submissionId, attempt + 1);
           }

@@ -4,6 +4,7 @@ import {
   resolvePendingSubmissionId,
   calculatePollingInterval,
   isTerminalSpeakingStatus,
+  getSpeakingFailureMessage,
 } from './speakingRecoveryLogic.ts';
 
 test('Speaking Submission Recovery - Tier 1: URL search param', () => {
@@ -113,4 +114,15 @@ test('Speaking Terminal Status triggers cleanup', () => {
   assert.equal(isTerminalSpeakingStatus('FAILED'), true);
   assert.equal(isTerminalSpeakingStatus('PENDING'), false);
   assert.equal(isTerminalSpeakingStatus('PROCESSING'), false);
+});
+
+test('Speaking failure message hides storage details and explains missing audio', () => {
+  assert.equal(
+    getSpeakingFailureMessage('AUDIO_OBJECT_NOT_FOUND'),
+    'Không tìm thấy tệp ghi âm của bài nộp. Vui lòng ghi âm và gửi lại.',
+  );
+  assert.equal(
+    getSpeakingFailureMessage('STORAGE_UNAVAILABLE'),
+    'Đánh giá phát âm chưa thành công. Bạn vui lòng thử lại.',
+  );
 });
