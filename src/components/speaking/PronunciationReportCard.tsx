@@ -56,6 +56,7 @@ export interface PronunciationReportCardProps {
   ttsAccent?: "US" | "UK";
   ttsRate?: number;
   isNextAvailable?: boolean;
+  isProlongedProcessing?: boolean;
 }
 
 /**
@@ -129,6 +130,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
   ttsAccent = "US",
   ttsRate = 1.0,
   isNextAvailable = true,
+  isProlongedProcessing = false,
 }) => {
   const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null);
 
@@ -465,12 +467,14 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
           <div className="text-center space-y-1">
             <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-100 border border-amber-200 text-amber-900 text-[11px] font-black uppercase tracking-wider">
               <Activity size={12} className="animate-pulse" />
-              <span>Đang phân tích bài nói...</span>
+              <span>Đang xử lý bài nói...</span>
             </span>
             <p className="text-xs text-slate-600 font-medium max-w-sm mx-auto">
-              {phase === "POLLING"
-                ? "Hệ thống đang so khớp bài nói với câu văn mẫu và chuẩn bị kết quả..."
-                : "Đang xử lý định dạng âm thanh và chuẩn bị dữ liệu đánh giá..."}
+              {isProlongedProcessing
+                ? "Bài nói vẫn đang được xử lý. Bạn có thể tiếp tục chờ hoặc quay lại xem kết quả sau."
+                : phase === "POLLING"
+                  ? "Hệ thống đang xử lý bài nói và chuẩn bị kết quả đánh giá..."
+                  : "Đang xử lý định dạng âm thanh và chuẩn bị dữ liệu đánh giá..."}
             </p>
           </div>
         </div>

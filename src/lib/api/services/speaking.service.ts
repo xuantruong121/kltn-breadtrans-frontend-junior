@@ -114,6 +114,7 @@ export const speakingService = {
     id: number,
     audioBlob: Blob,
     idempotencyKey?: string,
+    traceId?: string,
   ): Promise<SubmitSpeakingResponse> => {
     const formData = new FormData();
     formData.append("audio", audioBlob, "recording.wav");
@@ -122,6 +123,10 @@ export const speakingService = {
       idempotencyKey ||
       `spk-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
+    const effectiveTraceId =
+      traceId ||
+      `spk-trace-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
     return await axiosClient.post(
       `/speaking/exercises/${id}/submit`,
       formData,
@@ -129,6 +134,7 @@ export const speakingService = {
         headers: {
           "Content-Type": "multipart/form-data",
           "Idempotency-Key": key,
+          "x-trace-id": effectiveTraceId,
         },
       },
     );
