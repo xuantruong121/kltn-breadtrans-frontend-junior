@@ -101,7 +101,133 @@ export interface SpeakingSubmissionSummary {
   targetText?: string;
 }
 
+export interface SpeakingCapabilities {
+  uploadMode: "presigned" | "proxy";
+  maxSizeBytes: number;
+  maxDurationMs: number;
+  minDurationMs: number;
+  allowedContentTypes: string[];
+}
+
+export interface UploadIntentResponse {
+  uploadIntentId: string;
+  uploadUrl: string;
+  signedHeaders: Record<string, string>;
+  objectKey: string;
+  expiresAt: string;
+  maxSizeBytes: number;
+  isAlreadyFinalized: boolean;
+  submissionId?: number;
+  pollUrl?: string;
+}
+
 export const speakingService = {
+  getCapabilities: async (): Promise<SpeakingCapabilities> => {
+    try {
+      return await axiosClient.get("/speaking/capabilities");
+    } catch {
+      // Fallback defaults
+      return {
+        uploadMode: "presigned",
+        maxSizeBytes: 10 * 1024 * 1024,
+        maxDurationMs: 45000,
+        minDurationMs: 300,
+        allowedContentTypes: ["audio/wav", "audio/x-wav"],
+      };
+    }
+  },
+
+  createUploadIntent: async (
+    exerciseId: number,
+    data: {
+      contentType: string;
+      sizeBytes: number;
+      durationMs: number;
+      idempotencyKey?: string;
+      checksum?: string;
+    },
+    traceId?: string,
+  ): Promise<UploadIntentResponse> => {
+    return await axiosClient.post(
+      `/speaking/exercises/${exerciseId}/upload-intents`,
+      data,
+      {
+        headers: traceId ? { "x-trace-id": traceId } : undefined,
+      },
+    );
+  },
+
+  uploadAudioDirectToR2: async (
+    uploadUrl: string,
+    blob: Blob,
+    signedHeaders: Record<string, string> = { "Content-Type": "audio/wav" },
+    onProgress?: (percent: number) => void,
+    abortSignal?: AbortSignal,
+  ): Promise<void> => {
+    return new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", uploadUrl, true);
+
+      for (const [header, val] of Object.entries(signedHeaders)) {
+        xhr.setRequestHeader(header, val);
+      }
+
+      if (onProgress && xhr.upload) {
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percent = Math.round((event.loaded / event.total) * 100);
+            onProgress(percent);
+          }
+        };
+      }
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
+        } else {
+          reject(
+            new Error(
+              `Storage upload failed with status ${xhr.status}: ${xhr.statusText}`,
+            ),
+          );
+        }
+      };
+
+      xhr.onerror = () => {
+        reject(new Error("Network error during direct storage upload"));
+      };
+
+      xhr.ontimeout = () => {
+        reject(new Error("Storage upload timed out"));
+      };
+
+      xhr.onabort = () => {
+        reject(new Error("Upload aborted by user"));
+      };
+
+      if (abortSignal) {
+        abortSignal.addEventListener("abort", () => {
+          xhr.abort();
+        });
+      }
+
+      xhr.send(blob);
+    });
+  },
+
+  finalizeUpload: async (
+    uploadIntentId: string,
+    traceId?: string,
+  ): Promise<SubmitSpeakingResponse> => {
+    return await axiosClient.post(
+      `/speaking/upload-intents/${uploadIntentId}/finalize`,
+      {},
+      {
+        headers: traceId ? { "x-trace-id": traceId } : undefined,
+      },
+    );
+  },
+
   getExercises: async (): Promise<SpeakingExercise[]> => {
     return await axiosClient.get("/speaking/exercises");
   },
@@ -110,6 +236,9 @@ export const speakingService = {
     return await axiosClient.get(`/speaking/exercises/${id}`);
   },
 
+  /**
+   * @deprecated Phase 2 legacy multipart route. Use direct-to-R2 uploadIntent + finalizeUpload.
+   */
   submitAudio: async (
     id: number,
     audioBlob: Blob,

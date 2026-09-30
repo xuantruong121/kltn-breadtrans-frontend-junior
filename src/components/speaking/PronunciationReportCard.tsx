@@ -57,6 +57,7 @@ export interface PronunciationReportCardProps {
   ttsRate?: number;
   isNextAvailable?: boolean;
   isProlongedProcessing?: boolean;
+  uploadProgress?: number;
 }
 
 /**
@@ -131,6 +132,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
   ttsRate = 1.0,
   isNextAvailable = true,
   isProlongedProcessing = false,
+  uploadProgress = 0,
 }) => {
   const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null);
 
@@ -455,6 +457,9 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
 
       {(phase === "ENCODING" ||
         phase === "VALIDATING_AUDIO" ||
+        phase === "REQUESTING_UPLOAD" ||
+        phase === "UPLOADING" ||
+        phase === "FINALIZING" ||
         phase === "SUBMITTING" ||
         phase === "POLLING") && (
         <div className="bg-amber-50/50 p-5 rounded-2xl border border-amber-200 flex flex-col items-center justify-center gap-3 shrink-0 shadow-2xs animate-in fade-in">
@@ -467,15 +472,39 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
           <div className="text-center space-y-1">
             <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-100 border border-amber-200 text-amber-900 text-[11px] font-black uppercase tracking-wider">
               <Activity size={12} className="animate-pulse" />
-              <span>Đang xử lý bài nói...</span>
+              <span>
+                {phase === "REQUESTING_UPLOAD"
+                  ? "Khởi tạo tải lên an toàn..."
+                  : phase === "UPLOADING"
+                  ? `Đang tải âm thanh lên... ${uploadProgress ? `${uploadProgress}%` : ""}`
+                  : phase === "FINALIZING"
+                  ? "Đang xác thực bài nộp..."
+                  : phase === "POLLING"
+                  ? "Hệ thống đang chấm điểm bài nói..."
+                  : "Đang xử lý âm thanh..."}
+              </span>
             </span>
             <p className="text-xs text-slate-600 font-medium max-w-sm mx-auto">
               {isProlongedProcessing
                 ? "Bài nói vẫn đang được xử lý. Bạn có thể tiếp tục chờ hoặc quay lại xem kết quả sau."
+                : phase === "REQUESTING_UPLOAD"
+                ? "Đang xin quyền lưu trữ audio an toàn từ máy chủ..."
+                : phase === "UPLOADING"
+                ? "Âm thanh đang được truyền tải trực tiếp lên bộ nhớ đám mây."
+                : phase === "FINALIZING"
+                ? "Máy chủ đang kiểm tra tính toàn vẹn và đưa vào hàng đợi chấm điểm."
                 : phase === "POLLING"
-                  ? "Hệ thống đang xử lý bài nói và chuẩn bị kết quả đánh giá..."
-                  : "Đang xử lý định dạng âm thanh và chuẩn bị dữ liệu đánh giá..."}
+                ? "AI đang tiến hành phân tích phát âm và chuẩn bị báo cáo..."
+                : "Đang chuẩn hóa định dạng 16kHz mono WAV..."}
             </p>
+            {phase === "UPLOADING" && uploadProgress > 0 && (
+              <div className="w-48 h-1.5 bg-amber-200 rounded-full mx-auto overflow-hidden mt-2">
+                <div
+                  className="h-full bg-amber-600 transition-all duration-200"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}
