@@ -25,7 +25,6 @@ import {
   BellOff,
   LogOut,
   Flame,
-  LineChart,
   Heart,
   Loader2,
   ShieldCheck,
@@ -953,14 +952,7 @@ export function AppHeader() {
                       <span>Đổi mật khẩu</span>
                     </Link>
 
-                    <Link
-                      href="/history"
-                      onClick={closeMenus}
-                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-sky-50 dark:hover:bg-slate-800 hover:text-sky-900 dark:hover:text-sky-400 transition-colors whitespace-nowrap"
-                    >
-                      <LineChart size={16} className="text-sky-600 shrink-0" />
-                      <span>Lịch sử luyện tập</span>
-                    </Link>
+
 
                     <button
                       type="button"
@@ -1225,14 +1217,7 @@ export function AppHeader() {
                           <Heart size={17} className="text-emerald-600 dark:text-emerald-400" />
                           <span>Thú cưng đồng hành</span>
                         </Link>
-                        <Link
-                          href="/history"
-                          onClick={closeMenus}
-                          className="flex min-h-[44px] items-center gap-3 rounded-2xl px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-sky-50 dark:hover:bg-slate-800 hover:text-sky-900 dark:hover:text-sky-300 transition-colors"
-                        >
-                          <LineChart size={17} className="text-sky-600 dark:text-sky-400" />
-                          <span>Lịch sử luyện tập</span>
-                        </Link>
+
                       </div>
                     </div>
                   )}

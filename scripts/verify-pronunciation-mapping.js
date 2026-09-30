@@ -3,7 +3,7 @@ const assert = {
   strictEqual(actual, expected, message) {
     if (actual !== expected) {
       throw new Error(
-        `${message || "Assertion failed"}\nExpected: ${JSON.stringify(expected)}\nActual:   ${JSON.stringify(actual)}`
+        `${message || "Assertion failed"}\nExpected: ${JSON.stringify(expected)}\nActual:   ${JSON.stringify(actual)}`,
       );
     }
   },

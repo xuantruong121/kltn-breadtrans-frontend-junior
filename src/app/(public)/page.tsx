@@ -13,8 +13,6 @@ import {
   Route,
   Milestone,
   Headphones,
-  GraduationCap,
-  TrendingUp,
   Gift,
   Mic,
   Trophy,
@@ -24,8 +22,6 @@ import {
   Award,
   Zap,
   Star,
-  Languages,
-  Users,
   Check,
   Target,
 } from "lucide-react";
@@ -36,37 +32,6 @@ import { QuickRegisterModal } from "@/components/auth/QuickRegisterModal";
 import { motion } from "framer-motion";
 
 // --- DATA CONSTANTS ---
-
-const STATS_DATA = [
-  {
-    value: "50,000+",
-    label: "Học viên năng động",
-    desc: "Đang rèn luyện mỗi ngày trên nền tảng",
-    icon: Users,
-    color: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60",
-  },
-  {
-    value: "200+",
-    label: "Bộ đề ETS chuẩn hoá",
-    desc: "Cập nhật format mới nhất kèm giải chi tiết",
-    icon: GraduationCap,
-    color: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900/60",
-  },
-  {
-    value: "94.8%",
-    label: "Tăng 150+ điểm sau 60 ngày",
-    desc: "Tỷ lệ học viên đạt hoặc vượt mục tiêu cam kết",
-    icon: TrendingUp,
-    color: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60",
-  },
-  {
-    value: "4",
-    label: "Kỹ năng tiếng Anh",
-    desc: "Nghe, Nói, Đọc và Viết trong một lộ trình",
-    icon: Languages,
-    color: "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-900/60",
-  },
-];
 
 const ROADMAP_STEPS = [
   {
@@ -420,7 +385,7 @@ export default function PublicLandingPage() {
               </div>
 
               {/* Main Headline */}
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-black tracking-tight text-slate-900 dark:text-slate-100 leading-[1.18]">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-black text-slate-900 dark:text-slate-100 leading-[1.24] sm:leading-[1.18] text-balance">
                 Chinh phục Tiếng Anh &amp; Bứt phá TOEIC cùng{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 dark:from-amber-400 dark:via-orange-400 dark:to-amber-500">
                   Gia sư AI thông minh
@@ -478,19 +443,7 @@ export default function PublicLandingPage() {
                 </div>
               )}
 
-              {/* Factual product benefit strip */}
-              <div className="pt-3 flex flex-wrap items-center gap-4 sm:gap-6 text-xs font-bold text-slate-600 dark:text-slate-400 border-t border-slate-200/70 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-                  <span className="font-black text-slate-900 dark:text-slate-100">Luyện đủ 4 kỹ năng theo tiến độ cá nhân</span>
-                </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
-                  <span className="text-emerald-700 dark:text-emerald-400 font-black">Tặng 50 Bánh Mì khi đăng ký</span>
-                  <span className="text-slate-400 dark:text-slate-500 font-medium">• Không cần thẻ tín dụng</span>
-                </div>
-              </div>
             </div>
 
             {/* Right Column: Live Interactive Product Showcase Card (5 Cols) */}
@@ -644,43 +597,20 @@ export default function PublicLandingPage() {
         </div>
       </section>
 
-      {/* ========================================================================= */}
-      {/* 2. REAL-TIME STATS & SOCIAL PROOF STRIP                                   */}
-      {/* ========================================================================= */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 sm:-mt-8 relative z-20">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-card">
-          {STATS_DATA.map((item, idx) => {
-            const Icon = item.icon;
-            return (
-              <div key={idx} className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-2">
-                <div className={`size-12 rounded-2xl flex items-center justify-center shrink-0 border ${item.color}`}>
-                  <Icon size={22} aria-hidden="true" />
-                </div>
-                <div>
-                  <strong className="block text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-                    {item.value}
-                  </strong>
-                  <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 mt-0.5">{item.label}</p>
-                  <p className="hidden sm:block text-[11px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5">{item.desc}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+
 
       {/* ========================================================================= */}
       {/* 3. CORE FEATURE BENTO GRID (4 Trụ Cột Đột Phá)                            */}
       {/* ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 space-y-8">
-        <div className="text-center max-w-3xl mx-auto space-y-3">
-          <span className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50 px-3.5 py-1.5 rounded-full border border-amber-200 dark:border-amber-900/60">
+        <div className="flex flex-col items-center text-center max-w-4xl mx-auto gap-3.5 sm:gap-4.5">
+          <span className="inline-flex items-center text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50 px-3.5 py-1.5 rounded-full border border-amber-200 dark:border-amber-900/60">
             Trụ Cột Đột Phá
           </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 leading-snug sm:leading-[1.36] text-balance">
             Mọi công cụ bạn cần để làm chủ tiếng Anh &amp; TOEIC
           </h2>
-          <p className="text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-300">
+          <p className="text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl text-pretty">
             Tạm biệt phương pháp học nhồi nhét truyền thống. BreadTrans kết hợp AI phân tích âm vị,
             đấu trường luyện đề chuẩn ETS và động lực gamification giữ lửa mỗi ngày.
           </p>
@@ -903,14 +833,14 @@ export default function PublicLandingPage() {
           <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
             {/* Left Column: Selector Form (6 Cols) */}
             <div className="lg:col-span-6 space-y-6">
-              <div className="space-y-2">
-                <span className="text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full bg-white/20 border border-white/30 text-amber-100">
+              <div className="flex flex-col items-start gap-3 sm:gap-4">
+                <span className="inline-flex items-center text-xs font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full bg-white/20 border border-white/30 text-amber-100">
                   Công Cụ Tương Tác Miễn Phí
                 </span>
-                <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-black text-white leading-snug sm:leading-[1.36] text-balance">
                   Ước Tính Lộ Trình &amp; Điểm Số TOEIC Của Bạn
                 </h2>
-                <p className="text-amber-100 text-sm sm:text-base font-semibold leading-relaxed">
+                <p className="text-amber-100 text-sm sm:text-base font-semibold leading-relaxed text-pretty">
                   Chọn trình độ xuất phát và band điểm mục tiêu để hệ thống tính toán thời gian và khối lượng học tập tối ưu nhất.
                 </p>
               </div>
@@ -1043,14 +973,14 @@ export default function PublicLandingPage() {
       {/* 5. THE 4-STEP LEARNING JOURNEY (Lộ Trình Vàng)                           */}
       {/* ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 space-y-10">
-        <div className="text-center max-w-2xl mx-auto space-y-3">
-          <span className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50 px-3.5 py-1.5 rounded-full border border-amber-200 dark:border-amber-900/60">
+        <div className="flex flex-col items-center text-center max-w-4xl mx-auto gap-3.5 sm:gap-4.5">
+          <span className="inline-flex items-center text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50 px-3.5 py-1.5 rounded-full border border-amber-200 dark:border-amber-900/60">
             Hành Trình Chinh Phục
           </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 leading-snug sm:leading-[1.36] text-balance">
             4 Bước Đơn Giản Để Bứt Phá Năng Lực Tiếng Anh
           </h2>
-          <p className="text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-300">
+          <p className="text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-300 leading-relaxed text-pretty max-w-2xl">
             Từng bước đi rõ ràng, có đo lường cụ thể, không lo học lan man mất định hướng.
           </p>
         </div>
@@ -1091,14 +1021,14 @@ export default function PublicLandingPage() {
       {/* ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 space-y-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div className="space-y-2">
-            <span className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50 px-3.5 py-1.5 rounded-full border border-amber-200 dark:border-amber-900/60">
+          <div className="flex flex-col items-start gap-2.5 sm:gap-3.5">
+            <span className="inline-flex items-center text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50 px-3.5 py-1.5 rounded-full border border-amber-200 dark:border-amber-900/60">
               Giáo Trình Thực Chiến
             </span>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 leading-snug sm:leading-[1.36] text-balance">
               Khám phá các lộ trình học tiêu biểu
             </h2>
-            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 leading-relaxed text-pretty">
               Được thiết kế bài bản theo từng mục tiêu: thi chứng chỉ, giao tiếp công sở hoặc củng cố gốc tiếng Anh.
             </p>
           </div>
@@ -1177,14 +1107,14 @@ export default function PublicLandingPage() {
       {/* 7. REAL LEARNER TRANSFORMATIONS (Đánh Giá Học Viên)                       */}
       {/* ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 space-y-8">
-        <div className="text-center max-w-2xl mx-auto space-y-3">
-          <span className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50 px-3.5 py-1.5 rounded-full border border-amber-200 dark:border-amber-900/60">
+        <div className="flex flex-col items-center text-center max-w-4xl mx-auto gap-3.5 sm:gap-4.5">
+          <span className="inline-flex items-center text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50 px-3.5 py-1.5 rounded-full border border-amber-200 dark:border-amber-900/60">
             Câu Chuyện Thành Công
           </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 leading-snug sm:leading-[1.36] text-balance">
             Học viên nói gì về trải nghiệm cùng BreadTrans?
           </h2>
-          <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+          <p className="text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-300 leading-relaxed text-pretty max-w-2xl">
             Hơn 10.000 học viên đã vượt qua nỗi sợ tiếng Anh và đạt được chứng chỉ mong muốn.
           </p>
         </div>
@@ -1234,14 +1164,14 @@ export default function PublicLandingPage() {
       {/* 8. WHY BREADTRANS? (Bảng So Sánh Toàn Diện)                               */}
       {/* ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 space-y-8">
-        <div className="text-center max-w-2xl mx-auto space-y-3">
-          <span className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50 px-3.5 py-1.5 rounded-full border border-amber-200 dark:border-amber-900/60">
+        <div className="flex flex-col items-center text-center max-w-4xl mx-auto gap-3.5 sm:gap-4.5">
+          <span className="inline-flex items-center text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50 px-3.5 py-1.5 rounded-full border border-amber-200 dark:border-amber-900/60">
             Sự Khác Biệt
           </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 leading-snug sm:leading-[1.36] text-balance">
             Tại sao BreadTrans là lựa chọn thông minh hơn?
           </h2>
-          <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+          <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 leading-relaxed text-pretty max-w-2xl">
             Bảng đối chiếu minh bạch giữa học truyền thống, tự học và giải pháp toàn diện tại BreadTrans.
           </p>
         </div>
@@ -1284,14 +1214,14 @@ export default function PublicLandingPage() {
       {/* 9. FAQ ACCORDION (Giải Đáp Thắc Mắc)                                      */}
       {/* ========================================================================= */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 space-y-8">
-        <div className="text-center space-y-3">
-          <span className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50 px-3.5 py-1.5 rounded-full border border-amber-200 dark:border-amber-900/60">
+        <div className="flex flex-col items-center text-center max-w-4xl mx-auto gap-3.5 sm:gap-4.5">
+          <span className="inline-flex items-center text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50 px-3.5 py-1.5 rounded-full border border-amber-200 dark:border-amber-900/60">
             Hỗ Trợ &amp; Giải Đáp
           </span>
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 leading-snug sm:leading-[1.36] text-balance">
             Câu hỏi thường gặp trước khi bắt đầu
           </h2>
-          <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+          <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 leading-relaxed text-pretty max-w-2xl">
             Mọi điều bạn cần biết về phương pháp học và chính sách tại BreadTrans.
           </p>
         </div>
@@ -1343,14 +1273,14 @@ export default function PublicLandingPage() {
             aria-hidden="true"
           />
 
-          <div className="relative z-10 max-w-3xl mx-auto space-y-4">
-            <span className="inline-block text-xs font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full bg-white/20 border border-white/30 text-amber-100">
+          <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center text-center gap-3.5 sm:gap-4.5">
+            <span className="inline-flex items-center text-xs font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full bg-white/20 border border-white/30 text-amber-100">
               Khởi Đầu Vững Chắc Cùng BreadTrans
             </span>
-            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
+            <h2 className="text-2xl sm:text-4xl font-black text-white leading-snug sm:leading-[1.36] text-balance">
               Sẵn sàng bứt phá trình độ Tiếng Anh của bạn ngay hôm nay?
             </h2>
-            <p className="text-amber-100 text-sm sm:text-base font-semibold max-w-2xl mx-auto leading-relaxed">
+            <p className="text-amber-100 text-sm sm:text-base font-semibold max-w-2xl mx-auto leading-relaxed text-pretty">
               Đăng ký tài khoản miễn phí trong 30 giây, nhận ngay 50 Bánh Mì tân thủ và bắt đầu
               bài kiểm tra chẩn đoán năng lực 5 phút để nhận lộ trình cá nhân hóa.
             </p>

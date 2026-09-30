@@ -8,6 +8,7 @@ import {
   moveTranscriptIndex,
   normalizeDictationText,
   resolveActiveTranscriptIndex,
+  resolveTranscriptPlaybackState,
 } from "./listeningDictationUtils.ts";
 
 test("normalizes whitespace and curly apostrophes", () => {
@@ -203,14 +204,48 @@ test("transcript cursor moves independently and never changes the dictation curs
   assert.equal(clampTranscriptIndex(-4, 20), 0);
 });
 
-test("active transcript highlight is empty during authoritative pause gaps", () => {
+test("same speaker turn remains active during an internal bookmark gap", () => {
   const timeline = [
-    { startMs: 0, endMs: 5000 },
-    { startMs: 5260, endMs: 10000 },
-    { startMs: 10260, endMs: 15000 },
+    { startMs: 1000, endMs: 3000, speakerTurnId: "ST1" },
+    { startMs: 3250, endMs: 5000, speakerTurnId: "ST1" },
   ];
-  assert.equal(resolveActiveTranscriptIndex(4900, timeline), 0);
-  assert.equal(resolveActiveTranscriptIndex(5100, timeline), -1);
-  assert.equal(resolveActiveTranscriptIndex(5300, timeline), 1);
-  assert.equal(resolveActiveTranscriptIndex(10100, timeline), -1);
+  assert.deepEqual(resolveTranscriptPlaybackState(2900, timeline), {
+    activeChunkIndex: 0,
+    activeSpeakerTurnId: "ST1",
+  });
+  assert.deepEqual(resolveTranscriptPlaybackState(3050, timeline), {
+    activeChunkIndex: 0,
+    activeSpeakerTurnId: "ST1",
+  });
+  assert.deepEqual(resolveTranscriptPlaybackState(3200, timeline), {
+    activeChunkIndex: 0,
+    activeSpeakerTurnId: "ST1",
+  });
+  assert.deepEqual(resolveTranscriptPlaybackState(3250, timeline), {
+    activeChunkIndex: 1,
+    activeSpeakerTurnId: "ST1",
+  });
+  assert.equal(resolveActiveTranscriptIndex(3050, timeline), 0);
+});
+
+test("speaker handoff switches directly without a null cursor", () => {
+  const timeline = [
+    { startMs: 1000, endMs: 3000, speakerTurnId: "ST1" },
+    { startMs: 3250, endMs: 5000, speakerTurnId: "ST1" },
+    { startMs: 5300, endMs: 7000, speakerTurnId: "ST2" },
+  ];
+  assert.equal(resolveTranscriptPlaybackState(5100, timeline).activeSpeakerTurnId, "ST1");
+  assert.equal(resolveTranscriptPlaybackState(5200, timeline).activeSpeakerTurnId, "ST1");
+  assert.equal(resolveTranscriptPlaybackState(5300, timeline).activeSpeakerTurnId, "ST2");
+});
+
+test("cursor is empty before the first chunk and holds the final chunk until media ends", () => {
+  const timeline = [
+    { startMs: 1000, endMs: 3000, speakerTurnId: "ST1" },
+  ];
+  assert.deepEqual(resolveTranscriptPlaybackState(500, timeline), {
+    activeChunkIndex: -1,
+    activeSpeakerTurnId: null,
+  });
+  assert.equal(resolveTranscriptPlaybackState(3200, timeline).activeSpeakerTurnId, "ST1");
 });

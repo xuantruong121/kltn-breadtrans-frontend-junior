@@ -214,9 +214,9 @@ export const FloatingCompanionPet: React.FC = () => {
           className="hidden sm:block absolute bottom-full right-0 mb-3 w-72 sm:w-80 rounded-2xl bg-card dark:bg-slate-900 border border-amber-200/90 dark:border-amber-800/70 shadow-lg p-3.5 text-xs text-slate-800 dark:text-slate-100 animate-in fade-in slide-in-from-bottom-2 duration-200"
         >
           <div className="flex items-start justify-between gap-2 mb-1">
-            <span className="font-bold text-amber-900 flex items-center gap-1.5">
+            <span className="font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
               <span>{petName}</span>
-              <span className="text-[10px] font-medium text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-md border border-amber-200">
+              <span className="text-[10px] font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded-md border border-amber-200 dark:border-amber-800/70">
                 Gợi ý
               </span>
             </span>
@@ -224,21 +224,21 @@ export const FloatingCompanionPet: React.FC = () => {
               type="button"
               onClick={() => setHasDismissedMessage(true)}
               aria-label="Đóng lời nhắn"
-              className="text-slate-400 hover:text-slate-600 p-0.5 rounded-md focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none cursor-pointer"
+              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded-md focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none cursor-pointer"
             >
               <X size={14} aria-hidden="true" />
             </button>
           </div>
 
-          <p className="text-slate-600 leading-relaxed font-medium mb-2.5">
+          <p className="text-slate-600 dark:text-slate-300 leading-relaxed font-medium mb-2.5">
             {recommendation.title}: {recommendation.description}
           </p>
 
-          <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-slate-100">
+          <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
               onClick={() => setIsExpanded(true)}
-              className="text-[11px] font-bold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+              className="text-[11px] font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors cursor-pointer"
             >
               Mở chi tiết
             </button>
@@ -273,24 +273,24 @@ export const FloatingCompanionPet: React.FC = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="floating-pet-dialog-title"
-            className="fixed inset-x-0 bottom-0 rounded-t-3xl bg-card dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-2xl p-5 max-h-[85dvh] pb-[calc(1.5rem+env(safe-area-inset-bottom))] overflow-y-auto z-50 animate-in slide-in-from-bottom duration-300 sm:inset-auto sm:absolute sm:bottom-full sm:right-0 sm:mb-3 sm:w-88 sm:rounded-2xl sm:border sm:p-5 sm:max-h-[calc(100dvh-6rem)] sm:pb-5 sm:animate-in sm:fade-in sm:zoom-in-95 sm:duration-200"
+            className="fixed inset-x-0 bottom-0 rounded-t-3xl bg-card dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-2xl p-5 max-h-[85dvh] pb-[calc(1.5rem+env(safe-area-inset-bottom))] overflow-y-auto z-50 animate-in slide-in-from-bottom duration-300 sm:inset-auto sm:absolute sm:bottom-full sm:right-0 sm:mb-3 sm:w-88 sm:rounded-2xl sm:border sm:border-slate-200 dark:sm:border-slate-800 sm:p-5 sm:max-h-[calc(100dvh-6rem)] sm:pb-5 sm:animate-in sm:fade-in sm:zoom-in-95 sm:duration-200"
           >
           {/* Header */}
-          <div className="flex items-start justify-between pb-3 border-b border-slate-100 mb-3.5">
+          <div className="flex items-start justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-3.5">
             <div className="flex items-center gap-3">
-              <div className="size-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
+              <div className="size-12 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 flex items-center justify-center shrink-0">
                 <CompanionPet2D speciesId={speciesId} state={visualEmotion} level={level} size="sm" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <h3 id="floating-pet-dialog-title" className="text-sm font-bold text-slate-900">
+                  <h3 id="floating-pet-dialog-title" className="text-sm font-bold text-slate-900 dark:text-slate-100">
                     {petName}
                   </h3>
-                  <span className="text-[10px] font-bold text-amber-900 bg-amber-100/80 px-2 py-0.5 rounded-full border border-amber-200">
+                  <span className="text-[10px] font-bold text-amber-900 dark:text-amber-300 bg-amber-100/80 dark:bg-amber-950/50 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800/80">
                     Cấp {level}
                   </span>
                 </div>
-                <p className="text-[11px] font-medium text-slate-500 mt-0.5">
+                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                   {speciesInfo.title}
                 </p>
               </div>
@@ -300,24 +300,24 @@ export const FloatingCompanionPet: React.FC = () => {
               type="button"
               onClick={() => setIsExpanded(false)}
               aria-label="Đóng bảng thông tin thú cưng"
-              className="size-8 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
+              className="size-8 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-center transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
             >
               <X size={16} aria-hidden="true" />
             </button>
           </div>
 
           {/* Level Progress & Stats Meters */}
-          <div className="space-y-3 bg-slate-50/70 p-3 rounded-xl border border-slate-200/60 mb-3.5">
+          <div className="space-y-3 bg-slate-50/70 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200/60 dark:border-slate-700/60 mb-3.5">
             {/* Level EXP */}
             <div>
               <div className="flex justify-between text-[11px] font-medium mb-1">
-                <span className="flex items-center gap-1 text-slate-600">
-                  <TrendingUp size={12} className="text-amber-600" aria-hidden="true" /> Tiến trình cấp
+                <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
+                  <TrendingUp size={12} className="text-amber-600 dark:text-amber-400" aria-hidden="true" /> Tiến trình cấp
                 </span>
-                <span className="text-amber-900 font-bold">{expPercentage}% ({exp} EXP)</span>
+                <span className="text-amber-900 dark:text-amber-400 font-bold">{expPercentage}% ({exp} EXP)</span>
               </div>
               <div
-                className="h-2 rounded-full bg-slate-200/80 overflow-hidden"
+                className="h-2 rounded-full bg-slate-200/80 dark:bg-slate-700/80 overflow-hidden"
                 role="progressbar"
                 aria-valuenow={expPercentage}
                 aria-valuemin={0}
@@ -334,13 +334,13 @@ export const FloatingCompanionPet: React.FC = () => {
             {/* Health */}
             <div>
               <div className="flex justify-between text-[11px] font-medium mb-1">
-                <span className="flex items-center gap-1 text-slate-600">
+                <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
                   <Heart size={12} className="text-rose-500 fill-rose-500" aria-hidden="true" /> Sức khỏe
                 </span>
-                <span className="text-rose-700 font-bold">{health}%</span>
+                <span className="text-rose-700 dark:text-rose-400 font-bold">{health}%</span>
               </div>
               <div
-                className="h-2 rounded-full bg-slate-200/80 overflow-hidden"
+                className="h-2 rounded-full bg-slate-200/80 dark:bg-slate-700/80 overflow-hidden"
                 role="progressbar"
                 aria-valuenow={health}
                 aria-valuemin={0}
@@ -357,13 +357,13 @@ export const FloatingCompanionPet: React.FC = () => {
             {/* Happiness */}
             <div>
               <div className="flex justify-between text-[11px] font-medium mb-1">
-                <span className="flex items-center gap-1 text-slate-600">
-                  <Smile size={12} className="text-amber-600" aria-hidden="true" /> Vui vẻ
+                <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
+                  <Smile size={12} className="text-amber-600 dark:text-amber-400" aria-hidden="true" /> Vui vẻ
                 </span>
-                <span className="text-amber-700 font-bold">{happiness}%</span>
+                <span className="text-amber-700 dark:text-amber-400 font-bold">{happiness}%</span>
               </div>
               <div
-                className="h-2 rounded-full bg-slate-200/80 overflow-hidden"
+                className="h-2 rounded-full bg-slate-200/80 dark:bg-slate-700/80 overflow-hidden"
                 role="progressbar"
                 aria-valuenow={happiness}
                 aria-valuemin={0}
@@ -380,13 +380,13 @@ export const FloatingCompanionPet: React.FC = () => {
             {/* Satiety */}
             <div>
               <div className="flex justify-between text-[11px] font-medium mb-1">
-                <span className="flex items-center gap-1 text-slate-600">
-                  <Utensils size={12} className="text-orange-500" aria-hidden="true" /> Độ no
+                <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
+                  <Utensils size={12} className="text-orange-500 dark:text-orange-400" aria-hidden="true" /> Độ no
                 </span>
-                <span className="text-orange-700 font-bold">{satiety}%</span>
+                <span className="text-orange-700 dark:text-orange-400 font-bold">{satiety}%</span>
               </div>
               <div
-                className="h-2 rounded-full bg-slate-200/80 overflow-hidden"
+                className="h-2 rounded-full bg-slate-200/80 dark:bg-slate-700/80 overflow-hidden"
                 role="progressbar"
                 aria-valuenow={satiety}
                 aria-valuemin={0}
@@ -402,24 +402,24 @@ export const FloatingCompanionPet: React.FC = () => {
           </div>
 
           {/* Current Bánh Mì Balance */}
-          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-amber-50/70 border border-amber-200/70 text-xs font-bold text-amber-900 mb-3.5">
-            <span className="font-semibold text-slate-700">Số dư Bánh Mì:</span>
+          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/70 dark:border-amber-800/40 text-xs font-bold text-amber-900 dark:text-amber-300 mb-3.5">
+            <span className="font-semibold text-slate-700 dark:text-slate-300">Số dư Bánh Mì:</span>
             <span>{balance} Bánh Mì</span>
           </div>
 
           {/* Daily Quest Recommendation Card */}
           {recommendation && (
-            <div className="p-3 rounded-xl bg-card dark:bg-slate-800 border border-slate-200 dark:border-slate-700 mb-3.5 shadow-2xs">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 block mb-1">
+            <div className="p-3 rounded-xl bg-card dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 mb-3.5 shadow-2xs">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400 block mb-1">
                 Nhiệm vụ hôm nay
               </span>
-              <p className="text-xs font-semibold text-slate-800 line-clamp-2">
+              <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 line-clamp-2">
                 {recommendation.title}: {recommendation.description}
               </p>
               <Link
                 href={recommendation.actionUrl}
                 onClick={() => setIsExpanded(false)}
-                className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-amber-700 hover:text-amber-800 transition-colors"
+                className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 transition-colors"
               >
                 <span>{recommendation.actionLabel}</span>
                 <ChevronRight size={13} aria-hidden="true" />
@@ -434,17 +434,17 @@ export const FloatingCompanionPet: React.FC = () => {
               setIsExpanded(false);
               setTutorOpen(true);
             }}
-            className="mb-3.5 flex min-h-[44px] w-full items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50/70 px-3 py-2.5 text-left text-xs font-semibold text-blue-900 transition-colors hover:border-blue-300 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            className="mb-3.5 flex min-h-[44px] w-full items-center justify-between gap-3 rounded-xl border border-blue-200 dark:border-sky-800/60 bg-blue-50/70 dark:bg-sky-950/40 px-3 py-2.5 text-left text-xs font-semibold text-blue-900 dark:text-sky-300 transition-colors hover:border-blue-300 dark:hover:border-sky-700 hover:bg-blue-100 dark:hover:bg-sky-900/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
           >
             <span className="flex items-center gap-2">
-              <MessageCircle size={15} aria-hidden="true" />
+              <MessageCircle size={15} className="text-blue-700 dark:text-sky-400" aria-hidden="true" />
               <span>Hỏi trợ lý học tập</span>
             </span>
-            <ChevronRight size={14} aria-hidden="true" />
+            <ChevronRight size={14} className="text-blue-700 dark:text-sky-400" aria-hidden="true" />
           </button>
 
           {/* Feed Button & Satiety */}
-          <div className="space-y-2 pt-1 border-t border-slate-100">
+          <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
               onClick={handleFeedClick}
@@ -453,7 +453,7 @@ export const FloatingCompanionPet: React.FC = () => {
               className={`w-full min-h-[44px] px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none ${
                 feedEligibility.allowed
                   ? "bg-amber-600 hover:bg-amber-700 active:scale-[0.98] text-white shadow-xs"
-                  : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
+                  : "bg-slate-100 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700/60 cursor-not-allowed"
               }`}
             >
               {feedMutation.isPending ? (
@@ -470,13 +470,13 @@ export const FloatingCompanionPet: React.FC = () => {
             </button>
 
             {!feedEligibility.allowed && (pet?.satietyState === "FULL" || satiety >= 80) ? (
-              <p className="text-center text-[11px] font-medium text-slate-500">{satietyText}</p>
+              <p className="text-center text-[11px] font-medium text-slate-500 dark:text-slate-400">{satietyText}</p>
             ) : balance < feedCost ? (
-              <p className="text-center text-[11px] font-semibold text-rose-600">
+              <p className="text-center text-[11px] font-semibold text-rose-600 dark:text-rose-400">
                 Cần {feedCost} Bánh Mì (Số dư: {balance})
               </p>
             ) : (
-              <p className="text-center text-[10px] text-slate-500">
+              <p className="text-center text-[10px] text-slate-500 dark:text-slate-400">
                 Tiêu hao {feedCost} Bánh Mì • {satietyText} • EXP hôm nay {pet?.dailyRewardedFeedCount ?? 0}/{pet?.dailyRewardLimit ?? 3}
               </p>
             )}
@@ -511,7 +511,7 @@ export const FloatingCompanionPet: React.FC = () => {
         {/* Small badge when a learning quest is pending */}
         {recommendation && !hasDismissedMessage && (
           <span
-            className="absolute -top-1 -right-1 size-4 bg-amber-500 border-2 border-white rounded-full flex items-center justify-center animate-pulse"
+            className="absolute -top-1 -right-1 size-4 bg-amber-500 border-2 border-white dark:border-slate-900 rounded-full flex items-center justify-center animate-pulse"
             aria-hidden="true"
           />
         )}

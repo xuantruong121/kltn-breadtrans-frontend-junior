@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
+import { useSocket } from "@/lib/providers/SocketProvider";
 import {
   Activity,
   ArrowLeft,
@@ -39,6 +40,7 @@ import {
   shouldHandleSpeakingShortcut,
   getNextExerciseId,
 } from "@/lib/speaking/speakingPracticeLogic";
+import { getSpeakingFailureMessage } from "@/lib/speaking/speakingRecoveryLogic";
 import {
   createWorkletFlushController,
   isAudioWorkletSupported,
@@ -143,12 +145,18 @@ export default function SpeakingExerciseDetailPage() {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [qualityWarning, setQualityWarning] = useState<string | null>(null);
+  const [isProlongedProcessing, setIsProlongedProcessing] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // In-flight & Idempotency Guards
   const stopInFlightRef = useRef(false);
   const submissionInFlightRef = useRef(false);
+  const uploadAbortControllerRef = useRef<AbortController | null>(null);
   const attemptIdempotencyKeyRef = useRef<string | null>(null);
   const isMountedRef = useRef(true);
+  const currentSubmissionIdRef = useRef<number | null>(null);
+  const pollingStartTimeRef = useRef<number>(0);
+  const { socket } = useSocket();
 
   // Audio recording hardware nodes
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -327,6 +335,9 @@ export default function SpeakingExerciseDetailPage() {
   const isAnalyzing =
     phase === "ENCODING" ||
     phase === "VALIDATING_AUDIO" ||
+    phase === "REQUESTING_UPLOAD" ||
+    phase === "UPLOADING" ||
+    phase === "FINALIZING" ||
     phase === "SUBMITTING" ||
     phase === "POLLING";
 
@@ -581,21 +592,141 @@ export default function SpeakingExerciseDetailPage() {
     }
   }, [phase, releaseMediaStream]);
 
+  // WebSocket Completion / Failure Listener for real-time reactive feedback
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleCompleted = async (payload: {
+      submissionId: number;
+      traceId?: string;
+    }) => {
+      if (
+        currentSubmissionIdRef.current &&
+        payload.submissionId === currentSubmissionIdRef.current
+      ) {
+        if (pollingTimerRef.current) {
+          clearTimeout(pollingTimerRef.current);
+          pollingTimerRef.current = null;
+        }
+
+        try {
+          const sub = await speakingService.getSubmission(payload.submissionId);
+          if (!isMountedRef.current) return;
+
+          setCurrentSubmission(sub);
+
+          if (sub.status === "COMPLETED") {
+            setPhase("COMPLETED");
+            setIsProlongedProcessing(false);
+            submissionInFlightRef.current = false;
+            stopInFlightRef.current = false;
+            if (typeof window !== "undefined") {
+              try {
+                sessionStorage.removeItem(
+                  `breadtrans:speaking:pending:${exerciseId}`,
+                );
+              } catch {}
+            }
+            toast.success("Đã hoàn thành đánh giá phát âm!");
+
+            const currentUserId = useAuthStore.getState().user?.id;
+            queryClient.invalidateQueries({
+              queryKey: ["dashboard-today", currentUserId],
+            });
+            queryClient.invalidateQueries({
+              queryKey: ["user-stats", currentUserId],
+            });
+            queryClient.invalidateQueries({
+              queryKey: ["user-skills-summary", currentUserId],
+            });
+            queryClient.invalidateQueries({ queryKey: ["myPet"] });
+          } else if (sub.status === "FAILED") {
+            setPhase("FAILED");
+            setIsProlongedProcessing(false);
+            submissionInFlightRef.current = false;
+            stopInFlightRef.current = false;
+            if (typeof window !== "undefined") {
+              try {
+                sessionStorage.removeItem(
+                  `breadtrans:speaking:pending:${exerciseId}`,
+                );
+              } catch {}
+            }
+            toast.error(getSpeakingFailureMessage(sub.lastErrorCode));
+          }
+        } catch (fetchErr) {
+          console.error("Failed to fetch completed submission:", fetchErr);
+        }
+      }
+    };
+
+    const handleFailed = (payload: { submissionId: number }) => {
+      if (
+        currentSubmissionIdRef.current &&
+        payload.submissionId === currentSubmissionIdRef.current
+      ) {
+        if (pollingTimerRef.current) {
+          clearTimeout(pollingTimerRef.current);
+          pollingTimerRef.current = null;
+        }
+
+        setPhase("FAILED");
+        setIsProlongedProcessing(false);
+        submissionInFlightRef.current = false;
+        stopInFlightRef.current = false;
+        if (typeof window !== "undefined") {
+          try {
+            sessionStorage.removeItem(
+              `breadtrans:speaking:pending:${exerciseId}`,
+            );
+          } catch {}
+        }
+        toast.error("Đánh giá phát âm chưa thành công. Bạn vui lòng thử lại.");
+      }
+    };
+
+    socket.on("speaking.completed", handleCompleted);
+    socket.on("speaking.failed", handleFailed);
+
+    return () => {
+      socket.off("speaking.completed", handleCompleted);
+      socket.off("speaking.failed", handleFailed);
+    };
+  }, [socket, queryClient, exerciseId]);
+
   /**
-   * Polls GET /speaking/submissions/:id every 1.5s until terminal status.
+   * Adaptive HTTP polling fallback:
+   * - 2s initial intervals (attempts 1-5)
+   * - 3s medium intervals (attempts 6-15)
+   * - 4.5s backoff intervals (> 15 attempts)
+   * - Does NOT mark FAILED merely because 60s elapsed.
+   * - Shows respectful status: "Bài nói vẫn đang được xử lý..." when prolonged.
    */
   const pollSubmissionStatus = useCallback(
     (submissionId: number, attempt: number) => {
       if (!isMountedRef.current) return;
 
-      if (attempt > 40) {
-        setPhase("FAILED");
+      // When waiting beyond 30 seconds, activate prolonged processing notice
+      if (Date.now() - pollingStartTimeRef.current > 30000) {
+        setIsProlongedProcessing(true);
+      }
+
+      // Conservative guard against infinite orphan polling (> 120 attempts / ~7-8 mins)
+      if (attempt > 120) {
         submissionInFlightRef.current = false;
         stopInFlightRef.current = false;
-        toast.error(
-          "Thời gian chấm điểm kéo dài hơn dự kiến. Bạn có thể thử lại với bản ghi này.",
+        toast(
+          "Thời gian chấm điểm kéo dài hơn dự kiến. Kết quả sẽ được lưu vào lịch sử bài làm.",
+          { icon: "ℹ️" },
         );
         return;
+      }
+
+      let intervalMs = 2000;
+      if (attempt > 15) {
+        intervalMs = 4500;
+      } else if (attempt > 5) {
+        intervalMs = 3000;
       }
 
       pollingTimerRef.current = setTimeout(async () => {
@@ -609,8 +740,16 @@ export default function SpeakingExerciseDetailPage() {
 
           if (sub.status === "COMPLETED") {
             setPhase("COMPLETED");
+            setIsProlongedProcessing(false);
             submissionInFlightRef.current = false;
             stopInFlightRef.current = false;
+            if (typeof window !== "undefined") {
+              try {
+                sessionStorage.removeItem(
+                  `breadtrans:speaking:pending:${exerciseId}`,
+                );
+              } catch {}
+            }
             toast.success("Đã hoàn thành đánh giá phát âm!");
 
             // Authoritative cache invalidation on completed
@@ -627,11 +766,17 @@ export default function SpeakingExerciseDetailPage() {
             queryClient.invalidateQueries({ queryKey: ["myPet"] });
           } else if (sub.status === "FAILED") {
             setPhase("FAILED");
+            setIsProlongedProcessing(false);
             submissionInFlightRef.current = false;
             stopInFlightRef.current = false;
-            toast.error(
-              "Đánh giá phát âm chưa thành công. Bạn vui lòng thử lại.",
-            );
+            if (typeof window !== "undefined") {
+              try {
+                sessionStorage.removeItem(
+                  `breadtrans:speaking:pending:${exerciseId}`,
+                );
+              } catch {}
+            }
+            toast.error(getSpeakingFailureMessage(sub.lastErrorCode));
           } else {
             pollSubmissionStatus(submissionId, attempt + 1);
           }
@@ -641,40 +786,242 @@ export default function SpeakingExerciseDetailPage() {
             pollSubmissionStatus(submissionId, attempt + 1);
           }
         }
-      }, 1500);
+      }, intervalMs);
     },
-    [queryClient],
+    [queryClient, exerciseId],
   );
 
   /**
+   * 3-Tier Durable Recovery:
+   * Tier 1: URL param `?submissionId=...`
+   * Tier 2: sessionStorage `breadtrans:speaking:pending:${exerciseId}`
+   * Tier 3: Query server for latest active pending submission
+   */
+  useEffect(() => {
+    if (!exerciseId) return;
+
+    let active = true;
+    const recoverPendingSubmission = async () => {
+      let pendingId: number | null = null;
+
+      // Tier 1: URL search param
+      const urlSubId = searchParams.get("submissionId");
+      if (urlSubId && !isNaN(Number(urlSubId))) {
+        pendingId = Number(urlSubId);
+      }
+
+      // Tier 2: sessionStorage persistence
+      if (!pendingId && typeof window !== "undefined") {
+        try {
+          const stored = sessionStorage.getItem(
+            `breadtrans:speaking:pending:${exerciseId}`,
+          );
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (
+              parsed.submissionId &&
+              Date.now() - parsed.submittedAt < 30 * 60 * 1000
+            ) {
+              pendingId = Number(parsed.submissionId);
+            }
+          }
+        } catch {}
+      }
+
+      // Tier 3: Server query
+      if (!pendingId) {
+        try {
+          const mySubs = await speakingService.getMySubmissions();
+          const activeSub = mySubs.find(
+            (s) =>
+              s.exerciseId === exerciseId &&
+              (s.status === "PENDING" || s.status === "PROCESSING"),
+          );
+          if (activeSub) {
+            pendingId = activeSub.id;
+          }
+        } catch {}
+      }
+
+      if (!pendingId || !active) return;
+
+      try {
+        const sub = await speakingService.getSubmission(pendingId);
+        if (!active || !isMountedRef.current) return;
+
+        if (sub.status === "COMPLETED") {
+          setCurrentSubmission(sub);
+          setPhase("COMPLETED");
+          if (typeof window !== "undefined") {
+            sessionStorage.removeItem(
+              `breadtrans:speaking:pending:${exerciseId}`,
+            );
+          }
+        } else if (sub.status === "FAILED") {
+          setCurrentSubmission(sub);
+          setPhase("FAILED");
+          if (typeof window !== "undefined") {
+            sessionStorage.removeItem(
+              `breadtrans:speaking:pending:${exerciseId}`,
+            );
+          }
+        } else {
+          currentSubmissionIdRef.current = pendingId;
+          pollingStartTimeRef.current = new Date(sub.submittedAt).getTime();
+          setPhase("POLLING");
+          pollSubmissionStatus(pendingId, 0);
+        }
+      } catch (err) {
+        console.warn("Could not recover pending submission:", err);
+      }
+    };
+
+    recoverPendingSubmission();
+
+    return () => {
+      active = false;
+    };
+  }, [exerciseId, searchParams, pollSubmissionStatus]);
+
+  /**
    * Submits recorded Blob directly without waiting on async React state.
+   * Phase 2: Direct-to-Cloudflare-R2 presigned upload with server-side finalization,
+   * with automatic fallback to legacy proxy mode if configured.
    */
   const submitRecordedBlob = useCallback(
     async (blob: Blob, key: string) => {
       if (submissionInFlightRef.current) return;
       submissionInFlightRef.current = true;
 
-      setPhase("SUBMITTING");
       setCurrentSubmission(null);
+      setIsProlongedProcessing(false);
+      setUploadProgress(0);
+
+      const traceId = `trace-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
       try {
-        const response = await speakingService.submitAudio(
-          exerciseId,
-          blob,
-          key,
-        );
+        const capabilities = await speakingService.getCapabilities();
 
-        setPhase("POLLING");
-        pollSubmissionStatus(response.submissionId, 0);
+        if (capabilities.uploadMode === "presigned") {
+          // ── Step A: Request Secure Upload Intent ───────────────────────────
+          setPhase("REQUESTING_UPLOAD");
+          const durationMs = Math.max(
+            300,
+            Math.min(45000, Math.round(((blob.size - 44) / 32000) * 1000)),
+          );
+
+          const intent = await speakingService.createUploadIntent(
+            exerciseId,
+            {
+              contentType: "audio/wav",
+              sizeBytes: blob.size,
+              durationMs,
+              idempotencyKey: key,
+            },
+            traceId,
+          );
+
+          if (intent.isAlreadyFinalized && intent.submissionId) {
+            currentSubmissionIdRef.current = intent.submissionId;
+            if (typeof window !== "undefined") {
+              try {
+                sessionStorage.setItem(
+                  `breadtrans:speaking:pending:${exerciseId}`,
+                  JSON.stringify({
+                    submissionId: intent.submissionId,
+                    submittedAt: Date.now(),
+                  }),
+                );
+              } catch {}
+            }
+            pollingStartTimeRef.current = Date.now();
+            setPhase("POLLING");
+            pollSubmissionStatus(intent.submissionId, 0);
+            return;
+          }
+
+          // ── Step B: Direct Browser PUT to Cloudflare R2 ────────────────────
+          setPhase("UPLOADING");
+          setUploadProgress(0);
+          const abortController = new AbortController();
+          uploadAbortControllerRef.current = abortController;
+
+          await speakingService.uploadAudioDirectToR2(
+            intent.uploadUrl,
+            blob,
+            intent.signedHeaders,
+            (pct) => setUploadProgress(pct),
+            abortController.signal,
+          );
+
+          // ── Step C: Authoritative Backend Finalization ─────────────────────
+          setPhase("FINALIZING");
+          const response = await speakingService.finalizeUpload(
+            intent.uploadIntentId,
+            traceId,
+          );
+
+          currentSubmissionIdRef.current = response.submissionId;
+          if (typeof window !== "undefined") {
+            try {
+              sessionStorage.setItem(
+                `breadtrans:speaking:pending:${exerciseId}`,
+                JSON.stringify({
+                  submissionId: response.submissionId,
+                  submittedAt: Date.now(),
+                }),
+              );
+            } catch {}
+          }
+
+          pollingStartTimeRef.current = Date.now();
+          setPhase("POLLING");
+          pollSubmissionStatus(response.submissionId, 0);
+        } else {
+          // ── Legacy Proxy Fallback ──────────────────────────────────────────
+          setPhase("SUBMITTING");
+          const response = await speakingService.submitAudio(
+            exerciseId,
+            blob,
+            key,
+            traceId,
+          );
+
+          currentSubmissionIdRef.current = response.submissionId;
+          if (typeof window !== "undefined") {
+            try {
+              sessionStorage.setItem(
+                `breadtrans:speaking:pending:${exerciseId}`,
+                JSON.stringify({
+                  submissionId: response.submissionId,
+                  submittedAt: Date.now(),
+                }),
+              );
+            } catch {}
+          }
+
+          pollingStartTimeRef.current = Date.now();
+          setPhase("POLLING");
+          pollSubmissionStatus(response.submissionId, 0);
+        }
       } catch (err: any) {
+        if (err?.message?.includes("aborted")) {
+          setPhase("READY");
+          toast("Đã hủy quá trình tải lên âm thanh.");
+          return;
+        }
+
         console.error("Submission error:", err);
         setPhase("FAILED");
-        submissionInFlightRef.current = false;
-        stopInFlightRef.current = false;
+        setIsProlongedProcessing(false);
         const msg =
           err?.response?.data?.message ||
           "Có lỗi xảy ra khi gửi bài phát âm. Bạn có thể thử lại với bản ghi này.";
         toast.error(msg);
+      } finally {
+        submissionInFlightRef.current = false;
+        stopInFlightRef.current = false;
+        uploadAbortControllerRef.current = null;
       }
     },
     [exerciseId, pollSubmissionStatus],
@@ -1805,6 +2152,7 @@ export default function SpeakingExerciseDetailPage() {
               recordingSeconds={recordingSeconds}
               maxRecordingSeconds={MAX_RECORDING_SECONDS}
               canvasRef={canvasRef}
+              uploadProgress={uploadProgress}
               onStartRecording={startRecording}
               onStopRecording={stopRecording}
               onCancelRecording={handleCancelRecording}
@@ -1816,6 +2164,7 @@ export default function SpeakingExerciseDetailPage() {
               ttsAccent={ttsAccent}
               ttsRate={ttsRate}
               isNextAvailable={isNextAvailable}
+              isProlongedProcessing={isProlongedProcessing}
             />
           </section>
         </main>
@@ -1906,7 +2255,17 @@ export default function SpeakingExerciseDetailPage() {
           {isAnalyzing ? (
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs sm:text-sm font-bold shadow-xs">
               <Loader2 size={16} className="animate-spin text-amber-600" />
-              <span>Đang phân tích...</span>
+              <span>
+                {phase === "REQUESTING_UPLOAD"
+                  ? "Khởi tạo tải lên..."
+                  : phase === "UPLOADING"
+                  ? `Đang tải lên ${uploadProgress}%`
+                  : phase === "FINALIZING"
+                  ? "Đang xác thực..."
+                  : phase === "POLLING"
+                  ? "Đang chấm điểm..."
+                  : "Đang phân tích..."}
+              </span>
             </div>
           ) : phase === "READY" ? (
             <button

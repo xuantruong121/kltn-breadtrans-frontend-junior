@@ -243,11 +243,11 @@ export default function PetPage() {
                 <Zap size={18} aria-hidden="true" />
                 <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">Đặc điểm thú cưng</h3>
               </div>
-              <div className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/50 border border-amber-200/70 dark:border-amber-800/60 space-y-1">
+              <div className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/70 dark:border-amber-800/60 space-y-1">
                 <span className="font-bold text-amber-900 dark:text-amber-200 text-sm block">
                   {currentSpecies.buff}
                 </span>
-                <p className="text-xs text-amber-800 dark:text-amber-300/90 leading-relaxed">
+                <p className="text-xs text-amber-900/90 dark:text-amber-100/90 leading-relaxed font-normal">
                   {currentSpecies.buffDetail}
                 </p>
               </div>
@@ -255,39 +255,39 @@ export default function PetPage() {
 
             {/* Lore & Quote Card */}
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-3">
-              <div className="flex items-center gap-2 text-indigo-800 dark:text-indigo-400">
+              <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-400">
                 <Award size={18} aria-hidden="true" />
                 <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">Truyền Thuyết Loài</h3>
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-normal">
                 {currentSpecies.lore}
               </p>
-              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs italic">
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-xs italic leading-relaxed">
                 &ldquo;{currentSpecies.quote}&rdquo;
               </div>
             </div>
 
             {/* Feeding Tips */}
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-3">
-              <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-400">
+              <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
                 <Heart size={18} aria-hidden="true" />
                 <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">Quy Tắc Nuôi Dưỡng</h3>
               </div>
-              <ul className="text-xs text-slate-600 space-y-2">
+              <ul className="text-xs text-slate-700 dark:text-slate-200 space-y-2.5 leading-relaxed font-normal">
                 <li className="flex items-start gap-2">
-                  <span className="text-emerald-600 font-bold" aria-hidden="true">•</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold select-none" aria-hidden="true">•</span>
                   <span>
                     Chi phí thay đổi theo lượt ăn trong ngày ({feedCost} Bánh Mì). Ba lượt đầu có thể nhận EXP; các lượt sau áp dụng hiệu quả giảm dần.
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-emerald-600 font-bold" aria-hidden="true">•</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold select-none" aria-hidden="true">•</span>
                   <span>
                     Pet chuyển từ đói sang no theo trạng thái thực tế; không có cooldown 24 giờ cố định.
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-emerald-600 font-bold" aria-hidden="true">•</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold select-none" aria-hidden="true">•</span>
                   <span>
                     Hoàn thành bài tập và luyện nghe nói hàng ngày để tích lũy thêm nhiều Bánh Mì.
                   </span>
