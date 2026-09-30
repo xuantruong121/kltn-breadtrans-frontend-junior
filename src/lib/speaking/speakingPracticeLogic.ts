@@ -8,6 +8,9 @@ export type SpeakingAttemptPhase =
   | "RECORDING"
   | "ENCODING"
   | "VALIDATING_AUDIO"
+  | "REQUESTING_UPLOAD"
+  | "UPLOADING"
+  | "FINALIZING"
   | "SUBMITTING"
   | "POLLING"
   | "COMPLETED"
@@ -71,7 +74,22 @@ export function isValidPhaseTransition(
     case "ENCODING":
       return to === "VALIDATING_AUDIO" || to === "INVALID_AUDIO";
     case "VALIDATING_AUDIO":
-      return to === "SUBMITTING" || to === "INVALID_AUDIO";
+      return (
+        to === "REQUESTING_UPLOAD" ||
+        to === "SUBMITTING" ||
+        to === "INVALID_AUDIO"
+      );
+    case "REQUESTING_UPLOAD":
+      return (
+        to === "UPLOADING" ||
+        to === "POLLING" ||
+        to === "FAILED" ||
+        to === "READY"
+      );
+    case "UPLOADING":
+      return to === "FINALIZING" || to === "FAILED" || to === "READY";
+    case "FINALIZING":
+      return to === "POLLING" || to === "FAILED" || to === "READY";
     case "SUBMITTING":
       return to === "POLLING" || to === "FAILED";
     case "POLLING":
@@ -91,8 +109,11 @@ export function isValidPhaseTransition(
  */
 export function generateSpeakingIdempotencyKey(exerciseId: number): string {
   const ts = Date.now();
-  const rand = Math.random().toString(36).substring(2, 9);
-  return `spk-${exerciseId}-${ts}-${rand}`;
+  const uuid =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : Math.random().toString(36).substring(2, 10);
+  return `spk-${exerciseId}-${ts}-${uuid}`;
 }
 
 /**

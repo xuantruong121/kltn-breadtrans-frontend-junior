@@ -1,77 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-
-/**
- * Deterministic test verifying PracticeCard state machine logic and pedagogical extraction
- */
-function extractPedagogicalCues(text?: string) {
-  if (!text) {
-    return { phonemes: ["/ə/", "/t/", "/s/"], keywords: [] };
-  }
-
-  const phonemeRules = [
-    { regex: /\b(th\w*|\w*th\b|\w*th\w*)/i, symbol: "/θ/ - /ð/" },
-    { regex: /\b(sh\w*|\w*tion|\w*sion|ch\w*)/i, symbol: "/ʃ/ - /tʃ/" },
-    { regex: /\b(\w*ed|\w*ing|\w*est)/i, symbol: "/ɪd/ - /ɪŋ/" },
-    { regex: /\b(\w*r\w*|wr\w*)/i, symbol: "/r/ & Linking" },
-    { regex: /\b(v\w*|\w*ve\b|f\w*)/i, symbol: "/v/ - /f/" },
-    { regex: /\b(z\w*|\w*s\b|\w*es\b)/i, symbol: "/s/ - /z/" },
-  ];
-
-  const phonemes: string[] = [];
-  for (const rule of phonemeRules) {
-    if (rule.regex.test(text)) {
-      phonemes.push(rule.symbol);
-      if (phonemes.length >= 2) break;
-    }
-  }
-  if (phonemes.length === 0) phonemes.push("/ə/", "/s/");
-
-  const stopWords = new Set([
-    "about", "after", "again", "because", "could", "every", "first", "great", "might", "other",
-    "should", "their", "there", "these", "which", "would", "where", "while", "please", "thank"
-  ]);
-  const words = text
-    .replace(/[^\w\s]/g, "")
-    .split(/\s+/)
-    .map((w) => w.toLowerCase())
-    .filter((w) => w.length >= 5 && !stopWords.has(w));
-
-  const keywords = Array.from(new Set(words)).slice(0, 3);
-  return { phonemes, keywords };
-}
-
-function computePracticeCardStatus(params: {
-  isAuthenticated: boolean;
-  isCompleted?: boolean;
-  practiceSet?: {
-    exerciseCount: number;
-    completedCount: number;
-    isCompleted: boolean;
-  };
-  isSpotlight?: boolean;
-}): "COMPLETED" | "IN_PROGRESS" | "NOT_STARTED" | "LOCKED" {
-  const { isAuthenticated, isCompleted, practiceSet, isSpotlight } = params;
-  if (!isAuthenticated) return "LOCKED";
-  
-  const completed = Boolean(
-    isCompleted ||
-    (practiceSet && practiceSet.isCompleted) ||
-    (practiceSet && practiceSet.exerciseCount > 0 && practiceSet.completedCount >= practiceSet.exerciseCount)
-  );
-
-  if (completed) return "COMPLETED";
-
-  const inProgress = Boolean(
-    practiceSet &&
-    practiceSet.completedCount > 0 &&
-    practiceSet.completedCount < practiceSet.exerciseCount
-  );
-
-  if (inProgress || isSpotlight) return "IN_PROGRESS";
-
-  return "NOT_STARTED";
-}
+import {
+  computePracticeCardStatus,
+  matchesDifficulty,
+  resolveFormatTag,
+  resolvePedagogicalDescription,
+  resolveSkillTags,
+  type PracticeExerciseItem,
+} from "./practiceCardLogic.ts";
 
 test("PracticeCard State Machine: accurately detects COMPLETED state", () => {
   const status = computePracticeCardStatus({
@@ -105,11 +41,147 @@ test("PracticeCard State Machine: accurately detects LOCKED state for unauthenti
   assert.equal(status, "LOCKED");
 });
 
-test("Pedagogical Cues: extracts phonemes and keywords from sample target sentence", () => {
-  const sample = "The financial director confirmed the schedule for the presentation.";
-  const cues = extractPedagogicalCues(sample);
+test("PracticeCard Format Tag: resolves format badge accurately", () => {
+  const readAloudEx: PracticeExerciseItem = {
+    id: 1,
+    title: "Read Aloud — Office Announcement",
+    targetText: "Secret prompt sentence that should not leak",
+    difficulty: "BEGINNER",
+    category: "TOEIC",
+  };
+  assert.equal(resolveFormatTag(readAloudEx), "Đọc thành tiếng");
 
-  assert.ok(cues.phonemes.length >= 1);
-  assert.ok(cues.phonemes.includes("/θ/ - /ð/") || cues.phonemes.includes("/ʃ/ - /tʃ/"));
-  assert.ok(cues.keywords.includes("financial") || cues.keywords.includes("schedule") || cues.keywords.includes("presentation"));
+  const questionEx: PracticeExerciseItem = {
+    id: 2,
+    title: "Question Response 1",
+    targetText: "Another prompt sentence",
+    difficulty: "INTERMEDIATE",
+    category: "GENERAL",
+  };
+  assert.equal(resolveFormatTag(questionEx), "Phản hồi câu hỏi");
+
+  const opinionEx: PracticeExerciseItem = {
+    id: 3,
+    title: "Express an Opinion",
+    targetText: "Another secret prompt",
+    difficulty: "ADVANCED",
+    category: "TOEIC",
+  };
+  assert.equal(resolveFormatTag(opinionEx), "Bày tỏ quan điểm");
+
+  const pronunciationEx: PracticeExerciseItem = {
+    id: 4,
+    title: "Pronunciation Foundations",
+    targetText: "Another secret prompt",
+    difficulty: "BEGINNER",
+    category: "GENERAL",
+  };
+  assert.equal(resolveFormatTag(pronunciationEx), "Âm vị học");
+
+  const toeicEx: PracticeExerciseItem = {
+    id: 7,
+    title: "Luyện nhiệm vụ TOEIC Speaking",
+    targetText: "Another secret prompt",
+    difficulty: "INTERMEDIATE",
+    category: "TOEIC",
+    practiceSet: {
+      key: "toeic-speaking-practice",
+      title: "Luyện nhiệm vụ TOEIC Speaking",
+      description:
+        "Luyện theo nhóm nhiệm vụ đọc thành tiếng, mô tả và phản hồi trong TOEIC Speaking.",
+      category: "TOEIC",
+      exerciseCount: 4,
+      completedCount: 0,
+      exerciseIds: [25, 26, 27, 28],
+      difficultyLabel: "Trung cấp",
+      position: 7,
+      isCompleted: false,
+    },
+  };
+  assert.equal(resolveFormatTag(toeicEx), "Mô phỏng ETS");
+});
+
+test("PracticeCard Pedagogical Description: produces concise objective without content leakage", () => {
+  const secretSentence =
+    "Customers may return unused items within thirty days for a full refund.";
+  const exercise: PracticeExerciseItem = {
+    id: 10,
+    title: "Read Aloud — Store Return Policy",
+    targetText: secretSentence,
+    difficulty: "BEGINNER",
+    category: "TOEIC",
+  };
+
+  const desc = resolvePedagogicalDescription(exercise);
+
+  // Must not leak the actual prompt sentence
+  assert.equal(desc.includes(secretSentence), false);
+  assert.equal(desc.includes("thirty days"), false);
+  assert.equal(desc.includes("full refund"), false);
+  // Must provide a high-level pedagogical objective
+  assert.ok(desc.length > 20);
+  assert.ok(
+    desc.includes("phát âm") ||
+      desc.includes("ngữ điệu") ||
+      desc.includes("đọc") ||
+      desc.includes("luyện"),
+  );
+});
+
+test("PracticeCard Skill Tags: resolves high-level skills without vocabulary or phoneme leaks", () => {
+  const secretSentence =
+    "The financial director confirmed the schedule for the presentation.";
+  const exercise: PracticeExerciseItem = {
+    id: 11,
+    title: "Read Aloud — Presentation Schedule",
+    targetText: secretSentence,
+    difficulty: "INTERMEDIATE",
+    category: "BUSINESS",
+  };
+
+  const tags = resolveSkillTags(exercise);
+
+  assert.ok(tags.length >= 1 && tags.length <= 2);
+  // Verify no raw prompt words leaked
+  assert.equal(tags.includes("financial"), false);
+  assert.equal(tags.includes("director"), false);
+  assert.equal(tags.includes("presentation"), false);
+  // Verify no raw phoneme slashes leaked
+  assert.ok(tags.every((t) => !t.includes("/")));
+});
+
+test("Difficulty Filter: matches single and composite/hybrid difficulty tags accurately", () => {
+  // 1. ALL matches anything
+  assert.equal(matchesDifficulty("Cơ bản", "ALL"), true);
+  assert.equal(matchesDifficulty("Nâng cao", "ALL"), true);
+  assert.equal(matchesDifficulty("ADVANCED", "ALL"), true);
+  assert.equal(matchesDifficulty("", "ALL"), true);
+
+  // 2. BASIC matches 'Cơ bản', 'basic', 'beginner'
+  assert.equal(matchesDifficulty("Cơ bản", "BASIC"), true);
+  assert.equal(matchesDifficulty("BEGINNER", "BASIC"), true);
+  assert.equal(matchesDifficulty("basic english", "BASIC"), true);
+  assert.equal(matchesDifficulty("Trung cấp", "BASIC"), false);
+  assert.equal(matchesDifficulty("Nâng cao", "BASIC"), false);
+
+  // 3. INTERMEDIATE matches 'Trung cấp', 'intermediate'
+  assert.equal(matchesDifficulty("Trung cấp", "INTERMEDIATE"), true);
+  assert.equal(matchesDifficulty("INTERMEDIATE", "INTERMEDIATE"), true);
+  assert.equal(matchesDifficulty("Cơ bản", "INTERMEDIATE"), false);
+  assert.equal(matchesDifficulty("Nâng cao", "INTERMEDIATE"), false);
+
+  // 4. ADVANCED matches 'Nâng cao', 'advanced'
+  assert.equal(matchesDifficulty("Nâng cao", "ADVANCED"), true);
+  assert.equal(matchesDifficulty("ADVANCED", "ADVANCED"), true);
+  assert.equal(matchesDifficulty("Cơ bản", "ADVANCED"), false);
+  assert.equal(matchesDifficulty("Trung cấp", "ADVANCED"), false);
+
+  // 5. Composite / Hybrid difficulty tags (e.g. 'Cơ bản – Nâng cao', 'Cơ bản - Trung cấp')
+  assert.equal(matchesDifficulty("Cơ bản – Nâng cao", "BASIC"), true);
+  assert.equal(matchesDifficulty("Cơ bản – Nâng cao", "ADVANCED"), true);
+  assert.equal(matchesDifficulty("Cơ bản – Nâng cao", "INTERMEDIATE"), false);
+
+  assert.equal(matchesDifficulty("Cơ bản - Trung cấp", "BASIC"), true);
+  assert.equal(matchesDifficulty("Cơ bản - Trung cấp", "INTERMEDIATE"), true);
+  assert.equal(matchesDifficulty("Cơ bản - Trung cấp", "ADVANCED"), false);
 });
