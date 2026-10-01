@@ -34,6 +34,8 @@ export interface QuestionContent {
     endMs?: number;
   }>;
   category?: string;
+  skill?: string;
+  questionType?: string;
   section?: string;
 }
 
