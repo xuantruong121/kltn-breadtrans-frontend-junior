@@ -15,7 +15,7 @@ test("Route classification: Active answering rooms hide global navigation", () =
   assert.equal(isLearningFocusRoute("/practice/writing/789"), true);
   assert.equal(isLearningFocusRoute("/practice/vocab/999"), true);
   assert.equal(isLearningFocusRoute("/practice/toeic/attempts/1"), true);
-  assert.equal(isLearningFocusRoute("/diagnostic"), true);
+  assert.equal(isLearningFocusRoute("/diagnostic"), false);
   assert.equal(isLearningFocusRoute("/vocabulary/study"), true);
 
   // Dynamic non-numeric IDs (alphanumeric, UUID, slugs)
@@ -60,12 +60,15 @@ test("isPracticeRoomPath and isToeicAttemptPath helpers", () => {
   assert.equal(isToeicAttemptPath("/practice/toeic/1"), false);
   assert.equal(isPracticeRoomPath("/practice/listening"), false);
   assert.equal(isPracticeRoomPath("/practice/toeic/results/1"), false);
+  assert.equal(isPracticeRoomPath("/diagnostic"), false);
 });
 
 test("shouldHideStudentNavigation with runtime override", () => {
   // Respects runtime boolean override
   assert.equal(shouldHideStudentNavigation("/grammar", true), true);
   assert.equal(shouldHideStudentNavigation("/grammar", false), false);
+  assert.equal(shouldHideStudentNavigation("/diagnostic", true), true);
+  assert.equal(shouldHideStudentNavigation("/diagnostic", false), false);
   assert.equal(shouldHideStudentNavigation("/practice/speaking/1", false), false);
 
   // Defaults to route classification when null/undefined

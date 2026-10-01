@@ -57,10 +57,6 @@ export function classifyPracticeRoute(pathname: string): PracticeRouteKind {
   if (pathname === "/vocabulary/study" || pathname.startsWith("/vocabulary/study/")) {
     return "VOCAB_ROOM";
   }
-  if (pathname === "/diagnostic" || pathname.startsWith("/diagnostic/")) {
-    return "DIAGNOSTIC_ROOM";
-  }
-
   // 3. Catalogs, Hubs, Pre-start briefing pages
   if (
     pathname === "/practice" ||
@@ -117,8 +113,6 @@ export function isLearningFocusRoute(pathname: string): boolean {
     /^\/practice\/writing\/[^/]+(?:\/|$)/.test(pathname) ||
     /^\/practice\/vocab\/[^/]+(?:\/|$)/.test(pathname) ||
     /^\/practice\/toeic\/attempts\/[^/]+(?:\/|$)/.test(pathname) ||
-    pathname === "/diagnostic" ||
-    pathname.startsWith("/diagnostic/") ||
     pathname === "/vocabulary/study" ||
     pathname.startsWith("/vocabulary/study/")
   );

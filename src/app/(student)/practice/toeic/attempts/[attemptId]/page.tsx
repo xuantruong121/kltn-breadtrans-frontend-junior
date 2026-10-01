@@ -165,8 +165,11 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
   const { markTerminated } = useAssessmentAntiCheat({
     enabled: policy.enableAntiCheat && attempt?.status === "IN_PROGRESS",
     onViolation: (eventType) => {
+      // The existing backend enum has no CUT_ATTEMPT value; preserve its
+      // established clipboard violation contract without changing the backend.
+      const persistedEventType = eventType === "CUT_ATTEMPT" ? "COPY_ATTEMPT" : eventType;
       void toeicService
-        .recordIntegrityEvent(attempt!.id, eventType, current?.question.id)
+        .recordIntegrityEvent(attempt!.id, persistedEventType, current?.question.id)
         .catch(() => undefined);
     },
     preventClipboard: !policy.allowCopyPaste,

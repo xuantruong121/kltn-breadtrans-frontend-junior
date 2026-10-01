@@ -79,6 +79,9 @@ export default function DiagnosticPage() {
         case "PASTE_ATTEMPT":
           toast.error("Chức năng dán bị hạn chế trong bài kiểm tra.");
           break;
+        case "CUT_ATTEMPT":
+          toast.error("Chức năng cắt bị hạn chế trong bài kiểm tra.");
+          break;
         case "CONTEXT_MENU_ATTEMPT":
           toast.error("Menu chuột phải bị hạn chế trong bài kiểm tra.");
           break;

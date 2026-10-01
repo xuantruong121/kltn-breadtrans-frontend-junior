@@ -8,6 +8,7 @@ export type AssessmentViolationType =
   | "WINDOW_BLUR"
   | "COPY_ATTEMPT"
   | "PASTE_ATTEMPT"
+  | "CUT_ATTEMPT"
   | "CONTEXT_MENU_ATTEMPT";
 
 export interface UseAssessmentAntiCheatOptions {
@@ -100,6 +101,14 @@ export function useAssessmentAntiCheat({
       report("PASTE_ATTEMPT");
     };
 
+    const handleCut = (e: ClipboardEvent) => {
+      if (isTerminatedRef.current) return;
+      if (preventClipboard) {
+        e.preventDefault();
+      }
+      report("CUT_ATTEMPT");
+    };
+
     const handleContextMenu = (e: MouseEvent) => {
       if (isTerminatedRef.current) return;
       if (preventContextMenu) {
@@ -113,6 +122,7 @@ export function useAssessmentAntiCheat({
     window.addEventListener("blur", handleBlur);
     document.addEventListener("copy", handleCopy);
     document.addEventListener("paste", handlePaste);
+    document.addEventListener("cut", handleCut);
     document.addEventListener("contextmenu", handleContextMenu);
 
     return () => {
@@ -122,6 +132,7 @@ export function useAssessmentAntiCheat({
       window.removeEventListener("blur", handleBlur);
       document.removeEventListener("copy", handleCopy);
       document.removeEventListener("paste", handlePaste);
+      document.removeEventListener("cut", handleCut);
       document.removeEventListener("contextmenu", handleContextMenu);
     };
   }, [enabled, preventClipboard, preventContextMenu]);

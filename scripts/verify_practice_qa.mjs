@@ -82,7 +82,11 @@ async function runQA() {
     }
     const diagActiveAppHeader = await page.locator("header.sticky:has(a[href='/dashboard']), header.sticky:has(a[href='/'])").isVisible();
     const diagActivePracticeHeader = await page.locator("header.h-14").isVisible();
-    const test5Passed = !diagBriefingPracticeHeader && !diagActiveAppHeader && diagActivePracticeHeader;
+    const test5Passed =
+      diagBriefingAppHeader &&
+      !diagBriefingPracticeHeader &&
+      !diagActiveAppHeader &&
+      diagActivePracticeHeader;
     results.push({ name: "Diagnostic (Briefing has no PracticeHeader, Active has PracticeHeader and no AppHeader)", passed: test5Passed });
     console.log(`  -> Active room passed: ${test5Passed} (Active AppHeader: ${diagActiveAppHeader}, PracticeHeader: ${diagActivePracticeHeader})`);
 

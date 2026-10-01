@@ -50,6 +50,7 @@ test("AntiCheat Hook: attaches listeners only when enabled, detaches on cleanup"
     // 1. When disabled: no listeners attached
     assert.equal(mockDoc.listeners["fullscreenchange"]?.length ?? 0, 0);
     assert.equal(mockDoc.listeners["copy"]?.length ?? 0, 0);
+    assert.equal(mockDoc.listeners["cut"]?.length ?? 0, 0);
     assert.equal(mockWin.listeners["blur"]?.length ?? 0, 0);
 
     // 2. Attach listeners when enabled
@@ -65,6 +66,7 @@ test("AntiCheat Hook: attaches listeners only when enabled, detaches on cleanup"
     assert.equal(mockWin.listeners["blur"]?.length, 1);
     assert.equal(mockDoc.listeners["copy"]?.length, 1);
     assert.equal(mockDoc.listeners["paste"]?.length, 1);
+    assert.equal(mockDoc.listeners["cut"]?.length, 1);
     assert.equal(mockDoc.listeners["contextmenu"]?.length, 1);
 
     // 3. Verify violations on events
@@ -72,6 +74,11 @@ test("AntiCheat Hook: attaches listeners only when enabled, detaches on cleanup"
     mockDoc.dispatch("copy", { preventDefault: () => { prevented = true; } });
     assert.equal(prevented, true, "Copy should be prevented");
     assert.ok(violations.includes("COPY_ATTEMPT"), "Should report COPY_ATTEMPT");
+
+    let cutPrevented = false;
+    mockDoc.dispatch("cut", { preventDefault: () => { cutPrevented = true; } });
+    assert.equal(cutPrevented, true, "Cut should be prevented");
+    assert.equal(violations.filter((type) => type === "CUT_ATTEMPT").length, 1);
 
     mockWin.dispatch("blur", {});
     assert.ok(violations.includes("WINDOW_BLUR"), "Should report WINDOW_BLUR");
@@ -87,6 +94,7 @@ test("AntiCheat Hook: attaches listeners only when enabled, detaches on cleanup"
     assert.equal(mockWin.listeners["blur"]?.length, 0);
     assert.equal(mockDoc.listeners["copy"]?.length, 0);
     assert.equal(mockDoc.listeners["paste"]?.length, 0);
+    assert.equal(mockDoc.listeners["cut"]?.length, 0);
     assert.equal(mockDoc.listeners["contextmenu"]?.length, 0);
 
     // 5. Post-cleanup events do not report violations
@@ -135,6 +143,10 @@ test("AntiCheat Hook: when preventClipboard is false, events are not cancelled",
     let contextPrevented = false;
     mockDoc.dispatch("contextmenu", { preventDefault: () => { contextPrevented = true; } });
     assert.equal(contextPrevented, false, "Context menu should not be cancelled when preventContextMenu is false");
+
+    let cutPrevented = false;
+    mockDoc.dispatch("cut", { preventDefault: () => { cutPrevented = true; } });
+    assert.equal(cutPrevented, false, "Cut should not be cancelled when preventClipboard is false");
 
     cleanup();
   } finally {
@@ -191,6 +203,12 @@ function simulateAntiCheat(options: {
     report("PASTE_ATTEMPT");
   };
 
+  const handleCut = (e: any) => {
+    if (isTerminated) return;
+    if (options.preventClipboard) e.preventDefault?.();
+    report("CUT_ATTEMPT");
+  };
+
   const handleContextMenu = (e: any) => {
     if (isTerminated) return;
     if (options.preventContextMenu) e.preventDefault?.();
@@ -203,6 +221,7 @@ function simulateAntiCheat(options: {
     (global as any).window.addEventListener("blur", handleBlur);
     (global as any).document.addEventListener("copy", handleCopy);
     (global as any).document.addEventListener("paste", handlePaste);
+    (global as any).document.addEventListener("cut", handleCut);
     (global as any).document.addEventListener("contextmenu", handleContextMenu);
   }
 
@@ -213,6 +232,7 @@ function simulateAntiCheat(options: {
     (global as any).window.removeEventListener("blur", handleBlur);
     (global as any).document.removeEventListener("copy", handleCopy);
     (global as any).document.removeEventListener("paste", handlePaste);
+    (global as any).document.removeEventListener("cut", handleCut);
     (global as any).document.removeEventListener("contextmenu", handleContextMenu);
   };
 }
