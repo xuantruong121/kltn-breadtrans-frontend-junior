@@ -18,6 +18,9 @@ import {
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toeicService, type ToeicQuestionGroup } from "@/lib/api/services/toeic.service";
+import { resolveAssessmentPolicy } from "@/lib/practice/focusMode";
+import { useAssessmentAntiCheat } from "@/hooks/useAssessmentAntiCheat";
+import { PracticeHeader } from "@/components/practice/PracticeHeader";
 
 type QuestionEntry = {
   question: NonNullable<ToeicQuestionGroup["questions"]>[number];
@@ -115,11 +118,19 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
   });
   const submit = useMutation({
     mutationFn: () => toeicService.submitAttempt(attemptId),
-    onSuccess: () => { exitFullscreen(); router.push(`/practice/toeic/results/${attemptId}`); },
+    onSuccess: () => {
+      markTerminated();
+      exitFullscreen();
+      router.push(`/practice/toeic/results/${attemptId}`);
+    },
   });
   const cancel = useMutation({
     mutationFn: () => toeicService.cancelAttempt(attemptId),
-    onSuccess: () => { exitFullscreen(); router.push("/practice/quizzes"); },
+    onSuccess: () => {
+      markTerminated();
+      exitFullscreen();
+      router.push("/practice/quizzes");
+    },
   });
 
   useEffect(() => () => {
@@ -146,32 +157,21 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
     return () => window.clearInterval(timer);
   }, [attempt]);
 
-  useEffect(() => {
-    if (!attempt || attempt.status !== "IN_PROGRESS") return;
-    const report = (eventType: Parameters<typeof toeicService.recordIntegrityEvent>[1]) => {
-      void toeicService.recordIntegrityEvent(attempt.id, eventType, current?.question.id).catch(() => undefined);
-    };
-    const onFullscreenChange = () => { if (!document.fullscreenElement) report("FULLSCREEN_EXIT"); };
-    const onVisibilityChange = () => { if (document.visibilityState === "hidden") report("TAB_HIDDEN"); };
-    const onBlur = () => report("WINDOW_BLUR");
-    const onCopy = (event: ClipboardEvent) => { event.preventDefault(); report("COPY_ATTEMPT"); };
-    const onPaste = (event: ClipboardEvent) => { event.preventDefault(); report("PASTE_ATTEMPT"); };
-    const onContextMenu = (event: MouseEvent) => { event.preventDefault(); report("CONTEXT_MENU_ATTEMPT"); };
-    document.addEventListener("fullscreenchange", onFullscreenChange);
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    window.addEventListener("blur", onBlur);
-    document.addEventListener("copy", onCopy);
-    document.addEventListener("paste", onPaste);
-    document.addEventListener("contextmenu", onContextMenu);
-    return () => {
-      document.removeEventListener("fullscreenchange", onFullscreenChange);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-      window.removeEventListener("blur", onBlur);
-      document.removeEventListener("copy", onCopy);
-      document.removeEventListener("paste", onPaste);
-      document.removeEventListener("contextmenu", onContextMenu);
-    };
-  }, [attempt, current?.question.id]);
+  const policy = resolveAssessmentPolicy({
+    kind: "TOEIC",
+    mode: attempt?.mode,
+  });
+
+  const { markTerminated } = useAssessmentAntiCheat({
+    enabled: policy.enableAntiCheat && attempt?.status === "IN_PROGRESS",
+    onViolation: (eventType) => {
+      void toeicService
+        .recordIntegrityEvent(attempt!.id, eventType, current?.question.id)
+        .catch(() => undefined);
+    },
+    preventClipboard: !policy.allowCopyPaste,
+    preventContextMenu: !policy.allowContextMenu,
+  });
 
   const loadAudio = async (group: ToeicQuestionGroup, autoPlay: boolean) => {
     const requestId = ++audioRequestRef.current;
@@ -310,20 +310,51 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
       : attempt.durationSeconds;
 
   return (
-    <main className="min-h-dvh bg-slate-50 px-3 py-4 sm:px-4 sm:py-5">
-      <div className="mx-auto max-w-7xl space-y-4 sm:space-y-5">
-        <header className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-900 p-3 text-white sm:p-4">
-          <div className="min-w-0 flex-1">
-            <p className="text-xs text-slate-300">{fullTest ? "TOEIC Listening & Reading · Đề thi đầy đủ" : "Chế độ luyện tập"}</p>
-            <h1 className="truncate text-sm font-black sm:text-base">{attempt.exam.title}</h1>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {fullTest && <div className="flex items-center gap-1 sm:gap-1.5 rounded-xl border border-slate-700 bg-slate-800/90 px-2 sm:px-3 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold text-white"><Clock3 size={14} className="text-amber-400" /> <span className="hidden sm:inline">{readingPhase ? "Reading" : "Listening"} </span>{formatTime(sectionRemaining)}</div>}
-            <button type="button" onClick={() => setShowQuestionDrawer(true)} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-slate-600 bg-slate-800 px-3 text-xs font-bold text-white hover:bg-slate-700 lg:hidden" aria-label="Mở bảng câu hỏi"><ListOrdered size={15} /> Câu hỏi ({answeredCount}/{questions.length})</button>
-            <button type="button" onClick={enterFullscreen} className="hidden min-h-11 items-center gap-2 rounded-xl border border-slate-600 px-3 text-sm font-bold hover:bg-slate-800 sm:inline-flex"><Maximize2 size={16} /> Toàn màn hình</button>
-            <button type="button" onClick={() => setShowExit(true)} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-rose-600 px-3 text-xs font-bold hover:bg-rose-700 sm:gap-2"><X size={16} /> Thoát</button>
-          </div>
-        </header>
+    <div className="min-h-dvh flex flex-col bg-slate-50 dark:bg-slate-950 font-sans">
+      <PracticeHeader
+        title={attempt.exam.title}
+        category={fullTest ? "Đề thi đầy đủ" : "Chế độ luyện tập"}
+        activityLabel={readingPhase ? "Reading" : "Listening"}
+        onExit={() => setShowExit(true)}
+        exitLabel="Thoát"
+        statusContent={
+          fullTest ? (
+            <div className="flex items-center gap-1 sm:gap-1.5 rounded-xl border border-slate-700 bg-slate-800/90 px-2 sm:px-3 py-1 text-[11px] sm:text-xs font-bold text-white">
+              <Clock3 size={14} className="text-amber-400" />
+              <span className="hidden sm:inline">
+                {readingPhase ? "Reading" : "Listening"}{" "}
+              </span>
+              {formatTime(sectionRemaining)}
+            </div>
+          ) : null
+        }
+        additionalActions={
+          <>
+            <button
+              type="button"
+              onClick={() => setShowQuestionDrawer(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1 text-xs font-bold text-white hover:bg-slate-700 lg:hidden"
+              aria-label="Mở bảng câu hỏi"
+            >
+              <ListOrdered size={14} />
+              <span className="hidden xs:inline">Câu hỏi </span>(
+              {answeredCount}/{questions.length})
+            </button>
+            <button
+              type="button"
+              onClick={enterFullscreen}
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1 text-xs font-bold text-slate-300 hover:text-white"
+              title="Toàn màn hình"
+            >
+              <Maximize2 size={14} />
+              <span className="hidden md:inline">Toàn màn hình</span>
+            </button>
+          </>
+        }
+      />
+
+      <main className="flex-1 w-full px-3 py-4 sm:px-4 sm:py-5">
+        <div className="mx-auto max-w-7xl space-y-4 sm:space-y-5">
 
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-6">
@@ -402,6 +433,7 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
       <audio ref={audioRef} preload="auto" onLoadedMetadata={(event) => setAudioDuration(event.currentTarget.duration)} onTimeUpdate={(event) => setAudioPosition(event.currentTarget.currentTime)} onPlay={() => setAudioPlaying(true)} onPause={() => setAudioPlaying(false)} onEnded={() => { setAudioPlaying(false); setAudioFinished(true); if (fullTest && isListening) void next(true); }} className="sr-only" />
 
       {showExit && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"><div role="dialog" aria-modal="true" className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-xl"><AlertTriangle className="text-rose-600 dark:text-rose-400" /><h2 className="mt-3 text-xl font-black text-slate-900 dark:text-slate-100">Thoát và làm lại từ đầu?</h2><p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Lượt thi đang làm dở sẽ bị hủy và toàn bộ câu trả lời chưa nộp sẽ mất.</p><div className="mt-6 flex flex-col-reverse justify-end gap-2.5 sm:flex-row"><button type="button" onClick={() => setShowExit(false)} className="min-h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-4 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800">Ở lại làm bài</button><button type="button" onClick={() => cancel.mutate()} disabled={cancel.isPending} className="min-h-11 rounded-xl bg-rose-600 px-4 text-sm font-bold text-white hover:bg-rose-700 disabled:opacity-60">{cancel.isPending ? "Đang hủy..." : "Hủy lượt thi"}</button></div></div></div>}
-    </main>
+      </main>
+    </div>
   );
 }

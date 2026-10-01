@@ -13,8 +13,6 @@ import {
   ChevronDown,
   ChevronRight,
   FileText,
-  Keyboard,
-  Languages,
   LayoutGrid,
   Loader2,
   MessageCircleMore,
@@ -22,7 +20,6 @@ import {
   Star,
   StickyNote,
   Volume2,
-  VolumeX,
   X,
   XCircle,
 } from "lucide-react";
@@ -39,6 +36,7 @@ import { ListeningAudioPlayer } from "./ListeningAudioPlayer";
 import { parseQuestionExplanation } from "./listeningExplanationUtils";
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
 import { PracticeExitConfirmDialog } from "@/components/practice/PracticeExitConfirmDialog";
+import { PracticeHeader } from "@/components/practice/PracticeHeader";
 import { WordDictionaryPopup } from "@/components/speaking/WordDictionaryPopup";
 import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
 import { ReportIssueButton } from "@/components/issue-report";
@@ -154,7 +152,6 @@ export function ListeningComprehensionWorkspace({
   const [savedQuestions, setSavedQuestions] = useState<Record<number, boolean>>(
     {},
   );
-  const [showShortcuts, setShowShortcuts] = useState(false);
   const [showMatrixPopover, setShowMatrixPopover] = useState(false);
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [notes, setNotes] = useState("");
@@ -310,7 +307,6 @@ export function ListeningComprehensionWorkspace({
     };
   }, [quizId, questions, reviewOnly, sessionHydrated, sessionKey, userId]);
 
-  const shortcutsRef = useRef<HTMLDivElement | null>(null);
   const matrixPopoverRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -353,12 +349,6 @@ export function ListeningComprehensionWorkspace({
   // Dismiss popovers on outside click
   useEffect(() => {
     const handleDocumentClick = (e: MouseEvent) => {
-      if (
-        shortcutsRef.current &&
-        !shortcutsRef.current.contains(e.target as Node)
-      ) {
-        setShowShortcuts(false);
-      }
       if (
         matrixPopoverRef.current &&
         !matrixPopoverRef.current.contains(e.target as Node)
@@ -1147,150 +1137,64 @@ export function ListeningComprehensionWorkspace({
   }
 
   return (
-    <div className="fixed inset-0 z-[45] w-screen h-[100dvh] flex flex-col bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden">
-      {/* 1. Full-Width Top Exam Header */}
-      <header className="w-full h-14 bg-slate-900 text-white px-3 sm:px-6 flex items-center justify-between shrink-0 select-none border-b border-slate-800 z-30">
-        {/* Left Section: Thoát button + Breadcrumb / Section Tag */}
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <button
-            type="button"
-            onClick={() => confirmExit("/practice/listening")}
-            className="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-2.5 sm:px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer shrink-0"
-          >
-            <ArrowLeft size={16} aria-hidden="true" />
-            <span>Thoát<span className="hidden sm:inline"> bài luyện</span></span>
-          </button>
-
-          <span className="text-slate-600 hidden sm:inline">|</span>
-
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-xs sm:text-sm font-bold text-slate-100 truncate max-w-[120px] xs:max-w-[200px] sm:max-w-[320px] md:max-w-[480px]">
-              {quiz.title}
-            </span>
-            <span className="hidden xs:inline-flex shrink-0 rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider">
-              {reviewOnly ? "ÔN CÂU SAI" : levelTag}
-            </span>
-          </div>
-        </div>
-
-        {/* Right Section: Utility Tools + Live Counter */}
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-          {/* Song ngữ pill */}
-          <button
-            type="button"
-            onClick={() => {
-              if (!hasBilingualTranslation) {
-                showToast("Bài luyện này chưa có bản dịch song ngữ.");
-                return;
-              }
-              setIsBilingual((value) => !value);
-            }}
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer border ${
-              hasBilingualTranslation && isBilingual
-                ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
-                : "bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-200"
-            }`}
-            title={
-              hasBilingualTranslation
-                ? "Bật / tắt bản dịch tiếng Việt"
-                : "Bài luyện này chưa có bản dịch song ngữ"
-            }
-            aria-pressed={hasBilingualTranslation && isBilingual}
-          >
-            <Languages size={14} />
-            <span className="hidden md:inline">Song ngữ</span>
-          </button>
-
-          {/* Ghi chú pill */}
-          <button
-            type="button"
-            onClick={() => setShowNotesModal(true)}
-            className="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer"
-            title="Ghi chú bài làm"
-          >
-            <StickyNote size={14} />
-            <span className="hidden md:inline">Ghi chú</span>
-          </button>
-
-          {/* Phím tắt pill with popover (hidden on mobile touchscreen) */}
-          <div className="relative hidden sm:block" ref={shortcutsRef}>
-            <button
-              type="button"
-              onClick={() => setShowShortcuts((v) => !v)}
-              className="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer"
-              title="Xem phím tắt nhanh"
-              aria-expanded={showShortcuts}
-            >
-              <Keyboard size={14} />
-              <span className="hidden md:inline">Phím tắt</span>
-            </button>
-
-            {showShortcuts && (
-              <div className="absolute right-0 top-full mt-2 w-72 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-xl z-50 text-slate-800 dark:text-slate-200 animate-in fade-in zoom-in-95 duration-150">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-2.5">
-                  <span className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100">
-                    Phím tắt nhanh
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setShowShortcuts(false)}
-                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded-md cursor-pointer"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-                <ul className="space-y-2 text-xs font-medium text-slate-600 dark:text-slate-400">
-                  <li className="flex items-center justify-between">
-                    <span>Phát / Dừng audio:</span>
-                    <kbd className="rounded border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
-                      Ctrl + Space
-                    </kbd>
-                  </li>
-                  <li className="flex items-center justify-between">
-                    <span>Chọn đáp án A - D:</span>
-                    <kbd className="rounded border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
-                      1, 2, 3, 4
-                    </kbd>
-                  </li>
-                  <li className="flex items-center justify-between">
-                    <span>Kiểm tra / Câu tiếp:</span>
-                    <kbd className="rounded border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
-                      Ctrl + Enter
-                    </kbd>
-                  </li>
-                  <li className="flex items-center justify-between">
-                    <span>Tua lại 5 giây:</span>
-                    <kbd className="rounded border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
-                      Shift + ←
-                    </kbd>
-                  </li>
-                  <li className="flex items-center justify-between">
-                    <span>Nghe lại / Bỏ qua / Hiện đáp án:</span>
-                    <kbd className="rounded border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
-                      Alt + R / S / A
-                    </kbd>
-                  </li>
-                </ul>
-              </div>
-            )}
-          </div>
-
-          {/* Audio mute toggle */}
-          <button
-            type="button"
-            onClick={() => setSoundMuted((v) => !v)}
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer border ${
-              soundMuted
-                ? "bg-rose-500/20 text-rose-300 border-rose-500/40"
-                : "bg-slate-800 text-slate-300 border-slate-700 hover:text-white"
-            }`}
-            title={soundMuted ? "Âm thanh: Đã tắt" : "Âm thanh: Đang bật"}
-          >
-            {soundMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
-            <span className="hidden md:inline">Âm thanh</span>
-          </button>
-
-          {(isDialogue || (isDictation && isChecked)) && (
+    <div className="w-full min-h-dvh flex flex-col bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
+      <PracticeHeader
+        title={quiz.title}
+        difficulty={reviewOnly ? "ÔN CÂU SAI" : levelTag}
+        positionText={`Câu ${currentIndex + 1} / ${questions.length}`}
+        onExit={() => confirmExit("/practice/listening")}
+        exitLabel="Thoát"
+        bilingualEnabled
+        isBilingual={isBilingual}
+        onToggleBilingual={() => {
+          if (!hasBilingualTranslation) {
+            showToast("Bài luyện này chưa có bản dịch song ngữ.");
+            return;
+          }
+          setIsBilingual((value) => !value);
+        }}
+        notesEnabled
+        onOpenNotes={() => setShowNotesModal(true)}
+        shortcutsEnabled
+        shortcutsContent={
+          <ul className="space-y-2 text-xs font-medium text-slate-600 dark:text-slate-400">
+            <li className="flex items-center justify-between">
+              <span>Phát / Dừng audio:</span>
+              <kbd className="rounded border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                Ctrl + Space
+              </kbd>
+            </li>
+            <li className="flex items-center justify-between">
+              <span>Chọn đáp án A - D:</span>
+              <kbd className="rounded border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                1, 2, 3, 4
+              </kbd>
+            </li>
+            <li className="flex items-center justify-between">
+              <span>Kiểm tra / Câu tiếp:</span>
+              <kbd className="rounded border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                Ctrl + Enter
+              </kbd>
+            </li>
+            <li className="flex items-center justify-between">
+              <span>Tua lại 5 giây:</span>
+              <kbd className="rounded border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                Shift + ←
+              </kbd>
+            </li>
+            <li className="flex items-center justify-between">
+              <span>Nghe lại / Bỏ qua / Hiện đáp án:</span>
+              <kbd className="rounded border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                Alt + R / S / A
+              </kbd>
+            </li>
+          </ul>
+        }
+        soundEnabled
+        soundMuted={soundMuted}
+        onToggleSound={() => setSoundMuted((v) => !v)}
+        additionalActions={
+          (isDialogue || (isDictation && isChecked)) ? (
             <button
               type="button"
               onClick={() => {
@@ -1310,16 +1214,9 @@ export function ListeningComprehensionWorkspace({
               <FileText size={14} aria-hidden="true" />
               <span className="hidden md:inline">Transcript</span>
             </button>
-          )}
-
-          {/* Live Progress Counter Badge */}
-          <div className="flex items-center gap-1.5 rounded-lg bg-slate-800 border border-slate-700 px-3 py-1 text-xs font-bold text-amber-400 shrink-0">
-            <span>
-              Câu {currentIndex + 1} / {questions.length}
-            </span>
-          </div>
-        </div>
-      </header>
+          ) : null
+        }
+      />
 
       {/* 2. Main Listening Workspace. Dictation keeps audio and input in one focused vertical flow. */}
       <main

@@ -25,12 +25,12 @@ import {
   X,
 } from "lucide-react";
 import { quizService, AnswerDto } from "@/lib/api/services/quiz.service";
-import { BackButton } from "@/components/ui";
 import { useAuthStore } from "@/stores/authStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { ListeningComprehensionWorkspace } from "../../listening/components/ListeningComprehensionWorkspace";
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
 import { PracticeExitConfirmDialog } from "@/components/practice/PracticeExitConfirmDialog";
+import { PracticeHeader } from "@/components/practice/PracticeHeader";
 import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
 import toast from "react-hot-toast";
 import { getUnansweredQuestionIndexes } from "../readingQuizUtils";
@@ -390,69 +390,51 @@ export default function TakeQuizPage(props: {
   }
 
   return (
-    <div
-      className={`mx-auto w-full space-y-5 pb-20 px-3 sm:px-6 lg:px-8 ${
-        isReading ? "max-w-[1560px]" : "max-w-7xl"
-      }`}
-    >
-      {/* TOP HEADER BAR */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-        <div className="flex items-center gap-4">
-          <BackButton
-            href={backHref}
-            onClick={handleExitRequest}
-            label={isReading ? "Thoát bài đọc" : "Thoát bài luyện"}
-          />
-          <div className="h-6 w-0.5 bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
-          <div>
-            <h1 className="text-xl font-black text-slate-800 dark:text-slate-100 line-clamp-1">
-              {quiz.title}
-            </h1>
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-              {isReading
-                ? "Đọc hiểu theo trình độ và chủ đề"
-                : `Luyện tập ${skillLabel} theo từng phần`}
-            </p>
-          </div>
-        </div>
-
-        {/* Actions & Progress Pill */}
-        <div className="flex items-center gap-2.5">
-          {/* Mẹo làm bài / Mẹo đọc hiểu button */}
-          <button
-            type="button"
-            onClick={() => setShowTipsModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/60 text-xs font-black hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors cursor-pointer shadow-2xs"
-            title={isReading ? "Xem mẹo đọc hiểu" : "Xem phím tắt & mẹo"}
-            aria-label={isReading ? "Xem mẹo đọc hiểu" : "Xem phím tắt & mẹo"}
-          >
-            <Lightbulb
-              size={16}
-              className="text-amber-600 dark:text-amber-400 shrink-0"
-              aria-hidden="true"
-            />
-            <span className="hidden sm:inline">
-              {isReading ? "Mẹo đọc hiểu" : "Mẹo làm bài"}
-            </span>
-          </button>
-
-          {/* Progress Pill */}
-          <div className="flex items-center gap-3 bg-sky-50 dark:bg-sky-950/40 px-3.5 py-2 rounded-xl border border-sky-200 dark:border-sky-900/50 shrink-0">
-            <div className="w-20 sm:w-24 bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+    <div className="w-full min-h-dvh flex flex-col bg-slate-50 dark:bg-slate-950 font-sans">
+      <PracticeHeader
+        title={quiz.title}
+        category={isReading ? "Đọc hiểu" : skillLabel}
+        positionText={`Câu ${currentStep + 1}/${questions.length}`}
+        onExit={handleExitRequest}
+        exitLabel={isReading ? "Thoát bài đọc" : "Thoát"}
+        statusContent={
+          <div className="hidden sm:flex items-center gap-2 bg-slate-800 border border-slate-700 px-3 py-1 rounded-lg shrink-0">
+            <div className="w-16 bg-slate-700 h-1.5 rounded-full overflow-hidden">
               <motion.div
-                className="bg-junior-blue h-full"
+                className="bg-sky-400 h-full"
                 initial={{ width: 0 }}
                 animate={{
                   width: `${((currentStep + 1) / questions.length) * 100}%`,
                 }}
               />
             </div>
-            <span className="text-xs font-black text-sky-700 dark:text-sky-300">
-              Câu {currentStep + 1}/{questions.length}
+            <span className="text-[11px] font-bold text-sky-300">
+              {currentStep + 1}/{questions.length}
             </span>
           </div>
-        </div>
-      </div>
+        }
+        additionalActions={
+          <button
+            type="button"
+            onClick={() => setShowTipsModal(true)}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 text-xs font-semibold hover:text-white transition-colors cursor-pointer"
+            title={isReading ? "Xem mẹo đọc hiểu" : "Xem phím tắt & mẹo"}
+            aria-label={isReading ? "Xem mẹo đọc hiểu" : "Xem phím tắt & mẹo"}
+          >
+            <Lightbulb size={14} className="text-amber-400 shrink-0" aria-hidden="true" />
+            <span className="hidden md:inline">
+              {isReading ? "Mẹo đọc hiểu" : "Mẹo làm bài"}
+            </span>
+          </button>
+        }
+      />
+
+      <div
+        className={`mx-auto w-full space-y-5 pb-20 px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 flex-1 ${
+          isReading ? "max-w-[1560px]" : "max-w-7xl"
+        }`}
+      >
+
 
       {isReading ? (
         <>
@@ -1291,6 +1273,7 @@ export default function TakeQuizPage(props: {
 
       {/* Shared Exit Confirmation Modal */}
       <PracticeExitConfirmDialog {...exitDialogProps} />
+      </div>
     </div>
   );
 }

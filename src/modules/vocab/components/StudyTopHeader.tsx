@@ -1,8 +1,9 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
-import { ArrowLeft, Eye, BookOpen, Gamepad2, SlidersHorizontal, Zap } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Eye, Gamepad2, SlidersHorizontal } from "lucide-react";
+import { PracticeHeader } from "@/components/practice/PracticeHeader";
 
 interface StudyTopHeaderProps {
   topicTitle: string;
@@ -23,88 +24,63 @@ export const StudyTopHeader: React.FC<StudyTopHeaderProps> = ({
   onOpenSettings,
   onSwitchToGame,
 }) => {
+  const router = useRouter();
+
   return (
-    <div className="w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 sticky top-0 z-30">
-      {/* Top Header Bar */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
-        {/* Left: Back Arrow & Optional Topic Title */}
-        <div className="flex items-center gap-2.5 min-w-0">
-          <Link
-            href="/flashcard"
-            className="flex size-10 items-center justify-center rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none shrink-0"
-            aria-label="Quay lại danh mục flashcard"
-            title="Quay lại danh mục"
-          >
-            <ArrowLeft size={18} />
-          </Link>
-          {topicTitle && (
-            <span
-              className="hidden lg:inline-block text-xs font-bold text-slate-600 dark:text-slate-300 truncate max-w-[160px]"
-              title={topicTitle}
+    <div className="sticky top-0 z-30 w-full">
+      <PracticeHeader
+        title={topicTitle || "Luyện từ vựng"}
+        activityLabel="Học từ vựng"
+        onExit={() => router.push("/flashcard")}
+        exitLabel="Thoát"
+        statusContent={
+          <div className="flex items-center gap-1.5 xs:gap-2">
+            <div className="text-xs font-bold text-slate-300 bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-lg whitespace-nowrap">
+              <span className="text-sky-400 font-black">{learnedCount}</span>
+              <span className="text-slate-500">/{totalWordsCount} từ</span>
+            </div>
+          </div>
+        }
+        additionalActions={
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            <button
+              type="button"
+              onClick={onOpenWordList}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 border border-slate-700 transition-colors cursor-pointer"
+              title="Xem danh sách từ"
             >
-              {topicTitle}
-            </span>
-          )}
-        </div>
+              <Eye size={14} className="text-slate-400" aria-hidden="true" />
+              <span className="hidden sm:inline">Xem từ</span>
+            </button>
 
-        {/* Center Pill Switcher */}
-        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-full border border-slate-200/80 dark:border-slate-700">
-          <button
-            type="button"
-            onClick={onOpenWordList}
-            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 rounded-full hover:bg-white/60 dark:hover:bg-slate-700/60 transition-colors cursor-pointer"
-            title="Xem danh sách từ"
-          >
-            <Eye size={14} className="text-slate-500 dark:text-slate-400" />
-            <span className="hidden sm:inline">Xem từ</span>
-          </button>
+            {onSwitchToGame && (
+              <button
+                type="button"
+                onClick={onSwitchToGame}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 border border-slate-700 transition-colors cursor-pointer"
+                title="Chơi trò chơi ôn tập"
+              >
+                <Gamepad2 size={14} className="text-slate-400" aria-hidden="true" />
+                <span className="hidden sm:inline">Chơi</span>
+              </button>
+            )}
 
-          <button
-            type="button"
-            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 text-xs font-black text-white bg-sky-500 rounded-full shadow-xs"
-            title="Chế độ học"
-          >
-            <BookOpen size={14} />
-            <span>Học</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={onSwitchToGame}
-            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 rounded-full hover:bg-white/60 dark:hover:bg-slate-700/60 transition-colors cursor-pointer"
-            title="Chơi trò chơi ôn tập"
-          >
-            <Gamepad2 size={14} className="text-slate-500 dark:text-slate-400" />
-            <span className="hidden sm:inline">Chơi</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={onOpenSettings}
-            className="flex items-center justify-center size-7 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/80 dark:hover:bg-slate-700/80 transition-colors cursor-pointer"
-            title="Cài đặt âm thanh & phím tắt"
-          >
-            <SlidersHorizontal size={13} />
-          </button>
-        </div>
-
-        {/* Right Side: Energy & Word Counter */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 text-xs font-extrabold shadow-2xs">
-            <Zap size={13} className="fill-amber-500 text-amber-500" />
-            <span>+0</span>
+            <button
+              type="button"
+              onClick={onOpenSettings}
+              className="inline-flex items-center justify-center size-7 rounded-lg text-slate-400 hover:text-white bg-slate-800 border border-slate-700 transition-colors cursor-pointer"
+              title="Cài đặt âm thanh & phím tắt"
+              aria-label="Cài đặt âm thanh và phím tắt"
+            >
+              <SlidersHorizontal size={13} aria-hidden="true" />
+            </button>
           </div>
-
-          <div className="text-xs font-black text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-full whitespace-nowrap">
-            <span className="text-sky-600 dark:text-sky-400">{learnedCount}</span>
-            <span className="text-slate-400 dark:text-slate-500">/{totalWordsCount} từ</span>
-          </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Top Progress Line across screen width */}
       <div
-        className="w-full h-1 bg-slate-100 dark:bg-slate-800 overflow-hidden"
+        className="w-full h-1 bg-slate-800 overflow-hidden"
         role="progressbar"
         aria-valuenow={completionPercentage}
         aria-valuemin={0}

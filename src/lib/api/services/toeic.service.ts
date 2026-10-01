@@ -76,9 +76,12 @@ export const toeicService = {
     (await axiosClient.get(`/toeic/exams/${examId}`)) as unknown as ToeicExam,
   getBundle: async (quizId: number): Promise<ToeicBundle> =>
     (await axiosClient.get(`/toeic/bundles/${quizId}`)) as unknown as ToeicBundle,
-  startAttempt: async (examId: number): Promise<{ id: number }> =>
+  startAttempt: async (
+    examId: number,
+    mode?: "PRACTICE" | "FULL_TEST",
+  ): Promise<{ id: number }> =>
     (await axiosClient.post(`/toeic/exams/${examId}/attempts`, {
-      mode: "FULL_TEST",
+      mode: mode ?? "FULL_TEST",
     })) as unknown as { id: number },
   beginAttempt: async (attemptId: number): Promise<ToeicAttempt> =>
     (await axiosClient.post(`/toeic/attempts/${attemptId}/begin`)) as unknown as ToeicAttempt,
