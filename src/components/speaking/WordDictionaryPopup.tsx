@@ -17,6 +17,7 @@ import {
   VocabLookupResponse,
   vocabService,
 } from "@/lib/api/services/vocab.service";
+import { playAudioFromStart } from "@/lib/audio/safePlayback";
 
 interface WordDictionaryPopupProps {
   word: string;
@@ -262,6 +263,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
   const [isMounted, setIsMounted] = useState(false);
   const audioCacheRef = useRef(new Map<string, HTMLAudioElement>());
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
+  const audioGenerationRef = useRef(0);
 
   useEffect(() => {
     setIsMounted(true);
@@ -374,9 +376,18 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
     return () => {
       mounted = false;
       controller.abort();
+      audioGenerationRef.current += 1;
       activeAudioRef.current?.pause();
+      if (activeAudioRef.current) {
+        activeAudioRef.current.onended = null;
+        activeAudioRef.current.onerror = null;
+      }
       activeAudioRef.current = null;
-      for (const audio of audioCacheRef.current.values()) audio.pause();
+      for (const audio of audioCacheRef.current.values()) {
+        audio.pause();
+        audio.onended = null;
+        audio.onerror = null;
+      }
       audioCacheRef.current.clear();
       if (typeof window !== "undefined") {
         window.speechSynthesis?.cancel();
@@ -439,34 +450,72 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
     }
   };
 
-  const handlePlayAudio = (entry: DictionaryEntry, accent: "US" | "UK") => {
+  const handlePlayAudio = async (
+    entry: DictionaryEntry,
+    accent: "US" | "UK",
+  ) => {
+    const generation = audioGenerationRef.current + 1;
+    audioGenerationRef.current = generation;
+    const isCurrent = () => audioGenerationRef.current === generation;
     const url = accent === "US" ? entry.audio.us : entry.audio.uk;
-    setPlayingAccent(accent);
+
+    const previousAudio = activeAudioRef.current;
+    previousAudio?.pause();
+    if (previousAudio) {
+      previousAudio.onended = null;
+      previousAudio.onerror = null;
+    }
+    activeAudioRef.current = null;
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
 
     if (url) {
-      activeAudioRef.current?.pause();
+      setPlayingAccent(accent);
       const normalizedUrl = url.startsWith("//") ? `https:${url}` : url;
       const audio =
         audioCacheRef.current.get(url) ?? new Audio(normalizedUrl);
       audio.preload = "auto";
       audioCacheRef.current.set(url, audio);
       activeAudioRef.current = audio;
-      audio.currentTime = 0;
-      audio.onended = () => setPlayingAccent(null);
-      audio.onerror = () => {
+      let playbackErrorHandled = false;
+      audio.onended = () => {
+        if (!isCurrent()) return;
+        playbackErrorHandled = true;
         activeAudioRef.current = null;
         setPlayingAccent(null);
       };
-      void audio.play().catch(() => setPlayingAccent(null));
+      audio.onerror = () => {
+        if (!isCurrent()) return;
+        activeAudioRef.current = null;
+        setPlayingAccent(null);
+        toast.error("Không thể phát âm thanh. Vui lòng thử lại.");
+      };
+      try {
+        await playAudioFromStart(audio);
+        if (!isCurrent()) audio.pause();
+      } catch {
+        if (isCurrent() && !playbackErrorHandled) {
+          playbackErrorHandled = true;
+          activeAudioRef.current = null;
+          setPlayingAccent(null);
+          toast.error("Không thể phát âm thanh. Vui lòng thử lại.");
+        }
+      }
       return;
     }
 
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      setPlayingAccent(accent);
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(entry.word || canonicalWord);
       utterance.lang = accent === "US" ? "en-US" : "en-GB";
-      utterance.onend = () => setPlayingAccent(null);
-      utterance.onerror = () => setPlayingAccent(null);
+      utterance.onend = () => {
+        if (isCurrent()) setPlayingAccent(null);
+      };
+      utterance.onerror = () => {
+        if (isCurrent()) setPlayingAccent(null);
+      };
       window.speechSynthesis.speak(utterance);
     } else {
       setPlayingAccent(null);
@@ -592,7 +641,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
                       key={accent}
                       type="button"
                       onClick={() => primaryEntry && handlePlayAudio(primaryEntry, accent)}
-                      disabled={playingAccent !== null}
+                      disabled={!primaryEntry}
                       className={clsx(
                         "group flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition-all duration-200 cursor-pointer",
                         isPlaying

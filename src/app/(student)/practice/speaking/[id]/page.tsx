@@ -41,6 +41,7 @@ import {
   getNextExerciseId,
 } from "@/lib/speaking/speakingPracticeLogic";
 import { getSpeakingFailureMessage } from "@/lib/speaking/speakingRecoveryLogic";
+import { playAudioFromStart } from "@/lib/audio/safePlayback";
 import {
   createWorkletFlushController,
   isAudioWorkletSupported,
@@ -178,6 +179,8 @@ export default function SpeakingExerciseDetailPage() {
   const [ttsRate, setTtsRate] = useState<number>(1.0);
   const [ttsAccent, setTtsAccent] = useState<"US" | "UK">("US");
   const ttsAudioElementRef = useRef<HTMLAudioElement | null>(null);
+  const ttsObjectUrlRef = useRef<string | null>(null);
+  const ttsGenerationRef = useRef(0);
 
   // Dictionary Popup State
   const [selectedWordForLookup, setSelectedWordForLookup] = useState<
@@ -402,7 +405,14 @@ export default function SpeakingExerciseDetailPage() {
       releaseMediaStream();
       if (ttsAudioElementRef.current) {
         ttsAudioElementRef.current.pause();
+        ttsAudioElementRef.current.onended = null;
+        ttsAudioElementRef.current.onerror = null;
         ttsAudioElementRef.current = null;
+      }
+      ttsGenerationRef.current += 1;
+      if (ttsObjectUrlRef.current) {
+        URL.revokeObjectURL(ttsObjectUrlRef.current);
+        ttsObjectUrlRef.current = null;
       }
       if (typeof window !== "undefined" && "speechSynthesis" in window) {
         window.speechSynthesis.cancel();
@@ -1284,46 +1294,73 @@ export default function SpeakingExerciseDetailPage() {
   /**
    * Browser SpeechSynthesis fallback when neural TTS server is unreachable.
    */
-  const fallbackBrowserTTS = () => {
+  const fallbackBrowserTTS = (generation: number) => {
     if (
       !exercise?.targetText ||
       typeof window === "undefined" ||
       !("speechSynthesis" in window)
     ) {
-      setIsPlayingTTS(false);
+      if (ttsGenerationRef.current === generation) setIsPlayingTTS(false);
       return;
     }
 
+    setIsPlayingTTS(true);
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(exercise.targetText);
     utterance.rate = Number(ttsRate);
     utterance.lang = ttsAccent === "US" ? "en-US" : "en-GB";
 
-    utterance.onend = () => setIsPlayingTTS(false);
-    utterance.onerror = () => setIsPlayingTTS(false);
+    utterance.onend = () => {
+      if (ttsGenerationRef.current === generation) setIsPlayingTTS(false);
+    };
+    utterance.onerror = () => {
+      if (ttsGenerationRef.current === generation) setIsPlayingTTS(false);
+    };
 
     window.speechSynthesis.speak(utterance);
   };
+
+  const stopTtsPlayback = useCallback(() => {
+    ttsGenerationRef.current += 1;
+    if (ttsAudioElementRef.current) {
+      ttsAudioElementRef.current.pause();
+      ttsAudioElementRef.current.onended = null;
+      ttsAudioElementRef.current.onerror = null;
+      ttsAudioElementRef.current = null;
+    }
+    if (ttsObjectUrlRef.current) {
+      URL.revokeObjectURL(ttsObjectUrlRef.current);
+      ttsObjectUrlRef.current = null;
+    }
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsPlayingTTS(false);
+  }, []);
+
+  const openDictionary = useCallback(
+    (word: string) => {
+      if (isPlayingTTS) stopTtsPlayback();
+      setSelectedWordForLookup(word);
+    },
+    [isPlayingTTS, stopTtsPlayback],
+  );
 
   /**
    * Neural TTS playback for target text sample.
    */
   const handleTogglePlayTTS = async () => {
     if (isPlayingTTS) {
-      if (ttsAudioElementRef.current) {
-        ttsAudioElementRef.current.pause();
-        ttsAudioElementRef.current = null;
-      }
-      if (typeof window !== "undefined" && "speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-      }
-      setIsPlayingTTS(false);
+      stopTtsPlayback();
       return;
     }
 
     if (!exercise?.targetText) return;
 
+    const generation = ttsGenerationRef.current + 1;
+    ttsGenerationRef.current = generation;
     setIsPlayingTTS(true);
+    let fallbackStarted = false;
 
     try {
       const blob = await speakingService.generateTts(
@@ -1332,24 +1369,44 @@ export default function SpeakingExerciseDetailPage() {
         ttsRate,
       );
 
+      if (ttsGenerationRef.current !== generation) return;
       const objectUrl = URL.createObjectURL(blob);
-      const audio = new Audio(objectUrl);
+      ttsObjectUrlRef.current = objectUrl;
+      const audio = new Audio();
+      audio.preload = "auto";
+      audio.src = objectUrl;
       ttsAudioElementRef.current = audio;
 
       audio.onended = () => {
+        if (ttsGenerationRef.current !== generation) return;
+        ttsAudioElementRef.current = null;
+        ttsObjectUrlRef.current = null;
         setIsPlayingTTS(false);
         URL.revokeObjectURL(objectUrl);
       };
 
       audio.onerror = () => {
+        if (ttsGenerationRef.current !== generation) return;
+        ttsAudioElementRef.current = null;
+        ttsObjectUrlRef.current = null;
         setIsPlayingTTS(false);
         URL.revokeObjectURL(objectUrl);
-        fallbackBrowserTTS();
+        if (!fallbackStarted) {
+          fallbackStarted = true;
+          fallbackBrowserTTS(generation);
+        }
       };
 
-      await audio.play();
+      await playAudioFromStart(audio);
+      if (ttsGenerationRef.current !== generation) audio.pause();
     } catch {
-      fallbackBrowserTTS();
+      if (ttsGenerationRef.current !== generation) return;
+      ttsAudioElementRef.current = null;
+      if (ttsObjectUrlRef.current) {
+        URL.revokeObjectURL(ttsObjectUrlRef.current);
+        ttsObjectUrlRef.current = null;
+      }
+      if (!fallbackStarted) fallbackBrowserTTS(generation);
     }
   };
 
@@ -1431,7 +1488,7 @@ export default function SpeakingExerciseDetailPage() {
       return;
     }
 
-    setSelectedWordForLookup(word);
+    openDictionary(word);
   };
 
   /**
@@ -1552,7 +1609,7 @@ export default function SpeakingExerciseDetailPage() {
             <button
               key={`${token}-${index}`}
               type="button"
-              onClick={() => setSelectedWordForLookup(cleanLookupWord)}
+              onClick={() => openDictionary(cleanLookupWord)}
               title={tooltip}
               aria-label={tooltip}
               className={`inline-block cursor-pointer transition-all border font-black ${wordStyle}`}
@@ -2218,7 +2275,7 @@ export default function SpeakingExerciseDetailPage() {
               onRetryRecord={handleRetryRecord}
               onRetrySubmit={handleRetrySubmit}
               onNextExercise={handleNextExercise}
-              onSelectWord={(word) => setSelectedWordForLookup(word)}
+              onSelectWord={openDictionary}
               onPlaySample={handlePlayIsolatedWordSample}
               ttsAccent={ttsAccent}
               ttsRate={ttsRate}
