@@ -41,7 +41,10 @@ import {
   getNextExerciseId,
 } from "@/lib/speaking/speakingPracticeLogic";
 import { getSpeakingFailureMessage } from "@/lib/speaking/speakingRecoveryLogic";
-import { playAudioFromStart } from "@/lib/audio/safePlayback";
+import {
+  playAudioFromStart,
+  primeAudioOutput,
+} from "@/lib/audio/safePlayback";
 import {
   createWorkletFlushController,
   isAudioWorkletSupported,
@@ -181,6 +184,7 @@ export default function SpeakingExerciseDetailPage() {
   const ttsAudioElementRef = useRef<HTMLAudioElement | null>(null);
   const ttsObjectUrlRef = useRef<string | null>(null);
   const ttsGenerationRef = useRef(0);
+  const ttsAbortControllerRef = useRef<AbortController | null>(null);
 
   // Dictionary Popup State
   const [selectedWordForLookup, setSelectedWordForLookup] = useState<
@@ -409,6 +413,8 @@ export default function SpeakingExerciseDetailPage() {
         ttsAudioElementRef.current.onerror = null;
         ttsAudioElementRef.current = null;
       }
+      ttsAbortControllerRef.current?.abort();
+      ttsAbortControllerRef.current = null;
       ttsGenerationRef.current += 1;
       if (ttsObjectUrlRef.current) {
         URL.revokeObjectURL(ttsObjectUrlRef.current);
@@ -1322,6 +1328,8 @@ export default function SpeakingExerciseDetailPage() {
 
   const stopTtsPlayback = useCallback(() => {
     ttsGenerationRef.current += 1;
+    ttsAbortControllerRef.current?.abort();
+    ttsAbortControllerRef.current = null;
     if (ttsAudioElementRef.current) {
       ttsAudioElementRef.current.pause();
       ttsAudioElementRef.current.onended = null;
@@ -1352,14 +1360,16 @@ export default function SpeakingExerciseDetailPage() {
   const handleTogglePlayTTS = async () => {
     if (isPlayingTTS) {
       stopTtsPlayback();
-      return;
     }
 
     if (!exercise?.targetText) return;
 
     const generation = ttsGenerationRef.current + 1;
     ttsGenerationRef.current = generation;
+    const abortController = new AbortController();
+    ttsAbortControllerRef.current = abortController;
     setIsPlayingTTS(true);
+    void primeAudioOutput(abortController.signal).catch(() => undefined);
     let fallbackStarted = false;
 
     try {
@@ -1381,6 +1391,7 @@ export default function SpeakingExerciseDetailPage() {
         if (ttsGenerationRef.current !== generation) return;
         ttsAudioElementRef.current = null;
         ttsObjectUrlRef.current = null;
+        ttsAbortControllerRef.current = null;
         setIsPlayingTTS(false);
         URL.revokeObjectURL(objectUrl);
       };
@@ -1389,6 +1400,7 @@ export default function SpeakingExerciseDetailPage() {
         if (ttsGenerationRef.current !== generation) return;
         ttsAudioElementRef.current = null;
         ttsObjectUrlRef.current = null;
+        ttsAbortControllerRef.current = null;
         setIsPlayingTTS(false);
         URL.revokeObjectURL(objectUrl);
         if (!fallbackStarted) {
@@ -1397,11 +1409,17 @@ export default function SpeakingExerciseDetailPage() {
         }
       };
 
-      await playAudioFromStart(audio);
+      await playAudioFromStart(
+        audio,
+        4000,
+        (signal) => primeAudioOutput(signal),
+        abortController.signal,
+      );
       if (ttsGenerationRef.current !== generation) audio.pause();
     } catch {
       if (ttsGenerationRef.current !== generation) return;
       ttsAudioElementRef.current = null;
+      ttsAbortControllerRef.current = null;
       if (ttsObjectUrlRef.current) {
         URL.revokeObjectURL(ttsObjectUrlRef.current);
         ttsObjectUrlRef.current = null;
