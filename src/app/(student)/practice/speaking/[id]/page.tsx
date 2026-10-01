@@ -156,6 +156,7 @@ export default function SpeakingExerciseDetailPage() {
   const isMountedRef = useRef(true);
   const currentSubmissionIdRef = useRef<number | null>(null);
   const pollingStartTimeRef = useRef<number>(0);
+  const scoreVisibilityStartRef = useRef<number | null>(null);
   const { socket } = useSocket();
 
   // Audio recording hardware nodes
@@ -187,6 +188,10 @@ export default function SpeakingExerciseDetailPage() {
   const [currentSubmission, setCurrentSubmission] =
     useState<SpeakingSubmissionDetail | null>(null);
   const pollingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // A completed submission can arrive through WebSocket and polling (and can
+  // be polled again while post-processing feedback is still pending). Keep
+  // the user-facing completion toast idempotent per submission.
+  const completionToastShownRef = useRef<Set<number>>(new Set());
 
   // Utilities State
   const [isBilingual, setIsBilingual] = useState(true);
@@ -616,6 +621,14 @@ export default function SpeakingExerciseDetailPage() {
           setCurrentSubmission(sub);
 
           if (sub.status === "COMPLETED") {
+            if (scoreVisibilityStartRef.current !== null) {
+              console.info("[LATENCY_INSTRUMENTATION]", {
+                tag: "speaking_latency_metrics",
+                submissionId: payload.submissionId,
+                scoreVisibleMs: Date.now() - scoreVisibilityStartRef.current,
+              });
+              scoreVisibilityStartRef.current = null;
+            }
             setPhase("COMPLETED");
             setIsProlongedProcessing(false);
             submissionInFlightRef.current = false;
@@ -627,19 +640,24 @@ export default function SpeakingExerciseDetailPage() {
                 );
               } catch {}
             }
-            toast.success("Đã hoàn thành đánh giá phát âm!");
+            if (!completionToastShownRef.current.has(payload.submissionId)) {
+              completionToastShownRef.current.add(payload.submissionId);
+              toast.success("Đã hoàn thành đánh giá phát âm!", {
+                id: `speaking-completed-${payload.submissionId}`,
+              });
 
-            const currentUserId = useAuthStore.getState().user?.id;
-            queryClient.invalidateQueries({
-              queryKey: ["dashboard-today", currentUserId],
-            });
-            queryClient.invalidateQueries({
-              queryKey: ["user-stats", currentUserId],
-            });
-            queryClient.invalidateQueries({
-              queryKey: ["user-skills-summary", currentUserId],
-            });
-            queryClient.invalidateQueries({ queryKey: ["myPet"] });
+              const currentUserId = useAuthStore.getState().user?.id;
+              queryClient.invalidateQueries({
+                queryKey: ["dashboard-today", currentUserId],
+              });
+              queryClient.invalidateQueries({
+                queryKey: ["user-stats", currentUserId],
+              });
+              queryClient.invalidateQueries({
+                queryKey: ["user-skills-summary", currentUserId],
+              });
+              queryClient.invalidateQueries({ queryKey: ["myPet"] });
+            }
           } else if (sub.status === "FAILED") {
             setPhase("FAILED");
             setIsProlongedProcessing(false);
@@ -685,12 +703,28 @@ export default function SpeakingExerciseDetailPage() {
       }
     };
 
+    const handleFeedbackCompleted = async (payload: { submissionId: number }) => {
+      if (
+        currentSubmissionIdRef.current &&
+        payload.submissionId === currentSubmissionIdRef.current
+      ) {
+        try {
+          const sub = await speakingService.getSubmission(payload.submissionId);
+          if (isMountedRef.current) setCurrentSubmission(sub);
+        } catch (fetchErr) {
+          console.error("Failed to fetch completed feedback:", fetchErr);
+        }
+      }
+    };
+
     socket.on("speaking.completed", handleCompleted);
     socket.on("speaking.failed", handleFailed);
+    socket.on("speaking.feedback.completed", handleFeedbackCompleted);
 
     return () => {
       socket.off("speaking.completed", handleCompleted);
       socket.off("speaking.failed", handleFailed);
+      socket.off("speaking.feedback.completed", handleFeedbackCompleted);
     };
   }, [socket, queryClient, exerciseId]);
 
@@ -705,6 +739,7 @@ export default function SpeakingExerciseDetailPage() {
   const pollSubmissionStatus = useCallback(
     (submissionId: number, attempt: number) => {
       if (!isMountedRef.current) return;
+      if (attempt === 0) scoreVisibilityStartRef.current = Date.now();
 
       // When waiting beyond 30 seconds, activate prolonged processing notice
       if (Date.now() - pollingStartTimeRef.current > 30000) {
@@ -722,12 +757,8 @@ export default function SpeakingExerciseDetailPage() {
         return;
       }
 
-      let intervalMs = 2000;
-      if (attempt > 15) {
-        intervalMs = 4500;
-      } else if (attempt > 5) {
-        intervalMs = 3000;
-      }
+      const intervalMs =
+        attempt === 0 ? 0 : attempt <= 5 ? 1000 : attempt <= 15 ? 2000 : 5000;
 
       pollingTimerRef.current = setTimeout(async () => {
         if (!isMountedRef.current) return;
@@ -739,6 +770,14 @@ export default function SpeakingExerciseDetailPage() {
           setCurrentSubmission(sub);
 
           if (sub.status === "COMPLETED") {
+            if (scoreVisibilityStartRef.current !== null) {
+              console.info("[LATENCY_INSTRUMENTATION]", {
+                tag: "speaking_latency_metrics",
+                submissionId,
+                scoreVisibleMs: Date.now() - scoreVisibilityStartRef.current,
+              });
+              scoreVisibilityStartRef.current = null;
+            }
             setPhase("COMPLETED");
             setIsProlongedProcessing(false);
             submissionInFlightRef.current = false;
@@ -750,20 +789,31 @@ export default function SpeakingExerciseDetailPage() {
                 );
               } catch {}
             }
-            toast.success("Đã hoàn thành đánh giá phát âm!");
+            if (!completionToastShownRef.current.has(submissionId)) {
+              completionToastShownRef.current.add(submissionId);
+              toast.success("Đã hoàn thành đánh giá phát âm!", {
+                id: `speaking-completed-${submissionId}`,
+              });
 
-            // Authoritative cache invalidation on completed
-            const currentUserId = useAuthStore.getState().user?.id;
-            queryClient.invalidateQueries({
-              queryKey: ["dashboard-today", currentUserId],
-            });
-            queryClient.invalidateQueries({
-              queryKey: ["user-stats", currentUserId],
-            });
-            queryClient.invalidateQueries({
-              queryKey: ["user-skills-summary", currentUserId],
-            });
-            queryClient.invalidateQueries({ queryKey: ["myPet"] });
+              // Authoritative cache invalidation on completed
+              const currentUserId = useAuthStore.getState().user?.id;
+              queryClient.invalidateQueries({
+                queryKey: ["dashboard-today", currentUserId],
+              });
+              queryClient.invalidateQueries({
+                queryKey: ["user-stats", currentUserId],
+              });
+              queryClient.invalidateQueries({
+                queryKey: ["user-skills-summary", currentUserId],
+              });
+              queryClient.invalidateQueries({ queryKey: ["myPet"] });
+            }
+            if (
+              sub.feedbackStatus === "PENDING" ||
+              sub.feedbackStatus === "PROCESSING"
+            ) {
+              pollSubmissionStatus(submissionId, attempt + 1);
+            }
           } else if (sub.status === "FAILED") {
             setPhase("FAILED");
             setIsProlongedProcessing(false);
@@ -1542,7 +1592,7 @@ export default function SpeakingExerciseDetailPage() {
   }
 
   return (
-    <div className="fixed inset-0 z-[45] w-screen h-[100dvh] flex flex-col bg-white dark:bg-slate-950 overflow-hidden select-none font-sans">
+    <div className="fixed inset-0 z-[80] w-screen h-[100dvh] flex flex-col bg-white dark:bg-slate-950 overflow-hidden select-none font-sans">
       {/* 1. Full-Width Top Exam Header */}
       <header className="w-full h-14 bg-slate-900 text-white px-4 md:px-6 flex items-center justify-between shrink-0 select-none border-b border-slate-800 z-30">
         {/* Left: Thoát button + Title */}
@@ -1686,9 +1736,18 @@ export default function SpeakingExerciseDetailPage() {
         <main className="flex-1 w-full flex flex-col justify-between overflow-y-auto bg-slate-50/40 p-3 sm:p-4 lg:p-5 min-h-0">
           <div className="max-w-5xl xl:max-w-6xl mx-auto w-full flex-1 flex flex-col items-center justify-center gap-3 sm:gap-4 my-auto">
             {/* Focal mode badge */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-100/90 text-amber-900 text-xs font-black uppercase tracking-wider shadow-2xs">
+            <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-amber-100/90 text-amber-900 text-xs font-black uppercase tracking-wider shadow-2xs">
               <Target size={13} className="text-amber-700" />
               <span>Câu cần luyện đọc</span>
+              {practiceSetKey && currentPracticeSetPosition > 0 && practiceSetExercises.length > 1 && (
+                <>
+                  <span className="text-amber-600/60">·</span>
+                  <span className="tabular-nums font-black">
+                    {currentPracticeSetPosition}
+                    <span className="font-medium text-amber-700/70">/{practiceSetExercises.length}</span>
+                  </span>
+                </>
+              )}
             </div>
 
             {/* Contextual Illustration Image (if available) */}
