@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   computePracticeCardStatus,
   matchesDifficulty,
+  resolveDifficultyBadge,
   resolveFormatTag,
   resolvePedagogicalDescription,
   resolveSkillTags,
@@ -185,3 +186,58 @@ test("Difficulty Filter: matches single and composite/hybrid difficulty tags acc
   assert.equal(matchesDifficulty("Cơ bản - Trung cấp", "INTERMEDIATE"), true);
   assert.equal(matchesDifficulty("Cơ bản - Trung cấp", "ADVANCED"), false);
 });
+test("Difficulty Badge: resolves semantic, expressive badge styling for pure and hybrid levels", () => {
+  // 1. Pure Basic / Beginner
+  const basicVn = resolveDifficultyBadge("Cơ bản");
+  assert.equal(basicVn.label, "Cơ bản");
+  assert.ok(basicVn.badgeClass.includes("emerald-50"));
+  assert.ok(basicVn.dotClass.includes("emerald-500"));
+
+  const basicEn = resolveDifficultyBadge("BEGINNER");
+  assert.equal(basicEn.label, "Cơ bản");
+  assert.ok(basicEn.badgeClass.includes("emerald-50"));
+
+  // 2. Pure Intermediate
+  const interVn = resolveDifficultyBadge("Trung cấp");
+  assert.equal(interVn.label, "Trung cấp");
+  assert.ok(interVn.badgeClass.includes("amber-50"));
+  assert.ok(interVn.dotClass.includes("amber-500"));
+
+  const interEn = resolveDifficultyBadge("INTERMEDIATE");
+  assert.equal(interEn.label, "Trung cấp");
+  assert.ok(interEn.badgeClass.includes("amber-50"));
+
+  // 3. Pure Advanced
+  const advVn = resolveDifficultyBadge("Nâng cao");
+  assert.equal(advVn.label, "Nâng cao");
+  assert.ok(advVn.badgeClass.includes("rose-50"));
+  assert.ok(advVn.dotClass.includes("rose-500"));
+
+  const advEn = resolveDifficultyBadge("ADVANCED");
+  assert.equal(advEn.label, "Nâng cao");
+  assert.ok(advEn.badgeClass.includes("rose-50"));
+
+  // 4. Hybrid: Cơ bản – Trung cấp (Teal)
+  const basicInter = resolveDifficultyBadge("Cơ bản – Trung cấp");
+  assert.equal(basicInter.label, "Cơ bản – Trung cấp");
+  assert.ok(basicInter.badgeClass.includes("teal-50"));
+  assert.ok(basicInter.dotClass.includes("teal-500"));
+
+  // 5. Hybrid: Trung cấp – Nâng cao (Orange)
+  const interAdv = resolveDifficultyBadge("Trung cấp – Nâng cao");
+  assert.equal(interAdv.label, "Trung cấp – Nâng cao");
+  assert.ok(interAdv.badgeClass.includes("orange-50"));
+  assert.ok(interAdv.dotClass.includes("orange-500"));
+
+  // 6. Hybrid: Cơ bản – Nâng cao (Indigo)
+  const fullRange = resolveDifficultyBadge("Cơ bản – Nâng cao");
+  assert.equal(fullRange.label, "Cơ bản – Nâng cao");
+  assert.ok(fullRange.badgeClass.includes("indigo-50"));
+  assert.ok(fullRange.dotClass.includes("indigo-500"));
+
+  // 7. Undefined / Empty fallback defaults to Cơ bản (Emerald)
+  const fallback = resolveDifficultyBadge(undefined);
+  assert.equal(fallback.label, "Cơ bản");
+  assert.ok(fallback.badgeClass.includes("emerald-50"));
+});
+
