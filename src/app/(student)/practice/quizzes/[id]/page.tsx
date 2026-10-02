@@ -33,9 +33,11 @@ import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScre
 import { PracticeExitConfirmDialog } from "@/components/practice/PracticeExitConfirmDialog";
 import { PracticeHeader } from "@/components/practice/PracticeHeader";
 import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
+import { WordDictionaryPopup } from "@/components/speaking/WordDictionaryPopup";
 import toast from "react-hot-toast";
 import { getUnansweredQuestionIndexes } from "../readingQuizUtils";
 import { createReadingAttemptId } from "../readingAttempt";
+import { extractReadingDictionaryWord } from "../readingDictionary";
 import {
   buildReadingDraftKey,
   clearReadingDraft,
@@ -87,6 +89,9 @@ export default function TakeQuizPage(props: {
     "base",
   );
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [selectedWordForLookup, setSelectedWordForLookup] = useState<
+    string | null
+  >(null);
 
   const { data: quiz, isLoading } = useQuery({
     queryKey: ["quiz", quizId],
@@ -370,6 +375,16 @@ export default function TakeQuizPage(props: {
     }
   };
 
+  const handleReadingDictionaryLookup = () => {
+    const selection = window.getSelection()?.toString() ?? "";
+    const word = extractReadingDictionaryWord(selection);
+    if (!word) {
+      toast("Bôi đen một từ tiếng Anh, rồi chọn Tra từ.");
+      return;
+    }
+    setSelectedWordForLookup((current) => (current === word ? current : word));
+  };
+
   const playAudio = (text: string, rate: number = 1) => {
     if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel();
@@ -573,8 +588,8 @@ export default function TakeQuizPage(props: {
             >
               <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-sm flex flex-col lg:sticky lg:top-20 max-h-[calc(100vh-180px)] min-h-[560px]">
                 {/* Passage Header */}
-                <div className="flex items-center justify-between gap-3 pb-3 mb-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
-                  <div className="flex items-center gap-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-3 pb-3 mb-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                  <div className="flex min-w-0 items-center gap-2.5">
                     <div className="size-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 flex items-center justify-center border border-emerald-200 dark:border-emerald-900/60 shrink-0">
                       <BookOpen size={16} aria-hidden="true" />
                     </div>
@@ -587,6 +602,17 @@ export default function TakeQuizPage(props: {
                       </span>
                     </div>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={handleReadingDictionaryLookup}
+                    className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50 px-2.5 py-2 text-xs font-bold text-sky-700 transition-colors hover:bg-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 sm:px-3 dark:border-sky-900/60 dark:bg-sky-950/30 dark:text-sky-300 dark:hover:bg-sky-950/50"
+                    title="Bôi đen một từ tiếng Anh rồi tra từ"
+                    aria-label="Tra từ đang được bôi đen trong đoạn văn"
+                  >
+                    <BookOpen size={15} aria-hidden="true" />
+                    <span className="hidden sm:inline">Tra từ</span>
+                  </button>
 
                   {/* Reading Font Size Adjuster */}
                   <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-black text-slate-600 dark:text-slate-300">
@@ -1355,6 +1381,13 @@ export default function TakeQuizPage(props: {
             </div>
           </motion.div>
         </div>
+      )}
+
+      {selectedWordForLookup && (
+        <WordDictionaryPopup
+          word={selectedWordForLookup}
+          onClose={() => setSelectedWordForLookup(null)}
+        />
       )}
 
       {/* Shared Exit Confirmation Modal */}
