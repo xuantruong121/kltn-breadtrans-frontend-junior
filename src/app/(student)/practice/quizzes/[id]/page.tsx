@@ -36,6 +36,13 @@ import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
 import toast from "react-hot-toast";
 import { getUnansweredQuestionIndexes } from "../readingQuizUtils";
 import { createReadingAttemptId } from "../readingAttempt";
+import {
+  buildReadingDraftKey,
+  clearReadingDraft,
+  loadReadingDraft,
+  resolveReadingAttemptId,
+  saveReadingDraft,
+} from "../readingDraft";
 
 function useHydration() {
   return useSyncExternalStore(
@@ -61,6 +68,8 @@ export default function TakeQuizPage(props: {
 
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const readingAttemptIdRef = useRef<string | null>(null);
+  const readingDraftScopeRef = useRef<string | null>(null);
+  const skipNextDraftSaveRef = useRef(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
@@ -90,6 +99,9 @@ export default function TakeQuizPage(props: {
       quizService.submitQuiz(quizId, payload.answers, undefined, payload.clientAttemptId),
     onSuccess: (data) => {
       setSubmitError(null);
+      if (quiz?.type === "BILINGUAL_READING" && user?.id) {
+        clearReadingDraft(user.id, quizId);
+      }
       // Invalidate gamification and profile cache to update Daily Quests instantly
       queryClient.invalidateQueries({ queryKey: ["myQuests"] });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
@@ -113,13 +125,72 @@ export default function TakeQuizPage(props: {
 
   const loadedQuizType = quiz?.type;
   const isReading = loadedQuizType === "BILINGUAL_READING";
+  const loadedQuizQuestions = quiz?.questions;
+  const readingDraftKey =
+    isReading && user?.id ? buildReadingDraftKey(user.id, quizId) : null;
+
   useEffect(() => {
-    if (loadedQuizType !== "BILINGUAL_READING") {
+    if (!hasMounted) return;
+    if (!isReading || !user?.id) {
+      readingDraftScopeRef.current = null;
       readingAttemptIdRef.current = null;
       return;
     }
-    if (!readingAttemptIdRef.current) readingAttemptIdRef.current = createReadingAttemptId();
-  }, [quiz?.id, loadedQuizType]);
+    if (!quiz || !readingDraftKey || readingDraftScopeRef.current === readingDraftKey) {
+      return;
+    }
+
+    readingDraftScopeRef.current = readingDraftKey;
+    const draft = loadReadingDraft({
+      userId: user.id,
+      quizId,
+      questions: loadedQuizQuestions ?? [],
+    });
+    skipNextDraftSaveRef.current = true;
+    setAnswers(draft?.answers ?? {});
+    readingAttemptIdRef.current = resolveReadingAttemptId(draft);
+  }, [
+    hasMounted,
+    isReading,
+    user?.id,
+    quiz,
+    quizId,
+    readingDraftKey,
+    loadedQuizQuestions,
+  ]);
+
+  useEffect(() => {
+    if (
+      !hasMounted ||
+      !isReading ||
+      !user?.id ||
+      !readingDraftKey ||
+      readingDraftScopeRef.current !== readingDraftKey ||
+      !readingAttemptIdRef.current
+    ) {
+      return;
+    }
+    if (skipNextDraftSaveRef.current) {
+      skipNextDraftSaveRef.current = false;
+      return;
+    }
+
+    saveReadingDraft({
+      version: 1,
+      userId: user.id,
+      quizId,
+      clientAttemptId: readingAttemptIdRef.current,
+      answers,
+      savedAt: new Date().toISOString(),
+    });
+  }, [
+    answers,
+    hasMounted,
+    isReading,
+    user?.id,
+    quizId,
+    readingDraftKey,
+  ]);
   const isListening = quiz?.type === "LISTENING_PRACTICE";
   const reviewQuestionIds = useMemo(() => {
     if (searchParams.get("review") !== "wrong") return [];
