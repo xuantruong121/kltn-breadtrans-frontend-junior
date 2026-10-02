@@ -24,7 +24,11 @@ export default function ToeicBriefingPage({ params }: { params: Promise<{ examId
     enabled: hasMounted && Number.isInteger(examId) && !!user,
   });
   const startMutation = useMutation({
-    mutationFn: () => toeicService.startAttempt(examId),
+    mutationFn: () =>
+      toeicService.startAttempt(
+        examId,
+        data?.type === "FULL_TEST" ? "FULL_TEST" : "PRACTICE",
+      ),
     onSuccess: async ({ id }) => {
       await toeicService.beginAttempt(id);
       router.push(`/practice/toeic/attempts/${id}`);

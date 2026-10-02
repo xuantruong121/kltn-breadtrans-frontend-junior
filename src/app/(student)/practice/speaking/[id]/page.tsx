@@ -6,14 +6,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import { useSocket } from "@/lib/providers/SocketProvider";
 import {
-  Activity,
   ArrowLeft,
   BookOpen,
   ChevronDown,
   Gauge,
   HelpCircle,
-  Keyboard,
-  Languages,
   Loader2,
   Mic,
   RotateCcw,
@@ -23,7 +20,6 @@ import {
   StopCircle,
   Target,
   Volume2,
-  VolumeX,
   X,
 } from "lucide-react";
 import {
@@ -42,6 +38,10 @@ import {
 } from "@/lib/speaking/speakingPracticeLogic";
 import { getSpeakingFailureMessage } from "@/lib/speaking/speakingRecoveryLogic";
 import {
+  playAudioFromStart,
+  primeAudioOutput,
+} from "@/lib/audio/safePlayback";
+import {
   createWorkletFlushController,
   isAudioWorkletSupported,
   validateChunkSequence,
@@ -52,6 +52,7 @@ import { WordDictionaryPopup } from "@/components/speaking/WordDictionaryPopup";
 import { PronunciationReportCard } from "@/components/speaking/PronunciationReportCard";
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
 import { PracticeExitConfirmDialog } from "@/components/practice/PracticeExitConfirmDialog";
+import { PracticeHeader } from "@/components/practice/PracticeHeader";
 import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
 import { ReportIssueButton } from "@/components/issue-report";
 import toast from "react-hot-toast";
@@ -156,6 +157,7 @@ export default function SpeakingExerciseDetailPage() {
   const isMountedRef = useRef(true);
   const currentSubmissionIdRef = useRef<number | null>(null);
   const pollingStartTimeRef = useRef<number>(0);
+  const scoreVisibilityStartRef = useRef<number | null>(null);
   const { socket } = useSocket();
 
   // Audio recording hardware nodes
@@ -177,6 +179,9 @@ export default function SpeakingExerciseDetailPage() {
   const [ttsRate, setTtsRate] = useState<number>(1.0);
   const [ttsAccent, setTtsAccent] = useState<"US" | "UK">("US");
   const ttsAudioElementRef = useRef<HTMLAudioElement | null>(null);
+  const ttsObjectUrlRef = useRef<string | null>(null);
+  const ttsGenerationRef = useRef(0);
+  const ttsAbortControllerRef = useRef<AbortController | null>(null);
 
   // Dictionary Popup State
   const [selectedWordForLookup, setSelectedWordForLookup] = useState<
@@ -187,6 +192,10 @@ export default function SpeakingExerciseDetailPage() {
   const [currentSubmission, setCurrentSubmission] =
     useState<SpeakingSubmissionDetail | null>(null);
   const pollingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // A completed submission can arrive through WebSocket and polling (and can
+  // be polled again while post-processing feedback is still pending). Keep
+  // the user-facing completion toast idempotent per submission.
+  const completionToastShownRef = useRef<Set<number>>(new Set());
 
   // Utilities State
   const [isBilingual, setIsBilingual] = useState(true);
@@ -397,7 +406,16 @@ export default function SpeakingExerciseDetailPage() {
       releaseMediaStream();
       if (ttsAudioElementRef.current) {
         ttsAudioElementRef.current.pause();
+        ttsAudioElementRef.current.onended = null;
+        ttsAudioElementRef.current.onerror = null;
         ttsAudioElementRef.current = null;
+      }
+      ttsAbortControllerRef.current?.abort();
+      ttsAbortControllerRef.current = null;
+      ttsGenerationRef.current += 1;
+      if (ttsObjectUrlRef.current) {
+        URL.revokeObjectURL(ttsObjectUrlRef.current);
+        ttsObjectUrlRef.current = null;
       }
       if (typeof window !== "undefined" && "speechSynthesis" in window) {
         window.speechSynthesis.cancel();
@@ -616,6 +634,14 @@ export default function SpeakingExerciseDetailPage() {
           setCurrentSubmission(sub);
 
           if (sub.status === "COMPLETED") {
+            if (scoreVisibilityStartRef.current !== null) {
+              console.info("[LATENCY_INSTRUMENTATION]", {
+                tag: "speaking_latency_metrics",
+                submissionId: payload.submissionId,
+                scoreVisibleMs: Date.now() - scoreVisibilityStartRef.current,
+              });
+              scoreVisibilityStartRef.current = null;
+            }
             setPhase("COMPLETED");
             setIsProlongedProcessing(false);
             submissionInFlightRef.current = false;
@@ -627,19 +653,24 @@ export default function SpeakingExerciseDetailPage() {
                 );
               } catch {}
             }
-            toast.success("Đã hoàn thành đánh giá phát âm!");
+            if (!completionToastShownRef.current.has(payload.submissionId)) {
+              completionToastShownRef.current.add(payload.submissionId);
+              toast.success("Đã hoàn thành đánh giá phát âm!", {
+                id: `speaking-completed-${payload.submissionId}`,
+              });
 
-            const currentUserId = useAuthStore.getState().user?.id;
-            queryClient.invalidateQueries({
-              queryKey: ["dashboard-today", currentUserId],
-            });
-            queryClient.invalidateQueries({
-              queryKey: ["user-stats", currentUserId],
-            });
-            queryClient.invalidateQueries({
-              queryKey: ["user-skills-summary", currentUserId],
-            });
-            queryClient.invalidateQueries({ queryKey: ["myPet"] });
+              const currentUserId = useAuthStore.getState().user?.id;
+              queryClient.invalidateQueries({
+                queryKey: ["dashboard-today", currentUserId],
+              });
+              queryClient.invalidateQueries({
+                queryKey: ["user-stats", currentUserId],
+              });
+              queryClient.invalidateQueries({
+                queryKey: ["user-skills-summary", currentUserId],
+              });
+              queryClient.invalidateQueries({ queryKey: ["myPet"] });
+            }
           } else if (sub.status === "FAILED") {
             setPhase("FAILED");
             setIsProlongedProcessing(false);
@@ -685,12 +716,28 @@ export default function SpeakingExerciseDetailPage() {
       }
     };
 
+    const handleFeedbackCompleted = async (payload: { submissionId: number }) => {
+      if (
+        currentSubmissionIdRef.current &&
+        payload.submissionId === currentSubmissionIdRef.current
+      ) {
+        try {
+          const sub = await speakingService.getSubmission(payload.submissionId);
+          if (isMountedRef.current) setCurrentSubmission(sub);
+        } catch (fetchErr) {
+          console.error("Failed to fetch completed feedback:", fetchErr);
+        }
+      }
+    };
+
     socket.on("speaking.completed", handleCompleted);
     socket.on("speaking.failed", handleFailed);
+    socket.on("speaking.feedback.completed", handleFeedbackCompleted);
 
     return () => {
       socket.off("speaking.completed", handleCompleted);
       socket.off("speaking.failed", handleFailed);
+      socket.off("speaking.feedback.completed", handleFeedbackCompleted);
     };
   }, [socket, queryClient, exerciseId]);
 
@@ -705,6 +752,7 @@ export default function SpeakingExerciseDetailPage() {
   const pollSubmissionStatus = useCallback(
     (submissionId: number, attempt: number) => {
       if (!isMountedRef.current) return;
+      if (attempt === 0) scoreVisibilityStartRef.current = Date.now();
 
       // When waiting beyond 30 seconds, activate prolonged processing notice
       if (Date.now() - pollingStartTimeRef.current > 30000) {
@@ -722,12 +770,8 @@ export default function SpeakingExerciseDetailPage() {
         return;
       }
 
-      let intervalMs = 2000;
-      if (attempt > 15) {
-        intervalMs = 4500;
-      } else if (attempt > 5) {
-        intervalMs = 3000;
-      }
+      const intervalMs =
+        attempt === 0 ? 0 : attempt <= 5 ? 1000 : attempt <= 15 ? 2000 : 5000;
 
       pollingTimerRef.current = setTimeout(async () => {
         if (!isMountedRef.current) return;
@@ -739,6 +783,14 @@ export default function SpeakingExerciseDetailPage() {
           setCurrentSubmission(sub);
 
           if (sub.status === "COMPLETED") {
+            if (scoreVisibilityStartRef.current !== null) {
+              console.info("[LATENCY_INSTRUMENTATION]", {
+                tag: "speaking_latency_metrics",
+                submissionId,
+                scoreVisibleMs: Date.now() - scoreVisibilityStartRef.current,
+              });
+              scoreVisibilityStartRef.current = null;
+            }
             setPhase("COMPLETED");
             setIsProlongedProcessing(false);
             submissionInFlightRef.current = false;
@@ -750,20 +802,31 @@ export default function SpeakingExerciseDetailPage() {
                 );
               } catch {}
             }
-            toast.success("Đã hoàn thành đánh giá phát âm!");
+            if (!completionToastShownRef.current.has(submissionId)) {
+              completionToastShownRef.current.add(submissionId);
+              toast.success("Đã hoàn thành đánh giá phát âm!", {
+                id: `speaking-completed-${submissionId}`,
+              });
 
-            // Authoritative cache invalidation on completed
-            const currentUserId = useAuthStore.getState().user?.id;
-            queryClient.invalidateQueries({
-              queryKey: ["dashboard-today", currentUserId],
-            });
-            queryClient.invalidateQueries({
-              queryKey: ["user-stats", currentUserId],
-            });
-            queryClient.invalidateQueries({
-              queryKey: ["user-skills-summary", currentUserId],
-            });
-            queryClient.invalidateQueries({ queryKey: ["myPet"] });
+              // Authoritative cache invalidation on completed
+              const currentUserId = useAuthStore.getState().user?.id;
+              queryClient.invalidateQueries({
+                queryKey: ["dashboard-today", currentUserId],
+              });
+              queryClient.invalidateQueries({
+                queryKey: ["user-stats", currentUserId],
+              });
+              queryClient.invalidateQueries({
+                queryKey: ["user-skills-summary", currentUserId],
+              });
+              queryClient.invalidateQueries({ queryKey: ["myPet"] });
+            }
+            if (
+              sub.feedbackStatus === "PENDING" ||
+              sub.feedbackStatus === "PROCESSING"
+            ) {
+              pollSubmissionStatus(submissionId, attempt + 1);
+            }
           } else if (sub.status === "FAILED") {
             setPhase("FAILED");
             setIsProlongedProcessing(false);
@@ -1234,46 +1297,77 @@ export default function SpeakingExerciseDetailPage() {
   /**
    * Browser SpeechSynthesis fallback when neural TTS server is unreachable.
    */
-  const fallbackBrowserTTS = () => {
+  const fallbackBrowserTTS = (generation: number) => {
     if (
       !exercise?.targetText ||
       typeof window === "undefined" ||
       !("speechSynthesis" in window)
     ) {
-      setIsPlayingTTS(false);
+      if (ttsGenerationRef.current === generation) setIsPlayingTTS(false);
       return;
     }
 
+    setIsPlayingTTS(true);
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(exercise.targetText);
     utterance.rate = Number(ttsRate);
     utterance.lang = ttsAccent === "US" ? "en-US" : "en-GB";
 
-    utterance.onend = () => setIsPlayingTTS(false);
-    utterance.onerror = () => setIsPlayingTTS(false);
+    utterance.onend = () => {
+      if (ttsGenerationRef.current === generation) setIsPlayingTTS(false);
+    };
+    utterance.onerror = () => {
+      if (ttsGenerationRef.current === generation) setIsPlayingTTS(false);
+    };
 
     window.speechSynthesis.speak(utterance);
   };
+
+  const stopTtsPlayback = useCallback(() => {
+    ttsGenerationRef.current += 1;
+    ttsAbortControllerRef.current?.abort();
+    ttsAbortControllerRef.current = null;
+    if (ttsAudioElementRef.current) {
+      ttsAudioElementRef.current.pause();
+      ttsAudioElementRef.current.onended = null;
+      ttsAudioElementRef.current.onerror = null;
+      ttsAudioElementRef.current = null;
+    }
+    if (ttsObjectUrlRef.current) {
+      URL.revokeObjectURL(ttsObjectUrlRef.current);
+      ttsObjectUrlRef.current = null;
+    }
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsPlayingTTS(false);
+  }, []);
+
+  const openDictionary = useCallback(
+    (word: string) => {
+      if (isPlayingTTS) stopTtsPlayback();
+      setSelectedWordForLookup(word);
+    },
+    [isPlayingTTS, stopTtsPlayback],
+  );
 
   /**
    * Neural TTS playback for target text sample.
    */
   const handleTogglePlayTTS = async () => {
     if (isPlayingTTS) {
-      if (ttsAudioElementRef.current) {
-        ttsAudioElementRef.current.pause();
-        ttsAudioElementRef.current = null;
-      }
-      if (typeof window !== "undefined" && "speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-      }
-      setIsPlayingTTS(false);
-      return;
+      stopTtsPlayback();
     }
 
     if (!exercise?.targetText) return;
 
+    const generation = ttsGenerationRef.current + 1;
+    ttsGenerationRef.current = generation;
+    const abortController = new AbortController();
+    ttsAbortControllerRef.current = abortController;
     setIsPlayingTTS(true);
+    void primeAudioOutput(abortController.signal).catch(() => undefined);
+    let fallbackStarted = false;
 
     try {
       const blob = await speakingService.generateTts(
@@ -1282,24 +1376,52 @@ export default function SpeakingExerciseDetailPage() {
         ttsRate,
       );
 
+      if (ttsGenerationRef.current !== generation) return;
       const objectUrl = URL.createObjectURL(blob);
-      const audio = new Audio(objectUrl);
+      ttsObjectUrlRef.current = objectUrl;
+      const audio = new Audio();
+      audio.preload = "auto";
+      audio.src = objectUrl;
       ttsAudioElementRef.current = audio;
 
       audio.onended = () => {
+        if (ttsGenerationRef.current !== generation) return;
+        ttsAudioElementRef.current = null;
+        ttsObjectUrlRef.current = null;
+        ttsAbortControllerRef.current = null;
         setIsPlayingTTS(false);
         URL.revokeObjectURL(objectUrl);
       };
 
       audio.onerror = () => {
+        if (ttsGenerationRef.current !== generation) return;
+        ttsAudioElementRef.current = null;
+        ttsObjectUrlRef.current = null;
+        ttsAbortControllerRef.current = null;
         setIsPlayingTTS(false);
         URL.revokeObjectURL(objectUrl);
-        fallbackBrowserTTS();
+        if (!fallbackStarted) {
+          fallbackStarted = true;
+          fallbackBrowserTTS(generation);
+        }
       };
 
-      await audio.play();
+      await playAudioFromStart(
+        audio,
+        4000,
+        (signal) => primeAudioOutput(signal),
+        abortController.signal,
+      );
+      if (ttsGenerationRef.current !== generation) audio.pause();
     } catch {
-      fallbackBrowserTTS();
+      if (ttsGenerationRef.current !== generation) return;
+      ttsAudioElementRef.current = null;
+      ttsAbortControllerRef.current = null;
+      if (ttsObjectUrlRef.current) {
+        URL.revokeObjectURL(ttsObjectUrlRef.current);
+        ttsObjectUrlRef.current = null;
+      }
+      if (!fallbackStarted) fallbackBrowserTTS(generation);
     }
   };
 
@@ -1381,7 +1503,7 @@ export default function SpeakingExerciseDetailPage() {
       return;
     }
 
-    setSelectedWordForLookup(word);
+    openDictionary(word);
   };
 
   /**
@@ -1502,7 +1624,7 @@ export default function SpeakingExerciseDetailPage() {
             <button
               key={`${token}-${index}`}
               type="button"
-              onClick={() => setSelectedWordForLookup(cleanLookupWord)}
+              onClick={() => openDictionary(cleanLookupWord)}
               title={tooltip}
               aria-label={tooltip}
               className={`inline-block cursor-pointer transition-all border font-black ${wordStyle}`}
@@ -1542,143 +1664,51 @@ export default function SpeakingExerciseDetailPage() {
   }
 
   return (
-    <div className="fixed inset-0 z-[45] w-screen h-[100dvh] flex flex-col bg-white dark:bg-slate-950 overflow-hidden select-none font-sans">
-      {/* 1. Full-Width Top Exam Header */}
-      <header className="w-full h-14 bg-slate-900 text-white px-4 md:px-6 flex items-center justify-between shrink-0 select-none border-b border-slate-800 z-30">
-        {/* Left: Thoát button + Title */}
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <button
-            type="button"
-            onClick={() => confirmExit("/practice/speaking")}
-            className="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer shrink-0"
-          >
-            <ArrowLeft size={16} aria-hidden="true" />
-            <span>Thoát</span>
-          </button>
-
-          <span className="text-slate-600 hidden sm:inline">|</span>
-
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-sm font-bold text-slate-100 truncate max-w-[200px] sm:max-w-[320px] md:max-w-[480px]">
-              {activePracticeSet?.title ?? exercise.title}
-            </span>
-            <span className="shrink-0 rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider">
-              {exercise.difficulty}
-            </span>
-            {activePracticeSet && (
-              <span className="shrink-0 rounded bg-amber-500/15 border border-amber-400/30 px-2 py-0.5 text-[10px] font-bold text-amber-300">
-                Câu {currentPracticeSetPosition}/
-                {activePracticeSet.exerciseCount}
+    <div className="w-full min-h-dvh flex flex-col bg-white dark:bg-slate-950 font-sans">
+      <PracticeHeader
+        title={activePracticeSet?.title ?? exercise.title}
+        category={exercise.category}
+        difficulty={exercise.difficulty}
+        positionText={
+          activePracticeSet
+            ? `Câu ${currentPracticeSetPosition}/${activePracticeSet.exerciseCount}`
+            : undefined
+        }
+        activityLabel="Đánh giá phát âm"
+        onExit={() => confirmExit("/practice/speaking")}
+        exitLabel="Thoát"
+        bilingualEnabled
+        isBilingual={isBilingual}
+        onToggleBilingual={() => setIsBilingual((v) => !v)}
+        notesEnabled
+        onOpenNotes={() => setShowNotesModal(true)}
+        shortcutsEnabled
+        shortcutsContent={
+          <ul className="space-y-2 text-xs font-medium text-slate-600 dark:text-slate-400">
+            <li className="flex items-center justify-between">
+              <span>Bắt đầu / Dừng thu âm:</span>
+              <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                Space
+              </kbd>
+            </li>
+            <li className="flex items-center justify-between">
+              <span>Phím thu âm phụ:</span>
+              <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                R
+              </kbd>
+            </li>
+            <li className="flex items-center justify-between">
+              <span>Quy trình tự động:</span>
+              <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold">
+                Dừng &rarr; Chấm điểm ngay
               </span>
-            )}
-            <span className="hidden sm:inline-block shrink-0 rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-[10px] font-bold text-slate-300 uppercase tracking-wider">
-              {exercise.category}
-            </span>
-          </div>
-        </div>
-
-        {/* Right: Utility Tools + Live Mode Badge */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {/* Song ngữ toggle */}
-          <button
-            type="button"
-            onClick={() => setIsBilingual((v) => !v)}
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer border ${
-              isBilingual
-                ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
-                : "bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-200"
-            }`}
-            title="Bật / tắt chế độ dịch nghĩa song ngữ"
-            aria-pressed={isBilingual}
-          >
-            <Languages size={14} />
-            <span className="hidden md:inline">Song ngữ</span>
-          </button>
-
-          {/* Ghi chú pill */}
-          <button
-            type="button"
-            onClick={() => setShowNotesModal(true)}
-            className="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer"
-            title="Ghi chú bài học"
-          >
-            <StickyNote size={14} />
-            <span className="hidden md:inline">Ghi chú</span>
-          </button>
-
-          {/* Phím tắt pill with popover */}
-          <div className="relative" ref={shortcutsRef}>
-            <button
-              type="button"
-              onClick={() => setShowShortcuts((v) => !v)}
-              className="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer"
-              title="Xem phím tắt nhanh"
-              aria-expanded={showShortcuts}
-            >
-              <Keyboard size={14} />
-              <span className="hidden md:inline">Phím tắt</span>
-            </button>
-
-            {showShortcuts && (
-              <div className="absolute right-0 top-full mt-2 w-72 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-xl z-50 text-slate-800 dark:text-slate-200 animate-in fade-in zoom-in-95 duration-150">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-2.5">
-                  <span className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100">
-                    Phím tắt nhanh
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setShowShortcuts(false)}
-                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded-md cursor-pointer"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-                <ul className="space-y-2 text-xs font-medium text-slate-600 dark:text-slate-400">
-                  <li className="flex items-center justify-between">
-                    <span>Bắt đầu / Dừng thu âm:</span>
-                    <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
-                      Space
-                    </kbd>
-                  </li>
-                  <li className="flex items-center justify-between">
-                    <span>Phím thu âm phụ:</span>
-                    <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
-                      R
-                    </kbd>
-                  </li>
-                  <li className="flex items-center justify-between">
-                    <span>Quy trình tự động:</span>
-                    <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold">
-                      Dừng &rarr; Chấm điểm ngay
-                    </span>
-                  </li>
-                </ul>
-              </div>
-            )}
-          </div>
-
-          {/* Âm thanh SFX toggle */}
-          <button
-            type="button"
-            onClick={() => setSoundMuted((v) => !v)}
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer border ${
-              soundMuted
-                ? "bg-rose-500/20 text-rose-300 border-rose-500/40"
-                : "bg-slate-800 text-slate-300 border-slate-700 hover:text-white"
-            }`}
-            title={soundMuted ? "Âm thanh: Đã tắt" : "Âm thanh: Đang bật"}
-          >
-            {soundMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
-            <span className="hidden md:inline">Âm thanh</span>
-          </button>
-
-          {/* Mode Pill */}
-          <div className="hidden sm:flex items-center gap-1.5 rounded-lg bg-slate-800 border border-slate-700 px-3 py-1 text-xs font-bold text-amber-400 shrink-0">
-            <Activity size={13} className="text-amber-400" />
-            <span>Đánh giá phát âm</span>
-          </div>
-        </div>
-      </header>
+            </li>
+          </ul>
+        }
+        soundEnabled
+        soundMuted={soundMuted}
+        onToggleSound={() => setSoundMuted((v) => !v)}
+      />
 
       {/* 2. Main Workspace: Dynamic Two-Stage Morphing Architecture */}
       {isStage1 ? (
@@ -1686,9 +1716,18 @@ export default function SpeakingExerciseDetailPage() {
         <main className="flex-1 w-full flex flex-col justify-between overflow-y-auto bg-slate-50/40 p-3 sm:p-4 lg:p-5 min-h-0">
           <div className="max-w-5xl xl:max-w-6xl mx-auto w-full flex-1 flex flex-col items-center justify-center gap-3 sm:gap-4 my-auto">
             {/* Focal mode badge */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-100/90 text-amber-900 text-xs font-black uppercase tracking-wider shadow-2xs">
+            <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-amber-100/90 text-amber-900 text-xs font-black uppercase tracking-wider shadow-2xs">
               <Target size={13} className="text-amber-700" />
               <span>Câu cần luyện đọc</span>
+              {practiceSetKey && currentPracticeSetPosition > 0 && practiceSetExercises.length > 1 && (
+                <>
+                  <span className="text-amber-600/60">·</span>
+                  <span className="tabular-nums font-black">
+                    {currentPracticeSetPosition}
+                    <span className="font-medium text-amber-700/70">/{practiceSetExercises.length}</span>
+                  </span>
+                </>
+              )}
             </div>
 
             {/* Contextual Illustration Image (if available) */}
@@ -2159,7 +2198,7 @@ export default function SpeakingExerciseDetailPage() {
               onRetryRecord={handleRetryRecord}
               onRetrySubmit={handleRetrySubmit}
               onNextExercise={handleNextExercise}
-              onSelectWord={(word) => setSelectedWordForLookup(word)}
+              onSelectWord={openDictionary}
               onPlaySample={handlePlayIsolatedWordSample}
               ttsAccent={ttsAccent}
               ttsRate={ttsRate}

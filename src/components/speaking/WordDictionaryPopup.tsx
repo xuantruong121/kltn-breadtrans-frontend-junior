@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   AlertCircle,
   BookOpen,
@@ -16,6 +17,10 @@ import {
   VocabLookupResponse,
   vocabService,
 } from "@/lib/api/services/vocab.service";
+import {
+  playAudioFromStart,
+  primeAudioOutput,
+} from "@/lib/audio/safePlayback";
 
 interface WordDictionaryPopupProps {
   word: string;
@@ -258,6 +263,15 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
   const [starLoading, setStarLoading] = useState(false);
   const [playingAccent, setPlayingAccent] = useState<"US" | "UK" | null>(null);
   const [hasExpandedDetails, setHasExpandedDetails] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const audioCacheRef = useRef(new Map<string, HTMLAudioElement>());
+  const activeAudioRef = useRef<HTMLAudioElement | null>(null);
+  const audioGenerationRef = useRef(0);
+  const audioAbortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -265,6 +279,20 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
 
   // Primary entry used for top-level phonetics & audio
   const primaryEntry = entries[0];
+
+  // Warm the small dictionary clips while the popup is open so playback starts
+  // from the first phoneme instead of waiting on the first network packet.
+  useEffect(() => {
+    for (const entry of entries) {
+      for (const url of [entry.audio.us, entry.audio.uk]) {
+        if (!url || audioCacheRef.current.has(url)) continue;
+        const audio = new Audio(url.startsWith("//") ? `https:${url}` : url);
+        audio.preload = "auto";
+        audio.load();
+        audioCacheRef.current.set(url, audio);
+      }
+    }
+  }, [entries]);
 
   // Aggregate all collocations across entries
   const allCollocations = useMemo(() => {
@@ -352,6 +380,21 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
     return () => {
       mounted = false;
       controller.abort();
+      audioGenerationRef.current += 1;
+      audioAbortControllerRef.current?.abort();
+      audioAbortControllerRef.current = null;
+      activeAudioRef.current?.pause();
+      if (activeAudioRef.current) {
+        activeAudioRef.current.onended = null;
+        activeAudioRef.current.onerror = null;
+      }
+      activeAudioRef.current = null;
+      for (const audio of audioCacheRef.current.values()) {
+        audio.pause();
+        audio.onended = null;
+        audio.onerror = null;
+      }
+      audioCacheRef.current.clear();
       if (typeof window !== "undefined") {
         window.speechSynthesis?.cancel();
       }
@@ -361,7 +404,12 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
   useEffect(() => {
     previousFocusRef.current = document.activeElement as HTMLElement | null;
     closeButtonRef.current?.focus();
-    return () => previousFocusRef.current?.focus();
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      previousFocusRef.current?.focus();
+    };
   }, []);
 
   const handleDialogKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -408,33 +456,105 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
     }
   };
 
-  const handlePlayAudio = (entry: DictionaryEntry, accent: "US" | "UK") => {
+  const handlePlayAudio = async (
+    entry: DictionaryEntry,
+    accent: "US" | "UK",
+  ) => {
+    const generation = audioGenerationRef.current + 1;
+    audioGenerationRef.current = generation;
+    const isCurrent = () => audioGenerationRef.current === generation;
+    audioAbortControllerRef.current?.abort();
+    const abortController = new AbortController();
+    audioAbortControllerRef.current = abortController;
     const url = accent === "US" ? entry.audio.us : entry.audio.uk;
-    setPlayingAccent(accent);
+    void primeAudioOutput().catch(() => undefined);
+
+    const previousAudio = activeAudioRef.current;
+    previousAudio?.pause();
+    if (previousAudio) {
+      previousAudio.onended = null;
+      previousAudio.onerror = null;
+    }
+    activeAudioRef.current = null;
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
 
     if (url) {
-      const audio = new Audio(url.startsWith("//") ? `https:${url}` : url);
-      audio.onended = () => setPlayingAccent(null);
-      audio.onerror = () => setPlayingAccent(null);
-      void audio.play().catch(() => setPlayingAccent(null));
+      setPlayingAccent(accent);
+      const normalizedUrl = url.startsWith("//") ? `https:${url}` : url;
+      const audio =
+        audioCacheRef.current.get(url) ?? new Audio(normalizedUrl);
+      audio.preload = "auto";
+      audioCacheRef.current.set(url, audio);
+      activeAudioRef.current = audio;
+      let playbackErrorHandled = false;
+      audio.onended = () => {
+        if (!isCurrent()) return;
+        playbackErrorHandled = true;
+        activeAudioRef.current = null;
+        audioAbortControllerRef.current = null;
+        setPlayingAccent(null);
+      };
+      audio.onerror = () => {
+        if (!isCurrent()) return;
+        playbackErrorHandled = true;
+        activeAudioRef.current = null;
+        audioAbortControllerRef.current = null;
+        setPlayingAccent(null);
+        toast.error("Không thể phát âm thanh. Vui lòng thử lại.");
+      };
+      try {
+        await playAudioFromStart(
+          audio,
+          4000,
+          (signal) => primeAudioOutput(signal),
+          abortController.signal,
+        );
+        if (!isCurrent()) audio.pause();
+      } catch {
+        if (isCurrent() && !playbackErrorHandled) {
+          playbackErrorHandled = true;
+          activeAudioRef.current = null;
+          audioAbortControllerRef.current = null;
+          setPlayingAccent(null);
+          toast.error("Không thể phát âm thanh. Vui lòng thử lại.");
+        }
+      }
       return;
     }
 
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      setPlayingAccent(accent);
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(entry.word || canonicalWord);
       utterance.lang = accent === "US" ? "en-US" : "en-GB";
-      utterance.onend = () => setPlayingAccent(null);
-      utterance.onerror = () => setPlayingAccent(null);
+      utterance.onend = () => {
+        if (isCurrent()) {
+          audioAbortControllerRef.current = null;
+          setPlayingAccent(null);
+        }
+      };
+      utterance.onerror = () => {
+        if (isCurrent()) {
+          audioAbortControllerRef.current = null;
+          setPlayingAccent(null);
+        }
+      };
       window.speechSynthesis.speak(utterance);
     } else {
+      audioAbortControllerRef.current = null;
       setPlayingAccent(null);
     }
   };
 
-  return (
+  if (!isMounted || typeof document === "undefined") {
+    return null;
+  }
+
+  const modalContent = (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 sm:p-6 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+      className="fixed inset-0 z-[9990] flex items-center justify-center bg-slate-950/60 p-3 sm:p-5 md:p-6 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
       onClick={onClose}
       role="presentation"
     >
@@ -446,10 +566,10 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
         aria-describedby="dictionary-status"
         onKeyDown={handleDialogKeyDown}
         onClick={(event) => event.stopPropagation()}
-        className="flex max-h-[min(88dvh,840px)] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl transition-all"
+        className="flex max-h-[min(84dvh,780px)] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl transition-all my-auto"
       >
         {/* Header Bar */}
-        <header className="flex shrink-0 items-center justify-between border-b border-slate-100 dark:border-slate-800 px-5 py-4 sm:px-6">
+        <header className="flex shrink-0 items-center justify-between border-b border-slate-100 dark:border-slate-800 px-5 py-4 sm:px-6 bg-white dark:bg-slate-900 sticky top-0 z-10">
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 shadow-2xs">
               <BookOpen size={16} aria-hidden="true" />
@@ -498,7 +618,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
         </header>
 
         {/* Scrollable Main Content - Single continuous page without tabs */}
-        <main className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6 space-y-4">
+        <main className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6 space-y-4 overscroll-contain">
           {loading ? (
             <div
               id="dictionary-loading-status"
@@ -547,7 +667,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
                       key={accent}
                       type="button"
                       onClick={() => primaryEntry && handlePlayAudio(primaryEntry, accent)}
-                      disabled={playingAccent !== null}
+                      disabled={!primaryEntry}
                       className={clsx(
                         "group flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition-all duration-200 cursor-pointer",
                         isPlaying
@@ -742,7 +862,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
 
         {/* Footer Action: Practice Word in Speaking */}
         {entries.length > 0 && onPracticeWord && (
-          <footer className="shrink-0 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 px-5 py-4 sm:px-6">
+          <footer className="shrink-0 border-t border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/90 px-5 py-3.5 sm:px-6 backdrop-blur-xs">
             <button
               type="button"
               onClick={() => {
@@ -759,6 +879,8 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default WordDictionaryPopup;

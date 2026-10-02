@@ -194,23 +194,6 @@ export function ListeningAudioPlayer({
     };
   }, [error, isLoading]);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const activeTag = (document.activeElement?.tagName || "").toLowerCase();
-      if (activeTag === "input" || activeTag === "textarea") return;
-
-      if (e.ctrlKey && e.code === "Space") {
-        e.preventDefault();
-        togglePlayRef.current();
-      } else if (e.shiftKey && e.code === "ArrowLeft") {
-        e.preventDefault();
-        rewind5sRef.current();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
 
   return (
     <div

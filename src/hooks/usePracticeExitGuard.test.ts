@@ -126,3 +126,49 @@ test("Ownership Guard: yields when enabled is false to prevent nested guard conf
   });
   assert.equal(shouldConfirm, false);
 });
+
+test("Writing Exit Protection: prompts when editor content is dirty", () => {
+  const hasTypedContent = true;
+  const hasFeedback = false;
+  const isEvaluating = false;
+
+  const shouldConfirmExit = !hasFeedback && (hasTypedContent || isEvaluating);
+  const shouldConfirm = shouldShowPracticeExitConfirmation({
+    isSuccessfullySubmitted: !shouldConfirmExit,
+    enabled: true,
+  });
+  assert.equal(shouldConfirm, true, "Dirty essay draft must prompt before exit");
+});
+
+test("Writing Exit Protection: prompts when evaluation is currently in progress", () => {
+  const hasTypedContent = false;
+  const hasFeedback = false;
+  const isEvaluating = true;
+
+  const shouldConfirmExit = !hasFeedback && (hasTypedContent || isEvaluating);
+  const shouldConfirm = shouldShowPracticeExitConfirmation({
+    isSuccessfullySubmitted: !shouldConfirmExit,
+    enabled: true,
+  });
+  assert.equal(shouldConfirm, true, "In-flight evaluation must prompt before exit");
+});
+
+test("Writing Exit Protection: allows direct exit when untouched or completed", () => {
+  // 1. Untouched editor
+  const emptyContent = false;
+  const noFeedback = false;
+  const shouldConfirmUntouched = shouldShowPracticeExitConfirmation({
+    isSuccessfullySubmitted: !(!noFeedback && emptyContent),
+    enabled: true,
+  });
+  assert.equal(shouldConfirmUntouched, false, "Untouched editor allows direct exit");
+
+  // 2. Completed with feedback
+  const hasFeedback = true;
+  const shouldConfirmCompleted = shouldShowPracticeExitConfirmation({
+    isSuccessfullySubmitted: hasFeedback,
+    enabled: true,
+  });
+  assert.equal(shouldConfirmCompleted, false, "Completed essay allows direct exit");
+});
+

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
@@ -17,14 +17,24 @@ import {
   X,
 } from "lucide-react";
 import { readingService } from "@/lib/api/services/reading.service";
+import { grammarService, type GrammarTopicSummary } from "@/lib/api/services/grammar.service";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { ReadingTopicCard, type ReadingTopicItem } from "./components/ReadingTopicCard";
+import { GrammarTopicCard } from "./components/GrammarTopicCard";
 import {
   type DifficultyLevel,
+  type ExerciseCategory,
   matchesReadingDifficulty,
 } from "./components/readingCardLogic";
+import { GrammarScreen } from "@/modules/grammar/screens/GrammarScreen";
+
+const CATEGORY_OPTIONS: Array<{ id: ExerciseCategory; label: string }> = [
+  { id: "ALL", label: "Tất cả" },
+  { id: "READING", label: "Đọc hiểu" },
+  { id: "GRAMMAR", label: "Ngữ pháp" },
+];
 
 const DIFFICULTY_OPTIONS: Array<{ id: DifficultyLevel; label: string }> = [
   { id: "ALL", label: "Tất cả" },
@@ -33,8 +43,32 @@ const DIFFICULTY_OPTIONS: Array<{ id: DifficultyLevel; label: string }> = [
   { id: "ADVANCED", label: "Nâng cao" },
 ];
 
-export default function ReadingTopicsPage() {
+type UnifiedExerciseItem =
+  | { type: "READING"; data: ReadingTopicItem }
+  | { type: "GRAMMAR"; data: GrammarTopicSummary };
+
+function ReadingTopicsContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Backward compatibility: ?category=grammar | ?tab=grammar | ?mode=grammar
+  const rawCategoryParam = (
+    searchParams.get("category") ||
+    searchParams.get("tab") ||
+    searchParams.get("mode") ||
+    ""
+  ).toLowerCase();
+
+  const initialCategory: ExerciseCategory =
+    rawCategoryParam === "grammar"
+      ? "GRAMMAR"
+      : rawCategoryParam === "reading"
+        ? "READING"
+        : "ALL";
+
+  const [selectedCategory, setSelectedCategory] = useState<ExerciseCategory>(initialCategory);
+  const [activeGrammarTopicId, setActiveGrammarTopicId] = useState<number | null>(null);
+
   const { user } = useAuthStore();
   const { streak } = useGamificationStore();
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -49,6 +83,22 @@ export default function ReadingTopicsPage() {
     topicName?: string;
   }>({ open: false });
 
+  // Sync category param with URL without causing page reload
+  const handleCategoryChange = (category: ExerciseCategory) => {
+    setSelectedCategory(category);
+    const params = new URLSearchParams(window.location.search);
+    params.delete("tab");
+    params.delete("mode");
+    if (category === "ALL") {
+      params.delete("category");
+    } else {
+      params.set("category", category.toLowerCase());
+    }
+    const queryString = params.toString();
+    const newPath = queryString ? `/practice/reading?${queryString}` : "/practice/reading";
+    router.replace(newPath, { scroll: false });
+  };
+
   // Keyboard shortcut Ctrl+K / Cmd+K
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -61,73 +111,145 @@ export default function ReadingTopicsPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const { data: topicsData, isLoading } = useQuery({
+  // Fetch Reading Topics
+  const { data: readingTopicsData, isLoading: isLoadingReading } = useQuery({
     queryKey: ["reading-topics"],
     queryFn: readingService.getTopics,
   });
 
-  const topics: ReadingTopicItem[] = useMemo(() => {
-    return Array.isArray(topicsData) ? (topicsData as ReadingTopicItem[]) : [];
-  }, [topicsData]);
+  // Fetch Grammar Topics
+  const { data: grammarTopicsData, isLoading: isLoadingGrammar } = useQuery({
+    queryKey: ["grammar-topics"],
+    queryFn: grammarService.getTopics,
+  });
 
-  // Counts
-  const completedCount = useMemo(() => {
-    return topics.filter(
+  const isLoading = isLoadingReading || isLoadingGrammar;
+
+  const readingTopics: ReadingTopicItem[] = useMemo(() => {
+    return Array.isArray(readingTopicsData) ? (readingTopicsData as ReadingTopicItem[]) : [];
+  }, [readingTopicsData]);
+
+  const grammarTopics: GrammarTopicSummary[] = useMemo(() => {
+    return Array.isArray(grammarTopicsData) ? (grammarTopicsData as GrammarTopicSummary[]) : [];
+  }, [grammarTopicsData]);
+
+  // Reading-specific progress metrics (honest, un-faked)
+  const completedReadingCount = useMemo(() => {
+    return readingTopics.filter(
       (t) => (t.completedArticles || 0) >= (t.totalArticles || 0) && (t.totalArticles || 0) > 0,
     ).length;
-  }, [topics]);
+  }, [readingTopics]);
 
-  // Filter & Sort
-  const filteredAndSortedTopics = useMemo(() => {
+  const readingCompletionPct = Math.round(
+    (completedReadingCount / Math.max(1, readingTopics.length)) * 100,
+  );
+
+  // Unified Filtering and Sorting
+  const filteredAndSortedItems = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
-    const list = topics.filter((t) => {
-      const name = (t.name || t.title || "").toLowerCase();
-      const viName = (t.vietnameseName || t.description || "").toLowerCase();
-      const matchSearch = !q || name.includes(q) || viName.includes(q);
+    const results: UnifiedExerciseItem[] = [];
 
-      const total = t.totalArticles || 0;
-      const completed = t.completedArticles || 0;
-      const isDone = completed >= total && total > 0;
-      const isInProg = completed > 0 && completed < total;
+    // 1. Reading Topics
+    if (selectedCategory === "ALL" || selectedCategory === "READING") {
+      readingTopics.forEach((t) => {
+        const name = (t.name || t.title || "").toLowerCase();
+        const viName = (t.vietnameseName || t.description || "").toLowerCase();
+        const matchSearch = !q || name.includes(q) || viName.includes(q);
 
-      const matchDifficulty = matchesReadingDifficulty(t.level || "BEGINNER", selectedDifficulty);
+        const total = t.totalArticles || 0;
+        const completed = t.completedArticles || 0;
+        const isDone = completed >= total && total > 0;
+        const isInProg = completed > 0 && completed < total;
 
-      const matchStatus =
-        selectedStatus === "ALL" ||
-        (selectedStatus === "COMPLETED" && isDone) ||
-        (selectedStatus === "IN_PROGRESS" && isInProg) ||
-        (selectedStatus === "UNCOMPLETED" && !isDone && !isInProg);
+        const matchDifficulty = matchesReadingDifficulty(t, selectedDifficulty);
 
-      return matchSearch && matchDifficulty && matchStatus;
-    });
+        const matchStatus =
+          selectedStatus === "ALL" ||
+          (selectedStatus === "COMPLETED" && isDone) ||
+          (selectedStatus === "IN_PROGRESS" && isInProg) ||
+          (selectedStatus === "UNCOMPLETED" && !isDone && !isInProg);
 
-    const sorted = list.sort((a, b) => {
+        if (matchSearch && matchDifficulty && matchStatus) {
+          results.push({ type: "READING", data: t });
+        }
+      });
+    }
+
+    // 2. Grammar Topics
+    if (selectedCategory === "ALL" || selectedCategory === "GRAMMAR") {
+      grammarTopics.forEach((g) => {
+        const title = (g.title || "").toLowerCase();
+        const desc = (g.description || "").toLowerCase();
+        const formula = (g.keyFormula || "").toLowerCase();
+        const matchSearch = !q || title.includes(q) || desc.includes(q) || formula.includes(q);
+
+        const isDone = Boolean(g.isCompleted);
+        const isInProg = !isDone && (g.attemptCount || 0) > 0;
+
+        const matchDifficulty = matchesReadingDifficulty(g, selectedDifficulty);
+
+        const matchStatus =
+          selectedStatus === "ALL" ||
+          (selectedStatus === "COMPLETED" && isDone) ||
+          (selectedStatus === "IN_PROGRESS" && isInProg) ||
+          (selectedStatus === "UNCOMPLETED" && !isDone && !isInProg);
+
+        if (matchSearch && matchDifficulty && matchStatus) {
+          results.push({ type: "GRAMMAR", data: g });
+        }
+      });
+    }
+
+    // Sorting
+    const sorted = results.sort((a, b) => {
       if (sortOrder === "NAME_ASC") {
-        const nameA = a.name || a.title || "";
-        const nameB = b.name || b.title || "";
+        const nameA = a.type === "READING" ? (a.data.name || a.data.title || "") : a.data.title;
+        const nameB = b.type === "READING" ? (b.data.name || b.data.title || "") : b.data.title;
         return nameA.localeCompare(nameB);
       }
       if (sortOrder === "PROGRESS_DESC") {
-        const pctA = (a.totalArticles || 0) > 0 ? (a.completedArticles || 0) / (a.totalArticles || 1) : 0;
-        const pctB = (b.totalArticles || 0) > 0 ? (b.completedArticles || 0) / (b.totalArticles || 1) : 0;
+        const pctA =
+          a.type === "READING"
+            ? (a.data.totalArticles || 0) > 0
+              ? (a.data.completedArticles || 0) / (a.data.totalArticles || 1)
+              : 0
+            : a.data.isCompleted
+              ? 1
+              : 0;
+        const pctB =
+          b.type === "READING"
+            ? (b.data.totalArticles || 0) > 0
+              ? (b.data.completedArticles || 0) / (b.data.totalArticles || 1)
+              : 0
+            : b.data.isCompleted
+              ? 1
+              : 0;
         return pctB - pctA;
       }
-      return (a.id || 0) - (b.id || 0);
+      // DEFAULT order: Reading topics first (by order/id), then Grammar topics (by id)
+      if (a.type !== b.type) {
+        return a.type === "READING" ? -1 : 1;
+      }
+      return (a.data.id || 0) - (b.data.id || 0);
     });
 
-    // Tag the first uncompleted item as Spotlight
+    // Assign spotlight to first uncompleted reading item
     let spotlightAssigned = false;
     return sorted.map((item) => {
-      const isDone = (item.completedArticles || 0) >= (item.totalArticles || 0) && (item.totalArticles || 0) > 0;
-      if (!isDone && !spotlightAssigned) {
-        spotlightAssigned = true;
-        return { ...item, isSpotlight: true };
+      if (item.type === "READING") {
+        const isDone =
+          (item.data.completedArticles || 0) >= (item.data.totalArticles || 0) &&
+          (item.data.totalArticles || 0) > 0;
+        if (!isDone && !spotlightAssigned) {
+          spotlightAssigned = true;
+          return { ...item, data: { ...item.data, isSpotlight: true } };
+        }
       }
       return item;
     });
-  }, [topics, searchTerm, selectedDifficulty, selectedStatus, sortOrder]);
+  }, [readingTopics, grammarTopics, selectedCategory, searchTerm, selectedDifficulty, selectedStatus, sortOrder]);
 
-  const handleStartTopic = (topic: ReadingTopicItem) => {
+  const handleStartReadingTopic = (topic: ReadingTopicItem) => {
     if (!user) {
       setAuthGate({
         open: true,
@@ -139,9 +261,26 @@ export default function ReadingTopicsPage() {
     router.push(`/practice/reading/${topic.id}`);
   };
 
-  const globalCompletionPct = Math.round(
-    (completedCount / Math.max(1, topics.length)) * 100,
-  );
+  const handleStartGrammarTopic = (topic: GrammarTopicSummary) => {
+    if (!user) {
+      setAuthGate({
+        open: true,
+        topicName: topic.title,
+      });
+      return;
+    }
+    setActiveGrammarTopicId(topic.id);
+  };
+
+  // If active Grammar exercise workspace is open, render GrammarScreen in Focus Mode
+  if (activeGrammarTopicId !== null) {
+    return (
+      <GrammarScreen
+        activeTopicId={activeGrammarTopicId}
+        onExit={() => setActiveGrammarTopicId(null)}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6 pb-20 pt-2">
@@ -151,15 +290,15 @@ export default function ReadingTopicsPage() {
           <div className="max-w-2xl space-y-3.5">
             <div className="inline-flex items-center gap-2 rounded-full border border-violet-200 dark:border-violet-800/60 bg-violet-50/80 dark:bg-violet-950/40 px-3 py-1 text-xs font-bold text-violet-700 dark:text-violet-300">
               <BookOpen size={14} aria-hidden="true" />
-              <span>Phòng Luyện Đọc & Tra Cứu Song Ngữ Thông Minh</span>
+              <span>Trung Tâm Luyện Đọc & Ngữ Pháp Song Ngữ Thông Minh</span>
             </div>
 
             <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
-              Rèn luyện Đọc hiểu, Kỹ thuật Skim & Scan
+              Rèn luyện Đọc hiểu & Ngữ pháp, Kỹ thuật Skim & Scan
             </h1>
 
             <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-400 sm:text-sm">
-              Phát triển vốn từ vựng học thuật, tư duy phân tích đoạn văn và kỹ năng đối chiếu dữ liệu ngữ cảnh theo chuẩn bài thi TOEIC & văn bản thương mại.
+              Phát triển vốn từ vựng học thuật, củng cố quy tắc ngữ pháp cốt lõi và rèn luyện kỹ năng đối chiếu dữ liệu văn bản theo chuẩn bài thi TOEIC & tài liệu thương mại.
             </p>
 
             {/* Gamified Stats Pill Row */}
@@ -171,31 +310,31 @@ export default function ReadingTopicsPage() {
 
               <div className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 dark:border-blue-800/60 bg-blue-50 dark:bg-blue-950/40 px-3 py-1.5 text-xs font-black text-blue-800 dark:text-blue-300">
                 <Target size={14} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
-                <span>Mục tiêu hôm nay: {Math.min(completedCount, 3)}/3 bài</span>
+                <span>Mục tiêu đọc hiểu: {Math.min(completedReadingCount, 3)}/3 bài</span>
               </div>
 
               <div className="inline-flex items-center gap-1.5 rounded-xl border border-violet-200 dark:border-violet-800/60 bg-violet-50 dark:bg-violet-950/40 px-3 py-1.5 text-xs font-black text-violet-800 dark:text-violet-300">
                 <Coins size={14} className="text-violet-600 dark:text-violet-400" aria-hidden="true" />
-                <span>Thưởng: +10 Bánh Mì / bài</span>
+                <span>Thưởng: +5 đến +10 Bánh Mì / bài</span>
               </div>
             </div>
           </div>
 
-          {/* Global Completion Progress Card */}
+          {/* Reading Comprehension Progress Card */}
           <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 p-5 shadow-2xs lg:w-80 shrink-0 space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Tiến độ toàn khóa
+                Tiến độ Đọc hiểu
               </span>
               <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 text-xs font-black text-emerald-700 dark:text-emerald-300">
-                {globalCompletionPct}%
+                {readingCompletionPct}%
               </span>
             </div>
 
             <div>
               <div className="flex items-baseline justify-between text-sm">
                 <span className="text-xl font-black text-slate-900 dark:text-slate-100">
-                  {completedCount}/{topics.length}
+                  {completedReadingCount}/{readingTopics.length}
                 </span>
                 <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                   chủ đề hoàn thành
@@ -206,13 +345,13 @@ export default function ReadingTopicsPage() {
               <div className="mt-2.5 h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
                 <div
                   className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-                  style={{ width: `${globalCompletionPct}%` }}
+                  style={{ width: `${readingCompletionPct}%` }}
                 />
               </div>
             </div>
 
             <div className="flex items-center justify-between border-t border-slate-200/80 dark:border-slate-700/80 pt-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-              <span>Tổng số chủ đề: {topics.length}</span>
+              <span>Đọc hiểu: {readingTopics.length} · Ngữ pháp: {grammarTopics.length}</span>
               <Link
                 href="/practice/writing"
                 className="inline-flex items-center gap-1 text-xs font-semibold text-violet-700 dark:text-violet-300 hover:text-violet-800 dark:hover:text-violet-200 bg-violet-50 dark:bg-violet-950/60 hover:bg-violet-100 dark:hover:bg-violet-900/60 border border-violet-200/60 dark:border-violet-800/60 px-2.5 py-1 rounded-md transition-colors duration-150"
@@ -238,7 +377,7 @@ export default function ReadingTopicsPage() {
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="Tìm kiếm chủ đề đọc hiểu..."
+              placeholder="Tìm kiếm chủ đề đọc hiểu, ngữ pháp..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="min-h-11 w-full rounded-xl border border-slate-300/80 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-800/90 pl-10.5 pr-20 text-sm font-medium text-slate-900 dark:text-slate-100 transition-all duration-150 placeholder:text-slate-500 dark:placeholder:text-slate-400 placeholder:font-normal focus:border-violet-600 dark:focus:border-violet-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/20 focus:outline-hidden shadow-2xs"
@@ -265,35 +404,62 @@ export default function ReadingTopicsPage() {
           </div>
 
           <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-            Hiển thị <span className="font-bold text-slate-900 dark:text-slate-100">{filteredAndSortedTopics.length}</span> chủ đề đọc hiểu
+            Hiển thị <span className="font-bold text-slate-900 dark:text-slate-100">{filteredAndSortedItems.length}</span> bài luyện tập
           </div>
         </div>
 
-        {/* Row 2: Difficulty Chips, Status & Sort */}
+        {/* Row 2: Category Chips, Difficulty Chips, Status & Sort */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 pt-3">
-          {/* Difficulty Chips */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1">
-              Độ khó:
-            </span>
-            {DIFFICULTY_OPTIONS.map((lvl) => {
-              const isActive = selectedDifficulty === lvl.id;
-              return (
-                <button
-                  key={lvl.id}
-                  type="button"
-                  aria-pressed={isActive}
-                  onClick={() => setSelectedDifficulty(lvl.id)}
-                  className={`min-h-9 rounded-lg px-3 py-1.5 text-xs transition cursor-pointer ${
-                    isActive
-                      ? "bg-violet-600 text-white font-semibold shadow-sm border border-violet-600"
-                      : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200 dark:border-slate-700 font-medium"
-                  }`}
-                >
-                  {lvl.label}
-                </button>
-              );
-            })}
+          <div className="flex flex-wrap items-center gap-4">
+            {/* Category Chips */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1">
+                Phân loại:
+              </span>
+              {CATEGORY_OPTIONS.map((cat) => {
+                const isActive = selectedCategory === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    aria-pressed={isActive}
+                    onClick={() => handleCategoryChange(cat.id)}
+                    className={`min-h-9 rounded-lg px-3 py-1.5 text-xs transition cursor-pointer ${
+                      isActive
+                        ? "bg-amber-600 text-white font-semibold shadow-sm border border-amber-600"
+                        : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200 dark:border-slate-700 font-medium"
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Difficulty Chips */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1">
+                Độ khó:
+              </span>
+              {DIFFICULTY_OPTIONS.map((lvl) => {
+                const isActive = selectedDifficulty === lvl.id;
+                return (
+                  <button
+                    key={lvl.id}
+                    type="button"
+                    aria-pressed={isActive}
+                    onClick={() => setSelectedDifficulty(lvl.id)}
+                    className={`min-h-9 rounded-lg px-3 py-1.5 text-xs transition cursor-pointer ${
+                      isActive
+                        ? "bg-violet-600 text-white font-semibold shadow-sm border border-violet-600"
+                        : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200 dark:border-slate-700 font-medium"
+                    }`}
+                  >
+                    {lvl.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Sort, Status & Reset Controls */}
@@ -305,7 +471,7 @@ export default function ReadingTopicsPage() {
 
             {/* Sắp xếp */}
             <select
-              aria-label="Sắp xếp chủ đề đọc"
+              aria-label="Sắp xếp bài luyện đọc và ngữ pháp"
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value)}
               className="min-h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 transition focus:border-violet-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-hidden cursor-pointer"
@@ -325,7 +491,7 @@ export default function ReadingTopicsPage() {
               >
                 <option value="ALL">Tất cả trạng thái</option>
                 <option value="UNCOMPLETED">Chưa làm</option>
-                <option value="IN_PROGRESS">Đang đọc dở</option>
+                <option value="IN_PROGRESS">Đang học dở</option>
                 <option value="COMPLETED">Đã hoàn thành</option>
               </select>
             )}
@@ -335,9 +501,16 @@ export default function ReadingTopicsPage() {
               type="button"
               onClick={() => {
                 setSearchTerm("");
+                setSelectedCategory("ALL");
                 setSelectedDifficulty("ALL");
                 setSortOrder("DEFAULT");
                 setSelectedStatus("ALL");
+                const params = new URLSearchParams(window.location.search);
+                params.delete("category");
+                params.delete("tab");
+                params.delete("mode");
+                const qs = params.toString();
+                router.replace(qs ? `/practice/reading?${qs}` : "/practice/reading", { scroll: false });
               }}
               aria-label="Đặt lại tất cả bộ lọc về mặc định"
               className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-600 dark:text-slate-400 transition hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 cursor-pointer"
@@ -349,51 +522,76 @@ export default function ReadingTopicsPage() {
         </div>
       </section>
 
-      {/* Catalog Results Grid */}
+      {/* Unified Catalog Results Grid */}
       <section>
         {isLoading ? (
           <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
             <Loader2 size={32} className="animate-spin text-violet-600" aria-hidden="true" />
             <p className="mt-3 text-xs font-bold text-slate-500 dark:text-slate-400">
-              Đang tải danh sách chủ đề đọc hiểu...
+              Đang tải danh sách bài luyện tập...
             </p>
           </div>
-        ) : filteredAndSortedTopics.length > 0 ? (
+        ) : filteredAndSortedItems.length > 0 ? (
           <div className="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {filteredAndSortedTopics.map((topic) => (
-              <ReadingTopicCard
-                key={topic.id}
-                topic={topic}
-                isAuthenticated={Boolean(user)}
-                onOpenAuthGate={() =>
-                  setAuthGate({
-                    open: true,
-                    topicId: topic.id,
-                    topicName: topic.name || topic.title,
-                  })
-                }
-                onStart={handleStartTopic}
-                isSpotlight={topic.isSpotlight}
-              />
-            ))}
+            {filteredAndSortedItems.map((item) => {
+              if (item.type === "READING") {
+                return (
+                  <ReadingTopicCard
+                    key={`reading-${item.data.id}`}
+                    topic={item.data}
+                    isAuthenticated={Boolean(user)}
+                    onOpenAuthGate={() =>
+                      setAuthGate({
+                        open: true,
+                        topicId: item.data.id,
+                        topicName: item.data.name || item.data.title,
+                      })
+                    }
+                    onStart={handleStartReadingTopic}
+                    isSpotlight={item.data.isSpotlight}
+                  />
+                );
+              }
+              return (
+                <GrammarTopicCard
+                  key={`grammar-${item.data.id}`}
+                  topic={item.data}
+                  isAuthenticated={Boolean(user)}
+                  onOpenAuthGate={() =>
+                    setAuthGate({
+                      open: true,
+                      topicName: item.data.title,
+                    })
+                  }
+                  onStart={handleStartGrammarTopic}
+                />
+              );
+            })}
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 sm:p-12 text-center">
             <BookOpen size={36} className="mx-auto text-slate-400 dark:text-slate-500 mb-3" aria-hidden="true" />
             <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-200">
-              Không tìm thấy chủ đề đọc hiểu phù hợp
+              Không tìm thấy bài luyện tập phù hợp
             </h2>
             <p className="mt-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-              Hãy thử chọn bộ lọc khác hoặc tìm kiếm với từ khóa khác để khám phá các bài luyện có sẵn.
+              Hãy thử chọn phân loại khác, độ khó khác hoặc tìm kiếm với từ khóa khác để khám phá các bài luyện có sẵn.
             </p>
             <div className="mt-5 flex justify-center">
               <button
                 type="button"
                 onClick={() => {
                   setSearchTerm("");
+                  setSelectedCategory("ALL");
                   setSelectedDifficulty("ALL");
                   setSortOrder("DEFAULT");
                   setSelectedStatus("ALL");
+                  const params = new URLSearchParams(window.location.search);
+                  params.delete("category");
+                  params.delete("tab");
+                  params.delete("mode");
+                  const qs = params.toString();
+                  router.replace(qs ? `/practice/reading?${qs}` : "/practice/reading", { scroll: false });
                 }}
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
               >
@@ -409,11 +607,25 @@ export default function ReadingTopicsPage() {
       <AuthGateModal
         isOpen={authGate.open}
         onClose={() => setAuthGate({ open: false })}
-        targetLabel={authGate.topicName ? `chủ đề "${authGate.topicName}"` : "chủ đề đọc hiểu này"}
+        targetLabel={authGate.topicName ? `bài luyện "${authGate.topicName}"` : "bài luyện tập này"}
         targetRoute={authGate.topicId ? `/practice/reading/${authGate.topicId}` : "/practice/reading"}
         onOpenLogin={() => router.push("/login")}
         onOpenRegister={() => router.push("/register")}
       />
     </div>
+  );
+}
+
+export default function ReadingTopicsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-64 items-center justify-center">
+          <Loader2 className="animate-spin text-amber-600" size={32} />
+        </div>
+      }
+    >
+      <ReadingTopicsContent />
+    </Suspense>
   );
 }

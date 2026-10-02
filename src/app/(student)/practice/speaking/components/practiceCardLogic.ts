@@ -51,6 +51,123 @@ export function matchesDifficulty(
   return true;
 }
 
+export interface DifficultyBadgeConfig {
+  label: string;
+  badgeClass: string;
+  dotClass: string;
+}
+
+export const SPEAKING_DIFFICULTY_BADGES: Record<string, DifficultyBadgeConfig> = {
+  BEGINNER: {
+    label: "Cơ bản",
+    badgeClass:
+      "border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300",
+    dotClass: "bg-emerald-500",
+  },
+  INTERMEDIATE: {
+    label: "Trung cấp",
+    badgeClass:
+      "border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300",
+    dotClass: "bg-amber-500",
+  },
+  ADVANCED: {
+    label: "Nâng cao",
+    badgeClass:
+      "border-rose-200 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300",
+    dotClass: "bg-rose-500",
+  },
+};
+
+/**
+ * Resolves expressive, semantic difficulty badge styling and localized label.
+ * Harmonizes with BreadTrans multi-skill catalog aesthetics (Emerald for Basic,
+ * Amber for Intermediate, Rose for Advanced, and tailored chromatic accents for hybrid levels).
+ */
+export function resolveDifficultyBadge(rawDifficulty?: string): DifficultyBadgeConfig {
+  const raw = (rawDifficulty || "").trim();
+  const lower = raw.toLowerCase();
+
+  const hasBasic =
+    lower.includes("cơ bản") ||
+    lower.includes("basic") ||
+    lower.includes("beginner") ||
+    lower.includes("a1") ||
+    lower.includes("a2");
+
+  const hasIntermediate =
+    lower.includes("trung cấp") ||
+    lower.includes("intermediate") ||
+    lower.includes("b1") ||
+    lower.includes("b2");
+
+  const hasAdvanced =
+    lower.includes("nâng cao") ||
+    lower.includes("advanced") ||
+    lower.includes("c1") ||
+    lower.includes("c2");
+
+  // Composite 1: Spans Beginner to Advanced (Full spectrum)
+  if (hasBasic && hasAdvanced) {
+    return {
+      label: raw || "Cơ bản – Nâng cao",
+      badgeClass:
+        "border-indigo-200 dark:border-indigo-800/60 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300",
+      dotClass: "bg-indigo-500",
+    };
+  }
+
+  // Composite 2: Spans Beginner to Intermediate
+  if (hasBasic && hasIntermediate) {
+    return {
+      label: raw || "Cơ bản – Trung cấp",
+      badgeClass:
+        "border-teal-200 dark:border-teal-800/60 bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300",
+      dotClass: "bg-teal-500",
+    };
+  }
+
+  // Composite 3: Spans Intermediate to Advanced
+  if (hasIntermediate && hasAdvanced) {
+    return {
+      label: raw || "Trung cấp – Nâng cao",
+      badgeClass:
+        "border-orange-200 dark:border-orange-800/60 bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300",
+      dotClass: "bg-orange-500",
+    };
+  }
+
+  // Pure Advanced
+  if (hasAdvanced) {
+    const isEn = lower === "advanced" || lower === "hard" || lower === "c1" || lower === "c2";
+    return {
+      label: isEn ? "Nâng cao" : raw || "Nâng cao",
+      badgeClass:
+        "border-rose-200 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300",
+      dotClass: "bg-rose-500",
+    };
+  }
+
+  // Pure Intermediate
+  if (hasIntermediate) {
+    const isEn = lower === "intermediate" || lower === "medium" || lower === "b1" || lower === "b2";
+    return {
+      label: isEn ? "Trung cấp" : raw || "Trung cấp",
+      badgeClass:
+        "border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300",
+      dotClass: "bg-amber-500",
+    };
+  }
+
+  // Pure Basic / Default
+  const isEn = lower === "beginner" || lower === "basic" || lower === "a1" || lower === "a2";
+  return {
+    label: isEn ? "Cơ bản" : raw || "Cơ bản",
+    badgeClass:
+      "border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300",
+    dotClass: "bg-emerald-500",
+  };
+}
+
 /**
  * Resolves high-level exercise format badge (e.g. "Đọc thành tiếng", "Phản hồi câu hỏi", "Bày tỏ quan điểm").
  */

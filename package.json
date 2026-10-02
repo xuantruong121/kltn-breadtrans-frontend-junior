@@ -16,10 +16,11 @@
     "test:audio-worklet": "node --no-warnings --test --experimental-strip-types src/lib/speaking/speakingAudioWorkletLogic.test.ts",
     "test:pet-logic": "node --no-warnings --test --experimental-strip-types src/modules/pet/petLogic.test.ts",
     "test:market-exchange": "node --no-warnings --test --experimental-strip-types src/modules/market/marketExchangeLogic.test.ts",
-    "test:nav-utils": "node --no-warnings --test --experimental-strip-types src/components/navigation/navUtils.test.ts",
+    "test:nav-utils": "node --no-warnings --test --experimental-strip-types src/components/navigation/navUtils.test.ts src/components/navigation/headerRestructure.test.ts",
     "test:theme": "node --no-warnings --test --experimental-strip-types src/lib/theme/theme.test.ts",
     "test:practice-card": "node --no-warnings --test --experimental-strip-types \"src/app/(student)/practice/speaking/components/PracticeCard.test.ts\"",
     "test:speaking-recovery": "node --no-warnings --test --experimental-strip-types src/lib/speaking/speakingRecoveryLogic.test.ts",
+    "test:practice-header": "node --no-warnings --test --experimental-strip-types src/lib/practice/focusMode.test.ts src/components/practice/PracticeHeader.test.ts src/hooks/useAssessmentAntiCheat.test.ts",
     "test:responsive-invariants": "node scripts/verify_responsive_invariants.mjs"
   },
   "dependencies": {

@@ -282,8 +282,9 @@ test("Route Focus Visibility: low-focus discovery routes show companion, active 
   assert.equal(isLearningFocusRoute("/practice/writing/67"), true); // active writing editor
   assert.equal(isLearningFocusRoute("/practice/vocab/88"), true); // active vocab exercise
   assert.equal(isLearningFocusRoute("/vocabulary/study"), true); // active flashcard study
-  assert.equal(isLearningFocusRoute("/diagnostic"), true); // active diagnostic
-  assert.equal(isLearningFocusRoute("/diagnostic/1"), true);
+  // Diagnostic is stateful; active focus is supplied by the runtime override.
+  assert.equal(isLearningFocusRoute("/diagnostic"), false);
+  assert.equal(isLearningFocusRoute("/diagnostic/1"), false);
 
   // Transition back to low-focus: visible again
   assert.equal(shouldRenderCompanion(isLearningFocusRoute("/practice/quizzes/123")), false);

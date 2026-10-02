@@ -7,6 +7,7 @@ import {
   useState,
   useEffect,
   useMemo,
+  useRef,
   useSyncExternalStore,
   type MouseEvent,
 } from "react";
@@ -25,15 +26,25 @@ import {
   X,
 } from "lucide-react";
 import { quizService, AnswerDto } from "@/lib/api/services/quiz.service";
-import { BackButton } from "@/components/ui";
 import { useAuthStore } from "@/stores/authStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { ListeningComprehensionWorkspace } from "../../listening/components/ListeningComprehensionWorkspace";
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
 import { PracticeExitConfirmDialog } from "@/components/practice/PracticeExitConfirmDialog";
+import { PracticeHeader } from "@/components/practice/PracticeHeader";
 import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
+import { WordDictionaryPopup } from "@/components/speaking/WordDictionaryPopup";
 import toast from "react-hot-toast";
 import { getUnansweredQuestionIndexes } from "../readingQuizUtils";
+import { createReadingAttemptId } from "../readingAttempt";
+import { extractReadingDictionaryWord } from "../readingDictionary";
+import {
+  buildReadingDraftKey,
+  clearReadingDraft,
+  loadReadingDraft,
+  resolveReadingAttemptId,
+  saveReadingDraft,
+} from "../readingDraft";
 
 function useHydration() {
   return useSyncExternalStore(
@@ -58,6 +69,9 @@ export default function TakeQuizPage(props: {
   const showAuthModal = hasMounted && !user && !authModalDismissed;
 
   const [answers, setAnswers] = useState<Record<number, string>>({});
+  const readingAttemptIdRef = useRef<string | null>(null);
+  const readingDraftScopeRef = useRef<string | null>(null);
+  const skipNextDraftSaveRef = useRef(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
@@ -75,6 +89,9 @@ export default function TakeQuizPage(props: {
     "base",
   );
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [selectedWordForLookup, setSelectedWordForLookup] = useState<
+    string | null
+  >(null);
 
   const { data: quiz, isLoading } = useQuery({
     queryKey: ["quiz", quizId],
@@ -83,10 +100,13 @@ export default function TakeQuizPage(props: {
   });
 
   const submitMutation = useMutation({
-    mutationFn: (payload: AnswerDto[]) =>
-      quizService.submitQuiz(quizId, payload),
+    mutationFn: (payload: { answers: AnswerDto[]; clientAttemptId?: string }) =>
+      quizService.submitQuiz(quizId, payload.answers, undefined, payload.clientAttemptId),
     onSuccess: (data) => {
       setSubmitError(null);
+      if (quiz?.type === "BILINGUAL_READING" && user?.id) {
+        clearReadingDraft(user.id, quizId);
+      }
       // Invalidate gamification and profile cache to update Daily Quests instantly
       queryClient.invalidateQueries({ queryKey: ["myQuests"] });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
@@ -108,7 +128,74 @@ export default function TakeQuizPage(props: {
     },
   });
 
-  const isReading = quiz?.type === "BILINGUAL_READING";
+  const loadedQuizType = quiz?.type;
+  const isReading = loadedQuizType === "BILINGUAL_READING";
+  const loadedQuizQuestions = quiz?.questions;
+  const readingDraftKey =
+    isReading && user?.id ? buildReadingDraftKey(user.id, quizId) : null;
+
+  useEffect(() => {
+    if (!hasMounted) return;
+    if (!isReading || !user?.id) {
+      readingDraftScopeRef.current = null;
+      readingAttemptIdRef.current = null;
+      return;
+    }
+    if (!quiz || !readingDraftKey || readingDraftScopeRef.current === readingDraftKey) {
+      return;
+    }
+
+    readingDraftScopeRef.current = readingDraftKey;
+    const draft = loadReadingDraft({
+      userId: user.id,
+      quizId,
+      questions: loadedQuizQuestions ?? [],
+    });
+    skipNextDraftSaveRef.current = true;
+    setAnswers(draft?.answers ?? {});
+    readingAttemptIdRef.current = resolveReadingAttemptId(draft);
+  }, [
+    hasMounted,
+    isReading,
+    user?.id,
+    quiz,
+    quizId,
+    readingDraftKey,
+    loadedQuizQuestions,
+  ]);
+
+  useEffect(() => {
+    if (
+      !hasMounted ||
+      !isReading ||
+      !user?.id ||
+      !readingDraftKey ||
+      readingDraftScopeRef.current !== readingDraftKey ||
+      !readingAttemptIdRef.current
+    ) {
+      return;
+    }
+    if (skipNextDraftSaveRef.current) {
+      skipNextDraftSaveRef.current = false;
+      return;
+    }
+
+    saveReadingDraft({
+      version: 1,
+      userId: user.id,
+      quizId,
+      clientAttemptId: readingAttemptIdRef.current,
+      answers,
+      savedAt: new Date().toISOString(),
+    });
+  }, [
+    answers,
+    hasMounted,
+    isReading,
+    user?.id,
+    quizId,
+    readingDraftKey,
+  ]);
   const isListening = quiz?.type === "LISTENING_PRACTICE";
   const reviewQuestionIds = useMemo(() => {
     if (searchParams.get("review") !== "wrong") return [];
@@ -280,8 +367,22 @@ export default function TakeQuizPage(props: {
             questionId: parseInt(qId),
             answer: answers[parseInt(qId)],
           }));
-      submitMutation.mutate(payload);
+      const clientAttemptId = isReading
+        ? (readingAttemptIdRef.current ?? createReadingAttemptId())
+        : undefined;
+      readingAttemptIdRef.current = clientAttemptId ?? readingAttemptIdRef.current;
+      submitMutation.mutate({ answers: payload, clientAttemptId });
     }
+  };
+
+  const handleReadingDictionaryLookup = () => {
+    const selection = window.getSelection()?.toString() ?? "";
+    const word = extractReadingDictionaryWord(selection);
+    if (!word) {
+      toast("Bôi đen một từ tiếng Anh, rồi chọn Tra từ.");
+      return;
+    }
+    setSelectedWordForLookup((current) => (current === word ? current : word));
   };
 
   const playAudio = (text: string, rate: number = 1) => {
@@ -390,69 +491,51 @@ export default function TakeQuizPage(props: {
   }
 
   return (
-    <div
-      className={`mx-auto w-full space-y-5 pb-20 px-3 sm:px-6 lg:px-8 ${
-        isReading ? "max-w-[1560px]" : "max-w-7xl"
-      }`}
-    >
-      {/* TOP HEADER BAR */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-        <div className="flex items-center gap-4">
-          <BackButton
-            href={backHref}
-            onClick={handleExitRequest}
-            label={isReading ? "Thoát bài đọc" : "Thoát bài luyện"}
-          />
-          <div className="h-6 w-0.5 bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
-          <div>
-            <h1 className="text-xl font-black text-slate-800 dark:text-slate-100 line-clamp-1">
-              {quiz.title}
-            </h1>
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-              {isReading
-                ? "Đọc hiểu theo trình độ và chủ đề"
-                : `Luyện tập ${skillLabel} theo từng phần`}
-            </p>
-          </div>
-        </div>
-
-        {/* Actions & Progress Pill */}
-        <div className="flex items-center gap-2.5">
-          {/* Mẹo làm bài / Mẹo đọc hiểu button */}
-          <button
-            type="button"
-            onClick={() => setShowTipsModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/60 text-xs font-black hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors cursor-pointer shadow-2xs"
-            title={isReading ? "Xem mẹo đọc hiểu" : "Xem phím tắt & mẹo"}
-            aria-label={isReading ? "Xem mẹo đọc hiểu" : "Xem phím tắt & mẹo"}
-          >
-            <Lightbulb
-              size={16}
-              className="text-amber-600 dark:text-amber-400 shrink-0"
-              aria-hidden="true"
-            />
-            <span className="hidden sm:inline">
-              {isReading ? "Mẹo đọc hiểu" : "Mẹo làm bài"}
-            </span>
-          </button>
-
-          {/* Progress Pill */}
-          <div className="flex items-center gap-3 bg-sky-50 dark:bg-sky-950/40 px-3.5 py-2 rounded-xl border border-sky-200 dark:border-sky-900/50 shrink-0">
-            <div className="w-20 sm:w-24 bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+    <div className="w-full min-h-dvh flex flex-col bg-slate-50 dark:bg-slate-950 font-sans">
+      <PracticeHeader
+        title={quiz.title}
+        category={isReading ? "Đọc hiểu" : skillLabel}
+        positionText={`Câu ${currentStep + 1}/${questions.length}`}
+        onExit={handleExitRequest}
+        exitLabel={isReading ? "Thoát bài đọc" : "Thoát"}
+        statusContent={
+          <div className="hidden sm:flex items-center gap-2 bg-slate-800 border border-slate-700 px-3 py-1 rounded-lg shrink-0">
+            <div className="w-16 bg-slate-700 h-1.5 rounded-full overflow-hidden">
               <motion.div
-                className="bg-junior-blue h-full"
+                className="bg-sky-400 h-full"
                 initial={{ width: 0 }}
                 animate={{
                   width: `${((currentStep + 1) / questions.length) * 100}%`,
                 }}
               />
             </div>
-            <span className="text-xs font-black text-sky-700 dark:text-sky-300">
-              Câu {currentStep + 1}/{questions.length}
+            <span className="text-[11px] font-bold text-sky-300">
+              {currentStep + 1}/{questions.length}
             </span>
           </div>
-        </div>
-      </div>
+        }
+        additionalActions={
+          <button
+            type="button"
+            onClick={() => setShowTipsModal(true)}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 text-xs font-semibold hover:text-white transition-colors cursor-pointer"
+            title={isReading ? "Xem mẹo đọc hiểu" : "Xem phím tắt & mẹo"}
+            aria-label={isReading ? "Xem mẹo đọc hiểu" : "Xem phím tắt & mẹo"}
+          >
+            <Lightbulb size={14} className="text-amber-400 shrink-0" aria-hidden="true" />
+            <span className="hidden md:inline">
+              {isReading ? "Mẹo đọc hiểu" : "Mẹo làm bài"}
+            </span>
+          </button>
+        }
+      />
+
+      <div
+        className={`mx-auto w-full space-y-5 pb-20 px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 flex-1 ${
+          isReading ? "max-w-[1560px]" : "max-w-7xl"
+        }`}
+      >
+
 
       {isReading ? (
         <>
@@ -505,8 +588,8 @@ export default function TakeQuizPage(props: {
             >
               <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-sm flex flex-col lg:sticky lg:top-20 max-h-[calc(100vh-180px)] min-h-[560px]">
                 {/* Passage Header */}
-                <div className="flex items-center justify-between gap-3 pb-3 mb-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
-                  <div className="flex items-center gap-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-3 pb-3 mb-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                  <div className="flex min-w-0 items-center gap-2.5">
                     <div className="size-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 flex items-center justify-center border border-emerald-200 dark:border-emerald-900/60 shrink-0">
                       <BookOpen size={16} aria-hidden="true" />
                     </div>
@@ -519,6 +602,17 @@ export default function TakeQuizPage(props: {
                       </span>
                     </div>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={handleReadingDictionaryLookup}
+                    className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50 px-2.5 py-2 text-xs font-bold text-sky-700 transition-colors hover:bg-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 sm:px-3 dark:border-sky-900/60 dark:bg-sky-950/30 dark:text-sky-300 dark:hover:bg-sky-950/50"
+                    title="Bôi đen một từ tiếng Anh rồi tra từ"
+                    aria-label="Tra từ đang được bôi đen trong đoạn văn"
+                  >
+                    <BookOpen size={15} aria-hidden="true" />
+                    <span className="hidden sm:inline">Tra từ</span>
+                  </button>
 
                   {/* Reading Font Size Adjuster */}
                   <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-black text-slate-600 dark:text-slate-300">
@@ -1289,8 +1383,16 @@ export default function TakeQuizPage(props: {
         </div>
       )}
 
+      {selectedWordForLookup && (
+        <WordDictionaryPopup
+          word={selectedWordForLookup}
+          onClose={() => setSelectedWordForLookup(null)}
+        />
+      )}
+
       {/* Shared Exit Confirmation Modal */}
       <PracticeExitConfirmDialog {...exitDialogProps} />
+      </div>
     </div>
   );
 }

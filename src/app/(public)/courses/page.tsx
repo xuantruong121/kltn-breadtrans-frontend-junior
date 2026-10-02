@@ -2,10 +2,12 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { Search, ArrowRight, BookOpen, Calendar, AlertCircle } from "lucide-react";
+import { Search, ArrowRight, BookOpen, GraduationCap, Calendar, AlertCircle } from "lucide-react";
 import { courseService, PublicCourseCard } from "@/lib/api/services/course.service";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function PublicCoursesPage() {
+  const { user } = useAuthStore();
   const [courses, setCourses] = useState<PublicCourseCard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +61,34 @@ export default function PublicCoursesPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
+      {/* Integrated Course Hub Switcher for Students */}
+      {user && user.role === "STUDENT" && (
+        <div
+          role="tablist"
+          aria-label="Chế độ khóa học"
+          className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3"
+        >
+          <Link
+            href="/courses"
+            role="tab"
+            aria-selected={true}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-amber-600 text-white shadow-xs transition-colors"
+          >
+            <BookOpen size={16} aria-hidden="true" />
+            <span>Khám phá khóa học</span>
+          </Link>
+          <Link
+            href="/my-courses"
+            role="tab"
+            aria-selected={false}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
+          >
+            <GraduationCap size={16} aria-hidden="true" />
+            <span>Khóa học của tôi</span>
+          </Link>
+        </div>
+      )}
+
       {/* 1. Header */}
       <div className="space-y-4 max-w-3xl">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-600 dark:bg-blue-950/50 dark:border-blue-800/80 dark:text-blue-300 font-bold text-xs uppercase tracking-wider">

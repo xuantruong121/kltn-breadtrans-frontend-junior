@@ -11,7 +11,7 @@ import { MobileBottomNav } from "@/components/navigation/MobileBottomNav";
 import { userService } from "@/lib/api/services/user.service";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
-import { LearningFocusProvider } from "@/contexts/LearningFocusContext";
+import { LearningFocusProvider, useLearningFocusMode } from "@/contexts/LearningFocusContext";
 import { isLearningFocusRoute } from "@/lib/practice/focusMode";
 
 const FloatingAiTutor = dynamic(
@@ -93,35 +93,59 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   if (!isReady) return null;
   if ((!user || user.role !== "STUDENT") && !isGuestAllowed) return null;
 
-  const isPracticeRoomPage = isLearningFocusRoute(pathname);
-  const isPracticeCatalogPage =
-    pathname.startsWith("/practice");
   const isDashboardPage = pathname === "/dashboard" || pathname === "/student-home";
   const isPetManagementPage = pathname === "/pet";
 
   return (
     <LearningFocusProvider>
-      <div className="min-h-[100dvh] flex flex-col bg-background text-foreground antialiased selection:bg-amber-600 selection:text-white font-['Quicksand',sans-serif] transition-colors duration-150">
-        <AppHeader />
-        <main
-          className={`min-w-0 w-full ${
-            isPracticeRoomPage
-              ? "flex-1 flex flex-col max-w-none px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-2 sm:py-2.5 pb-2.5 sm:pb-3"
-              : isPracticeCatalogPage
-                ? "w-full flex-1 max-w-none px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-4 sm:py-6 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8"
-                : "mx-auto flex-1 max-w-7xl px-4 py-4 sm:px-6 sm:py-8 lg:px-8 xl:px-10 2xl:px-12 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8"
-          }`}
-        >
-          {children}
-        </main>
-        {!isPracticeRoomPage && <AppFooter />}
-        <BackToTop />
-        {user && !isPracticeRoomPage && <FloatingAiTutor />}
-        {user && !isPracticeRoomPage && !isDashboardPage && !isPetManagementPage && (
-          <FloatingCompanionPet />
-        )}
-        <MobileBottomNav />
-      </div>
+      <StudentLayoutContent
+        user={user}
+        isDashboardPage={isDashboardPage}
+        isPetManagementPage={isPetManagementPage}
+      >
+        {children}
+      </StudentLayoutContent>
     </LearningFocusProvider>
+  );
+}
+
+function StudentLayoutContent({
+  children,
+  user,
+  isDashboardPage,
+  isPetManagementPage,
+}: {
+  children: React.ReactNode;
+  user: any;
+  isDashboardPage: boolean;
+  isPetManagementPage: boolean;
+}) {
+  const pathname = usePathname();
+  const { isFocusMode } = useLearningFocusMode();
+  const isPracticeRoomPage = isFocusMode || isLearningFocusRoute(pathname);
+  const isPracticeCatalogPage = pathname.startsWith("/practice");
+
+  return (
+    <div className="min-h-[100dvh] flex flex-col bg-background text-foreground antialiased selection:bg-amber-600 selection:text-white font-['Quicksand',sans-serif] transition-colors duration-150">
+      {!isPracticeRoomPage && <AppHeader />}
+      <main
+        className={`min-w-0 w-full ${
+          isPracticeRoomPage
+            ? "flex-1 flex flex-col max-w-none p-0"
+            : isPracticeCatalogPage
+              ? "w-full flex-1 max-w-none px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-4 sm:py-6 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8"
+              : "mx-auto flex-1 max-w-7xl px-4 py-4 sm:px-6 sm:py-8 lg:px-8 xl:px-10 2xl:px-12 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8"
+        }`}
+      >
+        {children}
+      </main>
+      {!isPracticeRoomPage && <AppFooter />}
+      {!isPracticeRoomPage && <BackToTop />}
+      {user && !isPracticeRoomPage && <FloatingAiTutor />}
+      {user && !isPracticeRoomPage && !isDashboardPage && !isPetManagementPage && (
+        <FloatingCompanionPet />
+      )}
+      {!isPracticeRoomPage && <MobileBottomNav />}
+    </div>
   );
 }

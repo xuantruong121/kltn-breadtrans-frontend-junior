@@ -34,6 +34,8 @@ export interface QuestionContent {
     endMs?: number;
   }>;
   category?: string;
+  skill?: string;
+  questionType?: string;
   section?: string;
 }
 
@@ -92,6 +94,12 @@ export interface ListeningAudioArtifactIdentity {
 export interface AnswerDto {
   questionId: number;
   answer: string;
+}
+
+export interface SubmitQuizPayload {
+  answers: AnswerDto[];
+  attemptId?: number;
+  clientAttemptId?: string;
 }
 
 export interface SubmissionResult {
@@ -287,10 +295,12 @@ export const quizService = {
     id: number,
     answers: AnswerDto[],
     attemptId?: number,
+    clientAttemptId?: string,
   ): Promise<SubmissionResult> => {
     return await axiosClient.post(`/quizzes/${id}/submit`, {
       answers,
       ...(attemptId ? { attemptId } : {}),
+      ...(clientAttemptId ? { clientAttemptId } : {}),
     });
   },
 

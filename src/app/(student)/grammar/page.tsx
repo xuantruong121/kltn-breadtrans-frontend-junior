@@ -1,5 +1,5 @@
-import { GrammarScreen } from "@/modules/grammar/screens/GrammarScreen";
+import { redirect } from "next/navigation";
 
 export default function GrammarPage() {
-  return <GrammarScreen />;
+  redirect("/practice/reading?category=grammar");
 }

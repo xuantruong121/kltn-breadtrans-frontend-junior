@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import {
   computeReadingCardStatus,
   matchesReadingDifficulty,
+  matchesExerciseCategory,
+  resolveExerciseDifficulty,
   resolveReadingFormatTag,
   resolveReadingPedagogicalDescription,
   resolveReadingSkillTags,
@@ -100,4 +102,49 @@ test("Reading Difficulty Matching: accommodates basic and advanced levels", () =
   assert.equal(matchesReadingDifficulty("Trung cấp B1", "INTERMEDIATE"), true);
   assert.equal(matchesReadingDifficulty("Nâng cao C1", "ADVANCED"), true);
   assert.equal(matchesReadingDifficulty("Cơ bản", "ADVANCED"), false);
+});
+
+test("Reading CEFR Difficulty Resolution: strictly maps A1-A2, B1-B2, C1 and Grammar levels", () => {
+  // Reading A1-A2
+  const readingA1A2 = { name: "Reading A1–A2", vietnameseName: "Đọc hiểu A1–A2" };
+  assert.equal(resolveExerciseDifficulty(readingA1A2), "BASIC");
+  assert.equal(matchesReadingDifficulty(readingA1A2, "BASIC"), true);
+  assert.equal(matchesReadingDifficulty(readingA1A2, "INTERMEDIATE"), false);
+  assert.equal(matchesReadingDifficulty(readingA1A2, "ADVANCED"), false);
+
+  // Reading B1-B2 -> MUST be INTERMEDIATE (Trung cấp), NEVER BASIC
+  const readingB1B2 = { name: "Reading B1–B2", vietnameseName: "Đọc hiểu B1–B2" };
+  assert.equal(resolveExerciseDifficulty(readingB1B2), "INTERMEDIATE");
+  assert.equal(matchesReadingDifficulty(readingB1B2, "BASIC"), false);
+  assert.equal(matchesReadingDifficulty(readingB1B2, "INTERMEDIATE"), true);
+  assert.equal(matchesReadingDifficulty(readingB1B2, "ADVANCED"), false);
+
+  // Reading C1 -> MUST be ADVANCED (Nâng cao), NEVER BASIC
+  const readingC1 = { name: "Reading C1", vietnameseName: "Đọc hiểu C1" };
+  assert.equal(resolveExerciseDifficulty(readingC1), "ADVANCED");
+  assert.equal(matchesReadingDifficulty(readingC1, "BASIC"), false);
+  assert.equal(matchesReadingDifficulty(readingC1, "INTERMEDIATE"), false);
+  assert.equal(matchesReadingDifficulty(readingC1, "ADVANCED"), true);
+
+  // Grammar levels
+  const grammarBeginner = { title: "Present Simple", level: "BEGINNER" };
+  assert.equal(resolveExerciseDifficulty(grammarBeginner), "BASIC");
+  assert.equal(matchesReadingDifficulty(grammarBeginner, "BASIC"), true);
+
+  const grammarIntermediate = { title: "Present Perfect", level: "INTERMEDIATE" };
+  assert.equal(resolveExerciseDifficulty(grammarIntermediate), "INTERMEDIATE");
+  assert.equal(matchesReadingDifficulty(grammarIntermediate, "INTERMEDIATE"), true);
+
+  const grammarAdvanced = { title: "Conditionals", level: "ADVANCED" };
+  assert.equal(resolveExerciseDifficulty(grammarAdvanced), "ADVANCED");
+  assert.equal(matchesReadingDifficulty(grammarAdvanced, "ADVANCED"), true);
+});
+
+test("Reading Category Matching: filters Reading, Grammar, and All correctly", () => {
+  assert.equal(matchesExerciseCategory("READING", "ALL"), true);
+  assert.equal(matchesExerciseCategory("GRAMMAR", "ALL"), true);
+  assert.equal(matchesExerciseCategory("READING", "READING"), true);
+  assert.equal(matchesExerciseCategory("GRAMMAR", "READING"), false);
+  assert.equal(matchesExerciseCategory("READING", "GRAMMAR"), false);
+  assert.equal(matchesExerciseCategory("GRAMMAR", "GRAMMAR"), true);
 });

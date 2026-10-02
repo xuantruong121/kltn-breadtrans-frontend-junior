@@ -32,3 +32,81 @@ export function isSkillsRoute(pathname: string): boolean {
     pathname.startsWith("/grammar")
   );
 }
+
+export function isListeningRoute(pathname: string): boolean {
+  if (!pathname) return false;
+  return pathname.startsWith("/practice/listening");
+}
+
+export function isSpeakingRoute(pathname: string): boolean {
+  if (!pathname) return false;
+  return pathname.startsWith("/practice/speaking");
+}
+
+export function isReadingRoute(pathname: string): boolean {
+  if (!pathname) return false;
+  return (
+    pathname.startsWith("/practice/reading") ||
+    pathname.startsWith("/grammar")
+  );
+}
+
+export function isWritingRoute(pathname: string): boolean {
+  if (!pathname) return false;
+  return pathname.startsWith("/practice/writing");
+}
+
+export function isFlashcardRoute(pathname: string): boolean {
+  if (!pathname) return false;
+  return (
+    pathname.startsWith("/flashcard") ||
+    pathname.startsWith("/vocabulary") ||
+    pathname.startsWith("/practice/vocab")
+  );
+}
+
+export function isCoursesRoute(pathname: string): boolean {
+  if (!pathname) return false;
+  return (
+    pathname.startsWith("/courses") ||
+    pathname.startsWith("/my-courses") ||
+    pathname.startsWith("/classes")
+  );
+}
+
+export function isMarketRoute(pathname: string): boolean {
+  if (!pathname) return false;
+  return pathname.startsWith("/market");
+}
+
+export function isMoreRoute(pathname: string): boolean {
+  if (!pathname) return false;
+  return (
+    pathname.startsWith("/arena") ||
+    pathname.startsWith("/help")
+  );
+}
+
+export interface NavItemConfig {
+  label: string;
+  href: string;
+}
+
+export const MAIN_NAV_ORDER: NavItemConfig[] = [
+  { label: "Home/Logo", href: "/dashboard" },
+  { label: "Nghe", href: "/practice/listening" },
+  { label: "Nói", href: "/practice/speaking" },
+  { label: "Đọc", href: "/practice/reading" },
+  { label: "Viết", href: "/practice/writing" },
+  { label: "Flashcard", href: "/flashcard" },
+  { label: "Luyện đề", href: "/practice/quizzes" },
+  { label: "Khóa học", href: "/courses" },
+  { label: "Cửa hàng", href: "/market" },
+  { label: "More", href: "#more" },
+];
+
+export const MORE_DROPDOWN_ITEMS: NavItemConfig[] = [
+  { label: "Bảng xếp hạng", href: "/arena" },
+  { label: "Liên hệ", href: "/help" },
+  { label: "Đề xuất", href: "/help#feedback" },
+];

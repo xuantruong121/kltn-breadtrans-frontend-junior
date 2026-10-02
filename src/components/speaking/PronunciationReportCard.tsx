@@ -382,6 +382,14 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
         )}
       </div>
 
+      {phase === "COMPLETED" &&
+        (submission?.feedbackStatus === "PENDING" ||
+          submission?.feedbackStatus === "PROCESSING") && (
+          <div className="rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-800 dark:border-sky-900/60 dark:bg-sky-950/30 dark:text-sky-300">
+            Điểm đã sẵn sàng. Nhận xét chi tiết đang được hoàn thiện ở nền.
+          </div>
+        )}
+
       {/* 2. DYNAMIC COMMAND DECK (Clean, accessible BreadTrans controls) */}
       {phase === "READY" && (
         <div className="bg-slate-50/80 dark:bg-slate-850 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center gap-3 shrink-0 shadow-2xs">

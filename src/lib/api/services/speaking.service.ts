@@ -30,6 +30,7 @@ export interface SpeakingPracticeSetSummary {
 export interface SubmitSpeakingResponse {
   submissionId: number;
   status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
+  feedbackStatus?: "NOT_REQUESTED" | "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
   pollUrl: string;
   acceptedAt: string;
 }
@@ -66,6 +67,9 @@ export interface SpeakingSubmissionDetail {
   exerciseId: number;
   userId: number;
   status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
+  feedbackStatus?: "NOT_REQUESTED" | "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
+  feedbackError?: string | null;
+  rewardStatus?: "NOT_REQUESTED" | "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
   overallScore?: number | null;
   transcript?: string | null;
   aiFeedback?: PronunciationAssessmentData | null;

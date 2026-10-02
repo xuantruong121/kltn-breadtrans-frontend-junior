@@ -23,6 +23,7 @@ import {
   type PracticeCardStatus,
   type PracticeExerciseItem,
   computePracticeCardStatus,
+  resolveDifficultyBadge,
   resolveFormatTag,
   resolvePedagogicalDescription,
   resolveSkillTags,
@@ -42,30 +43,6 @@ export interface PracticeCardProps {
   description?: string;
   tags?: string[];
 }
-
-const DIFFICULTY_CONFIG: Record<
-  string,
-  { label: string; badgeClass: string; dotClass: string }
-> = {
-  BEGINNER: {
-    label: "Cơ bản",
-    badgeClass:
-      "border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300",
-    dotClass: "bg-emerald-500",
-  },
-  INTERMEDIATE: {
-    label: "Trung cấp",
-    badgeClass:
-      "border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300",
-    dotClass: "bg-amber-500",
-  },
-  ADVANCED: {
-    label: "Nâng cao",
-    badgeClass:
-      "border-rose-200 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300",
-    dotClass: "bg-rose-500",
-  },
-};
 
 /**
  * Resolves expressive format visual anchor icon and container styling.
@@ -141,17 +118,9 @@ export function PracticeCard({
 
   const status = statusOverride || computedStatus;
 
-  const difficulty = (
-    practiceSet?.difficultyLabel ||
-    exercise.difficulty ||
-    "BEGINNER"
-  ).toUpperCase();
-  const diffConfig = DIFFICULTY_CONFIG[difficulty] || {
-    label: exercise.difficulty || "Cơ bản",
-    badgeClass:
-      "border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300",
-    dotClass: "bg-slate-400",
-  };
+  const diffConfig = resolveDifficultyBadge(
+    practiceSet?.difficultyLabel || exercise.difficulty
+  );
 
   const totalExercises = practiceSet?.exerciseCount || 1;
   const completedExercises =

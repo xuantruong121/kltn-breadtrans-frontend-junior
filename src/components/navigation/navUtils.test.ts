@@ -1,6 +1,17 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { isExamRoute, isSkillsRoute } from "./navUtils.ts";
+import {
+  isExamRoute,
+  isSkillsRoute,
+  isListeningRoute,
+  isSpeakingRoute,
+  isReadingRoute,
+  isWritingRoute,
+  isFlashcardRoute,
+  isCoursesRoute,
+  isMarketRoute,
+  isMoreRoute,
+} from "./navUtils.ts";
 
 describe("Navigation Route Classification", () => {
   it("classifies listening practice routes as Skills Practice, NOT Exam Practice", () => {
@@ -79,5 +90,57 @@ describe("Navigation Route Classification", () => {
 
     assert.equal(isExamRoute("/"), false);
     assert.equal(isSkillsRoute("/"), false);
+  });
+
+  it("classifies individual header route families accurately", () => {
+    // 1. Listening
+    assert.equal(isListeningRoute("/practice/listening"), true);
+    assert.equal(isListeningRoute("/practice/listening/123"), true);
+    assert.equal(isListeningRoute("/practice/speaking"), false);
+
+    // 2. Speaking
+    assert.equal(isSpeakingRoute("/practice/speaking"), true);
+    assert.equal(isSpeakingRoute("/practice/speaking/456"), true);
+    assert.equal(isSpeakingRoute("/practice/reading"), false);
+
+    // 3. Reading (merges Reading and Grammar)
+    assert.equal(isReadingRoute("/practice/reading"), true);
+    assert.equal(isReadingRoute("/practice/reading/1"), true);
+    assert.equal(isReadingRoute("/practice/reading?tab=grammar"), true);
+    assert.equal(isReadingRoute("/grammar"), true);
+    assert.equal(isReadingRoute("/grammar/topic/1"), true);
+    assert.equal(isReadingRoute("/practice/writing"), false);
+
+    // 4. Writing
+    assert.equal(isWritingRoute("/practice/writing"), true);
+    assert.equal(isWritingRoute("/practice/writing/3"), true);
+    assert.equal(isWritingRoute("/practice/listening"), false);
+
+    // 5. Flashcard & Vocabulary
+    assert.equal(isFlashcardRoute("/flashcard"), true);
+    assert.equal(isFlashcardRoute("/flashcard/1"), true);
+    assert.equal(isFlashcardRoute("/vocabulary/study"), true);
+    assert.equal(isFlashcardRoute("/vocabulary/saved"), true);
+    assert.equal(isFlashcardRoute("/practice/vocab"), true);
+    assert.equal(isFlashcardRoute("/courses"), false);
+
+    // 6. Courses (includes public courses, my-courses, classes)
+    assert.equal(isCoursesRoute("/courses"), true);
+    assert.equal(isCoursesRoute("/courses/12"), true);
+    assert.equal(isCoursesRoute("/my-courses"), true);
+    assert.equal(isCoursesRoute("/classes"), true);
+    assert.equal(isCoursesRoute("/classes/45"), true);
+    assert.equal(isCoursesRoute("/market"), false);
+
+    // 7. Market
+    assert.equal(isMarketRoute("/market"), true);
+    assert.equal(isMarketRoute("/market/items"), true);
+    assert.equal(isMarketRoute("/arena"), false);
+
+    // 8. More (Arena, Help/Contact/Feedback)
+    assert.equal(isMoreRoute("/arena"), true);
+    assert.equal(isMoreRoute("/help"), true);
+    assert.equal(isMoreRoute("/help#feedback"), true);
+    assert.equal(isMoreRoute("/dashboard"), false);
   });
 });

@@ -33,6 +33,9 @@ import {
   Settings,
   Inbox,
   MoreHorizontal,
+  Layers,
+  CircleHelp,
+  Lightbulb,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
@@ -40,7 +43,18 @@ import { usePushNotification } from "@/lib/hooks/usePushNotification";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { notificationService, NotificationItem } from "@/lib/api/services/notification.service";
 import { BrandLogo } from "@/components/brand";
-import { isExamRoute, isSkillsRoute } from "./navUtils";
+import {
+  isExamRoute,
+  isSkillsRoute,
+  isListeningRoute,
+  isSpeakingRoute,
+  isReadingRoute,
+  isWritingRoute,
+  isFlashcardRoute,
+  isCoursesRoute,
+  isMarketRoute,
+  isMoreRoute,
+} from "./navUtils";
 import { ThemeToggle } from "./ThemeToggle";
 
 const emptySubscribe = () => () => {};
@@ -430,11 +444,9 @@ export function AppHeader() {
 
   const queryClient = useQueryClient();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [skillsOpen, setSkillsOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
 
-  const skillsRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLDivElement>(null);
   const isReady = useSyncExternalStore(emptySubscribe, () => true, () => false);
@@ -443,15 +455,11 @@ export function AppHeader() {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setMobileOpen(false);
-        setSkillsOpen(false);
         setProfileMenuOpen(false);
         setMoreOpen(false);
       }
     };
     const onPointerDown = (event: MouseEvent) => {
-      if (skillsRef.current && !skillsRef.current.contains(event.target as Node)) {
-        setSkillsOpen(false);
-      }
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setProfileMenuOpen(false);
       }
@@ -478,7 +486,6 @@ export function AppHeader() {
 
   const closeMenus = () => {
     setMobileOpen(false);
-    setSkillsOpen(false);
     setProfileMenuOpen(false);
     setMoreOpen(false);
   };
@@ -504,63 +511,122 @@ export function AppHeader() {
     description?: string;
   }
 
-  const primaryLinks: HeaderNavLink[] = [
-    { label: "Luyện đề", href: "/practice/quizzes", icon: Target, isExam: true },
-    { label: "Khóa học", href: "/courses", icon: BookOpen },
+  interface HeaderNavLink {
+    label: string;
+    href: string;
+    icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
+    isExam?: boolean;
+    iconBg?: string;
+    description?: string;
+  }
+
+  // Desktop Navigation Items following exact required logical order:
+  // 1. Logo (Home) - rendered via BrandLogo
+  // 2. Nghe
+  // 3. Nói
+  // 4. Đọc (merges Reading and Grammar)
+  // 5. Viết
+  // 6. Flashcard
+  // 7. Luyện đề (Exam Practice: TOEIC & Certificate test hub)
+  // 8. Khóa học (unified Course Hub)
+  // 9. Cửa hàng
+  // 10. ... More (Dropdown containing: Bảng xếp hạng, Liên hệ, Đề xuất)
+  const desktopNavLinks = [
+    {
+      label: "Nghe",
+      href: "/practice/listening",
+      icon: Headphones,
+      active: isListeningRoute(pathname),
+    },
+    {
+      label: "Nói",
+      href: "/practice/speaking",
+      icon: Mic,
+      active: isSpeakingRoute(pathname),
+    },
+    {
+      label: "Đọc",
+      href: "/practice/reading",
+      icon: BookOpen,
+      active: isReadingRoute(pathname),
+    },
+    {
+      label: "Viết",
+      href: "/practice/writing",
+      icon: PenTool,
+      active: isWritingRoute(pathname),
+    },
+    {
+      label: "Flashcard",
+      href: "/flashcard",
+      icon: Layers,
+      active: isFlashcardRoute(pathname),
+    },
+    {
+      label: "Luyện đề",
+      href: "/practice/quizzes",
+      icon: Target,
+      active: isExamRoute(pathname),
+    },
+    {
+      label: "Khóa học",
+      href: "/courses",
+      icon: GraduationCap,
+      active: isCoursesRoute(pathname),
+    },
+    {
+      label: "Cửa hàng",
+      href: "/market",
+      icon: ShoppingBag,
+      active: isMarketRoute(pathname),
+    },
   ];
 
-  const overflowLinks: HeaderNavLink[] = isStudent
-    ? [
-        {
-          label: "Khóa học của tôi",
-          href: "/my-courses",
-          icon: GraduationCap,
-          iconBg: "bg-indigo-50 text-indigo-600",
-          description: "Tiến độ khóa học & lộ trình",
-        },
-        {
-          label: "Cửa hàng",
-          href: "/market",
-          icon: ShoppingBag,
-          iconBg: "bg-emerald-50 text-emerald-600",
-          description: "Đổi vật phẩm & quà tặng",
-        },
-        {
-          label: "Bảng xếp hạng",
-          href: "/arena",
-          icon: Trophy,
-          iconBg: "bg-amber-50 text-amber-600",
-          description: "Bảng vàng thi đua tuần & EXP",
-        },
-      ]
-    : [
-        {
-          label: "Cửa hàng",
-          href: "/market",
-          icon: ShoppingBag,
-          iconBg: "bg-emerald-50 text-emerald-600",
-          description: "Đổi vật phẩm & tiện ích",
-        },
-        {
-          label: "Bảng xếp hạng",
-          href: "/arena",
-          icon: Trophy,
-          iconBg: "bg-amber-50 text-amber-600",
-          description: "Bảng vàng thi đua học tập",
-        },
-      ];
+  // The "... More" dropdown contains exactly:
+  // 1. Bảng xếp hạng (/arena)
+  // 2. Liên hệ (/help)
+  // 3. Đề xuất (/help#feedback)
+  const moreDropdownItems = [
+    {
+      label: "Bảng xếp hạng",
+      href: "/arena",
+      icon: Trophy,
+      iconBg: "bg-amber-50 dark:bg-amber-950/70 text-amber-600 dark:text-amber-400 border border-amber-200/80 dark:border-amber-800/60",
+      description: "Bảng vàng thi đua tuần & tích lũy EXP",
+    },
+    {
+      label: "Liên hệ",
+      href: "/help",
+      icon: CircleHelp,
+      iconBg: "bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 border border-blue-200/80 dark:border-blue-800/60",
+      description: "Trung tâm trợ giúp & email hỗ trợ học tập",
+    },
+    {
+      label: "Đề xuất",
+      href: "/help#feedback",
+      icon: Lightbulb,
+      iconBg: "bg-emerald-50 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/60",
+      description: "Đóng góp ý kiến cải tiến nền tảng & bài học",
+    },
+  ];
 
-  const secondaryLinks: HeaderNavLink[] = [...primaryLinks, ...overflowLinks];
+  const isMoreActive = isMoreRoute(pathname);
 
-  const isAnyOverflowActive = overflowLinks.some((link) =>
-    Boolean(link.isExam ? isExamPath : isActivePath(pathname, link.href))
-  );
+  // Mobile drawer links
+  const mobileSecondaryLinks: HeaderNavLink[] = [
+    { label: "Flashcard từ vựng", href: "/flashcard", icon: Layers },
+    { label: "Luyện đề", href: "/practice/quizzes", icon: Target, isExam: true },
+    { label: "Khóa học", href: "/courses", icon: GraduationCap },
+    { label: "Cửa hàng", href: "/market", icon: ShoppingBag },
+    { label: "Bảng xếp hạng", href: "/arena", icon: Trophy },
+    { label: "Trợ giúp & Liên hệ", href: "/help", icon: CircleHelp },
+  ];
 
   return (
     <header className="sticky top-0 z-[70] w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 transition-all duration-200 shadow-xs">
       <div className="w-full px-3 sm:px-6 lg:px-6 xl:px-8 2xl:px-12 h-16 sm:h-20 flex items-center justify-between gap-1.5 sm:gap-4">
         
-        {/* Brand Logo & Role Tag */}
+        {/* Brand Logo & Role Tag (Item 1: Logo/Home) */}
         <div className="flex items-center shrink-0">
           <BrandLogo
             href={isStudent ? "/dashboard" : "/"}
@@ -574,193 +640,27 @@ export function AppHeader() {
         {/* Center Desktop Navigation (Activates at xl: 1280px+ to ensure tablets have ample breathing space) */}
         <nav
           aria-label="Menu chính"
-          className="hidden xl:flex items-center justify-center gap-1 2xl:gap-2 text-xs 2xl:text-sm font-bold shrink-0"
+          className="hidden xl:flex items-center justify-center gap-0.5 xl:gap-1 2xl:gap-1.5 text-xs 2xl:text-sm font-bold shrink-0"
         >
-          {/* Trang chủ */}
-          <Link
-            href={isStudent ? "/dashboard" : "/"}
-            className={`px-2 xl:px-3 py-1.5 2xl:py-2 rounded-xl flex items-center gap-1 xl:gap-1.5 transition-colors shrink-0 whitespace-nowrap ${
-              isActivePath(pathname, isStudent ? "/dashboard" : "/")
-                ? "text-amber-800 dark:text-amber-400 bg-amber-50/90 dark:bg-amber-950/50 font-black border border-amber-200/60 dark:border-amber-800/60"
-                : "text-slate-600 dark:text-slate-300 hover:text-amber-800 dark:hover:text-amber-400 hover:bg-amber-50/50 dark:hover:bg-slate-800/60"
-            }`}
-          >
-            <Home size={16} className="shrink-0" aria-hidden="true" />
-            <span className="whitespace-nowrap">Trang chủ</span>
-          </Link>
-
-          {/* Trung tâm luyện kỹ năng + lối tắt theo từng kỹ năng */}
-          <div
-            ref={skillsRef}
-            className={`relative flex items-stretch shrink-0 group rounded-xl transition-colors ${
-              isSkillsPath
-                ? "bg-amber-50/90 dark:bg-amber-950/50 border border-amber-200/60 dark:border-amber-800/60 text-amber-800 dark:text-amber-400"
-                : "hover:bg-amber-50/50 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-300"
-            }`}
-            onMouseEnter={() => setSkillsOpen(true)}
-            onMouseLeave={() => setSkillsOpen(false)}
-          >
+          {desktopNavLinks.map((link) => (
             <Link
-              href="/practice"
-              onClick={closeMenus}
-              className={`pl-2 xl:pl-3 pr-1 py-1.5 2xl:py-2 flex items-center gap-1 xl:gap-1.5 transition-colors font-bold shrink-0 focus-visible:outline-none whitespace-nowrap rounded-l-xl ${
-                isSkillsPath ? "font-black" : "hover:text-amber-800 dark:hover:text-amber-400"
+              key={link.href}
+              href={link.href}
+              className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 2xl:py-2 rounded-xl flex items-center gap-1 xl:gap-1.5 transition-colors shrink-0 whitespace-nowrap ${
+                link.active
+                  ? "text-amber-800 dark:text-amber-400 bg-amber-50/90 dark:bg-amber-950/50 font-black border border-amber-200/60 dark:border-amber-800/60"
+                  : "text-slate-600 dark:text-slate-300 hover:text-amber-800 dark:hover:text-amber-400 hover:bg-amber-50/50 dark:hover:bg-slate-800/60"
               }`}
             >
-              <Dumbbell size={16} className="shrink-0" aria-hidden="true" />
-              <span className="whitespace-nowrap">Luyện tập kỹ năng</span>
+              <link.icon size={16} className="shrink-0" />
+              <span className="whitespace-nowrap">{link.label}</span>
             </Link>
-            <button
-              type="button"
-              onClick={() => setSkillsOpen((prev) => !prev)}
-              aria-label={skillsOpen ? "Đóng danh sách kỹ năng" : "Mở danh sách kỹ năng"}
-              aria-expanded={skillsOpen}
-              aria-controls="skills-navigation-menu"
-              aria-haspopup="menu"
-              className="pr-2 xl:pr-2.5 pl-0.5 flex items-center justify-center rounded-r-xl transition-colors shrink-0 focus-visible:outline-none cursor-pointer"
-            >
-              <ChevronDown
-                size={14}
-                className={`transition-transform duration-200 ${
-                  skillsOpen
-                    ? "rotate-180 text-amber-700 dark:text-amber-400"
-                    : isSkillsPath
-                      ? "text-amber-700 dark:text-amber-400 group-hover:rotate-180"
-                      : "text-slate-400 dark:text-slate-400 group-hover:rotate-180 group-hover:text-amber-700 dark:group-hover:text-amber-400"
-                }`}
-              />
-            </button>
+          ))}
 
-            {/* Dropdown Menu (Opens on hover and on click) */}
-            <div
-              className={`absolute top-full left-0 pt-1.5 w-[330px] max-w-[calc(100vw-2rem)] z-50 transition-all duration-150 ${
-                skillsOpen
-                  ? "opacity-100 pointer-events-auto translate-y-0"
-                  : "opacity-0 pointer-events-none -translate-y-1 group-hover:opacity-100 group-hover:pointer-events-auto group-hover:translate-y-0"
-              }`}
-            >
-              <div id="skills-navigation-menu" role="menu" className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-xl p-2 space-y-1">
-                {/* 1. Luyện nghe */}
-                <Link
-                  href="/practice/listening"
-                  onClick={closeMenus}
-                  className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-blue-50/70 dark:hover:bg-blue-950/40 text-slate-800 dark:text-slate-200 transition-colors group/item"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 border border-blue-100/80 dark:border-blue-800/60 flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform">
-                    <Headphones size={20} />
-                  </div>
-                  <div>
-                    <div className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover/item:text-blue-700 dark:group-hover/item:text-blue-400 transition-colors">
-                      Luyện nghe
-                    </div>
-                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 leading-snug mt-0.5">
-                      Rèn khả năng nghe hiểu qua hội thoại và tình huống thực tế.
-                    </div>
-                  </div>
-                </Link>
-
-                {/* 2. Luyện nói */}
-                <Link
-                  href="/practice/speaking"
-                  onClick={closeMenus}
-                  className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-purple-50/70 dark:hover:bg-purple-950/40 text-slate-800 dark:text-slate-200 transition-colors group/item"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/70 text-purple-600 dark:text-purple-400 border border-purple-100/80 dark:border-purple-800/60 flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform">
-                    <Mic size={20} />
-                  </div>
-                  <div>
-                    <div className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover/item:text-purple-700 dark:group-hover/item:text-purple-400 transition-colors">
-                      Luyện nói
-                    </div>
-                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 leading-snug mt-0.5">
-                      Cải thiện phát âm, ngữ điệu và phản xạ qua các bài tập tương tác.
-                    </div>
-                  </div>
-                </Link>
-
-                {/* 3. Luyện đọc */}
-                <Link
-                  href="/practice/reading"
-                  onClick={closeMenus}
-                  className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-emerald-50/70 dark:hover:bg-emerald-950/40 text-slate-800 dark:text-slate-200 transition-colors group/item"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 border border-emerald-100/80 dark:border-emerald-800/60 flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform">
-                    <BookOpen size={20} />
-                  </div>
-                  <div>
-                    <div className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover/item:text-emerald-700 dark:group-hover/item:text-emerald-400 transition-colors">
-                      Luyện đọc
-                    </div>
-                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 leading-snug mt-0.5">
-                      Phát triển kỹ năng đọc hiểu, tìm ý chính và xử lý thông tin.
-                    </div>
-                  </div>
-                </Link>
-
-                {/* 4. Luyện viết */}
-                <Link
-                  href="/practice/writing"
-                  onClick={closeMenus}
-                  className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-rose-50/70 dark:hover:bg-rose-950/40 text-slate-800 dark:text-slate-200 transition-colors group/item"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/70 text-rose-600 dark:text-rose-400 border border-rose-100/80 dark:border-rose-800/60 flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform">
-                    <PenTool size={20} />
-                  </div>
-                  <div>
-                    <div className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover/item:text-rose-700 dark:group-hover/item:text-rose-400 transition-colors">
-                      Luyện viết
-                    </div>
-                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 leading-snug mt-0.5">
-                      Luyện viết câu, email và nhận gợi ý chỉnh sửa chi tiết.
-                    </div>
-                  </div>
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          {/* Primary Links: Luyện đề, Khóa học */}
-          {primaryLinks.map((link) => {
-            const active = link.isExam ? isExamPath : isActivePath(pathname, link.href);
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`px-2 xl:px-3 py-1.5 2xl:py-2 rounded-xl flex items-center gap-1 xl:gap-1.5 transition-colors shrink-0 whitespace-nowrap ${
-                  active
-                    ? "text-amber-800 dark:text-amber-400 bg-amber-50/90 dark:bg-amber-950/50 font-black border border-amber-200/60 dark:border-amber-800/60"
-                    : "text-slate-600 dark:text-slate-300 hover:text-amber-800 dark:hover:text-amber-400 hover:bg-amber-50/50 dark:hover:bg-slate-800/60"
-                }`}
-              >
-                <link.icon size={16} className="shrink-0" />
-                <span className="whitespace-nowrap">{link.label}</span>
-              </Link>
-            );
-          })}
-
-          {/* Secondary Links inline on wide screens (>= 2xl) */}
-          {overflowLinks.map((link) => {
-            const active = link.isExam ? isExamPath : isActivePath(pathname, link.href);
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`hidden 2xl:flex px-2.5 2xl:px-3 py-1.5 2xl:py-2 rounded-xl items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap ${
-                  active
-                    ? "text-amber-800 dark:text-amber-400 bg-amber-50/90 dark:bg-amber-950/50 font-black border border-amber-200/60 dark:border-amber-800/60"
-                    : "text-slate-600 dark:text-slate-300 hover:text-amber-800 dark:hover:text-amber-400 hover:bg-amber-50/50 dark:hover:bg-slate-800/60"
-                }`}
-              >
-                <link.icon size={16} className="shrink-0" />
-                <span className="whitespace-nowrap">{link.label}</span>
-              </Link>
-            );
-          })}
-
-          {/* Adaptive "Khác" (More) Dropdown on intermediate viewports (< 2xl) */}
+          {/* 10. ... More Dropdown */}
           <div
             ref={moreRef}
-            className="relative flex 2xl:hidden shrink-0 group"
+            className="relative flex shrink-0 group"
             onMouseEnter={() => setMoreOpen(true)}
             onMouseLeave={() => setMoreOpen(false)}
           >
@@ -771,14 +671,14 @@ export function AppHeader() {
               aria-expanded={moreOpen}
               aria-controls="more-navigation-menu"
               aria-haspopup="menu"
-              className={`px-2 xl:px-3 py-1.5 2xl:py-2 rounded-xl flex items-center gap-1 xl:gap-1.5 transition-colors shrink-0 whitespace-nowrap font-bold cursor-pointer ${
-                isAnyOverflowActive
+              className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 2xl:py-2 rounded-xl flex items-center gap-1 xl:gap-1.5 transition-colors shrink-0 whitespace-nowrap font-bold cursor-pointer ${
+                isMoreActive
                   ? "text-amber-800 dark:text-amber-400 bg-amber-50/90 dark:bg-amber-950/50 font-black border border-amber-200/60 dark:border-amber-800/60"
                   : "text-slate-600 dark:text-slate-300 hover:text-amber-800 dark:hover:text-amber-400 hover:bg-amber-50/50 dark:hover:bg-slate-800/60"
               }`}
             >
               <MoreHorizontal size={16} className="shrink-0" aria-hidden="true" />
-              <span className="whitespace-nowrap">Khác</span>
+              <span className="whitespace-nowrap">More</span>
               <ChevronDown
                 size={14}
                 className={`shrink-0 transition-transform duration-200 ${
@@ -789,7 +689,7 @@ export function AppHeader() {
 
             {/* Dropdown Menu Panel */}
             <div
-              className={`absolute top-full right-0 pt-1.5 w-[280px] max-w-[calc(100vw-2rem)] z-50 transition-all duration-150 ${
+              className={`absolute top-full right-0 pt-2 w-[350px] max-w-[calc(100vw-2rem)] z-50 transition-all duration-150 ${
                 moreOpen
                   ? "opacity-100 pointer-events-auto translate-y-0"
                   : "opacity-0 pointer-events-none -translate-y-1 group-hover:opacity-100 group-hover:pointer-events-auto group-hover:translate-y-0"
@@ -798,41 +698,41 @@ export function AppHeader() {
               <div
                 id="more-navigation-menu"
                 role="menu"
-                className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-xl p-1.5 space-y-0.5"
+                className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xl p-2.5 space-y-1"
               >
-                {overflowLinks.map((link) => {
-                  const active = link.isExam ? isExamPath : isActivePath(pathname, link.href);
+                {moreDropdownItems.map((item) => {
+                  const active = isActivePath(pathname, item.href);
                   return (
                     <Link
-                      key={link.href}
-                      href={link.href}
+                      key={item.href}
+                      href={item.href}
                       onClick={closeMenus}
                       role="menuitem"
-                      className={`flex items-center gap-3 p-2 rounded-xl transition-colors ${
+                      className={`flex items-start gap-3.5 p-3 rounded-xl transition-all group/item ${
                         active
-                          ? "bg-amber-50/90 dark:bg-amber-950/60 text-amber-950 dark:text-amber-300 font-bold"
-                          : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 font-semibold"
+                          ? "bg-amber-50/90 dark:bg-amber-950/60 text-amber-950 dark:text-amber-300 font-bold border border-amber-200/70 dark:border-amber-800/60 shadow-2xs"
+                          : "text-slate-700 dark:text-slate-300 hover:bg-amber-50/50 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100 font-semibold"
                       }`}
                     >
                       <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                        className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform ${
                           active
-                            ? "bg-amber-600 text-white"
-                            : link.iconBg || "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                            ? "bg-amber-600 text-white shadow-xs"
+                            : item.iconBg || "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
                         }`}
                       >
-                        <link.icon size={16} />
+                        <item.icon size={22} />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-bold truncate flex items-center justify-between">
-                          <span>{link.label}</span>
+                      <div className="flex-1 min-w-0 pt-0.5">
+                        <div className="text-sm font-bold truncate flex items-center justify-between gap-2 group-hover/item:text-amber-800 dark:group-hover/item:text-amber-400 transition-colors">
+                          <span>{item.label}</span>
                           {active && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-600 dark:bg-amber-500 shrink-0" />
+                            <span className="w-2 h-2 rounded-full bg-amber-600 dark:bg-amber-500 shrink-0" />
                           )}
                         </div>
-                        {link.description && (
-                          <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
-                            {link.description}
+                        {item.description && (
+                          <div className="text-xs font-medium text-slate-500 dark:text-slate-400 leading-snug mt-0.5 line-clamp-1">
+                            {item.description}
                           </div>
                         )}
                       </div>
@@ -1183,7 +1083,7 @@ export function AppHeader() {
                   </div>
 
                   {/* 3. Luyện đề & Phần còn lại */}
-                  {secondaryLinks.map((link) => {
+                  {mobileSecondaryLinks.map((link) => {
                     const active = link.isExam ? isExamPath : isActivePath(pathname, link.href);
                     return (
                       <Link

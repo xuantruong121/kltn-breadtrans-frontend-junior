@@ -13,9 +13,9 @@ import {
   TrendingUp,
   BookOpen,
 } from "lucide-react";
-import { BackButton } from "@/components/ui";
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
 import { PracticeExitConfirmDialog } from "@/components/practice/PracticeExitConfirmDialog";
+import { PracticeHeader } from "@/components/practice/PracticeHeader";
 import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
 import {
   writingService,
@@ -51,7 +51,7 @@ export default function WritingDetailPage(props: {
   const minimumWords =
     topic?.wordRange?.[0] ?? (topic?.type === "WRITING_PICTURE" ? 1 : 15);
 
-  const shouldConfirmExit = !feedback && content.trim().length > 0;
+  const shouldConfirmExit = !feedback && (content.trim().length > 0 || isEvaluating);
   const { confirmExit, exitDialogProps } = usePracticeExitGuard({
     shouldConfirmExit,
     defaultFallbackUrl: "/practice/writing",
@@ -88,34 +88,25 @@ export default function WritingDetailPage(props: {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 pb-20">
-      {/* 1. TOP HEADER BAR */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs">
-        <div className="flex items-center gap-4">
-          <BackButton
-            href="/practice/writing"
-            onClick={() => confirmExit("/practice/writing")}
-            label="Quay lại danh sách bài viết"
-          />
-          <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block" />
-          <div>
-            <h1 className="text-xl font-extrabold text-slate-900 dark:text-slate-100 line-clamp-1">
-              {topic?.title || "Luyện viết"}
-            </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-              Viết bài theo tình huống thực tế & nhận phân tích chuyên sâu tự
-              động
-            </p>
+    <div className="w-full min-h-dvh flex flex-col bg-slate-50 dark:bg-slate-950 font-sans">
+      <PracticeHeader
+        title={topic?.title || "Luyện viết"}
+        category={topic?.taskType || topic?.type || "Writing"}
+        activityLabel="Luyện viết"
+        onExit={() => confirmExit("/practice/writing")}
+        exitLabel="Thoát"
+        statusContent={
+          <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-slate-300 bg-slate-800 border border-slate-700 px-3 py-1 rounded-lg">
+            <span>{wordCount} từ</span>
+            <span className="text-slate-500">·</span>
+            <span>{charCount} ký tự</span>
           </div>
-        </div>
+        }
+      />
 
-        <span className="bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50 px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider self-start sm:self-auto">
-          {topic?.taskType || topic?.type || "Writing"}
-        </span>
-      </div>
-
-      {/* 2. 2-COLUMN MAIN LAYOUT */}
-      <div className="grid grid-cols-12 gap-6 items-start">
+      <main className="max-w-6xl mx-auto w-full space-y-6 pb-20 px-4 sm:px-6 pt-6 flex-1">
+        {/* 2. 2-COLUMN MAIN LAYOUT */}
+        <div className="grid grid-cols-12 gap-6 items-start">
         {/* LEFT COLUMN: PROMPT, EDITOR & FEEDBACK */}
         <div className="col-span-12 lg:col-span-8 space-y-6">
           {/* HEADER PROMPT */}
@@ -349,6 +340,7 @@ export default function WritingDetailPage(props: {
 
       {/* Shared Exit Confirmation Modal */}
       <PracticeExitConfirmDialog {...exitDialogProps} />
-    </div>
-  );
+    </main>
+  </div>
+);
 }
