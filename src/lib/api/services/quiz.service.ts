@@ -96,6 +96,12 @@ export interface AnswerDto {
   answer: string;
 }
 
+export interface SubmitQuizPayload {
+  answers: AnswerDto[];
+  attemptId?: number;
+  clientAttemptId?: string;
+}
+
 export interface SubmissionResult {
   id: number;
   score: number;
@@ -289,10 +295,12 @@ export const quizService = {
     id: number,
     answers: AnswerDto[],
     attemptId?: number,
+    clientAttemptId?: string,
   ): Promise<SubmissionResult> => {
     return await axiosClient.post(`/quizzes/${id}/submit`, {
       answers,
       ...(attemptId ? { attemptId } : {}),
+      ...(clientAttemptId ? { clientAttemptId } : {}),
     });
   },
 

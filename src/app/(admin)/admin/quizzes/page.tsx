@@ -22,6 +22,10 @@ import {
 import axiosClient from "@/lib/api/axiosClient";
 import toast from "react-hot-toast";
 import { Pagination } from "@/components/ui";
+import {
+  READING_MICRO_SKILLS,
+  resolveReadingAuthoringAnswer,
+} from "@/lib/reading/readingAuthoringUtils";
 
 const QUIZ_TYPES = [
   { value: "all", label: "Tất cả thể loại" },
@@ -766,7 +770,12 @@ export default function AdminQuizzesPage() {
                   quizDetail.questions.map((q: any, idx: number) => {
                     const content = q.content || {};
                     const options = content.options || [];
-                    const correctAnswer = content.correct || content.correctAnswer || "";
+                    const readingAnswer = selectedQuizForQuestions.type === "BILINGUAL_READING"
+                      ? resolveReadingAuthoringAnswer(content)
+                      : null;
+                    const correctAnswer = readingAnswer?.available
+                      ? readingAnswer.answer
+                      : content.correct || content.correctAnswer || "";
 
                     return (
                       <div
@@ -923,6 +932,12 @@ export default function AdminQuizzesPage() {
                           </div>
                         )}
 
+                        {readingAnswer && !readingAnswer.available && (
+                          <p className="text-xs font-black text-rose-600">
+                            Đáp án chưa hợp lệ: {readingAnswer.reason}
+                          </p>
+                        )}
+
                         {/* Explanation / Translation */}
                         {formatQuestionExplanation(content.explanation || content.translate) && (
                           <div className="bg-amber-50/60 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 font-medium">
@@ -979,6 +994,8 @@ function QuickAddQuestionForm({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [questionText, setQuestionText] = useState("");
+  const [passage, setPassage] = useState("");
+  const [microSkill, setMicroSkill] = useState<(typeof READING_MICRO_SKILLS)[number]>("DETAIL");
   const [optA, setOptA] = useState("");
   const [optB, setOptB] = useState("");
   const [optC, setOptC] = useState("");
@@ -996,6 +1013,7 @@ function QuickAddQuestionForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const isReading = quizType === "BILINGUAL_READING";
     const isDialogue = practiceKind === "DIALOGUE" && quizType === "LISTENING_PRACTICE";
     const normalizedSegments = dialogueSegments
       .map((segment) => ({
@@ -1009,11 +1027,11 @@ function QuickAddQuestionForm({
         ...(segment.translation ? { translation: segment.translation } : {}),
       }));
 
-    if (!questionText.trim() || (!audioText.trim() && quizType === "LISTENING_PRACTICE" && !isDialogue)) {
+    if (!questionText.trim() || (isReading && !passage.trim()) || (!audioText.trim() && quizType === "LISTENING_PRACTICE" && !isDialogue)) {
       toast.error("Vui lòng nhập nội dung câu hỏi và nội dung audio.");
       return;
     }
-    if (practiceKind === "MULTIPLE_CHOICE" && (!optA.trim() || !optB.trim())) {
+    if ((practiceKind === "MULTIPLE_CHOICE" || isReading) && (!optA.trim() || !optB.trim())) {
       toast.error("Vui lòng nhập nội dung câu hỏi và ít nhất 2 đáp án A, B!");
       return;
     }
@@ -1029,15 +1047,23 @@ function QuickAddQuestionForm({
       toast.error("Hội thoại cần ít nhất 2 lượt lời thuộc 2 người nói khác nhau.");
       return;
     }
+    if (isReading && !READING_MICRO_SKILLS.includes(microSkill)) {
+      toast.error("Vui lòng chọn micro-skill Reading.");
+      return;
+    }
 
     const derivedAudioText = normalizedSegments.map((segment) => segment.text).join(" ");
 
     try {
       await onAdd({
-        type: practiceKind,
+        type: isReading ? "MULTIPLE_CHOICE" : practiceKind,
         content: {
           text: questionText.trim(),
-          ...(practiceKind === "MULTIPLE_CHOICE" ? { options, correct: correctValue } : {}),
+          ...(isReading
+            ? { passage: passage.trim(), options, correctIndex: ["A", "B", "C", "D"].indexOf(correctKey), skill: "READING", questionType: microSkill }
+            : practiceKind === "MULTIPLE_CHOICE"
+              ? { options, correct: correctValue }
+              : {}),
           ...(quizType === "LISTENING_PRACTICE"
             ? {
                 audioText: isDialogue ? derivedAudioText : audioText.trim(),
@@ -1057,6 +1083,8 @@ function QuickAddQuestionForm({
 
     // Reset form
     setQuestionText("");
+    setPassage("");
+    setMicroSkill("DETAIL");
     setOptA("");
     setOptB("");
     setOptC("");
@@ -1171,6 +1199,34 @@ function QuickAddQuestionForm({
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {quizType === "BILINGUAL_READING" && (
+        <div className="space-y-2 rounded-xl border border-emerald-200 bg-emerald-50/60 p-3">
+          <label className="block text-slate-600">
+            Đoạn đọc <span className="text-rose-500">*</span>
+            <textarea
+              required
+              value={passage}
+              onChange={(e) => setPassage(e.target.value)}
+              rows={4}
+              placeholder="Nhập đoạn văn dùng chung cho câu hỏi..."
+              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-800"
+            />
+          </label>
+          <label className="block text-slate-600">
+            Kỹ năng đọc (micro-skill) <span className="text-rose-500">*</span>
+            <select
+              value={microSkill}
+              onChange={(e) => setMicroSkill(e.target.value as typeof microSkill)}
+              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-800"
+            >
+              {READING_MICRO_SKILLS.map((skill) => (
+                <option key={skill} value={skill}>{skill}</option>
+              ))}
+            </select>
+          </label>
         </div>
       )}
 

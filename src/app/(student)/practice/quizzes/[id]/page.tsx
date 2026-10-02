@@ -7,6 +7,7 @@ import {
   useState,
   useEffect,
   useMemo,
+  useRef,
   useSyncExternalStore,
   type MouseEvent,
 } from "react";
@@ -34,6 +35,7 @@ import { PracticeHeader } from "@/components/practice/PracticeHeader";
 import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
 import toast from "react-hot-toast";
 import { getUnansweredQuestionIndexes } from "../readingQuizUtils";
+import { createReadingAttemptId } from "../readingAttempt";
 
 function useHydration() {
   return useSyncExternalStore(
@@ -58,6 +60,7 @@ export default function TakeQuizPage(props: {
   const showAuthModal = hasMounted && !user && !authModalDismissed;
 
   const [answers, setAnswers] = useState<Record<number, string>>({});
+  const readingAttemptIdRef = useRef<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
@@ -83,8 +86,8 @@ export default function TakeQuizPage(props: {
   });
 
   const submitMutation = useMutation({
-    mutationFn: (payload: AnswerDto[]) =>
-      quizService.submitQuiz(quizId, payload),
+    mutationFn: (payload: { answers: AnswerDto[]; clientAttemptId?: string }) =>
+      quizService.submitQuiz(quizId, payload.answers, undefined, payload.clientAttemptId),
     onSuccess: (data) => {
       setSubmitError(null);
       // Invalidate gamification and profile cache to update Daily Quests instantly
@@ -108,7 +111,15 @@ export default function TakeQuizPage(props: {
     },
   });
 
-  const isReading = quiz?.type === "BILINGUAL_READING";
+  const loadedQuizType = quiz?.type;
+  const isReading = loadedQuizType === "BILINGUAL_READING";
+  useEffect(() => {
+    if (loadedQuizType !== "BILINGUAL_READING") {
+      readingAttemptIdRef.current = null;
+      return;
+    }
+    if (!readingAttemptIdRef.current) readingAttemptIdRef.current = createReadingAttemptId();
+  }, [quiz?.id, loadedQuizType]);
   const isListening = quiz?.type === "LISTENING_PRACTICE";
   const reviewQuestionIds = useMemo(() => {
     if (searchParams.get("review") !== "wrong") return [];
@@ -280,7 +291,11 @@ export default function TakeQuizPage(props: {
             questionId: parseInt(qId),
             answer: answers[parseInt(qId)],
           }));
-      submitMutation.mutate(payload);
+      const clientAttemptId = isReading
+        ? (readingAttemptIdRef.current ?? createReadingAttemptId())
+        : undefined;
+      readingAttemptIdRef.current = clientAttemptId ?? readingAttemptIdRef.current;
+      submitMutation.mutate({ answers: payload, clientAttemptId });
     }
   };
 
