@@ -122,7 +122,7 @@ export const PracticeHeader: React.FC<PracticeHeaderProps> = ({
   const [showShortcutsPopover, setShowShortcutsPopover] = useState(false);
   const shortcutsRef = useRef<HTMLDivElement>(null);
 
-  // Close shortcuts popover on outside click
+  // Close shortcuts popover on outside click or Escape key
   useEffect(() => {
     if (!showShortcutsPopover) return;
     const handleClickOutside = (e: MouseEvent) => {
@@ -130,8 +130,17 @@ export const PracticeHeader: React.FC<PracticeHeaderProps> = ({
         setShowShortcutsPopover(false);
       }
     };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setShowShortcutsPopover(false);
+      }
+    };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, [showShortcutsPopover]);
 
   const displayCategory = category || subtitle;
@@ -247,7 +256,12 @@ export const PracticeHeader: React.FC<PracticeHeaderProps> = ({
             </button>
 
             {shortcutsContent && showShortcutsPopover && (
-              <div className="absolute right-0 top-full mt-2 w-72 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-xl z-50 text-slate-800 dark:text-slate-200 animate-in fade-in zoom-in-95 duration-150">
+              <div
+                data-shortcuts-popover="true"
+                role="region"
+                aria-label="Bảng phím tắt nhanh"
+                className="absolute right-0 top-full mt-2 w-72 sm:w-80 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-xl z-50 text-slate-800 dark:text-slate-200 animate-in fade-in zoom-in-95 duration-150"
+              >
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-2.5">
                   <span className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100">
                     Phím tắt nhanh
