@@ -99,6 +99,7 @@ export const MAIN_NAV_ORDER: NavItemConfig[] = [
   { label: "Đọc", href: "/practice/reading" },
   { label: "Viết", href: "/practice/writing" },
   { label: "Flashcard", href: "/flashcard" },
+  { label: "Luyện đề", href: "/practice/quizzes" },
   { label: "Khóa học", href: "/courses" },
   { label: "Cửa hàng", href: "/market" },
   { label: "More", href: "#more" },

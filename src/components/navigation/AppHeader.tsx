@@ -520,16 +520,17 @@ export function AppHeader() {
     description?: string;
   }
 
-  // 8 Desktop Navigation Items following exact required logical order:
+  // Desktop Navigation Items following exact required logical order:
   // 1. Logo (Home) - rendered via BrandLogo
   // 2. Nghe
   // 3. Nói
   // 4. Đọc (merges Reading and Grammar)
   // 5. Viết
   // 6. Flashcard
-  // 7. Khóa học (unified Course Hub)
-  // 8. Cửa hàng
-  // 9. ... More (Dropdown containing: Bảng xếp hạng, Liên hệ, Đề xuất)
+  // 7. Luyện đề (Exam Practice: TOEIC & Certificate test hub)
+  // 8. Khóa học (unified Course Hub)
+  // 9. Cửa hàng
+  // 10. ... More (Dropdown containing: Bảng xếp hạng, Liên hệ, Đề xuất)
   const desktopNavLinks = [
     {
       label: "Nghe",
@@ -560,6 +561,12 @@ export function AppHeader() {
       href: "/flashcard",
       icon: Layers,
       active: isFlashcardRoute(pathname),
+    },
+    {
+      label: "Luyện đề",
+      href: "/practice/quizzes",
+      icon: Target,
+      active: isExamRoute(pathname),
     },
     {
       label: "Khóa học",
@@ -633,13 +640,13 @@ export function AppHeader() {
         {/* Center Desktop Navigation (Activates at xl: 1280px+ to ensure tablets have ample breathing space) */}
         <nav
           aria-label="Menu chính"
-          className="hidden xl:flex items-center justify-center gap-1 2xl:gap-2 text-xs 2xl:text-sm font-bold shrink-0"
+          className="hidden xl:flex items-center justify-center gap-0.5 xl:gap-1 2xl:gap-1.5 text-xs 2xl:text-sm font-bold shrink-0"
         >
           {desktopNavLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`px-2 xl:px-3 py-1.5 2xl:py-2 rounded-xl flex items-center gap-1 xl:gap-1.5 transition-colors shrink-0 whitespace-nowrap ${
+              className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 2xl:py-2 rounded-xl flex items-center gap-1 xl:gap-1.5 transition-colors shrink-0 whitespace-nowrap ${
                 link.active
                   ? "text-amber-800 dark:text-amber-400 bg-amber-50/90 dark:bg-amber-950/50 font-black border border-amber-200/60 dark:border-amber-800/60"
                   : "text-slate-600 dark:text-slate-300 hover:text-amber-800 dark:hover:text-amber-400 hover:bg-amber-50/50 dark:hover:bg-slate-800/60"
@@ -650,7 +657,7 @@ export function AppHeader() {
             </Link>
           ))}
 
-          {/* 9. ... More Dropdown */}
+          {/* 10. ... More Dropdown */}
           <div
             ref={moreRef}
             className="relative flex shrink-0 group"
@@ -664,7 +671,7 @@ export function AppHeader() {
               aria-expanded={moreOpen}
               aria-controls="more-navigation-menu"
               aria-haspopup="menu"
-              className={`px-2 xl:px-3 py-1.5 2xl:py-2 rounded-xl flex items-center gap-1 xl:gap-1.5 transition-colors shrink-0 whitespace-nowrap font-bold cursor-pointer ${
+              className={`px-2 xl:px-2.5 2xl:px-3 py-1.5 2xl:py-2 rounded-xl flex items-center gap-1 xl:gap-1.5 transition-colors shrink-0 whitespace-nowrap font-bold cursor-pointer ${
                 isMoreActive
                   ? "text-amber-800 dark:text-amber-400 bg-amber-50/90 dark:bg-amber-950/50 font-black border border-amber-200/60 dark:border-amber-800/60"
                   : "text-slate-600 dark:text-slate-300 hover:text-amber-800 dark:hover:text-amber-400 hover:bg-amber-50/50 dark:hover:bg-slate-800/60"

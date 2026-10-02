@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   MAIN_NAV_ORDER,
   MORE_DROPDOWN_ITEMS,
+  isExamRoute,
   isListeningRoute,
   isSpeakingRoute,
   isReadingRoute,
@@ -22,12 +23,13 @@ describe("Header Navigation Restructure Verification", () => {
       "Đọc",
       "Viết",
       "Flashcard",
+      "Luyện đề",
       "Khóa học",
       "Cửa hàng",
       "More",
     ];
 
-    assert.equal(MAIN_NAV_ORDER.length, 9);
+    assert.equal(MAIN_NAV_ORDER.length, 10);
     MAIN_NAV_ORDER.forEach((item, index) => {
       assert.equal(item.label, expectedLabels[index]);
     });
@@ -94,5 +96,17 @@ describe("Header Navigation Restructure Verification", () => {
     assert.equal(isFlashcardRoute("/flashcard"), true);
     assert.equal(isFlashcardRoute("/vocabulary/study"), true);
     assert.equal(isMarketRoute("/market"), true);
+  });
+
+  it("activates 'Luyện đề' for exam catalog and certificate practice routes", () => {
+    assert.equal(isExamRoute("/practice/quizzes"), true);
+    assert.equal(isExamRoute("/practice/quizzes/"), true);
+    assert.equal(isExamRoute("/practice/toeic/1"), true);
+    assert.equal(isExamRoute("/practice/toeic/attempts/123"), true);
+
+    // Skill quizzes like reading or listening should NOT activate Luyện đề
+    assert.equal(isExamRoute("/practice/quizzes/123"), false);
+    assert.equal(isExamRoute("/practice/reading"), false);
+    assert.equal(isExamRoute("/practice/listening"), false);
   });
 });
