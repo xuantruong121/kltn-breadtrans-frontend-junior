@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
   BookOpen,
+  BookOpenCheck,
   Coins,
   Filter,
   Flame,
@@ -25,6 +26,7 @@ import {
   type DifficultyLevel,
   matchesReadingDifficulty,
 } from "./components/readingCardLogic";
+import { GrammarScreen } from "@/modules/grammar/screens/GrammarScreen";
 
 const DIFFICULTY_OPTIONS: Array<{ id: DifficultyLevel; label: string }> = [
   { id: "ALL", label: "Tất cả" },
@@ -33,8 +35,22 @@ const DIFFICULTY_OPTIONS: Array<{ id: DifficultyLevel; label: string }> = [
   { id: "ADVANCED", label: "Nâng cao" },
 ];
 
-export default function ReadingTopicsPage() {
+function ReadingTopicsContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const activeMode =
+    searchParams.get("tab") === "grammar" || searchParams.get("mode") === "grammar"
+      ? "grammar"
+      : "reading";
+
+  const handleModeChange = (mode: "reading" | "grammar") => {
+    if (mode === "grammar") {
+      router.push("/practice/reading?tab=grammar", { scroll: false });
+    } else {
+      router.push("/practice/reading", { scroll: false });
+    }
+  };
+
   const { user } = useAuthStore();
   const { streak } = useGamificationStore();
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -145,9 +161,54 @@ export default function ReadingTopicsPage() {
 
   return (
     <div className="space-y-6 pb-20 pt-2">
-      {/* Hero & Learning Progression Bar */}
-      <section className="relative overflow-hidden rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs sm:p-8">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      {/* Mode Switcher Tabs: Luyện đọc vs Ngữ pháp */}
+      <div
+        role="tablist"
+        aria-label="Chế độ học Đọc và Ngữ pháp"
+        className="flex items-center gap-2 border-b border-slate-200/80 dark:border-slate-800 pb-3"
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeMode === "reading"}
+          aria-controls="reading-practice-panel"
+          onClick={() => handleModeChange("reading")}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+            activeMode === "reading"
+              ? "bg-amber-600 text-white shadow-xs"
+              : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60"
+          }`}
+        >
+          <BookOpen size={16} aria-hidden="true" />
+          <span>Luyện đọc</span>
+        </button>
+
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeMode === "grammar"}
+          aria-controls="grammar-practice-panel"
+          onClick={() => handleModeChange("grammar")}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+            activeMode === "grammar"
+              ? "bg-amber-600 text-white shadow-xs"
+              : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60"
+          }`}
+        >
+          <BookOpenCheck size={16} aria-hidden="true" />
+          <span>Ngữ pháp</span>
+        </button>
+      </div>
+
+      {activeMode === "grammar" ? (
+        <section id="grammar-practice-panel" role="tabpanel" aria-label="Chuyên đề ngữ pháp">
+          <GrammarScreen />
+        </section>
+      ) : (
+        <div id="reading-practice-panel" role="tabpanel" aria-label="Luyện đọc hiểu" className="space-y-6">
+          {/* Hero & Learning Progression Bar */}
+          <section className="relative overflow-hidden rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs sm:p-8">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="max-w-2xl space-y-3.5">
             <div className="inline-flex items-center gap-2 rounded-full border border-violet-200 dark:border-violet-800/60 bg-violet-50/80 dark:bg-violet-950/40 px-3 py-1 text-xs font-bold text-violet-700 dark:text-violet-300">
               <BookOpen size={14} aria-hidden="true" />
@@ -404,6 +465,8 @@ export default function ReadingTopicsPage() {
           </div>
         )}
       </section>
+        </div>
+      )}
 
       {/* Guest AuthGateModal */}
       <AuthGateModal
@@ -415,5 +478,19 @@ export default function ReadingTopicsPage() {
         onOpenRegister={() => router.push("/register")}
       />
     </div>
+  );
+}
+
+export default function ReadingTopicsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-64 items-center justify-center">
+          <Loader2 className="animate-spin text-amber-600" size={32} />
+        </div>
+      }
+    >
+      <ReadingTopicsContent />
+    </Suspense>
   );
 }
