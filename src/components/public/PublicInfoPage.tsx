@@ -4,6 +4,7 @@ import { ArrowLeft, ChevronRight, type LucideIcon } from "lucide-react";
 type InfoSection = {
   title: string;
   body: string;
+  id?: string;
 };
 
 type PublicInfoPageProps = {
@@ -45,7 +46,11 @@ export function PublicInfoPage({
 
         <div className="mt-6 space-y-4">
           {sections.map((section) => (
-            <article key={section.title} className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-soft sm:p-7">
+            <article
+              id={section.id}
+              key={section.title}
+              className="scroll-mt-24 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-soft sm:p-7"
+            >
               <h2 className="text-lg font-extrabold text-slate-900 dark:text-slate-100">{section.title}</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{section.body}</p>
             </article>
