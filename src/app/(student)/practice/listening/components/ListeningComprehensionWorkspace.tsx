@@ -711,6 +711,12 @@ export function ListeningComprehensionWorkspace({
           delete next[currentQuestion.id];
           return next;
         });
+        // Also wipe the stale answer so the option doesn't appear pre-highlighted on return
+        setAnswersByQuestionId((prev) => {
+          const next = { ...prev };
+          delete next[currentQuestion.id];
+          return next;
+        });
       }
       checkpointAttempt({
         currentQuestionId: nextQ?.id,
@@ -730,6 +736,12 @@ export function ListeningComprehensionWorkspace({
       // Clear failed check so error panel hides when returning to prev question
       if (currentQuestion && checkResults[currentQuestion.id] && !checkResults[currentQuestion.id]?.isCorrect && !checkResults[currentQuestion.id]?.skipped) {
         setCheckResults((prev) => {
+          const next = { ...prev };
+          delete next[currentQuestion.id];
+          return next;
+        });
+        // Also wipe the stale answer so the option doesn't appear pre-highlighted on return
+        setAnswersByQuestionId((prev) => {
           const next = { ...prev };
           delete next[currentQuestion.id];
           return next;
