@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   CheckCircle2,
   ChevronLeft,
@@ -15,11 +15,17 @@ import { grammarService } from "@/lib/api/services/grammar.service";
 import { useAuthStore } from "@/stores/authStore";
 import { GrammarAttemptResult, GrammarTopicDetail } from "../types";
 import { GrammarVideoPlayer } from "./GrammarVideoPlayer";
+import {
+  getNextIndex,
+  getPrevIndex,
+  isGrammarDirty,
+} from "./grammarNavigationUtils";
 
 type QuestionResult = GrammarAttemptResult["questionsResult"][number];
 
-interface GrammarQuizProps {
+export interface GrammarQuizProps {
   topic: GrammarTopicDetail;
+  onDirtyChange?: (isDirty: boolean) => void;
 }
 
 // ─── Subcomponents ────────────────────────────────────────────────────────────
@@ -118,13 +124,19 @@ const FeedbackPanel: React.FC<{ qr: QuestionResult }> = ({ qr }) => (
 );
 
 // ─── Main component ───────────────────────────────────────────────────────────
-export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic }) => {
+export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }) => {
   const { id: topicId, questions } = topic;
   const queryClient = useQueryClient();
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [result, setResult] = useState<GrammarAttemptResult | null>(null);
+
+  const answeredCount = Object.keys(answers).length;
+
+  useEffect(() => {
+    onDirtyChange?.(isGrammarDirty(answeredCount, Boolean(result)));
+  }, [answeredCount, result, onDirtyChange]);
 
   const submitAttempt = useMutation({
     mutationFn: () => grammarService.submitAttempt(topicId, answers),
@@ -166,7 +178,6 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic }) => {
   const currentAnswerIndex = answers[String(currentQuestion.id)];
   const isFirstQuestion = currentIndex === 0;
   const isLastQuestion = currentIndex === questions.length - 1;
-  const answeredCount = Object.keys(answers).length;
   const isAllAnswered = answeredCount === questions.length;
   const hasCurrentAnswer = currentAnswerIndex !== undefined;
 
@@ -246,7 +257,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic }) => {
         {/* ── LEFT PANE (desktop only: wide, readable) ────────────────── */}
         <aside
           aria-label="Điều hướng câu hỏi"
-          className="hidden lg:flex w-72 xl:w-80 2xl:w-88 shrink-0 flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-y-auto"
+          className="hidden lg:flex lg:w-60 xl:w-72 2xl:w-80 shrink-0 flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-y-auto"
           data-testid="grammar-left-pane"
         >
           <div className="p-6 space-y-6">
@@ -324,7 +335,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic }) => {
           className="flex-1 min-h-0 overflow-y-auto bg-slate-50/70 dark:bg-slate-950/70 flex flex-col"
           aria-label="Câu hỏi hiện tại"
         >
-          <div className="mx-auto w-full max-w-3xl xl:max-w-4xl 2xl:max-w-5xl px-6 py-8 sm:px-10 sm:py-10 my-auto">
+          <div className="mx-auto w-full max-w-3xl xl:max-w-4xl 2xl:max-w-5xl px-4 sm:px-6 lg:px-8 py-8 sm:py-10 my-auto">
 
             {/* Completion banner */}
             {result && (
@@ -379,7 +390,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic }) => {
 
             {/* Question card */}
             <article
-              className="mb-6 rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 lg:p-10 shadow-xs dark:border-slate-800 dark:bg-slate-900"
+              className="mb-6 rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 lg:p-8 shadow-xs dark:border-slate-800 dark:bg-slate-900"
               data-testid="grammar-question-card"
             >
               <p className="mb-8 text-xl sm:text-2xl font-bold leading-relaxed tracking-tight text-slate-900 dark:text-slate-100">
@@ -440,7 +451,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic }) => {
         {/* ── RIGHT PANE (Theory & Contextual Feedback: Proportional & Breathable) ── */}
         <aside
           aria-label={result ? "Giải thích đáp án" : "Lý thuyết & Hướng dẫn"}
-          className="hidden md:flex w-80 lg:w-96 xl:w-[420px] 2xl:w-[440px] shrink-0 flex-col border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-y-auto"
+          className="hidden md:flex md:w-80 lg:w-80 xl:w-96 2xl:w-[420px] shrink-0 flex-col border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-y-auto"
           data-testid="grammar-right-pane"
         >
           <div className="p-6 sm:p-7 space-y-6">
@@ -472,7 +483,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic }) => {
         <button
           type="button"
           disabled={isFirstQuestion}
-          onClick={() => setCurrentIndex((prev) => prev - 1)}
+          onClick={() => setCurrentIndex((prev) => getPrevIndex(prev))}
           aria-label="Câu trước"
           className="flex cursor-pointer items-center gap-2 rounded-xl sm:rounded-2xl border border-slate-200 bg-white px-5 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
         >
@@ -499,10 +510,10 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic }) => {
         {!isLastQuestion || result ? (
           <button
             type="button"
-            disabled={!result && isLastQuestion}
-            onClick={() => setCurrentIndex((prev) => prev + 1)}
+            disabled={isLastQuestion}
+            onClick={() => setCurrentIndex((prev) => getNextIndex(prev, questions.length))}
             aria-label="Câu tiếp"
-            className="flex cursor-pointer items-center gap-2 rounded-xl sm:rounded-2xl border border-slate-200 bg-white px-5 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:invisible dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+            className="flex cursor-pointer items-center gap-2 rounded-xl sm:rounded-2xl border border-slate-200 bg-white px-5 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
           >
             <span className="hidden sm:inline">Câu tiếp</span>
             <ChevronRight size={18} aria-hidden="true" />

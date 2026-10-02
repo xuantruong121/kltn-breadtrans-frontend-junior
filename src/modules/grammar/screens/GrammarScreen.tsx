@@ -8,6 +8,8 @@ import { grammarService } from "@/lib/api/services/grammar.service";
 import { GrammarQuiz } from "../components/GrammarQuiz";
 import { PracticeHeader } from "@/components/practice/PracticeHeader";
 import { useLearningFocusMode } from "@/contexts/LearningFocusContext";
+import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
+import { PracticeExitConfirmDialog } from "@/components/practice/PracticeExitConfirmDialog";
 
 export interface GrammarScreenProps {
   activeTopicId?: number | null;
@@ -28,6 +30,8 @@ export const GrammarScreen: React.FC<GrammarScreenProps> = ({
     }
   };
   const { setFocusMode } = useLearningFocusMode();
+  const [isDirty, setIsDirty] = useState(false);
+  const defaultFallbackUrl = "/practice/reading?category=grammar";
 
   const topicsQuery = useQuery({
     queryKey: ["grammar-topics"],
@@ -53,12 +57,26 @@ export const GrammarScreen: React.FC<GrammarScreenProps> = ({
   }, [selectedTopicId, setFocusMode]);
 
   const handleExitExercise = () => {
+    setIsDirty(false);
     if (onExit) {
       onExit();
     } else {
       setInternalTopicId(null);
     }
     setFocusMode(false);
+  };
+
+  const { confirmExit, exitDialogProps } = usePracticeExitGuard({
+    shouldConfirmExit: isDirty,
+    defaultFallbackUrl,
+    onConfirmExit: () => {
+      handleExitExercise();
+    },
+    enabled: selectedTopicId !== null,
+  });
+
+  const handleExitRequest = () => {
+    confirmExit(defaultFallbackUrl);
   };
 
   if (topicsQuery.isLoading) {
@@ -97,7 +115,7 @@ export const GrammarScreen: React.FC<GrammarScreenProps> = ({
           title={detailQuery.data?.title ?? "Bài luyện ngữ pháp"}
           category={detailQuery.data?.level}
           activityLabel="Ngữ pháp"
-          onExit={handleExitExercise}
+          onExit={handleExitRequest}
           exitLabel="Thoát"
         />
 
@@ -112,7 +130,11 @@ export const GrammarScreen: React.FC<GrammarScreenProps> = ({
               />
             </div>
           ) : detailQuery.data ? (
-            <GrammarQuiz key={detailQuery.data.id} topic={detailQuery.data} />
+            <GrammarQuiz
+              key={detailQuery.data.id}
+              topic={detailQuery.data}
+              onDirtyChange={setIsDirty}
+            />
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
               <PlayCircle
@@ -133,6 +155,7 @@ export const GrammarScreen: React.FC<GrammarScreenProps> = ({
             </div>
           )}
         </div>
+        <PracticeExitConfirmDialog {...exitDialogProps} />
       </div>
     );
   }
