@@ -19,6 +19,7 @@ import {
   type ReadingCardStatus,
   computeReadingCardStatus,
   READING_DIFFICULTY_CONFIG,
+  resolveExerciseDifficulty,
   resolveReadingFormatTag,
   resolveReadingPedagogicalDescription,
   resolveReadingSkillTags,
@@ -101,14 +102,8 @@ export function ReadingTopicCard({
 
   const status = statusOverride || computedStatus;
 
-  const level = (topic.level || "BEGINNER").toUpperCase();
-  const diffConfig =
-    READING_DIFFICULTY_CONFIG[level] ||
-    (level.includes("A")
-      ? READING_DIFFICULTY_CONFIG.BEGINNER
-      : level.includes("B")
-        ? READING_DIFFICULTY_CONFIG.INTERMEDIATE
-        : READING_DIFFICULTY_CONFIG.ADVANCED);
+  const difficultyLevel = resolveExerciseDifficulty(topic);
+  const diffConfig = READING_DIFFICULTY_CONFIG[difficultyLevel];
 
   const formatTag = resolveReadingFormatTag(topic);
   const pedagogicalDescription = resolveReadingPedagogicalDescription(topic);

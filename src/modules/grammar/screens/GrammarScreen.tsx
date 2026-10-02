@@ -10,8 +10,24 @@ import { GrammarQuiz } from "../components/GrammarQuiz";
 import { PracticeHeader } from "@/components/practice/PracticeHeader";
 import { useLearningFocusMode } from "@/contexts/LearningFocusContext";
 
-export const GrammarScreen: React.FC = () => {
-  const [selectedTopicId, setSelectedTopicId] = useState<number | null>(null);
+export interface GrammarScreenProps {
+  activeTopicId?: number | null;
+  onExit?: () => void;
+}
+
+export const GrammarScreen: React.FC<GrammarScreenProps> = ({
+  activeTopicId,
+  onExit,
+}) => {
+  const [internalTopicId, setInternalTopicId] = useState<number | null>(null);
+  const selectedTopicId = activeTopicId !== undefined ? activeTopicId : internalTopicId;
+  const setSelectedTopicId = (id: number | null) => {
+    if (id === null && onExit) {
+      onExit();
+    } else {
+      setInternalTopicId(id);
+    }
+  };
   const { setFocusMode } = useLearningFocusMode();
 
   const topicsQuery = useQuery({
@@ -38,7 +54,11 @@ export const GrammarScreen: React.FC = () => {
   }, [selectedTopicId, setFocusMode]);
 
   const handleExitExercise = () => {
-    setSelectedTopicId(null);
+    if (onExit) {
+      onExit();
+    } else {
+      setInternalTopicId(null);
+    }
     setFocusMode(false);
   };
 

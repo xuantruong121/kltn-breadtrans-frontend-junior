@@ -7,6 +7,7 @@ export type ReadingCardStatus =
   | "LOCKED";
 
 export type DifficultyLevel = "ALL" | "BASIC" | "INTERMEDIATE" | "ADVANCED";
+export type ExerciseCategory = "ALL" | "READING" | "GRAMMAR";
 
 export interface DifficultyConfig {
   label: string;
@@ -15,6 +16,12 @@ export interface DifficultyConfig {
 }
 
 export const READING_DIFFICULTY_CONFIG: Record<string, DifficultyConfig> = {
+  BASIC: {
+    label: "Cơ bản",
+    badgeClass:
+      "border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300",
+    dotClass: "bg-emerald-500",
+  },
   BEGINNER: {
     label: "Cơ bản",
     badgeClass:
@@ -36,40 +43,88 @@ export const READING_DIFFICULTY_CONFIG: Record<string, DifficultyConfig> = {
 };
 
 /**
- * Matches reading topic difficulty accommodating level labels.
+ * Authoritatively resolves standard DifficultyLevel from CEFR level or item metadata.
+ * A1-A2 / Beginner -> BASIC (Cơ bản)
+ * B1-B2 / Intermediate -> INTERMEDIATE (Trung cấp)
+ * C1-C2 / Advanced -> ADVANCED (Nâng cao)
+ */
+export function resolveExerciseDifficulty(item: {
+  level?: string | null;
+  name?: string | null;
+  title?: string | null;
+  vietnameseName?: string | null;
+}): DifficultyLevel {
+  const rawLevel = (item.level || "").trim().toUpperCase();
+
+  // 1. Structured Level check
+  if (
+    rawLevel === "ADVANCED" ||
+    rawLevel.includes("C1") ||
+    rawLevel.includes("C2") ||
+    rawLevel.includes("NÂNG CAO")
+  ) {
+    return "ADVANCED";
+  }
+  if (
+    rawLevel === "INTERMEDIATE" ||
+    rawLevel.includes("B1") ||
+    rawLevel.includes("B2") ||
+    rawLevel.includes("TRUNG CẤP")
+  ) {
+    return "INTERMEDIATE";
+  }
+  if (
+    rawLevel === "BEGINNER" ||
+    rawLevel === "BASIC" ||
+    rawLevel.includes("A1") ||
+    rawLevel.includes("A2") ||
+    rawLevel.includes("CƠ BẢN")
+  ) {
+    return "BASIC";
+  }
+
+  // 2. Fallback to name/title/vietnameseName
+  const combined = `${item.name || ""} ${item.title || ""} ${item.vietnameseName || ""}`.toUpperCase();
+  if (combined.includes("C1") || combined.includes("C2") || combined.includes("NÂNG CAO")) {
+    return "ADVANCED";
+  }
+  if (combined.includes("B1") || combined.includes("B2") || combined.includes("TRUNG CẤP")) {
+    return "INTERMEDIATE";
+  }
+  return "BASIC";
+}
+
+/**
+ * Matches reading or grammar exercise difficulty.
  */
 export function matchesReadingDifficulty(
-  level: string,
+  levelOrItem:
+    | string
+    | {
+        level?: string | null;
+        name?: string | null;
+        title?: string | null;
+        vietnameseName?: string | null;
+      },
   selected: DifficultyLevel,
 ): boolean {
   if (selected === "ALL") return true;
-  const normalized = (level || "").toLowerCase();
-  if (selected === "BASIC") {
-    return (
-      normalized.includes("cơ bản") ||
-      normalized.includes("basic") ||
-      normalized.includes("beginner") ||
-      normalized.includes("a1") ||
-      normalized.includes("a2")
-    );
-  }
-  if (selected === "INTERMEDIATE") {
-    return (
-      normalized.includes("trung cấp") ||
-      normalized.includes("intermediate") ||
-      normalized.includes("b1") ||
-      normalized.includes("b2")
-    );
-  }
-  if (selected === "ADVANCED") {
-    return (
-      normalized.includes("nâng cao") ||
-      normalized.includes("advanced") ||
-      normalized.includes("c1") ||
-      normalized.includes("c2")
-    );
-  }
-  return true;
+  const resolved =
+    typeof levelOrItem === "string"
+      ? resolveExerciseDifficulty({ level: levelOrItem })
+      : resolveExerciseDifficulty(levelOrItem);
+  return resolved === selected;
+}
+
+/**
+ * Matches category filter (ALL, READING, GRAMMAR).
+ */
+export function matchesExerciseCategory(
+  itemCategory: "READING" | "GRAMMAR",
+  selectedCategory: ExerciseCategory,
+): boolean {
+  if (selectedCategory === "ALL") return true;
+  return itemCategory === selectedCategory;
 }
 
 /**
