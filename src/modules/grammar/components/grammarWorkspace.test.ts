@@ -214,13 +214,13 @@ describe("Focus-mode preservation", () => {
 describe("Responsive layout invariants", () => {
   test("left pane is desktop-only (hidden on tablet and mobile)", () => {
     // Left pane className contains 'hidden lg:flex' — visible only at lg+ (1024px+)
-    const leftPaneClasses = "hidden lg:flex w-56 xl:w-60 shrink-0 flex-col";
+    const leftPaneClasses = "hidden lg:flex w-72 xl:w-80 2xl:w-88 shrink-0 flex-col";
     assert.ok(leftPaneClasses.includes("hidden lg:flex"));
     assert.ok(!leftPaneClasses.includes("md:flex")); // NOT shown at tablet breakpoint
   });
 
   test("right pane is shown from tablet upward (md+)", () => {
-    const rightPaneClasses = "hidden md:flex w-64 xl:w-72 shrink-0 flex-col";
+    const rightPaneClasses = "hidden md:flex w-80 lg:w-96 xl:w-[420px] 2xl:w-[440px] shrink-0 flex-col";
     assert.ok(rightPaneClasses.includes("hidden md:flex"));
   });
 
