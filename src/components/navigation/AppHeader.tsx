@@ -584,22 +584,22 @@ export function AppHeader() {
       label: "Bảng xếp hạng",
       href: "/arena",
       icon: Trophy,
-      iconBg: "bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400",
-      description: "Bảng vàng thi đua tuần & EXP",
+      iconBg: "bg-amber-50 dark:bg-amber-950/70 text-amber-600 dark:text-amber-400 border border-amber-200/80 dark:border-amber-800/60",
+      description: "Bảng vàng thi đua tuần & tích lũy EXP",
     },
     {
       label: "Liên hệ",
       href: "/help",
       icon: CircleHelp,
-      iconBg: "bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400",
-      description: "Trung tâm trợ giúp & email hỗ trợ",
+      iconBg: "bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 border border-blue-200/80 dark:border-blue-800/60",
+      description: "Trung tâm trợ giúp & email hỗ trợ học tập",
     },
     {
       label: "Đề xuất",
       href: "/help#feedback",
       icon: Lightbulb,
-      iconBg: "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400",
-      description: "Đóng góp ý kiến cải tiến nền tảng",
+      iconBg: "bg-emerald-50 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/60",
+      description: "Đóng góp ý kiến cải tiến nền tảng & bài học",
     },
   ];
 
@@ -682,7 +682,7 @@ export function AppHeader() {
 
             {/* Dropdown Menu Panel */}
             <div
-              className={`absolute top-full right-0 pt-1.5 w-[280px] max-w-[calc(100vw-2rem)] z-50 transition-all duration-150 ${
+              className={`absolute top-full right-0 pt-2 w-[350px] max-w-[calc(100vw-2rem)] z-50 transition-all duration-150 ${
                 moreOpen
                   ? "opacity-100 pointer-events-auto translate-y-0"
                   : "opacity-0 pointer-events-none -translate-y-1 group-hover:opacity-100 group-hover:pointer-events-auto group-hover:translate-y-0"
@@ -691,7 +691,7 @@ export function AppHeader() {
               <div
                 id="more-navigation-menu"
                 role="menu"
-                className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-xl p-1.5 space-y-0.5"
+                className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xl p-2.5 space-y-1"
               >
                 {moreDropdownItems.map((item) => {
                   const active = isActivePath(pathname, item.href);
@@ -701,30 +701,30 @@ export function AppHeader() {
                       href={item.href}
                       onClick={closeMenus}
                       role="menuitem"
-                      className={`flex items-center gap-3 p-2 rounded-xl transition-colors ${
+                      className={`flex items-start gap-3.5 p-3 rounded-xl transition-all group/item ${
                         active
-                          ? "bg-amber-50/90 dark:bg-amber-950/60 text-amber-950 dark:text-amber-300 font-bold"
-                          : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 font-semibold"
+                          ? "bg-amber-50/90 dark:bg-amber-950/60 text-amber-950 dark:text-amber-300 font-bold border border-amber-200/70 dark:border-amber-800/60 shadow-2xs"
+                          : "text-slate-700 dark:text-slate-300 hover:bg-amber-50/50 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100 font-semibold"
                       }`}
                     >
                       <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                        className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform ${
                           active
-                            ? "bg-amber-600 text-white"
+                            ? "bg-amber-600 text-white shadow-xs"
                             : item.iconBg || "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
                         }`}
                       >
-                        <item.icon size={16} />
+                        <item.icon size={22} />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-bold truncate flex items-center justify-between">
+                      <div className="flex-1 min-w-0 pt-0.5">
+                        <div className="text-sm font-bold truncate flex items-center justify-between gap-2 group-hover/item:text-amber-800 dark:group-hover/item:text-amber-400 transition-colors">
                           <span>{item.label}</span>
                           {active && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-600 dark:bg-amber-500 shrink-0" />
+                            <span className="w-2 h-2 rounded-full bg-amber-600 dark:bg-amber-500 shrink-0" />
                           )}
                         </div>
                         {item.description && (
-                          <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                          <div className="text-xs font-medium text-slate-500 dark:text-slate-400 leading-snug mt-0.5 line-clamp-1">
                             {item.description}
                           </div>
                         )}
