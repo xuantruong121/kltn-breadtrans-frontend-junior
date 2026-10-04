@@ -1,62 +1,214 @@
 "use client";
 
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
-import { BookOpen, CheckCircle2, Library, Loader2, PlayCircle, RotateCcw } from "lucide-react";
+import {
+  AlertCircle,
+  Bookmark,
+  BookOpen,
+  Library,
+  RotateCcw,
+} from "lucide-react";
 import { vocabService } from "@/lib/api/services/vocab.service";
+import { FlashcardDeckCard } from "../components/FlashcardDeckCard";
+import { FlashcardStudySummary } from "../components/FlashcardStudySummary";
+import { FlashcardFilterBar } from "../components/FlashcardFilterBar";
+import {
+  computeFlashcardSummary,
+  extractUniqueCategories,
+  filterAndSortTopics,
+  FlashcardSortOption,
+  FlashcardStatusFilter,
+} from "../flashcardLogic";
 
-export const FlashcardScreen = () => {
-  const { data, isLoading, isError } = useQuery({ queryKey: ["vocab-topics"], queryFn: vocabService.getTopics });
-  const topics = data?.topics ?? [];
+// Skeleton card for non-distracting loading state
+const DeckCardSkeleton = () => (
+  <div className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 animate-pulse min-h-[230px]">
+    <div>
+      <div className="flex items-center justify-between gap-2">
+        <div className="h-4 w-24 rounded-md bg-slate-200 dark:bg-slate-800" />
+        <div className="h-5 w-16 rounded-full bg-slate-200 dark:bg-slate-800" />
+      </div>
+      <div className="mt-3 h-5 w-3/4 rounded-md bg-slate-200 dark:bg-slate-800" />
+      <div className="mt-2 h-4 w-1/2 rounded-md bg-slate-100 dark:bg-slate-800" />
+    </div>
+    <div className="mt-6 pt-3 border-t border-slate-100 dark:border-slate-800">
+      <div className="mb-2 flex justify-between">
+        <div className="h-3 w-16 rounded bg-slate-200 dark:bg-slate-800" />
+        <div className="h-3 w-12 rounded bg-slate-200 dark:bg-slate-800" />
+      </div>
+      <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800" />
+      <div className="mt-4 h-10 w-full rounded-xl bg-slate-200 dark:bg-slate-800" />
+    </div>
+  </div>
+);
+
+export const FlashcardScreen: React.FC = () => {
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ["vocab-topics"],
+    queryFn: vocabService.getTopics,
+  });
+
+  const topics = useMemo(() => data?.topics ?? [], [data]);
+
+  // Filter state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState<FlashcardStatusFilter>("ALL");
+  const [sortOption, setSortOption] = useState<FlashcardSortOption>("DEFAULT");
+
+  // Summary metrics computed strictly from authoritative data
+  const summaryMetrics = useMemo(() => computeFlashcardSummary(topics), [topics]);
+
+  // Unique categories derived dynamically from actual dataset
+  const uniqueCategories = useMemo(() => extractUniqueCategories(topics), [topics]);
+
+  // Filtered and sorted topics
+  const displayedTopics = useMemo(() => {
+    return filterAndSortTopics(topics, {
+      searchQuery,
+      selectedCategory,
+      statusFilter,
+      sortOption,
+    });
+  }, [topics, searchQuery, selectedCategory, statusFilter, sortOption]);
+
+  const hasActiveFilters =
+    searchQuery.trim().length > 0 ||
+    selectedCategory !== "ALL" ||
+    statusFilter !== "ALL" ||
+    sortOption !== "DEFAULT";
+
+  const handleResetFilters = () => {
+    setSearchQuery("");
+    setSelectedCategory("ALL");
+    setStatusFilter("ALL");
+    setSortOption("DEFAULT");
+  };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8">
-      <header className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 dark:border-amber-900/60 dark:from-amber-950/40 dark:to-slate-900 p-6 shadow-soft sm:p-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-start gap-3">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-amber-400 text-amber-950 dark:bg-amber-500 dark:text-slate-950" aria-hidden="true"><BookOpen size={24} /></span>
+    <div className="mx-auto max-w-7xl space-y-6 pb-12">
+      {/* ── Page Header: Compact, study-focused, no oversized hero ── */}
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/80 pb-6 dark:border-slate-800">
+        <div className="flex items-start gap-3">
+          <span
+            className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-amber-400 text-amber-950 dark:bg-amber-500 dark:text-slate-950 shadow-xs"
+            aria-hidden="true"
+          >
+            <BookOpen size={22} />
+          </span>
           <div>
-            <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 sm:text-3xl">Flashcard & từ vựng</h1>
-            <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-slate-600 dark:text-slate-300">Mỗi bộ từ dưới đây lấy trực tiếp từ hệ thống. Tiến độ đã thuộc, yêu thích và cần ôn được lưu riêng cho tài khoản của bạn.</p>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
+              Flashcard & từ vựng
+            </h1>
+            <p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-400">
+              Học từ mới, ôn đúng lúc và theo dõi tiến độ từng bộ từ.
+            </p>
           </div>
-          </div>
-          <Link href="/vocabulary/saved" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-amber-200 bg-white px-4 text-sm font-bold text-amber-700 hover:bg-amber-50 dark:border-amber-800/80 dark:bg-slate-900 dark:text-amber-300 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500">Từ đã lưu</Link>
+        </div>
+
+        {/* Saved words secondary action */}
+        <div className="flex shrink-0 items-center">
+          <Link
+            href="/vocabulary/saved"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-xs transition-colors hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            <Bookmark size={16} className="text-amber-500 dark:text-amber-400" aria-hidden="true" />
+            <span>Từ đã lưu</span>
+          </Link>
         </div>
       </header>
 
+      {/* ── Study Summary Strip (authoritative counts only) ────────── */}
+      {!isLoading && !isError && topics.length > 0 && (
+        <FlashcardStudySummary metrics={summaryMetrics} />
+      )}
+
+      {/* ── Search, Filters, and Sorting Controls ─────────────────── */}
+      {!isLoading && !isError && topics.length > 0 && (
+        <FlashcardFilterBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          categories={uniqueCategories}
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          sortOption={sortOption}
+          onSortOptionChange={setSortOption}
+          onResetFilters={handleResetFilters}
+          hasActiveFilters={hasActiveFilters}
+          totalFiltered={displayedTopics.length}
+        />
+      )}
+
+      {/* ── Main Catalog Grid ───────────────────────────────────────── */}
       {isLoading ? (
-        <div className="flex min-h-64 items-center justify-center"><Loader2 className="animate-spin text-amber-600 dark:text-amber-400" size={44} aria-label="Đang tải bộ từ vựng" /></div>
+        <div
+          className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          aria-busy="true"
+          aria-label="Đang tải các bộ từ vựng"
+        >
+          {Array.from({ length: 8 }).map((_, i) => (
+            <DeckCardSkeleton key={i} />
+          ))}
+        </div>
       ) : isError ? (
-        <div className="rounded-3xl border-2 border-dashed border-rose-200 bg-rose-50 dark:border-rose-900/60 dark:bg-rose-950/40 p-8 text-center text-rose-800 dark:text-rose-200"><p className="font-black">Không thể tải bộ từ vựng.</p><p className="mt-1 text-sm">Vui lòng thử lại sau.</p></div>
+        <div
+          role="alert"
+          className="rounded-2xl border border-rose-200 bg-rose-50 p-8 text-center text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200"
+        >
+          <AlertCircle className="mx-auto size-9 text-rose-500" aria-hidden="true" />
+          <p className="mt-3 font-bold">Không thể tải danh sách bộ từ vựng.</p>
+          <p className="mt-1 text-sm text-rose-600 dark:text-rose-300">
+            Vui lòng kiểm tra lại kết nối mạng hoặc thử lại.
+          </p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-rose-700"
+          >
+            <RotateCcw size={14} />
+            <span>Thử lại</span>
+          </button>
+        </div>
       ) : topics.length === 0 ? (
-        <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-10 text-center"><Library className="mx-auto text-slate-400 dark:text-slate-500" size={36} aria-hidden="true" /><p className="mt-3 font-black text-slate-700 dark:text-slate-300">Chưa có bộ từ vựng nào</p><p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Nội dung sẽ xuất hiện khi được quản trị viên thêm vào hệ thống.</p></div>
+        <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white p-10 text-center dark:border-slate-800 dark:bg-slate-900">
+          <Library className="mx-auto size-9 text-slate-400 dark:text-slate-500" aria-hidden="true" />
+          <p className="mt-3 font-bold text-slate-700 dark:text-slate-300">
+            Chưa có bộ từ vựng nào
+          </p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Nội dung sẽ xuất hiện khi quản trị viên thêm bộ từ vào hệ thống.
+          </p>
+        </div>
+      ) : displayedTopics.length === 0 ? (
+        <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white p-10 text-center dark:border-slate-800 dark:bg-slate-900">
+          <Library className="mx-auto size-9 text-slate-400 dark:text-slate-500" aria-hidden="true" />
+          <p className="mt-3 font-bold text-slate-800 dark:text-slate-200">
+            Không tìm thấy bộ từ phù hợp
+          </p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Thử thay đổi từ khóa tìm kiếm hoặc điều chỉnh lại bộ lọc trạng thái.
+          </p>
+          <button
+            type="button"
+            onClick={handleResetFilters}
+            className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:border-amber-500 hover:text-amber-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-amber-400 transition-colors"
+          >
+            <RotateCcw size={14} />
+            <span>Xóa toàn bộ lọc</span>
+          </button>
+        </div>
       ) : (
-        <section className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3" aria-label="Các bộ từ vựng">
-          {topics.map((topic, index) => {
-            const completed = topic.totalWords > 0 && topic.learnedCount >= topic.totalWords;
-            const percent = topic.totalWords > 0 ? Math.round((topic.learnedCount / topic.totalWords) * 100) : 0;
-            return (
-              <motion.article key={topic.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.04 }} whileHover={{ y: -4 }} className={`relative flex flex-col overflow-hidden rounded-2xl border bg-white dark:bg-slate-900 shadow-soft hover:shadow-card transition-all ${completed ? "border-emerald-300 dark:border-emerald-800" : "border-slate-200 dark:border-slate-800"}`}>
-                {completed && <span className="absolute right-4 top-4 z-10 flex size-9 items-center justify-center rounded-full bg-emerald-500 text-white" title="Đã thuộc toàn bộ từ"><CheckCircle2 size={19} aria-hidden="true" /></span>}
-                <div className="flex h-32 items-center justify-center bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-950/50 dark:to-orange-950/40 text-amber-500 dark:text-amber-400"><Library size={54} aria-hidden="true" /></div>
-                <div className="flex flex-1 flex-col p-6">
-                  <p className="text-xs font-black text-amber-700 dark:text-amber-400">{topic.categoryName}</p>
-                  <h2 className="mt-2 line-clamp-2 text-xl font-bold text-slate-900 dark:text-slate-100">{topic.title}</h2>
-                  <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">{topic.totalWords} từ • {topic.needReviewCount} từ cần ôn</p>
-                  <div className="mt-5">
-                    <div className="mb-1 flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400"><span>Tiến độ đã thuộc</span><span>{topic.learnedCount}/{topic.totalWords}</span></div>
-                    <div className="h-2.5 overflow-hidden rounded-full border border-amber-200 bg-amber-50 dark:border-amber-900/60 dark:bg-slate-800"><div className={`h-full transition-[width] ${completed ? "bg-emerald-500" : "bg-amber-400"}`} style={{ width: `${percent}%` }} /></div>
-                  </div>
-                  <Link href={`/practice/vocab/${topic.id}`} className="mt-6">
-                    <span className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold transition ${completed ? "bg-emerald-500 text-white hover:bg-emerald-600" : "bg-amber-400 text-amber-950 hover:bg-amber-500 dark:bg-amber-500 dark:text-slate-950 dark:hover:bg-amber-400"}`}>
-                      {completed ? <RotateCcw size={17} aria-hidden="true" /> : <PlayCircle size={17} aria-hidden="true" />}{completed ? "Ôn lại" : "Bắt đầu học"}
-                    </span>
-                  </Link>
-                </div>
-              </motion.article>
-            );
-          })}
+        <section
+          className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          aria-label="Danh sách bộ từ vựng"
+        >
+          {displayedTopics.map((topic) => (
+            <FlashcardDeckCard key={topic.id} topic={topic} />
+          ))}
         </section>
       )}
     </div>
