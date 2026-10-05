@@ -6,6 +6,8 @@ import {
   LISTENING_SHORTCUTS,
   handleListeningKeyboardShortcut,
   createListeningShortcutController,
+  createDictationReplayController,
+  type DictationReplayKey,
   isListeningShortcutIgnored,
   type ListeningWorkspaceShortcutActions,
 } from "./listeningShortcutConfig.ts";
@@ -475,4 +477,275 @@ test("Audio player: ListeningAudioPlayer no longer has conflicting Shift+ArrowLe
 
   assert.equal(content.includes('e.shiftKey && e.code === "ArrowLeft"'), false);
   assert.equal(content.includes('e.ctrlKey && e.code === "Space"'), false);
+});
+
+test("Header integration: DailyDictationWorkspace uses standardized PracticeHeader with bilingual, notes, shortcuts and sound controls", () => {
+  const dictationWorkspacePath = path.resolve(
+    process.cwd(),
+    "src/app/(student)/practice/listening/components/DailyDictationWorkspace.tsx",
+  );
+  const content = fs.readFileSync(dictationWorkspacePath, "utf-8");
+
+  // 1. Must import and render PracticeHeader
+  assert.ok(content.includes('import { PracticeHeader } from "@/components/practice/PracticeHeader"'));
+  assert.ok(content.includes("<PracticeHeader"));
+
+  // 2. Must wire required props
+  assert.ok(content.includes("title={quiz.title}"));
+  assert.ok(content.includes("positionText={`Câu ${currentIndex + 1} / ${questions.length}`}"));
+  assert.ok(content.includes('onExit={() => onExit("/practice/listening")}'));
+  assert.ok(content.includes("bilingualEnabled"));
+  assert.ok(content.includes("notesEnabled"));
+  assert.ok(content.includes("shortcutsEnabled"));
+  assert.ok(content.includes("soundEnabled"));
+
+  // 3. Must NOT contain the old redundant breadcrumbs or custom meta bar
+  assert.equal(content.includes("Thanh điều hướng phân cấp"), false);
+  assert.equal(content.includes("optionsRef"), false);
+  assert.equal(content.includes("isStarred"), false);
+});
+
+test("Translation card: DailyDictationWorkspace does not contain 'Translated by ChatGPT'", () => {
+  const dictationWorkspacePath = path.resolve(
+    process.cwd(),
+    "src/app/(student)/practice/listening/components/DailyDictationWorkspace.tsx",
+  );
+  const content = fs.readFileSync(dictationWorkspacePath, "utf-8");
+  assert.equal(content.includes("Translated by ChatGPT"), false);
+  assert.equal(content.includes("ChatGPT4.1"), false);
+});
+
+// ============================================================================
+// Dictation Replay Hotkey Configuration Tests
+// ============================================================================
+
+test("Dictation Replay: Default Ctrl keydown + keyup triggers replay exactly once; Alt and Shift do not replay", () => {
+  let replayCount = 0;
+  const activeKey: DictationReplayKey = "Ctrl";
+  const controller = createDictationReplayController(() => activeKey, () => {
+    replayCount += 1;
+  });
+
+  // 1. Standalone Ctrl triggers replay exactly once
+  controller.handleKeyDown(createMockEvent({ key: "Control", ctrlKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "Control", ctrlKey: false }).event);
+  assert.equal(replayCount, 1);
+
+  // 2. Alt does not replay when configured to Ctrl
+  controller.handleKeyDown(createMockEvent({ key: "Alt", altKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "Alt", altKey: false }).event);
+  assert.equal(replayCount, 1); // still 1
+
+  // 3. Shift does not replay when configured to Ctrl
+  controller.handleKeyDown(createMockEvent({ key: "Shift", shiftKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "Shift", shiftKey: false }).event);
+  assert.equal(replayCount, 1); // still 1
+});
+
+test("Dictation Replay: Configured Alt keydown + keyup triggers replay exactly once; Ctrl and Shift do not replay", () => {
+  let replayCount = 0;
+  const activeKey: DictationReplayKey = "Alt";
+  const controller = createDictationReplayController(() => activeKey, () => {
+    replayCount += 1;
+  });
+
+  // 1. Standalone Alt triggers replay exactly once
+  controller.handleKeyDown(createMockEvent({ key: "Alt", altKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "Alt", altKey: false }).event);
+  assert.equal(replayCount, 1);
+
+  // 2. Ctrl does not replay when configured to Alt
+  controller.handleKeyDown(createMockEvent({ key: "Control", ctrlKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "Control", ctrlKey: false }).event);
+  assert.equal(replayCount, 1);
+
+  // 3. Shift does not replay when configured to Alt
+  controller.handleKeyDown(createMockEvent({ key: "Shift", shiftKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "Shift", shiftKey: false }).event);
+  assert.equal(replayCount, 1);
+});
+
+test("Dictation Replay: Configured Shift standalone triggers replay exactly once; Ctrl and Alt do not replay", () => {
+  let replayCount = 0;
+  const activeKey: DictationReplayKey = "Shift";
+  const controller = createDictationReplayController(() => activeKey, () => {
+    replayCount += 1;
+  });
+
+  // 1. Standalone Shift triggers replay exactly once
+  controller.handleKeyDown(createMockEvent({ key: "Shift", shiftKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "Shift", shiftKey: false }).event);
+  assert.equal(replayCount, 1);
+
+  // 2. Ctrl does not replay when configured to Shift
+  controller.handleKeyDown(createMockEvent({ key: "Control", ctrlKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "Control", ctrlKey: false }).event);
+  assert.equal(replayCount, 1);
+
+  // 3. Alt does not replay when configured to Shift
+  controller.handleKeyDown(createMockEvent({ key: "Alt", altKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "Alt", altKey: false }).event);
+  assert.equal(replayCount, 1);
+});
+
+test("Dictation Replay: Modifier combinations (Ctrl+C, Ctrl+V, Ctrl+F, Ctrl+Arrow) do not replay", () => {
+  let replayCount = 0;
+  const controller = createDictationReplayController(() => "Ctrl", () => {
+    replayCount += 1;
+  });
+
+  // Ctrl+C
+  controller.handleKeyDown(createMockEvent({ key: "Control", ctrlKey: true }).event);
+  controller.handleKeyDown(createMockEvent({ key: "c", ctrlKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "c", ctrlKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "Control", ctrlKey: false }).event);
+  assert.equal(replayCount, 0);
+
+  // Ctrl+V
+  controller.handleKeyDown(createMockEvent({ key: "Control", ctrlKey: true }).event);
+  controller.handleKeyDown(createMockEvent({ key: "v", ctrlKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "v", ctrlKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "Control", ctrlKey: false }).event);
+  assert.equal(replayCount, 0);
+
+  // Ctrl+F
+  controller.handleKeyDown(createMockEvent({ key: "Control", ctrlKey: true }).event);
+  controller.handleKeyDown(createMockEvent({ key: "f", ctrlKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "f", ctrlKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "Control", ctrlKey: false }).event);
+  assert.equal(replayCount, 0);
+
+  // Ctrl+ArrowRight
+  controller.handleKeyDown(createMockEvent({ key: "Control", ctrlKey: true }).event);
+  controller.handleKeyDown(createMockEvent({ key: "ArrowRight", ctrlKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "ArrowRight", ctrlKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "Control", ctrlKey: false }).event);
+  assert.equal(replayCount, 0);
+
+  // Ctrl+ArrowLeft
+  controller.handleKeyDown(createMockEvent({ key: "Control", ctrlKey: true }).event);
+  controller.handleKeyDown(createMockEvent({ key: "ArrowLeft", ctrlKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "ArrowLeft", ctrlKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "Control", ctrlKey: false }).event);
+  assert.equal(replayCount, 0);
+});
+
+test("Dictation Replay: Alt+Tab, Alt+R, and held keydown repeated events do not cause duplicate replay", () => {
+  let replayCount = 0;
+  const controller = createDictationReplayController(() => "Alt", () => {
+    replayCount += 1;
+  });
+
+  // Alt+Tab
+  controller.handleKeyDown(createMockEvent({ key: "Alt", altKey: true }).event);
+  controller.handleKeyDown(createMockEvent({ key: "Tab", altKey: true }).event);
+  controller.handleBlur(); // window blur on tab switch
+  controller.handleKeyUp(createMockEvent({ key: "Alt", altKey: false }).event);
+  assert.equal(replayCount, 0);
+
+  // Alt+R does not replay unless standalone Alt
+  controller.handleKeyDown(createMockEvent({ key: "Alt", altKey: true }).event);
+  controller.handleKeyDown(createMockEvent({ key: "r", altKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "r", altKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "Alt", altKey: false }).event);
+  assert.equal(replayCount, 0);
+
+  // Repeated keydown while held
+  controller.handleKeyDown(createMockEvent({ key: "Alt", altKey: true, repeat: false }).event);
+  controller.handleKeyDown(createMockEvent({ key: "Alt", altKey: true, repeat: true }).event);
+  controller.handleKeyDown(createMockEvent({ key: "Alt", altKey: true, repeat: true }).event);
+  assert.equal(replayCount, 0); // none while held
+  controller.handleKeyUp(createMockEvent({ key: "Alt", altKey: false }).event);
+  assert.equal(replayCount, 1); // exactly once on release
+});
+
+test("Dictation integration: Parent shortcut controller does not replay Ctrl when isDictation is true", () => {
+  const { actions, calls } = createMockActions({ isDictation: true });
+  const parentController = createListeningShortcutController(() => actions);
+
+  // 1. Parent controller receives Ctrl down + up while in dictation
+  parentController.handleKeyDown(createMockEvent({ key: "Control", ctrlKey: true }).event);
+  parentController.handleKeyUp(createMockEvent({ key: "Control", ctrlKey: false }).event);
+
+  // 2. Parent MUST NOT trigger replayAudio (skipped completely for Dictation)
+  assert.equal(calls.replayAudio.length, 0);
+
+  // 3. DailyDictationWorkspace Replay controller handles the configured key independently
+  let dictationReplayCount = 0;
+  const configuredKey: DictationReplayKey = "Alt";
+  const dictationController = createDictationReplayController(() => configuredKey, () => {
+    dictationReplayCount += 1;
+  });
+
+  // Pressing Ctrl does not trigger dictation replay because configuredKey is Alt
+  dictationController.handleKeyDown(createMockEvent({ key: "Control", ctrlKey: true }).event);
+  dictationController.handleKeyUp(createMockEvent({ key: "Control", ctrlKey: false }).event);
+  assert.equal(dictationReplayCount, 0);
+
+  // Pressing Alt triggers dictation replay exactly once
+  dictationController.handleKeyDown(createMockEvent({ key: "Alt", altKey: true }).event);
+  dictationController.handleKeyUp(createMockEvent({ key: "Alt", altKey: false }).event);
+  assert.equal(dictationReplayCount, 1);
+});
+
+test("Lifecycle: Switching configured replay key from Ctrl -> Alt -> Shift dynamically removes previous key", () => {
+  let replayCount = 0;
+  let configuredKey: DictationReplayKey = "Ctrl";
+  const controller = createDictationReplayController(() => configuredKey, () => {
+    replayCount += 1;
+  });
+
+  // 1. Initially Ctrl
+  controller.handleKeyDown(createMockEvent({ key: "Control", ctrlKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "Control", ctrlKey: false }).event);
+  assert.equal(replayCount, 1);
+
+  // 2. Switch to Alt (simulating Settings modal Done click)
+  controller.reset();
+  configuredKey = "Alt";
+
+  // Old key Ctrl no longer replays
+  controller.handleKeyDown(createMockEvent({ key: "Control", ctrlKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "Control", ctrlKey: false }).event);
+  assert.equal(replayCount, 1); // still 1
+
+  // New key Alt replays
+  controller.handleKeyDown(createMockEvent({ key: "Alt", altKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "Alt", altKey: false }).event);
+  assert.equal(replayCount, 2);
+
+  // 3. Switch to Shift
+  controller.reset();
+  configuredKey = "Shift";
+
+  // Old key Alt no longer replays
+  controller.handleKeyDown(createMockEvent({ key: "Alt", altKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "Alt", altKey: false }).event);
+  assert.equal(replayCount, 2); // still 2
+
+  // New key Shift replays
+  controller.handleKeyDown(createMockEvent({ key: "Shift", shiftKey: true }).event);
+  controller.handleKeyUp(createMockEvent({ key: "Shift", shiftKey: false }).event);
+  assert.equal(replayCount, 3);
+});
+
+test("Obsolete logic removal: DailyDictationWorkspace.tsx does not contain legacy Alt shortcuts or external replay listener", () => {
+  const dictationWorkspacePath = path.resolve(
+    process.cwd(),
+    "src/app/(student)/practice/listening/components/DailyDictationWorkspace.tsx",
+  );
+  const content = fs.readFileSync(dictationWorkspacePath, "utf-8");
+
+  // 1. Must NOT contain hard-coded Alt+R replay
+  assert.equal(content.includes('e.altKey && e.key.toLowerCase() === "r"'), false);
+
+  // 2. Must NOT contain obsolete legacy shortcuts (Alt+S, Alt+A, Alt+T, Alt+Space, Ctrl+Space)
+  assert.equal(content.includes('e.altKey && e.key.toLowerCase() === "s"'), false);
+  assert.equal(content.includes('e.altKey && e.key.toLowerCase() === "a"'), false);
+  assert.equal(content.includes('e.altKey && e.key.toLowerCase() === "t"'), false);
+  assert.equal(content.includes('e.altKey && e.code === "Space"'), false);
+  assert.equal(content.includes('e.ctrlKey && e.code === "Space"'), false);
+
+  // 3. Must NOT listen to external breadtrans:replay-listening-audio event (no multiple replay sources)
+  assert.equal(content.includes('addEventListener("breadtrans:replay-listening-audio"'), false);
 });

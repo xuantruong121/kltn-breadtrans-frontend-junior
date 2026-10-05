@@ -9,7 +9,6 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Clock,
   Download,
   Globe,
   Keyboard,
@@ -27,13 +26,19 @@ import {
   RotateCcw,
   Send,
   Settings,
-  Share2,
-  Star,
+  StickyNote,
   Volume2,
   VolumeX,
   X,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { PracticeHeader } from "@/components/practice/PracticeHeader";
+import {
+  LISTENING_SHORTCUTS,
+  createDictationReplayController,
+  type DictationReplayKey,
+} from "./listeningShortcutConfig";
+import { useAuthStore } from "@/stores/authStore";
 import { WordDictionaryPopup } from "@/components/speaking/WordDictionaryPopup";
 import { issueReportService } from "@/lib/api/services/issue-report.service";
 import {
@@ -43,6 +48,12 @@ import {
   type Quiz,
   quizService,
 } from "@/lib/api/services/quiz.service";
+import {
+  probeOrPrefetchTranscript,
+  revealAndFetchTranscript,
+  getCachedTranscriptResources,
+  retainTranscriptConsumer,
+} from "./listeningTranscriptResources";
 import {
   type DictationDiffToken,
   buildProgressiveAnswer,
@@ -143,6 +154,7 @@ export function DailyDictationWorkspace({
   onPrev,
   onFinalSubmit,
   isSubmitting,
+  reviewOnly = false,
   onExit,
   accent = "US",
   onChangeAccent,
@@ -161,15 +173,45 @@ export function DailyDictationWorkspace({
   // turn the question into a skipped/completed outcome.
   const isCompletedOrRevealed = isSkipped || Boolean(isChecked && currentCheck?.isCorrect);
   const [activeTab, setActiveTab] = useState<"dictation" | "transcript">("dictation");
-  const [isStarred, setIsStarred] = useState(false);
-  const [elapsedMinutes, setElapsedMinutes] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
-  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [isBilingual, setIsBilingual] = useState(true);
   const [showAudioMenu, setShowAudioMenu] = useState(false);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [tipIndex, setTipIndex] = useState(0);
   const [selectedWordForLookup, setSelectedWordForLookup] = useState<string | null>(null);
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const quizId = quiz?.id;
+  const utilityKey = `breadtrans:listening-utilities:user-${userId ?? "unknown"}:quiz-${quizId ?? "unknown"}`;
+
+  useEffect(() => {
+    if (!quizId || !userId) return;
+
+    const timer = window.setTimeout(() => {
+      try {
+        const stored = JSON.parse(
+          localStorage.getItem(utilityKey) ?? "{}",
+        );
+        setNotes(typeof stored.notes === "string" ? stored.notes : "");
+      } catch {
+        setNotes("");
+      }
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [quizId, utilityKey, userId]);
+
+  useEffect(() => {
+    if (!quizId) return;
+    try {
+      const stored = JSON.parse(localStorage.getItem(utilityKey) ?? "{}");
+      localStorage.setItem(utilityKey, JSON.stringify({ ...stored, notes }));
+    } catch {
+      // ignore
+    }
+  }, [notes, quizId, utilityKey]);
 
   // Translation Card Actions State (Edit suggestion, Language dropdown, etc.)
   const [showTranslationMenu, setShowTranslationMenu] = useState(false);
@@ -187,7 +229,6 @@ export function DailyDictationWorkspace({
 
   // Audio Player State
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const audioBlobUrlRef = useRef<string | null>(null);
   const playbackRateRef = useRef(1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -195,7 +236,7 @@ export function DailyDictationWorkspace({
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(1);
   const [playbackRate, setPlaybackRate] = useState(1);
-  const [replayKey, setReplayKey] = useState("Ctrl");
+  const [replayKey, setReplayKey] = useState<DictationReplayKey>("Ctrl");
   const [playPauseKey, setPlayPauseKey] = useState("`");
   const [autoReplay, setAutoReplay] = useState(false);
   const [replayDelay, setReplayDelay] = useState("0.5");
@@ -211,7 +252,6 @@ export function DailyDictationWorkspace({
   const [activeTranscriptSpeakerTurnId, setActiveTranscriptSpeakerTurnId] = useState<string | null>(null);
   const [isTranscriptLoading, setIsTranscriptLoading] = useState(false);
   const [transcriptError, setTranscriptError] = useState<string | null>(null);
-  const [transcriptReloadKey, setTranscriptReloadKey] = useState(0);
   const [selectedTranslationLanguage, setSelectedTranslationLanguage] = useState<"none" | "vi">("none");
   const [repeatTranscript, setRepeatTranscript] = useState(false);
   const [autoScrollTranscript, setAutoScrollTranscript] = useState(true);
@@ -221,6 +261,7 @@ export function DailyDictationWorkspace({
   const activeTranscriptRowRef = useRef<HTMLButtonElement | null>(null);
   const transcriptListRef = useRef<HTMLDivElement | null>(null);
   const transcriptAudioRequestRef = useRef<AbortController | null>(null);
+  const questionAudioCacheRef = useRef<Map<string, { blob: Blob; url: string }>>(new Map());
   const activeAudioVersion = currentQuestion?.audioAssets?.find((asset) => asset.isActive)?.version;
   const currentContent = (currentQuestion?.content ?? {}) as Record<string, any>;
   const currentSegment = Array.isArray(currentContent.transcriptSegments)
@@ -245,17 +286,8 @@ export function DailyDictationWorkspace({
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const settingsRef = useRef<HTMLDivElement | null>(null);
-  const optionsRef = useRef<HTMLDivElement | null>(null);
   const audioMenuRef = useRef<HTMLDivElement | null>(null);
   const speedMenuRef = useRef<HTMLDivElement | null>(null);
-
-  // Practice timer (minutes)
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setElapsedMinutes((m) => m + 1);
-    }, 60000);
-    return () => clearInterval(timer);
-  }, []);
 
   const focusInputAtEnd = useCallback(() => {
     if (isCompletedOrRevealed || activeTab !== "dictation") return;
@@ -467,21 +499,35 @@ export function DailyDictationWorkspace({
     }
   };
 
-  // Fetch audio blob when question changes
+  // Fetch audio blob when question changes; cached to prevent re-downloads on tab switches
   useEffect(() => {
-    // Full transcript mode owns the shared player and advances through the
-    // sentence playlist. Do not replace its source when the highlighted row
-    // changes.
-    if (activeTab === "transcript") return;
+    const questionCacheKey = `${quiz.id}:${currentQuestion.id}:${activeAudioVersion ?? 0}`;
+    const cached = questionAudioCacheRef.current.get(questionCacheKey);
+
+    if (cached) {
+      if (activeTab === "dictation") {
+        setAudioBlobUrl(cached.url);
+        setAudioLoading(false);
+        setAudioError(false);
+        if (audioRef.current) {
+          audioRef.current.src = cached.url;
+          audioRef.current.playbackRate = playbackRateRef.current;
+          audioRef.current.load();
+        }
+      }
+      return;
+    }
 
     const controller = new AbortController();
     let isMounted = true;
     const resetTimer = window.setTimeout(() => {
       if (!isMounted) return;
-      setAudioLoading(true);
-      setAudioError(false);
-      setIsPlaying(false);
-      setCurrentTime(0);
+      if (activeTab === "dictation") {
+        setAudioLoading(true);
+        setAudioError(false);
+        setIsPlaying(false);
+        setCurrentTime(0);
+      }
     }, 0);
 
     quizService
@@ -494,28 +540,31 @@ export function DailyDictationWorkspace({
       )
       .then((blob) => {
         if (!isMounted) return;
-        if (audioBlobUrlRef.current) {
-          URL.revokeObjectURL(audioBlobUrlRef.current);
-        }
         const url = URL.createObjectURL(blob);
-        audioBlobUrlRef.current = url;
-        setAudioBlobUrl(url);
-        setAudioLoading(false);
+        questionAudioCacheRef.current.set(questionCacheKey, { blob, url });
 
-        if (audioRef.current) {
-          audioRef.current.src = url;
-          audioRef.current.playbackRate = playbackRateRef.current;
-          audioRef.current.load();
-          if (autoplayOnLoadRef.current) {
-            autoplayOnLoadRef.current = false;
-            void audioRef.current.play().catch(() => setIsPlaying(false));
+        if (activeTab === "dictation") {
+          setAudioBlobUrl(url);
+          setAudioLoading(false);
+          setAudioError(false);
+
+          if (audioRef.current) {
+            audioRef.current.src = url;
+            audioRef.current.playbackRate = playbackRateRef.current;
+            audioRef.current.load();
+            if (autoplayOnLoadRef.current) {
+              autoplayOnLoadRef.current = false;
+              void audioRef.current.play().catch(() => setIsPlaying(false));
+            }
           }
         }
       })
       .catch((err) => {
         if (!isMounted || err?.name === "AbortError" || err?.name === "CanceledError") return;
-        setAudioError(true);
-        setAudioLoading(false);
+        if (activeTab === "dictation") {
+          setAudioError(true);
+          setAudioLoading(false);
+        }
       });
 
     return () => {
@@ -523,101 +572,51 @@ export function DailyDictationWorkspace({
       window.clearTimeout(resetTimer);
       controller.abort();
     };
-  }, [activeAudioVersion, activeTab, currentQuestion.id, quiz.id, quiz.listeningAudioArtifact]);
+  }, [activeAudioVersion, currentQuestion.id, quiz.id, quiz.listeningAudioArtifact]);
 
   useEffect(() => {
     if (!audioRef.current) return;
     audioRef.current.volume = isMuted ? 0 : volume;
   }, [isMuted, volume]);
 
-  // Answers are redacted from the initial quiz payload. Load the complete
-  // dictation script only when the learner explicitly opens this tab.
+  // Safe background probe or prefetch of permitted transcript resources on mount
   useEffect(() => {
-    if (activeTab !== "transcript") return;
     const controller = new AbortController();
-    transcriptAudioRequestRef.current = controller;
-    let cancelled = false;
-    const loadingFrame = window.setTimeout(() => {
-      if (!cancelled) {
-        setIsTranscriptLoading(true);
-        setTranscriptError(null);
-      }
-    }, 0);
-    quizService
-      .revealListeningTranscript(quiz.id)
-      .then(async () => {
-        const transcriptResult = await quizService.getListeningTranscript(quiz.id);
-        if (cancelled) return;
-        let audioResult: { status: "fulfilled"; value: Blob } | { status: "rejected"; reason: unknown };
-        try {
-          audioResult = {
-            status: "fulfilled",
-            value: await quizService.getListeningTranscriptAudioBlob(
-              quiz.id,
-              controller.signal,
-              transcriptResult.audioArtifact,
-            ),
-          };
-        } catch (reason) {
-          audioResult = { status: "rejected", reason };
-        }
-
-        // A revealed sentence-level Dictation quiz may have no quiz-level
-        // production track. Keep the authorized transcript usable instead of
-        // discarding it because the optional full-track request returned 503.
-        setFullTranscript(transcriptResult.items);
-        setSelectedTranscriptItemIndex(0);
-        setActiveTranscriptItemIndex(0);
-        setActiveTranscriptSpeakerTurnId(transcriptResult.items[0]?.speakerTurnId ?? null);
-        setTranscriptError(null);
-        setAudioLoading(false);
-        setAudioError(audioResult.status === "rejected");
-        setAudioNotice(
-          audioResult.status === "rejected"
-            ? "Bản ghi âm toàn bài đang được quản trị viên chuẩn bị. Bạn vẫn có thể xem kịch bản."
-            : null,
-        );
-
-        if (audioResult.status === "fulfilled") {
-          if (audioBlobUrlRef.current) URL.revokeObjectURL(audioBlobUrlRef.current);
-          const url = URL.createObjectURL(audioResult.value);
-          audioBlobUrlRef.current = url;
-          setAudioBlobUrl(url);
-          if (audioRef.current) {
-            audioRef.current.src = url;
-            audioRef.current.playbackRate = playbackRateRef.current;
-            audioRef.current.load();
-          }
+    void probeOrPrefetchTranscript(quiz.id, quiz, controller.signal)
+      .then((entry) => {
+        if (entry.authorizationStatus === "authorized" && entry.transcript) {
+          setFullTranscript(entry.transcript);
+          setAudioNotice(entry.audioNotice);
         }
       })
-      .catch((error) => {
-        if (cancelled || error?.name === "AbortError" || error?.name === "CanceledError") return;
-        setTranscriptError("Chưa tải được toàn bộ kịch bản. Bạn hãy thử lại.");
-        setAudioError(true);
-        setAudioNotice(null);
-        setAudioLoading(false);
-      })
-      .finally(() => {
-        if (!cancelled) setIsTranscriptLoading(false);
-      });
+      .catch(() => undefined);
+
     return () => {
-      cancelled = true;
-      window.clearTimeout(loadingFrame);
       controller.abort();
-      if (transcriptAudioRequestRef.current === controller) {
-        transcriptAudioRequestRef.current = null;
-      }
     };
-  }, [activeTab, quiz.id, transcriptReloadKey]);
+  }, [quiz.id, quiz]);
 
-  // Cleanup object url on unmount
+  // Retain transcript resource cache ownership while mounted
   useEffect(() => {
+    const release = retainTranscriptConsumer(quiz.id);
+    return () => {
+      release();
+    };
+  }, [quiz.id]);
+
+  // Cleanup object urls on unmount
+  useEffect(() => {
+    const questionCache = questionAudioCacheRef.current;
     return () => {
       transcriptAudioRequestRef.current?.abort();
-      if (audioBlobUrlRef.current) {
-        URL.revokeObjectURL(audioBlobUrlRef.current);
-        audioBlobUrlRef.current = null;
+      for (const item of questionCache.values()) {
+        try {
+          URL.revokeObjectURL(item.url);
+        } catch {
+          // ignore
+        }
       }
+      questionCache.clear();
     };
   }, []);
 
@@ -788,9 +787,27 @@ export function DailyDictationWorkspace({
     }
   };
 
-  // Keyboard Shortcuts (Space = Play/Pause, Enter = Check)
+  // Keyboard Shortcuts (Space = Play/Pause, Enter = Check, Replay = Configured candidate keyup)
   useEffect(() => {
+    const isAnyModalOpen =
+      showSettings ||
+      showShortcutsModal ||
+      showNotesModal ||
+      showEditTranslationModal ||
+      showChangeLanguageModal ||
+      showAddLanguageModal;
+
+    const replayController = createDictationReplayController(
+      () => replayKey,
+      () => replayAudio(),
+    );
+
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (isAnyModalOpen) {
+        replayController.reset();
+        return;
+      }
+
       const activeElement = document.activeElement;
       const isTypingTarget =
         activeElement instanceof HTMLTextAreaElement ||
@@ -798,54 +815,23 @@ export function DailyDictationWorkspace({
         activeElement instanceof HTMLSelectElement ||
         activeElement?.getAttribute("contenteditable") === "true";
 
-      // Keep the Dictation shortcuts explicit and scoped to this workspace.
-      // Modifier shortcuts are allowed while the textarea is focused; bare
-      // Space and arrow keys remain native text-editing controls there.
-      if (e.ctrlKey && e.code === "Space") {
+      // 1. Process candidate model for configured replay key
+      replayController.handleKeyDown(e);
+
+      // 2. Arrow navigation with Ctrl
+      if (e.ctrlKey && e.key === "ArrowRight") {
         e.preventDefault();
-        togglePlay();
+        if (currentIndex < questions.length - 1) onNext();
         return;
       }
-      if (e.ctrlKey && e.key === "Enter" && activeTab === "dictation") {
+      if (e.ctrlKey && e.key === "ArrowLeft") {
         e.preventDefault();
-        if (!isChecking && !isCompletedOrRevealed) void handlePerformCheck();
-        return;
-      }
-      if (e.altKey && e.key.toLowerCase() === "r") {
-        e.preventDefault();
-        replayAudio();
-        return;
-      }
-      if (e.altKey && e.key.toLowerCase() === "s") {
-        e.preventDefault();
-        if (!isChecking && !isCompletedOrRevealed) handleSkipSentence();
-        return;
-      }
-      if (e.altKey && e.key.toLowerCase() === "a") {
-        e.preventDefault();
-        if (isChecked && !isCompletedOrRevealed) onToggleReveal();
-        return;
-      }
-      if (e.altKey && e.key.toLowerCase() === "t") {
-        e.preventDefault();
-        setActiveTab("transcript");
+        if (currentIndex > 0) onPrev();
         return;
       }
 
-      // Alt+Space remains a local fallback.
-      if (e.altKey && e.code === "Space") {
-        e.preventDefault();
-        togglePlay();
-        return;
-      }
-
-      // Modal open guards
-      if (showSettings || showShortcutsModal) {
-        return;
-      }
-
-      // If the question is already completed, correct, or skipped (revealed), Enter advances to the next question
-      if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.altKey) {
+      // 3. Enter -> Check Answer OR Advance to next question
+      if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
         if (isCompletedOrRevealed) {
           e.preventDefault();
           if (isLastQuestion) {
@@ -871,42 +857,31 @@ export function DailyDictationWorkspace({
         }
       }
 
+      // 4. Configured play/pause key
       const playPausePressed =
         playPauseKey === "Space"
-          ? e.code === "Space" && !e.ctrlKey && !e.altKey
+          ? e.code === "Space" && !e.ctrlKey && !e.altKey && !e.metaKey && !isTypingTarget
           : playPauseKey === "`"
-            ? e.key === "`" || e.code === "Backquote"
-            : playPauseKey === "Enter" && activeTab !== "dictation"
-              ? e.key === "Enter"
-              : e.key === "`" || e.code === "Backquote";
+            ? (e.key === "`" || e.code === "Backquote") && !e.ctrlKey && !e.altKey && !e.metaKey
+            : playPauseKey === "Enter" && activeTab !== "dictation" && !isTypingTarget
+              ? e.key === "Enter" && !e.ctrlKey && !e.altKey && !e.metaKey
+              : (e.key === "`" || e.code === "Backquote") && !e.ctrlKey && !e.altKey && !e.metaKey;
 
-      // Configured playback shortcuts are intentional controls, so they must
-      // still work while the learner is focused in the dictation textarea.
       if (playPausePressed) {
         e.preventDefault();
         togglePlay();
         return;
       }
 
-      const replayPressed =
-        !e.repeat &&
-        ((replayKey === "Ctrl" && e.key === "Control" && e.ctrlKey) ||
-          (replayKey === "Alt" && e.key === "Alt" && e.altKey) ||
-          (replayKey === "Shift" && e.key === "Shift" && e.shiftKey));
-      if (replayPressed) {
+      // 5. Bare Space outside textarea toggles playback
+      if (!isTypingTarget && e.code === "Space" && !e.ctrlKey && !e.altKey && !e.metaKey) {
         e.preventDefault();
-        replayAudio();
-        return;
-      }
-
-      // If not in textarea, bare Space toggles playback
-      if (!isTypingTarget && e.code === "Space") {
-        e.preventDefault();
+        e.stopPropagation();
         togglePlay();
         return;
       }
 
-      // Arrow navigation in transcript mode (bare ArrowLeft / ArrowRight)
+      // 6. Arrow navigation in transcript mode (bare ArrowLeft / ArrowRight)
       if (!isTypingTarget && activeTab === "transcript") {
         if (e.key === "ArrowRight") {
           e.preventDefault();
@@ -925,57 +900,54 @@ export function DailyDictationWorkspace({
           return;
         }
       }
-
-      // Arrow navigation with Ctrl
-      if (e.ctrlKey && e.key === "ArrowRight") {
-        e.preventDefault();
-        if (currentIndex < questions.length - 1) onNext();
-      } else if (e.ctrlKey && e.key === "ArrowLeft") {
-        e.preventDefault();
-        if (currentIndex > 0) onPrev();
-      }
     };
 
-    const handleSharedToggle = () => togglePlay();
-    const handleSharedReplay = () => replayAudio();
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (isAnyModalOpen) {
+        replayController.reset();
+        return;
+      }
+      replayController.handleKeyUp(e);
+    };
+
+    const handleBlur = () => {
+      replayController.handleBlur();
+    };
 
     window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("breadtrans:toggle-listening-audio", handleSharedToggle);
-    window.addEventListener("breadtrans:replay-listening-audio", handleSharedReplay);
+    window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", handleBlur);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("breadtrans:toggle-listening-audio", handleSharedToggle);
-      window.removeEventListener("breadtrans:replay-listening-audio", handleSharedReplay);
+      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", handleBlur);
     };
   }, [
     activeTab,
-    isChecked,
+    currentIndex,
+    handlePerformCheck,
     isChecking,
     isCompletedOrRevealed,
     isLastQuestion,
-    currentIndex,
-    questions.length,
-    playPauseKey,
-    replayKey,
-    showSettings,
-    showShortcutsModal,
-    handlePerformCheck,
-    handleSkipSentence,
-    focusInputAtEnd,
+    onFinalSubmit,
     onNext,
     onPrev,
-    onFinalSubmit,
+    playPauseKey,
+    questions.length,
     replayAudio,
-    onToggleReveal,
+    replayKey,
+    showAddLanguageModal,
+    showChangeLanguageModal,
+    showEditTranslationModal,
+    showNotesModal,
+    showSettings,
+    showShortcutsModal,
     togglePlay,
   ]);
 
   // Click outside listener for popovers
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (optionsRef.current && !optionsRef.current.contains(e.target as Node)) {
-        setShowOptionsMenu(false);
-      }
       if (audioMenuRef.current && !audioMenuRef.current.contains(e.target as Node)) {
         setShowAudioMenu(false);
       }
@@ -991,15 +963,16 @@ export function DailyDictationWorkspace({
   }, []);
 
   useEffect(() => {
-    if (!showSettings && !showShortcutsModal) return;
+    if (!showSettings && !showShortcutsModal && !showNotesModal) return;
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       if (showSettings) setShowSettings(false);
-      else setShowShortcutsModal(false);
+      else if (showShortcutsModal) setShowShortcutsModal(false);
+      else if (showNotesModal) setShowNotesModal(false);
     };
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [showSettings, showShortcutsModal]);
+  }, [showSettings, showShortcutsModal, showNotesModal]);
 
   const transcriptCursorIndex = clampTranscriptIndex(selectedTranscriptItemIndex, fullTranscript.length);
   const activeTranscriptItem =
@@ -1011,151 +984,192 @@ export function DailyDictationWorkspace({
     activeTranscriptItem?.translation ||
     null;
   const vocabLevel = level || quiz.bilingualContent?.skillLabel || "A1";
-  const categoryTitle =
-    (currentQuestion?.content as any)?.category ||
-    (quiz as any).category ||
-    quiz.bilingualContent?.skillLabel ||
-    "Short Stories";
+
+  const loadTranscript = useCallback(
+    async (forceReload = false) => {
+      setIsTranscriptLoading(true);
+      setTranscriptError(null);
+      const controller = new AbortController();
+      transcriptAudioRequestRef.current = controller;
+
+      try {
+        const res = await revealAndFetchTranscript(
+          quiz.id,
+          quiz,
+          controller.signal,
+          undefined,
+          forceReload,
+        );
+
+        setFullTranscript(res.transcript ?? []);
+        setSelectedTranscriptItemIndex(0);
+        setActiveTranscriptItemIndex(0);
+        setActiveTranscriptSpeakerTurnId(res.transcript?.[0]?.speakerTurnId ?? null);
+        setAudioNotice(res.audioNotice);
+        setAudioError(res.audioError);
+        setAudioLoading(false);
+
+        if (res.audioBlobUrl) {
+          setAudioBlobUrl(res.audioBlobUrl);
+          if (audioRef.current) {
+            audioRef.current.src = res.audioBlobUrl;
+            audioRef.current.playbackRate = playbackRateRef.current;
+            audioRef.current.load();
+            setCurrentTime(0);
+          }
+        }
+      } catch (error: any) {
+        if (error?.name === "AbortError" || error?.name === "CanceledError") return;
+        setTranscriptError("Chưa tải được toàn bộ kịch bản. Bạn hãy thử lại.");
+        setAudioError(true);
+        setAudioLoading(false);
+      } finally {
+        setIsTranscriptLoading(false);
+        if (transcriptAudioRequestRef.current === controller) {
+          transcriptAudioRequestRef.current = null;
+        }
+      }
+    },
+    [quiz],
+  );
 
   const openTranscriptTab = () => {
     setTranscriptError(null);
-    setIsTranscriptLoading(true);
     setActiveTab("transcript");
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    }
+
+    const cached = getCachedTranscriptResources(quiz.id, quiz.listeningAudioArtifact);
+    if (cached?.transcript && cached.authorizationStatus === "authorized") {
+      setFullTranscript(cached.transcript);
+      setIsTranscriptLoading(false);
+      setAudioNotice(cached.audioNotice);
+      setAudioError(cached.audioError);
+      setAudioLoading(false);
+
+      if (cached.audioBlobUrl) {
+        setAudioBlobUrl(cached.audioBlobUrl);
+        if (audioRef.current) {
+          audioRef.current.src = cached.audioBlobUrl;
+          audioRef.current.playbackRate = playbackRateRef.current;
+          audioRef.current.load();
+          setCurrentTime(0);
+        }
+      }
+      return;
+    }
+
+    setIsTranscriptLoading(true);
+    void loadTranscript();
+  };
+
+  const openDictationTab = () => {
+    setActiveTab("dictation");
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    }
+
+    const questionCacheKey = `${quiz.id}:${currentQuestion.id}:${activeAudioVersion ?? 0}`;
+    const cachedQuestion = questionAudioCacheRef.current.get(questionCacheKey);
+    if (cachedQuestion) {
+      setAudioBlobUrl(cachedQuestion.url);
+      setAudioLoading(false);
+      setAudioError(false);
+      if (audioRef.current) {
+        audioRef.current.src = cachedQuestion.url;
+        audioRef.current.playbackRate = playbackRateRef.current;
+        audioRef.current.load();
+        setCurrentTime(0);
+      }
+    }
+    focusInputAtEnd();
   };
 
   const retryTranscript = () => {
     setTranscriptError(null);
     setIsTranscriptLoading(true);
-    setTranscriptReloadKey((value) => value + 1);
+    void loadTranscript(true);
   };
 
   return (
-    <div className="w-full max-w-7xl xl:max-w-[1560px] 2xl:max-w-[1720px] mx-auto flex-1 flex flex-col pt-1 sm:pt-2 pb-8 px-3 sm:px-5 lg:px-6 font-sans antialiased text-slate-800 dark:text-slate-100">
-      {/* 1. Header / Breadcrumbs & Action Row */}
-      <div className="mb-2.5 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm">
-        {/* Breadcrumb path */}
-        <nav
-          aria-label="Thanh điều hướng phân cấp"
-          className="flex flex-wrap items-center gap-2 text-slate-500 dark:text-slate-400 font-medium"
-        >
-          <button
-            type="button"
-            onClick={() => onExit("/practice/listening")}
-            className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1 font-semibold cursor-pointer"
-          >
-            <ArrowLeft size={14} />
-            <span>Luyện nghe</span>
-          </button>
-          <span className="text-slate-300 dark:text-slate-700">/</span>
-          <span className="text-slate-600 dark:text-slate-400">{categoryTitle}</span>
-          <span className="text-slate-300 dark:text-slate-700">/</span>
-          <span className="text-slate-800 dark:text-slate-200 font-bold truncate max-w-[180px] sm:max-w-xs">
-            {quiz.title}
-          </span>
-        </nav>
-
-        {/* Keep the header quiet so the learner's attention stays on the audio and answer field. */}
-        <div className="flex items-center gap-3">
-          {/* Practice Timer */}
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
-            <Clock size={14} className="text-slate-400 dark:text-slate-500" aria-hidden="true" />
-            <span>{elapsedMinutes} phút</span>
+    <div className="w-full min-h-dvh flex flex-col bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased">
+      <PracticeHeader
+        title={quiz.title}
+        difficulty={reviewOnly ? "ÔN CÂU SAI" : vocabLevel}
+        positionText={`Câu ${currentIndex + 1} / ${questions.length}`}
+        onExit={() => onExit("/practice/listening")}
+        exitLabel="Thoát"
+        bilingualEnabled
+        isBilingual={isBilingual}
+        onToggleBilingual={() => {
+          setIsBilingual((value) => {
+            const next = !value;
+            setSelectedTranslationLanguage(next ? "vi" : "none");
+            return next;
+          });
+        }}
+        notesEnabled
+        onOpenNotes={() => setShowNotesModal(true)}
+        shortcutsEnabled
+        shortcutsContent={
+          <div data-shortcuts-popover="true" className="space-y-2.5 py-1 text-xs">
+            {LISTENING_SHORTCUTS.map((shortcut) => (
+              <div
+                key={shortcut.id}
+                className="flex items-center justify-between gap-3 text-slate-700 dark:text-slate-300"
+              >
+                <span className="font-semibold text-xs tracking-tight">
+                  {shortcut.label}
+                </span>
+                <kbd className="inline-flex items-center justify-center min-w-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100/90 dark:bg-slate-800/90 px-2 py-1 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200 shadow-2xs">
+                  {shortcut.keyDisplay}
+                </kbd>
+              </div>
+            ))}
           </div>
-        </div>
-      </div>
+        }
+        soundEnabled
+        soundMuted={isMuted}
+        onToggleSound={() => {
+          setIsMuted((prev) => {
+            const next = !prev;
+            if (audioRef.current) {
+              audioRef.current.muted = next;
+            }
+            return next;
+          });
+        }}
+      />
 
-      {/* 2. Title & Meta Row */}
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          {/* Star button */}
-          <button
-            type="button"
-            onClick={() => setIsStarred((s) => !s)}
-            title={isStarred ? "Bỏ yêu thích" : "Yêu thích bài học"}
-            aria-label="Yêu thích bài học"
-            className="text-slate-400 hover:text-amber-500 transition-colors cursor-pointer shrink-0"
-          >
-            <Star
-              size={22}
-              className={isStarred ? "fill-amber-400 text-amber-400" : ""}
-            />
-          </button>
-
-          {/* Title */}
-          <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight truncate">
-            {quiz.title}
-          </h1>
-
-          {/* Vocab Level Badge */}
-          <span className="shrink-0 rounded-md bg-amber-50 border border-amber-200/80 px-2 py-0.5 text-[11px] font-bold text-amber-800 dark:bg-amber-950/40 dark:border-amber-900/60 dark:text-amber-300 uppercase tracking-wider">
-            Trình độ: {vocabLevel}
-          </span>
-        </div>
-
-        {/* More Options (...) */}
-        <div className="relative shrink-0" ref={optionsRef}>
-          <button
-            type="button"
-            onClick={() => setShowOptionsMenu((o) => !o)}
-            title="Tùy chọn khác"
-            aria-label="Tùy chọn khác"
-            className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
-          >
-            <MoreHorizontal size={18} />
-          </button>
-
-          {showOptionsMenu && (
-            <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl z-50 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 animate-in fade-in zoom-in-95 duration-150">
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard?.writeText(window.location.href);
-                  setShowOptionsMenu(false);
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
-              >
-                <Share2 size={14} />
-                <span>Sao chép liên kết</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowShortcutsModal(true);
-                  setShowOptionsMenu(false);
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
-              >
-                <Keyboard size={14} />
-                <span>Phím tắt nhanh</span>
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* 3. Sub-Tabs Bar: [Dictation] [Full transcript] */}
-      <div className="inline-flex max-w-full overflow-x-auto no-scrollbar p-1 bg-stone-100/90 dark:bg-slate-800/80 rounded-xl border border-stone-200/80 dark:border-slate-700/80 mb-4 shadow-2xs self-start">
+      <main className="w-full max-w-[1560px] 2xl:max-w-[1680px] mx-auto flex-1 flex flex-col pt-4 sm:pt-6 pb-12 px-4 sm:px-6 lg:px-8">
+        {/* 3. Sub-Tabs Bar: [Dictation] [Full transcript] */}
+        <div className="inline-flex max-w-full overflow-x-auto no-scrollbar p-1.5 bg-stone-100/90 dark:bg-slate-800/80 rounded-2xl border border-stone-200/80 dark:border-slate-700/80 mb-5 shadow-2xs self-start">
         <button
           type="button"
-          onClick={() => setActiveTab("dictation")}
-          className={`rounded-lg px-3.5 sm:px-4 py-1.5 text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
+          onClick={openDictationTab}
+          className={`rounded-xl px-5 py-2 text-sm sm:text-base font-bold transition-all cursor-pointer whitespace-nowrap ${
             activeTab === "dictation"
-              ? "bg-white text-amber-700 shadow-xs border border-stone-200/60 dark:bg-slate-900 dark:text-amber-400 dark:border-slate-700"
+              ? "bg-white text-blue-700 shadow-xs border border-stone-200/60 dark:bg-slate-900 dark:text-blue-400 dark:border-slate-700"
               : "text-stone-600 dark:text-slate-400 hover:text-stone-900 dark:hover:text-slate-200"
           }`}
         >
-          Nghe chép chính tả <span className="hidden sm:inline">(Dictation)</span>
+          Nghe chép chính tả (Dictation)
         </button>
         <button
           type="button"
           onClick={openTranscriptTab}
-          className={`rounded-lg px-3.5 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
+          className={`rounded-xl px-5 py-2 text-sm sm:text-base font-bold transition-all cursor-pointer whitespace-nowrap ${
             activeTab === "transcript"
-              ? "bg-white text-amber-700 shadow-xs border border-stone-200/60 dark:bg-slate-900 dark:text-amber-400 dark:border-slate-700 font-bold"
+              ? "bg-white text-amber-600 shadow-xs border border-stone-200/60 dark:bg-slate-900 dark:text-amber-400 dark:border-slate-700"
               : "text-stone-600 dark:text-slate-400 hover:text-stone-900 dark:hover:text-slate-200"
           }`}
         >
-          Toàn bộ kịch bản <span className="hidden sm:inline">(Full transcript)</span>
+          Toàn bộ kịch bản (Full transcript)
         </button>
       </div>
 
@@ -1223,26 +1237,26 @@ export function DailyDictationWorkspace({
 
       {/* 4. Main Exercise Card */}
       {activeTab === "dictation" ? (
-        <div className="w-full rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-6 lg:p-7 shadow-xs transition-all">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 lg:gap-7 items-start">
+        <div className="w-full rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-7 lg:p-8 shadow-xs transition-all">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-7 lg:gap-8 items-start">
             {/* Left Column (lg:col-span-7): Player & Dictation Input */}
-            <div className="lg:col-span-7 flex flex-col">
+            <div className="lg:col-span-7 flex flex-col gap-4 sm:gap-5">
               {/* Sentence Navigator & Settings Row */}
-              <div className="mb-3.5 flex items-center justify-between gap-4">
+              <div className="flex items-center justify-between gap-4">
                 {/* Left: ← Câu 1 / 21 → */}
-                <div className="flex items-center gap-2.5 text-sm font-bold text-slate-700 dark:text-slate-300">
+                <div className="flex items-center gap-3 text-base font-bold text-slate-700 dark:text-slate-300">
                   <button
                     type="button"
                     onClick={onPrev}
                     disabled={currentIndex === 0}
                     title="Câu trước"
                     aria-label="Câu trước"
-                    className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 rounded-lg disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
+                    className="size-10 flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 rounded-xl disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
                   >
-                    <ArrowLeft size={16} />
+                    <ArrowLeft size={18} />
                   </button>
 
-                  <span className="font-extrabold text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-lg text-sm">
+                  <span className="font-black text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 px-4 py-1.5 rounded-xl text-base sm:text-lg tracking-tight">
                     Câu {currentIndex + 1} / {questions.length}
                   </span>
 
@@ -1252,21 +1266,21 @@ export function DailyDictationWorkspace({
                     disabled={currentIndex === questions.length - 1}
                     title="Câu tiếp theo"
                     aria-label="Câu tiếp theo"
-                    className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 rounded-lg disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
+                    className="size-10 flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 rounded-xl disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
                   >
-                    <ArrowRight size={16} />
+                    <ArrowRight size={18} />
                   </button>
                 </div>
 
                 {/* Right: Tra từ & ⚙ Settings */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <button
                     type="button"
                     onClick={handleDictionaryLookup}
-                    className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 dark:text-slate-300 dark:hover:text-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                    className="flex min-h-10 items-center gap-2 text-sm sm:text-base font-bold text-slate-700 hover:text-slate-950 bg-slate-50 hover:bg-slate-100 border border-slate-200 dark:text-slate-300 dark:hover:text-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700 px-4 py-2 rounded-xl transition-colors cursor-pointer shadow-2xs"
                     title="Bôi đen một từ tiếng Anh rồi bấm Tra từ"
                   >
-                    <BookOpen size={14} className="text-sky-600 dark:text-sky-400" />
+                    <BookOpen size={16} className="text-sky-600 dark:text-sky-400" />
                     <span className="hidden sm:inline">Tra từ</span>
                   </button>
 
@@ -1274,11 +1288,11 @@ export function DailyDictationWorkspace({
                     <button
                       type="button"
                       onClick={() => setShowSettings((s) => !s)}
-                      className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 dark:text-slate-300 dark:hover:text-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                      className="flex min-h-10 items-center gap-2 text-sm sm:text-base font-bold text-slate-700 hover:text-slate-950 bg-slate-50 hover:bg-slate-100 border border-slate-200 dark:text-slate-300 dark:hover:text-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700 px-4 py-2 rounded-xl transition-colors cursor-pointer shadow-2xs"
                       title="Cài đặt phát âm thanh"
                       aria-expanded={showSettings}
                     >
-                      <Settings size={14} />
+                      <Settings size={16} />
                       <span>Cài đặt</span>
                     </button>
                   </div>
@@ -1286,7 +1300,7 @@ export function DailyDictationWorkspace({
               </div>
 
               {/* Audio Player (BreadTrans clean light inline player) */}
-              <div className="mb-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 p-2.5 sm:p-3 flex flex-wrap items-center gap-2.5 sm:gap-3">
+              <div className="rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700/80 p-3 sm:p-3.5 flex flex-wrap items-center gap-3 sm:gap-4 shadow-2xs">
                 {/* Play / Pause button */}
                 <button
                   type="button"
@@ -1294,19 +1308,19 @@ export function DailyDictationWorkspace({
                   disabled={audioLoading || audioError}
                   title={isPlaying ? "Tạm dừng" : "Phát câu"}
                   aria-label={isPlaying ? "Tạm dừng" : "Phát câu"}
-                  className="flex size-11 items-center justify-center rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-all active:scale-95 disabled:opacity-40 cursor-pointer shrink-0"
+                  className="flex size-12 sm:size-[50px] items-center justify-center rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-all active:scale-95 disabled:opacity-40 cursor-pointer shrink-0"
                 >
                   {audioLoading ? (
-                    <Loader2 size={16} className="animate-spin" />
+                    <Loader2 size={18} className="animate-spin" />
                   ) : isPlaying ? (
-                    <Pause size={17} fill="currentColor" />
+                    <Pause size={20} fill="currentColor" />
                   ) : (
-                    <Play size={17} fill="currentColor" className="ml-0.5" />
+                    <Play size={20} fill="currentColor" className="ml-0.5" />
                   )}
                 </button>
 
                 {/* Monospace Timestamp */}
-                <span className="font-mono text-sm font-semibold text-slate-500 dark:text-slate-400 shrink-0 select-none">
+                <span className="font-mono text-sm sm:text-base font-bold text-slate-600 dark:text-slate-300 shrink-0 select-none">
                   {formatTime(currentTime)} / {formatTime(duration)}
                 </span>
 
@@ -1320,19 +1334,19 @@ export function DailyDictationWorkspace({
                   onChange={handleSeek}
                   disabled={audioLoading || duration === 0}
                   aria-label="Thanh thời gian nghe"
-                  className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full appearance-none cursor-pointer accent-blue-600 focus:outline-none"
+                  className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-full appearance-none cursor-pointer accent-blue-600 focus:outline-none"
                 />
 
                 {/* Volume control: mute toggle + accessible volume slider */}
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
                     onClick={toggleMute}
                     title={isMuted ? "Bật âm thanh" : "Tắt tiếng"}
                     aria-label={isMuted ? "Bật âm thanh" : "Tắt tiếng"}
-                    className="rounded-lg p-1.5 text-slate-500 hover:text-slate-800 hover:bg-white dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                    className="rounded-xl p-2 text-slate-500 hover:text-slate-800 hover:bg-white dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
                   >
-                    {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                    {isMuted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
                   </button>
                   <input
                     type="range"
@@ -1342,7 +1356,7 @@ export function DailyDictationWorkspace({
                     value={isMuted ? 0 : volume}
                     onChange={handleVolumeChange}
                     aria-label="Âm lượng audio"
-                    className="w-16 accent-blue-600 cursor-pointer"
+                    className="w-18 accent-blue-600 cursor-pointer h-2"
                   />
                 </div>
 
@@ -1353,10 +1367,10 @@ export function DailyDictationWorkspace({
                     onClick={() => setShowSpeedMenu((value) => !value)}
                     aria-haspopup="listbox"
                     aria-expanded={showSpeedMenu}
-                    className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-2xs transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+                    className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 text-sm sm:text-base font-extrabold text-slate-800 shadow-2xs transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 cursor-pointer"
                     title="Chọn tốc độ phát"
                   >
-                    {playbackRate}x <ChevronDown size={14} />
+                    {playbackRate}x <ChevronDown size={15} />
                   </button>
                   {showSpeedMenu && (
                     <div className="absolute right-0 top-full z-50 mt-2 max-h-72 w-44 overflow-y-auto rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 p-1.5 shadow-xl" role="listbox" aria-label="Tốc độ phát">
@@ -1388,9 +1402,9 @@ export function DailyDictationWorkspace({
                     onClick={() => setShowAudioMenu((value) => !value)}
                     aria-label="Tùy chọn audio"
                     aria-expanded={showAudioMenu}
-                    className="rounded-lg p-2 text-slate-500 hover:text-slate-800 hover:bg-white dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                    className="rounded-xl p-2 text-slate-500 hover:text-slate-800 hover:bg-white dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
                   >
-                    <MoreHorizontal size={18} />
+                    <MoreHorizontal size={20} />
                   </button>
                   {showAudioMenu && (
                     <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 p-1.5 text-sm shadow-xl">
@@ -1433,7 +1447,7 @@ export function DailyDictationWorkspace({
               </div>
 
               {/* Textarea Input */}
-              <div className="relative mb-3.5">
+              <div className="relative">
                 <textarea
                   ref={textareaRef}
                   value={displayedAnswer}
@@ -1464,7 +1478,7 @@ export function DailyDictationWorkspace({
                   autoFocus
                   readOnly={Boolean(isCompletedOrRevealed)}
                   spellCheck={wordSuggestions}
-                  className={`w-full resize-none min-h-[92px] sm:min-h-[105px] rounded-xl border-2 p-3.5 sm:p-4 text-base sm:text-lg leading-relaxed placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none transition-all shadow-2xs font-medium break-words cursor-text ${
+                  className={`w-full resize-none min-h-[135px] sm:min-h-[160px] lg:min-h-[175px] rounded-2xl border-2 p-4 sm:p-5 sm:pb-12 text-xl sm:text-2xl lg:text-[24px] leading-relaxed placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none transition-all shadow-2xs font-semibold break-words cursor-text ${
                     isCompletedOrRevealed
                       ? "border-emerald-500 bg-emerald-50/15 text-slate-900 dark:text-slate-100 dark:bg-emerald-950/20 font-bold focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 dark:focus:ring-emerald-950"
                       : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:border-blue-600 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-950"
@@ -1473,9 +1487,9 @@ export function DailyDictationWorkspace({
 
                 {/* Mic Icon for Speech Input & subtle check indicator */}
                 {!isCompletedOrRevealed && (
-                  <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
+                  <div className="absolute bottom-3.5 right-3.5 flex items-center gap-2">
                     {isChecking && (
-                      <Loader2 size={16} className="animate-spin text-blue-500" aria-label="Đang kiểm tra..." />
+                      <Loader2 size={18} className="animate-spin text-blue-500" aria-label="Đang kiểm tra..." />
                     )}
                     <button
                       type="button"
@@ -1483,13 +1497,13 @@ export function DailyDictationWorkspace({
                       disabled={isChecking}
                       title={isListeningSpeech ? "Đang lắng nghe..." : "Nhập bằng giọng nói"}
                       aria-label={isListeningSpeech ? "Đang lắng nghe..." : "Nhập bằng giọng nói"}
-                      className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                      className={`size-10 flex items-center justify-center rounded-xl transition-colors cursor-pointer ${
                         isListeningSpeech
                           ? "bg-rose-500 text-white animate-pulse"
                           : "text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-700"
                       }`}
                     >
-                      {isListeningSpeech ? <MicOff size={18} /> : <Mic size={18} />}
+                      {isListeningSpeech ? <MicOff size={20} /> : <Mic size={20} />}
                     </button>
                   </div>
                 )}
@@ -1497,14 +1511,14 @@ export function DailyDictationWorkspace({
 
               {/* Action Buttons Row before checking/skipping */}
               {!isCompletedOrRevealed && !isChecked && (
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center justify-between gap-4 pt-1">
                   <button
                     type="button"
                     onClick={() => void handlePerformCheck()}
                     disabled={isChecking}
-                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-7 py-2.5 text-base font-bold text-white shadow-xs transition-all hover:bg-blue-700 active:scale-98 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                    className="inline-flex min-h-[50px] sm:min-h-[54px] items-center justify-center gap-2.5 rounded-2xl bg-blue-600 px-8 sm:px-10 py-3 text-base sm:text-lg font-extrabold text-white shadow-xs transition-all hover:bg-blue-700 active:scale-98 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
                   >
-                    {isChecking && <Loader2 size={15} className="animate-spin" />}
+                    {isChecking && <Loader2 size={18} className="animate-spin" />}
                     <span>Kiểm tra</span>
                   </button>
 
@@ -1512,9 +1526,9 @@ export function DailyDictationWorkspace({
                     type="button"
                     onClick={handleSkipSentence}
                     disabled={isChecking}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50 cursor-pointer shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+                    className="inline-flex min-h-[50px] sm:min-h-[54px] items-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 sm:px-8 py-3 text-base sm:text-lg font-bold text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50 cursor-pointer shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-slate-100"
                   >
-                    {isChecking ? <Loader2 size={13} className="animate-spin" /> : null}
+                    {isChecking ? <Loader2 size={16} className="animate-spin" /> : null}
                     <span>Bỏ qua</span>
                   </button>
                 </div>
@@ -1522,28 +1536,28 @@ export function DailyDictationWorkspace({
 
               {/* When correct or explicitly skipped: show Next button & replay control */}
               {isCompletedOrRevealed && (
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between gap-4 pt-1">
+                  <div className="flex items-center gap-2.5">
                     {isSkipped ? (
-                      <span className="inline-flex items-center gap-1 text-sm font-bold px-3 py-1.5 rounded-lg border bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                      <span className="inline-flex items-center gap-1.5 text-base sm:text-lg font-extrabold px-5 py-2.5 rounded-xl border bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
                         Đã bỏ qua
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-sm font-bold px-3 py-1.5 rounded-lg border bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800">
+                      <span className="inline-flex items-center gap-1.5 text-base sm:text-lg font-extrabold px-5 py-2.5 rounded-xl border bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800">
                         ✓ Chính xác
                       </span>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <button
                       type="button"
                       onClick={handleRetryCurrentSentence}
                       title="Làm lại câu này"
                       aria-label="Làm lại câu này"
-                      className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer border border-slate-200/90 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-2xs"
+                      className="size-12 sm:size-[50px] flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 rounded-2xl transition-colors cursor-pointer border border-slate-200/90 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-2xs"
                     >
-                      <RotateCcw size={16} />
+                      <RotateCcw size={20} />
                     </button>
 
                     {isLastQuestion ? (
@@ -1551,16 +1565,16 @@ export function DailyDictationWorkspace({
                         type="button"
                         onClick={onFinalSubmit}
                         disabled={isSubmitting}
-                        className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-6 py-2 text-sm font-bold text-white shadow-xs transition-all active:scale-98 cursor-pointer disabled:opacity-50"
+                        className="inline-flex min-h-[50px] sm:min-h-[54px] items-center gap-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 px-8 sm:px-9 py-3 text-base sm:text-lg font-extrabold text-white shadow-xs transition-all active:scale-98 cursor-pointer disabled:opacity-50"
                       >
                         {isSubmitting ? (
                           <>
-                            <Loader2 size={15} className="animate-spin" />
+                            <Loader2 size={18} className="animate-spin" />
                             <span>Đang nộp bài...</span>
                           </>
                         ) : (
                           <>
-                            <Check size={16} />
+                            <Check size={20} />
                             <span>Hoàn thành bài tập</span>
                           </>
                         )}
@@ -1569,10 +1583,10 @@ export function DailyDictationWorkspace({
                       <button
                         type="button"
                         onClick={onNext}
-                        className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-6 py-2.5 text-sm font-bold text-white shadow-xs transition-colors cursor-pointer"
+                        className="inline-flex min-h-[50px] sm:min-h-[54px] items-center gap-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 px-8 sm:px-9 py-3 text-base sm:text-lg font-extrabold text-white shadow-xs transition-colors cursor-pointer"
                       >
                         <span>Câu tiếp theo</span>
-                        <ArrowRight size={15} />
+                        <ArrowRight size={18} />
                       </button>
                     )}
                   </div>
@@ -1582,14 +1596,14 @@ export function DailyDictationWorkspace({
               {/* Check Feedback Panel (Word-by-word diff) when checked and incorrect */}
               {isChecked && !isCompletedOrRevealed && (
                 <div
-                  className="mt-3.5 pt-3.5 border-t border-slate-100 dark:border-slate-800"
+                  className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800"
                   role="alert"
                   aria-live="polite"
                 >
                   {/* Progressive answer review */}
-                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/60 p-3.5 sm:p-4">
-                    <div className="mb-2 flex items-center justify-between gap-3">
-                      <p className="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/60 p-4 sm:p-5">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <p className="text-sm sm:text-base font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-300">
                         Đối chiếu theo thứ tự nghe
                       </p>
                       <div className="flex items-center gap-3">
@@ -1597,20 +1611,20 @@ export function DailyDictationWorkspace({
                           type="button"
                           onClick={handleSkipSentence}
                           disabled={isChecking}
-                          className="rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 px-3.5 py-1.5 text-sm font-bold text-slate-600 dark:text-slate-300 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:hover:bg-slate-700 dark:hover:text-slate-100 disabled:opacity-50 cursor-pointer shadow-2xs"
+                          className="rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 px-4 py-2 text-sm sm:text-base font-bold text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:hover:bg-slate-700 dark:hover:text-slate-100 disabled:opacity-50 cursor-pointer shadow-2xs"
                         >
                           Bỏ qua
                         </button>
                         <button
                           type="button"
                           onClick={onToggleReveal}
-                          className="text-sm font-bold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors cursor-pointer"
+                          className="text-sm sm:text-base font-bold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors cursor-pointer"
                         >
                           {isRevealed ? "Ẩn đáp án" : "Xem đáp án"}
                         </button>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-x-2.5 gap-y-1.5 text-lg sm:text-xl md:text-2xl font-bold leading-relaxed">
+                    <div className="flex flex-wrap gap-x-3 gap-y-2 text-xl sm:text-2xl md:text-3xl font-bold leading-relaxed">
                       {buildProgressiveAnswer(
                         currentCheck?.correctAnswer ?? canonicalAnswer,
                         currentCheck?.submittedAnswer ?? displayedAnswer,
@@ -1621,7 +1635,7 @@ export function DailyDictationWorkspace({
                           key={`${token.text}-${index}`}
                           className={
                             token.state === "hint"
-                              ? "rounded-md bg-amber-100 text-amber-950 ring-1 ring-amber-300 dark:bg-amber-950/60 dark:text-amber-200 dark:ring-amber-800 font-bold inline-block shadow-2xs"
+                              ? "rounded-md bg-amber-100 text-amber-950 ring-1 ring-amber-300 dark:bg-amber-950/60 dark:text-amber-200 dark:ring-amber-800 font-bold inline-block shadow-2xs px-1"
                               : token.state === "correct"
                                 ? "text-emerald-700 dark:text-emerald-400 font-bold"
                                 : token.state === "answer"
@@ -1639,21 +1653,22 @@ export function DailyDictationWorkspace({
             </div>
 
             {/* Right Column (lg:col-span-5): Translation & Pronunciation */}
-            <div className="lg:col-span-5 flex flex-col gap-3.5 sm:gap-4">
+            <div className="lg:col-span-5 flex flex-col gap-4 sm:gap-5">
               {isCompletedOrRevealed ? (
                 <>
                   {/* Card 1: Vietnamese Translation */}
-                  <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/60 p-4 sm:p-4.5 shadow-2xs flex flex-col justify-between">
+                  {isBilingual && (
+                    <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/60 p-5 sm:p-6 shadow-2xs flex flex-col justify-between min-h-[170px]">
                     <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm sm:text-base font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">
                           Bản dịch {selectedLanguage === "vi" ? "tiếng Việt" : selectedLanguage === "en" ? "tiếng Anh" : "bản địa"}
                         </span>
-                        <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded">
+                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-md">
                           AI Bilingual
                         </span>
                       </div>
-                      <p className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-200 leading-relaxed">
+                      <p className="text-xl sm:text-2xl lg:text-[24px] font-bold text-slate-900 dark:text-slate-100 leading-relaxed">
                         {selectedLanguage === "en" ? (
                           canonicalAnswer || (
                             <span className="text-slate-400 font-normal italic">
@@ -1670,13 +1685,9 @@ export function DailyDictationWorkspace({
                       </p>
                     </div>
 
-                    {/* Translation Actions Bar (Translated by ChatGPT4.1 + Edit + More options) */}
-                    <div className="mt-3.5 pt-2.5 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between gap-3 text-xs">
-                      <span className="text-slate-400 font-medium text-xs select-none">
-                        Translated by ChatGPT4.1
-                      </span>
-
-                      <div className="flex items-center gap-1.5 shrink-0">
+                    {/* Translation Actions Bar (Edit + More options) */}
+                    <div className="mt-4 pt-3 border-t border-slate-200/80 dark:border-slate-700/80 flex items-center justify-end gap-3 text-sm">
+                      <div className="flex items-center gap-2 shrink-0">
                         {/* Edit button: user provides improved translation to admin */}
                         <button
                           type="button"
@@ -1684,10 +1695,10 @@ export function DailyDictationWorkspace({
                             setSuggestedTranslation(translationText || "");
                             setShowEditTranslationModal(true);
                           }}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100 transition-colors cursor-pointer shadow-2xs"
+                          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-bold text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-slate-100 transition-colors cursor-pointer shadow-2xs"
                           title="Cung cấp bản dịch cải thiện cho Admin"
                         >
-                          <Pencil size={12} className="text-slate-500" />
+                          <Pencil size={14} className="text-slate-500" />
                           <span>Edit</span>
                         </button>
 
@@ -1696,11 +1707,11 @@ export function DailyDictationWorkspace({
                           <button
                             type="button"
                             onClick={() => setShowTranslationMenu((prev) => !prev)}
-                            className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-1 text-xs text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100 transition-colors cursor-pointer shadow-2xs"
+                            className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-slate-100 transition-colors cursor-pointer shadow-2xs"
                             title="Tùy chọn ngôn ngữ dịch"
                             aria-expanded={showTranslationMenu}
                           >
-                            <MoreHorizontal size={14} />
+                            <MoreHorizontal size={16} />
                           </button>
 
                           {showTranslationMenu && (
@@ -1733,18 +1744,19 @@ export function DailyDictationWorkspace({
                       </div>
                     </div>
                   </div>
+                )}
 
                   {/* Card 2: Pronunciation */}
-                  <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/60 p-4 sm:p-5 shadow-2xs">
-                    <div className="flex items-center justify-between mb-2.5">
-                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/60 p-5 sm:p-6 shadow-2xs">
+                    <div className="flex items-center justify-between mb-3.5">
+                      <span className="text-sm sm:text-base font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">
                         Phát âm (Pronunciation)
                       </span>
-                      <span className="text-xs font-semibold text-slate-400">
+                      <span className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
                         Nhấp vào từ để tra từ điển
                       </span>
                     </div>
-                    <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 leading-loose">
+                    <div className="text-xl sm:text-2xl lg:text-[24px] font-bold text-slate-900 dark:text-slate-100 leading-loose">
                       {canonicalAnswer ? (
                         String(canonicalAnswer).split(/\s+/).filter(Boolean).map((word: string, wordIdx: number) => {
                           const cleanWord = word.trim().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "") || word;
@@ -1752,7 +1764,7 @@ export function DailyDictationWorkspace({
                             <button
                               key={`${word}-${wordIdx}`}
                               type="button"
-                              className="inline-block border-b border-dotted border-slate-400 dark:border-slate-500 pb-0.5 mr-2 text-slate-900 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-600 dark:hover:border-blue-400 hover:bg-blue-50/70 dark:hover:bg-blue-950/40 rounded-xs px-1 py-0.5 cursor-pointer transition-all font-bold text-base sm:text-lg"
+                              className="inline-block border-b-2 border-dotted border-slate-300 dark:border-slate-600 pb-0.5 mr-2 text-slate-900 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-600 dark:hover:border-blue-400 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 rounded-md px-1.5 py-0.5 cursor-pointer transition-all font-bold text-xl sm:text-2xl lg:text-[24px]"
                               title={`Nhấn để tra từ điển & phát âm: "${cleanWord}"`}
                               onClick={() => {
                                 if (cleanWord) {
@@ -1773,14 +1785,14 @@ export function DailyDictationWorkspace({
                   </div>
                 </>
               ) : (
-                <div className="flex flex-col justify-center items-center h-full min-h-[260px] rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 p-8 text-center">
-                  <div className="size-16 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-4">
-                    <Languages size={30} />
+                <div className="flex flex-col justify-center items-center h-full min-h-[320px] rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 p-8 text-center">
+                  <div className="size-20 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-5">
+                    <Languages size={38} />
                   </div>
-                  <p className="text-xl font-extrabold text-slate-700 dark:text-slate-200">
+                  <p className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100">
                     Bản dịch &amp; Giải thích phát âm
                   </p>
-                  <p className="text-base text-slate-500 dark:text-slate-400 mt-3 max-w-sm leading-relaxed">
+                  <p className="text-base sm:text-lg text-slate-500 dark:text-slate-400 mt-3 max-w-md leading-relaxed">
                     Sẽ tự động hiển thị sau khi bạn bấm Kiểm tra hoặc Bỏ qua.
                   </p>
                 </div>
@@ -1927,24 +1939,21 @@ export function DailyDictationWorkspace({
 
               {/* Sentence Focus Showcase (Center Area) */}
               <div className="my-auto py-8 px-4 flex flex-col items-center justify-center text-center">
-                {(() => {
+                {isTranscriptLoading && fullTranscript.length === 0 ? (
+                  <div className="space-y-3 w-full max-w-md animate-pulse py-4" aria-live="polite">
+                    <div className="h-8 bg-stone-200 dark:bg-slate-700 rounded-xl w-3/4 mx-auto" />
+                    <div className="h-6 bg-stone-100 dark:bg-slate-800 rounded-lg w-1/2 mx-auto" />
+                  </div>
+                ) : (() => {
                   const activeTranscriptItem =
                     fullTranscript[transcriptCursorIndex] ??
                     fullTranscript.find((item) => item.questionId === currentQuestion?.id);
-                  const activeSentenceText =
-                    activeTranscriptItem?.transcript ||
-                    (currentQuestion?.content as any)?.correctAnswer ||
-                    (currentQuestion?.content as any)?.audioText ||
-                    (currentQuestion?.content as any)?.text ||
-                    "";
-                  const activeSentenceTranslation =
-                    activeTranscriptItem?.translation ||
-                    (currentQuestion?.content as any)?.translation ||
-                    null;
+                  const activeSentenceText = activeTranscriptItem?.transcript || "";
+                  const activeSentenceTranslation = activeTranscriptItem?.translation || null;
 
                   return (
                     <>
-                      <p className="text-lg sm:text-xl md:text-2xl font-bold text-stone-900 dark:text-slate-100 tracking-tight leading-relaxed max-w-lg">
+                      <p className="text-xl sm:text-2xl md:text-3xl font-bold text-stone-900 dark:text-slate-100 tracking-tight leading-relaxed max-w-2xl sm:max-w-3xl">
                         {activeSentenceText || (
                           <span className="text-stone-400 dark:text-slate-500 font-normal italic">
                             (Đang tải nội dung câu...)
@@ -1952,7 +1961,7 @@ export function DailyDictationWorkspace({
                         )}
                       </p>
                       {selectedTranslationLanguage === "vi" && (
-                        <p className="mt-3 text-sm sm:text-base font-medium text-amber-800/90 dark:text-amber-300/90 max-w-lg leading-relaxed animate-in fade-in duration-200">
+                        <p className="mt-3.5 text-base sm:text-lg md:text-xl font-medium text-amber-800/90 dark:text-amber-300/90 max-w-2xl sm:max-w-3xl leading-relaxed animate-in fade-in duration-200">
                           {activeSentenceTranslation || (
                             <span className="text-stone-400 dark:text-slate-500 italic font-normal">
                               (Chưa có bản dịch cho câu này)
@@ -2061,9 +2070,9 @@ export function DailyDictationWorkspace({
 
                           {/* Text content */}
                           <div className="min-w-0 flex-1">
-                            <p className={`text-sm leading-relaxed ${isCurrent ? "font-bold text-amber-950 dark:text-amber-200" : "font-medium text-stone-800 group-hover:text-stone-900 dark:text-slate-200 dark:group-hover:text-slate-100"}`}>
+                            <p className={`text-base sm:text-lg leading-relaxed ${isCurrent ? "font-bold text-amber-950 dark:text-amber-200" : "font-medium text-stone-800 group-hover:text-stone-900 dark:text-slate-200 dark:group-hover:text-slate-100"}`}>
                               {lead.speaker && (
-                                <span className="mr-1 text-[11px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+                                <span className="mr-1.5 text-xs sm:text-sm font-bold uppercase tracking-wide text-amber-700 dark:text-amber-400">
                                   {lead.speaker}:
                                 </span>
                               )}
@@ -2074,7 +2083,7 @@ export function DailyDictationWorkspace({
                               ))}
                             </p>
                             {selectedTranslationLanguage === "vi" && group.items.some((item) => item.translation) && (
-                              <p className="mt-1 text-xs text-amber-800/85 dark:text-amber-300/85 font-normal leading-relaxed">
+                              <p className="mt-1.5 text-sm sm:text-base text-amber-800/85 dark:text-amber-300/85 font-medium leading-relaxed">
                                 {group.items.map((item, index) => item.translation ? <span key={`${item.questionId}-translation-${index}`} className={index > 0 ? "mt-1 block" : ""}>{item.translation}</span> : null)}
                               </p>
                             )}
@@ -2088,7 +2097,7 @@ export function DailyDictationWorkspace({
               {/* Right Column Bottom Bar */}
               <div className="pt-3 border-t border-stone-200/70 dark:border-slate-700/70 flex flex-col gap-2">
                 <div className="flex items-center justify-end">
-                  <label className="flex items-center gap-2 text-xs font-semibold text-stone-600 dark:text-slate-400 select-none cursor-pointer hover:text-stone-900 dark:hover:text-slate-200">
+                  <label className="flex items-center gap-2 text-sm font-semibold text-stone-600 dark:text-slate-400 select-none cursor-pointer hover:text-stone-900 dark:hover:text-slate-200">
                     <input
                       type="checkbox"
                       checked={autoScrollTranscript}
@@ -2098,12 +2107,12 @@ export function DailyDictationWorkspace({
                     <span>Tự động cuộn (Auto scroll)</span>
                   </label>
                 </div>
-                <div className="text-[11px] text-stone-400 dark:text-slate-500 font-medium space-y-0.5 select-none">
+                <div className="text-xs text-stone-500 dark:text-slate-400 font-medium space-y-1 select-none">
                   <p>
-                    Nhấn <kbd className="px-1.5 py-0.5 rounded bg-stone-100 border border-stone-200 font-mono text-stone-600 text-[10px] dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">Space</kbd> để Phát / Dừng
+                    Nhấn <kbd className="px-1.5 py-0.5 rounded bg-stone-100 border border-stone-200 font-mono text-stone-700 text-xs dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">Space</kbd> để Phát / Dừng
                   </p>
                   <p>
-                    Nhấn <kbd className="px-1.5 py-0.5 rounded bg-stone-100 border border-stone-200 font-mono text-stone-600 text-[10px] dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">←</kbd> và <kbd className="px-1.5 py-0.5 rounded bg-stone-100 border border-stone-200 font-mono text-stone-600 text-[10px] dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">→</kbd> để chuyển giữa các câu
+                    Nhấn <kbd className="px-1.5 py-0.5 rounded bg-stone-100 border border-stone-200 font-mono text-stone-700 text-xs dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">←</kbd> và <kbd className="px-1.5 py-0.5 rounded bg-stone-100 border border-stone-200 font-mono text-stone-700 text-xs dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">→</kbd> để chuyển giữa các câu
                   </p>
                 </div>
               </div>
@@ -2115,10 +2124,10 @@ export function DailyDictationWorkspace({
       {/* 5. Motivational Tip Banner below Workspace */}
       <aside
         aria-label="Lời khuyên luyện nghe"
-        className="mt-4 inline-flex items-center gap-2 self-start rounded-lg border border-amber-200/80 bg-amber-50/70 dark:border-amber-900/60 dark:bg-amber-950/40 px-3.5 py-2 text-sm font-medium text-amber-900 dark:text-amber-200 shadow-2xs max-w-full"
+        className="mt-5 inline-flex items-center gap-3 self-start rounded-2xl border border-amber-200/80 bg-amber-50/80 dark:border-amber-900/60 dark:bg-amber-950/40 px-5 py-3.5 text-base sm:text-lg font-semibold text-amber-950 dark:text-amber-200 shadow-2xs max-w-full"
       >
-        <Lightbulb size={15} className="shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" />
-        <span className="leading-snug">
+        <Lightbulb size={20} className="shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+        <span className="leading-relaxed">
           {DICTATION_TIPS[tipIndex]}
         </span>
         <button
@@ -2126,11 +2135,12 @@ export function DailyDictationWorkspace({
           onClick={handleRotateTip}
           title="Xem lời khuyên khác"
           aria-label="Xem lời khuyên khác"
-          className="inline-flex items-center justify-center shrink-0 rounded p-1 text-amber-700/80 hover:bg-amber-100 hover:text-amber-950 dark:text-amber-300/80 dark:hover:bg-amber-900/50 dark:hover:text-amber-100 transition-colors cursor-pointer"
+          className="inline-flex items-center justify-center shrink-0 rounded-lg p-1.5 text-amber-700/80 hover:bg-amber-100 hover:text-amber-950 dark:text-amber-300/80 dark:hover:bg-amber-900/50 dark:hover:text-amber-100 transition-colors cursor-pointer"
         >
-          <RefreshCw size={13} />
+          <RefreshCw size={16} />
         </button>
       </aside>
+      </main>
 
       {/* Settings modal mirrors the reference controls while keeping preferences local to this learner. */}
       {showSettings && (
@@ -2145,11 +2155,11 @@ export function DailyDictationWorkspace({
             role="dialog"
             aria-modal="true"
             aria-labelledby="dictation-settings-title"
-            className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xl"
+            className="w-full max-w-xl sm:max-w-2xl rounded-3xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xl"
           >
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-5 py-4">
-              <h2 id="dictation-settings-title" className="flex items-center gap-2 text-lg font-black text-slate-900 dark:text-slate-100">
-                <Settings size={19} className="text-blue-600 dark:text-blue-400" />
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4.5">
+              <h2 id="dictation-settings-title" className="flex items-center gap-2.5 text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100">
+                <Settings size={20} className="text-blue-600 dark:text-blue-400" />
                 Cài đặt nghe chép
               </h2>
               <button
@@ -2161,11 +2171,11 @@ export function DailyDictationWorkspace({
                 <X size={18} />
               </button>
             </div>
-            <div className="divide-y divide-slate-100 dark:divide-slate-800 px-5 py-2 text-sm">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800 px-6 py-3 text-sm sm:text-base">
               <label className="flex min-h-14 items-center justify-between gap-4">
                 <span className="font-bold text-slate-800 dark:text-slate-200">Phím phát lại (Replay Key)</span>
-                <select value={replayKey} onChange={(event) => setReplayKey(event.target.value)} className="min-h-10 rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 px-3 text-slate-700 dark:text-slate-200 [&>option]:bg-white [&>option]:text-slate-900 dark:[&>option]:bg-slate-800 dark:[&>option]:text-slate-200">
-                  <option>Ctrl</option><option>Alt</option><option>Shift</option>
+                <select value={replayKey} onChange={(event) => setReplayKey(event.target.value as DictationReplayKey)} className="min-h-10 rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 px-3 text-slate-700 dark:text-slate-200 [&>option]:bg-white [&>option]:text-slate-900 dark:[&>option]:bg-slate-800 dark:[&>option]:text-slate-200">
+                  <option value="Ctrl">Ctrl</option><option value="Alt">Alt</option><option value="Shift">Shift</option>
                 </select>
               </label>
               <label className="flex min-h-14 items-center justify-between gap-4">
@@ -2201,8 +2211,8 @@ export function DailyDictationWorkspace({
                 </div>
               )}
             </div>
-            <div className="flex justify-end border-t border-slate-100 dark:border-slate-800 px-5 py-4">
-              <button type="button" onClick={() => setShowSettings(false)} className="min-h-11 rounded-xl bg-blue-600 px-5 text-sm font-bold text-white hover:bg-blue-700 cursor-pointer">
+            <div className="flex justify-end border-t border-slate-100 dark:border-slate-800 px-6 py-4">
+              <button type="button" onClick={() => setShowSettings(false)} className="min-h-11 rounded-xl bg-blue-600 px-6 text-sm sm:text-base font-bold text-white hover:bg-blue-700 cursor-pointer">
                 Xong
               </button>
             </div>
@@ -2213,7 +2223,7 @@ export function DailyDictationWorkspace({
       {/* Shortcuts Modal */}
       {showShortcutsModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 shadow-2xl text-slate-800 dark:text-slate-200 animate-in zoom-in-95 duration-150">
+          <div className="w-full max-w-md sm:max-w-lg rounded-3xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 sm:p-7 shadow-2xl text-slate-800 dark:text-slate-200 animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
               <h3 className="text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Keyboard size={17} className="text-blue-600 dark:text-blue-400" />
@@ -2269,43 +2279,43 @@ export function DailyDictationWorkspace({
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 sm:p-6 shadow-2xl animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+          <div className="w-full max-w-2xl sm:max-w-3xl rounded-3xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 sm:p-8 shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800 mb-5">
               <div>
-                <h3 className="text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                  <Pencil size={16} className="text-blue-600 dark:text-blue-400" />
+                <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2.5">
+                  <Pencil size={20} className="text-blue-600 dark:text-blue-400" />
                   Đề xuất bản dịch cải thiện
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                   Bản dịch của bạn sẽ được gửi tới Admin để kiểm duyệt và nâng cấp bài học.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowEditTranslationModal(false)}
-                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
-                <X size={16} />
+                <X size={20} />
               </button>
             </div>
 
-            <div className="space-y-3.5 text-xs">
+            <div className="space-y-4 text-sm">
               <div>
-                <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Câu tiếng Anh gốc:</span>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800 p-2.5 text-xs font-semibold text-slate-900 dark:text-slate-100 leading-relaxed">
+                <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">Câu tiếng Anh gốc:</span>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800 p-3.5 text-base font-bold text-slate-900 dark:text-slate-100 leading-relaxed">
                   {canonicalAnswer || "(Không có câu gốc)"}
                 </div>
               </div>
 
               <div>
-                <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Bản dịch hiện tại:</span>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800 p-2.5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">Bản dịch hiện tại:</span>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800 p-3.5 text-base font-medium text-slate-700 dark:text-slate-300 leading-relaxed">
                   {translationText || "(Chưa có bản dịch)"}
                 </div>
               </div>
 
               <div>
-                <label className="font-bold text-slate-800 dark:text-slate-200 block mb-1">
+                <label className="font-bold text-slate-800 dark:text-slate-200 block mb-1.5">
                   Bản dịch đề xuất của bạn <span className="text-rose-500">*</span>:
                 </label>
                 <textarea
@@ -2313,13 +2323,13 @@ export function DailyDictationWorkspace({
                   onChange={(e) => setSuggestedTranslation(e.target.value)}
                   placeholder="Nhập bản dịch tiếng Việt chuẩn xác hơn theo ý bạn..."
                   rows={3}
-                  className="w-full rounded-xl border-2 border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 p-3 text-sm text-slate-900 dark:text-slate-100 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-xl border-2 border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 p-3.5 text-base sm:text-lg text-slate-900 dark:text-slate-100 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none"
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
                   Ghi chú thêm (tùy chọn):
                 </label>
                 <input
@@ -2327,17 +2337,17 @@ export function DailyDictationWorkspace({
                   value={suggestionNote}
                   onChange={(e) => setSuggestionNote(e.target.value)}
                   placeholder="Ví dụ: Dịch tự nhiên hơn theo ngữ cảnh giao tiếp hàng ngày..."
-                  className="w-full rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 p-3 text-sm sm:text-base text-slate-800 dark:text-slate-100 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none"
                 />
               </div>
             </div>
 
-            <div className="mt-5 flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setShowEditTranslationModal(false)}
                 disabled={isSubmittingSuggestion}
-                className="rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                className="rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 px-5 py-2.5 text-sm sm:text-base font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
               >
                 Hủy
               </button>
@@ -2345,16 +2355,16 @@ export function DailyDictationWorkspace({
                 type="button"
                 onClick={handleSubmitTranslationSuggestion}
                 disabled={isSubmittingSuggestion || !suggestedTranslation.trim()}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-xs font-bold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 text-sm sm:text-base font-bold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
               >
                 {isSubmittingSuggestion ? (
                   <>
-                    <Loader2 size={13} className="animate-spin" />
+                    <Loader2 size={16} className="animate-spin" />
                     <span>Đang gửi...</span>
                   </>
                 ) : (
                   <>
-                    <Send size={13} />
+                    <Send size={16} />
                     <span>Gửi đề xuất cho Admin</span>
                   </>
                 )}
@@ -2371,26 +2381,26 @@ export function DailyDictationWorkspace({
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 shadow-2xl animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-3">
-              <h3 className="text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <Globe size={16} className="text-blue-600 dark:text-blue-400" />
+          <div className="w-full max-w-lg sm:max-w-xl rounded-3xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 sm:p-7 shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800 mb-4">
+              <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2.5">
+                <Globe size={18} className="text-blue-600 dark:text-blue-400" />
                 Change language
               </h3>
               <button
                 type="button"
                 onClick={() => setShowChangeLanguageModal(false)}
-                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
-                <X size={16} />
+                <X size={18} />
               </button>
             </div>
 
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
               Chọn ngôn ngữ hiển thị bản dịch cho câu này:
             </p>
 
-            <div className="space-y-1.5 text-xs">
+            <div className="space-y-2 text-sm">
               {[
                 { code: "vi", label: "Tiếng Việt (Mặc định)" },
                 { code: "en", label: "English (Nguyên bản tiếng Anh)" },
@@ -2409,23 +2419,23 @@ export function DailyDictationWorkspace({
                       toast(`Đã chọn ${item.label}. Ngôn ngữ này đang được cập nhật thêm.`);
                     }
                   }}
-                  className={`flex w-full items-center justify-between p-2.5 rounded-xl border text-left transition-colors cursor-pointer ${
+                  className={`flex w-full items-center justify-between p-3.5 rounded-xl border text-left transition-colors cursor-pointer text-sm sm:text-base ${
                     selectedLanguage === item.code
                       ? "border-blue-600 bg-blue-50/70 dark:bg-blue-950/50 text-blue-900 dark:text-blue-300 font-bold"
                       : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold"
                   }`}
                 >
                   <span>{item.label}</span>
-                  {selectedLanguage === item.code && <Check size={14} className="text-blue-600 dark:text-blue-400" />}
+                  {selectedLanguage === item.code && <Check size={16} className="text-blue-600 dark:text-blue-400" />}
                 </button>
               ))}
             </div>
 
-            <div className="mt-4 flex justify-end">
+            <div className="mt-5 flex justify-end">
               <button
                 type="button"
                 onClick={() => setShowChangeLanguageModal(false)}
-                className="rounded-xl bg-slate-900 dark:bg-slate-800 text-white px-4 py-2 text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                className="rounded-xl bg-slate-900 dark:bg-slate-800 text-white px-5 py-2.5 text-sm font-bold hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors cursor-pointer"
               >
                 Đóng
               </button>
@@ -2441,36 +2451,36 @@ export function DailyDictationWorkspace({
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 sm:p-6 shadow-2xl animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+          <div className="w-full max-w-2xl sm:max-w-3xl rounded-3xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 sm:p-8 shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800 mb-5">
               <div>
-                <h3 className="text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                  <Plus size={16} className="text-blue-600 dark:text-blue-400" />
+                <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2.5">
+                  <Plus size={18} className="text-blue-600 dark:text-blue-400" />
                   Add another language
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                   Đóng góp bản dịch ngôn ngữ mới cho câu này tới Admin.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowAddLanguageModal(false)}
-                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
-                <X size={16} />
+                <X size={18} />
               </button>
             </div>
 
-            <div className="space-y-3.5 text-xs">
+            <div className="space-y-4 text-sm">
               <div>
-                <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Câu tiếng Anh gốc:</span>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800 p-2.5 text-xs font-semibold text-slate-900 dark:text-slate-100 leading-relaxed">
+                <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">Câu tiếng Anh gốc:</span>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800 p-3.5 text-base font-bold text-slate-900 dark:text-slate-100 leading-relaxed">
                   {canonicalAnswer || "(Không có câu gốc)"}
                 </div>
               </div>
 
               <div>
-                <label className="font-bold text-slate-800 dark:text-slate-200 block mb-1">
+                <label className="font-bold text-slate-800 dark:text-slate-200 block mb-1.5">
                   Tên ngôn ngữ <span className="text-rose-500">*</span>:
                 </label>
                 <input
@@ -2478,13 +2488,13 @@ export function DailyDictationWorkspace({
                   value={addLangName}
                   onChange={(e) => setAddLangName(e.target.value)}
                   placeholder="Ví dụ: Japanese, Korean, French, German..."
-                  className="w-full rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 p-3 text-base text-slate-800 dark:text-slate-100 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none"
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className="font-bold text-slate-800 dark:text-slate-200 block mb-1">
+                <label className="font-bold text-slate-800 dark:text-slate-200 block mb-1.5">
                   Bản dịch tương ứng <span className="text-rose-500">*</span>:
                 </label>
                 <textarea
@@ -2492,17 +2502,17 @@ export function DailyDictationWorkspace({
                   onChange={(e) => setAddLangTranslation(e.target.value)}
                   placeholder="Nhập bản dịch bằng ngôn ngữ trên..."
                   rows={3}
-                  className="w-full rounded-xl border-2 border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 p-3 text-sm text-slate-900 dark:text-slate-100 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-xl border-2 border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 p-3.5 text-base sm:text-lg text-slate-900 dark:text-slate-100 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none"
                 />
               </div>
             </div>
 
-            <div className="mt-5 flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setShowAddLanguageModal(false)}
                 disabled={isSubmittingAddLang}
-                className="rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                className="rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 px-5 py-2.5 text-sm sm:text-base font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
               >
                 Hủy
               </button>
@@ -2510,16 +2520,16 @@ export function DailyDictationWorkspace({
                 type="button"
                 onClick={handleSubmitAddLanguage}
                 disabled={isSubmittingAddLang || !addLangName.trim() || !addLangTranslation.trim()}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-xs font-bold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 text-sm sm:text-base font-bold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
               >
                 {isSubmittingAddLang ? (
                   <>
-                    <Loader2 size={13} className="animate-spin" />
+                    <Loader2 size={16} className="animate-spin" />
                     <span>Đang gửi...</span>
                   </>
                 ) : (
                   <>
-                    <Send size={13} />
+                    <Send size={16} />
                     <span>Gửi bản dịch cho Admin</span>
                   </>
                 )}
@@ -2544,6 +2554,46 @@ export function DailyDictationWorkspace({
             }
           }}
         />
+      )}
+
+      {/* Notes Scratchpad Modal */}
+      {showNotesModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-xl sm:max-w-2xl rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-xl animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800 mb-4">
+              <h3 className="text-lg font-black text-slate-900 dark:text-slate-100 flex items-center gap-2.5">
+                <StickyNote size={20} className="text-amber-500" />
+                Ghi chú bài học
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowNotesModal(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-xl cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Ghi chú nhanh các từ mới hoặc cấu trúc nghe được..."
+              rows={6}
+              className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 p-4 text-base sm:text-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder:text-slate-400 dark:placeholder:text-slate-500 leading-relaxed"
+            />
+            <p className="mt-2.5 text-sm text-slate-500 dark:text-slate-400">
+              Ghi chú được lưu tự động trên thiết bị này.
+            </p>
+            <div className="mt-5 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowNotesModal(false)}
+                className="min-h-11 rounded-xl bg-slate-900 dark:bg-slate-800 text-white px-5 py-2.5 text-sm font-bold hover:bg-slate-800 dark:hover:bg-slate-700 cursor-pointer"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
