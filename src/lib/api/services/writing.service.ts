@@ -14,6 +14,8 @@ export interface WritingTopic {
   keywords?: string[];
   wordRange?: number[] | null;
   isCompleted?: boolean;
+  isPremiumContent?: boolean;
+  isLocked?: boolean;
 }
 
 export interface WritingCatalogResponse {

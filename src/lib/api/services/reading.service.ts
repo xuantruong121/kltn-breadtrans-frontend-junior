@@ -1,11 +1,28 @@
 import axiosClient from "../axiosClient";
 
+export interface ReadingTopicQuiz {
+  id: number;
+  title: string;
+  description?: string;
+  type?: string;
+  timeLimit?: number;
+  questionCount?: number;
+  courseId?: number | null;
+  isPremiumContent?: boolean;
+  isLocked?: boolean;
+  _count?: {
+    questions: number;
+  };
+}
+
 export interface ReadingTopic {
   id: number;
   title: string;
   description: string;
   imageUrl?: string;
-  quizzes?: any[];
+  isPremiumContent?: boolean;
+  isLocked?: boolean;
+  quizzes?: ReadingTopicQuiz[];
 }
 
 export const readingService = {

@@ -1,4 +1,5 @@
 import axiosClient from "../axiosClient";
+import { useAuthStore } from "@/stores/authStore";
 
 export interface VocabTopic {
   id: number;
@@ -8,6 +9,7 @@ export interface VocabTopic {
   learnedCount: number;
   needReviewCount: number;
   isPro: boolean;
+  isLocked?: boolean;
   iconUrl?: string;
   words?: VocabWord[];
 }
@@ -91,6 +93,11 @@ const expandedLookupCache = new Map<
   { expiresAt: number; value: VocabLookupResponse }
 >();
 
+function getLookupScope(): string {
+  const auth = useAuthStore.getState();
+  return auth.accessToken || (auth.user ? `user:${auth.user.id}` : "guest");
+}
+
 export const vocabService = {
   getTopics: async (): Promise<VocabTopicsResponse> => {
     return await axiosClient.get("/vocab/topics");
@@ -128,7 +135,7 @@ export const vocabService = {
     word: string,
     signal?: AbortSignal,
   ): Promise<VocabLookupResponse> => {
-    const key = word.trim().toLowerCase();
+    const key = `${getLookupScope()}:${word.trim().toLowerCase()}`;
     const cached = lookupCache.get(key);
     if (cached && cached.expiresAt > Date.now()) return cached.value;
     const existing = lookupInflight.get(key);
@@ -153,7 +160,7 @@ export const vocabService = {
     word: string,
     signal?: AbortSignal,
   ): Promise<VocabLookupResponse> => {
-    const key = word.trim().toLowerCase();
+    const key = `${getLookupScope()}:${word.trim().toLowerCase()}`;
     const cached = expandedLookupCache.get(key);
     if (cached && cached.expiresAt > Date.now()) return cached.value;
 

@@ -20,6 +20,7 @@ import { quizService, type ListeningPracticeCatalogItem } from "@/lib/api/servic
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
+import { PremiumContentPaywallModal } from "@/components/subscription/PremiumContentPaywallModal";
 import { ListeningExerciseCard } from "./components/ListeningExerciseCard";
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
 import {
@@ -88,6 +89,7 @@ function ListeningCatalogContent() {
     open: boolean;
     quiz?: ListeningPracticeCatalogItem;
   }>({ open: false });
+  const [paywallQuiz, setPaywallQuiz] = useState<ListeningPracticeCatalogItem | null>(null);
 
   // Keyboard shortcut Ctrl+K / Cmd+K to focus search input
   useEffect(() => {
@@ -510,6 +512,7 @@ function ListeningCatalogContent() {
                 quiz={quiz}
                 isAuthenticated={Boolean(user)}
                 onOpenAuthGate={(q) => setAuthGate({ open: true, quiz: q })}
+                onOpenPaywall={(q) => setPaywallQuiz(q)}
                 onStart={handleStartQuiz}
                 isLaunching={false}
                 isSpotlight={quiz.isSpotlight}
@@ -552,6 +555,14 @@ function ListeningCatalogContent() {
         targetRoute={authGate.quiz ? `/practice/quizzes/${authGate.quiz.id}` : "/practice/listening"}
         onOpenLogin={() => router.push("/login")}
         onOpenRegister={() => router.push("/register")}
+      />
+
+      {/* PLUS Paywall Modal */}
+      <PremiumContentPaywallModal
+        isOpen={!!paywallQuiz}
+        onClose={() => setPaywallQuiz(null)}
+        skillType="LISTENING"
+        itemTitle={paywallQuiz?.title}
       />
     </div>
   );

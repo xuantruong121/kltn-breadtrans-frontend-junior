@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import { BookOpen, CheckCircle2, PlayCircle, RotateCcw } from "lucide-react";
+import { BookOpen, CheckCircle2, PlayCircle, RotateCcw, Lock } from "lucide-react";
 import type { VocabTopic } from "@/lib/api/services/vocab.service";
+import { PremiumVocabPaywallModal } from "@/components/subscription/PremiumVocabPaywallModal";
 import {
   getDeckStatus,
   getDeckCtaText,
@@ -9,15 +10,18 @@ import {
   computeDeckProgress,
   FlashcardDeckStatus,
 } from "../flashcardLogic";
+import { isVocabTopicLocked } from "@/modules/subscription/planLogic";
 
 export interface FlashcardDeckCardProps {
   topic: VocabTopic;
 }
 
 export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) => {
+  const [showPaywall, setShowPaywall] = useState(false);
+  const isLocked = isVocabTopicLocked(topic);
   const status: FlashcardDeckStatus = getDeckStatus(topic);
   const badge = getDeckBadgeInfo(status, topic.needReviewCount);
-  const ctaText = getDeckCtaText(status);
+  const ctaText = isLocked ? "Mở khóa với Plus" : getDeckCtaText(status);
   const progress = computeDeckProgress(topic.learnedCount, topic.totalWords);
 
   return (
@@ -38,22 +42,29 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
           <span className="truncate text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
             {topic.categoryName || "Từ vựng"}
           </span>
-          <span
-            className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold border ${
-              badge.variant === "due"
-                ? "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300"
-                : badge.variant === "completed"
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300"
-                  : badge.variant === "progress"
-                    ? "border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-300"
-                    : "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-            }`}
-          >
-            {status === "COMPLETED" && (
-              <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-            )}
-            {badge.text}
-          </span>
+          {isLocked ? (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+              <Lock size={12} aria-hidden="true" />
+              <span>Premium</span>
+            </span>
+          ) : (
+            <span
+              className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold border ${
+                badge.variant === "due"
+                  ? "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300"
+                  : badge.variant === "completed"
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300"
+                    : badge.variant === "progress"
+                      ? "border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-300"
+                      : "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              }`}
+            >
+              {status === "COMPLETED" && (
+                <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+              )}
+              {badge.text}
+            </span>
+          )}
         </div>
 
         {/* ── Deck Title ──────────────────────────────────────────────── */}
@@ -105,28 +116,45 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
         </div>
 
         {/* Action CTA */}
-        <Link
-          href={`/practice/vocab/${topic.id}`}
-          className="mt-4 block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-xl"
-        >
-          <span
-            className={`flex min-h-10 sm:min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold transition-colors ${
-              status === "COMPLETED"
-                ? "border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200 dark:hover:bg-slate-700"
-                : status === "REVIEW_DUE"
-                  ? "bg-amber-500 text-white shadow-xs hover:bg-amber-600 dark:bg-amber-500 dark:hover:bg-amber-600"
-                  : "bg-amber-500 text-white shadow-xs hover:bg-amber-600 dark:bg-amber-500 dark:hover:bg-amber-600"
-            }`}
+        {isLocked ? (
+          <button
+            type="button"
+            onClick={() => setShowPaywall(true)}
+            className="mt-4 flex min-h-10 sm:min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 px-4 text-sm font-bold text-amber-900 dark:text-amber-200 shadow-2xs transition-colors cursor-pointer"
           >
-            {status === "COMPLETED" || status === "REVIEW_DUE" ? (
-              <RotateCcw size={16} aria-hidden="true" />
-            ) : (
-              <PlayCircle size={16} aria-hidden="true" />
-            )}
-            {ctaText}
-          </span>
-        </Link>
+            <Lock size={15} aria-hidden="true" />
+            <span>Mở khóa với Plus</span>
+          </button>
+        ) : (
+          <Link
+            href={`/practice/vocab/${topic.id}`}
+            className="mt-4 block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-xl"
+          >
+            <span
+              className={`flex min-h-10 sm:min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold transition-colors ${
+                status === "COMPLETED"
+                  ? "border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200 dark:hover:bg-slate-700"
+                  : status === "REVIEW_DUE"
+                    ? "bg-amber-500 text-white shadow-xs hover:bg-amber-600 dark:bg-amber-500 dark:hover:bg-amber-600"
+                    : "bg-amber-500 text-white shadow-xs hover:bg-amber-600 dark:bg-amber-500 dark:hover:bg-amber-600"
+              }`}
+            >
+              {status === "COMPLETED" || status === "REVIEW_DUE" ? (
+                <RotateCcw size={16} aria-hidden="true" />
+              ) : (
+                <PlayCircle size={16} aria-hidden="true" />
+              )}
+              {ctaText}
+            </span>
+          </Link>
+        )}
       </div>
+
+      <PremiumVocabPaywallModal
+        isOpen={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        topicTitle={topic.title}
+      />
     </article>
   );
 };

@@ -32,6 +32,14 @@ export const LISTENING_SHORTCUTS: readonly ListeningShortcutDefinition[] = [
   },
 ] as const;
 
+/** Dictation-specific display/configuration; standard listening keeps Space. */
+export const DICTATION_SHORTCUTS: readonly ListeningShortcutDefinition[] =
+  LISTENING_SHORTCUTS.map((shortcut) =>
+    shortcut.id === "PLAY_PAUSE"
+      ? { ...shortcut, keys: ["`"], keyDisplay: "`" }
+      : shortcut,
+  );
+
 export interface ListeningWorkspaceShortcutActions {
   isChecked: boolean;
   isLastQuestion: boolean;
@@ -152,7 +160,8 @@ export function handleListeningKeyDown(
   // Never repeat actions when non-Control key is held down
   if (e.repeat) return null;
 
-  // 2. Space -> Play / Pause audio
+  // 2. Space -> Play / Pause audio for the standard listening workspace.
+  // Dictation owns its separate backtick handler in DailyDictationWorkspace.
   if (e.code === "Space" || e.key === " ") {
     // Ignore if combined with modifier keys
     if (e.ctrlKey || e.altKey || e.metaKey) return null;

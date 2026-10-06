@@ -27,7 +27,8 @@ import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScre
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
-import { PracticeCard } from "./components/PracticeCard";
+import { PremiumContentPaywallModal } from "@/components/subscription/PremiumContentPaywallModal";
+import { PracticeCard, type PracticeExerciseItem } from "./components/PracticeCard";
 import {
   type DifficultyLevel,
   matchesDifficulty,
@@ -92,6 +93,7 @@ export default function SpeakingExercisesPage() {
     title?: string;
     practiceSetKey?: string;
   }>({ open: false });
+  const [paywallExercise, setPaywallExercise] = useState<PracticeExerciseItem | null>(null);
 
   // Keyboard shortcut Ctrl+K / Cmd+K to focus search dock
   useEffect(() => {
@@ -621,6 +623,7 @@ export default function SpeakingExercisesPage() {
                       practiceSetKey: ex.practiceSet?.key,
                     })
                   }
+                  onOpenPaywall={(ex) => setPaywallExercise(ex)}
                   onStart={handleStartExercise}
                   isLaunching={Boolean(launchingExerciseId)}
                 />
@@ -694,6 +697,14 @@ export default function SpeakingExercisesPage() {
         }
         onOpenLogin={() => router.push("/login")}
         onOpenRegister={() => router.push("/register")}
+      />
+
+      {/* PLUS Paywall Modal */}
+      <PremiumContentPaywallModal
+        isOpen={Boolean(paywallExercise)}
+        onClose={() => setPaywallExercise(null)}
+        skillType="SPEAKING"
+        itemTitle={paywallExercise?.title}
       />
     </div>
   );

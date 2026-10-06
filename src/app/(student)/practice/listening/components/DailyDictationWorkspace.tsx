@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
-  BookOpen,
   Check,
   ChevronDown,
   ChevronLeft,
@@ -34,7 +33,7 @@ import {
 import toast from "react-hot-toast";
 import { PracticeHeader } from "@/components/practice/PracticeHeader";
 import {
-  LISTENING_SHORTCUTS,
+  DICTATION_SHORTCUTS,
   createDictationReplayController,
   type DictationReplayKey,
 } from "./listeningShortcutConfig";
@@ -237,7 +236,7 @@ export function DailyDictationWorkspace({
   const [volume, setVolume] = useState(1);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [replayKey, setReplayKey] = useState<DictationReplayKey>("Ctrl");
-  const [playPauseKey, setPlayPauseKey] = useState("`");
+  const playPauseKey = "`";
   const [autoReplay, setAutoReplay] = useState(false);
   const [replayDelay, setReplayDelay] = useState("0.5");
   const [wordSuggestions, setWordSuggestions] = useState(false);
@@ -334,21 +333,6 @@ export function DailyDictationWorkspace({
       setTipIndex((prev) => (prev + 1) % DICTATION_TIPS.length);
     }, 15000);
     return () => clearInterval(timer);
-  }, []);
-
-  // Word lookup from text selection or custom event (matching Speaking mechanism)
-  const handleDictionaryLookup = useCallback(() => {
-    const selected = window.getSelection()?.toString().trim() ?? "";
-    const word = selected
-      .replace(/[’‘ʼ]/g, "'")
-      .replace(/^[^A-Za-z']+|[^A-Za-z']+$/g, "");
-
-    if (!/^[A-Za-z]+(?:'[A-Za-z]+)?$/.test(word)) {
-      toast("Bôi đen một từ tiếng Anh, rồi chọn Tra từ.");
-      return;
-    }
-
-    setSelectedWordForLookup(word);
   }, []);
 
   useEffect(() => {
@@ -787,7 +771,7 @@ export function DailyDictationWorkspace({
     }
   };
 
-  // Keyboard Shortcuts (Space = Play/Pause, Enter = Check, Replay = Configured candidate keyup)
+  // Keyboard Shortcuts (Backtick = Play/Pause, Enter = Check, Replay = configured modifier)
   useEffect(() => {
     const isAnyModalOpen =
       showSettings ||
@@ -857,15 +841,13 @@ export function DailyDictationWorkspace({
         }
       }
 
-      // 4. Configured play/pause key
+      // 4. Backtick is the only Play/Pause shortcut. It intentionally works
+      // while the Dictation textarea is focused so learners can keep typing.
       const playPausePressed =
-        playPauseKey === "Space"
-          ? e.code === "Space" && !e.ctrlKey && !e.altKey && !e.metaKey && !isTypingTarget
-          : playPauseKey === "`"
-            ? (e.key === "`" || e.code === "Backquote") && !e.ctrlKey && !e.altKey && !e.metaKey
-            : playPauseKey === "Enter" && activeTab !== "dictation" && !isTypingTarget
-              ? e.key === "Enter" && !e.ctrlKey && !e.altKey && !e.metaKey
-              : (e.key === "`" || e.code === "Backquote") && !e.ctrlKey && !e.altKey && !e.metaKey;
+        (e.key === "`" || e.code === "Backquote") &&
+        !e.ctrlKey &&
+        !e.altKey &&
+        !e.metaKey;
 
       if (playPausePressed) {
         e.preventDefault();
@@ -873,15 +855,7 @@ export function DailyDictationWorkspace({
         return;
       }
 
-      // 5. Bare Space outside textarea toggles playback
-      if (!isTypingTarget && e.code === "Space" && !e.ctrlKey && !e.altKey && !e.metaKey) {
-        e.preventDefault();
-        e.stopPropagation();
-        togglePlay();
-        return;
-      }
-
-      // 6. Arrow navigation in transcript mode (bare ArrowLeft / ArrowRight)
+      // 5. Arrow navigation in transcript mode (bare ArrowLeft / ArrowRight)
       if (!isTypingTarget && activeTab === "transcript") {
         if (e.key === "ArrowRight") {
           e.preventDefault();
@@ -932,7 +906,6 @@ export function DailyDictationWorkspace({
     onFinalSubmit,
     onNext,
     onPrev,
-    playPauseKey,
     questions.length,
     replayAudio,
     replayKey,
@@ -1115,10 +1088,10 @@ export function DailyDictationWorkspace({
         }}
         notesEnabled
         onOpenNotes={() => setShowNotesModal(true)}
-        shortcutsEnabled
+        shortcutsEnabled={showShortcutTips}
         shortcutsContent={
           <div data-shortcuts-popover="true" className="space-y-2.5 py-1 text-xs">
-            {LISTENING_SHORTCUTS.map((shortcut) => (
+            {DICTATION_SHORTCUTS.map((shortcut) => (
               <div
                 key={shortcut.id}
                 className="flex items-center justify-between gap-3 text-slate-700 dark:text-slate-300"
@@ -1272,18 +1245,8 @@ export function DailyDictationWorkspace({
                   </button>
                 </div>
 
-                {/* Right: Tra từ & ⚙ Settings */}
+                {/* Right: ⚙ Settings */}
                 <div className="flex items-center gap-2.5">
-                  <button
-                    type="button"
-                    onClick={handleDictionaryLookup}
-                    className="flex min-h-10 items-center gap-2 text-sm sm:text-base font-bold text-slate-700 hover:text-slate-950 bg-slate-50 hover:bg-slate-100 border border-slate-200 dark:text-slate-300 dark:hover:text-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700 px-4 py-2 rounded-xl transition-colors cursor-pointer shadow-2xs"
-                    title="Bôi đen một từ tiếng Anh rồi bấm Tra từ"
-                  >
-                    <BookOpen size={16} className="text-sky-600 dark:text-sky-400" />
-                    <span className="hidden sm:inline">Tra từ</span>
-                  </button>
-
                   <div className="relative" ref={settingsRef}>
                     <button
                       type="button"
@@ -1476,6 +1439,10 @@ export function DailyDictationWorkspace({
                   rows={3}
                   wrap="soft"
                   autoFocus
+                  autoCapitalize={wordSuggestions ? "sentences" : "none"}
+                  autoCorrect={wordSuggestions ? "on" : "off"}
+                  enterKeyHint="done"
+                  inputMode="text"
                   readOnly={Boolean(isCompletedOrRevealed)}
                   spellCheck={wordSuggestions}
                   className={`w-full resize-none min-h-[135px] sm:min-h-[160px] lg:min-h-[175px] rounded-2xl border-2 p-4 sm:p-5 sm:pb-12 text-xl sm:text-2xl lg:text-[24px] leading-relaxed placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none transition-all shadow-2xs font-semibold break-words cursor-text ${
@@ -2107,14 +2074,16 @@ export function DailyDictationWorkspace({
                     <span>Tự động cuộn (Auto scroll)</span>
                   </label>
                 </div>
-                <div className="text-xs text-stone-500 dark:text-slate-400 font-medium space-y-1 select-none">
-                  <p>
-                    Nhấn <kbd className="px-1.5 py-0.5 rounded bg-stone-100 border border-stone-200 font-mono text-stone-700 text-xs dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">Space</kbd> để Phát / Dừng
-                  </p>
-                  <p>
-                    Nhấn <kbd className="px-1.5 py-0.5 rounded bg-stone-100 border border-stone-200 font-mono text-stone-700 text-xs dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">←</kbd> và <kbd className="px-1.5 py-0.5 rounded bg-stone-100 border border-stone-200 font-mono text-stone-700 text-xs dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">→</kbd> để chuyển giữa các câu
-                  </p>
-                </div>
+                {showShortcutTips && (
+                  <div className="text-xs text-stone-500 dark:text-slate-400 font-medium space-y-1 select-none">
+                    <p>
+                      Nhấn <kbd className="px-1.5 py-0.5 rounded bg-stone-100 border border-stone-200 font-mono text-stone-700 text-xs dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">`</kbd> để Phát / Dừng
+                    </p>
+                    <p>
+                      Nhấn <kbd className="px-1.5 py-0.5 rounded bg-stone-100 border border-stone-200 font-mono text-stone-700 text-xs dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">←</kbd> và <kbd className="px-1.5 py-0.5 rounded bg-stone-100 border border-stone-200 font-mono text-stone-700 text-xs dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">→</kbd> để chuyển giữa các câu
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -2180,8 +2149,8 @@ export function DailyDictationWorkspace({
               </label>
               <label className="flex min-h-14 items-center justify-between gap-4">
                 <span className="font-bold text-slate-800 dark:text-slate-200">Phím phát / dừng</span>
-                <select value={playPauseKey} onChange={(event) => setPlayPauseKey(event.target.value)} className="min-h-10 rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 px-3 text-slate-700 dark:text-slate-200 [&>option]:bg-white [&>option]:text-slate-900 dark:[&>option]:bg-slate-800 dark:[&>option]:text-slate-200">
-                  <option>`</option><option>Space</option><option>Enter</option>
+                <select value={playPauseKey} disabled className="min-h-10 rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 px-3 text-slate-700 dark:text-slate-200 [&>option]:bg-white [&>option]:text-slate-900 dark:[&>option]:bg-slate-800 dark:[&>option]:text-slate-200 disabled:cursor-not-allowed disabled:opacity-70">
+                  <option value="`">`</option>
                 </select>
               </label>
               <label className="flex min-h-14 items-center justify-between gap-4">
@@ -2240,7 +2209,7 @@ export function DailyDictationWorkspace({
             <div className="space-y-3 text-xs">
               <div className="flex justify-between items-center">
                 <span className="text-slate-600 dark:text-slate-400 font-medium">Phát / Dừng audio:</span>
-                <kbd className="rounded-md bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 px-2 py-1 font-mono text-slate-800 dark:text-slate-200 font-bold">{playPauseKey === "Space" ? "Space" : playPauseKey}</kbd>
+                <kbd className="rounded-md bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 px-2 py-1 font-mono text-slate-800 dark:text-slate-200 font-bold">{playPauseKey}</kbd>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-600 dark:text-slate-400 font-medium">Phát lại câu:</span>

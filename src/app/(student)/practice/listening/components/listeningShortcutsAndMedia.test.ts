@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   LISTENING_SHORTCUTS,
+  DICTATION_SHORTCUTS,
   handleListeningKeyboardShortcut,
   createListeningShortcutController,
   createDictationReplayController,
@@ -77,8 +78,8 @@ function createMockEvent(overrides: Partial<{
   return { event, isPrevented: () => prevented };
 }
 
-// 1. Space Play/Pause tests
-test("Shortcut: Space alone toggles audio Play/Pause and prevents page scroll", () => {
+// 1. Standard listening workspace keeps Space Play/Pause; Dictation has a separate backtick handler.
+test("Shortcut: Space alone toggles audio Play/Pause in standard listening", () => {
   const { actions, calls } = createMockActions();
   const { event, isPrevented } = createMockEvent({ key: " ", code: "Space" });
 
@@ -88,9 +89,9 @@ test("Shortcut: Space alone toggles audio Play/Pause and prevents page scroll", 
   assert.equal(isPrevented(), true);
 });
 
-test("Shortcut: Ctrl+Space is ignored (bare Space required)", () => {
+test("Shortcut: Backtick is not handled by the standard listening controller", () => {
   const { actions, calls } = createMockActions();
-  const { event } = createMockEvent({ key: " ", code: "Space", ctrlKey: true });
+  const { event } = createMockEvent({ key: "`", code: "Backquote" });
 
   const result = handleListeningKeyboardShortcut(event, actions);
   assert.equal(result, null);
@@ -442,8 +443,11 @@ test("Popover: LISTENING_SHORTCUTS defines exactly the 4 required shortcuts with
   const allKeyDisplays = LISTENING_SHORTCUTS.map((s) => s.keyDisplay).join(" ");
   assert.equal(allKeyDisplays.includes("Ctrl + Space"), false);
   assert.equal(allKeyDisplays.includes("Ctrl + Enter"), false);
+  assert.equal(allKeyDisplays.includes("Space"), true);
   assert.equal(allKeyDisplays.includes("Shift + ←"), false);
   assert.equal(allKeyDisplays.includes("Alt + R"), false);
+
+  assert.equal(DICTATION_SHORTCUTS.find((s) => s.id === "PLAY_PAUSE")?.keyDisplay, "`");
 });
 
 // 8. Image layout invariant tests
@@ -503,6 +507,24 @@ test("Header integration: DailyDictationWorkspace uses standardized PracticeHead
   assert.equal(content.includes("Thanh điều hướng phân cấp"), false);
   assert.equal(content.includes("optionsRef"), false);
   assert.equal(content.includes("isStarred"), false);
+});
+
+test("Dictation settings: mobile suggestions and shortcut tips are wired; Play/Pause is backtick-only", () => {
+  const dictationWorkspacePath = path.resolve(
+    process.cwd(),
+    "src/app/(student)/practice/listening/components/DailyDictationWorkspace.tsx",
+  );
+  const content = fs.readFileSync(dictationWorkspacePath, "utf-8");
+
+  assert.ok(content.includes('shortcutsEnabled={showShortcutTips}'));
+  assert.ok(content.includes("{showShortcutTips && ("));
+  assert.ok(content.includes('autoCorrect={wordSuggestions ? "on" : "off"}'));
+  assert.ok(content.includes('autoCapitalize={wordSuggestions ? "sentences" : "none"}'));
+  assert.ok(content.includes("spellCheck={wordSuggestions}"));
+  assert.ok(content.includes('<option value="`">`</option>'));
+  assert.equal(content.includes("<option>Space</option>"), false);
+  assert.equal(content.includes("<option>Enter</option>"), false);
+  assert.ok(content.includes("DICTATION_SHORTCUTS.map"));
 });
 
 test("Translation card: DailyDictationWorkspace does not contain 'Translated by ChatGPT'", () => {

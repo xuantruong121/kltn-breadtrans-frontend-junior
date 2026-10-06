@@ -169,7 +169,7 @@ export function GrammarTopicCard({
               className="bg-white hover:bg-emerald-50 text-emerald-700 dark:bg-slate-800 dark:hover:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/80 font-semibold text-sm px-3.5 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500"
             >
               <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Luyện lại ↺</span>
+              <span>Luyện lại</span>
             </button>
           ) : (
             <button

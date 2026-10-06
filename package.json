@@ -24,7 +24,8 @@
     "test:speaking-recovery": "node --no-warnings --test --experimental-strip-types src/lib/speaking/speakingRecoveryLogic.test.ts",
     "test:practice-header": "node --no-warnings --test --experimental-strip-types src/lib/practice/focusMode.test.ts src/components/practice/PracticeHeader.test.ts src/hooks/useAssessmentAntiCheat.test.ts",
     "test:responsive-invariants": "node scripts/verify_responsive_invariants.mjs",
-    "test:flashcard-logic": "node --no-warnings --test --experimental-strip-types src/modules/flashcard/flashcardLogic.test.ts"
+    "test:flashcard-logic": "node --no-warnings --test --experimental-strip-types src/modules/flashcard/flashcardLogic.test.ts",
+    "test:plan-logic": "node --no-warnings --test --experimental-strip-types src/modules/subscription/planLogic.test.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.4",

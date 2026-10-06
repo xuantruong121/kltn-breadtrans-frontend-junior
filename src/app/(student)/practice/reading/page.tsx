@@ -21,6 +21,7 @@ import { grammarService, type GrammarTopicSummary } from "@/lib/api/services/gra
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
+import { PremiumContentPaywallModal } from "@/components/subscription/PremiumContentPaywallModal";
 import { ReadingTopicCard, type ReadingTopicItem } from "./components/ReadingTopicCard";
 import { GrammarTopicCard } from "./components/GrammarTopicCard";
 import {
@@ -82,6 +83,7 @@ function ReadingTopicsContent() {
     topicId?: number;
     topicName?: string;
   }>({ open: false });
+  const [paywallTopic, setPaywallTopic] = useState<ReadingTopicItem | null>(null);
 
   // Sync category param with URL without causing page reload
   const handleCategoryChange = (category: ExerciseCategory) => {
@@ -547,6 +549,7 @@ function ReadingTopicsContent() {
                         topicName: item.data.name || item.data.title,
                       })
                     }
+                    onOpenPaywall={(t) => setPaywallTopic(t)}
                     onStart={handleStartReadingTopic}
                     isSpotlight={item.data.isSpotlight}
                   />
@@ -611,6 +614,14 @@ function ReadingTopicsContent() {
         targetRoute={authGate.topicId ? `/practice/reading/${authGate.topicId}` : "/practice/reading"}
         onOpenLogin={() => router.push("/login")}
         onOpenRegister={() => router.push("/register")}
+      />
+
+      {/* PLUS Paywall Modal */}
+      <PremiumContentPaywallModal
+        isOpen={!!paywallTopic}
+        onClose={() => setPaywallTopic(null)}
+        skillType="READING"
+        itemTitle={paywallTopic?.name || paywallTopic?.title}
       />
     </div>
   );

@@ -29,6 +29,7 @@ export interface ListeningExerciseCardProps {
   quiz: ListeningPracticeCatalogItem;
   isAuthenticated: boolean;
   onOpenAuthGate: (quiz: ListeningPracticeCatalogItem) => void;
+  onOpenPaywall?: (quiz: ListeningPracticeCatalogItem) => void;
   onStart?: (quiz: ListeningPracticeCatalogItem) => void;
   isLaunching?: boolean;
   statusOverride?: ListeningCardStatus;
@@ -80,15 +81,18 @@ export function ListeningExerciseCard({
   quiz,
   isAuthenticated,
   onOpenAuthGate,
+  onOpenPaywall,
   onStart,
   isLaunching = false,
   statusOverride,
   isSpotlight = false,
 }: ListeningExerciseCardProps) {
+  const isLocked = Boolean(quiz.isLocked);
   const computedStatus = computeListeningCardStatus({
     isAuthenticated,
     isCompleted: quiz.isCompleted,
     isSpotlight,
+    isLocked,
   });
 
   const status = statusOverride || computedStatus;
@@ -111,6 +115,11 @@ export function ListeningExerciseCard({
   const { Icon: AnchorIcon, iconContainer } = resolveListeningVisualAnchor(formatTag);
 
   const handleCardClick = (e: React.MouseEvent) => {
+    if (isLocked) {
+      e.preventDefault();
+      onOpenPaywall?.(quiz);
+      return;
+    }
     if (!isAuthenticated) {
       e.preventDefault();
       onOpenAuthGate(quiz);
@@ -153,6 +162,12 @@ export function ListeningExerciseCard({
                 <span className={`w-1.5 h-1.5 rounded-full ${diffConfig.dotClass}`} aria-hidden="true" />
                 {diffConfig.label}
               </span>
+              {isLocked && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">
+                  <Lock size={11} aria-hidden="true" />
+                  PLUS
+                </span>
+              )}
             </div>
           </div>
 
@@ -262,7 +277,7 @@ export function ListeningExerciseCard({
               className="bg-white hover:bg-emerald-50 text-emerald-700 dark:bg-slate-800 dark:hover:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/80 font-semibold text-sm px-3.5 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 shadow-2xs hover:shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500"
             >
               <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Luyện lại ↺</span>
+              <span>Luyện lại</span>
             </button>
           ) : status === "IN_PROGRESS" ? (
             <button
@@ -283,6 +298,16 @@ export function ListeningExerciseCard({
             >
               <span>Bắt đầu</span>
               <ArrowRight className="w-4 h-4" aria-hidden="true" />
+            </button>
+          ) : isLocked ? (
+            <button
+              type="button"
+              onClick={handleCardClick}
+              aria-label={`Mở khóa bài nghe ${quiz.title}`}
+              className="bg-amber-50 hover:bg-amber-100 text-amber-900 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 dark:text-amber-200 border border-amber-300 dark:border-amber-800 font-semibold text-sm px-3.5 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500"
+            >
+              <Lock className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Mở khóa với PLUS</span>
             </button>
           ) : (
             <button

@@ -58,6 +58,7 @@ const isPublicOrOptionalEndpoint = (url?: string): boolean => {
     "/auth/login",
     "/auth/register",
     "/auth/forgot-password",
+    "/plans/catalog",
   ];
   return publicPaths.some((p) => url.includes(p));
 };
@@ -73,6 +74,7 @@ const isGuestAllowedPage = (): boolean => {
     "/arena",
     "/flashcard",
     "/grammar",
+    "/plans",
   ];
   return guestPrefixes.some(
     (prefix) => p === prefix || p.startsWith(`${prefix}/`),
@@ -146,6 +148,9 @@ axiosClient.interceptors.response.use(
         isRefreshing = false;
         processQueue(error, null);
         if (authState.user || authState.accessToken) {
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new Event("breadtrans:logout"));
+          }
           authState.logout();
         }
         if (
@@ -205,6 +210,9 @@ axiosClient.interceptors.response.use(
         processQueue(refreshError, null);
         isRefreshing = false;
         authState.logout();
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("breadtrans:logout"));
+        }
         if (
           !isGuestAllowedPage() &&
           typeof window !== "undefined" &&

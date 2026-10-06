@@ -67,6 +67,8 @@ export interface Quiz {
   title: string;
   description: string;
   type: string; // e.g. "LISTENING_PRACTICE"
+  isPremiumContent?: boolean;
+  isLocked?: boolean;
   bilingualContent?: {
     examFormat?: "TOEIC_LR" | "TOEIC_SW" | "TOEIC_4_SKILLS" | "TWO_SKILL" | "SPEAKING_WRITING" | "FOUR_SKILL";
     examSetId?: number;
@@ -142,6 +144,8 @@ export interface ListeningPracticeCatalogItem {
   questionCount?: number;
   durationMinutes?: number | null;
   isCompleted?: boolean;
+  isPremiumContent?: boolean;
+  isLocked?: boolean;
   _count?: {
     questions: number;
   };

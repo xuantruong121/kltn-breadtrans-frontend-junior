@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   BookOpen,
+  CreditCard,
   ChevronDown,
   Dumbbell,
   GraduationCap,
@@ -824,6 +825,15 @@ export function AppHeader() {
                     </div>
 
                     <Link
+                      href="/plans"
+                      onClick={closeMenus}
+                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-slate-800 hover:text-amber-900 dark:hover:text-amber-400 transition-colors whitespace-nowrap"
+                    >
+                      <CreditCard size={16} className="text-amber-600 shrink-0" />
+                      <span>Gói dịch vụ</span>
+                    </Link>
+
+                    <Link
                       href="/student/profile"
                       onClick={closeMenus}
                       className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-slate-800 hover:text-amber-900 dark:hover:text-amber-400 transition-colors whitespace-nowrap"
@@ -883,6 +893,13 @@ export function AppHeader() {
           {!user && (
             <>
               <ThemeToggle className="hidden sm:inline-flex" />
+              <Link
+                href="/plans"
+                className="hidden sm:inline-flex shrink-0 whitespace-nowrap text-slate-700 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-400 font-bold text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 transition-colors text-center items-center gap-1.5 cursor-pointer"
+              >
+                <CreditCard size={15} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                <span>Gói dịch vụ</span>
+              </Link>
               <Link
                 href="/login"
                 className="shrink-0 whitespace-nowrap border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl px-2.5 sm:px-4 py-1.5 sm:py-2 font-bold text-xs sm:text-sm transition-colors text-center cursor-pointer"
@@ -1156,21 +1173,31 @@ export function AppHeader() {
                     </Link>
                   )}
                   {!user && (
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-2">
                       <Link
-                        href="/login"
+                        href="/plans"
                         onClick={closeMenus}
-                        className="flex min-h-[44px] items-center justify-center rounded-2xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                        className="flex min-h-[44px] items-center justify-center gap-2 rounded-2xl border border-amber-300/80 dark:border-amber-700/60 bg-amber-50/60 dark:bg-amber-950/30 px-4 py-2.5 text-xs font-bold text-amber-900 dark:text-amber-200 hover:bg-amber-100/70 dark:hover:bg-amber-900/50 transition-colors"
                       >
-                        Đăng nhập
+                        <CreditCard size={16} className="text-amber-600 dark:text-amber-400" />
+                        <span>Gói dịch vụ</span>
                       </Link>
-                      <Link
-                        href="/register"
-                        onClick={closeMenus}
-                        className="flex min-h-[44px] items-center justify-center rounded-2xl bg-amber-600 text-white px-4 py-2 text-xs font-black hover:bg-amber-700 transition-colors shadow-xs"
-                      >
-                        Đăng ký
-                      </Link>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Link
+                          href="/login"
+                          onClick={closeMenus}
+                          className="flex min-h-[44px] items-center justify-center rounded-2xl border border-slate-300 dark:border-slate-700 px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                        >
+                          Đăng nhập
+                        </Link>
+                        <Link
+                          href="/register"
+                          onClick={closeMenus}
+                          className="flex min-h-[44px] items-center justify-center rounded-2xl bg-amber-600 text-white px-4 py-2 text-xs font-black hover:bg-amber-700 transition-colors shadow-xs"
+                        >
+                          Đăng ký
+                        </Link>
+                      </div>
                     </div>
                   )}
                 </div>

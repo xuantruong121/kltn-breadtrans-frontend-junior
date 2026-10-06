@@ -21,6 +21,7 @@ import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScre
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
+import { PremiumContentPaywallModal } from "@/components/subscription/PremiumContentPaywallModal";
 import {
   WritingTopicCard,
   type WritingTopicItem,
@@ -48,6 +49,7 @@ export default function WritingTopicsPage() {
   const [sortOrder, setSortOrder] = useState<"DEFAULT" | "NAME_ASC">("DEFAULT");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [launchingTopicId, setLaunchingTopicId] = useState<number | null>(null);
+  const [paywallTopic, setPaywallTopic] = useState<WritingTopicItem | null>(null);
   const [authGate, setAuthGate] = useState<{
     open: boolean;
     topicId?: number;
@@ -392,6 +394,7 @@ export default function WritingTopicsPage() {
                     title: topic.topicName || topic.title,
                   })
                 }
+                onOpenPaywall={(t) => setPaywallTopic(t)}
                 onStart={handleStartTopic}
                 isSpotlight={topic.isSpotlight}
               />
@@ -433,6 +436,14 @@ export default function WritingTopicsPage() {
         targetRoute={authGate.topicId ? `/practice/writing/${authGate.topicId}` : "/practice/writing"}
         onOpenLogin={() => router.push("/login")}
         onOpenRegister={() => router.push("/register")}
+      />
+
+      {/* PLUS Paywall Modal */}
+      <PremiumContentPaywallModal
+        isOpen={Boolean(paywallTopic)}
+        onClose={() => setPaywallTopic(null)}
+        skillType="WRITING"
+        itemTitle={paywallTopic?.topicName || paywallTopic?.title}
       />
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, use } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -12,6 +13,7 @@ import {
   FileText,
   TrendingUp,
   BookOpen,
+  Lock,
 } from "lucide-react";
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
 import { PracticeExitConfirmDialog } from "@/components/practice/PracticeExitConfirmDialog";
@@ -21,6 +23,7 @@ import {
   writingService,
   type WritingEvaluation,
 } from "@/lib/api/services/writing.service";
+import { isPremiumWritingForbiddenError } from "@/modules/subscription/planLogic";
 import toast from "react-hot-toast";
 
 export default function WritingDetailPage(props: {
@@ -39,7 +42,7 @@ export default function WritingDetailPage(props: {
     return () => clearTimeout(timer);
   }, []);
 
-  const { data: topicData, isLoading } = useQuery({
+  const { data: topicData, isLoading, error: topicError } = useQuery({
     queryKey: ["writing-topic", topicId],
     queryFn: () => writingService.getQuizDetails(topicId),
     enabled: !!topicId,
@@ -56,6 +59,43 @@ export default function WritingDetailPage(props: {
     shouldConfirmExit,
     defaultFallbackUrl: "/practice/writing",
   });
+
+  if (isPremiumWritingForbiddenError(topicError)) {
+    return (
+      <div className="min-h-dvh flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-6 text-center">
+        <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800/80 rounded-2xl p-6 sm:p-8 shadow-lg text-center space-y-4">
+          <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 flex items-center justify-center mx-auto text-amber-600 dark:text-amber-400">
+            <Lock className="w-6 h-6" aria-hidden="true" />
+          </div>
+          <div>
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
+              PLUS
+            </span>
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 mt-2">
+              Nội dung dành cho PLUS
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-2">
+              Chủ đề luyện viết này thuộc gói PLUS. Nâng cấp gói để mở khóa toàn bộ bài luyện và nội dung nâng cao.
+            </p>
+          </div>
+          <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
+            <Link
+              href="/practice/writing"
+              className="w-full py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-semibold transition text-center"
+            >
+              Quay lại danh sách
+            </Link>
+            <Link
+              href="/plans?highlight=plus"
+              className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm shadow-sm transition text-center"
+            >
+              Xem gói PLUS
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading || !minLaunchReady) {
     return (

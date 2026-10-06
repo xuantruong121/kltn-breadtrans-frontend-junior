@@ -18,6 +18,7 @@ import type { ReadingTopic } from "@/lib/api/services/reading.service";
 import {
   type ReadingCardStatus,
   computeReadingCardStatus,
+  isReadingTopicLocked,
   READING_DIFFICULTY_CONFIG,
   resolveExerciseDifficulty,
   resolveReadingFormatTag,
@@ -41,6 +42,7 @@ interface ReadingTopicCardProps {
   topic: ReadingTopicItem;
   isAuthenticated: boolean;
   onOpenAuthGate: (topic: ReadingTopicItem) => void;
+  onOpenPaywall?: (topic: ReadingTopicItem) => void;
   onStart?: (topic: ReadingTopicItem) => void;
   statusOverride?: ReadingCardStatus;
   isSpotlight?: boolean;
@@ -85,10 +87,12 @@ export function ReadingTopicCard({
   topic,
   isAuthenticated,
   onOpenAuthGate,
+  onOpenPaywall,
   onStart,
   statusOverride,
   isSpotlight = false,
 }: ReadingTopicCardProps) {
+  const isLocked = isReadingTopicLocked(topic);
   const total = topic.totalArticles || 4;
   const completed = topic.completedArticles || 0;
   const progressPercent = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
@@ -98,6 +102,7 @@ export function ReadingTopicCard({
     totalArticles: total,
     completedArticles: completed,
     isSpotlight,
+    isLocked,
   });
 
   const status = statusOverride || computedStatus;
@@ -111,6 +116,11 @@ export function ReadingTopicCard({
   const { Icon: AnchorIcon, iconContainer } = resolveReadingVisualAnchor(formatTag);
 
   const handleCardClick = (e: React.MouseEvent) => {
+    if (isLocked) {
+      e.preventDefault();
+      onOpenPaywall?.(topic);
+      return;
+    }
     if (!isAuthenticated) {
       e.preventDefault();
       onOpenAuthGate(topic);
@@ -153,6 +163,12 @@ export function ReadingTopicCard({
                 <span className={`w-1.5 h-1.5 rounded-full ${diffConfig.dotClass}`} aria-hidden="true" />
                 {diffConfig.label}
               </span>
+              {isLocked && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">
+                  <Lock size={11} aria-hidden="true" />
+                  PLUS
+                </span>
+              )}
             </div>
           </div>
 
@@ -264,7 +280,7 @@ export function ReadingTopicCard({
               className="bg-white hover:bg-emerald-50 text-emerald-700 dark:bg-slate-800 dark:hover:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/80 font-semibold text-sm px-3.5 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500"
             >
               <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Luyện lại ↺</span>
+              <span>Luyện lại</span>
             </button>
           ) : status === "IN_PROGRESS" ? (
             <button
@@ -283,6 +299,16 @@ export function ReadingTopicCard({
             >
               <span>Bắt đầu</span>
               <ArrowRight className="w-4 h-4" aria-hidden="true" />
+            </button>
+          ) : isLocked ? (
+            <button
+              type="button"
+              onClick={handleCardClick}
+              aria-label={`Mở khóa chủ đề ${topic.name || topic.title || ""}`}
+              className="bg-amber-50 hover:bg-amber-100 text-amber-900 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 dark:text-amber-200 border border-amber-300 dark:border-amber-800 font-semibold text-sm px-3.5 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500"
+            >
+              <Lock className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Mở khóa với PLUS</span>
             </button>
           ) : (
             <button

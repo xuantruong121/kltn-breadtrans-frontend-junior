@@ -11,7 +11,6 @@ import {
   PenTool,
   RotateCcw,
   Send,
-  Sparkles,
 } from "lucide-react";
 import type { WritingTopic } from "@/lib/api/services/writing.service";
 import {
@@ -36,6 +35,7 @@ interface WritingTopicCardProps {
   topic: WritingTopicItem;
   isAuthenticated: boolean;
   onOpenAuthGate: (topic: WritingTopicItem) => void;
+  onOpenPaywall?: (topic: WritingTopicItem) => void;
   onStart?: (topic: WritingTopicItem) => void;
   isLaunching?: boolean;
   statusOverride?: WritingCardStatus;
@@ -75,15 +75,19 @@ export function WritingTopicCard({
   topic,
   isAuthenticated,
   onOpenAuthGate,
+  onOpenPaywall,
   onStart,
   isLaunching = false,
   statusOverride,
   isSpotlight = false,
 }: WritingTopicCardProps) {
+  const isLocked = Boolean(topic.isLocked);
+
   const computedStatus = computeWritingCardStatus({
     isAuthenticated,
     isCompleted: topic.isCompleted,
     isSpotlight,
+    isLocked,
   });
 
   const status = statusOverride || computedStatus;
@@ -103,6 +107,11 @@ export function WritingTopicCard({
   const { Icon: AnchorIcon, iconContainer } = resolveWritingVisualAnchor(formatTag);
 
   const handleCardClick = (e: React.MouseEvent) => {
+    if (isLocked) {
+      e.preventDefault();
+      onOpenPaywall?.(topic);
+      return;
+    }
     if (!isAuthenticated) {
       e.preventDefault();
       onOpenAuthGate(topic);
@@ -145,6 +154,12 @@ export function WritingTopicCard({
                 <span className={`w-1.5 h-1.5 rounded-full ${diffConfig.dotClass}`} aria-hidden="true" />
                 {diffConfig.label}
               </span>
+              {isLocked && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">
+                  <Lock size={11} aria-hidden="true" />
+                  PLUS
+                </span>
+              )}
             </div>
           </div>
 
@@ -233,16 +248,9 @@ export function WritingTopicCard({
       <div className="mt-4 border-t border-slate-100 dark:border-slate-800/80 pt-3">
         <div className="flex items-center justify-between gap-3">
           {/* Metadata */}
-          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
-            <span className="inline-flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" aria-hidden="true" />
-              Gemini AI Rubric ETS
-            </span>
-            <span>·</span>
-            <span className="inline-flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
-              ~5 phút
-            </span>
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <Clock className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
+            <span>~5 phút</span>
           </div>
 
           {/* Differentiated CTA State Machine */}
@@ -254,7 +262,7 @@ export function WritingTopicCard({
               className="bg-white hover:bg-emerald-50 text-emerald-700 dark:bg-slate-800 dark:hover:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/80 font-semibold text-sm px-3.5 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 shadow-2xs hover:shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500"
             >
               <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Luyện lại ↺</span>
+              <span>Luyện lại</span>
             </button>
           ) : status === "IN_PROGRESS" ? (
             <button
@@ -275,6 +283,16 @@ export function WritingTopicCard({
             >
               <span>Bắt đầu</span>
               <ArrowRight className="w-4 h-4" aria-hidden="true" />
+            </button>
+          ) : isLocked ? (
+            <button
+              type="button"
+              onClick={handleCardClick}
+              aria-label={`Mở khóa chủ đề viết ${topic.topicName || topic.title || ""}`}
+              className="bg-amber-50 hover:bg-amber-100 text-amber-900 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 dark:text-amber-200 border border-amber-300 dark:border-amber-800 font-semibold text-sm px-3.5 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500"
+            >
+              <Lock className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Mở khóa với PLUS</span>
             </button>
           ) : (
             <button

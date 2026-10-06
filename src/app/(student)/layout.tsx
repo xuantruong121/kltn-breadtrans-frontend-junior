@@ -43,6 +43,7 @@ function isGuestAllowedRoute(pathname: string): boolean {
     "/learn",
     "/diagnostic",
     "/vocabulary",
+    "/plans",
   ];
   return guestPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"));
 }

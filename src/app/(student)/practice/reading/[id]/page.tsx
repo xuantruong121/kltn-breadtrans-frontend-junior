@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
-import { BookOpen, Clock, ChevronRight, ListChecks } from "lucide-react";
+import { BookOpen, Clock, ChevronRight, ListChecks, Lock } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { readingService } from "@/lib/api/services/reading.service";
 import { useAuthStore } from "@/stores/authStore";
 import { BackButton } from "@/components/ui";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
+import { PremiumContentPaywallModal } from "@/components/subscription/PremiumContentPaywallModal";
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
 
 export default function ReadingTopicDetailPage() {
@@ -18,6 +19,7 @@ export default function ReadingTopicDetailPage() {
   const topicId = Number(params.id);
   const { user } = useAuthStore();
   const [authGate, setAuthGate] = useState<{ open: boolean; quizId?: number; quizTitle?: string }>({ open: false });
+  const [paywallQuiz, setPaywallQuiz] = useState<any | null>(null);
   const [launchingQuizId, setLaunchingQuizId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -101,6 +103,10 @@ export default function ReadingTopicDetailPage() {
                     className="block"
                     onClick={(e) => {
                       e.preventDefault();
+                      if (quiz.isLocked) {
+                        setPaywallQuiz(quiz);
+                        return;
+                      }
                       if (!user) {
                         setAuthGate({ open: true, quizId: quiz.id, quizTitle: quiz.title });
                         return;
@@ -117,9 +123,17 @@ export default function ReadingTopicDetailPage() {
                       className="bg-slate-50 dark:bg-slate-850 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 p-5 rounded-2xl border-2 border-slate-200 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700 shadow-xs flex items-center justify-between group cursor-pointer transition-all"
                     >
                       <div className="flex-1 pr-4">
-                        <h3 className="text-base font-black text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors mb-1">
-                          Bài {index + 1}: {quiz.title}
-                        </h3>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-base font-black text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+                            Bài {index + 1}: {quiz.title}
+                          </h3>
+                          {quiz.isLocked && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800">
+                              <Lock size={11} aria-hidden="true" />
+                              PLUS
+                            </span>
+                          )}
+                        </div>
                         {quiz.description && (
                           <p className="text-slate-500 dark:text-slate-400 text-xs line-clamp-2 mb-3 font-medium">{quiz.description}</p>
                         )}
@@ -137,9 +151,15 @@ export default function ReadingTopicDetailPage() {
                           )}
                         </div>
                       </div>
-                      <div className="bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 group-hover:bg-emerald-500 group-hover:text-white dark:group-hover:text-white p-3 rounded-2xl shadow-xs transition-colors shrink-0">
-                        <ChevronRight size={20} />
-                      </div>
+                      {quiz.isLocked ? (
+                        <div className="bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 group-hover:bg-amber-500 group-hover:text-white p-3 rounded-2xl shadow-xs transition-colors shrink-0 border border-amber-200 dark:border-amber-800/80">
+                          <Lock size={18} />
+                        </div>
+                      ) : (
+                        <div className="bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 group-hover:bg-emerald-500 group-hover:text-white dark:group-hover:text-white p-3 rounded-2xl shadow-xs transition-colors shrink-0">
+                          <ChevronRight size={20} />
+                        </div>
+                      )}
                     </motion.div>
                   </Link>
                 ))}
@@ -212,6 +232,13 @@ export default function ReadingTopicDetailPage() {
         targetRoute={authGate.quizId ? `/practice/quizzes/${authGate.quizId}?topic=${topicId}` : "/practice"}
         onOpenLogin={() => router.push("/login")}
         onOpenRegister={() => router.push("/register")}
+      />
+
+      <PremiumContentPaywallModal
+        isOpen={!!paywallQuiz}
+        onClose={() => setPaywallQuiz(null)}
+        skillType="READING"
+        itemTitle={paywallQuiz?.title}
       />
     </>
   );
