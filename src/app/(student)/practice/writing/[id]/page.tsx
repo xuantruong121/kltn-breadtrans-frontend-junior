@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, use } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -31,6 +32,7 @@ export default function WritingDetailPage(props: {
 }) {
   const params = use(props.params);
   const topicId = Number(params.id);
+  const router = useRouter();
   const [content, setContent] = useState("");
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [feedback, setFeedback] = useState<WritingEvaluation | null>(null);
@@ -117,10 +119,15 @@ export default function WritingDetailPage(props: {
     setFeedback(null);
 
     try {
-      const result = await writingService.submit(topicId, content.trim());
-      setFeedback(result);
+      const clientAttemptId = crypto.randomUUID();
+      const result = await writingService.submit(
+        topicId,
+        content.trim(),
+        clientAttemptId,
+      );
       setIsEvaluating(false);
       toast.success("Hệ thống đã hoàn tất đánh giá bài viết!");
+      router.push(`/practice/quizzes/submissions/${result.submissionId}`);
     } catch {
       setIsEvaluating(false);
       toast.error("Có lỗi xảy ra khi chấm bài. Vui lòng thử lại!");

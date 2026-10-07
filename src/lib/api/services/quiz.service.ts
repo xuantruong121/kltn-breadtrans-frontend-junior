@@ -115,7 +115,8 @@ export interface SubmissionAnalytics {
   submissionId: number;
   quizId: number;
   quizTitle: string;
-  overallScore: number;
+  overallScore: number | null;
+  quizType?: string;
   totalQuestions: number;
   totalCorrect: number;
   overallAccuracyPercent: number;
@@ -130,6 +131,14 @@ export interface SubmissionAnalytics {
   strengths: string[];
   weaknesses: string[];
   recommendation: string;
+  writingFeedback?: {
+    feedback: string;
+    suggestions: string[];
+    maxScore: number;
+    score: number;
+    skill: "WRITING";
+  } | null;
+  submittedAnswer?: unknown;
 }
 
 export interface ListeningPracticeCatalogItem {

@@ -37,6 +37,7 @@ export interface WritingQuizDetails extends WritingTopic {
 
 export interface WritingEvaluation {
   submissionId: number;
+  status?: "COMPLETED";
   score: number;
   maxScore: number;
   feedback: string;
@@ -53,7 +54,38 @@ export const writingService = {
     return await axiosClient.get(`/writing/quizzes/${id}`);
   },
 
-  submit: async (id: number, answer: string): Promise<WritingEvaluation> => {
-    return await axiosClient.post(`/writing/quizzes/${id}/submit`, { answer });
+  submit: async (
+    id: number,
+    answer: string,
+    clientAttemptId: string,
+  ): Promise<WritingEvaluation> => {
+    return await axiosClient.post(`/writing/quizzes/${id}/submit`, {
+      answer,
+      clientAttemptId,
+    });
+  },
+
+  submitPart2: async (
+    quizId: number,
+    userResponse: string,
+    clientAttemptId: string,
+  ): Promise<WritingEvaluation> => {
+    return await axiosClient.post("/writing/part2/submit", {
+      quizId,
+      userResponse,
+      clientAttemptId,
+    });
+  },
+
+  submitPart3: async (
+    quizId: number,
+    userEssay: string,
+    clientAttemptId: string,
+  ): Promise<WritingEvaluation> => {
+    return await axiosClient.post("/writing/part3/submit", {
+      quizId,
+      userEssay,
+      clientAttemptId,
+    });
   },
 };

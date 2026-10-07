@@ -64,6 +64,17 @@ test("Writing Format Tag: resolves topic format accurately", () => {
     taskType: "WRITING_OPINION",
   };
   assert.equal(resolveWritingFormatTag(opinionItem), "Viết luận quan điểm");
+
+  const sharedEmailEnumOpinionItem: WritingTopicItem = {
+    id: 4,
+    topicName: "Writing Opinion",
+    type: "WRITING_EMAIL",
+    taskType: "OPINION",
+  };
+  assert.equal(
+    resolveWritingFormatTag(sharedEmailEnumOpinionItem),
+    "Viết luận quan điểm",
+  );
 });
 
 test("Writing Pedagogical Description: prevents prompt leakage", () => {

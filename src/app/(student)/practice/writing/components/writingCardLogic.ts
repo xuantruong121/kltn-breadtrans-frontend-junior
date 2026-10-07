@@ -76,17 +76,26 @@ export function matchesWritingDifficulty(
  * Resolves expressive format tag for writing topic.
  */
 export function resolveWritingFormatTag(topic: WritingTopicItem): string {
-  const type = (topic.type || topic.taskType || "").toUpperCase();
+  const type = (topic.type || "").toUpperCase();
+  const taskType = (topic.taskType || "").toUpperCase();
   const title = (topic.topicName || topic.title || "").toLowerCase();
 
+  // The backend stores Opinion tasks with the shared WRITING_EMAIL enum.
+  // taskType is therefore authoritative for the learner-facing format.
+  if (
+    taskType === "WRITING_OPINION" ||
+    ["OPINION", "ESSAY", "OPINION_ESSAY", "PROPOSAL"].includes(taskType) ||
+    title.includes("quan điểm") ||
+    title.includes("essay") ||
+    title.includes("luận")
+  ) {
+    return "Viết luận quan điểm";
+  }
   if (type === "WRITING_PICTURE" || title.includes("tranh") || title.includes("picture")) {
     return "Viết theo tranh";
   }
   if (type === "WRITING_EMAIL" || title.includes("email") || title.includes("thư")) {
     return "Phản hồi Email";
-  }
-  if (type === "WRITING_OPINION" || title.includes("quan điểm") || title.includes("essay") || title.includes("luận")) {
-    return "Viết luận quan điểm";
   }
   return "Viết câu";
 }

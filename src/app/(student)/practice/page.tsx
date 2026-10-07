@@ -23,6 +23,8 @@ import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useToeicStore } from "@/stores/toeicStore";
 import { userService, type SkillProgressSummary } from "@/lib/api/services/user.service";
+import { DailyPracticeCard } from "@/components/practice/DailyPracticeCard";
+import { skillScoreLabel, skillStatusLabel } from "@/lib/api/services/userSkillProgressLogic";
 import { gamificationService } from "@/lib/api/services/gamification.service";
 import {
   ArenaSwords3d,
@@ -188,7 +190,7 @@ export default function PracticeHubPage() {
     refetch: refetchSkillsSummary,
   } = useQuery({
     queryKey: ["user-skills-summary", user?.id],
-    queryFn: userService.getSkillsSummary,
+    queryFn: userService.getSkillProgress,
     enabled: isHydrated && !!user,
     staleTime: 30_000,
   });
@@ -212,6 +214,18 @@ export default function PracticeHubPage() {
     queryFn: userService.getProfile,
     enabled: isHydrated && !!user,
     staleTime: 60_000,
+  });
+
+  const {
+    data: dailyPractice,
+    isLoading: isDailyPracticeLoading,
+    isError: isDailyPracticeError,
+    refetch: refetchDailyPractice,
+  } = useQuery({
+    queryKey: ["daily-practice", user?.id],
+    queryFn: userService.getDailyPractice,
+    enabled: isHydrated && !!user,
+    staleTime: 30_000,
   });
 
   const skillsList: SkillProgressSummary[] =
@@ -240,6 +254,12 @@ export default function PracticeHubPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 pb-16">
+      <DailyPracticeCard
+        data={dailyPractice}
+        isLoading={isDailyPracticeLoading}
+        isError={isDailyPracticeError}
+        onRetry={() => refetchDailyPractice()}
+      />
       {/* ========================================================================= */}
       {/* 1. HERO HUB: DAILY QUEST & READINESS TRACKER                              */}
       {/* ========================================================================= */}
@@ -892,10 +912,20 @@ export default function PracticeHubPage() {
                           </div>
                         </div>
 
+                        <div className="mt-3 flex items-center justify-between gap-3 text-xs font-bold text-slate-500 dark:text-slate-400">
+                          <span>Điểm: {skillScoreLabel(skill)}</span>
+                          <span className={theme.tagText}>{skillStatusLabel(skill)}</span>
+                        </div>
+                        {skill.weakestDimension && (
+                          <p className="mt-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                            Cần luyện thêm: {skill.weakestDimension}
+                          </p>
+                        )}
+
                         {/* Real Dynamic Sub-tags */}
                         <div className="mt-4 flex flex-wrap gap-1.5 text-[11px] font-bold">
                           <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-slate-600 dark:text-slate-300">
-                            {skill.totalItems} {skill.unitLabel}
+                            {skill.completedAttempts ?? skill.totalItems} {skill.unitLabel}
                           </span>
                           <span className={`rounded-md ${theme.tagBg} px-2 py-0.5 ${theme.tagText}`}>
                             {skill.badge}

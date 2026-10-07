@@ -66,6 +66,11 @@ export function usePracticeExitGuard({
     defaultFallbackUrlRef.current = defaultFallbackUrl;
   }, [defaultFallbackUrl]);
 
+  const onConfirmExitRef = useRef(onConfirmExit);
+  useEffect(() => {
+    onConfirmExitRef.current = onConfirmExit;
+  }, [onConfirmExit]);
+
   const triggerElementRef = useRef<HTMLElement | null>(null);
   const isBypassingGuardRef = useRef(false);
 
@@ -87,10 +92,15 @@ export function usePracticeExitGuard({
 
   // 2. Programmatic exit trigger (e.g. in-page Back, Exit, or Return button)
   const confirmExit = useCallback(
-    (targetUrl?: string) => {
+    async (targetUrl?: string) => {
       const destination = targetUrl || defaultFallbackUrlRef.current;
 
       if (!isActiveRef.current) {
+        try {
+          await onConfirmExitRef.current?.();
+        } catch {
+          // Ignore errors in exit callback to guarantee navigation proceeds
+        }
         router.replace(destination);
         return;
       }
@@ -194,7 +204,7 @@ export function usePracticeExitGuard({
     setShowExitDialog(false);
 
     try {
-      await onConfirmExit?.();
+      await onConfirmExitRef.current?.();
     } catch {
       // Ignore errors in exit callback to guarantee navigation proceeds
     }
@@ -205,7 +215,7 @@ export function usePracticeExitGuard({
     } else {
       router.replace(destination);
     }
-  }, [isExternalDestination, onConfirmExit, pendingDestination, router]);
+  }, [isExternalDestination, pendingDestination, router]);
 
   return {
     showExitDialog,

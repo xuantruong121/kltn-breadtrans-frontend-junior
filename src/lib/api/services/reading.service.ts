@@ -25,6 +25,62 @@ export interface ReadingTopic {
   quizzes?: ReadingTopicQuiz[];
 }
 
+export interface ReadingTracking {
+  progress: {
+    completedExercises: number;
+    completedAttempts: number;
+    accuracy: number;
+    recentAverage: number;
+    lastPracticedAt: string | null;
+    currentStreak: number;
+  };
+  subskills: Array<{
+    key: string;
+    attempted: number;
+    correct: number;
+    accuracy: number;
+    status: "INSUFFICIENT_DATA" | "NEEDS_IMPROVEMENT" | "PROGRESSING" | "GOOD";
+    statusLabel: string;
+  }>;
+  recentAttempts: Array<{
+    submissionId: number;
+    quizId: number;
+    quizTitle: string;
+    correct: number;
+    total: number;
+    accuracy: number;
+    submittedAt: string;
+  }>;
+  recentTrend: {
+    direction: "INSUFFICIENT_DATA" | "IMPROVING" | "DECLINING" | "STABLE";
+    delta: number | null;
+    attempts: ReadingTracking["recentAttempts"];
+  };
+  mistakes: {
+    total: number;
+    bySubskill: Array<{ subskill: string; count: number }>;
+    items: Array<{
+      question: string;
+      yourAnswer: string;
+      correctAnswer: string | null;
+      answerAvailable: boolean;
+      explanation: string | null;
+      subskill: string;
+      source: string;
+      date: string;
+      status: "NEEDS_REVIEW";
+    }>;
+  };
+  recommendation: {
+    subskill: string;
+    reason: string;
+    quizId: number;
+    title: string;
+    isLocked: boolean;
+  } | null;
+  sampleSize: number;
+}
+
 export const readingService = {
   getTopics: async (): Promise<ReadingTopic[]> => {
     return await axiosClient.get("/reading/topics?category=BILINGUAL_LEVEL");
@@ -36,5 +92,9 @@ export const readingService = {
 
   getTheory: async (quizId: number): Promise<any> => {
     return await axiosClient.get(`/reading/quizzes/${quizId}/theory`);
+  },
+
+  getTracking: async (): Promise<ReadingTracking> => {
+    return await axiosClient.get("/reading/tracking");
   },
 };

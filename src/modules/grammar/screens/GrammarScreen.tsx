@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { BookOpenCheck, CheckCircle2, Loader2, PlayCircle } from "lucide-react";
@@ -29,6 +30,7 @@ export const GrammarScreen: React.FC<GrammarScreenProps> = ({
       setInternalTopicId(id);
     }
   };
+  const router = useRouter();
   const { setFocusMode } = useLearningFocusMode();
   const [isDirty, setIsDirty] = useState(false);
   const defaultFallbackUrl = "/practice/reading?category=grammar";
@@ -76,6 +78,11 @@ export const GrammarScreen: React.FC<GrammarScreenProps> = ({
   });
 
   const handleExitRequest = () => {
+    if (!isDirty) {
+      handleExitExercise();
+      router.replace(defaultFallbackUrl);
+      return;
+    }
     confirmExit(defaultFallbackUrl);
   };
 

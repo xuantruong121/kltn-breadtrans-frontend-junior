@@ -30,6 +30,7 @@ import {
   matchesReadingDifficulty,
 } from "./components/readingCardLogic";
 import { GrammarScreen } from "@/modules/grammar/screens/GrammarScreen";
+import { readingTrendLabel } from "./components/readingTrackingLogic";
 
 const CATEGORY_OPTIONS: Array<{ id: ExerciseCategory; label: string }> = [
   { id: "ALL", label: "Tất cả" },
@@ -133,6 +134,12 @@ function ReadingTopicsContent() {
   } = useQuery({
     queryKey: ["grammar-topics"],
     queryFn: grammarService.getTopics,
+  });
+
+  const { data: trackingData } = useQuery({
+    queryKey: ["reading-tracking"],
+    queryFn: readingService.getTracking,
+    enabled: Boolean(user),
   });
 
   const isLoading = isLoadingReading || isLoadingGrammar;
@@ -294,7 +301,10 @@ function ReadingTopicsContent() {
     return (
       <GrammarScreen
         activeTopicId={activeGrammarTopicId}
-        onExit={() => setActiveGrammarTopicId(null)}
+        onExit={() => {
+          setActiveGrammarTopicId(null);
+          handleCategoryChange("GRAMMAR");
+        }}
       />
     );
   }
@@ -380,6 +390,74 @@ function ReadingTopicsContent() {
           </div>
         </div>
       </section>
+
+      {user && trackingData && (
+        <section
+          aria-labelledby="reading-progress-heading"
+          className="rounded-2xl border border-emerald-200/80 dark:border-emerald-900/60 bg-white dark:bg-slate-900 p-5 shadow-2xs sm:p-6"
+        >
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">
+                Reading của bạn
+              </p>
+              <h2 id="reading-progress-heading" className="mt-1 text-xl font-black text-slate-900 dark:text-slate-100">
+                Theo dõi tiến bộ theo kỹ năng con
+              </h2>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Dữ liệu được tính từ các bài Reading đã nộp thành công; cần ít nhất {trackingData.sampleSize} lượt để gắn nhãn kỹ năng.
+              </p>
+            </div>
+            <Link
+              href="/practice/reading/mistakes"
+              className="inline-flex min-h-10 items-center justify-center rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/30 px-4 text-xs font-black text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-950/50"
+            >
+              Lỗi cần xem lại ({trackingData.mistakes.total})
+            </Link>
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-4">
+            {[
+              ["Độ chính xác", `${trackingData.progress.accuracy}%`],
+              ["Bài đã hoàn thành", String(trackingData.progress.completedExercises)],
+              ["Tổng lượt luyện", String(trackingData.progress.completedAttempts)],
+              ["Xu hướng gần đây", readingTrendLabel(trackingData.recentTrend.direction)],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/50 p-3">
+                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400">{label}</p>
+                <p className="mt-1 text-lg font-black text-slate-900 dark:text-slate-100">{value}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_280px]">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {trackingData.subskills.map((skill) => (
+                <div key={skill.key} className="rounded-xl border border-slate-200 dark:border-slate-800 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-black text-slate-800 dark:text-slate-100">{skill.key}</span>
+                    <span className="text-xs font-black text-emerald-700 dark:text-emerald-300">{skill.accuracy}%</span>
+                  </div>
+                  <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{skill.statusLabel} · {skill.attempted} lượt</p>
+                </div>
+              ))}
+            </div>
+            {trackingData.recommendation && (
+              <div className="rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 p-4">
+                <p className="text-[11px] font-black uppercase tracking-wide text-amber-800 dark:text-amber-300">Cần luyện thêm</p>
+                <p className="mt-1 text-sm font-black text-slate-900 dark:text-slate-100">{trackingData.recommendation.subskill}</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300">{trackingData.recommendation.reason}</p>
+                <Link
+                  href={trackingData.recommendation.isLocked ? "/store" : `/practice/quizzes/${trackingData.recommendation.quizId}`}
+                  className="mt-3 inline-flex text-xs font-black text-amber-800 underline underline-offset-2 dark:text-amber-300"
+                >
+                  {trackingData.recommendation.isLocked ? "Xem gói mở khóa" : `Luyện: ${trackingData.recommendation.title}`}
+                </Link>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Unified Modern Filter Dock */}
       <section className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xs sm:p-5 space-y-4">

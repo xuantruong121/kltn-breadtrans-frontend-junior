@@ -60,6 +60,88 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
 
   if (!analytics) return <div>Không tìm thấy kết quả.</div>;
 
+  const isWritingResult =
+    analytics.quizType === "WRITING_PICTURE" ||
+    analytics.quizType === "WRITING_EMAIL";
+  if (isWritingResult) {
+    const writingFeedback = analytics.writingFeedback;
+    return (
+      <div className="max-w-4xl mx-auto space-y-6 pb-20">
+        <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <BackButton href="/practice/writing" label="Quay lại luyện viết" />
+          <div className="h-6 w-0.5 bg-slate-200 dark:bg-slate-700 hidden sm:block" />
+          <div className="min-w-0">
+            <h1 className="text-xl font-black text-slate-800 dark:text-slate-100 line-clamp-1">
+              {analytics.quizTitle}
+            </h1>
+            <p className="text-xs font-bold text-slate-400 dark:text-slate-500">
+              Kết quả Writing đã lưu
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                Điểm đánh giá
+              </p>
+              <p className="text-4xl font-black text-emerald-600 dark:text-emerald-400">
+                {writingFeedback?.score ?? analytics.overallScore ?? "—"}
+                <span className="text-lg text-slate-400">
+                  {writingFeedback ? ` / ${writingFeedback.maxScore}` : ""}
+                </span>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => router.push(`/practice/writing/${analytics.quizId}`)}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-500 px-4 py-3 text-sm font-black text-white hover:bg-sky-600"
+            >
+              <RefreshCw size={16} /> Viết lại
+            </button>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 p-4">
+            <p className="text-xs font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">
+              Bài đã nộp
+            </p>
+            <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-200">
+              {typeof analytics.submittedAnswer === "string"
+                ? analytics.submittedAnswer
+                : "Không có nội dung hiển thị"}
+            </p>
+          </div>
+
+          {writingFeedback ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/70 dark:bg-emerald-950/30 p-4">
+                <h2 className="text-sm font-black text-emerald-800 dark:text-emerald-300">Nhận xét</h2>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+                  {writingFeedback.feedback}
+                </p>
+              </div>
+              <div className="rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/70 dark:bg-amber-950/30 p-4">
+                <h2 className="text-sm font-black text-amber-800 dark:text-amber-300">Gợi ý cải thiện</h2>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700 dark:text-slate-200">
+                  {writingFeedback.suggestions.map((suggestion) => (
+                    <li key={suggestion}>{suggestion}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ) : (
+            <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+              Feedback của bài viết này chưa khả dụng.
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  const isReadingResult = analytics.quizType === "BILINGUAL_READING";
+
   const wrongQuestionIds = (analytics.results || [])
     .filter((result: any) => result?.isCorrect !== true)
     .map((result: any) => Number(result.questionId))
@@ -212,6 +294,20 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
                 </span>
               </div>
             </div>
+
+            {isReadingResult && analytics.categoriesBreakdown.length > 0 && (
+              <div className="pt-3 text-left">
+                <p className="text-[10px] font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">Kỹ năng con</p>
+                <div className="mt-2 space-y-2">
+                  {analytics.categoriesBreakdown.map((category) => (
+                    <div key={category.category} className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 px-3 py-2">
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{category.category}</span>
+                      <span className="text-xs font-black text-emerald-700 dark:text-emerald-300">{category.correct}/{category.total} · {category.accuracyPercent}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="pt-2 flex flex-col gap-2">
               {wrongReviewHref && (

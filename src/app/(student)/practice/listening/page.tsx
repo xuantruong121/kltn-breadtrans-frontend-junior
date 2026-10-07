@@ -1,11 +1,9 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowRight,
   Coins,
   Filter,
   Flame,
@@ -247,80 +245,75 @@ function ListeningCatalogContent() {
   return (
     <div className="space-y-6 pb-20 pt-2">
       {/* Hero & Learning Progression Bar */}
-      <section className="relative overflow-hidden rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs sm:p-8">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="max-w-2xl space-y-3.5">
-            <div className="inline-flex items-center gap-2 rounded-full border border-violet-200 dark:border-violet-800/60 bg-violet-50/80 dark:bg-violet-950/40 px-3 py-1 text-xs font-bold text-violet-700 dark:text-violet-300">
-              <Headphones size={14} aria-hidden="true" />
-              <span>Phòng Luyện Nghe & Phân Tích Âm Thanh AI</span>
+      <section className="relative overflow-hidden rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-200 dark:border-violet-800/60 bg-violet-50/80 dark:bg-violet-950/40 px-2.5 py-0.5 text-[11px] font-bold text-violet-700 dark:text-violet-300">
+                <Headphones size={13} aria-hidden="true" />
+                Phòng Luyện Nghe & Phân Tích Âm Thanh
+              </span>
+              <span className="text-[11px] text-slate-400 dark:text-slate-500">•</span>
+              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                Chuẩn TOEIC & Giao tiếp
+              </span>
             </div>
 
-            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               Rèn luyện Nghe hiểu, Chép chính tả & Phản xạ Hội thoại
             </h1>
 
-            <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-400 sm:text-sm">
+            <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-400 line-clamp-1 sm:line-clamp-none max-w-2xl">
               Hệ thống luyện nghe đa ngữ cảnh tích hợp phân tích tốc độ phát thanh, nhận diện âm nuốt và bẫy phát âm theo chuẩn TOEIC & giao tiếp thực tế.
             </p>
 
             {/* Gamified Stats Pill Row */}
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <div className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/40 px-3 py-1.5 text-xs font-black text-amber-800 dark:text-amber-300">
-                <Flame size={14} className="text-amber-500 fill-amber-500" aria-hidden="true" />
-                <span>Chuỗi học: {streak || 1} ngày liên tiếp</span>
+            <div className="flex flex-wrap items-center gap-2 pt-0.5">
+              <div className="inline-flex items-center gap-1 rounded-lg border border-amber-200/80 dark:border-amber-800/50 bg-amber-50/70 dark:bg-amber-950/30 px-2.5 py-1 text-[11px] font-bold text-amber-800 dark:text-amber-300">
+                <Flame size={13} className="text-amber-500 fill-amber-500" aria-hidden="true" />
+                <span>Chuỗi học: {streak || 1} ngày</span>
               </div>
 
-              <div className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 dark:border-blue-800/60 bg-blue-50 dark:bg-blue-950/40 px-3 py-1.5 text-xs font-black text-blue-800 dark:text-blue-300">
-                <Target size={14} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
-                <span>Mục tiêu hôm nay: {Math.min(completedCount, 3)}/3 bài</span>
+              <div className="inline-flex items-center gap-1 rounded-lg border border-blue-200/80 dark:border-blue-800/50 bg-blue-50/70 dark:bg-blue-950/30 px-2.5 py-1 text-[11px] font-bold text-blue-800 dark:text-blue-300">
+                <Target size={13} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
+                <span>Mục tiêu: {Math.min(completedCount, 3)}/3 bài</span>
               </div>
 
-              <div className="inline-flex items-center gap-1.5 rounded-xl border border-violet-200 dark:border-violet-800/60 bg-violet-50 dark:bg-violet-950/40 px-3 py-1.5 text-xs font-black text-violet-800 dark:text-violet-300">
-                <Coins size={14} className="text-violet-600 dark:text-violet-400" aria-hidden="true" />
+              <div className="inline-flex items-center gap-1 rounded-lg border border-violet-200/80 dark:border-violet-800/50 bg-violet-50/70 dark:bg-violet-950/30 px-2.5 py-1 text-[11px] font-bold text-violet-800 dark:text-violet-300">
+                <Coins size={13} className="text-violet-600 dark:text-violet-400" aria-hidden="true" />
                 <span>Thưởng: +10 Bánh Mì / bài</span>
               </div>
             </div>
           </div>
 
           {/* Global Completion Progress Card */}
-          <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 p-5 shadow-2xs lg:w-80 shrink-0 space-y-4">
+          <div className="flex flex-col justify-between rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/40 p-3 sm:p-3.5 lg:w-64 shrink-0 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Tiến độ toàn khóa
               </span>
-              <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 text-xs font-black text-emerald-700 dark:text-emerald-300">
+              <span className="rounded-md bg-emerald-100 dark:bg-emerald-950/60 px-1.5 py-0.5 text-xs font-black text-emerald-700 dark:text-emerald-300">
                 {globalCompletionPct}%
               </span>
             </div>
 
             <div>
-              <div className="flex items-baseline justify-between text-sm">
-                <span className="text-xl font-black text-slate-900 dark:text-slate-100">
+              <div className="flex items-baseline justify-between text-xs">
+                <span className="text-base font-black text-slate-900 dark:text-slate-100">
                   {completedCount}/{quizzes.length}
                 </span>
-                <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
                   bài luyện hoàn thành
                 </span>
               </div>
 
               {/* Progress Bar */}
-              <div className="mt-2.5 h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+              <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
                 <div
                   className="h-full rounded-full bg-emerald-500 transition-all duration-500"
                   style={{ width: `${globalCompletionPct}%` }}
                 />
               </div>
-            </div>
-
-            <div className="flex items-center justify-between border-t border-slate-200/80 dark:border-slate-700/80 pt-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-              <span>Tổng số bài: {quizzes.length} bài</span>
-              <Link
-                href="/practice/reading"
-                className="inline-flex items-center gap-1 text-xs font-semibold text-violet-700 dark:text-violet-300 hover:text-violet-800 dark:hover:text-violet-200 bg-violet-50 dark:bg-violet-950/60 hover:bg-violet-100 dark:hover:bg-violet-900/60 border border-violet-200/60 dark:border-violet-800/60 px-2.5 py-1 rounded-md transition-colors duration-150"
-              >
-                Luyện đọc
-                <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-              </Link>
             </div>
           </div>
         </div>

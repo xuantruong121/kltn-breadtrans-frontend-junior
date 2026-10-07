@@ -28,8 +28,10 @@ import {
   TodayQuestItem,
 } from "@/lib/api/services/gamification.service";
 import { userService, SkillProgressSummary, UserProfile } from "@/lib/api/services/user.service";
+import { skillScoreLabel, skillStatusLabel } from "@/lib/api/services/userSkillProgressLogic";
 import { PlacementTestBanner } from "@/components/dashboard/PlacementTestBanner";
 import { DashboardCompanionCard } from "@/modules/pet/components/DashboardCompanionCard";
+import { DailyPracticeCard } from "@/components/practice/DailyPracticeCard";
 import {
   clampPercentage,
   getVietnamDayOfWeek,
@@ -418,9 +420,21 @@ export default function DashboardPage() {
     refetch: refetchSkills,
   } = useQuery({
     queryKey: ["user-skills-summary", user?.id],
-    queryFn: userService.getSkillsSummary,
+    queryFn: userService.getSkillProgress,
     enabled,
     staleTime: 60_000,
+  });
+
+  const {
+    data: dailyPractice,
+    isLoading: isDailyPracticeLoading,
+    isError: isDailyPracticeError,
+    refetch: refetchDailyPractice,
+  } = useQuery({
+    queryKey: ["daily-practice", user?.id],
+    queryFn: userService.getDailyPractice,
+    enabled,
+    staleTime: 30_000,
   });
 
   // Query invalidation on external learning events
@@ -430,6 +444,7 @@ export default function DashboardPage() {
       queryClient.invalidateQueries({ queryKey: ["user-stats", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["my-pet", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["user-skills-summary", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["daily-practice", user?.id] });
     };
     window.addEventListener("breadtrans:learning-event", handleLearningEvent);
     return () => window.removeEventListener("breadtrans:learning-event", handleLearningEvent);
@@ -507,6 +522,12 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 pb-16 font-['Quicksand',sans-serif]" id="dashboard">
+      <DailyPracticeCard
+        data={dailyPractice}
+        isLoading={isDailyPracticeLoading}
+        isError={isDailyPracticeError}
+        onRetry={() => refetchDailyPractice()}
+      />
       {/* ========================================================================= */}
       {/* 1. STUDENT HERO COMMAND CENTER (BreadTrans Clean Light Visual Language)   */}
       {/* ========================================================================= */}
@@ -1010,8 +1031,8 @@ export default function DashboardPage() {
               );
 
               // Strict Real Values (Zero static fallbacks)
-              const totalCount = apiSkill?.totalItems ?? 0;
-              const completedCount = apiSkill?.completedItems ?? 0;
+              const totalCount = apiSkill?.completedAttempts ?? apiSkill?.totalItems ?? 0;
+              const completedCount = apiSkill?.completedAttempts ?? apiSkill?.completedItems ?? 0;
               const progressPercent = apiSkill
                 ? Math.min(100, Math.max(0, Number(apiSkill.progressPercent) || 0))
                 : 0;
@@ -1090,6 +1111,20 @@ export default function DashboardPage() {
                         />
                       </div>
                     </div>
+                    <div className="flex items-center justify-between gap-3 text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                      <span>
+                        Điểm kỹ năng:{" "}
+                        {apiSkill ? skillScoreLabel(apiSkill) : "Chưa đủ dữ liệu"}
+                      </span>
+                      <span className="text-slate-700 dark:text-slate-200">
+                        {apiSkill ? skillStatusLabel(apiSkill) : "Chưa đủ dữ liệu"}
+                      </span>
+                    </div>
+                    {apiSkill?.weakestDimension && (
+                      <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                        Cần luyện thêm: {apiSkill.weakestDimension}
+                      </p>
+                    )}
                   </div>
 
                   <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800">
