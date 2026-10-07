@@ -294,8 +294,10 @@ export function computePracticeCardStatus(params: {
     isCompleted: boolean;
   };
   isSpotlight?: boolean;
+  isLocked?: boolean;
 }): PracticeCardStatus {
-  const { isAuthenticated, isCompleted, practiceSet, isSpotlight } = params;
+  const { isAuthenticated, isCompleted, practiceSet, isSpotlight, isLocked } = params;
+  if (isLocked) return "LOCKED";
   if (!isAuthenticated) return "LOCKED";
 
   const completed = Boolean(

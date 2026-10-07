@@ -71,20 +71,20 @@ export const SpeakingStage: React.FC<SpeakingStageProps> = ({
   const canRateSrs = score !== null || feedback !== null || isSkipped;
 
   return (
-    <div className="flex flex-col items-center w-full max-w-2xl sm:max-w-3xl mx-auto space-y-6">
+    <div className="flex flex-col items-center w-full max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto space-y-6">
       {/* Target Word & Meaning Card */}
-      <div className="w-full rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 text-center space-y-3 shadow-xs">
-        <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 px-3 py-1 rounded-full">
-          <Mic size={13} />
+      <div className="w-full rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-9 text-center space-y-4 shadow-xs">
+        <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-extrabold uppercase tracking-wider text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 px-3.5 py-1.5 rounded-full">
+          <Mic size={15} />
           Phát âm từ này
         </span>
 
-        <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+        <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
           {word.meaning}
         </p>
 
-        <div className="flex items-center justify-center gap-3">
-          <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
+        <div className="flex items-center justify-center gap-3.5">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
             {word.word}
           </h2>
 
@@ -92,15 +92,15 @@ export const SpeakingStage: React.FC<SpeakingStageProps> = ({
           <button
             type="button"
             onClick={() => onPlayAudio("us")}
-            className="flex items-center justify-center size-10 rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+            className="flex items-center justify-center size-11 rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors cursor-pointer"
             title="Nghe mẫu phát âm"
           >
-            <Volume2 size={18} />
+            <Volume2 size={20} />
           </button>
         </div>
 
         {word.ipaUs && (
-          <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 font-mono">
+          <p className="text-base sm:text-lg font-bold text-slate-500 dark:text-slate-400 font-mono">
             /{word.ipaUs.replace(/^\/|\/$/g, "")}/
           </p>
         )}

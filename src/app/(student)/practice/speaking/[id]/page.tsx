@@ -12,6 +12,7 @@ import {
   Gauge,
   HelpCircle,
   Loader2,
+  Lock,
   Mic,
   RotateCcw,
   Square,
@@ -55,6 +56,7 @@ import { PracticeExitConfirmDialog } from "@/components/practice/PracticeExitCon
 import { PracticeHeader } from "@/components/practice/PracticeHeader";
 import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
 import { ReportIssueButton } from "@/components/issue-report";
+import { isPremiumSpeakingForbiddenError } from "@/modules/subscription/planLogic";
 import toast from "react-hot-toast";
 
 /**
@@ -288,7 +290,7 @@ export default function SpeakingExerciseDetailPage() {
     return () => document.removeEventListener("mousedown", handleDocumentClick);
   }, []);
 
-  const { data: exercise, isLoading } = useQuery({
+  const { data: exercise, isLoading, error: exerciseError } = useQuery({
     queryKey: ["speaking-exercise", exerciseId],
     queryFn: () => speakingService.getExerciseById(exerciseId),
     enabled: !!exerciseId,
@@ -1637,6 +1639,45 @@ export default function SpeakingExerciseDetailPage() {
     );
   };
 
+  if (isPremiumSpeakingForbiddenError(exerciseError)) {
+    return (
+      <div className="fixed inset-0 z-[45] w-screen h-[100dvh] flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-6 text-center">
+        <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800/80 rounded-2xl p-6 sm:p-8 shadow-lg text-center space-y-4">
+          <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 flex items-center justify-center mx-auto text-amber-600 dark:text-amber-400">
+            <Lock className="w-6 h-6" aria-hidden="true" />
+          </div>
+          <div>
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
+              PLUS
+            </span>
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 mt-2">
+              Nội dung dành cho PLUS
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-2">
+              Bài luyện nói này thuộc gói PLUS. Nâng cấp gói để mở khóa toàn bộ bài luyện và nội dung nâng cao.
+            </p>
+          </div>
+          <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
+            <button
+              type="button"
+              onClick={() => router.push("/practice/speaking")}
+              className="w-full py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-semibold transition cursor-pointer"
+            >
+              Quay lại danh sách
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/plans?highlight=plus")}
+              className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm shadow-sm transition cursor-pointer"
+            >
+              Xem gói PLUS
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading || !minLaunchReady) {
     return (
       <div className="fixed inset-0 z-[45] w-screen h-[100dvh] flex items-center justify-center bg-white dark:bg-slate-950">
@@ -1744,7 +1785,7 @@ export default function SpeakingExerciseDetailPage() {
             {/* 1. Practice Sentence Canvas (Widened horizontal stretch, compact vertical padding) */}
             <div className="w-full bg-gradient-to-b from-white to-slate-50/60 dark:from-slate-900 dark:to-slate-850/60 py-4 px-5 sm:py-5 sm:px-8 lg:px-10 rounded-3xl border-2 border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center">
               {renderInteractiveTargetWords(
-                exercise.targetText,
+                exercise.targetText || "",
                 undefined,
                 true,
               )}
@@ -2054,7 +2095,7 @@ export default function SpeakingExerciseDetailPage() {
                 </div>
 
                 {renderInteractiveTargetWords(
-                  exercise.targetText,
+                  exercise.targetText || "",
                   phase === "COMPLETED" &&
                     !currentSubmission?.aiFeedback?.isSilentOrNoSpeech &&
                     currentSubmission?.lastErrorCode !== "NO_SPEECH"
@@ -2185,7 +2226,7 @@ export default function SpeakingExerciseDetailPage() {
             <PronunciationReportCard
               phase={phase}
               submission={currentSubmission}
-              targetText={exercise.targetText}
+              targetText={exercise.targetText || ""}
               userAudioUrl={audioUrl}
               qualityWarning={qualityWarning}
               recordingSeconds={recordingSeconds}

@@ -19,7 +19,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
   const isToeic = isExamRoute(pathname);
   const isSkills = isSkillsRoute(pathname);
   const isCourses = pathname.startsWith("/courses") || pathname.startsWith("/my-courses");
-  const isProfile = pathname.startsWith("/student/profile");
+  const isProfile = pathname.startsWith("/student/profile") || pathname.startsWith("/hub");
 
   return (
     <nav
@@ -96,7 +96,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
       {/* 5. Tài khoản / Đăng nhập */}
       {user ? (
         <Link
-          href="/student/profile"
+          href="/hub?tab=account-profile"
           className={`flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 transition-colors ${
             isProfile
               ? "text-amber-700 dark:text-amber-400 font-bold"

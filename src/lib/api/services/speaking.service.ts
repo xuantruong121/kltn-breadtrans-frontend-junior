@@ -3,7 +3,7 @@ import axiosClient from "../axiosClient";
 export interface SpeakingExercise {
   id: number;
   title: string;
-  targetText: string;
+  targetText?: string;
   imageUrl?: string;
   audioUrl?: string;
   difficulty: string;
@@ -11,6 +11,8 @@ export interface SpeakingExercise {
   translation?: string;
   description?: string;
   isCompleted?: boolean;
+  isPremiumContent?: boolean;
+  isLocked?: boolean;
   practiceSet?: SpeakingPracticeSetSummary;
 }
 

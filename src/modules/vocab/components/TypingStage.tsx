@@ -30,16 +30,16 @@ export const TypingStage: React.FC<TypingStageProps> = ({
   }, []);
 
   return (
-    <div className="flex flex-col items-center w-full max-w-2xl sm:max-w-3xl mx-auto space-y-6">
+    <div className="flex flex-col items-center w-full max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto space-y-6">
       {/* Prompt Card */}
-      <div className="w-full rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 text-center space-y-3 shadow-xs">
+      <div className="w-full rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-9 text-center space-y-4 shadow-xs">
         <div className="flex items-center justify-between">
-          <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-sky-700 bg-sky-50 dark:bg-sky-950/40 dark:text-sky-300 border border-sky-200 dark:border-sky-900/50 px-3 py-1 rounded-full">
-            <Keyboard size={13} />
+          <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-extrabold uppercase tracking-wider text-sky-700 bg-sky-50 dark:bg-sky-950/40 dark:text-sky-300 border border-sky-200 dark:border-sky-900/50 px-3.5 py-1.5 rounded-full">
+            <Keyboard size={15} />
             Gõ từ tiếng Anh
           </span>
           {word.pos && (
-            <span className="text-xs font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-900/50 rounded-full px-3 py-0.5">
+            <span className="text-sm sm:text-base font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-900/50 rounded-full px-3.5 py-1">
               ({word.pos})
             </span>
           )}
@@ -47,17 +47,17 @@ export const TypingStage: React.FC<TypingStageProps> = ({
 
         {/* Large Vietnamese definition */}
         <div className="py-3">
-          <p className="text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider mb-1">
+          <p className="text-xs sm:text-sm text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1.5">
             Nghĩa tiếng Việt
           </p>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
             {word.meaning}
           </h2>
         </div>
 
         {/* Hint Pill if revealed */}
         {hintCount > 0 && (
-          <div className="inline-flex items-center gap-1 px-3 py-1 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 rounded-full text-xs font-bold text-amber-800 dark:text-amber-300 animate-fadeIn">
+          <div className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 rounded-full text-sm font-bold text-amber-800 dark:text-amber-300 animate-fadeIn">
             <span>Gợi ý:</span>
             <span className="font-mono tracking-widest text-amber-900 dark:text-amber-200 uppercase">
               {word.word.slice(0, hintCount)}
@@ -68,7 +68,7 @@ export const TypingStage: React.FC<TypingStageProps> = ({
       </div>
 
       {/* Input Field & Controls */}
-      <div className="w-full space-y-3">
+      <div className="w-full space-y-3.5">
         <div className="relative w-full">
           <input
             ref={inputRef}
@@ -83,7 +83,7 @@ export const TypingStage: React.FC<TypingStageProps> = ({
               }
             }}
             placeholder="Gõ từ tiếng Anh..."
-            className={`w-full border-2 rounded-2xl text-center text-xl font-semibold py-3.5 px-12 transition-all outline-none ${
+            className={`w-full border-2 rounded-2xl text-center text-xl sm:text-2xl font-bold py-4 px-12 transition-all outline-none ${
               feedback === "CORRECT"
                 ? "border-emerald-500 bg-emerald-50 text-emerald-950 dark:bg-emerald-950/50 dark:text-emerald-200 ring-4 ring-emerald-100 dark:ring-emerald-900/40"
                 : feedback === "INCORRECT"
@@ -97,24 +97,24 @@ export const TypingStage: React.FC<TypingStageProps> = ({
             type="button"
             onClick={onRevealHint}
             disabled={feedback !== null}
-            className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center size-9 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors cursor-pointer"
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center justify-center size-10 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors cursor-pointer"
             title="Nhấn để nhận gợi ý chữ cái đầu"
           >
-            <Lightbulb size={17} />
+            <Lightbulb size={18} />
           </button>
         </div>
 
         {/* Instant Feedback Message */}
         {feedback === "CORRECT" && (
-          <div className="flex items-center justify-center gap-2 text-sm font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 rounded-2xl py-2 animate-fadeIn">
-            <Check size={16} />
+          <div className="flex items-center justify-center gap-2 text-base font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 rounded-2xl py-2.5 animate-fadeIn">
+            <Check size={18} />
             <span>Chính xác! Chuẩn bị chuyển qua luyện phát âm.</span>
           </div>
         )}
 
         {feedback === "INCORRECT" && (
-          <div className="flex items-center justify-center gap-2 text-sm font-bold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 rounded-2xl py-2 animate-fadeIn">
-            <X size={16} />
+          <div className="flex items-center justify-center gap-2 text-base font-bold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 rounded-2xl py-2.5 animate-fadeIn">
+            <X size={18} />
             <span>
               Chưa chính xác! Đáp án đúng: <strong className="font-extrabold">{word.word}</strong>
             </span>
@@ -127,12 +127,12 @@ export const TypingStage: React.FC<TypingStageProps> = ({
             type="button"
             onClick={onCheck}
             disabled={feedback !== null || !input.trim()}
-            className="w-full inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-sky-500 hover:bg-sky-600 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600 text-white font-extrabold text-sm transition-all active:scale-98 shadow-sm cursor-pointer"
+            className="w-full inline-flex min-h-[52px] sm:min-h-[56px] items-center justify-center gap-2 rounded-2xl bg-sky-500 hover:bg-sky-600 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600 text-white font-black text-base sm:text-lg transition-all active:scale-98 shadow-sm cursor-pointer"
           >
             <span>Kiểm tra</span>
-            <ArrowRight size={16} />
+            <ArrowRight size={18} />
           </button>
-          <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">Enter để kiểm tra</span>
+          <span className="text-xs sm:text-sm text-slate-400 dark:text-slate-500 font-medium">Enter để kiểm tra</span>
         </div>
       </div>
     </div>

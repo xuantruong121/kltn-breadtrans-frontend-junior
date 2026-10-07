@@ -32,6 +32,14 @@ export const LISTENING_SHORTCUTS: readonly ListeningShortcutDefinition[] = [
   },
 ] as const;
 
+/** Dictation-specific display/configuration; standard listening keeps Space. */
+export const DICTATION_SHORTCUTS: readonly ListeningShortcutDefinition[] =
+  LISTENING_SHORTCUTS.map((shortcut) =>
+    shortcut.id === "PLAY_PAUSE"
+      ? { ...shortcut, keys: ["`"], keyDisplay: "`" }
+      : shortcut,
+  );
+
 export interface ListeningWorkspaceShortcutActions {
   isChecked: boolean;
   isLastQuestion: boolean;
@@ -126,6 +134,12 @@ export function handleListeningKeyDown(
 
   // 1. Ctrl key down
   if (e.key === "Control") {
+    // When isDictation is true, parent controller skips built-in Ctrl Replay completely
+    // (Dictation Replay is owned exclusively by DailyDictationWorkspace with configurable hotkey)
+    if (actions.isDictation) {
+      state.isCandidate = false;
+      return null;
+    }
     // If repeat is true (held keydown), retain current candidate status without duplicate action
     if (e.repeat) {
       return null;
@@ -146,7 +160,8 @@ export function handleListeningKeyDown(
   // Never repeat actions when non-Control key is held down
   if (e.repeat) return null;
 
-  // 2. Space -> Play / Pause audio
+  // 2. Space -> Play / Pause audio for the standard listening workspace.
+  // Dictation owns its separate backtick handler in DailyDictationWorkspace.
   if (e.code === "Space" || e.key === " ") {
     // Ignore if combined with modifier keys
     if (e.ctrlKey || e.altKey || e.metaKey) return null;
@@ -224,6 +239,12 @@ export function handleListeningKeyUp(
     return null;
   }
 
+  // When isDictation is true, parent controller skips built-in Ctrl Replay completely
+  if (actions.isDictation) {
+    state.isCandidate = false;
+    return null;
+  }
+
   if (e.key === "Control") {
     if (state.isCandidate) {
       state.isCandidate = false;
@@ -237,6 +258,126 @@ export function handleListeningKeyUp(
   // Non-Control key released ensures candidate is cancelled
   state.isCandidate = false;
   return null;
+}
+
+/**
+ * Supported configurable modifier hotkeys for dictation replay.
+ */
+export type DictationReplayKey = "Ctrl" | "Alt" | "Shift";
+
+export interface DictationReplayState {
+  candidate: DictationReplayKey | null;
+}
+
+export function createDictationReplayState(): DictationReplayState {
+  return { candidate: null };
+}
+
+export function getModifierReplayKey(key: string): DictationReplayKey | null {
+  if (key === "Control") return "Ctrl";
+  if (key === "Alt") return "Alt";
+  if (key === "Shift") return "Shift";
+  return null;
+}
+
+/**
+ * Handles keydown for dictation replay candidate model.
+ * Returns true if a standalone candidate was marked, false otherwise.
+ */
+export function handleDictationReplayKeyDown(
+  e: KeyboardEventLike,
+  configuredReplayKey: DictationReplayKey,
+  state: DictationReplayState,
+): boolean {
+  const pressedModifier = getModifierReplayKey(e.key);
+
+  if (pressedModifier === configuredReplayKey) {
+    // Repeated keydown while held: preserve candidate without duplicate trigger
+    if (e.repeat) {
+      return state.candidate === configuredReplayKey;
+    }
+
+    // Cancel candidate if another modifier is active (e.g. Ctrl+Alt, Shift+Ctrl, Meta)
+    const hasOtherModifier =
+      (configuredReplayKey !== "Ctrl" && Boolean(e.ctrlKey)) ||
+      (configuredReplayKey !== "Alt" && Boolean(e.altKey)) ||
+      (configuredReplayKey !== "Shift" && Boolean(e.shiftKey)) ||
+      Boolean(e.metaKey);
+
+    if (hasOtherModifier) {
+      state.candidate = null;
+      return false;
+    }
+
+    state.candidate = configuredReplayKey;
+    return true;
+  }
+
+  // Any non-configured keydown cancels candidate (e.g. letters, numbers, arrow keys, Tab, etc.)
+  state.candidate = null;
+  return false;
+}
+
+/**
+ * Handles keyup for dictation replay candidate model.
+ * Triggers onReplay exactly once if the released key matches the candidate.
+ */
+export function handleDictationReplayKeyUp(
+  e: KeyboardEventLike,
+  configuredReplayKey: DictationReplayKey,
+  state: DictationReplayState,
+  onReplay: () => void,
+): boolean {
+  const releasedModifier = getModifierReplayKey(e.key);
+
+  if (releasedModifier === configuredReplayKey) {
+    if (state.candidate === configuredReplayKey) {
+      state.candidate = null;
+      onReplay();
+      return true;
+    }
+    state.candidate = null;
+    return false;
+  }
+
+  // Any other key released cancels candidate
+  state.candidate = null;
+  return false;
+}
+
+export function handleDictationReplayBlur(state: DictationReplayState): void {
+  state.candidate = null;
+}
+
+export interface DictationReplayController {
+  handleKeyDown: (e: KeyboardEventLike) => boolean;
+  handleKeyUp: (e: KeyboardEventLike) => boolean;
+  handleBlur: () => void;
+  reset: () => void;
+  getState: () => DictationReplayState;
+}
+
+export function createDictationReplayController(
+  getReplayKey: () => DictationReplayKey,
+  onReplay: () => void,
+): DictationReplayController {
+  const state = createDictationReplayState();
+
+  return {
+    handleKeyDown: (e: KeyboardEventLike): boolean => {
+      return handleDictationReplayKeyDown(e, getReplayKey(), state);
+    },
+    handleKeyUp: (e: KeyboardEventLike): boolean => {
+      return handleDictationReplayKeyUp(e, getReplayKey(), state, onReplay);
+    },
+    handleBlur: () => {
+      handleDictationReplayBlur(state);
+    },
+    reset: () => {
+      handleDictationReplayBlur(state);
+    },
+    getState: () => ({ ...state }),
+  };
 }
 
 /**

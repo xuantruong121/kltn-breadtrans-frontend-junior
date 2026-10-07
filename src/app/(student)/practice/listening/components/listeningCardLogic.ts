@@ -79,7 +79,6 @@ export function resolveListeningFormatTag(
   quiz: ListeningPracticeCatalogItem,
 ): string {
   const title = (quiz.title || "").toLowerCase();
-  const desc = (quiz.description || "").toLowerCase();
   const mode = (quiz.mode || "").toUpperCase();
 
   if (mode === "DICTATION" || title.includes("chép chính tả") || title.includes("dictation")) {
@@ -199,8 +198,10 @@ export function computeListeningCardStatus(params: {
   isCompleted?: boolean;
   isSpotlight?: boolean;
   inProgress?: boolean;
+  isLocked?: boolean;
 }): ListeningCardStatus {
-  const { isAuthenticated, isCompleted, isSpotlight, inProgress } = params;
+  const { isAuthenticated, isCompleted, isSpotlight, inProgress, isLocked } = params;
+  if (isLocked) return "LOCKED";
   if (!isAuthenticated) return "LOCKED";
   if (isCompleted) return "COMPLETED";
   if (inProgress || isSpotlight) return "IN_PROGRESS";

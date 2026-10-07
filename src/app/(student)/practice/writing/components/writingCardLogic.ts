@@ -133,15 +133,24 @@ export function resolveWritingSkillTags(topic: WritingTopicItem): string[] {
 }
 
 /**
+ * Checks if a writing topic is locked.
+ * STRICT CONTRACT: Authoritative truth comes from topic.isLocked!
+ */
+export function isWritingTopicLocked(topic: { isLocked?: boolean }): boolean {
+  return Boolean(topic?.isLocked);
+}
+
+/**
  * Computes writing card status machine.
  */
 export function computeWritingCardStatus(params: {
   isAuthenticated: boolean;
   isCompleted?: boolean;
   isSpotlight?: boolean;
+  isLocked?: boolean;
 }): WritingCardStatus {
-  const { isAuthenticated, isCompleted, isSpotlight } = params;
-  if (!isAuthenticated) return "LOCKED";
+  const { isAuthenticated, isCompleted, isSpotlight, isLocked } = params;
+  if (!isAuthenticated || isLocked) return "LOCKED";
   if (isCompleted) return "COMPLETED";
   if (isSpotlight) return "IN_PROGRESS";
   return "NOT_STARTED";

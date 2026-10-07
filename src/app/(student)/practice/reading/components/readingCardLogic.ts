@@ -196,6 +196,20 @@ export function resolveReadingSkillTags(topic: ReadingTopicItem): string[] {
 }
 
 /**
+ * Authoritatively checks if a reading topic is locked based on backend contracts.
+ */
+export function isReadingTopicLocked(topic: {
+  isLocked?: boolean;
+  quizzes?: Array<{ isLocked?: boolean }>;
+}): boolean {
+  if (topic.isLocked !== undefined) return Boolean(topic.isLocked);
+  if (Array.isArray(topic.quizzes) && topic.quizzes.length > 0) {
+    return topic.quizzes.every((q) => Boolean(q.isLocked));
+  }
+  return false;
+}
+
+/**
  * Computes reading card status machine.
  */
 export function computeReadingCardStatus(params: {
@@ -203,8 +217,10 @@ export function computeReadingCardStatus(params: {
   totalArticles: number;
   completedArticles: number;
   isSpotlight?: boolean;
+  isLocked?: boolean;
 }): ReadingCardStatus {
-  const { isAuthenticated, totalArticles, completedArticles, isSpotlight } = params;
+  const { isAuthenticated, totalArticles, completedArticles, isSpotlight, isLocked } = params;
+  if (isLocked) return "LOCKED";
   if (!isAuthenticated) return "LOCKED";
   if (totalArticles > 0 && completedArticles >= totalArticles) return "COMPLETED";
   if (completedArticles > 0 || isSpotlight) return "IN_PROGRESS";

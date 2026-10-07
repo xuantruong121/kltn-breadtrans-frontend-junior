@@ -21,6 +21,7 @@ import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScre
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
+import { PremiumContentPaywallModal } from "@/components/subscription/PremiumContentPaywallModal";
 import {
   WritingTopicCard,
   type WritingTopicItem,
@@ -48,6 +49,7 @@ export default function WritingTopicsPage() {
   const [sortOrder, setSortOrder] = useState<"DEFAULT" | "NAME_ASC">("DEFAULT");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [launchingTopicId, setLaunchingTopicId] = useState<number | null>(null);
+  const [paywallTopic, setPaywallTopic] = useState<WritingTopicItem | null>(null);
   const [authGate, setAuthGate] = useState<{
     open: boolean;
     topicId?: number;
@@ -86,6 +88,8 @@ export default function WritingTopicsPage() {
   const {
     data: topicsData,
     isLoading,
+    isError,
+    refetch,
   } = useQuery({
     queryKey: ["writing-topics"],
     queryFn: writingService.getTopics,
@@ -378,6 +382,23 @@ export default function WritingTopicsPage() {
               Đang tải danh sách chủ đề luyện viết...
             </p>
           </div>
+        ) : isError ? (
+          <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-rose-200 bg-rose-50/60 p-8 text-center dark:border-rose-900/60 dark:bg-rose-950/20">
+            <p className="text-sm font-bold text-rose-800 dark:text-rose-200">
+              Không thể tải danh sách chủ đề luyện viết.
+            </p>
+            <p className="mt-1 text-xs text-rose-700 dark:text-rose-300">
+              Kiểm tra kết nối mạng rồi thử lại.
+            </p>
+            <button
+              type="button"
+              onClick={() => void refetch()}
+              className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl border border-rose-300 bg-white px-4 text-xs font-bold text-rose-800 hover:bg-rose-100 dark:border-rose-800 dark:bg-slate-900 dark:text-rose-200 dark:hover:bg-rose-950/40"
+            >
+              <RotateCcw size={14} aria-hidden="true" />
+              Thử lại
+            </button>
+          </div>
         ) : filteredAndSortedTopics.length > 0 ? (
           <div className="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {filteredAndSortedTopics.map((topic) => (
@@ -392,6 +413,7 @@ export default function WritingTopicsPage() {
                     title: topic.topicName || topic.title,
                   })
                 }
+                onOpenPaywall={(t) => setPaywallTopic(t)}
                 onStart={handleStartTopic}
                 isSpotlight={topic.isSpotlight}
               />
@@ -433,6 +455,14 @@ export default function WritingTopicsPage() {
         targetRoute={authGate.topicId ? `/practice/writing/${authGate.topicId}` : "/practice/writing"}
         onOpenLogin={() => router.push("/login")}
         onOpenRegister={() => router.push("/register")}
+      />
+
+      {/* PLUS Paywall Modal */}
+      <PremiumContentPaywallModal
+        isOpen={Boolean(paywallTopic)}
+        onClose={() => setPaywallTopic(null)}
+        skillType="WRITING"
+        itemTitle={paywallTopic?.topicName || paywallTopic?.title}
       />
     </div>
   );

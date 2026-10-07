@@ -51,6 +51,7 @@ import {
   LISTENING_SHORTCUTS,
   createListeningShortcutController,
 } from "./listeningShortcutConfig";
+import { probeOrPrefetchTranscript } from "./listeningTranscriptResources";
 
 interface ListeningComprehensionWorkspaceProps {
   quiz?: Quiz | null;
@@ -349,6 +350,14 @@ export function ListeningComprehensionWorkspace({
     const timer = setTimeout(() => setMinLaunchReady(true), 350);
     return () => clearTimeout(timer);
   }, []);
+
+  // Safe background prefetch of permitted transcript resources during initial workspace lifecycle
+  useEffect(() => {
+    if (!quizId || !quiz) return;
+    const controller = new AbortController();
+    void probeOrPrefetchTranscript(quizId, quiz, controller.signal).catch(() => undefined);
+    return () => controller.abort();
+  }, [quizId, quiz]);
 
   // Dismiss popovers on outside click
   useEffect(() => {
@@ -952,7 +961,10 @@ export function ListeningComprehensionWorkspace({
   // Loading and error states
   if (isLoading || !quiz) {
     return (
-      <div className="fixed inset-0 z-[45] w-screen h-[100dvh] flex items-center justify-center bg-white dark:bg-slate-950">
+      <div
+        data-testid="listening-loading-screen"
+        className="fixed inset-0 z-[45] w-screen h-[100dvh] flex items-center justify-center bg-white dark:bg-slate-950"
+      >
         <PracticeLoadingScreen skill="listening" className="max-w-4xl" />
       </div>
     );
@@ -977,7 +989,10 @@ export function ListeningComprehensionWorkspace({
       );
     }
     return (
-      <div className="fixed inset-0 z-[45] w-screen h-[100dvh] flex items-center justify-center bg-white dark:bg-slate-950">
+      <div
+        data-testid="listening-loading-screen"
+        className="fixed inset-0 z-[45] w-screen h-[100dvh] flex items-center justify-center bg-white dark:bg-slate-950"
+      >
         <PracticeLoadingScreen skill="listening" className="max-w-4xl" />
       </div>
     );

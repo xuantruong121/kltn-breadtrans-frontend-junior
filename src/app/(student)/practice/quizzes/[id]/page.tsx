@@ -21,6 +21,7 @@ import {
   FileText,
   Lightbulb,
   Loader2,
+  Lock,
   Play,
   Square,
   X,
@@ -34,6 +35,10 @@ import { PracticeExitConfirmDialog } from "@/components/practice/PracticeExitCon
 import { PracticeHeader } from "@/components/practice/PracticeHeader";
 import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
 import { WordDictionaryPopup } from "@/components/speaking/WordDictionaryPopup";
+import {
+  isPremiumReadingForbiddenError,
+  isPremiumListeningForbiddenError,
+} from "@/modules/subscription/planLogic";
 import toast from "react-hot-toast";
 import { getUnansweredQuestionIndexes } from "../readingQuizUtils";
 import { createReadingAttemptId } from "../readingAttempt";
@@ -93,7 +98,7 @@ export default function TakeQuizPage(props: {
     string | null
   >(null);
 
-  const { data: quiz, isLoading } = useQuery({
+  const { data: quiz, isLoading, error: quizError } = useQuery({
     queryKey: ["quiz", quizId],
     queryFn: () => quizService.getQuizById(quizId),
     enabled: hasMounted && !!user && !Number.isNaN(quizId),
@@ -262,6 +267,51 @@ export default function TakeQuizPage(props: {
           onOpenLogin={() => router.push("/login")}
           onOpenRegister={() => router.push("/register")}
         />
+      </div>
+    );
+  }
+
+  const isReadingForbidden = isPremiumReadingForbiddenError(quizError);
+  const isListeningForbidden = isPremiumListeningForbiddenError(quizError);
+
+  if (isReadingForbidden || isListeningForbidden) {
+    const skillLabel = isListeningForbidden ? "bài luyện nghe" : "bài luyện đọc";
+    const backRoute = isListeningForbidden ? "/practice/listening" : "/practice/reading";
+
+    return (
+      <div className="min-h-dvh flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-6 text-center">
+        <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800/80 rounded-2xl p-6 sm:p-8 shadow-lg text-center space-y-4">
+          <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 flex items-center justify-center mx-auto text-amber-600 dark:text-amber-400">
+            <Lock className="w-6 h-6" aria-hidden="true" />
+          </div>
+          <div>
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
+              PLUS
+            </span>
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 mt-2">
+              Nội dung dành cho PLUS
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-2">
+              {`Nội dung ${skillLabel} này thuộc gói PLUS. Nâng cấp gói để mở khóa toàn bộ bài luyện và nội dung nâng cao.`}
+            </p>
+          </div>
+          <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
+            <button
+              type="button"
+              onClick={() => router.push(backRoute)}
+              className="w-full py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-semibold transition cursor-pointer"
+            >
+              Quay lại danh sách
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/plans?highlight=plus")}
+              className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm shadow-sm transition cursor-pointer"
+            >
+              Xem gói PLUS
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
