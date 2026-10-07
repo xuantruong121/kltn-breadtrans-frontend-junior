@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Library, Loader2, PlayCircle, CheckCircle2, Lock } from "lucide-react";
+import { Library, Loader2, PlayCircle, CheckCircle2, Lock, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { vocabService, type VocabTopic } from "@/lib/api/services/vocab.service";
 import { BackButton } from "@/components/ui";
@@ -12,7 +12,7 @@ import { isVocabTopicLocked } from "@/modules/subscription/planLogic";
 
 export default function VocabTopicsPage() {
   const [paywallTopic, setPaywallTopic] = useState<VocabTopic | null>(null);
-  const { data: topicsData, isLoading } = useQuery({
+  const { data: topicsData, isLoading, isError, refetch } = useQuery({
     queryKey: ["vocab-topics"],
     queryFn: vocabService.getTopics,
   });
@@ -37,6 +37,23 @@ export default function VocabTopicsPage() {
       {isLoading ? (
         <div className="flex justify-center p-12">
           <Loader2 className="animate-spin text-junior-orange" size={48} />
+        </div>
+      ) : isError ? (
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-rose-200 bg-rose-50/60 p-8 text-center dark:border-rose-900/60 dark:bg-rose-950/20">
+          <p className="text-sm font-bold text-rose-800 dark:text-rose-200">
+            Không thể tải danh sách chủ đề từ vựng.
+          </p>
+          <p className="mt-1 text-xs text-rose-700 dark:text-rose-300">
+            Kiểm tra kết nối mạng rồi thử lại.
+          </p>
+          <button
+            type="button"
+            onClick={() => void refetch()}
+            className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl border border-rose-300 bg-white px-4 text-xs font-bold text-rose-800 hover:bg-rose-100 dark:border-rose-800 dark:bg-slate-900 dark:text-rose-200 dark:hover:bg-rose-950/40"
+          >
+            <RotateCcw size={14} aria-hidden="true" />
+            Thử lại
+          </button>
         </div>
       ) : topics && topics.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

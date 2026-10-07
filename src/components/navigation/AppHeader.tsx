@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   BookOpen,
   CreditCard,
+  Crown,
   ChevronDown,
   Dumbbell,
   GraduationCap,
@@ -37,6 +38,7 @@ import {
   Layers,
   CircleHelp,
   Lightbulb,
+  Zap,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
@@ -507,17 +509,10 @@ export function AppHeader() {
     label: string;
     href: string;
     icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
+    active?: boolean;
     isExam?: boolean;
     iconBg?: string;
-    description?: string;
-  }
-
-  interface HeaderNavLink {
-    label: string;
-    href: string;
-    icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
-    isExam?: boolean;
-    iconBg?: string;
+    iconColor?: string;
     description?: string;
   }
 
@@ -538,48 +533,56 @@ export function AppHeader() {
       href: "/practice/listening",
       icon: Headphones,
       active: isListeningRoute(pathname),
+      iconColor: "text-sky-500 dark:text-sky-400",
     },
     {
       label: "Nói",
       href: "/practice/speaking",
       icon: Mic,
       active: isSpeakingRoute(pathname),
+      iconColor: "text-rose-500 dark:text-rose-400",
     },
     {
       label: "Đọc",
       href: "/practice/reading",
       icon: BookOpen,
       active: isReadingRoute(pathname),
+      iconColor: "text-emerald-500 dark:text-emerald-400",
     },
     {
       label: "Viết",
       href: "/practice/writing",
       icon: PenTool,
       active: isWritingRoute(pathname),
+      iconColor: "text-violet-500 dark:text-violet-400",
     },
     {
       label: "Flashcard",
       href: "/flashcard",
       icon: Layers,
       active: isFlashcardRoute(pathname),
+      iconColor: "text-cyan-500 dark:text-cyan-400",
     },
     {
       label: "Luyện đề",
       href: "/practice/quizzes",
       icon: Target,
       active: isExamRoute(pathname),
+      iconColor: "text-orange-500 dark:text-orange-400",
     },
     {
       label: "Khóa học",
       href: "/courses",
       icon: GraduationCap,
       active: isCoursesRoute(pathname),
+      iconColor: "text-indigo-500 dark:text-indigo-400",
     },
     {
       label: "Cửa hàng",
       href: "/market",
       icon: ShoppingBag,
       active: isMarketRoute(pathname),
+      iconColor: "text-pink-500 dark:text-pink-400",
     },
   ];
 
@@ -592,21 +595,21 @@ export function AppHeader() {
       label: "Bảng xếp hạng",
       href: "/arena",
       icon: Trophy,
-      iconBg: "bg-amber-50 dark:bg-amber-950/70 text-amber-600 dark:text-amber-400 border border-amber-200/80 dark:border-amber-800/60",
+      iconColor: "text-amber-500 dark:text-amber-400",
       description: "Bảng vàng thi đua tuần & tích lũy EXP",
     },
     {
       label: "Liên hệ",
       href: "/help",
       icon: CircleHelp,
-      iconBg: "bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 border border-blue-200/80 dark:border-blue-800/60",
+      iconColor: "text-sky-500 dark:text-sky-400",
       description: "Trung tâm trợ giúp & email hỗ trợ học tập",
     },
     {
       label: "Đề xuất",
       href: "/help#feedback",
       icon: Lightbulb,
-      iconBg: "bg-emerald-50 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/60",
+      iconColor: "text-emerald-500 dark:text-emerald-400",
       description: "Đóng góp ý kiến cải tiến nền tảng & bài học",
     },
   ];
@@ -653,7 +656,10 @@ export function AppHeader() {
                   : "text-slate-600 dark:text-slate-300 hover:text-amber-800 dark:hover:text-amber-400 hover:bg-amber-50/50 dark:hover:bg-slate-800/60"
               }`}
             >
-              <link.icon size={16} className="shrink-0" />
+              <link.icon
+                size={16}
+                className={`shrink-0 ${link.active ? "" : (link.iconColor ?? "")}`}
+              />
               <span className="whitespace-nowrap">{link.label}</span>
             </Link>
           ))}
@@ -709,26 +715,23 @@ export function AppHeader() {
                       href={item.href}
                       onClick={closeMenus}
                       role="menuitem"
-                      className={`flex items-start gap-3.5 p-3 rounded-xl transition-all group/item ${
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group/item ${
                         active
                           ? "bg-amber-50/90 dark:bg-amber-950/60 text-amber-950 dark:text-amber-300 font-bold border border-amber-200/70 dark:border-amber-800/60 shadow-2xs"
-                          : "text-slate-700 dark:text-slate-300 hover:bg-amber-50/50 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100 font-semibold"
+                          : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100 font-semibold"
                       }`}
                     >
-                      <div
-                        className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform ${
-                          active
-                            ? "bg-amber-600 text-white shadow-xs"
-                            : item.iconBg || "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                      <item.icon
+                        size={18}
+                        className={`shrink-0 transition-transform group-hover/item:scale-110 ${
+                          active ? "text-amber-600 dark:text-amber-400" : (item.iconColor ?? "text-slate-500")
                         }`}
-                      >
-                        <item.icon size={22} />
-                      </div>
-                      <div className="flex-1 min-w-0 pt-0.5">
+                      />
+                      <div className="flex-1 min-w-0">
                         <div className="text-sm font-bold truncate flex items-center justify-between gap-2 group-hover/item:text-amber-800 dark:group-hover/item:text-amber-400 transition-colors">
                           <span>{item.label}</span>
                           {active && (
-                            <span className="w-2 h-2 rounded-full bg-amber-600 dark:bg-amber-500 shrink-0" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-600 dark:bg-amber-500 shrink-0" />
                           )}
                         </div>
                         {item.description && (
@@ -750,9 +753,18 @@ export function AppHeader() {
           {/* If Student: Show Gamification badges & Profile Menu */}
           {isStudent && (
             <>
+              {/* Nút Nâng cấp bên trái ô hiển thị bánh mì */}
+              <Link
+                href="/plans"
+                className="inline-flex items-center gap-1 sm:gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black text-xs sm:text-sm shadow-xs transition-all shrink-0 cursor-pointer"
+              >
+                <Zap size={14} className="fill-white text-white shrink-0" aria-hidden="true" />
+                <span>Nâng cấp</span>
+              </Link>
+
               {/* Mobile Compact Pill: Bánh Mì */}
               <Link
-                href="/student/profile?tab=quotas"
+                href="/hub?tab=account-plan"
                 title={`Số dư: ${breads || 0} Bánh Mì`}
                 className="flex sm:hidden items-center gap-1 bg-amber-50/90 dark:bg-amber-950/50 border border-amber-200/90 dark:border-amber-800/70 px-2 py-1 rounded-xl shadow-2xs text-amber-900 dark:text-amber-300 shrink-0 whitespace-nowrap text-xs font-black"
               >
@@ -762,7 +774,7 @@ export function AppHeader() {
 
               {/* Badge Bánh Mì */}
               <Link
-                href="/student/profile?tab=quotas"
+                href="/hub?tab=account-plan"
                 title={`Số dư: ${breads || 0} Bánh Mì`}
                 className="group hidden items-center gap-1 sm:gap-1.5 bg-amber-50/90 dark:bg-amber-950/50 border border-amber-200/90 dark:border-amber-800/70 px-2 sm:px-2.5 2xl:px-3 py-1 2xl:py-1.5 rounded-2xl shadow-2xs hover:border-amber-400 dark:hover:border-amber-600 transition-colors shrink-0 whitespace-nowrap sm:flex"
               >
@@ -825,21 +837,21 @@ export function AppHeader() {
                     </div>
 
                     <Link
-                      href="/plans"
+                      href="/hub?tab=account-plan"
                       onClick={closeMenus}
                       className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-slate-800 hover:text-amber-900 dark:hover:text-amber-400 transition-colors whitespace-nowrap"
                     >
-                      <CreditCard size={16} className="text-amber-600 shrink-0" />
-                      <span>Gói dịch vụ</span>
+                      <Crown size={16} className="text-amber-500 shrink-0" />
+                      <span>Gói của tôi</span>
                     </Link>
 
                     <Link
-                      href="/student/profile"
+                      href="/hub?tab=account-profile"
                       onClick={closeMenus}
                       className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-slate-800 hover:text-amber-900 dark:hover:text-amber-400 transition-colors whitespace-nowrap"
                     >
                       <User size={16} className="text-amber-600 shrink-0" />
-                      <span>Hồ sơ & Gói học</span>
+                      <span>Thông tin cá nhân</span>
                     </Link>
 
                     {isStudent && (
@@ -854,15 +866,13 @@ export function AppHeader() {
                     )}
 
                     <Link
-                      href="/change-password"
+                      href="/hub?tab=account-password"
                       onClick={closeMenus}
                       className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-slate-800 hover:text-amber-900 dark:hover:text-amber-400 transition-colors whitespace-nowrap"
                     >
                       <KeyRound size={16} className="text-slate-400 shrink-0" />
                       <span>Đổi mật khẩu</span>
                     </Link>
-
-
 
                     <button
                       type="button"
@@ -1145,12 +1155,20 @@ export function AppHeader() {
                   {isStudent && (
                     <>
                       <Link
-                        href="/student/profile"
+                        href="/hub?tab=account-plan"
+                        onClick={closeMenus}
+                        className="flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 text-xs font-bold transition-colors shadow-xs"
+                      >
+                        <Crown size={16} />
+                        <span>Gói của tôi</span>
+                      </Link>
+                      <Link
+                        href="/hub?tab=account-profile"
                         onClick={closeMenus}
                         className="flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/70 px-4 py-2.5 text-xs font-bold text-amber-900 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors"
                       >
                         <User size={16} />
-                        <span>Hồ sơ & Gói học</span>
+                        <span>Thông tin cá nhân</span>
                       </Link>
                       <button
                         type="button"

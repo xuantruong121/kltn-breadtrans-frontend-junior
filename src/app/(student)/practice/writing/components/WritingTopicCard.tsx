@@ -168,7 +168,7 @@ export function WritingTopicCard({
             {status === "COMPLETED" ? (
               <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/70 px-2 py-0.5 rounded-full">
                 <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-                ✓ Đã làm
+                Đã làm
               </span>
             ) : (
               <>

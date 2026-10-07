@@ -677,6 +677,24 @@ test("Resilience: Failed optional full-track audio does NOT discard authorized t
   assert.ok(entry.audioNotice?.includes("chuẩn bị"));
 });
 
+test("Capability guard: empty Multiple Choice transcript does not request full-track audio", async () => {
+  const { fetcher, calls } = createMockFetcher({
+    getQuizTranscript: async (quizId) => {
+      calls.getQuizTranscript.push(quizId);
+      return { items: [], audioArtifact: null };
+    },
+  });
+
+  const quiz = createSampleQuiz(false, false);
+  const entry = await probeOrPrefetchTranscript(quiz.id, quiz, undefined, fetcher);
+
+  assert.equal(entry.authorizationStatus, "authorized");
+  assert.deepEqual(entry.transcript, []);
+  assert.equal(entry.audioBlob, null);
+  assert.equal(entry.audioError, false);
+  assert.equal(calls.getTranscriptAudioBlob.length, 0);
+});
+
 test("Helper quizContainsDictation accurately classifies quiz modes", () => {
   assert.equal(quizContainsDictation({ mode: "DIALOGUE", questions: [{ type: "DICTATION" }] }), false);
   assert.equal(quizContainsDictation({ questions: [{ type: "DICTATION" }] }), true);

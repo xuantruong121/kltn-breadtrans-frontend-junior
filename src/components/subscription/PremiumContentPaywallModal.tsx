@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, ArrowRight, X } from "lucide-react";
 import { useModalAccessibility } from "@/hooks/useModalAccessibility";
+
+const emptySubscribe = () => () => {};
 
 export type PremiumSkillType =
   | "READING"
@@ -32,6 +35,7 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
 }) => {
   const router = useRouter();
   const modalRef = useRef<HTMLDivElement>(null);
+  const isReady = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   useModalAccessibility({
     isOpen,
@@ -39,7 +43,7 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
     modalRef,
   });
 
-  if (!isOpen) return null;
+  if (!isOpen || !isReady || typeof document === "undefined") return null;
 
   const handleNavigateToPlans = () => {
     onClose();
@@ -63,14 +67,17 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
     }
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
         role="dialog"
         aria-modal="true"
         aria-labelledby="paywall-title"
         aria-describedby="paywall-desc"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
       >
         <motion.div
           ref={modalRef}
@@ -112,20 +119,20 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
           </h2>
 
           {itemTitle && (
-            <p className="mt-1 text-xs font-semibold text-amber-700 dark:text-amber-400 truncate">
+            <p className="mt-1 text-sm font-semibold text-amber-700 dark:text-amber-400 truncate">
               {getSkillLabel()}: {itemTitle}
             </p>
           )}
 
           <p
             id="paywall-desc"
-            className="mt-2.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400"
+            className="mt-2.5 text-base leading-relaxed text-slate-600 dark:text-slate-400"
           >
             {description}
           </p>
 
           {/* Verified Entitlement Highlights */}
-          <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50/70 p-3.5 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-300 space-y-2">
+          <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50/70 p-3.5 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-300 space-y-2">
             {skillType === "VOCABULARY" ? (
               <>
                 <div className="flex items-start gap-2">
@@ -160,14 +167,14 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               Để sau
             </button>
             <button
               type="button"
               onClick={handleNavigateToPlans}
-              className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-5 text-xs font-bold text-white shadow-xs hover:bg-amber-600 transition-colors cursor-pointer"
+              className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-5 text-sm font-bold text-white shadow-xs hover:bg-amber-600 transition-colors cursor-pointer"
             >
               <span>Xem gói PLUS</span>
               <ArrowRight size={14} aria-hidden="true" />
@@ -175,6 +182,7 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
           </div>
         </motion.div>
       </div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };

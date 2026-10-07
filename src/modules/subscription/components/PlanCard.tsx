@@ -50,7 +50,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
               BreadTrans Free
             </h3>
             {cta.isCurrent && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300 shrink-0 whitespace-nowrap">
                 Gói hiện tại
               </span>
             )}
@@ -129,7 +129,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
               BreadTrans Plus
             </h3>
             {cta.isCurrent && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300 shrink-0 whitespace-nowrap">
                 Gói hiện tại
               </span>
             )}
@@ -251,9 +251,9 @@ export const PlanCard: React.FC<PlanCardProps> = ({
           <h3 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-200">
             BreadTrans Pro
           </h3>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 shrink-0 whitespace-nowrap">
             <Clock size={13} aria-hidden="true" />
-            Sắp ra mắt
+            <span>Sắp ra mắt</span>
           </span>
         </div>
 

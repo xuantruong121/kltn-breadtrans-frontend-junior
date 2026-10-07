@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { AccountHub } from "@/components/profile/AccountHub";
 
-export default function StudentProfilePage() {
+export default function HubPage() {
   return (
     <Suspense
       fallback={

@@ -130,7 +130,7 @@ function ListeningCatalogContent() {
   };
 
   // Fetch catalog
-  const { data: quizzesData, isLoading } = useQuery({
+  const { data: quizzesData, isLoading, isError, refetch } = useQuery({
     queryKey: ["listeningPractices"],
     queryFn: quizService.getListeningPractices,
   });
@@ -503,6 +503,23 @@ function ListeningCatalogContent() {
             <p className="mt-3 text-xs font-bold text-slate-500 dark:text-slate-400">
               Đang tải danh sách bài luyện nghe...
             </p>
+          </div>
+        ) : isError ? (
+          <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-rose-200 bg-rose-50/60 p-8 text-center dark:border-rose-900/60 dark:bg-rose-950/20">
+            <p className="text-sm font-bold text-rose-800 dark:text-rose-200">
+              Không thể tải danh sách bài luyện nghe.
+            </p>
+            <p className="mt-1 text-xs text-rose-700 dark:text-rose-300">
+              Kiểm tra kết nối mạng rồi thử lại.
+            </p>
+            <button
+              type="button"
+              onClick={() => void refetch()}
+              className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl border border-rose-300 bg-white px-4 text-xs font-bold text-rose-800 hover:bg-rose-100 dark:border-rose-800 dark:bg-slate-900 dark:text-rose-200 dark:hover:bg-rose-950/40"
+            >
+              <RotateCcw size={14} aria-hidden="true" />
+              Thử lại
+            </button>
           </div>
         ) : filteredAndSortedQuizzes.length > 0 ? (
           <div className="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">

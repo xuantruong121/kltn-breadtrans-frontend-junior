@@ -7,9 +7,22 @@ export type PlanFeatureKey =
 
 export type SubscriptionStatus = "ACTIVE" | "EXPIRED" | "REVOKED";
 
-export type PlanPurchaseStatus = "PENDING_PAYMENT" | "COMPLETED" | "REJECTED";
+export type PlanPurchaseStatus =
+  | "PENDING_PAYMENT"
+  | "COMPLETED"
+  | "REJECTED"
+  | "EXPIRED"
+  | "SUPERSEDED";
 
-export type PlanPaymentStatus = "PENDING" | "REPORTED" | "CONFIRMED" | "REJECTED";
+export type PlanPaymentStatus =
+  | "PENDING"
+  | "REPORTED"
+  | "CONFIRMED"
+  | "REJECTED"
+  | "REVIEW_REQUIRED"
+  | "EXPIRED"
+  | "SUPERSEDED"
+  | "DUPLICATE";
 
 export interface EffectivePlanEntitlement {
   featureKey: PlanFeatureKey;
@@ -59,13 +72,17 @@ export interface PlanBankInstructions {
 export interface PlanPurchasePayment {
   id: number;
   transferCode: string;
-  status: PlanPaymentStatus;
+  status: PlanPaymentStatus | string;
   amountVnd: number;
   currency: string;
   reportedAt: string | null;
   confirmedAt: string | null;
   rejectedAt: string | null;
   rejectionReason: string | null;
+  expiresAt?: string | null;
+  paymentIntentExpiresAt?: string | null;
+  autoMatchUntil?: string | null;
+  supersededAt?: string | null;
 }
 
 export interface PlanPurchase {
@@ -74,14 +91,19 @@ export interface PlanPurchase {
   planCode: string;
   planDisplayName: string;
   version: number;
-  status: PlanPurchaseStatus;
+  status: PlanPurchaseStatus | string;
   amountVnd: number;
   currency: string;
   durationDays: number;
   createdAt: string;
   completedAt: string | null;
+  expiresAt?: string | null;
   payment: PlanPurchasePayment;
   bankInstructions: PlanBankInstructions;
+  isActivePaymentIntent?: boolean;
+  canReplace?: boolean;
+  supersededAt?: string | null;
+  supersededByPurchaseId?: number | null;
 }
 
 export interface PurchasablePlanVersionInfo {
@@ -99,7 +121,9 @@ export const PLAN_QUERY_KEYS = {
   vocabTopics: ["vocab-topics"] as const,
   readingTopics: ["reading-topics"] as const,
   readingTopic: (id: number) => ["reading-topic", id] as const,
-  listeningPractices: ["listening-practices"] as const,
+  // Must match the key used by the Listening catalog query. Keeping this
+  // centralized ensures entitlement refresh invalidates the live cache.
+  listeningPractices: ["listeningPractices"] as const,
   speakingExercises: ["speaking-exercises"] as const,
   speakingExercise: (id: number) => ["speaking-exercise", id] as const,
   writingTopics: ["writing-topics"] as const,
@@ -471,17 +495,36 @@ export function getPlanCardCta(
 }
 
 /**
- * Polling interval controller for manual payment confirmation.
- * Polls only when status is REPORTED (returns 5000ms).
- * Otherwise returns false (stops polling immediately).
+ * Evaluates whether a payment/purchase status is terminal.
+ * Terminal states stop polling and do not re-request status.
+ */
+export function isPaymentTerminalStatus(status?: string | null): boolean {
+  if (!status) return false;
+  return (
+    status === "COMPLETED" ||
+    status === "CONFIRMED" ||
+    status === "REJECTED" ||
+    status === "REVIEW_REQUIRED" ||
+    status === "DUPLICATE" ||
+    status === "EXPIRED"
+    || status === "SUPERSEDED"
+  );
+}
+
+/**
+ * Polling interval controller for automatic payment confirmation.
+ * Polls at ~2000ms while status is non-terminal (PENDING, PENDING_PAYMENT, REPORTED, PROCESSING).
+ * Returns false immediately once terminal state is reached:
+ * COMPLETED, CONFIRMED, REJECTED, REVIEW_REQUIRED, DUPLICATE, EXPIRED.
  */
 export function resolvePaymentPollingInterval(
   status?: string | null,
 ): number | false {
-  if (status === "REPORTED") {
-    return 5000;
+  if (!status) return 2000;
+  if (isPaymentTerminalStatus(status)) {
+    return false;
   }
-  return false;
+  return 2000;
 }
 
 /**
@@ -502,32 +545,56 @@ export function getPaymentStatusBadgeInfo(
     case "PENDING":
     case "PENDING_PAYMENT":
       return {
-        label: "Chờ chuyển khoản",
+        label: "Chờ thanh toán",
         badgeClass: "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/60",
         isTerminal: false,
       };
     case "REPORTED":
       return {
-        label: "Chờ xác nhận",
+        label: "Đang xác minh",
         badgeClass: "bg-sky-100 text-sky-800 border-sky-300 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-900/60",
         isTerminal: false,
       };
     case "CONFIRMED":
     case "COMPLETED":
       return {
-        label: "Đã xác nhận",
+        label: "Hoàn tất",
         badgeClass: "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/60",
+        isTerminal: true,
+      };
+    case "REVIEW_REQUIRED":
+      return {
+        label: "Cần kiểm tra",
+        badgeClass: "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/60",
         isTerminal: true,
       };
     case "REJECTED":
       return {
-        label: "Đã từ chối",
+        label: "Từ chối",
         badgeClass: "bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60",
+        isTerminal: true,
+      };
+    case "EXPIRED":
+      return {
+        label: "Hết hạn",
+        badgeClass: "bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+        isTerminal: true,
+      };
+    case "SUPERSEDED":
+      return {
+        label: "Đã thay thế",
+        badgeClass: "bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+        isTerminal: true,
+      };
+    case "DUPLICATE":
+      return {
+        label: "Đã nhận trước đó",
+        badgeClass: "bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
         isTerminal: true,
       };
     default:
       return {
-        label: String(status),
+        label: status ? String(status) : "Chờ thanh toán",
         badgeClass: "bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
         isTerminal: false,
       };
@@ -582,4 +649,53 @@ export function isVocabTopicLocked(topic: { isLocked?: boolean }): boolean {
  */
 export function shouldTriggerPaywallOnVocabError(err: any): boolean {
   return isPremiumVocabForbiddenError(err);
+}
+
+/**
+ * Checks if a payment intent expiration timestamp has elapsed.
+ */
+export function isPaymentIntentExpired(expiresAt: string | null | undefined): boolean {
+  if (!expiresAt) return false;
+  const exp = new Date(expiresAt).getTime();
+  if (isNaN(exp)) return false;
+  return exp < Date.now();
+}
+
+/**
+ * Calculates remaining active subscription days from endsAt timestamp.
+ */
+export function calculateSubscriptionDaysRemaining(endsAt: string | null | undefined): number | null {
+  if (!endsAt) return null;
+  const ends = new Date(endsAt).getTime();
+  if (isNaN(ends)) return null;
+  const remaining = Math.ceil((ends - Date.now()) / (1000 * 60 * 60 * 24));
+  return remaining > 0 ? remaining : 0;
+}
+
+/**
+ * Evaluates whether a payment status change represents a live completion transition
+ * that should trigger celebratory toasts and entitlement refetching.
+ *
+ * If the purchase was ALREADY completed when the modal opened, returns false
+ * (so viewing payment history details does not falsely trigger notifications).
+ *
+ * If the purchase was pending/waiting when the modal opened and subsequently
+ * transitioned to CONFIRMED or COMPLETED, returns true.
+ */
+export function shouldNotifyPaymentCompletion(
+  initialStatus: string | null | undefined,
+  currentStatus: string | null | undefined,
+  alreadyNotified: boolean,
+): boolean {
+  if (alreadyNotified) return false;
+  if (!currentStatus) return false;
+  const isTerminalSuccess = currentStatus === "CONFIRMED" || currentStatus === "COMPLETED";
+  if (!isTerminalSuccess) return false;
+
+  // If initial status was already terminal success, this is not a live transition
+  if (initialStatus === "CONFIRMED" || initialStatus === "COMPLETED") {
+    return false;
+  }
+
+  return true;
 }

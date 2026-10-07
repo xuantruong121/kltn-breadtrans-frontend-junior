@@ -124,6 +124,10 @@ export const planService = {
     return await axiosClient.get(`/plan-purchases/${id}`);
   },
 
+  replacePayment: async (id: number): Promise<PlanPurchase> => {
+    return await axiosClient.post(`/plan-purchases/${id}/replace-payment`);
+  },
+
   /**
    * POST /plan-purchases/:id/report-transfer
    * Student reports manual bank transfer completion (PENDING -> REPORTED).

@@ -713,6 +713,29 @@ async function fetchAuthorizedResources(
   if (signal.aborted) {
     throw createAbortError();
   }
+  // Multiple-choice listening items may intentionally have question audio only.
+  // An empty transcript plus no quiz-level artifact means full-track playback
+  // is not a capability of this content form, so do not probe its endpoint.
+  if (
+    transcriptResult.items.length === 0 &&
+    !quiz.listeningAudioArtifact &&
+    !transcriptResult.audioArtifact
+  ) {
+    const entry: TranscriptResourceCacheEntry = {
+      quizId,
+      authorizationStatus: "authorized",
+      transcript: [],
+      audioBlob: null,
+      audioBlobUrl: null,
+      audioArtifact: null,
+      contentHash: transcriptResult.contentHash ?? "empty",
+      audioError: false,
+      audioNotice: null,
+      updatedAt: Date.now(),
+    };
+    cacheByQuizId.set(quizId, entry);
+    return entry;
+  }
   return await fetchAudioForTranscript(
     quizId,
     quiz,

@@ -22,7 +22,8 @@ import {
 } from "@/modules/subscription/planLogic";
 import { PlanCard } from "@/modules/subscription/components/PlanCard";
 import { PlanPaymentModal } from "@/modules/subscription/components/PlanPaymentModal";
-import { PlanPurchaseHistory } from "@/modules/subscription/components/PlanPurchaseHistory";
+import { PlanComparisonTable } from "@/modules/subscription/components/PlanComparisonTable";
+import { PlanFaqAccordion } from "@/modules/subscription/components/PlanFaqAccordion";
 
 function PlansPageContent() {
   const router = useRouter();
@@ -33,6 +34,10 @@ function PlansPageContent() {
 
   // Active payment modal state
   const [activePurchaseId, setActivePurchaseId] = useState<number | null>(null);
+
+  const handleClosePaymentModal = React.useCallback(() => {
+    setActivePurchaseId(null);
+  }, []);
 
   // Logical idempotency key cached per purchase attempt
   const currentIdempotencyKeyRef = useRef<string>(generateIdempotencyKey());
@@ -119,15 +124,29 @@ function PlansPageContent() {
       return;
     }
 
+    // Protection against rapid double clicks
+    if (purchaseMutation.isPending) {
+      return;
+    }
+
     // Check if there is already an open pending purchase in history
     const openPending = myPurchases?.find(
-      (p) => p.planCode === "PLUS" && (p.payment?.status === "PENDING" || p.status === "PENDING_PAYMENT"),
+      (p) =>
+        p.planCode === "PLUS" &&
+        p.isActivePaymentIntent === true,
     );
     if (openPending) {
       setActivePurchaseId(openPending.id);
       return;
     }
 
+    purchaseMutation.mutate(purchasablePlusVersion.id);
+  };
+
+  const handleCreateNewFromModal = () => {
+    setActivePurchaseId(null);
+    if (!purchasablePlusVersion || purchaseMutation.isPending) return;
+    currentIdempotencyKeyRef.current = generateIdempotencyKey();
     purchaseMutation.mutate(purchasablePlusVersion.id);
   };
 
@@ -229,18 +248,19 @@ function PlansPageContent() {
         />
       </section>
 
-      {/* ── Purchase History (for logged-in students) ─────────────── */}
-      {user && (
-        <section className="pt-6 border-t border-slate-200/80 dark:border-slate-800">
-          <PlanPurchaseHistory />
-        </section>
-      )}
+      {/* ── Feature Comparison Table (with Dropdown Toggle) ──────── */}
+      <PlanComparisonTable />
+
+      {/* ── Frequently Asked Questions (FAQ) ─────────────────────── */}
+      <PlanFaqAccordion />
 
       {/* ── Payment Details Modal ────────────────────────────────── */}
       {activePurchaseId && (
         <PlanPaymentModal
           purchaseId={activePurchaseId}
-          onClose={() => setActivePurchaseId(null)}
+          onClose={handleClosePaymentModal}
+          onReplaceSuccess={(replacement) => setActivePurchaseId(replacement.id)}
+          onCreateNew={handleCreateNewFromModal}
         />
       )}
     </div>
