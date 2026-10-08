@@ -14,64 +14,64 @@ import {
 } from "./navUtils.ts";
 
 describe("Navigation Route Classification", () => {
-  it("classifies listening practice routes as Skills Practice, NOT Exam Practice", () => {
-    // Listening catalog
-    assert.equal(isExamRoute("/practice/listening"), false);
-    assert.equal(isSkillsRoute("/practice/listening"), true);
+  it("classifies canonical listening routes as Skills Practice, NOT Exam Practice", () => {
+    assert.equal(isExamRoute("/listening"), false);
+    assert.equal(isSkillsRoute("/listening"), true);
 
-    // Any listening practice exercise (e.g. /practice/quizzes/123)
-    assert.equal(isExamRoute("/practice/quizzes/123"), false);
-    assert.equal(isSkillsRoute("/practice/quizzes/123"), true);
+    assert.equal(isExamRoute("/listening/123"), false);
+    assert.equal(isSkillsRoute("/listening/123"), true);
 
     // Listening practice submission/analytics
-    assert.equal(isExamRoute("/practice/quizzes/submissions/456"), false);
-    assert.equal(isSkillsRoute("/practice/quizzes/submissions/456"), true);
+    assert.equal(isExamRoute("/listening/submissions/456"), false);
+    assert.equal(isSkillsRoute("/listening/submissions/456"), true);
   });
 
   it("classifies exam catalog and TOEIC tests as Exam Practice (Luyện đề)", () => {
     // Exam catalog
-    assert.equal(isExamRoute("/practice/quizzes"), true);
-    assert.equal(isSkillsRoute("/practice/quizzes"), false);
+    assert.equal(isExamRoute("/exams"), true);
+    assert.equal(isSkillsRoute("/exams"), false);
 
-    assert.equal(isExamRoute("/practice/quizzes/"), true);
-    assert.equal(isSkillsRoute("/practice/quizzes/"), false);
+    assert.equal(isExamRoute("/exams/"), true);
+    assert.equal(isSkillsRoute("/exams/"), false);
 
     // TOEIC test routes
-    assert.equal(isExamRoute("/practice/toeic/1"), true);
-    assert.equal(isSkillsRoute("/practice/toeic/1"), false);
+    assert.equal(isExamRoute("/toeic/1"), true);
+    assert.equal(isSkillsRoute("/toeic/1"), false);
 
-    assert.equal(isExamRoute("/practice/toeic/attempts/99"), true);
-    assert.equal(isSkillsRoute("/practice/toeic/attempts/99"), false);
+    assert.equal(isExamRoute("/toeic/attempts/99"), true);
+    assert.equal(isSkillsRoute("/toeic/attempts/99"), false);
 
-    assert.equal(isExamRoute("/practice/toeic/results/99"), true);
-    assert.equal(isSkillsRoute("/practice/toeic/results/99"), false);
+    assert.equal(isExamRoute("/toeic/results/99"), true);
+    assert.equal(isSkillsRoute("/toeic/results/99"), false);
 
-    assert.equal(isExamRoute("/practice/toeic/bundle/5"), true);
-    assert.equal(isSkillsRoute("/practice/toeic/bundle/5"), false);
+    assert.equal(isExamRoute("/toeic/bundle/5"), true);
+    assert.equal(isSkillsRoute("/toeic/bundle/5"), false);
   });
 
   it("classifies other skill practice routes correctly", () => {
     // Hub
     assert.equal(isExamRoute("/practice"), false);
-    assert.equal(isSkillsRoute("/practice"), true);
+    assert.equal(isSkillsRoute("/practice"), false);
+    assert.equal(isSkillsRoute("/listening"), true);
 
     // Speaking
-    assert.equal(isExamRoute("/practice/speaking"), false);
-    assert.equal(isSkillsRoute("/practice/speaking"), true);
+    assert.equal(isExamRoute("/speaking"), false);
+    assert.equal(isSkillsRoute("/speaking"), true);
 
     // Reading
-    assert.equal(isExamRoute("/practice/reading"), false);
-    assert.equal(isSkillsRoute("/practice/reading"), true);
-    assert.equal(isExamRoute("/practice/reading/1"), false);
-    assert.equal(isSkillsRoute("/practice/reading/1"), true);
+    assert.equal(isExamRoute("/reading"), false);
+    assert.equal(isSkillsRoute("/reading"), true);
+    assert.equal(isExamRoute("/reading/1"), false);
+    assert.equal(isSkillsRoute("/reading/1"), true);
+    assert.equal(isSkillsRoute("/reading/mistakes"), true);
 
     // Writing
-    assert.equal(isExamRoute("/practice/writing"), false);
-    assert.equal(isSkillsRoute("/practice/writing"), true);
+    assert.equal(isExamRoute("/writing"), false);
+    assert.equal(isSkillsRoute("/writing"), true);
 
     // Vocab / Flashcard / Grammar
-    assert.equal(isExamRoute("/practice/vocab"), false);
-    assert.equal(isSkillsRoute("/practice/vocab"), true);
+    assert.equal(isExamRoute("/flashcard/1"), false);
+    assert.equal(isSkillsRoute("/flashcard/1"), true);
     assert.equal(isExamRoute("/flashcard"), false);
     assert.equal(isSkillsRoute("/flashcard"), true);
     assert.equal(isExamRoute("/grammar"), false);
@@ -94,34 +94,35 @@ describe("Navigation Route Classification", () => {
 
   it("classifies individual header route families accurately", () => {
     // 1. Listening
-    assert.equal(isListeningRoute("/practice/listening"), true);
-    assert.equal(isListeningRoute("/practice/listening/123"), true);
-    assert.equal(isListeningRoute("/practice/speaking"), false);
+    assert.equal(isListeningRoute("/listening"), true);
+    assert.equal(isListeningRoute("/listening/456"), true);
+    assert.equal(isListeningRoute("/speaking"), false);
 
     // 2. Speaking
-    assert.equal(isSpeakingRoute("/practice/speaking"), true);
-    assert.equal(isSpeakingRoute("/practice/speaking/456"), true);
-    assert.equal(isSpeakingRoute("/practice/reading"), false);
+    assert.equal(isSpeakingRoute("/speaking"), true);
+    assert.equal(isSpeakingRoute("/speaking/456"), true);
+    assert.equal(isSpeakingRoute("/reading"), false);
 
     // 3. Reading (merges Reading and Grammar)
-    assert.equal(isReadingRoute("/practice/reading"), true);
-    assert.equal(isReadingRoute("/practice/reading/1"), true);
-    assert.equal(isReadingRoute("/practice/reading?tab=grammar"), true);
+    assert.equal(isReadingRoute("/reading"), true);
+    assert.equal(isReadingRoute("/reading/quizzes/1"), true);
+    assert.equal(isReadingRoute("/reading/mistakes"), true);
+    assert.equal(isReadingRoute("/reading?tab=grammar"), false);
     assert.equal(isReadingRoute("/grammar"), true);
     assert.equal(isReadingRoute("/grammar/topic/1"), true);
-    assert.equal(isReadingRoute("/practice/writing"), false);
+    assert.equal(isReadingRoute("/writing/1"), false);
 
     // 4. Writing
-    assert.equal(isWritingRoute("/practice/writing"), true);
-    assert.equal(isWritingRoute("/practice/writing/3"), true);
-    assert.equal(isWritingRoute("/practice/listening"), false);
+    assert.equal(isWritingRoute("/writing"), true);
+    assert.equal(isWritingRoute("/writing/3"), true);
+    assert.equal(isWritingRoute("/listening"), false);
 
     // 5. Flashcard & Vocabulary
     assert.equal(isFlashcardRoute("/flashcard"), true);
     assert.equal(isFlashcardRoute("/flashcard/1"), true);
     assert.equal(isFlashcardRoute("/vocabulary/study"), true);
     assert.equal(isFlashcardRoute("/vocabulary/saved"), true);
-    assert.equal(isFlashcardRoute("/practice/vocab"), true);
+    assert.equal(isFlashcardRoute("/flashcard/1"), true);
     assert.equal(isFlashcardRoute("/courses"), false);
 
     // 6. Courses (includes public courses, my-courses, classes)

@@ -34,6 +34,7 @@ export interface UserLearningStats {
   tier: string;
   masteredVocabCount: number;
   totalQuizzesDone: number;
+  totalToeicTestsDone?: number;
   hasCompletedPlacementTest?: boolean;
   latestDiagnostic?: {
     level: string;
@@ -78,6 +79,8 @@ export interface SkillProgressSummary {
   levelRange: string;
   badge: string;
   unitLabel: string;
+  totalExercises?: number;
+  completedExercises?: number;
   completedAttempts?: number;
   normalizedScore?: number | null;
   recentAverage?: number | null;

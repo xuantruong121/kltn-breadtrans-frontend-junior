@@ -304,7 +304,7 @@ export const MarketScreen: React.FC = () => {
         <div className="flex items-center gap-2">
           {!isGuest && (
             <Link
-              href="/student/profile?tab=inventory"
+              href="/hub?tab=account-inventory"
               className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 px-3.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 shadow-2xs hover:bg-amber-50 hover:text-amber-800 hover:border-amber-300 dark:hover:bg-slate-800/80 dark:hover:text-amber-400 transition-colors"
             >
               <Backpack size={15} className="text-amber-600 dark:text-amber-400" />

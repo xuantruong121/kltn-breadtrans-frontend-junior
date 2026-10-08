@@ -145,8 +145,8 @@ assertInvariant(
 // -----------------------------------------------------------------------------
 // GROUP E: Practice & Listening Page Responsiveness (Invariants 14 - 16)
 // -----------------------------------------------------------------------------
-const exerciseCardCode = readFileSafe("src/app/(student)/practice/listening/components/ListeningExerciseCard.tsx");
-const listeningPageCode = readFileSafe("src/app/(student)/practice/listening/page.tsx");
+const exerciseCardCode = readFileSafe("src/components/listening/ListeningExerciseCard.tsx");
+const listeningPageCode = readFileSafe("src/app/(student)/listening/page.tsx");
 const globalsCssCode = readFileSafe("src/app/globals.css");
 
 assertInvariant(
@@ -174,7 +174,7 @@ assertInvariant(
 // GROUP F: Admin CMS & TOEIC Attempt Breakpoint Clarification (Invariants 17 - 20)
 // -----------------------------------------------------------------------------
 const adminLayoutCode = readFileSafe("src/app/(admin)/layout.tsx");
-const toeicAttemptCode = readFileSafe("src/app/(student)/practice/toeic/attempts/[attemptId]/page.tsx");
+const toeicAttemptCode = readFileSafe("src/app/(student)/toeic/attempts/[attemptId]/page.tsx");
 
 assertInvariant(
   "Admin CMS Layout: Desktop sidebar activates at lg: (1024px+), Drawer operates strictly < 1024px (lg:hidden)",

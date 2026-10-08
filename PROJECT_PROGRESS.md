@@ -22,9 +22,10 @@ Tài liệu này ghi chép lại toàn bộ tiến độ, kiến trúc và các 
 **Layout chung:** `src/app/(student)/layout.tsx` sử dụng thiết kế Bento Grid, bo góc lớn, phối màu rực rỡ (Glassmorphism), có Sidebar điều hướng và `FloatingAiTutor` tích hợp.
 - **Dashboard (`/dashboard`):** Hiển thị tổng quan lớp học, streak, điểm số gamification.
 - **Lớp học (`/courses` & `/courses/[courseId]`):** Danh sách khoá học, chi tiết lớp học. Đã xử lý hiển thị nút "Tham gia Meet" tự động nếu API trả về `meetingLink`.
-- **Đảo Luyện Tập (`/practice`):**
-  - Làm Quiz Trắc nghiệm.
-  - Luyện Nói (`/practice/speaking`) & Luyện Viết (`/practice/writing`).
+- **Các khu vực luyện tập theo miền chức năng:**
+  - Listening (`/listening`), Reading (`/reading`), Speaking (`/speaking`) và Writing (`/writing`) có route catalog/detail riêng.
+  - Luyện đề dùng `/exams` và các route TOEIC dưới `/toeic`; Flashcard dùng `/flashcard`.
+  - Không còn namespace learner-facing `/practice`; các runner/review dùng chung được đặt ở `src/components` và route shell canonical.
   - Giao tiếp với API chấm điểm của AI (Gemini) từ Backend.
 - **Luyện thi TOEIC (`/toeic`):**
   - Nằm chung trong Student Layout để đồng bộ UI.

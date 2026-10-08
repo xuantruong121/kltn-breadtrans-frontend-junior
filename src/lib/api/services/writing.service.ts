@@ -4,7 +4,7 @@ export interface WritingTopic {
   id: number;
   title?: string;
   description?: string | null;
-  type?: "WRITING_PICTURE" | "WRITING_EMAIL";
+  type?: "WRITING_PICTURE" | "WRITING_EMAIL" | "WRITING_OPINION";
   topicId?: number | null;
   topicName?: string;
   level?: string;

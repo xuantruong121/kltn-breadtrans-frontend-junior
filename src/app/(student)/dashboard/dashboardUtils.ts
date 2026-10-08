@@ -1,6 +1,11 @@
 export const ALLOWED_INTERNAL_ROUTE_PREFIXES = [
   "/flashcard",
-  "/practice",
+  "/exams",
+  "/toeic",
+  "/listening",
+  "/speaking",
+  "/reading",
+  "/writing",
   "/my-courses",
   "/courses",
   "/arena",
@@ -12,6 +17,9 @@ export const ALLOWED_INTERNAL_ROUTE_PREFIXES = [
 export function isSafeInternalRoute(url?: string): boolean {
   if (!url || typeof url !== "string") return false;
   const trimmed = url.trim();
+  if ([
+    "/practice",
+  ].includes(trimmed)) return false;
   return ALLOWED_INTERNAL_ROUTE_PREFIXES.some(
     (prefix) => trimmed === prefix || trimmed.startsWith(prefix + "/")
   );
@@ -24,16 +32,16 @@ export function getTypeSpecificQuestFallback(type?: string): { actionLabel: stri
     case "DO_VOCAB":
       return { actionLabel: "Học từ vựng", actionUrl: "/flashcard" };
     case "DO_LISTENING":
-      return { actionLabel: "Luyện nghe", actionUrl: "/practice/listening" };
+      return { actionLabel: "Luyện nghe", actionUrl: "/listening" };
     case "COMPLETE_QUIZ":
-      return { actionLabel: "Làm bài kiểm tra", actionUrl: "/practice/quizzes" };
+      return { actionLabel: "Làm bài kiểm tra", actionUrl: "/exams" };
     case "DO_SPEAKING":
     case "PRACTICE_SPEAKING":
-      return { actionLabel: "Luyện nói", actionUrl: "/practice/speaking" };
+      return { actionLabel: "Luyện nói", actionUrl: "/speaking" };
     case "COMPLETE_LESSON":
       return { actionLabel: "Mở bài học", actionUrl: "/my-courses" };
     default:
-      return { actionLabel: "Khám phá bài học", actionUrl: "/practice" };
+      return { actionLabel: "Khám phá bài học", actionUrl: "/dashboard" };
   }
 }
 

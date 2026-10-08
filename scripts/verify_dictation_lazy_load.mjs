@@ -81,8 +81,8 @@ async function run() {
 
     await performLogin(desktopPage, "Desktop");
 
-    console.log(`[Desktop] Navigating to /practice/quizzes/${QUIZ_ID}...`);
-    await desktopPage.goto(`${BASE_URL}/practice/quizzes/${QUIZ_ID}`, {
+    console.log(`[Desktop] Navigating to /listening/${QUIZ_ID}...`);
+    await desktopPage.goto(`${BASE_URL}/listening/${QUIZ_ID}`, {
       waitUntil: "domcontentloaded",
       timeout: 25000,
     });
@@ -210,8 +210,8 @@ async function run() {
 
     await performLogin(mobilePage, "Mobile");
 
-    console.log(`[Mobile] Navigating independently to /practice/quizzes/${QUIZ_ID}...`);
-    await mobilePage.goto(`${BASE_URL}/practice/quizzes/${QUIZ_ID}`, {
+    console.log(`[Mobile] Navigating independently to /listening/${QUIZ_ID}...`);
+    await mobilePage.goto(`${BASE_URL}/listening/${QUIZ_ID}`, {
       waitUntil: "domcontentloaded",
       timeout: 25000,
     });

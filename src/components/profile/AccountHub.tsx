@@ -28,6 +28,7 @@ import {
   AlertCircle,
   RotateCcw,
   Backpack,
+  Activity,
 } from "lucide-react";
 
 import { useAuthStore } from "@/stores/authStore";
@@ -44,6 +45,7 @@ import {
 } from "@/modules/subscription/planLogic";
 import { PlanPaymentModal } from "@/modules/subscription/components/PlanPaymentModal";
 import { UserAvatarWithFrame } from "@/components/ui";
+import { LearningProgressTab } from "@/components/profile/LearningProgressTab";
 import { MARKET_ITEMS } from "@/modules/market/services/marketData";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { useApiMutation } from "@/hooks/useApiMutation";
@@ -56,24 +58,17 @@ export type AccountTabKey =
   | "account-password"
   | "account-device"
   | "account-notification"
-  | "account-inventory";
+  | "account-inventory"
+  | "learning-progress";
 
 const TAB_ALIASES: Record<string, AccountTabKey> = {
-  profile: "account-profile",
   "account-profile": "account-profile",
-  plan: "account-plan",
-  plans: "account-plan",
-  quotas: "account-plan",
   "account-plan": "account-plan",
-  password: "account-password",
   "account-password": "account-password",
-  device: "account-device",
   "account-device": "account-device",
-  notification: "account-notification",
-  notifications: "account-notification",
   "account-notification": "account-notification",
-  inventory: "account-inventory",
   "account-inventory": "account-inventory",
+  "learning-progress": "learning-progress",
 };
 
 function getInitials(name?: string | null): string {
@@ -293,6 +288,7 @@ export function AccountHub() {
     { id: "account-device", label: "Thiết bị", icon: Smartphone },
     { id: "account-notification", label: "Thông báo", icon: Bell },
     { id: "account-inventory", label: "Túi đồ & Ngoại trang", icon: Backpack },
+    { id: "learning-progress", label: "Tiến độ học tập", icon: Activity },
   ];
 
   return (
@@ -350,6 +346,7 @@ export function AccountHub() {
 
         {/* ── Right Content Area ────────────────────────────────── */}
         <main className="flex-1 min-w-0 w-full space-y-6">
+          {activeTab === "learning-progress" && <LearningProgressTab />}
           {/* TAB 1: GÓI CỦA TÔI */}
           {activeTab === "account-plan" && (
             <section className="space-y-6 animate-in fade-in duration-200" aria-labelledby="heading-plan">

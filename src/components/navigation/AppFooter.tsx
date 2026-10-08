@@ -30,7 +30,7 @@ export function AppFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/practice/quizzes" className="transition-colors hover:text-amber-700 dark:hover:text-amber-400">
+                <Link href="/exams" className="transition-colors hover:text-amber-700 dark:hover:text-amber-400">
                   Luyện đề thi TOEIC
                 </Link>
               </li>
@@ -52,22 +52,22 @@ export function AppFooter() {
             <h4 className="mb-3.5 text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">Luyện kỹ năng</h4>
             <ul className="space-y-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400">
               <li>
-                <Link href="/practice/listening" className="transition-colors hover:text-amber-700 dark:hover:text-amber-400">
+                <Link href="/listening" className="transition-colors hover:text-amber-700 dark:hover:text-amber-400">
                   Luyện nghe hiểu
                 </Link>
               </li>
               <li>
-                <Link href="/practice/speaking" className="transition-colors hover:text-amber-700 dark:hover:text-amber-400">
+                <Link href="/speaking" className="transition-colors hover:text-amber-700 dark:hover:text-amber-400">
                   Luyện nói & phát âm
                 </Link>
               </li>
               <li>
-                <Link href="/practice/reading" className="transition-colors hover:text-amber-700 dark:hover:text-amber-400">
+                <Link href="/reading" className="transition-colors hover:text-amber-700 dark:hover:text-amber-400">
                   Luyện đọc tra từ
                 </Link>
               </li>
               <li>
-                <Link href="/practice/writing" className="transition-colors hover:text-amber-700 dark:hover:text-amber-400">
+                <Link href="/writing" className="transition-colors hover:text-amber-700 dark:hover:text-amber-400">
                   Luyện viết câu
                 </Link>
               </li>

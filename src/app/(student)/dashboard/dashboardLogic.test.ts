@@ -67,19 +67,19 @@ test("Daily progress calculation agrees with counts and handles edge cases", () 
 });
 
 test("Quest routing correctly separates COMPLETE_QUIZ from DO_LISTENING", () => {
-  // DO_LISTENING -> /practice/listening
+  // DO_LISTENING -> canonical Listening home
   const listening = getTypeSpecificQuestFallback("DO_LISTENING");
-  assert.equal(listening.actionUrl, "/practice/listening");
+  assert.equal(listening.actionUrl, "/listening");
   assert.equal(listening.actionLabel, "Luyện nghe");
 
-  // COMPLETE_QUIZ -> /practice/quizzes (NOT /practice/listening!)
+  // COMPLETE_QUIZ -> /exams (NOT /listening)
   const quiz = getTypeSpecificQuestFallback("COMPLETE_QUIZ");
-  assert.equal(quiz.actionUrl, "/practice/quizzes");
+  assert.equal(quiz.actionUrl, "/exams");
   assert.equal(quiz.actionLabel, "Làm bài kiểm tra");
 
-  // DO_SPEAKING -> /practice/speaking
+  // DO_SPEAKING -> canonical Speaking home
   const speaking = getTypeSpecificQuestFallback("DO_SPEAKING");
-  assert.equal(speaking.actionUrl, "/practice/speaking");
+  assert.equal(speaking.actionUrl, "/speaking");
 
   // LEARN_VOCAB -> /flashcard
   const vocab = getTypeSpecificQuestFallback("LEARN_VOCAB");
@@ -91,8 +91,9 @@ test("Quest routing correctly separates COMPLETE_QUIZ from DO_LISTENING", () => 
 });
 
 test("isSafeInternalRoute validates allowed prefixes", () => {
-  assert.equal(isSafeInternalRoute("/practice/quizzes"), true);
-  assert.equal(isSafeInternalRoute("/practice/listening"), true);
+  assert.equal(isSafeInternalRoute("/exams"), true);
+  assert.equal(isSafeInternalRoute("/practice/listening"), false);
+  assert.equal(isSafeInternalRoute("/listening/123"), true);
   assert.equal(isSafeInternalRoute("/flashcard"), true);
   assert.equal(isSafeInternalRoute("/my-courses"), true);
   assert.equal(isSafeInternalRoute("https://external-malicious-site.com"), false);

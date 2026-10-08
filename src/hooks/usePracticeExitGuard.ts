@@ -10,7 +10,7 @@ export interface UsePracticeExitGuardOptions {
    */
   shouldConfirmExit: boolean;
   /**
-   * Practice catalog fallback URL to navigate to when exiting (e.g. "/practice/listening").
+   * Practice catalog fallback URL to navigate to when exiting (e.g. "/listening").
    */
   defaultFallbackUrl: string;
   /**

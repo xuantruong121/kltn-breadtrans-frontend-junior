@@ -5,12 +5,12 @@ import {
   ArrowRight,
   BookOpen,
   CheckCircle2,
+  Compass,
   Headphones,
   LockKeyhole,
   Mic,
   PenTool,
   RefreshCw,
-  Sparkles,
 } from "lucide-react";
 import type {
   DailyPracticeItem,
@@ -72,7 +72,7 @@ export function DailyPracticeCard({
     <section aria-labelledby="daily-practice-heading" className="rounded-3xl border border-amber-200/80 dark:border-amber-900/50 bg-white/90 dark:bg-slate-900/90 p-4 sm:p-5 shadow-xs">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-amber-700 dark:text-amber-300"><Sparkles size={15} aria-hidden="true" /> Luyện tập hôm nay</div>
+          <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-amber-700 dark:text-amber-300"><Compass size={15} aria-hidden="true" /> Luyện tập hôm nay</div>
           <h2 id="daily-practice-heading" className="mt-1 text-xl font-black text-slate-900 dark:text-slate-100">Hôm nay bạn nên luyện gì?</h2>
           <p className="mt-1 text-sm font-semibold text-slate-600 dark:text-slate-400">{data.reasonSummary} · khoảng {data.estimatedMinutes} phút</p>
         </div>

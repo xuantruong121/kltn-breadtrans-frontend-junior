@@ -2,7 +2,15 @@
  * Audio and speech synthesis utilities for the Vocabulary Study Room
  */
 
+import { selectSpeechVoice } from "@/lib/dictionary/dictionaryMerge";
+
 let activeAudio: HTMLAudioElement | null = null;
+
+export type WordAudioResult =
+  | "REMOTE_AUDIO"
+  | "SPEECH_SYNTHESIS"
+  | "UNAVAILABLE"
+  | "ERROR";
 
 export function stopCurrentAudio() {
   if (activeAudio) {
@@ -28,7 +36,7 @@ export function playWordAudio(
   audioUrl?: string,
   accent: "us" | "uk" = "us",
   playbackRate: number = 1.0
-): Promise<void> {
+): Promise<WordAudioResult> {
   stopCurrentAudio();
 
   return new Promise((resolve) => {
@@ -36,16 +44,22 @@ export function playWordAudio(
       const audio = new Audio(audioUrl);
       activeAudio = audio;
       audio.playbackRate = playbackRate;
+      let fallbackStarted = false;
+      const fallback = () => {
+        if (fallbackStarted) return;
+        fallbackStarted = true;
+        activeAudio = null;
+        fallbackSpeechSynthesis(word, accent, playbackRate).then(resolve);
+      };
       audio.onended = () => {
         activeAudio = null;
-        resolve();
+        resolve("REMOTE_AUDIO");
       };
       audio.onerror = () => {
-        // Fallback to speech synthesis
-        fallbackSpeechSynthesis(word, accent, playbackRate).then(resolve);
+        fallback();
       };
       audio.play().catch(() => {
-        fallbackSpeechSynthesis(word, accent, playbackRate).then(resolve);
+        fallback();
       });
     } else {
       fallbackSpeechSynthesis(word, accent, playbackRate).then(resolve);
@@ -57,32 +71,46 @@ function fallbackSpeechSynthesis(
   text: string,
   accent: "us" | "uk",
   playbackRate: number
-): Promise<void> {
+): Promise<WordAudioResult> {
   return new Promise((resolve) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      resolve();
+      resolve("UNAVAILABLE");
       return;
     }
 
     try {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = accent === "uk" ? "en-GB" : "en-US";
-      utterance.rate = playbackRate;
-
-      // Select matching voice if available
-      const voices = window.speechSynthesis.getVoices();
-      const targetLang = accent === "uk" ? "en-GB" : "en-US";
-      const voice = voices.find((v) => v.lang === targetLang || v.lang.startsWith(targetLang.slice(0, 2)));
-      if (voice) {
+      const synthesis = window.speechSynthesis;
+      const voices = synthesis.getVoices();
+      const speak = (availableVoices: SpeechSynthesisVoice[]) => {
+        const voice = selectSpeechVoice(availableVoices, accent === "uk" ? "UK" : "US");
+        if (!voice) {
+          resolve("UNAVAILABLE");
+          return;
+        }
+        synthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = voice.lang;
         utterance.voice = voice;
+        utterance.rate = Math.min(2, Math.max(0.5, playbackRate));
+        utterance.onend = () => resolve("SPEECH_SYNTHESIS");
+        utterance.onerror = () => resolve("ERROR");
+        synthesis.speak(utterance);
+      };
+      if (voices.length) {
+        speak(voices);
+        return;
       }
-
-      utterance.onend = () => resolve();
-      utterance.onerror = () => resolve();
-      window.speechSynthesis.speak(utterance);
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        synthesis.removeEventListener("voiceschanged", finish);
+        speak(synthesis.getVoices());
+      };
+      synthesis.addEventListener("voiceschanged", finish, { once: true });
+      window.setTimeout(finish, 1200);
     } catch {
-      resolve();
+      resolve("ERROR");
     }
   });
 }

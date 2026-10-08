@@ -19,7 +19,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
   const isToeic = isExamRoute(pathname);
   const isSkills = isSkillsRoute(pathname);
   const isCourses = pathname.startsWith("/courses") || pathname.startsWith("/my-courses");
-  const isProfile = pathname.startsWith("/student/profile") || pathname.startsWith("/hub");
+  const isProfile = pathname.startsWith("/hub");
 
   return (
     <nav
@@ -55,7 +55,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
         </button>
       ) : (
         <Link
-          href="/practice"
+          href="/listening"
           className={`flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 transition-colors ${
             isSkills
               ? "text-amber-700 dark:text-amber-400 font-bold"
@@ -69,7 +69,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
 
       {/* 3. Luyện đề TOEIC */}
       <Link
-        href="/practice/quizzes"
+        href="/exams"
         className={`flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 transition-colors ${
           isToeic
             ? "text-amber-700 dark:text-amber-400 font-bold"

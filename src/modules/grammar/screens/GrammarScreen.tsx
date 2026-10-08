@@ -33,7 +33,7 @@ export const GrammarScreen: React.FC<GrammarScreenProps> = ({
   const router = useRouter();
   const { setFocusMode } = useLearningFocusMode();
   const [isDirty, setIsDirty] = useState(false);
-  const defaultFallbackUrl = "/practice/reading?category=grammar";
+  const defaultFallbackUrl = "/reading?category=grammar";
 
   const topicsQuery = useQuery({
     queryKey: ["grammar-topics"],

@@ -74,7 +74,7 @@ const CURRICULUM_COURSES = [
     lessonsCount: "120 bài học",
     duration: "60 giờ",
     highlight: "Khóa học trọng tâm",
-    link: "/practice/quizzes",
+    link: "/exams",
   },
   {
     id: "workplace-comm",
@@ -96,7 +96,7 @@ const CURRICULUM_COURSES = [
     lessonsCount: "44 bài luyện",
     duration: "25 giờ",
     highlight: "Nhận diện âm vị",
-    link: "/practice/speaking",
+    link: "/speaking",
   },
   {
     id: "grammar-vocab-srs",
@@ -658,7 +658,7 @@ export default function PublicLandingPage() {
             <div className="pt-6 mt-6 border-t border-slate-200/70 dark:border-slate-800 flex items-center justify-between">
               <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Hơn 500+ bài tập hội thoại thực tế</span>
               <button
-                onClick={() => handleProtectedAction("phòng luyện nói", "/practice/speaking")}
+                onClick={() => handleProtectedAction("phòng luyện nói", "/speaking")}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-extrabold text-xs transition-colors shadow-2xs cursor-pointer"
                 type="button"
               >
@@ -703,7 +703,7 @@ export default function PublicLandingPage() {
             <div className="pt-5 mt-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <span className="text-xs font-bold text-slate-500 dark:text-slate-400">200+ đề thi có giải</span>
               <button
-                onClick={() => handleProtectedAction("phòng thi TOEIC", "/practice/quizzes")}
+                onClick={() => handleProtectedAction("phòng thi TOEIC", "/exams")}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs transition-colors shadow-2xs cursor-pointer"
                 type="button"
               >

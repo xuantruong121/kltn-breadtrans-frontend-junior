@@ -102,7 +102,7 @@ export function AuthShell({ children }: AuthShellProps) {
                 <li>
                   <Link
                     className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
-                    href="/practice/listening"
+                    href="/listening"
                   >
                     Luyện Nghe chép chính tả
                   </Link>
@@ -110,7 +110,7 @@ export function AuthShell({ children }: AuthShellProps) {
                 <li>
                   <Link
                     className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
-                    href="/practice/speaking"
+                    href="/speaking"
                   >
                     Luyện nói chuẩn âm vị
                   </Link>
@@ -118,7 +118,7 @@ export function AuthShell({ children }: AuthShellProps) {
                 <li>
                   <Link
                     className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
-                    href="/practice/reading"
+                    href="/reading"
                   >
                     Luyện Đọc tra từ thông minh
                   </Link>
@@ -126,7 +126,7 @@ export function AuthShell({ children }: AuthShellProps) {
                 <li>
                   <Link
                     className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
-                    href="/practice/writing"
+                    href="/writing"
                   >
                     Luyện Viết gợi ý sửa lỗi
                   </Link>
@@ -148,7 +148,7 @@ export function AuthShell({ children }: AuthShellProps) {
                 <li>
                   <Link
                     className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
-                    href="/practice/quizzes"
+                    href="/exams"
                   >
                     Thi thử TOEIC Full Test
                   </Link>

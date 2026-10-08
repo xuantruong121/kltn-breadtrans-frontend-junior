@@ -35,9 +35,14 @@ const emptySubscribe = () => () => {};
 
 function isGuestAllowedRoute(pathname: string): boolean {
   const guestPrefixes = [
+    "/listening",
+    "/speaking",
+    "/reading",
+    "/writing",
+    "/exams",
+    "/toeic",
     "/market",
     "/arena",
-    "/practice",
     "/flashcard",
     "/grammar",
     "/learn",
@@ -124,7 +129,7 @@ function StudentLayoutContent({
   const pathname = usePathname();
   const { isFocusMode } = useLearningFocusMode();
   const isPracticeRoomPage = isFocusMode || isLearningFocusRoute(pathname);
-  const isPracticeCatalogPage = pathname.startsWith("/practice");
+  const isPracticeCatalogPage = ["/listening", "/speaking", "/reading", "/writing", "/exams", "/toeic", "/flashcard"].includes(pathname);
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background text-foreground antialiased selection:bg-amber-600 selection:text-white font-['Quicksand',sans-serif] transition-colors duration-150">
