@@ -1,5 +1,59 @@
 import type { ReadingTopicItem } from "./ReadingTopicCard";
 
+export interface ReadingTopicProgressSource {
+  totalArticles?: number | null;
+  completedArticles?: number | null;
+  quizzes?: unknown[] | null;
+}
+
+export interface ReadingExerciseProgressSource {
+  completionStatus?: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | null;
+}
+
+export function summarizeReadingExerciseProgress(
+  exercises: ReadingExerciseProgressSource[],
+): { totalExercises: number; completedExercises: number; completionPercent: number } {
+  const completedExercises = exercises.filter(
+    (exercise) => exercise.completionStatus === "COMPLETED",
+  ).length;
+  const totalExercises = exercises.length;
+  return {
+    totalExercises,
+    completedExercises,
+    completionPercent:
+      totalExercises > 0
+        ? Math.min(100, Math.round((completedExercises / totalExercises) * 100))
+        : 0,
+  };
+}
+
+/** Reading cards represent topics; keep the hub and catalog on that unit. */
+export function summarizeReadingTopicProgress(
+  topics: ReadingTopicProgressSource[],
+): { totalTopics: number; completedTopics: number; completionPercent: number } {
+  const completedTopics = topics.filter((topic) => {
+    const total =
+      Number.isFinite(topic.totalArticles) && (topic.totalArticles ?? 0) > 0
+        ? Math.floor(topic.totalArticles as number)
+        : Array.isArray(topic.quizzes)
+          ? topic.quizzes.length
+          : 0;
+    const completed = Number.isFinite(topic.completedArticles)
+      ? Math.max(0, Math.floor(topic.completedArticles ?? 0))
+      : 0;
+    return total > 0 && completed >= total;
+  }).length;
+  const totalTopics = topics.length;
+  return {
+    totalTopics,
+    completedTopics,
+    completionPercent:
+      totalTopics > 0
+        ? Math.min(100, Math.round((completedTopics / totalTopics) * 100))
+        : 0,
+  };
+}
+
 export type ReadingCardStatus =
   | "COMPLETED"
   | "IN_PROGRESS"
@@ -146,7 +200,7 @@ export function resolveReadingFormatTag(topic: ReadingTopicItem): string {
   if (title.includes("part 7") || title.includes("email") || title.includes("thư") || title.includes("single passage")) {
     return "Đoạn đơn - Email";
   }
-  return "Đọc song ngữ";
+  return "Đọc hiểu";
 }
 
 /**
@@ -168,9 +222,9 @@ export function resolveReadingPedagogicalDescription(
       return "Rèn luyện tốc độ đọc lướt và kỹ năng đối chiếu dữ liệu ngữ cảnh giữa hóa đơn, lịch trình và thư từ trao đổi.";
     default:
       return (
-        topic.vietnameseName?.trim() ||
         topic.description?.trim() ||
-        "Phát triển vốn từ vựng học thuật, tư duy phân tích đoạn văn và kỹ năng đối chiếu dữ liệu ngữ cảnh song ngữ."
+        topic.vietnameseName?.trim() ||
+        "Phát triển vốn từ vựng và kỹ năng phân tích thông tin trong các đoạn văn theo ngữ cảnh thực tế."
       );
   }
 }
@@ -219,10 +273,11 @@ export function computeReadingCardStatus(params: {
   isSpotlight?: boolean;
   isLocked?: boolean;
 }): ReadingCardStatus {
-  const { isAuthenticated, totalArticles, completedArticles, isSpotlight, isLocked } = params;
+  const { isAuthenticated, totalArticles, completedArticles, isLocked } = params;
   if (isLocked) return "LOCKED";
   if (!isAuthenticated) return "LOCKED";
   if (totalArticles > 0 && completedArticles >= totalArticles) return "COMPLETED";
-  if (completedArticles > 0 || isSpotlight) return "IN_PROGRESS";
+  // A spotlight recommendation is not an in-progress Reading topic.
+  if (completedArticles > 0) return "IN_PROGRESS";
   return "NOT_STARTED";
 }

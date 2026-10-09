@@ -91,6 +91,9 @@ export function resolveWritingFormatTag(topic: WritingTopicItem): string {
   ) {
     return "Viết luận quan điểm";
   }
+  if (taskType === "SHORT_MESSAGE" || taskType === "MESSAGE") {
+    return "Tin nhắn ngắn";
+  }
   if (type === "WRITING_PICTURE" || title.includes("tranh") || title.includes("picture")) {
     return "Viết theo tranh";
   }
@@ -113,6 +116,8 @@ export function resolveWritingPedagogicalDescription(
       return "Rèn luyện sử dụng từ loại và giới từ mô tả hành động, quan hệ không gian dựa trên hình ảnh thực tế.";
     case "Phản hồi Email":
       return "Thực hành sử dụng liên từ chỉ nguyên nhân - kết quả và văn phong trang trọng để viết email giải quyết phàn nàn.";
+    case "Tin nhắn ngắn":
+      return "Luyện viết tin nhắn thực tế, ngắn gọn và phù hợp với người nhận.";
     case "Viết luận quan điểm":
       return "Phát triển lập luận mạch lạc, tổ chức ý tưởng và cung cấp dẫn chứng cụ thể hỗ trợ quan điểm cá nhân.";
     default:
@@ -134,6 +139,8 @@ export function resolveWritingSkillTags(topic: WritingTopicItem): string[] {
       return ["Mệnh đề quan hệ", "Giới từ không gian"];
     case "Phản hồi Email":
       return ["Văn phong trang trọng", "Cấu trúc email phản hồi"];
+    case "Tin nhắn ngắn":
+      return ["Mục đích rõ ràng", "Ngữ cảnh giao tiếp"];
     case "Viết luận quan điểm":
       return ["Tổ chức luận điểm", "Liên từ nối mạch lạc"];
     default:
@@ -158,9 +165,8 @@ export function computeWritingCardStatus(params: {
   isSpotlight?: boolean;
   isLocked?: boolean;
 }): WritingCardStatus {
-  const { isAuthenticated, isCompleted, isSpotlight, isLocked } = params;
+  const { isAuthenticated, isCompleted, isLocked } = params;
   if (!isAuthenticated || isLocked) return "LOCKED";
   if (isCompleted) return "COMPLETED";
-  if (isSpotlight) return "IN_PROGRESS";
   return "NOT_STARTED";
 }

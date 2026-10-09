@@ -689,8 +689,7 @@ describe("13. Centralized Query Keys Invariants", () => {
     assert.deepEqual(PLAN_QUERY_KEYS.myPurchases, ["my-plan-purchases"]);
     assert.deepEqual(PLAN_QUERY_KEYS.purchaseDetail(88), ["plan-purchase-detail", 88]);
     assert.deepEqual(PLAN_QUERY_KEYS.vocabTopics, ["vocab-topics"]);
-    assert.deepEqual(PLAN_QUERY_KEYS.readingTopics, ["reading-topics"]);
-    assert.deepEqual(PLAN_QUERY_KEYS.readingTopic(14), ["reading-topic", 14]);
+    assert.deepEqual(PLAN_QUERY_KEYS.readingExercises, ["reading-exercises"]);
     assert.deepEqual(PLAN_QUERY_KEYS.listeningPractices, ["listeningPractices"]);
     assert.deepEqual(PLAN_QUERY_KEYS.speakingExercises, ["speaking-exercises"]);
     assert.deepEqual(PLAN_QUERY_KEYS.speakingExercise(6), ["speaking-exercise", 6]);
@@ -832,7 +831,7 @@ describe("16. Phase PAY-UI Success Invalidation & Immediate Content Unlock", () 
         mockQueryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.effectivePlan });
         mockQueryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.catalog });
         mockQueryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.vocabTopics });
-        mockQueryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.readingTopics });
+        mockQueryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.readingExercises });
         mockQueryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.listeningPractices });
         mockQueryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.speakingExercises });
         mockQueryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.writingTopics });
@@ -855,7 +854,7 @@ describe("16. Phase PAY-UI Success Invalidation & Immediate Content Unlock", () 
       "effective-plan",
       "plan-catalog",
       "vocab-topics",
-      "reading-topics",
+      "reading-exercises",
       "listeningPractices",
       "speaking-exercises",
       "writing-topics",

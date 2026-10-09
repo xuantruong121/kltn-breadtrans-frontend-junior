@@ -17,13 +17,13 @@ test("Writing Card State Machine: accurately detects COMPLETED state", () => {
   assert.equal(status, "COMPLETED");
 });
 
-test("Writing Card State Machine: accurately detects IN_PROGRESS spotlight state", () => {
+test("Writing Card State Machine: spotlight does not imply learner progress", () => {
   const status = computeWritingCardStatus({
     isAuthenticated: true,
     isCompleted: false,
     isSpotlight: true,
   });
-  assert.equal(status, "IN_PROGRESS");
+  assert.equal(status, "NOT_STARTED");
 });
 
 test("Writing Card State Machine: accurately detects NOT_STARTED state", () => {
@@ -57,6 +57,15 @@ test("Writing Format Tag: resolves topic format accurately", () => {
     type: "WRITING_EMAIL",
   };
   assert.equal(resolveWritingFormatTag(emailItem), "Phản hồi Email");
+
+  const shortMessageItem: WritingTopicItem = {
+    id: 5,
+    topicName: "Writing A2 Messages",
+    type: "WRITING_EMAIL",
+    taskType: "SHORT_MESSAGE",
+  };
+  assert.equal(resolveWritingFormatTag(shortMessageItem), "Tin nhắn ngắn");
+  assert.equal(resolveWritingPedagogicalDescription(shortMessageItem).includes("phàn nàn"), false);
 
   const opinionItem: WritingTopicItem = {
     id: 3,

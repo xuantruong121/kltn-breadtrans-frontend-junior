@@ -97,6 +97,7 @@ export default function TakeQuizPage(props: {
   const [passageFontSize, setPassageFontSize] = useState<"base" | "lg" | "xl">(
     "base",
   );
+  const [showReadingTranslation, setShowReadingTranslation] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [selectedWordForLookup, setSelectedWordForLookup] = useState<
     string | null
@@ -224,21 +225,15 @@ export default function TakeQuizPage(props: {
       );
   }, [searchParams]);
   const isWrongAnswerReview = isListening && reviewQuestionIds.length > 0;
-  const readingTopicId = searchParams.get("topic");
-  const hasValidReadingTopic = Boolean(
-    readingTopicId && /^\d+$/.test(readingTopicId),
-  );
   const backHref = isListening
     ? "/listening"
     : isReading
-      ? hasValidReadingTopic
-        ? `/reading/${readingTopicId}`
-        : "/reading"
+      ? "/reading"
       : routeContext === "exams"
         ? "/exams"
         : "/listening";
   const currentQuizRoute = routeContext === "reading"
-    ? `/reading/quizzes/${quizId}${hasValidReadingTopic ? `?topic=${readingTopicId}` : ""}`
+    ? `/reading/${quizId}`
     : routeContext === "exams"
       ? `/exams/${quizId}`
       : `/listening/${quizId}`;
@@ -248,6 +243,10 @@ export default function TakeQuizPage(props: {
     const timer = setTimeout(() => setMinLaunchReady(true), 350);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    setShowReadingTranslation(false);
+  }, [currentStep, quizId]);
 
   // Single ownership: TakeQuizPage owns exit guard only when NOT listening
   const shouldConfirmExit = !submitMutation.isSuccess;
@@ -365,8 +364,12 @@ export default function TakeQuizPage(props: {
   const activePassage = rawPassage
     .replace(/^(ARTICLE|PASSAGE|EMAIL|MEMO|LETTER|NOTICE|ADVERTISEMENT|CONVERSATION):\s*/i, "")
     .trim();
+  const readingTranslation =
+    typeof currentQuestion?.content?.translation === "string"
+      ? currentQuestion.content.translation.trim()
+      : "";
 
-  // BILINGUAL_READING and generic quiz: quizzes/[id]/page.tsx owns the 350ms gate
+  // Reading and generic quiz routes share the same 350ms launch gate.
   if (!minLaunchReady || (!currentQuestion && questions.length > 0)) {
     return (
       <div className="flex items-center justify-center h-full min-h-[50vh] py-12">
@@ -678,6 +681,17 @@ export default function TakeQuizPage(props: {
                     <span className="hidden sm:inline">Tra từ</span>
                   </button>
 
+                  {readingTranslation && (
+                    <button
+                      type="button"
+                      onClick={() => setShowReadingTranslation((visible) => !visible)}
+                      className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-2.5 py-2 text-xs font-bold text-emerald-700 transition-colors hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:px-3 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300 dark:hover:bg-emerald-950/50"
+                      aria-expanded={showReadingTranslation}
+                    >
+                      {showReadingTranslation ? "Ẩn bản dịch" : "Xem bản dịch"}
+                    </button>
+                  )}
+
                   {/* Reading Font Size Adjuster */}
                   <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-black text-slate-600 dark:text-slate-300">
                     <button
@@ -758,6 +772,14 @@ export default function TakeQuizPage(props: {
                     {activePassage ||
                       "Không tìm thấy nội dung bài đọc cho câu hỏi này."}
                   </div>
+                  {showReadingTranslation && readingTranslation && (
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 text-sm leading-relaxed text-emerald-950 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100">
+                      <p className="mb-1 text-[10px] font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                        Bản dịch hỗ trợ
+                      </p>
+                      <p className="whitespace-pre-line">{readingTranslation}</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Mobile Navigation CTA to Switch to Questions */}
@@ -917,14 +939,6 @@ export default function TakeQuizPage(props: {
                     )}
                   </div>
 
-                  {/* Subtle 1-line EXP indicator */}
-                  <div className="flex items-center justify-between text-[11px] text-amber-800/80 dark:text-amber-300/80 font-semibold px-0.5">
-                    <span className="flex items-center gap-1">
-                      <Cookie size={13} className="text-amber-600 dark:text-amber-400" />
-                      Phần thưởng hoàn thành
-                    </span>
-                    <span>+20 EXP • +1 Nhiệm vụ</span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -1305,24 +1319,27 @@ export default function TakeQuizPage(props: {
               </div>
             </div>
 
-            {/* Gamification Reward Card */}
-            <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 p-5 rounded-2xl flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-amber-400 flex items-center justify-center shadow-sm shrink-0">
-                <Cookie
-                  size={24}
-                  aria-hidden="true"
-                  className="text-amber-950"
-                />
+            {/* Generic quiz reward card. Reading rewards are rendered only by
+                server-backed gamification surfaces, never as hardcoded copy. */}
+            {!isReading && (
+              <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 p-5 rounded-2xl flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-400 flex items-center justify-center shadow-sm shrink-0">
+                  <Cookie
+                    size={24}
+                    aria-hidden="true"
+                    className="text-amber-950"
+                  />
+                </div>
+                <div>
+                  <p className="font-black text-slate-800 dark:text-slate-100 text-sm">
+                    Phần Thưởng Hoàn Thành
+                  </p>
+                  <p className="text-xs font-bold text-amber-800 dark:text-amber-300 mt-0.5">
+                    +20 EXP • +1 Điểm Nhiệm Vụ Ngày
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="font-black text-slate-800 dark:text-slate-100 text-sm">
-                  Phần Thưởng Hoàn Thành
-                </p>
-                <p className="text-xs font-bold text-amber-800 dark:text-amber-300 mt-0.5">
-                  +20 EXP • +1 Điểm Nhiệm Vụ Ngày
-                </p>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       )}

@@ -296,7 +296,7 @@ export function computePracticeCardStatus(params: {
   isSpotlight?: boolean;
   isLocked?: boolean;
 }): PracticeCardStatus {
-  const { isAuthenticated, isCompleted, practiceSet, isSpotlight, isLocked } = params;
+  const { isAuthenticated, isCompleted, practiceSet, isLocked } = params;
   if (isLocked) return "LOCKED";
   if (!isAuthenticated) return "LOCKED";
 
@@ -316,7 +316,9 @@ export function computePracticeCardStatus(params: {
       practiceSet.completedCount < practiceSet.exerciseCount,
   );
 
-  if (inProgress || isSpotlight) return "IN_PROGRESS";
+  // Spotlight is only a recommendation marker; it is not evidence that the
+  // learner has started the set.
+  if (inProgress) return "IN_PROGRESS";
 
   return "NOT_STARTED";
 }

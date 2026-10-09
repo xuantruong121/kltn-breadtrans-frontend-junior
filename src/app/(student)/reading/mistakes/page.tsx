@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft, Loader2 } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Loader2, RefreshCw } from "lucide-react";
 import { readingService } from "@/lib/api/services/reading.service";
 import { readingSubskillLabel } from "@/components/reading/readingTrackingLogic";
 
@@ -60,6 +60,18 @@ export default function ReadingMistakesPage() {
                 <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500">{new Date(mistake.date).toLocaleDateString("vi-VN")}</span>
               </div>
               <h2 className="mt-3 text-base font-black text-slate-900 dark:text-slate-100">{mistake.question}</h2>
+              <div className="mt-2 flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                <span>{mistake.source}</span>
+                {mistake.quizId ? (
+                  <Link
+                    href={`/reading/${mistake.quizId}`}
+                    className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 text-amber-800 transition-colors hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-950/50"
+                  >
+                    <RefreshCw size={13} aria-hidden="true" />
+                    Làm lại bài đọc
+                  </Link>
+                ) : null}
+              </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/60 dark:bg-rose-950/20 p-3">
                   <p className="text-[10px] font-black uppercase tracking-wide text-rose-700 dark:text-rose-300">Bạn đã trả lời</p>
@@ -71,7 +83,6 @@ export default function ReadingMistakesPage() {
                 </div>
               </div>
               {mistake.explanation && <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300"><span className="font-black">Giải thích:</span> {mistake.explanation}</p>}
-              <p className="mt-3 text-xs font-semibold text-slate-400 dark:text-slate-500">Nguồn: {mistake.source}</p>
             </article>
           ))}
         </div>
@@ -79,4 +90,3 @@ export default function ReadingMistakesPage() {
     </div>
   );
 }
-

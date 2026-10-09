@@ -105,7 +105,7 @@ describe("Navigation Route Classification", () => {
 
     // 3. Reading (merges Reading and Grammar)
     assert.equal(isReadingRoute("/reading"), true);
-    assert.equal(isReadingRoute("/reading/quizzes/1"), true);
+  assert.equal(isReadingRoute("/reading/1"), true);
     assert.equal(isReadingRoute("/reading/mistakes"), true);
     assert.equal(isReadingRoute("/reading?tab=grammar"), false);
     assert.equal(isReadingRoute("/grammar"), true);

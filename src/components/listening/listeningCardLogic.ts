@@ -200,10 +200,12 @@ export function computeListeningCardStatus(params: {
   inProgress?: boolean;
   isLocked?: boolean;
 }): ListeningCardStatus {
-  const { isAuthenticated, isCompleted, isSpotlight, inProgress, isLocked } = params;
+  const { isAuthenticated, isCompleted, inProgress, isLocked } = params;
   if (isLocked) return "LOCKED";
   if (!isAuthenticated) return "LOCKED";
   if (isCompleted) return "COMPLETED";
-  if (inProgress || isSpotlight) return "IN_PROGRESS";
+  // Spotlight only highlights a recommended card and must not fabricate
+  // partial progress.
+  if (inProgress) return "IN_PROGRESS";
   return "NOT_STARTED";
 }

@@ -28,6 +28,13 @@ test("normal Writing opens the editor directly and keeps guidance in the workspa
   assert.doesNotMatch(source, /Bắt đầu viết/);
 });
 
+test("normal Reading catalog opens the exact selected exercise directly", () => {
+  const source = read("src/app/(student)/reading/page.tsx");
+  assert.match(source, /getExercises/);
+  assert.match(source, /router\.push\(`\/reading\/\$\{exercise\.quizId/);
+  assert.doesNotMatch(source, /firstAvailableQuiz/);
+});
+
 test("TOEIC retains a functional briefing boundary before timed attempt creation", () => {
   const briefing = read("src/app/(student)/toeic/[examId]/page.tsx");
   const attempt = read("src/app/(student)/toeic/attempts/[attemptId]/page.tsx");

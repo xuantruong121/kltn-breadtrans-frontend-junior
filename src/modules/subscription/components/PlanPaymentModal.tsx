@@ -152,7 +152,7 @@ export const PlanPaymentModal: React.FC<PlanPaymentModalProps> = ({
       queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.effectivePlan });
       queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.catalog });
       queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.vocabTopics });
-      queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.readingTopics });
+      queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.readingExercises });
       queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.listeningPractices });
       queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.speakingExercises });
       queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.writingTopics });

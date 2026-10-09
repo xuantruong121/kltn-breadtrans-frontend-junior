@@ -14,7 +14,6 @@ import {
   Mail,
   RotateCcw,
 } from "lucide-react";
-import type { ReadingTopic } from "@/lib/api/services/reading.service";
 import {
   type ReadingCardStatus,
   computeReadingCardStatus,
@@ -26,9 +25,23 @@ import {
   resolveReadingSkillTags,
 } from "./readingCardLogic";
 
-export interface ReadingTopicItem extends ReadingTopic {
+export interface ReadingTopicItem {
+  id: number;
+  title?: string;
+  description?: string;
+  isPremiumContent?: boolean;
+  isLocked?: boolean;
+  quizzes?: Array<{ id: number; isLocked?: boolean }>;
+  quizId?: number;
   name?: string;
   vietnameseName?: string;
+  topicName?: string | null;
+  parentTopicId?: number | null;
+  questionCount?: number;
+  estimatedMinutes?: number | null;
+  microSkills?: string[];
+  completionStatus?: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
+  difficulty?: "BASIC" | "INTERMEDIATE" | "ADVANCED";
   totalArticles?: number;
   completedArticles?: number;
   totalQuestions?: number;
@@ -93,7 +106,7 @@ export function ReadingTopicCard({
   isSpotlight = false,
 }: ReadingTopicCardProps) {
   const isLocked = isReadingTopicLocked(topic);
-  const total = topic.totalArticles || 4;
+  const total = topic.totalArticles || 1;
   const completed = topic.completedArticles || 0;
   const progressPercent = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
 
@@ -112,7 +125,18 @@ export function ReadingTopicCard({
 
   const formatTag = resolveReadingFormatTag(topic);
   const pedagogicalDescription = resolveReadingPedagogicalDescription(topic);
-  const skillTags = resolveReadingSkillTags(topic);
+  const skillTags = topic.microSkills?.length
+    ? topic.microSkills.map((skill) =>
+        ({
+          DETAIL: "Chi tiết",
+          PURPOSE: "Mục đích",
+          INFERENCE: "Suy luận",
+          MAIN_IDEA: "Ý chính",
+          VOCAB_IN_CONTEXT: "Từ vựng ngữ cảnh",
+          PROMOTION: "Khuyến mãi",
+        } as Record<string, string>)[skill] ?? skill,
+      )
+    : resolveReadingSkillTags(topic);
   const { Icon: AnchorIcon, iconContainer } = resolveReadingVisualAnchor(formatTag);
 
   const handleCardClick = (e: React.MouseEvent) => {
@@ -172,7 +196,8 @@ export function ReadingTopicCard({
             </div>
           </div>
 
-          {/* Gamification Reward Tag */}
+          {/* Recommendation and persisted completion status only. Rewards are
+              rendered by the server-backed gamification surfaces. */}
           <div className="shrink-0 flex items-center gap-1.5">
             {status === "COMPLETED" ? (
               <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/70 px-2 py-0.5 rounded-full">
@@ -181,18 +206,12 @@ export function ReadingTopicCard({
               </span>
             ) : (
               <>
-                {status === "IN_PROGRESS" && (
+                {(status === "IN_PROGRESS" || isSpotlight) && (
                   <span className="inline-flex items-center gap-1 text-xs font-semibold text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/60 border border-violet-200 dark:border-violet-800/70 px-2 py-0.5 rounded-full">
                     <Flame size={12} className="text-amber-500 fill-amber-500" aria-hidden="true" />
                     {isSpotlight ? "Gợi ý" : "Đang làm"}
                   </span>
                 )}
-                <span
-                  className="inline-flex items-center gap-1 text-xs font-bold text-amber-800 dark:text-amber-200 bg-amber-50/90 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-800/70 px-2 py-0.5 rounded-full shadow-xs"
-                  title="Phần thưởng khi hoàn thành bài luyện"
-                >
-                  +10 🍞
-                </span>
               </>
             )}
           </div>
@@ -263,12 +282,12 @@ export function ReadingTopicCard({
           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
             <span className="inline-flex items-center gap-1">
               <FileText className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
-              ~250 từ
+              {topic.questionCount ?? topic.totalQuestions ?? 0} câu hỏi
             </span>
             <span>·</span>
             <span className="inline-flex items-center gap-1">
               <Clock className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
-              ~3-4 phút
+              {topic.estimatedMinutes ? `~${topic.estimatedMinutes} phút` : "Thời lượng linh hoạt"}
             </span>
           </div>
 

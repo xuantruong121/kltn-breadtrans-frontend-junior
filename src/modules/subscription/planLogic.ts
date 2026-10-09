@@ -119,8 +119,7 @@ export const PLAN_QUERY_KEYS = {
   myPurchases: ["my-plan-purchases"] as const,
   purchaseDetail: (id: number) => ["plan-purchase-detail", id] as const,
   vocabTopics: ["vocab-topics"] as const,
-  readingTopics: ["reading-topics"] as const,
-  readingTopic: (id: number) => ["reading-topic", id] as const,
+  readingExercises: ["reading-exercises"] as const,
   // Must match the key used by the Listening catalog query. Keeping this
   // centralized ensures entitlement refresh invalidates the live cache.
   listeningPractices: ["listeningPractices"] as const,

@@ -8,6 +8,8 @@ import {
   resolveReadingFormatTag,
   resolveReadingPedagogicalDescription,
   resolveReadingSkillTags,
+  summarizeReadingExerciseProgress,
+  summarizeReadingTopicProgress,
 } from "./readingCardLogic.ts";
 import type { ReadingTopicItem } from "./ReadingTopicCard.tsx";
 
@@ -40,6 +42,30 @@ test("Reading Card State Machine: accurately detects NOT_STARTED state", () => {
   assert.equal(status, "NOT_STARTED");
 });
 
+test("Reading catalog progress counts exercise cards, not parent topics", () => {
+  assert.deepEqual(
+    summarizeReadingExerciseProgress([
+      { completionStatus: "COMPLETED" },
+      { completionStatus: "COMPLETED" },
+      { completionStatus: "IN_PROGRESS" },
+      { completionStatus: "NOT_STARTED" },
+      { completionStatus: "NOT_STARTED" },
+      { completionStatus: "NOT_STARTED" },
+    ]),
+    { totalExercises: 6, completedExercises: 2, completionPercent: 33 },
+  );
+});
+
+test("Reading Card State Machine: spotlight does not imply learner progress", () => {
+  const status = computeReadingCardStatus({
+    isAuthenticated: true,
+    totalArticles: 5,
+    completedArticles: 0,
+    isSpotlight: true,
+  });
+  assert.equal(status, "NOT_STARTED");
+});
+
 test("Reading Card State Machine: accurately detects LOCKED state for guests", () => {
   const status = computeReadingCardStatus({
     isAuthenticated: false,
@@ -47,6 +73,16 @@ test("Reading Card State Machine: accurately detects LOCKED state for guests", (
     completedArticles: 0,
   });
   assert.equal(status, "LOCKED");
+});
+
+test("Reading progress uses visible topic cards as its denominator", () => {
+  assert.deepEqual(
+    summarizeReadingTopicProgress([
+      { totalArticles: 2, completedArticles: 2 },
+      { quizzes: [{ id: 1 }, { id: 2 }], completedArticles: 1 },
+    ]),
+    { totalTopics: 2, completedTopics: 1, completionPercent: 50 },
+  );
 });
 
 test("Reading Format Tag: resolves topic format accurately", () => {

@@ -17,13 +17,13 @@ test("Listening Card State Machine: accurately detects COMPLETED state", () => {
   assert.equal(status, "COMPLETED");
 });
 
-test("Listening Card State Machine: accurately detects IN_PROGRESS spotlight state", () => {
+test("Listening Card State Machine: spotlight does not imply learner progress", () => {
   const status = computeListeningCardStatus({
     isAuthenticated: true,
     isCompleted: false,
     isSpotlight: true,
   });
-  assert.equal(status, "IN_PROGRESS");
+  assert.equal(status, "NOT_STARTED");
 });
 
 test("Listening Card State Machine: accurately detects NOT_STARTED state", () => {

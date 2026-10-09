@@ -82,7 +82,6 @@ export function LearningProgressTab() {
     enabled: Boolean(user),
     staleTime: 30_000,
   });
-
   const skills = useMemo(() => data?.skills ?? [], [data?.skills]);
 
   if (isLoading) {
@@ -115,8 +114,17 @@ export function LearningProgressTab() {
         {skills.map((skill) => {
           const meta = SKILL_META[skill.skill];
           const Icon = meta.icon;
-          const total = Math.max(0, skill.totalItems);
-          const completed = Math.min(Math.max(0, skill.completedItems), total || skill.completedItems);
+          const total = Math.max(
+            0,
+            skill.totalItems,
+          );
+          const completed = Math.min(
+            Math.max(
+              0,
+              skill.completedItems,
+            ),
+            total || skill.completedItems,
+          );
           const percent = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
           return (
             <article key={skill.skill} className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 sm:p-5">

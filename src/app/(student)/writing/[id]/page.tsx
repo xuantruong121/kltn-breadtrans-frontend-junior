@@ -3,7 +3,7 @@
 import React, { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   PenTool,
@@ -20,7 +20,7 @@ import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScre
 import { PracticeExitConfirmDialog } from "@/components/practice/PracticeExitConfirmDialog";
 import { PracticeHeader } from "@/components/practice/PracticeHeader";
 import { PracticeShell } from "@/components/practice/PracticeShell";
-import { countWritingWords, resolveWritingMode } from "@/lib/writing/writingExperienceLogic";
+import { countWritingWords, resolveWritingMode, resolveWritingPlaceholder } from "@/lib/writing/writingExperienceLogic";
 import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
 import {
   writingService,
@@ -28,6 +28,7 @@ import {
 } from "@/lib/api/services/writing.service";
 import { isPremiumWritingForbiddenError } from "@/modules/subscription/planLogic";
 import toast from "react-hot-toast";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function WritingDetailPage(props: {
   params: Promise<{ id: string }>;
@@ -35,6 +36,8 @@ export default function WritingDetailPage(props: {
   const params = use(props.params);
   const topicId = Number(params.id);
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
   const [content, setContent] = useState("");
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [feedback, setFeedback] = useState<WritingEvaluation | null>(null);
@@ -129,6 +132,14 @@ export default function WritingDetailPage(props: {
         clientAttemptId,
       );
       setIsEvaluating(false);
+      const currentUserId = user?.id;
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["writing-topics"] }),
+        queryClient.invalidateQueries({ queryKey: ["user-skills-summary", currentUserId] }),
+        queryClient.invalidateQueries({ queryKey: ["account-learning-progress", currentUserId] }),
+        queryClient.invalidateQueries({ queryKey: ["account-learning-history", currentUserId] }),
+        queryClient.invalidateQueries({ queryKey: ["learning-history"] }),
+      ]);
       toast.success("Hệ thống đã hoàn tất đánh giá bài viết!");
       router.push(`/writing/submissions/${result.submissionId}`);
     } catch {
@@ -237,7 +248,7 @@ export default function WritingDetailPage(props: {
               rows={11}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Dear Mr. Smith, I am writing to update you on our project status..."
+              placeholder={resolveWritingPlaceholder(topic ?? {})}
               className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 font-medium text-sm outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 transition-all leading-relaxed text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
 

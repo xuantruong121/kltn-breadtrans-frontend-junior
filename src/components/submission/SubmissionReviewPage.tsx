@@ -14,6 +14,7 @@ import {
   formatReadingValue,
   resolveReadingCorrectAnswer,
 } from "@/lib/reading/readingQuizUtils";
+import { readingSubskillLabel } from "@/components/reading/readingTrackingLogic";
 
 export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
@@ -157,6 +158,9 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
   const wrongReviewHref = isListeningResult && wrongQuestionIds.length > 0
     ? `/listening/${analytics.quizId}?review=wrong&questionIds=${wrongQuestionIds.join(",")}`
     : null;
+  const readingMistakesHref = isReadingResult && wrongQuestionIds.length > 0
+    ? "/reading/mistakes"
+    : null;
   const practiceCatalogHref = isListeningResult
     ? "/listening"
     : isReadingResult
@@ -170,7 +174,7 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
   const retryHref = isListeningResult
     ? `/listening/${analytics.quizId}`
     : isReadingResult
-      ? `/reading/quizzes/${analytics.quizId}`
+      ? `/reading/${analytics.quizId}`
       : `/exams/${analytics.quizId}`;
 
   return (
@@ -250,6 +254,11 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
                                 Dịch: {q.content.translation}
                               </span>
                             )}
+                            {isReadingResult && (q.content?.questionType || q.content?.microSkill) && (
+                              <span className="mt-2 inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-black text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                Kỹ năng: {readingSubskillLabel(q.content.questionType || q.content.microSkill)}
+                              </span>
+                            )}
                             {explanation && (
                               <span className="block mt-2 text-xs text-slate-600 dark:text-slate-300 whitespace-pre-line break-words">
                                 Giải thích: {explanation}
@@ -311,7 +320,9 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
                 <div className="mt-2 space-y-2">
                   {analytics.categoriesBreakdown.map((category) => (
                     <div key={category.category} className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 px-3 py-2">
-                      <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{category.category}</span>
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                        {readingSubskillLabel(category.category)}
+                      </span>
                       <span className="text-xs font-black text-emerald-700 dark:text-emerald-300">{category.correct}/{category.total} · {category.accuracyPercent}%</span>
                     </div>
                   ))}
@@ -324,6 +335,13 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
                 <Link href={wrongReviewHref} className="w-full">
                   <button className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-black py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer text-sm">
                     <Target size={18} /> Ôn lại {wrongQuestionIds.length} câu sai
+                  </button>
+                </Link>
+              )}
+              {readingMistakesHref && (
+                <Link href={readingMistakesHref} className="w-full">
+                  <button className="w-full flex items-center justify-center gap-2 border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-950/50 font-black py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer text-sm">
+                    <Target size={18} /> Xem trong lỗi cần ôn lại
                   </button>
                 </Link>
               )}

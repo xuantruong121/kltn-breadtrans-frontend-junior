@@ -218,7 +218,7 @@ export function PracticeCard({
               </span>
             ) : (
               <>
-                {status === "IN_PROGRESS" && (
+                {(status === "IN_PROGRESS" || exercise.isSpotlight) && (
                   <span className="inline-flex items-center gap-1 text-xs font-semibold text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/60 border border-violet-200 dark:border-violet-800/70 px-2 py-0.5 rounded-full">
                     <Flame size={12} className="text-amber-500 fill-amber-500" aria-hidden="true" />
                     {exercise.isSpotlight ? "Gợi ý" : "Đang làm"}

@@ -31,8 +31,8 @@ test("Route classification: Catalog, pre-start briefing, and hub pages retain gl
   assert.equal(isLearningFocusRoute("/dashboard"), false);
   assert.equal(isLearningFocusRoute("/listening"), false);
   assert.equal(isLearningFocusRoute("/reading"), false);
-  assert.equal(isLearningFocusRoute("/reading/12"), false); // topic detail page
-  assert.equal(isLearningFocusRoute("/reading/topic-food"), false);
+  assert.equal(isLearningFocusRoute("/reading/12"), true); // exact Reading exercise
+  assert.equal(isLearningFocusRoute("/reading/topic-food"), true); // canonical IDs remain route-safe
   assert.equal(isLearningFocusRoute("/writing"), false);
   assert.equal(isLearningFocusRoute("/speaking"), false);
   assert.equal(isLearningFocusRoute("/flashcard"), false);
@@ -54,6 +54,7 @@ test("Route classification: Result and review pages retain global navigation", (
 
 test("isPracticeRoomPath and isToeicAttemptPath helpers", () => {
   assert.equal(isPracticeRoomPath("/speaking/1"), true);
+  assert.equal(isPracticeRoomPath("/reading/1"), true);
   assert.equal(isPracticeRoomPath("/toeic/attempts/1"), true);
   assert.equal(isToeicAttemptPath("/toeic/attempts/1"), true);
   assert.equal(isToeicAttemptPath("/toeic/attempts/uuid-99"), true);
