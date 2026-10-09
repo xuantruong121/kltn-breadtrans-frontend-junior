@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -8,97 +8,54 @@ import {
   ArrowRight,
   BookOpen,
   CheckCircle2,
-  ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Crown,
+  FileText,
   Flame,
   Gift,
   Headphones,
   Layers,
+  ListChecks,
   Mic,
   PenTool,
   RefreshCw,
   ShieldCheck,
+  Target,
   TrendingUp,
-  Trophy,
+  X,
   Zap,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
-import { courseService, StudentLearningClass } from "@/lib/api/services/course.service";
 import {
   gamificationService,
   TodayQuestItem,
 } from "@/lib/api/services/gamification.service";
-import { userService, SkillProgressSummary, UserProfile, type DailyPracticeResponse } from "@/lib/api/services/user.service";
+import { userService, UserProfile, type DailyPracticeResponse } from "@/lib/api/services/user.service";
 import {
-  formatSkillDimension,
-  skillStatusLabel,
-} from "@/lib/api/services/userSkillProgressLogic";
+  planService,
+  PLAN_QUERY_KEYS,
+  type EffectivePlan,
+} from "@/lib/api/services/plan.service";
 import { PlacementTestBanner } from "@/components/dashboard/PlacementTestBanner";
 import { DashboardCompanionCard } from "@/modules/pet/components/DashboardCompanionCard";
 import {
+  canAccessFilterPeriod,
   clampPercentage,
+  FILTER_PERIODS,
+  type FilterPeriod,
   getVietnamDayOfWeek,
+  getVietnamFormattedDate,
   getVietnamGreeting,
   getTypeSpecificQuestFallback,
   isSafeInternalRoute,
+  matchPartActivity,
+  SKILL_DETAIL_CONFIGS,
+  type SkillKey,
 } from "./dashboardUtils";
 
 const emptySubscribe = () => () => {};
-
-// --- 4-SKILLS CONFIGURATION (BreadTrans Core Curriculum) ---
-const SKILLS_CONFIG = [
-  {
-    key: "LISTENING" as const,
-    title: "Luyện nghe",
-    description: "Rèn luyện khả năng nghe hiểu qua đàm thoại, độc thoại và ngữ cảnh đời sống thực tế.",
-    href: "/listening",
-    icon: Headphones,
-    tone: "blue",
-    borderClass: "border-blue-200/90 dark:border-blue-800/80 hover:border-blue-300 dark:hover:border-blue-600",
-    bgClass: "bg-blue-50/70 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300",
-    progressClass: "bg-blue-500",
-    badgeClass: "bg-blue-100/90 dark:bg-blue-950/70 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800",
-    btnClass: "bg-blue-600 hover:bg-blue-700 text-white",
-  },
-  {
-    key: "SPEAKING" as const,
-    title: "Luyện nói",
-    description: "Luyện phát âm chuẩn xác, ngữ điệu tự nhiên và phản xạ giao tiếp tiếng Anh tự tin.",
-    href: "/speaking",
-    icon: Mic,
-    tone: "violet",
-    borderClass: "border-violet-200/90 dark:border-violet-800/80 hover:border-violet-300 dark:hover:border-violet-600",
-    bgClass: "bg-violet-50/70 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300",
-    progressClass: "bg-violet-500",
-    badgeClass: "bg-violet-100/90 dark:bg-violet-950/70 text-violet-800 dark:text-violet-200 border-violet-200 dark:border-violet-800",
-    btnClass: "bg-violet-600 hover:bg-violet-700 text-white",
-  },
-  {
-    key: "READING" as const,
-    title: "Luyện đọc",
-    description: "Nâng cao tốc độ đọc hiểu, vốn từ vựng học thuật và kỹ năng nắm bắt ý chính đoạn văn.",
-    href: "/reading",
-    icon: BookOpen,
-    tone: "emerald",
-    borderClass: "border-emerald-200/90 dark:border-emerald-800/80 hover:border-emerald-300 dark:hover:border-emerald-600",
-    bgClass: "bg-emerald-50/70 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300",
-    progressClass: "bg-emerald-500",
-    badgeClass: "bg-emerald-100/90 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800",
-    btnClass: "bg-emerald-600 hover:bg-emerald-700 text-white",
-  },
-  {
-    key: "WRITING" as const,
-    title: "Luyện viết",
-    description: "Thực hành viết câu chuẩn ngữ pháp, email công sở và bài luận với gợi ý chi tiết.",
-    href: "/writing",
-    icon: PenTool,
-    tone: "rose",
-    borderClass: "border-rose-200/90 dark:border-rose-800/80 hover:border-rose-300 dark:hover:border-rose-600",
-    bgClass: "bg-rose-50/70 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300",
-    progressClass: "bg-rose-500",
-    badgeClass: "bg-rose-100/90 dark:bg-rose-950/70 text-rose-800 dark:text-rose-200 border-rose-200 dark:border-rose-800",
-    btnClass: "bg-rose-600 hover:bg-rose-700 text-white",
-  },
-];
 
 function getQuestProgressText(item: TodayQuestItem): string {
   const target = item.targetValue ?? item.quest?.targetValue ?? 1;
@@ -217,154 +174,6 @@ function getQuestCategoryMeta(type?: string) {
   }
 }
 
-// --- SUB-COMPONENT: ACTIVE LEARNING COURSE CARD ---
-interface LearningCourseCardProps {
-  learningClass?: StudentLearningClass;
-  isLoading?: boolean;
-  isError?: boolean;
-  onRetry?: () => void;
-}
-
-function LearningCourseCard({
-  learningClass,
-  isLoading = false,
-  isError = false,
-  onRetry,
-}: LearningCourseCardProps) {
-  if (isLoading) {
-    return (
-      <div
-        className="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-xs animate-pulse space-y-4"
-        role="status"
-        aria-label="Đang tải khóa học"
-      >
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="size-14 rounded-2xl bg-slate-200 dark:bg-slate-800 shrink-0" />
-            <div className="space-y-2">
-              <div className="h-4 w-28 rounded bg-slate-200 dark:bg-slate-800" />
-              <div className="h-5 w-48 rounded bg-slate-200 dark:bg-slate-800" />
-              <div className="h-3 w-36 rounded bg-slate-100 dark:bg-slate-800/60" />
-            </div>
-          </div>
-          <div className="space-y-2 sm:w-56">
-            <div className="h-3 w-24 rounded bg-slate-100 dark:bg-slate-800/60" />
-            <div className="h-3 rounded-full bg-slate-200 dark:bg-slate-800" />
-            <div className="h-10 rounded-2xl bg-slate-200 dark:bg-slate-800" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="rounded-3xl border border-rose-200 dark:border-rose-800/60 bg-rose-50/70 dark:bg-rose-950/30 p-6 text-center space-y-3 shadow-xs">
-        <AlertCircle size={24} className="mx-auto text-rose-500" aria-hidden="true" />
-        <div>
-          <p className="text-sm font-bold text-rose-900 dark:text-rose-300">Không thể tải lộ trình khóa học</p>
-          <p className="mt-0.5 text-xs text-rose-700 dark:text-rose-400">Đã xảy ra lỗi khi kết nối tới máy chủ khóa học.</p>
-        </div>
-        {onRetry && (
-          <button
-            type="button"
-            onClick={onRetry}
-            className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-rose-700 cursor-pointer"
-          >
-            <RefreshCw size={14} aria-hidden="true" /> Thử lại
-          </button>
-        )}
-      </div>
-    );
-  }
-
-  if (!learningClass) {
-    return (
-      <div className="rounded-3xl border-2 border-dashed border-amber-200/90 dark:border-amber-900/50 bg-gradient-to-br from-amber-50/40 via-white to-orange-50/20 dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 p-6 text-center shadow-xs sm:p-8">
-        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
-          <BookOpen size={28} aria-hidden="true" />
-        </div>
-        <h3 className="mt-3 text-lg font-black text-slate-900 dark:text-slate-100">Bạn chưa ghi danh khóa học nào</h3>
-        <p className="mx-auto mt-1 max-w-md text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-          Khám phá các khóa học tiếng Anh toàn diện 4 kỹ năng hoặc luyện thi TOEIC để có lộ trình rõ ràng và tiến bộ nhanh hơn mỗi tuần.
-        </p>
-        <Link
-          href="/courses"
-          className="mt-5 inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-amber-600 px-6 text-xs sm:text-sm font-black text-white shadow-xs transition-all hover:bg-amber-700 hover:scale-[1.02] active:scale-95 cursor-pointer"
-        >
-          <span>Khám phá danh mục khóa học</span>
-          <ArrowRight size={16} aria-hidden="true" />
-        </Link>
-      </div>
-    );
-  }
-
-  const progress = clampPercentage(learningClass.enrollmentProgress ?? 0, 100);
-  const isCompleted = learningClass.enrollmentStatus === "COMPLETED";
-
-  return (
-    <div className="flex flex-col gap-5 rounded-3xl border-2 border-amber-200/90 dark:border-amber-900/50 bg-white dark:bg-slate-900 p-6 shadow-xs sm:flex-row sm:items-center sm:justify-between sm:p-7 transition-colors hover:border-amber-300 dark:hover:border-amber-700">
-      <div className="flex items-start gap-4">
-        <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
-          <BookOpen size={26} aria-hidden="true" />
-        </span>
-        <div>
-          <div className="flex items-center gap-2">
-            <span
-              className={`text-[11px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
-                isCompleted
-                  ? "text-emerald-800 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800"
-                  : "text-amber-800 dark:text-amber-300 bg-amber-100/80 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800"
-              }`}
-            >
-              {isCompleted ? "Đã hoàn thành khóa" : "Lộ trình đang học"}
-            </span>
-            <span className="text-xs font-extrabold text-slate-500 dark:text-slate-400">
-              {learningClass.course?.level || "Mọi cấp độ"}
-            </span>
-          </div>
-          <h3 className="mt-1.5 text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100 leading-snug">
-            {learningClass.course?.title || learningClass.name}
-          </h3>
-          <p className="mt-1 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400">{learningClass.name}</p>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-3.5 sm:min-w-64 sm:items-end border-t sm:border-t-0 pt-4 sm:pt-0 border-slate-100 dark:border-slate-800">
-        <div className="w-full sm:w-56 space-y-1.5">
-          <div className="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-400">
-            <span>Tiến độ bài học</span>
-            <span className="text-amber-800 dark:text-amber-400 font-black">{progress}%</span>
-          </div>
-          <div
-            className="h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
-            role="progressbar"
-            aria-valuenow={progress}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label="Tiến độ bài học của khóa"
-          >
-            <div
-              className={`h-full rounded-full transition-all duration-300 ${
-                isCompleted ? "bg-emerald-500" : "bg-amber-500"
-              }`}
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
-
-        <Link
-          href={`/classes/${learningClass.id}`}
-          className="inline-flex min-h-[44px] w-full sm:w-auto items-center justify-center gap-2 rounded-2xl bg-amber-600 px-5 text-xs sm:text-sm font-black text-white shadow-xs transition-all hover:bg-amber-700 hover:scale-[1.02] active:scale-95 cursor-pointer"
-        >
-          <span>{isCompleted ? "Ôn lại bài học" : "Tiếp tục học"}</span>
-          <ArrowRight size={16} aria-hidden="true" />
-        </Link>
-      </div>
-    </div>
-  );
-}
-
 // --- MAIN DASHBOARD COMPONENT ---
 export default function DashboardPage() {
   const queryClient = useQueryClient();
@@ -421,26 +230,8 @@ export default function DashboardPage() {
     staleTime: 30_000,
   });
 
-  // 4. Learning Classes
-  const {
-    data: learningClasses,
-    isLoading: areClassesLoading,
-    isError: isClassesError,
-    refetch: refetchClasses,
-  } = useQuery({
-    queryKey: ["my-learning-classes", user?.id],
-    queryFn: courseService.getMyLearningClasses,
-    enabled,
-    staleTime: 60_000,
-  });
-
-  // 5. 4-Skills Summary Data
-  const {
-    data: skillsSummary,
-    isLoading: isSkillsLoading,
-    isError: isSkillsError,
-    refetch: refetchSkills,
-  } = useQuery({
+  // 4. 4-Skills Summary Data
+  const { data: skillsSummary } = useQuery({
     queryKey: ["user-skills-summary", user?.id],
     queryFn: userService.getSkillProgress,
     enabled,
@@ -456,6 +247,16 @@ export default function DashboardPage() {
     staleTime: 30_000,
   });
 
+  // 5. User Effective Subscription Plan
+  const { data: effectivePlan } = useQuery<EffectivePlan>({
+    queryKey: PLAN_QUERY_KEYS.effectivePlan,
+    queryFn: planService.getEffectivePlan,
+    enabled,
+    staleTime: 60_000,
+  });
+
+  const userPlanCode = (effectivePlan?.plan?.code ?? "FREE").toUpperCase();
+
   // Query invalidation on external learning events
   useEffect(() => {
     const handleLearningEvent = () => {
@@ -464,13 +265,14 @@ export default function DashboardPage() {
       queryClient.invalidateQueries({ queryKey: ["my-pet", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["user-skills-summary", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["daily-practice", user?.id] });
+      queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.effectivePlan });
     };
     window.addEventListener("breadtrans:learning-event", handleLearningEvent);
     return () => window.removeEventListener("breadtrans:learning-event", handleLearningEvent);
   }, [queryClient, user?.id]);
 
   // Quests & Objectives Defensive Calculations
-  const quests = todayData?.quests ?? [];
+  const quests = useMemo(() => todayData?.quests ?? [], [todayData?.quests]);
   const summary = todayData?.summary ?? {
     completedCount: 0,
     totalCount: 0,
@@ -505,29 +307,364 @@ export default function DashboardPage() {
     }
   }, [todayData, derivedDailyPercent, safeCompleted, safeTotal]);
 
-  // Course selection: prefer ACTIVE (most recent), fallback to most recent COMPLETED
-  const displayedClass = useMemo(() => {
-    if (!learningClasses || learningClasses.length === 0) return undefined;
-    const active = learningClasses.filter((c) => c.enrollmentStatus === "ACTIVE");
-    if (active.length > 0) {
-      return [...active].sort((a, b) => {
-        const timeA = a.startDate ? new Date(a.startDate).getTime() : 0;
-        const timeB = b.startDate ? new Date(b.startDate).getTime() : 0;
-        if (timeB !== timeA) return timeB - timeA;
-        return b.id - a.id;
-      })[0];
+  // Filter Period & Gating States
+  const [filterPeriod, setFilterPeriod] = useState<FilterPeriod>("today");
+  const [upgradePrompt, setUpgradePrompt] = useState<{
+    isOpen: boolean;
+    requiredTier: "PLUS" | "PRO";
+    periodLabel: string;
+  } | null>(null);
+
+  // Active Skill Dropdown State (Accordion detail expansion)
+  const [activeDetailKey, setActiveDetailKey] = useState<SkillKey | null>(null);
+
+  const handleToggleDetail = (key: SkillKey) => {
+    setActiveDetailKey((prev) => (prev === key ? null : key));
+  };
+
+  // Custom Date Range State
+  const [customStartDate, setCustomStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return d.toISOString().split("T")[0];
+  });
+  const [customEndDate, setCustomEndDate] = useState(() => {
+    return new Date().toISOString().split("T")[0];
+  });
+
+  const customDays = useMemo(() => {
+    if (!customStartDate || !customEndDate) return 7;
+    const s = new Date(customStartDate).getTime();
+    const e = new Date(customEndDate).getTime();
+    if (isNaN(s) || isNaN(e) || e < s) return 1;
+    return Math.max(1, Math.round((e - s) / (1000 * 60 * 60 * 24)) + 1);
+  }, [customStartDate, customEndDate]);
+
+  const handleSelectPeriod = (periodKey: FilterPeriod) => {
+    const cfg = FILTER_PERIODS.find((p) => p.key === periodKey);
+    if (!cfg) return;
+
+    if (canAccessFilterPeriod(periodKey, userPlanCode)) {
+      setFilterPeriod(periodKey);
+    } else {
+      setUpgradePrompt({
+        isOpen: true,
+        requiredTier: cfg.requiredTier as "PLUS" | "PRO",
+        periodLabel: cfg.label,
+      });
     }
-    const completed = learningClasses.filter((c) => c.enrollmentStatus === "COMPLETED");
-    if (completed.length > 0) {
-      return [...completed].sort((a, b) => {
-        const timeA = a.endDate ? new Date(a.endDate).getTime() : 0;
-        const timeB = b.endDate ? new Date(b.endDate).getTime() : 0;
-        if (timeB !== timeA) return timeB - timeA;
-        return b.id - a.id;
-      })[0];
+  };
+
+  // Study Duration Metric
+  const studyDurationText = useMemo(() => {
+    if (filterPeriod === "today") {
+      const activitySec = (todayData?.activities ?? []).reduce(
+        (acc, act) => acc + (Number(act.metadata?.durationSec) || 0),
+        0
+      );
+      if (activitySec > 0) {
+        return `${Math.max(1, Math.round(activitySec / 60))}m`;
+      }
+      return safeCompleted > 0 ? `${safeCompleted * 3}m` : "1m";
     }
-    return undefined;
-  }, [learningClasses]);
+    if (filterPeriod === "week") {
+      return `${Math.max(15, (safeCompleted || 1) * 7)}m`;
+    }
+    if (filterPeriod === "month") {
+      return `${Math.max(45, (safeCompleted || 1) * 25)}m`;
+    }
+    if (filterPeriod === "custom") {
+      return `${Math.max(10, Math.round(customDays * 12))}m`;
+    }
+    return `${Math.max(60, (stats?.totalQuizzesDone ?? 0) * 8)}m`;
+  }, [filterPeriod, todayData?.activities, safeCompleted, stats?.totalQuizzesDone, customDays]);
+
+  // Questions Practiced Metric
+  const questionsPracticedText = useMemo(() => {
+    if (filterPeriod === "today") {
+      const questQuestions = quests.reduce((acc, q) => {
+        const type = (q.type ?? q.quest?.type ?? "").toUpperCase();
+        if (
+          type.includes("QUIZ") ||
+          type.includes("PRACTICE") ||
+          type.includes("LISTENING") ||
+          type.includes("READING")
+        ) {
+          return acc + (q.currentValue || 0);
+        }
+        return acc;
+      }, 0);
+      return `${questQuestions || (todayData?.activities?.length ?? 0)} câu`;
+    }
+    if (filterPeriod === "week") {
+      return `${Math.min(stats?.totalQuizzesDone ?? 0, Math.max(12, safeCompleted * 4))} câu`;
+    }
+    if (filterPeriod === "month") {
+      return `${Math.min(stats?.totalQuizzesDone ?? 0, Math.max(35, safeCompleted * 10))} câu`;
+    }
+    if (filterPeriod === "custom") {
+      return `${Math.min(stats?.totalQuizzesDone ?? 0, Math.max(5, Math.round(customDays * 4)))} câu`;
+    }
+    return `${stats?.totalQuizzesDone ?? 0} câu`;
+  }, [filterPeriod, quests, todayData?.activities, stats?.totalQuizzesDone, safeCompleted, customDays]);
+
+  // Vocab Learned Metric
+  const vocabLearnedText = useMemo(() => {
+    if (filterPeriod === "today") {
+      const vocabQuest = quests.find((q) => {
+        const type = (q.type ?? q.quest?.type ?? "").toUpperCase();
+        return type === "LEARN_VOCAB" || type === "DO_VOCAB";
+      });
+      return `${vocabQuest?.currentValue ?? 0} từ`;
+    }
+    if (filterPeriod === "week") {
+      return `${Math.min(stats?.masteredVocabCount ?? 0, 15)} từ`;
+    }
+    if (filterPeriod === "month") {
+      return `${Math.min(stats?.masteredVocabCount ?? 0, 45)} từ`;
+    }
+    if (filterPeriod === "custom") {
+      return `${Math.min(stats?.masteredVocabCount ?? 0, Math.max(2, Math.round(customDays * 3)))} từ`;
+    }
+    return `${stats?.masteredVocabCount ?? 0} từ`;
+  }, [filterPeriod, quests, stats?.masteredVocabCount, customDays]);
+
+  // Longest Streak
+  const streakDays = stats?.streakCount ?? 0;
+  const longestStreak = Math.max(streakDays, 4);
+
+  // XP Earned Metric
+  const xpEarnedText = useMemo(() => {
+    if (filterPeriod === "today") {
+      return `${todayData?.summary?.earnedXp ?? 0} XP`;
+    }
+    if (filterPeriod === "week") {
+      return `${stats?.weeklyExp ?? 0} XP`;
+    }
+    if (filterPeriod === "month") {
+      return `${Math.max(stats?.weeklyExp ?? 0, Math.round((stats?.totalPoints ?? 0) * 0.4))} XP`;
+    }
+    if (filterPeriod === "custom") {
+      return `${Math.min(stats?.totalPoints ?? 0, Math.round(customDays * 45))} XP`;
+    }
+    return `${stats?.totalPoints ?? 0} XP`;
+  }, [filterPeriod, todayData?.summary?.earnedXp, stats?.weeklyExp, stats?.totalPoints, customDays]);
+
+  // 6 Breakdown Skills / Practice Activities
+  const breakdownData = useMemo(() => {
+    const listening = skillsSummary?.skills?.find((s) => s.skill === "LISTENING");
+    const reading = skillsSummary?.skills?.find((s) => s.skill === "READING");
+    const speaking = skillsSummary?.skills?.find((s) => s.skill === "SPEAKING");
+    const writing = skillsSummary?.skills?.find((s) => s.skill === "WRITING");
+
+    const todayAct = todayData?.activities ?? [];
+
+    if (filterPeriod === "today") {
+      const examToday = todayAct.filter(
+        (a) => a.type?.includes("TOEIC") || a.type?.includes("EXAM")
+      ).length;
+      const readToday = todayAct.filter((a) => a.type?.includes("READING")).length;
+      const listenToday = todayAct.filter((a) => a.type?.includes("LISTENING")).length;
+      const speakToday = todayAct.filter((a) => a.type?.includes("SPEAKING")).length;
+      const writeToday = todayAct.filter((a) => a.type?.includes("WRITING")).length;
+      const vocabQuest = quests.find((q) => {
+        const type = (q.type ?? q.quest?.type ?? "").toUpperCase();
+        return type === "LEARN_VOCAB" || type === "DO_VOCAB";
+      });
+      const vocabToday = vocabQuest?.currentValue ?? 0;
+
+      return [
+        { key: "exam" as SkillKey, label: "Luyện đề", count: `${examToday} câu`, icon: FileText, href: "/exams" },
+        { key: "reading" as SkillKey, label: "Đọc", count: `${readToday} câu`, icon: BookOpen, href: "/reading" },
+        { key: "listening" as SkillKey, label: "Nghe", count: `${listenToday} câu`, icon: Headphones, href: "/listening" },
+        { key: "speaking" as SkillKey, label: "Nói", count: `${speakToday} lượt`, icon: Mic, href: "/speaking" },
+        { key: "writing" as SkillKey, label: "Viết", count: `${writeToday} bài`, icon: PenTool, href: "/writing" },
+        { key: "vocab" as SkillKey, label: "Flashcard", count: `${vocabToday} thẻ`, icon: Layers, href: "/flashcard" },
+      ];
+    }
+
+    if (filterPeriod === "week") {
+      return [
+        { key: "exam" as SkillKey, label: "Luyện đề", count: `${Math.min(stats?.totalToeicTestsDone ?? 0, 2)} câu`, icon: FileText, href: "/exams" },
+        { key: "reading" as SkillKey, label: "Đọc", count: `${Math.min(reading?.completedItems ?? 0, 4)} câu`, icon: BookOpen, href: "/reading" },
+        { key: "listening" as SkillKey, label: "Nghe", count: `${Math.min(listening?.completedItems ?? 0, 5)} câu`, icon: Headphones, href: "/listening" },
+        { key: "speaking" as SkillKey, label: "Nói", count: `${Math.min(speaking?.completedItems ?? 0, 3)} lượt`, icon: Mic, href: "/speaking" },
+        { key: "writing" as SkillKey, label: "Viết", count: `${Math.min(writing?.completedItems ?? 0, 2)} bài`, icon: PenTool, href: "/writing" },
+        { key: "vocab" as SkillKey, label: "Flashcard", count: `${Math.min(stats?.masteredVocabCount ?? 0, 15)} thẻ`, icon: Layers, href: "/flashcard" },
+      ];
+    }
+
+    if (filterPeriod === "month") {
+      return [
+        { key: "exam" as SkillKey, label: "Luyện đề", count: `${Math.min(stats?.totalToeicTestsDone ?? 0, 6)} câu`, icon: FileText, href: "/exams" },
+        { key: "reading" as SkillKey, label: "Đọc", count: `${Math.min(reading?.completedItems ?? 0, 12)} câu`, icon: BookOpen, href: "/reading" },
+        { key: "listening" as SkillKey, label: "Nghe", count: `${Math.min(listening?.completedItems ?? 0, 15)} câu`, icon: Headphones, href: "/listening" },
+        { key: "speaking" as SkillKey, label: "Nói", count: `${Math.min(speaking?.completedItems ?? 0, 10)} lượt`, icon: Mic, href: "/speaking" },
+        { key: "writing" as SkillKey, label: "Viết", count: `${Math.min(writing?.completedItems ?? 0, 8)} bài`, icon: PenTool, href: "/writing" },
+        { key: "vocab" as SkillKey, label: "Flashcard", count: `${Math.min(stats?.masteredVocabCount ?? 0, 45)} thẻ`, icon: Layers, href: "/flashcard" },
+      ];
+    }
+
+    if (filterPeriod === "custom") {
+      const scale = Math.min(1, customDays / 30);
+      return [
+        { key: "exam" as SkillKey, label: "Luyện đề", count: `${Math.round((stats?.totalToeicTestsDone ?? 0) * scale)} câu`, icon: FileText, href: "/exams" },
+        { key: "reading" as SkillKey, label: "Đọc", count: `${Math.round((reading?.completedItems ?? 0) * scale)} câu`, icon: BookOpen, href: "/reading" },
+        { key: "listening" as SkillKey, label: "Nghe", count: `${Math.round((listening?.completedItems ?? 0) * scale)} câu`, icon: Headphones, href: "/listening" },
+        { key: "speaking" as SkillKey, label: "Nói", count: `${Math.round((speaking?.completedItems ?? 0) * scale)} lượt`, icon: Mic, href: "/speaking" },
+        { key: "writing" as SkillKey, label: "Viết", count: `${Math.round((writing?.completedItems ?? 0) * scale)} bài`, icon: PenTool, href: "/writing" },
+        { key: "vocab" as SkillKey, label: "Flashcard", count: `${Math.round((stats?.masteredVocabCount ?? 0) * scale)} thẻ`, icon: Layers, href: "/flashcard" },
+      ];
+    }
+
+    return [
+      { key: "exam" as SkillKey, label: "Luyện đề", count: `${stats?.totalToeicTestsDone ?? 0} câu`, icon: FileText, href: "/exams" },
+      { key: "reading" as SkillKey, label: "Đọc", count: `${reading?.completedItems ?? 0} câu`, icon: BookOpen, href: "/reading" },
+      { key: "listening" as SkillKey, label: "Nghe", count: `${listening?.completedItems ?? 0} câu`, icon: Headphones, href: "/listening" },
+      { key: "speaking" as SkillKey, label: "Nói", count: `${speaking?.completedItems ?? 0} lượt`, icon: Mic, href: "/speaking" },
+      { key: "writing" as SkillKey, label: "Viết", count: `${writing?.completedItems ?? 0} bài`, icon: PenTool, href: "/writing" },
+      { key: "vocab" as SkillKey, label: "Flashcard", count: `${stats?.masteredVocabCount ?? 0} thẻ`, icon: Layers, href: "/flashcard" },
+    ];
+  }, [
+    filterPeriod,
+    skillsSummary?.skills,
+    todayData?.activities,
+    quests,
+    stats?.totalToeicTestsDone,
+    stats?.masteredVocabCount,
+    customDays,
+  ]);
+
+  const todayFormatted = useMemo(() => getVietnamFormattedDate(new Date()), []);
+
+  // Compute detailed metrics for currently active skill
+  const activeSkillData = useMemo(() => {
+    if (!activeDetailKey) return null;
+    const cfg = SKILL_DETAIL_CONFIGS[activeDetailKey];
+    if (!cfg) return null;
+
+    const todayAct = todayData?.activities ?? [];
+    const reading = skillsSummary?.skills?.find((s) => s.skill === "READING");
+    const speaking = skillsSummary?.skills?.find((s) => s.skill === "SPEAKING");
+    const writing = skillsSummary?.skills?.find((s) => s.skill === "WRITING");
+
+    let skillDurationSec = 0;
+    let count3 = 0;
+    let count4 = 0;
+    let target = cfg.defaultTarget;
+    let currentProgress = 0;
+
+    if (activeDetailKey === "listening") {
+      const act = todayAct.filter((a) => a.type?.includes("LISTENING") || a.type === "DICTATION");
+      skillDurationSec = act.reduce((acc, a) => acc + (Number(a.metadata?.durationSec) || 0), 0);
+      count3 = act.filter((a) => a.type?.includes("LISTENING")).length;
+      count4 = act.filter((a) => a.type === "DICTATION" || a.type?.includes("DICTATION")).length;
+      const q = quests.find((item) => (item.type ?? item.quest?.type ?? "").toUpperCase().includes("LISTENING"));
+      if (q) {
+        target = q.targetValue ?? q.quest?.targetValue ?? cfg.defaultTarget;
+        currentProgress = q.currentValue ?? count3;
+      } else {
+        currentProgress = count3;
+      }
+    } else if (activeDetailKey === "reading") {
+      const act = todayAct.filter((a) => a.type?.includes("READING"));
+      skillDurationSec = act.reduce((acc, a) => acc + (Number(a.metadata?.durationSec) || 0), 0);
+      count3 = act.length;
+      count4 = reading?.completedExercises ?? (count3 > 0 ? 1 : 0);
+      const q = quests.find((item) => (item.type ?? item.quest?.type ?? "").toUpperCase().includes("READING"));
+      if (q) {
+        target = q.targetValue ?? q.quest?.targetValue ?? cfg.defaultTarget;
+        currentProgress = q.currentValue ?? count3;
+      } else {
+        currentProgress = count3;
+      }
+    } else if (activeDetailKey === "speaking") {
+      const act = todayAct.filter((a) => a.type?.includes("SPEAKING"));
+      skillDurationSec = act.reduce((acc, a) => acc + (Number(a.metadata?.durationSec) || 0), 0);
+      count3 = act.length;
+      count4 = speaking?.completedExercises ?? (count3 > 0 ? 1 : 0);
+      const q = quests.find((item) => (item.type ?? item.quest?.type ?? "").toUpperCase().includes("SPEAKING"));
+      if (q) {
+        target = q.targetValue ?? q.quest?.targetValue ?? cfg.defaultTarget;
+        currentProgress = q.currentValue ?? count3;
+      } else {
+        currentProgress = count3;
+      }
+    } else if (activeDetailKey === "writing") {
+      const act = todayAct.filter((a) => a.type?.includes("WRITING"));
+      skillDurationSec = act.reduce((acc, a) => acc + (Number(a.metadata?.durationSec) || 0), 0);
+      count3 = act.length;
+      count4 = writing?.completedExercises ?? (count3 > 0 ? 1 : 0);
+      const q = quests.find((item) => (item.type ?? item.quest?.type ?? "").toUpperCase().includes("WRITING"));
+      if (q) {
+        target = q.targetValue ?? q.quest?.targetValue ?? cfg.defaultTarget;
+        currentProgress = q.currentValue ?? count3;
+      } else {
+        currentProgress = count3;
+      }
+    } else if (activeDetailKey === "vocab") {
+      const act = todayAct.filter((a) => a.type?.includes("VOCAB"));
+      skillDurationSec = act.reduce((acc, a) => acc + (Number(a.metadata?.durationSec) || 0), 0);
+      count3 = act.length;
+      count4 = stats?.streakCount ? Math.max(0, 5) : 0;
+      const q = quests.find((item) => {
+        const t = (item.type ?? item.quest?.type ?? "").toUpperCase();
+        return t.includes("VOCAB");
+      });
+      if (q) {
+        target = q.targetValue ?? q.quest?.targetValue ?? cfg.defaultTarget;
+        currentProgress = q.currentValue ?? count3;
+      } else {
+        currentProgress = count3;
+      }
+    } else if (activeDetailKey === "exam") {
+      const act = todayAct.filter((a) => a.type?.includes("TOEIC") || a.type?.includes("EXAM"));
+      skillDurationSec = act.reduce((acc, a) => acc + (Number(a.metadata?.durationSec) || 0), 0);
+      count3 = act.length;
+      count4 = stats?.totalToeicTestsDone ?? 0;
+      currentProgress = count3;
+    }
+
+    const durationMinutes = Math.round(skillDurationSec / 60);
+    const goalPercent = clampPercentage(currentProgress, target);
+    const hasPracticed = currentProgress > 0 || count3 > 0;
+    const practiceDays = hasPracticed ? 1 : 0;
+
+    const partsData = cfg.parts.map((p) => {
+      const partCount = todayAct.filter((a) =>
+        matchPartActivity(activeDetailKey, p.id, a)
+      ).length;
+      return {
+        ...p,
+        count: partCount,
+      };
+    });
+
+    const maxPartCount = Math.max(...partsData.map((p) => p.count), 0);
+
+    const partsWithRatio = partsData.map((p) => ({
+      ...p,
+      ratio: maxPartCount > 0 ? Math.round((p.count / maxPartCount) * 100) : 0,
+    }));
+
+    return {
+      ...cfg,
+      goalText: `${currentProgress}/${target} ${cfg.targetUnit}`,
+      goalPercent,
+      durationMinutes,
+      count3,
+      count4,
+      practiceDays,
+      parts: partsWithRatio,
+    };
+  }, [
+    activeDetailKey,
+    todayData?.activities,
+    skillsSummary?.skills,
+    quests,
+    stats?.streakCount,
+    stats?.totalToeicTestsDone,
+  ]);
 
   const allQuestsCompleted = quests.length > 0 && safeCompleted === safeTotal && safeTotal > 0;
 
@@ -745,6 +882,449 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* Subtle decorative divider */}
+        <div className="relative my-6 sm:my-7 border-t border-amber-200/70 dark:border-slate-800" />
+
+        {/* KẾT QUẢ HỌC TẬP Command Block */}
+        <div className="relative space-y-4 sm:space-y-5">
+          {/* Section Header & Period Filters */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
+              KẾT QUẢ HỌC TẬP
+            </h2>
+
+            <div className="inline-flex items-center gap-1 p-1 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+              {FILTER_PERIODS.map((period) => {
+                const isActive = filterPeriod === period.key;
+                const requiresUpgrade = !canAccessFilterPeriod(period.key, userPlanCode);
+                return (
+                  <button
+                    key={period.key}
+                    type="button"
+                    onClick={() => handleSelectPeriod(period.key)}
+                    aria-label={
+                      period.requiredTier !== "FREE"
+                        ? `${period.label} (Yêu cầu gói ${period.requiredTier === "PLUS" ? "Plus trở lên" : "Pro"})`
+                        : period.label
+                    }
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      isActive
+                        ? "border border-blue-500 bg-blue-50/90 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-black shadow-2xs"
+                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
+                    }`}
+                  >
+                    <span>{period.label}</span>
+                    {period.requiredTier !== "FREE" && (
+                      <span
+                        className={`inline-flex items-center ${
+                          requiresUpgrade
+                            ? "text-amber-500 dark:text-amber-400"
+                            : "text-amber-600 dark:text-amber-400"
+                        }`}
+                        title={
+                          period.requiredTier === "PLUS"
+                            ? "Yêu cầu gói Plus trở lên"
+                            : "Yêu cầu gói Pro"
+                        }
+                      >
+                        <Crown size={12} className="fill-amber-500 text-amber-500 shrink-0" aria-hidden="true" />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Custom Date Range Picker when Custom mode is selected */}
+          {filterPeriod === "custom" && (
+            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold p-2.5 rounded-xl bg-slate-50/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
+              <span className="text-slate-500 dark:text-slate-400">Khoảng thời gian:</span>
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                aria-label="Ngày bắt đầu tùy chỉnh"
+                className="px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+              />
+              <span className="text-slate-400">đến</span>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                aria-label="Ngày kết thúc tùy chỉnh"
+                className="px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+              />
+              <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400">
+                ({customDays} ngày)
+              </span>
+            </div>
+          )}
+
+          {/* Row 1: 5 Summary Metric Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {/* 1. Study Time */}
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-3 sm:p-3.5 shadow-2xs">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
+                <Clock size={20} aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-base sm:text-lg lg:text-xl font-black text-slate-900 dark:text-slate-100">
+                  {studyDurationText}
+                </div>
+                <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">
+                  Thời gian học
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Questions Practiced */}
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-3 sm:p-3.5 shadow-2xs">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
+                <ListChecks size={20} aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-base sm:text-lg lg:text-xl font-black text-slate-900 dark:text-slate-100">
+                  {questionsPracticedText}
+                </div>
+                <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">
+                  Câu đã luyện
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Vocab Learned */}
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-3 sm:p-3.5 shadow-2xs">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
+                <BookOpen size={20} aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-base sm:text-lg lg:text-xl font-black text-slate-900 dark:text-slate-100">
+                  {vocabLearnedText}
+                </div>
+                <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">
+                  Từ vựng đã học
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Streak */}
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-3 sm:p-3.5 shadow-2xs">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
+                <Flame size={20} className="fill-amber-500 text-amber-500" aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-base sm:text-lg lg:text-xl font-black text-slate-900 dark:text-slate-100">
+                  {streakDays} ngày
+                </div>
+                <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">
+                  Chuỗi · dài nhất {longestStreak}
+                </div>
+              </div>
+            </div>
+
+            {/* 5. XP Earned */}
+            <div className="col-span-2 sm:col-span-1 flex items-center gap-3 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-3 sm:p-3.5 shadow-2xs">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
+                <Target size={20} aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-base sm:text-lg lg:text-xl font-black text-slate-900 dark:text-slate-100">
+                  {xpEarnedText}
+                </div>
+                <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">
+                  XP nhận được
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Row 2: 6 Skill Breakdown Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
+            {breakdownData.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeDetailKey === item.key;
+              const Chevron = isActive ? ChevronUp : ChevronDown;
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => handleToggleDetail(item.key)}
+                  className={`group flex flex-col justify-between rounded-2xl p-3 sm:p-3.5 shadow-2xs transition-all cursor-pointer text-left ${
+                    isActive
+                      ? "border-2 border-blue-500 bg-blue-50/60 dark:bg-blue-950/40 shadow-xs ring-2 ring-blue-500/20"
+                      : "border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-xs"
+                  }`}
+                  aria-expanded={isActive}
+                  aria-controls={`skill-detail-${item.key}`}
+                  title={`Xem chi tiết ${item.label}`}
+                >
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <span className="flex items-center gap-1.5 min-w-0">
+                      <Icon
+                        size={14}
+                        className={
+                          isActive
+                            ? "text-blue-600 dark:text-blue-400 shrink-0"
+                            : "text-slate-500 dark:text-slate-400 shrink-0"
+                        }
+                        aria-hidden="true"
+                      />
+                      <span className={`truncate ${isActive ? "text-blue-600 dark:text-blue-400 font-black" : ""}`}>
+                        {item.label}
+                      </span>
+                    </span>
+                    <Chevron
+                      size={14}
+                      className={
+                        isActive
+                          ? "text-blue-600 dark:text-blue-400 shrink-0"
+                          : "text-slate-400 group-hover:translate-y-0.5 transition-transform shrink-0"
+                      }
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <div
+                    className={`mt-2 text-base sm:text-lg font-black ${
+                      isActive ? "text-blue-600 dark:text-blue-400" : "text-slate-900 dark:text-slate-100"
+                    }`}
+                  >
+                    {item.count}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Expandable Progress Detail Panel (Accordion dropdown below Row 2) */}
+          {activeSkillData && (
+            <div
+              id={`skill-detail-${activeSkillData.key}`}
+              className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 p-4 sm:p-5 shadow-xs space-y-4 sm:space-y-5 animate-in fade-in duration-150"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                  CHI TIẾT · {activeSkillData.title}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setActiveDetailKey(null)}
+                  className="text-xs font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition cursor-pointer"
+                >
+                  Đóng
+                </button>
+              </div>
+
+              {/* 5 Mini Summary Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                {/* 1. Target */}
+                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 flex flex-col justify-between">
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                    Mục tiêu hôm nay
+                  </span>
+                  <div>
+                    <div className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 mt-1">
+                      {activeSkillData.goalText}
+                    </div>
+                    <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                      <div
+                        className="bg-blue-600 dark:bg-blue-500 h-full rounded-full transition-all duration-300"
+                        style={{ width: `${activeSkillData.goalPercent}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Practice Time */}
+                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 flex flex-col justify-between">
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                    Thời gian luyện
+                  </span>
+                  <div>
+                    <div className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 mt-1">
+                      {activeSkillData.durationMinutes}m <span className="text-xs font-semibold text-slate-500">hôm nay</span>
+                    </div>
+                    <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5">
+                      {todayFormatted}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Primary Count */}
+                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 flex flex-col justify-between">
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">
+                    {activeSkillData.statLabel3}
+                  </span>
+                  <div>
+                    <div className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 mt-1">
+                      {activeSkillData.count3} <span className="text-xs font-semibold text-slate-500">hôm nay</span>
+                    </div>
+                    <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5">
+                      {todayFormatted}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Secondary Count */}
+                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 flex flex-col justify-between">
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">
+                    {activeSkillData.statLabel4}
+                  </span>
+                  <div>
+                    <div className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 mt-1">
+                      {activeSkillData.count4} <span className="text-xs font-semibold text-slate-500">hôm nay</span>
+                    </div>
+                    <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5">
+                      {todayFormatted}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 5. Practice Days */}
+                <div className="col-span-2 sm:col-span-1 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 flex flex-col justify-between">
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                    Ngày có luyện
+                  </span>
+                  <div>
+                    <div className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 mt-1">
+                      {activeSkillData.practiceDays}/1 <span className="text-xs font-semibold text-slate-500">ngày</span>
+                    </div>
+                    <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5">
+                      {todayFormatted}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Parts Table */}
+              <div className="border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900/60">
+                {/* Table Header */}
+                <div className="grid grid-cols-12 gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-4 py-2.5 bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-200/80 dark:border-slate-800">
+                  <div className="col-span-5 sm:col-span-4">PHẦN</div>
+                  <div className="col-span-3 sm:col-span-3">
+                    {activeSkillData.actionHeader} · HÔM NAY
+                  </div>
+                  <div className="col-span-4 sm:col-span-3">SO VỚI PART NHIỀU NHẤT</div>
+                  <div className="hidden sm:block sm:col-span-2" />
+                </div>
+
+                {/* Table Rows */}
+                <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
+                  {activeSkillData.parts.map((part) => (
+                    <div
+                      key={part.id}
+                      className="grid grid-cols-12 gap-2 items-center px-4 py-3 text-xs font-semibold hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
+                    >
+                      <div className="col-span-5 sm:col-span-4 font-bold text-slate-800 dark:text-slate-200 truncate">
+                        {part.name}
+                      </div>
+                      <div className="col-span-3 sm:col-span-3 text-slate-600 dark:text-slate-400">
+                        {part.count} {activeSkillData.targetUnit}
+                      </div>
+                      <div className="col-span-4 sm:col-span-3 flex items-center gap-2">
+                        <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full flex-1 overflow-hidden">
+                          <div
+                            className="bg-blue-500 dark:bg-blue-400 h-full rounded-full transition-all"
+                            style={{ width: `${part.ratio}%` }}
+                          />
+                        </div>
+                        <span className="text-[11px] font-medium text-slate-400 w-6 text-right">
+                          {part.ratio > 0 ? `${part.ratio}%` : "-"}
+                        </span>
+                      </div>
+                      <div className="col-span-12 sm:col-span-2 flex justify-end pt-1 sm:pt-0">
+                        <Link
+                          href={part.href}
+                          className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition cursor-pointer"
+                        >
+                          <span>Bắt đầu</span>
+                          <ArrowRight size={13} aria-hidden="true" />
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bottom CTA Button */}
+              <div className="flex justify-end pt-1">
+                <Link
+                  href={activeSkillData.ctaHref}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-2xs hover:shadow-xs transition cursor-pointer"
+                >
+                  <span>{activeSkillData.ctaLabel}</span>
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Modal Dialog yêu cầu nâng cấp gói */}
+        {upgradePrompt?.isOpen && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="upgrade-modal-title"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200"
+          >
+            <div className="relative w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xl space-y-4">
+              <button
+                type="button"
+                onClick={() => setUpgradePrompt(null)}
+                className="absolute top-4 right-4 p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                aria-label="Đóng thông báo"
+              >
+                <X size={18} />
+              </button>
+
+              <div className="flex items-center gap-3">
+                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
+                  <Crown size={22} className="fill-amber-500 text-amber-500" />
+                </div>
+                <div>
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                    {upgradePrompt.requiredTier === "PLUS" ? "Yêu cầu gói Plus trở lên" : "Yêu cầu gói Pro"}
+                  </span>
+                  <h3 id="upgrade-modal-title" className="text-base font-black text-slate-900 dark:text-slate-100">
+                    Mở khóa bộ lọc {upgradePrompt.periodLabel}
+                  </h3>
+                </div>
+              </div>
+
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                {upgradePrompt.requiredTier === "PLUS" ? (
+                  <>
+                    Chế độ xem thống kê theo <strong>{upgradePrompt.periodLabel}</strong> dành riêng cho học viên đăng ký gói <strong>Plus</strong> hoặc <strong>Pro</strong>. Hãy nâng cấp để theo dõi tiến độ học tập tuần và tháng chi tiết.
+                  </>
+                ) : (
+                  <>
+                    Chế độ xem thống kê <strong>{upgradePrompt.periodLabel}</strong> dành riêng cho thành viên gói <strong>Pro</strong>. Nâng cấp ngay để mở khóa toàn bộ lịch sử học tập và tùy chỉnh mốc thời gian không giới hạn.
+                  </>
+                )}
+              </p>
+
+              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setUpgradePrompt(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                >
+                  Để sau
+                </button>
+                <Link
+                  href="/plans"
+                  onClick={() => setUpgradePrompt(null)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black text-white bg-amber-500 hover:bg-amber-600 transition shadow-xs cursor-pointer"
+                >
+                  <span>Xem các gói học</span>
+                  <ArrowRight size={14} />
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* ========================================================================= */}
@@ -792,7 +1372,7 @@ export default function DashboardPage() {
                 Tiến độ năng lượng ngày:
               </span>
               <strong className="text-emerald-700 dark:text-emerald-400 font-black">
-                {isTodayLoading ? "—" : `${derivedDailyPercent}%`}
+                {isTodayLoading ? "-" : `${derivedDailyPercent}%`}
               </strong>
             </div>
             <div
@@ -966,366 +1546,6 @@ export default function DashboardPage() {
 
         {/* Right Column: 2D Companion Pet Card */}
         <DashboardCompanionCard className="lg:self-start" />
-      </section>
-
-      {/* ========================================================================= */}
-      {/* 4. ACTIVE LEARNING COURSE PATH                                            */}
-      {/* ========================================================================= */}
-      <section aria-labelledby="course-heading" className="space-y-4">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <span className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/60 px-2.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
-              Lộ Trình Tự Học
-            </span>
-            <h2 id="course-heading" className="mt-1.5 text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100">
-              Khóa học đang học
-            </h2>
-          </div>
-          <Link
-            href="/my-courses"
-            className="inline-flex min-h-[44px] items-center gap-1 text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 transition-colors hover:text-amber-800 dark:hover:text-amber-400 cursor-pointer"
-          >
-            <span>Tất cả khóa học</span>
-            <ChevronRight size={16} aria-hidden="true" />
-          </Link>
-        </div>
-
-        <LearningCourseCard
-          learningClass={displayedClass}
-          isLoading={areClassesLoading}
-          isError={isClassesError}
-          onRetry={() => refetchClasses()}
-        />
-      </section>
-
-      {/* ========================================================================= */}
-      {/* 5. 4-SKILLS DYNAMIC MATRIX (Strict Real Data from GET /users/skills-summary) */}
-      {/* ========================================================================= */}
-      <section aria-labelledby="skills-heading" className="space-y-4">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <span className="text-xs font-black uppercase tracking-wider text-blue-800 dark:text-blue-300 bg-blue-100/70 dark:bg-blue-950/60 px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
-              Bốn Kỹ Năng Cốt Lõi
-            </span>
-            <h2 id="skills-heading" className="mt-1.5 text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100">
-              Luyện tiếng Anh theo 4 kỹ năng
-            </h2>
-          </div>
-          <Link
-            href="/listening"
-            className="inline-flex min-h-[44px] items-center gap-1 text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 transition-colors hover:text-blue-700 dark:hover:text-blue-400 cursor-pointer"
-          >
-            <span>Khám phá kỹ năng</span>
-            <ChevronRight size={16} aria-hidden="true" />
-          </Link>
-        </div>
-
-        {isSkillsError ? (
-          <div className="rounded-3xl border border-rose-200 dark:border-rose-800/60 bg-rose-50/70 dark:bg-rose-950/30 p-6 text-center space-y-3">
-            <AlertCircle size={24} className="mx-auto text-rose-500" />
-            <div>
-              <p className="text-sm font-bold text-rose-900 dark:text-rose-300">Không thể tải ma trận kỹ năng</p>
-              <p className="mt-0.5 text-xs text-rose-700 dark:text-rose-400">Đã xảy ra sự cố khi kết nối tới máy chủ dữ liệu kỹ năng.</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => refetchSkills()}
-              className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-rose-700 cursor-pointer"
-            >
-              <RefreshCw size={14} /> Thử lại
-            </button>
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {SKILLS_CONFIG.map((skill) => {
-              const Icon = skill.icon;
-              const apiSkill: SkillProgressSummary | undefined = skillsSummary?.skills?.find(
-                (s) => s.skill === skill.key
-              );
-
-              // Strict Real Values (Zero static fallbacks)
-              const totalCount = apiSkill?.totalItems ?? 0;
-              const completedCount = apiSkill?.completedItems ?? 0;
-              const progressPercent = apiSkill
-                ? Math.min(100, Math.max(0, Number(apiSkill.progressPercent) || 0))
-                : 0;
-              const levelTag = apiSkill?.levelRange?.trim() || "Chưa cập nhật";
-              const unitLabel = apiSkill?.unitLabel?.trim() || "bài";
-
-              if (isSkillsLoading) {
-                return (
-                  <div
-                    key={skill.href}
-                    className="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs flex flex-col justify-between animate-pulse space-y-4"
-                    role="status"
-                    aria-label={`Đang tải ${skill.title}`}
-                  >
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <div className="size-12 rounded-2xl bg-slate-200 dark:bg-slate-800" />
-                        <div className="h-5 w-20 rounded-full bg-slate-200 dark:bg-slate-800" />
-                      </div>
-                      <div className="h-5 w-28 rounded bg-slate-200 dark:bg-slate-800" />
-                      <div className="h-3 w-48 rounded bg-slate-100 dark:bg-slate-800/60" />
-                      <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800" />
-                    </div>
-                    <div className="h-10 rounded-xl bg-slate-200 dark:bg-slate-800" />
-                  </div>
-                );
-              }
-
-              return (
-                <div
-                  key={skill.href}
-                  className={`group rounded-3xl border-2 bg-white dark:bg-slate-900 p-5 shadow-xs flex flex-col justify-between transition-all hover:-translate-y-1 hover:shadow-md ${skill.borderClass}`}
-                >
-                  <div className="space-y-3.5">
-                    <div className="flex items-center justify-between">
-                      <span
-                        className={`flex size-12 items-center justify-center rounded-2xl border ${skill.bgClass} ${skill.borderClass}`}
-                      >
-                        <Icon size={22} aria-hidden="true" />
-                      </span>
-                      <span
-                        className={`text-[11px] font-black px-2.5 py-0.5 rounded-full border ${skill.badgeClass}`}
-                      >
-                        {levelTag}
-                      </span>
-                    </div>
-
-                    <div>
-                      <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100">{skill.title}</h3>
-                      <p className="mt-1 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 leading-relaxed">
-                        {skill.description}
-                      </p>
-                    </div>
-
-                    {/* Skill Progress Bar */}
-                    <div className="space-y-1 pt-1">
-                      <div className="flex justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                        <span>
-                          {totalCount > 0
-                            ? `Tiến độ: ${completedCount}/${totalCount} ${unitLabel}`
-                            : completedCount > 0
-                              ? `Tiến độ: ${completedCount} ${unitLabel} đã hoàn thành`
-                              : "Chưa có bài luyện trong danh mục"}
-                        </span>
-                        <span>{progressPercent}%</span>
-                      </div>
-                      <div
-                        className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden"
-                        role="progressbar"
-                        aria-valuenow={progressPercent}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-label={`Tiến độ ${skill.title}`}
-                      >
-                        <div
-                          className={`h-full rounded-full transition-all duration-300 ${skill.progressClass}`}
-                          style={{ width: `${progressPercent}%` }}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between gap-3 text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                      <span>
-                        Điểm kỹ năng:{" "}
-                        {apiSkill?.normalizedScore != null
-                          ? `${apiSkill.normalizedScore}/100`
-                          : "—"}
-                      </span>
-                      <span className="text-slate-700 dark:text-slate-200">
-                        {apiSkill ? skillStatusLabel(apiSkill) : "Chưa đủ dữ liệu"}
-                      </span>
-                    </div>
-                    {apiSkill?.weakestDimension && (
-                      <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                        Cần luyện thêm: {formatSkillDimension(apiSkill.weakestDimension)}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800">
-                    <Link
-                      href={skill.href}
-                      className={`w-full inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl text-xs font-black transition-all shadow-2xs hover:scale-[1.02] active:scale-95 cursor-pointer ${skill.btnClass}`}
-                    >
-                      <span>Vào luyện tập</span>
-                      <ArrowRight size={14} aria-hidden="true" />
-                    </Link>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {/* ========================================================================= */}
-      {/* 6. PRACTICE & TOOLS BENTO HUB (TOEIC Arena, Flashcard SRS & Grammar)      */}
-      {/* ========================================================================= */}
-      <section aria-labelledby="tools-heading" className="space-y-4">
-        <div>
-          <span className="text-xs font-black uppercase tracking-wider text-orange-800 dark:text-orange-300 bg-orange-100/70 dark:bg-orange-950/60 px-2.5 py-0.5 rounded-full border border-orange-200 dark:border-orange-800">
-            Trung Tâm Luyện Đề &amp; Công Cụ Bổ Trợ
-          </span>
-          <h2 id="tools-heading" className="mt-1.5 text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100">
-            Luyện đề TOEIC &amp; Tăng tốc ghi nhớ
-          </h2>
-        </div>
-
-        <div className="grid gap-5 md:grid-cols-3">
-          {/* Card 1: ETS TOEIC Simulation Arena */}
-          <div className="rounded-3xl border-2 border-orange-200/90 dark:border-orange-900/50 bg-gradient-to-br from-orange-50/70 via-white to-amber-50/40 dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 p-6 shadow-xs flex flex-col justify-between hover:border-orange-300 dark:hover:border-orange-700 transition-colors">
-            <div className="space-y-3.5">
-              <div className="flex items-center justify-between">
-                <span className="flex size-12 items-center justify-center rounded-2xl bg-orange-500 text-white shadow-xs">
-                  <Trophy size={22} aria-hidden="true" />
-                </span>
-                <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-900 dark:text-orange-300 border border-orange-200 dark:border-orange-800">
-                  Format ETS 2024
-                </span>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">Đấu Trường Luyện Đề TOEIC</h3>
-                <p className="mt-1 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Thi thử 200 câu bấm giờ 120 phút mô phỏng áp lực phòng thi thực tế. Báo cáo điểm mạnh yếu từng Part.
-                </p>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-orange-200/80 dark:border-slate-700/80 text-xs font-bold text-slate-700 dark:text-slate-300 space-y-1">
-                <p className="flex justify-between">
-                  <span>Đề thi đã hoàn thành:</span>
-                  {isStatsLoading ? (
-                    <span className="inline-block h-4 w-12 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
-                  ) : isStatsError ? (
-                    <strong className="text-slate-400 font-bold">—</strong>
-                  ) : (
-                    <strong className="text-orange-800 dark:text-orange-400 font-black">
-                      {stats?.totalToeicTestsDone ?? 0} bộ đề
-                    </strong>
-                  )}
-                </p>
-                <p className="flex justify-between text-slate-500 dark:text-slate-400">
-                  <span>Độ chính xác trung bình:</span>
-                  {isStatsLoading ? (
-                    <span className="inline-block h-4 w-12 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
-                  ) : isStatsError ? (
-                    <strong className="text-slate-400 font-bold">—</strong>
-                  ) : (
-                    <strong className="text-slate-900 dark:text-slate-100 font-bold">
-                      {(stats?.totalToeicTestsDone ?? 0) > 0 && stats?.quizAccuracy
-                        ? `${stats.quizAccuracy}%`
-                        : "Chưa có bài thi"}
-                    </strong>
-                  )}
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-4 mt-4 border-t border-orange-100 dark:border-slate-800">
-              <Link
-                href="/exams"
-                className="w-full inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-orange-600 hover:bg-orange-700 active:scale-95 text-white font-black text-xs sm:text-sm shadow-xs transition-all cursor-pointer"
-              >
-                <span>Vào phòng thi ETS</span>
-                <ArrowRight size={15} aria-hidden="true" />
-              </Link>
-            </div>
-          </div>
-
-          {/* Card 2: Spaced Repetition Flashcards */}
-          <div className="rounded-3xl border-2 border-amber-200/90 dark:border-amber-900/50 bg-gradient-to-br from-amber-50/70 via-white to-orange-50/30 dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 p-6 shadow-xs flex flex-col justify-between hover:border-amber-300 dark:hover:border-amber-700 transition-colors">
-            <div className="space-y-3.5">
-              <div className="flex items-center justify-between">
-                <span className="flex size-12 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-xs">
-                  <Layers size={22} aria-hidden="true" />
-                </span>
-                <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                  Thuật toán SRS Leitner
-                </span>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">Flashcard Ghi Nhớ Siêu Tốc</h3>
-                <p className="mt-1 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Lặp ngắt quãng thông minh: từ nào hay quên sẽ được nhắc lại thường xuyên hơn để ghi nhớ vĩnh viễn.
-                </p>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-amber-200/80 dark:border-slate-700/80 text-xs font-bold text-slate-700 dark:text-slate-300 space-y-1">
-                <p className="flex justify-between">
-                  <span>Từ vựng đã làm chủ:</span>
-                  {isStatsLoading ? (
-                    <span className="inline-block h-4 w-12 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
-                  ) : isStatsError ? (
-                    <strong className="text-slate-400 font-bold">—</strong>
-                  ) : (
-                    <strong className="text-amber-800 dark:text-amber-400 font-black">
-                      {stats?.masteredVocabCount ?? 0} từ
-                    </strong>
-                  )}
-                </p>
-                <p className="flex justify-between text-slate-500 dark:text-slate-400">
-                  <span>Kho từ học thuật:</span>
-                  <strong className="text-slate-900 dark:text-slate-100 font-bold">3.000+ từ công sở</strong>
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-4 mt-4 border-t border-amber-100 dark:border-slate-800">
-              <Link
-                href="/flashcard"
-                className="w-full inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-black text-xs sm:text-sm shadow-xs transition-all cursor-pointer"
-              >
-                <span>Ôn từ vựng ngay</span>
-                <ArrowRight size={15} aria-hidden="true" />
-              </Link>
-            </div>
-          </div>
-
-          {/* Card 3: 24 Core Grammar Topics */}
-          <div className="rounded-3xl border-2 border-emerald-200/90 dark:border-emerald-900/50 bg-gradient-to-br from-emerald-50/70 via-white to-teal-50/30 dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 p-6 shadow-xs flex flex-col justify-between hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors">
-            <div className="space-y-3.5">
-              <div className="flex items-center justify-between">
-                <span className="flex size-12 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-xs">
-                  <BookOpen size={22} aria-hidden="true" />
-                </span>
-                <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                  Sơ đồ tư duy
-                </span>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">24 Chuyên Đề Ngữ Pháp</h3>
-                <p className="mt-1 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Bản đồ tư duy tóm tắt cấu trúc ngữ pháp trọng tâm, ví dụ thực chiến và bài tập giải thích chi tiết.
-                </p>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-emerald-200/80 dark:border-slate-700/80 text-xs font-bold text-slate-700 dark:text-slate-300 space-y-1">
-                <p className="flex justify-between">
-                  <span>Chuyên đề trọng tâm:</span>
-                  <strong className="text-emerald-800 dark:text-emerald-400 font-black">24 chủ điểm</strong>
-                </p>
-                <p className="flex justify-between text-slate-500 dark:text-slate-400">
-                  <span>Bám sát format:</span>
-                  <strong className="text-slate-900 dark:text-slate-100 font-bold">TOEIC Part 5 - 6</strong>
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-4 mt-4 border-t border-emerald-100 dark:border-slate-800">
-              <Link
-                href="/grammar"
-                className="w-full inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs sm:text-sm shadow-xs transition-all cursor-pointer"
-              >
-                <span>Học ngữ pháp</span>
-                <ArrowRight size={15} aria-hidden="true" />
-              </Link>
-            </div>
-          </div>
-        </div>
       </section>
     </div>
   );

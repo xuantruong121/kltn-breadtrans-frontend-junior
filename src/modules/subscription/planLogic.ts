@@ -99,7 +99,21 @@ export interface PlanPurchase {
   completedAt: string | null;
   expiresAt?: string | null;
   payment: PlanPurchasePayment;
-  bankInstructions: PlanBankInstructions;
+  bankInstructions: PlanBankInstructions | null;
+  payos?: {
+    intentId: number;
+    type: "PLAN" | "COURSE";
+    orderCode: number;
+    description: string;
+    paymentLinkId: string | null;
+    checkoutUrl: string | null;
+    qrCode: string | null;
+    bankBin: string | null;
+    bankAccountNumber: string | null;
+    bankAccountName: string | null;
+    status: string;
+    expiresAt: string | null;
+  } | null;
   isActivePaymentIntent?: boolean;
   canReplace?: boolean;
   supersededAt?: string | null;

@@ -124,6 +124,10 @@ export const planService = {
     return await axiosClient.get(`/plan-purchases/${id}`);
   },
 
+  syncPayosPayment: async (intentId: number): Promise<unknown> => {
+    return await axiosClient.post(`/payments/payos/${intentId}/sync`);
+  },
+
   replacePayment: async (id: number): Promise<PlanPurchase> => {
     return await axiosClient.post(`/plan-purchases/${id}/replace-payment`);
   },

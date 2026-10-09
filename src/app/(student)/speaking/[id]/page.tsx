@@ -138,6 +138,10 @@ export default function SpeakingExerciseDetailPage() {
   const router = useRouter();
   const exerciseId = Number(id);
   const practiceSetKey = searchParams.get("set");
+  const requestedReturnTo = searchParams.get("returnTo");
+  const courseReturn = requestedReturnTo && /^\/my-courses\/\d+$/.test(requestedReturnTo)
+    ? requestedReturnTo
+    : "/speaking";
   const queryClient = useQueryClient();
 
   // Explicit Attempt State Machine
@@ -1587,7 +1591,7 @@ export default function SpeakingExerciseDetailPage() {
           <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
             <button
               type="button"
-              onClick={() => router.push("/speaking")}
+              onClick={() => router.push(courseReturn)}
               className="w-full py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-semibold transition cursor-pointer"
             >
               Quay lại danh sách
@@ -1621,7 +1625,7 @@ export default function SpeakingExerciseDetailPage() {
         </p>
         <button
           type="button"
-          onClick={() => confirmExit("/speaking")}
+          onClick={() => confirmExit(courseReturn)}
           className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-amber-500 px-5 text-sm font-extrabold text-white hover:bg-amber-600 cursor-pointer"
         >
           <ArrowLeft size={16} aria-hidden="true" />
@@ -1653,7 +1657,7 @@ export default function SpeakingExerciseDetailPage() {
             : undefined
         }
         activityLabel="Đánh giá phát âm"
-        onExit={() => confirmExit("/speaking")}
+        onExit={() => confirmExit(courseReturn)}
         exitLabel="Thoát"
         bilingualEnabled
         isBilingual={isBilingual}
@@ -2312,7 +2316,7 @@ export default function SpeakingExerciseDetailPage() {
         <div className="flex items-center gap-2 sm:gap-3">
           <button
             type="button"
-            onClick={() => confirmExit("/speaking")}
+            onClick={() => confirmExit(courseReturn)}
             className="px-3.5 py-1.5 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 cursor-pointer transition-colors text-xs sm:text-sm"
           >
             ← Danh sách bài

@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   X,
   Loader2,
+  LockKeyhole,
 } from "lucide-react";
 import {
   courseService,
@@ -165,6 +166,9 @@ export default function PublicCourseDetailPage() {
       }
 
       toast.success(res.message);
+      if (res.payos?.checkoutUrl) {
+        window.open(res.payos.checkoutUrl, "_blank", "noopener,noreferrer");
+      }
       setSelectedClassForEnroll(null);
     } catch (err: any) {
       const msg = getApiErrorMessage(err, "Ghi danh lớp học thất bại. Vui lòng thử lại.");
@@ -366,6 +370,52 @@ export default function PublicCourseDetailPage() {
             ) : (
               <div className="p-8 text-center text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
                 Khung giáo trình đang được hoàn thiện cập nhật.
+              </div>
+            )}
+
+            {course.curriculum && course.curriculum.lessons.some((lesson) => lesson.activities.length > 0) && (
+              <div className="space-y-3 border-t border-slate-100 pt-5 dark:border-slate-800">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Lộ trình thực hành</h3>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      Bài tập được gắn trực tiếp với từng kỹ năng trong lộ trình.
+                    </p>
+                  </div>
+                  <span className="rounded-lg bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                    {course.curriculum.readiness === "READY" ? "Sẵn sàng" : "Đang hoàn thiện"}
+                  </span>
+                </div>
+                {course.curriculum.lessons.flatMap((lesson) => lesson.activities).map((activity) => {
+                  const enrolled = Object.values(studentEnrollments).some(
+                    (item) => item.status === "ACTIVE" || item.status === "COMPLETED",
+                  );
+                  const locked = activity.isPremiumContent && !enrolled;
+                  const label = activity.skill === "LISTENING"
+                    ? "Listening"
+                    : activity.skill === "READING"
+                      ? "Reading"
+                      : activity.skill === "WRITING"
+                        ? "Writing"
+                        : "Lesson";
+                  return locked || !activity.route ? (
+                    <div key={activity.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/40">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-200">{activity.title}</p>
+                        <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{label} · {locked ? "Nội dung dành cho học viên" : "Đang cập nhật đường dẫn"}</p>
+                      </div>
+                      <LockKeyhole size={15} className="shrink-0 text-slate-400" aria-label="Đang khóa" />
+                    </div>
+                  ) : (
+                    <Link key={activity.id} href={activity.route} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3 transition hover:border-blue-300 hover:bg-blue-50/40 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-800 dark:hover:bg-blue-950/30">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-200">{activity.title}</p>
+                        <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{label} · Bắt đầu luyện tập</p>
+                      </div>
+                      <ArrowRight size={15} className="shrink-0 text-blue-600" />
+                    </Link>
+                  );
+                })}
               </div>
             )}
 

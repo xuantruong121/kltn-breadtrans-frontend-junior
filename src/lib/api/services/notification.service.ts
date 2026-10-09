@@ -11,6 +11,8 @@ export interface NotificationItem {
   createdAt: string;
 }
 
+export type NotificationFilter = "all" | "unread" | "read";
+
 export interface NotificationInboxResponse {
   items: NotificationItem[];
   nextCursor: number | null;
@@ -21,9 +23,13 @@ export interface UnreadCountResponse {
 }
 
 export const notificationService = {
-  getInbox: async (limit = 20, cursor?: number): Promise<NotificationInboxResponse> => {
+  getInbox: async (
+    limit = 20,
+    cursor?: number,
+    filter: NotificationFilter = "all"
+  ): Promise<NotificationInboxResponse> => {
     return await axiosClient.get("/notifications/inbox", {
-      params: { limit, cursor },
+      params: { limit, cursor, filter },
     });
   },
 
@@ -37,5 +43,9 @@ export const notificationService = {
 
   markAllRead: async (): Promise<{ success: boolean; count: number }> => {
     return await axiosClient.patch("/notifications/inbox/read-all");
+  },
+
+  delete: async (id: number): Promise<{ success: boolean; id?: number; message?: string }> => {
+    return await axiosClient.delete(`/notifications/inbox/${id}`);
   },
 };

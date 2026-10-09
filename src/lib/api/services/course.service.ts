@@ -15,6 +15,78 @@ export interface Class {
   hasEnrollments?: boolean;
 }
 
+export type CourseSkill = "LISTENING" | "SPEAKING" | "READING" | "WRITING";
+
+export interface CourseCurriculumActivity {
+  id: string;
+  sourceId: number | string;
+  kind: "LESSON" | "LISTENING" | "SPEAKING" | "READING" | "WRITING";
+  skill: CourseSkill | null;
+  title: string;
+  description: string | null;
+  route: string | null;
+  required: boolean;
+  published: boolean;
+  hasQuestions: boolean;
+  isPremiumContent: boolean;
+  lessonId?: number;
+  order?: number;
+  speakingPracticeSetId?: string | null;
+  completed?: boolean;
+}
+
+export interface CourseCurriculumLesson {
+  id: number;
+  order: number;
+  title: string;
+  description: string | null;
+  materials: Array<{
+    id: number;
+    title: string;
+    fileUrl: string;
+    fileType?: string | null;
+    objective?: string | null;
+    contentText?: string | null;
+  }>;
+  activities: CourseCurriculumActivity[];
+}
+
+export interface CourseCurriculum {
+  version: 2;
+  lessons: CourseCurriculumLesson[];
+  requiredActivityCount: number;
+  skillCoverage: Record<CourseSkill, number>;
+  optionalActivityCount: number;
+  readiness:
+    | "READY"
+    | "PARTIAL"
+    | "EMPTY"
+    | "BROKEN"
+    | "FOCUSED"
+    | "DEFERRED_TO_TOEIC_WORKFLOW";
+  readinessReasons: string[];
+}
+
+export interface CourseProgress {
+  requiredCompleted: number;
+  requiredTotal: number;
+  optionalCompleted: number;
+  optionalTotal: number;
+  percentage: number;
+  isComplete: boolean;
+  nextActivity: { id: string; route: string | null; title: string } | null;
+  activities: Array<{
+    id: string;
+    lessonId?: number;
+    order?: number;
+    kind: string;
+    title: string;
+    required: boolean;
+    completed: boolean;
+    route: string | null;
+  }>;
+}
+
 export interface Course {
   id: number;
   title: string;
@@ -24,6 +96,14 @@ export interface Course {
   level: string; // e.g., "BEGINNER", "INTERMEDIATE"
   status?: string;
   classes?: Class[];
+  curriculum?: CourseCurriculum;
+  progress?: CourseProgress | null;
+  quizzes?: Array<{
+    id: number;
+    title: string;
+    type: string;
+    isPremiumContent?: boolean;
+  }>;
 }
 
 export interface Material {
@@ -55,7 +135,10 @@ export interface ClassDetail extends Class {
 export interface StudentLearningClass extends Class {
   enrollmentProgress: number;
   enrollmentStatus: "ACTIVE" | "COMPLETED";
-  course: Pick<Course, "id" | "title" | "description" | "thumbnail" | "thumbnailUrl" | "level">;
+  course: Pick<
+    Course,
+    "id" | "title" | "description" | "thumbnail" | "thumbnailUrl" | "level"
+  >;
 }
 
 // ================= PUBLIC DISCOVERY (PHASE 3A & 3B) =================
@@ -111,21 +194,36 @@ export interface PublicCourseDetail {
   teacher?: PublicTeacher;
   lessons: PublicLessonOutline[];
   classes: PublicClass[];
+  curriculum?: CourseCurriculum;
 }
 
 export interface EnrollResponseDto {
   enrollmentId: number;
   classId: number;
-  status: 'ACTIVE' | 'PENDING_PAYMENT';
+  status: "ACTIVE" | "PENDING_PAYMENT";
   tuitionFeeVnd: number;
   accessGranted: boolean;
   message: string;
+  payos?: {
+    intentId: number;
+    type?: "PLAN" | "COURSE";
+    orderCode: number;
+    description: string;
+    paymentLinkId: string | null;
+    checkoutUrl: string | null;
+    qrCode: string | null;
+    bankBin: string | null;
+    bankAccountNumber: string | null;
+    bankAccountName: string | null;
+    status: string;
+    expiresAt: string | null;
+  } | null;
 }
 
 export interface StudentCourseEnrollment {
   id: number;
   classId: number;
-  status: 'ACTIVE' | 'PENDING_PAYMENT' | 'COMPLETED' | 'DROPPED';
+  status: "ACTIVE" | "PENDING_PAYMENT" | "COMPLETED" | "DROPPED";
   joinedAt: string;
 }
 
@@ -133,9 +231,13 @@ export const courseService = {
   getAllCourses: async (): Promise<Course[]> => {
     return await axiosClient.get("/courses");
   },
-  
+
   getCourseById: async (id: number): Promise<Course> => {
     return await axiosClient.get(`/courses/${id}`);
+  },
+
+  getCourseProgress: async (id: number): Promise<CourseProgress> => {
+    return await axiosClient.get(`/courses/${id}/progress`);
   },
 
   getClassById: async (classId: number): Promise<ClassDetail> => {

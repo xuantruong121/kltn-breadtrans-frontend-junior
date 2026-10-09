@@ -268,12 +268,12 @@ describe("4. Purchase Request Safety & Idempotency Key", () => {
 describe("5. Payment Instructions & VietQR Presentation", () => {
   test("Payment detail uses backend-returned VietQR and bank parameters", () => {
     const purchase = makeMockPurchase();
-    assert.equal(purchase.bankInstructions.vietQrUrl.startsWith("https://img.vietqr.io"), true);
-    assert.equal(purchase.bankInstructions.transferCode, "BT-PLAN-00000042");
+    assert.equal(purchase.bankInstructions!.vietQrUrl.startsWith("https://img.vietqr.io"), true);
+    assert.equal(purchase.bankInstructions!.transferCode, "BT-PLAN-00000042");
     assert.equal(purchase.payment.transferCode, "BT-PLAN-00000042");
-    assert.equal(purchase.bankInstructions.amountVnd, 69000);
-    assert.equal(purchase.bankInstructions.bankName, "MBBank");
-    assert.equal(purchase.bankInstructions.accountNumber, "0335888999");
+    assert.equal(purchase.bankInstructions!.amountVnd, 69000);
+    assert.equal(purchase.bankInstructions!.bankName, "MBBank");
+    assert.equal(purchase.bankInstructions!.accountNumber, "0335888999");
   });
 
   test("formatVnd outputs correct locale currency string", () => {

@@ -225,13 +225,17 @@ export default function TakeQuizPage(props: {
       );
   }, [searchParams]);
   const isWrongAnswerReview = isListening && reviewQuestionIds.length > 0;
-  const backHref = isListening
+  const courseReturn = searchParams.get("returnTo");
+  const safeCourseReturn = courseReturn && /^\/my-courses\/\d+$/.test(courseReturn)
+    ? courseReturn
+    : null;
+  const backHref = safeCourseReturn ?? (isListening
     ? "/listening"
     : isReading
       ? "/reading"
       : routeContext === "exams"
         ? "/exams"
-        : "/listening";
+        : "/listening");
   const currentQuizRoute = routeContext === "reading"
     ? `/reading/${quizId}`
     : routeContext === "exams"
@@ -288,7 +292,7 @@ export default function TakeQuizPage(props: {
 
   if (isReadingForbidden || isListeningForbidden) {
     const skillLabel = isListeningForbidden ? "bài luyện nghe" : "bài luyện đọc";
-    const backRoute = isListeningForbidden ? "/listening" : "/reading";
+    const backRoute = safeCourseReturn ?? (isListeningForbidden ? "/listening" : "/reading");
 
     return (
       <div className="min-h-dvh flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-6 text-center">
@@ -351,6 +355,7 @@ export default function TakeQuizPage(props: {
         quiz={quiz}
         reviewOnly={isWrongAnswerReview}
         reviewQuestionIds={reviewQuestionIds}
+        returnTo={safeCourseReturn ?? undefined}
       />
     );
   }

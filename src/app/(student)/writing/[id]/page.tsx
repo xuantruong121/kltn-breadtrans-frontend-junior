@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, use } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -36,6 +36,11 @@ export default function WritingDetailPage(props: {
   const params = use(props.params);
   const topicId = Number(params.id);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedReturnTo = searchParams.get("returnTo");
+  const courseReturn = requestedReturnTo && /^\/my-courses\/\d+$/.test(requestedReturnTo)
+    ? requestedReturnTo
+    : "/writing";
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
   const [content, setContent] = useState("");
@@ -155,7 +160,7 @@ export default function WritingDetailPage(props: {
         title={topic?.title || "Luyện viết"}
         category={topic?.taskType || topic?.type || "Writing"}
         activityLabel="Luyện viết"
-        onExit={() => confirmExit("/writing")}
+        onExit={() => confirmExit(courseReturn)}
         exitLabel="Thoát"
         statusContent={
           <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-slate-300 bg-slate-800 border border-slate-700 px-3 py-1 rounded-lg">
