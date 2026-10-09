@@ -127,7 +127,7 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
           </button>
         ) : (
           <Link
-            href={`/practice/vocab/${topic.id}`}
+            href={`/flashcard/${topic.id}`}
             className="mt-4 block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-xl"
           >
             <span

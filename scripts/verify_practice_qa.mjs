@@ -25,19 +25,17 @@ async function runQA() {
     await page.waitForURL((url) => !url.pathname.includes("/login"), { timeout: 15000 });
     console.log("Logged in successfully. Redirected to:", page.url());
 
-    // 1. Practice Catalog (/practice)
-    console.log("\nTesting [1. Practice Catalog] at /practice...");
-    await page.goto(`${BASE_URL}/practice`, { waitUntil: "domcontentloaded", timeout: 15000 });
-    await page.waitForTimeout(1000);
-    const catalogAppHeader = await page.locator("header.sticky:has(a[href='/dashboard']), header.sticky:has(a[href='/'])").isVisible();
-    const catalogPracticeHeader = await page.locator("header.h-14").isVisible();
-    const test1Passed = catalogAppHeader && !catalogPracticeHeader;
-    results.push({ name: "Practice Catalog (AppHeader visible, PracticeHeader hidden)", passed: test1Passed });
-    console.log(`  -> Passed: ${test1Passed} (AppHeader: ${catalogAppHeader}, PracticeHeader: ${catalogPracticeHeader})`);
+    // 1. Obsolete root alias (/practice)
+    console.log("\nTesting [1. Obsolete root] at /practice...");
+    const obsoletePracticeResponse = await page.goto(`${BASE_URL}/practice`, { waitUntil: "domcontentloaded", timeout: 15000 });
+    const obsoletePracticeStatus = obsoletePracticeResponse?.status() ?? 0;
+    const test1Passed = obsoletePracticeStatus === 404;
+    results.push({ name: "Obsolete /practice returns normal not-found", passed: test1Passed });
+    console.log(`  -> Passed: ${test1Passed} (status: ${obsoletePracticeStatus})`);
 
-    // 2. Speaking Room (/practice/speaking/1)
-    console.log("\nTesting [2. Speaking Room] at /practice/speaking/1...");
-    await page.goto(`${BASE_URL}/practice/speaking/1`, { waitUntil: "domcontentloaded", timeout: 15000 });
+    // 2. Speaking Room (/speaking/1)
+    console.log("\nTesting [2. Speaking Room] at /speaking/1...");
+    await page.goto(`${BASE_URL}/speaking/1`, { waitUntil: "domcontentloaded", timeout: 15000 });
     await page.waitForSelector("header.h-14", { timeout: 10000 });
     const speakingAppHeader = await page.locator("header.sticky:has(a[href='/dashboard']), header.sticky:has(a[href='/'])").isVisible();
     const speakingPracticeHeader = await page.locator("header.h-14").isVisible();
@@ -46,9 +44,9 @@ async function runQA() {
     results.push({ name: "Speaking Room (PracticeHeader visible, AppHeader hidden, No overlay)", passed: test2Passed });
     console.log(`  -> Passed: ${test2Passed} (AppHeader: ${speakingAppHeader}, PracticeHeader: ${speakingPracticeHeader}, Overlay: ${speakingOverlay})`);
 
-    // 3. Writing Room (/practice/writing/1)
-    console.log("\nTesting [3. Writing Room] at /practice/writing/1...");
-    await page.goto(`${BASE_URL}/practice/writing/1`, { waitUntil: "domcontentloaded", timeout: 15000 });
+    // 3. Writing Room (/writing/1)
+    console.log("\nTesting [3. Writing Room] at /writing/1...");
+    await page.goto(`${BASE_URL}/writing/1`, { waitUntil: "domcontentloaded", timeout: 15000 });
     await page.waitForSelector("header.h-14", { timeout: 10000 });
     const writingAppHeader = await page.locator("header.sticky:has(a[href='/dashboard']), header.sticky:has(a[href='/'])").isVisible();
     const writingPracticeHeader = await page.locator("header.h-14").isVisible();
@@ -56,9 +54,9 @@ async function runQA() {
     results.push({ name: "Writing Room (PracticeHeader visible, AppHeader hidden)", passed: test3Passed });
     console.log(`  -> Passed: ${test3Passed} (AppHeader: ${writingAppHeader}, PracticeHeader: ${writingPracticeHeader})`);
 
-    // 4. Vocab Study Room (/practice/vocab/1)
-    console.log("\nTesting [4. Vocab Study Room] at /practice/vocab/1...");
-    await page.goto(`${BASE_URL}/practice/vocab/1`, { waitUntil: "domcontentloaded", timeout: 15000 });
+    // 4. Vocab Study Room (/flashcard/1)
+    console.log("\nTesting [4. Vocab Study Room] at /flashcard/1...");
+    await page.goto(`${BASE_URL}/flashcard/1`, { waitUntil: "domcontentloaded", timeout: 15000 });
     await page.waitForSelector("header.h-14", { timeout: 10000 });
     const vocabAppHeader = await page.locator("header.sticky:has(a[href='/dashboard']), header.sticky:has(a[href='/'])").isVisible();
     const vocabPracticeHeader = await page.locator("header.h-14").isVisible();

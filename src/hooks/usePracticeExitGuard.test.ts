@@ -7,16 +7,16 @@ import {
 
 const MOCK_LOCATION = {
   origin: "http://localhost:3000",
-  pathname: "/practice/quizzes/1",
+  pathname: "/listening/1",
   search: "",
-  href: "http://localhost:3000/practice/quizzes/1",
+  href: "http://localhost:3000/listening/1",
 };
 
 test("Link Interceptor: correctly ignores Ctrl/Cmd-click", () => {
   const result = shouldInterceptLinkClick({
     ctrlKey: true,
     button: 0,
-    href: "/practice/listening",
+    href: "/listening",
     currentLocation: MOCK_LOCATION,
   });
   assert.equal(result.shouldIntercept, false);
@@ -72,7 +72,7 @@ test("Link Interceptor: correctly ignores hash-only, mailto, tel links", () => {
 test("Link Interceptor: ignores same-page navigation clicks", () => {
   const result = shouldInterceptLinkClick({
     button: 0,
-    href: "/practice/quizzes/1",
+    href: "/listening/1",
     currentLocation: MOCK_LOCATION,
   });
   assert.equal(result.shouldIntercept, false);
@@ -171,4 +171,3 @@ test("Writing Exit Protection: allows direct exit when untouched or completed", 
   });
   assert.equal(shouldConfirmCompleted, false, "Completed essay allows direct exit");
 });
-

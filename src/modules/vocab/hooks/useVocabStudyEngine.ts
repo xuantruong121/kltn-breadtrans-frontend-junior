@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
+import toast from "react-hot-toast";
 import { VocabWord, vocabService } from "@/lib/api/services/vocab.service";
 import { QueueItem, StudyMode, QuizOption, SrsRating, StudySettings } from "../types/study";
 import { playWordAudio, playChime, stopCurrentAudio } from "../utils/audio";
@@ -116,12 +117,24 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
       const textToSpeak = text?.trim() || currentWord.word;
       // Stored audio belongs to the vocabulary word only. Example/phrase text
       // must not reuse the word audio.
-      const audioUrl = text?.trim()
+      const requestedAudioUrl = text?.trim()
         ? undefined
         : targetAccent === "uk"
           ? currentWord.audioUk
           : currentWord.audioUs;
-      playWordAudio(textToSpeak, audioUrl, targetAccent, settings.speechRate);
+      const sameAccentAudio =
+        Boolean(currentWord.audioUs && currentWord.audioUk) &&
+        currentWord.audioUs === currentWord.audioUk;
+      const audioUrl = sameAccentAudio ? undefined : requestedAudioUrl;
+      void playWordAudio(textToSpeak, audioUrl, targetAccent, settings.speechRate).then(
+        (result) => {
+          if (result === "UNAVAILABLE") {
+            toast.error(`Chưa có audio phát âm cho giọng ${targetAccent === "uk" ? "Anh" : "Mỹ"}.`);
+          } else if (result === "ERROR") {
+            toast.error("Không thể phát âm lúc này. Vui lòng thử lại.");
+          }
+        },
+      );
     },
     [currentWord, settings]
   );

@@ -403,9 +403,7 @@ export default function FloatingAiTutor() {
   }, [threads, searchTerm]);
 
   // Ẩn Trợ lý khi học viên đang trong phòng thi hoặc bài tập chuyên sâu
-  const isHiddenPath = 
-    pathname.match(/^\/practice\/[^\/]+\/.+/) || 
-    pathname.includes("/lessons/");
+  const isHiddenPath = isFocusMode || pathname.includes("/lessons/");
 
   // Smart scroll controls
   const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {

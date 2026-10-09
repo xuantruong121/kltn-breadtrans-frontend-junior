@@ -20,8 +20,29 @@ assert(loadingScreenCode.includes("Đang chuẩn bị bài viết"), "Writing su
 assert(loadingScreenCode.includes('role="status"'), "role='status' must be present");
 assert(loadingScreenCode.includes('aria-live="polite"'), "aria-live='polite' must be present");
 assert(loadingScreenCode.includes("motion-reduce:animate-none"), "prefers-reduced-motion must be supported");
-assert(loadingScreenCode.includes("/logo.png"), "Brand asset /logo.png must be referenced");
+assert(loadingScreenCode.includes("<BrandIcon"), "Loading screen must use the shared BrandIcon asset");
 console.log("✓ PracticeLoadingScreen: All visual and accessibility requirements verified");
+
+// Normal skill exercise routes must open their usable workspace directly. Exam/TOEIC
+// briefing routes are intentionally tested separately and retain their lifecycle gate.
+const directListeningCode = fs.readFileSync(
+  path.join(FRONTEND_ROOT, "src/components/quiz/TakeQuizPage.tsx"),
+  "utf-8",
+);
+const directSpeakingCode = fs.readFileSync(
+  path.join(FRONTEND_ROOT, "src/app/(student)/speaking/[id]/page.tsx"),
+  "utf-8",
+);
+const directWritingCode = fs.readFileSync(
+  path.join(FRONTEND_ROOT, "src/app/(student)/writing/[id]/page.tsx"),
+  "utf-8",
+);
+assert(!directListeningCode.includes("Bắt đầu luyện nghe"), "Listening detail must not require a second start CTA");
+assert(!directSpeakingCode.includes("Bắt đầu luyện nói"), "Speaking detail must not require a second start CTA");
+assert(!directWritingCode.includes("Bắt đầu viết"), "Writing detail must not require a second start CTA");
+assert(directSpeakingCode.includes('stage={phase === "COMPLETED" ? "FEEDBACK" : "PRACTICE"}'), "Speaking detail must enter PRACTICE declaratively");
+assert(directWritingCode.includes('stage={feedback ? "FEEDBACK" : "PRACTICE"}'), "Writing detail must enter PRACTICE declaratively");
+console.log("✓ Direct-to-exercise: normal Listening, Speaking, and Writing routes have no redundant start stage");
 
 // 2. Verify PracticeExitConfirmDialog.tsx
 const exitDialogPath = path.join(FRONTEND_ROOT, "src/components/practice/PracticeExitConfirmDialog.tsx");
@@ -78,7 +99,7 @@ console.log("✓ usePracticeExitGuard: Safe link interception, browser Back, fal
 // 4. Verify Listening Practice (ListeningComprehensionWorkspace.tsx)
 const listeningWorkspacePath = path.join(
   FRONTEND_ROOT,
-  "src/app/(student)/practice/listening/components/ListeningComprehensionWorkspace.tsx"
+  "src/components/listening/ListeningComprehensionWorkspace.tsx"
 );
 const listeningCode = fs.readFileSync(listeningWorkspacePath, "utf-8");
 
@@ -94,7 +115,7 @@ assert(listeningCode.includes("minLaunchReady"), "Listening workspace must enfor
 console.log("✓ Listening: Exit guard, loading screen, and contextual image verified");
 
 // 5. Verify Speaking Practice (speaking/[id]/page.tsx)
-const speakingPath = path.join(FRONTEND_ROOT, "src/app/(student)/practice/speaking/[id]/page.tsx");
+const speakingPath = path.join(FRONTEND_ROOT, "src/app/(student)/speaking/[id]/page.tsx");
 const speakingCode = fs.readFileSync(speakingPath, "utf-8");
 
 assert(speakingCode.includes("usePracticeExitGuard"), "Speaking must use usePracticeExitGuard");
@@ -105,7 +126,7 @@ assert(speakingCode.includes("minLaunchReady"), "Speaking runner must enforce mi
 console.log("✓ Speaking: Exit guard, recording dirty check, and loading screen verified");
 
 // 6. Verify Reading & Quiz Runner (quizzes/[id]/page.tsx and reading/[id]/page.tsx)
-const quizRunnerPath = path.join(FRONTEND_ROOT, "src/app/(student)/practice/quizzes/[id]/page.tsx");
+const quizRunnerPath = path.join(FRONTEND_ROOT, "src/components/quiz/TakeQuizPage.tsx");
 const quizRunnerCode = fs.readFileSync(quizRunnerPath, "utf-8");
 assert(quizRunnerCode.includes("usePracticeExitGuard"), "Quiz runner must use usePracticeExitGuard");
 assert(quizRunnerCode.includes("enabled: !isListening"), "Quiz runner must yield guard ownership when isListening");
@@ -114,14 +135,14 @@ assert(quizRunnerCode.includes("PracticeExitConfirmDialog"), "Quiz runner must r
 assert(quizRunnerCode.includes("PracticeLoadingScreen"), "Quiz runner must render PracticeLoadingScreen");
 assert(quizRunnerCode.includes("minLaunchReady"), "Quiz runner must enforce minimum launch ready duration");
 
-const readingTopicPath = path.join(FRONTEND_ROOT, "src/app/(student)/practice/reading/[id]/page.tsx");
+const readingTopicPath = path.join(FRONTEND_ROOT, "src/app/(student)/reading/[id]/page.tsx");
 const readingTopicCode = fs.readFileSync(readingTopicPath, "utf-8");
 assert(readingTopicCode.includes("PracticeLoadingScreen"), "Reading topic detail must use PracticeLoadingScreen");
 assert(readingTopicCode.includes("launchingQuizId"), "Reading detail must have launchingQuizId state");
 console.log("✓ Reading & Shared Quiz Runner: Exit guard and loading screens verified");
 
 // 7. Verify Writing Practice (writing/[id]/page.tsx)
-const writingPath = path.join(FRONTEND_ROOT, "src/app/(student)/practice/writing/[id]/page.tsx");
+const writingPath = path.join(FRONTEND_ROOT, "src/app/(student)/writing/[id]/page.tsx");
 const writingCode = fs.readFileSync(writingPath, "utf-8");
 
 assert(writingCode.includes("usePracticeExitGuard"), "Writing must use usePracticeExitGuard");
@@ -131,14 +152,15 @@ assert(writingCode.includes("shouldConfirmExit = !feedback"), "Writing must requ
 assert(writingCode.includes("minLaunchReady"), "Writing runner must enforce minimum launch ready duration");
 console.log("✓ Writing: Exit guard, draft dirty check, and loading screen verified");
 
-// 8. Verify TOEIC Exam (toeic/[examId]/page.tsx)
-const toeicPath = path.join(FRONTEND_ROOT, "src/app/(student)/practice/toeic/[examId]/page.tsx");
-const toeicCode = fs.readFileSync(toeicPath, "utf-8");
-assert(toeicCode.includes("usePracticeExitGuard"), "TOEIC exam must use usePracticeExitGuard");
-assert(toeicCode.includes("PracticeExitConfirmDialog"), "TOEIC exam must render PracticeExitConfirmDialog");
-assert(toeicCode.includes("PracticeLoadingScreen"), "TOEIC exam must render PracticeLoadingScreen");
-assert(toeicCode.includes("shouldConfirmExit = !submitMutation.isSuccess"), "TOEIC exam must require exit confirmation until submitted");
-assert(toeicCode.includes("minLaunchReady"), "TOEIC runner must enforce minimum launch ready duration");
-console.log("✓ TOEIC Exam: Exit guard and loading screen verified");
+// 8. Verify TOEIC lifecycle (briefing remains a real pre-start boundary)
+const toeicBriefingPath = path.join(FRONTEND_ROOT, "src/app/(student)/toeic/[examId]/page.tsx");
+const toeicAttemptPath = path.join(FRONTEND_ROOT, "src/app/(student)/toeic/attempts/[attemptId]/page.tsx");
+const toeicBriefingCode = fs.readFileSync(toeicBriefingPath, "utf-8");
+const toeicAttemptCode = fs.readFileSync(toeicAttemptPath, "utf-8");
+assert(toeicBriefingCode.includes("startAttempt"), "TOEIC briefing must create an attempt only after explicit start");
+assert(toeicBriefingCode.includes("Bắt đầu làm bài"), "TOEIC briefing must retain explicit start CTA");
+assert(toeicAttemptCode.includes("useAssessmentAntiCheat"), "TOEIC attempt must preserve assessment protections");
+assert(toeicAttemptCode.includes("formatTime"), "TOEIC attempt must preserve timer behavior");
+console.log("✓ TOEIC: meaningful briefing and timed assessment lifecycle retained");
 
 console.log("\nALL VERIFICATION CHECKS PASSED PERFECTLY!");

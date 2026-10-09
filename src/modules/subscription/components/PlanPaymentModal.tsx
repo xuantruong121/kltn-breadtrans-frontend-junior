@@ -182,7 +182,7 @@ export const PlanPaymentModal: React.FC<PlanPaymentModalProps> = ({
 
   const handleStartLearning = () => {
     onClose();
-    router.push("/practice");
+    router.push("/dashboard");
   };
 
   const handleViewHistory = () => {

@@ -150,7 +150,7 @@ export default function DiagnosticPage() {
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
-              href="/practice"
+              href="/dashboard"
               className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-extrabold text-white hover:bg-violet-700"
             >
               Bắt đầu luyện tập <ArrowRight size={17} />

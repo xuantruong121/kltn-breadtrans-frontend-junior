@@ -50,6 +50,7 @@ export interface PronunciationReportCardProps {
   onCancelRecording?: () => void;
   onRetryRecord: () => void;
   onRetrySubmit?: () => void;
+  isPreviewReady?: boolean;
   onNextExercise?: () => void;
   onSelectWord?: (word: string) => void;
   onPlaySample?: (word: string) => void;
@@ -125,6 +126,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
   onCancelRecording,
   onRetryRecord,
   onRetrySubmit,
+  isPreviewReady = false,
   onNextExercise,
   onSelectWord,
   onPlaySample,
@@ -391,7 +393,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
         )}
 
       {/* 2. DYNAMIC COMMAND DECK (Clean, accessible BreadTrans controls) */}
-      {phase === "READY" && (
+      {phase === "READY" && !isPreviewReady && (
         <div className="bg-slate-50/80 dark:bg-slate-850 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center gap-3 shrink-0 shadow-2xs">
           <button
             type="button"

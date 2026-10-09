@@ -39,6 +39,7 @@ import {
   CircleHelp,
   Lightbulb,
   Zap,
+  Activity,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
@@ -530,28 +531,28 @@ export function AppHeader() {
   const desktopNavLinks = [
     {
       label: "Nghe",
-      href: "/practice/listening",
+      href: "/listening",
       icon: Headphones,
       active: isListeningRoute(pathname),
       iconColor: "text-sky-500 dark:text-sky-400",
     },
     {
       label: "Nói",
-      href: "/practice/speaking",
+      href: "/speaking",
       icon: Mic,
       active: isSpeakingRoute(pathname),
       iconColor: "text-rose-500 dark:text-rose-400",
     },
     {
       label: "Đọc",
-      href: "/practice/reading",
+      href: "/reading",
       icon: BookOpen,
       active: isReadingRoute(pathname),
       iconColor: "text-emerald-500 dark:text-emerald-400",
     },
     {
       label: "Viết",
-      href: "/practice/writing",
+      href: "/writing",
       icon: PenTool,
       active: isWritingRoute(pathname),
       iconColor: "text-violet-500 dark:text-violet-400",
@@ -565,7 +566,7 @@ export function AppHeader() {
     },
     {
       label: "Luyện đề",
-      href: "/practice/quizzes",
+      href: "/exams",
       icon: Target,
       active: isExamRoute(pathname),
       iconColor: "text-orange-500 dark:text-orange-400",
@@ -619,7 +620,7 @@ export function AppHeader() {
   // Mobile drawer links
   const mobileSecondaryLinks: HeaderNavLink[] = [
     { label: "Flashcard từ vựng", href: "/flashcard", icon: Layers },
-    { label: "Luyện đề", href: "/practice/quizzes", icon: Target, isExam: true },
+    { label: "Luyện đề", href: "/exams", icon: Target, isExam: true },
     { label: "Khóa học", href: "/courses", icon: GraduationCap },
     { label: "Cửa hàng", href: "/market", icon: ShoppingBag },
     { label: "Bảng xếp hạng", href: "/arena", icon: Trophy },
@@ -854,6 +855,15 @@ export function AppHeader() {
                       <span>Thông tin cá nhân</span>
                     </Link>
 
+                    <Link
+                      href="/hub?tab=learning-progress"
+                      onClick={closeMenus}
+                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-900 dark:hover:text-emerald-400 transition-colors whitespace-nowrap"
+                    >
+                      <Activity size={16} className="text-emerald-600 shrink-0" />
+                      <span>Tiến độ học tập</span>
+                    </Link>
+
                     {isStudent && (
                       <Link
                         href="/pet"
@@ -1015,7 +1025,7 @@ export function AppHeader() {
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <Link
-                        href="/student/profile?tab=quotas"
+                        href="/hub?tab=account-plan"
                         onClick={closeMenus}
                         className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 px-2.5 py-1.5 rounded-xl text-xs font-black text-amber-900 dark:text-amber-300 shadow-2xs hover:border-amber-400 dark:hover:border-amber-600 transition-colors"
                       >
@@ -1058,7 +1068,7 @@ export function AppHeader() {
                   {/* 2. Luyện tập kỹ năng & 4 kỹ năng con */}
                   <div className="space-y-1.5 pt-1">
                     <Link
-                      href="/practice"
+                      href="/listening"
                       onClick={closeMenus}
                       className={`flex min-h-[48px] items-center gap-3 rounded-2xl px-4 py-2.5 text-sm font-bold transition-colors ${
                         isSkillsPath
@@ -1074,7 +1084,7 @@ export function AppHeader() {
                     <div className="pl-3 pr-1 py-1">
                       <div className="grid grid-cols-2 gap-2">
                         <Link
-                          href="/practice/listening"
+                          href="/listening"
                           onClick={closeMenus}
                           className="flex items-center gap-2 p-2.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/60 text-xs font-bold text-blue-900 dark:text-blue-300 hover:bg-blue-100/70 dark:hover:bg-blue-900/60 transition-colors"
                         >
@@ -1082,7 +1092,7 @@ export function AppHeader() {
                           <span>Luyện Nghe</span>
                         </Link>
                         <Link
-                          href="/practice/speaking"
+                          href="/speaking"
                           onClick={closeMenus}
                           className="flex items-center gap-2 p-2.5 rounded-xl bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200/60 dark:border-purple-800/60 text-xs font-bold text-purple-900 dark:text-purple-300 hover:bg-purple-100/70 dark:hover:bg-purple-900/60 transition-colors"
                         >
@@ -1090,7 +1100,7 @@ export function AppHeader() {
                           <span>Luyện Nói</span>
                         </Link>
                         <Link
-                          href="/practice/reading"
+                          href="/reading"
                           onClick={closeMenus}
                           className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/60 text-xs font-bold text-emerald-900 dark:text-emerald-300 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/60 transition-colors"
                         >
@@ -1098,7 +1108,7 @@ export function AppHeader() {
                           <span>Luyện Đọc</span>
                         </Link>
                         <Link
-                          href="/practice/writing"
+                          href="/writing"
                           onClick={closeMenus}
                           className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-50/70 dark:bg-rose-950/40 border border-rose-200/60 dark:border-rose-800/60 text-xs font-bold text-rose-900 dark:text-rose-300 hover:bg-rose-100/70 dark:hover:bg-rose-900/60 transition-colors"
                         >

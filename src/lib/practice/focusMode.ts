@@ -32,26 +32,26 @@ export function classifyPracticeRoute(pathname: string): PracticeRouteKind {
 
   // 1. Specific sub-routes that are Results or Reviews (check before general [id])
   if (
-    /^\/practice\/quizzes\/submissions\/[^/]+(?:\/|$)/.test(pathname) ||
-    /^\/practice\/toeic\/results\/[^/]+(?:\/|$)/.test(pathname)
+    /^\/(?:listening|reading|exams)\/submissions\/[^/]+(?:\/|$)/.test(pathname) ||
+    /^\/toeic\/results\/[^/]+(?:\/|$)/.test(pathname)
   ) {
     return "RESULT_OR_REVIEW";
   }
 
   // 2. Specific sub-routes that are Active Answering Rooms
-  if (/^\/practice\/toeic\/attempts\/[^/]+(?:\/|$)/.test(pathname)) {
+  if (/^\/toeic\/attempts\/[^/]+(?:\/|$)/.test(pathname)) {
     return "TOEIC_ATTEMPT_ROOM";
   }
-  if (/^\/practice\/speaking\/[^/]+(?:\/|$)/.test(pathname)) {
+  if (/^\/speaking\/[^/]+(?:\/|$)/.test(pathname)) {
     return "SPEAKING_ROOM";
   }
-  if (/^\/practice\/quizzes\/[^/]+(?:\/|$)/.test(pathname)) {
+  if (/^\/listening\/[^/]+(?:\/|$)/.test(pathname) || /^\/reading\/quizzes\/[^/]+(?:\/|$)/.test(pathname)) {
     return "LISTENING_ROOM";
   }
-  if (/^\/practice\/writing\/[^/]+(?:\/|$)/.test(pathname)) {
+  if (/^\/writing\/[^/]+(?:\/|$)/.test(pathname)) {
     return "WRITING_ROOM";
   }
-  if (/^\/practice\/vocab\/[^/]+(?:\/|$)/.test(pathname)) {
+  if (/^\/flashcard\/[^/]+(?:\/|$)/.test(pathname)) {
     return "VOCAB_ROOM";
   }
   if (pathname === "/vocabulary/study" || pathname.startsWith("/vocabulary/study/")) {
@@ -59,15 +59,15 @@ export function classifyPracticeRoute(pathname: string): PracticeRouteKind {
   }
   // 3. Catalogs, Hubs, Pre-start briefing pages
   if (
-    pathname === "/practice" ||
-    pathname.startsWith("/practice/listening") ||
-    pathname.startsWith("/practice/reading") ||
-    pathname.startsWith("/practice/writing") ||
-    pathname.startsWith("/practice/speaking") ||
-    pathname.startsWith("/practice/vocab") ||
-    pathname.startsWith("/practice/quizzes") ||
-    pathname.startsWith("/practice/toeic/bundle") ||
-    /^\/practice\/toeic\/[^/]+(?:\/|$)/.test(pathname) || // pre-start briefing e.g. /practice/toeic/[examId]
+    pathname === "/listening" ||
+    pathname === "/reading" ||
+    pathname === "/writing" ||
+    pathname === "/speaking" ||
+    pathname === "/exams" ||
+    pathname.startsWith("/exams/") ||
+    pathname.startsWith("/toeic/bundle") ||
+    /^\/toeic\/[^/]+(?:\/|$)/.test(pathname) || // pre-start briefing e.g. /toeic/[examId]
+    pathname.startsWith("/flashcard") ||
     pathname === "/flashcard" ||
     pathname === "/vocabulary/saved" ||
     pathname === "/grammar"
@@ -87,32 +87,33 @@ export function isLearningFocusRoute(pathname: string): boolean {
 
   // Explicitly exclude results and reviews
   if (
-    /^\/practice\/quizzes\/submissions\/[^/]+(?:\/|$)/.test(pathname) ||
-    /^\/practice\/toeic\/results\/[^/]+(?:\/|$)/.test(pathname)
+    /^\/(?:listening|reading|exams)\/submissions\/[^/]+(?:\/|$)/.test(pathname) ||
+    /^\/toeic\/results\/[^/]+(?:\/|$)/.test(pathname)
   ) {
     return false;
   }
 
-  // Explicitly exclude pre-start TOEIC exam info pages (e.g. /practice/toeic/1 or /practice/toeic/exam-uuid)
-  // while keeping /practice/toeic/attempts/[attemptId]
+  // Explicitly exclude pre-start TOEIC exam info pages (e.g. /toeic/1)
+  // while keeping /toeic/attempts/[attemptId]
   if (
-    /^\/practice\/toeic\/[^/]+(?:\/|$)/.test(pathname) &&
-    !pathname.startsWith("/practice/toeic/attempts/")
+    /^\/toeic\/[^/]+(?:\/|$)/.test(pathname) &&
+    !pathname.startsWith("/toeic/attempts/")
   ) {
     return false;
   }
 
-  // Exclude reading topic catalog e.g. /practice/reading/1
-  if (/^\/practice\/reading(?:\/|$)/.test(pathname)) {
+  // Exclude the retained Reading topic detail runner from focus mode.
+  if (/^\/reading\/(?!quizzes\/|submissions\/)[^/]+(?:\/|$)/.test(pathname)) {
     return false;
   }
 
   return (
-    /^\/practice\/quizzes\/[^/]+(?:\/|$)/.test(pathname) ||
-    /^\/practice\/speaking\/[^/]+(?:\/|$)/.test(pathname) ||
-    /^\/practice\/writing\/[^/]+(?:\/|$)/.test(pathname) ||
-    /^\/practice\/vocab\/[^/]+(?:\/|$)/.test(pathname) ||
-    /^\/practice\/toeic\/attempts\/[^/]+(?:\/|$)/.test(pathname) ||
+    /^\/listening\/[^/]+(?:\/|$)/.test(pathname) ||
+    /^\/reading\/quizzes\/[^/]+(?:\/|$)/.test(pathname) ||
+    /^\/speaking\/[^/]+(?:\/|$)/.test(pathname) ||
+    /^\/writing\/[^/]+(?:\/|$)/.test(pathname) ||
+    /^\/flashcard\/[^/]+(?:\/|$)/.test(pathname) ||
+    /^\/toeic\/attempts\/[^/]+(?:\/|$)/.test(pathname) ||
     pathname === "/vocabulary/study" ||
     pathname.startsWith("/vocabulary/study/")
   );
@@ -137,7 +138,7 @@ export function isPracticeRoomPath(pathname: string): boolean {
  * Checks if the route is a TOEIC attempt room.
  */
 export function isToeicAttemptPath(pathname: string): boolean {
-  return /^\/practice\/toeic\/attempts\/[^/]+(?:\/|$)/.test(pathname);
+  return /^\/toeic\/attempts\/[^/]+(?:\/|$)/.test(pathname);
 }
 
 /**

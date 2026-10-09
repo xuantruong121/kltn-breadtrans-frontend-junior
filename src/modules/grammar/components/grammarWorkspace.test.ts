@@ -274,13 +274,13 @@ describe("DEFECT C — Exit guard & unsaved answer protection", () => {
       navigatedUrl = url;
     };
 
-    const defaultFallbackUrl = "/practice/reading?category=grammar";
+    const defaultFallbackUrl = "/reading?category=grammar";
     const onConfirmExit = () => {
       mockRouterPush(defaultFallbackUrl);
     };
 
     onConfirmExit();
-    assert.equal(navigatedUrl, "/practice/reading?category=grammar");
+    assert.equal(navigatedUrl, "/reading?category=grammar");
   });
 
   test("G. focus mode remains true on cancelled exit, clears on confirmed exit or unmount", () => {

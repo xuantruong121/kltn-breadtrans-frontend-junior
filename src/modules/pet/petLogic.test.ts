@@ -228,7 +228,7 @@ test("Practice Focus Mode: hides companion and suppresses FloatingAiTutor", () =
 test("Pet recommendation: uses the first actionable incomplete quest", () => {
   assert.deepEqual(
     getPetRecommendation([
-      { title: "Đã xong", isCompleted: true, actionUrl: "/practice" },
+      { title: "Đã xong", isCompleted: true, actionUrl: "/dashboard" },
       {
         title: "Học từ vựng",
         description: "Ôn 10 từ mới",
@@ -244,7 +244,7 @@ test("Pet recommendation: uses the first actionable incomplete quest", () => {
       actionUrl: "/flashcard/1",
     },
   );
-  assert.equal(getPetRecommendation([{ isCompleted: true, actionUrl: "/practice" }]), null);
+  assert.equal(getPetRecommendation([{ isCompleted: true, actionUrl: "/dashboard" }]), null);
 });
 
 test("Route Focus Visibility: low-focus discovery routes show companion, active learning routes hide companion", () => {
@@ -254,19 +254,15 @@ test("Route Focus Visibility: low-focus discovery routes show companion, active 
     "/",
     "/courses",
     "/my-courses",
-    "/practice",
-    "/practice/listening",
-    "/practice/reading",
-    "/practice/speaking",
-    "/practice/writing",
-    "/practice/vocab",
+    "/dashboard",
+    "/flashcard",
     "/grammar",
     "/flashcard",
     "/learn",
     "/market",
     "/arena",
     "/pet",
-    "/student/profile",
+    "/hub",
   ];
 
   for (const route of discoveryRoutes) {
@@ -276,19 +272,19 @@ test("Route Focus Visibility: low-focus discovery routes show companion, active 
   }
 
   // Active learning assessments: companion must be hidden
-  assert.equal(isLearningFocusRoute("/practice/quizzes/123"), true); // active quiz
-  assert.equal(isLearningFocusRoute("/practice/toeic/attempts/99"), true); // active TOEIC attempt
-  assert.equal(isLearningFocusRoute("/practice/speaking/45"), true); // active speaking recording
-  assert.equal(isLearningFocusRoute("/practice/writing/67"), true); // active writing editor
-  assert.equal(isLearningFocusRoute("/practice/vocab/88"), true); // active vocab exercise
+  assert.equal(isLearningFocusRoute("/listening/123"), true); // active quiz
+  assert.equal(isLearningFocusRoute("/toeic/attempts/99"), true); // active TOEIC attempt
+  assert.equal(isLearningFocusRoute("/speaking/45"), true); // active speaking recording
+  assert.equal(isLearningFocusRoute("/writing/67"), true); // active writing editor
+  assert.equal(isLearningFocusRoute("/flashcard/88"), true); // active vocab exercise
   assert.equal(isLearningFocusRoute("/vocabulary/study"), true); // active flashcard study
   // Diagnostic is stateful; active focus is supplied by the runtime override.
   assert.equal(isLearningFocusRoute("/diagnostic"), false);
   assert.equal(isLearningFocusRoute("/diagnostic/1"), false);
 
   // Transition back to low-focus: visible again
-  assert.equal(shouldRenderCompanion(isLearningFocusRoute("/practice/quizzes/123")), false);
-  assert.equal(shouldRenderCompanion(isLearningFocusRoute("/practice/quizzes")), true);
+  assert.equal(shouldRenderCompanion(isLearningFocusRoute("/listening/123")), false);
+  assert.equal(shouldRenderCompanion(isLearningFocusRoute("/exams")), true);
 });
 
 test("Floating UI States: transitions cleanly between HIDDEN, COLLAPSED, MESSAGE, and EXPANDED", () => {

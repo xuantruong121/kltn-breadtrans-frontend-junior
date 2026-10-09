@@ -30,7 +30,7 @@ export function PublicFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/practice/quizzes" className="transition-colors hover:text-amber-600 dark:hover:text-amber-400">
+                <Link href="/exams" className="transition-colors hover:text-amber-600 dark:hover:text-amber-400">
                   Đề thi TOEIC
                 </Link>
               </li>

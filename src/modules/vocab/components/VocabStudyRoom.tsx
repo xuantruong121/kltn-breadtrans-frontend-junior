@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { useVocabStudyEngine } from "../hooks/useVocabStudyEngine";
 import { StudyTopHeader } from "./StudyTopHeader";
@@ -100,7 +101,14 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
 
   // Audio helper for drawer
   const handlePlayDrawerAudio = (word: string, audioUrl?: string, accent?: "us" | "uk") => {
-    playWordAudio(word, audioUrl, accent || "us", settings.speechRate);
+    const targetAccent = accent || "us";
+    void playWordAudio(word, audioUrl, targetAccent, settings.speechRate).then((result) => {
+      if (result === "UNAVAILABLE") {
+        toast.error(`Chưa có audio phát âm cho giọng ${targetAccent === "uk" ? "Anh" : "Mỹ"}.`);
+      } else if (result === "ERROR") {
+        toast.error("Không thể phát âm lúc này. Vui lòng thử lại.");
+      }
+    });
   };
 
   return (

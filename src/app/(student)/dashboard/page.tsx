@@ -27,7 +27,11 @@ import {
   gamificationService,
   TodayQuestItem,
 } from "@/lib/api/services/gamification.service";
-import { userService, SkillProgressSummary, UserProfile } from "@/lib/api/services/user.service";
+import { userService, SkillProgressSummary, UserProfile, type DailyPracticeResponse } from "@/lib/api/services/user.service";
+import {
+  formatSkillDimension,
+  skillStatusLabel,
+} from "@/lib/api/services/userSkillProgressLogic";
 import { PlacementTestBanner } from "@/components/dashboard/PlacementTestBanner";
 import { DashboardCompanionCard } from "@/modules/pet/components/DashboardCompanionCard";
 import {
@@ -46,7 +50,7 @@ const SKILLS_CONFIG = [
     key: "LISTENING" as const,
     title: "Luyện nghe",
     description: "Rèn luyện khả năng nghe hiểu qua đàm thoại, độc thoại và ngữ cảnh đời sống thực tế.",
-    href: "/practice/listening",
+    href: "/listening",
     icon: Headphones,
     tone: "blue",
     borderClass: "border-blue-200/90 dark:border-blue-800/80 hover:border-blue-300 dark:hover:border-blue-600",
@@ -59,7 +63,7 @@ const SKILLS_CONFIG = [
     key: "SPEAKING" as const,
     title: "Luyện nói",
     description: "Luyện phát âm chuẩn xác, ngữ điệu tự nhiên và phản xạ giao tiếp tiếng Anh tự tin.",
-    href: "/practice/speaking",
+    href: "/speaking",
     icon: Mic,
     tone: "violet",
     borderClass: "border-violet-200/90 dark:border-violet-800/80 hover:border-violet-300 dark:hover:border-violet-600",
@@ -72,7 +76,7 @@ const SKILLS_CONFIG = [
     key: "READING" as const,
     title: "Luyện đọc",
     description: "Nâng cao tốc độ đọc hiểu, vốn từ vựng học thuật và kỹ năng nắm bắt ý chính đoạn văn.",
-    href: "/practice/reading",
+    href: "/reading",
     icon: BookOpen,
     tone: "emerald",
     borderClass: "border-emerald-200/90 dark:border-emerald-800/80 hover:border-emerald-300 dark:hover:border-emerald-600",
@@ -85,7 +89,7 @@ const SKILLS_CONFIG = [
     key: "WRITING" as const,
     title: "Luyện viết",
     description: "Thực hành viết câu chuẩn ngữ pháp, email công sở và bài luận với gợi ý chi tiết.",
-    href: "/practice/writing",
+    href: "/writing",
     icon: PenTool,
     tone: "rose",
     borderClass: "border-rose-200/90 dark:border-rose-800/80 hover:border-rose-300 dark:hover:border-rose-600",
@@ -116,18 +120,38 @@ function getQuestProgressText(item: TodayQuestItem): string {
   return `${current}/${target}`;
 }
 
-function resolveQuestAction(item: TodayQuestItem) {
+function resolveQuestAction(item: TodayQuestItem, dailyPractice?: DailyPracticeResponse) {
   const questObj = item.quest || item;
   const type = (item.type ?? questObj?.type ?? "").toUpperCase();
   const candidateUrl = item.actionUrl?.trim() || "";
   const candidateLabel = item.actionLabel?.trim() || "";
 
+  const plannerSkill = type === "DO_LISTENING" ? "LISTENING" : type === "DO_SPEAKING" || type === "PRACTICE_SPEAKING" ? "SPEAKING" : null;
+  const plannerItem = plannerSkill
+    ? dailyPractice?.items.find(
+        (planned) =>
+          planned.skill === plannerSkill &&
+          !planned.isLocked &&
+          !planned.isCompleted &&
+          isSafeInternalRoute(planned.route) &&
+          (plannerSkill === "LISTENING"
+            ? planned.route.startsWith("/listening")
+            : planned.route.startsWith("/speaking")),
+      )
+    : undefined;
+  if (plannerItem) {
+    return {
+      actionLabel: plannerSkill === "LISTENING" ? "Luyện nghe ngay" : "Luyện nói ngay",
+      actionUrl: plannerItem.route,
+    };
+  }
+
   // Guard against legacy backend actionUrl incorrectly pointing COMPLETE_QUIZ to listening
-  if (type === "COMPLETE_QUIZ" && candidateUrl === "/practice/listening") {
+  if (type === "COMPLETE_QUIZ" && candidateUrl === "/listening") {
     return {
       actionLabel:
         candidateLabel === "Luyện nghe" ? "Làm bài kiểm tra" : (candidateLabel || "Làm bài kiểm tra"),
-      actionUrl: "/practice/quizzes",
+      actionUrl: "/exams",
     };
   }
 
@@ -418,9 +442,18 @@ export default function DashboardPage() {
     refetch: refetchSkills,
   } = useQuery({
     queryKey: ["user-skills-summary", user?.id],
-    queryFn: userService.getSkillsSummary,
+    queryFn: userService.getSkillProgress,
     enabled,
     staleTime: 60_000,
+  });
+
+  const {
+    data: dailyPractice,
+  } = useQuery({
+    queryKey: ["daily-practice", user?.id],
+    queryFn: userService.getDailyPractice,
+    enabled,
+    staleTime: 30_000,
   });
 
   // Query invalidation on external learning events
@@ -430,6 +463,7 @@ export default function DashboardPage() {
       queryClient.invalidateQueries({ queryKey: ["user-stats", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["my-pet", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["user-skills-summary", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["daily-practice", user?.id] });
     };
     window.addEventListener("breadtrans:learning-event", handleLearningEvent);
     return () => window.removeEventListener("breadtrans:learning-event", handleLearningEvent);
@@ -528,7 +562,7 @@ export default function DashboardPage() {
           {/* Student Profile Identity */}
           <div className="flex items-center gap-4 sm:gap-5">
             <Link
-              href="/student/profile"
+              href="/hub?tab=account-profile"
               aria-label="Mở hồ sơ cá nhân"
               className="group relative flex size-16 sm:size-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl ring-2 ring-amber-400/40 border border-amber-300 dark:border-amber-700 bg-amber-100 dark:bg-amber-950 text-2xl sm:text-3xl font-black text-amber-800 dark:text-amber-300 shadow-xs transition-transform hover:scale-105"
             >
@@ -636,7 +670,7 @@ export default function DashboardPage() {
 
               {/* Bánh Mì */}
               <Link
-                href="/student/profile?tab=quotas"
+              href="/hub?tab=account-plan"
                 className="rounded-2xl border border-amber-200/90 dark:border-amber-900/50 bg-white/90 dark:bg-slate-900 p-3 sm:p-3.5 text-center shadow-2xs transition-all hover:border-amber-300 dark:hover:border-amber-700 block group"
                 title="Xem lịch sử và đổi quà Bánh Mì"
               >
@@ -822,7 +856,7 @@ export default function DashboardPage() {
                   typeof item.progressPercent === "number"
                     ? Math.min(100, Math.max(0, item.progressPercent))
                     : clampPercentage(item.currentValue, targetValue);
-                const { actionLabel, actionUrl } = resolveQuestAction(item);
+                const { actionLabel, actionUrl } = resolveQuestAction(item, dailyPractice);
                 const categoryMeta = getQuestCategoryMeta(item.type ?? questObj?.type);
                 const CategoryIcon = categoryMeta.icon;
 
@@ -978,10 +1012,10 @@ export default function DashboardPage() {
             </h2>
           </div>
           <Link
-            href="/practice"
+            href="/listening"
             className="inline-flex min-h-[44px] items-center gap-1 text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 transition-colors hover:text-blue-700 dark:hover:text-blue-400 cursor-pointer"
           >
-            <span>Trung tâm kỹ năng</span>
+            <span>Khám phá kỹ năng</span>
             <ChevronRight size={16} aria-hidden="true" />
           </Link>
         </div>
@@ -1072,7 +1106,9 @@ export default function DashboardPage() {
                         <span>
                           {totalCount > 0
                             ? `Tiến độ: ${completedCount}/${totalCount} ${unitLabel}`
-                            : "Chưa có bài luyện trong danh mục"}
+                            : completedCount > 0
+                              ? `Tiến độ: ${completedCount} ${unitLabel} đã hoàn thành`
+                              : "Chưa có bài luyện trong danh mục"}
                         </span>
                         <span>{progressPercent}%</span>
                       </div>
@@ -1090,6 +1126,22 @@ export default function DashboardPage() {
                         />
                       </div>
                     </div>
+                    <div className="flex items-center justify-between gap-3 text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                      <span>
+                        Điểm kỹ năng:{" "}
+                        {apiSkill?.normalizedScore != null
+                          ? `${apiSkill.normalizedScore}/100`
+                          : "—"}
+                      </span>
+                      <span className="text-slate-700 dark:text-slate-200">
+                        {apiSkill ? skillStatusLabel(apiSkill) : "Chưa đủ dữ liệu"}
+                      </span>
+                    </div>
+                    {apiSkill?.weakestDimension && (
+                      <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                        Cần luyện thêm: {formatSkillDimension(apiSkill.weakestDimension)}
+                      </p>
+                    )}
                   </div>
 
                   <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800">
@@ -1150,7 +1202,7 @@ export default function DashboardPage() {
                     <strong className="text-slate-400 font-bold">—</strong>
                   ) : (
                     <strong className="text-orange-800 dark:text-orange-400 font-black">
-                      {stats?.totalQuizzesDone ?? 0} bộ đề
+                      {stats?.totalToeicTestsDone ?? 0} bộ đề
                     </strong>
                   )}
                 </p>
@@ -1162,7 +1214,9 @@ export default function DashboardPage() {
                     <strong className="text-slate-400 font-bold">—</strong>
                   ) : (
                     <strong className="text-slate-900 dark:text-slate-100 font-bold">
-                      {stats?.quizAccuracy ? `${stats.quizAccuracy}%` : "Chưa có bài thi"}
+                      {(stats?.totalToeicTestsDone ?? 0) > 0 && stats?.quizAccuracy
+                        ? `${stats.quizAccuracy}%`
+                        : "Chưa có bài thi"}
                     </strong>
                   )}
                 </p>
@@ -1171,7 +1225,7 @@ export default function DashboardPage() {
 
             <div className="pt-4 mt-4 border-t border-orange-100 dark:border-slate-800">
               <Link
-                href="/practice/quizzes"
+                href="/exams"
                 className="w-full inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-orange-600 hover:bg-orange-700 active:scale-95 text-white font-black text-xs sm:text-sm shadow-xs transition-all cursor-pointer"
               >
                 <span>Vào phòng thi ETS</span>

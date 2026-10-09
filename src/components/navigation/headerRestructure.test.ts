@@ -57,16 +57,16 @@ describe("Header Navigation Restructure Verification", () => {
   });
 
   it("activates 'Đọc' for both Reading and Grammar routes", () => {
-    assert.equal(isReadingRoute("/practice/reading"), true);
-    assert.equal(isReadingRoute("/practice/reading/12"), true);
-    assert.equal(isReadingRoute("/practice/reading?tab=grammar"), true);
+    assert.equal(isReadingRoute("/reading"), true);
+    assert.equal(isReadingRoute("/reading/quizzes/12"), true);
+    assert.equal(isReadingRoute("/reading?tab=grammar"), false);
     assert.equal(isReadingRoute("/grammar"), true);
     assert.equal(isReadingRoute("/grammar/topic/5"), true);
 
     // Other skills should not activate Đọc
-    assert.equal(isReadingRoute("/practice/listening"), false);
-    assert.equal(isReadingRoute("/practice/speaking"), false);
-    assert.equal(isReadingRoute("/practice/writing"), false);
+    assert.equal(isReadingRoute("/listening"), false);
+    assert.equal(isReadingRoute("/speaking"), false);
+    assert.equal(isReadingRoute("/writing"), false);
   });
 
   it("activates 'Khóa học' for Course catalog, My Courses, and Class routes", () => {
@@ -90,23 +90,23 @@ describe("Header Navigation Restructure Verification", () => {
   });
 
   it("preserves active highlighting for all other skills, flashcard, and store", () => {
-    assert.equal(isListeningRoute("/practice/listening"), true);
-    assert.equal(isSpeakingRoute("/practice/speaking"), true);
-    assert.equal(isWritingRoute("/practice/writing"), true);
+    assert.equal(isListeningRoute("/listening"), true);
+    assert.equal(isSpeakingRoute("/speaking"), true);
+    assert.equal(isWritingRoute("/writing"), true);
     assert.equal(isFlashcardRoute("/flashcard"), true);
     assert.equal(isFlashcardRoute("/vocabulary/study"), true);
     assert.equal(isMarketRoute("/market"), true);
   });
 
   it("activates 'Luyện đề' for exam catalog and certificate practice routes", () => {
-    assert.equal(isExamRoute("/practice/quizzes"), true);
-    assert.equal(isExamRoute("/practice/quizzes/"), true);
-    assert.equal(isExamRoute("/practice/toeic/1"), true);
-    assert.equal(isExamRoute("/practice/toeic/attempts/123"), true);
+    assert.equal(isExamRoute("/exams"), true);
+    assert.equal(isExamRoute("/exams/"), true);
+    assert.equal(isExamRoute("/toeic/1"), true);
+    assert.equal(isExamRoute("/toeic/attempts/123"), true);
 
     // Skill quizzes like reading or listening should NOT activate Luyện đề
-    assert.equal(isExamRoute("/practice/quizzes/123"), false);
-    assert.equal(isExamRoute("/practice/reading"), false);
-    assert.equal(isExamRoute("/practice/listening"), false);
+    assert.equal(isExamRoute("/listening/123"), false);
+    assert.equal(isExamRoute("/reading"), false);
+    assert.equal(isExamRoute("/listening"), false);
   });
 });
