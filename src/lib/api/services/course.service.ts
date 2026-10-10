@@ -20,7 +20,14 @@ export type CourseSkill = "LISTENING" | "SPEAKING" | "READING" | "WRITING";
 export interface CourseCurriculumActivity {
   id: string;
   sourceId: number | string;
-  kind: "LESSON" | "LISTENING" | "SPEAKING" | "READING" | "WRITING";
+  kind:
+    | "LESSON"
+    | "LISTENING"
+    | "SPEAKING"
+    | "READING"
+    | "WRITING"
+    | "TOEIC"
+    | "GRAMMAR";
   skill: CourseSkill | null;
   title: string;
   description: string | null;
@@ -33,6 +40,8 @@ export interface CourseCurriculumActivity {
   order?: number;
   speakingPracticeSetId?: string | null;
   completed?: boolean;
+  unlocked?: boolean;
+  lockedReason?: string | null;
 }
 
 export interface CourseCurriculumLesson {
@@ -63,6 +72,7 @@ export interface CourseCurriculum {
     | "EMPTY"
     | "BROKEN"
     | "FOCUSED"
+    | "TOEIC"
     | "DEFERRED_TO_TOEIC_WORKFLOW";
   readinessReasons: string[];
 }
@@ -74,7 +84,12 @@ export interface CourseProgress {
   optionalTotal: number;
   percentage: number;
   isComplete: boolean;
-  nextActivity: { id: string; route: string | null; title: string } | null;
+  nextActivity: {
+    id: string;
+    lessonId?: number;
+    route: string | null;
+    title: string;
+  } | null;
   activities: Array<{
     id: string;
     lessonId?: number;
@@ -84,6 +99,8 @@ export interface CourseProgress {
     required: boolean;
     completed: boolean;
     route: string | null;
+    unlocked?: boolean;
+    lockedReason?: string | null;
   }>;
 }
 
@@ -98,12 +115,43 @@ export interface Course {
   classes?: Class[];
   curriculum?: CourseCurriculum;
   progress?: CourseProgress | null;
+  canAccess?: boolean;
+  accessSource?: "ADMIN" | "PRO_SUBSCRIPTION" | "LEGACY_PURCHASE" | null;
+  requiresPro?: boolean;
+  isStarted?: boolean;
+  isCompleted?: boolean;
+  lockedReason?: string | null;
+  isSelfPaced?: boolean;
+  learning?: CourseLearningProfile;
   quizzes?: Array<{
     id: number;
     title: string;
     type: string;
     isPremiumContent?: boolean;
   }>;
+}
+
+export interface CourseLearningProfile {
+  introduction: string;
+  objectives: string[];
+  studyGuidance: string;
+  mediaLabel: string;
+  coverImage: string;
+}
+
+export interface CourseLessonDetail {
+  courseId: number;
+  lesson: CourseCurriculumLesson & {
+    theory: { overview: string; keyPoints: string[] };
+  };
+  course: {
+    id: number;
+    title: string;
+    level: string | null;
+    learning?: CourseLearningProfile;
+  };
+  progress: CourseProgress | null;
+  navigation: { previousLessonId: number | null; nextLessonId: number | null };
 }
 
 export interface Material {
@@ -159,7 +207,13 @@ export interface PublicCourseCard {
   status: string;
   createdAt: string;
   teacher?: PublicTeacher;
-  upcomingClassCount: number;
+  curriculumType?: string;
+  canAccess: boolean;
+  accessSource: "ADMIN" | "PRO_SUBSCRIPTION" | "LEGACY_PURCHASE" | null;
+  requiresPro: boolean;
+  isSelfPaced: boolean;
+  learning?: CourseLearningProfile;
+  curriculum?: CourseCurriculum;
 }
 
 export interface PublicClass {
@@ -181,6 +235,7 @@ export interface PublicLessonOutline {
   title: string;
   description: string | null;
   order: number;
+  activities: CourseCurriculumActivity[];
 }
 
 export interface PublicCourseDetail {
@@ -193,8 +248,14 @@ export interface PublicCourseDetail {
   createdAt: string;
   teacher?: PublicTeacher;
   lessons: PublicLessonOutline[];
-  classes: PublicClass[];
+  curriculumType?: string;
+  classes?: PublicClass[];
   curriculum?: CourseCurriculum;
+  canAccess: boolean;
+  accessSource: "ADMIN" | "PRO_SUBSCRIPTION" | "LEGACY_PURCHASE" | null;
+  requiresPro: boolean;
+  isSelfPaced: boolean;
+  learning?: CourseLearningProfile;
 }
 
 export interface EnrollResponseDto {
@@ -238,6 +299,30 @@ export const courseService = {
 
   getCourseProgress: async (id: number): Promise<CourseProgress> => {
     return await axiosClient.get(`/courses/${id}/progress`);
+  },
+
+  startCourse: async (
+    id: number,
+  ): Promise<{
+    courseId: number;
+    enrollmentId: number;
+    accessSource: string;
+    progress: CourseProgress;
+  }> => {
+    return await axiosClient.post(`/courses/${id}/start`);
+  },
+
+  getCourseActivityAccess: async (courseId: number, activityId: number) => {
+    return await axiosClient.get(
+      `/courses/${courseId}/activities/${activityId}/access`,
+    );
+  },
+
+  getCourseLesson: async (
+    courseId: number,
+    lessonId: number,
+  ): Promise<CourseLessonDetail> => {
+    return await axiosClient.get(`/courses/${courseId}/lessons/${lessonId}`);
   },
 
   getClassById: async (classId: number): Promise<ClassDetail> => {

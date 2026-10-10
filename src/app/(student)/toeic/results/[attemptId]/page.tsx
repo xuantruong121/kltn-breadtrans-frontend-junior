@@ -3,8 +3,9 @@
 import { use } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toeicService } from "@/lib/api/services/toeic.service";
+import { isSafeCourseReturn } from "@/lib/course/navigation";
 
 export default function ToeicResultPage({
   params,
@@ -14,6 +15,12 @@ export default function ToeicResultPage({
   const { attemptId: rawAttemptId } = use(params);
   const attemptId = Number(rawAttemptId);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedReturnTo = searchParams.get("returnTo");
+  const courseReturn =
+    requestedReturnTo && isSafeCourseReturn(requestedReturnTo)
+      ? requestedReturnTo
+      : null;
   const { data, isLoading, isError } = useQuery({
     queryKey: ["toeic-result", attemptId],
     queryFn: () => toeicService.getResult(attemptId),
@@ -132,7 +139,7 @@ export default function ToeicResultPage({
         </button>
         <button
           type="button"
-          onClick={() => router.push("/exams")}
+          onClick={() => router.push(courseReturn ?? "/exams")}
           className="mt-8 inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-5 text-sm font-black text-slate-700 dark:text-slate-200 hover:border-amber-400 dark:hover:border-amber-500 cursor-pointer"
         >
           <ArrowLeft size={16} /> Quay lại kho đề

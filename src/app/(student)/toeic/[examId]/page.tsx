@@ -2,11 +2,12 @@
 
 import { use, useSyncExternalStore } from "react";
 import { Clock3, FileText, Loader2, PlayCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toeicService } from "@/lib/api/services/toeic.service";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { useAuthStore } from "@/stores/authStore";
+import { isSafeCourseReturn } from "@/lib/course/navigation";
 
 export default function ToeicBriefingPage({
   params,
@@ -16,6 +17,10 @@ export default function ToeicBriefingPage({
   const { examId: rawExamId } = use(params);
   const examId = Number(rawExamId);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get("returnTo");
+  const safeReturnTo =
+    returnTo && isSafeCourseReturn(returnTo) ? returnTo : null;
   const { user } = useAuthStore();
   const hasMounted = useSyncExternalStore(
     () => () => undefined,
@@ -35,7 +40,9 @@ export default function ToeicBriefingPage({
       ),
     onSuccess: async ({ id }) => {
       await toeicService.beginAttempt(id);
-      router.push(`/toeic/attempts/${id}`);
+      router.push(
+        `/toeic/attempts/${id}${safeReturnTo ? `?returnTo=${encodeURIComponent(safeReturnTo)}` : ""}`,
+      );
     },
   });
   if (!hasMounted)

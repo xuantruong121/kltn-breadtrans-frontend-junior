@@ -3,20 +3,19 @@
 import { useState, useMemo, useRef, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import {
-  BookOpen,
-  Filter,
-  Loader2,
-  RotateCcw,
-  Search,
-  X,
-} from "lucide-react";
+import { BookOpen, Filter, Loader2, RotateCcw, Search, X } from "lucide-react";
 import { readingService } from "@/lib/api/services/reading.service";
-import { grammarService, type GrammarTopicSummary } from "@/lib/api/services/grammar.service";
+import {
+  grammarService,
+  type GrammarTopicSummary,
+} from "@/lib/api/services/grammar.service";
 import { useAuthStore } from "@/stores/authStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { PremiumContentPaywallModal } from "@/components/subscription/PremiumContentPaywallModal";
-import { ReadingTopicCard, type ReadingTopicItem } from "@/components/reading/ReadingTopicCard";
+import {
+  ReadingTopicCard,
+  type ReadingTopicItem,
+} from "@/components/reading/ReadingTopicCard";
 import { GrammarTopicCard } from "@/components/reading/GrammarTopicCard";
 import {
   type DifficultyLevel,
@@ -25,6 +24,7 @@ import {
   summarizeReadingExerciseProgress,
 } from "@/components/reading/readingCardLogic";
 import { GrammarScreen } from "@/modules/grammar/screens/GrammarScreen";
+import { isSafeCourseReturn } from "@/lib/course/navigation";
 
 const CATEGORY_OPTIONS: Array<{ id: ExerciseCategory; label: string }> = [
   { id: "READING", label: "Đọc hiểu" },
@@ -55,18 +55,32 @@ function ReadingTopicsContent() {
   ).toLowerCase();
 
   const initialCategory: ExerciseCategory =
-    rawCategoryParam === "grammar"
-      ? "GRAMMAR"
-      : "READING";
+    rawCategoryParam === "grammar" ? "GRAMMAR" : "READING";
+  const requestedGrammarTopicId = Number(searchParams.get("topicId"));
+  const requestedReturnTo = searchParams.get("returnTo");
+  const courseReturn =
+    requestedReturnTo && isSafeCourseReturn(requestedReturnTo)
+      ? requestedReturnTo
+      : null;
 
-  const [selectedCategory, setSelectedCategory] = useState<ExerciseCategory>(initialCategory);
-  const [activeGrammarTopicId, setActiveGrammarTopicId] = useState<number | null>(null);
+  const [selectedCategory, setSelectedCategory] =
+    useState<ExerciseCategory>(initialCategory);
+  const [activeGrammarTopicId, setActiveGrammarTopicId] = useState<
+    number | null
+  >(
+    initialCategory === "GRAMMAR" &&
+      Number.isInteger(requestedGrammarTopicId) &&
+      requestedGrammarTopicId > 0
+      ? requestedGrammarTopicId
+      : null,
+  );
 
   const { user } = useAuthStore();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel>("ALL");
+  const [selectedDifficulty, setSelectedDifficulty] =
+    useState<DifficultyLevel>("ALL");
   const [sortOrder, setSortOrder] = useState<string>("DEFAULT");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [authGate, setAuthGate] = useState<{
@@ -74,7 +88,8 @@ function ReadingTopicsContent() {
     quizId?: number;
     title?: string;
   }>({ open: false });
-  const [paywallExercise, setPaywallExercise] = useState<ReadingTopicItem | null>(null);
+  const [paywallExercise, setPaywallExercise] =
+    useState<ReadingTopicItem | null>(null);
 
   // Sync category param with URL without causing page reload
   const handleCategoryChange = (category: ExerciseCategory) => {
@@ -158,7 +173,9 @@ function ReadingTopicsContent() {
   }, [readingExercisesData]);
 
   const grammarTopics: GrammarTopicSummary[] = useMemo(() => {
-    return Array.isArray(grammarTopicsData) ? (grammarTopicsData as GrammarTopicSummary[]) : [];
+    return Array.isArray(grammarTopicsData)
+      ? (grammarTopicsData as GrammarTopicSummary[])
+      : [];
   }, [grammarTopicsData]);
 
   const readingProgress = summarizeReadingExerciseProgress(readingExercises);
@@ -179,12 +196,18 @@ function ReadingTopicsContent() {
           exercise.level,
           exercise.topicName,
           ...(exercise.microSkills ?? []),
-        ].filter(Boolean).join(" ").toLowerCase();
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
         const matchSearch = !q || searchable.includes(q);
         const status = exercise.completionStatus ?? "NOT_STARTED";
         const isDone = status === "COMPLETED";
         const isInProg = status === "IN_PROGRESS";
-        const matchDifficulty = matchesReadingDifficulty(exercise, selectedDifficulty);
+        const matchDifficulty = matchesReadingDifficulty(
+          exercise,
+          selectedDifficulty,
+        );
 
         const matchStatus =
           selectedStatus === "ALL" ||
@@ -204,7 +227,8 @@ function ReadingTopicsContent() {
         const title = (g.title || "").toLowerCase();
         const desc = (g.description || "").toLowerCase();
         const formula = (g.keyFormula || "").toLowerCase();
-        const matchSearch = !q || title.includes(q) || desc.includes(q) || formula.includes(q);
+        const matchSearch =
+          !q || title.includes(q) || desc.includes(q) || formula.includes(q);
 
         const isDone = Boolean(g.isCompleted);
         const isInProg = !isDone && (g.attemptCount || 0) > 0;
@@ -226,8 +250,14 @@ function ReadingTopicsContent() {
     // Sorting
     const sorted = results.sort((a, b) => {
       if (sortOrder === "NAME_ASC") {
-        const nameA = a.type === "READING" ? (a.data.name || a.data.title || "") : a.data.title;
-        const nameB = b.type === "READING" ? (b.data.name || b.data.title || "") : b.data.title;
+        const nameA =
+          a.type === "READING"
+            ? a.data.name || a.data.title || ""
+            : a.data.title;
+        const nameB =
+          b.type === "READING"
+            ? b.data.name || b.data.title || ""
+            : b.data.title;
         return nameA.localeCompare(nameB);
       }
       if (sortOrder === "PROGRESS_DESC") {
@@ -261,7 +291,8 @@ function ReadingTopicsContent() {
     return sorted.map((item) => {
       if (item.type === "READING") {
         const isDone =
-          (item.data.completedArticles || 0) >= (item.data.totalArticles || 0) &&
+          (item.data.completedArticles || 0) >=
+            (item.data.totalArticles || 0) &&
           (item.data.totalArticles || 0) > 0;
         if (!isDone && !spotlightAssigned) {
           spotlightAssigned = true;
@@ -270,7 +301,15 @@ function ReadingTopicsContent() {
       }
       return item;
     });
-  }, [readingExercises, grammarTopics, selectedCategory, searchTerm, selectedDifficulty, selectedStatus, sortOrder]);
+  }, [
+    readingExercises,
+    grammarTopics,
+    selectedCategory,
+    searchTerm,
+    selectedDifficulty,
+    selectedStatus,
+    sortOrder,
+  ]);
 
   const handleStartReadingExercise = (exercise: ReadingTopicItem) => {
     if (!user) {
@@ -305,6 +344,10 @@ function ReadingTopicsContent() {
       <GrammarScreen
         activeTopicId={activeGrammarTopicId}
         onExit={() => {
+          if (courseReturn) {
+            router.push(courseReturn);
+            return;
+          }
           setActiveGrammarTopicId(null);
           handleCategoryChange("GRAMMAR");
         }}
@@ -328,7 +371,9 @@ function ReadingTopicsContent() {
             </h1>
 
             <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-400 sm:text-sm max-w-3xl line-clamp-1 xl:line-clamp-none">
-              Phát triển vốn từ vựng, củng cố quy tắc ngữ pháp cốt lõi và rèn luyện khả năng đọc hiểu trong ngữ cảnh đời sống, học tập và công việc.
+              Phát triển vốn từ vựng, củng cố quy tắc ngữ pháp cốt lõi và rèn
+              luyện khả năng đọc hiểu trong ngữ cảnh đời sống, học tập và công
+              việc.
             </p>
           </div>
 
@@ -405,7 +450,11 @@ function ReadingTopicsContent() {
           </div>
 
           <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-            Hiển thị <span className="font-bold text-slate-900 dark:text-slate-100">{filteredAndSortedItems.length}</span> bài luyện tập
+            Hiển thị{" "}
+            <span className="font-bold text-slate-900 dark:text-slate-100">
+              {filteredAndSortedItems.length}
+            </span>{" "}
+            bài luyện tập
           </div>
         </div>
 
@@ -511,7 +560,9 @@ function ReadingTopicsContent() {
                 params.delete("tab");
                 params.delete("mode");
                 const qs = params.toString();
-                router.replace(qs ? `/reading?${qs}` : "/reading", { scroll: false });
+                router.replace(qs ? `/reading?${qs}` : "/reading", {
+                  scroll: false,
+                });
               }}
               aria-label="Đặt lại tất cả bộ lọc về mặc định"
               className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-600 dark:text-slate-400 transition hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 cursor-pointer"
@@ -527,7 +578,11 @@ function ReadingTopicsContent() {
       <section>
         {isLoading ? (
           <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-            <Loader2 size={32} className="animate-spin text-violet-600" aria-hidden="true" />
+            <Loader2
+              size={32}
+              className="animate-spin text-violet-600"
+              aria-hidden="true"
+            />
             <p className="mt-3 text-xs font-bold text-slate-500 dark:text-slate-400">
               Đang tải danh sách bài luyện tập...
             </p>
@@ -567,7 +622,12 @@ function ReadingTopicsContent() {
                     }
                     onOpenPaywall={(t) => setPaywallExercise(t)}
                     onStart={handleStartReadingExercise}
-                    statusOverride={!item.data.isLocked && item.data.completionStatus === "IN_PROGRESS" ? "IN_PROGRESS" : undefined}
+                    statusOverride={
+                      !item.data.isLocked &&
+                      item.data.completionStatus === "IN_PROGRESS"
+                        ? "IN_PROGRESS"
+                        : undefined
+                    }
                     isSpotlight={item.data.isSpotlight}
                   />
                 );
@@ -590,12 +650,17 @@ function ReadingTopicsContent() {
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 sm:p-12 text-center">
-            <BookOpen size={36} className="mx-auto text-slate-400 dark:text-slate-500 mb-3" aria-hidden="true" />
+            <BookOpen
+              size={36}
+              className="mx-auto text-slate-400 dark:text-slate-500 mb-3"
+              aria-hidden="true"
+            />
             <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-200">
               Không tìm thấy bài luyện tập phù hợp
             </h2>
             <p className="mt-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-              Hãy thử chọn phân loại khác, độ khó khác hoặc tìm kiếm với từ khóa khác để khám phá các bài luyện có sẵn.
+              Hãy thử chọn phân loại khác, độ khó khác hoặc tìm kiếm với từ khóa
+              khác để khám phá các bài luyện có sẵn.
             </p>
             <div className="mt-5 flex justify-center">
               <button
@@ -611,7 +676,9 @@ function ReadingTopicsContent() {
                   params.delete("tab");
                   params.delete("mode");
                   const qs = params.toString();
-                  router.replace(qs ? `/reading?${qs}` : "/reading", { scroll: false });
+                  router.replace(qs ? `/reading?${qs}` : "/reading", {
+                    scroll: false,
+                  });
                 }}
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
               >
@@ -627,8 +694,12 @@ function ReadingTopicsContent() {
       <AuthGateModal
         isOpen={authGate.open}
         onClose={() => setAuthGate({ open: false })}
-        targetLabel={authGate.title ? `bài luyện "${authGate.title}"` : "bài luyện tập này"}
-        targetRoute={authGate.quizId ? `/reading/${authGate.quizId}` : "/reading"}
+        targetLabel={
+          authGate.title ? `bài luyện "${authGate.title}"` : "bài luyện tập này"
+        }
+        targetRoute={
+          authGate.quizId ? `/reading/${authGate.quizId}` : "/reading"
+        }
         onOpenLogin={() => router.push("/login")}
         onOpenRegister={() => router.push("/register")}
       />

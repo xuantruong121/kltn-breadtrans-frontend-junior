@@ -18,6 +18,7 @@
     "test:audio-worklet": "node --no-warnings --test --experimental-strip-types src/lib/speaking/speakingAudioWorkletLogic.test.ts",
     "test:pet-logic": "node --no-warnings --test --experimental-strip-types src/modules/pet/petLogic.test.ts",
     "test:market-exchange": "node --no-warnings --test --experimental-strip-types src/modules/market/marketExchangeLogic.test.ts",
+    "test:address-combobox": "node --no-warnings --test --experimental-strip-types src/components/ui/addressComboboxLogic.test.ts",
     "test:nav-utils": "node --no-warnings --test --experimental-strip-types src/components/navigation/navUtils.test.ts src/components/navigation/headerRestructure.test.ts",
     "test:theme": "node --no-warnings --test --experimental-strip-types src/lib/theme/theme.test.ts",
     "test:practice-card": "node --no-warnings --test --experimental-strip-types \"src/components/speaking/PracticeCard.test.ts\"",
@@ -34,7 +35,8 @@
     "test:flashcard-logic": "node --no-warnings --test --experimental-strip-types src/modules/flashcard/flashcardLogic.test.ts",
     "test:plan-logic": "node --no-warnings --test --experimental-strip-types src/modules/subscription/planLogic.test.ts",
     "test:notifications": "node --no-warnings --test --experimental-strip-types src/lib/notifications/notificationLogic.test.ts",
-    "test:diagnostic": "node --no-warnings --test --experimental-strip-types src/lib/diagnostic/diagnosticUiLogic.test.ts"
+    "test:diagnostic": "node --no-warnings --test --experimental-strip-types src/lib/diagnostic/diagnosticUiLogic.test.ts",
+    "test:course-catalog-ia": "node --no-warnings --test --experimental-strip-types src/lib/course/courseCatalogIa.test.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.4",

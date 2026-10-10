@@ -89,9 +89,9 @@ test("Quest routing correctly separates COMPLETE_QUIZ from DO_LISTENING", () => 
   const vocab = getTypeSpecificQuestFallback("LEARN_VOCAB");
   assert.equal(vocab.actionUrl, "/flashcard");
 
-  // COMPLETE_LESSON -> /my-courses
+  // COMPLETE_LESSON -> unified Course catalog (root /my-courses is retired)
   const lesson = getTypeSpecificQuestFallback("COMPLETE_LESSON");
-  assert.equal(lesson.actionUrl, "/my-courses");
+  assert.equal(lesson.actionUrl, "/courses");
 });
 
 test("isSafeInternalRoute validates allowed prefixes", () => {

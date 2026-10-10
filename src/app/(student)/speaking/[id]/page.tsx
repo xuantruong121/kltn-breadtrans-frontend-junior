@@ -30,6 +30,7 @@ import {
   SpeakingSubmissionSummary,
   WordAssessmentItem,
 } from "@/lib/api/services/speaking.service";
+import { isSafeCourseReturn } from "@/lib/course/navigation";
 import {
   SpeakingAttemptPhase,
   generateSpeakingIdempotencyKey,
@@ -53,7 +54,11 @@ import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScre
 import { PracticeExitConfirmDialog } from "@/components/practice/PracticeExitConfirmDialog";
 import { PracticeHeader } from "@/components/practice/PracticeHeader";
 import { PracticeShell } from "@/components/practice/PracticeShell";
-import { findPreviousCompletedAttempt, resolveSpeakingMode, scoreDelta } from "@/lib/speaking/speakingExperienceLogic";
+import {
+  findPreviousCompletedAttempt,
+  resolveSpeakingMode,
+  scoreDelta,
+} from "@/lib/speaking/speakingExperienceLogic";
 import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
 import { ReportIssueButton } from "@/components/issue-report";
 import { isPremiumSpeakingForbiddenError } from "@/modules/subscription/planLogic";
@@ -139,14 +144,17 @@ export default function SpeakingExerciseDetailPage() {
   const exerciseId = Number(id);
   const practiceSetKey = searchParams.get("set");
   const requestedReturnTo = searchParams.get("returnTo");
-  const courseReturn = requestedReturnTo && /^\/my-courses\/\d+$/.test(requestedReturnTo)
-    ? requestedReturnTo
-    : "/speaking";
+  const courseReturn =
+    requestedReturnTo && isSafeCourseReturn(requestedReturnTo)
+      ? requestedReturnTo
+      : "/speaking";
   const queryClient = useQueryClient();
 
   // Explicit Attempt State Machine
   const [phase, setPhase] = useState<SpeakingAttemptPhase>("READY");
-  const [micStatus, setMicStatus] = useState<"UNKNOWN" | "READY" | "DENIED" | "MISSING">("UNKNOWN");
+  const [micStatus, setMicStatus] = useState<
+    "UNKNOWN" | "READY" | "DENIED" | "MISSING"
+  >("UNKNOWN");
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const MAX_RECORDING_SECONDS = 45;
 
@@ -176,8 +184,7 @@ export default function SpeakingExerciseDetailPage() {
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const animFrameRef = useRef<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const workletFlushControllerRef =
-    useRef<WorkletFlushController | null>(null);
+  const workletFlushControllerRef = useRef<WorkletFlushController | null>(null);
   const lastChunkSequenceRef = useRef<number | null>(null);
   const inputSampleRateRef = useRef<number>(44100);
 
@@ -292,7 +299,11 @@ export default function SpeakingExerciseDetailPage() {
     return () => document.removeEventListener("mousedown", handleDocumentClick);
   }, []);
 
-  const { data: exercise, isLoading, error: exerciseError } = useQuery({
+  const {
+    data: exercise,
+    isLoading,
+    error: exerciseError,
+  } = useQuery({
     queryKey: ["speaking-exercise", exerciseId],
     queryFn: () => speakingService.getExerciseById(exerciseId),
     enabled: !!exerciseId,
@@ -334,7 +345,10 @@ export default function SpeakingExerciseDetailPage() {
   );
   const activePracticeSet = activeCatalogExercise?.practiceSet;
   const speakingMode = useMemo(
-    () => resolveSpeakingMode(exercise ?? activeCatalogExercise ?? { title: "", category: "GENERAL" }),
+    () =>
+      resolveSpeakingMode(
+        exercise ?? activeCatalogExercise ?? { title: "", category: "GENERAL" },
+      ),
     [exercise, activeCatalogExercise],
   );
   const currentPracticeSetPosition = activePracticeSet
@@ -354,7 +368,12 @@ export default function SpeakingExerciseDetailPage() {
 
   const isCompleted = phase === "COMPLETED";
   const previousAttempt = useMemo(
-    () => findPreviousCompletedAttempt(mySubmissions, exerciseId, currentSubmission?.id),
+    () =>
+      findPreviousCompletedAttempt(
+        mySubmissions,
+        exerciseId,
+        currentSubmission?.id,
+      ),
     [mySubmissions, exerciseId, currentSubmission?.id],
   );
   const shouldConfirmExit = !isCompleted;
@@ -619,7 +638,11 @@ export default function SpeakingExerciseDetailPage() {
           ? "Không tìm thấy micro. Hãy kết nối micro rồi thử lại."
           : "Chưa cấp quyền micro hoặc không thể khởi tạo bộ ghi âm. Hãy kiểm tra quyền micro trong trình duyệt.",
       );
-      setMicStatus(err instanceof DOMException && err.name === "NotFoundError" ? "MISSING" : "DENIED");
+      setMicStatus(
+        err instanceof DOMException && err.name === "NotFoundError"
+          ? "MISSING"
+          : "DENIED",
+      );
       setPhase("READY");
     }
   }, [audioUrl, phase, releaseMediaStream]);
@@ -730,7 +753,9 @@ export default function SpeakingExerciseDetailPage() {
       }
     };
 
-    const handleFeedbackCompleted = async (payload: { submissionId: number }) => {
+    const handleFeedbackCompleted = async (payload: {
+      submissionId: number;
+    }) => {
       if (
         currentSubmissionIdRef.current &&
         payload.submissionId === currentSubmissionIdRef.current
@@ -1585,7 +1610,8 @@ export default function SpeakingExerciseDetailPage() {
               Nội dung dành cho PLUS
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-2">
-              Bài luyện nói này thuộc gói PLUS. Nâng cấp gói để mở khóa toàn bộ bài luyện và nội dung nâng cao.
+              Bài luyện nói này thuộc gói PLUS. Nâng cấp gói để mở khóa toàn bộ
+              bài luyện và nội dung nâng cao.
             </p>
           </div>
           <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
@@ -1646,487 +1672,100 @@ export default function SpeakingExerciseDetailPage() {
       mode={speakingMode.label}
       variant="immersive"
     >
-    <div className="w-full min-h-dvh flex flex-col bg-white dark:bg-slate-950 font-sans">
-      <PracticeHeader
-        title={activePracticeSet?.title ?? exercise.title}
-        category={exercise.category}
-        difficulty={exercise.difficulty}
-        positionText={
-          activePracticeSet && currentPracticeSetPosition > 0
-            ? `Câu ${currentPracticeSetPosition}/${activePracticeSet.exerciseCount}`
-            : undefined
-        }
-        activityLabel="Đánh giá phát âm"
-        onExit={() => confirmExit(courseReturn)}
-        exitLabel="Thoát"
-        bilingualEnabled
-        isBilingual={isBilingual}
-        onToggleBilingual={() => setIsBilingual((v) => !v)}
-        notesEnabled
-        onOpenNotes={() => setShowNotesModal(true)}
-        shortcutsEnabled
-        shortcutsContent={
-          <ul className="space-y-2 text-xs font-medium text-slate-600 dark:text-slate-400">
-            <li className="flex items-center justify-between">
-              <span>Bắt đầu / Dừng thu âm:</span>
-              <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
-                Space
-              </kbd>
-            </li>
-            <li className="flex items-center justify-between">
-              <span>Phím thu âm phụ:</span>
-              <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
-                R
-              </kbd>
-            </li>
-            <li className="flex items-center justify-between">
-              <span>Quy trình tự động:</span>
-              <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold">
-                Dừng &rarr; Nghe lại rồi gửi
-              </span>
-            </li>
-          </ul>
-        }
-        soundEnabled
-        soundMuted={soundMuted}
-        onToggleSound={() => setSoundMuted((v) => !v)}
-      />
-
-      {/* 2. Main Workspace: Dynamic Two-Stage Morphing Architecture */}
-      {isStage1 ? (
-        /* STAGE 1: FOCUSED RECORDING MODE (Single Centered Stage, Zero Gutters) */
-        <main className="flex-1 w-full flex flex-col justify-between overflow-y-auto bg-slate-50/40 p-3 sm:p-4 lg:p-5 min-h-0">
-          <div className="max-w-5xl xl:max-w-6xl mx-auto w-full flex-1 flex flex-col items-center justify-center gap-3 sm:gap-4 my-auto">
-            {/* Focal mode badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-amber-100/90 text-amber-900 text-xs font-black uppercase tracking-wider shadow-2xs">
-              <Target size={13} className="text-amber-700" />
-              <span>Câu cần luyện đọc</span>
-              {practiceSetKey && currentPracticeSetPosition > 0 && practiceSetExercises.length > 1 && (
-                <>
-                  <span className="text-amber-600/60">·</span>
-                  <span className="tabular-nums font-black">
-                    {currentPracticeSetPosition}
-                    <span className="font-medium text-amber-700/70">/{practiceSetExercises.length}</span>
-                  </span>
-                </>
-              )}
-            </div>
-
-            {/* Contextual Illustration Image (if available) */}
-            {exercise.imageUrl && (
-              <div className="w-full max-w-xs flex items-center justify-center overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-1.5 shadow-xs shrink-0 max-h-[120px]">
-                <img
-                  src={exercise.imageUrl}
-                  alt="Contextual illustration"
-                  className="w-full h-full object-contain max-h-[110px] rounded-xl"
-                />
-              </div>
-            )}
-
-            {/* 1. Practice Sentence Canvas (Widened horizontal stretch, compact vertical padding) */}
-            <div className="w-full bg-gradient-to-b from-white to-slate-50/60 dark:from-slate-900 dark:to-slate-850/60 py-4 px-5 sm:py-5 sm:px-8 lg:px-10 rounded-3xl border-2 border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center">
-              {renderInteractiveTargetWords(
-                exercise.targetText || "",
-                undefined,
-                true,
-              )}
-
-              {/* Optional Bilingual translation box */}
-              {isBilingual &&
-                (exercise.translation || exercise.description) && (
-                  <div className="mt-2.5 w-full max-w-2xl rounded-2xl border border-amber-200/80 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/40 px-3.5 py-2 text-slate-800 dark:text-slate-200 text-center shadow-2xs">
-                    <span className="font-black text-amber-950 dark:text-amber-300 block uppercase tracking-wider text-xs">
-                      Bản dịch tham khảo
-                    </span>
-                    <p className="font-semibold text-slate-800 dark:text-slate-200 italic text-sm sm:text-base">
-                      "{exercise.translation || exercise.description}"
-                    </p>
-                  </div>
-                )}
-
-              <p className="mt-2.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-bold flex items-center justify-center gap-2">
-                <BookOpen size={14} className="text-amber-600 dark:text-amber-400" />
-                <span>
-                  Nhấp vào từ bất kỳ để tra phiên âm IPA &amp; nghe phát âm
+      <div className="w-full min-h-dvh flex flex-col bg-white dark:bg-slate-950 font-sans">
+        <PracticeHeader
+          title={activePracticeSet?.title ?? exercise.title}
+          category={exercise.category}
+          difficulty={exercise.difficulty}
+          positionText={
+            activePracticeSet && currentPracticeSetPosition > 0
+              ? `Câu ${currentPracticeSetPosition}/${activePracticeSet.exerciseCount}`
+              : undefined
+          }
+          activityLabel="Đánh giá phát âm"
+          onExit={() => confirmExit(courseReturn)}
+          exitLabel="Thoát"
+          bilingualEnabled
+          isBilingual={isBilingual}
+          onToggleBilingual={() => setIsBilingual((v) => !v)}
+          notesEnabled
+          onOpenNotes={() => setShowNotesModal(true)}
+          shortcutsEnabled
+          shortcutsContent={
+            <ul className="space-y-2 text-xs font-medium text-slate-600 dark:text-slate-400">
+              <li className="flex items-center justify-between">
+                <span>Bắt đầu / Dừng thu âm:</span>
+                <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                  Space
+                </kbd>
+              </li>
+              <li className="flex items-center justify-between">
+                <span>Phím thu âm phụ:</span>
+                <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                  R
+                </kbd>
+              </li>
+              <li className="flex items-center justify-between">
+                <span>Quy trình tự động:</span>
+                <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold">
+                  Dừng &rarr; Nghe lại rồi gửi
                 </span>
-              </p>
-            </div>
+              </li>
+            </ul>
+          }
+          soundEnabled
+          soundMuted={soundMuted}
+          onToggleSound={() => setSoundMuted((v) => !v)}
+        />
 
-            {/* 2. Sample Audio & Speed Dock (POSITIONED DIRECTLY BENEATH THE SENTENCE) */}
-            <div className="w-full max-w-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs rounded-2xl border border-slate-200/90 dark:border-slate-800 p-2 sm:p-2.5 flex flex-wrap items-center justify-between gap-2.5 shadow-sm">
-              {/* Play / Stop sample + Accent */}
-              <div className="flex items-center gap-2">
-                {(() => {
-                  const hasReferenceAudio = Boolean(exercise.audioUrl);
-                  return (
-                    <button
-                      type="button"
-                      onClick={handleTogglePlayTTS}
-                      disabled={!hasReferenceAudio}
-                      aria-pressed={isPlayingTTS}
-                      aria-label={
-                        !hasReferenceAudio
-                          ? "Audio mẫu chưa khả dụng"
-                          : isPlayingTTS
-                            ? "Dừng nghe mẫu"
-                            : "Nghe mẫu phát âm"
-                      }
-                      title={
-                        hasReferenceAudio
-                          ? "Nghe audio mẫu đã được quản trị viên cung cấp"
-                          : "Bài luyện này chưa có audio mẫu được quản trị viên cung cấp"
-                      }
-                      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl font-extrabold text-xs sm:text-sm transition-all shadow-xs ${
-                        !hasReferenceAudio
-                          ? "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed"
-                          : isPlayingTTS
-                            ? "bg-rose-600 hover:bg-rose-700 text-white"
-                            : "bg-slate-900 hover:bg-slate-800 text-white active:scale-95 cursor-pointer"
-                      }`}
-                    >
-                      {!hasReferenceAudio ? (
-                        <>
-                          <VolumeX size={15} className="shrink-0" />
-                          <span>Audio mẫu chưa khả dụng</span>
-                        </>
-                      ) : isPlayingTTS ? (
-                        <>
-                          <Square size={13} className="fill-white shrink-0" />
-                          <span>Dừng nghe</span>
-                        </>
-                      ) : (
-                        <>
-                          <Volume2 size={15} className="shrink-0 text-amber-400" />
-                          <span>Nghe câu mẫu</span>
-                        </>
-                      )}
-                    </button>
-                  );
-                })()}
-
-                {/* Accent selector pills */}
-                <div
-                  className={`flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700 transition-opacity ${
-                    isPlayingTTS ? "opacity-60 cursor-not-allowed" : ""
-                  }`}
-                  role="group"
-                  aria-label="Chọn chất giọng phát âm từ"
-                >
-                  {(["US", "UK"] as const).map((accent) => {
-                    const selected = ttsAccent === accent;
-                    return (
-                      <button
-                        key={accent}
-                        type="button"
-                        disabled={isPlayingTTS}
-                        onClick={() => setTtsAccent(accent)}
-                        aria-pressed={selected}
-                        className={`px-2.5 py-1 rounded-lg text-xs sm:text-sm font-black transition-all ${
-                          isPlayingTTS ? "cursor-not-allowed" : "cursor-pointer"
-                        } ${
-                          selected
-                            ? "bg-amber-500 text-white shadow-2xs"
-                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
-                        }`}
-                      >
-                        {accent === "US" ? "Mỹ (US)" : "Anh (UK)"}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Speed rate controls */}
-              <div className="flex items-center gap-1.5">
-                <div className="flex items-center gap-1 text-slate-700 dark:text-slate-300 font-black text-xs sm:text-sm shrink-0">
-                  <Gauge size={14} className="text-amber-600 dark:text-amber-400" />
-                  <span className="hidden sm:inline">Tốc độ:</span>
-                </div>
-                <div
-                  className={`flex items-center gap-1 ${
-                    isPlayingTTS ? "opacity-60 cursor-not-allowed" : ""
-                  }`}
-                  role="group"
-                  aria-label="Chọn tốc độ phát âm từ"
-                >
-                  {TTS_SPEED_OPTIONS.map((opt) => {
-                    const selected = ttsRate === opt.value;
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        disabled={isPlayingTTS}
-                        onClick={() => setTtsRate(opt.value)}
-                        aria-pressed={selected}
-                        className={`px-2 py-0.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${
-                          isPlayingTTS ? "cursor-not-allowed" : "cursor-pointer"
-                        } ${
-                          selected
-                            ? "bg-amber-500 text-white font-black shadow-2xs"
-                            : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200/80 dark:border-slate-700"
-                        }`}
-                        title={opt.title}
-                      >
-                        {opt.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* 3. Audio Recording Controls */}
-            {phase === "READY" && !audioBlob ? (
-              <div className="flex flex-col items-center justify-center gap-2 my-1">
-                <button
-                  type="button"
-                  onClick={startRecording}
-                  className="size-16 sm:size-20 rounded-full bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center border border-amber-600/20 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 transition-all cursor-pointer active:scale-95 group"
-                  title="Bắt đầu thu âm (Phím Space / R)"
-                  aria-label="Bắt đầu thu âm"
-                >
-                  <Mic
-                    size={30}
-                    className="transition-transform group-hover:scale-105"
-                  />
-                </button>
-                <div className="text-center space-y-0.5">
-                  <p className={`text-xs font-bold ${micStatus === "READY" ? "text-emerald-700 dark:text-emerald-300" : micStatus === "MISSING" || micStatus === "DENIED" ? "text-rose-700 dark:text-rose-300" : "text-slate-500 dark:text-slate-400"}`}>
-                    {micStatus === "READY" ? "Micro sẵn sàng" : micStatus === "MISSING" ? "Không tìm thấy micro" : micStatus === "DENIED" ? "Chưa cấp quyền micro" : "Micro sẽ được kiểm tra khi bắt đầu thu âm"}
-                  </p>
-                  <p className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">
-                    Nhấn nút Micro hoặc bấm phím{" "}
-                    <kbd className="px-2 py-0.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-mono text-xs font-black text-slate-800 dark:text-slate-200 shadow-2xs">
-                      Space
-                    </kbd>{" "}
-                    để nói
-                  </p>
-                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-semibold">
-                    Sau khi dừng, bạn có thể nghe lại trước khi gửi đánh giá
-                  </p>
-                </div>
-              </div>
-            ) : phase === "READY" && audioBlob ? (
-              <div className="w-full max-w-xl rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 shadow-xs dark:border-emerald-900/60 dark:bg-emerald-950/20">
-                <div className="flex items-center gap-2 text-sm font-black text-emerald-900 dark:text-emerald-200">
-                  <Volume2 size={17} aria-hidden="true" /> Bản ghi đã sẵn sàng
-                </div>
-                <audio className="mt-3 w-full" controls preload="metadata" src={audioUrl ?? undefined} aria-label="Nghe lại bản ghi của bạn" />
-                <div className="mt-3 flex flex-wrap justify-center gap-2">
-                  <button type="button" onClick={handleRetryRecord} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">
-                    <RotateCcw size={15} aria-hidden="true" /> Thu lại
-                  </button>
-                  <button type="button" onClick={() => void submitPreparedRecording()} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-black text-white hover:bg-emerald-700">
-                    <Mic size={15} aria-hidden="true" /> Gửi đánh giá
-                  </button>
-                </div>
-                <p className="mt-2 text-center text-xs font-semibold text-emerald-800/80 dark:text-emerald-200/80">Bạn vẫn có thể thu lại trước khi gửi.</p>
-              </div>
-            ) : (
-              <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl border border-rose-200 dark:border-rose-900/60 p-4 flex flex-col items-center justify-center gap-3 shadow-xs animate-in fade-in my-1">
-                {/* Live countdown timer */}
-                <div className="flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-900 text-white font-mono font-bold text-xs sm:text-sm shadow-xs">
-                  <span className="size-2 rounded-full bg-rose-500 animate-ping" />
-                  <span>{formatSpeakingTime(recordingSeconds)}</span>
-                  <span className="text-slate-400">/ 00:45</span>
-                </div>
-
-                {/* Live audio visualizer canvas */}
-                <div className="w-full h-10 flex items-center justify-center bg-slate-950 rounded-xl p-1 shadow-inner">
-                  <canvas
-                    ref={canvasRef}
-                    width={320}
-                    height={36}
-                    className="w-full h-full"
-                  />
-                </div>
-
-                {/* Action buttons */}
-                <div className="flex items-center justify-center gap-3">
-                  <button
-                    type="button"
-                    onClick={stopRecording}
-                    className="size-16 sm:size-20 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center border border-rose-700/20 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 transition-all cursor-pointer active:scale-95 group"
-                    title="Dừng ghi âm (Phím Space / R)"
-                    aria-label="Dừng ghi âm để nghe lại"
-                  >
-                    <StopCircle
-                      size={30}
-                      className="transition-transform group-hover:scale-105"
-                    />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleCancelRecording}
-                    className="inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 bg-white dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-slate-200 dark:border-slate-700 hover:border-rose-200 transition-all cursor-pointer shadow-2xs active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
-                    title="Hủy lượt thu âm này"
-                  >
-                    <X size={14} className="text-rose-500" />
-                    <span>Hủy bỏ</span>
-                  </button>
-                </div>
-
-                <p className="font-bold text-xs sm:text-sm text-rose-600 text-center">
-                  Đang thu âm... Bấm nút đỏ hoặc nhấn [Space] để hoàn tất và nghe lại
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Collapsible Guidelines Drawer at the bottom */}
-          <div className="max-w-5xl xl:max-w-6xl mx-auto w-full mt-3 sm:mt-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2.5 shadow-xs shrink-0">
-            <button
-              type="button"
-              onClick={() => setShowTipsDrawer((v) => !v)}
-              className="w-full flex items-center justify-between text-sm font-black text-slate-800 dark:text-slate-200 hover:text-slate-900 dark:hover:text-slate-100 transition cursor-pointer"
-            >
-              <span className="flex items-center gap-2">
-                <HelpCircle size={15} className="text-amber-600" />
-                <span>Tiêu chuẩn đánh giá phát âm &amp; Mẹo thu âm</span>
-              </span>
-              <span className="flex items-center gap-1 text-xs font-bold text-slate-500">
-                {showTipsDrawer ? "Thu gọn" : "Xem hướng dẫn"}
-                <ChevronDown
-                  size={14}
-                  className={`transition-transform duration-200 ${
-                    showTipsDrawer ? "rotate-180" : ""
-                  }`}
-                />
-              </span>
-            </button>
-
-            {showTipsDrawer && (
-              <div className="mt-2.5 border-t border-slate-100 dark:border-slate-800 pt-2.5 space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300 animate-in fade-in duration-150">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                    <p className="font-black text-sm text-slate-900 dark:text-slate-100">
-                      1. Độ chính xác
-                    </p>
-                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1 leading-relaxed">
-                      Đọc rõ từng từ, đặc biệt là âm cuối (ending sounds).
-                    </p>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                    <p className="font-black text-sm text-slate-900 dark:text-slate-100">
-                      2. Độ lưu loát
-                    </p>
-                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1 leading-relaxed">
-                      Giữ nhịp điệu tự nhiên, không ngập ngừng quá lâu.
-                    </p>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                    <p className="font-black text-sm text-slate-900 dark:text-slate-100">
-                      3. Độ toàn vẹn
-                    </p>
-                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1 leading-relaxed">
-                      Không bỏ sót từ ngữ nào trong câu văn mẫu.
-                    </p>
-                  </div>
-                </div>
-                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-semibold italic text-center pt-1">
-                  Mẹo: Giữ khoảng cách micro 10-15cm và tránh đọc trong phòng có
-                  tiếng vang.
-                </p>
-              </div>
-            )}
-          </div>
-        </main>
-      ) : (
-        /* STAGE 2: 1:1 COMPARATIVE ANALYSIS STUDIO (50/50 Split Canvas) */
-        <main className="flex-1 w-full grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-slate-800 overflow-hidden min-h-0 transition-all duration-500">
-          {/* Left Panel: Target Text & Context Canvas */}
-          <section className="w-full h-full p-5 sm:p-6 lg:p-7 flex flex-col justify-between overflow-y-auto bg-white dark:bg-slate-900 min-h-0">
-            <div className="flex-1 flex flex-col min-h-0">
-              {/* Instruction Header */}
-              <div className="flex items-center justify-between gap-2 mb-3 shrink-0">
-                <div className="space-y-0.5">
-                  <p className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">
-                    {phase === "COMPLETED"
-                      ? "Kết quả đánh giá phát âm từng từ:"
-                      : "Đọc to câu văn bên dưới với phát âm rõ ràng và tự nhiên:"}
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                    Màu sắc thể hiện mức độ chính xác của từng từ bạn đã phát âm
-                  </p>
-                </div>
-                <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold border border-slate-200/80 dark:border-slate-700 shrink-0">
-                  <Target size={13} className="text-amber-600 dark:text-amber-400" />
-                  <span>Đối chiếu trực quan</span>
-                </div>
+        {/* 2. Main Workspace: Dynamic Two-Stage Morphing Architecture */}
+        {isStage1 ? (
+          /* STAGE 1: FOCUSED RECORDING MODE (Single Centered Stage, Zero Gutters) */
+          <main className="flex-1 w-full flex flex-col justify-between overflow-y-auto bg-slate-50/40 p-3 sm:p-4 lg:p-5 min-h-0">
+            <div className="max-w-5xl xl:max-w-6xl mx-auto w-full flex-1 flex flex-col items-center justify-center gap-3 sm:gap-4 my-auto">
+              {/* Focal mode badge */}
+              <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-amber-100/90 text-amber-900 text-xs font-black uppercase tracking-wider shadow-2xs">
+                <Target size={13} className="text-amber-700" />
+                <span>Câu cần luyện đọc</span>
+                {practiceSetKey &&
+                  currentPracticeSetPosition > 0 &&
+                  practiceSetExercises.length > 1 && (
+                    <>
+                      <span className="text-amber-600/60">·</span>
+                      <span className="tabular-nums font-black">
+                        {currentPracticeSetPosition}
+                        <span className="font-medium text-amber-700/70">
+                          /{practiceSetExercises.length}
+                        </span>
+                      </span>
+                    </>
+                  )}
               </div>
 
               {/* Contextual Illustration Image (if available) */}
               {exercise.imageUrl && (
-                <div className="w-full flex items-center justify-center my-2 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-xs shrink-0 max-h-[160px]">
+                <div className="w-full max-w-xs flex items-center justify-center overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-1.5 shadow-xs shrink-0 max-h-[120px]">
                   <img
                     src={exercise.imageUrl}
                     alt="Contextual illustration"
-                    className="w-full h-full object-contain max-h-[145px] rounded-xl"
+                    className="w-full h-full object-contain max-h-[110px] rounded-xl"
                   />
                 </div>
               )}
 
-              {/* Hero Practice Sentence Canvas with Word-Level Color Grading */}
-              <div className="w-full bg-gradient-to-b from-white to-slate-50/50 p-5 sm:p-6 rounded-3xl border-2 border-slate-200/90 shadow-sm my-2 flex flex-col items-center justify-center">
-                <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black uppercase tracking-wider mb-2.5">
-                  <Target size={14} className="text-amber-700" />
-                  <span>Câu luyện đọc đối chiếu</span>
-                </div>
-
+              {/* 1. Practice Sentence Canvas (Widened horizontal stretch, compact vertical padding) */}
+              <div className="w-full bg-gradient-to-b from-white to-slate-50/60 dark:from-slate-900 dark:to-slate-850/60 py-4 px-5 sm:py-5 sm:px-8 lg:px-10 rounded-3xl border-2 border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center">
                 {renderInteractiveTargetWords(
                   exercise.targetText || "",
-                  phase === "COMPLETED" &&
-                    !currentSubmission?.aiFeedback?.isSilentOrNoSpeech &&
-                    currentSubmission?.lastErrorCode !== "NO_SPEECH"
-                    ? currentSubmission?.aiFeedback?.words
-                    : undefined,
-                  false,
+                  undefined,
+                  true,
                 )}
-
-                {/* In-Context Assessment Legend */}
-                {phase === "COMPLETED" &&
-                  !currentSubmission?.aiFeedback?.isSilentOrNoSpeech &&
-                  currentSubmission?.lastErrorCode !== "NO_SPEECH" &&
-                  Array.isArray(currentSubmission?.aiFeedback?.words) &&
-                  currentSubmission.aiFeedback.words.length > 0 && (
-                    <div
-                      role="note"
-                      aria-label="Chú thích màu sắc phát âm"
-                      className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-4 pt-3.5 border-t border-slate-100 dark:border-slate-800 text-xs sm:text-sm font-extrabold text-slate-700 dark:text-slate-300"
-                    >
-                      <span className="inline-flex items-center gap-1.5">
-                        <span className="size-2.5 rounded-full bg-emerald-500 shadow-2xs" />
-                        <span className="underline decoration-emerald-500 decoration-2 underline-offset-4 text-emerald-800 dark:text-emerald-300">
-                          Đạt chuẩn (&ge; 80%)
-                        </span>
-                      </span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <span className="size-2.5 rounded-full bg-amber-500 shadow-2xs" />
-                        <span className="underline decoration-amber-500 decoration-wavy underline-offset-4 text-amber-900 dark:text-amber-300">
-                          Cần chỉnh lại (60-79%)
-                        </span>
-                      </span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <span className="size-2.5 rounded-full bg-rose-500 shadow-2xs" />
-                        <span className="underline decoration-rose-500 decoration-wavy underline-offset-4 text-rose-800 dark:text-rose-400">
-                          Chưa đạt (&lt; 60%)
-                        </span>
-                      </span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <span className="size-2.5 rounded-full bg-rose-500 shadow-2xs" />
-                        <span className="line-through decoration-rose-500 decoration-2 text-rose-700 dark:text-rose-400">
-                          Bỏ sót
-                        </span>
-                      </span>
-                    </div>
-                  )}
 
                 {/* Optional Bilingual translation box */}
                 {isBilingual &&
                   (exercise.translation || exercise.description) && (
-                    <div className="mt-3.5 w-full max-w-xl rounded-2xl border border-amber-200/90 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/40 p-3.5 text-center shadow-2xs">
-                      <span className="font-black text-amber-950 dark:text-amber-300 block mb-1 uppercase tracking-wider text-xs">
+                    <div className="mt-2.5 w-full max-w-2xl rounded-2xl border border-amber-200/80 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/40 px-3.5 py-2 text-slate-800 dark:text-slate-200 text-center shadow-2xs">
+                      <span className="font-black text-amber-950 dark:text-amber-300 block uppercase tracking-wider text-xs">
                         Bản dịch tham khảo
                       </span>
                       <p className="font-semibold text-slate-800 dark:text-slate-200 italic text-sm sm:text-base">
@@ -2135,29 +1774,286 @@ export default function SpeakingExerciseDetailPage() {
                     </div>
                   )}
 
-                {/* Dictionary hint pill */}
-                <div className="mt-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100/90 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs sm:text-sm font-semibold border border-slate-200/80 dark:border-slate-700 shadow-2xs">
-                  <BookOpen size={14} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                <p className="mt-2.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-bold flex items-center justify-center gap-2">
+                  <BookOpen
+                    size={14}
+                    className="text-amber-600 dark:text-amber-400"
+                  />
                   <span>
-                    Nhấp vào từ bất kỳ để tra nghĩa, phiên âm IPA và nghe cách
-                    đọc mẫu
+                    Nhấp vào từ bất kỳ để tra phiên âm IPA &amp; nghe phát âm
                   </span>
+                </p>
+              </div>
+
+              {/* 2. Sample Audio & Speed Dock (POSITIONED DIRECTLY BENEATH THE SENTENCE) */}
+              <div className="w-full max-w-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs rounded-2xl border border-slate-200/90 dark:border-slate-800 p-2 sm:p-2.5 flex flex-wrap items-center justify-between gap-2.5 shadow-sm">
+                {/* Play / Stop sample + Accent */}
+                <div className="flex items-center gap-2">
+                  {(() => {
+                    const hasReferenceAudio = Boolean(exercise.audioUrl);
+                    return (
+                      <button
+                        type="button"
+                        onClick={handleTogglePlayTTS}
+                        disabled={!hasReferenceAudio}
+                        aria-pressed={isPlayingTTS}
+                        aria-label={
+                          !hasReferenceAudio
+                            ? "Audio mẫu chưa khả dụng"
+                            : isPlayingTTS
+                              ? "Dừng nghe mẫu"
+                              : "Nghe mẫu phát âm"
+                        }
+                        title={
+                          hasReferenceAudio
+                            ? "Nghe audio mẫu đã được quản trị viên cung cấp"
+                            : "Bài luyện này chưa có audio mẫu được quản trị viên cung cấp"
+                        }
+                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl font-extrabold text-xs sm:text-sm transition-all shadow-xs ${
+                          !hasReferenceAudio
+                            ? "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed"
+                            : isPlayingTTS
+                              ? "bg-rose-600 hover:bg-rose-700 text-white"
+                              : "bg-slate-900 hover:bg-slate-800 text-white active:scale-95 cursor-pointer"
+                        }`}
+                      >
+                        {!hasReferenceAudio ? (
+                          <>
+                            <VolumeX size={15} className="shrink-0" />
+                            <span>Audio mẫu chưa khả dụng</span>
+                          </>
+                        ) : isPlayingTTS ? (
+                          <>
+                            <Square size={13} className="fill-white shrink-0" />
+                            <span>Dừng nghe</span>
+                          </>
+                        ) : (
+                          <>
+                            <Volume2
+                              size={15}
+                              className="shrink-0 text-amber-400"
+                            />
+                            <span>Nghe câu mẫu</span>
+                          </>
+                        )}
+                      </button>
+                    );
+                  })()}
+
+                  {/* Accent selector pills */}
+                  <div
+                    className={`flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700 transition-opacity ${
+                      isPlayingTTS ? "opacity-60 cursor-not-allowed" : ""
+                    }`}
+                    role="group"
+                    aria-label="Chọn chất giọng phát âm từ"
+                  >
+                    {(["US", "UK"] as const).map((accent) => {
+                      const selected = ttsAccent === accent;
+                      return (
+                        <button
+                          key={accent}
+                          type="button"
+                          disabled={isPlayingTTS}
+                          onClick={() => setTtsAccent(accent)}
+                          aria-pressed={selected}
+                          className={`px-2.5 py-1 rounded-lg text-xs sm:text-sm font-black transition-all ${
+                            isPlayingTTS
+                              ? "cursor-not-allowed"
+                              : "cursor-pointer"
+                          } ${
+                            selected
+                              ? "bg-amber-500 text-white shadow-2xs"
+                              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                          }`}
+                        >
+                          {accent === "US" ? "Mỹ (US)" : "Anh (UK)"}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Speed rate controls */}
+                <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1 text-slate-700 dark:text-slate-300 font-black text-xs sm:text-sm shrink-0">
+                    <Gauge
+                      size={14}
+                      className="text-amber-600 dark:text-amber-400"
+                    />
+                    <span className="hidden sm:inline">Tốc độ:</span>
+                  </div>
+                  <div
+                    className={`flex items-center gap-1 ${
+                      isPlayingTTS ? "opacity-60 cursor-not-allowed" : ""
+                    }`}
+                    role="group"
+                    aria-label="Chọn tốc độ phát âm từ"
+                  >
+                    {TTS_SPEED_OPTIONS.map((opt) => {
+                      const selected = ttsRate === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          disabled={isPlayingTTS}
+                          onClick={() => setTtsRate(opt.value)}
+                          aria-pressed={selected}
+                          className={`px-2 py-0.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+                            isPlayingTTS
+                              ? "cursor-not-allowed"
+                              : "cursor-pointer"
+                          } ${
+                            selected
+                              ? "bg-amber-500 text-white font-black shadow-2xs"
+                              : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200/80 dark:border-slate-700"
+                          }`}
+                          title={opt.title}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
+
+              {/* 3. Audio Recording Controls */}
+              {phase === "READY" && !audioBlob ? (
+                <div className="flex flex-col items-center justify-center gap-2 my-1">
+                  <button
+                    type="button"
+                    onClick={startRecording}
+                    className="size-16 sm:size-20 rounded-full bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center border border-amber-600/20 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 transition-all cursor-pointer active:scale-95 group"
+                    title="Bắt đầu thu âm (Phím Space / R)"
+                    aria-label="Bắt đầu thu âm"
+                  >
+                    <Mic
+                      size={30}
+                      className="transition-transform group-hover:scale-105"
+                    />
+                  </button>
+                  <div className="text-center space-y-0.5">
+                    <p
+                      className={`text-xs font-bold ${micStatus === "READY" ? "text-emerald-700 dark:text-emerald-300" : micStatus === "MISSING" || micStatus === "DENIED" ? "text-rose-700 dark:text-rose-300" : "text-slate-500 dark:text-slate-400"}`}
+                    >
+                      {micStatus === "READY"
+                        ? "Micro sẵn sàng"
+                        : micStatus === "MISSING"
+                          ? "Không tìm thấy micro"
+                          : micStatus === "DENIED"
+                            ? "Chưa cấp quyền micro"
+                            : "Micro sẽ được kiểm tra khi bắt đầu thu âm"}
+                    </p>
+                    <p className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">
+                      Nhấn nút Micro hoặc bấm phím{" "}
+                      <kbd className="px-2 py-0.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-mono text-xs font-black text-slate-800 dark:text-slate-200 shadow-2xs">
+                        Space
+                      </kbd>{" "}
+                      để nói
+                    </p>
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-semibold">
+                      Sau khi dừng, bạn có thể nghe lại trước khi gửi đánh giá
+                    </p>
+                  </div>
+                </div>
+              ) : phase === "READY" && audioBlob ? (
+                <div className="w-full max-w-xl rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 shadow-xs dark:border-emerald-900/60 dark:bg-emerald-950/20">
+                  <div className="flex items-center gap-2 text-sm font-black text-emerald-900 dark:text-emerald-200">
+                    <Volume2 size={17} aria-hidden="true" /> Bản ghi đã sẵn sàng
+                  </div>
+                  <audio
+                    className="mt-3 w-full"
+                    controls
+                    preload="metadata"
+                    src={audioUrl ?? undefined}
+                    aria-label="Nghe lại bản ghi của bạn"
+                  />
+                  <div className="mt-3 flex flex-wrap justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleRetryRecord}
+                      className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                    >
+                      <RotateCcw size={15} aria-hidden="true" /> Thu lại
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void submitPreparedRecording()}
+                      className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-black text-white hover:bg-emerald-700"
+                    >
+                      <Mic size={15} aria-hidden="true" /> Gửi đánh giá
+                    </button>
+                  </div>
+                  <p className="mt-2 text-center text-xs font-semibold text-emerald-800/80 dark:text-emerald-200/80">
+                    Bạn vẫn có thể thu lại trước khi gửi.
+                  </p>
+                </div>
+              ) : (
+                <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl border border-rose-200 dark:border-rose-900/60 p-4 flex flex-col items-center justify-center gap-3 shadow-xs animate-in fade-in my-1">
+                  {/* Live countdown timer */}
+                  <div className="flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-900 text-white font-mono font-bold text-xs sm:text-sm shadow-xs">
+                    <span className="size-2 rounded-full bg-rose-500 animate-ping" />
+                    <span>{formatSpeakingTime(recordingSeconds)}</span>
+                    <span className="text-slate-400">/ 00:45</span>
+                  </div>
+
+                  {/* Live audio visualizer canvas */}
+                  <div className="w-full h-10 flex items-center justify-center bg-slate-950 rounded-xl p-1 shadow-inner">
+                    <canvas
+                      ref={canvasRef}
+                      width={320}
+                      height={36}
+                      className="w-full h-full"
+                    />
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex items-center justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={stopRecording}
+                      className="size-16 sm:size-20 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center border border-rose-700/20 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 transition-all cursor-pointer active:scale-95 group"
+                      title="Dừng ghi âm (Phím Space / R)"
+                      aria-label="Dừng ghi âm để nghe lại"
+                    >
+                      <StopCircle
+                        size={30}
+                        className="transition-transform group-hover:scale-105"
+                      />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleCancelRecording}
+                      className="inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 bg-white dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-slate-200 dark:border-slate-700 hover:border-rose-200 transition-all cursor-pointer shadow-2xs active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                      title="Hủy lượt thu âm này"
+                    >
+                      <X size={14} className="text-rose-500" />
+                      <span>Hủy bỏ</span>
+                    </button>
+                  </div>
+
+                  <p className="font-bold text-xs sm:text-sm text-rose-600 text-center">
+                    Đang thu âm... Bấm nút đỏ hoặc nhấn [Space] để hoàn tất và
+                    nghe lại
+                  </p>
+                </div>
+              )}
             </div>
 
-            {/* Collapsible Guidelines Drawer */}
-            <div className="mt-auto rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 shadow-xs shrink-0">
+            {/* Collapsible Guidelines Drawer at the bottom */}
+            <div className="max-w-5xl xl:max-w-6xl mx-auto w-full mt-3 sm:mt-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2.5 shadow-xs shrink-0">
               <button
                 type="button"
                 onClick={() => setShowTipsDrawer((v) => !v)}
                 className="w-full flex items-center justify-between text-sm font-black text-slate-800 dark:text-slate-200 hover:text-slate-900 dark:hover:text-slate-100 transition cursor-pointer"
               >
                 <span className="flex items-center gap-2">
-                  <HelpCircle size={15} className="text-amber-600 dark:text-amber-400" />
+                  <HelpCircle size={15} className="text-amber-600" />
                   <span>Tiêu chuẩn đánh giá phát âm &amp; Mẹo thu âm</span>
                 </span>
-                <span className="flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-slate-400">
+                <span className="flex items-center gap-1 text-xs font-bold text-slate-500">
                   {showTipsDrawer ? "Thu gọn" : "Xem hướng dẫn"}
                   <ChevronDown
                     size={14}
@@ -2196,302 +2092,530 @@ export default function SpeakingExerciseDetailPage() {
                       </p>
                     </div>
                   </div>
+                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-semibold italic text-center pt-1">
+                    Mẹo: Giữ khoảng cách micro 10-15cm và tránh đọc trong phòng
+                    có tiếng vang.
+                  </p>
                 </div>
               )}
             </div>
-          </section>
+          </main>
+        ) : (
+          /* STAGE 2: 1:1 COMPARATIVE ANALYSIS STUDIO (50/50 Split Canvas) */
+          <main className="flex-1 w-full grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-slate-800 overflow-hidden min-h-0 transition-all duration-500">
+            {/* Left Panel: Target Text & Context Canvas */}
+            <section className="w-full h-full p-5 sm:p-6 lg:p-7 flex flex-col justify-between overflow-y-auto bg-white dark:bg-slate-900 min-h-0">
+              <div className="flex-1 flex flex-col min-h-0">
+                {/* Instruction Header */}
+                <div className="flex items-center justify-between gap-2 mb-3 shrink-0">
+                  <div className="space-y-0.5">
+                    <p className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">
+                      {phase === "COMPLETED"
+                        ? "Kết quả đánh giá phát âm từng từ:"
+                        : "Đọc to câu văn bên dưới với phát âm rõ ràng và tự nhiên:"}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                      Màu sắc thể hiện mức độ chính xác của từng từ bạn đã phát
+                      âm
+                    </p>
+                  </div>
+                  <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold border border-slate-200/80 dark:border-slate-700 shrink-0">
+                    <Target
+                      size={13}
+                      className="text-amber-600 dark:text-amber-400"
+                    />
+                    <span>Đối chiếu trực quan</span>
+                  </div>
+                </div>
 
-          {/* Right Panel: Unified Assessment Studio */}
-          <section className="w-full h-full p-4 sm:p-5 lg:p-6 flex flex-col justify-between overflow-y-auto bg-slate-50/40 min-h-0">
-            <PronunciationReportCard
-              phase={phase}
-              submission={currentSubmission}
-              targetText={exercise.targetText || ""}
-              userAudioUrl={audioUrl}
-              qualityWarning={qualityWarning}
-              recordingSeconds={recordingSeconds}
-              maxRecordingSeconds={MAX_RECORDING_SECONDS}
-              canvasRef={canvasRef}
-              uploadProgress={uploadProgress}
-              onStartRecording={startRecording}
-              onStopRecording={stopRecording}
-              onCancelRecording={handleCancelRecording}
-              onRetryRecord={handleRetryRecord}
-              onRetrySubmit={handleRetrySubmit}
-              isPreviewReady={Boolean(audioBlob)}
-              onNextExercise={handleNextExercise}
-              onSelectWord={openDictionary}
-              onPlaySample={handlePlayIsolatedWordSample}
-              ttsAccent={ttsAccent}
-              ttsRate={ttsRate}
-              isNextAvailable={isNextAvailable}
-              isProlongedProcessing={isProlongedProcessing}
-            />
-            {phase === "COMPLETED" && previousAttempt && currentSubmission?.overallScore != null && (
-              <div className="mt-4 rounded-2xl border border-violet-200 bg-violet-50/70 p-4 dark:border-violet-900/60 dark:bg-violet-950/20">
-                <p className="text-xs font-black uppercase tracking-wider text-violet-700 dark:text-violet-300">So sánh lần luyện</p>
-                <div className="mt-2 grid grid-cols-3 items-end gap-2 text-center">
-                  <div><p className="text-xs font-semibold text-slate-500">Lần trước</p><p className="text-xl font-black text-slate-700 dark:text-slate-200">{Math.round(previousAttempt.overallScore ?? 0)}</p></div>
-                  <div><p className="text-xs font-semibold text-slate-500">Lần này</p><p className="text-xl font-black text-violet-700 dark:text-violet-300">{Math.round(currentSubmission.overallScore)}</p></div>
-                  <div><p className="text-xs font-semibold text-slate-500">Thay đổi</p><p className={`text-xl font-black ${(scoreDelta(currentSubmission.overallScore, previousAttempt.overallScore) ?? 0) >= 0 ? "text-emerald-600" : "text-rose-600"}`}>{(scoreDelta(currentSubmission.overallScore, previousAttempt.overallScore) ?? 0) > 0 ? "+" : ""}{scoreDelta(currentSubmission.overallScore, previousAttempt.overallScore)}</p></div>
+                {/* Contextual Illustration Image (if available) */}
+                {exercise.imageUrl && (
+                  <div className="w-full flex items-center justify-center my-2 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-xs shrink-0 max-h-[160px]">
+                    <img
+                      src={exercise.imageUrl}
+                      alt="Contextual illustration"
+                      className="w-full h-full object-contain max-h-[145px] rounded-xl"
+                    />
+                  </div>
+                )}
+
+                {/* Hero Practice Sentence Canvas with Word-Level Color Grading */}
+                <div className="w-full bg-gradient-to-b from-white to-slate-50/50 p-5 sm:p-6 rounded-3xl border-2 border-slate-200/90 shadow-sm my-2 flex flex-col items-center justify-center">
+                  <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black uppercase tracking-wider mb-2.5">
+                    <Target size={14} className="text-amber-700" />
+                    <span>Câu luyện đọc đối chiếu</span>
+                  </div>
+
+                  {renderInteractiveTargetWords(
+                    exercise.targetText || "",
+                    phase === "COMPLETED" &&
+                      !currentSubmission?.aiFeedback?.isSilentOrNoSpeech &&
+                      currentSubmission?.lastErrorCode !== "NO_SPEECH"
+                      ? currentSubmission?.aiFeedback?.words
+                      : undefined,
+                    false,
+                  )}
+
+                  {/* In-Context Assessment Legend */}
+                  {phase === "COMPLETED" &&
+                    !currentSubmission?.aiFeedback?.isSilentOrNoSpeech &&
+                    currentSubmission?.lastErrorCode !== "NO_SPEECH" &&
+                    Array.isArray(currentSubmission?.aiFeedback?.words) &&
+                    currentSubmission.aiFeedback.words.length > 0 && (
+                      <div
+                        role="note"
+                        aria-label="Chú thích màu sắc phát âm"
+                        className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-4 pt-3.5 border-t border-slate-100 dark:border-slate-800 text-xs sm:text-sm font-extrabold text-slate-700 dark:text-slate-300"
+                      >
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className="size-2.5 rounded-full bg-emerald-500 shadow-2xs" />
+                          <span className="underline decoration-emerald-500 decoration-2 underline-offset-4 text-emerald-800 dark:text-emerald-300">
+                            Đạt chuẩn (&ge; 80%)
+                          </span>
+                        </span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className="size-2.5 rounded-full bg-amber-500 shadow-2xs" />
+                          <span className="underline decoration-amber-500 decoration-wavy underline-offset-4 text-amber-900 dark:text-amber-300">
+                            Cần chỉnh lại (60-79%)
+                          </span>
+                        </span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className="size-2.5 rounded-full bg-rose-500 shadow-2xs" />
+                          <span className="underline decoration-rose-500 decoration-wavy underline-offset-4 text-rose-800 dark:text-rose-400">
+                            Chưa đạt (&lt; 60%)
+                          </span>
+                        </span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className="size-2.5 rounded-full bg-rose-500 shadow-2xs" />
+                          <span className="line-through decoration-rose-500 decoration-2 text-rose-700 dark:text-rose-400">
+                            Bỏ sót
+                          </span>
+                        </span>
+                      </div>
+                    )}
+
+                  {/* Optional Bilingual translation box */}
+                  {isBilingual &&
+                    (exercise.translation || exercise.description) && (
+                      <div className="mt-3.5 w-full max-w-xl rounded-2xl border border-amber-200/90 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/40 p-3.5 text-center shadow-2xs">
+                        <span className="font-black text-amber-950 dark:text-amber-300 block mb-1 uppercase tracking-wider text-xs">
+                          Bản dịch tham khảo
+                        </span>
+                        <p className="font-semibold text-slate-800 dark:text-slate-200 italic text-sm sm:text-base">
+                          "{exercise.translation || exercise.description}"
+                        </p>
+                      </div>
+                    )}
+
+                  {/* Dictionary hint pill */}
+                  <div className="mt-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100/90 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs sm:text-sm font-semibold border border-slate-200/80 dark:border-slate-700 shadow-2xs">
+                    <BookOpen
+                      size={14}
+                      className="text-amber-600 dark:text-amber-400 shrink-0"
+                    />
+                    <span>
+                      Nhấp vào từ bất kỳ để tra nghĩa, phiên âm IPA và nghe cách
+                      đọc mẫu
+                    </span>
+                  </div>
                 </div>
               </div>
-            )}
-          </section>
-        </main>
-      )}
 
-      {/* 3. Full-Width Bottom Action Dock */}
-      <footer className="w-full h-14 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 md:px-6 flex items-center justify-between shrink-0 shadow-sm z-30 select-none">
-        {/* Left: Quick utilities */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <ReportIssueButton
-            area="SPEAKING"
-            context={{
-              route:
-                typeof window !== "undefined"
-                  ? window.location.pathname
-                  : undefined,
-              sourceType: "SPEAKING_EXERCISE",
-              sourceId: exercise?.id,
-              context: {
-                exerciseTitle: exercise?.title,
-                targetText: exercise?.targetText,
-              },
-            }}
-          />
+              {/* Collapsible Guidelines Drawer */}
+              <div className="mt-auto rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 shadow-xs shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowTipsDrawer((v) => !v)}
+                  className="w-full flex items-center justify-between text-sm font-black text-slate-800 dark:text-slate-200 hover:text-slate-900 dark:hover:text-slate-100 transition cursor-pointer"
+                >
+                  <span className="flex items-center gap-2">
+                    <HelpCircle
+                      size={15}
+                      className="text-amber-600 dark:text-amber-400"
+                    />
+                    <span>Tiêu chuẩn đánh giá phát âm &amp; Mẹo thu âm</span>
+                  </span>
+                  <span className="flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-slate-400">
+                    {showTipsDrawer ? "Thu gọn" : "Xem hướng dẫn"}
+                    <ChevronDown
+                      size={14}
+                      className={`transition-transform duration-200 ${
+                        showTipsDrawer ? "rotate-180" : ""
+                      }`}
+                    />
+                  </span>
+                </button>
 
-          {/* Tra từ */}
-          <button
-            type="button"
-            onClick={handleDictionaryLookup}
-            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 px-3 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-            title="Bôi đen một từ tiếng Anh rồi bấm để tra cứu"
-          >
-            <BookOpen size={15} className="text-sky-600 dark:text-sky-400" />
-            <span className="hidden sm:inline">Tra từ</span>
-          </button>
+                {showTipsDrawer && (
+                  <div className="mt-2.5 border-t border-slate-100 dark:border-slate-800 pt-2.5 space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300 animate-in fade-in duration-150">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                        <p className="font-black text-sm text-slate-900 dark:text-slate-100">
+                          1. Độ chính xác
+                        </p>
+                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1 leading-relaxed">
+                          Đọc rõ từng từ, đặc biệt là âm cuối (ending sounds).
+                        </p>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                        <p className="font-black text-sm text-slate-900 dark:text-slate-100">
+                          2. Độ lưu loát
+                        </p>
+                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1 leading-relaxed">
+                          Giữ nhịp điệu tự nhiên, không ngập ngừng quá lâu.
+                        </p>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                        <p className="font-black text-sm text-slate-900 dark:text-slate-100">
+                          3. Độ toàn vẹn
+                        </p>
+                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1 leading-relaxed">
+                          Không bỏ sót từ ngữ nào trong câu văn mẫu.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
 
-          {/* Lưu bài luyện */}
-          <button
-            type="button"
-            onClick={() => {
-              setIsSaved((prev) => {
-                const next = !prev;
-                showToast(
-                  next
-                    ? "Đã lưu bài luyện vào danh sách ôn tập."
-                    : "Đã bỏ lưu bài luyện.",
-                );
-                return next;
-              });
-            }}
-            className={`inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold px-3 py-1.5 rounded-xl transition cursor-pointer ${
-              isSaved
-                ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
-                : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
-            }`}
-            title={isSaved ? "Bỏ lưu bài tập" : "Lưu bài tập để luyện lại sau"}
-          >
-            <Star
-              size={15}
-              className={
-                isSaved ? "fill-amber-500 text-amber-500" : "text-amber-500"
-              }
-            />
-            <span className="hidden sm:inline">
-              {isSaved ? "Đã lưu" : "Lưu bài"}
-            </span>
-          </button>
-        </div>
-
-        {/* Center Toast Feedback Message */}
-        {toastMessage && (
-          <div className="absolute left-1/2 -translate-x-1/2 bottom-18 z-50 rounded-xl bg-slate-900 text-white px-4 py-2 text-xs font-bold shadow-lg animate-in fade-in zoom-in-95 duration-150">
-            {toastMessage}
-          </div>
+            {/* Right Panel: Unified Assessment Studio */}
+            <section className="w-full h-full p-4 sm:p-5 lg:p-6 flex flex-col justify-between overflow-y-auto bg-slate-50/40 min-h-0">
+              <PronunciationReportCard
+                phase={phase}
+                submission={currentSubmission}
+                targetText={exercise.targetText || ""}
+                userAudioUrl={audioUrl}
+                qualityWarning={qualityWarning}
+                recordingSeconds={recordingSeconds}
+                maxRecordingSeconds={MAX_RECORDING_SECONDS}
+                canvasRef={canvasRef}
+                uploadProgress={uploadProgress}
+                onStartRecording={startRecording}
+                onStopRecording={stopRecording}
+                onCancelRecording={handleCancelRecording}
+                onRetryRecord={handleRetryRecord}
+                onRetrySubmit={handleRetrySubmit}
+                isPreviewReady={Boolean(audioBlob)}
+                onNextExercise={handleNextExercise}
+                onSelectWord={openDictionary}
+                onPlaySample={handlePlayIsolatedWordSample}
+                ttsAccent={ttsAccent}
+                ttsRate={ttsRate}
+                isNextAvailable={isNextAvailable}
+                isProlongedProcessing={isProlongedProcessing}
+              />
+              {phase === "COMPLETED" &&
+                previousAttempt &&
+                currentSubmission?.overallScore != null && (
+                  <div className="mt-4 rounded-2xl border border-violet-200 bg-violet-50/70 p-4 dark:border-violet-900/60 dark:bg-violet-950/20">
+                    <p className="text-xs font-black uppercase tracking-wider text-violet-700 dark:text-violet-300">
+                      So sánh lần luyện
+                    </p>
+                    <div className="mt-2 grid grid-cols-3 items-end gap-2 text-center">
+                      <div>
+                        <p className="text-xs font-semibold text-slate-500">
+                          Lần trước
+                        </p>
+                        <p className="text-xl font-black text-slate-700 dark:text-slate-200">
+                          {Math.round(previousAttempt.overallScore ?? 0)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-slate-500">
+                          Lần này
+                        </p>
+                        <p className="text-xl font-black text-violet-700 dark:text-violet-300">
+                          {Math.round(currentSubmission.overallScore)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-slate-500">
+                          Thay đổi
+                        </p>
+                        <p
+                          className={`text-xl font-black ${(scoreDelta(currentSubmission.overallScore, previousAttempt.overallScore) ?? 0) >= 0 ? "text-emerald-600" : "text-rose-600"}`}
+                        >
+                          {(scoreDelta(
+                            currentSubmission.overallScore,
+                            previousAttempt.overallScore,
+                          ) ?? 0) > 0
+                            ? "+"
+                            : ""}
+                          {scoreDelta(
+                            currentSubmission.overallScore,
+                            previousAttempt.overallScore,
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+            </section>
+          </main>
         )}
 
-        {/* Right Navigation Dock */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          <button
-            type="button"
-            onClick={() => confirmExit(courseReturn)}
-            className="px-3.5 py-1.5 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 cursor-pointer transition-colors text-xs sm:text-sm"
-          >
-            ← Danh sách bài
-          </button>
+        {/* 3. Full-Width Bottom Action Dock */}
+        <footer className="w-full h-14 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 md:px-6 flex items-center justify-between shrink-0 shadow-sm z-30 select-none">
+          {/* Left: Quick utilities */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <ReportIssueButton
+              area="SPEAKING"
+              context={{
+                route:
+                  typeof window !== "undefined"
+                    ? window.location.pathname
+                    : undefined,
+                sourceType: "SPEAKING_EXERCISE",
+                sourceId: exercise?.id,
+                context: {
+                  exerciseTitle: exercise?.title,
+                  targetText: exercise?.targetText,
+                },
+              }}
+            />
 
-          {/* Contextual Action Button */}
-          {isAnalyzing ? (
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs sm:text-sm font-bold shadow-xs">
-              <Loader2 size={16} className="animate-spin text-amber-600" />
-              <span>
-                {phase === "REQUESTING_UPLOAD"
-                  ? "Khởi tạo tải lên..."
-                  : phase === "UPLOADING"
-                  ? `Đang tải lên ${uploadProgress}%`
-                  : phase === "FINALIZING"
-                  ? "Đang xác thực..."
-                  : phase === "POLLING"
-                  ? "Đang chấm điểm..."
-                  : "Đang phân tích..."}
-              </span>
-            </div>
-          ) : phase === "READY" && !audioBlob ? (
+            {/* Tra từ */}
             <button
               type="button"
-              onClick={startRecording}
-              className="px-4 sm:px-5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1.5 text-xs sm:text-sm"
+              onClick={handleDictionaryLookup}
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 px-3 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              title="Bôi đen một từ tiếng Anh rồi bấm để tra cứu"
             >
-              <Mic size={15} aria-hidden="true" />
-              <span>Bắt đầu thu âm</span>
-              <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-amber-600/60 font-mono text-[10px] text-white">
-                Space
-              </kbd>
+              <BookOpen size={15} className="text-sky-600 dark:text-sky-400" />
+              <span className="hidden sm:inline">Tra từ</span>
             </button>
-          ) : phase === "READY" && audioBlob ? (
-            <div className="flex items-center gap-2">
-              <button type="button" onClick={handleRetryRecord} className="px-3.5 py-1.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 transition-all hover:bg-slate-50">
-                <RotateCcw size={14} aria-hidden="true" /> Thu lại
-              </button>
-              <button type="button" onClick={() => void submitPreparedRecording()} className="px-4 sm:px-5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-xs transition-all cursor-pointer inline-flex items-center gap-1.5 text-xs sm:text-sm">
-                <Mic size={15} aria-hidden="true" /> Gửi đánh giá
-              </button>
+
+            {/* Lưu bài luyện */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsSaved((prev) => {
+                  const next = !prev;
+                  showToast(
+                    next
+                      ? "Đã lưu bài luyện vào danh sách ôn tập."
+                      : "Đã bỏ lưu bài luyện.",
+                  );
+                  return next;
+                });
+              }}
+              className={`inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold px-3 py-1.5 rounded-xl transition cursor-pointer ${
+                isSaved
+                  ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
+                  : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+              title={
+                isSaved ? "Bỏ lưu bài tập" : "Lưu bài tập để luyện lại sau"
+              }
+            >
+              <Star
+                size={15}
+                className={
+                  isSaved ? "fill-amber-500 text-amber-500" : "text-amber-500"
+                }
+              />
+              <span className="hidden sm:inline">
+                {isSaved ? "Đã lưu" : "Lưu bài"}
+              </span>
+            </button>
+          </div>
+
+          {/* Center Toast Feedback Message */}
+          {toastMessage && (
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-18 z-50 rounded-xl bg-slate-900 text-white px-4 py-2 text-xs font-bold shadow-lg animate-in fade-in zoom-in-95 duration-150">
+              {toastMessage}
             </div>
-          ) : phase === "RECORDING" ? (
-            <div className="flex items-center gap-2">
+          )}
+
+          {/* Right Navigation Dock */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => confirmExit(courseReturn)}
+              className="px-3.5 py-1.5 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 cursor-pointer transition-colors text-xs sm:text-sm"
+            >
+              ← Danh sách bài
+            </button>
+
+            {/* Contextual Action Button */}
+            {isAnalyzing ? (
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs sm:text-sm font-bold shadow-xs">
+                <Loader2 size={16} className="animate-spin text-amber-600" />
+                <span>
+                  {phase === "REQUESTING_UPLOAD"
+                    ? "Khởi tạo tải lên..."
+                    : phase === "UPLOADING"
+                      ? `Đang tải lên ${uploadProgress}%`
+                      : phase === "FINALIZING"
+                        ? "Đang xác thực..."
+                        : phase === "POLLING"
+                          ? "Đang chấm điểm..."
+                          : "Đang phân tích..."}
+                </span>
+              </div>
+            ) : phase === "READY" && !audioBlob ? (
               <button
                 type="button"
-                onClick={handleCancelRecording}
-                className="px-3 py-1.5 rounded-xl border border-slate-300 text-slate-600 hover:text-rose-600 hover:border-rose-300 font-bold transition-all text-xs sm:text-sm cursor-pointer inline-flex items-center gap-1 active:scale-95"
-                title="Hủy lượt thu âm này"
+                onClick={startRecording}
+                className="px-4 sm:px-5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1.5 text-xs sm:text-sm"
               >
-                <X size={14} className="text-rose-500" />
-                <span>Hủy</span>
-              </button>
-              <button
-                type="button"
-                onClick={stopRecording}
-                className="px-4 sm:px-5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1.5 text-xs sm:text-sm animate-pulse"
-              >
-                <StopCircle size={15} aria-hidden="true" />
-                <span>Dừng &amp; nghe lại</span>
-                <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-rose-700 font-mono text-[10px] text-white">
+                <Mic size={15} aria-hidden="true" />
+                <span>Bắt đầu thu âm</span>
+                <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-amber-600/60 font-mono text-[10px] text-white">
                   Space
                 </kbd>
               </button>
-            </div>
-          ) : phase === "COMPLETED" ? (
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleRetryRecord}
-                className="px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 transition-all shadow-xs hover:shadow-sm active:scale-95 cursor-pointer"
-              >
-                <RotateCcw size={14} aria-hidden="true" />
-                <span>Thử đọc lại</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleNextExercise}
-                className="px-4 sm:px-5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1.5 text-xs sm:text-sm"
-              >
-                <span>
-                  {isNextAvailable
-                    ? activePracticeSet
-                      ? "Câu tiếp theo"
-                      : "Tiếp tục bài sau"
-                    : "Về danh sách"}
-                </span>
-                <ArrowLeft
-                  size={14}
-                  className="rotate-180"
-                  aria-hidden="true"
-                />
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              {phase === "FAILED" && audioBlob && (
+            ) : phase === "READY" && audioBlob ? (
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={handleRetrySubmit}
-                  className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 transition-all shadow-xs hover:shadow-sm active:scale-95 cursor-pointer"
+                  onClick={handleRetryRecord}
+                  className="px-3.5 py-1.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 transition-all hover:bg-slate-50"
+                >
+                  <RotateCcw size={14} aria-hidden="true" /> Thu lại
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void submitPreparedRecording()}
+                  className="px-4 sm:px-5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-xs transition-all cursor-pointer inline-flex items-center gap-1.5 text-xs sm:text-sm"
+                >
+                  <Mic size={15} aria-hidden="true" /> Gửi đánh giá
+                </button>
+              </div>
+            ) : phase === "RECORDING" ? (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleCancelRecording}
+                  className="px-3 py-1.5 rounded-xl border border-slate-300 text-slate-600 hover:text-rose-600 hover:border-rose-300 font-bold transition-all text-xs sm:text-sm cursor-pointer inline-flex items-center gap-1 active:scale-95"
+                  title="Hủy lượt thu âm này"
+                >
+                  <X size={14} className="text-rose-500" />
+                  <span>Hủy</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={stopRecording}
+                  className="px-4 sm:px-5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1.5 text-xs sm:text-sm animate-pulse"
+                >
+                  <StopCircle size={15} aria-hidden="true" />
+                  <span>Dừng &amp; nghe lại</span>
+                  <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-rose-700 font-mono text-[10px] text-white">
+                    Space
+                  </kbd>
+                </button>
+              </div>
+            ) : phase === "COMPLETED" ? (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleRetryRecord}
+                  className="px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 transition-all shadow-xs hover:shadow-sm active:scale-95 cursor-pointer"
                 >
                   <RotateCcw size={14} aria-hidden="true" />
-                  <span>Thử lại với bản ghi này</span>
+                  <span>Thử đọc lại</span>
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={handleRetryRecord}
-                className="px-4 sm:px-5 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-800 text-white font-bold shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1.5 text-xs sm:text-sm"
-              >
-                <RotateCcw size={14} aria-hidden="true" />
-                <span>Thu lại</span>
-              </button>
-            </div>
-          )}
-        </div>
-      </footer>
 
-      {/* Scratchpad Notes Modal */}
-      {showNotesModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xl animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
-              <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <StickyNote size={18} className="text-amber-500" />
-                Ghi chú phát âm
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowNotesModal(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg cursor-pointer"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Ghi chú các từ cần luyện tập thêm, mẹo phát âm..."
-              rows={6}
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
-            />
-            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-              Ghi chú được lưu tự động trên thiết bị này.
-            </p>
-            <div className="mt-4 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setShowNotesModal(false)}
-                className="rounded-xl bg-slate-900 dark:bg-slate-800 text-white px-4 py-2 text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-700 cursor-pointer"
-              >
-                Đóng
-              </button>
+                <button
+                  type="button"
+                  onClick={handleNextExercise}
+                  className="px-4 sm:px-5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1.5 text-xs sm:text-sm"
+                >
+                  <span>
+                    {isNextAvailable
+                      ? activePracticeSet
+                        ? "Câu tiếp theo"
+                        : "Tiếp tục bài sau"
+                      : "Về danh sách"}
+                  </span>
+                  <ArrowLeft
+                    size={14}
+                    className="rotate-180"
+                    aria-hidden="true"
+                  />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                {phase === "FAILED" && audioBlob && (
+                  <button
+                    type="button"
+                    onClick={handleRetrySubmit}
+                    className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 transition-all shadow-xs hover:shadow-sm active:scale-95 cursor-pointer"
+                  >
+                    <RotateCcw size={14} aria-hidden="true" />
+                    <span>Thử lại với bản ghi này</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleRetryRecord}
+                  className="px-4 sm:px-5 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-800 text-white font-bold shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1.5 text-xs sm:text-sm"
+                >
+                  <RotateCcw size={14} aria-hidden="true" />
+                  <span>Thu lại</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </footer>
+
+        {/* Scratchpad Notes Modal */}
+        {showNotesModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+            <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xl animate-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+                <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <StickyNote size={18} className="text-amber-500" />
+                  Ghi chú phát âm
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowNotesModal(false)}
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg cursor-pointer"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Ghi chú các từ cần luyện tập thêm, mẹo phát âm..."
+                rows={6}
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+              />
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                Ghi chú được lưu tự động trên thiết bị này.
+              </p>
+              <div className="mt-4 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowNotesModal(false)}
+                  className="rounded-xl bg-slate-900 dark:bg-slate-800 text-white px-4 py-2 text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-700 cursor-pointer"
+                >
+                  Đóng
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Interactive Word Dictionary Popup */}
-      {selectedWordForLookup && (
-        <WordDictionaryPopup
-          word={selectedWordForLookup}
-          onClose={() => setSelectedWordForLookup(null)}
-          onPracticeWord={(w) => {
-            handlePlayIsolatedWordSample(w);
-          }}
-          playbackRate={ttsRate}
-        />
-      )}
+        {/* Interactive Word Dictionary Popup */}
+        {selectedWordForLookup && (
+          <WordDictionaryPopup
+            word={selectedWordForLookup}
+            onClose={() => setSelectedWordForLookup(null)}
+            onPracticeWord={(w) => {
+              handlePlayIsolatedWordSample(w);
+            }}
+            playbackRate={ttsRate}
+          />
+        )}
 
-      {/* Shared Exit Confirmation Modal */}
-      <PracticeExitConfirmDialog {...exitDialogProps} />
-    </div>
+        {/* Shared Exit Confirmation Modal */}
+        <PracticeExitConfirmDialog {...exitDialogProps} />
+      </div>
     </PracticeShell>
   );
 }

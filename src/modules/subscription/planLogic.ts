@@ -438,6 +438,7 @@ export function getPlanCardCta(
   effectivePlan: EffectivePlan | null | undefined,
   purchasablePlusVersion: PurchasablePlanVersionInfo | null | undefined,
   isAuthenticatedParam?: boolean,
+  purchasableProVersion?: PurchasablePlanVersionInfo | null,
 ): PlanCardCtaState {
   const current = resolveEffectivePlanDisplay(effectivePlan);
   const isAuthenticated =
@@ -498,13 +499,29 @@ export function getPlanCardCta(
     };
   }
 
-  // PRO Plan
-  return {
-    label: "Sắp ra mắt",
-    disabled: true,
-    isCurrent: false,
-    statusVariant: "coming_soon",
-  };
+  if (isAuthenticated && current.isPaid && current.planCode === "PRO") {
+    return {
+      label: "Gói hiện tại",
+      disabled: true,
+      isCurrent: true,
+      statusVariant: "current",
+    };
+  }
+
+  const pricing = getPlusPricingDisplay(purchasableProVersion);
+  return pricing.isPurchasable
+    ? {
+        label: "Nâng cấp Pro",
+        disabled: false,
+        isCurrent: false,
+        statusVariant: "primary",
+      }
+    : {
+        label: "Chưa thể mua",
+        disabled: true,
+        isCurrent: false,
+        statusVariant: "disabled",
+      };
 }
 
 /**

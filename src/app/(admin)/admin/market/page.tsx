@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ShoppingBag, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { ShoppingBag, CheckCircle, XCircle, Loader2, Truck } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import toast from "react-hot-toast";
 
@@ -59,8 +59,7 @@ export default function AdminMarketOrdersPage() {
               Quản Lý Đơn Hàng Đổi Quà
             </h1>
             <p className="text-slate-400 font-bold text-sm">
-              Xem và phê duyệt các yêu cầu đổi Bánh Mì lấy quà/voucher của học
-              viên
+              Xem và phê duyệt các yêu cầu đổi Bánh Mì lấy quà/voucher của học viên
             </p>
           </div>
         </div>
@@ -90,7 +89,7 @@ export default function AdminMarketOrdersPage() {
       </div>
 
       {/* ORDERS TABLE / CARDS */}
-      <div className="bg-white rounded-[2rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center py-16">
             <Loader2 className="animate-spin text-rose-500" size={40} />
@@ -99,23 +98,25 @@ export default function AdminMarketOrdersPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b-2 border-slate-100 bg-slate-50 text-slate-400 font-black text-xs uppercase tracking-wider">
+                <tr className="border-b border-slate-100 bg-slate-50 text-slate-500 font-bold text-xs uppercase tracking-wider">
                   <th className="py-4 px-6">Mã Đơn</th>
                   <th className="py-4 px-6">Học Viên</th>
-                  <th className="py-4 px-6">Vật Phẩm Đổi</th>
+                  <th className="py-4 px-6">Vật Phẩm & Địa Chỉ Giao</th>
                   <th className="py-4 px-6">Bánh Mì Trừ</th>
                   <th className="py-4 px-6">Thời Gian</th>
                   <th className="py-4 px-6">Trạng Thái</th>
                   <th className="py-4 px-6 text-right">Thao Tác</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-bold text-sm">
+              <tbody className="divide-y divide-slate-100 font-medium text-sm">
                 {filteredOrders.map((ord) => {
                   const itemsList = Array.isArray(ord.items)
                     ? ord.items
                         .map((i: any) => `${i.name} (x${i.quantity || 1})`)
                         .join(", ")
                     : "Vật phẩm";
+
+                  const physical = ord.physicalRedemptions?.[0];
 
                   return (
                     <tr
@@ -126,7 +127,7 @@ export default function AdminMarketOrdersPage() {
                         #{ord.id}
                       </td>
                       <td className="py-4 px-6">
-                        <div className="text-slate-800 font-extrabold">
+                        <div className="text-slate-800 font-bold">
                           {ord.studentName ||
                             ord.user?.profile?.fullName ||
                             "Học viên"}
@@ -135,8 +136,21 @@ export default function AdminMarketOrdersPage() {
                           {ord.user?.email}
                         </div>
                       </td>
-                      <td className="py-4 px-6 text-slate-700 max-w-xs truncate">
-                        {itemsList}
+                      <td className="py-4 px-6 text-slate-700 max-w-sm">
+                        <div className="font-semibold">{itemsList}</div>
+                        {physical && (
+                          <div className="mt-1.5 p-2 rounded-lg bg-amber-50 border border-amber-200/80 text-xs space-y-0.5">
+                            <div className="flex items-center gap-1 font-bold text-amber-900">
+                              <Truck size={12} className="text-amber-700 shrink-0" />
+                              <span>
+                                {physical.recipientName} ({physical.phone})
+                              </span>
+                            </div>
+                            <div className="text-slate-600 font-normal text-[11px] leading-relaxed">
+                              {physical.formattedAddress}
+                            </div>
+                          </div>
+                        )}
                       </td>
                       <td className="py-4 px-6 font-black text-amber-600">
                         -{ord.totalBanh} Bánh Mì

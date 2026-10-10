@@ -42,6 +42,8 @@ import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { notificationService, NotificationItem } from "@/lib/api/services/notification.service";
+import { planService, PLAN_QUERY_KEYS } from "@/lib/api/services/plan.service";
+import { resolveEffectivePlanDisplay } from "@/modules/subscription/planLogic";
 import { getNotificationActionLabel, resolveNotificationAction } from "@/lib/notifications/notificationLogic";
 import { useTheme } from "@/lib/theme/useTheme";
 import { BrandLogo } from "@/components/brand";
@@ -151,6 +153,18 @@ export function AppHeader() {
   const isAdmin = isReady && user?.role === "ADMIN";
   const isExamPath = isExamRoute(pathname);
   const isSkillsPath = isSkillsRoute(pathname);
+
+  const { data: effectivePlan } = useQuery({
+    queryKey: PLAN_QUERY_KEYS.effectivePlan,
+    queryFn: planService.getEffectivePlan,
+    enabled: isStudent,
+    staleTime: 60 * 1000,
+  });
+  const planDisplay = resolveEffectivePlanDisplay(effectivePlan);
+  const headerPlanLabel =
+    planDisplay.isPaid && (planDisplay.planCode === "PLUS" || planDisplay.planCode === "PRO")
+      ? `Gói ${planDisplay.planCode === "PRO" ? "Pro" : "Plus"}`
+      : "Nâng cấp";
 
   const { data: unreadData } = useQuery({
     queryKey: ["notifications", "unread-count"],
@@ -316,7 +330,7 @@ export function AppHeader() {
   ];
 
   return (
-    <header className="sticky top-0 z-[70] w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 transition-all duration-200 shadow-xs">
+    <header className="sticky top-0 z-[70] w-full overflow-x-clip bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 transition-all duration-200 shadow-xs">
       <div className="w-full px-3 sm:px-6 lg:px-6 xl:px-8 2xl:px-12 h-16 sm:h-20 flex items-center justify-between gap-1.5 sm:gap-4">
         
         {/* Brand Logo & Role Tag (Item 1: Logo/Home) */}
@@ -442,13 +456,14 @@ export function AppHeader() {
           {/* If Student: Show Upgrade CTA & Profile Menu with embedded stats, notifications & theme toggle */}
           {isStudent && (
             <>
-              {/* Nút Nâng cấp */}
+              {/* Current plan links to the plan management page; FREE keeps the upgrade CTA. */}
               <Link
                 href="/plans"
+                aria-label={headerPlanLabel === "Nâng cấp" ? "Nâng cấp gói học" : `Xem ${headerPlanLabel}`}
                 className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black text-xs sm:text-sm shadow-xs transition-all shrink-0 cursor-pointer"
               >
                 <Crown size={15} className="text-white shrink-0" aria-hidden="true" />
-                <span>Nâng cấp</span>
+                <span>{headerPlanLabel}</span>
               </Link>
 
               {/* Student Avatar & Dropdown */}

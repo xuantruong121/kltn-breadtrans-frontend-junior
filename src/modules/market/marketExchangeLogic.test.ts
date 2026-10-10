@@ -8,6 +8,8 @@ import {
   calculateRemainingBalance,
   formatBanhMi,
   buildMarketOrderPayload,
+  requiresShippingForProduct,
+  isShippingComplete,
 } from "./marketExchangeLogic.ts";
 import type { MarketProduct } from "./types.ts";
 
@@ -134,3 +136,85 @@ test("MarketExchangeLogic: Invariant check - No native confirm dialogs in src", 
     `Found native confirm() in: ${confirmCalls.join(", ")}`
   );
 });
+
+test("MarketExchangeLogic: requiresShippingForProduct correctly identifies physical vs digital products", () => {
+  assert.equal(requiresShippingForProduct({ fulfillmentType: "PHYSICAL" }), true);
+  assert.equal(requiresShippingForProduct({ requiresShippingAddress: true }), true);
+  assert.equal(requiresShippingForProduct({ slug: "gift-notebook" }), true);
+  assert.equal(requiresShippingForProduct({ slug: "gift-bottle" }), true);
+  assert.equal(requiresShippingForProduct({ slug: "gift-plush" }), true);
+
+  // Digital products must NOT require shipping
+  assert.equal(requiresShippingForProduct({ fulfillmentType: "DIGITAL" }), false);
+  assert.equal(requiresShippingForProduct({ slug: "gift-voucher" }), false);
+  assert.equal(requiresShippingForProduct({ slug: "streak-freeze-24h" }), false);
+  assert.equal(requiresShippingForProduct(undefined), false);
+});
+
+test("MarketExchangeLogic: isShippingComplete validates required shipping fields", () => {
+  assert.equal(isShippingComplete(null), false);
+  assert.equal(isShippingComplete(undefined), false);
+  assert.equal(
+    isShippingComplete({
+      recipientName: "",
+      recipientPhone: "0912345678",
+      provinceCode: "79",
+      wardCode: "26734",
+      addressDetail: "123 Lê Lợi",
+    }),
+    false
+  );
+  assert.equal(
+    isShippingComplete({
+      recipientName: "Nguyễn Văn A",
+      recipientPhone: "",
+      provinceCode: "79",
+      wardCode: "26734",
+      addressDetail: "123 Lê Lợi",
+    }),
+    false
+  );
+  assert.equal(
+    isShippingComplete({
+      recipientName: "Nguyễn Văn A",
+      recipientPhone: "0912345678",
+      provinceCode: "",
+      wardCode: "26734",
+      addressDetail: "123 Lê Lợi",
+    }),
+    false
+  );
+  assert.equal(
+    isShippingComplete({
+      recipientName: "Nguyễn Văn A",
+      recipientPhone: "0912345678",
+      provinceCode: "79",
+      wardCode: "",
+      addressDetail: "123 Lê Lợi",
+    }),
+    false
+  );
+  assert.equal(
+    isShippingComplete({
+      recipientName: "Nguyễn Văn A",
+      recipientPhone: "0912345678",
+      provinceCode: "79",
+      wardCode: "26734",
+      addressDetail: "",
+    }),
+    false
+  );
+
+  // Valid complete shipping profile
+  assert.equal(
+    isShippingComplete({
+      recipientName: "Nguyễn Văn A",
+      recipientPhone: "0912345678",
+      provinceCode: "79",
+      wardCode: "26734",
+      addressDetail: "123 Lê Lợi, P. Bến Nghé",
+    }),
+    true
+  );
+});
+

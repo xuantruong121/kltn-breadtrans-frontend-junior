@@ -228,12 +228,20 @@ describe("2. PLUS Plan Display from Backend Data vs Unavailable Catalog", () => 
 });
 
 describe("3. PRO Plan Behavior", () => {
-  test("PRO plan remains Coming Soon (Sắp ra mắt) and disabled without live price", () => {
+  test("PRO plan stays unavailable when the public catalog has no current version", () => {
     const freeUser = makeEffectivePlan();
     const cta = getPlanCardCta("PRO", freeUser, null);
     assert.equal(cta.disabled, true);
-    assert.equal(cta.label, "Sắp ra mắt");
+    assert.equal(cta.label, "Chưa thể mua");
     assert.equal(cta.isCurrent, false);
+  });
+
+  test("PRO plan becomes purchasable from the backend catalog", () => {
+    const freeUser = makeEffectivePlan();
+    const proVersion = { id: 22, priceVnd: 149000, durationDays: 30, currency: "VND" };
+    const cta = getPlanCardCta("PRO", freeUser, null, true, proVersion);
+    assert.equal(cta.disabled, false);
+    assert.equal(cta.label, "Nâng cấp Pro");
   });
 });
 

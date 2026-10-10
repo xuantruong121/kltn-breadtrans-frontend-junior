@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Check, Wheat, Truck } from "lucide-react";
 import clsx from "clsx";
 import { MarketProduct } from "../types";
+import { getMarketItemVisual } from "../marketVisuals";
 
 interface MarketItemCardProps {
   product: MarketProduct;
@@ -86,7 +87,8 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({
   onRedeem,
   onEquipToggle,
 }) => {
-  const [imgSrc, setImgSrc] = useState(product.imageUrl || "/images/market/streak-freeze.svg");
+  const visual = getMarketItemVisual(product.slug, product.category);
+  const [imgSrc, setImgSrc] = useState(visual.src);
   const rarity = RARITY_CONFIG[product.rarity?.toUpperCase()] || RARITY_CONFIG.COMMON;
   const isOutOfStock = product.stock <= 0;
   const isEquippable = (product.category === "AVATAR_FRAME" || product.category === "BADGE") && isUnlocked;
@@ -141,19 +143,21 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({
           {/* Upgraded SVG Artwork */}
           <Image
             src={imgSrc}
-            alt={product.name}
-            width={112}
-            height={112}
-            className="relative z-10 h-24 w-24 sm:h-28 sm:w-28 object-contain transition-all duration-300 ease-out group-hover:scale-110 group-hover:-translate-y-1.5 drop-shadow-md"
-            onError={() => setImgSrc("/images/market/streak-freeze.svg")}
+            alt={`${product.name} — ${visual.alt}`}
+            width={144}
+            height={144}
+            className="relative z-10 h-28 w-28 sm:h-32 sm:w-32 object-contain transition-all duration-300 ease-out group-hover:scale-110 group-hover:-translate-y-1.5 drop-shadow-md"
+            onError={() => setImgSrc((current) => current === visual.src ? visual.fallbackSrc : "/images/market/badge-star.svg")}
             loading="lazy"
           />
 
           {/* Physical Delivery Pill */}
-          {product.category === "PHYSICAL" && (
+          {(product.fulfillmentType === "PHYSICAL" ||
+            product.requiresShippingAddress ||
+            product.category === "PHYSICAL") && (
             <span className="absolute bottom-2.5 right-2.5 z-20 inline-flex items-center gap-1 rounded-full border border-amber-200/80 bg-white/95 dark:border-amber-800/60 dark:bg-slate-900/95 px-2.5 py-0.5 text-[10px] font-bold text-amber-800 dark:text-amber-300 shadow-2xs backdrop-blur-xs">
               <Truck size={12} className="text-amber-600 dark:text-amber-400" />
-              <span>Giao tận nhà</span>
+              <span>Quà vật lý</span>
             </span>
           )}
 

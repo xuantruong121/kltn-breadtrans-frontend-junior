@@ -39,7 +39,7 @@ export function getTypeSpecificQuestFallback(type?: string): { actionLabel: stri
     case "PRACTICE_SPEAKING":
       return { actionLabel: "Luyện nói", actionUrl: "/speaking" };
     case "COMPLETE_LESSON":
-      return { actionLabel: "Mở bài học", actionUrl: "/my-courses" };
+      return { actionLabel: "Mở bài học", actionUrl: "/courses" };
     default:
       return { actionLabel: "Khám phá bài học", actionUrl: "/dashboard" };
   }
@@ -387,4 +387,3 @@ export function getVietnamFormattedDate(date: Date = new Date()): string {
   });
   return formatter.format(date);
 }
-

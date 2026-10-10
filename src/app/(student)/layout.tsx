@@ -61,7 +61,9 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   const setStats = useGamificationStore((state) => state.setStats);
   const isReady = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
-  const isGuestAllowed = isGuestAllowedRoute(pathname);
+  // The deprecated root catalog is public only long enough to normalize to
+  // /courses; nested learner routes still require an authenticated student.
+  const isGuestAllowed = pathname === "/my-courses" || isGuestAllowedRoute(pathname);
 
   const { data: learningStats } = useQuery({
     queryKey: ["user-stats", user?.id],

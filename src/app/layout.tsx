@@ -60,7 +60,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${quicksand.className} min-h-dvh antialiased bg-background text-foreground transition-colors duration-150`}
+        className={`${quicksand.className} min-h-dvh overflow-x-clip antialiased bg-background text-foreground transition-colors duration-150`}
         suppressHydrationWarning
       >
         <Script

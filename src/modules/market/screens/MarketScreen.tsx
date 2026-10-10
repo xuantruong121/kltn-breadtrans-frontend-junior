@@ -26,6 +26,8 @@ import { MarketProduct, MarketOrder, MarketInventoryResponse, MarketBalanceRespo
 import { MarketItemCard } from "../components/MarketItemCard";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { MarketExchangeConfirmModal } from "../components/MarketExchangeConfirmModal";
+import { ShippingCompletionModal } from "../components/ShippingCompletionModal";
+import { userService, UserShippingProfile } from "@/lib/api/services/user.service";
 import { validateMarketExchange, buildMarketOrderPayload } from "../marketExchangeLogic";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 
@@ -106,6 +108,17 @@ export const MarketScreen: React.FC = () => {
     staleTime: 30_000,
   });
 
+  // 5. Student shipping profile query
+  const { data: shippingProfile } = useQuery<UserShippingProfile>({
+    queryKey: ["shippingProfile"],
+    queryFn: () => userService.getShippingProfile(),
+    enabled: !isGuest,
+    staleTime: 60_000,
+  });
+
+  const [isShippingModalOpen, setIsShippingModalOpen] = useState(false);
+  const [pendingPhysicalProduct, setPendingPhysicalProduct] = useState<MarketProduct | null>(null);
+
   // Filter products by category and search
   const filteredProducts = useMemo(() => {
     return products.filter((item) => {
@@ -171,8 +184,35 @@ export const MarketScreen: React.FC = () => {
       triggerButtonRef.current = document.activeElement as HTMLElement | null;
     }
 
+    const isPhysical =
+      product.fulfillmentType === "PHYSICAL" ||
+      Boolean(product.requiresShippingAddress) ||
+      product.category === "PHYSICAL";
+
+    if (isPhysical && !shippingProfile?.shippingProfileComplete) {
+      setPendingPhysicalProduct(product);
+      setIsShippingModalOpen(true);
+      return;
+    }
+
     setExchangeError(null);
     setProductToExchange(product);
+  };
+
+  const handleShippingComplete = () => {
+    setIsShippingModalOpen(false);
+    if (pendingPhysicalProduct) {
+      setProductToExchange(pendingPhysicalProduct);
+      setPendingPhysicalProduct(null);
+    }
+  };
+
+  const handleEditShipping = () => {
+    if (productToExchange) {
+      setPendingPhysicalProduct(productToExchange);
+      setProductToExchange(null);
+      setIsShippingModalOpen(true);
+    }
   };
 
   const handleCancelExchange = () => {
@@ -196,7 +236,20 @@ export const MarketScreen: React.FC = () => {
       );
 
       unlockItem(productToExchange.slug || String(productToExchange.id));
-      toast.success(`Đổi "${productToExchange.name}" thành công!`);
+
+      const isPhysical =
+        productToExchange.fulfillmentType === "PHYSICAL" ||
+        Boolean(productToExchange.requiresShippingAddress) ||
+        productToExchange.category === "PHYSICAL";
+
+      if (isPhysical) {
+        toast.success(
+          `Đổi "${productToExchange.name}" thành công! BreadTrans sẽ xử lý việc gửi quà vật lý theo thông tin bạn đã xác nhận.`,
+          { duration: 5000 }
+        );
+      } else {
+        toast.success(`Đổi "${productToExchange.name}" thành công!`);
+      }
 
       queryClient.invalidateQueries({ queryKey: ["my-market-orders"] });
       queryClient.invalidateQueries({ queryKey: ["market-balance"] });
@@ -208,6 +261,17 @@ export const MarketScreen: React.FC = () => {
       setProductToExchange(null);
       triggerButtonRef.current?.focus();
     } catch (err: any) {
+      const errCode = err?.response?.data?.code;
+      if (errCode === "SHIPPING_PROFILE_REQUIRED") {
+        setPendingPhysicalProduct(productToExchange);
+        setProductToExchange(null);
+        setIsShippingModalOpen(true);
+        toast.error(
+          "Vui lòng hoàn thiện thông tin nhận quà trước khi đổi quà vật lý.",
+          { duration: 4000 }
+        );
+        return;
+      }
       const friendlyMsg = getApiErrorMessage(err, "Có lỗi xảy ra khi đổi quà!");
       setExchangeError(friendlyMsg);
       toast.error(friendlyMsg);
@@ -547,6 +611,16 @@ export const MarketScreen: React.FC = () => {
         onOpenRegister={() => router.push("/register?redirect=/market")}
       />
 
+      {/* Shipping Completion Modal for Physical Rewards */}
+      <ShippingCompletionModal
+        isOpen={isShippingModalOpen}
+        onClose={() => {
+          setIsShippingModalOpen(false);
+          setPendingPhysicalProduct(null);
+        }}
+        onSuccess={handleShippingComplete}
+      />
+
       {/* Market Exchange Confirmation Modal */}
       <MarketExchangeConfirmModal
         isOpen={Boolean(productToExchange)}
@@ -554,6 +628,8 @@ export const MarketScreen: React.FC = () => {
         currentBalance={balanceData?.totalBanh || 0}
         isPending={isSubmitting}
         errorMessage={exchangeError}
+        shippingProfile={shippingProfile}
+        onEditShipping={handleEditShipping}
         onConfirm={handleConfirmExchange}
         onCancel={handleCancelExchange}
       />

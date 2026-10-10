@@ -82,7 +82,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
 
       {/* 4. Khóa học */}
       <Link
-        href={user ? "/my-courses" : "/courses"}
+        href="/courses"
         className={`flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 transition-colors ${
           isCourses
             ? "text-amber-700 dark:text-amber-400 font-bold"
