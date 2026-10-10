@@ -42,7 +42,21 @@ export interface StudentPayment {
 
 export interface StudentPaymentDetail extends StudentPayment {
   updatedAt: string;
-  bankInstructions: BankTransferInstructions;
+  bankInstructions: BankTransferInstructions | null;
+  payos?: {
+    intentId: number;
+    type: "PLAN" | "COURSE";
+    orderCode: number;
+    description: string;
+    paymentLinkId: string | null;
+    checkoutUrl: string | null;
+    qrCode: string | null;
+    bankBin: string | null;
+    bankAccountNumber: string | null;
+    bankAccountName: string | null;
+    status: string;
+    expiresAt: string | null;
+  } | null;
 }
 
 // =================== ADMIN INTERFACES ===================

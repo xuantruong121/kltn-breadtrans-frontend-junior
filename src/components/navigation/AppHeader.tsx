@@ -24,28 +24,28 @@ import {
   User,
   X,
   Bell,
-  BellOff,
   LogOut,
   Flame,
   Heart,
   Loader2,
-  ShieldCheck,
   CheckCheck,
   Clock,
-  Settings,
-  Inbox,
   MoreHorizontal,
   Layers,
   CircleHelp,
   Lightbulb,
-  Zap,
   Activity,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
-import { usePushNotification } from "@/lib/hooks/usePushNotification";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { notificationService, NotificationItem } from "@/lib/api/services/notification.service";
+import { planService, PLAN_QUERY_KEYS } from "@/lib/api/services/plan.service";
+import { resolveEffectivePlanDisplay } from "@/modules/subscription/planLogic";
+import { getNotificationActionLabel, resolveNotificationAction } from "@/lib/notifications/notificationLogic";
+import { useTheme } from "@/lib/theme/useTheme";
 import { BrandLogo } from "@/components/brand";
 import {
   isExamRoute,
@@ -85,375 +85,23 @@ function formatRelativeTime(dateStr: string) {
   }
 }
 
-function StudentNotificationMenu() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const queryClient = useQueryClient();
-  const { user } = useAuthStore();
-  const [open, setOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"inbox" | "settings">("inbox");
-  const menuRef = useRef<HTMLDivElement>(null);
-  const mobilePanelRef = useRef<HTMLElement>(null);
-
-  const {
-    isSupported,
-    permission,
-    isSubscribed,
-    isLoading: isPushLoading,
-    subscribeToPush,
-    unsubscribeFromPush,
-  } = usePushNotification();
-
-  const { data: unreadData } = useQuery({
-    queryKey: ["notifications-unread"],
-    queryFn: () => notificationService.getUnreadCount(),
-    enabled: !!user,
-    refetchInterval: 30000,
-  });
-  const unreadCount = unreadData?.count || 0;
-
-  const { data: inboxData, isLoading: isInboxLoading } = useQuery({
-    queryKey: ["notifications-inbox"],
-    queryFn: () => notificationService.getInbox(20),
-    enabled: !!user && open && activeTab === "inbox",
-  });
-  const items = inboxData?.items || [];
-
-  const markReadMut = useMutation({
-    mutationFn: (id: number) => notificationService.markRead(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications-unread"] });
-      queryClient.invalidateQueries({ queryKey: ["notifications-inbox"] });
-    },
-  });
-
-  const markAllReadMut = useMutation({
-    mutationFn: () => notificationService.markAllRead(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications-unread"] });
-      queryClient.invalidateQueries({ queryKey: ["notifications-inbox"] });
-    },
-  });
-
-  const [prevPathname, setPrevPathname] = useState(pathname);
-  if (prevPathname !== pathname) {
-    setPrevPathname(pathname);
-    setOpen(false);
-  }
-
-  useEffect(() => {
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    const closeOnOutsideClick = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (
-        menuRef.current &&
-        !menuRef.current.contains(target) &&
-        (!mobilePanelRef.current || !mobilePanelRef.current.contains(target))
-      ) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("keydown", closeOnEscape);
-    document.addEventListener("mousedown", closeOnOutsideClick);
-    return () => {
-      document.removeEventListener("keydown", closeOnEscape);
-      document.removeEventListener("mousedown", closeOnOutsideClick);
-    };
-  }, []);
-
-  const handleItemClick = (item: NotificationItem, isMobile: boolean = false) => {
-    if (!item.isRead) {
-      markReadMut.mutate(item.id);
-    }
-    if (item.url) {
-      setOpen(false);
-      router.push(item.url);
-    } else if (isMobile) {
-      setOpen(false);
-    }
-  };
-
-  const status = !isSupported
-    ? "Trình duyệt chưa hỗ trợ"
-    : permission === "denied"
-      ? "Đã bị chặn"
-      : isSubscribed
-        ? "Đang bật"
-        : "Chưa bật";
-
-  const renderMenuContent = (isMobile: boolean = false) => (
-    <div className="flex flex-col overflow-hidden">
-      {/* TABS HEADER */}
-      <div className="flex border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/80 p-1.5 shrink-0">
-        <button
-          type="button"
-          onClick={() => setActiveTab("inbox")}
-          className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition-all cursor-pointer ${
-            activeTab === "inbox"
-              ? "bg-white dark:bg-slate-900 text-amber-900 dark:text-amber-400 shadow-sm"
-              : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-          }`}
-        >
-          <Inbox size={15} />
-          <span>Hộp thư</span>
-          {unreadCount > 0 && (
-            <span className="rounded-full bg-rose-500 px-1.5 py-0.2 text-[9px] font-black text-white">
-              {unreadCount}
-            </span>
-          )}
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("settings")}
-          className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition-all cursor-pointer ${
-            activeTab === "settings"
-              ? "bg-white dark:bg-slate-900 text-amber-900 dark:text-amber-400 shadow-sm"
-              : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-          }`}
-        >
-          <Settings size={15} />
-          <span>Cài đặt nhận tin</span>
-        </button>
-      </div>
-
-      {/* TAB 1: INBOX */}
-      {activeTab === "inbox" && (
-        <div className="flex flex-col min-h-0">
-          {/* Inbox Subheader */}
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-4 py-2.5 shrink-0 bg-white dark:bg-slate-900">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-              {unreadCount > 0 ? `${unreadCount} thông báo chưa đọc` : "Đã đọc tất cả"}
-            </span>
-            {unreadCount > 0 && (
-              <button
-                type="button"
-                disabled={markAllReadMut.isPending}
-                onClick={() => markAllReadMut.mutate()}
-                className="flex items-center gap-1 text-[11px] font-bold text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300 disabled:opacity-50 cursor-pointer"
-              >
-                <CheckCheck size={13} />
-                <span>Đọc tất cả</span>
-              </button>
-            )}
-          </div>
-
-          {/* Notification List */}
-          <div className={`${isMobile ? "max-h-[50dvh]" : "max-h-[360px]"} overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800`}>
-            {isInboxLoading ? (
-              <div className="flex items-center justify-center py-8 text-slate-400">
-                <Loader2 size={24} className="animate-spin text-amber-500" />
-              </div>
-            ) : items.length === 0 ? (
-              <div className="py-10 text-center text-slate-400">
-                <Inbox size={32} className="mx-auto mb-2 text-slate-300" />
-                <p className="text-xs font-bold">Chưa có thông báo nào</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Các lời nhắc ôn từ vựng và chuỗi học tập sẽ hiển thị tại đây.
-                </p>
-              </div>
-            ) : (
-              items.map((item) => {
-                const isVocab = item.type === "vocab_review";
-                const isStreak = item.type === "streak";
-
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => handleItemClick(item, isMobile)}
-                    className={`group relative flex items-start gap-3 p-3.5 transition-colors cursor-pointer ${
-                      item.isRead
-                        ? "bg-white dark:bg-slate-900 hover:bg-slate-50/80 dark:hover:bg-slate-800/60"
-                        : "bg-amber-50/50 dark:bg-amber-950/30 hover:bg-amber-50 dark:hover:bg-amber-950/50"
-                    }`}
-                  >
-                    {/* Icon */}
-                    <div
-                      className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl text-xs ${
-                        isVocab
-                          ? "bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300"
-                          : isStreak
-                          ? "bg-orange-100 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300"
-                          : "bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300"
-                      }`}
-                    >
-                      {isVocab ? (
-                        <BookOpen size={16} />
-                      ) : isStreak ? (
-                        <Flame size={16} />
-                      ) : (
-                        <Bell size={16} />
-                      )}
-                    </div>
-
-                    {/* Content */}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-1">
-                        <p
-                          className={`text-xs leading-snug line-clamp-1 ${
-                            item.isRead
-                              ? "font-semibold text-slate-700 dark:text-slate-300"
-                              : "font-extrabold text-slate-900 dark:text-slate-100"
-                          }`}
-                        >
-                          {item.title}
-                        </p>
-                        {!item.isRead && (
-                          <span className="size-2 shrink-0 rounded-full bg-amber-500" />
-                        )}
-                      </div>
-                      <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500 line-clamp-2">
-                        {item.body}
-                      </p>
-                      <div className="mt-1 flex items-center gap-1 text-[10px] text-slate-400">
-                        <Clock size={11} />
-                        <span>{formatRelativeTime(item.createdAt)}</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* TAB 2: PUSH SETTINGS */}
-      {activeTab === "settings" && (
-        <div className="overflow-y-auto max-h-[50dvh] sm:max-h-none">
-          <div className="flex items-start gap-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 p-4">
-            <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${isSubscribed ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300" : "bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300"}`}>
-              {isSubscribed ? <ShieldCheck size={20} aria-hidden="true" /> : <BellOff size={20} aria-hidden="true" />}
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">Thông báo trình duyệt</h2>
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${isSubscribed ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300" : "bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300"}`}>{status}</span>
-              </div>
-              <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Nhận nhắc ôn tập từ vựng Spaced Repetition và duy trì ngọn lửa streak ngay trên thiết bị này.</p>
-            </div>
-          </div>
-          <div className="space-y-3 p-4">
-            {!isSupported ? (
-              <p className="rounded-xl bg-slate-50 dark:bg-slate-800 p-3 text-xs font-semibold leading-5 text-slate-500 dark:text-slate-400">Trình duyệt hiện tại không hỗ trợ thông báo đẩy.</p>
-            ) : permission === "denied" ? (
-              <p className="rounded-xl bg-rose-50 dark:bg-rose-950/40 p-3 text-xs font-semibold leading-5 text-rose-700 dark:text-rose-300">Bạn đã chặn thông báo. Hãy bật lại quyền thông báo trong cài đặt trình duyệt để tiếp tục.</p>
-            ) : isSubscribed ? (
-              <button type="button" disabled={isPushLoading} onClick={unsubscribeFromPush} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 text-sm font-extrabold text-slate-700 dark:text-slate-200 transition-colors hover:border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer">
-                {isPushLoading ? <Loader2 size={17} className="animate-spin" aria-hidden="true" /> : <BellOff size={17} aria-hidden="true" />} Tắt thông báo đẩy
-              </button>
-            ) : (
-              <button type="button" disabled={isPushLoading} onClick={subscribeToPush} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 text-sm font-extrabold text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer">
-                {isPushLoading ? <Loader2 size={17} className="animate-spin" aria-hidden="true" /> : <Bell size={17} aria-hidden="true" />} Bật nhận thông báo
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
-  return (
-    <div ref={menuRef} className="relative shrink-0">
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        aria-label="Mở thông báo"
-        aria-expanded={open}
-        aria-controls="student-notification-menu-desktop"
-        className={`relative flex size-9 sm:size-10 sm:min-h-11 sm:min-w-11 items-center justify-center rounded-xl border transition-all focus-visible:outline-none ${
-          open
-            ? "border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 shadow-2xs"
-            : "border-transparent text-slate-500 dark:text-slate-400 hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200"
-        }`}
-      >
-        <Bell size={18} className="sm:hidden" aria-hidden="true" />
-        <Bell size={20} className="hidden sm:inline-block" aria-hidden="true" />
-        {unreadCount > 0 ? (
-          <span className="absolute -right-1 -top-1 flex h-4.5 min-w-4.5 sm:h-5 sm:min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] sm:text-[10px] font-black text-white ring-2 ring-white">
-            {unreadCount > 99 ? "99+" : unreadCount}
-          </span>
-        ) : !isSubscribed && isSupported && permission !== "denied" ? (
-          <span className="absolute right-1.5 top-1.5 sm:right-2 sm:top-2 size-2 rounded-full bg-amber-500 ring-2 ring-white" aria-label="Chưa thiết lập thông báo" />
-        ) : null}
-      </button>
-
-      {/* Desktop Dropdown (sm and up >= 640px) */}
-      {open && (
-        <section
-          id="student-notification-menu-desktop"
-          className="hidden sm:block absolute right-0 top-full z-50 mt-2 w-96 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-150"
-        >
-          {renderMenuContent(false)}
-        </section>
-      )}
-
-      {/* Mobile Portal Modal (< sm < 640px, e.g. iPhone 16 Pro Max, 440px) */}
-      {open &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div className="sm:hidden">
-            {/* Darkened Backdrop */}
-            <div
-              className="fixed inset-0 z-[9990] bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
-              onClick={() => setOpen(false)}
-              aria-hidden="true"
-            />
-
-            {/* Floating Card Sheet */}
-            <section
-              ref={mobilePanelRef}
-              id="student-notification-menu-mobile"
-              className="fixed top-20 inset-x-3 z-[9995] max-w-[420px] mx-auto overflow-hidden rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[calc(100dvh-6rem)] flex flex-col"
-            >
-              {/* Mobile Header Bar */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-400 flex items-center justify-center shrink-0">
-                    <Bell size={17} />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">Thông báo</h3>
-                    <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                      {unreadCount > 0 ? `${unreadCount} thông báo chưa đọc` : "Đã đọc tất cả"}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  aria-label="Đóng thông báo"
-                  className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              {/* Shared Content Body */}
-              {renderMenuContent(true)}
-            </section>
-          </div>,
-          document.body
-        )}
-    </div>
-  );
-}
-
 export function AppHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuthStore();
-  const { breads, streak } = useGamificationStore();
+  const { breads, streak, level, exp } = useGamificationStore();
+  const { resolvedTheme, toggleTheme } = useTheme();
 
   const queryClient = useQueryClient();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [notificationsExpanded, setNotificationsExpanded] = useState(true);
   const [moreOpen, setMoreOpen] = useState(false);
 
   const profileRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLDivElement>(null);
   const isReady = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const isDark = isReady ? resolvedTheme === "dark" : false;
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -505,6 +153,60 @@ export function AppHeader() {
   const isAdmin = isReady && user?.role === "ADMIN";
   const isExamPath = isExamRoute(pathname);
   const isSkillsPath = isSkillsRoute(pathname);
+
+  const { data: effectivePlan } = useQuery({
+    queryKey: PLAN_QUERY_KEYS.effectivePlan,
+    queryFn: planService.getEffectivePlan,
+    enabled: isStudent,
+    staleTime: 60 * 1000,
+  });
+  const planDisplay = resolveEffectivePlanDisplay(effectivePlan);
+  const headerPlanLabel =
+    planDisplay.isPaid && (planDisplay.planCode === "PLUS" || planDisplay.planCode === "PRO")
+      ? `Gói ${planDisplay.planCode === "PRO" ? "Pro" : "Plus"}`
+      : "Nâng cấp";
+
+  const { data: unreadData } = useQuery({
+    queryKey: ["notifications", "unread-count"],
+    queryFn: () => notificationService.getUnreadCount(),
+    enabled: !!user && user.role === "STUDENT",
+    refetchInterval: 30000,
+  });
+  const unreadCount = unreadData?.count || 0;
+
+  const { data: inboxData, isLoading: isInboxLoading } = useQuery({
+    queryKey: ["notifications", "recent", "unread"],
+    queryFn: () => notificationService.getInbox(3, undefined, "unread"),
+    enabled: !!user && user.role === "STUDENT" && profileMenuOpen,
+  });
+  const recentNotifications = inboxData?.items || [];
+
+  const markReadMut = useMutation({
+    mutationFn: (id: number) => notificationService.markRead(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", "recent", "unread"] });
+    },
+  });
+
+  const markAllReadMut = useMutation({
+    mutationFn: () => notificationService.markAllRead(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", "recent", "unread"] });
+    },
+  });
+
+  const handleNotificationClick = (item: NotificationItem) => {
+    if (!item.isRead) {
+      markReadMut.mutate(item.id);
+    }
+    const action = resolveNotificationAction(item);
+    closeMenus();
+    if (action) {
+      router.push(action);
+    }
+  };
 
   interface HeaderNavLink {
     label: string;
@@ -628,7 +330,7 @@ export function AppHeader() {
   ];
 
   return (
-    <header className="sticky top-0 z-[70] w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 transition-all duration-200 shadow-xs">
+    <header className="sticky top-0 z-[70] w-full overflow-x-clip bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 transition-all duration-200 shadow-xs">
       <div className="w-full px-3 sm:px-6 lg:px-6 xl:px-8 2xl:px-12 h-16 sm:h-20 flex items-center justify-between gap-1.5 sm:gap-4">
         
         {/* Brand Logo & Role Tag (Item 1: Logo/Home) */}
@@ -751,56 +453,18 @@ export function AppHeader() {
 
         {/* Right Header Utilities */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 xl:gap-3 shrink-0">
-          {/* If Student: Show Gamification badges & Profile Menu */}
+          {/* If Student: Show Upgrade CTA & Profile Menu with embedded stats, notifications & theme toggle */}
           {isStudent && (
             <>
-              {/* Nút Nâng cấp bên trái ô hiển thị bánh mì */}
+              {/* Current plan links to the plan management page; FREE keeps the upgrade CTA. */}
               <Link
                 href="/plans"
-                className="inline-flex items-center gap-1 sm:gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black text-xs sm:text-sm shadow-xs transition-all shrink-0 cursor-pointer"
+                aria-label={headerPlanLabel === "Nâng cấp" ? "Nâng cấp gói học" : `Xem ${headerPlanLabel}`}
+                className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black text-xs sm:text-sm shadow-xs transition-all shrink-0 cursor-pointer"
               >
-                <Zap size={14} className="fill-white text-white shrink-0" aria-hidden="true" />
-                <span>Nâng cấp</span>
+                <Crown size={15} className="text-white shrink-0" aria-hidden="true" />
+                <span>{headerPlanLabel}</span>
               </Link>
-
-              {/* Mobile Compact Pill: Bánh Mì */}
-              <Link
-                href="/hub?tab=account-plan"
-                title={`Số dư: ${breads || 0} Bánh Mì`}
-                className="flex sm:hidden items-center gap-1 bg-amber-50/90 dark:bg-amber-950/50 border border-amber-200/90 dark:border-amber-800/70 px-2 py-1 rounded-xl shadow-2xs text-amber-900 dark:text-amber-300 shrink-0 whitespace-nowrap text-xs font-black"
-              >
-                <span className="text-sm shrink-0" role="img" aria-label="Bánh Mì">🥖</span>
-                <span>{breads || 0}</span>
-              </Link>
-
-              {/* Badge Bánh Mì */}
-              <Link
-                href="/hub?tab=account-plan"
-                title={`Số dư: ${breads || 0} Bánh Mì`}
-                className="group hidden items-center gap-1 sm:gap-1.5 bg-amber-50/90 dark:bg-amber-950/50 border border-amber-200/90 dark:border-amber-800/70 px-2 sm:px-2.5 2xl:px-3 py-1 2xl:py-1.5 rounded-2xl shadow-2xs hover:border-amber-400 dark:hover:border-amber-600 transition-colors shrink-0 whitespace-nowrap sm:flex"
-              >
-                <span className="text-base shrink-0" role="img" aria-label="Bánh Mì">🥖</span>
-                <span className="text-xs font-black text-amber-900 dark:text-amber-300 tracking-tight whitespace-nowrap">
-                  {breads || 0}
-                </span>
-              </Link>
-
-              {/* Badge Streak */}
-              <div
-                title={`Chuỗi học tập liên tục: ${streak || 1} ngày`}
-                className="hidden items-center gap-1 sm:gap-1.5 bg-orange-50/90 dark:bg-orange-950/50 border border-orange-200/90 dark:border-orange-800/70 px-2 sm:px-2.5 2xl:px-3 py-1 2xl:py-1.5 rounded-2xl shadow-2xs text-orange-700 dark:text-orange-300 shrink-0 whitespace-nowrap sm:flex"
-              >
-                <Flame size={16} className="fill-orange-500 text-orange-500 shrink-0" />
-                <span className="text-xs font-black tracking-tight whitespace-nowrap">
-                  {streak || 1}
-                  <span className="hidden xl:inline"> ngày</span>
-                </span>
-              </div>
-
-              {/* Theme Toggle placed immediately left of Notification Menu */}
-              <ThemeToggle className="hidden sm:inline-flex" />
-
-              <StudentNotificationMenu />
 
               {/* Student Avatar & Dropdown */}
               <div ref={profileRef} className="relative shrink-0">
@@ -809,7 +473,7 @@ export function AppHeader() {
                   onClick={() => setProfileMenuOpen((prev) => !prev)}
                   aria-expanded={profileMenuOpen}
                   aria-label="Menu tài khoản"
-                  className="flex size-9 sm:size-auto sm:min-h-11 sm:min-w-11 items-center justify-center sm:gap-1.5 rounded-full bg-white dark:bg-slate-800/90 p-0.5 sm:px-1.5 ring-2 ring-amber-500/60 dark:ring-amber-500/50 shadow-2xs transition-all hover:bg-amber-50 dark:hover:bg-slate-750 hover:ring-amber-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-amber-700 cursor-pointer shrink-0"
+                  className="relative flex size-9 sm:size-auto sm:min-h-11 sm:min-w-11 items-center justify-center sm:gap-1.5 rounded-full bg-white dark:bg-slate-800/90 p-0.5 sm:px-1.5 ring-2 ring-amber-500/60 dark:ring-amber-500/50 shadow-2xs transition-all hover:bg-amber-50 dark:hover:bg-slate-750 hover:ring-amber-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-amber-700 cursor-pointer shrink-0"
                 >
                   <div className="size-7.5 sm:size-8 rounded-full bg-amber-600 text-white font-black text-xs flex items-center justify-center overflow-hidden shrink-0">
                     {user?.profile?.avatar ? (
@@ -826,68 +490,267 @@ export function AppHeader() {
                     )}
                   </div>
                   <ChevronDown size={14} className="hidden sm:inline-block text-slate-400 dark:text-slate-300 mr-0.5 shrink-0" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-black text-white ring-2 ring-white dark:ring-slate-900">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
                 </button>
 
                 {profileMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-56 max-w-[calc(100vw-1.5rem)] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-xl p-2 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
-                    <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 mb-1">
-                      <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
+                  <div className="absolute right-0 top-full mt-2 w-[320px] sm:w-[350px] max-w-[calc(100vw-1.5rem)] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xl p-2.5 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
+                    {/* User Identity */}
+                    <div className="px-2 pt-1 pb-1">
+                      <p className="text-sm font-extrabold text-slate-900 dark:text-slate-100 truncate">
                         {user?.profile?.fullName || user?.email}
                       </p>
-                      <p className="text-[11px] font-semibold text-slate-400 truncate">{user?.email}</p>
+                      {user?.profile?.fullName && user?.email && (
+                        <p className="text-[11px] font-medium text-slate-400 truncate mt-0.5">{user.email}</p>
+                      )}
                     </div>
+
+                    {/* Gamification Stats Strip (Streak, Breads, Level) */}
+                    <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80 rounded-xl p-2.5 flex items-center justify-around my-2 text-xs">
+                      <div className="flex items-center gap-1.5" title={`Chuỗi học tập liên tục: ${streak || 1} ngày`}>
+                        <Flame size={15} className="fill-orange-500 text-orange-500 shrink-0" />
+                        <span className="font-extrabold text-orange-600 dark:text-orange-400">{streak || 1}</span>
+                        <span className="text-slate-500 dark:text-slate-400 text-[11px] font-medium">ngày</span>
+                      </div>
+
+                      <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
+
+                      <Link
+                        href="/hub?tab=account-plan"
+                        onClick={closeMenus}
+                        title={`Số dư bánh mì: ${breads || 0}`}
+                        className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+                      >
+                        <span className="text-sm leading-none" role="img" aria-label="Bánh Mì">🥖</span>
+                        <span className="font-extrabold text-amber-600 dark:text-amber-400">{breads || 0}</span>
+                        <span className="text-slate-500 dark:text-slate-400 text-[11px] font-medium">bánh</span>
+                      </Link>
+
+                      <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
+
+                      <div className="flex items-center gap-1.5" title={`Cấp độ ${level || 1} (${exp || 0} EXP)`}>
+                        <span className="text-sm leading-none">⚡</span>
+                        <span className="font-extrabold text-sky-600 dark:text-sky-400">Lv.{level || 1}</span>
+                      </div>
+                    </div>
+
+                    {/* Collapsible Thông báo */}
+                    <div className="border-t border-slate-100 dark:border-slate-800 pt-1 pb-1">
+                      <button
+                        type="button"
+                        onClick={() => setNotificationsExpanded((prev) => !prev)}
+                        className="w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors cursor-pointer"
+                        aria-expanded={notificationsExpanded}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Bell size={16} className="text-slate-500 dark:text-slate-400 shrink-0" />
+                          <span>Thông báo</span>
+                          {unreadCount > 0 && (
+                            <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[9px] font-black text-white leading-none">
+                              {unreadCount > 99 ? "99+" : unreadCount}
+                            </span>
+                          )}
+                        </div>
+                        <ChevronDown
+                          size={15}
+                          className={`text-slate-400 transition-transform duration-200 shrink-0 ${
+                            notificationsExpanded ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+
+                      {notificationsExpanded && (
+                        <div className="mt-1 px-1 space-y-1.5 animate-in fade-in duration-150">
+                          {isInboxLoading ? (
+                            <div className="flex items-center justify-center py-4 text-slate-400">
+                              <Loader2 size={16} className="animate-spin text-amber-500" />
+                            </div>
+                          ) : recentNotifications.length === 0 ? (
+                            <div className="p-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-center">
+                              <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                                Chưa có thông báo mới
+                              </p>
+                              <Link
+                                href="/notifications"
+                                onClick={closeMenus}
+                                className="mt-1 inline-block text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline"
+                              >
+                                Xem lịch sử thông báo
+                              </Link>
+                            </div>
+                          ) : (
+                            <>
+                              {recentNotifications.slice(0, 2).map((item) => {
+                                const isVocab = item.type === "vocab_review";
+                                const isStreak = item.type === "streak";
+                                const action = resolveNotificationAction(item);
+                                const actionLabel = getNotificationActionLabel(item);
+
+                                return (
+                                  <div
+                                    key={item.id}
+                                    onClick={() => handleNotificationClick(item)}
+                                    className="p-2.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 hover:bg-amber-50/60 dark:hover:bg-slate-800 transition-colors cursor-pointer group/notif text-left"
+                                  >
+                                    <div className="flex items-start gap-2">
+                                      <div className="mt-0.5 text-xs shrink-0">
+                                        {isVocab ? (
+                                          <BookOpen size={14} className="text-amber-600 dark:text-amber-400" />
+                                        ) : isStreak ? (
+                                          <Flame size={14} className="text-orange-500" />
+                                        ) : (
+                                          <Bell size={14} className="text-amber-600 dark:text-amber-400" />
+                                        )}
+                                      </div>
+                                      <div className="min-w-0 flex-1">
+                                        <div className="flex items-center justify-between gap-1">
+                                          <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate group-hover/notif:text-amber-800 dark:group-hover/notif:text-amber-400 transition-colors">
+                                            {item.title}
+                                          </p>
+                                          {!item.isRead && (
+                                            <span className="size-1.5 rounded-full bg-amber-500 shrink-0" />
+                                          )}
+                                        </div>
+                                        <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5 leading-relaxed">
+                                          {item.body}
+                                        </p>
+                                        <div className="mt-1 flex items-center justify-between text-[10px] text-slate-400">
+                                          <span className="flex items-center gap-1">
+                                            <Clock size={10} />
+                                            {formatRelativeTime(item.createdAt)}
+                                          </span>
+                                          {action && actionLabel && (
+                                            <span className="font-extrabold text-amber-700 dark:text-amber-400 group-hover/notif:underline">
+                                              {actionLabel}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+
+                              {/* Footer Actions */}
+                              <div className="flex items-center justify-between px-1 pt-1 text-[11px]">
+                                <Link
+                                  href="/notifications"
+                                  onClick={closeMenus}
+                                  className="font-bold text-slate-500 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
+                                >
+                                  Xem tất cả
+                                </Link>
+                                {unreadCount > 0 && (
+                                  <button
+                                    type="button"
+                                    disabled={markAllReadMut.isPending}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      markAllReadMut.mutate();
+                                    }}
+                                    className="font-bold text-amber-700 dark:text-amber-400 hover:underline flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <CheckCheck size={12} />
+                                    <span>Đọc tất cả</span>
+                                  </button>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
+
+                    {/* Nav Links */}
+                    <Link
+                      href="/hub?tab=account-profile"
+                      onClick={closeMenus}
+                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap"
+                    >
+                      <User size={16} className="text-slate-500 dark:text-slate-400 shrink-0" />
+                      <span>Thông tin cá nhân</span>
+                    </Link>
 
                     <Link
                       href="/hub?tab=account-plan"
                       onClick={closeMenus}
-                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-slate-800 hover:text-amber-900 dark:hover:text-amber-400 transition-colors whitespace-nowrap"
+                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap"
                     >
                       <Crown size={16} className="text-amber-500 shrink-0" />
                       <span>Gói của tôi</span>
                     </Link>
 
                     <Link
-                      href="/hub?tab=account-profile"
-                      onClick={closeMenus}
-                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-slate-800 hover:text-amber-900 dark:hover:text-amber-400 transition-colors whitespace-nowrap"
-                    >
-                      <User size={16} className="text-amber-600 shrink-0" />
-                      <span>Thông tin cá nhân</span>
-                    </Link>
-
-                    <Link
                       href="/hub?tab=learning-progress"
                       onClick={closeMenus}
-                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-900 dark:hover:text-emerald-400 transition-colors whitespace-nowrap"
+                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap"
                     >
-                      <Activity size={16} className="text-emerald-600 shrink-0" />
+                      <Activity size={16} className="text-emerald-500 shrink-0" />
                       <span>Tiến độ học tập</span>
                     </Link>
 
-                    {isStudent && (
-                      <Link
-                        href="/pet"
-                        onClick={closeMenus}
-                        className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-900 dark:hover:text-emerald-400 transition-colors whitespace-nowrap"
-                      >
-                        <Heart size={16} className="text-emerald-600 shrink-0" />
-                        <span>Thú cưng đồng hành</span>
-                      </Link>
-                    )}
+                    <Link
+                      href="/pet"
+                      onClick={closeMenus}
+                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap"
+                    >
+                      <Heart size={16} className="text-rose-500 shrink-0" />
+                      <span>Thú cưng đồng hành</span>
+                    </Link>
 
                     <Link
                       href="/hub?tab=account-password"
                       onClick={closeMenus}
-                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-slate-800 hover:text-amber-900 dark:hover:text-amber-400 transition-colors whitespace-nowrap"
+                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap"
                     >
                       <KeyRound size={16} className="text-slate-400 shrink-0" />
                       <span>Đổi mật khẩu</span>
                     </Link>
 
+                    {/* Dark Mode Toggle Item */}
+                    <div
+                      onClick={toggleTheme}
+                      className="flex items-center justify-between p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer select-none"
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          toggleTheme();
+                        }
+                      }}
+                      aria-label="Bật tắt chế độ tối"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        {isDark ? (
+                          <Moon size={16} className="text-amber-400 shrink-0" />
+                        ) : (
+                          <Sun size={16} className="text-slate-500 dark:text-slate-400 shrink-0" />
+                        )}
+                        <span>Chế độ tối</span>
+                      </div>
+                      <div
+                        className={`w-9 h-5 rounded-full p-0.5 transition-colors duration-200 ease-in-out flex items-center shrink-0 ${
+                          isDark ? "bg-amber-500 justify-end" : "bg-slate-300 dark:bg-slate-600 justify-start"
+                        }`}
+                      >
+                        <div className="size-4 rounded-full bg-white shadow-xs" />
+                      </div>
+                    </div>
+
+                    {/* Divider & Logout */}
+                    <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors text-left cursor-pointer mt-1 pt-2 border-t border-slate-100 dark:border-slate-800 whitespace-nowrap"
+                      className="w-full flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors text-left cursor-pointer whitespace-nowrap"
                     >
                       <LogOut size={16} className="shrink-0" />
                       <span>Đăng xuất</span>

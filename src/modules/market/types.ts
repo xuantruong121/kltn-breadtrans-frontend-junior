@@ -13,6 +13,8 @@ export interface MarketProduct {
   stock: number;
   purchaseCount: number;
   isActive: boolean;
+  fulfillmentType?: "DIGITAL" | "PHYSICAL";
+  requiresShippingAddress?: boolean;
 }
 
 export interface MarketInventoryResponse {

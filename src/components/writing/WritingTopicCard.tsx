@@ -172,7 +172,7 @@ export function WritingTopicCard({
               </span>
             ) : (
               <>
-                {status === "IN_PROGRESS" && (
+                {(status === "IN_PROGRESS" || isSpotlight) && (
                   <span className="inline-flex items-center gap-1 text-xs font-semibold text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/60 border border-violet-200 dark:border-violet-800/70 px-2 py-0.5 rounded-full">
                     <Flame size={12} className="text-amber-500 fill-amber-500" aria-hidden="true" />
                     {isSpotlight ? "Gợi ý" : "Đang làm"}
@@ -186,7 +186,7 @@ export function WritingTopicCard({
         {/* Title & Pedagogical Description */}
         <div>
           <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors line-clamp-1 mt-2">
-            {topic.topicName || topic.title || "Chủ đề luyện viết"}
+            {topic.title || topic.topicName || "Chủ đề luyện viết"}
           </h3>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2 min-h-[38px] mt-1">
             {pedagogicalDescription}

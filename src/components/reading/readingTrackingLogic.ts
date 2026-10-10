@@ -15,12 +15,13 @@ export function readingTrendLabel(direction: ReadingTrendDirection): string {
 
 export function readingSubskillLabel(key: string): string {
   return {
-    MAIN_IDEA: "Main Idea",
-    DETAIL: "Detail",
-    INFERENCE: "Inference",
-    PURPOSE: "Purpose",
-    VOCAB_IN_CONTEXT: "Vocabulary in Context",
-    PROMOTION: "Promotion",
-    UNKNOWN: "Reading",
+    MAIN_IDEA: "Ý chính",
+    DETAIL: "Chi tiết",
+    INFERENCE: "Suy luận",
+    PURPOSE: "Mục đích",
+    VOCAB_IN_CONTEXT: "Từ vựng trong ngữ cảnh",
+    PROMOTION: "Thông tin khuyến mãi",
+    READING: "Đọc hiểu",
+    UNKNOWN: "Đọc hiểu",
   }[key] || key;
 }

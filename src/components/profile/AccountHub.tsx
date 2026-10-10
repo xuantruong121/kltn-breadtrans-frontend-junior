@@ -44,13 +44,15 @@ import {
   calculateSubscriptionDaysRemaining,
 } from "@/modules/subscription/planLogic";
 import { PlanPaymentModal } from "@/modules/subscription/components/PlanPaymentModal";
-import { UserAvatarWithFrame } from "@/components/ui";
+import { UserAvatarWithFrame, AddressCombobox } from "@/components/ui";
 import { LearningProgressTab } from "@/components/profile/LearningProgressTab";
 import { MARKET_ITEMS } from "@/modules/market/services/marketData";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { useApiMutation } from "@/hooks/useApiMutation";
 import PushNotificationToggle from "@/components/pwa/PushNotificationToggle";
 import axiosClient from "@/lib/api/axiosClient";
+import { userService } from "@/lib/api/services/user.service";
+import { locationService } from "@/lib/api/services/location.service";
 
 export type AccountTabKey =
   | "account-profile"
@@ -121,25 +123,62 @@ export function AccountHub() {
     }
   );
 
+  const shippingProfileQuery = useQuery({
+    queryKey: ["shippingProfile", user?.id],
+    queryFn: () => userService.getShippingProfile(),
+    enabled: !!user?.id,
+  });
+
   const [formData, setFormData] = useState({
     fullName: "",
-    phone: "",
-    address: "",
-    targetScore: "",
     avatar: "",
+  });
+
+  const [shippingData, setShippingData] = useState({
+    recipientName: "",
+    phone: "",
+    provinceCode: "",
+    wardCode: "",
+    addressLine: "",
+  });
+
+  const provincesQuery = useQuery({
+    queryKey: ["vietnamProvinces"],
+    queryFn: () => locationService.getProvinces(),
+    staleTime: 1000 * 60 * 60 * 12,
+  });
+
+  const wardsQuery = useQuery({
+    queryKey: ["vietnamWards", shippingData.provinceCode],
+    queryFn: () => locationService.getWards(shippingData.provinceCode),
+    enabled: !!shippingData.provinceCode,
+    staleTime: 1000 * 60 * 60 * 12,
   });
 
   useEffect(() => {
     if (profileData || user) {
       setFormData({
         fullName: profileData?.fullName || user?.profile?.fullName || "",
-        phone: profileData?.phone || user?.profile?.phone || "",
-        address: profileData?.address || user?.profile?.address || "",
-        targetScore: profileData?.targetScore || user?.profile?.targetScore || "",
         avatar: profileData?.avatar || user?.profile?.avatar || "",
       });
     }
   }, [profileData, user]);
+
+  useEffect(() => {
+    if (shippingProfileQuery.data) {
+      const sp = shippingProfileQuery.data;
+      setShippingData({
+        recipientName:
+          sp.recipientName || profileData?.fullName || user?.profile?.fullName || "",
+        phone: sp.phoneDisplay || sp.phone || profileData?.phone || user?.profile?.phone || "",
+        provinceCode: sp.provinceCode || "",
+        wardCode: sp.wardCode || "",
+        addressLine: sp.addressLine || "",
+      });
+    }
+  }, [shippingProfileQuery.data, profileData, user]);
+
+  const [isSaving, setIsSaving] = useState(false);
 
   const updateProfileMutation = useApiMutation("/users/profile", "PATCH", {
     onSuccess: (data) => {
@@ -147,16 +186,72 @@ export function AccountHub() {
       if (data) {
         setProfile(data);
       }
-      toast.success("Cập nhật thông tin thành công!");
-    },
-    onError: () => {
-      toast.error("Không thể cập nhật thông tin. Vui lòng thử lại.");
     },
   });
 
-  const handleProfileSubmit = (e: React.FormEvent) => {
+  const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfileMutation.mutate(formData);
+    setIsSaving(true);
+    try {
+      // 1. Cập nhật thông tin profile cơ bản (Họ tên, avatar)
+      await updateProfileMutation.mutateAsync({
+        fullName: formData.fullName,
+        avatar: formData.avatar,
+      });
+
+      // 2. Cập nhật thông tin địa chỉ nhận quà nếu có nhập liệu
+      const hasAnyShippingInput =
+        shippingData.recipientName.trim() ||
+        shippingData.phone.trim() ||
+        shippingData.provinceCode ||
+        shippingData.wardCode ||
+        shippingData.addressLine.trim();
+
+      if (hasAnyShippingInput) {
+        if (
+          !shippingData.recipientName.trim() ||
+          !shippingData.phone.trim() ||
+          !shippingData.provinceCode ||
+          !shippingData.wardCode ||
+          !shippingData.addressLine.trim()
+        ) {
+          toast.error(
+            "Vui lòng điền đầy đủ: Tên người nhận, Số điện thoại, Tỉnh/Thành phố, Phường/Xã và Địa chỉ chi tiết.",
+            { duration: 4000 }
+          );
+          setIsSaving(false);
+          return;
+        }
+
+        await userService.updateShippingProfile({
+          recipientName: shippingData.recipientName.trim(),
+          phone: shippingData.phone.trim(),
+          provinceCode: shippingData.provinceCode.trim(),
+          wardCode: shippingData.wardCode.trim(),
+          addressLine: shippingData.addressLine.trim(),
+        });
+        queryClient.invalidateQueries({ queryKey: ["shippingProfile", user?.id] });
+      }
+
+      toast.success("Cập nhật thông tin thành công!");
+    } catch (err: any) {
+      const errCode = err?.response?.data?.code;
+      if (errCode === "INVALID_VIETNAM_PHONE") {
+        toast.error(
+          "Số điện thoại không hợp lệ. Vui lòng nhập số di động Việt Nam (vd: 0987654321 hoặc +84987654321)."
+        );
+      } else if (errCode === "WARD_PROVINCE_MISMATCH") {
+        toast.error("Phường/xã đã chọn không thuộc tỉnh/thành phố tương ứng.");
+      } else if (errCode === "INVALID_PROVINCE") {
+        toast.error("Mã tỉnh/thành phố không hợp lệ.");
+      } else {
+        toast.error(
+          err?.response?.data?.message || "Không thể cập nhật thông tin. Vui lòng thử lại."
+        );
+      }
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -698,53 +793,132 @@ export function AccountHub() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
-                        Số điện thoại
-                      </label>
-                      <input
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
-                        placeholder="0912345678"
-                      />
+                  {/* SECTION: THÔNG TIN LIÊN HỆ / NHẬN QUÀ */}
+                  <div className="pt-4 border-t border-slate-200/80 dark:border-slate-800 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                      <div>
+                        <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                          Thông tin liên hệ / Nhận quà
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          Thông tin này chỉ được dùng để xử lý gửi quà vật lý khi đổi thưởng.
+                        </p>
+                      </div>
+                      {shippingProfileQuery.data?.shippingProfileComplete && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 w-fit">
+                          ✓ Đã hoàn thiện
+                        </span>
+                      )}
                     </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
+                          Tên người nhận
+                        </label>
+                        <input
+                          type="text"
+                          value={shippingData.recipientName}
+                          onChange={(e) =>
+                            setShippingData({ ...shippingData, recipientName: e.target.value })
+                          }
+                          className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
+                          placeholder="Họ và tên người nhận"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
+                          Số điện thoại nhận quà
+                        </label>
+                        <input
+                          type="tel"
+                          value={shippingData.phone}
+                          onChange={(e) =>
+                            setShippingData({ ...shippingData, phone: e.target.value })
+                          }
+                          className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
+                          placeholder="0987654321 hoặc +84..."
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
+                          Tỉnh / Thành phố
+                        </label>
+                        <AddressCombobox
+                          id="shipping-province-select"
+                          value={shippingData.provinceCode}
+                          options={provincesQuery.data || []}
+                          isLoading={provincesQuery.isLoading}
+                          placeholder="Chọn hoặc nhập tỉnh/thành phố..."
+                          loadingPlaceholder="Đang tải tỉnh/thành phố..."
+                          accentColor="blue"
+                          onChange={(nextProvince) => {
+                            setShippingData({
+                              ...shippingData,
+                              provinceCode: nextProvince,
+                              wardCode: "", // Đổi tỉnh sẽ tự động reset phường/xã (Requirement 28)
+                            });
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
+                          Phường / Xã / Đặc khu
+                        </label>
+                        <AddressCombobox
+                          id="shipping-ward-select"
+                          value={shippingData.wardCode}
+                          options={wardsQuery.data || []}
+                          disabled={!shippingData.provinceCode || wardsQuery.isLoading}
+                          disabledPlaceholder={
+                            shippingData.provinceCode
+                              ? "Chọn phường/xã/đặc khu..."
+                              : "Chọn tỉnh/thành phố trước ▾"
+                          }
+                          isLoading={wardsQuery.isLoading}
+                          loadingPlaceholder="Đang tải phường/xã..."
+                          placeholder="Chọn hoặc nhập phường/xã/đặc khu..."
+                          accentColor="blue"
+                          onChange={(nextWard) => {
+                            setShippingData({
+                              ...shippingData,
+                              wardCode: nextWard,
+                            });
+                          }}
+                        />
+                      </div>
+                    </div>
+
                     <div>
                       <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
-                        Mục tiêu (TOEIC / IELTS)
+                        Địa chỉ chi tiết
                       </label>
                       <input
                         type="text"
-                        value={formData.targetScore}
-                        onChange={(e) => setFormData({ ...formData, targetScore: e.target.value })}
+                        value={shippingData.addressLine}
+                        onChange={(e) =>
+                          setShippingData({ ...shippingData, addressLine: e.target.value })
+                        }
                         className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
-                        placeholder="TOEIC 750 / IELTS 6.5"
+                        placeholder="Số nhà, tên đường, thôn/ấp, tòa nhà..."
                       />
                     </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
-                      Địa chỉ
-                    </label>
-                    <textarea
-                      value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      rows={2}
-                      className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 transition-all resize-none"
-                      placeholder="Nhập địa chỉ sinh sống"
-                    />
                   </div>
 
                   <div className="pt-2">
                     <button
                       type="submit"
-                      disabled={updateProfileMutation.isPending}
+                      disabled={isSaving || updateProfileMutation.isPending}
                       className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-sm shadow-sm transition-all cursor-pointer disabled:opacity-60 flex items-center gap-2"
                     >
-                      {updateProfileMutation.isPending && <Loader2 size={16} className="animate-spin" />}
+                      {(isSaving || updateProfileMutation.isPending) && (
+                        <Loader2 size={16} className="animate-spin" />
+                      )}
                       <span>Lưu thay đổi</span>
                     </button>
                   </div>

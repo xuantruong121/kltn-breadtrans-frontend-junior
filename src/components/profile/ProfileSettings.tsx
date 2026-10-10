@@ -74,7 +74,6 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
     fullName: profile?.fullName || user?.profile?.fullName || "",
     phone: profile?.phone || user?.profile?.phone || "",
     address: profile?.address || user?.profile?.address || "",
-    targetScore: profile?.targetScore || user?.profile?.targetScore || "",
     avatar: profile?.avatar || user?.profile?.avatar || "",
   });
 
@@ -232,33 +231,17 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-extrabold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                        <Phone size={13} /> Số điện thoại
-                      </label>
-                      <input
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40 transition-all"
-                        placeholder="0912345678"
-                      />
-                    </div>
-                    {user?.role === "STUDENT" && (
-                      <div>
-                        <label className="block text-xs font-extrabold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                          <Target size={13} /> Mục tiêu (IELTS/TOEIC)
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.targetScore}
-                          onChange={(e) => setFormData({ ...formData, targetScore: e.target.value })}
-                          className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40 transition-all"
-                          placeholder="Vd: TOEIC 750 / IELTS 6.5"
-                        />
-                      </div>
-                    )}
+                  <div>
+                    <label className="block text-xs font-extrabold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                      <Phone size={13} /> Số điện thoại
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40 transition-all"
+                      placeholder="0912345678"
+                    />
                   </div>
 
                   <div>

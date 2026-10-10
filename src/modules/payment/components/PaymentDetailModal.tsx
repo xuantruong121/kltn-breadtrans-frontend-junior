@@ -16,6 +16,7 @@ import {
   Loader2,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { QRCodeSVG } from "qrcode.react";
 import {
   paymentService,
   StudentPaymentDetail,
@@ -120,7 +121,9 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
       toast.error(msg);
       if (err?.response?.status === 409) {
         queryClient.invalidateQueries({ queryKey: ["my-payments"] });
-        queryClient.invalidateQueries({ queryKey: ["payment-detail", paymentId] });
+        queryClient.invalidateQueries({
+          queryKey: ["payment-detail", paymentId],
+        });
       }
     },
   });
@@ -222,36 +225,63 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                   </div>
                 </div>
 
-                {/* Bank Instructions Card */}
+                {/* Provider payment instructions */}
                 <div className="space-y-3">
                   <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Hướng dẫn chuyển khoản ngân hàng
+                    {payment.payos
+                      ? "Thanh toán qua payOS / VietQR"
+                      : "Hướng dẫn chuyển khoản ngân hàng"}
                   </h4>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* VietQR Section */}
-                    {payment.bankInstructions?.vietQrUrl && (
-                      <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-slate-50 border border-slate-200 text-center">
-                        <img
-                          src={payment.bankInstructions.vietQrUrl}
-                          alt="Mã VietQR chuyển khoản"
-                          className="w-48 h-48 object-contain rounded-xl border border-slate-200 bg-white p-2 shadow-xs"
-                          loading="lazy"
-                        />
-                        <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1 font-medium">
-                          <QrCode size={13} className="text-sky-600" />
-                          Quét mã QR bằng App ngân hàng
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Transfer Details Form */}
-                    <div className="space-y-2.5">
-                      {/* Amount */}
-                      <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200/80">
-                        <div className="flex items-center justify-between">
+                  {payment.payos ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {payment.payos.qrCode && (
+                        <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                          <QRCodeSVG
+                            value={payment.payos.qrCode}
+                            size={192}
+                            level="M"
+                            includeMargin
+                            title="Mã VietQR payOS"
+                            className="h-48 w-48 rounded-xl border border-slate-200 bg-white p-2 shadow-xs"
+                          />
+                          <p className="text-[11px] text-slate-500 mt-2">
+                            Quét mã bằng ứng dụng ngân hàng
+                          </p>
+                        </div>
+                      )}
+                      <div className="space-y-2.5">
+                        <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs">
+                          <span className="text-slate-500 block text-[11px]">Ngân hàng:</span>
+                          <span className="font-bold text-slate-800">
+                            {payment.payos.bankBin ? `VietQR (BIN: ${payment.payos.bankBin})` : "payOS / VietQR"}
+                          </span>
+                        </div>
+                        <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs flex items-center justify-between">
+                          <div>
+                            <span className="text-slate-500 block text-[11px]">Số tài khoản:</span>
+                            <span className="font-bold text-slate-800 text-sm tracking-wider">
+                              {payment.payos.bankAccountNumber || "-"}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(payment.payos?.bankAccountNumber || "", "Số tài khoản")}
+                            className="p-1.5 rounded-md hover:bg-slate-200 text-slate-500 hover:text-slate-700 transition-colors"
+                            title="Sao chép số tài khoản"
+                          >
+                            {copiedField === "Số tài khoản" ? <Check size={15} className="text-emerald-600" /> : <Copy size={15} />}
+                          </button>
+                        </div>
+                        <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs">
+                          <span className="text-slate-500 block text-[11px]">Chủ tài khoản:</span>
+                          <span className="font-bold text-slate-800 uppercase">
+                            {payment.payos.bankAccountName || "-"}
+                          </span>
+                        </div>
+                        <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200/80 flex items-center justify-between">
                           <span className="text-xs text-amber-900 font-medium">
-                            Số tiền cần chuyển:
+                            Số tiền:
                           </span>
                           <span className="text-base font-extrabold text-amber-700">
                             {new Intl.NumberFormat("vi-VN").format(
@@ -260,96 +290,153 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                             đ
                           </span>
                         </div>
-                      </div>
-
-                      {/* Bank Name */}
-                      <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs">
-                        <span className="text-slate-500 block text-[11px]">
-                          Ngân hàng:
-                        </span>
-                        <span className="font-bold text-slate-800">
-                          {payment.bankInstructions?.bankName} (Mã BIN:{" "}
-                          {payment.bankInstructions?.bin})
-                        </span>
-                      </div>
-
-                      {/* Account Number */}
-                      <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs flex items-center justify-between">
-                        <div>
+                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
                           <span className="text-slate-500 block text-[11px]">
-                            Số tài khoản:
+                            Mã đơn hàng payOS:
                           </span>
-                          <span className="font-bold text-slate-800 text-sm tracking-wider">
-                            {payment.bankInstructions?.accountNumber}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleCopy(
-                              payment.bankInstructions?.accountNumber || "",
-                              "Số tài khoản",
-                            )
-                          }
-                          className="p-1.5 rounded-md hover:bg-slate-200 text-slate-500 hover:text-slate-700 transition-colors flex items-center gap-1 cursor-pointer"
-                          title="Sao chép số tài khoản"
-                        >
-                          {copiedField === "Số tài khoản" ? (
-                            <Check size={15} className="text-emerald-600" />
-                          ) : (
-                            <Copy size={15} />
-                          )}
-                        </button>
-                      </div>
-
-                      {/* Account Holder Name */}
-                      <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs">
-                        <span className="text-slate-500 block text-[11px]">
-                          Chủ tài khoản:
-                        </span>
-                        <span className="font-bold text-slate-800 uppercase">
-                          {payment.bankInstructions?.accountName}
-                        </span>
-                      </div>
-
-                      {/* Transfer Code */}
-                      <div className="p-2.5 rounded-lg bg-sky-50/70 border border-sky-200 text-xs flex items-center justify-between">
-                        <div>
-                          <span className="text-sky-800 font-medium block text-[11px]">
-                            Nội dung chuyển khoản (bắt buộc):
-                          </span>
-                          <span className="font-extrabold text-sky-900 text-sm tracking-wider">
-                            {payment.transferCode}
+                          <span className="font-bold text-slate-800 tracking-wider">
+                            {payment.payos.orderCode}
                           </span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleCopy(
-                              payment.transferCode,
-                              "Nội dung chuyển khoản",
-                            )
-                          }
-                          className="p-1.5 rounded-md hover:bg-sky-200 text-sky-700 transition-colors flex items-center gap-1 cursor-pointer"
-                          title="Sao chép nội dung chuyển khoản"
-                        >
-                          {copiedField === "Nội dung chuyển khoản" ? (
-                            <Check size={15} className="text-emerald-600" />
-                          ) : (
-                            <Copy size={15} />
-                          )}
-                        </button>
+                        {payment.payos.checkoutUrl && (
+                          <a
+                            href={payment.payos.checkoutUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white hover:bg-emerald-700"
+                          >
+                            Mở trang thanh toán payOS
+                          </a>
+                        )}
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* VietQR Section */}
+                        {payment.bankInstructions?.vietQrUrl && (
+                          <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                            <img
+                              src={payment.bankInstructions.vietQrUrl}
+                              alt="Mã VietQR chuyển khoản"
+                              className="w-48 h-48 object-contain rounded-xl border border-slate-200 bg-white p-2 shadow-xs"
+                              loading="lazy"
+                            />
+                            <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1 font-medium">
+                              <QrCode size={13} className="text-sky-600" />
+                              Quét mã QR bằng App ngân hàng
+                            </p>
+                          </div>
+                        )}
 
-                  <p className="text-[11px] text-slate-400 italic">
-                    * Vui lòng nhập chính xác nội dung chuyển khoản{" "}
-                    <strong className="text-slate-600">
-                      {payment.transferCode}
-                    </strong>{" "}
-                    để hệ thống có thể đối soát và kích hoạt lớp học nhanh nhất.
-                  </p>
+                        {/* Transfer Details Form */}
+                        <div className="space-y-2.5">
+                          {/* Amount */}
+                          <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200/80">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-amber-900 font-medium">
+                                Số tiền cần chuyển:
+                              </span>
+                              <span className="text-base font-extrabold text-amber-700">
+                                {new Intl.NumberFormat("vi-VN").format(
+                                  payment.amountVnd,
+                                )}{" "}
+                                đ
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Bank Name */}
+                          <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs">
+                            <span className="text-slate-500 block text-[11px]">
+                              Ngân hàng:
+                            </span>
+                            <span className="font-bold text-slate-800">
+                              {payment.bankInstructions?.bankName} (Mã BIN:{" "}
+                              {payment.bankInstructions?.bin})
+                            </span>
+                          </div>
+
+                          {/* Account Number */}
+                          <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs flex items-center justify-between">
+                            <div>
+                              <span className="text-slate-500 block text-[11px]">
+                                Số tài khoản:
+                              </span>
+                              <span className="font-bold text-slate-800 text-sm tracking-wider">
+                                {payment.bankInstructions?.accountNumber}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleCopy(
+                                  payment.bankInstructions?.accountNumber || "",
+                                  "Số tài khoản",
+                                )
+                              }
+                              className="p-1.5 rounded-md hover:bg-slate-200 text-slate-500 hover:text-slate-700 transition-colors flex items-center gap-1 cursor-pointer"
+                              title="Sao chép số tài khoản"
+                            >
+                              {copiedField === "Số tài khoản" ? (
+                                <Check size={15} className="text-emerald-600" />
+                              ) : (
+                                <Copy size={15} />
+                              )}
+                            </button>
+                          </div>
+
+                          {/* Account Holder Name */}
+                          <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs">
+                            <span className="text-slate-500 block text-[11px]">
+                              Chủ tài khoản:
+                            </span>
+                            <span className="font-bold text-slate-800 uppercase">
+                              {payment.bankInstructions?.accountName}
+                            </span>
+                          </div>
+
+                          {/* Transfer Code */}
+                          <div className="p-2.5 rounded-lg bg-sky-50/70 border border-sky-200 text-xs flex items-center justify-between">
+                            <div>
+                              <span className="text-sky-800 font-medium block text-[11px]">
+                                Nội dung chuyển khoản (bắt buộc):
+                              </span>
+                              <span className="font-extrabold text-sky-900 text-sm tracking-wider">
+                                {payment.transferCode}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleCopy(
+                                  payment.transferCode,
+                                  "Nội dung chuyển khoản",
+                                )
+                              }
+                              className="p-1.5 rounded-md hover:bg-sky-200 text-sky-700 transition-colors flex items-center gap-1 cursor-pointer"
+                              title="Sao chép nội dung chuyển khoản"
+                            >
+                              {copiedField === "Nội dung chuyển khoản" ? (
+                                <Check size={15} className="text-emerald-600" />
+                              ) : (
+                                <Copy size={15} />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <p className="text-[11px] text-slate-400 italic">
+                        * Vui lòng nhập chính xác nội dung chuyển khoản{" "}
+                        <strong className="text-slate-600">
+                          {payment.transferCode}
+                        </strong>{" "}
+                        để hệ thống có thể đối soát và kích hoạt lớp học nhanh
+                        nhất.
+                      </p>
+                    </>
+                  )}
                 </div>
 
                 {/* Status Notice or Report Action */}
@@ -379,8 +466,8 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                               )}{" "}
                               đ
                             </strong>{" "}
-                            với nội dung{" "}
-                            <strong>{payment.transferCode}</strong>?
+                            với nội dung <strong>{payment.transferCode}</strong>
+                            ?
                           </p>
                         </div>
                         <div className="flex items-center justify-end gap-2 pt-1">
@@ -426,8 +513,8 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                         {payment.reportedAt
                           ? new Date(payment.reportedAt).toLocaleString("vi-VN")
                           : "Vừa xong"}
-                        . Ban Quản Trị đang đối soát và sẽ kích hoạt lớp học cho bạn
-                        sớm nhất.
+                        . Ban Quản Trị đang đối soát và sẽ kích hoạt lớp học cho
+                        bạn sớm nhất.
                       </p>
                     </div>
                   </div>
@@ -443,7 +530,8 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                           Khoản thanh toán đã được xác nhận!
                         </p>
                         <p className="text-emerald-700 leading-relaxed">
-                          Thanh toán đã được xác nhận. Ghi danh đã được kích hoạt.
+                          Thanh toán đã được xác nhận. Ghi danh đã được kích
+                          hoạt.
                         </p>
                       </div>
                     </div>
@@ -458,7 +546,9 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                           Đã nhận thanh toán (Chờ kích hoạt)
                         </p>
                         <p className="text-amber-700 leading-relaxed">
-                          Thanh toán đã được xác nhận nhưng quyền vào lớp chưa được kích hoạt. Vui lòng liên hệ trung tâm để được hỗ trợ.
+                          Thanh toán đã được xác nhận nhưng quyền vào lớp chưa
+                          được kích hoạt. Vui lòng liên hệ trung tâm để được hỗ
+                          trợ.
                         </p>
                       </div>
                     </div>
@@ -472,7 +562,8 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                     <div className="text-xs text-rose-900 space-y-0.5">
                       <p className="font-bold">Khoản thanh toán bị từ chối.</p>
                       <p className="text-rose-700 leading-relaxed">
-                        Thanh toán đã bị từ chối. Vui lòng liên hệ trung tâm để được hỗ trợ.
+                        Thanh toán đã bị từ chối. Vui lòng liên hệ trung tâm để
+                        được hỗ trợ.
                       </p>
                     </div>
                   </div>
@@ -485,8 +576,8 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                     <div className="text-xs text-purple-900 space-y-0.5">
                       <p className="font-bold">Cần xử lý thêm.</p>
                       <p className="text-purple-700 leading-relaxed">
-                        Khoản thanh toán đang được xem xét đặc biệt. Vui lòng liên
-                        hệ bộ phận hỗ trợ.
+                        Khoản thanh toán đang được xem xét đặc biệt. Vui lòng
+                        liên hệ bộ phận hỗ trợ.
                       </p>
                     </div>
                   </div>

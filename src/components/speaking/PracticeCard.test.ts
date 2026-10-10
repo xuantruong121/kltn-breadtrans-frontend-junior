@@ -18,7 +18,16 @@ test("PracticeCard State Machine: accurately detects COMPLETED state", () => {
   assert.equal(status, "COMPLETED");
 });
 
-test("PracticeCard State Machine: accurately detects IN_PROGRESS spotlight state", () => {
+test("PracticeCard State Machine: spotlight does not imply learner progress", () => {
+  const status = computePracticeCardStatus({
+    isAuthenticated: true,
+    practiceSet: { exerciseCount: 4, completedCount: 0, isCompleted: false },
+    isSpotlight: true,
+  });
+  assert.equal(status, "NOT_STARTED");
+});
+
+test("PracticeCard State Machine: partial child completion is IN_PROGRESS", () => {
   const status = computePracticeCardStatus({
     isAuthenticated: true,
     practiceSet: { exerciseCount: 4, completedCount: 2, isCompleted: false },
@@ -240,4 +249,3 @@ test("Difficulty Badge: resolves semantic, expressive badge styling for pure and
   assert.equal(fallback.label, "Cơ bản");
   assert.ok(fallback.badgeClass.includes("emerald-50"));
 });
-

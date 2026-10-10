@@ -99,7 +99,21 @@ export interface PlanPurchase {
   completedAt: string | null;
   expiresAt?: string | null;
   payment: PlanPurchasePayment;
-  bankInstructions: PlanBankInstructions;
+  bankInstructions: PlanBankInstructions | null;
+  payos?: {
+    intentId: number;
+    type: "PLAN" | "COURSE";
+    orderCode: number;
+    description: string;
+    paymentLinkId: string | null;
+    checkoutUrl: string | null;
+    qrCode: string | null;
+    bankBin: string | null;
+    bankAccountNumber: string | null;
+    bankAccountName: string | null;
+    status: string;
+    expiresAt: string | null;
+  } | null;
   isActivePaymentIntent?: boolean;
   canReplace?: boolean;
   supersededAt?: string | null;
@@ -119,8 +133,7 @@ export const PLAN_QUERY_KEYS = {
   myPurchases: ["my-plan-purchases"] as const,
   purchaseDetail: (id: number) => ["plan-purchase-detail", id] as const,
   vocabTopics: ["vocab-topics"] as const,
-  readingTopics: ["reading-topics"] as const,
-  readingTopic: (id: number) => ["reading-topic", id] as const,
+  readingExercises: ["reading-exercises"] as const,
   // Must match the key used by the Listening catalog query. Keeping this
   // centralized ensures entitlement refresh invalidates the live cache.
   listeningPractices: ["listeningPractices"] as const,
@@ -425,6 +438,7 @@ export function getPlanCardCta(
   effectivePlan: EffectivePlan | null | undefined,
   purchasablePlusVersion: PurchasablePlanVersionInfo | null | undefined,
   isAuthenticatedParam?: boolean,
+  purchasableProVersion?: PurchasablePlanVersionInfo | null,
 ): PlanCardCtaState {
   const current = resolveEffectivePlanDisplay(effectivePlan);
   const isAuthenticated =
@@ -485,13 +499,29 @@ export function getPlanCardCta(
     };
   }
 
-  // PRO Plan
-  return {
-    label: "Sắp ra mắt",
-    disabled: true,
-    isCurrent: false,
-    statusVariant: "coming_soon",
-  };
+  if (isAuthenticated && current.isPaid && current.planCode === "PRO") {
+    return {
+      label: "Gói hiện tại",
+      disabled: true,
+      isCurrent: true,
+      statusVariant: "current",
+    };
+  }
+
+  const pricing = getPlusPricingDisplay(purchasableProVersion);
+  return pricing.isPurchasable
+    ? {
+        label: "Nâng cấp Pro",
+        disabled: false,
+        isCurrent: false,
+        statusVariant: "primary",
+      }
+    : {
+        label: "Chưa thể mua",
+        disabled: true,
+        isCurrent: false,
+        statusVariant: "disabled",
+      };
 }
 
 /**

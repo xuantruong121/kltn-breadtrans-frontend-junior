@@ -2,9 +2,10 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { AlertCircle, AlertTriangle, Loader2, Wheat, X } from "lucide-react";
+import { AlertCircle, AlertTriangle, Loader2, Truck, Wheat, X } from "lucide-react";
 import { MarketProduct } from "../types";
 import { calculateRemainingBalance, formatBanhMi } from "../marketExchangeLogic";
+import { UserShippingProfile } from "@/lib/api/services/user.service";
 
 interface MarketExchangeConfirmModalProps {
   isOpen: boolean;
@@ -12,6 +13,8 @@ interface MarketExchangeConfirmModalProps {
   currentBalance: number;
   isPending: boolean;
   errorMessage?: string | null;
+  shippingProfile?: UserShippingProfile | null;
+  onEditShipping?: () => void;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -52,6 +55,8 @@ export const MarketExchangeConfirmModal: React.FC<MarketExchangeConfirmModalProp
   currentBalance,
   isPending,
   errorMessage,
+  shippingProfile,
+  onEditShipping,
   onConfirm,
   onCancel,
 }) => {
@@ -111,6 +116,11 @@ export const MarketExchangeConfirmModal: React.FC<MarketExchangeConfirmModalProp
 
   if (!isOpen || !product) return null;
 
+  const isPhysical =
+    product.fulfillmentType === "PHYSICAL" ||
+    Boolean(product.requiresShippingAddress) ||
+    product.category === "PHYSICAL";
+
   const remainingBalance = calculateRemainingBalance(currentBalance, product.price);
   const categoryLabel = CATEGORY_LABEL_MAP[product.category?.toUpperCase()] || product.category;
   const rarity = RARITY_MAP[product.rarity?.toUpperCase()] || RARITY_MAP.COMMON;
@@ -137,20 +147,22 @@ export const MarketExchangeConfirmModal: React.FC<MarketExchangeConfirmModalProp
         <div className="flex items-start justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
-              <Wheat size={22} aria-hidden="true" />
+              {isPhysical ? <Truck size={22} aria-hidden="true" /> : <Wheat size={22} aria-hidden="true" />}
             </div>
             <div>
               <h2
                 id="market-exchange-modal-title"
                 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 leading-tight"
               >
-                Xác nhận đổi vật phẩm
+                {isPhysical ? "Xác nhận thông tin nhận quà" : "Xác nhận đổi vật phẩm"}
               </h2>
               <p
                 id="market-exchange-modal-desc"
                 className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400"
               >
-                Bạn có chắc chắn muốn đổi vật phẩm này bằng Bánh Mì không?
+                {isPhysical
+                  ? "Vui lòng kiểm tra kỹ người nhận và địa chỉ giao quà vật lý trước khi xác nhận đổi quà."
+                  : "Bạn có chắc chắn muốn đổi vật phẩm này bằng Bánh Mì không?"}
               </p>
             </div>
           </div>
@@ -202,6 +214,57 @@ export const MarketExchangeConfirmModal: React.FC<MarketExchangeConfirmModalProp
             )}
           </div>
         </div>
+
+        {/* Shipping address breakdown for physical gifts */}
+        {isPhysical && (
+          <div className="mt-4 rounded-xl border border-amber-200/90 bg-amber-50/50 dark:border-amber-900/60 dark:bg-amber-950/20 p-4 space-y-2 text-xs">
+            <div className="flex items-center justify-between pb-2 border-b border-amber-200/60 dark:border-amber-900/40">
+              <div className="flex items-center gap-1.5 font-bold text-amber-900 dark:text-amber-200">
+                <Truck size={14} className="text-amber-700 dark:text-amber-400" />
+                <span>Thông tin nhận quà vật lý</span>
+              </div>
+              {onEditShipping && (
+                <button
+                  type="button"
+                  onClick={onEditShipping}
+                  disabled={isPending}
+                  className="text-blue-600 dark:text-blue-400 hover:underline font-bold cursor-pointer"
+                >
+                  Chỉnh sửa
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-700 dark:text-slate-300">
+              <div>
+                <span className="text-slate-500 dark:text-slate-400">Người nhận:</span>{" "}
+                <span className="font-bold text-slate-900 dark:text-slate-100">
+                  {shippingProfile?.recipientName || "Chưa có"}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-500 dark:text-slate-400">Số điện thoại:</span>{" "}
+                <span className="font-bold text-slate-900 dark:text-slate-100">
+                  {shippingProfile?.phoneDisplay || shippingProfile?.phone || "Chưa có"}
+                </span>
+              </div>
+            </div>
+            <div className="text-slate-700 dark:text-slate-300 pt-1">
+              <span className="text-slate-500 dark:text-slate-400">Địa chỉ:</span>{" "}
+              <span className="font-bold text-slate-900 dark:text-slate-100">
+                {shippingProfile?.formattedAddress ||
+                  [
+                    shippingProfile?.addressLine,
+                    shippingProfile?.wardName,
+                    shippingProfile?.provinceName,
+                    "Việt Nam",
+                  ]
+                    .filter(Boolean)
+                    .join(", ") ||
+                  "Chưa có"}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Ledger Breakdown Card */}
         <div className="mt-4 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-850/70 p-4 space-y-2.5 text-sm">
@@ -269,11 +332,13 @@ export const MarketExchangeConfirmModal: React.FC<MarketExchangeConfirmModalProp
             type="button"
             onClick={onConfirm}
             disabled={isPending}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 text-sm font-bold text-white shadow-xs hover:bg-amber-700 active:bg-amber-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-950 disabled:opacity-60 transition-colors"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 text-sm font-bold text-white shadow-xs hover:bg-amber-700 active:bg-amber-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-950 disabled:opacity-60 transition-colors cursor-pointer"
           >
             {isPending && <Loader2 size={16} className="animate-spin" />}
             {isPending
               ? "Đang xử lý..."
+              : isPhysical
+              ? "Xác nhận đổi quà"
               : `Đổi với ${formatBanhMi(product.price)} Bánh Mì`}
           </button>
         </div>

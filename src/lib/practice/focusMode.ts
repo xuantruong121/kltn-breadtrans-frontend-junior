@@ -45,8 +45,11 @@ export function classifyPracticeRoute(pathname: string): PracticeRouteKind {
   if (/^\/speaking\/[^/]+(?:\/|$)/.test(pathname)) {
     return "SPEAKING_ROOM";
   }
-  if (/^\/listening\/[^/]+(?:\/|$)/.test(pathname) || /^\/reading\/quizzes\/[^/]+(?:\/|$)/.test(pathname)) {
+  if (/^\/listening\/[^/]+(?:\/|$)/.test(pathname)) {
     return "LISTENING_ROOM";
+  }
+  if (/^\/reading\/[^/]+(?:\/|$)/.test(pathname) && !pathname.startsWith("/reading/mistakes")) {
+    return "READING_ROOM";
   }
   if (/^\/writing\/[^/]+(?:\/|$)/.test(pathname)) {
     return "WRITING_ROOM";
@@ -102,14 +105,9 @@ export function isLearningFocusRoute(pathname: string): boolean {
     return false;
   }
 
-  // Exclude the retained Reading topic detail runner from focus mode.
-  if (/^\/reading\/(?!quizzes\/|submissions\/)[^/]+(?:\/|$)/.test(pathname)) {
-    return false;
-  }
-
   return (
     /^\/listening\/[^/]+(?:\/|$)/.test(pathname) ||
-    /^\/reading\/quizzes\/[^/]+(?:\/|$)/.test(pathname) ||
+    (/^\/reading\/[^/]+(?:\/|$)/.test(pathname) && !pathname.startsWith("/reading/mistakes")) ||
     /^\/speaking\/[^/]+(?:\/|$)/.test(pathname) ||
     /^\/writing\/[^/]+(?:\/|$)/.test(pathname) ||
     /^\/flashcard\/[^/]+(?:\/|$)/.test(pathname) ||
@@ -127,6 +125,7 @@ export function isPracticeRoomPath(pathname: string): boolean {
   return (
     kind === "SPEAKING_ROOM" ||
     kind === "LISTENING_ROOM" ||
+    kind === "READING_ROOM" ||
     kind === "WRITING_ROOM" ||
     kind === "VOCAB_ROOM" ||
     kind === "TOEIC_ATTEMPT_ROOM" ||

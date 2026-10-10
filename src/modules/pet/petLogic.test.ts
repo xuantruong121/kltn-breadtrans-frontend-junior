@@ -17,6 +17,9 @@ import {
   getPetRecommendation,
   resolveFloatingPetUIState,
   getFloatingPetBoundingBox,
+  isInsideCourseRoute,
+  isCourseCatalogRoute,
+  shouldRenderFloatingPetOnPublicRoute,
 } from "./petLogic.ts";
 import { isLearningFocusRoute } from "../../lib/practice/focusMode.ts";
 
@@ -336,4 +339,60 @@ test("Student layout: companion uses the right floating slot", () => {
     assert.ok(petBox.x2 <= vp.width, `Pet right should be <= screen width on ${vp.name}`);
     assert.ok(petBox.x1 > vp.width / 2, `Pet should be on the right side on ${vp.name}`);
   }
+});
+
+test("isInsideCourseRoute & isCourseCatalogRoute: accurately distinguishes course catalog from inside-course routes", () => {
+  // Catalogs
+  assert.equal(isCourseCatalogRoute("/courses"), true);
+  assert.equal(isCourseCatalogRoute("/courses/"), true);
+  assert.equal(isCourseCatalogRoute("/course"), true);
+  assert.equal(isCourseCatalogRoute("/my-courses"), true);
+
+  // Non-catalogs
+  assert.equal(isCourseCatalogRoute("/"), false);
+  assert.equal(isCourseCatalogRoute("/courses/1"), false);
+  assert.equal(isCourseCatalogRoute("/my-courses/1"), false);
+  assert.equal(isCourseCatalogRoute("/help"), false);
+
+  // Inside-course paths (suppress pet)
+  assert.equal(isInsideCourseRoute("/courses/1"), true);
+  assert.equal(isInsideCourseRoute("/courses/grammar-builder"), true);
+  assert.equal(isInsideCourseRoute("/my-courses/1"), true);
+  assert.equal(isInsideCourseRoute("/my-courses/1/lessons/2"), true);
+  assert.equal(isInsideCourseRoute("/classes/1"), true);
+  assert.equal(isInsideCourseRoute("/classes/1/lessons/1"), true);
+
+  // NOT inside course
+  assert.equal(isInsideCourseRoute("/courses"), false);
+  assert.equal(isInsideCourseRoute("/courses/"), false);
+  assert.equal(isInsideCourseRoute("/course"), false);
+  assert.equal(isInsideCourseRoute("/my-courses"), false);
+  assert.equal(isInsideCourseRoute("/classes"), false);
+  assert.equal(isInsideCourseRoute("/dashboard"), false);
+  assert.equal(isInsideCourseRoute("/"), false);
+});
+
+test("shouldRenderFloatingPetOnPublicRoute: displays pet on course catalog for students, hides on course detail or for non-students", () => {
+  const student = { role: "STUDENT" };
+  const admin = { role: "ADMIN" };
+  const guest = null;
+
+  // Authenticated student on catalog -> true
+  assert.equal(shouldRenderFloatingPetOnPublicRoute("/courses", student), true);
+  assert.equal(shouldRenderFloatingPetOnPublicRoute("/courses/", student), true);
+  assert.equal(shouldRenderFloatingPetOnPublicRoute("/course", student), true);
+
+  // Authenticated student entering course detail -> false (hidden)
+  assert.equal(shouldRenderFloatingPetOnPublicRoute("/courses/1", student), false);
+  assert.equal(shouldRenderFloatingPetOnPublicRoute("/courses/grammar-builder", student), false);
+
+  // Authenticated student on other public pages -> false
+  assert.equal(shouldRenderFloatingPetOnPublicRoute("/", student), false);
+  assert.equal(shouldRenderFloatingPetOnPublicRoute("/help", student), false);
+  assert.equal(shouldRenderFloatingPetOnPublicRoute("/privacy", student), false);
+
+  // Non-students / Guests on catalog -> false
+  assert.equal(shouldRenderFloatingPetOnPublicRoute("/courses", guest), false);
+  assert.equal(shouldRenderFloatingPetOnPublicRoute("/courses", undefined), false);
+  assert.equal(shouldRenderFloatingPetOnPublicRoute("/courses", admin), false);
 });

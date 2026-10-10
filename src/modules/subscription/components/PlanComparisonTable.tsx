@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChevronDown, Check, Minus, Clock } from "lucide-react";
+import { ChevronDown, Check, Minus } from "lucide-react";
 
 interface ComparisonFeature {
   name: string;
@@ -17,7 +17,7 @@ const COMPARISON_FEATURES: ComparisonFeature[] = [
     name: "Kho bài luyện 4 kỹ năng (Nghe, Nói, Đọc, Viết)",
     free: "Giới hạn bài cơ bản",
     plus: "Toàn bộ bài học & đề luyện tập",
-    pro: "Toàn bộ bài học + Luyện đề nâng cao",
+    pro: "Toàn bộ bài học + toàn bộ khóa học tự học",
   },
   {
     name: "Chủ đề Từ vựng Premium",
@@ -152,12 +152,12 @@ export function PlanComparisonTable() {
                     scope="col"
                     className="p-4 sm:p-5 font-black text-slate-700 dark:text-slate-200 w-[24%] text-center bg-slate-100/60 dark:bg-slate-800/40"
                   >
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300 mb-1 shrink-0 whitespace-nowrap">
-                      <Clock size={11} /> Sắp ra mắt
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300 mb-1 shrink-0 whitespace-nowrap">
+                      Đầy đủ quyền lợi
                     </span>
                     <div className="text-sm font-black">BreadTrans PRO</div>
                     <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 block mt-0.5">
-                      Chưa mở bán
+                      149.000 ₫ / 30 ngày
                     </span>
                   </th>
                 </tr>

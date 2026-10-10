@@ -1,6 +1,11 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -21,6 +26,7 @@ import {
   XCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { QRCodeSVG } from "qrcode.react";
 import {
   formatVnd,
   PLAN_QUERY_KEYS,
@@ -59,7 +65,11 @@ export const PlanPaymentModal: React.FC<PlanPaymentModalProps> = ({
   onCreateNew,
 }) => {
   const router = useRouter();
-  const isReady = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const isReady = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
   const queryClient = useQueryClient();
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -85,7 +95,18 @@ export const PlanPaymentModal: React.FC<PlanPaymentModalProps> = ({
     refetch,
   } = useQuery({
     queryKey: PLAN_QUERY_KEYS.purchaseDetail(purchaseId || 0),
-    queryFn: () => planService.getPurchaseById(purchaseId!),
+    queryFn: async () => {
+      const current = await planService.getPurchaseById(purchaseId!);
+      const intent = current.payos;
+      if (
+        intent?.intentId &&
+        !["PAID", "CANCELLED", "EXPIRED", "FAILED"].includes(intent.status)
+      ) {
+        await planService.syncPayosPayment(intent.intentId);
+        return planService.getPurchaseById(purchaseId!);
+      }
+      return current;
+    },
     enabled: !!purchaseId,
     refetchInterval: (query) => {
       const current = query.state.data;
@@ -100,12 +121,18 @@ export const PlanPaymentModal: React.FC<PlanPaymentModalProps> = ({
     },
   });
 
+  const providerStatus = purchase?.payos?.status;
   const rawExpiresAt =
+    purchase?.payos?.expiresAt ||
     purchase?.payment?.paymentIntentExpiresAt ||
     purchase?.payment?.expiresAt ||
     purchase?.expiresAt;
-  const paymentStatus = purchase?.payment?.status || purchase?.status || "PENDING";
-  const isCompleted = paymentStatus === "CONFIRMED" || paymentStatus === "COMPLETED";
+  const paymentStatus =
+    purchase?.payment?.status || purchase?.status || "PENDING";
+  const isCompleted =
+    providerStatus === "PAID" ||
+    paymentStatus === "CONFIRMED" ||
+    paymentStatus === "COMPLETED";
   const isReviewRequired =
     paymentStatus === "REVIEW_REQUIRED" || paymentStatus === "DUPLICATE";
   const isRejected = paymentStatus === "REJECTED";
@@ -121,6 +148,13 @@ export const PlanPaymentModal: React.FC<PlanPaymentModalProps> = ({
     isPaymentIntentExpired(rawExpiresAt) ||
     paymentStatus === "EXPIRED" ||
     purchase?.status === "EXPIRED";
+  const isPayosSessionMissing = Boolean(
+    purchase &&
+    (!purchase.payos ||
+      (!purchase.payos.qrCode && !purchase.payos.checkoutUrl)) &&
+    !purchase.bankInstructions &&
+    ["PENDING", "REPORTED"].includes(paymentStatus),
+  );
   const countdown = formatCountdown(rawExpiresAt, now);
 
   useEffect(() => {
@@ -149,13 +183,23 @@ export const PlanPaymentModal: React.FC<PlanPaymentModalProps> = ({
       toast.success("Thanh toán thành công! Gói PLUS đã được kích hoạt.", {
         id: `payment-confirmed-${purchase.id}`,
       });
-      queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.effectivePlan });
+      queryClient.invalidateQueries({
+        queryKey: PLAN_QUERY_KEYS.effectivePlan,
+      });
       queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.catalog });
       queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.vocabTopics });
-      queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.readingTopics });
-      queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.listeningPractices });
-      queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.speakingExercises });
-      queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.writingTopics });
+      queryClient.invalidateQueries({
+        queryKey: PLAN_QUERY_KEYS.readingExercises,
+      });
+      queryClient.invalidateQueries({
+        queryKey: PLAN_QUERY_KEYS.listeningPractices,
+      });
+      queryClient.invalidateQueries({
+        queryKey: PLAN_QUERY_KEYS.speakingExercises,
+      });
+      queryClient.invalidateQueries({
+        queryKey: PLAN_QUERY_KEYS.writingTopics,
+      });
       queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.myPurchases });
     }
   }, [isCompleted, paymentStatus, purchase, queryClient]);
@@ -193,7 +237,9 @@ export const PlanPaymentModal: React.FC<PlanPaymentModalProps> = ({
   if (!purchaseId || !isReady || typeof document === "undefined") return null;
 
   const transferCode =
-    purchase?.bankInstructions?.transferCode || purchase?.payment?.transferCode || "";
+    purchase?.bankInstructions?.transferCode ||
+    purchase?.payment?.transferCode ||
+    "";
   const modalTitle = isCompleted
     ? "Thanh toán thành công"
     : isReviewRequired
@@ -254,12 +300,18 @@ export const PlanPaymentModal: React.FC<PlanPaymentModalProps> = ({
 
           <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
             {isLoading && !purchase ? (
-              <div className="space-y-4" aria-label="Đang tải thông tin thanh toán">
+              <div
+                className="space-y-4"
+                aria-label="Đang tải thông tin thanh toán"
+              >
                 <div className="grid gap-4 md:grid-cols-[250px_1fr]">
                   <div className="h-[300px] animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
                   <div className="space-y-3">
                     {[1, 2, 3, 4].map((item) => (
-                      <div key={item} className="h-[62px] animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
+                      <div
+                        key={item}
+                        className="h-[62px] animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800"
+                      />
                     ))}
                   </div>
                 </div>
@@ -268,12 +320,17 @@ export const PlanPaymentModal: React.FC<PlanPaymentModalProps> = ({
               </div>
             ) : isError && !purchase ? (
               <div className="space-y-3 py-12 text-center">
-                <AlertCircle size={38} className="mx-auto text-rose-500" aria-hidden="true" />
+                <AlertCircle
+                  size={38}
+                  className="mx-auto text-rose-500"
+                  aria-hidden="true"
+                />
                 <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
                   Không thể tải thông tin thanh toán
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Phiên thanh toán không tồn tại hoặc bạn không có quyền truy cập.
+                  Phiên thanh toán không tồn tại hoặc bạn không có quyền truy
+                  cập.
                 </p>
                 <button
                   type="button"
@@ -294,21 +351,34 @@ export const PlanPaymentModal: React.FC<PlanPaymentModalProps> = ({
                     Thanh toán thành công
                   </h3>
                   <p className="mt-1.5 text-sm sm:text-base text-slate-600 dark:text-slate-400">
-                    Gói BreadTrans Plus đã được kích hoạt trên tài khoản của bạn.
+                    Gói BreadTrans Plus đã được kích hoạt trên tài khoản của
+                    bạn.
                   </p>
                 </div>
                 <div className="space-y-3.5 rounded-2xl bg-slate-50 p-5 text-left dark:bg-slate-800/60">
                   <div className="flex items-center justify-between gap-4 text-sm sm:text-base">
-                    <span className="text-slate-500 dark:text-slate-400">Gói sử dụng</span>
-                    <span className="font-bold text-slate-900 dark:text-slate-100">BreadTrans Plus</span>
+                    <span className="text-slate-500 dark:text-slate-400">
+                      Gói sử dụng
+                    </span>
+                    <span className="font-bold text-slate-900 dark:text-slate-100">
+                      BreadTrans Plus
+                    </span>
                   </div>
                   <div className="flex items-center justify-between gap-4 text-sm sm:text-base">
-                    <span className="text-slate-500 dark:text-slate-400">Thời hạn</span>
-                    <span className="font-bold text-slate-900 dark:text-slate-100">{purchase.durationDays} ngày</span>
+                    <span className="text-slate-500 dark:text-slate-400">
+                      Thời hạn
+                    </span>
+                    <span className="font-bold text-slate-900 dark:text-slate-100">
+                      {purchase.durationDays} ngày
+                    </span>
                   </div>
                   <div className="flex items-center justify-between gap-4 text-sm sm:text-base">
-                    <span className="text-slate-500 dark:text-slate-400">Số tiền</span>
-                    <span className="text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-300">{formatVnd(purchase.amountVnd)}</span>
+                    <span className="text-slate-500 dark:text-slate-400">
+                      Số tiền
+                    </span>
+                    <span className="text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-300">
+                      {formatVnd(purchase.amountVnd)}
+                    </span>
                   </div>
                 </div>
                 <div className="flex flex-col gap-3 sm:flex-row">
@@ -361,7 +431,10 @@ export const PlanPaymentModal: React.FC<PlanPaymentModalProps> = ({
                 icon={<XCircle size={30} aria-hidden="true" />}
                 tone="danger"
                 title="Thanh toán không thành công"
-                description={purchase.payment?.rejectionReason || "Không tìm thấy giao dịch chuyển khoản tương ứng."}
+                description={
+                  purchase.payment?.rejectionReason ||
+                  "Không tìm thấy giao dịch chuyển khoản tương ứng."
+                }
                 action={<CloseButton onClose={onClose} />}
               />
             ) : isIntentExpired && purchase ? (
@@ -379,6 +452,27 @@ export const PlanPaymentModal: React.FC<PlanPaymentModalProps> = ({
                     >
                       Tạo phiên thanh toán mới
                     </button>
+                    <CloseButton onClose={onClose} />
+                  </div>
+                }
+              />
+            ) : isPayosSessionMissing && purchase ? (
+              <StateMessage
+                icon={<AlertCircle size={30} aria-hidden="true" />}
+                tone="warning"
+                title="Phiên PayOS chưa đủ thông tin"
+                description="Phiên này chưa có mã QR hoặc đường dẫn thanh toán. Hãy tạo lại phiên để tiếp tục."
+                action={
+                  <div className="flex flex-col justify-center gap-2 sm:flex-row">
+                    {onCreateNew ? (
+                      <button
+                        type="button"
+                        onClick={onCreateNew}
+                        className="min-h-10 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                      >
+                        Tạo lại phiên thanh toán
+                      </button>
+                    ) : null}
                     <CloseButton onClose={onClose} />
                   </div>
                 }
@@ -427,19 +521,27 @@ function StateMessage({
   action: React.ReactNode;
 }) {
   const toneClass = {
-    neutral: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300",
-    warning: "bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-300",
+    neutral:
+      "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300",
+    warning:
+      "bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-300",
     danger: "bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-300",
   }[tone];
 
   return (
     <div className="space-y-4 py-10 text-center">
-      <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full ${toneClass}`}>
+      <div
+        className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full ${toneClass}`}
+      >
         {icon}
       </div>
       <div>
-        <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{title}</h3>
-        <p className="mx-auto mt-1 max-w-[38ch] text-sm leading-relaxed text-slate-600 dark:text-slate-400">{description}</p>
+        <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+          {title}
+        </h3>
+        <p className="mx-auto mt-1 max-w-[38ch] text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+          {description}
+        </p>
       </div>
       {action}
     </div>
@@ -462,6 +564,7 @@ function ActivePaymentView({
   isReported: boolean;
 }) {
   const bank = purchase.bankInstructions;
+  const payos = purchase.payos;
   const accountNumber = bank?.accountNumber || "";
   const accountName = bank?.accountName || "";
 
@@ -469,11 +572,20 @@ function ActivePaymentView({
     <div className="space-y-4 sm:space-y-5">
       <div className="grid items-stretch gap-4 md:grid-cols-[250px_1fr] sm:gap-5">
         <section className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-slate-50/80 p-5 text-center dark:border-slate-700 dark:bg-slate-800/50 sm:p-5.5">
-          {bank?.vietQrUrl ? (
+          {payos?.qrCode ? (
+            <QRCodeSVG
+              value={payos.qrCode}
+              size={225}
+              level="M"
+              includeMargin
+              title="Mã QR thanh toán payOS"
+              className="h-[210px] w-[210px] rounded-xl bg-white p-2 shadow-sm sm:h-[225px] sm:w-[225px]"
+            />
+          ) : bank?.vietQrUrl ? (
             <img
               src={bank.vietQrUrl}
               alt="Mã QR thanh toán"
-              className="h-[210px] w-[210px] sm:h-[225px] sm:w-[225px] rounded-xl bg-white object-contain p-2 shadow-sm"
+              className="h-[210px] w-[210px] rounded-xl bg-white object-contain p-2 shadow-sm sm:h-[225px] sm:w-[225px]"
               loading="eager"
             />
           ) : (
@@ -485,72 +597,135 @@ function ActivePaymentView({
             Quét mã QR bằng ứng dụng ngân hàng
           </p>
           <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-            Ngân hàng, số tiền và nội dung sẽ được điền tự động
+            {payos
+              ? "Được xử lý an toàn bởi payOS"
+              : "Ngân hàng, số tiền và nội dung sẽ được điền tự động"}
           </p>
         </section>
 
         <section className="grid content-between gap-2.5 sm:gap-3">
-          <PaymentDetail label="Ngân hàng" value={bank?.bankName || "-"} />
-          <PaymentDetail
-            label="Số tài khoản"
-            value={accountNumber || "-"}
-            mono
-            valueClassName="text-base sm:text-[17px] font-bold tracking-wider"
-            action={
-              <CopyButton
-                label="Sao chép số tài khoản"
-                copied={copiedField === "Số tài khoản"}
-                onClick={() => onCopy(accountNumber, "Số tài khoản")}
+          {payos ? (
+            <>
+              <PaymentDetail
+                label="Gói"
+                value={purchase.planDisplayName || "BreadTrans Plus"}
               />
-            }
-          />
-          <PaymentDetail label="Chủ tài khoản" value={accountName || "-"} />
-          <PaymentDetail
-            label="Số tiền"
-            value={formatVnd(purchase.amountVnd)}
-            valueClassName="text-xl sm:text-2xl font-black text-blue-700 dark:text-blue-300"
-          />
+              <PaymentDetail
+                label="Chủ tài khoản"
+                value={payos.bankAccountName || "-"}
+              />
+              <PaymentDetail
+                label="Số tiền"
+                value={formatVnd(purchase.amountVnd)}
+                valueClassName="text-xl sm:text-2xl font-black text-blue-700 dark:text-blue-300"
+              />
+              <PaymentDetail
+                label="Mã đơn hàng"
+                value={String(payos.orderCode)}
+                mono
+              />
+              <PaymentDetail
+                label="Nội dung thanh toán"
+                value={payos.description || "BreadTrans Plus"}
+              />
+            </>
+          ) : (
+            <>
+              <PaymentDetail label="Ngân hàng" value={bank?.bankName || "-"} />
+              <PaymentDetail
+                label="Số tài khoản"
+                value={accountNumber || "-"}
+                mono
+                valueClassName="text-base sm:text-[17px] font-bold tracking-wider"
+                action={
+                  <CopyButton
+                    label="Sao chép số tài khoản"
+                    copied={copiedField === "Số tài khoản"}
+                    onClick={() => onCopy(accountNumber, "Số tài khoản")}
+                  />
+                }
+              />
+              <PaymentDetail label="Chủ tài khoản" value={accountName || "-"} />
+            </>
+          )}
+          {!payos && (
+            <PaymentDetail
+              label="Số tiền"
+              value={formatVnd(purchase.amountVnd)}
+              valueClassName="text-xl sm:text-2xl font-black text-blue-700 dark:text-blue-300"
+            />
+          )}
         </section>
       </div>
 
-      <section className="rounded-2xl border border-orange-200 bg-orange-50/90 p-4 sm:p-5 dark:border-orange-900/60 dark:bg-orange-950/30">
-        <div className="flex items-start gap-3">
-          <AlertTriangle size={20} className="mt-0.5 shrink-0 text-orange-600 dark:text-orange-400" aria-hidden="true" />
-          <div className="min-w-0 flex-1">
-            <h3 className="text-sm sm:text-base font-bold text-orange-950 dark:text-orange-100">
-              Nội dung chuyển khoản (bắt buộc)
-            </h3>
-            <div className="mt-2.5 flex items-center gap-3 rounded-xl border border-orange-200 bg-white p-2.5 sm:p-3 dark:border-orange-900/70 dark:bg-slate-900/70">
-              <code className="min-w-0 flex-1 truncate px-1 font-mono text-base sm:text-lg font-black tracking-wider text-slate-900 dark:text-slate-100">
-                {transferCode || "-"}
-              </code>
-              <button
-                type="button"
-                onClick={() => onCopy(transferCode, "nội dung chuyển khoản")}
-                aria-label="Sao chép nội dung chuyển khoản"
-                className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-lg bg-orange-100 px-3.5 py-2 text-xs sm:text-sm font-bold text-orange-900 transition-colors hover:bg-orange-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 dark:bg-orange-950/70 dark:text-orange-200 dark:hover:bg-orange-900"
-              >
-                {copiedField === "nội dung chuyển khoản" ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
-                Sao chép
-              </button>
+      {!payos && (
+        <section className="rounded-2xl border border-orange-200 bg-orange-50/90 p-4 sm:p-5 dark:border-orange-900/60 dark:bg-orange-950/30">
+          <div className="flex items-start gap-3">
+            <AlertTriangle
+              size={20}
+              className="mt-0.5 shrink-0 text-orange-600 dark:text-orange-400"
+              aria-hidden="true"
+            />
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm sm:text-base font-bold text-orange-950 dark:text-orange-100">
+                Nội dung chuyển khoản (bắt buộc)
+              </h3>
+              <div className="mt-2.5 flex items-center gap-3 rounded-xl border border-orange-200 bg-white p-2.5 sm:p-3 dark:border-orange-900/70 dark:bg-slate-900/70">
+                <code className="min-w-0 flex-1 truncate px-1 font-mono text-base sm:text-lg font-black tracking-wider text-slate-900 dark:text-slate-100">
+                  {transferCode || "-"}
+                </code>
+                <button
+                  type="button"
+                  onClick={() => onCopy(transferCode, "nội dung chuyển khoản")}
+                  aria-label="Sao chép nội dung chuyển khoản"
+                  className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-lg bg-orange-100 px-3.5 py-2 text-xs sm:text-sm font-bold text-orange-900 transition-colors hover:bg-orange-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 dark:bg-orange-950/70 dark:text-orange-200 dark:hover:bg-orange-900"
+                >
+                  {copiedField === "nội dung chuyển khoản" ? (
+                    <Check size={16} aria-hidden="true" />
+                  ) : (
+                    <Copy size={16} aria-hidden="true" />
+                  )}
+                  Sao chép
+                </button>
+              </div>
+              <p className="mt-2 text-xs sm:text-[13px] leading-relaxed text-orange-800/90 dark:text-orange-200/90">
+                Không chỉnh sửa nội dung chuyển khoản. Hệ thống có thể không tự
+                động xác nhận nếu nội dung bị thay đổi.
+              </p>
             </div>
-            <p className="mt-2 text-xs sm:text-[13px] leading-relaxed text-orange-800/90 dark:text-orange-200/90">
-              Không chỉnh sửa nội dung chuyển khoản. Hệ thống có thể không tự động xác nhận nếu nội dung bị thay đổi.
-            </p>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
+
+      {payos?.checkoutUrl && (
+        <a
+          href={payos.checkoutUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-700"
+        >
+          Mở trang thanh toán payOS
+        </a>
+      )}
 
       <section className="flex items-center gap-3.5 rounded-2xl border border-sky-200 bg-sky-50/90 p-4 sm:p-4.5 dark:border-sky-900/70 dark:bg-sky-950/30">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-sky-600 shadow-sm dark:bg-slate-900 dark:text-sky-300">
-          {isReported ? <Loader2 size={19} className="animate-spin" aria-hidden="true" /> : <Clock size={19} aria-hidden="true" />}
+          {isReported ? (
+            <Loader2 size={19} className="animate-spin" aria-hidden="true" />
+          ) : (
+            <Clock size={19} aria-hidden="true" />
+          )}
         </div>
         <div className="min-w-0 text-sky-950 dark:text-sky-100">
           <p className="text-sm sm:text-base font-bold">
-            {isReported ? "Đã nhận giao dịch, đang xác nhận" : "Hệ thống sẽ tự động xác nhận sau khi nhận được giao dịch"}
+            {isReported
+              ? "Đã nhận giao dịch, đang xác nhận"
+              : "Hệ thống sẽ tự động xác nhận sau khi nhận được giao dịch"}
           </p>
           <p className="mt-0.5 text-xs sm:text-[13px] font-medium leading-relaxed text-sky-800 dark:text-sky-200">
-            {countdown ? `Phiên thanh toán còn: ${countdown}` : "Vui lòng hoàn tất chuyển khoản trong phiên hiện tại."}
+            {countdown
+              ? `Phiên thanh toán còn: ${countdown}`
+              : "Vui lòng hoàn tất chuyển khoản trong phiên hiện tại."}
           </p>
         </div>
       </section>
@@ -574,8 +749,12 @@ function PaymentDetail({
   return (
     <div className="flex min-h-[62px] items-center justify-between gap-3 rounded-xl bg-slate-50 px-4 py-2.5 dark:bg-slate-800/60">
       <div className="min-w-0">
-        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{label}</p>
-        <p className={`mt-0.5 truncate text-[15px] sm:text-base font-bold text-slate-900 dark:text-slate-100 ${mono ? "font-mono tracking-wide" : ""} ${valueClassName}`}>
+        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+          {label}
+        </p>
+        <p
+          className={`mt-0.5 truncate text-[15px] sm:text-base font-bold text-slate-900 dark:text-slate-100 ${mono ? "font-mono tracking-wide" : ""} ${valueClassName}`}
+        >
           {value}
         </p>
       </div>
@@ -600,7 +779,15 @@ function CopyButton({
       aria-label={label}
       className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
     >
-      {copied ? <Check size={16} className="text-emerald-600 dark:text-emerald-300" aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
+      {copied ? (
+        <Check
+          size={16}
+          className="text-emerald-600 dark:text-emerald-300"
+          aria-hidden="true"
+        />
+      ) : (
+        <Copy size={16} aria-hidden="true" />
+      )}
     </button>
   );
 }

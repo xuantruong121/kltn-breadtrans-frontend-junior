@@ -1,4 +1,4 @@
-export type WritingMode = "SENTENCE" | "EMAIL" | "OPINION";
+export type WritingMode = "SENTENCE" | "SHORT_MESSAGE" | "EMAIL" | "OPINION";
 
 export interface WritingGuidanceSection {
   title: string;
@@ -31,7 +31,20 @@ export function resolveWritingMode(input: {
       ],
     };
   }
-  if (taskType.includes("EMAIL") || taskType.includes("MESSAGE") || taskType.includes("PART2")) {
+  if (taskType.includes("SHORT_MESSAGE") || taskType.includes("SHORT MESSAGE")) {
+    return {
+      id: "SHORT_MESSAGE",
+      label: "Tin nhắn ngắn",
+      objective: "Viết tin nhắn ngắn gọn, tự nhiên và phù hợp với người nhận.",
+      guidance: [
+        { title: "Opening", stem: "Hi ...," },
+        { title: "Purpose", stem: "I am writing to let you know that..." },
+        { title: "Details", stem: "I will ... at ..." },
+        { title: "Closing", stem: "See you soon!" },
+      ],
+    };
+  }
+  if (taskType.includes("EMAIL") || taskType.includes("PART2")) {
     return {
       id: "EMAIL",
       label: "Email & tin nhắn",
@@ -54,6 +67,23 @@ export function resolveWritingMode(input: {
       { title: "Context", stem: "Use the required vocabulary in a complete sentence." },
     ],
   };
+}
+
+export function resolveWritingPlaceholder(input: {
+  taskType?: string | null;
+  type?: string | null;
+  title?: string | null;
+}): string {
+  switch (resolveWritingMode(input).id) {
+    case "SHORT_MESSAGE":
+      return "Hi Alex, I am sorry that I will arrive late...";
+    case "EMAIL":
+      return "Dear Mr. Smith, I am writing to update you on our project status...";
+    case "OPINION":
+      return "In my opinion, ... because ... For example, ...";
+    default:
+      return "Write one complete sentence using the required words...";
+  }
 }
 
 export function countWritingWords(value: string): number {

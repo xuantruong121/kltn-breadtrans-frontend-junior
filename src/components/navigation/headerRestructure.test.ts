@@ -58,7 +58,7 @@ describe("Header Navigation Restructure Verification", () => {
 
   it("activates 'Đọc' for both Reading and Grammar routes", () => {
     assert.equal(isReadingRoute("/reading"), true);
-    assert.equal(isReadingRoute("/reading/quizzes/12"), true);
+    assert.equal(isReadingRoute("/reading/12"), true);
     assert.equal(isReadingRoute("/reading?tab=grammar"), false);
     assert.equal(isReadingRoute("/grammar"), true);
     assert.equal(isReadingRoute("/grammar/topic/5"), true);

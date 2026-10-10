@@ -52,8 +52,8 @@ export function PublicFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/my-courses" className="transition-colors hover:text-amber-600 dark:hover:text-amber-400">
-                  Khóa học của tôi
+                <Link href="/courses" className="transition-colors hover:text-amber-600 dark:hover:text-amber-400">
+                  Danh mục khóa học
                 </Link>
               </li>
               <li>

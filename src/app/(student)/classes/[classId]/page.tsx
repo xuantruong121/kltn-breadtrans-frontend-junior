@@ -148,7 +148,7 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
     <div className="max-w-5xl mx-auto">
       {/* Back button */}
       <div className="mb-6">
-        <BackButton href="/my-courses" label="Quay lại khóa học của tôi" />
+        <BackButton href="/courses" label="Quay lại danh mục khóa học" />
       </div>
 
       {/* Workspace Header */}

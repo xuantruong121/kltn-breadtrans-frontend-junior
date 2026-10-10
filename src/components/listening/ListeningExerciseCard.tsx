@@ -19,10 +19,13 @@ import type { ListeningPracticeCatalogItem } from "@/lib/api/services/quiz.servi
 import {
   type ListeningCardStatus,
   computeListeningCardStatus,
-  LISTENING_DIFFICULTY_CONFIG,
+  resolveCefrBadge,
   resolveListeningFormatTag,
+  resolveListeningFormatTheme,
   resolveListeningPedagogicalDescription,
   resolveListeningSkillTags,
+  resolveSpeakerContext,
+  resolveAudioAccentTag,
 } from "./listeningCardLogic";
 
 export interface ListeningExerciseCardProps {
@@ -100,19 +103,14 @@ export function ListeningExerciseCard({
   const questionCount = quiz.questionCount ?? quiz._count?.questions ?? 4;
   const durationMinutes = quiz.durationMinutes ?? Math.max(2, Math.round((questionCount * 45) / 60));
 
-  const firstLevel = Array.isArray(quiz.levels) && quiz.levels.length > 0 ? quiz.levels[0].toUpperCase() : "BEGINNER";
-  const diffConfig =
-    LISTENING_DIFFICULTY_CONFIG[firstLevel] ||
-    (firstLevel.includes("A")
-      ? LISTENING_DIFFICULTY_CONFIG.BEGINNER
-      : firstLevel.includes("B")
-        ? LISTENING_DIFFICULTY_CONFIG.INTERMEDIATE
-        : LISTENING_DIFFICULTY_CONFIG.ADVANCED);
-
+  const cefr = resolveCefrBadge(quiz.levels);
   const formatTag = resolveListeningFormatTag(quiz);
+  const formatTheme = resolveListeningFormatTheme(formatTag);
   const pedagogicalDescription = resolveListeningPedagogicalDescription(quiz);
   const skillTags = resolveListeningSkillTags(quiz);
-  const { Icon: AnchorIcon, iconContainer } = resolveListeningVisualAnchor(formatTag);
+  const speakerContext = resolveSpeakerContext(quiz);
+  const audioAccent = resolveAudioAccentTag(quiz);
+  const { Icon: AnchorIcon } = resolveListeningVisualAnchor(formatTag);
 
   const handleCardClick = (e: React.MouseEvent) => {
     if (isLocked) {
@@ -128,13 +126,13 @@ export function ListeningExerciseCard({
 
   const containerClasses = {
     IN_PROGRESS:
-      "relative flex min-h-[235px] flex-col justify-between rounded-xl border border-violet-400 dark:border-violet-500/80 bg-white dark:bg-slate-900 p-4 sm:p-5 ring-2 ring-violet-500/20 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-violet-500 dark:hover:border-violet-400 hover:shadow-md cursor-pointer group",
+      "relative flex min-h-[245px] flex-col justify-between rounded-xl ring-2 ring-violet-500/25 border border-violet-400 bg-gradient-to-b from-violet-50/20 to-transparent dark:from-violet-950/20 dark:to-transparent p-4 sm:p-5 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-violet-500 hover:shadow-md cursor-pointer group",
     COMPLETED:
-      "relative flex min-h-[235px] flex-col justify-between rounded-xl border border-emerald-200/80 dark:border-emerald-800/60 bg-emerald-50/20 dark:bg-emerald-950/15 p-4 sm:p-5 shadow-2xs transition-all duration-200 hover:-translate-y-1 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md cursor-pointer group",
+      "relative flex min-h-[245px] flex-col justify-between rounded-xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/20 dark:bg-emerald-950/15 p-4 sm:p-5 shadow-2xs transition-all duration-200 hover:-translate-y-1 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md cursor-pointer group",
     NOT_STARTED:
-      "relative flex min-h-[235px] flex-col justify-between rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-2xs transition-all duration-200 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md cursor-pointer group",
+      `relative flex min-h-[245px] flex-col justify-between rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-2xs transition-all duration-200 hover:-translate-y-1 ${formatTheme.hoverBorderClass} hover:shadow-md cursor-pointer group`,
     LOCKED:
-      "relative flex min-h-[235px] flex-col justify-between rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 p-4 sm:p-5 opacity-90 shadow-2xs transition-all duration-200 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm cursor-pointer group",
+      "relative flex min-h-[245px] flex-col justify-between rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 p-4 sm:p-5 opacity-90 shadow-2xs transition-all duration-200 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm cursor-pointer group",
   }[status];
 
   return (
@@ -145,23 +143,31 @@ export function ListeningExerciseCard({
           <div className="flex items-center gap-2.5 min-w-0">
             {/* Expressive Category Icon Anchor */}
             <div
-              className={`shrink-0 flex items-center justify-center p-2 rounded-lg ${iconContainer}`}
+              className={`shrink-0 flex items-center justify-center p-2 rounded-lg ${formatTheme.iconContainerClass}`}
               title={formatTag}
             >
               <AnchorIcon className="w-4 h-4" aria-hidden="true" />
             </div>
 
-            {/* Semantic Format & Difficulty Pills */}
+            {/* Semantic Format, CEFR Badge & Context Pills */}
             <div className="flex flex-wrap items-center gap-1.5 min-w-0">
               <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80 truncate">
                 {formatTag}
               </span>
               <span
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold border ${diffConfig.badgeClass}`}
+                className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold border ${cefr.badgeClass}`}
               >
-                <span className={`w-1.5 h-1.5 rounded-full ${diffConfig.dotClass}`} aria-hidden="true" />
-                {diffConfig.label}
+                {cefr.label}
               </span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80">
+                <Volume2 className="w-3 h-3 text-sky-500" aria-hidden="true" />
+                <span>{audioAccent.flag} {audioAccent.label}</span>
+              </span>
+              {speakerContext && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700/70">
+                  {speakerContext}
+                </span>
+              )}
               {isLocked && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">
                   <Lock size={11} aria-hidden="true" />
@@ -176,11 +182,11 @@ export function ListeningExerciseCard({
             {status === "COMPLETED" ? (
               <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/70 px-2 py-0.5 rounded-full">
                 <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-                Đã làm
+                <span>✓ Đã hoàn thành{quiz.score != null ? ` (Điểm: ${quiz.score}/100)` : ""}</span>
               </span>
             ) : (
               <>
-                {status === "IN_PROGRESS" && (
+                {(status === "IN_PROGRESS" || isSpotlight) && (
                   <span className="inline-flex items-center gap-1 text-xs font-semibold text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/60 border border-violet-200 dark:border-violet-800/70 px-2 py-0.5 rounded-full">
                     <Flame size={12} className="text-amber-500 fill-amber-500" aria-hidden="true" />
                     {isSpotlight ? "Gợi ý" : "Đang làm"}
@@ -207,7 +213,7 @@ export function ListeningExerciseCard({
           </p>
         </div>
 
-        {/* Sub-skill Micro-Badges */}
+        {/* Sub-skill Micro-Badges with Tactile Dot Markers */}
         {skillTags.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
             {skillTags.map((tag) => (
@@ -240,8 +246,8 @@ export function ListeningExerciseCard({
         ) : status === "IN_PROGRESS" ? (
           <div className="space-y-1.5 pt-1">
             <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
-              <span className="text-slate-700 dark:text-slate-300 font-medium">
-                Tiến độ: {Math.max(1, Math.round(questionCount * 0.5))}/{questionCount} câu
+              <span className="text-violet-700 dark:text-violet-300 font-semibold">
+                Còn {Math.max(1, questionCount - Math.max(1, Math.round(questionCount * 0.5)))} câu · ~{Math.max(1, Math.round(durationMinutes / 2))} phút
               </span>
               <span className="text-violet-600 dark:text-violet-400 font-bold">50%</span>
             </div>
@@ -274,10 +280,10 @@ export function ListeningExerciseCard({
               type="button"
               onClick={() => onStart?.(quiz)}
               disabled={isLaunching}
-              className="bg-white hover:bg-emerald-50 text-emerald-700 dark:bg-slate-800 dark:hover:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/80 font-semibold text-sm px-3.5 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 shadow-2xs hover:shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500"
+              className="border border-emerald-300 dark:border-emerald-700/80 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 font-semibold text-sm px-3.5 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 shadow-2xs hover:shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500"
             >
               <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Luyện lại</span>
+              <span>Luyện lại ↺</span>
             </button>
           ) : status === "IN_PROGRESS" ? (
             <button
@@ -294,7 +300,7 @@ export function ListeningExerciseCard({
               type="button"
               onClick={() => onStart?.(quiz)}
               disabled={isLaunching}
-              className="bg-violet-50 hover:bg-violet-600 text-violet-700 hover:text-white dark:bg-slate-800 dark:hover:bg-violet-600 dark:text-violet-300 dark:hover:text-white border border-violet-200 dark:border-violet-700/60 hover:border-transparent font-semibold text-sm px-4 py-2 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500"
+              className="bg-slate-50 hover:bg-violet-600 text-slate-700 hover:text-white dark:bg-slate-800 dark:hover:bg-violet-600 dark:text-slate-200 dark:hover:text-white border border-slate-200 dark:border-slate-700 hover:border-transparent font-medium text-sm px-4 py-2 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500"
             >
               <span>Bắt đầu</span>
               <ArrowRight className="w-4 h-4" aria-hidden="true" />

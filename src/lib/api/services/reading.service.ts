@@ -1,28 +1,26 @@
 import axiosClient from "../axiosClient";
 
-export interface ReadingTopicQuiz {
-  id: number;
-  title: string;
-  description?: string;
-  type?: string;
-  timeLimit?: number;
-  questionCount?: number;
-  courseId?: number | null;
-  isPremiumContent?: boolean;
-  isLocked?: boolean;
-  _count?: {
-    questions: number;
-  };
-}
+export type ReadingExerciseCompletionStatus =
+  | "NOT_STARTED"
+  | "IN_PROGRESS"
+  | "COMPLETED";
 
-export interface ReadingTopic {
-  id: number;
+export interface ReadingExercise {
+  quizId: number;
   title: string;
-  description: string;
-  imageUrl?: string;
-  isPremiumContent?: boolean;
-  isLocked?: boolean;
-  quizzes?: ReadingTopicQuiz[];
+  description?: string | null;
+  level: string;
+  difficulty: "BASIC" | "INTERMEDIATE" | "ADVANCED";
+  questionCount: number;
+  estimatedMinutes?: number | null;
+  parentTopicId?: number | null;
+  topicName?: string | null;
+  topicVietnameseName?: string | null;
+  microSkills: string[];
+  isPremiumContent: boolean;
+  isLocked: boolean;
+  completionStatus: ReadingExerciseCompletionStatus;
+  completedQuestionCount: number;
 }
 
 export interface ReadingTracking {
@@ -60,6 +58,9 @@ export interface ReadingTracking {
     total: number;
     bySubskill: Array<{ subskill: string; count: number }>;
     items: Array<{
+      quizId?: number;
+      topicId?: number | null;
+      questionId?: number;
       question: string;
       yourAnswer: string;
       correctAnswer: string | null;
@@ -82,12 +83,8 @@ export interface ReadingTracking {
 }
 
 export const readingService = {
-  getTopics: async (): Promise<ReadingTopic[]> => {
-    return await axiosClient.get("/reading/topics?category=BILINGUAL_LEVEL");
-  },
-
-  getTopicById: async (id: number): Promise<ReadingTopic> => {
-    return await axiosClient.get(`/reading/topics/${id}`);
+  getExercises: async (): Promise<ReadingExercise[]> => {
+    return await axiosClient.get("/reading/exercises");
   },
 
   getTheory: async (quizId: number): Promise<any> => {

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Check, Clock, Lock, Star } from "lucide-react";
+import { Check, Star } from "lucide-react";
 import type { EffectivePlan, PurchasablePlanVersionInfo } from "../planLogic";
 import {
   getPlanCardCta,
@@ -13,7 +13,9 @@ export interface PlanCardProps {
   planType: "FREE" | "PLUS" | "PRO";
   effectivePlan: EffectivePlan | null | undefined;
   purchasablePlusVersion?: PurchasablePlanVersionInfo | null;
+  purchasableProVersion?: PurchasablePlanVersionInfo | null;
   onSelectPlus?: () => void;
+  onSelectPro?: () => void;
   isPurchasing?: boolean;
   highlighted?: boolean;
   isAuthenticated?: boolean;
@@ -25,7 +27,9 @@ export const PlanCard: React.FC<PlanCardProps> = ({
   planType,
   effectivePlan,
   purchasablePlusVersion,
+  purchasableProVersion,
   onSelectPlus,
+  onSelectPro,
   isPurchasing = false,
   highlighted = false,
   isAuthenticated = false,
@@ -33,7 +37,13 @@ export const PlanCard: React.FC<PlanCardProps> = ({
   isCatalogError = false,
 }) => {
   const current = resolveEffectivePlanDisplay(effectivePlan);
-  const cta = getPlanCardCta(planType, effectivePlan, purchasablePlusVersion, isAuthenticated);
+  const cta = getPlanCardCta(
+    planType,
+    effectivePlan,
+    purchasablePlusVersion,
+    isAuthenticated,
+    purchasableProVersion,
+  );
 
   if (planType === "FREE") {
     return (
@@ -244,48 +254,65 @@ export const PlanCard: React.FC<PlanCardProps> = ({
   }
 
   // PRO Plan
+  const proPricing = getPlusPricingDisplay(purchasableProVersion);
   return (
-    <div className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-slate-50/70 p-6 lg:p-7 shadow-xs transition-all dark:border-slate-800 dark:bg-slate-900/60">
+    <div className={`flex flex-col justify-between rounded-2xl border bg-white p-6 lg:p-7 shadow-md transition-all dark:bg-slate-900 ${
+      cta.isCurrent
+        ? "border-emerald-300 dark:border-emerald-800 ring-2 ring-emerald-500/20"
+        : proPricing.isPurchasable
+          ? "border-indigo-400 dark:border-indigo-500 ring-2 ring-indigo-400/20"
+          : "border-slate-200 dark:border-slate-800"
+    }`}>
       <div>
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-200">
             BreadTrans Pro
           </h3>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 shrink-0 whitespace-nowrap">
-            <Clock size={13} aria-hidden="true" />
-            <span>Sắp ra mắt</span>
-          </span>
+          {cta.isCurrent && (
+            <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300 shrink-0 whitespace-nowrap">
+              Gói hiện tại
+            </span>
+          )}
         </div>
 
         <p className="mt-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed">
-          Premium + các công cụ AI hỗ trợ học tập — Sắp ra mắt.
+          Toàn bộ quyền lợi Plus và toàn bộ thư viện khóa học tự học.
         </p>
 
         <div className="mt-6 pb-6 border-b border-slate-200/80 dark:border-slate-800">
-          <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-400 dark:text-slate-500">
-            Sắp ra mắt
-          </span>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-            Đang hoàn thiện kiến trúc tính năng AI
-          </p>
+          {isLoadingCatalog ? (
+            <div className="space-y-2 animate-pulse py-1">
+              <div className="h-8 w-36 bg-slate-100 dark:bg-slate-800 rounded-lg" />
+              <div className="h-3.5 w-24 bg-slate-100 dark:bg-slate-800 rounded-md" />
+            </div>
+          ) : proPricing.isPurchasable ? (
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-3xl sm:text-4xl font-black tracking-tight text-indigo-600 dark:text-indigo-400">
+                {proPricing.priceText}
+              </span>
+              <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                {proPricing.durationText}
+              </span>
+            </div>
+          ) : (
+            <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-500 dark:text-slate-400">
+              {proPricing.priceText}
+            </span>
+          )}
         </div>
 
         <ul className="mt-6 space-y-3.5 text-sm text-slate-500 dark:text-slate-400">
           <li className="flex items-start gap-3">
-            <Check size={18} className="text-slate-400 shrink-0 mt-0.5" aria-hidden="true" />
+            <Check size={18} className="text-indigo-500 shrink-0 mt-0.5" aria-hidden="true" />
             <span>Toàn bộ quyền lợi gói Plus</span>
           </li>
           <li className="flex items-start gap-3">
-            <Lock size={17} className="text-slate-400 shrink-0 mt-0.5" aria-hidden="true" />
-            <span>Đánh giá phát âm & AI Speaking (Sắp ra mắt)</span>
+            <Check size={18} className="text-indigo-500 shrink-0 mt-0.5" aria-hidden="true" />
+            <span>Mở khóa toàn bộ khóa học</span>
           </li>
           <li className="flex items-start gap-3">
-            <Lock size={17} className="text-slate-400 shrink-0 mt-0.5" aria-hidden="true" />
-            <span>Chấm chữa chi tiết AI Writing (Sắp ra mắt)</span>
-          </li>
-          <li className="flex items-start gap-3">
-            <Lock size={17} className="text-slate-400 shrink-0 mt-0.5" aria-hidden="true" />
-            <span>Gia sư AI học tập tương tác (Sắp ra mắt)</span>
+            <Check size={18} className="text-indigo-500 shrink-0 mt-0.5" aria-hidden="true" />
+            <span>Lộ trình học tuần tự, tiếp tục từ bài đang học</span>
           </li>
         </ul>
       </div>
@@ -293,10 +320,11 @@ export const PlanCard: React.FC<PlanCardProps> = ({
       <div className="mt-8 pt-4">
         <button
           type="button"
-          disabled
-          className="w-full min-h-12 rounded-xl border border-slate-200 bg-slate-100 px-4 text-sm font-bold text-slate-400 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-500 cursor-not-allowed"
+          onClick={onSelectPro}
+          disabled={cta.disabled || isPurchasing || isCatalogError || !proPricing.isPurchasable}
+          className="w-full min-h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] px-4 text-sm sm:text-base font-extrabold text-white shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {cta.label}
+          {isPurchasing ? "Đang xử lý..." : cta.label}
         </button>
       </div>
     </div>

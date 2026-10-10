@@ -150,6 +150,30 @@ export interface DailyPracticeResponse {
   items: DailyPracticeItem[];
 }
 
+export interface UserShippingProfile {
+  id?: number;
+  userId?: number;
+  recipientName: string;
+  phone: string;
+  phoneDisplay?: string;
+  countryCode: string;
+  provinceCode: string;
+  provinceName: string;
+  wardCode: string;
+  wardName: string;
+  addressLine: string;
+  formattedAddress?: string;
+  shippingProfileComplete: boolean;
+}
+
+export interface UpdateShippingProfilePayload {
+  recipientName: string;
+  phone: string;
+  provinceCode: string;
+  wardCode: string;
+  addressLine: string;
+}
+
 export const userService = {
   getProfile: async (): Promise<UserProfile> => {
     return await axiosClient.get("/users/profile");
@@ -175,4 +199,14 @@ export const userService = {
     axiosClient.get(
       `/users/learning-history${type && type !== "ALL" ? `?type=${encodeURIComponent(type)}` : ""}`,
     ),
+
+  getShippingProfile: async (): Promise<UserShippingProfile> => {
+    return await axiosClient.get("/users/shipping-profile");
+  },
+
+  updateShippingProfile: async (
+    payload: UpdateShippingProfilePayload
+  ): Promise<UserShippingProfile> => {
+    return await axiosClient.patch("/users/shipping-profile", payload);
+  },
 };

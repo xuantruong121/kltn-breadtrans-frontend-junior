@@ -266,3 +266,47 @@ export function getFloatingPetBoundingBox(
     y2: bottom + height,
   };
 }
+
+/**
+ * Detects whether a pathname corresponds to being inside a specific course or lesson.
+ * Entering a course suppresses the floating pet companion to keep focus on course content.
+ */
+export function isInsideCourseRoute(pathname: string): boolean {
+  if (!pathname) return false;
+  const clean = pathname.replace(/\/+$/, "");
+
+  // /courses/:id (course preview/detail)
+  if (/^\/courses\/[^/]+/.test(clean)) return true;
+
+  // /my-courses/:courseId (learning syllabus, roadmap, lesson workspace)
+  if (/^\/my-courses\/[^/]+/.test(clean)) return true;
+
+  // /classes/:classId (enrolled class learning area)
+  if (/^\/classes\/[^/]+/.test(clean)) return true;
+
+  return false;
+}
+
+/**
+ * Determines if the route is the courses catalog overview.
+ */
+export function isCourseCatalogRoute(pathname: string): boolean {
+  if (!pathname) return false;
+  const clean = pathname.replace(/\/+$/, "");
+  return clean === "/courses" || clean === "/course" || clean === "/my-courses";
+}
+
+/**
+ * Floating companion pet on public layout surfaces.
+ * Only authenticated students browsing the courses catalog have their pet displayed.
+ * As soon as the user enters a specific course (/courses/:id), the pet is suppressed.
+ */
+export function shouldRenderFloatingPetOnPublicRoute(
+  pathname: string,
+  user: { role?: string } | null | undefined,
+): boolean {
+  if (!user || user.role !== "STUDENT") {
+    return false;
+  }
+  return isCourseCatalogRoute(pathname) && !isInsideCourseRoute(pathname);
+}

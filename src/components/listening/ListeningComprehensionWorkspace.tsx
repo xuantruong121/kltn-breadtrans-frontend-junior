@@ -58,6 +58,7 @@ interface ListeningComprehensionWorkspaceProps {
   isLoading?: boolean;
   reviewOnly?: boolean;
   reviewQuestionIds?: number[];
+  returnTo?: string;
 }
 
 interface DictationAttemptMetrics {
@@ -122,6 +123,7 @@ export function ListeningComprehensionWorkspace({
   isLoading,
   reviewOnly = false,
   reviewQuestionIds = [],
+  returnTo = "/listening",
 }: ListeningComprehensionWorkspaceProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -631,7 +633,7 @@ export function ListeningComprehensionWorkspace({
   const { confirmExit, exitDialogProps } = usePracticeExitGuard({
     shouldConfirmExit,
     onConfirmExit: handleConfirmedExit,
-    defaultFallbackUrl: "/listening",
+    defaultFallbackUrl: returnTo,
     enabled: true,
   });
 
@@ -656,7 +658,7 @@ export function ListeningComprehensionWorkspace({
   // Handle final submission with client-side double-click guard
   const handleFinalSubmit = async () => {
     if (reviewOnly) {
-      confirmExit("/listening");
+      confirmExit(returnTo);
       return;
     }
     if (isSubmitting || submitMutation.isPending) return;
@@ -982,7 +984,7 @@ export function ListeningComprehensionWorkspace({
           </p>
           <button
             type="button"
-            onClick={() => confirmExit("/listening")}
+            onClick={() => confirmExit(returnTo)}
             className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-amber-500 px-5 text-sm font-extrabold text-white hover:bg-amber-600 cursor-pointer"
           >
             <ArrowLeft size={16} aria-hidden="true" />
@@ -1142,7 +1144,7 @@ export function ListeningComprehensionWorkspace({
         title={quiz.title}
         difficulty={reviewOnly ? "ÔN CÂU SAI" : levelTag}
         positionText={`Câu ${currentIndex + 1} / ${questions.length}`}
-        onExit={() => confirmExit("/listening")}
+        onExit={() => confirmExit(returnTo)}
         exitLabel="Thoát"
         bilingualEnabled
         isBilingual={isBilingual}
@@ -1896,7 +1898,7 @@ export function ListeningComprehensionWorkspace({
         <div className="flex items-center gap-1.5 sm:gap-2">
           <button
             type="button"
-            onClick={() => confirmExit("/listening")}
+            onClick={() => confirmExit(returnTo)}
             className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors hover:border-slate-400 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
             aria-label="Thoát bài luyện và quay lại danh sách bài nghe"
           >

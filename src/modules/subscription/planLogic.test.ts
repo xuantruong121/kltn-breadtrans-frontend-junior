@@ -228,12 +228,20 @@ describe("2. PLUS Plan Display from Backend Data vs Unavailable Catalog", () => 
 });
 
 describe("3. PRO Plan Behavior", () => {
-  test("PRO plan remains Coming Soon (Sắp ra mắt) and disabled without live price", () => {
+  test("PRO plan stays unavailable when the public catalog has no current version", () => {
     const freeUser = makeEffectivePlan();
     const cta = getPlanCardCta("PRO", freeUser, null);
     assert.equal(cta.disabled, true);
-    assert.equal(cta.label, "Sắp ra mắt");
+    assert.equal(cta.label, "Chưa thể mua");
     assert.equal(cta.isCurrent, false);
+  });
+
+  test("PRO plan becomes purchasable from the backend catalog", () => {
+    const freeUser = makeEffectivePlan();
+    const proVersion = { id: 22, priceVnd: 149000, durationDays: 30, currency: "VND" };
+    const cta = getPlanCardCta("PRO", freeUser, null, true, proVersion);
+    assert.equal(cta.disabled, false);
+    assert.equal(cta.label, "Nâng cấp Pro");
   });
 });
 
@@ -268,12 +276,12 @@ describe("4. Purchase Request Safety & Idempotency Key", () => {
 describe("5. Payment Instructions & VietQR Presentation", () => {
   test("Payment detail uses backend-returned VietQR and bank parameters", () => {
     const purchase = makeMockPurchase();
-    assert.equal(purchase.bankInstructions.vietQrUrl.startsWith("https://img.vietqr.io"), true);
-    assert.equal(purchase.bankInstructions.transferCode, "BT-PLAN-00000042");
+    assert.equal(purchase.bankInstructions!.vietQrUrl.startsWith("https://img.vietqr.io"), true);
+    assert.equal(purchase.bankInstructions!.transferCode, "BT-PLAN-00000042");
     assert.equal(purchase.payment.transferCode, "BT-PLAN-00000042");
-    assert.equal(purchase.bankInstructions.amountVnd, 69000);
-    assert.equal(purchase.bankInstructions.bankName, "MBBank");
-    assert.equal(purchase.bankInstructions.accountNumber, "0335888999");
+    assert.equal(purchase.bankInstructions!.amountVnd, 69000);
+    assert.equal(purchase.bankInstructions!.bankName, "MBBank");
+    assert.equal(purchase.bankInstructions!.accountNumber, "0335888999");
   });
 
   test("formatVnd outputs correct locale currency string", () => {
@@ -689,8 +697,7 @@ describe("13. Centralized Query Keys Invariants", () => {
     assert.deepEqual(PLAN_QUERY_KEYS.myPurchases, ["my-plan-purchases"]);
     assert.deepEqual(PLAN_QUERY_KEYS.purchaseDetail(88), ["plan-purchase-detail", 88]);
     assert.deepEqual(PLAN_QUERY_KEYS.vocabTopics, ["vocab-topics"]);
-    assert.deepEqual(PLAN_QUERY_KEYS.readingTopics, ["reading-topics"]);
-    assert.deepEqual(PLAN_QUERY_KEYS.readingTopic(14), ["reading-topic", 14]);
+    assert.deepEqual(PLAN_QUERY_KEYS.readingExercises, ["reading-exercises"]);
     assert.deepEqual(PLAN_QUERY_KEYS.listeningPractices, ["listeningPractices"]);
     assert.deepEqual(PLAN_QUERY_KEYS.speakingExercises, ["speaking-exercises"]);
     assert.deepEqual(PLAN_QUERY_KEYS.speakingExercise(6), ["speaking-exercise", 6]);
@@ -832,7 +839,7 @@ describe("16. Phase PAY-UI Success Invalidation & Immediate Content Unlock", () 
         mockQueryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.effectivePlan });
         mockQueryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.catalog });
         mockQueryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.vocabTopics });
-        mockQueryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.readingTopics });
+        mockQueryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.readingExercises });
         mockQueryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.listeningPractices });
         mockQueryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.speakingExercises });
         mockQueryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.writingTopics });
@@ -855,7 +862,7 @@ describe("16. Phase PAY-UI Success Invalidation & Immediate Content Unlock", () 
       "effective-plan",
       "plan-catalog",
       "vocab-topics",
-      "reading-topics",
+      "reading-exercises",
       "listeningPractices",
       "speaking-exercises",
       "writing-topics",

@@ -34,9 +34,11 @@ function PlansPageContent() {
 
   // Active payment modal state
   const [activePurchaseId, setActivePurchaseId] = useState<number | null>(null);
+  const [activePurchasePlanCode, setActivePurchasePlanCode] = useState<"PLUS" | "PRO">("PLUS");
 
   const handleClosePaymentModal = React.useCallback(() => {
     setActivePurchaseId(null);
+    setActivePurchasePlanCode("PLUS");
   }, []);
 
   // Logical idempotency key cached per purchase attempt
@@ -87,6 +89,13 @@ function PlansPageContent() {
       durationDays: cv.durationDays,
     };
   }, [catalogData]);
+  const purchasableProVersion = React.useMemo<PurchasablePlanVersionInfo | null>(() => {
+    if (!catalogData?.plans) return null;
+    const proPlan = catalogData.plans.find((p) => p.code === "PRO");
+    if (!proPlan || !proPlan.purchasable || !proPlan.currentVersion) return null;
+    const cv = proPlan.currentVersion;
+    return { id: cv.id, version: cv.version, priceVnd: cv.priceVnd, currency: cv.currency, durationDays: cv.durationDays };
+  }, [catalogData]);
 
   // Purchase creation mutation
   const purchaseMutation = useMutation({
@@ -103,6 +112,7 @@ function PlansPageContent() {
       currentIdempotencyKeyRef.current = generateIdempotencyKey();
       queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.myPurchases });
       setActivePurchaseId(purchase.id);
+      setActivePurchasePlanCode(purchase.planCode === "PRO" ? "PRO" : "PLUS");
     },
     onError: (err: any) => {
       const msg = mapPlanPurchaseErrorMessage(err, "Không thể khởi tạo thanh toán. Vui lòng thử lại.");
@@ -113,13 +123,13 @@ function PlansPageContent() {
     },
   });
 
-  const handleInitiatePlusPurchase = () => {
+  const handleInitiatePurchase = (targetPlan: "PLUS" | "PRO", version: PurchasablePlanVersionInfo | null) => {
     if (!user) {
-      router.push(getLoginRedirectUrl("plus"));
+      router.push(getLoginRedirectUrl(targetPlan === "PRO" ? "pro" : "plus"));
       return;
     }
 
-    if (!purchasablePlusVersion) {
+    if (!version) {
       toast.error("Gói dịch vụ này hiện chưa mở bán. Vui lòng quay lại sau.");
       return;
     }
@@ -132,22 +142,27 @@ function PlansPageContent() {
     // Check if there is already an open pending purchase in history
     const openPending = myPurchases?.find(
       (p) =>
-        p.planCode === "PLUS" &&
+      p.planCode === targetPlan &&
         p.isActivePaymentIntent === true,
     );
     if (openPending) {
       setActivePurchaseId(openPending.id);
+      setActivePurchasePlanCode(targetPlan);
       return;
     }
 
-    purchaseMutation.mutate(purchasablePlusVersion.id);
+    purchaseMutation.mutate(version.id);
   };
+
+  const handleInitiatePlusPurchase = () => handleInitiatePurchase("PLUS", purchasablePlusVersion);
+  const handleInitiateProPurchase = () => handleInitiatePurchase("PRO", purchasableProVersion);
 
   const handleCreateNewFromModal = () => {
     setActivePurchaseId(null);
-    if (!purchasablePlusVersion || purchaseMutation.isPending) return;
+    const version = activePurchasePlanCode === "PRO" ? purchasableProVersion : purchasablePlusVersion;
+    if (!version || purchaseMutation.isPending) return;
     currentIdempotencyKeyRef.current = generateIdempotencyKey();
-    purchaseMutation.mutate(purchasablePlusVersion.id);
+    purchaseMutation.mutate(version.id);
   };
 
   const planDisplay = resolveEffectivePlanDisplay(effectivePlan);
@@ -166,7 +181,7 @@ function PlansPageContent() {
               Nâng cấp trải nghiệm học tập
             </h1>
             <p className="mt-1.5 text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
-              Lựa chọn gói dịch vụ phù hợp để mở khóa các chủ đề từ vựng Premium.
+              Lựa chọn gói dịch vụ phù hợp để mở khóa nội dung và lộ trình học tập.
             </p>
           </div>
 
@@ -234,6 +249,7 @@ function PlansPageContent() {
           effectivePlan={effectivePlan}
           purchasablePlusVersion={purchasablePlusVersion}
           onSelectPlus={handleInitiatePlusPurchase}
+          purchasableProVersion={purchasableProVersion}
           isPurchasing={purchaseMutation.isPending}
           highlighted={highlightPlus}
           isAuthenticated={!!user}
@@ -244,6 +260,11 @@ function PlansPageContent() {
         <PlanCard
           planType="PRO"
           effectivePlan={effectivePlan}
+          purchasableProVersion={purchasableProVersion}
+          onSelectPro={handleInitiateProPurchase}
+          isPurchasing={purchaseMutation.isPending}
+          isLoadingCatalog={isLoadingCatalog}
+          isCatalogError={isCatalogError}
           isAuthenticated={!!user}
         />
       </section>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import { Loader2, Trophy, Target, Star, RefreshCw } from "lucide-react";
@@ -14,12 +14,21 @@ import {
   formatReadingValue,
   resolveReadingCorrectAnswer,
 } from "@/lib/reading/readingQuizUtils";
+import { readingSubskillLabel } from "@/components/reading/readingTrackingLogic";
+import { isSafeCourseReturn, withSafeReturnTo } from "@/lib/course/navigation";
 
-export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: string }> }) {
+export default function SubmissionAnalyticsPage(props: {
+  params: Promise<{ id: string }>;
+}) {
   const params = use(props.params);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const submissionId = parseInt(params.id);
-  
+  const requestedReturnTo = searchParams.get("returnTo");
+  const courseReturn = isSafeCourseReturn(requestedReturnTo)
+    ? requestedReturnTo
+    : null;
+
   const [stoppedConfetti, setStoppedConfetti] = useState(false);
   const [windowDimension, setWindowDimension] = useState({
     width: typeof window !== "undefined" ? window.innerWidth : 800,
@@ -37,7 +46,10 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
 
   useEffect(() => {
     const handleResize = () => {
-      setWindowDimension({ width: window.innerWidth, height: window.innerHeight });
+      setWindowDimension({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -68,7 +80,10 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
     return (
       <div className="max-w-4xl mx-auto space-y-6 pb-20">
         <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <BackButton href="/writing" label="Quay lại luyện viết" />
+          <BackButton
+            href={courseReturn ?? "/writing"}
+            label={courseReturn ? "Quay lại bài học" : "Quay lại luyện viết"}
+          />
           <div className="h-6 w-0.5 bg-slate-200 dark:bg-slate-700 hidden sm:block" />
           <div className="min-w-0">
             <h1 className="text-xl font-black text-slate-800 dark:text-slate-100 line-clamp-1">
@@ -95,7 +110,14 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
             </div>
             <button
               type="button"
-              onClick={() => router.push(`/writing/${analytics.quizId}`)}
+              onClick={() =>
+                router.push(
+                  withSafeReturnTo(
+                    `/writing/${analytics.quizId}`,
+                    courseReturn,
+                  ),
+                )
+              }
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-500 px-4 py-3 text-sm font-black text-white hover:bg-sky-600"
             >
               <RefreshCw size={16} /> Viết lại
@@ -116,13 +138,17 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
           {writingFeedback ? (
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/70 dark:bg-emerald-950/30 p-4">
-                <h2 className="text-sm font-black text-emerald-800 dark:text-emerald-300">Nhận xét</h2>
+                <h2 className="text-sm font-black text-emerald-800 dark:text-emerald-300">
+                  Nhận xét
+                </h2>
                 <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-200">
                   {writingFeedback.feedback}
                 </p>
               </div>
               <div className="rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/70 dark:bg-amber-950/30 p-4">
-                <h2 className="text-sm font-black text-amber-800 dark:text-amber-300">Gợi ý cải thiện</h2>
+                <h2 className="text-sm font-black text-amber-800 dark:text-amber-300">
+                  Gợi ý cải thiện
+                </h2>
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700 dark:text-slate-200">
                   {writingFeedback.suggestions.map((suggestion) => (
                     <li key={suggestion}>{suggestion}</li>
@@ -145,8 +171,9 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
   const wrongQuestionIds = (analytics.results || [])
     .filter((result: any) => result?.isCorrect !== true)
     .map((result: any) => Number(result.questionId))
-    .filter((id: number, index: number, ids: number[]) =>
-      Number.isInteger(id) && id > 0 && ids.indexOf(id) === index,
+    .filter(
+      (id: number, index: number, ids: number[]) =>
+        Number.isInteger(id) && id > 0 && ids.indexOf(id) === index,
     );
   const isListeningResult = analytics.questions?.some(
     (question: any) =>
@@ -154,9 +181,15 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
       question?.content?.audioText ||
       Array.isArray(question?.content?.transcriptSegments),
   );
-  const wrongReviewHref = isListeningResult && wrongQuestionIds.length > 0
-    ? `/listening/${analytics.quizId}?review=wrong&questionIds=${wrongQuestionIds.join(",")}`
-    : null;
+  const wrongReviewHref =
+    isListeningResult && wrongQuestionIds.length > 0
+      ? withSafeReturnTo(
+          `/listening/${analytics.quizId}?review=wrong&questionIds=${wrongQuestionIds.join(",")}`,
+          courseReturn,
+        )
+      : null;
+  const readingMistakesHref =
+    isReadingResult && wrongQuestionIds.length > 0 ? "/reading/mistakes" : null;
   const practiceCatalogHref = isListeningResult
     ? "/listening"
     : isReadingResult
@@ -168,28 +201,37 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
       ? "Quay lại danh sách bài Reading"
       : "Quay lại danh sách bài thi";
   const retryHref = isListeningResult
-    ? `/listening/${analytics.quizId}`
+    ? withSafeReturnTo(`/listening/${analytics.quizId}`, courseReturn)
     : isReadingResult
-      ? `/reading/quizzes/${analytics.quizId}`
-      : `/exams/${analytics.quizId}`;
+      ? withSafeReturnTo(`/reading/${analytics.quizId}`, courseReturn)
+      : withSafeReturnTo(`/exams/${analytics.quizId}`, courseReturn);
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-20 relative">
-      {showConfetti && <Confetti width={windowDimension.width} height={windowDimension.height} />}
-      
+      {showConfetti && (
+        <Confetti
+          width={windowDimension.width}
+          height={windowDimension.height}
+        />
+      )}
+
       {/* TOP HEADER BAR */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="flex items-center gap-4">
-          <BackButton href={practiceCatalogHref} label={practiceCatalogLabel} />
+          <BackButton
+            href={courseReturn ?? practiceCatalogHref}
+            label={courseReturn ? "Quay lại bài học" : practiceCatalogLabel}
+          />
           <div className="h-6 w-0.5 bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
           <div>
-            <h1 className="text-xl font-black text-slate-800 dark:text-slate-100 line-clamp-1">{analytics.quizTitle}</h1>
+            <h1 className="text-xl font-black text-slate-800 dark:text-slate-100 line-clamp-1">
+              {analytics.quizTitle}
+            </h1>
             <p className="text-xs font-bold text-slate-400 dark:text-slate-500">
               Báo cáo kết quả & phân tích chi tiết đáp án
             </p>
           </div>
         </div>
-
       </div>
 
       {/* 2-COLUMN MAIN LAYOUT */}
@@ -209,37 +251,50 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
                 const isCorrect = result?.isCorrect === true;
                 const correctAnswer = resolveReadingCorrectAnswer(q.content);
                 const explanation = formatReadingExplanation(q.content);
-                
+
                 return (
-                  <motion.div 
+                  <motion.div
                     key={q.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05 }}
                     className={`p-5 rounded-2xl border-2 transition-all ${
-                      isCorrect ? 'bg-emerald-50/40 dark:bg-emerald-950/25 border-emerald-200 dark:border-emerald-900/50' : 'bg-rose-50/40 dark:bg-rose-950/25 border-rose-200 dark:border-rose-900/50'
+                      isCorrect
+                        ? "bg-emerald-50/40 dark:bg-emerald-950/25 border-emerald-200 dark:border-emerald-900/50"
+                        : "bg-rose-50/40 dark:bg-rose-950/25 border-rose-200 dark:border-rose-900/50"
                     }`}
                   >
                     <div className="flex items-start gap-3.5">
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm shrink-0 ${
-                        isCorrect ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'
-                      }`}>
+                      <div
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm shrink-0 ${
+                          isCorrect
+                            ? "bg-emerald-500 text-white"
+                            : "bg-rose-500 text-white"
+                        }`}
+                      >
                         {idx + 1}
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 mb-3 break-words">
-                          {q.content?.text || "Nghe đoạn âm thanh và điền câu trả lời:"}
+                          {q.content?.text ||
+                            "Nghe đoạn âm thanh và điền câu trả lời:"}
                         </h3>
-                        
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                           <div className="p-3 bg-white dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase block mb-1">Bạn đã trả lời:</span>
-                            <span className={`font-bold text-sm break-words block ${isCorrect ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-400 line-through'}`}>
+                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase block mb-1">
+                              Bạn đã trả lời:
+                            </span>
+                            <span
+                              className={`font-bold text-sm break-words block ${isCorrect ? "text-emerald-700 dark:text-emerald-300" : "text-rose-600 dark:text-rose-400 line-through"}`}
+                            >
                               {formatReadingValue(result?.answer)}
                             </span>
                           </div>
                           <div className="p-3 bg-white dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <span className="text-[10px] font-black text-sky-600 dark:text-sky-400 uppercase block mb-1">Đáp án chuẩn:</span>
+                            <span className="text-[10px] font-black text-sky-600 dark:text-sky-400 uppercase block mb-1">
+                              Đáp án chuẩn:
+                            </span>
                             <span className="font-bold text-sm text-sky-800 dark:text-sky-200 break-words block">
                               {correctAnswer.available
                                 ? correctAnswer.answer
@@ -250,6 +305,17 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
                                 Dịch: {q.content.translation}
                               </span>
                             )}
+                            {isReadingResult &&
+                              (q.content?.questionType ||
+                                q.content?.microSkill) && (
+                                <span className="mt-2 inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-black text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                  Kỹ năng:{" "}
+                                  {readingSubskillLabel(
+                                    q.content.questionType ||
+                                      q.content.microSkill,
+                                  )}
+                                </span>
+                              )}
                             {explanation && (
                               <span className="block mt-2 text-xs text-slate-600 dark:text-slate-300 whitespace-pre-line break-words">
                                 Giải thích: {explanation}
@@ -269,7 +335,7 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
         {/* RIGHT COLUMN: SCORE OVERVIEW & ACTIONS */}
         <div className="col-span-12 lg:col-span-4 space-y-6">
           {/* Score Summary Card */}
-          <motion.div 
+          <motion.div
             initial={{ y: -10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm text-center relative overflow-hidden space-y-4"
@@ -283,22 +349,39 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
             </div>
 
             <div>
-              <h2 className="text-xl font-black text-slate-800 dark:text-slate-100">Tổng Điểm Của Bạn</h2>
-              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 mt-0.5">Hoàn thành bài luyện tập xuất sắc</p>
+              <h2 className="text-xl font-black text-slate-800 dark:text-slate-100">
+                Tổng Điểm Của Bạn
+              </h2>
+              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 mt-0.5">
+                Hoàn thành bài luyện tập xuất sắc
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3 pt-2">
               <div className="p-4 bg-sky-50 dark:bg-sky-950/40 rounded-2xl border border-sky-200 dark:border-sky-900/50 flex flex-col items-center">
-                <Target className="text-sky-600 dark:text-sky-400 mb-1" size={24} />
-                <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase">Câu đúng</span>
+                <Target
+                  className="text-sky-600 dark:text-sky-400 mb-1"
+                  size={24}
+                />
+                <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase">
+                  Câu đúng
+                </span>
                 <span className="text-2xl font-black text-sky-700 dark:text-sky-300">
-                  {analytics.totalCorrect} <span className="text-sm text-sky-400 dark:text-sky-500">/{analytics.totalQuestions}</span>
+                  {analytics.totalCorrect}{" "}
+                  <span className="text-sm text-sky-400 dark:text-sky-500">
+                    /{analytics.totalQuestions}
+                  </span>
                 </span>
               </div>
 
               <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl border border-emerald-200 dark:border-emerald-900/50 flex flex-col items-center">
-                <Star className="text-emerald-500 dark:text-emerald-400 mb-1" size={24} />
-                <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase">Chính xác</span>
+                <Star
+                  className="text-emerald-500 dark:text-emerald-400 mb-1"
+                  size={24}
+                />
+                <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase">
+                  Chính xác
+                </span>
                 <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
                   {analytics.overallAccuracyPercent}%
                 </span>
@@ -307,12 +390,22 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
 
             {isReadingResult && analytics.categoriesBreakdown.length > 0 && (
               <div className="pt-3 text-left">
-                <p className="text-[10px] font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">Kỹ năng con</p>
+                <p className="text-[10px] font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  Kỹ năng con
+                </p>
                 <div className="mt-2 space-y-2">
                   {analytics.categoriesBreakdown.map((category) => (
-                    <div key={category.category} className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 px-3 py-2">
-                      <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{category.category}</span>
-                      <span className="text-xs font-black text-emerald-700 dark:text-emerald-300">{category.correct}/{category.total} · {category.accuracyPercent}%</span>
+                    <div
+                      key={category.category}
+                      className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 px-3 py-2"
+                    >
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                        {readingSubskillLabel(category.category)}
+                      </span>
+                      <span className="text-xs font-black text-emerald-700 dark:text-emerald-300">
+                        {category.correct}/{category.total} ·{" "}
+                        {category.accuracyPercent}%
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -323,11 +416,19 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
               {wrongReviewHref && (
                 <Link href={wrongReviewHref} className="w-full">
                   <button className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-black py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer text-sm">
-                    <Target size={18} /> Ôn lại {wrongQuestionIds.length} câu sai
+                    <Target size={18} /> Ôn lại {wrongQuestionIds.length} câu
+                    sai
                   </button>
                 </Link>
               )}
-              <button 
+              {readingMistakesHref && (
+                <Link href={readingMistakesHref} className="w-full">
+                  <button className="w-full flex items-center justify-center gap-2 border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-950/50 font-black py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer text-sm">
+                    <Target size={18} /> Xem trong lỗi cần ôn lại
+                  </button>
+                </Link>
+              )}
+              <button
                 onClick={() => router.push(retryHref)}
                 className="w-full flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-black py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer text-sm"
               >
@@ -335,7 +436,9 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
               </button>
               <Link href={practiceCatalogHref} className="w-full">
                 <button className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold py-3 px-4 rounded-xl transition-all cursor-pointer text-xs">
-                  {isListeningResult ? "Chọn bài luyện nghe khác" : "Chọn bài tập khác"}
+                  {isListeningResult
+                    ? "Chọn bài luyện nghe khác"
+                    : "Chọn bài tập khác"}
                 </button>
               </Link>
             </div>
@@ -343,8 +446,13 @@ export default function SubmissionAnalyticsPage(props: { params: Promise<{ id: s
 
           {isListeningResult && (
             <div className="rounded-2xl border border-sky-200 bg-sky-50/70 p-5 dark:border-sky-900/50 dark:bg-sky-950/30">
-              <p className="text-sm font-black text-sky-950 dark:text-sky-100">Tiến độ đã được ghi nhận</p>
-              <p className="mt-1 text-xs font-semibold leading-relaxed text-sky-800 dark:text-sky-300">Các chỉ số luyện nghe và kế hoạch hôm nay sẽ được làm mới theo kết quả máy chủ.</p>
+              <p className="text-sm font-black text-sky-950 dark:text-sky-100">
+                Tiến độ đã được ghi nhận
+              </p>
+              <p className="mt-1 text-xs font-semibold leading-relaxed text-sky-800 dark:text-sky-300">
+                Các chỉ số luyện nghe và kế hoạch hôm nay sẽ được làm mới theo
+                kết quả máy chủ.
+              </p>
             </div>
           )}
         </div>

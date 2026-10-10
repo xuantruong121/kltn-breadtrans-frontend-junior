@@ -52,7 +52,7 @@ export function GrammarTopicCard({
   return (
     <article className={containerClasses}>
       <div className="space-y-3">
-        {/* Top Row: Visual Anchor + Format Badges on Left, Gamification Reward on Right */}
+        {/* Top Row: Visual Anchor + Format Badges + persisted status */}
         <div className="flex items-start justify-between gap-2.5">
           <div className="flex items-center gap-2.5 min-w-0">
             {/* Expressive Category Icon Anchor */}
@@ -77,21 +77,14 @@ export function GrammarTopicCard({
             </div>
           </div>
 
-          {/* Status & Reward Tag */}
+          {/* Status only; rewards come from server-backed gamification surfaces. */}
           <div className="shrink-0 flex items-center gap-1.5">
             {isCompleted ? (
               <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/70 px-2 py-0.5 rounded-full">
                 <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
                 ✓ {topic.lastScore !== null ? `${topic.lastScore}%` : "Đã làm"}
               </span>
-            ) : (
-              <span
-                className="inline-flex items-center gap-1 text-xs font-bold text-amber-800 dark:text-amber-200 bg-amber-50/90 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-800/70 px-2 py-0.5 rounded-full shadow-xs"
-                title="Phần thưởng khi hoàn thành bài tập ngữ pháp"
-              >
-                +5 🍞
-              </span>
-            )}
+            ) : null}
           </div>
         </div>
 

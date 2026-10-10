@@ -13,6 +13,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { LearningFocusProvider, useLearningFocusMode } from "@/contexts/LearningFocusContext";
 import { isLearningFocusRoute } from "@/lib/practice/focusMode";
+import { isInsideCourseRoute } from "@/modules/pet/petLogic";
 
 const FloatingAiTutor = dynamic(
   () =>
@@ -61,7 +62,9 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   const setStats = useGamificationStore((state) => state.setStats);
   const isReady = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
-  const isGuestAllowed = isGuestAllowedRoute(pathname);
+  // The deprecated root catalog is public only long enough to normalize to
+  // /courses; nested learner routes still require an authenticated student.
+  const isGuestAllowed = pathname === "/my-courses" || isGuestAllowedRoute(pathname);
 
   const { data: learningStats } = useQuery({
     queryKey: ["user-stats", user?.id],
@@ -148,7 +151,7 @@ function StudentLayoutContent({
       {!isPracticeRoomPage && <AppFooter />}
       {!isPracticeRoomPage && <BackToTop />}
       {user && !isPracticeRoomPage && <FloatingAiTutor />}
-      {user && !isPracticeRoomPage && !isDashboardPage && !isPetManagementPage && (
+      {user && !isPracticeRoomPage && !isDashboardPage && !isPetManagementPage && !isInsideCourseRoute(pathname) && (
         <FloatingCompanionPet />
       )}
       {!isPracticeRoomPage && <MobileBottomNav />}
