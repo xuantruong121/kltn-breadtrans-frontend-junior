@@ -2,6 +2,7 @@ import { AppHeader } from "@/components/navigation/AppHeader";
 import { AppFooter } from "@/components/navigation/AppFooter";
 import { BackToTop } from "@/components/navigation/BackToTop";
 import { MobileBottomNav } from "@/components/navigation/MobileBottomNav";
+import { PublicFloatingPet } from "@/modules/pet/components/PublicFloatingPet";
 
 export default function PublicLayout({
   children,
@@ -16,6 +17,7 @@ export default function PublicLayout({
       </main>
       <AppFooter />
       <BackToTop />
+      <PublicFloatingPet />
       <MobileBottomNav />
     </div>
   );

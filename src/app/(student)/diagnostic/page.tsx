@@ -56,7 +56,7 @@ export default function DiagnosticPage() {
   });
   const [started, setStarted] = useState(false);
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [answers, setAnswers] = useState<Record<string, number | string>>({});
   const [submissionToken, setSubmissionToken] = useState(createSubmissionToken);
   const [hidePersistedResult, setHidePersistedResult] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
@@ -191,8 +191,9 @@ export default function DiagnosticPage() {
               "Trả lời các câu hỏi ngắn để nhận mức khởi điểm ước tính và gợi ý khóa học phù hợp."}
           </p>
           <p className="mt-4 text-sm font-bold text-violet-700 dark:text-violet-300">
-            {assessment.questions.length} câu hỏi • khoảng 10–15 phút • không
-            phải bài thi chứng chỉ
+            {assessment.questions.length} mục • khoảng 35–50 phút • gồm Language
+            Use, Reading, Listening và hai nhiệm vụ Speaking/Writing. Đây là kết
+            quả tham khảo nội bộ, không phải bài thi chứng chỉ.
           </p>
           <button
             type="button"
@@ -210,95 +211,149 @@ export default function DiagnosticPage() {
   return (
     <>
       <div className="flex min-h-dvh w-full flex-col bg-slate-50 font-sans dark:bg-slate-950">
-      <PracticeHeader
-        title={assessment.title}
-        category="Đánh giá đầu vào"
-        positionText={`Câu ${step + 1}/${assessment.questions.length}`}
-        activityLabel="Đánh giá đầu vào"
-        onExit={handleExit}
-        exitLabel="Thoát"
-      />
-      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-9">
-          <div className="mb-5 flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
-            <span className="text-xs font-black uppercase tracking-wider text-violet-600 dark:text-violet-400">
-              Kỹ năng: {skillLabel[current.skill] ?? current.skill}
-            </span>
-            <span className="text-xs font-bold text-slate-500">
-              Câu {step + 1}/{assessment.questions.length}
-            </span>
-          </div>
-          <div
-            className="mb-6 flex flex-wrap gap-2"
-            aria-label="Điều hướng câu hỏi"
-          >
-            {assessment.questions.map((question, index) => (
-              <button
-                key={question.id}
-                type="button"
-                onClick={() => setStep(index)}
-                aria-label={`Đi tới câu ${index + 1}`}
-                aria-current={index === step ? "step" : undefined}
-                className={`size-9 rounded-full text-xs font-black ${index === step ? "bg-violet-600 text-white" : answers[question.id] === undefined ? "border border-amber-300 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}
-              >
-                {index + 1}
-              </button>
-            ))}
-          </div>
-          <h2 className="text-xl font-black leading-8 text-slate-900 dark:text-slate-100">
-            {current.question}
-          </h2>
-          <div className="mt-7 grid gap-3 sm:grid-cols-2">
-            {current.options.map((option, index) => (
-              <button
-                key={`${current.id}-${option}`}
-                type="button"
-                onClick={() =>
-                  setAnswers((old) => ({ ...old, [current.id]: index }))
+        <PracticeHeader
+          title={assessment.title}
+          category="Đánh giá đầu vào"
+          positionText={`Câu ${step + 1}/${assessment.questions.length}`}
+          activityLabel="Đánh giá đầu vào"
+          onExit={handleExit}
+          exitLabel="Thoát"
+        />
+        <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-9">
+            <div className="mb-5 flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+              <span className="text-xs font-black uppercase tracking-wider text-violet-600 dark:text-violet-400">
+                Phần:{" "}
+                {current.section ?? skillLabel[current.skill] ?? current.skill}
+              </span>
+              <span className="text-xs font-bold text-slate-500">
+                Câu {step + 1}/{assessment.questions.length}
+              </span>
+            </div>
+            <div
+              className="mb-6 flex flex-wrap gap-2"
+              aria-label="Điều hướng câu hỏi"
+            >
+              {assessment.questions.map((question, index) => (
+                <button
+                  key={question.id}
+                  type="button"
+                  onClick={() => setStep(index)}
+                  aria-label={`Đi tới câu ${index + 1}`}
+                  aria-current={index === step ? "step" : undefined}
+                  className={`size-9 rounded-full text-xs font-black ${index === step ? "bg-violet-600 text-white" : answers[question.id] === undefined ? "border border-amber-300 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}
+                >
+                  {index + 1}
+                </button>
+              ))}
+            </div>
+            {current.section === "READING" && current.passageText && (
+              <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm leading-7 text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
+                <p className="mb-2 text-xs font-black uppercase tracking-wider text-violet-600">
+                  Đoạn đọc
+                </p>
+                {current.passageText}
+              </div>
+            )}
+            {current.section === "LISTENING" && (
+              <div className="mb-6 rounded-2xl border border-violet-200 bg-violet-50 p-4 dark:border-violet-900 dark:bg-violet-950/30">
+                <p className="text-sm font-bold text-violet-900 dark:text-violet-100">
+                  Nghe đoạn âm thanh rồi chọn đáp án.
+                </p>
+                {current.audioUrl ? (
+                  <audio
+                    className="mt-3 w-full"
+                    controls
+                    preload="metadata"
+                    src={current.audioUrl}
+                    aria-label="Âm thanh bài kiểm tra"
+                  />
+                ) : (
+                  <p className="mt-2 text-sm font-bold text-rose-600">
+                    Âm thanh chưa sẵn sàng. Vui lòng thử lại sau.
+                  </p>
+                )}
+              </div>
+            )}
+            <h2 className="text-xl font-black leading-8 text-slate-900 dark:text-slate-100">
+              {current.question}
+            </h2>
+            {current.questionType === "OPEN_TEXT" ? (
+              <textarea
+                value={
+                  typeof answers[current.id] === "string"
+                    ? (answers[current.id] as string)
+                    : ""
                 }
-                aria-pressed={answers[current.id] === index}
-                className={`min-h-16 rounded-2xl border-2 px-5 text-left text-sm font-bold transition-colors ${answers[current.id] === index ? "border-violet-500 bg-violet-50 text-violet-950 dark:border-violet-500 dark:bg-violet-950/50 dark:text-violet-100" : "border-slate-200 bg-white text-slate-700 hover:border-violet-200 dark:border-slate-800 dark:bg-slate-850 dark:text-slate-200"}`}
+                onChange={(event) =>
+                  setAnswers((old) => ({
+                    ...old,
+                    [current.id]: event.target.value,
+                  }))
+                }
+                className="mt-7 min-h-36 w-full rounded-2xl border-2 border-slate-200 bg-white p-4 text-sm leading-6 text-slate-800 outline-none focus:border-violet-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                placeholder="Viết câu trả lời ngắn của bạn..."
+                aria-label="Câu trả lời tự luận"
+              />
+            ) : (
+              <div className="mt-7 grid gap-3 sm:grid-cols-2">
+                {current.options.map((option, index) => (
+                  <button
+                    key={`${current.id}-${option}`}
+                    type="button"
+                    onClick={() =>
+                      setAnswers((old) => ({ ...old, [current.id]: index }))
+                    }
+                    aria-pressed={answers[current.id] === index}
+                    className={`min-h-16 rounded-2xl border-2 px-5 text-left text-sm font-bold transition-colors ${answers[current.id] === index ? "border-violet-500 bg-violet-50 text-violet-950 dark:border-violet-500 dark:bg-violet-950/50 dark:text-violet-100" : "border-slate-200 bg-white text-slate-700 hover:border-violet-200 dark:border-slate-800 dark:bg-slate-850 dark:text-slate-200"}`}
+                  >
+                    <span className="mr-3 text-violet-600">
+                      {String.fromCharCode(65 + index)}.
+                    </span>
+                    {option}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="mt-8 flex justify-between">
+              <button
+                type="button"
+                onClick={() => setStep((value) => Math.max(0, value - 1))}
+                disabled={!step}
+                className="min-h-11 px-4 text-sm font-bold text-slate-500 disabled:opacity-40"
               >
-                <span className="mr-3 text-violet-600">
-                  {String.fromCharCode(65 + index)}.
-                </span>
-                {option}
+                Câu trước
               </button>
-            ))}
-          </div>
-          <div className="mt-8 flex justify-between">
-            <button
-              type="button"
-              onClick={() => setStep((value) => Math.max(0, value - 1))}
-              disabled={!step}
-              className="min-h-11 px-4 text-sm font-bold text-slate-500 disabled:opacity-40"
-            >
-              Câu trước
-            </button>
-            <button
-              type="button"
-              disabled={answers[current.id] === undefined || submit.isPending}
-              onClick={() =>
-                step === assessment.questions.length - 1
-                  ? handleSubmit()
-                  : setStep((value) => value + 1)
-              }
-              className="min-h-11 rounded-xl bg-violet-600 px-5 text-sm font-extrabold text-white disabled:opacity-50"
-            >
-              {submit.isPending
-                ? "Đang chấm..."
-                : step === assessment.questions.length - 1
-                  ? "Xem kết quả"
-                  : "Câu tiếp"}
-            </button>
-          </div>
-          {submit.isError && (
-            <p className="mt-4 text-sm font-bold text-rose-600" role="alert">
-              Không thể lưu kết quả. Vui lòng thử lại.
-            </p>
-          )}
-        </section>
-      </main>
+              <button
+                type="button"
+                disabled={
+                  answers[current.id] === undefined ||
+                  (typeof answers[current.id] === "string" &&
+                    !(answers[current.id] as string).trim()) ||
+                  submit.isPending ||
+                  (current.section === "LISTENING" && !current.audioUrl)
+                }
+                onClick={() =>
+                  step === assessment.questions.length - 1
+                    ? handleSubmit()
+                    : setStep((value) => value + 1)
+                }
+                className="min-h-11 rounded-xl bg-violet-600 px-5 text-sm font-extrabold text-white disabled:opacity-50"
+              >
+                {submit.isPending
+                  ? "Đang chấm..."
+                  : step === assessment.questions.length - 1
+                    ? "Xem kết quả"
+                    : "Câu tiếp"}
+              </button>
+            </div>
+            {submit.isError && (
+              <p className="mt-4 text-sm font-bold text-rose-600" role="alert">
+                Không thể lưu kết quả. Vui lòng thử lại.
+              </p>
+            )}
+          </section>
+        </main>
       </div>
       <ConfirmDialog
         open={showExitConfirm}
@@ -335,10 +390,16 @@ function DiagnosticResultView({
           Mức khởi điểm ước tính: {result.level}
         </h1>
         <p className="mt-2 text-slate-600 dark:text-slate-300">
-          Bạn đúng {result.correctCount}/{result.totalCount} câu (
+          Bạn đúng {result.correctCount}/{result.totalCount} câu mục tiêu (
           {result.percentage}%). Đây là kết quả tham khảo để chọn điểm bắt đầu,
           không phải chứng nhận CEFR.
         </p>
+        {result.productiveTaskCount ? (
+          <p className="mt-2 text-sm text-slate-500">
+            Speaking/Writing: {result.productiveTaskCount} nhiệm vụ đã ghi nhận;
+            phần này cần được giáo viên hoặc hệ thống đánh giá riêng.
+          </p>
+        ) : null}
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {result.skillProfiles?.map((profile) => (
             <div
@@ -445,8 +506,11 @@ function DiagnosticResultView({
                     {item.isCorrect ? "Chính xác" : "Chưa chính xác"}
                   </p>
                   <p className="mt-1 text-slate-600 dark:text-slate-300">
-                    Bạn chọn: {selected ?? "Chưa trả lời"} • Đáp án chuẩn:{" "}
-                    {standard ?? "Không khả dụng"}
+                    Bạn chọn: {item.selectedText ?? selected ?? "Chưa trả lời"}{" "}
+                    • Đáp án chuẩn:{" "}
+                    {item.isCorrect === null
+                      ? "Đánh giá sau"
+                      : (standard ?? "Không khả dụng")}
                   </p>
                   {item.explanation && (
                     <p className="mt-1 text-xs text-slate-500">

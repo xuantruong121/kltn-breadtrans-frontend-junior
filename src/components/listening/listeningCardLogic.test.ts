@@ -6,6 +6,10 @@ import {
   resolveListeningFormatTag,
   resolveListeningPedagogicalDescription,
   resolveListeningSkillTags,
+  resolveCefrBadge,
+  resolveListeningFormatTheme,
+  resolveSpeakerContext,
+  resolveAudioAccentTag,
 } from "./listeningCardLogic.ts";
 import type { ListeningPracticeCatalogItem } from "@/lib/api/services/quiz.service";
 
@@ -110,4 +114,61 @@ test("Listening Difficulty Matching: accommodates composite & CEFR levels", () =
   assert.equal(matchesListeningDifficulty("B1 Intermediate", "INTERMEDIATE"), true);
   assert.equal(matchesListeningDifficulty("C1 Advanced", "ADVANCED"), true);
   assert.equal(matchesListeningDifficulty("C1 Advanced", "BASIC"), false);
+});
+
+test("CEFR Badging: maps standardized colorways to A1/A2, B1/B2, C1", () => {
+  const a1 = resolveCefrBadge(["A1"]);
+  assert.equal(a1.code, "A1 / A2");
+  assert.ok(a1.badgeClass.includes("text-emerald-800"));
+
+  const b2 = resolveCefrBadge(["B2"]);
+  assert.equal(b2.code, "B2");
+  assert.ok(b2.badgeClass.includes("text-amber-800"));
+
+  const c1 = resolveCefrBadge(["C1"]);
+  assert.equal(c1.code, "C1");
+  assert.ok(c1.badgeClass.includes("text-rose-800"));
+});
+
+test("Format Themed Accents: maps sky, indigo, and emerald themes to formats", () => {
+  const dictation = resolveListeningFormatTheme("Chép chính tả");
+  assert.equal(dictation.themeName, "indigo");
+  assert.ok(dictation.hoverBorderClass.includes("indigo-300"));
+
+  const conversation = resolveListeningFormatTheme("Hội thoại ngắn");
+  assert.equal(conversation.themeName, "emerald");
+  assert.ok(conversation.hoverBorderClass.includes("emerald-300"));
+
+  const comprehension = resolveListeningFormatTheme("Nghe hiểu");
+  assert.equal(comprehension.themeName, "sky");
+  assert.ok(comprehension.hoverBorderClass.includes("sky-300"));
+});
+
+test("Pedagogical Context Metadata: resolves speaker context and audio accents", () => {
+  const dialogueItem: ListeningPracticeCatalogItem = {
+    id: 10,
+    title: "Part 3 Dialogue",
+    description: null,
+    mode: "DIALOGUE",
+  };
+  assert.equal(resolveSpeakerContext(dialogueItem), "👥 2 người đối thoại");
+
+  const talkItem: ListeningPracticeCatalogItem = {
+    id: 11,
+    title: "Part 4 Talk",
+    description: null,
+    mode: "COMPREHENSION",
+  };
+  assert.equal(resolveSpeakerContext(talkItem), "📢 Thông báo đơn (1 người)");
+
+  const ukItem: ListeningPracticeCatalogItem = {
+    id: 12,
+    title: "BBC British News",
+    description: null,
+    mode: "COMPREHENSION",
+    accents: ["UK"],
+  };
+  const accent = resolveAudioAccentTag(ukItem);
+  assert.equal(accent.flag, "🇬🇧");
+  assert.equal(accent.label, "UK English");
 });

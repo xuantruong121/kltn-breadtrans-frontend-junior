@@ -16,24 +16,139 @@ export interface DifficultyConfig {
 
 export const LISTENING_DIFFICULTY_CONFIG: Record<string, DifficultyConfig> = {
   BEGINNER: {
-    label: "Cơ bản",
+    label: "A1 / A2",
     badgeClass:
-      "border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300",
+      "bg-emerald-50 text-emerald-800 border-emerald-200 font-bold dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800/60",
     dotClass: "bg-emerald-500",
   },
   INTERMEDIATE: {
-    label: "Trung cấp",
+    label: "B1 / B2",
     badgeClass:
-      "border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300",
+      "bg-amber-50 text-amber-800 border-amber-200 font-bold dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800/60",
     dotClass: "bg-amber-500",
   },
   ADVANCED: {
-    label: "Nâng cao",
+    label: "C1",
     badgeClass:
-      "border-rose-200 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300",
+      "bg-rose-50 text-rose-800 border-rose-200 font-bold dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800/60",
     dotClass: "bg-rose-500",
   },
 };
+
+export interface CefrBadgeConfig {
+  code: string;
+  label: string;
+  badgeClass: string;
+}
+
+/**
+ * Standardized CEFR level badging:
+ * A1/A2: emerald, B1/B2: amber, C1: rose
+ */
+export function resolveCefrBadge(levels?: string[] | string): CefrBadgeConfig {
+  const raw = (Array.isArray(levels) ? levels.join(" ") : levels || "").toUpperCase();
+  if (raw.includes("C1") || raw.includes("C2") || raw.includes("ADVANCED") || raw.includes("NÂNG CAO")) {
+    return {
+      code: "C1",
+      label: "C1",
+      badgeClass:
+        "bg-rose-50 text-rose-800 border-rose-200 font-bold dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800/60",
+    };
+  }
+  if (
+    raw.includes("B1") ||
+    raw.includes("B2") ||
+    raw.includes("INTERMEDIATE") ||
+    raw.includes("TRUNG CẤP")
+  ) {
+    const code = raw.includes("B1") && raw.includes("B2") ? "B1 / B2" : raw.includes("B2") ? "B2" : "B1 / B2";
+    return {
+      code,
+      label: code,
+      badgeClass:
+        "bg-amber-50 text-amber-800 border-amber-200 font-bold dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800/60",
+    };
+  }
+  return {
+    code: "A1 / A2",
+    label: "A1 / A2",
+    badgeClass:
+      "bg-emerald-50 text-emerald-800 border-emerald-200 font-bold dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800/60",
+  };
+}
+
+export interface FormatThemeConfig {
+  hoverBorderClass: string;
+  iconContainerClass: string;
+  themeName: "sky" | "indigo" | "emerald" | "amber" | "default";
+}
+
+/**
+ * Skill-aligned format-based theme accents:
+ * - Comprehension / Nghe hiểu: sky-blue
+ * - Dictation / Chép chính tả: warm indigo/violet
+ * - Dialogue / Hội thoại ngắn: fresh emerald/teal
+ */
+export function resolveListeningFormatTheme(formatTag: string): FormatThemeConfig {
+  switch (formatTag) {
+    case "Chép chính tả":
+      return {
+        themeName: "indigo",
+        hoverBorderClass: "hover:border-indigo-300 dark:hover:border-indigo-600",
+        iconContainerClass:
+          "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/60",
+      };
+    case "Hội thoại ngắn":
+      return {
+        themeName: "emerald",
+        hoverBorderClass: "hover:border-emerald-300 dark:hover:border-emerald-600",
+        iconContainerClass:
+          "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/60",
+      };
+    case "Nghe hiểu":
+    case "Mô tả tranh":
+    case "Hỏi - Đáp":
+    case "Bài nói chuyện":
+    default:
+      return {
+        themeName: "sky",
+        hoverBorderClass: "hover:border-sky-300 dark:hover:border-sky-600",
+        iconContainerClass:
+          "bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400 border border-sky-100 dark:border-sky-800/60",
+      };
+  }
+}
+
+/**
+ * Resolves dialogue / speaker context tags
+ */
+export function resolveSpeakerContext(quiz: ListeningPracticeCatalogItem): string | null {
+  const formatTag = resolveListeningFormatTag(quiz);
+  if (formatTag === "Hội thoại ngắn") {
+    return "👥 2 người đối thoại";
+  }
+  if (formatTag === "Bài nói chuyện") {
+    return "📢 Thông báo đơn (1 người)";
+  }
+  return null;
+}
+
+/**
+ * Resolves authentic audio accent tags (US / UK English)
+ */
+export function resolveAudioAccentTag(
+  quiz: ListeningPracticeCatalogItem,
+): { flag: string; label: string } {
+  const accents = Array.isArray(quiz.accents) ? quiz.accents : [];
+  if (accents.includes("UK")) {
+    return { flag: "🇬🇧", label: "UK English" };
+  }
+  const title = (quiz.title || "").toLowerCase();
+  if (title.includes("uk") || title.includes("british") || title.includes("anh - anh")) {
+    return { flag: "🇬🇧", label: "UK English" };
+  }
+  return { flag: "🇺🇸", label: "US English" };
+}
 
 /**
  * Matches exercise difficulty accommodating composite/hybrid difficulty tags.

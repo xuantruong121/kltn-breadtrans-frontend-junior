@@ -153,6 +153,7 @@ export interface ListeningPracticeCatalogItem {
   questionCount?: number;
   durationMinutes?: number | null;
   isCompleted?: boolean;
+  score?: number | null;
   isPremiumContent?: boolean;
   isLocked?: boolean;
   _count?: {

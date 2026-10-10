@@ -7,7 +7,6 @@ import {
   Heart,
   Smile,
   Utensils,
-  ArrowRight,
   X,
   Loader2,
   ExternalLink,
@@ -16,10 +15,14 @@ import {
   MessageCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { motion } from "framer-motion";
 import { useAuthStore } from "@/stores/authStore";
+import { useGamificationStore } from "@/stores/gamificationStore";
 import { useChatAssistantStore } from "@/stores/chatAssistantStore";
 import { gamificationService } from "@/lib/api/services/gamification.service";
 import { useCompanionPetRuntime } from "../useCompanionPetRuntime";
+import { usePetDialogue } from "../usePetDialogue";
+import { PetSpeechBubble } from "./PetSpeechBubble";
 import {
   getPetVisualState,
   getPetStatusCopy,
@@ -75,6 +78,21 @@ export const FloatingCompanionPet: React.FC = () => {
 
   const satiety = Math.min(100, Math.max(0, pet?.satiety ?? 80));
   const petDisplayName = pet?.name || speciesInfo.speciesName || "Bready";
+
+  const { streak } = useGamificationStore();
+  const {
+    dialogue,
+    isVisible: isDialogueVisible,
+    isBouncing,
+    pokePet,
+    dismiss: dismissDialogue,
+  } = usePetDialogue({
+    petName: petDisplayName,
+    satiety,
+    streak,
+    todayQuests: today?.quests,
+    enabled: Boolean(user) && !isFocusMode && !isExpanded,
+  });
 
   const visualEmotion = useMemo(() => {
     return getPetVisualState({
@@ -206,59 +224,14 @@ export const FloatingCompanionPet: React.FC = () => {
         {ariaFeedback}
       </div>
 
-      {/* 1. MESSAGE STATE: Proactive Contextual Speech Bubble (Desktop/Tablet safe; hidden on mobile to prevent filter collisions, indicator dot shown on avatar) */}
-      {uiState === "MESSAGE" && recommendation && (
-        <div
-          role="dialog"
-          aria-label="Gợi ý học tập từ thú cưng"
-          className="hidden sm:block absolute bottom-full right-0 mb-3 w-72 sm:w-80 rounded-2xl bg-card dark:bg-slate-900 border border-amber-200/90 dark:border-amber-800/70 shadow-lg p-3.5 text-xs text-slate-800 dark:text-slate-100 animate-in fade-in slide-in-from-bottom-2 duration-200"
-        >
-          <div className="flex items-start justify-between gap-2 mb-1">
-            <span className="font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
-              <span>{petName}</span>
-              <span className="text-[10px] font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded-md border border-amber-200 dark:border-amber-800/70">
-                Gợi ý
-              </span>
-            </span>
-            <button
-              type="button"
-              onClick={() => setHasDismissedMessage(true)}
-              aria-label="Đóng lời nhắn"
-              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded-md focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none cursor-pointer"
-            >
-              <X size={14} aria-hidden="true" />
-            </button>
-          </div>
-
-          <p className="text-slate-600 dark:text-slate-300 leading-relaxed font-medium mb-2.5">
-            {recommendation.title}: {recommendation.description}
-          </p>
-
-          <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-slate-100 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={() => setIsExpanded(true)}
-              className="text-[11px] font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors cursor-pointer"
-            >
-              Mở chi tiết
-            </button>
-            <Link
-              href={recommendation.actionUrl}
-              onClick={() => setHasDismissedMessage(true)}
-              className="inline-flex min-h-[32px] items-center gap-1 px-3 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
-            >
-              <span>{recommendation.actionLabel}</span>
-              <ArrowRight size={12} aria-hidden="true" />
-            </Link>
-          </div>
-
-          {/* Speech bubble pointer notch */}
-          <div
-            className="absolute -bottom-2 right-6 w-3.5 h-3.5 bg-card dark:bg-slate-900 border-b border-r border-amber-200/90 dark:border-amber-800/70 rotate-45"
-            aria-hidden="true"
-          />
-        </div>
-      )}
+      {/* 1. INTERACTIVE SPEECH BUBBLE & ENGAGEMENT ENGINE */}
+      <PetSpeechBubble
+        dialogue={dialogue}
+        isVisible={isDialogueVisible && !isExpanded}
+        onDismiss={dismissDialogue}
+        onActionClick={() => dismissDialogue()}
+        onOpenDetails={() => setIsExpanded(true)}
+      />
 
       {/* 2. EXPANDED STATE: Full Popover Card (Desktop popover, Mobile-safe bottom sheet) */}
       {uiState === "EXPANDED" && (
@@ -495,27 +468,36 @@ export const FloatingCompanionPet: React.FC = () => {
       </>
       )}
 
-      {/* 3. COLLAPSED STATE: 48px Semantic Avatar Button */}
-      <button
+      {/* 3. COLLAPSED STATE: 48px Semantic Avatar Button with Interactive Poking */}
+      <motion.button
         type="button"
         onClick={() => {
-          setIsExpanded(!isExpanded);
-          setHasDismissedMessage(true);
+          pokePet();
         }}
+        onDoubleClick={() => {
+          setIsExpanded(!isExpanded);
+          dismissDialogue();
+        }}
+        animate={isBouncing ? { scale: [1, 1.15, 0.95, 1] } : { scale: 1 }}
+        transition={
+          isBouncing
+            ? { duration: 0.45, times: [0, 0.35, 0.7, 1], ease: "easeInOut" }
+            : { duration: 0.2 }
+        }
         aria-expanded={isExpanded}
-        aria-label={`Thú cưng đồng hành ${petName}, cấp ${level}. Nhấn để mở thông tin nhanh.`}
+        aria-label={`Thú cưng đồng hành ${petName}, cấp ${level}. Nhấn để tương tác.`}
         className="relative size-12 sm:size-14 rounded-full bg-card dark:bg-slate-800 border-2 border-amber-300 dark:border-amber-700 shadow-md hover:shadow-lg hover:border-amber-400 active:scale-95 flex items-center justify-center transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none group"
       >
         <CompanionPet2D speciesId={speciesId} state={visualEmotion} level={level} size="sm" />
 
         {/* Small badge when a learning quest is pending */}
-        {recommendation && !hasDismissedMessage && (
+        {recommendation && (
           <span
             className="absolute -top-1 -right-1 size-4 bg-amber-500 border-2 border-white dark:border-slate-900 rounded-full flex items-center justify-center animate-pulse"
             aria-hidden="true"
           />
         )}
-      </button>
+      </motion.button>
     </div>
   );
 };

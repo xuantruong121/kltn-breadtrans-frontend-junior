@@ -4,10 +4,12 @@ export interface DiagnosticUiQuestion {
 
 export function getUnansweredQuestionIndexes(
   questions: DiagnosticUiQuestion[],
-  answers: Record<string, number>,
+  answers: Record<string, number | string>,
 ): number[] {
   return questions.reduce<number[]>((indexes, question, index) => {
-    if (answers[question.id] === undefined) indexes.push(index);
+    const answer = answers[question.id];
+    if (answer === undefined || (typeof answer === "string" && !answer.trim()))
+      indexes.push(index);
     return indexes;
   }, []);
 }

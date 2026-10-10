@@ -19,3 +19,13 @@ test("diagnostic review resolves a valid correctIndex and safely rejects corrupt
   assert.equal(resolveReviewAnswer(["A"], 3), null);
   assert.equal(resolveReviewAnswer({ answer: "B" }, 0), null);
 });
+
+test("diagnostic submit guard treats blank productive answers as unanswered", () => {
+  assert.deepEqual(
+    getUnansweredQuestionIndexes([{ id: 21 }, { id: 22 }], {
+      "21": "   ",
+      "22": "ok",
+    }),
+    [0],
+  );
+});

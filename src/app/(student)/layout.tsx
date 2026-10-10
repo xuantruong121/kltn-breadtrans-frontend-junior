@@ -13,6 +13,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { LearningFocusProvider, useLearningFocusMode } from "@/contexts/LearningFocusContext";
 import { isLearningFocusRoute } from "@/lib/practice/focusMode";
+import { isInsideCourseRoute } from "@/modules/pet/petLogic";
 
 const FloatingAiTutor = dynamic(
   () =>
@@ -150,7 +151,7 @@ function StudentLayoutContent({
       {!isPracticeRoomPage && <AppFooter />}
       {!isPracticeRoomPage && <BackToTop />}
       {user && !isPracticeRoomPage && <FloatingAiTutor />}
-      {user && !isPracticeRoomPage && !isDashboardPage && !isPetManagementPage && (
+      {user && !isPracticeRoomPage && !isDashboardPage && !isPetManagementPage && !isInsideCourseRoute(pathname) && (
         <FloatingCompanionPet />
       )}
       {!isPracticeRoomPage && <MobileBottomNav />}

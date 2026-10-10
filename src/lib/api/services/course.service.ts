@@ -288,6 +288,114 @@ export interface StudentCourseEnrollment {
   joinedAt: string;
 }
 
+export interface CourseV5LessonSummary {
+  id: number;
+  slug: string;
+  order: number;
+  title: string;
+  summary: string;
+  estimatedMinutes: number;
+  difficulty: string | null;
+  coverImage: string | null;
+  exerciseCount: number;
+  completed: boolean;
+}
+
+export interface CourseV5Overview {
+  course: Pick<Course, "id" | "title" | "description" | "level"> & {
+    learning?: CourseLearningProfile;
+  };
+  lessons: CourseV5LessonSummary[];
+  progress: {
+    completedLessons: number;
+    totalLessons: number;
+    percentage: number;
+    isComplete: boolean;
+  };
+}
+
+export interface CourseV5Section {
+  id: number;
+  order: number;
+  type: string;
+  heading: string;
+  content: unknown;
+  isRequired: boolean;
+}
+
+export interface CourseV5Exercise {
+  id: number;
+  slug: string;
+  order: number;
+  type: string;
+  title: string;
+  prompt: string;
+  instructions: string | null;
+  content: unknown;
+  rubric: unknown;
+  required: boolean;
+  minimumScore: number | null;
+  completed: boolean;
+  questions: Array<{
+    id: number;
+    order: number;
+    prompt: string;
+    options: unknown;
+  }>;
+}
+
+export interface CourseV5LessonDetail {
+  courseId: number;
+  course: Pick<Course, "id" | "title" | "level"> & {
+    learning?: CourseLearningProfile;
+  };
+  lesson: {
+    id: number;
+    slug: string;
+    order: number;
+    title: string;
+    summary: string;
+    learningObjectives: unknown;
+    estimatedMinutes: number;
+    difficulty: string | null;
+    coverImage: string | null;
+    sections: CourseV5Section[];
+    media: Array<{
+      id: number;
+      type: string;
+      url: string;
+      altText: string | null;
+    }>;
+    references: Array<{
+      id: number;
+      title: string;
+      publisher: string | null;
+      url: string;
+      note: string | null;
+    }>;
+    exercises: CourseV5Exercise[];
+  };
+  navigation: {
+    previousLessonId: number | null;
+    nextLessonId: number | null;
+    lessons: Array<{ id: number; order: number; title: string }>;
+  };
+}
+
+export interface CourseV5SubmitResult {
+  attemptId: number;
+  score: number;
+  maxScore: number;
+  percentage: number;
+  completed: boolean;
+  feedback: Array<{
+    questionId: number;
+    answer: unknown;
+    isCorrect: boolean;
+    explanation: string;
+  }>;
+}
+
 export const courseService = {
   getAllCourses: async (): Promise<Course[]> => {
     return await axiosClient.get("/courses");
@@ -323,6 +431,33 @@ export const courseService = {
     lessonId: number,
   ): Promise<CourseLessonDetail> => {
     return await axiosClient.get(`/courses/${courseId}/lessons/${lessonId}`);
+  },
+
+  getCourseLearningOverview: async (
+    courseId: number,
+  ): Promise<CourseV5Overview> => {
+    return await axiosClient.get(`/courses/${courseId}/learning`);
+  },
+
+  getCourseLearningLesson: async (
+    courseId: number,
+    lessonId: number,
+  ): Promise<CourseV5LessonDetail> => {
+    return await axiosClient.get(
+      `/courses/${courseId}/learning/lessons/${lessonId}`,
+    );
+  },
+
+  submitCourseLearningExercise: async (
+    courseId: number,
+    lessonId: number,
+    exerciseId: number,
+    answers: Array<{ questionId: number; answer: unknown }>,
+  ): Promise<CourseV5SubmitResult> => {
+    return await axiosClient.post(
+      `/courses/${courseId}/learning/lessons/${lessonId}/exercises/${exerciseId}/submit`,
+      { answers },
+    );
   },
 
   getClassById: async (classId: number): Promise<ClassDetail> => {
