@@ -76,3 +76,28 @@ test("Pet Dialogue State: GOAL_PROGRESS triggers when daily progress is in fligh
   assert.equal(goalDialogue?.kind, "GOAL_PROGRESS");
   assert.ok(goalDialogue?.text.includes("2/4 bài rồi"));
 });
+
+test("Pet Dialogue State: HUNGRY triggers when satiety < 50% without needing idle", () => {
+  const hungry45 = resolvePetDialogue({
+    petName: "Bready",
+    satiety: 45,
+  });
+  assert.equal(hungry45?.kind, "HUNGRY");
+  assert.ok(hungry45?.header.includes("Đang đói"));
+});
+
+test("Pet Dialogue State: GREETING fallback triggers when allowGreeting is true and no urgent nudge", () => {
+  const greeting = resolvePetDialogue({
+    petName: "Owly",
+    satiety: 80,
+    streak: 0,
+    completedQuestsCount: 0,
+    totalQuestsCount: 0,
+    allowGreeting: true,
+    pokeMessageIndex: 1,
+  });
+  assert.equal(greeting?.kind, "IDLE");
+  assert.equal(greeting?.text, POKE_MESSAGES[1]);
+  assert.ok(greeting?.header.includes("Owly"));
+});
+

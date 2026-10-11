@@ -2,12 +2,15 @@
 
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   CheckCircle2,
   Loader2,
+  Mic,
   RotateCcw,
+  SkipForward,
+  Square,
   Target,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -25,9 +28,18 @@ import {
   getUnansweredQuestionIndexes,
   resolveReviewAnswer,
 } from "@/lib/diagnostic/diagnosticUiLogic";
+import {
+  DIAGNOSTIC_SPEAKING_MAX_DURATION_MS,
+  isValidDiagnosticRecording,
+  selectDiagnosticRecordingMimeType,
+} from "@/lib/diagnostic/diagnosticSpeakingRecorderLogic";
 
 function createSubmissionToken() {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
+}
+
+function nowMs() {
+  return Date.now();
 }
 
 const skillLabel: Record<string, string> = {
@@ -38,6 +50,12 @@ const skillLabel: Record<string, string> = {
   Speaking: "Speaking",
   Writing: "Writing",
 };
+
+const diagnosticDisplayTitle = "Bài kiểm tra xác định năng lực cơ bản";
+const diagnosticDisplayDescription =
+  "Bài kiểm tra giúp xác định năng lực hiện tại qua Ngữ pháp và Từ vựng, Đọc hiểu, Nghe hiểu, cùng hai nhiệm vụ Nói và Viết. Thời gian thực hiện khoảng 35–50 phút.";
+const diagnosticDisplayGuidance =
+  "Hãy thực hiện nghiêm túc và trả lời đúng với năng lực hiện tại để kết quả phản ánh sát hơn mức độ của bạn. Kết quả chỉ mang tính tham khảo, không thay thế chứng chỉ CEFR hay bài thi TOEIC chính thức.";
 
 export default function DiagnosticPage() {
   const queryClient = useQueryClient();
@@ -60,6 +78,38 @@ export default function DiagnosticPage() {
   const [submissionToken, setSubmissionToken] = useState(createSubmissionToken);
   const [hidePersistedResult, setHidePersistedResult] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [attemptId, setAttemptId] = useState<number | null>(null);
+  const [recording, setRecording] = useState(false);
+  const [recordingMs, setRecordingMs] = useState(0);
+  const [recordedAudio, setRecordedAudio] = useState<Blob | null>(null);
+  const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
+  const [speakingError, setSpeakingError] = useState<string | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const recordingStartedAtRef = useRef(0);
+
+  useEffect(() => {
+    const inProgress = assessment?.inProgressAttempt;
+    if (!inProgress) return;
+    setAttemptId(inProgress.id);
+    const persisted = { ...(inProgress.answers as Record<string, number | string>) };
+    for (const response of inProgress.speakingResponses) persisted[String(response.questionId)] = response.status;
+    setAnswers((current) => ({ ...persisted, ...current }));
+  }, [assessment?.inProgressAttempt]);
+
+  useEffect(() => {
+    if (!recording) return;
+    const timer = window.setInterval(() => {
+      setRecordingMs(Date.now() - recordingStartedAtRef.current);
+    }, 100);
+    return () => window.clearInterval(timer);
+  }, [recording]);
+
+  useEffect(() => () => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    if (recordedUrl) URL.revokeObjectURL(recordedUrl);
+  }, [recordedUrl]);
 
   useEffect(() => {
     setFocusMode(started);
@@ -68,7 +118,7 @@ export default function DiagnosticPage() {
 
   const submit = useMutation({
     mutationFn: () =>
-      diagnosticService.submit(assessment!.id, answers, submissionToken),
+      diagnosticService.submit(assessment!.id, answers, submissionToken, attemptId ?? undefined),
     onSuccess: (data) => {
       if (document.fullscreenElement)
         void document.exitFullscreen?.().catch(() => undefined);
@@ -86,6 +136,22 @@ export default function DiagnosticPage() {
       void data;
     },
     onError: () => toast.error("Không thể lưu kết quả. Vui lòng thử lại."),
+  });
+
+  const confirmSpeaking = useMutation({
+    mutationFn: async ({ questionId, blob, durationMs }: { questionId: number; blob: Blob; durationMs: number }) => {
+      if (!assessment || !attemptId) throw new Error("Phiên kiểm tra chưa sẵn sàng");
+      return diagnosticService.confirmSpeaking(assessment.id, attemptId, questionId, blob, durationMs);
+    },
+    onSuccess: (response, variables) => {
+      setAnswers((current) => ({ ...current, [variables.questionId]: response.status }));
+      setRecordedAudio(null);
+      if (recordedUrl) URL.revokeObjectURL(recordedUrl);
+      setRecordedUrl(null);
+      setSpeakingError(response.status === "GRADING_FAILED" ? "Đã ghi nhận bài nói nhưng chưa thể chấm tự động." : null);
+      setStep((value) => Math.min(assessment!.questions.length - 1, value + 1));
+    },
+    onError: (error) => setSpeakingError(error instanceof Error ? error.message : "Không thể lưu bản ghi."),
   });
 
   const result: DiagnosticResult | undefined =
@@ -119,11 +185,26 @@ export default function DiagnosticPage() {
     setAnswers({});
     setSubmissionToken(createSubmissionToken());
     setHidePersistedResult(true);
+    setAttemptId(null);
+    setRecordedAudio(null);
+    if (recordedUrl) URL.revokeObjectURL(recordedUrl);
+    setRecordedUrl(null);
+    setSpeakingError(null);
     submit.reset();
   };
 
   const handleStart = async () => {
     setHidePersistedResult(true);
+    if (!attemptId && assessment) {
+      try {
+        const startedAttempt = await diagnosticService.startAttempt(assessment.id);
+        setAttemptId(startedAttempt.attemptId);
+        setSubmissionToken(startedAttempt.submissionToken || submissionToken);
+      } catch {
+        toast.error("Không thể khởi tạo phiên kiểm tra. Vui lòng thử lại.");
+        return;
+      }
+    }
     try {
       if (document.documentElement.requestFullscreen)
         await document.documentElement.requestFullscreen();
@@ -131,6 +212,75 @@ export default function DiagnosticPage() {
       console.warn("Fullscreen request rejected or not supported:", error);
     }
     setStarted(true);
+  };
+
+  const startRecording = async () => {
+    setSpeakingError(null);
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      setSpeakingError("Trình duyệt này chưa hỗ trợ ghi âm. Bạn có thể bỏ qua phần nói.");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = selectDiagnosticRecordingMimeType((type) => MediaRecorder.isTypeSupported(type));
+      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      chunksRef.current = [];
+      recorder.ondataavailable = (event) => {
+        if (event.data.size) chunksRef.current.push(event.data);
+      };
+      recorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || mimeType || "audio/webm" });
+        const duration = nowMs() - recordingStartedAtRef.current;
+        if (!isValidDiagnosticRecording(blob.size, duration)) {
+          setSpeakingError("Bản ghi quá ngắn. Vui lòng thử lại hoặc bỏ qua.");
+          return;
+        }
+        setRecordedAudio(blob);
+        setRecordedUrl(URL.createObjectURL(blob));
+        setRecordingMs(duration);
+      };
+      streamRef.current = stream;
+      recorderRef.current = recorder;
+      recordingStartedAtRef.current = nowMs();
+      setRecordingMs(0);
+      setRecording(true);
+      recorder.start();
+      window.setTimeout(() => {
+        if (recorderRef.current === recorder && recorder.state === "recording") stopRecording();
+      }, DIAGNOSTIC_SPEAKING_MAX_DURATION_MS);
+    } catch (error) {
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+      setSpeakingError(error instanceof DOMException && error.name === "NotAllowedError" ? "Bạn đã từ chối quyền micro. Bạn có thể bỏ qua phần nói." : "Không thể truy cập micro. Bạn có thể bỏ qua phần nói.");
+    }
+  };
+
+  const stopRecording = () => {
+    recorderRef.current?.stop();
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    recorderRef.current = null;
+    setRecording(false);
+    setRecordingMs((value) => Math.max(value, Date.now() - recordingStartedAtRef.current));
+  };
+
+  const discardRecording = () => {
+    setRecordedAudio(null);
+    if (recordedUrl) URL.revokeObjectURL(recordedUrl);
+    setRecordedUrl(null);
+    setRecordingMs(0);
+    setSpeakingError(null);
+  };
+
+  const skipSpeaking = async (questionId: number) => {
+    if (!assessment || !attemptId) return;
+    try {
+      await diagnosticService.skipSpeaking(assessment.id, attemptId, questionId);
+      setAnswers((current) => ({ ...current, [questionId]: "SKIPPED" }));
+      discardRecording();
+      setStep((value) => Math.min(assessment.questions.length - 1, value + 1));
+    } catch {
+      setSpeakingError("Không thể ghi nhận thao tác bỏ qua. Vui lòng thử lại.");
+    }
   };
 
   const handleExit = () => {
@@ -184,16 +334,13 @@ export default function DiagnosticPage() {
             </span>
           </div>
           <h1 className="mt-4 text-3xl font-black text-slate-900 dark:text-slate-100 sm:text-4xl">
-            {assessment.title}
+            {diagnosticDisplayTitle}
           </h1>
           <p className="mt-3 max-w-2xl leading-6 text-slate-600 dark:text-slate-300">
-            {assessment.description ??
-              "Trả lời các câu hỏi ngắn để nhận mức khởi điểm ước tính và gợi ý khóa học phù hợp."}
+            {diagnosticDisplayDescription}
           </p>
-          <p className="mt-4 text-sm font-bold text-violet-700 dark:text-violet-300">
-            {assessment.questions.length} mục • khoảng 35–50 phút • gồm Language
-            Use, Reading, Listening và hai nhiệm vụ Speaking/Writing. Đây là kết
-            quả tham khảo nội bộ, không phải bài thi chứng chỉ.
+          <p className="mt-4 max-w-3xl text-sm font-bold leading-6 text-violet-700 dark:text-violet-300">
+            {diagnosticDisplayGuidance}
           </p>
           <button
             type="button"
@@ -212,7 +359,7 @@ export default function DiagnosticPage() {
     <>
       <div className="flex min-h-dvh w-full flex-col bg-slate-50 font-sans dark:bg-slate-950">
         <PracticeHeader
-          title={assessment.title}
+          title={diagnosticDisplayTitle}
           category="Đánh giá đầu vào"
           positionText={`Câu ${step + 1}/${assessment.questions.length}`}
           activityLabel="Đánh giá đầu vào"
@@ -278,7 +425,53 @@ export default function DiagnosticPage() {
             <h2 className="text-xl font-black leading-8 text-slate-900 dark:text-slate-100">
               {current.question}
             </h2>
-            {current.questionType === "OPEN_TEXT" ? (
+            {current.questionType === "OPEN_TEXT" && current.section === "SPEAKING" ? (
+              <div className="mt-7 rounded-2xl border border-violet-200 bg-violet-50 p-5 dark:border-violet-900 dark:bg-violet-950/30">
+                <div className="flex items-center gap-2 text-sm font-bold text-violet-900 dark:text-violet-100">
+                  <Mic size={18} /> Hãy nói câu trả lời của bạn
+                </div>
+                <p className="mt-2 text-xs text-violet-700 dark:text-violet-300">
+                  Tối đa 90 giây. Bạn có thể nghe lại, ghi âm lại hoặc bỏ qua nếu chưa thể sử dụng micro.
+                </p>
+                {recording && (
+                  <div className="mt-4 flex items-center gap-3 text-sm font-black text-rose-600">
+                    <span className="size-3 animate-pulse rounded-full bg-rose-500" />
+                    Đang ghi âm {Math.floor(recordingMs / 1000)}s / 90s
+                  </div>
+                )}
+                {recordedUrl && !recording && (
+                  <audio className="mt-4 w-full" controls src={recordedUrl} preload="metadata" aria-label="Nghe lại bản ghi Speaking" />
+                )}
+                {speakingError && <p className="mt-3 text-sm font-bold text-rose-600" role="alert">{speakingError}</p>}
+                <div className="mt-5 flex flex-wrap gap-3">
+                  {!recording && !recordedAudio && (
+                    <button type="button" onClick={startRecording} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-extrabold text-white">
+                      <Mic size={17} /> Bắt đầu ghi âm
+                    </button>
+                  )}
+                  {recording && (
+                    <button type="button" onClick={stopRecording} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-rose-600 px-5 text-sm font-extrabold text-white">
+                      <Square size={16} /> Dừng ghi âm
+                    </button>
+                  )}
+                  {recordedAudio && !recording && (
+                    <>
+                      <button type="button" onClick={discardRecording} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 px-5 text-sm font-extrabold text-slate-700 dark:border-slate-700 dark:text-slate-200">
+                        <RotateCcw size={16} /> Ghi âm lại
+                      </button>
+                      <button type="button" disabled={confirmSpeaking.isPending || recordingMs < 300} onClick={() => confirmSpeaking.mutate({ questionId: current.id, blob: recordedAudio, durationMs: recordingMs })} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-extrabold text-white disabled:opacity-50">
+                        {confirmSpeaking.isPending ? <Loader2 className="animate-spin" size={16} /> : <CheckCircle2 size={16} />} Xác nhận & tiếp tục
+                      </button>
+                    </>
+                  )}
+                  {!recording && (
+                    <button type="button" onClick={() => void skipSpeaking(current.id)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-300 px-5 text-sm font-extrabold text-amber-800 dark:text-amber-200">
+                      <SkipForward size={16} /> Bỏ qua
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : current.questionType === "OPEN_TEXT" ? (
               <textarea
                 value={
                   typeof answers[current.id] === "string"
@@ -316,14 +509,14 @@ export default function DiagnosticPage() {
               </div>
             )}
             <div className="mt-8 flex justify-between">
-              <button
+              {current.section !== "SPEAKING" && <button
                 type="button"
                 onClick={() => setStep((value) => Math.max(0, value - 1))}
                 disabled={!step}
                 className="min-h-11 px-4 text-sm font-bold text-slate-500 disabled:opacity-40"
               >
                 Câu trước
-              </button>
+              </button>}
               <button
                 type="button"
                 disabled={
@@ -395,10 +588,17 @@ function DiagnosticResultView({
           không phải chứng nhận CEFR.
         </p>
         {result.productiveTaskCount ? (
-          <p className="mt-2 text-sm text-slate-500">
-            Speaking/Writing: {result.productiveTaskCount} nhiệm vụ đã ghi nhận;
-            phần này cần được giáo viên hoặc hệ thống đánh giá riêng.
-          </p>
+          <div className="mt-3 rounded-2xl border border-violet-200 bg-violet-50 p-4 text-sm text-violet-900 dark:border-violet-900 dark:bg-violet-950/30 dark:text-violet-100">
+            <p className="font-black">Bằng chứng Speaking</p>
+            <p className="mt-1">
+              {result.speakingEvidenceCount
+                ? `${result.speakingScore}/100 · ${result.speakingEvidenceCount}/2 nhiệm vụ · độ tin cậy ${result.speakingEvidenceConfidence === "FULL_DIAGNOSTIC_SAMPLE" ? "đầy đủ mẫu" : "một phần"}.`
+                : "Chưa đủ dữ liệu Speaking; kết quả dựa trên 48 câu khách quan."}
+            </p>
+            {result.speakingResponses?.some((response) => response.status === "GRADING_FAILED") && (
+              <p className="mt-1 font-bold text-amber-700 dark:text-amber-300">Đã ghi nhận bài nói nhưng chưa thể chấm tự động.</p>
+            )}
+          </div>
         ) : null}
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {result.skillProfiles?.map((profile) => (

@@ -39,11 +39,12 @@ export interface ResolveDialogueOptions {
   totalQuestsCount?: number;
   pokeMessageIndex?: number;
   forcePoke?: boolean;
+  allowGreeting?: boolean;
 }
 
 /**
  * Resolves the active dialogue bubble content based on vitals, streak, and learner events.
- * Strict priority: ON_CLICK (forcePoke) > HUNGRY > STREAK_NUDGE > GOAL_PROGRESS.
+ * Strict priority: ON_CLICK (forcePoke) > HUNGRY > STREAK_NUDGE > GOAL_PROGRESS > GREETING.
  */
 export function resolvePetDialogue(options: ResolveDialogueOptions): PetDialogueContent | null {
   const name = options.petName?.trim() || "Bready";
@@ -63,10 +64,10 @@ export function resolvePetDialogue(options: ResolveDialogueOptions): PetDialogue
     };
   }
 
-  // 2. HUNGRY state: satiety < 30 OR idle >= 3 minutes (180,000 ms) with non-full belly
+  // 2. HUNGRY state: satiety < 50 OR idle >= 3 minutes (180,000 ms) with non-full belly (< 60)
   const satiety = options.satiety ?? 80;
   const isIdle3Min = (options.idleDurationMs ?? 0) >= 180_000;
-  if (satiety < 30 || (isIdle3Min && satiety < 60)) {
+  if (satiety < 50 || (isIdle3Min && satiety < 60)) {
     const hungryIdx = satiety < 20 ? 1 : 0;
     return {
       kind: "HUNGRY",
@@ -105,6 +106,21 @@ export function resolvePetDialogue(options: ResolveDialogueOptions): PetDialogue
       text: `Tiến độ hôm nay: ${completed}/${total} bài rồi! Cố thêm một xíu nữa là xong! 🎯`,
       action: {
         label: "Luyện tiếp",
+        url: "/listening",
+        onClickType: "START_PRACTICE",
+      },
+    };
+  }
+
+  // 5. Default encouraging greeting when auto-showing dialogue
+  if (options.allowGreeting) {
+    const pokeIdx = Math.abs(options.pokeMessageIndex ?? 0) % POKE_MESSAGES.length;
+    return {
+      kind: "IDLE",
+      header: `${name} · Cổ vũ 💪`,
+      text: POKE_MESSAGES[pokeIdx],
+      action: {
+        label: "Luyện bài ngay",
         url: "/listening",
         onClickType: "START_PRACTICE",
       },

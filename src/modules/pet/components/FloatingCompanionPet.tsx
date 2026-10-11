@@ -84,14 +84,15 @@ export const FloatingCompanionPet: React.FC = () => {
     dialogue,
     isVisible: isDialogueVisible,
     isBouncing,
-    pokePet,
+    triggerBounce,
     dismiss: dismissDialogue,
   } = usePetDialogue({
     petName: petDisplayName,
     satiety,
+    satietyState: pet?.satietyState,
     streak,
     todayQuests: today?.quests,
-    enabled: Boolean(user) && !isFocusMode && !isExpanded,
+    enabled: Boolean(user) && !isFocusMode,
   });
 
   const visualEmotion = useMemo(() => {
@@ -229,8 +230,6 @@ export const FloatingCompanionPet: React.FC = () => {
         dialogue={dialogue}
         isVisible={isDialogueVisible && !isExpanded}
         onDismiss={dismissDialogue}
-        onActionClick={() => dismissDialogue()}
-        onOpenDetails={() => setIsExpanded(true)}
       />
 
       {/* 2. EXPANDED STATE: Full Popover Card (Desktop popover, Mobile-safe bottom sheet) */}
@@ -468,24 +467,21 @@ export const FloatingCompanionPet: React.FC = () => {
       </>
       )}
 
-      {/* 3. COLLAPSED STATE: 48px Semantic Avatar Button with Interactive Poking */}
+      {/* 3. COLLAPSED STATE: 48px Semantic Avatar Button */}
       <motion.button
         type="button"
         onClick={() => {
-          pokePet();
-        }}
-        onDoubleClick={() => {
-          setIsExpanded(!isExpanded);
-          dismissDialogue();
+          triggerBounce();
+          setIsExpanded((prev) => !prev);
         }}
         animate={isBouncing ? { scale: [1, 1.15, 0.95, 1] } : { scale: 1 }}
         transition={
           isBouncing
-            ? { duration: 0.45, times: [0, 0.35, 0.7, 1], ease: "easeInOut" }
+            ? { duration: 0.45, type: "tween", ease: "easeInOut" }
             : { duration: 0.2 }
         }
         aria-expanded={isExpanded}
-        aria-label={`Thú cưng đồng hành ${petName}, cấp ${level}. Nhấn để tương tác.`}
+        aria-label={`Thú cưng đồng hành ${petName}, cấp ${level}. Nhấn để mở bảng tình trạng thú cưng.`}
         className="relative size-12 sm:size-14 rounded-full bg-card dark:bg-slate-800 border-2 border-amber-300 dark:border-amber-700 shadow-md hover:shadow-lg hover:border-amber-400 active:scale-95 flex items-center justify-center transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none group"
       >
         <CompanionPet2D speciesId={speciesId} state={visualEmotion} level={level} size="sm" />

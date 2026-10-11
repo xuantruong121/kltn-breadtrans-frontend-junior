@@ -40,6 +40,14 @@ export interface DiagnosticResult {
   objectiveTotalCount?: number;
   productiveTaskCount?: number;
   productiveUnavailable?: boolean;
+  objectiveCoreScore?: number;
+  objectivePlacementBand?: string;
+  speakingEvidenceCount?: number;
+  speakingScore?: number | null;
+  speakingEvidenceConfidence?: string;
+  finalEvidenceScore?: number;
+  finalEstimatedBand?: string;
+  speakingResponses?: DiagnosticSpeakingResponse[];
   submittedAt?: string;
   skillProfiles?: DiagnosticSkillProfile[];
   strengths?: string[];
@@ -55,6 +63,16 @@ export interface DiagnosticResult {
   }>;
 }
 
+export interface DiagnosticSpeakingResponse {
+  id: number;
+  questionId: number;
+  taskKey?: string;
+  status: string;
+  durationMs?: number | null;
+  score?: number | null;
+  failureReason?: string | null;
+}
+
 export interface DiagnosticAssessment {
   id: number;
   title: string;
@@ -67,6 +85,11 @@ export interface DiagnosticAssessment {
     level: string;
     submittedAt: string;
   } | null;
+  inProgressAttempt?: {
+    id: number;
+    answers: Record<string, unknown>;
+    speakingResponses: DiagnosticSpeakingResponse[];
+  } | null;
 }
 
 export const diagnosticService = {
@@ -78,9 +101,40 @@ export const diagnosticService = {
     assessmentId: number,
     answers: Record<string, number | string>,
     submissionToken?: string,
+    attemptId?: number,
   ): Promise<DiagnosticResult> =>
     axiosClient.post(`/diagnostic/${assessmentId}/attempts`, {
       answers,
       submissionToken,
+      attemptId,
     }),
+  startAttempt: async (assessmentId: number): Promise<{ attemptId: number; submissionToken: string }> =>
+    (await axiosClient.post(`/diagnostic/${assessmentId}/attempts/start`)) as unknown as {
+      attemptId: number;
+      submissionToken: string;
+    },
+  confirmSpeaking: async (
+    assessmentId: number,
+    attemptId: number,
+    questionId: number,
+    audio: Blob,
+    durationMs: number,
+  ): Promise<DiagnosticSpeakingResponse> => {
+    const form = new FormData();
+    form.append("audio", audio, "diagnostic-speaking.webm");
+    form.append("durationMs", String(durationMs));
+    return axiosClient.post(
+      `/diagnostic/${assessmentId}/attempts/${attemptId}/speaking/${questionId}/confirm`,
+      form,
+      { headers: { "Content-Type": "multipart/form-data" } },
+    );
+  },
+  skipSpeaking: (
+    assessmentId: number,
+    attemptId: number,
+    questionId: number,
+  ): Promise<DiagnosticSpeakingResponse> =>
+    axiosClient.post(
+      `/diagnostic/${assessmentId}/attempts/${attemptId}/speaking/${questionId}/skip`,
+    ),
 };
