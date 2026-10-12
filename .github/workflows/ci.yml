@@ -1,32 +1,51 @@
-name: Frontend CI Pipeline
+name: Frontend CI
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches:
+      - develop
+      - main
   pull_request:
-    branches: [ "main", "develop" ]
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: frontend-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
-  build-and-test:
+  quality:
+    name: Frontend CI / quality
     runs-on: ubuntu-latest
-
+    timeout-minutes: 20
+    env:
+      CI: 'true'
+      NEXT_PUBLIC_API_URL: http://localhost:3001
     steps:
-      - name: Checkout Source Code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: npm
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name: Run Linter Check
+      - name: Lint
         run: npm run lint
 
-      - name: Build Next.js Production Bundle
-        env:
-          NEXT_PUBLIC_API_URL: "http://localhost:3001"
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Focused and unit tests
+        run: npm run test:ci
+
+      - name: Production build
         run: npm run build
