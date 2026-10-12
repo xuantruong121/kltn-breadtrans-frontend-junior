@@ -10,7 +10,9 @@
 
 ## GitHub Actions CI
 
-The workflow uses Node 20 and `npm ci`, then runs ESLint, TypeScript, the repository's TypeScript unit-test files, and a real `next build`. It has read-only contents permission and cancels obsolete runs for the same ref.
+The workflow uses Node 22 and `npm ci`, then runs ESLint, TypeScript, the repository's TypeScript unit-test files, and a real `next build`. It has read-only contents permission and cancels obsolete runs for the same ref.
+
+Node 22 is intentional: `test:ci` uses Node's `--experimental-strip-types` flag, which is not available in Node 20.
 
 There is no Vercel CLI deployment job. Vercel Git Integration is the single CD path.
 

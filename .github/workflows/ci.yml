@@ -32,7 +32,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          # test:ci uses Node's --experimental-strip-types test runner flag.
+          # Node 22+ is required; Node 20 exits before collecting tests.
+          node-version: '22'
           cache: npm
 
       - name: Install dependencies
