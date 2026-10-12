@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Heart,
@@ -36,11 +37,21 @@ import { getSpeciesIdFromPetName, PET_SPECIES_LIST } from "../types";
 import { CompanionPet2D } from "./CompanionPet2D";
 
 export const FloatingCompanionPet: React.FC = () => {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isDiagnosticView =
+    pathname === "/diagnostic" ||
+    pathname.startsWith("/diagnostic/") ||
+    ((pathname === "/student" || pathname === "/hub") &&
+      (searchParams.get("tab") === "diagnostic" || searchParams.get("tab") === "diagnostic-result"));
+
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const { isOpen: isTutorOpen, setIsOpen: setTutorOpen } = useChatAssistantStore();
 
   const { isFocusMode, pet, balance, today } = useCompanionPetRuntime();
+
+  if (isDiagnosticView) return null;
 
   // Floating UI state machine
   const [isExpanded, setIsExpanded] = useState(false);

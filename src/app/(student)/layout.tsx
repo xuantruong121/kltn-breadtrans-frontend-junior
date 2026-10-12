@@ -134,6 +134,7 @@ function StudentLayoutContent({
   const isPracticeRoomPage = isFocusMode || isLearningFocusRoute(pathname);
   const isPracticeCatalogPage = ["/listening", "/speaking", "/reading", "/writing", "/exams", "/toeic", "/flashcard"].includes(pathname);
   const isCourseRoute = isInsideCourseRoute(pathname) || pathname.startsWith("/my-courses") || pathname.startsWith("/courses");
+  const isDiagnosticRoute = pathname === "/diagnostic" || pathname.startsWith("/diagnostic/");
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background text-foreground antialiased selection:bg-amber-600 selection:text-white font-['Quicksand',sans-serif] transition-colors duration-150">
@@ -151,8 +152,8 @@ function StudentLayoutContent({
       </main>
       {!isPracticeRoomPage && <AppFooter />}
       {!isPracticeRoomPage && <BackToTop />}
-      {user && !isPracticeRoomPage && <FloatingAiTutor />}
-      {user && !isPracticeRoomPage && !isDashboardPage && !isPetManagementPage && !isInsideCourseRoute(pathname) && (
+      {user && !isPracticeRoomPage && !isDiagnosticRoute && <FloatingAiTutor />}
+      {user && !isPracticeRoomPage && !isDashboardPage && !isPetManagementPage && !isDiagnosticRoute && !isInsideCourseRoute(pathname) && (
         <FloatingCompanionPet />
       )}
       {!isPracticeRoomPage && <MobileBottomNav />}

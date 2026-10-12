@@ -14,6 +14,7 @@ import {
   PublicCourseCard,
 } from "@/lib/api/services/course.service";
 import { getCourseCardMedia } from "@/lib/course/catalogVisual";
+import { getCourseLevelFilterKey } from "@/lib/course/courseLevel";
 
 function CourseCard({ course }: { course: PublicCourseCard }) {
   const [mediaSrc, setMediaSrc] = useState<string | null>(null);
@@ -130,7 +131,7 @@ export default function PublicCoursesPage() {
 
       const matchesLevel =
         selectedLevel === "ALL" ||
-        (c.level && c.level.toUpperCase() === selectedLevel.toUpperCase());
+        getCourseLevelFilterKey(c.level) === selectedLevel;
 
       return matchesSearch && matchesLevel;
     });

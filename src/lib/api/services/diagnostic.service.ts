@@ -8,6 +8,8 @@ export interface DiagnosticQuestion {
   questionType?: "MCQ" | "OPEN_TEXT";
   question: string;
   options: string[];
+  passageTitle?: string | null;
+  passageBody?: string | null;
   passageText?: string | null;
   audioUrl?: string | null;
   order: number;
@@ -31,10 +33,35 @@ export interface DiagnosticRecommendation {
   recommendedLesson?: { id: number; title: string } | null;
 }
 
+export interface DiagnosticPracticeRecommendation {
+  id: string;
+  skill: string;
+  title: string;
+  description: string;
+  route: string;
+  badge: string;
+}
+
+export interface CanonicalDiagnosticBlueprint {
+  version: string;
+  totalItems: number;
+  objectiveCount: number;
+  productiveCount: number;
+  sections: Record<string, {
+    name: string;
+    total: number;
+    objective: number;
+    productive?: number;
+    skills: string[];
+  }>;
+}
+
 export interface DiagnosticResult {
   attemptId: number;
+  canonicalBlueprint?: CanonicalDiagnosticBlueprint;
   correctCount: number;
   totalCount: number;
+  totalTaskCount?: number;
   percentage: number;
   level: string;
   objectiveTotalCount?: number;
@@ -49,15 +76,18 @@ export interface DiagnosticResult {
   finalEstimatedBand?: string;
   speakingResponses?: DiagnosticSpeakingResponse[];
   submittedAt?: string;
+  completedAt?: string;
   skillProfiles?: DiagnosticSkillProfile[];
   strengths?: string[];
   weaknesses?: string[];
+  practiceRecommendations?: DiagnosticPracticeRecommendation[];
   recommendations?: DiagnosticRecommendation[];
   questionsResult: Array<{
     questionId: number;
     selectedOption?: number;
     selectedText?: string;
     correctOption: number | null;
+    correctText?: string | null;
     isCorrect: boolean | null;
     explanation: string | null;
   }>;
@@ -77,13 +107,17 @@ export interface DiagnosticAssessment {
   id: number;
   title: string;
   description: string | null;
+  canonicalBlueprint?: CanonicalDiagnosticBlueprint;
+  hasCompleted?: boolean;
   questions: DiagnosticQuestion[];
   latestAttempt: {
+    id?: number;
     correctCount: number;
     totalCount: number;
     percentage: number;
     level: string;
     submittedAt: string;
+    completedAt?: string;
   } | null;
   inProgressAttempt?: {
     id: number;

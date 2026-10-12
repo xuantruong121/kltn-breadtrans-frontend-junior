@@ -31,15 +31,25 @@ import toast from "react-hot-toast";
 function getActivityIcon(skill: string | null) {
   switch (skill) {
     case "LISTENING":
-      return <Headphones size={18} className="text-blue-600 dark:text-blue-400" />;
+      return (
+        <Headphones size={18} className="text-blue-600 dark:text-blue-400" />
+      );
     case "SPEAKING":
-      return <Mic size={18} className="text-emerald-600 dark:text-emerald-400" />;
+      return (
+        <Mic size={18} className="text-emerald-600 dark:text-emerald-400" />
+      );
     case "READING":
-      return <BookOpen size={18} className="text-amber-600 dark:text-amber-400" />;
+      return (
+        <BookOpen size={18} className="text-amber-600 dark:text-amber-400" />
+      );
     case "WRITING":
-      return <PenTool size={18} className="text-indigo-600 dark:text-indigo-400" />;
+      return (
+        <PenTool size={18} className="text-indigo-600 dark:text-indigo-400" />
+      );
     default:
-      return <BookOpen size={18} className="text-slate-600 dark:text-slate-400" />;
+      return (
+        <BookOpen size={18} className="text-slate-600 dark:text-slate-400" />
+      );
   }
 }
 
@@ -53,7 +63,8 @@ export default function PublicCourseDetailPage() {
   const [starting, setStarting] = useState(false);
   const [mediaFailed, setMediaFailed] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [learningOverview, setLearningOverview] = useState<CourseV5Overview | null>(null);
+  const [learningOverview, setLearningOverview] =
+    useState<CourseV5Overview | null>(null);
 
   useEffect(() => {
     if (!Number.isInteger(id) || id < 1) {
@@ -216,7 +227,7 @@ export default function PublicCourseDetailPage() {
               <button
                 onClick={start}
                 disabled={starting || !course.canAccess}
-                className="inline-flex min-h-12 items-center gap-2.5 rounded-2xl bg-blue-600 px-7 py-3.5 text-base font-bold text-white shadow-sm hover:bg-blue-700 active:scale-[0.98] transition-all disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex min-h-12 cursor-pointer items-center gap-2.5 rounded-2xl bg-blue-600 px-7 py-3.5 text-base font-bold text-white shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md hover:shadow-blue-600/30 active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-sm"
               >
                 {starting ? (
                   "Đang mở..."
@@ -289,13 +300,18 @@ export default function PublicCourseDetailPage() {
               <div className="grid gap-6 md:grid-cols-2">
                 <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs dark:border-slate-800 dark:bg-slate-900">
                   <h2 className="flex items-center gap-2.5 text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-                    <Target size={22} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                    <Target
+                      size={22}
+                      className="text-blue-600 dark:text-blue-400 shrink-0"
+                    />
                     Bạn sẽ học được gì?
                   </h2>
                   <ul className="mt-4 space-y-3.5 text-base sm:text-lg leading-relaxed text-slate-600 dark:text-slate-300">
                     {course.learning.objectives.map((objective) => (
                       <li key={objective} className="flex items-start gap-2.5">
-                        <span className="text-blue-500 font-bold leading-relaxed">•</span>
+                        <span className="text-blue-500 font-bold leading-relaxed">
+                          •
+                        </span>
                         <span>{objective}</span>
                       </li>
                     ))}
@@ -374,12 +390,17 @@ export default function PublicCourseDetailPage() {
                               </p>
                               <p className="text-xs sm:text-sm text-slate-500">
                                 {activity.skill || "Bài học"}
-                                {activity.required ? " · Bắt buộc" : " · Tùy chọn"}
+                                {activity.required
+                                  ? " · Bắt buộc"
+                                  : " · Tùy chọn"}
                               </p>
                             </div>
                           </div>
                           {!course.canAccess && (
-                            <LockKeyhole size={16} className="text-slate-400 shrink-0" />
+                            <LockKeyhole
+                              size={16}
+                              className="text-slate-400 shrink-0"
+                            />
                           )}
                         </div>
                       ))}

@@ -41,8 +41,8 @@ export function GrammarTopicCard({
 
   const isCompleted = Boolean(topic.isCompleted);
   const containerClasses = isCompleted
-    ? "relative flex min-h-[235px] flex-col justify-between rounded-xl border border-emerald-200/80 dark:border-emerald-800/60 bg-emerald-50/20 dark:bg-emerald-950/15 p-4 sm:p-5 shadow-2xs transition-all duration-200 hover:-translate-y-1 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md cursor-pointer group"
-    : "relative flex min-h-[235px] flex-col justify-between rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-2xs transition-all duration-200 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md cursor-pointer group";
+    ? "relative flex min-h-[245px] flex-col justify-between rounded-xl border border-emerald-200/80 dark:border-emerald-800/60 bg-emerald-50/20 dark:bg-emerald-950/15 p-4 sm:p-5 shadow-2xs transition-all duration-200 hover:-translate-y-1 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md cursor-pointer group"
+    : "relative flex min-h-[245px] flex-col justify-between rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-2xs transition-all duration-200 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md cursor-pointer group";
 
   // Derive compact formula / concept tag
   const formulaTag = topic.keyFormula
@@ -82,7 +82,7 @@ export function GrammarTopicCard({
             {isCompleted ? (
               <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/70 px-2 py-0.5 rounded-full">
                 <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-                ✓ {topic.lastScore !== null ? `${topic.lastScore}%` : "Đã làm"}
+                ✓ {topic.lastScore !== null ? `${topic.lastScore}%` : "Đã hoàn thành"}
               </span>
             ) : null}
           </div>
@@ -168,7 +168,7 @@ export function GrammarTopicCard({
             <button
               type="button"
               onClick={() => onStart(topic)}
-              className="bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white dark:bg-slate-800 dark:hover:bg-emerald-600 dark:text-emerald-300 dark:hover:text-white border border-emerald-200 dark:border-emerald-700/60 hover:border-transparent font-semibold text-sm px-4 py-2 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500"
+              className="bg-slate-50 hover:bg-emerald-600 text-slate-700 hover:text-white dark:bg-slate-800 dark:hover:bg-emerald-600 dark:text-slate-200 dark:hover:text-white border border-slate-200 dark:border-slate-700 hover:border-transparent font-medium text-sm px-4 py-2 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500"
             >
               <span>Bắt đầu</span>
               <ArrowRight className="w-4 h-4" aria-hidden="true" />

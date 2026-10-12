@@ -151,6 +151,10 @@ function deriveHasMore(res?: {
 
 export default function FloatingAiTutor() {
   const pathname = usePathname();
+  const isDiagnosticView =
+    pathname === "/diagnostic" || pathname.startsWith("/diagnostic/");
+  if (isDiagnosticView) return null;
+
   const { user } = useAuthStore();
   const { isFocusMode } = useLearningFocusMode();
   const { 

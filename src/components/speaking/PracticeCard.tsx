@@ -160,16 +160,16 @@ export function PracticeCard({
     }
   };
 
-  // State-specific card styling with uniform 230px min-height, tactile hover elevation, and accessible contrast
+  // State-specific card styling with uniform 245px min-height, tactile hover elevation, and accessible contrast
   const containerClasses = {
     IN_PROGRESS:
-      "relative flex min-h-[230px] flex-col justify-between rounded-xl border border-violet-400 dark:border-violet-500/80 bg-white dark:bg-slate-900 p-4 sm:p-5 ring-2 ring-violet-500/20 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-violet-500 dark:hover:border-violet-400 hover:shadow-md cursor-pointer group",
+      "relative flex min-h-[245px] flex-col justify-between rounded-xl border border-violet-400 dark:border-violet-500/80 bg-gradient-to-b from-violet-50/20 to-transparent dark:from-violet-950/20 dark:to-transparent p-4 sm:p-5 ring-2 ring-violet-500/20 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-violet-500 dark:hover:border-violet-400 hover:shadow-md cursor-pointer group",
     COMPLETED:
-      "relative flex min-h-[230px] flex-col justify-between rounded-xl border border-emerald-200/80 dark:border-emerald-800/60 bg-emerald-50/20 dark:bg-emerald-950/15 p-4 sm:p-5 shadow-2xs transition-all duration-200 hover:-translate-y-1 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md cursor-pointer group",
+      "relative flex min-h-[245px] flex-col justify-between rounded-xl border border-emerald-200/80 dark:border-emerald-800/60 bg-emerald-50/20 dark:bg-emerald-950/15 p-4 sm:p-5 shadow-2xs transition-all duration-200 hover:-translate-y-1 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md cursor-pointer group",
     NOT_STARTED:
-      "relative flex min-h-[230px] flex-col justify-between rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-2xs transition-all duration-200 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md cursor-pointer group",
+      "relative flex min-h-[245px] flex-col justify-between rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-2xs transition-all duration-200 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md cursor-pointer group",
     LOCKED:
-      "relative flex min-h-[230px] flex-col justify-between rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 p-4 sm:p-5 opacity-90 shadow-2xs transition-all duration-200 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm cursor-pointer group",
+      "relative flex min-h-[245px] flex-col justify-between rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 p-4 sm:p-5 opacity-90 shadow-2xs transition-all duration-200 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm cursor-pointer group",
   }[status];
 
   return (
@@ -214,7 +214,7 @@ export function PracticeCard({
             {status === "COMPLETED" ? (
               <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/70 px-2 py-0.5 rounded-full">
                 <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-                Đã làm
+                ✓ Đã hoàn thành
               </span>
             ) : (
               <>
@@ -349,7 +349,7 @@ export function PracticeCard({
               type="button"
               onClick={() => onStart?.(exercise)}
               disabled={isLaunching}
-              className="bg-violet-50 hover:bg-violet-600 text-violet-700 hover:text-white dark:bg-slate-800 dark:hover:bg-violet-600 dark:text-violet-300 dark:hover:text-white border border-violet-200 dark:border-violet-700/60 hover:border-transparent font-semibold text-sm px-4 py-2 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500"
+              className="bg-slate-50 hover:bg-violet-600 text-slate-700 hover:text-white dark:bg-slate-800 dark:hover:bg-violet-600 dark:text-slate-200 dark:hover:text-white border border-slate-200 dark:border-slate-700 hover:border-transparent font-medium text-sm px-4 py-2 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500"
             >
               <span>Bắt đầu</span>
               <ArrowRight className="w-4 h-4" aria-hidden="true" />

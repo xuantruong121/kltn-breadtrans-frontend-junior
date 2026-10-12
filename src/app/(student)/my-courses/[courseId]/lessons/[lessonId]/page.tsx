@@ -40,6 +40,26 @@ const sectionTypeLabels: Record<string, string> = {
   CHECKPOINT: "Luyện tập có hướng dẫn",
   SUMMARY: "Tóm tắt bài học",
 };
+
+function renderQuestionPrompt(prompt: string) {
+  const parts = prompt.split(/_{3,}/g);
+  if (parts.length === 1) return prompt;
+
+  return parts.flatMap((part, index) => [
+    <span key={`prompt-${index}`}>{part}</span>,
+    ...(index < parts.length - 1
+      ? [
+          <span
+            key={`blank-${index}`}
+            aria-label="Chỗ trống cần điền"
+            role="img"
+            className="mx-1 inline-block w-16 translate-y-[-0.08em] border-b-2 border-current"
+          />,
+        ]
+      : []),
+  ]);
+}
+
 function ExerciseCard({
   exercise,
   courseId,
@@ -163,7 +183,7 @@ function ExerciseCard({
           return (
             <div key={question.id}>
               <p className="text-base sm:text-lg font-semibold text-slate-800 dark:text-slate-200">
-                {question.order}. {question.prompt}
+                {question.order}. {renderQuestionPrompt(question.prompt)}
               </p>
               {options.length > 0 ? (
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -349,7 +369,13 @@ export default function CourseLessonPage(props: {
             )}
           </header>
           {lesson.media.length > 0 && (
-            <section className="grid gap-5 sm:grid-cols-2">
+            <section
+              className={
+                lesson.media.length === 1
+                  ? "grid grid-cols-1 gap-5"
+                  : "grid gap-5 sm:grid-cols-2"
+              }
+            >
               {lesson.media.map((media) =>
                 media.type === "AUDIO" ? (
                   <div
@@ -362,8 +388,17 @@ export default function CourseLessonPage(props: {
                     <audio className="mt-4 w-full" controls preload="metadata" src={media.url} />
                   </div>
                 ) : (
-                  <figure key={media.id} className="overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs">
-                    <img src={media.url} alt={media.altText ?? lesson.title} className="h-56 sm:h-72 w-full object-cover" loading="lazy" />
+                  <figure
+                    key={media.id}
+                    className="mx-auto flex w-full max-w-5xl items-center justify-center overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 p-3 shadow-xs dark:border-slate-800 dark:bg-slate-950/40"
+                  >
+                    <img
+                      src={media.url}
+                      alt={media.altText ?? lesson.title}
+                      className="h-auto max-h-[34rem] w-full object-contain"
+                      loading="lazy"
+                      decoding="async"
+                    />
                   </figure>
                 ),
               )}

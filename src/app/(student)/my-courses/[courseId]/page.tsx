@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { use, useState } from "react";
+import { use } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, BookOpen, Loader2 } from "lucide-react";
 import { courseService } from "@/lib/api/services/course.service";
@@ -12,7 +12,6 @@ export default function CourseDetailPage(props: {
 }) {
   const { courseId: rawCourseId } = use(props.params);
   const courseId = Number(rawCourseId);
-  const [mediaFailed, setMediaFailed] = useState(false);
   const { data, isLoading, error } = useQuery({
     queryKey: ["course-learning-v5", courseId],
     queryFn: () => courseService.getCourseLearningOverview(courseId),
@@ -44,14 +43,6 @@ export default function CourseDetailPage(props: {
       >
         <ArrowLeft size={18} /> Danh mục khóa học
       </Link>
-      {learning?.coverImage && !mediaFailed && (
-        <img
-          src={learning.coverImage}
-          alt=""
-          className="h-56 sm:h-72 w-full rounded-3xl object-cover shadow-xs"
-          onError={() => setMediaFailed(true)}
-        />
-      )}
       <header className="space-y-4">
         <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-blue-600">
           {data.course.level ?? "Course"}
