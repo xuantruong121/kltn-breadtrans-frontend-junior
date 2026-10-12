@@ -162,7 +162,7 @@ export default function PublicCourseDetailPage() {
     ? v5Lessons.reduce((total, lesson) => total + lesson.exerciseCount, 0)
     : activities.length;
   const media = getCourseCardMedia(course);
-  const mediaSrc = mediaFailed ? media.fallbackSrc : media.src;
+  const mediaSrc = mediaFailed ? null : media.src;
 
   return (
     <div className="w-full space-y-6 sm:space-y-8 px-4 sm:px-6 lg:px-8 xl:px-10 py-6 sm:py-8 lg:py-10">

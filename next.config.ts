@@ -1,6 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  images: {
+    // Course thumbnails and lesson media are resolved by the backend to this
+    // public R2 origin; the frontend never constructs object keys.
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'pub-ecd236c9754a4b7cb22ab82189e6ded2.r2.dev',
+      },
+    ],
+  },
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
   },
