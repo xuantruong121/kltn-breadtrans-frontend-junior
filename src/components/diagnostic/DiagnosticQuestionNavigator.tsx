@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { Check, ChevronRight, LayoutGrid, ListOrdered, X } from "lucide-react";
+import { Check, LayoutGrid, X } from "lucide-react";
 import {
   DiagnosticUiQuestion,
   groupQuestionsBySection,
-  SectionQuestionGroup,
 } from "@/lib/diagnostic/diagnosticUiLogic";
 
 interface DiagnosticQuestionNavigatorProps {
@@ -23,7 +22,6 @@ export function DiagnosticQuestionNavigator({
 }: DiagnosticQuestionNavigatorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const groups = groupQuestionsBySection(questions);
-  const currentQuestion = questions[currentStep];
 
   // Identify current group
   const currentGroup = groups.find((g) =>

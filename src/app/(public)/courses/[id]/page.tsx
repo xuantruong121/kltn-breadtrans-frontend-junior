@@ -62,6 +62,7 @@ export default function PublicCourseDetailPage() {
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
   const [mediaFailed, setMediaFailed] = useState(false);
+  const [mediaRatio, setMediaRatio] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [learningOverview, setLearningOverview] =
     useState<CourseV5Overview | null>(null);
@@ -72,6 +73,10 @@ export default function PublicCourseDetailPage() {
       setLoading(false);
       return;
     }
+    setMediaRatio(null);
+    setMediaFailed(false);
+    setError(null);
+    setLoading(true);
     courseService
       .getPublicCourseDetail(id)
       .then(setCourse)
@@ -175,44 +180,56 @@ export default function PublicCourseDetailPage() {
       </Link>
 
       {/* 2-Column Responsive Layout: Left = Content in Image 1, Right = Lộ trình học */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 xl:gap-10 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 xl:gap-8 items-start">
         {/* LEFT COLUMN: Hero banner card + Overview + Objectives + Study Guidance */}
-        <div className="lg:col-span-7 xl:col-span-7 space-y-6 lg:space-y-8">
+        <div className="lg:col-span-8 xl:col-span-8 space-y-5 lg:space-y-6">
           {/* Main Course Header Card */}
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 lg:p-10 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm font-bold">
-              <span className="rounded-full bg-blue-50 px-3.5 py-1 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 lg:p-7 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
+              <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
                 {course.level || "Cơ bản"}
               </span>
-              <span className="rounded-full bg-emerald-50 px-3.5 py-1 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+              <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
                 Tự học theo lộ trình
               </span>
               {!course.canAccess && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3.5 py-1 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
                   <LockKeyhole size={14} />
                   Gói PRO
                 </span>
               )}
             </div>
 
-            <h1 className="mt-5 text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15]">
+            <h1 className="mt-4 max-w-3xl text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15]">
               {course.title}
             </h1>
 
-            <p className="mt-4 text-base sm:text-lg lg:text-xl leading-relaxed text-slate-600 dark:text-slate-300">
+            <p className="mt-3 max-w-2xl text-base leading-[1.65] text-slate-600 dark:text-slate-300">
               {course.description ||
                 "Củng cố ngữ pháp cốt lõi và vốn từ thông dụng/TOEIC theo chủ đề để hỗ trợ cả bốn kỹ năng."}
             </p>
 
-            {/* Media Image Banner */}
-            <div className="mt-6 relative h-48 sm:h-56 lg:h-64 w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-800">
+            {/* Course media keeps its aspect ratio and uses contain so diagrams and focal subjects are not clipped. */}
+            <div
+              className="relative mt-5 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/70"
+              style={{
+                aspectRatio: mediaRatio ? String(mediaRatio) : "16 / 9",
+                maxHeight: "22rem",
+              }}
+            >
               {mediaSrc ? (
                 <Image
                   src={mediaSrc}
                   alt={media.alt}
                   fill
                   sizes="(max-width: 1024px) 100vw, 850px"
-                  className="object-cover"
+                  className="object-contain p-2 sm:p-3"
+                  onLoad={(event) => {
+                    const image = event.currentTarget;
+                    if (image.naturalWidth && image.naturalHeight) {
+                      setMediaRatio(image.naturalWidth / image.naturalHeight);
+                    }
+                  }}
                   onError={() => setMediaFailed(true)}
                 />
               ) : (
@@ -223,11 +240,11 @@ export default function PublicCourseDetailPage() {
             </div>
 
             {/* Primary Action Button */}
-            <div className="mt-7 flex flex-wrap items-center gap-4">
+            <div className="mt-5 flex flex-wrap items-center gap-3">
               <button
                 onClick={start}
                 disabled={starting || !course.canAccess}
-                className="inline-flex min-h-12 cursor-pointer items-center gap-2.5 rounded-2xl bg-blue-600 px-7 py-3.5 text-base font-bold text-white shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md hover:shadow-blue-600/30 active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-sm"
+                className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md hover:shadow-blue-600/30 active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-sm"
               >
                 {starting ? (
                   "Đang mở..."
@@ -246,7 +263,7 @@ export default function PublicCourseDetailPage() {
               {!course.canAccess && (
                 <Link
                   href="/plans?highlight=pro"
-                  className="inline-flex min-h-12 items-center gap-2 rounded-2xl border border-amber-300 bg-amber-50/50 px-6 py-3.5 text-base font-bold text-amber-700 hover:bg-amber-100/60 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-300 transition-colors"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-300 bg-amber-50/50 px-5 py-2.5 text-sm font-bold text-amber-700 hover:bg-amber-100/60 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-300 transition-colors"
                 >
                   <ArrowRight size={18} />
                   Xem gói PRO
@@ -255,28 +272,28 @@ export default function PublicCourseDetailPage() {
             </div>
 
             {/* Quick Metrics Bar */}
-            <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-3 border-t border-slate-100 pt-6 dark:border-slate-800">
-              <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800/60">
-                <span className="block text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">
+            <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-0 border-t border-slate-100 pt-5 dark:border-slate-800">
+              <div className="border-r border-slate-100 pr-3 dark:border-slate-800">
+                <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                   Quy mô
                 </span>
-                <span className="mt-1 block text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+                <span className="mt-1 block text-base sm:text-lg font-bold text-slate-900 dark:text-white">
                   {displayLessons.length} bài học
                 </span>
               </div>
-              <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800/60">
-                <span className="block text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">
+              <div className="border-r border-slate-100 px-3 dark:border-slate-800">
+                <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                   Hoạt động
                 </span>
-                <span className="mt-1 block text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+                <span className="mt-1 block text-base sm:text-lg font-bold text-slate-900 dark:text-white">
                   {activityCount} bài thực hành
                 </span>
               </div>
-              <div className="col-span-2 sm:col-span-1 rounded-xl bg-slate-50 p-4 dark:bg-slate-800/60">
-                <span className="block text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">
+              <div className="col-span-2 mt-3 border-t border-slate-100 pt-3 sm:col-span-1 sm:mt-0 sm:border-t-0 sm:pl-3 sm:pt-0 dark:border-slate-800">
+                <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                   Hình thức
                 </span>
-                <span className="mt-1 block text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+                <span className="mt-1 block text-base sm:text-lg font-bold text-slate-900 dark:text-white">
                   Tự học theo tiến độ
                 </span>
               </div>
@@ -285,28 +302,28 @@ export default function PublicCourseDetailPage() {
 
           {/* Pedagogical Deep-Dive: Giới thiệu & Mục tiêu */}
           {course.learning && (
-            <div className="space-y-6">
+            <div className="space-y-5">
               {/* Giới thiệu khóa học */}
-              <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 lg:p-9 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+              <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
                 <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
                   Giới thiệu khóa học
                 </p>
-                <p className="mt-3 text-base sm:text-lg lg:text-xl leading-relaxed text-slate-700 dark:text-slate-200">
+                <p className="mt-3 max-w-3xl text-base leading-[1.65] text-slate-700 dark:text-slate-200">
                   {course.learning.introduction}
                 </p>
               </section>
 
               {/* Bạn sẽ học được gì & Cách học khóa này */}
-              <div className="grid gap-6 md:grid-cols-2">
-                <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                  <h2 className="flex items-center gap-2.5 text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+              <div className="grid gap-5 md:grid-cols-2">
+                <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                  <h2 className="flex items-center gap-2.5 text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
                     <Target
                       size={22}
                       className="text-blue-600 dark:text-blue-400 shrink-0"
                     />
                     Bạn sẽ học được gì?
                   </h2>
-                  <ul className="mt-4 space-y-3.5 text-base sm:text-lg leading-relaxed text-slate-600 dark:text-slate-300">
+                  <ul className="mt-4 space-y-3 text-sm sm:text-base leading-relaxed text-slate-600 dark:text-slate-300">
                     {course.learning.objectives.map((objective) => (
                       <li key={objective} className="flex items-start gap-2.5">
                         <span className="text-blue-500 font-bold leading-relaxed">
@@ -318,12 +335,12 @@ export default function PublicCourseDetailPage() {
                   </ul>
                 </section>
 
-                <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                  <h2 className="flex items-center gap-2.5 text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+                <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                  <h2 className="flex items-center gap-2.5 text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
                     <Lightbulb size={22} className="text-amber-500 shrink-0" />
                     Cách học khóa này
                   </h2>
-                  <p className="mt-4 text-base sm:text-lg leading-relaxed text-slate-600 dark:text-slate-300">
+                  <p className="mt-4 text-sm sm:text-base leading-relaxed text-slate-600 dark:text-slate-300">
                     {course.learning.studyGuidance}
                   </p>
                 </section>
@@ -333,40 +350,40 @@ export default function PublicCourseDetailPage() {
         </div>
 
         {/* RIGHT COLUMN: Lộ trình học (Curriculum) */}
-        <div className="lg:col-span-5 xl:col-span-5">
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-5 dark:border-slate-800">
+        <div className="lg:col-span-4 xl:col-span-4 lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
               <div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                   Lộ trình học
                 </h2>
-                <p className="mt-1.5 text-base text-slate-500 dark:text-slate-400 font-medium">
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 font-medium">
                   {displayLessons.length} bài học · {activityCount} hoạt động
                 </p>
               </div>
               {course.curriculum && (
-                <span className="rounded-full bg-emerald-50 px-3.5 py-1 text-xs sm:text-sm font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+                <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
                   {course.curriculum.readiness}
                 </span>
               )}
             </div>
 
-            <div className="mt-6 space-y-4">
+            <div className="mt-5 space-y-2.5">
               {displayLessons.map((lesson, index) => (
                 <div
                   key={lesson.id}
-                  className="rounded-2xl border border-slate-200/90 bg-slate-50/40 p-5 dark:border-slate-800 dark:bg-slate-950/40"
+                  className="rounded-xl border border-slate-200/90 bg-slate-50/40 p-3.5 dark:border-slate-800 dark:bg-slate-950/40"
                 >
-                  <div className="flex items-start gap-3.5">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100/70 text-blue-800 text-sm font-bold dark:bg-blue-950/80 dark:text-blue-200">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100/70 text-blue-800 text-xs font-bold dark:bg-blue-950/80 dark:text-blue-200">
                       {lesson.order || index + 1}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-snug">
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug">
                         {lesson.title}
                       </h3>
                       {lesson.description && (
-                        <p className="mt-1.5 text-sm sm:text-base leading-relaxed text-slate-500 dark:text-slate-400">
+                        <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
                           {lesson.description}
                         </p>
                       )}
@@ -374,18 +391,18 @@ export default function PublicCourseDetailPage() {
                   </div>
 
                   {lesson.activities.length > 0 && (
-                    <div className="mt-4 space-y-2.5">
+                    <div className="mt-3 space-y-2">
                       {lesson.activities.map((activity) => (
                         <div
                           key={activity.id}
-                          className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/60 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900"
+                          className="flex items-center justify-between gap-3 rounded-lg border border-slate-200/60 bg-white px-3 py-2.5 dark:border-slate-800 dark:bg-slate-900"
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
                               {getActivityIcon(activity.skill)}
                             </div>
                             <div className="min-w-0">
-                              <p className="text-base font-semibold text-slate-800 dark:text-slate-200 truncate">
+                              <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
                                 {activity.title}
                               </p>
                               <p className="text-xs sm:text-sm text-slate-500">
@@ -411,12 +428,12 @@ export default function PublicCourseDetailPage() {
             </div>
 
             {course.canAccess && activityCount === 0 && (
-              <p className="mt-6 text-base text-amber-700 dark:text-amber-300 font-medium">
+              <p className="mt-5 text-sm text-amber-700 dark:text-amber-300 font-medium">
                 Khóa học chưa có hoạt động học tập khả dụng.
               </p>
             )}
             {course.canAccess && (
-              <p className="mt-6 flex items-center gap-2.5 text-sm font-medium text-slate-500 dark:text-slate-400 border-t border-slate-100 pt-4 dark:border-slate-800">
+              <p className="mt-5 flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 border-t border-slate-100 pt-4 dark:border-slate-800">
                 <CheckCircle2 size={17} className="text-emerald-500 shrink-0" />
                 Bắt đầu khóa học để truy cập bài học và làm bài tập.
               </p>

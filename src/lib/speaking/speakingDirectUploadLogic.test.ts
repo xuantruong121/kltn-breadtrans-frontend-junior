@@ -241,7 +241,6 @@ test('Phase 2 Security Boundary: presigned storage URL is never persisted in cli
     setItem(k: string, v: string) { this.data.set(k, v); },
     getItem(k: string) { return this.data.get(k) ?? null; },
   };
-  const presignedUrl = 'https://r2.storage.example/speaking/pending/10/intent.wav?X-Amz-Signature=secret_bearer_token';
   const submissionId = 202;
   const exerciseId = 1;
 

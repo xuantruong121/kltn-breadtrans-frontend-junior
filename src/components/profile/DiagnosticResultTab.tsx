@@ -1,24 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
-  Award,
   BookOpen,
   Calendar,
   CheckCircle2,
   Clock,
   ExternalLink,
-  GraduationCap,
-  Headphones,
-  HelpCircle,
   Loader2,
   Mic,
-  PenTool,
   Target,
-  TrendingUp,
 } from "lucide-react";
 import {
   diagnosticService,

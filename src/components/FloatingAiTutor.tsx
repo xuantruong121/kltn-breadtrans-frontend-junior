@@ -149,12 +149,7 @@ function deriveHasMore(res?: {
   return false;
 }
 
-export default function FloatingAiTutor() {
-  const pathname = usePathname();
-  const isDiagnosticView =
-    pathname === "/diagnostic" || pathname.startsWith("/diagnostic/");
-  if (isDiagnosticView) return null;
-
+function FloatingAiTutorInner() {
   const { user } = useAuthStore();
   const { isFocusMode } = useLearningFocusMode();
   const { 
@@ -1163,4 +1158,13 @@ export default function FloatingAiTutor() {
       </AnimatePresence>
     </>
   );
+}
+
+export default function FloatingAiTutor() {
+  const pathname = usePathname();
+  const isDiagnosticView =
+    pathname === "/diagnostic" || pathname.startsWith("/diagnostic/");
+  if (isDiagnosticView) return null;
+
+  return <FloatingAiTutorInner />;
 }

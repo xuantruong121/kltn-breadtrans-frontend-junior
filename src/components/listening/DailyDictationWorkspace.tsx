@@ -556,7 +556,7 @@ export function DailyDictationWorkspace({
       window.clearTimeout(resetTimer);
       controller.abort();
     };
-  }, [activeAudioVersion, currentQuestion.id, quiz.id, quiz.listeningAudioArtifact]);
+  }, [activeAudioVersion, currentQuestion.id, quiz.id, quiz.listeningAudioArtifact, activeTab]);
 
   useEffect(() => {
     if (!audioRef.current) return;

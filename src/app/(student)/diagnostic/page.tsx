@@ -4,19 +4,16 @@ import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, useMemo } from "react";
 import {
-  AlertCircle,
   ArrowRight,
   Award,
   BookOpen,
   CheckCircle2,
-  Filter,
   Loader2,
   Mic,
   RotateCcw,
   SkipForward,
   Square,
   Target,
-  XCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import {
