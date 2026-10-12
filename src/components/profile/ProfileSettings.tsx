@@ -8,7 +8,6 @@ import {
   User,
   Phone,
   MapPin,
-  Target,
   Loader2,
   Save,
   ShoppingBag,

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, MapPin, Truck, X } from "lucide-react";
+import { Loader2, Truck, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { locationService } from "@/lib/api/services/location.service";
 import { userService } from "@/lib/api/services/user.service";

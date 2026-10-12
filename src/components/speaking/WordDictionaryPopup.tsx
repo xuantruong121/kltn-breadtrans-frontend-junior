@@ -354,6 +354,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
       }
     };
 
+    const audioCache = audioCacheRef.current;
     void load();
     return () => {
       mounted = false;
@@ -367,12 +368,12 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
         activeAudioRef.current.onerror = null;
       }
       activeAudioRef.current = null;
-      for (const audio of audioCacheRef.current.values()) {
+      for (const audio of audioCache.values()) {
         audio.pause();
         audio.onended = null;
         audio.onerror = null;
       }
-      audioCacheRef.current.clear();
+      audioCache.clear();
       if (typeof window !== "undefined") {
         window.speechSynthesis?.cancel();
       }

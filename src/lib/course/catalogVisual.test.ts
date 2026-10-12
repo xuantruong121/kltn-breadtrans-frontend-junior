@@ -1,40 +1,20 @@
 import assert from "node:assert/strict";
-import fs from "node:fs";
 import test from "node:test";
 import { getCourseCardMedia } from "./catalogVisual.ts";
 
-test("maps all eight course cards to distinct local visuals", () => {
-  const media = Array.from({ length: 8 }, (_, index) =>
-    getCourseCardMedia({ id: index + 1 }),
-  );
+test("uses the backend-provided course thumbnail without deriving a local path", () => {
+  const media = getCourseCardMedia({
+    title: "Course",
+    thumbnail: "https://cdn.example.test/catalog/courses/course-1/cover.svg",
+  });
 
-  assert.equal(new Set(media.map((item) => item.src)).size, 8);
-  assert.ok(media.every((item) => item.src.includes("/images/courses/photos/")));
-  assert.ok(media.every((item) => item.fallbackSrc.endsWith(".svg")));
-  assert.ok(
-    media.every((item) =>
-      fs.existsSync(new URL(`../../../public${item.fallbackSrc}`, import.meta.url)),
-    ),
-  );
-  assert.ok(media.every((item) => item.alt.length > 10));
+  assert.equal(media.src, "https://cdn.example.test/catalog/courses/course-1/cover.svg");
+  assert.equal(media.fallbackSrc, null);
+  assert.equal(media.alt, "Ảnh đại diện khóa học Course");
 });
 
-test("keeps local photography primary while using profile label and SVG fallback", () => {
-  assert.deepEqual(
-    getCourseCardMedia({
-      id: 8,
-      learning: {
-        introduction: "",
-        objectives: [],
-        studyGuidance: "",
-        mediaLabel: "Ngữ pháp và từ vựng",
-        coverImage: "/images/courses/course-8-grammar-vocabulary.svg",
-      },
-    }),
-    {
-      src: "/images/courses/photos/course-8-grammar-vocabulary.jpg",
-      fallbackSrc: "/images/courses/course-8-grammar-vocabulary.svg",
-      alt: "Học ngữ pháp, từ vựng và xây dựng câu tiếng Anh",
-    },
-  );
+test("does not silently fall back to a misleading local course image", () => {
+  const media = getCourseCardMedia({ title: "Ngữ pháp", thumbnail: null });
+  assert.equal(media.src, null);
+  assert.equal(media.fallbackSrc, null);
 });

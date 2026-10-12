@@ -18,6 +18,10 @@ export interface PracticeHeaderProps {
    */
   title: string;
   /**
+   * Optional shorter title for narrow mobile viewports.
+   */
+  mobileTitle?: string;
+  /**
    * Optional subtitle or category (e.g. "Part 1 - Photographs" or "Daily Routine").
    */
   category?: string;
@@ -95,6 +99,7 @@ export interface PracticeHeaderProps {
 
 export const PracticeHeader: React.FC<PracticeHeaderProps> = ({
   title,
+  mobileTitle,
   category,
   subtitle,
   difficulty,
@@ -174,7 +179,8 @@ export const PracticeHeader: React.FC<PracticeHeaderProps> = ({
             className="text-xs sm:text-sm font-bold text-slate-100 truncate max-w-[130px] xs:max-w-[200px] sm:max-w-[320px] md:max-w-[440px] lg:max-w-[560px]"
             title={title}
           >
-            {title}
+            <span className={mobileTitle ? "hidden sm:inline" : ""}>{title}</span>
+            {mobileTitle && <span className="sm:hidden">{mobileTitle}</span>}
           </span>
 
           {difficulty && (

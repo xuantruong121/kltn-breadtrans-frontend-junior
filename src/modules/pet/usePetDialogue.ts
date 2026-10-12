@@ -10,132 +10,137 @@ import {
 export interface UsePetDialogueOptions {
   petName?: string;
   satiety?: number;
+  satietyState?: string;
   streak?: number;
   todayQuests?: Array<{ isCompleted: boolean }>;
   enabled?: boolean;
 }
 
+const FIVE_MINUTES_MS = 5 * 60 * 1000;
+
 export function usePetDialogue(options: UsePetDialogueOptions) {
-  const { petName, satiety, streak = 0, todayQuests = [], enabled = true } = options;
+  const {
+    petName,
+    satiety,
+    satietyState,
+    streak = 0,
+    todayQuests = [],
+    enabled = true,
+  } = options;
 
   const [dialogue, setDialogue] = useState<PetDialogueContent | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isBouncing, setIsBouncing] = useState(false);
 
   const pokeIndexRef = useRef(0);
-  const lastProactiveTimeRef = useRef(0);
-  const lastActivityTimeRef = useRef(0);
-  const dismissTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const reopenTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const prevSatietyRef = useRef<number | undefined>(satiety);
+  const hasInitializedRef = useRef(false);
 
-  const clearDismissTimer = useCallback(() => {
-    if (dismissTimerRef.current) {
-      clearTimeout(dismissTimerRef.current);
-      dismissTimerRef.current = null;
+  const clearReopenTimer = useCallback(() => {
+    if (reopenTimerRef.current) {
+      clearTimeout(reopenTimerRef.current);
+      reopenTimerRef.current = null;
     }
   }, []);
 
-  const dismiss = useCallback(() => {
-    clearDismissTimer();
-    setIsVisible(false);
-  }, [clearDismissTimer]);
-
-  const showDialogue = useCallback(
-    (content: PetDialogueContent, autoDismissDurationMs = 8000) => {
-      clearDismissTimer();
-      setDialogue(content);
-      setIsVisible(true);
-      dismissTimerRef.current = setTimeout(() => {
-        setIsVisible(false);
-      }, autoDismissDurationMs);
-    },
-    [clearDismissTimer],
-  );
-
-  // Trigger poke on click
-  const pokePet = useCallback(() => {
-    // 1. Trigger spring bounce animation
-    setIsBouncing(true);
-    setTimeout(() => setIsBouncing(false), 600);
-
-    // 2. Resolve poke dialogue with rotating message
-    const currentIndex = pokeIndexRef.current;
-    pokeIndexRef.current = (pokeIndexRef.current + 1) % POKE_MESSAGES.length;
-
-    const content = resolvePetDialogue({
-      petName,
-      forcePoke: true,
-      pokeMessageIndex: currentIndex,
-    });
-
-    if (content) {
-      showDialogue(content, 7000);
-    }
-  }, [petName, showDialogue]);
-
-  // Track user activity to determine idle duration
-  useEffect(() => {
-    if (!enabled) return;
-    lastActivityTimeRef.current = Date.now();
-    const updateActivity = () => {
-      lastActivityTimeRef.current = Date.now();
-    };
-    window.addEventListener("mousemove", updateActivity, { passive: true });
-    window.addEventListener("keydown", updateActivity, { passive: true });
-    window.addEventListener("click", updateActivity, { passive: true });
-    return () => {
-      window.removeEventListener("mousemove", updateActivity);
-      window.removeEventListener("keydown", updateActivity);
-      window.removeEventListener("click", updateActivity);
-    };
-  }, [enabled]);
-
-  // Proactive dialogue loop: checks every 15s with 60s cooldown
-  useEffect(() => {
-    if (!enabled) return;
-
-    const interval = setInterval(() => {
-      const now = Date.now();
-      // Enforce 60-second cooldown between proactive messages
-      if (now - lastProactiveTimeRef.current < 60_000) {
-        return;
-      }
-
-      const lastActivity = lastActivityTimeRef.current || now;
-      const idleDurationMs = Math.max(0, now - lastActivity);
+  const resolveCurrentDialogue = useCallback(
+    (forcePoke = false) => {
       const completedCount = todayQuests.filter((q) => q.isCompleted).length;
       const totalCount = todayQuests.length;
       const isStreakAtRisk = totalCount > 0 && completedCount === 0;
 
-      const proactive = resolvePetDialogue({
+      return resolvePetDialogue({
         petName,
         satiety,
-        idleDurationMs,
+        idleDurationMs: 0,
         streak,
         isStreakAtRisk,
         completedQuestsCount: completedCount,
         totalQuestsCount: totalCount,
+        allowGreeting: true,
+        forcePoke,
+        pokeMessageIndex: pokeIndexRef.current,
       });
+    },
+    [petName, satiety, streak, todayQuests],
+  );
 
-      if (proactive) {
-        lastProactiveTimeRef.current = now;
-        showDialogue(proactive, 8500);
+  const showDialogue = useCallback(
+    (forcePoke = false) => {
+      clearReopenTimer();
+      const content = resolveCurrentDialogue(forcePoke);
+      if (content) {
+        setDialogue(content);
+        setIsVisible(true);
       }
-    }, 15_000);
+    },
+    [clearReopenTimer, resolveCurrentDialogue],
+  );
 
-    return () => clearInterval(interval);
-  }, [enabled, petName, satiety, streak, todayQuests, showDialogue]);
+  // User actively dismisses with X button: hide and reopen after 5 minutes
+  const dismiss = useCallback(() => {
+    clearReopenTimer();
+    setIsVisible(false);
 
-  // Cleanup timer on unmount
+    // Automatically reopen dialogue after 5 minutes
+    reopenTimerRef.current = setTimeout(() => {
+      pokeIndexRef.current = (pokeIndexRef.current + 1) % POKE_MESSAGES.length;
+      showDialogue();
+    }, FIVE_MINUTES_MS);
+  }, [clearReopenTimer, showDialogue]);
+
+  // 1. Automatically show dialogue when user opens web / logs in (enabled becomes true)
   useEffect(() => {
-    return () => clearDismissTimer();
-  }, [clearDismissTimer]);
+    if (!enabled) {
+      hasInitializedRef.current = false;
+      return;
+    }
+
+    if (!hasInitializedRef.current) {
+      hasInitializedRef.current = true;
+      showDialogue();
+    }
+  }, [enabled, showDialogue]);
+
+  // 2. Hunger trigger: when pet is hungry or becomes hungry, show dialogue immediately
+  useEffect(() => {
+    if (!enabled) return;
+
+    const isHungry =
+      satiety !== undefined &&
+      (satiety < 50 || satietyState === "HUNGRY" || satietyState === "VERY_HUNGRY");
+    const wasHungry =
+      prevSatietyRef.current !== undefined && prevSatietyRef.current < 50;
+    prevSatietyRef.current = satiety;
+
+    // If pet transitions to hungry while dialogue is closed, show hungry dialogue immediately
+    if (isHungry && !wasHungry && !isVisible) {
+      showDialogue();
+    }
+  }, [enabled, satiety, satietyState, isVisible, showDialogue]);
+
+  // Trigger bounce animation when pet is poked or clicked
+  const triggerBounce = useCallback(() => {
+    setIsBouncing(true);
+    setTimeout(() => setIsBouncing(false), 500);
+  }, []);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      clearReopenTimer();
+    };
+  }, [clearReopenTimer]);
 
   return {
     dialogue,
     isVisible,
     isBouncing,
-    pokePet,
+    triggerBounce,
+    pokePet: triggerBounce,
     dismiss,
+    showDialogue,
   };
 }
 

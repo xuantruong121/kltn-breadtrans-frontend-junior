@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
+import { getCourseLevelFilterKey } from "./courseLevel.ts";
 
 const root = process.cwd();
 const read = (relativePath: string) =>
@@ -44,4 +45,13 @@ test("Course imagery has no overlaid illustration captions", () => {
 
   const visuals = read("src/lib/course/catalogVisual.ts");
   assert.equal(visuals.includes("Minh họa"), false);
+});
+
+test("Course level filters group CEFR ranges under learner-facing levels", () => {
+  assert.equal(getCourseLevelFilterKey("A1-A2"), "BEGINNER");
+  assert.equal(getCourseLevelFilterKey("A2"), "BEGINNER");
+  assert.equal(getCourseLevelFilterKey("B1-B2"), "INTERMEDIATE");
+  assert.equal(getCourseLevelFilterKey("B2-C1"), "ADVANCED");
+  assert.equal(getCourseLevelFilterKey("Nâng cao"), "ADVANCED");
+  assert.equal(getCourseLevelFilterKey("unknown"), null);
 });
