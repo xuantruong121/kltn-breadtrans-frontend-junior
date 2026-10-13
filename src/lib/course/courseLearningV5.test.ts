@@ -25,5 +25,8 @@ test("course lessons expose native media and open response practice", () => {
   assert.match(lessonSource, /controls preload="metadata"/);
   assert.match(lessonSource, /<textarea/);
   assert.match(lessonSource, /rubric/);
-  assert.match(lessonSource, /references/);
+  assert.match(lessonSource, /Bạn còn .* câu chưa trả lời/);
+  assert.match(lessonSource, /Đáp án đúng/);
+  assert.match(lessonSource, /loading=\{mediaIndex === 0 \? "eager" : "lazy"\}/);
+  assert.doesNotMatch(lessonSource, /Tài liệu tham khảo thêm/);
 });

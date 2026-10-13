@@ -1,15 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { use, useMemo, useState } from "react";
+import { use, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ArrowRight,
-  BookOpen,
   CheckCircle2,
   ChevronRight,
-  ExternalLink,
   Headphones,
   Menu,
   PanelRightClose,
@@ -30,6 +28,12 @@ const objectValue = (value: unknown): Record<string, unknown> =>
   value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : {};
+const formatAnswer = (value: unknown): string => {
+  if (value === null || value === undefined || value === "") return "—";
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) return value.map(formatAnswer).join(", ");
+  try { return JSON.stringify(value); } catch { return "—"; }
+};
 const sectionTypeLabels: Record<string, string> = {
   INTRO: "Mục tiêu bài học",
   THEORY: "Kiến thức trọng tâm",
@@ -42,7 +46,7 @@ const sectionTypeLabels: Record<string, string> = {
 };
 
 function renderQuestionPrompt(prompt: string) {
-  const parts = prompt.split(/_{3,}/g);
+  const parts = prompt.split(/_+/g);
   if (parts.length === 1) return prompt;
 
   return parts.flatMap((part, index) => [
@@ -53,7 +57,7 @@ function renderQuestionPrompt(prompt: string) {
             key={`blank-${index}`}
             aria-label="Chỗ trống cần điền"
             role="img"
-            className="mx-1 inline-block w-16 translate-y-[-0.08em] border-b-2 border-current"
+            className="mx-1 inline-block w-12 translate-y-[-0.08em] border-b-2 border-current"
           />,
         ]
       : []),
@@ -71,14 +75,18 @@ function ExerciseCard({
 }) {
   const client = useQueryClient();
   const [answers, setAnswers] = useState<Record<number, unknown>>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const questionRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const [result, setResult] = useState<{
     score: number;
     maxScore: number;
     percentage: number;
     feedback: Array<{
       questionId: number;
+      answer: unknown;
+      correctAnswer: unknown;
       isCorrect: boolean;
-      explanation: string;
+      explanation: string | null;
     }>;
   } | null>(null);
   const mutation = useMutation({
@@ -93,6 +101,7 @@ function ExerciseCard({
         })),
       ),
     onSuccess: (value) => {
+      setSubmitError(null);
       setResult(value);
       void client.invalidateQueries({
         queryKey: ["course-learning-v5", courseId],
@@ -101,7 +110,10 @@ function ExerciseCard({
         queryKey: ["course-learning-v5-lesson", courseId, lessonId],
       });
     },
-    onError: () => toast.error("Không thể nộp bài. Vui lòng thử lại."),
+    onError: () => {
+      setSubmitError("Không thể nộp bài. Kiểm tra kết nối rồi thử lại; câu trả lời của bạn vẫn được giữ lại.");
+      toast.error("Không thể nộp bài. Vui lòng thử lại.");
+    },
   });
   const exerciseContent = objectValue(exercise.content);
   const contentAudio =
@@ -181,7 +193,7 @@ function ExerciseCard({
             : [];
           const answer = answers[question.id];
           return (
-            <div key={question.id}>
+            <div key={question.id} ref={(node) => { questionRefs.current[question.id] = node; }}>
               <p className="text-base sm:text-lg font-semibold text-slate-800 dark:text-slate-200">
                 {question.order}. {renderQuestionPrompt(question.prompt)}
               </p>
@@ -232,32 +244,39 @@ function ExerciseCard({
         })}
       </div>
       <button
-        type="button"
-        disabled={
-          mutation.isPending ||
-          exercise.questions.some((question) => {
+      type="button"
+        disabled={mutation.isPending}
+        onClick={() => {
+          const unanswered = exercise.questions.filter((question) => {
             const answer = answers[question.id];
             return answer === undefined || (typeof answer === "string" && !answer.trim());
-          })
-        }
-        onClick={() => mutation.mutate()}
+          });
+          if (unanswered.length > 0) {
+            setSubmitError(`Bạn còn ${unanswered.length} câu chưa trả lời.`);
+            const target = questionRefs.current[unanswered[0].id];
+            target?.scrollIntoView({ behavior: "smooth", block: "center" });
+            target?.querySelector<HTMLElement>("button, textarea")?.focus();
+            return;
+          }
+          setSubmitError(null);
+          mutation.mutate();
+        }}
         className="mt-6 inline-flex min-h-12 items-center gap-2.5 rounded-2xl bg-blue-600 px-6 py-3 text-base font-bold text-white shadow-sm hover:bg-blue-700 active:scale-[0.98] transition-all disabled:cursor-not-allowed disabled:opacity-50"
       >
         {mutation.isPending ? "Đang chấm..." : "Nộp bài"}
         <ArrowRight size={18} />
       </button>
+      {submitError && <p role="alert" className="mt-3 text-sm font-semibold text-rose-700 dark:text-rose-300">{submitError}</p>}
       {result && (
-        <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-base text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200">
-          <p className="font-bold text-lg">
-            Kết quả: {result.score}/{result.maxScore} ({result.percentage}%)
-          </p>
-          <ul className="mt-3 space-y-2">
+        <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-5 text-base text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
+          <p className="font-bold text-lg">Hoàn thành bài tập</p>
+          <p className="mt-1 text-xl font-extrabold text-blue-700 dark:text-blue-300">{result.score}/{result.maxScore} câu đúng · {result.percentage}%</p>
+          <ul className="mt-4 space-y-3">
             {result.feedback.map((item) => (
-              <li key={item.questionId} className="flex items-start gap-2">
-                <span className={item.isCorrect ? "text-emerald-600 font-bold" : "text-rose-600 font-bold"}>
-                  {item.isCorrect ? "✓ Đúng" : "✕ Chưa đúng"}
-                </span>
-                <span>· {item.explanation}</span>
+              <li key={item.questionId} className={`rounded-xl border p-3 ${item.isCorrect ? "border-emerald-200 bg-emerald-50/70 dark:border-emerald-900/60 dark:bg-emerald-950/30" : "border-rose-200 bg-rose-50/70 dark:border-rose-900/60 dark:bg-rose-950/30"}`}>
+                <p className={`font-bold ${item.isCorrect ? "text-emerald-700 dark:text-emerald-300" : "text-rose-700 dark:text-rose-300"}`}>{item.isCorrect ? "✓ Chính xác" : "✕ Chưa chính xác"}</p>
+                {!item.isCorrect && <div className="mt-2 space-y-1 text-sm"><p><strong>Bạn chọn:</strong> {formatAnswer(item.answer)}</p><p><strong>Đáp án đúng:</strong> {formatAnswer(item.correctAnswer)}</p></div>}
+                {item.explanation && <p className="mt-2 text-sm leading-relaxed"><strong>Giải thích:</strong> {item.explanation}</p>}
               </li>
             ))}
           </ul>
@@ -376,7 +395,7 @@ export default function CourseLessonPage(props: {
                   : "grid gap-5 sm:grid-cols-2"
               }
             >
-              {lesson.media.map((media) =>
+              {lesson.media.map((media, mediaIndex) =>
                 media.type === "AUDIO" ? (
                   <div
                     key={media.id}
@@ -396,7 +415,7 @@ export default function CourseLessonPage(props: {
                       src={media.url}
                       alt={media.altText ?? lesson.title}
                       className="h-auto max-h-[34rem] w-full object-contain"
-                      loading="lazy"
+                      loading={mediaIndex === 0 ? "eager" : "lazy"}
                       decoding="async"
                     />
                   </figure>
@@ -564,27 +583,6 @@ export default function CourseLessonPage(props: {
               />
             ))}
           </section>
-          {lesson.references.length > 0 && (
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 dark:border-slate-800 dark:bg-slate-900 shadow-xs">
-              <div className="flex items-center gap-2.5 text-base sm:text-lg font-bold text-slate-800 dark:text-slate-200">
-                <BookOpen size={20} /> Tài liệu tham khảo thêm (không bắt buộc)
-              </div>
-              <div className="mt-4 space-y-3">
-                {lesson.references.map((reference) => (
-                  <a
-                    key={reference.id}
-                    href={reference.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex min-h-12 items-center justify-between gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-base font-semibold text-blue-700 hover:border-blue-300 hover:bg-blue-50/40 dark:border-slate-700 dark:text-blue-300 dark:hover:bg-slate-800/50 transition-colors"
-                  >
-                    <span>{reference.title}</span>
-                    <ExternalLink size={17} aria-hidden="true" />
-                  </a>
-                ))}
-              </div>
-            </section>
-          )}
           <nav className="flex items-center justify-between border-t border-slate-200 dark:border-slate-800 pt-6">
             <Link
               href={

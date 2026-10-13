@@ -391,8 +391,9 @@ export interface CourseV5SubmitResult {
   feedback: Array<{
     questionId: number;
     answer: unknown;
+    correctAnswer: unknown;
     isCorrect: boolean;
-    explanation: string;
+    explanation: string | null;
   }>;
 }
 
