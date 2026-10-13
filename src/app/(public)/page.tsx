@@ -155,10 +155,10 @@ const COMPARISON_ROWS = [
     breadtrans: "Chấm chi tiết từng âm vị, ngữ điệu chuẩn xác trong 2 giây",
   },
   {
-    feature: "Thi thử TOEIC chuẩn ETS",
+    feature: "Luyện đề theo format chứng chỉ",
     traditional: "1-2 buổi thi thử mỗi khóa, trả kết quả sau vài ngày",
     selfStudy: "Làm sách photo, tự tra đáp án, không rõ bẫy đề",
-    breadtrans: "200+ bộ đề bấm giờ thực tế, phân tích lỗ hổng tức thì",
+    breadtrans: "Kho đề theo từng format, hiện có 200+ đề TOEIC/ETS và phân tích lỗ hổng tức thì",
   },
   {
     feature: "Động lực duy trì thói quen",
@@ -381,12 +381,12 @@ export default function PublicLandingPage() {
               {/* Product Badge */}
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-100/80 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-900/60 text-amber-900 dark:text-amber-300 text-xs font-black tracking-wide shadow-2xs">
                 <Zap className="size-3.5 text-amber-600 dark:text-amber-400 shrink-0 fill-amber-600 dark:fill-amber-400" aria-hidden="true" />
-                <span>Nền tảng Học Tiếng Anh &amp; Luyện Thi TOEIC AI Thế Hệ Mới</span>
+                <span>Nền tảng Tự học Tiếng Anh theo Kỹ năng, Lộ trình &amp; Mục tiêu Chứng chỉ</span>
               </div>
 
               {/* Main Headline */}
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-black text-slate-900 dark:text-slate-100 leading-[1.24] sm:leading-[1.18] text-balance">
-                Chinh phục Tiếng Anh &amp; Bứt phá TOEIC cùng{" "}
+                Tự học Tiếng Anh theo lộ trình, chinh phục từng mục tiêu cùng{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 dark:from-amber-400 dark:via-orange-400 dark:to-amber-500">
                   Gia sư AI thông minh
                 </span>
@@ -394,8 +394,8 @@ export default function PublicLandingPage() {
 
               {/* Subheadline */}
               <p className="text-slate-600 dark:text-slate-300 text-base sm:text-lg font-semibold leading-relaxed max-w-2xl">
-                Học tập phản xạ 4 kỹ năng Nghe - Nói - Đọc - Viết, chấm phát âm chi tiết từng âm vị, cọ xát
-                hơn 200+ bộ đề thi ETS chuẩn hóa và duy trì cảm hứng bền bỉ cùng thú cưng đồng hành mỗi ngày.
+                Rèn luyện từng kỹ năng Nghe - Nói - Đọc - Viết theo cấp độ và chủ đề, học theo khóa học có lộ trình,
+                luyện đề theo các format chứng chỉ đang hỗ trợ (trong đó có TOEIC) và duy trì cảm hứng cùng AI, Gamification.
               </p>
 
               {/* Call-to-Actions */}
@@ -560,7 +560,7 @@ export default function PublicLandingPage() {
                       <strong className="text-base font-black text-amber-700 dark:text-amber-400">95 / 100</strong>
                     </div>
                     <div className="p-2 rounded-xl bg-amber-50/50 dark:bg-slate-800/60 border border-amber-200/60 dark:border-slate-700/60">
-                      <span className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Dự đoán TOEIC</span>
+                      <span className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Mục tiêu format</span>
                       <strong className="text-base font-black text-blue-700 dark:text-blue-400">820+</strong>
                     </div>
                   </div>
@@ -608,11 +608,11 @@ export default function PublicLandingPage() {
             Trụ Cột Đột Phá
           </span>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 leading-snug sm:leading-[1.36] text-balance">
-            Mọi công cụ bạn cần để làm chủ tiếng Anh &amp; TOEIC
+            Mọi công cụ bạn cần để làm chủ tiếng Anh &amp; mục tiêu chứng chỉ
           </h2>
           <p className="text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl text-pretty">
             Tạm biệt phương pháp học nhồi nhét truyền thống. BreadTrans kết hợp AI phân tích âm vị,
-            đấu trường luyện đề chuẩn ETS và động lực gamification giữ lửa mỗi ngày.
+            lộ trình học theo kỹ năng, kho luyện đề theo format chứng chỉ và động lực Gamification giữ lửa mỗi ngày.
           </p>
         </div>
 
@@ -668,7 +668,7 @@ export default function PublicLandingPage() {
             </div>
           </div>
 
-          {/* Card 2: ETS Simulation TOEIC Arena (1 Col) */}
+          {/* Card 2: Certificate-format exam arena (1 Col) */}
           <div className="bg-gradient-to-br from-blue-50/50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-850 border border-blue-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-soft hover:border-blue-300 dark:hover:border-slate-700 transition-colors">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -676,16 +676,16 @@ export default function PublicLandingPage() {
                   <Trophy size={28} aria-hidden="true" />
                 </div>
                 <span className="px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-900/60 text-xs font-black">
-                  Format ETS 2024
+                  Ví dụ: TOEIC ETS 2024
                 </span>
               </div>
               <div>
                 <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100">
-                  Đấu Trường Thi Thử TOEIC 200 Câu
+                  Đấu Trường Thi Thử theo Format Chứng Chỉ
                 </h3>
                 <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
-                  Trải nghiệm áp lực làm bài 120 phút với đồng hồ đếm ngược đồng bộ server.
-                  Báo cáo phân tích điểm mạnh - điểm yếu từng Part 1 đến Part 7 tự động.
+                  Trải nghiệm format TOEIC 200 câu với áp lực làm bài 120 phút và đồng hồ đếm ngược đồng bộ server.
+                  Báo cáo tự động phân tích điểm mạnh - điểm yếu theo từng Part.
                 </p>
               </div>
               <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 space-y-1.5 text-xs font-bold">
@@ -703,11 +703,11 @@ export default function PublicLandingPage() {
             <div className="pt-5 mt-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <span className="text-xs font-bold text-slate-500 dark:text-slate-400">200+ đề thi có giải</span>
               <button
-                onClick={() => handleProtectedAction("phòng thi TOEIC", "/exams")}
+                onClick={() => handleProtectedAction("phòng thi theo format chứng chỉ", "/exams")}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs transition-colors shadow-2xs cursor-pointer"
                 type="button"
               >
-                <span>Làm đề ETS</span>
+                <span>Làm đề TOEIC/ETS</span>
                 <ChevronRight size={14} aria-hidden="true" />
               </button>
             </div>
@@ -820,7 +820,7 @@ export default function PublicLandingPage() {
       </section>
 
       {/* ========================================================================= */}
-      {/* 4. INTERACTIVE TEST-DRIVE WIDGET (Dự Đoán Lộ Trình & Điểm Số TOEIC)       */}
+      {/* 4. INTERACTIVE TEST-DRIVE WIDGET (Ước tính lộ trình & mục tiêu chứng chỉ) */}
       {/* ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20">
         <div className="bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 rounded-3xl p-6 sm:p-10 text-white shadow-card relative overflow-hidden">
@@ -838,7 +838,7 @@ export default function PublicLandingPage() {
                   Công Cụ Tương Tác Miễn Phí
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-black text-white leading-snug sm:leading-[1.36] text-balance">
-                  Ước Tính Lộ Trình &amp; Điểm Số TOEIC Của Bạn
+                  Ước Tính Lộ Trình &amp; Mục Tiêu Chứng Chỉ Của Bạn
                 </h2>
                 <p className="text-amber-100 text-sm sm:text-base font-semibold leading-relaxed text-pretty">
                   Chọn trình độ xuất phát và band điểm mục tiêu để hệ thống tính toán thời gian và khối lượng học tập tối ưu nhất.
@@ -875,7 +875,7 @@ export default function PublicLandingPage() {
               {/* Step 2: Target Score */}
               <div className="space-y-2">
                 <label className="text-xs font-extrabold uppercase tracking-wide text-amber-200">
-                  2. Mục tiêu TOEIC mong muốn:
+                  2. Mục tiêu điểm theo format đang chọn:
                 </label>
                 <div className="grid grid-cols-3 gap-2 sm:gap-3">
                   {[

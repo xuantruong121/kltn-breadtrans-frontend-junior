@@ -17,6 +17,7 @@ export default function AdminSpeakingPage() {
   const [pageSize, setPageSize] = useState(10);
   const [pendingDelete, setPendingDelete] = useState<{
     id: number;
+    practiceSetId: string;
     title: string;
   } | null>(null);
 
@@ -29,14 +30,32 @@ export default function AdminSpeakingPage() {
   const { data: exercises, isLoading } = useQuery<any[]>({
     queryKey: ["admin-speaking"],
     queryFn: async () => {
-      const res: any = await axiosClient.get("/admin/speaking/exercises");
-      return Array.isArray(res) ? res : res?.data || [];
+      const res: any = await axiosClient.get("/admin/skill-content/speaking");
+      const sets = Array.isArray(res) ? res : res?.data || [];
+      return sets.flatMap((set: any) =>
+        (set.exercises || []).map((exercise: any) => ({
+          ...exercise,
+          practiceSetId: set.id,
+          practiceSetTitle: set.title,
+          setPublicationStatus: set.publicationStatus,
+        })),
+      );
     },
   });
 
   const createMutation = useMutation({
     mutationFn: async (dto: any) => {
-      return axiosClient.post("/admin/speaking/exercises", dto);
+      const set = await axiosClient.post("/admin/skill-content/speaking", {
+        title: dto.title,
+        description: "",
+        category: dto.category,
+        level: dto.difficulty,
+      });
+      const setData: any = (set as any)?.data || set;
+      return axiosClient.post(
+        `/admin/skill-content/speaking/${setData.id}/exercises`,
+        dto,
+      );
     },
     onSuccess: () => {
       toast.success("Tạo bài tập phát âm thành công!");
@@ -51,8 +70,10 @@ export default function AdminSpeakingPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
-      return axiosClient.delete(`/admin/speaking/exercises/${id}`);
+    mutationFn: async ({ practiceSetId, id }: { practiceSetId: string; id: number }) => {
+      return axiosClient.delete(
+        `/admin/skill-content/speaking/${practiceSetId}/exercises/${id}`,
+      );
     },
     onSuccess: () => {
       toast.success("Đã xóa bài tập phát âm!");
@@ -61,6 +82,20 @@ export default function AdminSpeakingPage() {
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message || "Có lỗi xảy ra");
+    },
+  });
+
+  const publishMutation = useMutation({
+    mutationFn: async (practiceSetId: string) =>
+      axiosClient.post(`/admin/skill-content/speaking/${practiceSetId}/publish`, {
+        status: "PUBLISHED",
+      }),
+    onSuccess: () => {
+      toast.success("Đã xuất bản nội dung Speaking!");
+      queryClient.invalidateQueries({ queryKey: ["admin-speaking"] });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || "Không thể xuất bản nội dung");
     },
   });
 
@@ -170,7 +205,11 @@ export default function AdminSpeakingPage() {
 
                       <button
                         onClick={() =>
-                          setPendingDelete({ id: ex.id, title: ex.title })
+                        setPendingDelete({
+                          id: ex.id,
+                          practiceSetId: ex.practiceSetId,
+                          title: ex.title,
+                        })
                         }
                         className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg transition-colors cursor-pointer"
                         title="Xóa bài tập"
@@ -182,6 +221,9 @@ export default function AdminSpeakingPage() {
                     <h3 className="text-base font-black text-slate-800">
                       {ex.title}
                     </h3>
+                    <p className="text-xs text-slate-500">
+                      Bộ bài: {ex.practiceSetTitle} · {ex.setPublicationStatus}
+                    </p>
                   </div>
 
                   <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-1">
@@ -191,6 +233,16 @@ export default function AdminSpeakingPage() {
                     <p className="text-sm font-extrabold text-purple-900 leading-relaxed italic">
                       &ldquo;{ex.targetText}&rdquo;
                     </p>
+                    {ex.setPublicationStatus !== "PUBLISHED" && (
+                      <button
+                        type="button"
+                        onClick={() => publishMutation.mutate(ex.practiceSetId)}
+                        disabled={publishMutation.isPending}
+                        className="mt-3 text-xs font-bold text-purple-700 hover:text-purple-900 disabled:opacity-50"
+                      >
+                        {publishMutation.isPending ? "Đang xuất bản..." : "Kiểm tra và xuất bản bộ bài"}
+                      </button>
+                    )}
                   </div>
                 </motion.div>
               ))}
@@ -329,7 +381,7 @@ export default function AdminSpeakingPage() {
         isPending={deleteMutation.isPending}
         onCancel={() => setPendingDelete(null)}
         onConfirm={() => {
-          if (pendingDelete) deleteMutation.mutate(pendingDelete.id);
+          if (pendingDelete) deleteMutation.mutate(pendingDelete);
         }}
       />
     </div>

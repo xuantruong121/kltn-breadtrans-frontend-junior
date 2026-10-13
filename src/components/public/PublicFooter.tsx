@@ -93,7 +93,7 @@ export function PublicFooter() {
             <Link href="/privacy" className="hover:text-amber-700 dark:hover:text-amber-400">Chính sách bảo mật</Link>
             <Link href="/help" className="hover:text-amber-700 dark:hover:text-amber-400">Trợ giúp</Link>
           </div>
-          <p>© {new Date().getFullYear()} BreadTrans - Nền tảng tự học tiếng Anh & Luyện thi TOEIC. Thiết kế lấy học viên làm trung tâm.</p>
+          <p>© {new Date().getFullYear()} BreadTrans - Nền tảng tự học tiếng Anh theo kỹ năng, chứng chỉ và lộ trình học. Thiết kế lấy học viên làm trung tâm.</p>
         </div>
       </div>
     </footer>

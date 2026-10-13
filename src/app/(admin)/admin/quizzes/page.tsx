@@ -543,7 +543,7 @@ export default function AdminQuizzesPage() {
                     required
                     value={quizForm.title}
                     onChange={(e) => setQuizForm({ ...quizForm, title: e.target.value })}
-                    placeholder="VD: Đề Luyện Thi TOEIC Part 5 - Bài 1"
+                    placeholder="VD: Bài luyện Reading Part 5 hoặc đề theo format chứng chỉ"
                     className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:bg-white text-slate-800"
                   />
                 </div>
