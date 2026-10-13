@@ -165,7 +165,7 @@ export default function AdminPaymentsPage() {
             Đối Soát Thanh Toán
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Hàng đợi kiểm tra giao dịch và đối soát thanh toán gói học
+            Hàng đợi kiểm tra giao dịch và đối soát thanh toán
           </p>
         </div>
         <button
@@ -250,7 +250,7 @@ export default function AdminPaymentsPage() {
                 <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                   <th className="py-3 px-4">Mã Chuyển Khoản</th>
                   <th className="py-3 px-4">Học Viên</th>
-                  <th className="py-3 px-4">Khóa học & Gói học</th>
+                  <th className="py-3 px-4">Sản phẩm / dịch vụ</th>
                   <th className="py-3 px-4 text-right">Số Tiền (Snapshot)</th>
                   <th className="py-3 px-4 text-center">Trạng Thái</th>
                   <th className="py-3 px-4">Thời Gian Báo</th>

@@ -72,6 +72,10 @@ const STATUS_CONFIG: Record<
   },
 };
 
+// Legacy class/package controls remain implemented for compatibility routes,
+// but are intentionally absent from the primary self-study Course UI.
+const SHOW_LEGACY_PACKAGE_TOOLS = false;
+
 export default function AdminCoursesPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -283,7 +287,7 @@ export default function AdminCoursesPage() {
             Quản lý Khóa học
           </h1>
           <p className="text-slate-500 mt-1">
-            Tạo, thẩm định và quản lý các khóa học cùng gói truy cập trong hệ thống.
+            Tạo, thẩm định và quản lý nội dung khóa học tự học.
           </p>
         </div>
         <button
@@ -330,7 +334,7 @@ export default function AdminCoursesPage() {
           />
           <input
             type="text"
-            placeholder="Tìm theo tên khóa học hoặc gói học..."
+            placeholder="Tìm theo tên khóa học..."
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -398,15 +402,15 @@ export default function AdminCoursesPage() {
                           {/* Top Action Buttons */}
                           <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
                             <Link
-                              href={`/admin/courses/${course.id}/edit`}
+                              href={`/admin/courses/${course.id}/curriculum`}
                               className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors"
                               title="Mở Course Studio để soạn giáo trình và bài học"
                             >
                               <BookOpen size={14} /> Soạn bài học (Studio)
                             </Link>
 
-                            {/* Create access package - available after the course is published */}
-                            {course.status === "PUBLISHED" ? (
+                            {/* Legacy package controls stay available only through support routes. */}
+                            {SHOW_LEGACY_PACKAGE_TOOLS && course.status === "PUBLISHED" ? (
                               <button
                                 onClick={() => {
                                   setShowCreateClass(course.id);
@@ -419,14 +423,14 @@ export default function AdminCoursesPage() {
                               >
                                 <Plus size={14} /> Thêm gói học
                               </button>
-                            ) : (
+                            ) : SHOW_LEGACY_PACKAGE_TOOLS ? (
                               <span
                                 className="px-2.5 py-1 bg-slate-100 text-slate-400 rounded-lg text-xs font-medium border border-slate-200 cursor-not-allowed"
                                 title="Cần duyệt khóa học (PUBLISHED) trước khi mở gói học"
                               >
                                 Cần duyệt trước khi mở gói học
                               </span>
-                            )}
+                            ) : null}
 
                             <button
                               onClick={() => setCourseToDelete(course)}
@@ -442,11 +446,11 @@ export default function AdminCoursesPage() {
                           <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-600">
                             {levelLabel(course.level)}
                           </span>
-                          <span className="flex items-center gap-1">
+                          {SHOW_LEGACY_PACKAGE_TOOLS && <span className="flex items-center gap-1">
                             <Users size={13} className="text-slate-400" />{" "}
                             {course._count.classes} gói học
-                          </span>
-                          <button
+                          </span>}
+                          {SHOW_LEGACY_PACKAGE_TOOLS && <button
                             onClick={() =>
                               setExpandedCourse(
                                 expandedCourse === course.id ? null : course.id,
@@ -463,13 +467,13 @@ export default function AdminCoursesPage() {
                                 expandedCourse === course.id ? "rotate-90" : ""
                               }`}
                             />
-                          </button>
+                          </button>}
                         </div>
                       </div>
                     </div>
 
                     {/* Classes Accordion */}
-                    {expandedCourse === course.id && (
+                    {SHOW_LEGACY_PACKAGE_TOOLS && expandedCourse === course.id && (
                       <div className="border-t border-slate-100 bg-slate-50 p-4">
                         {course.classes && course.classes.length > 0 ? (
                           <div className="overflow-x-auto">

@@ -26,6 +26,33 @@ export default function SocketProvider({ children }: { children: React.ReactNode
   const { user, accessToken } = useAuthStore();
   const queryClient = useQueryClient();
 
+  // A logout caused by an expired session must reach other open tabs too;
+  // otherwise each tab keeps sending the same rejected token independently.
+  useEffect(() => {
+    const handleAuthStorageChange = (event: StorageEvent) => {
+      if (event.key !== "auth-storage-junior") return;
+
+      try {
+        const persisted = event.newValue ? JSON.parse(event.newValue) : null;
+        const nextState = persisted?.state;
+        if (nextState?.accessToken && nextState?.user) return;
+
+        const current = useAuthStore.getState();
+        if (!current.accessToken && !current.refreshToken && !current.user) return;
+
+        queryClient.clear();
+        current.logout();
+        window.dispatchEvent(new Event("breadtrans:logout"));
+      } catch {
+        // Ignore malformed storage events; the local interceptor still
+        // invalidates a failed session safely.
+      }
+    };
+
+    window.addEventListener("storage", handleAuthStorageChange);
+    return () => window.removeEventListener("storage", handleAuthStorageChange);
+  }, [queryClient]);
+
   useEffect(() => {
     if (!accessToken) {
       return;
@@ -41,6 +68,21 @@ export default function SocketProvider({ children }: { children: React.ReactNode
       },
       autoConnect: true,
     });
+
+    const handleAuthError = () => {
+      // The server explicitly rejected this token. Stop Socket.IO's automatic
+      // reconnect loop and let the normal auth flow require a fresh login.
+      socketInstance.io.opts.reconnection = false;
+      socketInstance.disconnect();
+
+      const current = useAuthStore.getState();
+      if (current.accessToken !== accessToken) return;
+      queryClient.clear();
+      current.logout();
+      window.dispatchEvent(new Event("breadtrans:logout"));
+    };
+
+    socketInstance.on("auth:error", handleAuthError);
 
     socketInstance.on("connect", () => {
       setSocket(socketInstance);
@@ -150,6 +192,7 @@ export default function SocketProvider({ children }: { children: React.ReactNode
     });
 
     return () => {
+      socketInstance.off("auth:error", handleAuthError);
       socketInstance.disconnect();
       setSocket(null);
       setIsConnected(false);

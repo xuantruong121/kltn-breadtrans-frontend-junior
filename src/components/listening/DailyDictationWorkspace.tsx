@@ -55,7 +55,8 @@ import {
 } from "./listeningTranscriptResources";
 import {
   type DictationDiffToken,
-  buildProgressiveAnswer,
+  calculateProgressiveDictationFeedback,
+  generateSafeRelativeDictationHint,
   clampTranscriptIndex,
   moveTranscriptIndex,
   resolveTranscriptPlaybackState,
@@ -159,14 +160,6 @@ export function DailyDictationWorkspace({
   onChangeAccent,
   level,
 }: DailyDictationWorkspaceProps) {
-  const canonicalAnswer =
-    currentCheck?.correctAnswer ||
-    (currentQuestion?.content as any)?.correctAnswer ||
-    (currentQuestion?.content as any)?.audioText ||
-    "";
-  const displayedAnswer = isSkipped
-    ? (canonicalAnswer || currentCheck?.correctAnswer || selectedAnswer)
-    : selectedAnswer;
   const isLastQuestion = currentIndex === questions.length - 1;
   // Viewing the masked suffix is only a hint. It must not lock the input or
   // turn the question into a skipped/completed outcome.
@@ -245,7 +238,21 @@ export function DailyDictationWorkspace({
   const [audioError, setAudioError] = useState(false);
   const [audioNotice, setAudioNotice] = useState<string | null>(null);
   const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
-  const [fullTranscript, setFullTranscript] = useState<ListeningTranscriptItem[]>([]);
+  const [fullTranscript, setFullTranscript] = useState<ListeningTranscriptItem[]>(() => {
+    const cached = getCachedTranscriptResources(quiz.id, quiz.listeningAudioArtifact);
+    return cached?.transcript ?? [];
+  });
+  const [isSkipping, setIsSkipping] = useState(false);
+
+  useEffect(() => {
+    if (fullTranscript.length === 0) {
+      const cached = getCachedTranscriptResources(quiz.id, quiz.listeningAudioArtifact);
+      if (cached?.transcript && cached.transcript.length > 0) {
+        setFullTranscript(cached.transcript);
+      }
+    }
+  }, [quiz.id, quiz.listeningAudioArtifact, fullTranscript.length]);
+
   const [selectedTranscriptItemIndex, setSelectedTranscriptItemIndex] = useState(-1);
   const [activeTranscriptItemIndex, setActiveTranscriptItemIndex] = useState(-1);
   const [activeTranscriptSpeakerTurnId, setActiveTranscriptSpeakerTurnId] = useState<string | null>(null);
@@ -254,6 +261,29 @@ export function DailyDictationWorkspace({
   const [selectedTranslationLanguage, setSelectedTranslationLanguage] = useState<"none" | "vi">("none");
   const [repeatTranscript, setRepeatTranscript] = useState(false);
   const [autoScrollTranscript, setAutoScrollTranscript] = useState(true);
+
+  const cachedTranscript = getCachedTranscriptResources(quiz.id, quiz.listeningAudioArtifact);
+  const currentSentenceTranscriptItem =
+    fullTranscript.find((item) => item.questionId === currentQuestion?.id) ??
+    cachedTranscript?.transcript?.find((item) => item.questionId === currentQuestion?.id) ??
+    fullTranscript[currentIndex] ??
+    cachedTranscript?.transcript?.[currentIndex];
+
+  const currentContent = (currentQuestion?.content ?? {}) as Record<string, any>;
+  const questionSegmentText = Array.isArray(currentContent.transcriptSegments)
+    ? currentContent.transcriptSegments?.[0]?.text
+    : undefined;
+
+  const canonicalAnswer =
+    currentCheck?.correctAnswer ||
+    currentSentenceTranscriptItem?.transcript ||
+    (currentContent as any)?.correctAnswer ||
+    (currentContent as any)?.audioText ||
+    ((isCompletedOrRevealed || isSkipped) && questionSegmentText ? questionSegmentText : "") ||
+    "";
+  const displayedAnswer = isSkipped
+    ? (canonicalAnswer || currentCheck?.correctAnswer || selectedAnswer || questionSegmentText || "")
+    : selectedAnswer;
   const [showTranscriptSpeedMenu, setShowTranscriptSpeedMenu] = useState(false);
   const autoplayOnLoadRef = useRef(false);
   const transcriptSpeedMenuRef = useRef<HTMLDivElement | null>(null);
@@ -262,7 +292,6 @@ export function DailyDictationWorkspace({
   const transcriptAudioRequestRef = useRef<AbortController | null>(null);
   const questionAudioCacheRef = useRef<Map<string, { blob: Blob; url: string }>>(new Map());
   const activeAudioVersion = currentQuestion?.audioAssets?.find((asset) => asset.isActive)?.version;
-  const currentContent = (currentQuestion?.content ?? {}) as Record<string, any>;
   const currentSegment = Array.isArray(currentContent.transcriptSegments)
     ? currentContent.transcriptSegments.find(
         (segment: any) =>
@@ -304,13 +333,26 @@ export function DailyDictationWorkspace({
   const handlePerformCheck = useCallback(async () => {
     if (isChecking || isCompletedOrRevealed) return;
     const res = await onCheck();
-    if (!res?.isCorrect) {
-      const el = textareaRef.current;
-      if (el && document.activeElement !== el) {
-        el.focus({ preventScroll: true });
-      }
+    const finalAnswer = res?.canonicalizedAnswer;
+    if (finalAnswer) {
+      onChangeAnswer(finalAnswer);
     }
-  }, [isChecking, isCompletedOrRevealed, onCheck]);
+    setTimeout(() => {
+      const el = textareaRef.current;
+      if (el) {
+        if (finalAnswer && el.value !== finalAnswer) {
+          el.value = finalAnswer;
+        }
+        el.focus({ preventScroll: true });
+        const len = el.value.length;
+        try {
+          el.setSelectionRange(len, len);
+        } catch {
+          // ignore
+        }
+      }
+    }, 50);
+  }, [isChecking, isCompletedOrRevealed, onCheck, onChangeAnswer]);
 
   // Keep dictation textarea focused on mount, tab switch, or sentence change without overriding active typing caret
   useEffect(() => {
@@ -371,13 +413,75 @@ export function DailyDictationWorkspace({
     }, 60);
   }, [onRetry, onChangeAnswer, focusInputAtEnd, isSegmentAudio, segmentStartSeconds]);
 
-  // Skip current question: perform skip and immediately focus textarea so caret is visible
+  // Skip current question: perform skip, populate canonical answer into input, and focus
   const handleSkipSentence = useCallback(async () => {
-    await onSkip();
-    setTimeout(() => {
-      textareaRef.current?.focus();
-    }, 50);
-  }, [onSkip]);
+    if (isSkipping) return;
+    setIsSkipping(true);
+    let canonical =
+      canonicalAnswer ||
+      (Array.isArray((currentQuestion?.content as any)?.transcriptSegments)
+        ? (currentQuestion?.content as any)?.transcriptSegments?.[0]?.text
+        : "");
+
+    try {
+      if (!canonical && quiz?.id) {
+        const res = await revealAndFetchTranscript(quiz.id, {
+          ...quiz,
+          questions: questions?.length > 0 ? questions : quiz?.questions,
+        });
+        if (res.transcript && res.transcript.length > 0) {
+          setFullTranscript(res.transcript);
+          const match =
+            res.transcript.find((item) => item.questionId === currentQuestion?.id) ??
+            res.transcript[currentIndex];
+          if (match?.transcript) {
+            canonical = match.transcript;
+          }
+        }
+      }
+      if (canonical) {
+        onChangeAnswer(canonical);
+      }
+      await onSkip();
+    } catch (err) {
+      console.error("Failed to query transcript on skip:", err);
+      if (canonical) {
+        onChangeAnswer(canonical);
+      }
+      await onSkip();
+    } finally {
+      setIsSkipping(false);
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 50);
+    }
+  }, [
+    isSkipping,
+    canonicalAnswer,
+    currentQuestion,
+    quiz,
+    questions,
+    currentIndex,
+    onChangeAnswer,
+    onSkip,
+  ]);
+
+  const handleToggleRevealAnswer = useCallback(async () => {
+    onToggleReveal();
+    if (!isRevealed && fullTranscript.length === 0 && quiz?.id) {
+      try {
+        const res = await revealAndFetchTranscript(quiz.id, {
+          ...quiz,
+          questions: questions?.length > 0 ? questions : quiz?.questions,
+        });
+        if (res.transcript && res.transcript.length > 0) {
+          setFullTranscript(res.transcript);
+        }
+      } catch (err) {
+        console.error("Failed to fetch transcript on reveal:", err);
+      }
+    }
+  }, [isRevealed, fullTranscript.length, onToggleReveal, quiz, questions]);
 
   const displayTranscriptItems: ListeningTranscriptItem[] =
     fullTranscript.length > 0
@@ -1119,9 +1223,9 @@ export function DailyDictationWorkspace({
         }}
       />
 
-      <main className="w-full max-w-[1560px] 2xl:max-w-[1680px] mx-auto flex-1 flex flex-col pt-4 sm:pt-6 pb-12 px-4 sm:px-6 lg:px-8">
+      <main className="w-full max-w-[1560px] 2xl:max-w-[1680px] mx-auto flex-1 flex flex-col pt-3 sm:pt-4 pb-8 px-4 sm:px-6 lg:px-8">
         {/* 3. Sub-Tabs Bar: [Dictation] [Full transcript] */}
-        <div className="inline-flex max-w-full overflow-x-auto no-scrollbar p-1.5 bg-stone-100/90 dark:bg-slate-800/80 rounded-2xl border border-stone-200/80 dark:border-slate-700/80 mb-5 shadow-2xs self-start">
+        <div className="inline-flex max-w-full overflow-x-auto no-scrollbar p-1.5 bg-stone-100/90 dark:bg-slate-800/80 rounded-2xl border border-stone-200/80 dark:border-slate-700/80 mb-3.5 shadow-2xs self-start">
         <button
           type="button"
           onClick={openDictationTab}
@@ -1210,10 +1314,10 @@ export function DailyDictationWorkspace({
 
       {/* 4. Main Exercise Card */}
       {activeTab === "dictation" ? (
-        <div className="w-full rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-7 lg:p-8 shadow-xs transition-all">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-7 lg:gap-8 items-start">
+        <div className="w-full rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 lg:p-6 shadow-xs transition-all">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 lg:gap-6 items-start">
             {/* Left Column (lg:col-span-7): Player & Dictation Input */}
-            <div className="lg:col-span-7 flex flex-col gap-4 sm:gap-5">
+            <div className="lg:col-span-7 flex flex-col gap-3 sm:gap-3.5">
               {/* Sentence Navigator & Settings Row */}
               <div className="flex items-center justify-between gap-4">
                 {/* Left: ← Câu 1 / 21 → */}
@@ -1263,7 +1367,7 @@ export function DailyDictationWorkspace({
               </div>
 
               {/* Audio Player (BreadTrans clean light inline player) */}
-              <div className="rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700/80 p-3 sm:p-3.5 flex flex-wrap items-center gap-3 sm:gap-4 shadow-2xs">
+              <div className="rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700/80 p-2.5 sm:p-3 flex flex-wrap items-center gap-2.5 sm:gap-3.5 shadow-2xs">
                 {/* Play / Pause button */}
                 <button
                   type="button"
@@ -1271,7 +1375,7 @@ export function DailyDictationWorkspace({
                   disabled={audioLoading || audioError}
                   title={isPlaying ? "Tạm dừng" : "Phát câu"}
                   aria-label={isPlaying ? "Tạm dừng" : "Phát câu"}
-                  className="flex size-12 sm:size-[50px] items-center justify-center rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-all active:scale-95 disabled:opacity-40 cursor-pointer shrink-0"
+                  className="flex size-11 sm:size-12 items-center justify-center rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-all active:scale-95 disabled:opacity-40 cursor-pointer shrink-0"
                 >
                   {audioLoading ? (
                     <Loader2 size={18} className="animate-spin" />
@@ -1445,7 +1549,7 @@ export function DailyDictationWorkspace({
                   inputMode="text"
                   readOnly={Boolean(isCompletedOrRevealed)}
                   spellCheck={wordSuggestions}
-                  className={`w-full resize-none min-h-[135px] sm:min-h-[160px] lg:min-h-[175px] rounded-2xl border-2 p-4 sm:p-5 sm:pb-12 text-xl sm:text-2xl lg:text-[24px] leading-relaxed placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none transition-all shadow-2xs font-semibold break-words cursor-text ${
+                  className={`w-full resize-none min-h-[96px] sm:min-h-[110px] lg:min-h-[120px] rounded-2xl border-2 p-3.5 sm:p-4 sm:pb-9 text-lg sm:text-xl lg:text-[22px] leading-relaxed placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none transition-all shadow-2xs font-semibold break-words cursor-text ${
                     isCompletedOrRevealed
                       ? "border-emerald-500 bg-emerald-50/15 text-slate-900 dark:text-slate-100 dark:bg-emerald-950/20 font-bold focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 dark:focus:ring-emerald-950"
                       : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:border-blue-600 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-950"
@@ -1454,7 +1558,7 @@ export function DailyDictationWorkspace({
 
                 {/* Mic Icon for Speech Input & subtle check indicator */}
                 {!isCompletedOrRevealed && (
-                  <div className="absolute bottom-3.5 right-3.5 flex items-center gap-2">
+                  <div className="absolute bottom-2.5 right-2.5 flex items-center gap-2">
                     {isChecking && (
                       <Loader2 size={18} className="animate-spin text-blue-500" aria-label="Đang kiểm tra..." />
                     )}
@@ -1464,13 +1568,13 @@ export function DailyDictationWorkspace({
                       disabled={isChecking}
                       title={isListeningSpeech ? "Đang lắng nghe..." : "Nhập bằng giọng nói"}
                       aria-label={isListeningSpeech ? "Đang lắng nghe..." : "Nhập bằng giọng nói"}
-                      className={`size-10 flex items-center justify-center rounded-xl transition-colors cursor-pointer ${
+                      className={`size-9 sm:size-10 flex items-center justify-center rounded-xl transition-colors cursor-pointer ${
                         isListeningSpeech
                           ? "bg-rose-500 text-white animate-pulse"
                           : "text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-700"
                       }`}
                     >
-                      {isListeningSpeech ? <MicOff size={20} /> : <Mic size={20} />}
+                      {isListeningSpeech ? <MicOff size={18} /> : <Mic size={18} />}
                     </button>
                   </div>
                 )}
@@ -1478,12 +1582,12 @@ export function DailyDictationWorkspace({
 
               {/* Action Buttons Row before checking/skipping */}
               {!isCompletedOrRevealed && !isChecked && (
-                <div className="flex items-center justify-between gap-4 pt-1">
+                <div className="flex items-center justify-between gap-3 pt-0.5">
                   <button
                     type="button"
                     onClick={() => void handlePerformCheck()}
                     disabled={isChecking}
-                    className="inline-flex min-h-[50px] sm:min-h-[54px] items-center justify-center gap-2.5 rounded-2xl bg-blue-600 px-8 sm:px-10 py-3 text-base sm:text-lg font-extrabold text-white shadow-xs transition-all hover:bg-blue-700 active:scale-98 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                    className="inline-flex min-h-[46px] sm:min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-blue-600 px-7 sm:px-8 py-2.5 text-base sm:text-lg font-extrabold text-white shadow-xs transition-all hover:bg-blue-700 active:scale-98 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
                   >
                     {isChecking && <Loader2 size={18} className="animate-spin" />}
                     <span>Kiểm tra</span>
@@ -1492,10 +1596,10 @@ export function DailyDictationWorkspace({
                   <button
                     type="button"
                     onClick={handleSkipSentence}
-                    disabled={isChecking}
-                    className="inline-flex min-h-[50px] sm:min-h-[54px] items-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 sm:px-8 py-3 text-base sm:text-lg font-bold text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50 cursor-pointer shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+                    disabled={isChecking || isSkipping}
+                    className="inline-flex min-h-[46px] sm:min-h-[48px] items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 sm:px-6 py-2.5 text-base sm:text-lg font-bold text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50 cursor-pointer shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-slate-100"
                   >
-                    {isChecking ? <Loader2 size={16} className="animate-spin" /> : null}
+                    {(isChecking || isSkipping) ? <Loader2 size={16} className="animate-spin" /> : null}
                     <span>Bỏ qua</span>
                   </button>
                 </div>
@@ -1503,28 +1607,28 @@ export function DailyDictationWorkspace({
 
               {/* When correct or explicitly skipped: show Next button & replay control */}
               {isCompletedOrRevealed && (
-                <div className="flex items-center justify-between gap-4 pt-1">
-                  <div className="flex items-center gap-2.5">
+                <div className="flex items-center justify-between gap-3 pt-0.5">
+                  <div className="flex items-center gap-2">
                     {isSkipped ? (
-                      <span className="inline-flex items-center gap-1.5 text-base sm:text-lg font-extrabold px-5 py-2.5 rounded-xl border bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                      <span className="inline-flex items-center gap-1.5 text-sm sm:text-base font-extrabold px-4 py-2 rounded-xl border bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
                         Đã bỏ qua
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 text-base sm:text-lg font-extrabold px-5 py-2.5 rounded-xl border bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800">
+                      <span className="inline-flex items-center gap-1.5 text-sm sm:text-base font-extrabold px-4 py-2 rounded-xl border bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800">
                         ✓ Chính xác
                       </span>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5">
                     <button
                       type="button"
                       onClick={handleRetryCurrentSentence}
                       title="Làm lại câu này"
                       aria-label="Làm lại câu này"
-                      className="size-12 sm:size-[50px] flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 rounded-2xl transition-colors cursor-pointer border border-slate-200/90 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-2xs"
+                      className="size-11 sm:size-12 flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 rounded-2xl transition-colors cursor-pointer border border-slate-200/90 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-2xs"
                     >
-                      <RotateCcw size={20} />
+                      <RotateCcw size={18} />
                     </button>
 
                     {isLastQuestion ? (
@@ -1532,7 +1636,7 @@ export function DailyDictationWorkspace({
                         type="button"
                         onClick={onFinalSubmit}
                         disabled={isSubmitting}
-                        className="inline-flex min-h-[50px] sm:min-h-[54px] items-center gap-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 px-8 sm:px-9 py-3 text-base sm:text-lg font-extrabold text-white shadow-xs transition-all active:scale-98 cursor-pointer disabled:opacity-50"
+                        className="inline-flex min-h-[46px] sm:min-h-[48px] items-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 px-7 sm:px-8 py-2.5 text-base sm:text-lg font-extrabold text-white shadow-xs transition-all active:scale-98 cursor-pointer disabled:opacity-50"
                       >
                         {isSubmitting ? (
                           <>
@@ -1541,7 +1645,7 @@ export function DailyDictationWorkspace({
                           </>
                         ) : (
                           <>
-                            <Check size={20} />
+                            <Check size={18} />
                             <span>Hoàn thành bài tập</span>
                           </>
                         )}
@@ -1550,7 +1654,7 @@ export function DailyDictationWorkspace({
                       <button
                         type="button"
                         onClick={onNext}
-                        className="inline-flex min-h-[50px] sm:min-h-[54px] items-center gap-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 px-8 sm:px-9 py-3 text-base sm:text-lg font-extrabold text-white shadow-xs transition-colors cursor-pointer"
+                        className="inline-flex min-h-[46px] sm:min-h-[48px] items-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 px-7 sm:px-8 py-2.5 text-base sm:text-lg font-extrabold text-white shadow-xs transition-colors cursor-pointer"
                       >
                         <span>Câu tiếp theo</span>
                         <ArrowRight size={18} />
@@ -1563,71 +1667,151 @@ export function DailyDictationWorkspace({
               {/* Check Feedback Panel (Word-by-word diff) when checked and incorrect */}
               {isChecked && !isCompletedOrRevealed && (
                 <div
-                  className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800"
+                  className="pt-0.5"
                   role="alert"
                   aria-live="polite"
                 >
                   {/* Progressive answer review */}
-                  <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/60 p-4 sm:p-5">
-                    <div className="mb-3 flex items-center justify-between gap-3">
+                  <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/60 p-3.5 sm:p-4">
+                    <div className="mb-2.5 flex items-center justify-between gap-3">
                       <p className="text-sm sm:text-base font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-300">
                         Đối chiếu theo thứ tự nghe
                       </p>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2.5">
                         <button
                           type="button"
                           onClick={handleSkipSentence}
-                          disabled={isChecking}
-                          className="rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 px-4 py-2 text-sm sm:text-base font-bold text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:hover:bg-slate-700 dark:hover:text-slate-100 disabled:opacity-50 cursor-pointer shadow-2xs"
+                          disabled={isChecking || isSkipping}
+                          className="rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 px-3.5 py-1.5 text-sm sm:text-base font-bold text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:hover:bg-slate-700 dark:hover:text-slate-100 disabled:opacity-50 cursor-pointer shadow-2xs"
                         >
-                          Bỏ qua
+                          {isSkipping ? <Loader2 size={14} className="animate-spin" /> : null}
+                          <span>Bỏ qua</span>
                         </button>
                         <button
                           type="button"
-                          onClick={onToggleReveal}
+                          onClick={handleToggleRevealAnswer}
                           className="text-sm sm:text-base font-bold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors cursor-pointer"
                         >
                           {isRevealed ? "Ẩn đáp án" : "Xem đáp án"}
                         </button>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-x-3 gap-y-2 text-xl sm:text-2xl md:text-3xl font-bold leading-relaxed">
-                      {buildProgressiveAnswer(
-                        currentCheck?.correctAnswer ?? canonicalAnswer,
-                        currentCheck?.submittedAnswer ?? displayedAnswer,
-                        isSkipped,
-                        isRevealed,
-                      ).map((token, index) => (
-                        <span
-                          key={`${token.text}-${index}`}
-                          className={
-                            token.state === "hint"
-                              ? "rounded-md bg-amber-100 text-amber-950 ring-1 ring-amber-300 dark:bg-amber-950/60 dark:text-amber-200 dark:ring-amber-800 font-bold inline-block shadow-2xs px-1"
-                              : token.state === "correct"
-                                ? "text-emerald-700 dark:text-emerald-400 font-bold"
-                                : token.state === "answer"
-                                  ? "text-slate-900 dark:text-slate-100 font-bold"
-                                  : "text-slate-400 dark:text-slate-500 tracking-[0.2em] font-mono"
-                          }
-                        >
-                          {token.text}
-                        </span>
-                      ))}
-                    </div>
+                    {(() => {
+                      if (isRevealed) {
+                        return (
+                          <>
+                            <div
+                              className="text-lg sm:text-xl md:text-2xl font-bold leading-relaxed tracking-normal break-words text-slate-900 dark:text-slate-100"
+                              data-testid="dictation-revealed-sentence"
+                            >
+                              {canonicalAnswer || (
+                                <span className="inline-flex items-center gap-2 text-base font-medium text-slate-500 animate-pulse">
+                                  <Loader2 size={16} className="animate-spin text-blue-500" />
+                                  <span>Đang tải đáp án...</span>
+                                </span>
+                              )}
+                            </div>
+                            <div className="mt-2.5 flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400">
+                              <span className="inline-block size-2 rounded-full bg-blue-500" />
+                              <span>Đáp án đầy đủ của câu.</span>
+                            </div>
+                          </>
+                        );
+                      }
+
+                      // Progressive feedback: verifiedPrefix + nextWordMask (active) + remainingMasks (gray)
+                      let verifiedPrefix = currentCheck?.verifiedPrefix;
+                      let nextWordMask = currentCheck?.nextWordMask;
+                      let remainingMasks = currentCheck?.remainingMasks;
+                      let relativeHint = currentCheck?.hint;
+
+                      if (verifiedPrefix === undefined && nextWordMask === undefined) {
+                        const feedback = calculateProgressiveDictationFeedback(
+                          currentCheck?.correctAnswer ?? canonicalAnswer,
+                          currentCheck?.submittedAnswer ?? displayedAnswer,
+                        );
+                        verifiedPrefix = feedback.verifiedPrefix;
+                        nextWordMask = feedback.nextWordMask;
+                        remainingMasks = feedback.remainingMasks;
+                        relativeHint = relativeHint || feedback.hint;
+                      } else if (!remainingMasks || remainingMasks.length === 0) {
+                        const feedback = calculateProgressiveDictationFeedback(
+                          currentCheck?.correctAnswer ?? canonicalAnswer,
+                          currentCheck?.submittedAnswer ?? displayedAnswer,
+                        );
+                        remainingMasks = feedback.remainingMasks;
+                      }
+
+                      if (!relativeHint) {
+                        relativeHint = generateSafeRelativeDictationHint(
+                          currentCheck?.correctAnswer ?? canonicalAnswer,
+                          currentCheck?.submittedAnswer ?? displayedAnswer,
+                        );
+                      }
+
+                      return (
+                        <>
+                          <div
+                            className="text-lg sm:text-xl md:text-2xl font-semibold leading-relaxed tracking-normal break-words text-slate-900 dark:text-slate-100"
+                            data-testid="dictation-progressive-sentence"
+                          >
+                            {verifiedPrefix && (
+                              <span className="text-emerald-700 dark:text-emerald-400 font-bold">
+                                {verifiedPrefix}
+                              </span>
+                            )}
+                            {verifiedPrefix && nextWordMask && " "}
+                            {nextWordMask && (
+                              <span
+                                className="font-mono tracking-wider font-bold text-amber-700 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-950/40 px-2 py-0.5 rounded-lg border border-amber-300 dark:border-amber-700/80 inline-block shadow-2xs"
+                                aria-label={`Từ tiếp theo gồm ${nextWordMask.replace(/[^A-Za-z*]/g, "").length} chữ cái`}
+                                data-testid="dictation-next-word-mask"
+                              >
+                                {nextWordMask}
+                              </span>
+                            )}
+                            {remainingMasks && remainingMasks.length > 0 && (
+                              <span
+                                className="font-mono tracking-wider text-slate-400 dark:text-slate-500 font-medium"
+                                data-testid="dictation-remaining-masks"
+                              >
+                                {" " + remainingMasks.join(" ")}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="mt-2.5 flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400">
+                            <span className="inline-block size-2 rounded-full bg-amber-500" />
+                            <span>Hãy nghe lại vị trí tiếp theo và thử lại.</span>
+                          </div>
+
+                          {relativeHint && (
+                            <div className="mt-2.5 rounded-xl border border-blue-200/90 bg-blue-50/80 p-2.5 sm:p-3 text-xs sm:text-sm font-medium text-blue-950 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200">
+                              <div className="flex items-start gap-2">
+                                <span className="font-extrabold uppercase tracking-wider text-[11px] px-1.5 py-0.5 rounded bg-blue-200/80 text-blue-900 dark:bg-blue-900/80 dark:text-blue-200 shrink-0 mt-0.5">
+                                  Gợi ý
+                                </span>
+                                <span>{relativeHint}</span>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               )}
             </div>
 
             {/* Right Column (lg:col-span-5): Translation & Pronunciation */}
-            <div className="lg:col-span-5 flex flex-col gap-4 sm:gap-5">
+            <div className="lg:col-span-5 flex flex-col gap-3 sm:gap-3.5">
               {isCompletedOrRevealed ? (
                 <>
                   {/* Card 1: Vietnamese Translation */}
                   {isBilingual && (
-                    <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/60 p-5 sm:p-6 shadow-2xs flex flex-col justify-between min-h-[170px]">
+                    <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/60 p-4 sm:p-5 shadow-2xs flex flex-col justify-between min-h-[140px]">
                     <div>
-                      <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center justify-between mb-2.5">
                         <span className="text-sm sm:text-base font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">
                           Bản dịch {selectedLanguage === "vi" ? "tiếng Việt" : selectedLanguage === "en" ? "tiếng Anh" : "bản địa"}
                         </span>
@@ -1635,7 +1819,7 @@ export function DailyDictationWorkspace({
                           AI Bilingual
                         </span>
                       </div>
-                      <p className="text-xl sm:text-2xl lg:text-[24px] font-bold text-slate-900 dark:text-slate-100 leading-relaxed">
+                      <p className="text-lg sm:text-xl lg:text-[22px] font-bold text-slate-900 dark:text-slate-100 leading-relaxed">
                         {selectedLanguage === "en" ? (
                           canonicalAnswer || (
                             <span className="text-slate-400 font-normal italic">
@@ -1653,7 +1837,7 @@ export function DailyDictationWorkspace({
                     </div>
 
                     {/* Translation Actions Bar (Edit + More options) */}
-                    <div className="mt-4 pt-3 border-t border-slate-200/80 dark:border-slate-700/80 flex items-center justify-end gap-3 text-sm">
+                    <div className="mt-3 pt-2.5 border-t border-slate-200/80 dark:border-slate-700/80 flex items-center justify-end gap-3 text-sm">
                       <div className="flex items-center gap-2 shrink-0">
                         {/* Edit button: user provides improved translation to admin */}
                         <button
@@ -1714,8 +1898,8 @@ export function DailyDictationWorkspace({
                 )}
 
                   {/* Card 2: Pronunciation */}
-                  <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/60 p-5 sm:p-6 shadow-2xs">
-                    <div className="flex items-center justify-between mb-3.5">
+                  <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/60 p-4 sm:p-5 shadow-2xs">
+                    <div className="flex items-center justify-between mb-2.5">
                       <span className="text-sm sm:text-base font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">
                         Phát âm (Pronunciation)
                       </span>
@@ -1723,16 +1907,22 @@ export function DailyDictationWorkspace({
                         Nhấp vào từ để tra từ điển
                       </span>
                     </div>
-                    <div className="text-xl sm:text-2xl lg:text-[24px] font-bold text-slate-900 dark:text-slate-100 leading-loose">
-                      {canonicalAnswer ? (
+                    <div className="text-lg sm:text-xl lg:text-[22px] font-bold text-slate-900 dark:text-slate-100 leading-relaxed">
+                      {isSkipping ? (
+                        <div className="flex items-center gap-2 text-slate-500 text-sm sm:text-base font-semibold">
+                          <Loader2 size={16} className="animate-spin text-blue-600" />
+                          <span>Đang nạp phát âm...</span>
+                        </div>
+                      ) : canonicalAnswer ? (
                         String(canonicalAnswer).split(/\s+/).filter(Boolean).map((word: string, wordIdx: number) => {
-                          const cleanWord = word.trim().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "") || word;
+                          const cleanWord = word.trim().replace(/^[^\p{L}\p{N}']+|[^\p{L}\p{N}']+$/gu, "") || word;
                           return (
                             <button
                               key={`${word}-${wordIdx}`}
                               type="button"
-                              className="inline-block border-b-2 border-dotted border-slate-300 dark:border-slate-600 pb-0.5 mr-2 text-slate-900 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-600 dark:hover:border-blue-400 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 rounded-md px-1.5 py-0.5 cursor-pointer transition-all font-bold text-xl sm:text-2xl lg:text-[24px]"
+                              className="inline-block border-b-2 border-dotted border-slate-300 dark:border-slate-600 pb-0.5 mr-2 text-slate-900 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-600 dark:hover:border-blue-400 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 rounded-md px-1.5 py-0.5 cursor-pointer transition-all font-bold text-lg sm:text-xl lg:text-[22px]"
                               title={`Nhấn để tra từ điển & phát âm: "${cleanWord}"`}
+                              aria-label={`Nhấn để tra từ điển: ${cleanWord}`}
                               onClick={() => {
                                 if (cleanWord) {
                                   setSelectedWordForLookup(cleanWord);
@@ -1752,14 +1942,14 @@ export function DailyDictationWorkspace({
                   </div>
                 </>
               ) : (
-                <div className="flex flex-col justify-center items-center h-full min-h-[320px] rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 p-8 text-center">
-                  <div className="size-20 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-5">
-                    <Languages size={38} />
+                <div className="flex flex-col justify-center items-center h-full min-h-[240px] rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 p-6 text-center">
+                  <div className="size-14 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3">
+                    <Languages size={28} />
                   </div>
-                  <p className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100">
+                  <p className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100">
                     Bản dịch &amp; Giải thích phát âm
                   </p>
-                  <p className="text-base sm:text-lg text-slate-500 dark:text-slate-400 mt-3 max-w-md leading-relaxed">
+                  <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 mt-2 max-w-md leading-relaxed">
                     Sẽ tự động hiển thị sau khi bạn bấm Kiểm tra hoặc Bỏ qua.
                   </p>
                 </div>
@@ -2513,11 +2703,12 @@ export function DailyDictationWorkspace({
         <WordDictionaryPopup
           word={selectedWordForLookup}
           onClose={() => setSelectedWordForLookup(null)}
+          playbackRate={playbackRate}
           onPracticeWord={(w) => {
             if (typeof window !== "undefined" && "speechSynthesis" in window) {
               window.speechSynthesis.cancel();
               const utterance = new SpeechSynthesisUtterance(w);
-              utterance.rate = 0.9;
+              utterance.rate = playbackRate || 0.9;
               utterance.lang = accent === "UK" ? "en-GB" : "en-US";
               window.speechSynthesis.speak(utterance);
             }

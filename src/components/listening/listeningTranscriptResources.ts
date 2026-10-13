@@ -297,10 +297,12 @@ export function getActiveConsumerCount(quizId: number): number {
 export function quizContainsDictation(quiz: {
   questions?: Array<{ type?: string }>;
   mode?: string;
+  type?: string;
 }): boolean {
   if (quiz.mode === "DIALOGUE") return false;
-  if (!Array.isArray(quiz.questions)) return false;
-  return quiz.questions.some((q) => q.type === "DICTATION");
+  if (Array.isArray(quiz.questions) && quiz.questions.some((q) => q.type === "DICTATION")) return true;
+  if (quiz.type === "LISTENING_PRACTICE") return true;
+  return false;
 }
 
 export function getCachedTranscriptResources(
@@ -599,7 +601,7 @@ export async function revealAndFetchTranscript(
     const fetcher = await resolveFetcher(customFetcher);
 
     if (hasDictation) {
-      await fetcher.revealTranscript(quizId);
+      await fetcher.revealTranscript(quizId).catch(() => undefined);
     }
     return await fetchAuthorizedResources(quizId, quiz, internalSignal, fetcher);
   });

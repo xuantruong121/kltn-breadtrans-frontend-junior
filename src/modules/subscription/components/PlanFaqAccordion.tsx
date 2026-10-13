@@ -35,10 +35,10 @@ const FAQS: FaqItem[] = [
       "Có. Bạn có thể đăng nhập tài khoản BreadTrans trên máy tính, điện thoại thông minh và máy tính bảng. Mọi tiến độ học tập, bài thi thử đã làm và kho từ vựng cá nhân đều được đồng bộ tự động theo thời gian thực giữa các thiết bị.",
   },
   {
-    id: "ai-credits",
-    question: "Lượt chấm AI Writing & Speaking được tính như thế nào?",
+    id: "ai-assessment",
+    question: "AI Writing & Speaking hoạt động như thế nào?",
     answer:
-      "Mỗi tài khoản được cấp lượt chấm miễn phí hàng ngày để trải nghiệm. Khi nâng cấp gói Plus, bạn được ưu tiên xử lý và mở rộng hạn mức chấm chữa chi tiết (phân tích phát âm, sửa lỗi ngữ pháp, gợi ý nâng cấp từ vựng chuẩn band điểm thi quốc tế).",
+      "Bạn có thể gửi bài trực tiếp từ khu vực Writing hoặc Speaking. Hệ thống kiểm tra đăng nhập và quyền truy cập nội dung, sau đó xử lý bài qua pipeline chấm hiện có. Mức độ phân tích phụ thuộc vào gói và nội dung bạn đang được cấp quyền.",
   },
   {
     id: "support-channel",

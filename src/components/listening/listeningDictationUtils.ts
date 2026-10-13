@@ -128,6 +128,21 @@ function tokenize(value?: string | null): string[] {
  * Replaces case/punctuation of correctly matched prefix words with the canonical version,
  * and appends a trailing space if more words remain so the learner can continue typing.
  */
+function tokensMatch(subWord: string, expWord: string): boolean {
+  if (subWord === expWord) return true;
+  const normSub = normalizeDictationToken(subWord);
+  const normExp = normalizeDictationToken(expWord);
+  if (normSub === normExp) return true;
+  const strippedSub = normSub.replace(/'/g, "");
+  const strippedExp = normExp.replace(/'/g, "");
+  return strippedSub.length > 0 && strippedSub === strippedExp;
+}
+
+/**
+ * Normalizes user submitted text against expected canonical sentence.
+ * Replaces case/punctuation of correctly matched prefix words with the canonical version,
+ * while preserving any unresolved/mismatched words for editing.
+ */
 export function canonicalizeSubmittedDictation(
   expected?: string | null,
   submitted?: string | null,
@@ -141,33 +156,28 @@ export function canonicalizeSubmittedDictation(
   const submittedWords = trimmedSubmitted.split(/\s+/).filter(Boolean);
   if (expectedWords.length === 0) return trimmedSubmitted;
 
-  let allPrefixMatched = true;
+  let mismatchFound = false;
   const normalizedWords: string[] = [];
 
   for (let i = 0; i < submittedWords.length; i += 1) {
     const subWord = submittedWords[i];
     const expWord = expectedWords[i];
 
-    if (
-      expWord &&
-      normalizeDictationToken(subWord) === normalizeDictationToken(expWord)
-    ) {
+    if (!mismatchFound && expWord && tokensMatch(subWord, expWord)) {
       normalizedWords.push(expWord);
     } else {
-      allPrefixMatched = false;
+      mismatchFound = true;
       normalizedWords.push(subWord);
     }
   }
 
-  const result = normalizedWords.join(" ");
+  return normalizedWords.join(" ");
+}
 
-  // If all typed words matched the prefix of the sentence and there are more words remaining,
-  // add a trailing space so the learner can immediately type the next word.
-  if (allPrefixMatched && submittedWords.length < expectedWords.length) {
-    return result + " ";
-  }
-
-  return result;
+export interface DictationDiffToken {
+  kind: DictationDiffKind;
+  text: string;
+  originalSubmittedText?: string;
 }
 
 /** Small deterministic word diff for learner feedback; it never mutates the original answer. */
@@ -212,8 +222,23 @@ export function diffDictationAnswer(
   return result;
 }
 
-export function maskWord(value: string): string {
-  return value.replace(/\S/g, "*");
+export function getLexicalLetterCount(word?: string | null): number {
+  if (!word) return 0;
+  return word.replace(/[^A-Za-z]/g, "").length;
+}
+
+export function maskExpectedWord(canonicalToken?: string | null): string {
+  if (!canonicalToken) return "***";
+  const letterCount = getLexicalLetterCount(canonicalToken);
+  const asterisks = "*".repeat(letterCount > 0 ? letterCount : 1);
+  const trailingPunctMatch = canonicalToken.match(/([.,!?:;]+)$/);
+  const trailingPunct = trailingPunctMatch ? trailingPunctMatch[1] : "";
+  return `${asterisks}${trailingPunct}`;
+}
+
+export function maskWord(value?: string | null): string {
+  if (!value) return "***";
+  return maskExpectedWord(value);
 }
 
 /** Keeps transcript navigation independent from the Dictation question cursor. */
@@ -302,72 +327,345 @@ export function resolveActiveTranscriptIndex(
   return resolveTranscriptPlaybackState(currentTimeMs, items).activeChunkIndex;
 }
 
+export interface ProgressiveAnswerToken {
+  text: string;
+  state: "correct" | "wrong" | "missing" | "extra" | "hint" | "masked" | "answer";
+  originalWord?: string;
+}
+
+const COMMON_PREPOSITIONS = new Set([
+  "to", "at", "in", "on", "for", "by", "with", "from", "about",
+  "into", "through", "after", "before", "under", "between", "among",
+  "of", "off", "over", "up", "down", "out",
+]);
+
+const COMMON_DETERMINERS = new Set([
+  "a", "an", "the", "this", "that", "these", "those",
+  "my", "your", "his", "her", "their", "our", "its",
+]);
+
+const COMMON_AUXILIARIES = new Set([
+  "do", "does", "did", "have", "has", "had",
+  "is", "am", "are", "was", "were", "will", "would",
+  "can", "could", "should", "must",
+]);
+
+export interface ProgressiveDictationFeedback {
+  isCorrect: boolean;
+  verifiedPrefix: string;
+  nextWordMask: string;
+  remainingMasks: string[];
+  nextErrorType: "WRONG" | "MISSING" | "EXTRA" | null;
+  hint: string | null;
+  wordAccuracy: number;
+}
+
+function generateProgressiveRelativeHint(
+  canonicalTokens: string[],
+  normSubmittedTokens: string[],
+  matchedCanonicalCount: number,
+  subIndex: number,
+  nextErrorType: "WRONG" | "MISSING" | "EXTRA",
+): string {
+  if (normSubmittedTokens.length === 0) {
+    return "Hãy nghe kỹ phần đầu câu.";
+  }
+
+  const prevCanonical =
+    matchedCanonicalCount > 0
+      ? canonicalTokens[matchedCanonicalCount - 1].replace(/[^A-Za-z]/g, "")
+      : null;
+
+  if (nextErrorType === "EXTRA") {
+    if (prevCanonical) {
+      return `Có một từ thừa ngay sau “${prevCanonical}”. Hãy nghe lại phần này.`;
+    }
+    return "Có từ thừa ở đầu câu trả lời, hãy nghe lại và lược bỏ.";
+  }
+
+  if (matchedCanonicalCount >= canonicalTokens.length) {
+    return "Có từ thừa ở cuối câu trả lời, hãy nghe lại và lược bỏ.";
+  }
+
+  const nextCanonical = canonicalTokens[matchedCanonicalCount];
+  const nextExpWords = tokenize(nextCanonical);
+  const nextExpWord = nextExpWords[0] ?? "";
+  const currentSubWord =
+    subIndex < normSubmittedTokens.length ? normSubmittedTokens[subIndex] : "";
+
+  if (COMMON_PREPOSITIONS.has(nextExpWord)) {
+    if (prevCanonical) {
+      return `Kiểm tra từ nối ngay sau “${prevCanonical}”.`;
+    }
+    return "Kiểm tra giới từ hoặc từ nối ở vị trí này.";
+  }
+
+  if (COMMON_DETERMINERS.has(nextExpWord)) {
+    return "Kiểm tra mạo từ (a, an, the) hoặc từ hạn định ở vị trí này.";
+  }
+
+  if (COMMON_AUXILIARIES.has(nextExpWord)) {
+    return "Kiểm tra trợ động từ hoặc dạng viết tắt (auxiliary verb).";
+  }
+
+  if (currentSubWord) {
+    const baseExp = nextExpWord.replace(/(?:ing|ed|es|s)$/, "");
+    const baseSub = currentSubWord.replace(/(?:ing|ed|es|s)$/, "");
+    if (baseExp.length >= 3 && baseExp === baseSub) {
+      if (nextExpWord.endsWith("s") || nextExpWord.endsWith("es")) {
+        if (
+          prevCanonical &&
+          ["he", "she", "it"].includes(prevCanonical.toLowerCase())
+        ) {
+          return `Kiểm tra dạng động từ với chủ ngữ “${prevCanonical}”.`;
+        }
+        return "Kiểm tra dạng động từ theo chủ ngữ (chú ý ngôi và số ít / số nhiều).";
+      }
+      if (nextExpWord.endsWith("ed")) {
+        return "Chú ý thì của động từ (kiểm tra âm đuôi quá khứ -ed).";
+      }
+      if (nextExpWord.endsWith("ing")) {
+        return "Chú ý dạng động từ ở vị trí tiếp theo.";
+      }
+      return "Chú ý phụ âm cuối hoặc dạng biến đổi của từ.";
+    }
+  }
+
+  if (nextExpWord.endsWith("ed") || looksLikePastParticiple(nextExpWord)) {
+    return "Câu đang nói về một hành động trong quá khứ, hãy chú ý thì của động từ.";
+  }
+
+  if (
+    prevCanonical &&
+    ["he", "she", "it"].includes(prevCanonical.toLowerCase()) &&
+    (nextExpWord.endsWith("s") || nextExpWord.endsWith("es"))
+  ) {
+    return `Kiểm tra dạng động từ với chủ ngữ “${prevCanonical}”.`;
+  }
+
+  if (prevCanonical) {
+    return `Nghe kỹ lại phần ngay sau “${prevCanonical}”.`;
+  }
+
+  return "Hãy nghe kỹ phần đầu câu.";
+}
+
+export function calculateProgressiveDictationFeedback(
+  expected?: string | null,
+  submitted?: string | null,
+): ProgressiveDictationFeedback {
+  const trimmedExpected = String(expected ?? "").trim();
+  const trimmedSubmitted = String(submitted ?? "").trim();
+
+  const canonicalTokens = trimmedExpected.split(/\s+/).filter(Boolean);
+  const normSubmittedTokens = tokenize(trimmedSubmitted);
+  const normExpectedTokens = tokenize(trimmedExpected);
+
+  const isCorrect =
+    normSubmittedTokens.length === normExpectedTokens.length &&
+    normSubmittedTokens.every((t, i) => t === normExpectedTokens[i]);
+
+  let wordAccuracy = 0;
+  if (canonicalTokens.length > 0) {
+    let matchedCount = 0;
+    for (
+      let i = 0;
+      i < Math.min(normExpectedTokens.length, normSubmittedTokens.length);
+      i += 1
+    ) {
+      if (normExpectedTokens[i] === normSubmittedTokens[i]) matchedCount += 1;
+    }
+    wordAccuracy = Math.round(
+      (matchedCount /
+        Math.max(normExpectedTokens.length, normSubmittedTokens.length)) *
+        100,
+    );
+  }
+
+  if (isCorrect) {
+    return {
+      isCorrect: true,
+      verifiedPrefix: trimmedExpected,
+      nextWordMask: "",
+      remainingMasks: [],
+      nextErrorType: null,
+      hint: null,
+      wordAccuracy: 100,
+    };
+  }
+
+  let subIndex = 0;
+  let matchedCanonicalCount = 0;
+
+  for (let idx = 0; idx < canonicalTokens.length; idx += 1) {
+    const canonicalToken = canonicalTokens[idx];
+    const expNorm = tokenize(canonicalToken);
+
+    if (
+      expNorm.length > 0 &&
+      subIndex + expNorm.length <= normSubmittedTokens.length &&
+      expNorm.every((token, k) => normSubmittedTokens[subIndex + k] === token)
+    ) {
+      matchedCanonicalCount += 1;
+      subIndex += expNorm.length;
+    } else {
+      break;
+    }
+  }
+
+  const verifiedTokens = canonicalTokens.slice(0, matchedCanonicalCount);
+  const verifiedPrefix = verifiedTokens.join(" ");
+
+  let nextWordMask = "";
+  let remainingMasks: string[] = [];
+  let nextErrorType: "WRONG" | "MISSING" | "EXTRA" = "WRONG";
+
+  if (matchedCanonicalCount < canonicalTokens.length) {
+    const nextCanonicalToken = canonicalTokens[matchedCanonicalCount];
+    nextWordMask = maskExpectedWord(nextCanonicalToken);
+
+    const remainingTokens = canonicalTokens.slice(matchedCanonicalCount + 1);
+    remainingMasks = remainingTokens.map((t) => maskExpectedWord(t));
+
+    if (subIndex >= normSubmittedTokens.length) {
+      nextErrorType = "MISSING";
+    } else {
+      const nextExpectedToken = tokenize(nextCanonicalToken)[0];
+      const remainingSubmitted = normSubmittedTokens.slice(subIndex);
+      const foundLater = remainingSubmitted.includes(nextExpectedToken);
+      nextErrorType = foundLater ? "EXTRA" : "WRONG";
+    }
+  } else {
+    nextErrorType = "EXTRA";
+    nextWordMask = "";
+  }
+
+  const hint = generateProgressiveRelativeHint(
+    canonicalTokens,
+    normSubmittedTokens,
+    matchedCanonicalCount,
+    subIndex,
+    nextErrorType,
+  );
+
+  return {
+    isCorrect: false,
+    verifiedPrefix,
+    nextWordMask,
+    remainingMasks,
+    nextErrorType,
+    hint,
+    wordAccuracy,
+  };
+}
+
+export function generateSafeRelativeDictationHint(
+  expected?: string | null,
+  submitted?: string | null,
+  tokens?: unknown,
+): string {
+  void tokens;
+  const feedback = calculateProgressiveDictationFeedback(expected, submitted);
+  return (
+    feedback.hint ||
+    "Lắng nghe kỹ câu trong audio và nhập những gì bạn nghe được."
+  );
+}
+
 /**
- * Builds progressive dictation answer display:
- * - Words correctly typed from left to right are marked as "correct" (green).
- * - At the first mistyped word (or the next word to type), the correct word is shown as "hint" (yellow highlight).
- * - All subsequent words after the error are NOT reported and remain masked as asterisks ("masked").
- * - When full answer is revealed, all words are shown as "answer".
+ * Builds progressive dictation answer tokens:
+ * - When full answer is revealed: all canonical words with state 'answer'.
+ * - When checking: longest verified prefix (state 'correct') + ONLY ONE next unresolved word mask (state 'masked').
+ * - VISIBLE_MASK_COUNT = 1 always. Downstream words/masks are NEVER returned.
  */
 export function buildProgressiveAnswer(
   expected?: string | null,
   submitted?: string | null,
   showFullAnswer = false,
   revealMaskedWords = false,
-): Array<{ text: string; state: "correct" | "hint" | "masked" | "answer" }> {
-  const expectedWords = (expected || "").trim().split(/\s+/).filter(Boolean);
-  if (showFullAnswer) {
+  serverTokens?: Array<{
+    status: "CORRECT" | "WRONG" | "MISSING" | "EXTRA";
+    text?: string;
+  }>,
+  serverVerifiedPrefix?: string,
+  serverNextWordMask?: string,
+): ProgressiveAnswerToken[] {
+  const trimmedExpected = (expected || "").trim();
+  const expectedWords = trimmedExpected.split(/\s+/).filter(Boolean);
+
+  if (showFullAnswer || revealMaskedWords) {
     return expectedWords.map((word) => ({
       text: word,
       state: "answer" as const,
     }));
   }
-  const submittedWords = (submitted || "").trim().split(/\s+/).filter(Boolean);
 
-  let firstMismatchIndex = -1;
-  for (let i = 0; i < submittedWords.length; i += 1) {
-    const subWord = submittedWords[i];
-    const expWord = expectedWords[i];
-    if (
-      !expWord ||
-      normalizeDictationToken(subWord) !== normalizeDictationToken(expWord)
-    ) {
-      firstMismatchIndex = i;
-      break;
+  // 1. Authoritative server response: verifiedPrefix + nextWordMask
+  if (
+    serverVerifiedPrefix !== undefined &&
+    serverNextWordMask !== undefined
+  ) {
+    const tokens: ProgressiveAnswerToken[] = [];
+    if (serverVerifiedPrefix.trim().length > 0) {
+      const prefixWords = serverVerifiedPrefix
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+      for (const w of prefixWords) {
+        tokens.push({ text: w, state: "correct" });
+      }
     }
+    if (serverNextWordMask) {
+      tokens.push({ text: serverNextWordMask, state: "masked" });
+    }
+    return tokens;
   }
 
-  const targetHighlightIndex =
-    firstMismatchIndex !== -1
-      ? firstMismatchIndex
-      : submittedWords.length < expectedWords.length
-        ? submittedWords.length
-        : -1;
-
-  const result: Array<{
-    text: string;
-    state: "correct" | "hint" | "masked" | "answer";
-  }> = [];
-
-  for (let i = 0; i < expectedWords.length; i += 1) {
-    const expWord = expectedWords[i];
-
-    if (targetHighlightIndex !== -1 && i === targetHighlightIndex) {
-      result.push({ text: expWord, state: "hint" as const });
-    } else if (targetHighlightIndex !== -1 && i > targetHighlightIndex) {
-      result.push(
-        revealMaskedWords
-          ? { text: expWord, state: "answer" as const }
-          : { text: maskWord(expWord), state: "masked" as const },
-      );
-    } else if (firstMismatchIndex === -1 && i < submittedWords.length) {
-      result.push({ text: expWord, state: "correct" as const });
-    } else if (firstMismatchIndex !== -1 && i < firstMismatchIndex) {
-      result.push({ text: expWord, state: "correct" as const });
-    } else {
-      result.push({ text: maskWord(expWord), state: "masked" as const });
+  // 2. Client-side deterministic calculation from expected text
+  if (trimmedExpected) {
+    const feedback = calculateProgressiveDictationFeedback(
+      trimmedExpected,
+      submitted,
+    );
+    if (feedback.isCorrect) {
+      return expectedWords.map((word) => ({
+        text: word,
+        state: "correct" as const,
+      }));
     }
+
+    const tokens: ProgressiveAnswerToken[] = [];
+    if (feedback.verifiedPrefix) {
+      const prefixWords = feedback.verifiedPrefix
+        .split(/\s+/)
+        .filter(Boolean);
+      for (const w of prefixWords) {
+        tokens.push({ text: w, state: "correct" });
+      }
+    }
+    if (feedback.nextWordMask) {
+      tokens.push({ text: feedback.nextWordMask, state: "masked" });
+    }
+    return tokens;
   }
 
-  return result;
+  // 3. Fallback: serverTokens provided without expected text:
+  // Render verified prefix tokens up to first non-correct token, then exactly ONE mask, then STOP.
+  if (serverTokens && serverTokens.length > 0) {
+    const tokens: ProgressiveAnswerToken[] = [];
+    for (const tok of serverTokens) {
+      if (tok.status === "CORRECT") {
+        tokens.push({ text: tok.text ?? "", state: "correct" });
+      } else {
+        tokens.push({
+          text: tok.text && tok.text.includes("*") ? tok.text : "***",
+          state: "masked",
+        });
+        break;
+      }
+    }
+    return tokens;
+  }
+
+  return [];
 }

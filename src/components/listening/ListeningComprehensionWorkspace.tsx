@@ -44,6 +44,7 @@ import {
   buildProgressiveAnswer,
   canonicalizeSubmittedDictation,
   diffDictationAnswer,
+  generateSafeRelativeDictationHint,
   type DictationDiffToken,
 } from "./listeningDictationUtils";
 import { DailyDictationWorkspace } from "./DailyDictationWorkspace";
@@ -51,7 +52,10 @@ import {
   LISTENING_SHORTCUTS,
   createListeningShortcutController,
 } from "./listeningShortcutConfig";
-import { probeOrPrefetchTranscript } from "./listeningTranscriptResources";
+import {
+  probeOrPrefetchTranscript,
+  revealAndFetchTranscript,
+} from "./listeningTranscriptResources";
 
 interface ListeningComprehensionWorkspaceProps {
   quiz?: Quiz | null;
@@ -110,11 +114,7 @@ function maskDictationAnswer(answer: string): string {
   return answer
     .trim()
     .split(/\s+/)
-    .map((word, index) =>
-      index === 0
-        ? word
-        : word.replace(/[A-Za-z0-9À-ỹ]/g, "*"),
-    )
+    .map(() => "***")
     .join(" ");
 }
 
@@ -439,14 +439,20 @@ export function ListeningComprehensionWorkspace({
         currentQuestion.id,
         answer,
       );
-      let canonicalizedSubmitted = answer;
-      if (currentQuestion.type === "DICTATION") {
-        const canonical =
-          res?.correctAnswer ||
-          (currentQuestion.content as any)?.correctAnswer ||
-          (currentQuestion.content as any)?.audioText ||
-          "";
-        canonicalizedSubmitted = canonicalizeSubmittedDictation(canonical, answer);
+      let canonicalizedSubmitted = res?.canonicalizedAnswer ?? answer;
+      if (currentQuestion.type === "DICTATION" || isDictationQuestion) {
+        if (!res?.canonicalizedAnswer) {
+          const canonical =
+            res?.correctAnswer ||
+            (currentQuestion.content as any)?.correctAnswer ||
+            (currentQuestion.content as any)?.audioText ||
+            "";
+          if (res?.isCorrect && canonical) {
+            canonicalizedSubmitted = canonical;
+          } else if (canonical) {
+            canonicalizedSubmitted = canonicalizeSubmittedDictation(canonical, answer);
+          }
+        }
         if (canonicalizedSubmitted !== answer) {
           setAnswersByQuestionId((prev) => ({
             ...prev,
@@ -767,33 +773,39 @@ export function ListeningComprehensionWorkspace({
   };
 
   const handleSkipQuestion = async () => {
-    if (
-      !currentQuestion ||
-      isSkipped ||
-      (isChecked && !canRetryDictation) ||
-      isChecking
-    ) return;
+    if (!currentQuestion || isSkipped || isChecking) return;
+
+    const segmentText = Array.isArray((currentQuestion.content as any)?.transcriptSegments)
+      ? (currentQuestion.content as any)?.transcriptSegments?.[0]?.text
+      : undefined;
+    const segmentTrans = Array.isArray((currentQuestion.content as any)?.transcriptSegments)
+      ? (currentQuestion.content as any)?.transcriptSegments?.[0]?.translation
+      : undefined;
 
     let canonical =
       checkResults[currentQuestion.id]?.correctAnswer ||
+      segmentText ||
       (currentQuestion.content as any)?.correctAnswer ||
       (currentQuestion.content as any)?.audioText ||
       "";
     let trans =
       checkResults[currentQuestion.id]?.translation ||
+      segmentTrans ||
       (currentQuestion.content as any)?.translation ||
       "";
 
-    if ((!canonical || !trans) && quizId && isDictationQuestion) {
+    if ((!canonical || !trans) && quizId) {
       setIsChecking(true);
       try {
-        const res = await quizService.checkPracticeQuestion(
-          quizId,
-          currentQuestion.id,
-          answersByQuestionId[currentQuestion.id] || "",
-        );
-        if (res?.correctAnswer) canonical = res.correctAnswer;
-        if (res?.translation) trans = res.translation;
+        const entry = await revealAndFetchTranscript(quizId, {
+          ...quiz,
+          questions: questions?.length > 0 ? questions : quiz?.questions,
+        });
+        const match =
+          entry?.transcript?.find((item) => item.questionId === currentQuestion.id) ??
+          entry?.transcript?.[currentIndex];
+        if (match?.transcript) canonical = match.transcript;
+        if (match?.translation) trans = match.translation;
       } catch (err) {
         console.error("Failed to query canonical answer on skip:", err);
       } finally {
@@ -833,12 +845,61 @@ export function ListeningComprehensionWorkspace({
     }
   };
 
-  const toggleRevealAnswer = () => {
-    if (!currentQuestion || !currentCheck) return;
+  const toggleRevealAnswer = async () => {
+    if (!currentQuestion) return;
+    const willBeRevealed = !revealedQuestionIds[currentQuestion.id];
     setRevealedQuestionIds((previous) => ({
       ...previous,
-      [currentQuestion.id]: !previous[currentQuestion.id],
+      [currentQuestion.id]: willBeRevealed,
     }));
+
+    if (willBeRevealed && quizId) {
+      const segmentText = Array.isArray((currentQuestion.content as any)?.transcriptSegments)
+        ? (currentQuestion.content as any)?.transcriptSegments?.[0]?.text
+        : undefined;
+      const segmentTrans = Array.isArray((currentQuestion.content as any)?.transcriptSegments)
+        ? (currentQuestion.content as any)?.transcriptSegments?.[0]?.translation
+        : undefined;
+
+      const canonical =
+        checkResults[currentQuestion.id]?.correctAnswer ||
+        segmentText ||
+        (currentQuestion.content as any)?.correctAnswer ||
+        (currentQuestion.content as any)?.audioText ||
+        "";
+      if (!canonical) {
+        try {
+          const entry = await revealAndFetchTranscript(quizId, {
+            ...quiz,
+            questions: questions?.length > 0 ? questions : quiz?.questions,
+          });
+          const match =
+            entry?.transcript?.find((item) => item.questionId === currentQuestion.id) ??
+            entry?.transcript?.[currentIndex];
+          if (match?.transcript) {
+            setCheckResults((prev) => ({
+              ...prev,
+              [currentQuestion.id]: {
+                ...(prev[currentQuestion.id] ?? {
+                  isCorrect: false,
+                  submittedAnswer: answersByQuestionId[currentQuestion.id] || "",
+                  wordAccuracy: 0,
+                  diff: [],
+                }),
+                correctAnswer: match.transcript,
+                translation:
+                  match.translation ??
+                  segmentTrans ??
+                  prev[currentQuestion.id]?.translation ??
+                  null,
+              } as any,
+            }));
+          }
+        } catch (err) {
+          console.error("Failed to load transcript on reveal:", err);
+        }
+      }
+    }
   };
 
   const handleRetryQuestion = useCallback(() => {
@@ -1612,19 +1673,53 @@ export function ListeningComprehensionWorkspace({
                           {dictationDiff.map((token, index) => (
                             <span
                               key={`${token.text}-${index}`}
+                              aria-label={
+                                token.kind === "same"
+                                  ? `Từ đúng: ${token.text}`
+                                  : token.kind === "missing"
+                                    ? "Một từ còn thiếu"
+                                    : token.kind === "changed"
+                                      ? "Một từ chưa đúng"
+                                      : `Từ thừa: ${token.text}`
+                              }
                               className={
                                 token.kind === "same"
                                   ? "text-slate-800 dark:text-slate-200"
                                   : token.kind === "missing"
-                                    ? "rounded-md bg-rose-100 dark:bg-rose-950/50 px-1.5 text-rose-800 dark:text-rose-300 line-through decoration-rose-500"
-                                    : "rounded-md bg-amber-100 dark:bg-amber-950/50 px-1.5 text-amber-900 dark:text-amber-300"
+                                    ? "rounded-md bg-rose-100 dark:bg-rose-950/50 px-1.5 text-rose-800 dark:text-rose-300 font-mono tracking-wider"
+                                    : token.kind === "changed"
+                                      ? "rounded-md bg-amber-100 dark:bg-amber-950/50 px-1.5 text-amber-900 dark:text-amber-300 font-mono tracking-wider"
+                                      : "rounded-md bg-slate-200 dark:bg-slate-800 px-1.5 text-slate-700 dark:text-slate-300 line-through"
                               }
                             >
-                              {token.text}
-                              {token.kind === "missing" ? " (thiếu)" : token.kind === "extra" ? " (thừa)" : ""}
+                              {token.kind === "missing" ? (
+                                isRevealed ? `${token.text} (thiếu)` : "*** (thiếu)"
+                              ) : token.kind === "changed" ? (
+                                isRevealed ? `${token.text} (chưa đúng)` : "*** (chưa đúng)"
+                              ) : token.kind === "extra" ? (
+                                `${token.text} (thừa)`
+                              ) : (
+                                token.text
+                              )}
                             </span>
                           ))}
                         </div>
+                        {(() => {
+                          const relHint =
+                            currentCheck?.hint ||
+                            generateSafeRelativeDictationHint(
+                              currentCheck?.correctAnswer,
+                              currentCheck?.submittedAnswer ?? answersByQuestionId[currentQuestion.id],
+                              dictationDiff,
+                            );
+                          if (!relHint || currentCheck?.isCorrect) return null;
+                          return (
+                            <div className="mt-2.5 rounded-lg border border-blue-200/80 bg-blue-50/70 p-2 text-xs font-medium text-blue-900 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200">
+                              <span className="font-bold mr-1">Gợi ý:</span>
+                              {relHint}
+                            </div>
+                          );
+                        })()}
                         {!currentCheck?.isCorrect && (
                           <button
                             type="button"

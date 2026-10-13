@@ -5,8 +5,11 @@ import {
   canonicalizeSubmittedDictation,
   clampTranscriptIndex,
   diffDictationAnswer,
+  getLexicalLetterCount,
+  maskExpectedWord,
   moveTranscriptIndex,
   normalizeDictationText,
+  calculateProgressiveDictationFeedback,
   resolveActiveTranscriptIndex,
   resolveTranscriptPlaybackState,
 } from "./listeningDictationUtils.ts";
@@ -15,30 +18,66 @@ test("normalizes whitespace and curly apostrophes", () => {
   assert.equal(normalizeDictationText("  Don’t   worry! "), "don't worry!");
 });
 
-test("canonicalizeSubmittedDictation normalizes case and adds trailing space when prefix matches", () => {
-  const expected = "The museum is located near the park.";
-  assert.equal(canonicalizeSubmittedDictation(expected, "the"), "The ");
+test("canonicalizeSubmittedDictation normalizes case, restores punctuation, preserves wrong word, and is idempotent", () => {
+  const target = "Hey, Liam. Are we still watching movie?";
+
+  // Step 1: first word
+  assert.equal(canonicalizeSubmittedDictation(target, "hey"), "Hey,");
+
+  // Step 2: two words
+  assert.equal(canonicalizeSubmittedDictation(target, "hey liam"), "Hey, Liam.");
+
+  // Step 3: several words with wrong trailing word preserved
   assert.equal(
-    canonicalizeSubmittedDictation(expected, "the museum"),
-    "The museum ",
+    canonicalizeSubmittedDictation(target, "hey liam are we still watch"),
+    "Hey, Liam. Are we still watch",
   );
+
+  // Step 4: full correct with punctuation restored
   assert.equal(
-    canonicalizeSubmittedDictation(expected, "the musuem"),
-    "The musuem",
+    canonicalizeSubmittedDictation(
+      target,
+      "hey liam are we still watching movie",
+    ),
+    "Hey, Liam. Are we still watching movie?",
+  );
+
+  // Case conventions: converts uppercase to canonical casing
+  assert.equal(
+    canonicalizeSubmittedDictation(target, "HEY LIAM are WE"),
+    "Hey, Liam. Are we",
+  );
+
+  // Idempotent: repeated check does not duplicate punctuation
+  assert.equal(
+    canonicalizeSubmittedDictation(target, "Hey, Liam."),
+    "Hey, Liam.",
+  );
+
+  // Contraction apostrophe restoration
+  assert.equal(
+    canonicalizeSubmittedDictation("I'm ready.", "im ready"),
+    "I'm ready.",
+  );
+
+  // Real grammar / vocabulary errors NOT auto-corrected
+  assert.equal(
+    canonicalizeSubmittedDictation(
+      "She drinks coffee every morning.",
+      "she drink coffee",
+    ),
+    "She drink coffee",
   );
   assert.equal(
     canonicalizeSubmittedDictation(
-      expected,
-      "the museum is located near the park.",
+      "I go to school by bus.",
+      "i go school by bus",
     ),
-    "The museum is located near the park.",
+    "I go school by bus",
   );
-  assert.equal(
-    canonicalizeSubmittedDictation("Well, I don't know.", "well i dont"),
-    "Well, I don't ",
-  );
-  assert.equal(canonicalizeSubmittedDictation(expected, ""), "");
-  assert.equal(canonicalizeSubmittedDictation(null, "the"), "the");
+
+  assert.equal(canonicalizeSubmittedDictation(target, ""), "");
+  assert.equal(canonicalizeSubmittedDictation(null, "hey"), "hey");
 });
 
 test("returns useful missing and extra word feedback", () => {
@@ -122,38 +161,199 @@ test("handles null or undefined input safely without throwing", () => {
   ]);
 });
 
-test("buildProgressiveAnswer stops at first mismatch, shows correct word as hint, and masks all words after it", () => {
+test("maskExpectedWord and getLexicalLetterCount count only letters and preserve punctuation", () => {
+  assert.equal(getLexicalLetterCount("a"), 1);
+  assert.equal(maskExpectedWord("a"), "*");
+
+  assert.equal(getLexicalLetterCount("to"), 2);
+  assert.equal(maskExpectedWord("to"), "**");
+
+  assert.equal(getLexicalLetterCount("Are"), 3);
+  assert.equal(maskExpectedWord("Are"), "***");
+
+  assert.equal(getLexicalLetterCount("works"), 5);
+  assert.equal(maskExpectedWord("works"), "*****");
+
+  assert.equal(getLexicalLetterCount("drinks"), 6);
+  assert.equal(maskExpectedWord("drinks"), "******");
+
+  assert.equal(getLexicalLetterCount("meeting"), 7);
+  assert.equal(maskExpectedWord("meeting"), "*******");
+
+  assert.equal(getLexicalLetterCount("transportation"), 14);
+  assert.equal(maskExpectedWord("transportation"), "**************");
+
+  // Punctuation preserved after asterisks
+  assert.equal(getLexicalLetterCount("Liam,"), 4);
+  assert.equal(maskExpectedWord("Liam,"), "****,");
+
+  assert.equal(getLexicalLetterCount("ready?"), 5);
+  assert.equal(maskExpectedWord("ready?"), "*****?");
+
+  assert.equal(getLexicalLetterCount("meeting."), 7);
+  assert.equal(maskExpectedWord("meeting."), "*******.");
+
+  // Contractions & hyphens count letters only
+  assert.equal(getLexicalLetterCount("don't"), 4);
+  assert.equal(maskExpectedWord("don't"), "****");
+
+  assert.equal(getLexicalLetterCount("part-time"), 8);
+  assert.equal(maskExpectedWord("part-time"), "********");
+});
+
+test("buildProgressiveAnswer shows canonical verified prefix + exactly one next word mask with letter count", () => {
   const expected = "The museum is across the street from the train station";
-  const submitted = "The museum is accross the";
+  const submitted = "The museum is accross the street";
 
   const result = buildProgressiveAnswer(expected, submitted);
 
-  assert.equal(result.length, 10);
+  // Exactly verified prefix + single next mask
+  assert.equal(result.length, 4);
   assert.deepEqual(result[0], { text: "The", state: "correct" });
   assert.deepEqual(result[1], { text: "museum", state: "correct" });
   assert.deepEqual(result[2], { text: "is", state: "correct" });
-  // Word 3 is the mismatch position: shows the correct expected word as 'hint' (yellow highlight)
-  assert.deepEqual(result[3], { text: "across", state: "hint" });
-  // Word 4 was typed as 'the', but because it is AFTER the first mismatch, it is NOT evaluated and stays masked as '*'
-  assert.deepEqual(result[4], { text: "***", state: "masked" });
-  assert.deepEqual(result[5], { text: "******", state: "masked" });
-  assert.deepEqual(result[6], { text: "****", state: "masked" });
-  assert.deepEqual(result[7], { text: "***", state: "masked" });
-  assert.deepEqual(result[8], { text: "*****", state: "masked" });
-  assert.deepEqual(result[9], { text: "*******", state: "masked" });
+  // across = 6 letters
+  assert.deepEqual(result[3], { text: "******", state: "masked" });
+
+  // Critical negative assertions
+  const serialized = JSON.stringify(result);
+  assert.ok(!serialized.includes('"text":"across"'), "Target word across must NOT be revealed in feedback");
+  assert.ok(!serialized.includes("street"), "Downstream words must NOT be revealed");
+  assert.ok(!serialized.includes("station"), "Downstream target tail must NOT be revealed");
+  assert.equal(result.filter((r) => r.state === "masked").length, 1, "Must have exactly 1 mask");
 });
 
-test("buildProgressiveAnswer highlights the next untyped word when prefix is completely correct", () => {
-  const expected = "The museum is across";
-  const submitted = "The museum is";
+test("Controlled Case 1: short prefix shows canonical prefix and single mask with exact letter count", () => {
+  const target = "Hey, Liam. Are we still meeting at the library on Saturday morning?";
+  const submitted = "hey liam";
 
-  const result = buildProgressiveAnswer(expected, submitted);
+  const feedback = calculateProgressiveDictationFeedback(target, submitted);
+  assert.equal(feedback.isCorrect, false);
+  assert.equal(feedback.verifiedPrefix, "Hey, Liam.");
+  assert.equal(feedback.nextWordMask, "***"); // Are = 3 letters
+  assert.ok(feedback.hint?.includes("trợ động từ") || feedback.hint?.includes("Liam"));
 
-  assert.deepEqual(result, [
-    { text: "The", state: "correct" },
-    { text: "museum", state: "correct" },
-    { text: "is", state: "correct" },
-    { text: "across", state: "hint" },
+  const tokens = buildProgressiveAnswer(target, submitted);
+  assert.equal(tokens.length, 3);
+  assert.deepEqual(tokens[0], { text: "Hey,", state: "correct" });
+  assert.deepEqual(tokens[1], { text: "Liam.", state: "correct" });
+  assert.deepEqual(tokens[2], { text: "***", state: "masked" });
+  assert.equal(tokens.filter((t) => t.state === "masked").length, 1);
+});
+
+test("Controlled Case 2: later error shows canonical verified prefix and mask for next word", () => {
+  const target = "Hey, Liam. Are we still meeting at the library on Saturday morning?";
+  const submitted = "hey liam are we still meet";
+
+  const feedback = calculateProgressiveDictationFeedback(target, submitted);
+  assert.equal(feedback.isCorrect, false);
+  assert.equal(feedback.verifiedPrefix, "Hey, Liam. Are we still");
+  assert.equal(feedback.nextWordMask, "*******"); // meeting = 7 letters
+  assert.ok(feedback.hint?.includes("dạng động từ"));
+
+  const tokens = buildProgressiveAnswer(target, submitted);
+  assert.equal(tokens[tokens.length - 1].text, "*******");
+  assert.equal(tokens.filter((t) => t.state === "masked").length, 1);
+  assert.ok(!JSON.stringify(tokens).includes("library"));
+});
+
+test("Controlled Case 3: missing word stops at missing position with letter count mask", () => {
+  const target = "I go to school by bus.";
+  const submitted = "i go school by bus";
+
+  const feedback = calculateProgressiveDictationFeedback(target, submitted);
+  assert.equal(feedback.isCorrect, false);
+  assert.equal(feedback.verifiedPrefix, "I go");
+  assert.equal(feedback.nextWordMask, "**"); // to = 2 letters
+  assert.ok(feedback.hint?.includes("từ nối") || feedback.hint?.includes("giới từ"));
+
+  const tokens = buildProgressiveAnswer(target, submitted);
+  assert.deepEqual(tokens, [
+    { text: "I", state: "correct" },
+    { text: "go", state: "correct" },
+    { text: "**", state: "masked" },
+  ]);
+});
+
+test("Controlled Case 4: morphological error stops at wrong word with letter count mask", () => {
+  const target = "She drinks coffee every morning.";
+  const submitted = "she drink coffee every morning";
+
+  const feedback = calculateProgressiveDictationFeedback(target, submitted);
+  assert.equal(feedback.isCorrect, false);
+  assert.equal(feedback.verifiedPrefix, "She");
+  assert.equal(feedback.nextWordMask, "******"); // drinks = 6 letters
+  assert.ok(feedback.hint?.includes("chủ ngữ “She”") || feedback.hint?.includes("động từ"));
+
+  const tokens = buildProgressiveAnswer(target, submitted);
+  assert.deepEqual(tokens, [
+    { text: "She", state: "correct" },
+    { text: "******", state: "masked" },
+  ]);
+});
+
+test("Controlled Case 5: extra word stops at expected target with hint about extra word", () => {
+  const target = "I like coffee.";
+  const submitted = "i really like coffee";
+
+  const feedback = calculateProgressiveDictationFeedback(target, submitted);
+  assert.equal(feedback.isCorrect, false);
+  assert.equal(feedback.verifiedPrefix, "I");
+  assert.equal(feedback.nextWordMask, "****"); // like = 4 letters
+  assert.ok(feedback.hint?.includes("từ thừa"));
+
+  const tokens = buildProgressiveAnswer(target, submitted);
+  assert.deepEqual(tokens, [
+    { text: "I", state: "correct" },
+    { text: "****", state: "masked" },
+  ]);
+});
+
+test("Controlled Case 6: case and punctuation ignored during comparison -> full success", () => {
+  const target = "Hey, Liam. Are you ready?";
+  const submitted = "hey liam are you ready";
+
+  const feedback = calculateProgressiveDictationFeedback(target, submitted);
+  assert.equal(feedback.isCorrect, true);
+  assert.equal(feedback.verifiedPrefix, target);
+  assert.equal(feedback.nextWordMask, "");
+
+  const tokens = buildProgressiveAnswer(target, submitted);
+  assert.equal(tokens.every((t) => t.state === "correct"), true);
+  assert.equal(tokens.map((t) => t.text).join(" "), target);
+});
+
+test("Controlled Case 7: Saturday is busy comparison ignores lowercase", () => {
+  const target = "Saturday is busy.";
+  const submitted = "saturday is busy";
+
+  const feedback = calculateProgressiveDictationFeedback(target, submitted);
+  assert.equal(feedback.isCorrect, true);
+  assert.equal(feedback.verifiedPrefix, target);
+});
+
+test("Controlled Case 8: She works here with work input remains wrong", () => {
+  const target = "She works here.";
+  const submitted = "she work here";
+
+  const feedback = calculateProgressiveDictationFeedback(target, submitted);
+  assert.equal(feedback.isCorrect, false);
+  assert.equal(feedback.verifiedPrefix, "She");
+  assert.equal(feedback.nextWordMask, "*****"); // works = 5 letters
+});
+
+test("Controlled Case 9: empty input shows exactly one mask matching first word letters", () => {
+  const target = "Transportation is available.";
+  const submitted = "";
+
+  const feedback = calculateProgressiveDictationFeedback(target, submitted);
+  assert.equal(feedback.isCorrect, false);
+  assert.equal(feedback.verifiedPrefix, "");
+  assert.equal(feedback.nextWordMask, "**************"); // Transportation = 14 letters
+
+  const tokens = buildProgressiveAnswer(target, submitted);
+  assert.deepEqual(tokens, [
+    { text: "**************", state: "masked" },
   ]);
 });
 
@@ -171,22 +371,19 @@ test("buildProgressiveAnswer reveals all words when showFullAnswer is true", () 
   ]);
 });
 
-test("buildProgressiveAnswer reveals only the masked suffix without turning the hint into a full skip", () => {
-  const result = buildProgressiveAnswer(
-    "The museum is across the street",
-    "The museum is accross",
-    false,
-    true,
-  );
+test("buildProgressiveAnswer maps serverTokens directly without leaking target words or downstream tokens", () => {
+  const serverTokens = [
+    { status: "CORRECT" as const, text: "She" },
+    { status: "WRONG" as const },
+    { status: "CORRECT" as const, text: "coffee" },
+  ];
 
+  const result = buildProgressiveAnswer(undefined, undefined, false, false, serverTokens);
   assert.deepEqual(result, [
-    { text: "The", state: "correct" },
-    { text: "museum", state: "correct" },
-    { text: "is", state: "correct" },
-    { text: "across", state: "hint" },
-    { text: "the", state: "answer" },
-    { text: "street", state: "answer" },
+    { text: "She", state: "correct" },
+    { text: "***", state: "masked" },
   ]);
+  assert.equal(result.length, 2, "Must stop after first non-correct token");
 });
 
 test("transcript cursor moves independently and never changes the dictation cursor", () => {
