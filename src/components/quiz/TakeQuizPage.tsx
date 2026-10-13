@@ -51,6 +51,11 @@ import {
   saveReadingDraft,
 } from "@/lib/reading/readingDraft";
 import { isSafeCourseReturn, withSafeReturnTo } from "@/lib/course/navigation";
+import {
+  buildProgressiveAnswer,
+  calculateProgressiveDictationFeedback,
+  generateSafeRelativeDictationHint,
+} from "@/components/listening/listeningDictationUtils";
 
 export type QuizRouteContext = "listening" | "reading" | "exams";
 
@@ -1175,69 +1180,70 @@ export default function TakeQuizPage(props: {
                             <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-bold mb-3 text-base">
                               <span>Có chỗ chưa chính xác, hãy thử lại!</span>
                             </div>
-                            <div className="text-lg font-mono tracking-wide leading-relaxed">
-                              {(() => {
-                                const userAnswer =
-                                  answers[currentQuestion.id] || "";
-                                const correctAnswer =
-                                  currentQuestion.content?.correctAnswer ||
-                                  currentQuestion.content?.correct ||
-                                  "";
-                                const correctWords = normalizeStr(correctAnswer)
-                                  .split(/\s+/)
-                                  .filter(Boolean);
-                                const userWords = normalizeStr(userAnswer)
-                                  .split(/\s+/)
-                                  .filter(Boolean);
+                            {(() => {
+                              const userAnswer =
+                                answers[currentQuestion.id] || "";
+                              const correctAnswer =
+                                currentQuestion.content?.correctAnswer ||
+                                currentQuestion.content?.correct ||
+                                "";
+                              const feedback = calculateProgressiveDictationFeedback(
+                                correctAnswer,
+                                userAnswer,
+                              );
+                              const hint = feedback.hint;
 
-                                let firstWrongIdx = -1;
-                                for (let i = 0; i < correctWords.length; i++) {
-                                  if (userWords[i] !== correctWords[i]) {
-                                    firstWrongIdx = i;
-                                    break;
-                                  }
-                                }
+                              return (
+                                <>
+                                  <div
+                                    className="text-base md:text-lg font-semibold leading-relaxed tracking-normal break-words text-slate-900 dark:text-slate-100"
+                                    data-testid="dictation-progressive-sentence"
+                                  >
+                                    {feedback.verifiedPrefix && (
+                                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                                        {feedback.verifiedPrefix}
+                                      </span>
+                                    )}
+                                    {feedback.verifiedPrefix && feedback.nextWordMask && " "}
+                                    {feedback.nextWordMask && (
+                                      <span
+                                        className="font-mono tracking-wider font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 inline-block shadow-2xs"
+                                        aria-label={`Từ tiếp theo gồm ${feedback.nextWordMask.replace(/[^A-Za-z*]/g, "").length} chữ cái`}
+                                        data-testid="dictation-next-word-mask"
+                                      >
+                                        {feedback.nextWordMask}
+                                      </span>
+                                    )}
+                                    {feedback.remainingMasks && feedback.remainingMasks.length > 0 && (
+                                      <span
+                                        className="font-mono tracking-wider text-slate-400 dark:text-slate-500 font-medium"
+                                        data-testid="dictation-remaining-masks"
+                                      >
+                                        {" " + feedback.remainingMasks.join(" ")}
+                                      </span>
+                                    )}
+                                  </div>
 
-                                if (firstWrongIdx === -1) {
-                                  firstWrongIdx = userWords.length;
-                                }
+                                  {!feedback.isCorrect && (
+                                    <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
+                                      <span className="inline-block size-2 rounded-full bg-amber-500" />
+                                      <span>Hãy nghe lại vị trí tiếp theo và thử lại.</span>
+                                    </div>
+                                  )}
 
-                                return correctWords.map((word, idx) => {
-                                  if (idx < firstWrongIdx) {
-                                    return (
-                                      <span
-                                        key={idx}
-                                        className="text-emerald-600 dark:text-emerald-400 font-bold break-words"
-                                      >
-                                        {word}
-                                      </span>
-                                    );
-                                  } else if (idx === firstWrongIdx) {
-                                    return (
-                                      <span
-                                        key={idx}
-                                        className="text-rose-600 dark:text-rose-400 font-black underline decoration-wavy break-words"
-                                      >
-                                        {word}
-                                      </span>
-                                    );
-                                  } else {
-                                    const masked = word.replace(
-                                      /[\p{L}\p{N}]/gu,
-                                      "*",
-                                    );
-                                    return (
-                                      <span
-                                        key={idx}
-                                        className="text-slate-400 dark:text-slate-500 tracking-widest break-words"
-                                      >
-                                        {masked}
-                                      </span>
-                                    );
-                                  }
-                                });
-                              })()}
-                            </div>
+                                  {hint && (
+                                    <div className="mt-3 rounded-xl border border-blue-200/90 bg-blue-50/80 p-3 text-xs font-medium text-blue-950 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200">
+                                      <div className="flex items-start gap-2">
+                                        <span className="font-extrabold uppercase tracking-wider text-[11px] px-1.5 py-0.5 rounded bg-blue-200/80 text-blue-900 dark:bg-blue-900/80 dark:text-blue-200 shrink-0">
+                                          Gợi ý
+                                        </span>
+                                        <span>{hint}</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                </>
+                              );
+                            })()}
                           </div>
                         ) : (
                           <div className="text-lg font-medium leading-relaxed">

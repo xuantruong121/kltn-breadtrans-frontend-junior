@@ -34,17 +34,42 @@ const formatAnswer = (value: unknown): string => {
   if (Array.isArray(value)) return value.map(formatAnswer).join(", ");
   try { return JSON.stringify(value); } catch { return "—"; }
 };
-const sectionTypeLabels: Record<string, string> = {
-  INTRO: "Mục tiêu bài học",
-  THEORY: "Kiến thức trọng tâm",
-  EXAMPLE: "Ví dụ song ngữ",
-  VOCABULARY: "Từ vựng và cụm từ",
-  COMMON_MISTAKE: "Lỗi thường gặp",
-  TIP: "Mẹo ghi nhớ",
-  CHECKPOINT: "Luyện tập có hướng dẫn",
-  SUMMARY: "Tóm tắt bài học",
+type LessonExample = {
+  label?: string;
+  text?: string;
+  translation?: string;
+  explanation?: string;
 };
 
+const mistakeReason = (wrong: string, correct: string): string => {
+  const normalized = wrong.toLowerCase();
+  if (/doesn['’]?t|does not/.test(normalized) && /works?/.test(normalized))
+    return "Sau does not/doesn’t, động từ chính luôn trở về dạng nguyên mẫu; does đã mang dấu hiệu ngôi thứ ba.";
+  if (/\bam\s+go\b/.test(normalized) || /going/.test(correct.toLowerCase()))
+    return "Am/is/are phải đi với động từ thêm -ing khi diễn tả hành động đang diễn ra.";
+  if (/\bshe\s+work\b/.test(normalized) || /\bhe\s+work\b/.test(normalized))
+    return "Chủ ngữ he/she/it ở hiện tại đơn cần động từ thêm -s hoặc -es trong câu khẳng định.";
+  return "Hãy xác định chủ ngữ, dấu hiệu thời gian và cấu trúc của thì trước khi chia động từ.";
+};
+
+const parseMistake = (value: unknown) => {
+  if (typeof value === "object" && value !== null) {
+    const item = value as Record<string, unknown>;
+    const wrong = typeof item.wrong === "string" ? item.wrong : "";
+    const correct = typeof item.correct === "string" ? item.correct : "";
+    return {
+      wrong,
+      correct,
+      reason: typeof item.reason === "string" ? item.reason : mistakeReason(wrong, correct),
+    };
+  }
+  const raw = typeof value === "string" ? value : "";
+  const [wrong = "", correct = ""] = raw.split(/\s*→\s*/);
+  if (!correct) {
+    return { wrong: "", correct: "", reason: raw || "Hãy kiểm tra lại cấu trúc trước khi dùng câu này." };
+  }
+  return { wrong, correct, reason: mistakeReason(wrong, correct) };
+};
 function renderQuestionPrompt(prompt: string) {
   const parts = prompt.split(/_+/g);
   if (parts.length === 1) return prompt;
@@ -409,12 +434,12 @@ export default function CourseLessonPage(props: {
                 ) : (
                   <figure
                     key={media.id}
-                    className="mx-auto flex w-full max-w-5xl items-center justify-center overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 p-3 shadow-xs dark:border-slate-800 dark:bg-slate-950/40"
+                    className="mx-auto flex w-full max-w-none items-center justify-center overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 p-0 shadow-xs dark:border-slate-800 dark:bg-slate-950/40"
                   >
                     <img
                       src={media.url}
                       alt={media.altText ?? lesson.title}
-                      className="h-auto max-h-[34rem] w-full object-contain"
+                      className="h-auto max-h-none w-[104%] max-w-none -translate-x-[2%] object-contain"
                       loading={mediaIndex === 0 ? "eager" : "lazy"}
                       decoding="async"
                     />
@@ -430,9 +455,12 @@ export default function CourseLessonPage(props: {
             const formulas = listValue(content.formulas);
             const examples = Array.isArray(content.examples)
               ? content.examples.filter(
-                  (item): item is { label?: string; text?: string; translation?: string; explanation?: string } =>
+                  (item): item is LessonExample =>
                     Boolean(item) && typeof item === "object",
                 )
+              : [];
+            const mistakeItems = Array.isArray(content.bullets)
+              ? content.bullets.filter((item) => typeof item === "string" || (item && typeof item === "object"))
               : [];
             const audioExamples = Array.isArray(content.audioExamples)
               ? content.audioExamples.filter(
@@ -460,12 +488,19 @@ export default function CourseLessonPage(props: {
                 key={section.id}
                 className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 lg:p-9 dark:border-slate-800 dark:bg-slate-900 shadow-xs"
               >
-                <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-blue-600">
-                  {sectionTypeLabels[section.type] ?? section.type}
-                </p>
-                <h2 className="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
                   {section.heading}
                 </h2>
+                {section.type === "EXAMPLE" && (
+                  <p className="mt-3 max-w-3xl text-base leading-relaxed text-slate-600 dark:text-slate-300">
+                    Đọc câu tiếng Anh trước, đối chiếu nghĩa tiếng Việt, sau đó chú ý phần giải thích để biết vì sao cấu trúc này phù hợp với ngữ cảnh.
+                  </p>
+                )}
+                {section.type === "COMMON_MISTAKE" && (
+                  <p className="mt-3 max-w-3xl text-base leading-relaxed text-slate-600 dark:text-slate-300">
+                    Những lỗi dưới đây thường xuất hiện khi người học chia động từ theo thói quen tiếng Việt hoặc trộn lẫn hai thì. Mỗi ví dụ đều chỉ rõ nguyên nhân để bạn tự sửa được câu mới.
+                  </p>
+                )}
                 {paragraphs.map((paragraph) => (
                   <p
                     key={paragraph}
@@ -474,7 +509,43 @@ export default function CourseLessonPage(props: {
                     {paragraph}
                   </p>
                 ))}
-                {bullets.length > 0 && (
+                {section.type === "COMMON_MISTAKE" && mistakeItems.length > 0 ? (
+                  <div className="mt-6 grid gap-4 lg:grid-cols-2">
+                    {mistakeItems.map((item, index) => {
+                      const parsed = parseMistake(item);
+                      return (
+                        <article
+                          key={`${section.id}-mistake-${index}`}
+                          className="rounded-2xl border border-rose-200/80 bg-rose-50/50 p-5 dark:border-rose-900/60 dark:bg-rose-950/20"
+                        >
+                          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-rose-700 dark:text-rose-300">
+                            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-rose-100 text-sm dark:bg-rose-900/60">!</span>
+                            Lỗi cần tránh {index + 1}
+                          </div>
+                          {parsed.correct ? (
+                            <>
+                              <p className="mt-4 text-base font-semibold text-rose-800 line-through decoration-rose-400 dark:text-rose-200">
+                                {parsed.wrong}
+                              </p>
+                              <p className="mt-2 text-base font-bold text-emerald-700 dark:text-emerald-300">
+                                <span className="mr-2 no-underline">✓</span>{parsed.correct}
+                              </p>
+                            </>
+                          ) : (
+                            <p className="mt-4 text-base font-semibold leading-relaxed text-rose-800 dark:text-rose-200">
+                              {parsed.reason}
+                            </p>
+                          )}
+                          {parsed.correct && (
+                            <div className="mt-4 rounded-xl border border-white/80 bg-white/80 p-3 text-sm leading-relaxed text-slate-700 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-200">
+                              <strong>Vì sao?</strong> {parsed.reason}
+                            </div>
+                          )}
+                        </article>
+                      );
+                    })}
+                  </div>
+                ) : bullets.length > 0 && (
                   <ul className="mt-4 space-y-2.5 text-base sm:text-lg leading-relaxed text-slate-700 dark:text-slate-200">
                     {bullets.map((bullet) => (
                       <li key={bullet} className="flex items-start gap-2.5">
@@ -495,12 +566,12 @@ export default function CourseLessonPage(props: {
                 {examples.length > 0 && (
                   <div className="mt-6 grid gap-4 sm:grid-cols-2">
                     {examples.map((example, index) => (
-                      <div key={`${section.id}-example-${index}`} className="rounded-2xl bg-blue-50/70 p-4 text-base dark:bg-blue-950/30">
-                        <p className="font-bold text-blue-800 dark:text-blue-200">{example.label ?? "Ví dụ"}</p>
-                        <p className="mt-2 font-semibold leading-relaxed text-slate-800 dark:text-slate-100">{example.text ?? ""}</p>
-                        {example.translation && <p className="mt-1.5 leading-relaxed text-slate-600 dark:text-slate-300">Nghĩa: {example.translation}</p>}
-                        {example.explanation && <p className="mt-1.5 text-sm leading-relaxed text-slate-500 dark:text-slate-400">Giải thích: {example.explanation}</p>}
-                      </div>
+                      <article key={`${section.id}-example-${index}`} className="relative overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50/90 to-white p-5 text-base shadow-xs dark:border-blue-900/60 dark:from-blue-950/40 dark:to-slate-900">
+                        <span className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-300">Ví dụ {String(index + 1).padStart(2, "0")}</span>
+                        <p className="mt-3 text-lg font-bold leading-relaxed text-slate-950 dark:text-white">{example.label ?? example.text ?? "Ví dụ"}</p>
+                        {example.translation && <div className="mt-4 border-t border-blue-100 pt-3 dark:border-blue-900/60"><p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Nghĩa tiếng Việt</p><p className="mt-1 leading-relaxed text-slate-700 dark:text-slate-200">{example.translation}</p></div>}
+                        {example.explanation && <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/80 p-3 dark:border-amber-900/60 dark:bg-amber-950/30"><p className="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">Vì sao dùng cấu trúc này?</p><p className="mt-1 leading-relaxed text-amber-950 dark:text-amber-100">{example.explanation}</p></div>}
+                      </article>
                     ))}
                   </div>
                 )}
@@ -567,10 +638,7 @@ export default function CourseLessonPage(props: {
           })}
           <section className="space-y-6">
             <div>
-              <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-blue-600">
-                Thực hành trong khóa học
-              </p>
-              <h2 className="mt-1.5 text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
                 Luyện tập ngay trong bài học
               </h2>
             </div>

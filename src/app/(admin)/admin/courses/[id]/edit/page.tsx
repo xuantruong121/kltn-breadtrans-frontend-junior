@@ -520,7 +520,7 @@ export default function AdminCourseEditStudioPage() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Admin Course Studio
+                  Course metadata / Legacy editor
                 </span>
                 <span
                   className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${
@@ -576,6 +576,14 @@ export default function AdminCourseEditStudioPage() {
 
       {/* Main Container */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6">
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950">
+          <p className="text-sm font-semibold">Trình chỉnh sửa legacy</p>
+          <p className="mt-1 text-xs leading-relaxed text-amber-800">
+            Màn hình này chỉ duy trì chỉnh sửa dữ liệu Lesson/Material cũ để hỗ trợ
+            tương thích. Nội dung học viên hiện tại được đọc từ CourseLesson V5;
+            thay đổi ở đây không phải là trình soạn thảo V5 chính thức.
+          </p>
+        </div>
         {/* Status Alerts */}
         {isPublished && (
           <div className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start justify-between gap-4 text-emerald-800 flex-wrap">
@@ -598,7 +606,7 @@ export default function AdminCourseEditStudioPage() {
                 className="px-3 py-1.5 bg-slate-100 text-slate-500 rounded-lg text-xs font-medium border border-slate-200 shrink-0 cursor-not-allowed"
                 title="Khóa học đang có lớp diễn ra, không thể chuyển về bản nháp"
               >
-                Đang có {ongoingClassCount} gói học đang mở (khóa sửa giáo trình)
+                Đang có {ongoingClassCount} lớp legacy đang mở (khóa sửa giáo trình)
               </span>
             ) : (
               <button

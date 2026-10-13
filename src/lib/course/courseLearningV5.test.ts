@@ -30,3 +30,21 @@ test("course lessons expose native media and open response practice", () => {
   assert.match(lessonSource, /loading=\{mediaIndex === 0 \? "eager" : "lazy"\}/);
   assert.doesNotMatch(lessonSource, /Tài liệu tham khảo thêm/);
 });
+
+test("guided and final exercise regression fixture are distinct", () => {
+  const guided = [
+    "She ____ coffee every morning.",
+    "He doesn't work here.",
+    "I am working today.",
+  ];
+  const finalCheck = [
+    "Look! Minh ___ for the bus now.",
+    "My sister usually works from home, but this week she ___ at the office.",
+    "Choose the corrected sentence for a weekly habit.",
+  ];
+  assert.equal(new Set([...guided, ...finalCheck]).size, guided.length + finalCheck.length);
+  assert.match(guided[0], /She .*coffee every morning/);
+  assert.equal(finalCheck.includes(guided[0]), false);
+  assert.equal(finalCheck.includes(guided[1]), false);
+  assert.equal(finalCheck.includes(guided[2]), false);
+});

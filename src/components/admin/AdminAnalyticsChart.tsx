@@ -3,13 +3,10 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  TrendingUp,
-  Users,
   Activity,
   Calendar,
   CheckCircle2,
   ArrowUpRight,
-  UserPlus,
   BarChart3,
   Lightbulb,
 } from "lucide-react";
@@ -28,21 +25,12 @@ interface AdminAnalyticsChartProps {
 export default function AdminAnalyticsChart({
   data,
 }: AdminAnalyticsChartProps) {
-  const [metric, setMetric] = useState<"enrollments" | "activity">(
-    "enrollments",
-  );
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   const trends = data || [];
-  const values = trends.map((t) =>
-    metric === "enrollments" ? t.enrollments : t.activityCount,
-  );
+  const values = trends.map((t) => t.activityCount);
   const maxVal = Math.max(...values, 10);
 
-  const totalPeriodEnrollments = trends.reduce(
-    (sum, t) => sum + t.enrollments,
-    0,
-  );
   const totalPeriodActivity = trends.reduce(
     (sum, t) => sum + t.activityCount,
     0,
@@ -53,8 +41,6 @@ export default function AdminAnalyticsChart({
   );
   const avgMonthlyActivity =
     trends.length > 0 ? Math.round(totalPeriodActivity / trends.length) : 0;
-  const avgMonthlyEnrollments =
-    trends.length > 0 ? Math.round(totalPeriodEnrollments / trends.length) : 0;
 
   return (
     <div className="space-y-6">
@@ -74,34 +60,14 @@ export default function AdminAnalyticsChart({
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              Dữ liệu ghi danh học viên mới và tổng lượt học tập hoàn thành
+              Tổng lượt học tập hoàn thành trong sáu tháng gần nhất
             </p>
           </div>
         </div>
 
-        {/* METRIC SELECTOR TABS */}
-        <div className="inline-flex items-center p-1 bg-slate-100/90 rounded-lg border border-slate-200/80 self-start sm:self-auto text-xs font-medium">
-          <button
-            onClick={() => setMetric("enrollments")}
-            className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 cursor-pointer ${
-              metric === "enrollments"
-                ? "bg-white text-slate-900 font-semibold shadow-xs border border-slate-200/80"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <Users size={14} strokeWidth={2} /> Ghi Danh
-          </button>
-          <button
-            onClick={() => setMetric("activity")}
-            className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 cursor-pointer ${
-              metric === "activity"
-                ? "bg-white text-slate-900 font-semibold shadow-xs border border-slate-200/80"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <Activity size={14} strokeWidth={2} /> Lượt Tương Tác
-          </button>
-        </div>
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-600">
+          <Activity size={14} strokeWidth={2} /> Lượt học tập
+        </span>
       </div>
 
       {/* 2. INTERACTIVE BAR CHART */}
@@ -127,24 +93,14 @@ export default function AdminAnalyticsChart({
 
           <div className="h-56 sm:h-64 flex items-end justify-between gap-3 sm:gap-6 px-3 relative z-10">
             {trends.map((item, index) => {
-              const currentVal =
-                metric === "enrollments"
-                  ? item.enrollments
-                  : item.activityCount;
+              const currentVal = item.activityCount;
               const heightPercent =
                 maxVal > 0
                   ? Math.max(10, Math.round((currentVal / maxVal) * 100))
                   : 10;
               const isHovered = hoveredIdx === index;
 
-              const barBg =
-                metric === "enrollments"
-                  ? isHovered
-                    ? "bg-blue-700"
-                    : "bg-blue-600"
-                  : isHovered
-                    ? "bg-indigo-700"
-                    : "bg-indigo-600";
+              const barBg = isHovered ? "bg-indigo-700" : "bg-indigo-600";
 
               return (
                 <div
@@ -162,9 +118,7 @@ export default function AdminAnalyticsChart({
                     >
                       <div className="font-semibold text-white">
                         {currentVal}{" "}
-                        {metric === "enrollments"
-                          ? "học viên mới"
-                          : "lượt học tập"}
+                        lượt học tập
                       </div>
                       <span className="text-[10px] text-slate-400">
                         Tháng {item.month.replace("T", "")}
@@ -230,35 +184,16 @@ export default function AdminAnalyticsChart({
 
         <div className="p-3.5 bg-slate-50/70 rounded-xl border border-slate-200/80 hover:border-slate-300 transition-colors">
           <div className="flex items-center gap-1.5 text-slate-500 mb-1">
-            <TrendingUp
-              size={14}
-              className="text-emerald-600"
-              strokeWidth={2}
-            />
-            <span className="text-[11px] font-semibold uppercase tracking-wider">
-              Tổng Ghi Danh
-            </span>
-          </div>
-          <div className="text-base font-bold text-slate-900">
-            {totalPeriodEnrollments} lượt
-          </div>
-          <div className="text-[11px] text-emerald-600 font-medium mt-0.5">
-            ~{avgMonthlyEnrollments} lượt/tháng
-          </div>
-        </div>
-
-        <div className="p-3.5 bg-slate-50/70 rounded-xl border border-slate-200/80 hover:border-slate-300 transition-colors">
-          <div className="flex items-center gap-1.5 text-slate-500 mb-1">
             <Activity size={14} className="text-indigo-600" strokeWidth={2} />
             <span className="text-[11px] font-semibold uppercase tracking-wider">
-              Tổng Tương Tác
+              Trung Bình / Tháng
             </span>
           </div>
           <div className="text-base font-bold text-slate-900">
-            {totalPeriodActivity} lượt
+            {avgMonthlyActivity} lượt
           </div>
           <div className="text-[11px] text-slate-500 mt-0.5">
-            ~{avgMonthlyActivity} lượt/tháng
+            Dựa trên dữ liệu thực
           </div>
         </div>
 
@@ -298,19 +233,19 @@ export default function AdminAnalyticsChart({
               </span>
             </div>
             <p className="text-xs text-slate-600 mt-1 leading-relaxed max-w-3xl">
-              Biểu đồ phản ánh số lượt ghi danh và hoạt động học tập được ghi
-              nhận trong sáu tháng gần nhất. Dữ liệu theo khung giờ chưa được
-              thu thập nên không đưa ra kết luận về thời điểm cao điểm.
+              Biểu đồ phản ánh lượt học tập được ghi nhận trong sáu tháng gần
+              nhất. Dữ liệu theo khung giờ chưa được thu thập nên không đưa ra
+              kết luận về thời điểm cao điểm.
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
           <Link
-            href="/admin/enroll"
+            href="/admin/courses"
             className="flex-1 sm:flex-none px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
           >
-            <UserPlus size={14} strokeWidth={2} /> Ghi danh học viên
+            Quản lý khóa học
           </Link>
           <Link
             href="/admin/users"

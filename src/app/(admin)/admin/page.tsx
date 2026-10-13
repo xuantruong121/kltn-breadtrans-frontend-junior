@@ -116,7 +116,7 @@ export default function AdminDashboardPage() {
           color: "text-blue-600",
           bg: "bg-blue-50",
           borderColor: "border-blue-100",
-          sub: `${data.stats.activeStudents || 0} hoạt động (30 ngày) · ${data.stats.totalEnrollments.toLocaleString()} quyền truy cập`,
+          sub: `${data.stats.activeStudents || 0} hoạt động trong 30 ngày`,
           trendPositive: true,
         },
         {
@@ -179,12 +179,12 @@ export default function AdminDashboardPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Link
-            href="/admin/enroll"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors"
+            href="/admin/courses"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors"
           >
-            <UserPlus size={14} strokeWidth={2} /> Cấp quyền mới
+            Soạn nội dung <ArrowRight size={14} strokeWidth={2} />
           </Link>
         </div>
       </div>
@@ -303,10 +303,10 @@ export default function AdminDashboardPage() {
                       </div>
                       <div>
                         <h3 className="text-sm font-bold text-slate-900">
-                          Quyền Truy Cập Gần Đây
+                          Hoạt động gần đây
                         </h3>
                         <p className="text-[11px] text-slate-400">
-                          Các quyền truy cập mới nhất
+                          Cập nhật nội dung và hoạt động hệ thống
                         </p>
                       </div>
                     </div>
@@ -358,10 +358,10 @@ export default function AdminDashboardPage() {
                     Quản lý học viên <ArrowUpRight size={13} strokeWidth={2} />
                   </Link>
                   <Link
-                    href="/admin/enroll"
-                    className="flex-1 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-xs rounded-lg border border-blue-200 transition-colors flex items-center justify-center gap-1 shadow-2xs"
+                    href="/admin/issue-reports"
+                    className="flex-1 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 font-semibold text-xs rounded-lg border border-amber-200 transition-colors flex items-center justify-center gap-1 shadow-2xs"
                   >
-                    Cấp quyền <UserPlus size={13} strokeWidth={2} />
+                    Xử lý báo cáo <ArrowUpRight size={13} strokeWidth={2} />
                   </Link>
                 </div>
               </div>

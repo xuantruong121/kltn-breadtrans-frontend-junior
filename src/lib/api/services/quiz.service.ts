@@ -167,13 +167,24 @@ export interface CheckPracticeQuestionResult {
   questionId: number;
   isCorrect: boolean;
   submittedAnswer: string;
-  correctAnswer: string;
+  correctAnswer?: string;
   evaluationMode?: "STANDARD" | "STRICT";
   wordAccuracy?: number;
+  tokens?: Array<{
+    status: "CORRECT" | "WRONG" | "MISSING" | "EXTRA";
+    text?: string;
+  }>;
+  hint?: string | null;
+  remainingErrors?: number;
   explanation: QuestionExplanation | null;
   translation: string | null;
   /** True when the user chose to skip this question without a correct answer */
   skipped?: boolean;
+  verifiedPrefix?: string;
+  canonicalizedAnswer?: string;
+  nextWordMask?: string;
+  remainingMasks?: string[];
+  nextErrorType?: "WRONG" | "MISSING" | "EXTRA" | null;
 }
 
 export interface ListeningTranscriptItem {

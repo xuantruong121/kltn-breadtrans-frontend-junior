@@ -29,6 +29,10 @@ axiosClient.interceptors.request.use(
 );
 
 let isRefreshing = false;
+// Do not start a new refresh attempt for every query retry with the same
+// rejected access token. A new login or successful refresh naturally clears
+// this guard.
+let invalidAccessToken: string | null = null;
 let failedQueue: Array<{
   resolve: (token: string) => void;
   reject: (error: any) => void;
@@ -107,6 +111,10 @@ axiosClient.interceptors.response.use(
         authState.accessToken || authState.refreshToken
       );
 
+      if (authState.accessToken && authState.accessToken === invalidAccessToken) {
+        return Promise.reject(error);
+      }
+
       // If client is an unauthenticated guest or requesting a public/optional endpoint, do NOT refresh or redirect
       if (!hasExistingAuth || isPublicOrOptionalEndpoint(originalRequest.url)) {
         return Promise.reject(error);
@@ -182,6 +190,7 @@ axiosClient.interceptors.response.use(
         const newAccessToken = data.access_token;
         const newRefreshToken = data.refresh_token;
         persistDeviceId(data.deviceId || deviceId);
+        invalidAccessToken = null;
 
         if (authState.user) {
           authState.setAuth(newAccessToken, newRefreshToken, authState.user);
@@ -207,6 +216,7 @@ axiosClient.interceptors.response.use(
 
         return axiosClient(originalRequest);
       } catch (refreshError) {
+        invalidAccessToken = authState.accessToken;
         processQueue(refreshError, null);
         isRefreshing = false;
         authState.logout();

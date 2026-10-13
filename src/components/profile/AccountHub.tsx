@@ -16,7 +16,6 @@ import {
   LogOut,
   Settings,
   Zap,
-  Coins,
   ReceiptText,
   ChevronRight,
   Eye,
@@ -94,7 +93,6 @@ export function AccountHub() {
   const setProfile = useAuthStore((state) => state.setProfile);
   const logout = useAuthStore((state) => state.logout);
   const {
-    breads,
     unlockedItems,
     equippedAvatarFrame,
     equippedBadge,
@@ -525,46 +523,7 @@ export function AccountHub() {
                 </div>
               </div>
 
-              {/* Card 2: Credits */}
-              <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-2xs space-y-4">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200 font-bold text-sm">
-                    <Coins size={18} className="text-amber-500 shrink-0" aria-hidden="true" />
-                    <span>Credits</span>
-                  </div>
-                  <Link
-                    href="/market"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-xs hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors"
-                  >
-                    <span>Nạp thêm credits</span>
-                  </Link>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50/70 dark:bg-slate-850/60 rounded-2xl p-4 border border-slate-100 dark:border-slate-800">
-                  <div>
-                    <span className="block text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider">
-                      SỐ DƯ
-                    </span>
-                    <span className="block text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 mt-1">
-                      {breads || 0} credits
-                    </span>
-                  </div>
-                  <div>
-                    <span className="block text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider">
-                      LƯỢT CHẤM MIỄN PHÍ
-                    </span>
-                    <span className="block text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 mt-1">
-                      10 / 10 lượt
-                    </span>
-                  </div>
-                </div>
-
-                <p className="text-xs text-slate-400 dark:text-slate-500">
-                  Credits dùng cho chấm AI Writing &amp; Speaking. Hết lượt miễn phí thì mỗi lần chấm trừ vào credits.
-                </p>
-              </div>
-
-              {/* Card 3: Lịch sử thanh toán */}
+              {/* Card 2: Lịch sử thanh toán */}
               <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-2xs space-y-4">
                 <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200 font-bold text-sm">
                   <ReceiptText size={18} className="text-blue-500 shrink-0" aria-hidden="true" />

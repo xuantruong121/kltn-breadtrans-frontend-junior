@@ -46,9 +46,9 @@ const COMPARISON_FEATURES: ComparisonFeature[] = [
   {
     category: "Công cụ & Chấm chữa AI",
     name: "Chấm chữa AI Writing (Sửa lỗi & Gợi ý câu)",
-    free: "10 lượt miễn phí",
-    plus: "Ưu tiên lượt chấm & Hạn mức cao",
-    pro: "Chấm chi tiết không giới hạn + Band điểm",
+    free: "Chấm chữa cơ bản",
+    plus: "Phân tích chi tiết hơn",
+    pro: "Phân tích chuyên sâu + Band điểm",
   },
   {
     name: "Đánh giá phát âm & AI Speaking",
