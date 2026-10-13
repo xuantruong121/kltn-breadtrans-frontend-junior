@@ -51,11 +51,7 @@ import {
   saveReadingDraft,
 } from "@/lib/reading/readingDraft";
 import { isSafeCourseReturn, withSafeReturnTo } from "@/lib/course/navigation";
-import {
-  buildProgressiveAnswer,
-  calculateProgressiveDictationFeedback,
-  generateSafeRelativeDictationHint,
-} from "@/components/listening/listeningDictationUtils";
+import { calculateProgressiveDictationFeedback } from "@/components/listening/listeningDictationUtils";
 
 export type QuizRouteContext = "listening" | "reading" | "exams";
 

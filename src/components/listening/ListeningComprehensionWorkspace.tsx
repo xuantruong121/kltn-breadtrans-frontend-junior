@@ -861,7 +861,7 @@ export function ListeningComprehensionWorkspace({
         ? (currentQuestion.content as any)?.transcriptSegments?.[0]?.translation
         : undefined;
 
-      let canonical =
+      const canonical =
         checkResults[currentQuestion.id]?.correctAnswer ||
         segmentText ||
         (currentQuestion.content as any)?.correctAnswer ||

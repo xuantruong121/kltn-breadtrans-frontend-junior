@@ -55,7 +55,6 @@ import {
 } from "./listeningTranscriptResources";
 import {
   type DictationDiffToken,
-  buildProgressiveAnswer,
   calculateProgressiveDictationFeedback,
   generateSafeRelativeDictationHint,
   clampTranscriptIndex,

@@ -562,8 +562,9 @@ export function calculateProgressiveDictationFeedback(
 export function generateSafeRelativeDictationHint(
   expected?: string | null,
   submitted?: string | null,
-  _tokens?: DictationDiffToken[],
+  tokens?: unknown,
 ): string {
+  void tokens;
   const feedback = calculateProgressiveDictationFeedback(expected, submitted);
   return (
     feedback.hint ||

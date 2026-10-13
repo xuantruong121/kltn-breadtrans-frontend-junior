@@ -106,6 +106,11 @@ export default function AdminDashboardPage() {
     (data?.stats?.pendingPayments || 0) +
     (data?.gamification?.pendingOrders || 0);
 
+  const visibleRecentActivity =
+    data?.recentActivity?.filter(
+      (activity) => !["enrollment", "enroll"].includes(activity.type.toLowerCase()),
+    ) || [];
+
   const STATS = data
     ? [
         {
@@ -187,6 +192,19 @@ export default function AdminDashboardPage() {
             Soạn nội dung <ArrowRight size={14} strokeWidth={2} />
           </Link>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        {[
+          ["Listening CMS", "/admin/listening", "Dictation, Dialogue và audio"],
+          ["Reading CMS", "/admin/reading", "Passage, kỹ năng con và câu hỏi"],
+          ["Writing CMS", "/admin/writing", "Part 1, Part 2 và Part 3"],
+        ].map(([label, href, description]) => (
+          <Link key={href} href={href} className="rounded-xl border border-slate-200 bg-white p-4 transition hover:border-blue-300 hover:shadow-sm">
+            <span className="font-semibold text-slate-900">{label}</span>
+            <span className="mt-1 block text-xs text-slate-500">{description}</span>
+          </Link>
+        ))}
       </div>
 
       {isLoading ? (
@@ -311,13 +329,13 @@ export default function AdminDashboardPage() {
                       </div>
                     </div>
                     <span className="text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200/70">
-                      {data?.recentActivity?.length || 0} bản ghi
+                      {visibleRecentActivity.length} bản ghi
                     </span>
                   </div>
 
                   <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
-                    {data?.recentActivity && data.recentActivity.length > 0 ? (
-                      data.recentActivity.map((activity) => {
+                    {visibleRecentActivity.length > 0 ? (
+                      visibleRecentActivity.map((activity) => {
                         const Icon = getActivityIcon(activity.type);
                         return (
                           <div

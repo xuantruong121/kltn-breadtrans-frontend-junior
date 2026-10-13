@@ -402,7 +402,7 @@ export default function AdminCoursesPage() {
                           {/* Top Action Buttons */}
                           <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
                             <Link
-                              href={`/admin/courses/${course.id}/edit`}
+                              href={`/admin/courses/${course.id}/curriculum`}
                               className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors"
                               title="Mở Course Studio để soạn giáo trình và bài học"
                             >
