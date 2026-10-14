@@ -18,6 +18,7 @@ import {
   Type,
   Activity,
   History,
+  Copy,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axiosClient from "@/lib/api/axiosClient";
@@ -267,6 +268,16 @@ export default function AdminAiToolsPage() {
       publishFlashcards: pubFlashcards,
       publishAssignment: pubAssignment && Boolean(selectedClassId),
     };
+  };
+
+  const copyCandidateJson = () => {
+    try {
+      const payload = buildReviewedPayload();
+      navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+      toast.success("Đã sao chép cấu trúc JSON ứng viên vào bộ nhớ tạm!");
+    } catch (err: any) {
+      toast.error(err?.message || "Không thể sao chép dữ liệu ứng viên");
+    }
   };
 
   // Persist the reviewed draft without publishing it.
@@ -1271,8 +1282,35 @@ export default function AdminAiToolsPage() {
                         </label>
                       </div>
 
-                      {/* Review/publish actions are intentionally separate lifecycle steps. */}
-                      <div className="flex items-center gap-3">
+                      {/* Single-Writer Architectural Guidance Banner */}
+                      <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs font-semibold flex items-start gap-3">
+                        <div className="p-1 bg-amber-200/60 rounded-lg text-amber-800 shrink-0 mt-0.5">
+                          <Layers size={16} />
+                        </div>
+                        <div className="space-y-1">
+                          <div className="font-bold text-amber-950">
+                            Công cụ trích xuất & xem trước nội bộ (Internal Preview Only)
+                          </div>
+                          <p className="text-amber-800 leading-relaxed">
+                            Đường dẫn ghi trực tiếp vào cơ sở dữ liệu runtime đã được đóng để bảo vệ tính toàn vẹn Single-Writer của các Studio chuyên biệt.
+                            Vui lòng sao chép dữ liệu ứng viên để bàn giao và tạo bài học trong{" "}
+                            <Link href="/admin/courses" className="underline font-bold text-indigo-700 hover:text-indigo-900">Course Studio</Link>,{" "}
+                            <Link href="/admin/vocab" className="underline font-bold text-indigo-700 hover:text-indigo-900">Vocabulary Studio</Link> hoặc{" "}
+                            <Link href="/admin/exams" className="underline font-bold text-indigo-700 hover:text-indigo-900">Exam Studio</Link>.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Review/export actions: Save draft, copy JSON candidate, or trigger governed Gone response */}
+                      <div className="flex flex-wrap items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={copyCandidateJson}
+                          className="px-5 py-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl font-black flex items-center gap-2 shadow-sm transition-all cursor-pointer text-sm"
+                        >
+                          <Copy size={18} />
+                          Sao chép ứng viên (JSON)
+                        </button>
                         <button
                           onClick={() => saveDraftMut.mutate()}
                           disabled={
@@ -1296,7 +1334,8 @@ export default function AdminAiToolsPage() {
                             publishContentMut.isPending ||
                             saveDraftMut.isPending
                           }
-                          className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black flex items-center gap-2 shadow-sm transition-all cursor-pointer text-sm disabled:opacity-50"
+                          className="px-6 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-black flex items-center gap-2 shadow-sm transition-all cursor-pointer text-sm disabled:opacity-50"
+                          title="Đường dẫn xuất bản cũ đã đóng (410 Gone) để bảo vệ Single-Writer"
                         >
                           {publishContentMut.isPending ? (
                             <Loader2 className="animate-spin" size={20} />
@@ -1305,7 +1344,7 @@ export default function AdminAiToolsPage() {
                           )}
                           {publishContentMut.isPending
                             ? "Đang lưu..."
-                            : "Lưu & Xuất Bản"}
+                            : "Xuất bản trực tiếp (Đã đóng)"}
                         </button>
                       </div>
                     </div>
@@ -1538,10 +1577,10 @@ export default function AdminAiToolsPage() {
                   <span>{message.text}</span>
                   {message.quizId && (
                     <Link
-                      href="/admin/quizzes"
+                      href="/admin/exams"
                       className="px-3 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-black"
                     >
-                      Xem Trong Quản Lý Đề{" "}
+                      Xem Trong Exam Studio{" "}
                       <ArrowRight size={12} className="inline ml-1" />
                     </Link>
                   )}

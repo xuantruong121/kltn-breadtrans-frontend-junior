@@ -62,6 +62,7 @@ const isPublicOrOptionalEndpoint = (url?: string): boolean => {
     "/auth/login",
     "/auth/register",
     "/auth/forgot-password",
+    "/auth/reset-password",
     "/plans/catalog",
   ];
   return publicPaths.some((p) => url.includes(p));
@@ -70,7 +71,14 @@ const isPublicOrOptionalEndpoint = (url?: string): boolean => {
 const isGuestAllowedPage = (): boolean => {
   if (typeof window === "undefined") return false;
   const p = window.location.pathname;
-  if (p === "/" || p === "/login" || p === "/register") return true;
+  if (
+    p === "/" ||
+    p === "/login" ||
+    p === "/register" ||
+    p === "/forgot-password" ||
+    p === "/reset-password"
+  )
+    return true;
   const guestPrefixes = [
     "/courses",
     "/practice",

@@ -1,7 +1,7 @@
 {
-  "name": "BreadTrans - Luyện TOEIC & Tiếng Anh Trực Tuyến",
+  "name": "BreadTrans - Tự học Tiếng Anh theo Lộ trình",
   "short_name": "BreadTrans",
-  "description": "Nền tảng học tiếng Anh và luyện thi TOEIC tương tác thông minh",
+  "description": "Nền tảng tự học tiếng Anh theo kỹ năng, chủ đề, chứng chỉ và khóa học có lộ trình sẵn",
   "start_url": "/",
   "id": "/",
   "display": "standalone",

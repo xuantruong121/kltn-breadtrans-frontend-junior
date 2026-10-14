@@ -1,0 +1,168 @@
+"use client";
+
+import React, { useRef, useState } from "react";
+import { Image as ImageIcon, Loader2, Trash2, Upload, ChevronDown, ChevronUp } from "lucide-react";
+import toast from "react-hot-toast";
+import axiosClient from "@/lib/api/axiosClient";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
+
+interface ImageUploadFieldProps {
+  label?: string;
+  value: string;
+  onChange: (url: string) => void;
+  disabled?: boolean;
+  helperText?: string;
+}
+
+export default function ImageUploadField({
+  label = "Ảnh bìa",
+  value,
+  onChange,
+  disabled = false,
+  helperText = "Hỗ trợ định dạng JPG, PNG, WEBP tối đa 10MB.",
+}: ImageUploadFieldProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [showTechnicalUrl, setShowTechnicalUrl] = useState(false);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Vui lòng chọn file hình ảnh hợp lệ (JPG, PNG, WEBP).");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Kích thước ảnh không được vượt quá 10MB.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    setUploading(true);
+    try {
+      const res: any = await axiosClient.post("/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      const uploadedUrl = res?.url || res?.data?.url;
+      if (uploadedUrl) {
+        onChange(uploadedUrl);
+        toast.success("Tải ảnh lên thành công!");
+      } else {
+        toast.error("Không nhận được URL ảnh sau khi tải lên.");
+      }
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, "Không thể tải ảnh lên. Vui lòng thử lại."));
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleRemove = () => {
+    onChange("");
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <label className="text-sm font-semibold text-slate-800">{label}</label>
+        {value && (
+          <button
+            type="button"
+            onClick={() => setShowTechnicalUrl(!showTechnicalUrl)}
+            className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            Thông tin kỹ thuật {showTechnicalUrl ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+          </button>
+        )}
+      </div>
+
+      <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
+        {value ? (
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="relative h-28 w-44 shrink-0 overflow-hidden rounded-md border border-slate-200 bg-slate-100">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={value}
+                alt="Preview"
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "";
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  disabled={disabled || uploading}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                >
+                  {uploading ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+                  {uploading ? "Đang tải..." : "Thay đổi ảnh"}
+                </button>
+                <button
+                  type="button"
+                  disabled={disabled || uploading}
+                  onClick={handleRemove}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-50"
+                >
+                  <Trash2 size={13} />
+                  Xóa ảnh
+                </button>
+              </div>
+              <p className="text-xs text-slate-500">{helperText}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-6 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 mb-2">
+              <ImageIcon size={22} />
+            </div>
+            <p className="text-sm font-medium text-slate-700">Chưa có ảnh bìa</p>
+            <p className="mt-1 text-xs text-slate-500 mb-3">{helperText}</p>
+            <button
+              type="button"
+              disabled={disabled || uploading}
+              onClick={() => fileInputRef.current?.click()}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors disabled:opacity-50"
+            >
+              {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+              {uploading ? "Đang tải ảnh lên..." : "Tải ảnh từ máy tính"}
+            </button>
+          </div>
+        )}
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileChange}
+          disabled={disabled || uploading}
+        />
+
+        {showTechnicalUrl && (
+          <div className="mt-3 pt-3 border-t border-slate-200">
+            <label className="text-xs font-medium text-slate-500">Đường dẫn tệp (URL kỹ thuật):</label>
+            <input
+              type="text"
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              disabled={disabled}
+              placeholder="https://..."
+              className="mt-1 w-full rounded border border-slate-200 bg-white px-2.5 py-1 text-xs font-mono text-slate-600 outline-none focus:border-slate-400"
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

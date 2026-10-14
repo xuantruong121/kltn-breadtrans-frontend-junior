@@ -174,7 +174,7 @@ export function BrandLogo({
                     : "text-slate-500 dark:text-slate-400"
               }`}
             >
-              {subtitle || "Nền tảng Tự học Tiếng Anh & Luyện thi TOEIC"}
+              {subtitle || "Nền tảng Tự học Tiếng Anh theo Lộ trình"}
             </span>
           )}
         </div>

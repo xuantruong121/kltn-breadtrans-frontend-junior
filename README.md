@@ -1,6 +1,6 @@
 # 🍞 BreadTrans Junior Frontend (`kltn-breadtrans-frontend-junior`)
 
-Giao diện người dùng hiện đại, sống động cho **Nền tảng Học & Luyện thi Tiếng Anh Thông Minh BreadTrans E-Learning** — Khóa luận tốt nghiệp.  
+Giao diện người dùng hiện đại, sống động cho **Nền tảng Tự học Tiếng Anh theo kỹ năng, cấp độ, chủ đề và lộ trình BreadTrans E-Learning**. Người học có thể luyện đề theo nhiều dạng chứng chỉ, trong đó hiện có format TOEIC, kết hợp AI, Gamification và theo dõi tiến độ — Khóa luận tốt nghiệp.
 Ứng dụng được thiết kế theo phong cách **Junior Neo-Brutalism** (border dày dặn, nút bấm 3D nổi bật, màu sắc rực rỡ và chuyển động vi mô mượt mà).
 
 <p align="center">
@@ -21,7 +21,7 @@ Giao diện người dùng hiện đại, sống động cho **Nền tảng Họ
 - **Dashboard Trung Tâm:** Lộ trình học tập, thống kê tiến độ, thanh nhiệm vụ hằng ngày, chuỗi Streak và Bánh Mì tích lũy.
 - **Phòng Học Trực Tuyến Nhúng Web (Daily.co):** Học sinh tham gia lớp học trực tuyến với giáo viên qua video call trực tiếp ngay trong website mà không bị chuyển tab ngoài.
 - **Luyện Nói & Chấm Điểm Phát Âm (Azure AI Speech F0):** Thu âm trực quan với đồng hồ đếm ngược giới hạn **45 giây**, phân tích phát âm chi tiết cấp độ âm vị (Phoneme-level), độ lưu loát (Fluency), ngữ điệu (Prosody).
-- **Luyện Viết TOEIC Writing (AI Tutor):** Viết bài luận trực tiếp trên web, tính năng đếm từ thông minh và AI chấm điểm, phân tích ngữ pháp, gợi ý diễn đạt chuẩn thi.
+- **Luyện Viết theo kỹ năng & format chứng chỉ (AI Tutor):** Viết bài trực tiếp trên web, tính năng đếm từ thông minh và AI chấm điểm, phân tích ngữ pháp, gợi ý diễn đạt; hiện có nội dung TOEIC Writing.
 - **Học Từ Vựng & Flashcard 3D:** Hiệu ứng lật thẻ 3D, âm thanh phát âm mẫu chuẩn người bản xứ, chế độ Quiz và Typing ôn luyện.
 - **Đấu Trường 1v1 (Arena):** Ghép cặp ngẫu nhiên và thi đấu trả lời câu hỏi đối kháng thời gian thực qua WebSockets.
 - **Cửa Hàng Vật Phẩm (Market):** Dùng điểm Bánh Mì đổi các vật phẩm thú vị (Khiên đóng băng Streak, ngoại trang).

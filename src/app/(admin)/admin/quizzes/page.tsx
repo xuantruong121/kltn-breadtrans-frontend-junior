@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState } from "react";
+import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -328,6 +329,22 @@ export default function AdminQuizzesPage() {
         </div>
       )}
 
+      {/* BANNER: TOEIC CMS SINGLE AUTHORING PATH */}
+      <div className="rounded-2xl border border-blue-200 bg-blue-50/80 p-4 text-xs text-blue-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+        <div>
+          <p className="font-bold text-sm text-blue-950">Chuyên mục Luyện đề & TOEIC đã có Studio chuyên biệt</p>
+          <p className="text-blue-700 mt-0.5">
+            Đề thi TOEIC hiện được quản lý tại Studio Luyện đề với đầy đủ cấu trúc 7 phần, audio R2, đoạn văn và bảo vệ lịch sử làm bài.
+          </p>
+        </div>
+        <Link
+          href="/admin/exams"
+          className="shrink-0 rounded-xl bg-blue-900 px-4 py-2 text-xs font-bold text-white hover:bg-blue-800 transition-colors shadow-xs"
+        >
+          Mở Studio Luyện đề
+        </Link>
+      </div>
+
       {/* FILTER & SEARCH */}
       <div className="bg-white rounded-[2.5rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] overflow-hidden p-6 md:p-8 space-y-6">
         <div className="flex flex-col md:flex-row items-center gap-4">
@@ -543,7 +560,7 @@ export default function AdminQuizzesPage() {
                     required
                     value={quizForm.title}
                     onChange={(e) => setQuizForm({ ...quizForm, title: e.target.value })}
-                    placeholder="VD: Đề Luyện Thi TOEIC Part 5 - Bài 1"
+                    placeholder="VD: Bài luyện Reading Part 5 hoặc đề theo format chứng chỉ"
                     className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:bg-white text-slate-800"
                   />
                 </div>

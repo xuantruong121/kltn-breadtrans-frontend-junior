@@ -2,9 +2,12 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
-import { useAuthStore } from "@/stores/authStore";
+import {
+  setAuthPersistenceMode,
+  useAuthStore,
+} from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -14,6 +17,34 @@ import { hydrateSession } from "@/lib/auth/hydrateSession";
 
 type GoogleCredentialResponse = { credential?: string };
 type GoogleCredentialHandler = (response: GoogleCredentialResponse) => void;
+
+function GoogleMark() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="size-[22px] shrink-0"
+      viewBox="0 0 24 24"
+      role="img"
+    >
+      <path
+        fill="#4285F4"
+        d="M21.35 12.27c0-.79-.07-1.55-.2-2.27H12v4.3h5.23a4.5 4.5 0 0 1-1.94 2.96v2.46h3.14c1.84-1.69 2.92-4.18 2.92-7.45Z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 21.5c2.63 0 4.84-.87 6.45-2.36l-3.14-2.46c-.87.58-1.98.92-3.31.92-2.54 0-4.69-1.72-5.46-4.03H3.3v2.54A9.74 9.74 0 0 0 12 21.5Z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M6.54 13.57a5.85 5.85 0 0 1 0-3.14V7.89H3.3a9.5 9.5 0 0 0 0 8.22l3.24-2.54Z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 6.4c1.43 0 2.72.49 3.73 1.46l2.8-2.8C16.84 3.48 14.63 2.5 12 2.5a9.74 9.74 0 0 0-8.7 5.39l3.24 2.54C7.31 8.12 9.46 6.4 12 6.4Z"
+      />
+    </svg>
+  );
+}
 
 declare global {
   interface Window {
@@ -106,6 +137,7 @@ export default function GoogleSignInButton({
         queryClient.clear();
         useGamificationStore.getState().reset();
 
+        setAuthPersistenceMode(true);
         setAuth(res.access_token, res.refresh_token, res.user);
         persistDeviceId(res.deviceId || deviceId);
         await hydrateSession(queryClient);
@@ -158,6 +190,29 @@ export default function GoogleSignInButton({
     }
 
     let intervalId: NodeJS.Timeout;
+    let resizeObserver: ResizeObserver | null = null;
+    let renderedWidth = 0;
+
+    const syncIframeSize = () => {
+      const host = buttonRef.current;
+      const iframe = host?.querySelector<HTMLIFrameElement>("iframe");
+      if (!host || !iframe) return false;
+
+      iframe.style.width = "100%";
+      iframe.style.height = "100%";
+      iframe.style.minHeight = "100%";
+      iframe.style.display = "block";
+
+      const iframeHost = iframe.parentElement;
+      if (iframeHost) {
+        iframeHost.style.width = "100%";
+        iframeHost.style.height = "100%";
+        iframeHost.style.minHeight = "100%";
+      }
+
+      return true;
+    };
+
     const initGsi = () => {
       if (window.google?.accounts?.id && buttonRef.current) {
         try {
@@ -172,22 +227,44 @@ export default function GoogleSignInButton({
           }
 
           if (runtime.initializedClientId !== clientId) {
-            console.error("Google Sign-In client ID changed after initialization.");
+            console.error(
+              "Google Sign-In client ID changed after initialization.",
+            );
             return false;
           }
 
           runtime.activeCredentialHandler = handleCredentialResponse;
+
+          const wrapperWidth = Math.round(
+            buttonRef.current.getBoundingClientRect().width,
+          );
+          const width = Math.min(wrapperWidth || 400, 400);
+          if (renderedWidth === width && syncIframeSize()) {
+            return true;
+          }
 
           buttonRef.current.innerHTML = "";
           window.google.accounts.id.renderButton(buttonRef.current, {
             type: "standard",
             theme: "outline",
             size: "large",
-            shape: "pill",
-            text: "continue_with",
-            width: buttonRef.current.offsetWidth || 380,
-            logo_alignment: "left",
+            shape: "rectangular",
+            text: "signin_with",
+            width,
+            logo_alignment: "center",
+            locale: "vi",
           });
+
+          renderedWidth = width;
+          if (!syncIframeSize()) return false;
+
+          if (!resizeObserver && "ResizeObserver" in window) {
+            resizeObserver = new ResizeObserver(() => {
+              initGsi();
+            });
+            resizeObserver.observe(buttonRef.current);
+          }
+
           setIsReady(true);
           return true;
         } catch (e) {
@@ -207,6 +284,7 @@ export default function GoogleSignInButton({
 
     return () => {
       if (intervalId) clearInterval(intervalId);
+      resizeObserver?.disconnect();
       const runtime = window.__breadtransGoogleSignIn;
       if (runtime?.activeCredentialHandler === handleCredentialResponse) {
         runtime.activeCredentialHandler = null;
@@ -218,16 +296,36 @@ export default function GoogleSignInButton({
     <div className="w-full">
       {isProcessing && (
         <div className="mb-3 flex items-center justify-center gap-2 rounded-2xl border border-blue-200 dark:border-blue-900/60 bg-blue-50 dark:bg-blue-950/40 py-3 text-sm font-semibold text-blue-700 dark:text-blue-300">
-          <Loader2 className="animate-spin text-blue-600 dark:text-blue-400" size={18} />
+          <Loader2
+            className="animate-spin text-blue-600 dark:text-blue-400"
+            size={18}
+          />
           Đang xác thực tài khoản Google...
         </div>
       )}
-      <div
-        ref={buttonRef}
-        className={`flex w-full justify-center ${
-          !isReady ? "h-[44px] animate-pulse rounded-full bg-slate-100 dark:bg-slate-800" : ""
-        }`}
-      />
+      <div className="group relative h-14 w-full overflow-hidden rounded-2xl group-focus-within:outline group-focus-within:outline-2 group-focus-within:outline-amber-500 group-focus-within:outline-offset-2">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-0 flex h-14 w-full items-center justify-center rounded-2xl border border-slate-200/90 bg-white px-6 text-base font-semibold tracking-[-0.01em] text-slate-800 shadow-[0_2px_10px_-2px_rgba(15,23,42,0.08),0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] group-hover:border-orange-300/80 group-hover:shadow-[0_12px_26px_-5px_rgba(234,88,12,0.18),0_3px_8px_-2px_rgba(15,23,42,0.08)] group-focus-within:ring-2 group-focus-within:ring-amber-500 group-focus-within:ring-offset-2 group-active:scale-[0.99] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:group-hover:border-orange-700/80"
+        >
+          <span className="inline-flex items-center justify-center gap-3">
+            <GoogleMark />
+            <span>Đăng nhập bằng Google</span>
+          </span>
+          <ArrowRight
+            aria-hidden="true"
+            size={18}
+            className="absolute right-6 translate-x-1 opacity-0 transition-[transform,opacity] duration-200 group-hover:translate-x-0 group-hover:opacity-100"
+          />
+        </div>
+        <div
+          ref={buttonRef}
+          aria-busy={isProcessing || !isReady}
+          className={`absolute inset-0 z-20 flex h-14 w-full scale-y-125 cursor-pointer items-center justify-center overflow-hidden rounded-2xl opacity-[0.001] ${
+            !isReady || isProcessing ? "pointer-events-none" : ""
+          }`}
+        />
+      </div>
     </div>
   );
 }

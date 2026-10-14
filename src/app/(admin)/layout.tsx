@@ -8,23 +8,22 @@ import {
   Users,
   PenTool,
   LogOut,
-  FileText,
   GraduationCap,
   ShoppingBag,
   Coins,
   BookOpen,
   Layers,
-  Gamepad2,
   Mic,
   Menu,
   X,
   CreditCard,
-  Cpu,
   Activity,
   Flag,
   ChevronDown,
   BookMarked,
   Settings,
+  Headphones,
+  Award,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useQueryClient } from "@tanstack/react-query";
@@ -60,9 +59,9 @@ const OVERVIEW_ITEM: NavItem = {
 
 const NAV_GROUPS: NavCategory[] = [
   {
-    id: "courses-group",
-    title: "Đào Tạo & Khóa Học",
-    icon: GraduationCap,
+    id: "content-group",
+    title: "NỘI DUNG HỌC",
+    icon: BookMarked,
     items: [
       {
         id: "courses",
@@ -70,17 +69,34 @@ const NAV_GROUPS: NavCategory[] = [
         label: "Khóa học",
         icon: BookOpen,
       },
-    ],
-  },
-  {
-    id: "content-group",
-    title: "Kho Học Liệu & Kỹ Năng",
-    icon: BookMarked,
-    items: [
+      {
+        id: "listening",
+        href: "/admin/listening",
+        label: "Nghe & Dictation",
+        icon: Headphones,
+      },
+      {
+        id: "speaking",
+        href: "/admin/speaking",
+        label: "Nói",
+        icon: Mic,
+      },
+      {
+        id: "reading",
+        href: "/admin/reading",
+        label: "Đọc",
+        icon: BookOpen,
+      },
+      {
+        id: "writing",
+        href: "/admin/writing",
+        label: "Viết",
+        icon: PenTool,
+      },
       {
         id: "vocab",
         href: "/admin/vocab",
-        label: "Từ vựng (Flashcard)",
+        label: "Từ vựng & Flashcard",
         icon: Layers,
       },
       {
@@ -90,16 +106,10 @@ const NAV_GROUPS: NavCategory[] = [
         icon: GraduationCap,
       },
       {
-        id: "speaking",
-        href: "/admin/speaking",
-        label: "Luyện phát âm",
-        icon: Mic,
-      },
-      {
-        id: "quizzes",
-        href: "/admin/quizzes",
-        label: "Đề thi & Trắc nghiệm",
-        icon: FileText,
+        id: "exams",
+        href: "/admin/exams",
+        label: "Luyện đề",
+        icon: Award,
       },
     ],
   },
@@ -120,31 +130,6 @@ const NAV_GROUPS: NavCategory[] = [
         label: "Thanh toán",
         icon: CreditCard,
         roles: ["ADMIN"],
-      },
-    ],
-  },
-  {
-    id: "legacy-group",
-    title: "Dữ liệu cũ / Legacy",
-    icon: Settings,
-    items: [
-      {
-        id: "practice-legacy",
-        href: "/admin/practice",
-        label: "Taxonomy luyện tập (Legacy)",
-        icon: Gamepad2,
-      },
-      {
-        id: "assignments-legacy",
-        href: "/admin/assignments",
-        label: "Bài tập lớp (Legacy)",
-        icon: PenTool,
-      },
-      {
-        id: "enroll-legacy",
-        href: "/admin/enroll",
-        label: "Lớp & ghi danh (Legacy)",
-        icon: Users,
       },
     ],
   },
@@ -177,12 +162,6 @@ const NAV_GROUPS: NavCategory[] = [
         href: "/admin/issue-reports",
         label: "Báo cáo lỗi",
         icon: Flag,
-      },
-      {
-        id: "ai",
-        href: "/admin/ai-tools",
-        label: "Soạn nội dung AI",
-        icon: Cpu,
       },
       {
         id: "costs",
@@ -272,6 +251,7 @@ export default function AdminLayout({
           <Link
             href={OVERVIEW_ITEM.href}
             onClick={() => setIsMobileNavOpen(false)}
+            title={OVERVIEW_ITEM.label}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
               isOverviewActive
                 ? "bg-blue-600 text-white shadow-xs"
@@ -279,7 +259,7 @@ export default function AdminLayout({
             }`}
           >
             <OVERVIEW_ITEM.icon size={18} className={isOverviewActive ? "text-white" : "text-slate-500"} />
-            <span>{OVERVIEW_ITEM.label}</span>
+            <span className="leading-snug text-left break-words">{OVERVIEW_ITEM.label}</span>
           </Link>
 
           <div className="h-px bg-slate-200/80 my-1 mx-2 shrink-0" />
@@ -305,6 +285,7 @@ export default function AdminLayout({
                 <button
                   type="button"
                   onClick={() => toggleGroup(group.id)}
+                  title={group.title}
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer select-none ${
                     isGroupActive
                       ? "text-blue-700 bg-blue-50/70 hover:bg-blue-50"
@@ -312,12 +293,12 @@ export default function AdminLayout({
                   }`}
                   aria-expanded={isOpen}
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-1">
                     <group.icon
                       size={16}
                       className={isGroupActive ? "text-blue-600 shrink-0" : "text-slate-400 shrink-0"}
                     />
-                    <span className="truncate uppercase tracking-wider text-[11px] font-bold text-left">
+                    <span className="uppercase tracking-normal text-[11px] font-bold text-left leading-tight break-words flex-1">
                       {group.title}
                     </span>
                     {isGroupActive && (
@@ -342,7 +323,7 @@ export default function AdminLayout({
                       transition={{ duration: 0.2, ease: "easeInOut" }}
                       className="overflow-hidden"
                     >
-                      <div className="ml-4 pl-3.5 border-l-2 border-slate-200/80 space-y-1 pt-1 pb-1">
+                      <div className="ml-3 pl-2.5 border-l-2 border-slate-200/80 space-y-1 pt-1 pb-1">
                         {filteredItems.map((item) => {
                           const isActive =
                             item.href === "/admin"
@@ -354,7 +335,8 @@ export default function AdminLayout({
                               key={item.id}
                               href={item.href}
                               onClick={() => setIsMobileNavOpen(false)}
-                              className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                              title={item.label}
+                              className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                                 isActive
                                   ? "bg-blue-600 text-white shadow-xs"
                                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
@@ -364,7 +346,9 @@ export default function AdminLayout({
                                 size={15}
                                 className={isActive ? "text-white shrink-0" : "text-slate-400 shrink-0"}
                               />
-                              <span className="truncate">{item.label}</span>
+                              <span className="leading-snug text-left break-words flex-1">
+                                {item.label}
+                              </span>
                             </Link>
                           );
                         })}
@@ -378,11 +362,15 @@ export default function AdminLayout({
         </nav>
       </div>
       <div className="border-t border-slate-200 p-4 shrink-0">
-        <div className="mb-3 truncate px-2 text-xs font-bold text-slate-500">
+        <div
+          title={user?.email}
+          className="mb-3 truncate px-2 text-xs font-bold text-slate-500"
+        >
           {user?.email}
         </div>
         <button
           onClick={handleLogout}
+          title="Đăng xuất khỏi hệ thống quản trị"
           className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-100 p-2.5 text-xs font-bold text-slate-600 transition-colors hover:bg-rose-50 hover:text-rose-600"
         >
           <LogOut size={16} /> Đăng xuất
@@ -397,7 +385,7 @@ export default function AdminLayout({
       className="light flex h-[100dvh] bg-slate-50 overflow-hidden text-slate-800"
     >
       {/* Desktop Sidebar (lg+) */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-200 bg-white text-slate-700 lg:flex">
+      <aside className="hidden w-64 lg:w-72 shrink-0 flex-col border-r border-slate-200 bg-white text-slate-700 lg:flex">
         {sidebarNav}
       </aside>
 
@@ -417,7 +405,7 @@ export default function AdminLayout({
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 280 }}
-              className="relative z-10 flex h-full w-72 max-w-[80vw] flex-col justify-between bg-white text-slate-700 shadow-2xl"
+              className="relative z-10 flex h-full w-72 sm:w-80 max-w-[85vw] flex-col justify-between bg-white text-slate-700 shadow-2xl"
             >
               {sidebarNav}
             </motion.aside>

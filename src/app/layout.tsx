@@ -14,9 +14,9 @@ const quicksand = Quicksand({
 });
 
 export const metadata: Metadata = {
-  title: "BreadTrans - Học tiếng Anh & Luyện đề TOEIC",
+  title: "BreadTrans - Tự học tiếng Anh theo lộ trình",
   description:
-    "Nền tảng tự học tiếng Anh 4 kỹ năng, từ vựng, ngữ pháp và luyện đề TOEIC tương tác",
+    "Nền tảng tự học tiếng Anh theo kỹ năng, cấp độ và chủ đề; luyện đề theo nhiều dạng chứng chỉ và học theo khóa học có lộ trình sẵn.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

@@ -318,17 +318,20 @@ export default function AdminUsersPage() {
                   <tr key={user.id} className="hover:bg-slate-50/70 transition-colors">
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
-                        {user.profile?.avatar ? (
-                          <img
-                            src={user.profile.avatar}
-                            alt=""
-                            className="w-10 h-10 rounded-2xl object-cover border border-slate-200"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-2xl bg-blue-100 text-blue-600 font-black flex items-center justify-center shrink-0">
-                            <User size={20} />
-                          </div>
-                        )}
+                        <div className="relative w-10 h-10 rounded-2xl bg-blue-100 text-blue-600 font-black flex items-center justify-center shrink-0">
+                          <User size={20} />
+                          {user.profile?.avatar ? (
+                            <img
+                              src={user.profile.avatar}
+                              alt=""
+                              referrerPolicy="no-referrer"
+                              onError={(event) => {
+                                event.currentTarget.style.display = "none";
+                              }}
+                              className="absolute inset-0 w-full h-full rounded-2xl object-cover border border-slate-200"
+                            />
+                          ) : null}
+                        </div>
                         <div>
                           <p className="font-black text-slate-800 text-base">{user.profile?.fullName || "—"}</p>
                           <p className="text-xs text-slate-400 font-medium flex items-center gap-1">

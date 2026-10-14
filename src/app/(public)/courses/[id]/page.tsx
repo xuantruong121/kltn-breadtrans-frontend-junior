@@ -214,7 +214,7 @@ export default function PublicCourseDetailPage() {
               className="relative mt-5 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/70"
               style={{
                 aspectRatio: mediaRatio ? String(mediaRatio) : "16 / 9",
-                maxHeight: "22rem",
+                maxHeight: mediaRatio && mediaRatio < 1.1 ? "34rem" : "26rem",
               }}
             >
               {mediaSrc ? (
@@ -223,7 +223,7 @@ export default function PublicCourseDetailPage() {
                   alt={media.alt}
                   fill
                   sizes="(max-width: 1024px) 100vw, 850px"
-                  className="object-contain p-2 sm:p-3"
+                  className="object-contain p-1.5 sm:p-2"
                   onLoad={(event) => {
                     const image = event.currentTarget;
                     if (image.naturalWidth && image.naturalHeight) {

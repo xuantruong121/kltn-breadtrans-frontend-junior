@@ -1,54 +1,38 @@
 "use client";
 
-import {
-  type ClipboardEvent,
-  type FormEvent,
-  type KeyboardEvent,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
 import {
-  UserPlus,
-  User,
-  Mail,
-  KeyRound,
+  AlertCircle,
+  ArrowRight,
+  CheckCircle2,
   Eye,
   EyeOff,
-  ArrowRight,
-  ArrowLeft,
-  AlertCircle,
-  X,
-  MailCheck,
-  Check,
-  RotateCcw,
-  CheckCircle2,
+  KeyRound,
   Loader2,
+  Mail,
+  User,
+  X,
 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { AuthShell } from "./AuthShell";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import GoogleAccountLinkModal from "@/components/auth/GoogleAccountLinkModal";
 
-type RegisterStep = "details" | "otp" | "success";
-type FieldName = "fullName" | "email" | "password";
+type RegisterStep = "details" | "success";
+type FieldName = "fullName" | "email" | "password" | "confirmPassword";
 
 interface RegistrationForm {
   fullName: string;
   email: string;
   password: string;
+  confirmPassword: string;
 }
 
 interface ApiErrorShape {
   response?: { data?: { message?: string | string[] } };
 }
-
-const OTP_LENGTH = 6;
-const RESEND_DELAY_SECONDS = 60;
-const emptyOtp = () => Array.from({ length: OTP_LENGTH }, () => "");
 
 function getSafeRedirect(raw: string | null) {
   if (!raw) return null;
@@ -64,49 +48,21 @@ function getSafeRedirect(raw: string | null) {
   return null;
 }
 
-function getErrorMessage(error: unknown, fallback: string) {
-  if (typeof error !== "object" || error === null) return fallback;
+function getErrorMessage(error: unknown) {
+  if (typeof error !== "object" || error === null) {
+    return "Chưa thể tạo tài khoản. Hãy thử lại sau.";
+  }
   const message = (error as ApiErrorShape).response?.data?.message;
   const raw = Array.isArray(message) ? message.join(". ") : message;
-  if (!raw) return fallback;
+  if (!raw) return "Chưa thể tạo tài khoản. Hãy thử lại sau.";
 
-  const normalized = raw.toLowerCase();
-  if (normalized.includes("already") || normalized.includes("exist")) {
+  if (
+    raw.toLowerCase().includes("already") ||
+    raw.toLowerCase().includes("exist")
+  ) {
     return "Email này đã được sử dụng. Bạn hãy đăng nhập hoặc dùng email khác.";
   }
-  if (normalized.includes("expired")) {
-    return "Mã OTP đã hết hạn. Hãy yêu cầu gửi một mã mới.";
-  }
-  if (normalized.includes("attempt")) {
-    return "Bạn đã nhập sai quá số lần cho phép. Hãy gửi lại mã OTP mới.";
-  }
-  if (normalized.includes("otp") || normalized.includes("invalid")) {
-    return "Mã OTP chưa đúng. Hãy kiểm tra email và thử lại.";
-  }
   return raw;
-}
-
-function StepProgressBar({ current }: { current: 1 | 2 }) {
-  return (
-    <div className="mb-6" aria-label={`Bước ${current} trên 2`}>
-      <div className="mb-2 flex items-center justify-between text-xs font-bold">
-        <span className={current === 1 ? "text-amber-700 dark:text-amber-400 font-bold" : "text-slate-400 dark:text-slate-500"}>
-          1. Thông tin tài khoản
-        </span>
-        <span className={current === 2 ? "text-amber-700 dark:text-amber-400 font-bold" : "text-slate-400 dark:text-slate-500"}>
-          2. Xác thực email
-        </span>
-      </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800" aria-hidden="true">
-        <motion.div
-          initial={false}
-          animate={{ width: current === 1 ? "50%" : "100%" }}
-          transition={{ type: "spring", stiffness: 180, damping: 24 }}
-          className="h-full rounded-full bg-amber-600"
-        />
-      </div>
-    </div>
-  );
 }
 
 export default function RegisterFlow() {
@@ -117,40 +73,27 @@ export default function RegisterFlow() {
     ? `/login?redirect=${encodeURIComponent(safeRedirect)}`
     : "/login";
 
-  const otpRefs = useRef<Array<HTMLInputElement | null>>([]);
   const [step, setStep] = useState<RegisterStep>("details");
   const [form, setForm] = useState<RegistrationForm>({
     fullName: "",
     email: "",
     password: "",
+    confirmPassword: "",
   });
-  const [otpDigits, setOtpDigits] = useState<string[]>(emptyOtp);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isResending, setIsResending] = useState(false);
-  const [resendSeconds, setResendSeconds] = useState(RESEND_DELAY_SECONDS);
   const [error, setError] = useState("");
-  const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldName, string>>>({});
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<FieldName, string>>
+  >({});
   const [linkModalData, setLinkModalData] = useState<{
     isOpen: boolean;
     credential: string;
   }>({ isOpen: false, credential: "" });
 
-  useEffect(() => {
-    if (step !== "otp" || resendSeconds <= 0) return;
-    const timer = window.setTimeout(
-      () => setResendSeconds((seconds) => Math.max(0, seconds - 1)),
-      1000
-    );
-    return () => window.clearTimeout(timer);
-  }, [step, resendSeconds]);
-
-  useEffect(() => {
-    if (step === "otp") otpRefs.current[0]?.focus();
-  }, [step]);
-
   const updateField = (field: FieldName, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
+    setError("");
     if (fieldErrors[field]) {
       setFieldErrors((current) => ({ ...current, [field]: undefined }));
     }
@@ -167,15 +110,15 @@ export default function RegisterFlow() {
     if (form.password.length < 6) {
       next.password = "Mật khẩu cần có ít nhất 6 ký tự.";
     }
+    if (form.password !== form.confirmPassword) {
+      next.confirmPassword = "Mật khẩu nhập lại chưa trùng khớp.";
+    }
     setFieldErrors(next);
     return Object.keys(next).length === 0;
   };
 
-  const registrationPayload = () => ({
-    email: form.email.trim().toLowerCase(),
-    password: form.password,
-    fullName: form.fullName.trim(),
-  });
+  const passwordMismatch =
+    form.confirmPassword.length > 0 && form.password !== form.confirmPassword;
 
   const submitDetails = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -184,460 +127,256 @@ export default function RegisterFlow() {
 
     setIsSubmitting(true);
     try {
-      await axiosClient.post("/auth/register", registrationPayload());
-      setOtpDigits(emptyOtp());
-      setResendSeconds(RESEND_DELAY_SECONDS);
-      setStep("otp");
-    } catch (requestError: unknown) {
-      setError(
-        getErrorMessage(requestError, "Chưa thể gửi mã OTP. Hãy kiểm tra kết nối và thử lại.")
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const updateOtpDigit = (index: number, value: string) => {
-    const digit = value.replace(/\D/g, "").slice(-1);
-    setOtpDigits((current) => {
-      const next = [...current];
-      next[index] = digit;
-      return next;
-    });
-    setError("");
-    if (digit && index < OTP_LENGTH - 1) otpRefs.current[index + 1]?.focus();
-  };
-
-  const handleOtpKeyDown = (index: number, event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Backspace" && !otpDigits[index] && index > 0) {
-      otpRefs.current[index - 1]?.focus();
-    }
-    if (event.key === "ArrowLeft" && index > 0) otpRefs.current[index - 1]?.focus();
-    if (event.key === "ArrowRight" && index < OTP_LENGTH - 1) {
-      otpRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleOtpPaste = (event: ClipboardEvent<HTMLInputElement>) => {
-    const digits = event.clipboardData
-      .getData("text")
-      .replace(/\D/g, "")
-      .slice(0, OTP_LENGTH)
-      .split("");
-    if (!digits.length) return;
-
-    event.preventDefault();
-    setOtpDigits(Array.from({ length: OTP_LENGTH }, (_, index) => digits[index] ?? ""));
-    setError("");
-    otpRefs.current[Math.min(digits.length, OTP_LENGTH) - 1]?.focus();
-  };
-
-  const verifyOtp = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const otp = otpDigits.join("");
-    setError("");
-    if (otp.length !== OTP_LENGTH) {
-      setError("Hãy nhập đủ 6 chữ số trong mã OTP.");
-      const firstEmpty = otpDigits.findIndex((digit) => !digit);
-      otpRefs.current[Math.max(firstEmpty, 0)]?.focus();
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await axiosClient.post("/auth/register/verify", {
+      await axiosClient.post("/auth/register", {
         email: form.email.trim().toLowerCase(),
-        otp,
+        password: form.password,
+        fullName: form.fullName.trim(),
       });
       setStep("success");
     } catch (requestError: unknown) {
-      setError(
-        getErrorMessage(
-          requestError,
-          "Chưa thể xác thực tài khoản. Hãy kiểm tra mã OTP và thử lại."
-        )
-      );
+      setError(getErrorMessage(requestError));
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const resendOtp = async () => {
-    if (resendSeconds > 0 || isResending) return;
-    setError("");
-    setIsResending(true);
-    try {
-      await axiosClient.post("/auth/register", registrationPayload());
-      setOtpDigits(emptyOtp());
-      setResendSeconds(RESEND_DELAY_SECONDS);
-      otpRefs.current[0]?.focus();
-    } catch (requestError: unknown) {
-      setError(getErrorMessage(requestError, "Chưa thể gửi lại OTP. Hãy thử lại sau một lát."));
-    } finally {
-      setIsResending(false);
     }
   };
 
   return (
     <AuthShell>
-      <AnimatePresence mode="wait" initial={false}>
-        {step === "details" && (
-          <motion.div
-            key="details"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.2 }}
-            className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl p-6 sm:p-10 relative border border-amber-100 dark:border-slate-800"
-          >
-            <StepProgressBar current={1} />
+      {step === "details" ? (
+        <div className="rounded-3xl border border-amber-100 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900 sm:p-10">
+          <div className="mb-6 text-center">
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
+              Đăng ký BreadTrans
+            </h1>
+            <p className="mt-1.5 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+              Tạo tài khoản để bắt đầu lộ trình tự học tiếng Anh của bạn.
+            </p>
+          </div>
 
-            {/* Header Info */}
-            <div className="text-center mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-200 dark:bg-amber-950/40 dark:border-amber-900/50 flex items-center justify-center mx-auto mb-3 shadow-xs text-amber-700 dark:text-amber-400">
-                <UserPlus size={22} />
+          {error && (
+            <div
+              role="alert"
+              className="mb-5 flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-3.5 text-sm font-medium text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300"
+            >
+              <div className="flex items-center gap-2.5">
+                <AlertCircle
+                  size={18}
+                  className="shrink-0 text-rose-600 dark:text-rose-400"
+                />
+                <span>{error}</span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-                Đăng ký BreadTrans
-              </h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-                Tạo tài khoản học viên để bắt đầu hành trình nâng cao 4 kỹ năng tiếng Anh.
-              </p>
+              <button
+                type="button"
+                onClick={() => setError("")}
+                aria-label="Đóng thông báo lỗi"
+                className="rounded-lg p-1 text-rose-600 transition-colors hover:bg-rose-100 hover:text-rose-800 dark:text-rose-400 dark:hover:bg-rose-900/40 dark:hover:text-rose-200"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          )}
+
+          <form onSubmit={submitDetails} noValidate className="space-y-4">
+            <div className="space-y-1.5">
+              <label
+                className="block text-sm font-bold text-slate-700 dark:text-slate-300"
+                htmlFor="register-full-name"
+              >
+                Họ và tên <span className="text-rose-500">*</span>
+              </label>
+              <div className="relative">
+                <User
+                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                  size={18}
+                />
+                <input
+                  id="register-full-name"
+                  name="fullName"
+                  type="text"
+                  autoComplete="name"
+                  required
+                  value={form.fullName}
+                  onChange={(event) =>
+                    updateField("fullName", event.target.value)
+                  }
+                  placeholder="Ví dụ: Nguyễn Minh Anh"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/70 py-3 pl-10 pr-4 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/10 dark:border-slate-700 dark:bg-slate-850 dark:text-slate-100 dark:focus:bg-slate-800"
+                />
+              </div>
+              {fieldErrors.fullName && (
+                <p className="text-xs font-medium text-rose-600 dark:text-rose-400">
+                  {fieldErrors.fullName}
+                </p>
+              )}
             </div>
 
-            {/* Error Alert Box */}
-            {error && (
-              <div className="mb-5 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50 p-3.5 rounded-2xl text-sm font-medium flex items-center justify-between gap-3 animate-in fade-in duration-150">
-                <div className="flex items-center gap-2.5">
-                  <AlertCircle size={18} className="text-rose-600 dark:text-rose-400 shrink-0" />
-                  <span>{error}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setError("")}
-                  aria-label="Đóng thông báo lỗi"
-                  className="text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-200 p-1 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors"
+            <div className="space-y-1.5">
+              <label
+                className="block text-sm font-bold text-slate-700 dark:text-slate-300"
+                htmlFor="register-email"
+              >
+                Địa chỉ Email <span className="text-rose-500">*</span>
+              </label>
+              <div className="relative">
+                <Mail
+                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                  size={18}
+                />
+                <input
+                  id="register-email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  inputMode="email"
+                  required
+                  value={form.email}
+                  onChange={(event) => updateField("email", event.target.value)}
+                  placeholder="name@gmail.com"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/70 py-3 pl-10 pr-4 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/10 dark:border-slate-700 dark:bg-slate-850 dark:text-slate-100 dark:focus:bg-slate-800"
+                />
+              </div>
+              {fieldErrors.email ? (
+                <p className="text-xs font-medium text-rose-600 dark:text-rose-400">
+                  {fieldErrors.email}
+                </p>
+              ) : (
+                <p className="text-xs leading-relaxed text-slate-400 dark:text-slate-500">
+                  Nên dùng Gmail bạn đang sử dụng để sau này dễ xác nhận khi cần
+                  đổi mật khẩu.
+                </p>
+              )}
+            </div>
+
+            {(["password", "confirmPassword"] as const).map((field) => (
+              <div key={field} className="space-y-1.5">
+                <label
+                  className="block text-sm font-bold text-slate-700 dark:text-slate-300"
+                  htmlFor={`register-${field}`}
                 >
-                  <X size={16} />
-                </button>
-              </div>
-            )}
-
-            {/* Form Elements */}
-            <form onSubmit={submitDetails} noValidate className="space-y-4">
-              {/* Full Name Field */}
-              <div className="space-y-1.5">
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300" htmlFor="register-full-name">
-                  Họ và tên <span className="text-rose-500">*</span>
+                  {field === "password" ? "Mật khẩu" : "Nhập lại mật khẩu"}{" "}
+                  <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 dark:text-slate-500">
-                    <User size={18} />
-                  </span>
-                  <input
-                    id="register-full-name"
-                    name="fullName"
-                    type="text"
-                    autoComplete="name"
-                    required
-                    value={form.fullName}
-                    onChange={(e) => updateField("fullName", e.target.value)}
-                    placeholder="Ví dụ: Nguyễn Minh Anh"
-                    className={`w-full pl-10 pr-4 py-3 bg-slate-50/70 dark:bg-slate-850 border rounded-xl text-slate-900 dark:text-slate-100 text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:bg-white dark:focus:bg-slate-800 transition-all ${
-                      fieldErrors.fullName
-                        ? "border-rose-300 dark:border-rose-700 focus:ring-4 focus:ring-rose-500/10"
-                        : "border-slate-200 dark:border-slate-700 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
-                    }`}
+                  <KeyRound
+                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                    size={18}
                   />
-                </div>
-                {fieldErrors.fullName && (
-                  <p className="text-xs text-rose-600 dark:text-rose-400 font-medium mt-1">{fieldErrors.fullName}</p>
-                )}
-              </div>
-
-              {/* Email Field */}
-              <div className="space-y-1.5">
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300" htmlFor="register-email">
-                  Địa chỉ Email <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 dark:text-slate-500">
-                    <Mail size={18} />
-                  </span>
                   <input
-                    id="register-email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    inputMode="email"
-                    required
-                    value={form.email}
-                    onChange={(e) => updateField("email", e.target.value)}
-                    placeholder="name@example.com"
-                    className={`w-full pl-10 pr-4 py-3 bg-slate-50/70 dark:bg-slate-850 border rounded-xl text-slate-900 dark:text-slate-100 text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:bg-white dark:focus:bg-slate-800 transition-all ${
-                      fieldErrors.email
-                        ? "border-rose-300 dark:border-rose-700 focus:ring-4 focus:ring-rose-500/10"
-                        : "border-slate-200 dark:border-slate-700 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
-                    }`}
-                  />
-                </div>
-                {fieldErrors.email && (
-                  <p className="text-xs text-rose-600 dark:text-rose-400 font-medium mt-1">{fieldErrors.email}</p>
-                )}
-              </div>
-
-              {/* Password Field */}
-              <div className="space-y-1.5">
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300" htmlFor="register-password">
-                  Mật khẩu <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 dark:text-slate-500">
-                    <KeyRound size={18} />
-                  </span>
-                  <input
-                    id="register-password"
-                    name="password"
+                    id={`register-${field}`}
+                    name={field}
                     type={showPassword ? "text" : "password"}
-                    autoComplete="new-password"
+                    autoComplete={
+                      field === "password" ? "new-password" : "new-password"
+                    }
                     required
-                    value={form.password}
-                    onChange={(e) => updateField("password", e.target.value)}
-                    placeholder="Tối thiểu 6 ký tự"
-                    className={`w-full pl-10 pr-11 py-3 bg-slate-50/70 dark:bg-slate-850 border rounded-xl text-slate-900 dark:text-slate-100 text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:bg-white dark:focus:bg-slate-800 transition-all ${
-                      fieldErrors.password
-                        ? "border-rose-300 dark:border-rose-700 focus:ring-4 focus:ring-rose-500/10"
-                        : "border-slate-200 dark:border-slate-700 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10"
+                    value={form[field]}
+                    onChange={(event) => updateField(field, event.target.value)}
+                    placeholder={
+                      field === "password"
+                        ? "Tối thiểu 6 ký tự"
+                        : "Nhập lại mật khẩu"
+                    }
+                    aria-invalid={Boolean(
+                      fieldErrors[field] ||
+                      (field === "confirmPassword" && passwordMismatch),
+                    )}
+                    className={`w-full rounded-xl border bg-slate-50/70 py-3 pl-10 pr-11 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:bg-white focus:ring-4 dark:bg-slate-850 dark:text-slate-100 dark:focus:bg-slate-800 ${
+                      fieldErrors[field] ||
+                      (field === "confirmPassword" && passwordMismatch)
+                        ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/10 dark:border-rose-700"
+                        : "border-slate-200 focus:border-amber-500 focus:ring-amber-500/10 dark:border-slate-700"
                     }`}
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                    title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    onClick={() => setShowPassword((current) => !current)}
+                    className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 items-center justify-center text-slate-400 transition-colors hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
                     aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
-                {fieldErrors.password ? (
-                  <p className="text-xs text-rose-600 dark:text-rose-400 font-medium mt-1">{fieldErrors.password}</p>
-                ) : (
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                    Mật khẩu gồm ít nhất 6 ký tự để bảo vệ tài khoản của bạn.
+                {fieldErrors[field] ||
+                (field === "confirmPassword" && passwordMismatch) ? (
+                  <p className="text-xs font-medium text-rose-600 dark:text-rose-400">
+                    {fieldErrors[field] || "Mật khẩu nhập lại chưa trùng khớp."}
                   </p>
-                )}
+                ) : field === "password" ? (
+                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                    Mật khẩu gồm ít nhất 6 ký tự.
+                  </p>
+                ) : null}
               </div>
-
-              {/* Submit CTA */}
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="btn-tactile-primary w-full py-3.5 px-6 rounded-xl font-bold text-sm sm:text-base bg-amber-600 hover:bg-amber-700 text-white shadow-md transition-all duration-150 flex items-center justify-center gap-2 select-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-2"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" />
-                    <span>Đang gửi mã xác thực...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Đăng ký tài khoản</span>
-                    <ArrowRight size={18} />
-                  </>
-                )}
-              </button>
-            </form>
-
-            {/* Divider with Text */}
-            <div className="relative my-6 flex items-center justify-center">
-              <div className="w-full bg-slate-200 dark:bg-slate-800 h-[1px]" />
-              <span className="absolute px-3 bg-white dark:bg-slate-900 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                Hoặc tiếp tục với
-              </span>
-            </div>
-
-            {/* Google SSO */}
-            <div className="space-y-2">
-              <GoogleSignInButton
-                redirectUrl={safeRedirect}
-                onAccountLinkRequired={({ credential }) =>
-                  setLinkModalData({ isOpen: true, credential })
-                }
-                onError={(msg) => setError(msg)}
-              />
-            </div>
-
-            {/* Footer Card Direction */}
-            <div className="mt-6 text-center pt-3 bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 rounded-2xl p-3.5">
-              <p className="text-sm text-slate-600 dark:text-slate-400">
-                Đã có tài khoản BreadTrans?{" "}
-                <Link
-                  href={loginHref}
-                  className="font-bold text-amber-700 dark:text-amber-400 hover:underline ml-1 inline-block"
-                >
-                  Đăng nhập ngay
-                </Link>
-              </p>
-            </div>
-          </motion.div>
-        )}
-
-        {step === "otp" && (
-          <motion.div
-            key="otp"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.2 }}
-            className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl p-6 sm:p-10 relative border border-amber-100 dark:border-slate-800"
-          >
-            <StepProgressBar current={2} />
-
-            <div className="text-center mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-200 dark:bg-amber-950/40 dark:border-amber-900/50 flex items-center justify-center mx-auto mb-3 shadow-xs text-amber-700 dark:text-amber-400">
-                <MailCheck size={22} />
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-                Kiểm tra email nhé!
-              </h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-                BreadTrans đã gửi mã xác thực 6 chữ số tới địa chỉ
-              </p>
-              <div className="mt-1 font-bold text-amber-700 dark:text-amber-400 break-all text-sm">{form.email}</div>
-            </div>
-
-            {error && (
-              <div className="mb-5 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50 p-3.5 rounded-2xl text-sm font-medium flex items-center justify-between gap-3 animate-in fade-in duration-150">
-                <div className="flex items-center gap-2.5">
-                  <AlertCircle size={18} className="text-rose-600 dark:text-rose-400 shrink-0" />
-                  <span>{error}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setError("")}
-                  aria-label="Đóng thông báo lỗi"
-                  className="text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-200 p-1 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            )}
-
-            <form onSubmit={verifyOtp} className="space-y-6">
-              <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 text-center">
-                  Nhập mã 6 chữ số
-                </label>
-                <div className="grid grid-cols-6 gap-2 sm:gap-3">
-                  {otpDigits.map((digit, index) => (
-                    <input
-                      key={index}
-                      ref={(element) => {
-                        otpRefs.current[index] = element;
-                      }}
-                      type="text"
-                      inputMode="numeric"
-                      autoComplete={index === 0 ? "one-time-code" : "off"}
-                      pattern="[0-9]*"
-                      maxLength={1}
-                      value={digit}
-                      onChange={(e) => updateOtpDigit(index, e.target.value)}
-                      onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                      onPaste={handleOtpPaste}
-                      aria-label={`Chữ số OTP thứ ${index + 1}`}
-                      className="h-13 sm:h-14 min-w-0 rounded-xl bg-slate-50/70 dark:bg-slate-850 border border-slate-200 dark:border-slate-700 text-center text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all"
-                    />
-                  ))}
-                </div>
-                <p className="mt-3 text-center text-xs text-slate-400 dark:text-slate-500">
-                  Mã có hiệu lực trong 5 phút. Bạn có thể dán toàn bộ mã vào bất kỳ ô nào.
-                </p>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="btn-tactile-primary w-full py-3.5 px-6 rounded-xl font-bold text-sm sm:text-base bg-amber-600 hover:bg-amber-700 text-white shadow-md transition-all duration-150 flex items-center justify-center gap-2 select-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" />
-                    <span>Đang xác thực...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Xác nhận tài khoản</span>
-                    <Check size={18} />
-                  </>
-                )}
-              </button>
-            </form>
-
-            <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-              <button
-                type="button"
-                onClick={() => {
-                  setError("");
-                  setStep("details");
-                }}
-                className="inline-flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors py-1 px-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                <ArrowLeft size={16} />
-                <span>Thay đổi email</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={resendOtp}
-                disabled={resendSeconds > 0 || isResending}
-                className="inline-flex items-center gap-1.5 font-semibold text-amber-700 dark:text-amber-400 hover:underline disabled:text-slate-400 dark:disabled:text-slate-600 disabled:no-underline disabled:cursor-not-allowed"
-              >
-                <RotateCcw size={16} />
-                <span>
-                  {resendSeconds > 0 ? `Gửi lại sau ${resendSeconds}s` : "Gửi lại mã OTP"}
-                </span>
-              </button>
-            </div>
-          </motion.div>
-        )}
-
-        {step === "success" && (
-          <motion.div
-            key="success"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.2 }}
-            className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl p-6 sm:p-10 relative border border-amber-100 dark:border-slate-800 text-center"
-          >
-            <div className="w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-4 shadow-xs border border-emerald-200 dark:border-emerald-900/50">
-              <CheckCircle2 size={32} />
-            </div>
-
-            <div className="inline-block px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 text-xs font-bold uppercase tracking-wider mb-2">
-              Hoàn tất đăng ký
-            </div>
-
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-              Tài khoản đã sẵn sàng!
-            </h1>
-
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-sm mx-auto leading-relaxed">
-              Chào mừng <strong className="text-slate-900 dark:text-slate-100 font-bold">{form.fullName.trim()}</strong> đến
-              với BreadTrans. Bạn có thể đăng nhập và bắt đầu học tập ngay bây giờ.
-            </p>
+            ))}
 
             <button
-              type="button"
-              onClick={() => router.push(loginHref)}
-              className="btn-tactile-primary mt-6 w-full py-3.5 px-6 rounded-xl font-bold text-sm sm:text-base bg-amber-600 hover:bg-amber-700 text-white shadow-md transition-all duration-150 flex items-center justify-center gap-2 select-none cursor-pointer"
+              type="submit"
+              disabled={isSubmitting}
+              className="btn-tactile-primary mt-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-amber-600 px-6 py-3.5 text-sm font-bold text-white shadow-md transition-all duration-150 hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50 sm:text-base"
             >
-              <span>Đăng nhập ngay</span>
-              <ArrowRight size={18} />
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  <span>Đang tạo tài khoản...</span>
+                </>
+              ) : (
+                <>
+                  <span>Đăng ký tài khoản</span>
+                  <ArrowRight size={18} />
+                </>
+              )}
             </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </form>
+
+          <div className="relative my-6 flex items-center justify-center">
+            <div className="h-px w-full bg-slate-200 dark:bg-slate-800" />
+            <span className="absolute bg-white px-3 text-xs font-bold uppercase tracking-wider text-slate-400 dark:bg-slate-900 dark:text-slate-500">
+              Hoặc tiếp tục với
+            </span>
+          </div>
+
+          <GoogleSignInButton
+            redirectUrl={safeRedirect}
+            onAccountLinkRequired={({ credential }) =>
+              setLinkModalData({ isOpen: true, credential })
+            }
+            onError={(message) => setError(message)}
+          />
+
+          <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/80 p-3.5 text-center dark:border-slate-800 dark:bg-slate-800/40">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Đã có tài khoản BreadTrans?{" "}
+              <Link
+                href={loginHref}
+                className="ml-1 inline-block font-bold text-amber-700 hover:underline dark:text-amber-400"
+              >
+                Đăng nhập ngay
+              </Link>
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-3xl border border-amber-100 bg-white p-6 text-center shadow-xl dark:border-slate-800 dark:bg-slate-900 sm:p-10">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-100 text-emerald-600 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-400">
+            <CheckCircle2 size={32} />
+          </div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
+            Tạo tài khoản thành công!
+          </h1>
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+            Tài khoản của bạn đã sẵn sàng. Đăng nhập để bắt đầu học tiếng Anh
+            theo lộ trình.
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push(loginHref)}
+            className="btn-tactile-primary mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-6 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:bg-amber-700 sm:text-base"
+          >
+            <span>Đăng nhập ngay</span>
+            <ArrowRight size={18} />
+          </button>
+        </div>
+      )}
 
       <GoogleAccountLinkModal
         isOpen={linkModalData.isOpen}
