@@ -47,6 +47,7 @@ export default function V5LessonEditorPage() {
   const [courseTitle, setCourseTitle] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [isPublishConfirmOpen, setIsPublishConfirmOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"sections" | "exercises" | "info" | "preview">("sections");
 
   // Lesson Info Form
@@ -147,6 +148,7 @@ export default function V5LessonEditorPage() {
     try {
       await axiosClient.post(`/admin/courses/${courseId}/studio/lessons/${lessonId}/publish`);
       toast.success("Đã xuất bản bài học thành công!");
+      setIsPublishConfirmOpen(false);
       await load();
     } catch (e) {
       toast.error(getApiErrorMessage(e, "Bài học chưa đủ điều kiện xuất bản (cần ít nhất 1 section và Final Check)."));
@@ -459,7 +461,7 @@ export default function V5LessonEditorPage() {
                   : "bg-amber-50 text-amber-700 border border-amber-200"
               }`}
             >
-              {lesson.status}
+              {lesson.status === "PUBLISHED" ? "Đã xuất bản" : "Bản nháp"}
             </span>
           </div>
           <p className="mt-1 text-xs text-slate-500">
@@ -469,7 +471,7 @@ export default function V5LessonEditorPage() {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={publishLesson}
+            onClick={() => setIsPublishConfirmOpen(true)}
             disabled={busy || lesson.status === "PUBLISHED"}
             className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
           >
@@ -1239,6 +1241,15 @@ export default function V5LessonEditorPage() {
           onCancel={() => setPendingDeleteExercise(null)}
         />
       )}
+      <ConfirmDialog
+        open={isPublishConfirmOpen}
+        title="Xuất bản bài học?"
+        description="Bài học đạt điều kiện sẽ hiển thị cho học viên khi khóa học được xuất bản."
+        confirmLabel="Xuất bản bài học"
+        isPending={busy}
+        onConfirm={publishLesson}
+        onCancel={() => setIsPublishConfirmOpen(false)}
+      />
     </main>
   );
 }

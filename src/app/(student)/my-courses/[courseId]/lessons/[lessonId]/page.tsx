@@ -431,20 +431,76 @@ export default function CourseLessonPage(props: {
                     </div>
                     <audio className="mt-4 w-full" controls preload="metadata" src={media.url} />
                   </div>
-                ) : (
-                  <figure
-                    key={media.id}
-                    className="mx-auto flex w-full max-w-none items-center justify-center overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 p-0 shadow-xs dark:border-slate-800 dark:bg-slate-950/40"
-                  >
-                    <img
-                      src={media.url}
-                      alt={media.altText ?? lesson.title}
-                      className="h-auto max-h-none w-[104%] max-w-none -translate-x-[2%] object-contain"
-                      loading={mediaIndex === 0 ? "eager" : "lazy"}
-                      decoding="async"
-                    />
-                  </figure>
-                ),
+                ) : (() => {
+                  const isFullWidthMedia =
+                    lessonId === 656 ||
+                    media.url.includes("lesson-656") ||
+                    (Boolean(media.altText) &&
+                      /international phonetic alphabet|bảng ký hiệu.*ipa/i.test(
+                        media.altText ?? "",
+                      ));
+                  if (isFullWidthMedia) {
+                    return (
+                      <figure
+                        key={media.id}
+                        className="mx-auto flex w-full max-w-none items-center justify-center overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 p-0 shadow-xs dark:border-slate-800 dark:bg-slate-950/40"
+                      >
+                        <img
+                          src={media.url}
+                          alt={media.altText ?? lesson.title}
+                          className="h-auto max-h-none w-[104%] max-w-none -translate-x-[2%] object-contain"
+                          loading={mediaIndex === 0 ? "eager" : "lazy"}
+                          decoding="async"
+                        />
+                      </figure>
+                    );
+                  }
+
+                  const isLargeMedia =
+                    lessonId === 660 ||
+                    lessonId === 57 ||
+                    lessonId === 5 ||
+                    media.url.includes("lesson-660") ||
+                    media.url.includes("lesson-57") ||
+                    /\/lesson-5\//.test(media.url) ||
+                    (Boolean(media.altText) &&
+                      /bảng phụ âm|so sánh hiện tại đơn|mặt bằng nhà/i.test(
+                        media.altText ?? "",
+                      ));
+
+                  const isMediumLargeMedia =
+                    lessonId === 663 ||
+                    media.url.includes("lesson-663") ||
+                    (Boolean(media.altText) &&
+                      /nhận diện âm thanh/i.test(media.altText ?? ""));
+
+                  const containerMaxW = isLargeMedia
+                    ? "max-w-4xl sm:p-5"
+                    : isMediumLargeMedia
+                      ? "max-w-3xl"
+                      : "max-w-2xl";
+
+                  const imgMaxH = isLargeMedia
+                    ? "max-h-[560px] sm:max-h-[640px]"
+                    : isMediumLargeMedia
+                      ? "max-h-[500px] sm:max-h-[560px]"
+                      : "max-h-[380px] sm:max-h-[420px]";
+
+                  return (
+                    <figure
+                      key={media.id}
+                      className={`mx-auto flex w-full items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 sm:p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900/60 ${containerMaxW}`}
+                    >
+                      <img
+                        src={media.url}
+                        alt={media.altText ?? lesson.title}
+                        className={`h-auto w-auto max-w-full rounded-xl object-contain ${imgMaxH}`}
+                        loading={mediaIndex === 0 ? "eager" : "lazy"}
+                        decoding="async"
+                      />
+                    </figure>
+                  );
+                })(),
               )}
             </section>
           )}

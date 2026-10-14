@@ -566,7 +566,7 @@ export default function CourseCurriculumPage() {
                   href={`/admin/courses/${courseId}/lessons/${lesson.id}`}
                   className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors"
                 >
-                  <Edit2 size={13} /> Chỉnh sửa
+                  <Edit2 size={13} /> Mở Editor
                 </Link>
 
                 {/* Delete Button */}

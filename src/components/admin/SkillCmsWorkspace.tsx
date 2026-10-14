@@ -36,6 +36,7 @@ type QuestionDraft = {
   options: string;
   correctIndex: string;
   explanation: string;
+  questionType: string;
   segments: ListeningSegment[];
   taskType: string;
   level: string;
@@ -58,6 +59,18 @@ const publicationStatusLabel = (status?: string) =>
 const writingTypeLabel = (type: string) =>
   type === "WRITING_PICTURE" ? "Viết theo tranh" : "Viết email";
 
+const readingQuestionTypeLabel = (type?: string) => {
+  const labels: Record<string, string> = {
+    DETAIL: "Chi tiết",
+    PURPOSE: "Mục đích",
+    INFERENCE: "Suy luận",
+    MAIN_IDEA: "Ý chính",
+    PROMOTION: "Thông tin quảng bá",
+    VOCAB_IN_CONTEXT: "Từ vựng trong ngữ cảnh",
+  };
+  return labels[type ?? ""] ?? "Trắc nghiệm đọc hiểu";
+};
+
 const emptySegment = (): ListeningSegment => ({
   speaker: "",
   text: "",
@@ -74,6 +87,7 @@ const emptyQuestion = (domain: Domain): QuestionDraft => ({
   options: "",
   correctIndex: "",
   explanation: "",
+  questionType: domain === "reading" ? "MAIN_IDEA" : "",
   segments: [emptySegment()],
   taskType: domain === "writing" ? "EMAIL" : "",
   level: "",
@@ -112,6 +126,7 @@ function questionToDraft(question: any): QuestionDraft {
       typeof content.explanation === "string"
         ? content.explanation
         : String(content.explanation?.vi ?? ""),
+    questionType: String(content.questionType ?? "MAIN_IDEA"),
     segments: Array.isArray(content.transcriptSegments)
       ? content.transcriptSegments.map((segment: any) => ({
           speaker: String(segment?.speaker ?? segment?.speakerId ?? ""),
@@ -568,6 +583,10 @@ export default function SkillCmsWorkspace({
           prompt: question.prompt.trim(),
           explanation: question.explanation.trim() || undefined,
         };
+        if (domain === "reading") {
+          content.passage = form.passage.trim();
+          content.questionType = question.questionType || "MAIN_IDEA";
+        }
         if (domain === "listening") {
           if (question.type === "DICTATION")
             content.correctAnswer = question.prompt.trim();
@@ -1053,8 +1072,7 @@ export default function SkillCmsWorkspace({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {(domain === "reading" ||
-              (isListening && question.type === "MULTIPLE_CHOICE")) && (
+            {domain === "reading" && (
               <button
                 type="button"
                 onClick={() => {
@@ -1097,6 +1115,12 @@ export default function SkillCmsWorkspace({
         </div>
 
         <div className="mt-4 space-y-3">
+          {questions.length === 0 && (
+            <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
+              Chưa có câu hỏi nào. Dùng biểu mẫu bên dưới để thêm câu hỏi đầu
+              tiên cho nội dung {isListening ? "Listening" : isWriting ? "Writing" : "Reading"}.
+            </div>
+          )}
           {questions.map((current: any, index: number) => (
             <div
               key={current.id}
@@ -1105,7 +1129,11 @@ export default function SkillCmsWorkspace({
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold text-slate-500">
-                    Câu {index + 1} · {current.type}
+                    Câu {index + 1} · {isWriting
+                      ? "Writing"
+                      : isListening
+                        ? current.type
+                        : readingQuestionTypeLabel(current.content?.questionType)}
                   </p>
                   <p className="mt-1 text-sm text-slate-900">
                     {questionToDraft(current).prompt || "Chưa có nội dung"}
@@ -1187,6 +1215,30 @@ export default function SkillCmsWorkspace({
               )}
             </select>
           </label>
+          {domain === "reading" && (
+            <label className="text-sm font-medium">
+              Dạng câu hỏi đọc hiểu
+              <select
+                value={question.questionType || "MAIN_IDEA"}
+                onChange={(event) =>
+                  setQuestion({
+                    ...question,
+                    questionType: event.target.value,
+                  })
+                }
+                className={inputClassName()}
+              >
+                <option value="DETAIL">Chi tiết</option>
+                <option value="PURPOSE">Mục đích</option>
+                <option value="INFERENCE">Suy luận</option>
+                <option value="MAIN_IDEA">Ý chính</option>
+                <option value="PROMOTION">Thông tin quảng bá</option>
+                <option value="VOCAB_IN_CONTEXT">
+                  Từ vựng trong ngữ cảnh
+                </option>
+              </select>
+            </label>
+          )}
           <div className="text-sm font-medium">
             <span className="flex items-center justify-between gap-3">
               <span>
@@ -1328,7 +1380,8 @@ export default function SkillCmsWorkspace({
             </>
           )}
 
-          {domain === "reading" && (
+          {(domain === "reading" ||
+            (isListening && question.type === "MULTIPLE_CHOICE")) && (
             <>
               <label className="text-sm font-medium">
                 Các phương án lựa chọn (mỗi dòng một phương án)
@@ -2498,6 +2551,7 @@ export default function SkillCmsWorkspace({
                             options: candidate.options.join("\n"),
                             correctIndex: String(candidate.correctIndex),
                             explanation: candidate.explanation,
+                            questionType: candidate.questionType || "MAIN_IDEA",
                           });
                           setIsQuestionsAiOpen(false);
                           toast.success(

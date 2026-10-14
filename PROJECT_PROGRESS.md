@@ -101,3 +101,19 @@ Tài liệu này ghi chép lại toàn bộ tiến độ, kiến trúc và các 
 ## 4. Work in Progress / Next Steps
 - Cài đặt hệ thống Test Tự động E2E (Playwright) để kiểm thử luồng FE.
 - Cải thiện UX phần CMS Admin và tích hợp nốt Quản lý Đề thi / AI Tools.
+
+## 5. Learner Course Media Refresh — 2026-10-14
+- Đã thay ảnh minh họa của Course 1 bài 2, 3, 4 và Course 8 bài 2, 3, 4, 5, 6, 8 bằng ảnh JPEG từ Pexels, có alt text/provenance trong `CourseLessonMedia`.
+- Course 8 bài 1 và 7 được giữ nguyên theo yêu cầu; 9 ảnh mới đã kiểm tra HTTP 200 và `image/jpeg`, không có SVG trong các bài mục tiêu.
+
+## 6. BreadTrans CMS Phase 4.5.1 — Listening closure — 2026-10-14
+- Listening CMS browser/API QA đã chạy trên frontend/backend origin cô lập; list/search/status, editor, MCQ options/correct selector, save/reload, Dialogue ownership, empty state và responsive desktop/tablet/mobile đều PASS.
+- Giữ nguyên các control Phase 5B `Gợi ý nội dung nghe`, `Tạo câu hỏi nháp` và Production audio; không gọi Gemini trong QA.
+- `SkillCmsWorkspace.tsx` đã mở đúng form options/correctIndex cho Listening MCQ, thêm empty state và loại bỏ nút AI trùng. Backend grading dùng canonical `options[correctIndex]`.
+- Synthetic fixtures prefix `qa-cms-workflow-listening-final-` đã được dọn sạch; không thay đổi Reading/Speaking/Course hoặc active Listening data.
+
+## BreadTrans CMS Phase 4.5.1 — Reading micro-batch closure — 2026-10-14
+- Reading CMS editor now persists the current passage with each authored question and exposes human-readable Reading micro-skill labels while keeping canonical A/B/C/D answer selection.
+- Reading list/editor lifecycle, search/status filters, empty state, question ownership, save/reload, learner answer security and grading were verified with isolated API/browser fixtures.
+- Phase 5A Reading AI controls remain review-first and local-only until explicit save; AI question requests use the current editor passage.
+- Isolated responsive browser QA passed at 1440x900, 768x1024 and 390x844. Synthetic Reading fixtures were cleaned up and active Reading content was unchanged.

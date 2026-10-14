@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 describe("Phase 5A Contextual AI Authoring Frontend Invariants", () => {
   describe("1. Apply-to-form only (AI_APPLY_ONLY_UPDATES_EDITOR=true)", () => {
     it("applying vocab AI suggestion only mutates local form state and does not trigger save", () => {
-      let isSaveCalled = false;
+      const isSaveCalled = false;
       const initialForm = {
         word: "interview",
         pos: "noun",
@@ -42,7 +42,7 @@ describe("Phase 5A Contextual AI Authoring Frontend Invariants", () => {
     });
 
     it("applying reading question suggestion only populates question draft state without saving", () => {
-      let dbMutated = false;
+      const dbMutated = false;
       const candidate = {
         prompt: "What is the primary topic of the passage?",
         options: ["Option A", "Option B", "Option C", "Option D"],
@@ -92,7 +92,7 @@ describe("Phase 5A Contextual AI Authoring Frontend Invariants", () => {
 
       // Simulate provider error handling
       let hasError = false;
-      let preservedForm = { ...existingForm };
+      const preservedForm = { ...existingForm };
 
       try {
         throw new Error("503 Service Unavailable / 429 Too Many Requests");
