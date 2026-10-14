@@ -25,6 +25,8 @@ import {
   ChevronDown,
   BookMarked,
   Settings,
+  Headphones,
+  Award,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useQueryClient } from "@tanstack/react-query";
@@ -60,9 +62,9 @@ const OVERVIEW_ITEM: NavItem = {
 
 const NAV_GROUPS: NavCategory[] = [
   {
-    id: "courses-group",
-    title: "Đào Tạo & Khóa Học",
-    icon: GraduationCap,
+    id: "content-group",
+    title: "NỘI DUNG HỌC",
+    icon: BookMarked,
     items: [
       {
         id: "courses",
@@ -70,17 +72,34 @@ const NAV_GROUPS: NavCategory[] = [
         label: "Khóa học",
         icon: BookOpen,
       },
-    ],
-  },
-  {
-    id: "content-group",
-    title: "Học Liệu & Kỹ Năng",
-    icon: BookMarked,
-    items: [
+      {
+        id: "listening",
+        href: "/admin/listening",
+        label: "Nghe & Dictation",
+        icon: Headphones,
+      },
+      {
+        id: "speaking",
+        href: "/admin/speaking",
+        label: "Nói",
+        icon: Mic,
+      },
+      {
+        id: "reading",
+        href: "/admin/reading",
+        label: "Đọc",
+        icon: BookOpen,
+      },
+      {
+        id: "writing",
+        href: "/admin/writing",
+        label: "Viết",
+        icon: PenTool,
+      },
       {
         id: "vocab",
         href: "/admin/vocab",
-        label: "Từ vựng (Flashcard)",
+        label: "Từ vựng & Flashcard",
         icon: Layers,
       },
       {
@@ -90,10 +109,10 @@ const NAV_GROUPS: NavCategory[] = [
         icon: GraduationCap,
       },
       {
-        id: "speaking",
-        href: "/admin/speaking",
-        label: "Luyện phát âm",
-        icon: Mic,
+        id: "exams",
+        href: "/admin/exams",
+        label: "Luyện đề",
+        icon: Award,
       },
       {
         id: "quizzes",

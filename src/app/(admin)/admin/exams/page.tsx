@@ -1,0 +1,1430 @@
+"use client";
+
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  Award,
+  Plus,
+  Loader2,
+  Search,
+  Trash2,
+  Edit2,
+  ArrowLeft,
+  CheckCircle2,
+  AlertTriangle,
+  Volume2,
+  Image as ImageIcon,
+  FileText,
+  Clock,
+  ArrowUp,
+  ArrowDown,
+  X,
+  Eye,
+  Check,
+  ShieldAlert,
+} from "lucide-react";
+import axiosClient from "@/lib/api/axiosClient";
+import { Pagination } from "@/components/ui";
+import toast from "react-hot-toast";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+
+const TOEIC_PARTS = [
+  { part: 1, label: "Part 1: Mô tả hình ảnh (Photographs)", type: "LISTENING" },
+  { part: 2, label: "Part 2: Hỏi - Đáp (Question - Response)", type: "LISTENING" },
+  { part: 3, label: "Part 3: Hội thoại ngắn (Short Conversations)", type: "LISTENING" },
+  { part: 4, label: "Part 4: Bài nói ngắn (Short Talks)", type: "LISTENING" },
+  { part: 5, label: "Part 5: Hoàn thành câu (Incomplete Sentences)", type: "READING" },
+  { part: 6, label: "Part 6: Điền đoạn văn (Text Completion)", type: "READING" },
+  { part: 7, label: "Part 7: Đọc hiểu văn bản (Reading Comprehension)", type: "READING" },
+];
+
+interface ExamQuestion {
+  id: number;
+  groupId: number;
+  questionNumber: number;
+  text?: string | null;
+  options: string[];
+  correctIndex: number;
+  explanation?: string | null;
+}
+
+interface ExamGroup {
+  id: number;
+  examId: number;
+  part: number;
+  groupOrder: number;
+  imageUrl?: string | null;
+  audioUrl?: string | null;
+  passageText?: string | null;
+  questions: ExamQuestion[];
+}
+
+interface ExamDetail {
+  id: number;
+  title: string;
+  description?: string | null;
+  type: "FULL_TEST" | "PRACTICE_BY_PART";
+  difficulty: "easy" | "medium" | "hard";
+  durationSeconds: number;
+  publicationStatus: "DRAFT" | "PUBLISHED";
+  groups: ExamGroup[];
+  attemptsCount?: number;
+  learnerReady?: boolean;
+  validation?: {
+    counts: Record<string, number>;
+    issues: Array<{ code: string; message: string; groupId?: number; questionId?: number }>;
+  };
+}
+
+export default function AdminExamsPage() {
+  const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedExamId, setSelectedExamId] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(9);
+  const [activeTab, setActiveTab] = useState<"structure" | "preflight" | "preview" | "info">("structure");
+  const [activePartFilter, setActivePartFilter] = useState<number | "all">("all");
+
+  // Modals & Confirm states
+  const [isExamModalOpen, setIsExamModalOpen] = useState(false);
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<ExamGroup | null>(null);
+  const [targetGroupIdForQuestion, setTargetGroupIdForQuestion] = useState<number | null>(null);
+  const [editingQuestion, setEditingQuestion] = useState<ExamQuestion | null>(null);
+
+  const [pendingDeleteExam, setPendingDeleteExam] = useState<{ id: number; title: string } | null>(null);
+  const [pendingDeleteGroup, setPendingDeleteGroup] = useState<{ id: number; part: number } | null>(null);
+  const [pendingDeleteQuestion, setPendingDeleteQuestion] = useState<{ id: number; questionNumber: number } | null>(null);
+
+  // Form states: Exam
+  const [examForm, setExamForm] = useState({
+    title: "",
+    description: "",
+    type: "PRACTICE_BY_PART" as "FULL_TEST" | "PRACTICE_BY_PART",
+    difficulty: "medium" as "easy" | "medium" | "hard",
+    durationMinutes: 45,
+  });
+
+  // Form states: Group
+  const [groupForm, setGroupForm] = useState({
+    part: 1,
+    groupOrder: 1,
+    audioUrl: "",
+    imageUrl: "",
+    passageText: "",
+  });
+
+  // Form states: Question
+  const [questionForm, setQuestionForm] = useState({
+    questionNumber: 1,
+    text: "",
+    options: ["", "", "", ""],
+    correctIndex: 0,
+    explanation: "",
+  });
+
+  // 1. Query all exams
+  const { data: exams, isLoading: isExamsLoading } = useQuery<any[]>({
+    queryKey: ["admin-exams"],
+    queryFn: async () => {
+      const res: any = await axiosClient.get("/admin/exams");
+      return Array.isArray(res) ? res : res?.data || [];
+    },
+  });
+
+  // 2. Query single exam detail
+  const { data: examDetail, isLoading: isDetailLoading } = useQuery<ExamDetail>({
+    queryKey: ["admin-exam-detail", selectedExamId],
+    queryFn: async () => {
+      if (!selectedExamId) return null;
+      const res: any = await axiosClient.get(`/admin/exams/${selectedExamId}`);
+      return res?.data || res;
+    },
+    enabled: !!selectedExamId,
+  });
+
+  // Mutations
+  const createExamMutation = useMutation({
+    mutationFn: async (dto: any) =>
+      axiosClient.post("/admin/exams", {
+        ...dto,
+        durationSeconds: dto.durationMinutes * 60,
+      }),
+    onSuccess: (data: any) => {
+      toast.success("Tạo bộ đề thi mới thành công!");
+      setIsExamModalOpen(false);
+      setExamForm({ title: "", description: "", type: "PRACTICE_BY_PART", difficulty: "medium", durationMinutes: 45 });
+      queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
+      if (data?.id) setSelectedExamId(data.id);
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể tạo bộ đề thi"),
+  });
+
+  const updateExamMutation = useMutation({
+    mutationFn: async ({ id, dto }: { id: number; dto: any }) => axiosClient.patch(`/admin/exams/${id}`, dto),
+    onSuccess: () => {
+      toast.success("Cập nhật thông tin đề thi thành công!");
+      queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-exam-detail", selectedExamId] });
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể cập nhật đề thi"),
+  });
+
+  const publishExamMutation = useMutation({
+    mutationFn: async (id: number) => axiosClient.post(`/admin/exams/${id}/publish`),
+    onSuccess: () => {
+      toast.success("Đã xuất bản bộ đề thi cho học viên!");
+      queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-exam-detail", selectedExamId] });
+    },
+    onError: (err: any) => {
+      const msg = err?.response?.data?.message;
+      const issues = err?.response?.data?.issues;
+      if (Array.isArray(issues) && issues.length > 0) {
+        toast.error(`${msg || "Chưa đủ điều kiện xuất bản"}:\n${issues.slice(0, 3).map((i: any) => `• ${i.message}`).join("\n")}`);
+      } else {
+        toast.error(msg || "Không thể xuất bản đề thi");
+      }
+    },
+  });
+
+  const unpublishExamMutation = useMutation({
+    mutationFn: async (id: number) => axiosClient.post(`/admin/exams/${id}/unpublish`),
+    onSuccess: () => {
+      toast.success("Đã chuyển đề thi về bản nháp!");
+      queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-exam-detail", selectedExamId] });
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể gỡ xuất bản"),
+  });
+
+  const deleteExamMutation = useMutation({
+    mutationFn: async (id: number) => axiosClient.delete(`/admin/exams/${id}`),
+    onSuccess: () => {
+      toast.success("Đã xóa bộ đề thi!");
+      setPendingDeleteExam(null);
+      if (selectedExamId === pendingDeleteExam?.id) setSelectedExamId(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể xóa đề thi"),
+  });
+
+  const saveGroupMutation = useMutation({
+    mutationFn: async (dto: any) => {
+      if (!selectedExamId) return;
+      if (editingGroup) {
+        return axiosClient.patch(`/admin/exams/${selectedExamId}/groups/${editingGroup.id}`, dto);
+      }
+      return axiosClient.post(`/admin/exams/${selectedExamId}/groups`, dto);
+    },
+    onSuccess: () => {
+      toast.success(editingGroup ? "Cập nhật nhóm câu hỏi thành công!" : "Thêm nhóm câu hỏi mới thành công!");
+      setIsGroupModalOpen(false);
+      setEditingGroup(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-exam-detail", selectedExamId] });
+      queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể lưu nhóm câu hỏi"),
+  });
+
+  const deleteGroupMutation = useMutation({
+    mutationFn: async (groupId: number) => {
+      if (!selectedExamId) return;
+      return axiosClient.delete(`/admin/exams/${selectedExamId}/groups/${groupId}`);
+    },
+    onSuccess: () => {
+      toast.success("Đã xóa nhóm câu hỏi!");
+      setPendingDeleteGroup(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-exam-detail", selectedExamId] });
+      queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể xóa nhóm câu hỏi"),
+  });
+
+  const saveQuestionMutation = useMutation({
+    mutationFn: async (dto: any) => {
+      if (!selectedExamId) return;
+      const groupId = targetGroupIdForQuestion || editingQuestion?.groupId;
+      if (!groupId) return;
+      if (editingQuestion) {
+        return axiosClient.patch(`/admin/exams/${selectedExamId}/groups/${groupId}/questions/${editingQuestion.id}`, dto);
+      }
+      return axiosClient.post(`/admin/exams/${selectedExamId}/groups/${groupId}/questions`, dto);
+    },
+    onSuccess: () => {
+      toast.success(editingQuestion ? "Cập nhật câu hỏi thành công!" : "Thêm câu hỏi mới thành công!");
+      setIsQuestionModalOpen(false);
+      setEditingQuestion(null);
+      setTargetGroupIdForQuestion(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-exam-detail", selectedExamId] });
+      queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể lưu câu hỏi"),
+  });
+
+  const deleteQuestionMutation = useMutation({
+    mutationFn: async ({ groupId, questionId }: { groupId: number; questionId: number }) => {
+      if (!selectedExamId) return;
+      return axiosClient.delete(`/admin/exams/${selectedExamId}/groups/${groupId}/questions/${questionId}`);
+    },
+    onSuccess: () => {
+      toast.success("Đã xóa câu hỏi!");
+      setPendingDeleteQuestion(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-exam-detail", selectedExamId] });
+      queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể xóa câu hỏi"),
+  });
+
+  const filteredExams = exams?.filter((e) =>
+    e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    e.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const totalPages = Math.ceil((filteredExams?.length || 0) / pageSize);
+  const paginatedExams = filteredExams?.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  // -------------------------------------------------------------
+  // RENDER: Exam Workspace / Editor when an exam is selected
+  // -------------------------------------------------------------
+  if (selectedExamId && examDetail) {
+    const isPublished = examDetail.publicationStatus === "PUBLISHED";
+    const groups = examDetail.groups || [];
+    const allQuestions = groups.flatMap((g) => g.questions || []);
+    const validation = examDetail.validation;
+    const issues = validation?.issues || [];
+
+    const visibleGroups = activePartFilter === "all"
+      ? groups
+      : groups.filter((g) => g.part === activePartFilter);
+
+    return (
+      <main className="mx-auto max-w-6xl space-y-6 p-6">
+        {/* TOP BAR */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-5">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSelectedExamId(null)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors"
+              title="Quay lại danh sách"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold text-slate-900">{examDetail.title}</h1>
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                    isPublished ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-amber-50 text-amber-700 border border-amber-200"
+                  }`}
+                >
+                  {isPublished ? "Đã xuất bản" : "Bản nháp"}
+                </span>
+                <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                  {examDetail.type === "FULL_TEST" ? "Full Test (200 câu)" : "Luyện tập theo Part"}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Thời lượng: {Math.round(examDetail.durationSeconds / 60)} phút · {groups.length} nhóm · {allQuestions.length} câu hỏi · {examDetail.attemptsCount || 0} lượt làm bài
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {isPublished ? (
+              <button
+                onClick={() => unpublishExamMutation.mutate(examDetail.id)}
+                disabled={unpublishExamMutation.isPending}
+                className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                Gỡ xuất bản (Draft)
+              </button>
+            ) : (
+              <button
+                onClick={() => publishExamMutation.mutate(examDetail.id)}
+                disabled={publishExamMutation.isPending}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors shadow-sm"
+              >
+                <CheckCircle2 size={15} /> Xuất bản đề thi
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* WORKSPACE NAVIGATION TABS */}
+        <div className="flex gap-2 border-b border-slate-200 pb-1">
+          <button
+            onClick={() => setActiveTab("structure")}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
+              activeTab === "structure" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            Cấu trúc & Câu hỏi ({allQuestions.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("preflight")}
+            className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
+              activeTab === "preflight" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <span>Kiểm tra tiền xuất bản</span>
+            {issues.length > 0 ? (
+              <span className="rounded-full bg-rose-500 px-1.5 py-0.2 text-[11px] font-bold text-white">
+                {issues.length}
+              </span>
+            ) : (
+              <span className="rounded-full bg-emerald-500 px-1.5 py-0.2 text-[11px] font-bold text-white">
+                OK
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab("preview")}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
+              activeTab === "preview" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            Xem trước đề thi
+          </button>
+          <button
+            onClick={() => setActiveTab("info")}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
+              activeTab === "info" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            Thông tin chung
+          </button>
+        </div>
+
+        {/* TAB 1: STRUCTURE & QUESTIONS */}
+        {activeTab === "structure" && (
+          <div className="space-y-5">
+            {/* PART FILTER PILLS */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  onClick={() => setActivePartFilter("all")}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    activePartFilter === "all" ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  Tất cả Part ({groups.length} nhóm)
+                </button>
+                {TOEIC_PARTS.map((p) => {
+                  const partGroupCount = groups.filter((g) => g.part === p.part).length;
+                  return (
+                    <button
+                      key={p.part}
+                      onClick={() => setActivePartFilter(p.part)}
+                      className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+                        activePartFilter === p.part ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      }`}
+                    >
+                      Part {p.part} ({partGroupCount})
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => {
+                  setEditingGroup(null);
+                  setGroupForm({
+                    part: activePartFilter === "all" ? 1 : activePartFilter,
+                    groupOrder: groups.length + 1,
+                    audioUrl: "",
+                    imageUrl: "",
+                    passageText: "",
+                  });
+                  setIsGroupModalOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors"
+              >
+                <Plus size={15} /> Thêm nhóm câu hỏi (Group)
+              </button>
+            </div>
+
+            {/* GROUPS LIST */}
+            {visibleGroups.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-500">
+                Chưa có nhóm câu hỏi nào trong phần này. Hãy thêm nhóm mới để bắt đầu.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {visibleGroups.map((group) => {
+                  const partInfo = TOEIC_PARTS.find((p) => p.part === group.part);
+                  return (
+                    <div
+                      key={group.id}
+                      className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4"
+                    >
+                      {/* GROUP HEADER */}
+                      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="rounded bg-slate-900 px-2 py-0.5 text-xs font-bold text-white">
+                              Part {group.part}
+                            </span>
+                            <span className="text-xs font-semibold text-slate-600">
+                              {partInfo?.label}
+                            </span>
+                            <span className="text-xs text-slate-400">· Thứ tự #{group.groupOrder}</span>
+                          </div>
+
+                          {/* MEDIA BADGES */}
+                          <div className="flex items-center gap-3 pt-1 text-xs text-slate-500">
+                            {group.audioUrl ? (
+                              <span className="inline-flex items-center gap-1 text-emerald-600 font-medium">
+                                <Volume2 size={13} /> Có audio
+                              </span>
+                            ) : group.part <= 4 ? (
+                              <span className="inline-flex items-center gap-1 text-rose-500 font-medium">
+                                <AlertTriangle size={13} /> Thiếu audio Part 1-4
+                              </span>
+                            ) : null}
+
+                            {group.imageUrl ? (
+                              <span className="inline-flex items-center gap-1 text-emerald-600 font-medium">
+                                <ImageIcon size={13} /> Có hình ảnh
+                              </span>
+                            ) : group.part === 1 ? (
+                              <span className="inline-flex items-center gap-1 text-rose-500 font-medium">
+                                <AlertTriangle size={13} /> Thiếu ảnh Part 1
+                              </span>
+                            ) : null}
+
+                            {group.passageText ? (
+                              <span className="inline-flex items-center gap-1 text-emerald-600 font-medium">
+                                <FileText size={13} /> Có đoạn văn ({group.passageText.length} ký tự)
+                              </span>
+                            ) : group.part >= 6 ? (
+                              <span className="inline-flex items-center gap-1 text-rose-500 font-medium">
+                                <AlertTriangle size={13} /> Thiếu đoạn văn Part 6-7
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => {
+                              setTargetGroupIdForQuestion(group.id);
+                              setEditingQuestion(null);
+                              const nextQNum = allQuestions.length > 0
+                                ? Math.max(...allQuestions.map((q) => q.questionNumber)) + 1
+                                : 1;
+                              setQuestionForm({
+                                questionNumber: nextQNum,
+                                text: "",
+                                options: group.part === 2 ? ["", "", ""] : ["", "", "", ""],
+                                correctIndex: 0,
+                                explanation: "",
+                              });
+                              setIsQuestionModalOpen(true);
+                            }}
+                            className="rounded-lg bg-slate-100 hover:bg-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-800 transition-colors"
+                          >
+                            + Thêm câu hỏi
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingGroup(group);
+                              setGroupForm({
+                                part: group.part,
+                                groupOrder: group.groupOrder,
+                                audioUrl: group.audioUrl || "",
+                                imageUrl: group.imageUrl || "",
+                                passageText: group.passageText || "",
+                              });
+                              setIsGroupModalOpen(true);
+                            }}
+                            className="p-1.5 text-slate-500 hover:text-slate-900"
+                            title="Sửa nhóm"
+                          >
+                            <Edit2 size={15} />
+                          </button>
+                          <button
+                            onClick={() => setPendingDeleteGroup({ id: group.id, part: group.part })}
+                            className="p-1.5 text-slate-400 hover:text-rose-600"
+                            title="Xóa nhóm"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* PASSAGE TEXT EXCERPT IF PRESENT */}
+                      {group.passageText && (
+                        <div className="rounded-lg bg-slate-50 border border-slate-100 p-3 text-xs text-slate-700 max-h-36 overflow-y-auto whitespace-pre-line font-serif leading-relaxed">
+                          {group.passageText}
+                        </div>
+                      )}
+
+                      {/* QUESTIONS IN GROUP */}
+                      {group.questions && group.questions.length > 0 ? (
+                        <div className="space-y-2.5 pl-2">
+                          {group.questions.map((q) => (
+                            <div
+                              key={q.id}
+                              className="rounded-lg border border-slate-100 bg-slate-50/50 p-3 text-xs space-y-2"
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex items-start gap-2">
+                                  <span className="font-bold text-slate-900 bg-white border border-slate-200 px-1.5 py-0.5 rounded">
+                                    Câu {q.questionNumber}
+                                  </span>
+                                  <p className="font-medium text-slate-800">{q.text || "—"}</p>
+                                </div>
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <button
+                                    onClick={() => {
+                                      setTargetGroupIdForQuestion(group.id);
+                                      setEditingQuestion(q);
+                                      setQuestionForm({
+                                        questionNumber: q.questionNumber,
+                                        text: q.text || "",
+                                        options: Array.isArray(q.options) ? [...q.options] : ["", "", "", ""],
+                                        correctIndex: q.correctIndex,
+                                        explanation: q.explanation || "",
+                                      });
+                                      setIsQuestionModalOpen(true);
+                                    }}
+                                    className="p-1 text-slate-400 hover:text-slate-800"
+                                    title="Sửa câu hỏi"
+                                  >
+                                    <Edit2 size={13} />
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      setPendingDeleteQuestion({ id: q.id, questionNumber: q.questionNumber })
+                                    }
+                                    className="p-1 text-slate-400 hover:text-rose-600"
+                                    title="Xóa câu hỏi"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* OPTIONS ROW */}
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                {q.options.map((opt, optIdx) => {
+                                  const isCorrect = optIdx === q.correctIndex;
+                                  return (
+                                    <div
+                                      key={optIdx}
+                                      className={`rounded px-2 py-1 text-[11px] font-medium flex items-center justify-between ${
+                                        isCorrect
+                                          ? "bg-emerald-50 text-emerald-900 border border-emerald-300 font-bold"
+                                          : "bg-white text-slate-600 border border-slate-200"
+                                      }`}
+                                    >
+                                      <span className="truncate">({String.fromCharCode(65 + optIdx)}) {opt}</span>
+                                      {isCorrect && <Check size={11} className="text-emerald-600 shrink-0" />}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-400 italic pl-2">
+                          Nhóm này chưa có câu hỏi nào. Hãy nhấn "+ Thêm câu hỏi".
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 2: PREFLIGHT CHECKLIST */}
+        {activeTab === "preflight" && (
+          <div className="space-y-6 max-w-3xl mx-auto py-2">
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">Báo cáo kiểm tra chất lượng đề thi</h2>
+                  <p className="text-xs text-slate-500">
+                    Hệ thống tự động kiểm tra tính toàn vẹn của âm thanh, hình ảnh, đoạn văn và bộ đáp án.
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span
+                    className={`inline-block rounded-full px-3 py-1 text-xs font-bold ${
+                      issues.length === 0 ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-rose-50 text-rose-700 border border-rose-200"
+                    }`}
+                  >
+                    {issues.length === 0 ? "✓ Sẵn sàng xuất bản" : `⚠ Có ${issues.length} cảnh báo`}
+                  </span>
+                </div>
+              </div>
+
+              {/* STATS BREAKDOWN */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+                <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase">Tổng số câu hỏi</span>
+                  <p className="text-xl font-bold text-slate-900 mt-1">{allQuestions.length}</p>
+                </div>
+                <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase">Số nhóm bài</span>
+                  <p className="text-xl font-bold text-slate-900 mt-1">{groups.length}</p>
+                </div>
+                <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase">Phần Listening</span>
+                  <p className="text-xl font-bold text-slate-900 mt-1">
+                    {groups.filter((g) => g.part <= 4).flatMap((g) => g.questions || []).length} câu
+                  </p>
+                </div>
+                <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase">Phần Reading</span>
+                  <p className="text-xl font-bold text-slate-900 mt-1">
+                    {groups.filter((g) => g.part >= 5).flatMap((g) => g.questions || []).length} câu
+                  </p>
+                </div>
+              </div>
+
+              {/* ISSUES LIST */}
+              {issues.length > 0 ? (
+                <div className="space-y-2 pt-2">
+                  <h3 className="text-xs font-bold text-rose-800 uppercase tracking-wider">
+                    Các mục cần hoàn thiện trước khi xuất bản:
+                  </h3>
+                  <div className="space-y-2">
+                    {issues.map((issue, idx) => (
+                      <div
+                        key={idx}
+                        className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-900 flex items-start gap-2"
+                      >
+                        <AlertTriangle size={15} className="text-rose-600 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold font-mono">[{issue.code}]</span> {issue.message}
+                          {issue.groupId && <span className="text-rose-700 ml-1">(Nhóm ID: {issue.groupId})</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-xs text-emerald-900 flex items-center gap-3">
+                  <CheckCircle2 size={20} className="text-emerald-600 shrink-0" />
+                  <div>
+                    <p className="font-bold">Đề thi hoàn hảo!</p>
+                    <p className="text-emerald-700 mt-0.5">
+                      Toàn bộ media, hình ảnh, đoạn văn và bảng đáp án đều hợp lệ. Bạn có thể xuất bản đề thi ngay bây giờ.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: PREVIEW */}
+        {activeTab === "preview" && (
+          <div className="space-y-6 max-w-3xl mx-auto py-2">
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
+              <div className="border-b border-slate-100 pb-3">
+                <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                  {examDetail.type === "FULL_TEST" ? "TOEIC Full Test" : "Luyện đề theo Part"}
+                </span>
+                <h2 className="text-2xl font-bold text-slate-900 mt-2">{examDetail.title}</h2>
+                <p className="text-xs text-slate-500 mt-1">
+                  Mô phỏng giao diện làm bài thi của học viên · Thời lượng: {Math.round(examDetail.durationSeconds / 60)} phút
+                </p>
+              </div>
+
+              {groups.map((group, idx) => (
+                <div key={group.id} className="space-y-4 rounded-xl border border-slate-200 bg-slate-50/50 p-5">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <span className="font-bold text-sm text-slate-900">
+                      Part {group.part} · Nhóm #{idx + 1}
+                    </span>
+                    <span className="text-xs text-slate-500">{group.questions?.length || 0} câu hỏi</span>
+                  </div>
+
+                  {group.imageUrl && (
+                    <div className="max-w-md mx-auto overflow-hidden rounded-lg border border-slate-200">
+                      <img src={group.imageUrl} alt="Stimulus" className="w-full h-auto object-cover" />
+                    </div>
+                  )}
+
+                  {group.audioUrl && (
+                    <div className="rounded-lg bg-white border border-slate-200 p-3">
+                      <audio controls src={group.audioUrl} className="w-full h-8" />
+                    </div>
+                  )}
+
+                  {group.passageText && (
+                    <div className="rounded-lg bg-white border border-slate-200 p-4 text-xs font-serif leading-relaxed text-slate-800 whitespace-pre-line">
+                      {group.passageText}
+                    </div>
+                  )}
+
+                  <div className="space-y-4 pt-2">
+                    {group.questions?.map((q) => (
+                      <div key={q.id} className="space-y-2 bg-white p-4 rounded-lg border border-slate-200">
+                        <p className="font-bold text-xs text-slate-900">
+                          Câu {q.questionNumber}. {q.text}
+                        </p>
+                        <div className="space-y-1.5 pl-2">
+                          {q.options.map((opt, optIdx) => (
+                            <label
+                              key={optIdx}
+                              className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer"
+                            >
+                              <input type="radio" name={`q-${q.id}`} className="text-slate-900" />
+                              <span>({String.fromCharCode(65 + optIdx)}) {opt}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: METADATA & INFO */}
+        {activeTab === "info" && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              updateExamMutation.mutate({
+                id: examDetail.id,
+                dto: {
+                  title: examDetail.title,
+                  type: examDetail.type,
+                  difficulty: examDetail.difficulty,
+                  durationSeconds: examDetail.durationSeconds,
+                  description: examDetail.description,
+                },
+              });
+            }}
+            className="max-w-xl space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+          >
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Tên bộ đề thi *</label>
+              <input
+                type="text"
+                value={examDetail.title}
+                onChange={(e) => {
+                  queryClient.setQueryData(["admin-exam-detail", selectedExamId], {
+                    ...examDetail,
+                    title: e.target.value,
+                  });
+                }}
+                className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Định dạng đề</label>
+                <select
+                  value={examDetail.type}
+                  onChange={(e) => {
+                    queryClient.setQueryData(["admin-exam-detail", selectedExamId], {
+                      ...examDetail,
+                      type: e.target.value as any,
+                    });
+                  }}
+                  className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400"
+                >
+                  <option value="PRACTICE_BY_PART">Luyện tập theo Part</option>
+                  <option value="FULL_TEST">Full Test (200 câu TOEIC chuẩn)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Độ khó</label>
+                <select
+                  value={examDetail.difficulty}
+                  onChange={(e) => {
+                    queryClient.setQueryData(["admin-exam-detail", selectedExamId], {
+                      ...examDetail,
+                      difficulty: e.target.value as any,
+                    });
+                  }}
+                  className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400"
+                >
+                  <option value="easy">Dễ (Easy)</option>
+                  <option value="medium">Trung bình (Medium)</option>
+                  <option value="hard">Khó (Hard)</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Thời lượng (phút)</label>
+              <input
+                type="number"
+                min={5}
+                max={240}
+                value={Math.round(examDetail.durationSeconds / 60)}
+                onChange={(e) => {
+                  queryClient.setQueryData(["admin-exam-detail", selectedExamId], {
+                    ...examDetail,
+                    durationSeconds: Number(e.target.value) * 60,
+                  });
+                }}
+                className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Mô tả bộ đề thi</label>
+              <textarea
+                rows={3}
+                value={examDetail.description || ""}
+                onChange={(e) => {
+                  queryClient.setQueryData(["admin-exam-detail", selectedExamId], {
+                    ...examDetail,
+                    description: e.target.value,
+                  });
+                }}
+                className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400"
+              />
+            </div>
+
+            <div className="flex items-center justify-end pt-3">
+              <button
+                type="submit"
+                disabled={updateExamMutation.isPending}
+                className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+              >
+                {updateExamMutation.isPending ? "Đang lưu..." : "Lưu thay đổi"}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* MODAL: ADD / EDIT GROUP */}
+        {isGroupModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+            <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 className="font-bold text-slate-900">
+                  {editingGroup ? "Chỉnh sửa nhóm câu hỏi" : "Thêm nhóm câu hỏi mới"}
+                </h3>
+                <button
+                  onClick={() => setIsGroupModalOpen(false)}
+                  className="rounded-lg p-1 text-slate-400 hover:text-slate-700"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  saveGroupMutation.mutate(groupForm);
+                }}
+                className="space-y-3.5 text-sm"
+              >
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Part TOEIC *</label>
+                    <select
+                      value={groupForm.part}
+                      onChange={(e) => setGroupForm({ ...groupForm, part: Number(e.target.value) })}
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
+                    >
+                      {TOEIC_PARTS.map((p) => (
+                        <option key={p.part} value={p.part}>
+                          Part {p.part} ({p.type})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Thứ tự nhóm</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={groupForm.groupOrder}
+                      onChange={(e) => setGroupForm({ ...groupForm, groupOrder: Number(e.target.value) })}
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
+                    />
+                  </div>
+                </div>
+
+                {groupForm.part <= 4 && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Đường dẫn Audio (Part 1–4) *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="https://... hoặc URL audio R2"
+                      value={groupForm.audioUrl}
+                      onChange={(e) => setGroupForm({ ...groupForm, audioUrl: e.target.value })}
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400 text-xs font-mono"
+                    />
+                  </div>
+                )}
+
+                {groupForm.part === 1 && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Đường dẫn Hình ảnh (Part 1) *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="https://... URL hình ảnh R2"
+                      value={groupForm.imageUrl}
+                      onChange={(e) => setGroupForm({ ...groupForm, imageUrl: e.target.value })}
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400 text-xs font-mono"
+                    />
+                  </div>
+                )}
+
+                {groupForm.part >= 6 && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Đoạn văn đọc hiểu (Part 6–7) *
+                    </label>
+                    <textarea
+                      rows={6}
+                      placeholder="Dán nội dung đoạn văn, email, bài báo..."
+                      value={groupForm.passageText}
+                      onChange={(e) => setGroupForm({ ...groupForm, passageText: e.target.value })}
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400 text-xs font-serif leading-relaxed"
+                    />
+                  </div>
+                )}
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setIsGroupModalOpen(false)}
+                    className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                  >
+                    Hủy bỏ
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saveGroupMutation.isPending}
+                    className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                  >
+                    {saveGroupMutation.isPending ? "Đang lưu..." : editingGroup ? "Cập nhật" : "Thêm mới"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL: ADD / EDIT QUESTION */}
+        {isQuestionModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+            <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 className="font-bold text-slate-900">
+                  {editingQuestion ? `Chỉnh sửa câu hỏi #${editingQuestion.questionNumber}` : "Thêm câu hỏi mới"}
+                </h3>
+                <button
+                  onClick={() => setIsQuestionModalOpen(false)}
+                  className="rounded-lg p-1 text-slate-400 hover:text-slate-700"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (questionForm.options.some((o) => !o.trim())) {
+                    toast.error("Vui lòng điền đủ tất cả phương án!");
+                    return;
+                  }
+                  saveQuestionMutation.mutate(questionForm);
+                }}
+                className="space-y-3.5 text-sm"
+              >
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Số thứ tự câu *</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={200}
+                      value={questionForm.questionNumber}
+                      onChange={(e) => setQuestionForm({ ...questionForm, questionNumber: Number(e.target.value) })}
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Câu hỏi (prompt)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. What is the topic of the meeting?"
+                      value={questionForm.text}
+                      onChange={(e) => setQuestionForm({ ...questionForm, text: e.target.value })}
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-semibold text-slate-700">Các lựa chọn & Đáp án đúng *</label>
+                  {questionForm.options.map((opt, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="examCorrectAnswer"
+                        checked={questionForm.correctIndex === idx}
+                        onChange={() => setQuestionForm({ ...questionForm, correctIndex: idx })}
+                        className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                        title="Đánh dấu đáp án đúng"
+                      />
+                      <span className="w-5 text-xs font-bold text-slate-500">({String.fromCharCode(65 + idx)})</span>
+                      <input
+                        type="text"
+                        value={opt}
+                        onChange={(e) => {
+                          const newOpts = [...questionForm.options];
+                          newOpts[idx] = e.target.value;
+                          setQuestionForm({ ...questionForm, options: newOpts });
+                        }}
+                        placeholder={`Lựa chọn ${String.fromCharCode(65 + idx)}`}
+                        required
+                        className="flex-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-800 outline-none focus:border-slate-400"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Giải thích chi tiết (tùy chọn)</label>
+                  <textarea
+                    rows={2}
+                    value={questionForm.explanation}
+                    onChange={(e) => setQuestionForm({ ...questionForm, explanation: e.target.value })}
+                    placeholder="Giải thích đáp án cho học viên xem lại sau khi nộp bài..."
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400 text-xs"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setIsQuestionModalOpen(false)}
+                    className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                  >
+                    Hủy bỏ
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saveQuestionMutation.isPending}
+                    className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                  >
+                    {saveQuestionMutation.isPending ? "Đang lưu..." : editingQuestion ? "Cập nhật" : "Thêm mới"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* CONFIRM DELETE EXAM */}
+        <ConfirmDialog
+          open={!!pendingDeleteExam}
+          title="Xác nhận xóa bộ đề thi"
+          description={`Bạn có chắc chắn muốn xóa bộ đề thi "${pendingDeleteExam?.title}"? Toàn bộ các nhóm câu hỏi và câu hỏi sẽ bị xóa. Nếu đề thi đã có lượt làm bài của học viên, hệ thống sẽ từ chối để bảo toàn kết quả thi.`}
+          confirmLabel="Xóa đề thi"
+          isPending={deleteExamMutation.isPending}
+          onConfirm={() => {
+            if (pendingDeleteExam) deleteExamMutation.mutate(pendingDeleteExam.id);
+          }}
+          onCancel={() => setPendingDeleteExam(null)}
+        />
+
+        {/* CONFIRM DELETE GROUP */}
+        <ConfirmDialog
+          open={!!pendingDeleteGroup}
+          title="Xác nhận xóa nhóm câu hỏi"
+          description={`Bạn có chắc chắn muốn xóa nhóm câu hỏi Part ${pendingDeleteGroup?.part}? Toàn bộ câu hỏi thuộc nhóm này sẽ bị xóa. Nếu đề đã có học viên thi, hệ thống sẽ từ chối.`}
+          confirmLabel="Xóa nhóm"
+          isPending={deleteGroupMutation.isPending}
+          onConfirm={() => {
+            if (pendingDeleteGroup) deleteGroupMutation.mutate(pendingDeleteGroup.id);
+          }}
+          onCancel={() => setPendingDeleteGroup(null)}
+        />
+
+        {/* CONFIRM DELETE QUESTION */}
+        <ConfirmDialog
+          open={!!pendingDeleteQuestion}
+          title="Xác nhận xóa câu hỏi"
+          description={`Bạn có chắc chắn muốn xóa câu hỏi số ${pendingDeleteQuestion?.questionNumber}? Nếu câu hỏi đã có lượt làm bài trong lịch sử thi, hệ thống sẽ từ chối để bảo toàn kết quả thi.`}
+          confirmLabel="Xóa câu hỏi"
+          isPending={deleteQuestionMutation.isPending}
+          onConfirm={() => {
+            if (pendingDeleteQuestion && targetGroupIdForQuestion) {
+              deleteQuestionMutation.mutate({
+                groupId: targetGroupIdForQuestion,
+                questionId: pendingDeleteQuestion.id,
+              });
+            } else if (pendingDeleteQuestion) {
+              const foundGroup = groups.find((g) => g.questions?.some((q) => q.id === pendingDeleteQuestion.id));
+              if (foundGroup) {
+                deleteQuestionMutation.mutate({
+                  groupId: foundGroup.id,
+                  questionId: pendingDeleteQuestion.id,
+                });
+              }
+            }
+          }}
+          onCancel={() => setPendingDeleteQuestion(null)}
+        />
+      </main>
+    );
+  }
+
+  // -------------------------------------------------------------
+  // RENDER: Exam Sets Catalog / List Page
+  // -------------------------------------------------------------
+  return (
+    <main className="mx-auto max-w-6xl space-y-6 p-6">
+      {/* HEADER */}
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[.18em] text-slate-500">Exam / TOEIC Studio</p>
+          <h1 className="mt-1 text-2xl font-bold text-slate-950">Quản Lý Bộ Đề Thi & Luyện Đề</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Biên tập đề thi chuẩn cấu trúc 7 phần TOEIC, quản lý audio R2, stimulus đoạn văn và xuất bản cho học viên.
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            setExamForm({ title: "", description: "", type: "PRACTICE_BY_PART", difficulty: "medium", durationMinutes: 45 });
+            setIsExamModalOpen(true);
+          }}
+          className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors shadow-sm"
+        >
+          <Plus size={16} /> Tạo bộ đề thi mới
+        </button>
+      </header>
+
+      {/* FILTER & SEARCH */}
+      <div className="relative">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
+        <input
+          type="text"
+          placeholder="Tìm kiếm bộ đề thi theo tên hoặc mô tả..."
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-800 outline-none focus:border-slate-400 shadow-xs"
+        />
+      </div>
+
+      {/* EXAMS GRID */}
+      {isExamsLoading ? (
+        <div className="flex min-h-64 items-center justify-center">
+          <Loader2 className="animate-spin text-slate-600" />
+        </div>
+      ) : paginatedExams && paginatedExams.length > 0 ? (
+        <div className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {paginatedExams.map((exam) => {
+              const isPublished = exam.publicationStatus === "PUBLISHED";
+              return (
+                <article
+                  key={exam.id}
+                  className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-5 shadow-xs hover:border-slate-300 transition-colors"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                        {exam.type === "FULL_TEST" ? "Full Test 200 câu" : "Luyện theo Part"}
+                      </span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                          isPublished
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : "bg-amber-50 text-amber-700 border border-amber-200"
+                        }`}
+                      >
+                        {isPublished ? "Đã xuất bản" : "Bản nháp"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <h2 className="font-bold text-slate-900 leading-snug">{exam.title}</h2>
+                      <p className="mt-1 text-xs text-slate-500 line-clamp-2">
+                        {exam.description || "Chưa có mô tả cho bộ đề thi này."}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-3.5 text-xs text-slate-500">
+                    <div className="flex items-center gap-1 font-semibold text-slate-600">
+                      <Clock size={13} /> {Math.round((exam.durationSeconds || 7200) / 60)} phút · {exam.totalQuestions || 0} câu
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setSelectedExamId(exam.id)}
+                        className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 font-semibold text-slate-800 hover:bg-slate-100 transition-colors"
+                      >
+                        Quản lý đề
+                      </button>
+                      <button
+                        onClick={() => setPendingDeleteExam({ id: exam.id, title: exam.title })}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 transition-colors"
+                        title="Xóa đề thi"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex justify-center pt-2">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-500">
+          Không tìm thấy bộ đề thi nào. Hãy tạo bộ đề đầu tiên!
+        </div>
+      )}
+
+      {/* MODAL: CREATE EXAM */}
+      {isExamModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="font-bold text-slate-900">Tạo bộ đề thi mới</h3>
+              <button
+                onClick={() => setIsExamModalOpen(false)}
+                className="rounded-lg p-1 text-slate-400 hover:text-slate-700"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                createExamMutation.mutate(examForm);
+              }}
+              className="space-y-3.5 text-sm"
+            >
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Tên bộ đề thi *</label>
+                <input
+                  type="text"
+                  value={examForm.title}
+                  onChange={(e) => setExamForm({ ...examForm, title: e.target.value })}
+                  placeholder="e.g. ETS TOEIC Practice Test 01"
+                  required
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Định dạng thi</label>
+                  <select
+                    value={examForm.type}
+                    onChange={(e) => setExamForm({ ...examForm, type: e.target.value as any })}
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
+                  >
+                    <option value="PRACTICE_BY_PART">Luyện tập theo Part</option>
+                    <option value="FULL_TEST">Full Test 200 câu</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Độ khó</label>
+                  <select
+                    value={examForm.difficulty}
+                    onChange={(e) => setExamForm({ ...examForm, difficulty: e.target.value as any })}
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
+                  >
+                    <option value="easy">Dễ (Easy)</option>
+                    <option value="medium">Trung bình (Medium)</option>
+                    <option value="hard">Khó (Hard)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Thời lượng làm bài (phút)</label>
+                <input
+                  type="number"
+                  min={5}
+                  max={240}
+                  value={examForm.durationMinutes}
+                  onChange={(e) => setExamForm({ ...examForm, durationMinutes: Number(e.target.value) })}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Mô tả (tùy chọn)</label>
+                <textarea
+                  rows={2}
+                  value={examForm.description}
+                  onChange={(e) => setExamForm({ ...examForm, description: e.target.value })}
+                  placeholder="Mô tả nguồn gốc hoặc phạm vi bài thi..."
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400 text-xs"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsExamModalOpen(false)}
+                  className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="submit"
+                  disabled={createExamMutation.isPending}
+                  className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                >
+                  {createExamMutation.isPending ? "Đang tạo..." : "Tạo bản nháp"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* CONFIRM DELETE EXAM */}
+      <ConfirmDialog
+        open={!!pendingDeleteExam}
+        title="Xác nhận xóa bộ đề thi"
+        description={`Bạn có chắc chắn muốn xóa bộ đề thi "${pendingDeleteExam?.title}"? Toàn bộ các nhóm câu hỏi và câu hỏi sẽ bị xóa. Nếu đề thi đã có lượt làm bài của học viên, hệ thống sẽ từ chối để bảo toàn kết quả thi.`}
+        confirmLabel="Xóa đề thi"
+        isPending={deleteExamMutation.isPending}
+        onConfirm={() => {
+          if (pendingDeleteExam) deleteExamMutation.mutate(pendingDeleteExam.id);
+        }}
+        onCancel={() => setPendingDeleteExam(null)}
+      />
+    </main>
+  );
+}
