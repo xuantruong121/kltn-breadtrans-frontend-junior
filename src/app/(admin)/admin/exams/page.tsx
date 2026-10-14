@@ -27,15 +27,37 @@ import axiosClient from "@/lib/api/axiosClient";
 import { Pagination } from "@/components/ui";
 import toast from "react-hot-toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import ImageUploadField from "@/components/admin/ImageUploadField";
+import AudioUploadField from "@/components/admin/AudioUploadField";
 
 const TOEIC_PARTS = [
   { part: 1, label: "Part 1: Mô tả hình ảnh (Photographs)", type: "LISTENING" },
-  { part: 2, label: "Part 2: Hỏi - Đáp (Question - Response)", type: "LISTENING" },
-  { part: 3, label: "Part 3: Hội thoại ngắn (Short Conversations)", type: "LISTENING" },
+  {
+    part: 2,
+    label: "Part 2: Hỏi - Đáp (Question - Response)",
+    type: "LISTENING",
+  },
+  {
+    part: 3,
+    label: "Part 3: Hội thoại ngắn (Short Conversations)",
+    type: "LISTENING",
+  },
   { part: 4, label: "Part 4: Bài nói ngắn (Short Talks)", type: "LISTENING" },
-  { part: 5, label: "Part 5: Hoàn thành câu (Incomplete Sentences)", type: "READING" },
-  { part: 6, label: "Part 6: Điền đoạn văn (Text Completion)", type: "READING" },
-  { part: 7, label: "Part 7: Đọc hiểu văn bản (Reading Comprehension)", type: "READING" },
+  {
+    part: 5,
+    label: "Part 5: Hoàn thành câu (Incomplete Sentences)",
+    type: "READING",
+  },
+  {
+    part: 6,
+    label: "Part 6: Điền đoạn văn (Text Completion)",
+    type: "READING",
+  },
+  {
+    part: 7,
+    label: "Part 7: Đọc hiểu văn bản (Reading Comprehension)",
+    type: "READING",
+  },
 ];
 
 interface ExamQuestion {
@@ -72,30 +94,55 @@ interface ExamDetail {
   learnerReady?: boolean;
   validation?: {
     counts: Record<string, number>;
-    issues: Array<{ code: string; message: string; groupId?: number; questionId?: number }>;
+    issues: Array<{
+      code: string;
+      message: string;
+      groupId?: number;
+      questionId?: number;
+    }>;
   };
 }
 
 export default function AdminExamsPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
+    "ALL" | "DRAFT" | "PUBLISHED"
+  >("ALL");
   const [selectedExamId, setSelectedExamId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(9);
-  const [activeTab, setActiveTab] = useState<"structure" | "preflight" | "preview" | "info">("structure");
-  const [activePartFilter, setActivePartFilter] = useState<number | "all">("all");
+  const [activeTab, setActiveTab] = useState<
+    "structure" | "preflight" | "preview" | "info"
+  >("structure");
+  const [activePartFilter, setActivePartFilter] = useState<number | "all">(
+    "all",
+  );
 
   // Modals & Confirm states
   const [isExamModalOpen, setIsExamModalOpen] = useState(false);
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<ExamGroup | null>(null);
-  const [targetGroupIdForQuestion, setTargetGroupIdForQuestion] = useState<number | null>(null);
-  const [editingQuestion, setEditingQuestion] = useState<ExamQuestion | null>(null);
+  const [targetGroupIdForQuestion, setTargetGroupIdForQuestion] = useState<
+    number | null
+  >(null);
+  const [editingQuestion, setEditingQuestion] = useState<ExamQuestion | null>(
+    null,
+  );
 
-  const [pendingDeleteExam, setPendingDeleteExam] = useState<{ id: number; title: string } | null>(null);
-  const [pendingDeleteGroup, setPendingDeleteGroup] = useState<{ id: number; part: number } | null>(null);
-  const [pendingDeleteQuestion, setPendingDeleteQuestion] = useState<{ id: number; questionNumber: number } | null>(null);
+  const [pendingDeleteExam, setPendingDeleteExam] = useState<{
+    id: number;
+    title: string;
+  } | null>(null);
+  const [pendingDeleteGroup, setPendingDeleteGroup] = useState<{
+    id: number;
+    part: number;
+  } | null>(null);
+  const [pendingDeleteQuestion, setPendingDeleteQuestion] = useState<{
+    id: number;
+    questionNumber: number;
+  } | null>(null);
 
   // Form states: Exam
   const [examForm, setExamForm] = useState({
@@ -124,7 +171,51 @@ export default function AdminExamsPage() {
     explanation: "",
   });
 
+  // Contextual AI state: Exam TOEIC Part 5
+  const [isAiPart5ModalOpen, setIsAiPart5ModalOpen] = useState(false);
+  const [isAiPart5Loading, setIsAiPart5Loading] = useState(false);
+  const [aiPart5TargetGroup, setAiPart5TargetGroup] =
+    useState<ExamGroup | null>(null);
+  const [aiPart5Topic, setAiPart5Topic] = useState("");
+  const [aiPart5GrammarFocus, setAiPart5GrammarFocus] = useState("");
+  const [aiPart5Count, setAiPart5Count] = useState(5);
+  const [aiPart5Candidates, setAiPart5Candidates] = useState<
+    Array<{
+      prompt: string;
+      options: string[];
+      correctIndex: number;
+      explanation: string;
+    }>
+  >([]);
+
+  const handleGenerateAiPart5 = async () => {
+    setIsAiPart5Loading(true);
+    try {
+      const res: any = await axiosClient.post("/admin/exams/ai/suggest-part5", {
+        topic: aiPart5Topic.trim() || examDetail?.title || undefined,
+        grammarFocus: aiPart5GrammarFocus.trim() || undefined,
+        count: Number(aiPart5Count),
+      });
+      const data = res?.data || res;
+      if (Array.isArray(data?.candidates)) {
+        setAiPart5Candidates(data.candidates);
+        toast.success(
+          `AI đã gợi ý ${data.candidates.length} câu hỏi TOEIC Part 5 nháp`,
+        );
+      } else {
+        toast.error("Không nhận được câu hỏi hợp lệ từ AI");
+      }
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || "Không thể tạo câu hỏi Part 5 lúc này.",
+      );
+    } finally {
+      setIsAiPart5Loading(false);
+    }
+  };
+
   // 1. Query all exams
+
   const { data: exams, isLoading: isExamsLoading } = useQuery<any[]>({
     queryKey: ["admin-exams"],
     queryFn: async () => {
@@ -134,15 +225,19 @@ export default function AdminExamsPage() {
   });
 
   // 2. Query single exam detail
-  const { data: examDetail, isLoading: isDetailLoading } = useQuery<ExamDetail>({
-    queryKey: ["admin-exam-detail", selectedExamId],
-    queryFn: async () => {
-      if (!selectedExamId) return null;
-      const res: any = await axiosClient.get(`/admin/exams/${selectedExamId}`);
-      return res?.data || res;
+  const { data: examDetail, isLoading: isDetailLoading } = useQuery<ExamDetail>(
+    {
+      queryKey: ["admin-exam-detail", selectedExamId],
+      queryFn: async () => {
+        if (!selectedExamId) return null;
+        const res: any = await axiosClient.get(
+          `/admin/exams/${selectedExamId}`,
+        );
+        return res?.data || res;
+      },
+      enabled: !!selectedExamId,
     },
-    enabled: !!selectedExamId,
-  });
+  );
 
   // Mutations
   const createExamMutation = useMutation({
@@ -154,35 +249,54 @@ export default function AdminExamsPage() {
     onSuccess: (data: any) => {
       toast.success("Tạo bộ đề thi mới thành công!");
       setIsExamModalOpen(false);
-      setExamForm({ title: "", description: "", type: "PRACTICE_BY_PART", difficulty: "medium", durationMinutes: 45 });
+      setExamForm({
+        title: "",
+        description: "",
+        type: "PRACTICE_BY_PART",
+        difficulty: "medium",
+        durationMinutes: 45,
+      });
       queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
       if (data?.id) setSelectedExamId(data.id);
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể tạo bộ đề thi"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể tạo bộ đề thi"),
   });
 
   const updateExamMutation = useMutation({
-    mutationFn: async ({ id, dto }: { id: number; dto: any }) => axiosClient.patch(`/admin/exams/${id}`, dto),
+    mutationFn: async ({ id, dto }: { id: number; dto: any }) =>
+      axiosClient.patch(`/admin/exams/${id}`, dto),
     onSuccess: () => {
       toast.success("Cập nhật thông tin đề thi thành công!");
       queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-exam-detail", selectedExamId] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-exam-detail", selectedExamId],
+      });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể cập nhật đề thi"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể cập nhật đề thi"),
   });
 
   const publishExamMutation = useMutation({
-    mutationFn: async (id: number) => axiosClient.post(`/admin/exams/${id}/publish`),
+    mutationFn: async (id: number) =>
+      axiosClient.post(`/admin/exams/${id}/publish`),
     onSuccess: () => {
       toast.success("Đã xuất bản bộ đề thi cho học viên!");
       queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-exam-detail", selectedExamId] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-exam-detail", selectedExamId],
+      });
     },
     onError: (err: any) => {
       const msg = err?.response?.data?.message;
       const issues = err?.response?.data?.issues;
       if (Array.isArray(issues) && issues.length > 0) {
-        toast.error(`${msg || "Chưa đủ điều kiện xuất bản"}:\n${issues.slice(0, 3).map((i: any) => `• ${i.message}`).join("\n")}`);
+        toast.error(
+          `${msg || "Chưa đủ điều kiện xuất bản"}:\n${issues
+            .slice(0, 3)
+            .map((i: any) => `• ${i.message}`)
+            .join("\n")}`,
+        );
       } else {
         toast.error(msg || "Không thể xuất bản đề thi");
       }
@@ -190,13 +304,17 @@ export default function AdminExamsPage() {
   });
 
   const unpublishExamMutation = useMutation({
-    mutationFn: async (id: number) => axiosClient.post(`/admin/exams/${id}/unpublish`),
+    mutationFn: async (id: number) =>
+      axiosClient.post(`/admin/exams/${id}/unpublish`),
     onSuccess: () => {
       toast.success("Đã chuyển đề thi về bản nháp!");
       queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-exam-detail", selectedExamId] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-exam-detail", selectedExamId],
+      });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể gỡ xuất bản"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể gỡ xuất bản"),
   });
 
   const deleteExamMutation = useMutation({
@@ -207,39 +325,55 @@ export default function AdminExamsPage() {
       if (selectedExamId === pendingDeleteExam?.id) setSelectedExamId(null);
       queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể xóa đề thi"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể xóa đề thi"),
   });
 
   const saveGroupMutation = useMutation({
     mutationFn: async (dto: any) => {
       if (!selectedExamId) return;
       if (editingGroup) {
-        return axiosClient.patch(`/admin/exams/${selectedExamId}/groups/${editingGroup.id}`, dto);
+        return axiosClient.patch(
+          `/admin/exams/${selectedExamId}/groups/${editingGroup.id}`,
+          dto,
+        );
       }
       return axiosClient.post(`/admin/exams/${selectedExamId}/groups`, dto);
     },
     onSuccess: () => {
-      toast.success(editingGroup ? "Cập nhật nhóm câu hỏi thành công!" : "Thêm nhóm câu hỏi mới thành công!");
+      toast.success(
+        editingGroup
+          ? "Cập nhật nhóm câu hỏi thành công!"
+          : "Thêm nhóm câu hỏi mới thành công!",
+      );
       setIsGroupModalOpen(false);
       setEditingGroup(null);
-      queryClient.invalidateQueries({ queryKey: ["admin-exam-detail", selectedExamId] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-exam-detail", selectedExamId],
+      });
       queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể lưu nhóm câu hỏi"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể lưu nhóm câu hỏi"),
   });
 
   const deleteGroupMutation = useMutation({
     mutationFn: async (groupId: number) => {
       if (!selectedExamId) return;
-      return axiosClient.delete(`/admin/exams/${selectedExamId}/groups/${groupId}`);
+      return axiosClient.delete(
+        `/admin/exams/${selectedExamId}/groups/${groupId}`,
+      );
     },
     onSuccess: () => {
       toast.success("Đã xóa nhóm câu hỏi!");
       setPendingDeleteGroup(null);
-      queryClient.invalidateQueries({ queryKey: ["admin-exam-detail", selectedExamId] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-exam-detail", selectedExamId],
+      });
       queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể xóa nhóm câu hỏi"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể xóa nhóm câu hỏi"),
   });
 
   const saveQuestionMutation = useMutation({
@@ -248,41 +382,70 @@ export default function AdminExamsPage() {
       const groupId = targetGroupIdForQuestion || editingQuestion?.groupId;
       if (!groupId) return;
       if (editingQuestion) {
-        return axiosClient.patch(`/admin/exams/${selectedExamId}/groups/${groupId}/questions/${editingQuestion.id}`, dto);
+        return axiosClient.patch(
+          `/admin/exams/${selectedExamId}/groups/${groupId}/questions/${editingQuestion.id}`,
+          dto,
+        );
       }
-      return axiosClient.post(`/admin/exams/${selectedExamId}/groups/${groupId}/questions`, dto);
+      return axiosClient.post(
+        `/admin/exams/${selectedExamId}/groups/${groupId}/questions`,
+        dto,
+      );
     },
     onSuccess: () => {
-      toast.success(editingQuestion ? "Cập nhật câu hỏi thành công!" : "Thêm câu hỏi mới thành công!");
+      toast.success(
+        editingQuestion
+          ? "Cập nhật câu hỏi thành công!"
+          : "Thêm câu hỏi mới thành công!",
+      );
       setIsQuestionModalOpen(false);
       setEditingQuestion(null);
       setTargetGroupIdForQuestion(null);
-      queryClient.invalidateQueries({ queryKey: ["admin-exam-detail", selectedExamId] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-exam-detail", selectedExamId],
+      });
       queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể lưu câu hỏi"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể lưu câu hỏi"),
   });
 
   const deleteQuestionMutation = useMutation({
-    mutationFn: async ({ groupId, questionId }: { groupId: number; questionId: number }) => {
+    mutationFn: async ({
+      groupId,
+      questionId,
+    }: {
+      groupId: number;
+      questionId: number;
+    }) => {
       if (!selectedExamId) return;
-      return axiosClient.delete(`/admin/exams/${selectedExamId}/groups/${groupId}/questions/${questionId}`);
+      return axiosClient.delete(
+        `/admin/exams/${selectedExamId}/groups/${groupId}/questions/${questionId}`,
+      );
     },
     onSuccess: () => {
       toast.success("Đã xóa câu hỏi!");
       setPendingDeleteQuestion(null);
-      queryClient.invalidateQueries({ queryKey: ["admin-exam-detail", selectedExamId] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-exam-detail", selectedExamId],
+      });
       queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể xóa câu hỏi"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể xóa câu hỏi"),
   });
 
-  const filteredExams = exams?.filter((e) =>
-    e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    e.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredExams = exams?.filter(
+    (e) =>
+      (e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.description?.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (statusFilter === "ALL" || e.publicationStatus === statusFilter),
   );
   const totalPages = Math.ceil((filteredExams?.length || 0) / pageSize);
-  const paginatedExams = filteredExams?.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const paginatedExams = filteredExams?.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   // -------------------------------------------------------------
   // RENDER: Exam Workspace / Editor when an exam is selected
@@ -294,9 +457,10 @@ export default function AdminExamsPage() {
     const validation = examDetail.validation;
     const issues = validation?.issues || [];
 
-    const visibleGroups = activePartFilter === "all"
-      ? groups
-      : groups.filter((g) => g.part === activePartFilter);
+    const visibleGroups =
+      activePartFilter === "all"
+        ? groups
+        : groups.filter((g) => g.part === activePartFilter);
 
     return (
       <main className="mx-auto max-w-6xl space-y-6 p-6">
@@ -312,20 +476,28 @@ export default function AdminExamsPage() {
             </button>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-slate-900">{examDetail.title}</h1>
+                <h1 className="text-2xl font-bold text-slate-900">
+                  {examDetail.title}
+                </h1>
                 <span
                   className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                    isPublished ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-amber-50 text-amber-700 border border-amber-200"
+                    isPublished
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : "bg-amber-50 text-amber-700 border border-amber-200"
                   }`}
                 >
                   {isPublished ? "Đã xuất bản" : "Bản nháp"}
                 </span>
                 <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
-                  {examDetail.type === "FULL_TEST" ? "Full Test (200 câu)" : "Luyện tập theo Part"}
+                  {examDetail.type === "FULL_TEST"
+                    ? "Full Test (200 câu)"
+                    : "Luyện tập theo Part"}
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Thời lượng: {Math.round(examDetail.durationSeconds / 60)} phút · {groups.length} nhóm · {allQuestions.length} câu hỏi · {examDetail.attemptsCount || 0} lượt làm bài
+                Thời lượng: {Math.round(examDetail.durationSeconds / 60)} phút ·{" "}
+                {groups.length} nhóm · {allQuestions.length} câu hỏi ·{" "}
+                {examDetail.attemptsCount || 0} lượt làm bài
               </p>
             </div>
           </div>
@@ -337,7 +509,7 @@ export default function AdminExamsPage() {
                 disabled={unpublishExamMutation.isPending}
                 className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
               >
-                Gỡ xuất bản (Draft)
+                Chuyển về bản nháp
               </button>
             ) : (
               <button
@@ -356,7 +528,9 @@ export default function AdminExamsPage() {
           <button
             onClick={() => setActiveTab("structure")}
             className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
-              activeTab === "structure" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
+              activeTab === "structure"
+                ? "bg-slate-900 text-white"
+                : "text-slate-600 hover:bg-slate-100"
             }`}
           >
             Cấu trúc & Câu hỏi ({allQuestions.length})
@@ -364,7 +538,9 @@ export default function AdminExamsPage() {
           <button
             onClick={() => setActiveTab("preflight")}
             className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
-              activeTab === "preflight" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
+              activeTab === "preflight"
+                ? "bg-slate-900 text-white"
+                : "text-slate-600 hover:bg-slate-100"
             }`}
           >
             <span>Kiểm tra tiền xuất bản</span>
@@ -381,7 +557,9 @@ export default function AdminExamsPage() {
           <button
             onClick={() => setActiveTab("preview")}
             className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
-              activeTab === "preview" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
+              activeTab === "preview"
+                ? "bg-slate-900 text-white"
+                : "text-slate-600 hover:bg-slate-100"
             }`}
           >
             Xem trước đề thi
@@ -389,7 +567,9 @@ export default function AdminExamsPage() {
           <button
             onClick={() => setActiveTab("info")}
             className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
-              activeTab === "info" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
+              activeTab === "info"
+                ? "bg-slate-900 text-white"
+                : "text-slate-600 hover:bg-slate-100"
             }`}
           >
             Thông tin chung
@@ -401,26 +581,36 @@ export default function AdminExamsPage() {
           <div className="space-y-5">
             {/* PART FILTER PILLS */}
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setActivePartFilter("all")}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    activePartFilter === "all" ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  className={`rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors ${
+                    activePartFilter === "all"
+                      ? "bg-slate-900 text-white shadow-xs"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                   }`}
                 >
                   Tất cả Part ({groups.length} nhóm)
                 </button>
                 {TOEIC_PARTS.map((p) => {
-                  const partGroupCount = groups.filter((g) => g.part === p.part).length;
+                  const partGroupCount = groups.filter(
+                    (g) => g.part === p.part,
+                  ).length;
+                  const partQuestionCount = groups
+                    .filter((g) => g.part === p.part)
+                    .reduce((sum, g) => sum + (g.questions?.length || 0), 0);
                   return (
                     <button
                       key={p.part}
                       onClick={() => setActivePartFilter(p.part)}
-                      className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
-                        activePartFilter === p.part ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+                        activePartFilter === p.part
+                          ? "bg-slate-900 text-white shadow-xs"
+                          : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                       }`}
                     >
-                      Part {p.part} ({partGroupCount})
+                      Part {p.part} ({partGroupCount} nhóm · {partQuestionCount}{" "}
+                      câu)
                     </button>
                   );
                 })}
@@ -438,7 +628,7 @@ export default function AdminExamsPage() {
                   });
                   setIsGroupModalOpen(true);
                 }}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors shadow-xs"
               >
                 <Plus size={15} /> Thêm nhóm câu hỏi (Group)
               </button>
@@ -447,35 +637,40 @@ export default function AdminExamsPage() {
             {/* GROUPS LIST */}
             {visibleGroups.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-500">
-                Chưa có nhóm câu hỏi nào trong phần này. Hãy thêm nhóm mới để bắt đầu.
+                Chưa có nhóm câu hỏi nào trong phần này. Hãy nhấn &quot;Thêm
+                nhóm câu hỏi (Group)&quot; để bắt đầu.
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {visibleGroups.map((group) => {
-                  const partInfo = TOEIC_PARTS.find((p) => p.part === group.part);
+                  const partInfo = TOEIC_PARTS.find(
+                    (p) => p.part === group.part,
+                  );
                   return (
                     <div
                       key={group.id}
-                      className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4"
+                      className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4 hover:border-slate-300 transition-colors"
                     >
                       {/* GROUP HEADER */}
-                      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-3">
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <span className="rounded bg-slate-900 px-2 py-0.5 text-xs font-bold text-white">
+                            <span className="rounded bg-slate-900 px-2.5 py-0.5 text-xs font-bold text-white">
                               Part {group.part}
                             </span>
-                            <span className="text-xs font-semibold text-slate-600">
+                            <span className="text-sm font-bold text-slate-800">
                               {partInfo?.label}
                             </span>
-                            <span className="text-xs text-slate-400">· Thứ tự #{group.groupOrder}</span>
+                            <span className="text-xs text-slate-500">
+                              · Thứ tự #{group.groupOrder}
+                            </span>
                           </div>
 
                           {/* MEDIA BADGES */}
-                          <div className="flex items-center gap-3 pt-1 text-xs text-slate-500">
+                          <div className="flex items-center gap-3 pt-0.5 text-xs text-slate-500">
                             {group.audioUrl ? (
                               <span className="inline-flex items-center gap-1 text-emerald-600 font-medium">
-                                <Volume2 size={13} /> Có audio
+                                <Volume2 size={13} /> Có audio stimulus
                               </span>
                             ) : group.part <= 4 ? (
                               <span className="inline-flex items-center gap-1 text-rose-500 font-medium">
@@ -485,7 +680,7 @@ export default function AdminExamsPage() {
 
                             {group.imageUrl ? (
                               <span className="inline-flex items-center gap-1 text-emerald-600 font-medium">
-                                <ImageIcon size={13} /> Có hình ảnh
+                                <ImageIcon size={13} /> Có hình ảnh minh họa
                               </span>
                             ) : group.part === 1 ? (
                               <span className="inline-flex items-center gap-1 text-rose-500 font-medium">
@@ -495,37 +690,61 @@ export default function AdminExamsPage() {
 
                             {group.passageText ? (
                               <span className="inline-flex items-center gap-1 text-emerald-600 font-medium">
-                                <FileText size={13} /> Có đoạn văn ({group.passageText.length} ký tự)
+                                <FileText size={13} /> Có đoạn văn (
+                                {group.passageText.length} ký tự)
                               </span>
                             ) : group.part >= 6 ? (
                               <span className="inline-flex items-center gap-1 text-rose-500 font-medium">
-                                <AlertTriangle size={13} /> Thiếu đoạn văn Part 6-7
+                                <AlertTriangle size={13} /> Thiếu đoạn văn Part
+                                6-7
                               </span>
                             ) : null}
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-1">
+                        {/* EXPLICIT GROUP ACTION BUTTONS */}
+                        <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => {
                               setTargetGroupIdForQuestion(group.id);
                               setEditingQuestion(null);
-                              const nextQNum = allQuestions.length > 0
-                                ? Math.max(...allQuestions.map((q) => q.questionNumber)) + 1
-                                : 1;
+                              const nextQNum =
+                                allQuestions.length > 0
+                                  ? Math.max(
+                                      ...allQuestions.map(
+                                        (q) => q.questionNumber,
+                                      ),
+                                    ) + 1
+                                  : 1;
                               setQuestionForm({
                                 questionNumber: nextQNum,
                                 text: "",
-                                options: group.part === 2 ? ["", "", ""] : ["", "", "", ""],
+                                options:
+                                  group.part === 2
+                                    ? ["", "", ""]
+                                    : ["", "", "", ""],
                                 correctIndex: 0,
                                 explanation: "",
                               });
                               setIsQuestionModalOpen(true);
                             }}
-                            className="rounded-lg bg-slate-100 hover:bg-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-800 transition-colors"
+                            className="inline-flex items-center gap-1 rounded-lg bg-slate-900 hover:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white transition-colors"
                           >
-                            + Thêm câu hỏi
+                            <Plus size={13} /> Thêm câu hỏi
                           </button>
+                          {group.part === 5 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAiPart5TargetGroup(group);
+                                setAiPart5Candidates([]);
+                                setIsAiPart5ModalOpen(true);
+                              }}
+                              className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors"
+                            >
+                              Tạo câu hỏi Part 5 nháp
+                            </button>
+                          )}
                           <button
                             onClick={() => {
                               setEditingGroup(group);
@@ -538,44 +757,51 @@ export default function AdminExamsPage() {
                               });
                               setIsGroupModalOpen(true);
                             }}
-                            className="p-1.5 text-slate-500 hover:text-slate-900"
-                            title="Sửa nhóm"
+                            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors"
+                            title="Sửa nhóm câu hỏi"
                           >
-                            <Edit2 size={15} />
+                            <Edit2 size={12} /> Sửa nhóm
                           </button>
                           <button
-                            onClick={() => setPendingDeleteGroup({ id: group.id, part: group.part })}
-                            className="p-1.5 text-slate-400 hover:text-rose-600"
-                            title="Xóa nhóm"
+                            onClick={() =>
+                              setPendingDeleteGroup({
+                                id: group.id,
+                                part: group.part,
+                              })
+                            }
+                            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white hover:border-rose-200 hover:bg-rose-50 px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:text-rose-600 transition-colors"
+                            title="Xóa nhóm câu hỏi"
                           >
-                            <Trash2 size={15} />
+                            <Trash2 size={13} /> Xóa nhóm
                           </button>
                         </div>
                       </div>
 
                       {/* PASSAGE TEXT EXCERPT IF PRESENT */}
                       {group.passageText && (
-                        <div className="rounded-lg bg-slate-50 border border-slate-100 p-3 text-xs text-slate-700 max-h-36 overflow-y-auto whitespace-pre-line font-serif leading-relaxed">
+                        <div className="rounded-lg bg-slate-50 border border-slate-200 p-3.5 text-xs text-slate-700 max-h-40 overflow-y-auto whitespace-pre-line font-serif leading-relaxed">
                           {group.passageText}
                         </div>
                       )}
 
                       {/* QUESTIONS IN GROUP */}
                       {group.questions && group.questions.length > 0 ? (
-                        <div className="space-y-2.5 pl-2">
+                        <div className="space-y-3 pt-1">
                           {group.questions.map((q) => (
                             <div
                               key={q.id}
-                              className="rounded-lg border border-slate-100 bg-slate-50/50 p-3 text-xs space-y-2"
+                              className="rounded-lg border border-slate-200 bg-slate-50/40 p-4 text-xs space-y-2.5"
                             >
                               <div className="flex items-start justify-between gap-3">
-                                <div className="flex items-start gap-2">
-                                  <span className="font-bold text-slate-900 bg-white border border-slate-200 px-1.5 py-0.5 rounded">
+                                <div className="flex items-start gap-2.5">
+                                  <span className="font-bold text-slate-900 bg-white border border-slate-200 px-2 py-0.5 rounded text-xs shrink-0 shadow-2xs">
                                     Câu {q.questionNumber}
                                   </span>
-                                  <p className="font-medium text-slate-800">{q.text || "—"}</p>
+                                  <p className="font-semibold text-sm text-slate-900 leading-snug">
+                                    {q.text || "—"}
+                                  </p>
                                 </div>
-                                <div className="flex items-center gap-1 shrink-0">
+                                <div className="flex items-center gap-1.5 shrink-0">
                                   <button
                                     onClick={() => {
                                       setTargetGroupIdForQuestion(group.id);
@@ -583,22 +809,27 @@ export default function AdminExamsPage() {
                                       setQuestionForm({
                                         questionNumber: q.questionNumber,
                                         text: q.text || "",
-                                        options: Array.isArray(q.options) ? [...q.options] : ["", "", "", ""],
+                                        options: Array.isArray(q.options)
+                                          ? [...q.options]
+                                          : ["", "", "", ""],
                                         correctIndex: q.correctIndex,
                                         explanation: q.explanation || "",
                                       });
                                       setIsQuestionModalOpen(true);
                                     }}
-                                    className="p-1 text-slate-400 hover:text-slate-800"
+                                    className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
                                     title="Sửa câu hỏi"
                                   >
-                                    <Edit2 size={13} />
+                                    <Edit2 size={12} /> Sửa
                                   </button>
                                   <button
                                     onClick={() =>
-                                      setPendingDeleteQuestion({ id: q.id, questionNumber: q.questionNumber })
+                                      setPendingDeleteQuestion({
+                                        id: q.id,
+                                        questionNumber: q.questionNumber,
+                                      })
                                     }
-                                    className="p-1 text-slate-400 hover:text-rose-600"
+                                    className="rounded border border-slate-200 bg-white p-1 text-slate-400 hover:text-rose-600 hover:border-rose-200 transition-colors"
                                     title="Xóa câu hỏi"
                                   >
                                     <Trash2 size={13} />
@@ -607,30 +838,45 @@ export default function AdminExamsPage() {
                               </div>
 
                               {/* OPTIONS ROW */}
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 pt-1">
                                 {q.options.map((opt, optIdx) => {
                                   const isCorrect = optIdx === q.correctIndex;
                                   return (
                                     <div
                                       key={optIdx}
-                                      className={`rounded px-2 py-1 text-[11px] font-medium flex items-center justify-between ${
+                                      className={`rounded-md px-3 py-1.5 text-xs font-medium flex items-center justify-between ${
                                         isCorrect
-                                          ? "bg-emerald-50 text-emerald-900 border border-emerald-300 font-bold"
-                                          : "bg-white text-slate-600 border border-slate-200"
+                                          ? "bg-emerald-50 text-emerald-950 border border-emerald-300 font-bold"
+                                          : "bg-white text-slate-700 border border-slate-200"
                                       }`}
                                     >
-                                      <span className="truncate">({String.fromCharCode(65 + optIdx)}) {opt}</span>
-                                      {isCorrect && <Check size={11} className="text-emerald-600 shrink-0" />}
+                                      <span className="truncate">
+                                        ({String.fromCharCode(65 + optIdx)}){" "}
+                                        {opt}
+                                      </span>
+                                      {isCorrect && (
+                                        <Check
+                                          size={12}
+                                          className="text-emerald-600 shrink-0"
+                                        />
+                                      )}
                                     </div>
                                   );
                                 })}
                               </div>
+
+                              {q.explanation && (
+                                <p className="text-[11px] text-slate-500 italic bg-white p-2 rounded border border-slate-100">
+                                  Giải thích: {q.explanation}
+                                </p>
+                              )}
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <p className="text-xs text-slate-400 italic pl-2">
-                          Nhóm này chưa có câu hỏi nào. Hãy nhấn "+ Thêm câu hỏi".
+                        <p className="text-xs text-slate-400 italic py-2">
+                          Nhóm này chưa có câu hỏi nào. Hãy nhấn &quot;+ Thêm
+                          câu hỏi&quot; để bổ sung câu hỏi vào nhóm.
                         </p>
                       )}
                     </div>
@@ -647,18 +893,25 @@ export default function AdminExamsPage() {
             <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900">Báo cáo kiểm tra chất lượng đề thi</h2>
+                  <h2 className="text-lg font-bold text-slate-900">
+                    Báo cáo kiểm tra chất lượng đề thi
+                  </h2>
                   <p className="text-xs text-slate-500">
-                    Hệ thống tự động kiểm tra tính toàn vẹn của âm thanh, hình ảnh, đoạn văn và bộ đáp án.
+                    Hệ thống tự động kiểm tra tính toàn vẹn của âm thanh, hình
+                    ảnh, đoạn văn và bộ đáp án.
                   </p>
                 </div>
                 <div className="text-right">
                   <span
                     className={`inline-block rounded-full px-3 py-1 text-xs font-bold ${
-                      issues.length === 0 ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-rose-50 text-rose-700 border border-rose-200"
+                      issues.length === 0
+                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                        : "bg-rose-50 text-rose-700 border border-rose-200"
                     }`}
                   >
-                    {issues.length === 0 ? "✓ Sẵn sàng xuất bản" : `⚠ Có ${issues.length} cảnh báo`}
+                    {issues.length === 0
+                      ? "✓ Sẵn sàng xuất bản"
+                      : `⚠ Có ${issues.length} cảnh báo`}
                   </span>
                 </div>
               </div>
@@ -666,23 +919,45 @@ export default function AdminExamsPage() {
               {/* STATS BREAKDOWN */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
                 <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase">Tổng số câu hỏi</span>
-                  <p className="text-xl font-bold text-slate-900 mt-1">{allQuestions.length}</p>
-                </div>
-                <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase">Số nhóm bài</span>
-                  <p className="text-xl font-bold text-slate-900 mt-1">{groups.length}</p>
-                </div>
-                <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase">Phần Listening</span>
+                  <span className="text-[11px] font-bold text-slate-500 uppercase">
+                    Tổng số câu hỏi
+                  </span>
                   <p className="text-xl font-bold text-slate-900 mt-1">
-                    {groups.filter((g) => g.part <= 4).flatMap((g) => g.questions || []).length} câu
+                    {allQuestions.length}
                   </p>
                 </div>
                 <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase">Phần Reading</span>
+                  <span className="text-[11px] font-bold text-slate-500 uppercase">
+                    Số nhóm bài
+                  </span>
                   <p className="text-xl font-bold text-slate-900 mt-1">
-                    {groups.filter((g) => g.part >= 5).flatMap((g) => g.questions || []).length} câu
+                    {groups.length}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase">
+                    Phần Listening
+                  </span>
+                  <p className="text-xl font-bold text-slate-900 mt-1">
+                    {
+                      groups
+                        .filter((g) => g.part <= 4)
+                        .flatMap((g) => g.questions || []).length
+                    }{" "}
+                    câu
+                  </p>
+                </div>
+                <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase">
+                    Phần Reading
+                  </span>
+                  <p className="text-xl font-bold text-slate-900 mt-1">
+                    {
+                      groups
+                        .filter((g) => g.part >= 5)
+                        .flatMap((g) => g.questions || []).length
+                    }{" "}
+                    câu
                   </p>
                 </div>
               </div>
@@ -699,10 +974,20 @@ export default function AdminExamsPage() {
                         key={idx}
                         className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-900 flex items-start gap-2"
                       >
-                        <AlertTriangle size={15} className="text-rose-600 shrink-0 mt-0.5" />
+                        <AlertTriangle
+                          size={15}
+                          className="text-rose-600 shrink-0 mt-0.5"
+                        />
                         <div>
-                          <span className="font-bold font-mono">[{issue.code}]</span> {issue.message}
-                          {issue.groupId && <span className="text-rose-700 ml-1">(Nhóm ID: {issue.groupId})</span>}
+                          <span className="font-bold font-mono">
+                            [{issue.code}]
+                          </span>{" "}
+                          {issue.message}
+                          {issue.groupId && (
+                            <span className="text-rose-700 ml-1">
+                              (Nhóm ID: {issue.groupId})
+                            </span>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -710,11 +995,15 @@ export default function AdminExamsPage() {
                 </div>
               ) : (
                 <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-xs text-emerald-900 flex items-center gap-3">
-                  <CheckCircle2 size={20} className="text-emerald-600 shrink-0" />
+                  <CheckCircle2
+                    size={20}
+                    className="text-emerald-600 shrink-0"
+                  />
                   <div>
                     <p className="font-bold">Đề thi hoàn hảo!</p>
                     <p className="text-emerald-700 mt-0.5">
-                      Toàn bộ media, hình ảnh, đoạn văn và bảng đáp án đều hợp lệ. Bạn có thể xuất bản đề thi ngay bây giờ.
+                      Toàn bộ media, hình ảnh, đoạn văn và bảng đáp án đều hợp
+                      lệ. Bạn có thể xuất bản đề thi ngay bây giờ.
                     </p>
                   </div>
                 </div>
@@ -729,32 +1018,50 @@ export default function AdminExamsPage() {
             <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
               <div className="border-b border-slate-100 pb-3">
                 <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
-                  {examDetail.type === "FULL_TEST" ? "TOEIC Full Test" : "Luyện đề theo Part"}
+                  {examDetail.type === "FULL_TEST"
+                    ? "TOEIC Full Test"
+                    : "Luyện đề theo Part"}
                 </span>
-                <h2 className="text-2xl font-bold text-slate-900 mt-2">{examDetail.title}</h2>
+                <h2 className="text-2xl font-bold text-slate-900 mt-2">
+                  {examDetail.title}
+                </h2>
                 <p className="text-xs text-slate-500 mt-1">
-                  Mô phỏng giao diện làm bài thi của học viên · Thời lượng: {Math.round(examDetail.durationSeconds / 60)} phút
+                  Mô phỏng giao diện làm bài thi của học viên · Thời lượng:{" "}
+                  {Math.round(examDetail.durationSeconds / 60)} phút
                 </p>
               </div>
 
               {groups.map((group, idx) => (
-                <div key={group.id} className="space-y-4 rounded-xl border border-slate-200 bg-slate-50/50 p-5">
+                <div
+                  key={group.id}
+                  className="space-y-4 rounded-xl border border-slate-200 bg-slate-50/50 p-5"
+                >
                   <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                     <span className="font-bold text-sm text-slate-900">
                       Part {group.part} · Nhóm #{idx + 1}
                     </span>
-                    <span className="text-xs text-slate-500">{group.questions?.length || 0} câu hỏi</span>
+                    <span className="text-xs text-slate-500">
+                      {group.questions?.length || 0} câu hỏi
+                    </span>
                   </div>
 
                   {group.imageUrl && (
                     <div className="max-w-md mx-auto overflow-hidden rounded-lg border border-slate-200">
-                      <img src={group.imageUrl} alt="Stimulus" className="w-full h-auto object-cover" />
+                      <img
+                        src={group.imageUrl}
+                        alt="Stimulus"
+                        className="w-full h-auto object-cover"
+                      />
                     </div>
                   )}
 
                   {group.audioUrl && (
                     <div className="rounded-lg bg-white border border-slate-200 p-3">
-                      <audio controls src={group.audioUrl} className="w-full h-8" />
+                      <audio
+                        controls
+                        src={group.audioUrl}
+                        className="w-full h-8"
+                      />
                     </div>
                   )}
 
@@ -766,7 +1073,10 @@ export default function AdminExamsPage() {
 
                   <div className="space-y-4 pt-2">
                     {group.questions?.map((q) => (
-                      <div key={q.id} className="space-y-2 bg-white p-4 rounded-lg border border-slate-200">
+                      <div
+                        key={q.id}
+                        className="space-y-2 bg-white p-4 rounded-lg border border-slate-200"
+                      >
                         <p className="font-bold text-xs text-slate-900">
                           Câu {q.questionNumber}. {q.text}
                         </p>
@@ -776,8 +1086,14 @@ export default function AdminExamsPage() {
                               key={optIdx}
                               className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer"
                             >
-                              <input type="radio" name={`q-${q.id}`} className="text-slate-900" />
-                              <span>({String.fromCharCode(65 + optIdx)}) {opt}</span>
+                              <input
+                                type="radio"
+                                name={`q-${q.id}`}
+                                className="text-slate-900"
+                              />
+                              <span>
+                                ({String.fromCharCode(65 + optIdx)}) {opt}
+                              </span>
                             </label>
                           ))}
                         </div>
@@ -809,15 +1125,20 @@ export default function AdminExamsPage() {
             className="max-w-xl space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
           >
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Tên bộ đề thi *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Tên bộ đề thi *
+              </label>
               <input
                 type="text"
                 value={examDetail.title}
                 onChange={(e) => {
-                  queryClient.setQueryData(["admin-exam-detail", selectedExamId], {
-                    ...examDetail,
-                    title: e.target.value,
-                  });
+                  queryClient.setQueryData(
+                    ["admin-exam-detail", selectedExamId],
+                    {
+                      ...examDetail,
+                      title: e.target.value,
+                    },
+                  );
                 }}
                 className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400"
                 required
@@ -826,31 +1147,43 @@ export default function AdminExamsPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Định dạng đề</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Định dạng đề
+                </label>
                 <select
                   value={examDetail.type}
                   onChange={(e) => {
-                    queryClient.setQueryData(["admin-exam-detail", selectedExamId], {
-                      ...examDetail,
-                      type: e.target.value as any,
-                    });
+                    queryClient.setQueryData(
+                      ["admin-exam-detail", selectedExamId],
+                      {
+                        ...examDetail,
+                        type: e.target.value as any,
+                      },
+                    );
                   }}
                   className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400"
                 >
                   <option value="PRACTICE_BY_PART">Luyện tập theo Part</option>
-                  <option value="FULL_TEST">Full Test (200 câu TOEIC chuẩn)</option>
+                  <option value="FULL_TEST">
+                    Full Test (200 câu TOEIC chuẩn)
+                  </option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Độ khó</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Độ khó
+                </label>
                 <select
                   value={examDetail.difficulty}
                   onChange={(e) => {
-                    queryClient.setQueryData(["admin-exam-detail", selectedExamId], {
-                      ...examDetail,
-                      difficulty: e.target.value as any,
-                    });
+                    queryClient.setQueryData(
+                      ["admin-exam-detail", selectedExamId],
+                      {
+                        ...examDetail,
+                        difficulty: e.target.value as any,
+                      },
+                    );
                   }}
                   className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400"
                 >
@@ -862,32 +1195,42 @@ export default function AdminExamsPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Thời lượng (phút)</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Thời lượng (phút)
+              </label>
               <input
                 type="number"
                 min={5}
                 max={240}
                 value={Math.round(examDetail.durationSeconds / 60)}
                 onChange={(e) => {
-                  queryClient.setQueryData(["admin-exam-detail", selectedExamId], {
-                    ...examDetail,
-                    durationSeconds: Number(e.target.value) * 60,
-                  });
+                  queryClient.setQueryData(
+                    ["admin-exam-detail", selectedExamId],
+                    {
+                      ...examDetail,
+                      durationSeconds: Number(e.target.value) * 60,
+                    },
+                  );
                 }}
                 className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Mô tả bộ đề thi</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Mô tả bộ đề thi
+              </label>
               <textarea
                 rows={3}
                 value={examDetail.description || ""}
                 onChange={(e) => {
-                  queryClient.setQueryData(["admin-exam-detail", selectedExamId], {
-                    ...examDetail,
-                    description: e.target.value,
-                  });
+                  queryClient.setQueryData(
+                    ["admin-exam-detail", selectedExamId],
+                    {
+                      ...examDetail,
+                      description: e.target.value,
+                    },
+                  );
                 }}
                 className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400"
               />
@@ -911,7 +1254,9 @@ export default function AdminExamsPage() {
             <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <h3 className="font-bold text-slate-900">
-                  {editingGroup ? "Chỉnh sửa nhóm câu hỏi" : "Thêm nhóm câu hỏi mới"}
+                  {editingGroup
+                    ? "Chỉnh sửa nhóm câu hỏi"
+                    : "Thêm nhóm câu hỏi mới"}
                 </h3>
                 <button
                   onClick={() => setIsGroupModalOpen(false)}
@@ -930,10 +1275,17 @@ export default function AdminExamsPage() {
               >
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Part TOEIC *</label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Part TOEIC *
+                    </label>
                     <select
                       value={groupForm.part}
-                      onChange={(e) => setGroupForm({ ...groupForm, part: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setGroupForm({
+                          ...groupForm,
+                          part: Number(e.target.value),
+                        })
+                      }
                       className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
                     >
                       {TOEIC_PARTS.map((p) => (
@@ -945,12 +1297,19 @@ export default function AdminExamsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Thứ tự nhóm</label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Thứ tự nhóm
+                    </label>
                     <input
                       type="number"
                       min={1}
                       value={groupForm.groupOrder}
-                      onChange={(e) => setGroupForm({ ...groupForm, groupOrder: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setGroupForm({
+                          ...groupForm,
+                          groupOrder: Number(e.target.value),
+                        })
+                      }
                       className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
                     />
                   </div>
@@ -958,30 +1317,26 @@ export default function AdminExamsPage() {
 
                 {groupForm.part <= 4 && (
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Đường dẫn Audio (Part 1–4) *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="https://... hoặc URL audio R2"
+                    <AudioUploadField
+                      label={`Tệp âm thanh nghe (Part ${groupForm.part}) *`}
                       value={groupForm.audioUrl}
-                      onChange={(e) => setGroupForm({ ...groupForm, audioUrl: e.target.value })}
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400 text-xs font-mono"
+                      onChange={(url) =>
+                        setGroupForm({ ...groupForm, audioUrl: url })
+                      }
+                      helperText="Tải file âm thanh đoạn hội thoại/bài nghe lên R2, hoặc dán URL bên ngoài."
                     />
                   </div>
                 )}
 
                 {groupForm.part === 1 && (
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Đường dẫn Hình ảnh (Part 1) *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="https://... URL hình ảnh R2"
+                    <ImageUploadField
+                      label="Hình ảnh bài thi (Part 1 Photo) *"
                       value={groupForm.imageUrl}
-                      onChange={(e) => setGroupForm({ ...groupForm, imageUrl: e.target.value })}
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400 text-xs font-mono"
+                      onChange={(url) =>
+                        setGroupForm({ ...groupForm, imageUrl: url })
+                      }
+                      helperText="Tải ảnh mô tả cho Part 1. Hệ thống lưu trực tiếp lên Cloudflare R2."
                     />
                   </div>
                 )}
@@ -995,7 +1350,12 @@ export default function AdminExamsPage() {
                       rows={6}
                       placeholder="Dán nội dung đoạn văn, email, bài báo..."
                       value={groupForm.passageText}
-                      onChange={(e) => setGroupForm({ ...groupForm, passageText: e.target.value })}
+                      onChange={(e) =>
+                        setGroupForm({
+                          ...groupForm,
+                          passageText: e.target.value,
+                        })
+                      }
                       className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400 text-xs font-serif leading-relaxed"
                     />
                   </div>
@@ -1014,7 +1374,11 @@ export default function AdminExamsPage() {
                     disabled={saveGroupMutation.isPending}
                     className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
                   >
-                    {saveGroupMutation.isPending ? "Đang lưu..." : editingGroup ? "Cập nhật" : "Thêm mới"}
+                    {saveGroupMutation.isPending
+                      ? "Đang lưu..."
+                      : editingGroup
+                        ? "Cập nhật"
+                        : "Thêm mới"}
                   </button>
                 </div>
               </form>
@@ -1028,7 +1392,9 @@ export default function AdminExamsPage() {
             <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <h3 className="font-bold text-slate-900">
-                  {editingQuestion ? `Chỉnh sửa câu hỏi #${editingQuestion.questionNumber}` : "Thêm câu hỏi mới"}
+                  {editingQuestion
+                    ? `Chỉnh sửa câu hỏi #${editingQuestion.questionNumber}`
+                    : "Thêm câu hỏi mới"}
                 </h3>
                 <button
                   onClick={() => setIsQuestionModalOpen(false)}
@@ -1051,48 +1417,74 @@ export default function AdminExamsPage() {
               >
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Số thứ tự câu *</label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Số thứ tự câu *
+                    </label>
                     <input
                       type="number"
                       min={1}
                       max={200}
                       value={questionForm.questionNumber}
-                      onChange={(e) => setQuestionForm({ ...questionForm, questionNumber: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setQuestionForm({
+                          ...questionForm,
+                          questionNumber: Number(e.target.value),
+                        })
+                      }
                       className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
                     />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Câu hỏi (prompt)</label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Câu hỏi (prompt)
+                    </label>
                     <input
                       type="text"
                       placeholder="e.g. What is the topic of the meeting?"
                       value={questionForm.text}
-                      onChange={(e) => setQuestionForm({ ...questionForm, text: e.target.value })}
+                      onChange={(e) =>
+                        setQuestionForm({
+                          ...questionForm,
+                          text: e.target.value,
+                        })
+                      }
                       className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-xs font-semibold text-slate-700">Các lựa chọn & Đáp án đúng *</label>
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Các lựa chọn & Đáp án đúng *
+                  </label>
                   {questionForm.options.map((opt, idx) => (
                     <div key={idx} className="flex items-center gap-2">
                       <input
                         type="radio"
                         name="examCorrectAnswer"
                         checked={questionForm.correctIndex === idx}
-                        onChange={() => setQuestionForm({ ...questionForm, correctIndex: idx })}
+                        onChange={() =>
+                          setQuestionForm({
+                            ...questionForm,
+                            correctIndex: idx,
+                          })
+                        }
                         className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                         title="Đánh dấu đáp án đúng"
                       />
-                      <span className="w-5 text-xs font-bold text-slate-500">({String.fromCharCode(65 + idx)})</span>
+                      <span className="w-5 text-xs font-bold text-slate-500">
+                        ({String.fromCharCode(65 + idx)})
+                      </span>
                       <input
                         type="text"
                         value={opt}
                         onChange={(e) => {
                           const newOpts = [...questionForm.options];
                           newOpts[idx] = e.target.value;
-                          setQuestionForm({ ...questionForm, options: newOpts });
+                          setQuestionForm({
+                            ...questionForm,
+                            options: newOpts,
+                          });
                         }}
                         placeholder={`Lựa chọn ${String.fromCharCode(65 + idx)}`}
                         required
@@ -1103,11 +1495,18 @@ export default function AdminExamsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Giải thích chi tiết (tùy chọn)</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Giải thích chi tiết (tùy chọn)
+                  </label>
                   <textarea
                     rows={2}
                     value={questionForm.explanation}
-                    onChange={(e) => setQuestionForm({ ...questionForm, explanation: e.target.value })}
+                    onChange={(e) =>
+                      setQuestionForm({
+                        ...questionForm,
+                        explanation: e.target.value,
+                      })
+                    }
                     placeholder="Giải thích đáp án cho học viên xem lại sau khi nộp bài..."
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400 text-xs"
                   />
@@ -1126,10 +1525,268 @@ export default function AdminExamsPage() {
                     disabled={saveQuestionMutation.isPending}
                     className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
                   >
-                    {saveQuestionMutation.isPending ? "Đang lưu..." : editingQuestion ? "Cập nhật" : "Thêm mới"}
+                    {saveQuestionMutation.isPending
+                      ? "Đang lưu..."
+                      : editingQuestion
+                        ? "Cập nhật"
+                        : "Thêm mới"}
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL: AI TOEIC PART 5 GENERATOR & REVIEW */}
+        {isAiPart5ModalOpen && aiPart5TargetGroup && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+            <div className="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-xl space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                  <h3 className="font-bold text-slate-900">
+                    Tạo câu hỏi TOEIC Part 5 nháp bằng AI
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Nhóm #{aiPart5TargetGroup.groupOrder} • Hoàn thành câu
+                    (Incomplete Sentences)
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsAiPart5ModalOpen(false)}
+                  className="rounded-lg p-1 text-slate-400 hover:text-slate-700"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Chủ đề từ vựng (tùy chọn)
+                    </label>
+                    <input
+                      type="text"
+                      value={aiPart5Topic}
+                      onChange={(e) => setAiPart5Topic(e.target.value)}
+                      placeholder="e.g. Office, Marketing, Travel, Finance"
+                      className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-slate-800 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Trọng tâm ngữ pháp (tùy chọn)
+                    </label>
+                    <input
+                      type="text"
+                      value={aiPart5GrammarFocus}
+                      onChange={(e) => setAiPart5GrammarFocus(e.target.value)}
+                      placeholder="e.g. Word forms, Prepositions, Tenses, Conjunctions"
+                      className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-slate-800 outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <div className="flex items-center gap-2">
+                    <label className="font-semibold text-slate-700">
+                      Số câu:
+                    </label>
+                    <select
+                      value={aiPart5Count}
+                      onChange={(e) => setAiPart5Count(Number(e.target.value))}
+                      disabled={isAiPart5Loading}
+                      className="rounded-lg border border-slate-200 px-3 py-1 text-slate-800 outline-none"
+                    >
+                      <option value={3}>3 câu</option>
+                      <option value={5}>5 câu (chuẩn)</option>
+                      <option value={10}>10 câu</option>
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isAiPart5Loading}
+                    onClick={handleGenerateAiPart5}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-colors"
+                  >
+                    {isAiPart5Loading ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : null}
+                    {aiPart5Candidates.length > 0
+                      ? "Tạo lại"
+                      : "Tạo câu hỏi nháp"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 text-xs">
+                {aiPart5Candidates.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center text-slate-400">
+                    Nhấn "Tạo câu hỏi nháp" để AI đề xuất các câu hỏi luyện tập
+                    format TOEIC Part 5 với chỗ trống và 4 phương án.
+                  </div>
+                ) : (
+                  aiPart5Candidates.map((candidate, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-2.5"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="font-bold text-slate-800">
+                          Câu {idx + 1}:
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAiPart5Candidates((prev) =>
+                              prev.filter((_, i) => i !== idx),
+                            );
+                          }}
+                          className="text-slate-400 hover:text-rose-600 text-[11px]"
+                        >
+                          Bỏ qua
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        value={candidate.prompt}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setAiPart5Candidates((prev) =>
+                            prev.map((c, i) =>
+                              i === idx ? { ...c, prompt: val } : c,
+                            ),
+                          );
+                        }}
+                        className="w-full rounded border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none"
+                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        {candidate.options.map((opt, optIdx) => {
+                          const letter =
+                            ["A", "B", "C", "D"][optIdx] || String(optIdx);
+                          const isCorrect = candidate.correctIndex === optIdx;
+                          return (
+                            <div
+                              key={optIdx}
+                              className={`flex items-center gap-1.5 rounded border px-2 py-1.5 bg-white ${
+                                isCorrect
+                                  ? "border-emerald-500 ring-1 ring-emerald-200"
+                                  : "border-slate-200"
+                              }`}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAiPart5Candidates((prev) =>
+                                    prev.map((c, i) =>
+                                      i === idx
+                                        ? { ...c, correctIndex: optIdx }
+                                        : c,
+                                    ),
+                                  );
+                                }}
+                                className={`h-5 w-5 rounded text-[11px] font-bold flex items-center justify-center ${
+                                  isCorrect
+                                    ? "bg-emerald-600 text-white"
+                                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                }`}
+                                title="Đặt làm đáp án đúng"
+                              >
+                                {letter}
+                              </button>
+                              <input
+                                type="text"
+                                value={opt}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setAiPart5Candidates((prev) =>
+                                    prev.map((c, i) =>
+                                      i === idx
+                                        ? {
+                                            ...c,
+                                            options: c.options.map((o, oi) =>
+                                              oi === optIdx ? val : o,
+                                            ),
+                                          }
+                                        : c,
+                                    ),
+                                  );
+                                }}
+                                className="flex-1 bg-transparent text-xs text-slate-800 outline-none"
+                              />
+                              {isCorrect ? (
+                                <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded">
+                                  Đúng
+                                </span>
+                              ) : null}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-semibold text-slate-500 mb-0.5">
+                          Giải thích:
+                        </label>
+                        <input
+                          type="text"
+                          value={candidate.explanation}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAiPart5Candidates((prev) =>
+                              prev.map((c, i) =>
+                                i === idx ? { ...c, explanation: val } : c,
+                              ),
+                            );
+                          }}
+                          className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 outline-none"
+                        />
+                      </div>
+                      <div className="flex justify-end pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTargetGroupIdForQuestion(aiPart5TargetGroup.id);
+                            setEditingQuestion(null);
+                            const nextQNum =
+                              allQuestions.length > 0
+                                ? Math.max(
+                                    ...allQuestions.map(
+                                      (q) => q.questionNumber,
+                                    ),
+                                  ) + 1
+                                : 1;
+                            setQuestionForm({
+                              questionNumber: nextQNum,
+                              text: candidate.prompt,
+                              options: [...candidate.options],
+                              correctIndex: candidate.correctIndex,
+                              explanation: candidate.explanation,
+                            });
+                            setIsAiPart5ModalOpen(false);
+                            setIsQuestionModalOpen(true);
+                            toast.success(
+                              "Đã áp dụng câu hỏi Part 5 vào form. Bạn có thể kiểm tra và bấm Thêm câu hỏi.",
+                            );
+                          }}
+                          className="rounded bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 transition-colors"
+                        >
+                          Áp dụng vào form
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="flex items-center justify-end pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsAiPart5ModalOpen(false)}
+                  className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                >
+                  Đóng
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -1142,7 +1799,8 @@ export default function AdminExamsPage() {
           confirmLabel="Xóa đề thi"
           isPending={deleteExamMutation.isPending}
           onConfirm={() => {
-            if (pendingDeleteExam) deleteExamMutation.mutate(pendingDeleteExam.id);
+            if (pendingDeleteExam)
+              deleteExamMutation.mutate(pendingDeleteExam.id);
           }}
           onCancel={() => setPendingDeleteExam(null)}
         />
@@ -1155,7 +1813,8 @@ export default function AdminExamsPage() {
           confirmLabel="Xóa nhóm"
           isPending={deleteGroupMutation.isPending}
           onConfirm={() => {
-            if (pendingDeleteGroup) deleteGroupMutation.mutate(pendingDeleteGroup.id);
+            if (pendingDeleteGroup)
+              deleteGroupMutation.mutate(pendingDeleteGroup.id);
           }}
           onCancel={() => setPendingDeleteGroup(null)}
         />
@@ -1174,7 +1833,9 @@ export default function AdminExamsPage() {
                 questionId: pendingDeleteQuestion.id,
               });
             } else if (pendingDeleteQuestion) {
-              const foundGroup = groups.find((g) => g.questions?.some((q) => q.id === pendingDeleteQuestion.id));
+              const foundGroup = groups.find((g) =>
+                g.questions?.some((q) => q.id === pendingDeleteQuestion.id),
+              );
               if (foundGroup) {
                 deleteQuestionMutation.mutate({
                   groupId: foundGroup.id,
@@ -1197,15 +1858,26 @@ export default function AdminExamsPage() {
       {/* HEADER */}
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[.18em] text-slate-500">Exam / TOEIC Studio</p>
-          <h1 className="mt-1 text-2xl font-bold text-slate-950">Quản Lý Bộ Đề Thi & Luyện Đề</h1>
+          <p className="text-xs font-bold uppercase tracking-[.18em] text-slate-500">
+            Exam / TOEIC Studio
+          </p>
+          <h1 className="mt-1 text-2xl font-bold text-slate-950">
+            Quản Lý Bộ Đề Thi & Luyện Đề
+          </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Biên tập đề thi chuẩn cấu trúc 7 phần TOEIC, quản lý audio R2, stimulus đoạn văn và xuất bản cho học viên.
+            Biên tập đề thi chuẩn cấu trúc 7 phần TOEIC, quản lý audio R2,
+            stimulus đoạn văn và xuất bản cho học viên.
           </p>
         </div>
         <button
           onClick={() => {
-            setExamForm({ title: "", description: "", type: "PRACTICE_BY_PART", difficulty: "medium", durationMinutes: 45 });
+            setExamForm({
+              title: "",
+              description: "",
+              type: "PRACTICE_BY_PART",
+              difficulty: "medium",
+              durationMinutes: 45,
+            });
             setIsExamModalOpen(true);
           }}
           className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors shadow-sm"
@@ -1215,18 +1887,38 @@ export default function AdminExamsPage() {
       </header>
 
       {/* FILTER & SEARCH */}
-      <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
-        <input
-          type="text"
-          placeholder="Tìm kiếm bộ đề thi theo tên hoặc mô tả..."
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="relative flex-1">
+          <Search
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+            size={17}
+          />
+          <input
+            type="text"
+            placeholder="Tìm kiếm bộ đề thi theo tên hoặc mô tả..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-800 outline-none focus:border-slate-400 shadow-xs"
+          />
+        </div>
+        <select
+          aria-label="Lọc trạng thái bộ đề"
+          value={statusFilter}
+          onChange={(event) => {
+            setStatusFilter(
+              event.target.value as "ALL" | "DRAFT" | "PUBLISHED",
+            );
             setCurrentPage(1);
           }}
-          className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-800 outline-none focus:border-slate-400 shadow-xs"
-        />
+          className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 sm:w-48"
+        >
+          <option value="ALL">Tất cả trạng thái</option>
+          <option value="DRAFT">Bản nháp</option>
+          <option value="PUBLISHED">Đã xuất bản</option>
+        </select>
       </div>
 
       {/* EXAMS GRID */}
@@ -1247,7 +1939,9 @@ export default function AdminExamsPage() {
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-2">
                       <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
-                        {exam.type === "FULL_TEST" ? "Full Test 200 câu" : "Luyện theo Part"}
+                        {exam.type === "FULL_TEST"
+                          ? "Full Test 200 câu"
+                          : "Luyện theo Part"}
                       </span>
                       <span
                         className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
@@ -1261,7 +1955,9 @@ export default function AdminExamsPage() {
                     </div>
 
                     <div>
-                      <h2 className="font-bold text-slate-900 leading-snug">{exam.title}</h2>
+                      <h2 className="font-bold text-slate-900 leading-snug">
+                        {exam.title}
+                      </h2>
                       <p className="mt-1 text-xs text-slate-500 line-clamp-2">
                         {exam.description || "Chưa có mô tả cho bộ đề thi này."}
                       </p>
@@ -1270,7 +1966,9 @@ export default function AdminExamsPage() {
 
                   <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-3.5 text-xs text-slate-500">
                     <div className="flex items-center gap-1 font-semibold text-slate-600">
-                      <Clock size={13} /> {Math.round((exam.durationSeconds || 7200) / 60)} phút · {exam.totalQuestions || 0} câu
+                      <Clock size={13} />{" "}
+                      {Math.round((exam.durationSeconds || 7200) / 60)} phút ·{" "}
+                      {exam.totalQuestions || 0} câu
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -1280,7 +1978,12 @@ export default function AdminExamsPage() {
                         Quản lý đề
                       </button>
                       <button
-                        onClick={() => setPendingDeleteExam({ id: exam.id, title: exam.title })}
+                        onClick={() =>
+                          setPendingDeleteExam({
+                            id: exam.id,
+                            title: exam.title,
+                          })
+                        }
                         className="p-1.5 text-slate-400 hover:text-rose-600 transition-colors"
                         title="Xóa đề thi"
                       >
@@ -1331,11 +2034,15 @@ export default function AdminExamsPage() {
               className="space-y-3.5 text-sm"
             >
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Tên bộ đề thi *</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Tên bộ đề thi *
+                </label>
                 <input
                   type="text"
                   value={examForm.title}
-                  onChange={(e) => setExamForm({ ...examForm, title: e.target.value })}
+                  onChange={(e) =>
+                    setExamForm({ ...examForm, title: e.target.value })
+                  }
                   placeholder="e.g. ETS TOEIC Practice Test 01"
                   required
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
@@ -1344,22 +2051,35 @@ export default function AdminExamsPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Định dạng thi</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Định dạng thi
+                  </label>
                   <select
                     value={examForm.type}
-                    onChange={(e) => setExamForm({ ...examForm, type: e.target.value as any })}
+                    onChange={(e) =>
+                      setExamForm({ ...examForm, type: e.target.value as any })
+                    }
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
                   >
-                    <option value="PRACTICE_BY_PART">Luyện tập theo Part</option>
+                    <option value="PRACTICE_BY_PART">
+                      Luyện tập theo Part
+                    </option>
                     <option value="FULL_TEST">Full Test 200 câu</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Độ khó</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Độ khó
+                  </label>
                   <select
                     value={examForm.difficulty}
-                    onChange={(e) => setExamForm({ ...examForm, difficulty: e.target.value as any })}
+                    onChange={(e) =>
+                      setExamForm({
+                        ...examForm,
+                        difficulty: e.target.value as any,
+                      })
+                    }
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
                   >
                     <option value="easy">Dễ (Easy)</option>
@@ -1370,23 +2090,34 @@ export default function AdminExamsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Thời lượng làm bài (phút)</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Thời lượng làm bài (phút)
+                </label>
                 <input
                   type="number"
                   min={5}
                   max={240}
                   value={examForm.durationMinutes}
-                  onChange={(e) => setExamForm({ ...examForm, durationMinutes: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setExamForm({
+                      ...examForm,
+                      durationMinutes: Number(e.target.value),
+                    })
+                  }
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Mô tả (tùy chọn)</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Mô tả (tùy chọn)
+                </label>
                 <textarea
                   rows={2}
                   value={examForm.description}
-                  onChange={(e) => setExamForm({ ...examForm, description: e.target.value })}
+                  onChange={(e) =>
+                    setExamForm({ ...examForm, description: e.target.value })
+                  }
                   placeholder="Mô tả nguồn gốc hoặc phạm vi bài thi..."
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400 text-xs"
                 />
@@ -1405,7 +2136,9 @@ export default function AdminExamsPage() {
                   disabled={createExamMutation.isPending}
                   className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
                 >
-                  {createExamMutation.isPending ? "Đang tạo..." : "Tạo bản nháp"}
+                  {createExamMutation.isPending
+                    ? "Đang tạo..."
+                    : "Tạo bản nháp"}
                 </button>
               </div>
             </form>
@@ -1421,7 +2154,8 @@ export default function AdminExamsPage() {
         confirmLabel="Xóa đề thi"
         isPending={deleteExamMutation.isPending}
         onConfirm={() => {
-          if (pendingDeleteExam) deleteExamMutation.mutate(pendingDeleteExam.id);
+          if (pendingDeleteExam)
+            deleteExamMutation.mutate(pendingDeleteExam.id);
         }}
         onCancel={() => setPendingDeleteExam(null)}
       />

@@ -54,17 +54,28 @@ interface TopicDetail {
 export default function AdminVocabPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
+    "ALL" | "DRAFT" | "PUBLISHED"
+  >("ALL");
   const [selectedTopicId, setSelectedTopicId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(9);
-  const [activeTab, setActiveTab] = useState<"info" | "words" | "preview">("words");
+  const [activeTab, setActiveTab] = useState<"info" | "words" | "preview">(
+    "words",
+  );
 
   // Modals & Confirm states
   const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
   const [isWordModalOpen, setIsWordModalOpen] = useState(false);
   const [editingWord, setEditingWord] = useState<WordItem | null>(null);
-  const [pendingDeleteTopic, setPendingDeleteTopic] = useState<{ id: number; title: string } | null>(null);
-  const [pendingDeleteWord, setPendingDeleteWord] = useState<{ id: number; word: string } | null>(null);
+  const [pendingDeleteTopic, setPendingDeleteTopic] = useState<{
+    id: number;
+    title: string;
+  } | null>(null);
+  const [pendingDeleteWord, setPendingDeleteWord] = useState<{
+    id: number;
+    word: string;
+  } | null>(null);
 
   // Form states: Topic
   const [topicForm, setTopicForm] = useState({
@@ -88,6 +99,43 @@ export default function AdminVocabPage() {
     exampleVi: "",
   });
 
+  // Contextual AI state: Vocab
+  const [isAiSuggesting, setIsAiSuggesting] = useState(false);
+  const [vocabSuggestion, setVocabSuggestion] = useState<{
+    word: string;
+    pos: string;
+    meaning: string;
+    ipaUs?: string;
+    ipaUk?: string;
+    exampleEn?: string;
+    exampleVi?: string;
+    collocations?: Array<{ phrase: string; meaningVi: string }>;
+  } | null>(null);
+
+  const handleAiSuggestWord = async () => {
+    if (!wordForm.word.trim()) {
+      toast.error("Vui lòng nhập từ vựng trước khi yêu cầu AI gợi ý");
+      return;
+    }
+    setIsAiSuggesting(true);
+    try {
+      const res: any = await axiosClient.post("/admin/vocab/ai/suggest-word", {
+        word: wordForm.word.trim(),
+        level: topicDetail?.level || undefined,
+      });
+      const data = res?.data || res;
+      setVocabSuggestion(data);
+      toast.success("Đã nhận bản nháp gợi ý từ AI");
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message ||
+          "Không thể lấy gợi ý AI lúc này. Vui lòng thử lại sau.",
+      );
+    } finally {
+      setIsAiSuggesting(false);
+    }
+  };
+
   // Preview state
   const [previewCardIndex, setPreviewCardIndex] = useState(0);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
@@ -102,113 +150,172 @@ export default function AdminVocabPage() {
   });
 
   // 2. Query single topic detail
-  const { data: topicDetail, isLoading: isDetailLoading } = useQuery<TopicDetail>({
-    queryKey: ["admin-vocab-topic-detail", selectedTopicId],
-    queryFn: async () => {
-      if (!selectedTopicId) return null;
-      const res: any = await axiosClient.get(`/admin/vocab/topics/${selectedTopicId}`);
-      return res?.data || res;
-    },
-    enabled: !!selectedTopicId,
-  });
+  const { data: topicDetail, isLoading: isDetailLoading } =
+    useQuery<TopicDetail>({
+      queryKey: ["admin-vocab-topic-detail", selectedTopicId],
+      queryFn: async () => {
+        if (!selectedTopicId) return null;
+        const res: any = await axiosClient.get(
+          `/admin/vocab/topics/${selectedTopicId}`,
+        );
+        return res?.data || res;
+      },
+      enabled: !!selectedTopicId,
+    });
 
   // Mutations
   const createTopicMutation = useMutation({
-    mutationFn: async (dto: any) => axiosClient.post("/admin/vocab/topics", dto),
+    mutationFn: async (dto: any) =>
+      axiosClient.post("/admin/vocab/topics", dto),
     onSuccess: (data: any) => {
       toast.success("Tạo bộ từ vựng mới thành công!");
       setIsTopicModalOpen(false);
-      setTopicForm({ title: "", description: "", categoryName: "600 TỪ VỰNG TOEIC", level: "INTERMEDIATE", isPro: false });
+      setTopicForm({
+        title: "",
+        description: "",
+        categoryName: "600 TỪ VỰNG TOEIC",
+        level: "INTERMEDIATE",
+        isPro: false,
+      });
       queryClient.invalidateQueries({ queryKey: ["admin-vocab-topics"] });
       if (data?.id) setSelectedTopicId(data.id);
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể tạo bộ từ vựng"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể tạo bộ từ vựng"),
   });
 
   const updateTopicMutation = useMutation({
-    mutationFn: async ({ id, dto }: { id: number; dto: any }) => axiosClient.patch(`/admin/vocab/topics/${id}`, dto),
+    mutationFn: async ({ id, dto }: { id: number; dto: any }) =>
+      axiosClient.patch(`/admin/vocab/topics/${id}`, dto),
     onSuccess: () => {
       toast.success("Cập nhật thông tin chủ đề thành công!");
       queryClient.invalidateQueries({ queryKey: ["admin-vocab-topics"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-vocab-topic-detail", selectedTopicId] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-vocab-topic-detail", selectedTopicId],
+      });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể cập nhật chủ đề"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể cập nhật chủ đề"),
   });
 
   const publishTopicMutation = useMutation({
-    mutationFn: async (id: number) => axiosClient.post(`/admin/vocab/topics/${id}/publish`),
+    mutationFn: async (id: number) =>
+      axiosClient.post(`/admin/vocab/topics/${id}/publish`),
     onSuccess: () => {
       toast.success("Đã xuất bản bộ từ vựng!");
       queryClient.invalidateQueries({ queryKey: ["admin-vocab-topics"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-vocab-topic-detail", selectedTopicId] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-vocab-topic-detail", selectedTopicId],
+      });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể xuất bản"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể xuất bản"),
   });
 
   const unpublishTopicMutation = useMutation({
-    mutationFn: async (id: number) => axiosClient.post(`/admin/vocab/topics/${id}/unpublish`),
+    mutationFn: async (id: number) =>
+      axiosClient.post(`/admin/vocab/topics/${id}/unpublish`),
     onSuccess: () => {
       toast.success("Đã gỡ xuất bản về bản nháp!");
       queryClient.invalidateQueries({ queryKey: ["admin-vocab-topics"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-vocab-topic-detail", selectedTopicId] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-vocab-topic-detail", selectedTopicId],
+      });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể gỡ xuất bản"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể gỡ xuất bản"),
   });
 
   const deleteTopicMutation = useMutation({
-    mutationFn: async (id: number) => axiosClient.delete(`/admin/vocab/topics/${id}`),
+    mutationFn: async (id: number) =>
+      axiosClient.delete(`/admin/vocab/topics/${id}`),
     onSuccess: () => {
       toast.success("Đã xóa bộ từ vựng!");
       setPendingDeleteTopic(null);
       if (selectedTopicId === pendingDeleteTopic?.id) setSelectedTopicId(null);
       queryClient.invalidateQueries({ queryKey: ["admin-vocab-topics"] });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể xóa bộ từ vựng"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể xóa bộ từ vựng"),
   });
 
   const saveWordMutation = useMutation({
     mutationFn: async (dto: any) => {
       if (!selectedTopicId) return;
       if (editingWord) {
-        return axiosClient.patch(`/admin/vocab/topics/${selectedTopicId}/words/${editingWord.id}`, dto);
+        return axiosClient.patch(
+          `/admin/vocab/topics/${selectedTopicId}/words/${editingWord.id}`,
+          dto,
+        );
       }
-      return axiosClient.post(`/admin/vocab/topics/${selectedTopicId}/words`, dto);
+      return axiosClient.post(
+        `/admin/vocab/topics/${selectedTopicId}/words`,
+        dto,
+      );
     },
     onSuccess: () => {
-      toast.success(editingWord ? "Cập nhật từ vựng thành công!" : "Thêm từ vựng thành công!");
+      toast.success(
+        editingWord
+          ? "Cập nhật từ vựng thành công!"
+          : "Thêm từ vựng thành công!",
+      );
       setIsWordModalOpen(false);
       setEditingWord(null);
-      setWordForm({ word: "", pos: "noun", meaning: "", ipaUs: "", ipaUk: "", audioUs: "", audioUk: "", exampleEn: "", exampleVi: "" });
-      queryClient.invalidateQueries({ queryKey: ["admin-vocab-topic-detail", selectedTopicId] });
+      setWordForm({
+        word: "",
+        pos: "noun",
+        meaning: "",
+        ipaUs: "",
+        ipaUk: "",
+        audioUs: "",
+        audioUk: "",
+        exampleEn: "",
+        exampleVi: "",
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-vocab-topic-detail", selectedTopicId],
+      });
       queryClient.invalidateQueries({ queryKey: ["admin-vocab-topics"] });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể lưu từ vựng"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể lưu từ vựng"),
   });
 
   const deleteWordMutation = useMutation({
     mutationFn: async (wordId: number) => {
       if (!selectedTopicId) return;
-      return axiosClient.delete(`/admin/vocab/topics/${selectedTopicId}/words/${wordId}`);
+      return axiosClient.delete(
+        `/admin/vocab/topics/${selectedTopicId}/words/${wordId}`,
+      );
     },
     onSuccess: () => {
       toast.success("Đã xóa từ vựng!");
       setPendingDeleteWord(null);
-      queryClient.invalidateQueries({ queryKey: ["admin-vocab-topic-detail", selectedTopicId] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-vocab-topic-detail", selectedTopicId],
+      });
       queryClient.invalidateQueries({ queryKey: ["admin-vocab-topics"] });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể xóa từ vựng"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể xóa từ vựng"),
   });
 
   const reorderWordsMutation = useMutation({
     mutationFn: async (wordIds: number[]) => {
       if (!selectedTopicId) return;
-      return axiosClient.post(`/admin/vocab/topics/${selectedTopicId}/reorder-words`, { wordIds });
+      return axiosClient.post(
+        `/admin/vocab/topics/${selectedTopicId}/reorder-words`,
+        { wordIds },
+      );
     },
     onSuccess: () => {
       toast.success("Đã lưu thứ tự từ vựng!");
-      queryClient.invalidateQueries({ queryKey: ["admin-vocab-topic-detail", selectedTopicId] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-vocab-topic-detail", selectedTopicId],
+      });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể sắp xếp từ vựng"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể sắp xếp từ vựng"),
   });
 
   // Reorder helper
@@ -239,12 +346,17 @@ export default function AdminVocabPage() {
     setIsWordModalOpen(true);
   };
 
-  const filteredTopics = topics?.filter((t) =>
-    t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.categoryName?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredTopics = topics?.filter(
+    (t) =>
+      (t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.categoryName?.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (statusFilter === "ALL" || t.publicationStatus === statusFilter),
   );
   const totalPages = Math.ceil((filteredTopics?.length || 0) / pageSize);
-  const paginatedTopics = filteredTopics?.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const paginatedTopics = filteredTopics?.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   // -------------------------------------------------------------
   // RENDER: Topic Workspace / Editor when a topic is selected
@@ -268,10 +380,14 @@ export default function AdminVocabPage() {
             </button>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-slate-900">{topicDetail.title}</h1>
+                <h1 className="text-2xl font-bold text-slate-900">
+                  {topicDetail.title}
+                </h1>
                 <span
                   className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                    isPublished ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-amber-50 text-amber-700 border border-amber-200"
+                    isPublished
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : "bg-amber-50 text-amber-700 border border-amber-200"
                   }`}
                 >
                   {isPublished ? "Đã xuất bản" : "Bản nháp"}
@@ -290,7 +406,7 @@ export default function AdminVocabPage() {
                 disabled={unpublishTopicMutation.isPending}
                 className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
               >
-                Gỡ xuất bản (Draft)
+                Chuyển về bản nháp
               </button>
             ) : (
               <button
@@ -309,7 +425,9 @@ export default function AdminVocabPage() {
           <button
             onClick={() => setActiveTab("words")}
             className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
-              activeTab === "words" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
+              activeTab === "words"
+                ? "bg-slate-900 text-white"
+                : "text-slate-600 hover:bg-slate-100"
             }`}
           >
             Từ vựng ({words.length})
@@ -317,7 +435,9 @@ export default function AdminVocabPage() {
           <button
             onClick={() => setActiveTab("preview")}
             className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
-              activeTab === "preview" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
+              activeTab === "preview"
+                ? "bg-slate-900 text-white"
+                : "text-slate-600 hover:bg-slate-100"
             }`}
           >
             Xem trước Flashcard
@@ -325,7 +445,9 @@ export default function AdminVocabPage() {
           <button
             onClick={() => setActiveTab("info")}
             className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
-              activeTab === "info" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
+              activeTab === "info"
+                ? "bg-slate-900 text-white"
+                : "text-slate-600 hover:bg-slate-100"
             }`}
           >
             Thông tin chủ đề
@@ -337,12 +459,23 @@ export default function AdminVocabPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-xs text-slate-500 font-medium">
-                Thứ tự từ vựng sẽ quyết định trình tự học thẻ flashcard của học viên.
+                Thứ tự từ vựng sẽ quyết định trình tự học thẻ flashcard của học
+                viên.
               </p>
               <button
                 onClick={() => {
                   setEditingWord(null);
-                  setWordForm({ word: "", pos: "noun", meaning: "", ipaUs: "", ipaUk: "", audioUs: "", audioUk: "", exampleEn: "", exampleVi: "" });
+                  setWordForm({
+                    word: "",
+                    pos: "noun",
+                    meaning: "",
+                    ipaUs: "",
+                    ipaUk: "",
+                    audioUs: "",
+                    audioUk: "",
+                    exampleEn: "",
+                    exampleVi: "",
+                  });
                   setIsWordModalOpen(true);
                 }}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors"
@@ -353,7 +486,8 @@ export default function AdminVocabPage() {
 
             {words.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-500">
-                Chủ đề này chưa có từ vựng nào. Hãy thêm ít nhất 1 từ trước khi xuất bản.
+                Chủ đề này chưa có từ vựng nào. Hãy thêm ít nhất 1 từ trước khi
+                xuất bản.
               </div>
             ) : (
               <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -369,13 +503,18 @@ export default function AdminVocabPage() {
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-slate-700">
                     {words.map((item, idx) => (
-                      <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                      <tr
+                        key={item.id}
+                        className="hover:bg-slate-50/80 transition-colors"
+                      >
                         <td className="py-3 px-4 text-center font-bold text-slate-400">
                           {idx + 1}
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-slate-900 text-base">{item.word}</span>
+                            <span className="font-bold text-slate-900 text-base">
+                              {item.word}
+                            </span>
                             {item.pos && (
                               <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-600">
                                 {item.pos}
@@ -390,19 +529,27 @@ export default function AdminVocabPage() {
                                 /{item.ipaUs || item.ipaUk}/
                               </span>
                             )}
-                            <p className="font-semibold text-slate-800">{item.meaning}</p>
+                            <p className="font-semibold text-slate-800">
+                              {item.meaning}
+                            </p>
                           </div>
                         </td>
                         <td className="py-3 px-4 max-w-xs truncate">
                           {item.exampleEn ? (
                             <div>
-                              <p className="text-xs text-slate-600 italic">“{item.exampleEn}”</p>
+                              <p className="text-xs text-slate-600 italic">
+                                “{item.exampleEn}”
+                              </p>
                               {item.exampleVi && (
-                                <p className="text-[11px] text-slate-400">↳ {item.exampleVi}</p>
+                                <p className="text-[11px] text-slate-400">
+                                  ↳ {item.exampleVi}
+                                </p>
                               )}
                             </div>
                           ) : (
-                            <span className="text-xs text-slate-300">Chưa có ví dụ</span>
+                            <span className="text-xs text-slate-300">
+                              Chưa có ví dụ
+                            </span>
                           )}
                         </td>
                         <td className="py-3 px-4 text-right">
@@ -431,7 +578,12 @@ export default function AdminVocabPage() {
                               <Edit2 size={15} />
                             </button>
                             <button
-                              onClick={() => setPendingDeleteWord({ id: item.id, word: item.word })}
+                              onClick={() =>
+                                setPendingDeleteWord({
+                                  id: item.id,
+                                  word: item.word,
+                                })
+                              }
                               className="p-1 text-slate-400 hover:text-rose-600"
                               title="Xóa từ"
                             >
@@ -458,7 +610,9 @@ export default function AdminVocabPage() {
             ) : currentPreviewWord ? (
               <div className="space-y-4">
                 <div className="flex items-center justify-between text-xs text-slate-500 font-semibold">
-                  <span>Thẻ {previewCardIndex + 1} / {words.length}</span>
+                  <span>
+                    Thẻ {previewCardIndex + 1} / {words.length}
+                  </span>
                   <span>Chế độ: Học viên Flashcard</span>
                 </div>
 
@@ -477,7 +631,9 @@ export default function AdminVocabPage() {
                         {currentPreviewWord.word}
                       </h2>
                       {currentPreviewWord.ipaUs && (
-                        <p className="font-mono text-sm text-slate-500">/{currentPreviewWord.ipaUs}/</p>
+                        <p className="font-mono text-sm text-slate-500">
+                          /{currentPreviewWord.ipaUs}/
+                        </p>
                       )}
                       <p className="text-xs text-slate-400 pt-4 flex items-center justify-center gap-1">
                         <RotateCcw size={13} /> Nhấn để lật thẻ xem định nghĩa
@@ -487,14 +643,22 @@ export default function AdminVocabPage() {
                     // BACK OF CARD
                     <div className="my-auto text-center space-y-4">
                       <div className="space-y-1">
-                        <span className="text-xs font-bold uppercase tracking-wider text-emerald-600">Định nghĩa</span>
-                        <h3 className="text-2xl font-bold text-slate-900">{currentPreviewWord.meaning}</h3>
+                        <span className="text-xs font-bold uppercase tracking-wider text-emerald-600">
+                          Định nghĩa
+                        </span>
+                        <h3 className="text-2xl font-bold text-slate-900">
+                          {currentPreviewWord.meaning}
+                        </h3>
                       </div>
                       {currentPreviewWord.exampleEn && (
                         <div className="rounded-xl bg-slate-50 p-4 text-left border border-slate-100">
-                          <p className="text-sm text-slate-700 italic">“{currentPreviewWord.exampleEn}”</p>
+                          <p className="text-sm text-slate-700 italic">
+                            “{currentPreviewWord.exampleEn}”
+                          </p>
                           {currentPreviewWord.exampleVi && (
-                            <p className="text-xs text-slate-500 mt-1">↳ {currentPreviewWord.exampleVi}</p>
+                            <p className="text-xs text-slate-500 mt-1">
+                              ↳ {currentPreviewWord.exampleVi}
+                            </p>
                           )}
                         </div>
                       )}
@@ -520,7 +684,9 @@ export default function AdminVocabPage() {
                   <button
                     onClick={() => {
                       setIsCardFlipped(false);
-                      setPreviewCardIndex((prev) => Math.min(words.length - 1, prev + 1));
+                      setPreviewCardIndex((prev) =>
+                        Math.min(words.length - 1, prev + 1),
+                      );
                     }}
                     disabled={previewCardIndex === words.length - 1}
                     className="flex-1 rounded-lg bg-slate-900 py-2.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-40"
@@ -552,45 +718,60 @@ export default function AdminVocabPage() {
             className="max-w-xl space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
           >
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Tên chủ đề từ vựng</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Tên chủ đề từ vựng
+              </label>
               <input
                 type="text"
                 value={topicDetail.title}
                 onChange={(e) => {
-                  queryClient.setQueryData(["admin-vocab-topic-detail", selectedTopicId], {
-                    ...topicDetail,
-                    title: e.target.value,
-                  });
+                  queryClient.setQueryData(
+                    ["admin-vocab-topic-detail", selectedTopicId],
+                    {
+                      ...topicDetail,
+                      title: e.target.value,
+                    },
+                  );
                 }}
                 className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Chuyên mục lớn</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Chuyên mục lớn
+              </label>
               <input
                 type="text"
                 value={topicDetail.categoryName}
                 onChange={(e) => {
-                  queryClient.setQueryData(["admin-vocab-topic-detail", selectedTopicId], {
-                    ...topicDetail,
-                    categoryName: e.target.value,
-                  });
+                  queryClient.setQueryData(
+                    ["admin-vocab-topic-detail", selectedTopicId],
+                    {
+                      ...topicDetail,
+                      categoryName: e.target.value,
+                    },
+                  );
                 }}
                 className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Mô tả (tùy chọn)</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Mô tả (tùy chọn)
+              </label>
               <textarea
                 rows={3}
                 value={topicDetail.description || ""}
                 onChange={(e) => {
-                  queryClient.setQueryData(["admin-vocab-topic-detail", selectedTopicId], {
-                    ...topicDetail,
-                    description: e.target.value,
-                  });
+                  queryClient.setQueryData(
+                    ["admin-vocab-topic-detail", selectedTopicId],
+                    {
+                      ...topicDetail,
+                      description: e.target.value,
+                    },
+                  );
                 }}
                 className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400"
               />
@@ -632,21 +813,43 @@ export default function AdminVocabPage() {
               >
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Từ vựng *</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-semibold text-slate-700">
+                        Từ vựng *
+                      </label>
+                      <button
+                        type="button"
+                        disabled={isAiSuggesting || !wordForm.word.trim()}
+                        onClick={handleAiSuggestWord}
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-700 hover:text-slate-900 disabled:opacity-40 transition-colors"
+                        title="AI gợi ý nghĩa, loại từ và ví dụ theo từ này"
+                      >
+                        {isAiSuggesting ? (
+                          <Loader2 size={11} className="animate-spin" />
+                        ) : null}
+                        Gợi ý nội dung
+                      </button>
+                    </div>
                     <input
                       type="text"
                       value={wordForm.word}
-                      onChange={(e) => setWordForm({ ...wordForm, word: e.target.value })}
+                      onChange={(e) =>
+                        setWordForm({ ...wordForm, word: e.target.value })
+                      }
                       placeholder="e.g. Innovation"
                       required
                       className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Loại từ</label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Loại từ
+                    </label>
                     <select
                       value={wordForm.pos}
-                      onChange={(e) => setWordForm({ ...wordForm, pos: e.target.value })}
+                      onChange={(e) =>
+                        setWordForm({ ...wordForm, pos: e.target.value })
+                      }
                       className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
                     >
                       <option value="noun">Danh từ (noun)</option>
@@ -658,12 +861,95 @@ export default function AdminVocabPage() {
                   </div>
                 </div>
 
+                {/* AI SUGGESTION REVIEW DRAWER/CARD */}
+                {vocabSuggestion && (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs space-y-2">
+                    <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                      <span className="font-bold text-slate-800">
+                        Bản nháp gợi ý từ AI
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-medium">
+                        Chưa lưu vào cơ sở dữ liệu
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-slate-700">
+                      <div>
+                        <span className="font-semibold text-slate-500">
+                          Loại từ:
+                        </span>{" "}
+                        {vocabSuggestion.pos}
+                      </div>
+                      <div>
+                        <span className="font-semibold text-slate-500">
+                          Phiên âm:
+                        </span>{" "}
+                        {vocabSuggestion.ipaUs || vocabSuggestion.ipaUk || "—"}
+                      </div>
+                    </div>
+                    <div className="text-slate-700">
+                      <span className="font-semibold text-slate-500">
+                        Nghĩa:
+                      </span>{" "}
+                      {vocabSuggestion.meaning}
+                    </div>
+                    {vocabSuggestion.exampleEn && (
+                      <div className="text-slate-700">
+                        <span className="font-semibold text-slate-500">
+                          Ví dụ:
+                        </span>{" "}
+                        {vocabSuggestion.exampleEn}
+                      </div>
+                    )}
+                    {vocabSuggestion.exampleVi && (
+                      <div className="text-slate-600 italic">
+                        {vocabSuggestion.exampleVi}
+                      </div>
+                    )}
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200">
+                      <button
+                        type="button"
+                        onClick={() => setVocabSuggestion(null)}
+                        className="rounded px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200 transition-colors"
+                      >
+                        Hủy
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setWordForm((prev) => ({
+                            ...prev,
+                            pos: vocabSuggestion.pos || prev.pos,
+                            meaning: vocabSuggestion.meaning || prev.meaning,
+                            ipaUs: vocabSuggestion.ipaUs || prev.ipaUs,
+                            ipaUk: vocabSuggestion.ipaUk || prev.ipaUk,
+                            exampleEn:
+                              vocabSuggestion.exampleEn || prev.exampleEn,
+                            exampleVi:
+                              vocabSuggestion.exampleVi || prev.exampleVi,
+                          }));
+                          setVocabSuggestion(null);
+                          toast.success(
+                            "Đã áp dụng gợi ý vào form. Bạn có thể chỉnh sửa trước khi lưu.",
+                          );
+                        }}
+                        className="rounded bg-slate-900 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-800 transition-colors"
+                      >
+                        Áp dụng vào form
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Nghĩa tiếng Việt *</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Nghĩa tiếng Việt *
+                  </label>
                   <input
                     type="text"
                     value={wordForm.meaning}
-                    onChange={(e) => setWordForm({ ...wordForm, meaning: e.target.value })}
+                    onChange={(e) =>
+                      setWordForm({ ...wordForm, meaning: e.target.value })
+                    }
                     placeholder="e.g. Sự đổi mới, cải tiến"
                     required
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
@@ -672,21 +958,29 @@ export default function AdminVocabPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Phiên âm US</label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Phiên âm US
+                    </label>
                     <input
                       type="text"
                       value={wordForm.ipaUs}
-                      onChange={(e) => setWordForm({ ...wordForm, ipaUs: e.target.value })}
+                      onChange={(e) =>
+                        setWordForm({ ...wordForm, ipaUs: e.target.value })
+                      }
                       placeholder="e.g. ˌɪn.əˈveɪ.ʃən"
                       className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400 font-mono text-xs"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Phiên âm UK</label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Phiên âm UK
+                    </label>
                     <input
                       type="text"
                       value={wordForm.ipaUk}
-                      onChange={(e) => setWordForm({ ...wordForm, ipaUk: e.target.value })}
+                      onChange={(e) =>
+                        setWordForm({ ...wordForm, ipaUk: e.target.value })
+                      }
                       placeholder="e.g. ˌɪn.əˈveɪ.ʃən"
                       className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400 font-mono text-xs"
                     />
@@ -694,22 +988,30 @@ export default function AdminVocabPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Câu ví dụ tiếng Anh</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Câu ví dụ tiếng Anh
+                  </label>
                   <textarea
                     rows={2}
                     value={wordForm.exampleEn}
-                    onChange={(e) => setWordForm({ ...wordForm, exampleEn: e.target.value })}
+                    onChange={(e) =>
+                      setWordForm({ ...wordForm, exampleEn: e.target.value })
+                    }
                     placeholder="e.g. Technological innovation is key to staying competitive."
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400 text-xs"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Dịch nghĩa câu ví dụ</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Dịch nghĩa câu ví dụ
+                  </label>
                   <textarea
                     rows={2}
                     value={wordForm.exampleVi}
-                    onChange={(e) => setWordForm({ ...wordForm, exampleVi: e.target.value })}
+                    onChange={(e) =>
+                      setWordForm({ ...wordForm, exampleVi: e.target.value })
+                    }
                     placeholder="e.g. Đổi mới công nghệ là chìa khóa để duy trì năng lực cạnh tranh."
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400 text-xs"
                   />
@@ -728,7 +1030,11 @@ export default function AdminVocabPage() {
                     disabled={saveWordMutation.isPending}
                     className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
                   >
-                    {saveWordMutation.isPending ? "Đang lưu..." : editingWord ? "Cập nhật" : "Thêm mới"}
+                    {saveWordMutation.isPending
+                      ? "Đang lưu..."
+                      : editingWord
+                        ? "Cập nhật"
+                        : "Thêm mới"}
                   </button>
                 </div>
               </form>
@@ -744,7 +1050,8 @@ export default function AdminVocabPage() {
           confirmLabel="Xóa từ"
           isPending={deleteWordMutation.isPending}
           onConfirm={() => {
-            if (pendingDeleteWord) deleteWordMutation.mutate(pendingDeleteWord.id);
+            if (pendingDeleteWord)
+              deleteWordMutation.mutate(pendingDeleteWord.id);
           }}
           onCancel={() => setPendingDeleteWord(null)}
         />
@@ -760,15 +1067,26 @@ export default function AdminVocabPage() {
       {/* HEADER */}
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[.18em] text-slate-500">Vocabulary Studio</p>
-          <h1 className="mt-1 text-2xl font-bold text-slate-950">Quản Lý Bộ Từ Vựng & Flashcard</h1>
+          <p className="text-xs font-bold uppercase tracking-[.18em] text-slate-500">
+            Vocabulary Studio
+          </p>
+          <h1 className="mt-1 text-2xl font-bold text-slate-950">
+            Quản Lý Bộ Từ Vựng & Flashcard
+          </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Biên tập bộ chủ đề từ vựng, quản lý thẻ ghi nhớ và xuất bản cho học viên theo dõi tiến độ SRS.
+            Biên tập bộ chủ đề từ vựng, quản lý thẻ ghi nhớ và xuất bản cho học
+            viên theo dõi tiến độ SRS.
           </p>
         </div>
         <button
           onClick={() => {
-            setTopicForm({ title: "", description: "", categoryName: "600 TỪ VỰNG TOEIC", level: "INTERMEDIATE", isPro: false });
+            setTopicForm({
+              title: "",
+              description: "",
+              categoryName: "600 TỪ VỰNG TOEIC",
+              level: "INTERMEDIATE",
+              isPro: false,
+            });
             setIsTopicModalOpen(true);
           }}
           className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors shadow-sm"
@@ -778,18 +1096,38 @@ export default function AdminVocabPage() {
       </header>
 
       {/* FILTER & SEARCH */}
-      <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
-        <input
-          type="text"
-          placeholder="Tìm kiếm theo tên chủ đề hoặc danh mục..."
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="relative flex-1">
+          <Search
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+            size={17}
+          />
+          <input
+            type="text"
+            placeholder="Tìm kiếm theo tên chủ đề hoặc danh mục..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-800 outline-none focus:border-slate-400 shadow-xs"
+          />
+        </div>
+        <select
+          aria-label="Lọc trạng thái bộ từ vựng"
+          value={statusFilter}
+          onChange={(event) => {
+            setStatusFilter(
+              event.target.value as "ALL" | "DRAFT" | "PUBLISHED",
+            );
             setCurrentPage(1);
           }}
-          className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-800 outline-none focus:border-slate-400 shadow-xs"
-        />
+          className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 sm:w-48"
+        >
+          <option value="ALL">Tất cả trạng thái</option>
+          <option value="DRAFT">Bản nháp</option>
+          <option value="PUBLISHED">Đã xuất bản</option>
+        </select>
       </div>
 
       {/* TOPICS GRID */}
@@ -824,9 +1162,12 @@ export default function AdminVocabPage() {
                     </div>
 
                     <div>
-                      <h2 className="font-bold text-slate-900 leading-snug">{topic.title}</h2>
+                      <h2 className="font-bold text-slate-900 leading-snug">
+                        {topic.title}
+                      </h2>
                       <p className="mt-1 text-xs text-slate-500 line-clamp-2">
-                        {topic.description || "Chưa có mô tả cho bộ từ vựng này."}
+                        {topic.description ||
+                          "Chưa có mô tả cho bộ từ vựng này."}
                       </p>
                     </div>
                   </div>
@@ -843,7 +1184,12 @@ export default function AdminVocabPage() {
                         Quản lý
                       </button>
                       <button
-                        onClick={() => setPendingDeleteTopic({ id: topic.id, title: topic.title })}
+                        onClick={() =>
+                          setPendingDeleteTopic({
+                            id: topic.id,
+                            title: topic.title,
+                          })
+                        }
                         className="p-1.5 text-slate-400 hover:text-rose-600 transition-colors"
                         title="Xóa bộ từ vựng"
                       >
@@ -894,11 +1240,15 @@ export default function AdminVocabPage() {
               className="space-y-3.5 text-sm"
             >
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Tên bộ từ vựng *</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Tên bộ từ vựng *
+                </label>
                 <input
                   type="text"
                   value={topicForm.title}
-                  onChange={(e) => setTopicForm({ ...topicForm, title: e.target.value })}
+                  onChange={(e) =>
+                    setTopicForm({ ...topicForm, title: e.target.value })
+                  }
                   placeholder="e.g. Contract & Negotiations"
                   required
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
@@ -906,21 +1256,29 @@ export default function AdminVocabPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Chuyên mục lớn</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Chuyên mục lớn
+                </label>
                 <input
                   type="text"
                   value={topicForm.categoryName}
-                  onChange={(e) => setTopicForm({ ...topicForm, categoryName: e.target.value })}
+                  onChange={(e) =>
+                    setTopicForm({ ...topicForm, categoryName: e.target.value })
+                  }
                   placeholder="e.g. 600 TỪ VỰNG TOEIC"
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Cấp độ</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Cấp độ
+                </label>
                 <select
                   value={topicForm.level}
-                  onChange={(e) => setTopicForm({ ...topicForm, level: e.target.value })}
+                  onChange={(e) =>
+                    setTopicForm({ ...topicForm, level: e.target.value })
+                  }
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
                 >
                   <option value="BEGINNER">Cơ bản (Beginner)</option>
@@ -930,11 +1288,15 @@ export default function AdminVocabPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Mô tả (tùy chọn)</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Mô tả (tùy chọn)
+                </label>
                 <textarea
                   rows={2}
                   value={topicForm.description}
-                  onChange={(e) => setTopicForm({ ...topicForm, description: e.target.value })}
+                  onChange={(e) =>
+                    setTopicForm({ ...topicForm, description: e.target.value })
+                  }
                   placeholder="Mô tả nội dung hoặc ngữ cảnh sử dụng..."
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400 text-xs"
                 />
@@ -953,7 +1315,9 @@ export default function AdminVocabPage() {
                   disabled={createTopicMutation.isPending}
                   className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
                 >
-                  {createTopicMutation.isPending ? "Đang tạo..." : "Tạo bản nháp"}
+                  {createTopicMutation.isPending
+                    ? "Đang tạo..."
+                    : "Tạo bản nháp"}
                 </button>
               </div>
             </form>
@@ -969,7 +1333,8 @@ export default function AdminVocabPage() {
         confirmLabel="Xóa bộ từ"
         isPending={deleteTopicMutation.isPending}
         onConfirm={() => {
-          if (pendingDeleteTopic) deleteTopicMutation.mutate(pendingDeleteTopic.id);
+          if (pendingDeleteTopic)
+            deleteTopicMutation.mutate(pendingDeleteTopic.id);
         }}
         onCancel={() => setPendingDeleteTopic(null)}
       />

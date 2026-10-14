@@ -50,17 +50,29 @@ interface GrammarTopicDetail {
 export default function AdminGrammarPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
+    "ALL" | "DRAFT" | "PUBLISHED"
+  >("ALL");
   const [selectedTopicId, setSelectedTopicId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(9);
-  const [activeTab, setActiveTab] = useState<"questions" | "theory" | "preview">("questions");
+  const [activeTab, setActiveTab] = useState<
+    "questions" | "theory" | "preview"
+  >("questions");
 
   // Modals & Confirm states
   const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
-  const [editingQuestion, setEditingQuestion] = useState<GrammarQuestion | null>(null);
-  const [pendingDeleteTopic, setPendingDeleteTopic] = useState<{ id: number; title: string } | null>(null);
-  const [pendingDeleteQuestion, setPendingDeleteQuestion] = useState<{ id: number; question: string } | null>(null);
+  const [editingQuestion, setEditingQuestion] =
+    useState<GrammarQuestion | null>(null);
+  const [pendingDeleteTopic, setPendingDeleteTopic] = useState<{
+    id: number;
+    title: string;
+  } | null>(null);
+  const [pendingDeleteQuestion, setPendingDeleteQuestion] = useState<{
+    id: number;
+    question: string;
+  } | null>(null);
 
   // Form states: Topic
   const [topicForm, setTopicForm] = useState({
@@ -79,8 +91,53 @@ export default function AdminGrammarPage() {
     explanation: "",
   });
 
+  // Contextual AI state: Grammar
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [isAiGenerating, setIsAiGenerating] = useState(false);
+  const [aiCount, setAiCount] = useState(3);
+  const [aiCandidates, setAiCandidates] = useState<
+    Array<{
+      question: string;
+      options: string[];
+      correctIndex: number;
+      explanation: string;
+    }>
+  >([]);
+
+  const handleGenerateAiQuestions = async () => {
+    if (!topicDetail) return;
+    setIsAiGenerating(true);
+    try {
+      const res: any = await axiosClient.post(
+        "/admin/grammar/ai/suggest-questions",
+        {
+          topicTitle: topicDetail.title,
+          level: topicDetail.level,
+          theory: topicDetail.description || undefined,
+          keyFormula: topicDetail.keyFormula || undefined,
+          count: Number(aiCount),
+        },
+      );
+      const data = res?.data || res;
+      if (Array.isArray(data?.candidates)) {
+        setAiCandidates(data.candidates);
+        toast.success(`AI đã gợi ý ${data.candidates.length} câu hỏi nháp`);
+      } else {
+        toast.error("Không nhận được câu hỏi hợp lệ từ AI");
+      }
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || "Không thể tạo câu hỏi nháp lúc này.",
+      );
+    } finally {
+      setIsAiGenerating(false);
+    }
+  };
+
   // Preview interactive state
-  const [previewSelectedOption, setPreviewSelectedOption] = useState<number | null>(null);
+  const [previewSelectedOption, setPreviewSelectedOption] = useState<
+    number | null
+  >(null);
   const [previewSubmitted, setPreviewSubmitted] = useState(false);
   const [previewQuestionIndex, setPreviewQuestionIndex] = useState(0);
 
@@ -94,15 +151,18 @@ export default function AdminGrammarPage() {
   });
 
   // 2. Query single topic detail
-  const { data: topicDetail, isLoading: isDetailLoading } = useQuery<GrammarTopicDetail>({
-    queryKey: ["admin-grammar-topic-detail", selectedTopicId],
-    queryFn: async () => {
-      if (!selectedTopicId) return null;
-      const res: any = await axiosClient.get(`/grammar/topics/${selectedTopicId}`);
-      return res?.data || res;
-    },
-    enabled: !!selectedTopicId,
-  });
+  const { data: topicDetail, isLoading: isDetailLoading } =
+    useQuery<GrammarTopicDetail>({
+      queryKey: ["admin-grammar-topic-detail", selectedTopicId],
+      queryFn: async () => {
+        if (!selectedTopicId) return null;
+        const res: any = await axiosClient.get(
+          `/grammar/topics/${selectedTopicId}`,
+        );
+        return res?.data || res;
+      },
+      enabled: !!selectedTopicId,
+    });
 
   // Mutations
   const createTopicMutation = useMutation({
@@ -110,97 +170,149 @@ export default function AdminGrammarPage() {
     onSuccess: (data: any) => {
       toast.success("Tạo chủ đề ngữ pháp mới thành công!");
       setIsTopicModalOpen(false);
-      setTopicForm({ title: "", level: "BEGINNER", description: "", keyFormula: "", videoYoutubeId: "" });
+      setTopicForm({
+        title: "",
+        level: "BEGINNER",
+        description: "",
+        keyFormula: "",
+        videoYoutubeId: "",
+      });
       queryClient.invalidateQueries({ queryKey: ["admin-grammar-topics"] });
       if (data?.id) setSelectedTopicId(data.id);
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể tạo chủ đề ngữ pháp"),
+    onError: (err: any) =>
+      toast.error(
+        err?.response?.data?.message || "Không thể tạo chủ đề ngữ pháp",
+      ),
   });
 
   const updateTopicMutation = useMutation({
-    mutationFn: async ({ id, dto }: { id: number; dto: any }) => axiosClient.patch(`/grammar/topics/${id}`, dto),
+    mutationFn: async ({ id, dto }: { id: number; dto: any }) =>
+      axiosClient.patch(`/grammar/topics/${id}`, dto),
     onSuccess: () => {
       toast.success("Cập nhật chủ đề thành công!");
       queryClient.invalidateQueries({ queryKey: ["admin-grammar-topics"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-grammar-topic-detail", selectedTopicId] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-grammar-topic-detail", selectedTopicId],
+      });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể cập nhật chủ đề"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể cập nhật chủ đề"),
   });
 
   const publishTopicMutation = useMutation({
-    mutationFn: async (id: number) => axiosClient.post(`/grammar/topics/${id}/publish`),
+    mutationFn: async (id: number) =>
+      axiosClient.post(`/grammar/topics/${id}/publish`),
     onSuccess: () => {
       toast.success("Đã xuất bản chủ đề ngữ pháp!");
       queryClient.invalidateQueries({ queryKey: ["admin-grammar-topics"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-grammar-topic-detail", selectedTopicId] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-grammar-topic-detail", selectedTopicId],
+      });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể xuất bản"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể xuất bản"),
   });
 
   const unpublishTopicMutation = useMutation({
-    mutationFn: async (id: number) => axiosClient.post(`/grammar/topics/${id}/unpublish`),
+    mutationFn: async (id: number) =>
+      axiosClient.post(`/grammar/topics/${id}/unpublish`),
     onSuccess: () => {
       toast.success("Đã chuyển về bản nháp!");
       queryClient.invalidateQueries({ queryKey: ["admin-grammar-topics"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-grammar-topic-detail", selectedTopicId] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-grammar-topic-detail", selectedTopicId],
+      });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể gỡ xuất bản"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể gỡ xuất bản"),
   });
 
   const deleteTopicMutation = useMutation({
-    mutationFn: async (id: number) => axiosClient.delete(`/grammar/topics/${id}`),
+    mutationFn: async (id: number) =>
+      axiosClient.delete(`/grammar/topics/${id}`),
     onSuccess: () => {
       toast.success("Đã xóa chủ đề ngữ pháp!");
       setPendingDeleteTopic(null);
       if (selectedTopicId === pendingDeleteTopic?.id) setSelectedTopicId(null);
       queryClient.invalidateQueries({ queryKey: ["admin-grammar-topics"] });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể xóa chủ đề"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể xóa chủ đề"),
   });
 
   const saveQuestionMutation = useMutation({
     mutationFn: async (dto: any) => {
       if (!selectedTopicId) return;
       if (editingQuestion) {
-        return axiosClient.patch(`/grammar/topics/${selectedTopicId}/questions/${editingQuestion.id}`, dto);
+        return axiosClient.patch(
+          `/grammar/topics/${selectedTopicId}/questions/${editingQuestion.id}`,
+          dto,
+        );
       }
-      return axiosClient.post(`/grammar/topics/${selectedTopicId}/questions`, dto);
+      return axiosClient.post(
+        `/grammar/topics/${selectedTopicId}/questions`,
+        dto,
+      );
     },
     onSuccess: () => {
-      toast.success(editingQuestion ? "Cập nhật câu hỏi thành công!" : "Thêm câu hỏi thành công!");
+      toast.success(
+        editingQuestion
+          ? "Cập nhật câu hỏi thành công!"
+          : "Thêm câu hỏi thành công!",
+      );
       setIsQuestionModalOpen(false);
       setEditingQuestion(null);
-      setQuestionForm({ question: "", options: ["", "", "", ""], correctIndex: 0, explanation: "" });
-      queryClient.invalidateQueries({ queryKey: ["admin-grammar-topic-detail", selectedTopicId] });
+      setQuestionForm({
+        question: "",
+        options: ["", "", "", ""],
+        correctIndex: 0,
+        explanation: "",
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-grammar-topic-detail", selectedTopicId],
+      });
       queryClient.invalidateQueries({ queryKey: ["admin-grammar-topics"] });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể lưu câu hỏi"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể lưu câu hỏi"),
   });
 
   const deleteQuestionMutation = useMutation({
     mutationFn: async (questionId: number) => {
       if (!selectedTopicId) return;
-      return axiosClient.delete(`/grammar/topics/${selectedTopicId}/questions/${questionId}`);
+      return axiosClient.delete(
+        `/grammar/topics/${selectedTopicId}/questions/${questionId}`,
+      );
     },
     onSuccess: () => {
       toast.success("Đã xóa câu hỏi!");
       setPendingDeleteQuestion(null);
-      queryClient.invalidateQueries({ queryKey: ["admin-grammar-topic-detail", selectedTopicId] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-grammar-topic-detail", selectedTopicId],
+      });
       queryClient.invalidateQueries({ queryKey: ["admin-grammar-topics"] });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể xóa câu hỏi"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể xóa câu hỏi"),
   });
 
   const reorderQuestionsMutation = useMutation({
     mutationFn: async (questionIds: number[]) => {
       if (!selectedTopicId) return;
-      return axiosClient.post(`/grammar/topics/${selectedTopicId}/reorder-questions`, { questionIds });
+      return axiosClient.post(
+        `/grammar/topics/${selectedTopicId}/reorder-questions`,
+        { questionIds },
+      );
     },
     onSuccess: () => {
       toast.success("Đã lưu thứ tự câu hỏi!");
-      queryClient.invalidateQueries({ queryKey: ["admin-grammar-topic-detail", selectedTopicId] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-grammar-topic-detail", selectedTopicId],
+      });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể sắp xếp câu hỏi"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể sắp xếp câu hỏi"),
   });
 
   const handleMoveQuestion = (index: number, direction: "up" | "down") => {
@@ -218,19 +330,27 @@ export default function AdminGrammarPage() {
     setEditingQuestion(item);
     setQuestionForm({
       question: item.question,
-      options: Array.isArray(item.options) && item.options.length === 4 ? [...item.options] : ["", "", "", ""],
+      options:
+        Array.isArray(item.options) && item.options.length === 4
+          ? [...item.options]
+          : ["", "", "", ""],
       correctIndex: item.correctIndex ?? 0,
       explanation: item.explanation || "",
     });
     setIsQuestionModalOpen(true);
   };
 
-  const filteredTopics = topics?.filter((t) =>
-    t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredTopics = topics?.filter(
+    (t) =>
+      (t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.description?.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (statusFilter === "ALL" || t.publicationStatus === statusFilter),
   );
   const totalPages = Math.ceil((filteredTopics?.length || 0) / pageSize);
-  const paginatedTopics = filteredTopics?.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const paginatedTopics = filteredTopics?.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   // -------------------------------------------------------------
   // RENDER: Topic Workspace / Editor when a topic is selected
@@ -254,10 +374,14 @@ export default function AdminGrammarPage() {
             </button>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-slate-900">{topicDetail.title}</h1>
+                <h1 className="text-2xl font-bold text-slate-900">
+                  {topicDetail.title}
+                </h1>
                 <span
                   className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                    isPublished ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-amber-50 text-amber-700 border border-amber-200"
+                    isPublished
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : "bg-amber-50 text-amber-700 border border-amber-200"
                   }`}
                 >
                   {isPublished ? "Đã xuất bản" : "Bản nháp"}
@@ -279,7 +403,7 @@ export default function AdminGrammarPage() {
                 disabled={unpublishTopicMutation.isPending}
                 className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
               >
-                Gỡ xuất bản (Draft)
+                Chuyển về bản nháp
               </button>
             ) : (
               <button
@@ -298,7 +422,9 @@ export default function AdminGrammarPage() {
           <button
             onClick={() => setActiveTab("questions")}
             className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
-              activeTab === "questions" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
+              activeTab === "questions"
+                ? "bg-slate-900 text-white"
+                : "text-slate-600 hover:bg-slate-100"
             }`}
           >
             Câu hỏi ({questions.length})
@@ -306,7 +432,9 @@ export default function AdminGrammarPage() {
           <button
             onClick={() => setActiveTab("theory")}
             className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
-              activeTab === "theory" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
+              activeTab === "theory"
+                ? "bg-slate-900 text-white"
+                : "text-slate-600 hover:bg-slate-100"
             }`}
           >
             Lý thuyết & Công thức
@@ -314,7 +442,9 @@ export default function AdminGrammarPage() {
           <button
             onClick={() => setActiveTab("preview")}
             className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
-              activeTab === "preview" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
+              activeTab === "preview"
+                ? "bg-slate-900 text-white"
+                : "text-slate-600 hover:bg-slate-100"
             }`}
           >
             Xem trước bài học
@@ -326,23 +456,42 @@ export default function AdminGrammarPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-xs text-slate-500 font-medium">
-                Mỗi câu hỏi có 4 lựa chọn và 1 đáp án chính xác. Học viên chỉ xem được đáp án sau khi nộp bài.
+                Mỗi câu hỏi có 4 lựa chọn và 1 đáp án chính xác. Học viên chỉ
+                xem được đáp án sau khi nộp bài.
               </p>
-              <button
-                onClick={() => {
-                  setEditingQuestion(null);
-                  setQuestionForm({ question: "", options: ["", "", "", ""], correctIndex: 0, explanation: "" });
-                  setIsQuestionModalOpen(true);
-                }}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors"
-              >
-                <Plus size={15} /> Thêm câu hỏi mới
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAiCandidates([]);
+                    setIsAiModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-3.5 py-2 text-xs font-semibold text-slate-700 transition-colors"
+                >
+                  Tạo câu hỏi nháp bằng AI
+                </button>
+                <button
+                  onClick={() => {
+                    setEditingQuestion(null);
+                    setQuestionForm({
+                      question: "",
+                      options: ["", "", "", ""],
+                      correctIndex: 0,
+                      explanation: "",
+                    });
+                    setIsQuestionModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors"
+                >
+                  <Plus size={15} /> Thêm câu hỏi mới
+                </button>
+              </div>
             </div>
 
             {questions.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-500">
-                Chủ đề này chưa có câu hỏi nào. Hãy thêm ít nhất 1 câu hỏi trước khi xuất bản.
+                Chủ đề này chưa có câu hỏi nào. Hãy thêm ít nhất 1 câu hỏi trước
+                khi xuất bản.
               </div>
             ) : (
               <div className="space-y-3">
@@ -357,10 +506,15 @@ export default function AdminGrammarPage() {
                           {idx + 1}
                         </span>
                         <div>
-                          <p className="font-bold text-slate-900 text-sm leading-snug">{item.question}</p>
+                          <p className="font-bold text-slate-900 text-sm leading-snug">
+                            {item.question}
+                          </p>
                           {item.explanation && (
                             <p className="text-xs text-slate-500 mt-1">
-                              <span className="font-semibold text-slate-700">Giải thích:</span> {item.explanation}
+                              <span className="font-semibold text-slate-700">
+                                Giải thích:
+                              </span>{" "}
+                              {item.explanation}
                             </p>
                           )}
                         </div>
@@ -391,7 +545,12 @@ export default function AdminGrammarPage() {
                           <Edit2 size={15} />
                         </button>
                         <button
-                          onClick={() => setPendingDeleteQuestion({ id: item.id, question: item.question })}
+                          onClick={() =>
+                            setPendingDeleteQuestion({
+                              id: item.id,
+                              question: item.question,
+                            })
+                          }
                           className="p-1 text-slate-400 hover:text-rose-600"
                           title="Xóa câu hỏi"
                         >
@@ -412,8 +571,15 @@ export default function AdminGrammarPage() {
                                 : "border-slate-200 bg-slate-50 text-slate-700"
                             }`}
                           >
-                            <span>{String.fromCharCode(65 + optIdx)}. {opt}</span>
-                            {isCorrect && <CheckCircle2 size={13} className="text-emerald-600 shrink-0" />}
+                            <span>
+                              {String.fromCharCode(65 + optIdx)}. {opt}
+                            </span>
+                            {isCorrect && (
+                              <CheckCircle2
+                                size={13}
+                                className="text-emerald-600 shrink-0"
+                              />
+                            )}
                           </div>
                         );
                       })}
@@ -444,15 +610,20 @@ export default function AdminGrammarPage() {
             className="max-w-2xl space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
           >
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Tên chủ đề ngữ pháp</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Tên chủ đề ngữ pháp
+              </label>
               <input
                 type="text"
                 value={topicDetail.title}
                 onChange={(e) => {
-                  queryClient.setQueryData(["admin-grammar-topic-detail", selectedTopicId], {
-                    ...topicDetail,
-                    title: e.target.value,
-                  });
+                  queryClient.setQueryData(
+                    ["admin-grammar-topic-detail", selectedTopicId],
+                    {
+                      ...topicDetail,
+                      title: e.target.value,
+                    },
+                  );
                 }}
                 className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400"
                 required
@@ -461,14 +632,19 @@ export default function AdminGrammarPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Cấp độ</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Cấp độ
+                </label>
                 <select
                   value={topicDetail.level}
                   onChange={(e) => {
-                    queryClient.setQueryData(["admin-grammar-topic-detail", selectedTopicId], {
-                      ...topicDetail,
-                      level: e.target.value as any,
-                    });
+                    queryClient.setQueryData(
+                      ["admin-grammar-topic-detail", selectedTopicId],
+                      {
+                        ...topicDetail,
+                        level: e.target.value as any,
+                      },
+                    );
                   }}
                   className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400"
                 >
@@ -479,16 +655,21 @@ export default function AdminGrammarPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">YouTube Video ID (tùy chọn)</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  YouTube Video ID (tùy chọn)
+                </label>
                 <input
                   type="text"
                   placeholder="e.g. dQw4w9WgXcQ"
                   value={topicDetail.videoYoutubeId || ""}
                   onChange={(e) => {
-                    queryClient.setQueryData(["admin-grammar-topic-detail", selectedTopicId], {
-                      ...topicDetail,
-                      videoYoutubeId: e.target.value,
-                    });
+                    queryClient.setQueryData(
+                      ["admin-grammar-topic-detail", selectedTopicId],
+                      {
+                        ...topicDetail,
+                        videoYoutubeId: e.target.value,
+                      },
+                    );
                   }}
                   className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400"
                 />
@@ -496,31 +677,41 @@ export default function AdminGrammarPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Công thức trọng tâm (Key Formula)</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Công thức trọng tâm (Key Formula)
+              </label>
               <input
                 type="text"
                 placeholder="e.g. S + have/has + V3/ed + since/for..."
                 value={topicDetail.keyFormula || ""}
                 onChange={(e) => {
-                  queryClient.setQueryData(["admin-grammar-topic-detail", selectedTopicId], {
-                    ...topicDetail,
-                    keyFormula: e.target.value,
-                  });
+                  queryClient.setQueryData(
+                    ["admin-grammar-topic-detail", selectedTopicId],
+                    {
+                      ...topicDetail,
+                      keyFormula: e.target.value,
+                    },
+                  );
                 }}
                 className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400 font-mono"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Lý thuyết & Hướng dẫn sử dụng</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Lý thuyết & Hướng dẫn sử dụng
+              </label>
               <textarea
                 rows={6}
                 value={topicDetail.description || ""}
                 onChange={(e) => {
-                  queryClient.setQueryData(["admin-grammar-topic-detail", selectedTopicId], {
-                    ...topicDetail,
-                    description: e.target.value,
-                  });
+                  queryClient.setQueryData(
+                    ["admin-grammar-topic-detail", selectedTopicId],
+                    {
+                      ...topicDetail,
+                      description: e.target.value,
+                    },
+                  );
                 }}
                 placeholder="Trình bày lý thuyết ngữ pháp chi tiết, quy tắc sử dụng và ví dụ minh họa..."
                 className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400"
@@ -533,7 +724,9 @@ export default function AdminGrammarPage() {
                 disabled={updateTopicMutation.isPending}
                 className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
               >
-                {updateTopicMutation.isPending ? "Đang lưu..." : "Lưu lý thuyết"}
+                {updateTopicMutation.isPending
+                  ? "Đang lưu..."
+                  : "Lưu lý thuyết"}
               </button>
             </div>
           </form>
@@ -547,7 +740,9 @@ export default function AdminGrammarPage() {
               <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
                 {topicDetail.level}
               </span>
-              <h2 className="text-xl font-bold text-slate-900">{topicDetail.title}</h2>
+              <h2 className="text-xl font-bold text-slate-900">
+                {topicDetail.title}
+              </h2>
               {topicDetail.keyFormula && (
                 <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 font-mono text-xs text-slate-800 font-bold">
                   {topicDetail.keyFormula}
@@ -564,26 +759,36 @@ export default function AdminGrammarPage() {
             {questions.length > 0 && currentPreviewQuestion ? (
               <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
                 <div className="flex items-center justify-between text-xs text-slate-500 font-semibold border-b border-slate-100 pb-3">
-                  <span>Câu hỏi luyện tập {previewQuestionIndex + 1} / {questions.length}</span>
+                  <span>
+                    Câu hỏi luyện tập {previewQuestionIndex + 1} /{" "}
+                    {questions.length}
+                  </span>
                   <span>Chế độ: Học viên làm bài</span>
                 </div>
 
-                <p className="font-bold text-slate-900 text-base">{currentPreviewQuestion.question}</p>
+                <p className="font-bold text-slate-900 text-base">
+                  {currentPreviewQuestion.question}
+                </p>
 
                 <div className="space-y-2">
                   {currentPreviewQuestion.options.map((option, idx) => {
                     const isSelected = previewSelectedOption === idx;
-                    const isCorrect = idx === currentPreviewQuestion.correctIndex;
-                    let optionStyle = "border-slate-200 bg-white text-slate-800 hover:bg-slate-50";
+                    const isCorrect =
+                      idx === currentPreviewQuestion.correctIndex;
+                    let optionStyle =
+                      "border-slate-200 bg-white text-slate-800 hover:bg-slate-50";
 
                     if (previewSubmitted) {
                       if (isCorrect) {
-                        optionStyle = "border-emerald-400 bg-emerald-50 text-emerald-900 font-bold";
+                        optionStyle =
+                          "border-emerald-400 bg-emerald-50 text-emerald-900 font-bold";
                       } else if (isSelected && !isCorrect) {
-                        optionStyle = "border-rose-400 bg-rose-50 text-rose-900";
+                        optionStyle =
+                          "border-rose-400 bg-rose-50 text-rose-900";
                       }
                     } else if (isSelected) {
-                      optionStyle = "border-slate-900 bg-slate-100 text-slate-950 font-semibold";
+                      optionStyle =
+                        "border-slate-900 bg-slate-100 text-slate-950 font-semibold";
                     }
 
                     return (
@@ -595,9 +800,14 @@ export default function AdminGrammarPage() {
                         }}
                         className={`w-full rounded-lg border p-3 text-left text-sm transition-all flex items-center justify-between ${optionStyle}`}
                       >
-                        <span>{String.fromCharCode(65 + idx)}. {option}</span>
+                        <span>
+                          {String.fromCharCode(65 + idx)}. {option}
+                        </span>
                         {previewSubmitted && isCorrect && (
-                          <CheckCircle2 size={16} className="text-emerald-600" />
+                          <CheckCircle2
+                            size={16}
+                            className="text-emerald-600"
+                          />
                         )}
                       </button>
                     );
@@ -606,7 +816,9 @@ export default function AdminGrammarPage() {
 
                 {previewSubmitted && currentPreviewQuestion.explanation && (
                   <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 text-xs text-slate-600 space-y-1">
-                    <span className="font-bold text-slate-800">Giải thích chi tiết:</span>
+                    <span className="font-bold text-slate-800">
+                      Giải thích chi tiết:
+                    </span>
                     <p>{currentPreviewQuestion.explanation}</p>
                   </div>
                 )}
@@ -617,7 +829,9 @@ export default function AdminGrammarPage() {
                       onClick={() => {
                         setPreviewSubmitted(false);
                         setPreviewSelectedOption(null);
-                        setPreviewQuestionIndex((prev) => Math.max(0, prev - 1));
+                        setPreviewQuestionIndex((prev) =>
+                          Math.max(0, prev - 1),
+                        );
                       }}
                       disabled={previewQuestionIndex === 0}
                       className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40"
@@ -628,7 +842,9 @@ export default function AdminGrammarPage() {
                       onClick={() => {
                         setPreviewSubmitted(false);
                         setPreviewSelectedOption(null);
-                        setPreviewQuestionIndex((prev) => Math.min(questions.length - 1, prev + 1));
+                        setPreviewQuestionIndex((prev) =>
+                          Math.min(questions.length - 1, prev + 1),
+                        );
                       }}
                       disabled={previewQuestionIndex === questions.length - 1}
                       className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40"
@@ -695,11 +911,18 @@ export default function AdminGrammarPage() {
                 className="space-y-3.5 text-sm"
               >
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Nội dung câu hỏi *</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Nội dung câu hỏi *
+                  </label>
                   <textarea
                     rows={2}
                     value={questionForm.question}
-                    onChange={(e) => setQuestionForm({ ...questionForm, question: e.target.value })}
+                    onChange={(e) =>
+                      setQuestionForm({
+                        ...questionForm,
+                        question: e.target.value,
+                      })
+                    }
                     placeholder="e.g. She has worked here ___ 2018."
                     required
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
@@ -707,25 +930,37 @@ export default function AdminGrammarPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-xs font-semibold text-slate-700">4 Lựa chọn & Đáp án đúng *</label>
+                  <label className="block text-xs font-semibold text-slate-700">
+                    4 Lựa chọn & Đáp án đúng *
+                  </label>
                   {questionForm.options.map((opt, idx) => (
                     <div key={idx} className="flex items-center gap-2">
                       <input
                         type="radio"
                         name="correctAnswer"
                         checked={questionForm.correctIndex === idx}
-                        onChange={() => setQuestionForm({ ...questionForm, correctIndex: idx })}
+                        onChange={() =>
+                          setQuestionForm({
+                            ...questionForm,
+                            correctIndex: idx,
+                          })
+                        }
                         className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                         title="Đánh dấu đáp án đúng"
                       />
-                      <span className="w-5 text-xs font-bold text-slate-500">{String.fromCharCode(65 + idx)}.</span>
+                      <span className="w-5 text-xs font-bold text-slate-500">
+                        {String.fromCharCode(65 + idx)}.
+                      </span>
                       <input
                         type="text"
                         value={opt}
                         onChange={(e) => {
                           const newOpts = [...questionForm.options];
                           newOpts[idx] = e.target.value;
-                          setQuestionForm({ ...questionForm, options: newOpts });
+                          setQuestionForm({
+                            ...questionForm,
+                            options: newOpts,
+                          });
                         }}
                         placeholder={`Lựa chọn ${String.fromCharCode(65 + idx)}`}
                         required
@@ -733,15 +968,24 @@ export default function AdminGrammarPage() {
                       />
                     </div>
                   ))}
-                  <p className="text-[11px] text-slate-400">Chọn nút tròn tương ứng với đáp án chính xác.</p>
+                  <p className="text-[11px] text-slate-400">
+                    Chọn nút tròn tương ứng với đáp án chính xác.
+                  </p>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Giải thích chi tiết (tùy chọn)</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Giải thích chi tiết (tùy chọn)
+                  </label>
                   <textarea
                     rows={2}
                     value={questionForm.explanation}
-                    onChange={(e) => setQuestionForm({ ...questionForm, explanation: e.target.value })}
+                    onChange={(e) =>
+                      setQuestionForm({
+                        ...questionForm,
+                        explanation: e.target.value,
+                      })
+                    }
                     placeholder="e.g. 'Since' đi kèm mốc thời gian trong quá khứ..."
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400 text-xs"
                   />
@@ -760,10 +1004,232 @@ export default function AdminGrammarPage() {
                     disabled={saveQuestionMutation.isPending}
                     className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
                   >
-                    {saveQuestionMutation.isPending ? "Đang lưu..." : editingQuestion ? "Cập nhật" : "Thêm mới"}
+                    {saveQuestionMutation.isPending
+                      ? "Đang lưu..."
+                      : editingQuestion
+                        ? "Cập nhật"
+                        : "Thêm mới"}
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL: AI QUESTION GENERATOR & REVIEW */}
+        {isAiModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+            <div className="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-xl space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                  <h3 className="font-bold text-slate-900">
+                    Tạo câu hỏi ngữ pháp nháp bằng AI
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Chủ đề:{" "}
+                    <span className="font-medium text-slate-700">
+                      {topicDetail?.title}
+                    </span>{" "}
+                    • Cấp độ:{" "}
+                    <span className="font-medium text-slate-700">
+                      {topicDetail?.level}
+                    </span>
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsAiModalOpen(false)}
+                  className="rounded-lg p-1 text-slate-400 hover:text-slate-700"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <label className="text-xs font-semibold text-slate-700">
+                  Số lượng câu hỏi:
+                </label>
+                <select
+                  value={aiCount}
+                  onChange={(e) => setAiCount(Number(e.target.value))}
+                  disabled={isAiGenerating}
+                  className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-800 outline-none focus:border-slate-400"
+                >
+                  <option value={1}>1 câu</option>
+                  <option value={2}>2 câu</option>
+                  <option value={3}>3 câu (khuyến nghị)</option>
+                  <option value={5}>5 câu</option>
+                </select>
+                <button
+                  type="button"
+                  disabled={isAiGenerating}
+                  onClick={handleGenerateAiQuestions}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-colors"
+                >
+                  {isAiGenerating ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : null}
+                  {aiCandidates.length > 0 ? "Tạo lại" : "Tạo câu hỏi nháp"}
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 text-xs">
+                {aiCandidates.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center text-slate-400">
+                    Nhấn "Tạo câu hỏi nháp" để AI đề xuất các câu hỏi trắc
+                    nghiệm dựa theo chủ đề và cấp độ hiện tại.
+                  </div>
+                ) : (
+                  aiCandidates.map((candidate, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-2.5"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="font-bold text-slate-800">
+                          Câu {idx + 1}:
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAiCandidates((prev) =>
+                              prev.filter((_, i) => i !== idx),
+                            );
+                          }}
+                          className="text-slate-400 hover:text-rose-600 text-[11px]"
+                        >
+                          Bỏ qua
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        value={candidate.question}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setAiCandidates((prev) =>
+                            prev.map((c, i) =>
+                              i === idx ? { ...c, question: val } : c,
+                            ),
+                          );
+                        }}
+                        className="w-full rounded border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none"
+                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        {candidate.options.map((opt, optIdx) => {
+                          const letter =
+                            ["A", "B", "C", "D"][optIdx] || String(optIdx);
+                          const isCorrect = candidate.correctIndex === optIdx;
+                          return (
+                            <div
+                              key={optIdx}
+                              className={`flex items-center gap-1.5 rounded border px-2 py-1.5 bg-white ${
+                                isCorrect
+                                  ? "border-emerald-500 ring-1 ring-emerald-200"
+                                  : "border-slate-200"
+                              }`}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAiCandidates((prev) =>
+                                    prev.map((c, i) =>
+                                      i === idx
+                                        ? { ...c, correctIndex: optIdx }
+                                        : c,
+                                    ),
+                                  );
+                                }}
+                                className={`h-5 w-5 rounded text-[11px] font-bold flex items-center justify-center ${
+                                  isCorrect
+                                    ? "bg-emerald-600 text-white"
+                                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                }`}
+                                title="Đặt làm đáp án đúng"
+                              >
+                                {letter}
+                              </button>
+                              <input
+                                type="text"
+                                value={opt}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setAiCandidates((prev) =>
+                                    prev.map((c, i) =>
+                                      i === idx
+                                        ? {
+                                            ...c,
+                                            options: c.options.map((o, oi) =>
+                                              oi === optIdx ? val : o,
+                                            ),
+                                          }
+                                        : c,
+                                    ),
+                                  );
+                                }}
+                                className="flex-1 bg-transparent text-xs text-slate-800 outline-none"
+                              />
+                              {isCorrect ? (
+                                <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded">
+                                  Đúng
+                                </span>
+                              ) : null}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-semibold text-slate-500 mb-0.5">
+                          Giải thích:
+                        </label>
+                        <input
+                          type="text"
+                          value={candidate.explanation}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAiCandidates((prev) =>
+                              prev.map((c, i) =>
+                                i === idx ? { ...c, explanation: val } : c,
+                              ),
+                            );
+                          }}
+                          className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 outline-none"
+                        />
+                      </div>
+                      <div className="flex justify-end pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingQuestion(null);
+                            setQuestionForm({
+                              question: candidate.question,
+                              options: [...candidate.options],
+                              correctIndex: candidate.correctIndex,
+                              explanation: candidate.explanation,
+                            });
+                            setIsAiModalOpen(false);
+                            setIsQuestionModalOpen(true);
+                            toast.success(
+                              "Đã áp dụng câu hỏi vào form. Bạn có thể kiểm tra và bấm Lưu câu hỏi.",
+                            );
+                          }}
+                          className="rounded bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 transition-colors"
+                        >
+                          Áp dụng vào form
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="flex items-center justify-end pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsAiModalOpen(false)}
+                  className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                >
+                  Đóng
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -776,7 +1242,8 @@ export default function AdminGrammarPage() {
           confirmLabel="Xóa câu hỏi"
           isPending={deleteQuestionMutation.isPending}
           onConfirm={() => {
-            if (pendingDeleteQuestion) deleteQuestionMutation.mutate(pendingDeleteQuestion.id);
+            if (pendingDeleteQuestion)
+              deleteQuestionMutation.mutate(pendingDeleteQuestion.id);
           }}
           onCancel={() => setPendingDeleteQuestion(null)}
         />
@@ -792,15 +1259,26 @@ export default function AdminGrammarPage() {
       {/* HEADER */}
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[.18em] text-slate-500">Grammar Studio</p>
-          <h1 className="mt-1 text-2xl font-bold text-slate-950">Quản Lý Ngữ Pháp & Bài Tập</h1>
+          <p className="text-xs font-bold uppercase tracking-[.18em] text-slate-500">
+            Grammar Studio
+          </p>
+          <h1 className="mt-1 text-2xl font-bold text-slate-950">
+            Quản Lý Ngữ Pháp & Bài Tập
+          </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Biên tập lý thuyết, công thức trọng tâm và câu hỏi trắc nghiệm ngữ pháp theo cấp độ.
+            Biên tập lý thuyết, công thức trọng tâm và câu hỏi trắc nghiệm ngữ
+            pháp theo cấp độ.
           </p>
         </div>
         <button
           onClick={() => {
-            setTopicForm({ title: "", level: "BEGINNER", description: "", keyFormula: "", videoYoutubeId: "" });
+            setTopicForm({
+              title: "",
+              level: "BEGINNER",
+              description: "",
+              keyFormula: "",
+              videoYoutubeId: "",
+            });
             setIsTopicModalOpen(true);
           }}
           className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors shadow-sm"
@@ -810,18 +1288,38 @@ export default function AdminGrammarPage() {
       </header>
 
       {/* FILTER & SEARCH */}
-      <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
-        <input
-          type="text"
-          placeholder="Tìm kiếm chủ đề ngữ pháp..."
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="relative flex-1">
+          <Search
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+            size={17}
+          />
+          <input
+            type="text"
+            placeholder="Tìm kiếm chủ đề ngữ pháp..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-800 outline-none focus:border-slate-400 shadow-xs"
+          />
+        </div>
+        <select
+          aria-label="Lọc trạng thái chủ đề ngữ pháp"
+          value={statusFilter}
+          onChange={(event) => {
+            setStatusFilter(
+              event.target.value as "ALL" | "DRAFT" | "PUBLISHED",
+            );
             setCurrentPage(1);
           }}
-          className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-800 outline-none focus:border-slate-400 shadow-xs"
-        />
+          className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 sm:w-48"
+        >
+          <option value="ALL">Tất cả trạng thái</option>
+          <option value="DRAFT">Bản nháp</option>
+          <option value="PUBLISHED">Đã xuất bản</option>
+        </select>
       </div>
 
       {/* TOPICS GRID */}
@@ -856,16 +1354,20 @@ export default function AdminGrammarPage() {
                     </div>
 
                     <div>
-                      <h2 className="font-bold text-slate-900 leading-snug">{topic.title}</h2>
+                      <h2 className="font-bold text-slate-900 leading-snug">
+                        {topic.title}
+                      </h2>
                       <p className="mt-1 text-xs text-slate-500 line-clamp-2">
-                        {topic.description || "Chưa có mô tả cho chủ đề ngữ pháp này."}
+                        {topic.description ||
+                          "Chưa có mô tả cho chủ đề ngữ pháp này."}
                       </p>
                     </div>
                   </div>
 
                   <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-3.5 text-xs text-slate-500">
                     <span className="font-semibold text-slate-600">
-                      {topic._count?.questions || topic.questions?.length || 0} câu hỏi
+                      {topic._count?.questions || topic.questions?.length || 0}{" "}
+                      câu hỏi
                     </span>
                     <div className="flex items-center gap-2">
                       <button
@@ -875,7 +1377,12 @@ export default function AdminGrammarPage() {
                         Quản lý
                       </button>
                       <button
-                        onClick={() => setPendingDeleteTopic({ id: topic.id, title: topic.title })}
+                        onClick={() =>
+                          setPendingDeleteTopic({
+                            id: topic.id,
+                            title: topic.title,
+                          })
+                        }
                         className="p-1.5 text-slate-400 hover:text-rose-600 transition-colors"
                         title="Xóa chủ đề"
                       >
@@ -909,7 +1416,9 @@ export default function AdminGrammarPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
           <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-bold text-slate-900">Tạo chủ đề ngữ pháp mới</h3>
+              <h3 className="font-bold text-slate-900">
+                Tạo chủ đề ngữ pháp mới
+              </h3>
               <button
                 onClick={() => setIsTopicModalOpen(false)}
                 className="rounded-lg p-1 text-slate-400 hover:text-slate-700"
@@ -926,11 +1435,15 @@ export default function AdminGrammarPage() {
               className="space-y-3.5 text-sm"
             >
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Tên chủ đề *</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Tên chủ đề *
+                </label>
                 <input
                   type="text"
                   value={topicForm.title}
-                  onChange={(e) => setTopicForm({ ...topicForm, title: e.target.value })}
+                  onChange={(e) =>
+                    setTopicForm({ ...topicForm, title: e.target.value })
+                  }
                   placeholder="e.g. Present Perfect vs Past Simple"
                   required
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
@@ -938,10 +1451,14 @@ export default function AdminGrammarPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Cấp độ</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Cấp độ
+                </label>
                 <select
                   value={topicForm.level}
-                  onChange={(e) => setTopicForm({ ...topicForm, level: e.target.value })}
+                  onChange={(e) =>
+                    setTopicForm({ ...topicForm, level: e.target.value })
+                  }
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
                 >
                   <option value="BEGINNER">Cơ bản (Beginner)</option>
@@ -951,22 +1468,30 @@ export default function AdminGrammarPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Công thức trọng tâm</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Công thức trọng tâm
+                </label>
                 <input
                   type="text"
                   value={topicForm.keyFormula}
-                  onChange={(e) => setTopicForm({ ...topicForm, keyFormula: e.target.value })}
+                  onChange={(e) =>
+                    setTopicForm({ ...topicForm, keyFormula: e.target.value })
+                  }
                   placeholder="e.g. S + have/has + V3"
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400 font-mono text-xs"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Mô tả lý thuyết tóm tắt</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Mô tả lý thuyết tóm tắt
+                </label>
                 <textarea
                   rows={2}
                   value={topicForm.description}
-                  onChange={(e) => setTopicForm({ ...topicForm, description: e.target.value })}
+                  onChange={(e) =>
+                    setTopicForm({ ...topicForm, description: e.target.value })
+                  }
                   placeholder="Tóm tắt nội dung ngữ pháp..."
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400 text-xs"
                 />
@@ -985,7 +1510,9 @@ export default function AdminGrammarPage() {
                   disabled={createTopicMutation.isPending}
                   className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
                 >
-                  {createTopicMutation.isPending ? "Đang tạo..." : "Tạo bản nháp"}
+                  {createTopicMutation.isPending
+                    ? "Đang tạo..."
+                    : "Tạo bản nháp"}
                 </button>
               </div>
             </form>
@@ -1001,7 +1528,8 @@ export default function AdminGrammarPage() {
         confirmLabel="Xóa chủ đề"
         isPending={deleteTopicMutation.isPending}
         onConfirm={() => {
-          if (pendingDeleteTopic) deleteTopicMutation.mutate(pendingDeleteTopic.id);
+          if (pendingDeleteTopic)
+            deleteTopicMutation.mutate(pendingDeleteTopic.id);
         }}
         onCancel={() => setPendingDeleteTopic(null)}
       />

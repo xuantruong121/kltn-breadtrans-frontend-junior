@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { BrandLogo } from "@/components/brand";
 
 import { ThemeToggle } from "@/components/navigation/ThemeToggle";
@@ -10,9 +10,13 @@ import { ThemeToggle } from "@/components/navigation/ThemeToggle";
 interface AuthShellProps {
   children: ReactNode;
   contentPosition?: "center" | "start";
+  contentClassName?: string;
 }
 
-export function AuthShell({ children }: AuthShellProps) {
+export function AuthShell({
+  children,
+  contentClassName = "max-w-md",
+}: AuthShellProps) {
   return (
     <div className="min-h-dvh flex flex-col bg-background text-foreground selection:bg-amber-100 selection:text-amber-900 transition-colors duration-150">
       {/* Minimalist Auth Top Bar */}
@@ -45,182 +49,10 @@ export function AuthShell({ children }: AuthShellProps) {
         <div className="absolute -top-24 -left-20 w-80 h-80 rounded-full bg-amber-200/30 dark:bg-amber-500/10 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -right-20 w-96 h-96 rounded-full bg-orange-200/20 dark:bg-orange-500/10 blur-3xl pointer-events-none" />
 
-        <div className="w-full max-w-md mx-auto my-4 z-10">
+        <div className={`w-full ${contentClassName} mx-auto my-4 z-10`}>
           {children}
-
-          {/* Quick Platform Support Credentials Note */}
-          <div className="mt-6 text-center">
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Gặp sự cố khi đăng nhập hoặc đăng ký? Liên hệ đội ngũ học thuật:{" "}
-              <a
-                className="text-amber-700 dark:text-amber-400 hover:underline font-semibold"
-                href="mailto:support@breadtrans.edu.vn"
-              >
-                support@breadtrans.edu.vn
-              </a>
-            </p>
-          </div>
-
-          {/* Policy & Legal Links Footer */}
-          <div className="mt-6 flex items-center justify-center gap-3 sm:gap-4 text-xs text-slate-500 dark:text-slate-400">
-            <Link href="/terms" className="hover:text-amber-700 dark:hover:text-amber-400 transition-colors">
-              Điều khoản dịch vụ
-            </Link>
-            <span>•</span>
-            <Link href="/privacy" className="hover:text-amber-700 dark:hover:text-amber-400 transition-colors">
-              Chính sách bảo mật
-            </Link>
-            <span>•</span>
-            <Link href="/help" className="hover:text-amber-700 dark:hover:text-amber-400 transition-colors">
-              Trợ giúp
-            </Link>
-          </div>
         </div>
       </main>
-
-      {/* Brand Footer */}
-      <footer className="w-full bg-white dark:bg-slate-900 shadow-[0_-1px_6px_rgba(0,0,0,0.03)] border-t border-slate-200/70 dark:border-slate-800 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
-            <div className="lg:col-span-2">
-              <div className="mb-3">
-                <BrandLogo href="/" variant="compact" size="md" />
-              </div>
-              <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-4 leading-relaxed">
-                Nền tảng tự học tiếng Anh tương tác. Rèn luyện 4 kỹ năng, củng cố từ vựng
-                và ngữ pháp theo phương pháp học chủ động.
-              </p>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold">
-                <CheckCircle2 size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
-                <span>Học theo lộ trình phù hợp với bạn</span>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-3">Luyện 4 Kỹ Năng</h4>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <Link
-                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
-                    href="/listening"
-                  >
-                    Luyện Nghe chép chính tả
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
-                    href="/speaking"
-                  >
-                    Luyện nói chuẩn âm vị
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
-                    href="/reading"
-                  >
-                    Luyện Đọc tra từ thông minh
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
-                    href="/writing"
-                  >
-                    Luyện Viết gợi ý sửa lỗi
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-3">Chương Trình Học</h4>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <Link
-                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
-                    href="/courses"
-                  >
-                    Khóa học cốt lõi
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
-                    href="/exams"
-                  >
-                    Thi thử TOEIC Full Test
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
-                    href="/courses"
-                  >
-                    Đánh giá trình độ ban đầu
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
-                    href="/market"
-                  >
-                    Gói hội viên &amp; Bánh Mì
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-3">Hỗ Trợ &amp; Pháp Lý</h4>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <Link
-                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
-                    href="/help"
-                  >
-                    Trung tâm trợ giúp
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
-                    href="/privacy"
-                  >
-                    Chính sách bảo mật
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
-                    href="/terms"
-                  >
-                    Điều khoản sử dụng
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    className="text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
-                    href="/contact"
-                  >
-                    Liên hệ góp ý
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="pt-6 border-t border-slate-200/70 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
-            <p>© {new Date().getFullYear()} BreadTrans EdTech. Nền tảng tự học tiếng Anh phản xạ 4 kỹ năng.</p>
-            <div className="flex items-center gap-4">
-              <span>Phiên bản Web 2.4.0</span>
-              <span>•</span>
-              <span>Hệ thống trực tuyến</span>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
-import { useAuthStore } from "@/stores/authStore";
+import {
+  setAuthPersistenceMode,
+  useAuthStore,
+} from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQueryClient } from "@tanstack/react-query";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
@@ -69,6 +72,7 @@ export function QuickLoginModal({
       const res: any = await axiosClient.post("/auth/login", { email, password, deviceId });
       queryClient.clear();
       useGamificationStore.getState().reset();
+      setAuthPersistenceMode(true);
       setAuth(res.access_token, res.refresh_token, res.user);
 
       onClose();

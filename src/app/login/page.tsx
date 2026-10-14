@@ -4,7 +4,6 @@ import { useState, useEffect, useSyncExternalStore, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  Lock,
   Mail,
   KeyRound,
   Eye,
@@ -14,9 +13,13 @@ import {
   X,
   Info,
   Loader2,
+  ChevronDown,
 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
-import { useAuthStore } from "@/stores/authStore";
+import {
+  setAuthPersistenceMode,
+  useAuthStore,
+} from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { AuthShell } from "@/components/auth/AuthShell";
@@ -53,6 +56,7 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [showEmailLogin, setShowEmailLogin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [showReturnBanner, setShowReturnBanner] = useState(
@@ -107,6 +111,7 @@ function LoginForm() {
       useGamificationStore.getState().reset();
 
       // Set user session in authStore
+      setAuthPersistenceMode(rememberMe);
       setAuth(res.access_token, res.refresh_token, res.user);
       persistDeviceId(res.deviceId || deviceId);
       await hydrateSession(queryClient);
@@ -137,7 +142,7 @@ function LoginForm() {
     <>
       {/* Return URL Context Notification Banner */}
       {showReturnBanner && (
-        <div className="mb-4 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-200 dark:border-amber-900/60 p-3.5 rounded-2xl shadow-xs flex items-start justify-between gap-3 transition-all duration-200">
+        <div className="mx-auto mb-4 w-full max-w-[480px] bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-200 dark:border-amber-900/60 p-3.5 rounded-2xl shadow-xs flex items-start justify-between gap-3 transition-all duration-200">
           <div className="flex items-start gap-2.5 text-xs sm:text-sm leading-snug">
             <Info className="text-amber-600 dark:text-amber-400 size-5 shrink-0 mt-0.5" />
             <div>
@@ -157,18 +162,14 @@ function LoginForm() {
       )}
 
       {/* Authentication Card */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl p-6 sm:p-10 relative border border-amber-100 dark:border-slate-800">
+      <div className="relative mx-auto w-full max-w-[480px] overflow-hidden rounded-3xl border border-orange-100/90 bg-[radial-gradient(120%_80%_at_50%_0%,rgba(255,237,213,0.55)_0%,rgba(255,255,255,1)_55%)] p-8 shadow-[0_20px_50px_-12px_rgba(15,23,42,0.08),0_0_0_1px_rgba(251,146,60,0.08)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900 sm:p-10">
         {/* Header Info */}
-        <div className="text-center mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 flex items-center justify-center mx-auto mb-3 shadow-xs text-amber-700 dark:text-amber-400">
-            <Lock size={22} />
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-            Đăng nhập BreadTrans
+        <div className="mb-8 text-center">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-[30px]">
+            Chào mừng trở lại
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-            Chào mừng bạn quay trở lại! Tiếp tục hành trình học tiếng Anh của
-            bạn.
+          <p className="mt-2 text-[15px] text-slate-500 dark:text-slate-400">
+            Đăng nhập nhanh bằng Google để tiếp tục học.
           </p>
         </div>
 
@@ -179,7 +180,10 @@ function LoginForm() {
             className="mb-5 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-200 border border-rose-200 dark:border-rose-900/60 p-3.5 rounded-2xl text-sm font-medium flex items-center justify-between gap-3 animate-in fade-in duration-150"
           >
             <div className="flex items-center gap-2.5">
-              <AlertCircle size={18} className="text-rose-600 dark:text-rose-400 shrink-0" />
+              <AlertCircle
+                size={18}
+                className="text-rose-600 dark:text-rose-400 shrink-0"
+              />
               <span>{errorMsg}</span>
             </div>
             <button
@@ -193,8 +197,50 @@ function LoginForm() {
           </div>
         )}
 
-        {/* Form Elements */}
-        <form className="space-y-4" onSubmit={handleLogin}>
+        {/* Google-first sign in */}
+        <div className="mb-6">
+          <GoogleSignInButton
+            redirectUrl={safeRedirect}
+            onAccountLinkRequired={({ credential }) =>
+              setLinkModalData({ isOpen: true, credential })
+            }
+            onError={(msg) => setErrorMsg(msg)}
+          />
+        </div>
+
+        <div className="my-6 flex items-center gap-3" aria-hidden="true">
+          <span className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent dark:via-slate-700" />
+          <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+            hoặc
+          </span>
+          <span className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent dark:via-slate-700" />
+        </div>
+
+        <button
+          type="button"
+          aria-expanded={showEmailLogin}
+          aria-controls="email-login-panel"
+          onClick={() => setShowEmailLogin((current) => !current)}
+          className="group flex w-full flex-col items-center rounded-2xl px-3 py-3.5 text-center transition-all duration-200 hover:-translate-y-0.5 hover:bg-orange-50/70 hover:shadow-[0_8px_20px_-12px_rgba(234,88,12,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 active:translate-y-0 active:scale-[0.99] dark:hover:bg-slate-800/60"
+        >
+          <span className="mb-0.5 block text-[13px] text-slate-400 dark:text-slate-500">
+            Đã có tài khoản email?
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 transition-colors group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white sm:text-[14px]">
+            Đăng nhập bằng email/mật khẩu
+            <ChevronDown
+              size={16}
+              className={`transition-transform duration-200 ${
+                showEmailLogin ? "rotate-180" : ""
+              }`}
+              aria-hidden="true"
+            />
+          </span>
+        </button>
+
+        {showEmailLogin && (
+          <div id="email-login-panel" className="mt-4">
+            <form className="space-y-4" onSubmit={handleLogin}>
           {/* Email Input Field */}
           <div className="space-y-1.5">
             <label
@@ -271,7 +317,7 @@ function LoginForm() {
               <span>Ghi nhớ đăng nhập</span>
             </label>
             <Link
-              href="mailto:support@breadtrans.edu.vn?subject=Y%C3%AAu%20c%E1%BA%A7u%20h%E1%BB%97%20tr%E1%BB%A3%20%C4%91%E1%BA%B7t%20l%E1%BA%A1i%20m%E1%BA%ADt%20kh%E1%BA%A9u"
+              href="/forgot-password"
               className="font-bold text-amber-700 dark:text-amber-400 hover:underline transition-colors"
             >
               Quên mật khẩu?
@@ -297,38 +343,24 @@ function LoginForm() {
               </>
             )}
           </button>
-        </form>
-
-        {/* Divider with Text */}
-        <div className="relative my-6 flex items-center justify-center">
-          <div className="w-full bg-slate-200 dark:bg-slate-800 h-[1px]" />
-          <span className="absolute px-3 bg-white dark:bg-slate-900 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-            Hoặc tiếp tục với
-          </span>
-        </div>
-
-        {/* Social SSO: Google Authentication */}
-        <div className="space-y-2">
-          <GoogleSignInButton
-            redirectUrl={safeRedirect}
-            onAccountLinkRequired={({ credential }) =>
-              setLinkModalData({ isOpen: true, credential })
-            }
-            onError={(msg) => setErrorMsg(msg)}
-          />
-        </div>
+            </form>
+          </div>
+        )}
 
         {/* Footer Card Direction */}
-        <div className="mt-6 text-center pt-3 bg-slate-50/80 dark:bg-slate-850/60 border border-slate-100 dark:border-slate-800 rounded-2xl p-3.5">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            Chưa có tài khoản BreadTrans?{" "}
-            <Link
-              href={registerHref}
-              className="font-bold text-amber-700 dark:text-amber-400 hover:underline ml-1 inline-block"
-            >
-              Đăng ký ngay miễn phí
-            </Link>
-          </p>
+        <div className="mt-7 flex flex-wrap items-center justify-center gap-1.5 border-t border-slate-100 pt-6 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+          <span>Chưa có tài khoản BreadTrans?</span>
+          <Link
+            href={registerHref}
+            className="group inline-flex items-center gap-1 font-semibold text-orange-600 transition-colors hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300"
+          >
+            Đăng ký ngay miễn phí
+            <ArrowRight
+              size={14}
+              className="transition-transform duration-200 group-hover:translate-x-0.5"
+              aria-hidden="true"
+            />
+          </Link>
         </div>
       </div>
 
@@ -345,7 +377,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <AuthShell>
+    <AuthShell contentClassName="max-w-xl">
       <Suspense
         fallback={
           <div className="p-12 text-center text-sm text-on-surface-variant animate-pulse">

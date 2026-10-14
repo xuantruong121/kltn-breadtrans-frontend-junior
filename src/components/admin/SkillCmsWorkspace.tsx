@@ -9,14 +9,19 @@ import {
   FilePlus2,
   Loader2,
   Plus,
+  Search,
   Save,
   Send,
   Trash2,
   Upload,
   Volume2,
+  X,
 } from "lucide-react";
+
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
+import ImageUploadField from "@/components/admin/ImageUploadField";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 type Domain = "listening" | "reading" | "writing";
 type ListeningSegment = {
@@ -47,9 +52,24 @@ const meta: Record<Domain, { label: string; type: string }> = {
   writing: { label: "Writing", type: "WRITING_EMAIL" },
 };
 
-const emptySegment = (): ListeningSegment => ({ speaker: "", text: "", translation: "" });
+const publicationStatusLabel = (status?: string) =>
+  status === "PUBLISHED" ? "Đã xuất bản" : "Bản nháp";
+
+const writingTypeLabel = (type: string) =>
+  type === "WRITING_PICTURE" ? "Viết theo tranh" : "Viết email";
+
+const emptySegment = (): ListeningSegment => ({
+  speaker: "",
+  text: "",
+  translation: "",
+});
 const emptyQuestion = (domain: Domain): QuestionDraft => ({
-  type: domain === "listening" ? "DICTATION" : domain === "writing" ? "WRITING" : "MULTIPLE_CHOICE",
+  type:
+    domain === "listening"
+      ? "DICTATION"
+      : domain === "writing"
+        ? "WRITING"
+        : "MULTIPLE_CHOICE",
   prompt: "",
   options: "",
   correctIndex: "",
@@ -69,16 +89,29 @@ function unwrap<T>(value: any): T {
 }
 
 function questionToDraft(question: any): QuestionDraft {
-  const content = question?.content && typeof question.content === "object" ? question.content : {};
+  const content =
+    question?.content && typeof question.content === "object"
+      ? question.content
+      : {};
   const range = Array.isArray(content.wordRange) ? content.wordRange : [];
   return {
     ...emptyQuestion(question?.type === "WRITING" ? "writing" : "listening"),
     id: question.id,
     type: question.type || "MULTIPLE_CHOICE",
-    prompt: String(content.prompt ?? content.text ?? content.correctAnswer ?? content.audioText ?? ""),
+    prompt: String(
+      content.prompt ??
+        content.text ??
+        content.correctAnswer ??
+        content.audioText ??
+        "",
+    ),
     options: Array.isArray(content.options) ? content.options.join("\n") : "",
-    correctIndex: content.correctIndex === undefined ? "" : String(content.correctIndex),
-    explanation: typeof content.explanation === "string" ? content.explanation : String(content.explanation?.vi ?? ""),
+    correctIndex:
+      content.correctIndex === undefined ? "" : String(content.correctIndex),
+    explanation:
+      typeof content.explanation === "string"
+        ? content.explanation
+        : String(content.explanation?.vi ?? ""),
     segments: Array.isArray(content.transcriptSegments)
       ? content.transcriptSegments.map((segment: any) => ({
           speaker: String(segment?.speaker ?? segment?.speakerId ?? ""),
@@ -96,7 +129,9 @@ function questionToDraft(question: any): QuestionDraft {
         : "",
     wordMin: range[0] === undefined ? "" : String(range[0]),
     wordMax: range[1] === undefined ? "" : String(range[1]),
-    sampleSentences: Array.isArray(content.sampleSentences) ? content.sampleSentences.join("\n") : "",
+    sampleSentences: Array.isArray(content.sampleSentences)
+      ? content.sampleSentences.join("\n")
+      : "",
   };
 }
 
@@ -121,6 +156,13 @@ export default function SkillCmsWorkspace({
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
+    "ALL" | "DRAFT" | "PUBLISHED"
+  >("ALL");
+  const [pendingPublicationStatus, setPendingPublicationStatus] = useState<
+    "DRAFT" | "PUBLISHED" | null
+  >(null);
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -129,7 +171,249 @@ export default function SkillCmsWorkspace({
     passage: "",
     type: meta[domain].type,
   });
-  const [question, setQuestion] = useState<QuestionDraft>(emptyQuestion(domain));
+  const [question, setQuestion] = useState<QuestionDraft>(
+    emptyQuestion(domain),
+  );
+
+  // Contextual AI state: Reading
+  const [isPassageAiOpen, setIsPassageAiOpen] = useState(false);
+  const [isPassageAiLoading, setIsPassageAiLoading] = useState(false);
+  const [passageAiTopic, setPassageAiTopic] = useState("");
+  const [passageAiSuggestion, setPassageAiSuggestion] = useState<{
+    title: string;
+    passage: string;
+  } | null>(null);
+
+  const [isQuestionsAiOpen, setIsQuestionsAiOpen] = useState(false);
+  const [isQuestionsAiLoading, setIsQuestionsAiLoading] = useState(false);
+  const [readingAiCount, setReadingAiCount] = useState(3);
+  const [readingAiCandidates, setReadingAiCandidates] = useState<
+    Array<{
+      prompt: string;
+      options: string[];
+      correctIndex: number;
+      explanation: string;
+      questionType?: string;
+    }>
+  >([]);
+
+  // Contextual AI state: Listening / Writing. Suggestions remain local until the existing save action.
+  const [isListeningContentAiOpen, setIsListeningContentAiOpen] =
+    useState(false);
+  const [isListeningContentAiLoading, setIsListeningContentAiLoading] =
+    useState(false);
+  const [listeningContentAiSuggestion, setListeningContentAiSuggestion] =
+    useState<{
+      mode: "DIALOGUE" | "DICTATION";
+      text?: string;
+      turns?: ListeningSegment[];
+    } | null>(null);
+  const [isListeningQuestionsAiOpen, setIsListeningQuestionsAiOpen] =
+    useState(false);
+  const [isListeningQuestionsAiLoading, setIsListeningQuestionsAiLoading] =
+    useState(false);
+  const [listeningQuestionsAiCount, setListeningQuestionsAiCount] = useState(3);
+  const [listeningQuestionsAiCandidates, setListeningQuestionsAiCandidates] =
+    useState<
+      Array<{
+        prompt: string;
+        options: string[];
+        correctIndex: number;
+        explanation: string;
+      }>
+    >([]);
+  const [isWritingAiOpen, setIsWritingAiOpen] = useState(false);
+  const [isWritingAiLoading, setIsWritingAiLoading] = useState(false);
+  const [writingAiSuggestion, setWritingAiSuggestion] = useState<{
+    taskType: string;
+    prompt: string;
+    scenario?: string;
+    recipient?: string;
+    context?: string;
+    wordRange?: [number, number];
+    keywords?: string[];
+    sampleSentences?: string[];
+  } | null>(null);
+
+  const handleSuggestPassage = async () => {
+    const topic = passageAiTopic.trim() || form.title.trim();
+    if (!topic) {
+      toast.error("Vui lòng nhập chủ đề cho bài đọc");
+      return;
+    }
+    setIsPassageAiLoading(true);
+    try {
+      const res: any = await axiosClient.post(
+        "/admin/reading/ai/suggest-passage",
+        {
+          topic,
+          level: form.level || "A2",
+          targetLength: 180,
+        },
+      );
+      const data = res?.data || res;
+      setPassageAiSuggestion(data);
+      toast.success("Đã nhận gợi ý đoạn đọc từ AI");
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || "Không thể lấy gợi ý đoạn đọc từ AI.",
+      );
+    } finally {
+      setIsPassageAiLoading(false);
+    }
+  };
+
+  const handleSuggestReadingQuestions = async () => {
+    if (!form.passage.trim()) {
+      toast.error("Vui lòng nhập hoặc có đoạn đọc trước khi tạo câu hỏi");
+      return;
+    }
+    setIsQuestionsAiLoading(true);
+    try {
+      const res: any = await axiosClient.post(
+        "/admin/reading/ai/suggest-questions",
+        {
+          passage: form.passage.trim(),
+          level: form.level || "A2",
+          count: Number(readingAiCount),
+        },
+      );
+      const data = res?.data || res;
+      if (Array.isArray(data?.candidates)) {
+        setReadingAiCandidates(data.candidates);
+        toast.success(`AI đã gợi ý ${data.candidates.length} câu hỏi đọc hiểu`);
+      } else {
+        toast.error("Không nhận được câu hỏi hợp lệ từ AI");
+      }
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message ||
+          "Không thể tạo câu hỏi đọc hiểu lúc này.",
+      );
+    } finally {
+      setIsQuestionsAiLoading(false);
+    }
+  };
+
+  const listeningMode = (): "DIALOGUE" | "DICTATION" =>
+    question.type === "DIALOGUE" ? "DIALOGUE" : "DICTATION";
+
+  const listeningSourceText = () =>
+    question.type === "DIALOGUE"
+      ? question.segments
+          .filter((segment) => segment.text.trim())
+          .map(
+            (segment) =>
+              `${segment.speaker.trim() || "Speaker"}: ${segment.text.trim()}`,
+          )
+          .join("\n")
+      : question.prompt.trim();
+
+  const handleSuggestListeningContent = async () => {
+    setIsListeningContentAiLoading(true);
+    try {
+      const response: any = await axiosClient.post(
+        "/admin/listening/ai/suggest-content",
+        {
+          mode: listeningMode(),
+          level: form.level || "A2",
+          topic: form.title.trim() || undefined,
+          currentText: question.prompt.trim() || undefined,
+          currentTurns: question.segments.filter((segment) =>
+            segment.text.trim(),
+          ),
+        },
+      );
+      const data = response?.data || response;
+      if (data?.mode === "DIALOGUE" && Array.isArray(data.turns)) {
+        setListeningContentAiSuggestion({
+          mode: "DIALOGUE",
+          turns: data.turns.map((turn: any) => ({
+            speaker: String(turn.speaker || ""),
+            text: String(turn.text || ""),
+            translation: String(turn.translation || ""),
+          })),
+        });
+      } else if (data?.mode === "DICTATION" && typeof data.text === "string") {
+        setListeningContentAiSuggestion({ mode: "DICTATION", text: data.text });
+      } else {
+        toast.error("Không nhận được transcript hợp lệ từ AI");
+        return;
+      }
+      toast.success("Đã nhận transcript nháp. Hãy kiểm tra trước khi lưu.");
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message ||
+          "Không thể gợi ý nội dung nghe lúc này.",
+      );
+    } finally {
+      setIsListeningContentAiLoading(false);
+    }
+  };
+
+  const handleSuggestListeningQuestions = async () => {
+    const sourceText = listeningSourceText();
+    if (!sourceText) {
+      toast.error("Vui lòng nhập transcript trước khi tạo câu hỏi.");
+      return;
+    }
+    setIsListeningQuestionsAiLoading(true);
+    try {
+      const response: any = await axiosClient.post(
+        "/admin/listening/ai/suggest-questions",
+        {
+          mode: listeningMode(),
+          sourceText,
+          level: form.level || "A2",
+          count: Number(listeningQuestionsAiCount),
+        },
+      );
+      const data = response?.data || response;
+      if (!Array.isArray(data?.candidates)) {
+        toast.error("Không nhận được câu hỏi nghe hợp lệ từ AI");
+        return;
+      }
+      setListeningQuestionsAiCandidates(data.candidates);
+      toast.success(`AI đã gợi ý ${data.candidates.length} câu hỏi nghe nháp.`);
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || "Không thể tạo câu hỏi nghe lúc này.",
+      );
+    } finally {
+      setIsListeningQuestionsAiLoading(false);
+    }
+  };
+
+  const handleSuggestWritingTask = async () => {
+    setIsWritingAiLoading(true);
+    try {
+      const response: any = await axiosClient.post(
+        "/admin/writing/ai/suggest-task",
+        {
+          taskType: question.taskType.trim() || "EMAIL",
+          level: question.level.trim() || form.level || "A2",
+          topic: form.title.trim() || undefined,
+          currentPrompt: question.prompt.trim() || undefined,
+          wordMin: question.wordMin ? Number(question.wordMin) : undefined,
+          wordMax: question.wordMax ? Number(question.wordMax) : undefined,
+        },
+      );
+      const data = response?.data || response;
+      if (!data?.prompt || !data?.taskType) {
+        toast.error("Không nhận được đề bài Writing hợp lệ từ AI");
+        return;
+      }
+      setWritingAiSuggestion(data);
+      toast.success("Đã nhận đề bài Writing nháp. Hãy kiểm tra trước khi lưu.");
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message ||
+          "Không thể gợi ý đề bài Writing lúc này.",
+      );
+    } finally {
+      setIsWritingAiLoading(false);
+    }
+  };
 
   const title = useMemo(
     () =>
@@ -144,9 +428,13 @@ export default function SkillCmsWorkspace({
   const loadList = async () => {
     setLoading(true);
     try {
-      setItems(unwrap<any[]>(await axiosClient.get(`/admin/skill-content/${domain}`)));
+      setItems(
+        unwrap<any[]>(await axiosClient.get(`/admin/skill-content/${domain}`)),
+      );
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Không thể tải nội dung CMS");
+      toast.error(
+        error?.response?.data?.message || "Không thể tải nội dung CMS",
+      );
     } finally {
       setLoading(false);
     }
@@ -200,7 +488,10 @@ export default function SkillCmsWorkspace({
         type: domain === "writing" ? form.type : undefined,
       };
       const saved = id
-        ? await axiosClient.patch(`/admin/skill-content/${domain}/${id}`, payload)
+        ? await axiosClient.patch(
+            `/admin/skill-content/${domain}/${id}`,
+            payload,
+          )
         : await axiosClient.post(`/admin/skill-content/${domain}`, payload);
       const savedItem = unwrap<any>(saved);
       toast.success("Đã lưu bản nháp");
@@ -235,24 +526,41 @@ export default function SkillCmsWorkspace({
           prompt: question.prompt.trim(),
           taskType: question.taskType.trim() || undefined,
           level: question.level.trim() || undefined,
-          imageUrl: pictureTask ? question.imageUrl.trim() || undefined : undefined,
-          keywords: pictureTask
-            ? question.keywords.split("\n").map((value) => value.trim()).filter(Boolean)
+          imageUrl: pictureTask
+            ? question.imageUrl.trim() || undefined
             : undefined,
-          wordRange: (!pictureTask || taskType === "SENTENCE") && question.wordMin && question.wordMax
-            ? [Number(question.wordMin), Number(question.wordMax)]
-            : essayTask && question.wordMin && question.wordMax
+          keywords: pictureTask
+            ? question.keywords
+                .split("\n")
+                .map((value) => value.trim())
+                .filter(Boolean)
+            : undefined,
+          wordRange:
+            (!pictureTask || taskType === "SENTENCE") &&
+            question.wordMin &&
+            question.wordMax
               ? [Number(question.wordMin), Number(question.wordMax)]
-              : undefined,
+              : essayTask && question.wordMin && question.wordMax
+                ? [Number(question.wordMin), Number(question.wordMax)]
+                : undefined,
           sampleSentences: pictureTask
-            ? question.sampleSentences.split("\n").map((value) => value.trim()).filter(Boolean)
+            ? question.sampleSentences
+                .split("\n")
+                .map((value) => value.trim())
+                .filter(Boolean)
             : undefined,
           explanation: question.explanation.trim() || undefined,
         };
         if (question.id) {
-          await axiosClient.patch(`/admin/skill-content/writing/${id}/questions/${question.id}`, payload);
+          await axiosClient.patch(
+            `/admin/skill-content/writing/${id}/questions/${question.id}`,
+            payload,
+          );
         } else {
-          await axiosClient.post(`/admin/skill-content/writing/${id}/questions`, payload);
+          await axiosClient.post(
+            `/admin/skill-content/writing/${id}/questions`,
+            payload,
+          );
         }
       } else {
         const content: Record<string, unknown> = {
@@ -261,9 +569,12 @@ export default function SkillCmsWorkspace({
           explanation: question.explanation.trim() || undefined,
         };
         if (domain === "listening") {
-          if (question.type === "DICTATION") content.correctAnswer = question.prompt.trim();
+          if (question.type === "DICTATION")
+            content.correctAnswer = question.prompt.trim();
           if (question.type === "DIALOGUE") {
-            const segments = question.segments.filter((segment) => segment.speaker.trim() && segment.text.trim());
+            const segments = question.segments.filter(
+              (segment) => segment.speaker.trim() && segment.text.trim(),
+            );
             if (segments.length < 2) {
               toast.error("Dialogue cần ít nhất 2 lượt lời");
               return;
@@ -271,12 +582,21 @@ export default function SkillCmsWorkspace({
             content.transcriptSegments = segments.map((segment) => ({
               speaker: segment.speaker.trim(),
               text: segment.text.trim(),
-              ...(segment.translation.trim() ? { translation: segment.translation.trim() } : {}),
+              ...(segment.translation.trim()
+                ? { translation: segment.translation.trim() }
+                : {}),
             }));
           }
         }
-        if (domain === "reading" && question.options.trim()) {
-          content.options = question.options.split("\n").map((value) => value.trim()).filter(Boolean);
+        if (
+          (domain === "reading" ||
+            (domain === "listening" && question.type === "MULTIPLE_CHOICE")) &&
+          question.options.trim()
+        ) {
+          content.options = question.options
+            .split("\n")
+            .map((value) => value.trim())
+            .filter(Boolean);
           content.correctIndex = Number(question.correctIndex);
         }
         const payload = { type: question.type, content };
@@ -310,7 +630,9 @@ export default function SkillCmsWorkspace({
     if (!id) return;
     setBusy(true);
     try {
-      await axiosClient.delete(`/admin/skill-content/${domain}/${id}/questions/${questionId}`);
+      await axiosClient.delete(
+        `/admin/skill-content/${domain}/${id}/questions/${questionId}`,
+      );
       toast.success("Đã xóa câu hỏi");
       setPendingDeleteId(null);
       await loadItem();
@@ -325,13 +647,19 @@ export default function SkillCmsWorkspace({
     if (!id) return;
     setBusy(true);
     try {
-      const check = unwrap<any>(await axiosClient.get(`/admin/skill-content/${domain}/${id}/validate`));
+      const check = unwrap<any>(
+        await axiosClient.get(`/admin/skill-content/${domain}/${id}/validate`),
+      );
       if (!check.valid) {
         toast.error(check.errors.join("\n"));
         return;
       }
-      await axiosClient.post(`/admin/skill-content/${domain}/${id}/publish`, { status });
-      toast.success(status === "PUBLISHED" ? "Đã xuất bản" : "Đã chuyển về bản nháp");
+      await axiosClient.post(`/admin/skill-content/${domain}/${id}/publish`, {
+        status,
+      });
+      toast.success(
+        status === "PUBLISHED" ? "Đã xuất bản" : "Đã chuyển về bản nháp",
+      );
       await loadItem();
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Không thể xuất bản");
@@ -342,7 +670,11 @@ export default function SkillCmsWorkspace({
 
   const refreshArtifacts = async () => {
     if (!id || domain !== "listening") return;
-    setArtifacts(unwrap<any[]>(await axiosClient.get(`/admin/skill-content/listening/${id}/audio`)));
+    setArtifacts(
+      unwrap<any[]>(
+        await axiosClient.get(`/admin/skill-content/listening/${id}/audio`),
+      ),
+    );
   };
 
   const previewArtifact = async (artifactId: number) => {
@@ -356,27 +688,41 @@ export default function SkillCmsWorkspace({
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setPreviewUrl(URL.createObjectURL(response as unknown as Blob));
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Không thể tải audio preview");
+      toast.error(
+        error?.response?.data?.message || "Không thể tải audio preview",
+      );
     } finally {
       setBusy(false);
     }
   };
 
-  const audioAction = async (action: "validate" | "generate-preview" | "approve" | "publish", artifactId?: number) => {
+  const audioAction = async (
+    action: "validate" | "generate-preview" | "approve" | "publish",
+    artifactId?: number,
+  ) => {
     if (!id) return;
     setBusy(true);
     try {
       const path = artifactId
         ? `/admin/skill-content/listening/${id}/audio/${artifactId}/${action}`
         : `/admin/skill-content/listening/${id}/audio/${action}`;
-      const response = await (action === "validate" || action === "generate-preview"
+      const response = await (action === "validate" ||
+      action === "generate-preview"
         ? axiosClient.post(path)
         : axiosClient.post(path));
       const result = unwrap<any>(response);
-      toast.success(action === "validate" ? (result.valid ? "Transcript hợp lệ" : "Transcript chưa hợp lệ") : "Đã cập nhật audio artifact");
+      toast.success(
+        action === "validate"
+          ? result.valid
+            ? "Transcript hợp lệ"
+            : "Transcript chưa hợp lệ"
+          : "Đã cập nhật audio artifact",
+      );
       await refreshArtifacts();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Không thể thực hiện thao tác audio");
+      toast.error(
+        error?.response?.data?.message || "Không thể thực hiện thao tác audio",
+      );
     } finally {
       setBusy(false);
     }
@@ -388,9 +734,13 @@ export default function SkillCmsWorkspace({
     body.append("file", file);
     setBusy(true);
     try {
-      await axiosClient.post(`/admin/skill-content/listening/${id}/questions/${questionId}/audio-assets`, body, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await axiosClient.post(
+        `/admin/skill-content/listening/${id}/questions/${questionId}/audio-assets`,
+        body,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        },
+      );
       toast.success("Đã tải audio câu hỏi lên R2");
       await loadItem();
     } catch (error: any) {
@@ -404,50 +754,146 @@ export default function SkillCmsWorkspace({
     if (!id) return;
     setBusy(true);
     try {
-      await axiosClient.post(`/admin/skill-content/listening/${id}/questions/${questionId}/audio-assets/generate-dialogue`);
+      await axiosClient.post(
+        `/admin/skill-content/listening/${id}/questions/${questionId}/audio-assets/generate-dialogue`,
+      );
       toast.success("Đã sinh audio Dialogue");
       await loadItem();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Không thể sinh audio Dialogue");
+      toast.error(
+        error?.response?.data?.message || "Không thể sinh audio Dialogue",
+      );
     } finally {
       setBusy(false);
     }
   };
 
-  if (loading) return <div className="flex min-h-64 items-center justify-center"><Loader2 className="animate-spin text-slate-600" /></div>;
+  if (loading)
+    return (
+      <div className="flex min-h-64 items-center justify-center">
+        <Loader2 className="animate-spin text-slate-600" />
+      </div>
+    );
 
   if (mode === "list") {
+    const visibleItems = items.filter((content) => {
+      const query = searchTerm.trim().toLocaleLowerCase("vi");
+      const searchable = [
+        content.title,
+        content.description,
+        content.level,
+        content.type,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLocaleLowerCase("vi");
+      const status = content.publicationStatus || "DRAFT";
+      return (
+        (!query || searchable.includes(query)) &&
+        (statusFilter === "ALL" || status === statusFilter)
+      );
+    });
+
     return (
       <main className="mx-auto max-w-6xl space-y-6 p-6">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[.18em] text-slate-500">Skill CMS</p>
-            <h1 className="mt-2 text-3xl font-semibold text-slate-950">{title}</h1>
-            <p className="mt-1 text-sm text-slate-500">Tạo, kiểm tra và xuất bản nội dung theo đúng runtime learner.</p>
+            <p className="text-xs font-bold uppercase tracking-[.18em] text-slate-500">
+              Skill CMS
+            </p>
+            <h1 className="mt-2 text-3xl font-semibold text-slate-950">
+              {title}
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Tạo, kiểm tra và xuất bản nội dung theo đúng runtime learner.
+            </p>
           </div>
-          <button onClick={() => router.push(`/admin/${domain}/new`)} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white">
+          <button
+            onClick={() => router.push(`/admin/${domain}/new`)}
+            className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white"
+          >
             <FilePlus2 size={16} /> Tạo bản nháp
           </button>
         </header>
+        <section className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row">
+          <label className="relative min-w-0 flex-1">
+            <span className="sr-only">Tìm nội dung {meta[domain].label}</span>
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              size={18}
+              aria-hidden="true"
+            />
+            <input
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Tìm theo tiêu đề, mô tả, trình độ..."
+              className="min-h-11 w-full rounded-lg border border-slate-200 py-2 pl-10 pr-3 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+            />
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            <span className="sr-only">Lọc theo trạng thái</span>
+            <select
+              value={statusFilter}
+              onChange={(event) =>
+                setStatusFilter(
+                  event.target.value as "ALL" | "DRAFT" | "PUBLISHED",
+                )
+              }
+              className="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200 sm:w-44"
+            >
+              <option value="ALL">Tất cả trạng thái</option>
+              <option value="DRAFT">Bản nháp</option>
+              <option value="PUBLISHED">Đã xuất bản</option>
+            </select>
+          </label>
+        </section>
         <div className="grid gap-4 md:grid-cols-2">
-          {items.map((content) => (
-            <article key={content.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          {visibleItems.map((content) => (
+            <article
+              key={content.id}
+              className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+            >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="font-semibold text-slate-950">{content.title}</h2>
-                  <p className="mt-1 text-sm text-slate-500">{content.description || "Chưa có mô tả"}</p>
+                  <h2 className="font-semibold text-slate-950">
+                    {content.title}
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {content.description || "Chưa có mô tả"}
+                  </p>
                 </div>
-                <span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${content.publicationStatus === "PUBLISHED" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
-                  {content.publicationStatus || "DRAFT"}
+                <span
+                  className={`rounded-md px-2.5 py-1 text-xs font-semibold ${content.publicationStatus === "PUBLISHED" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}
+                >
+                  {publicationStatusLabel(content.publicationStatus)}
                 </span>
               </div>
               <div className="mt-5 flex items-center justify-between text-xs text-slate-500">
-                <span>{content._count?.questions ?? content.questions?.length ?? 0} câu hỏi</span>
-                <button onClick={() => router.push(`/admin/${domain}/${content.id}`)} className="min-h-10 rounded-lg border border-slate-200 px-3 py-2 font-semibold text-slate-800">Mở editor</button>
+                <span>
+                  {content._count?.questions ?? content.questions?.length ?? 0}{" "}
+                  câu hỏi
+                </span>
+                <button
+                  onClick={() => router.push(`/admin/${domain}/${content.id}`)}
+                  className="min-h-10 rounded-lg border border-slate-200 px-3 py-2 font-semibold text-slate-800"
+                >
+                  Mở editor
+                </button>
               </div>
             </article>
           ))}
-          {items.length === 0 && <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500">Chưa có nội dung {domain}.</div>}
+          {items.length === 0 && (
+            <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500">
+              Chưa có nội dung {meta[domain].label}. Hãy tạo bản nháp đầu tiên
+              để bắt đầu.
+            </div>
+          )}
+          {items.length > 0 && visibleItems.length === 0 && (
+            <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500">
+              Không tìm thấy nội dung phù hợp. Hãy đổi từ khóa hoặc bộ lọc trạng
+              thái.
+            </div>
+          )}
         </div>
       </main>
     );
@@ -458,58 +904,260 @@ export default function SkillCmsWorkspace({
   const isListening = domain === "listening";
   const writingTaskType = question.taskType.trim().toUpperCase();
   const isPictureWriting = isWriting && form.type === "WRITING_PICTURE";
-  const isEssayWriting = isWriting && [
-    "PROPOSAL",
-    "OPINION",
-    "ESSAY",
-    "OPINION_ESSAY",
-    "ANALYTICAL_RESPONSE",
-    "ARGUMENT",
-  ].includes(writingTaskType);
+  const isEssayWriting =
+    isWriting &&
+    [
+      "PROPOSAL",
+      "OPINION",
+      "ESSAY",
+      "OPINION_ESSAY",
+      "ANALYTICAL_RESPONSE",
+      "ARGUMENT",
+    ].includes(writingTaskType);
 
   return (
     <main className="mx-auto max-w-6xl space-y-6 p-6">
-      <button onClick={() => router.push(`/admin/${domain}`)} className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-500"><ArrowLeft size={16} /> Danh sách</button>
+      <button
+        onClick={() => router.push(`/admin/${domain}`)}
+        className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-500"
+      >
+        <ArrowLeft size={16} /> Danh sách
+      </button>
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[.18em] text-slate-500">{meta[domain].label}</p>
-          <h1 className="mt-2 text-3xl font-semibold text-slate-950">{title}</h1>
-          <p className="mt-1 text-sm text-slate-500">Trạng thái: {item?.publicationStatus || "DRAFT"}</p>
+          <p className="text-xs font-bold uppercase tracking-[.18em] text-slate-500">
+            {meta[domain].label}
+          </p>
+          <h1 className="mt-2 text-3xl font-semibold text-slate-950">
+            {title}
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Trạng thái: {publicationStatusLabel(item?.publicationStatus)}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button onClick={() => void saveContent()} disabled={busy} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold"><Save size={16} /> Lưu</button>
-          <button onClick={() => void publish(item?.publicationStatus === "PUBLISHED" ? "DRAFT" : "PUBLISHED")} disabled={busy} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white"><Send size={16} /> {item?.publicationStatus === "PUBLISHED" ? "Gỡ xuất bản" : "Kiểm tra & xuất bản"}</button>
+          <button
+            onClick={() => void saveContent()}
+            disabled={busy}
+            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold"
+          >
+            <Save size={16} /> Lưu
+          </button>
+          <button
+            onClick={() =>
+              setPendingPublicationStatus(
+                item?.publicationStatus === "PUBLISHED" ? "DRAFT" : "PUBLISHED",
+              )
+            }
+            disabled={busy}
+            className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white"
+          >
+            <Send size={16} />{" "}
+            {item?.publicationStatus === "PUBLISHED"
+              ? "Chuyển về bản nháp"
+              : "Kiểm tra & xuất bản"}
+          </button>
         </div>
       </header>
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="font-semibold text-slate-950">Thông tin nội dung</h2>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <label className="text-sm font-medium">Tiêu đề<input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} className={inputClassName()} /></label>
-          <label className="text-sm font-medium">Trình độ<input value={form.level} onChange={(event) => setForm({ ...form, level: event.target.value })} className={inputClassName()} /></label>
-          <label className="text-sm font-medium md:col-span-2">Mô tả<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} className={`${inputClassName()} min-h-20`} /></label>
-          {isWriting && <label className="text-sm font-medium">Writing quiz type<select value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value })} className={inputClassName()}><option value="WRITING_PICTURE">WRITING_PICTURE</option><option value="WRITING_EMAIL">WRITING_EMAIL</option></select></label>}
-          {domain === "reading" && <label className="text-sm font-medium md:col-span-2">Đoạn đọc<textarea value={form.passage} onChange={(event) => setForm({ ...form, passage: event.target.value })} className={`${inputClassName()} min-h-40`} /></label>}
+          <label className="text-sm font-medium">
+            Tiêu đề
+            <input
+              value={form.title}
+              onChange={(event) =>
+                setForm({ ...form, title: event.target.value })
+              }
+              className={inputClassName()}
+            />
+          </label>
+          <label className="text-sm font-medium">
+            Trình độ
+            <input
+              value={form.level}
+              onChange={(event) =>
+                setForm({ ...form, level: event.target.value })
+              }
+              className={inputClassName()}
+            />
+          </label>
+          <label className="text-sm font-medium md:col-span-2">
+            Mô tả
+            <textarea
+              value={form.description}
+              onChange={(event) =>
+                setForm({ ...form, description: event.target.value })
+              }
+              className={`${inputClassName()} min-h-20`}
+            />
+          </label>
+          {isWriting && (
+            <label className="text-sm font-medium">
+              Dạng bài viết
+              <select
+                value={form.type}
+                onChange={(event) =>
+                  setForm({ ...form, type: event.target.value })
+                }
+                className={inputClassName()}
+              >
+                <option value="WRITING_PICTURE">
+                  {writingTypeLabel("WRITING_PICTURE")}
+                </option>
+                <option value="WRITING_EMAIL">
+                  {writingTypeLabel("WRITING_EMAIL")}
+                </option>
+              </select>
+            </label>
+          )}
+          {(domain === "reading" ||
+            (isListening && question.type === "MULTIPLE_CHOICE")) && (
+            <div className="md:col-span-2 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">
+                  Đoạn đọc (Reading Passage)
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPassageAiTopic(form.title);
+                    setPassageAiSuggestion(null);
+                    setIsPassageAiOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white hover:bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 transition-colors"
+                >
+                  Gợi ý đoạn đọc
+                </button>
+              </div>
+              <textarea
+                value={form.passage}
+                onChange={(event) =>
+                  setForm({ ...form, passage: event.target.value })
+                }
+                className={`${inputClassName()} min-h-40 font-serif leading-relaxed`}
+                placeholder="Nhập hoặc dán nội dung đoạn văn tiếng Anh tại đây..."
+              />
+            </div>
+          )}
         </div>
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex items-center justify-between gap-4">
-          <div><h2 className="font-semibold text-slate-950">Câu hỏi</h2><p className="mt-1 text-sm text-slate-500">Dữ liệu được lưu vào đúng Question runtime hiện hành.</p></div>
-          <span className="text-sm text-slate-500">{questions.length} câu</span>
+          <div>
+            <h2 className="font-semibold text-slate-950">Câu hỏi</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Dữ liệu được lưu vào đúng Question runtime hiện hành.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {(domain === "reading" ||
+              (isListening && question.type === "MULTIPLE_CHOICE")) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setReadingAiCandidates([]);
+                  setIsQuestionsAiOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors"
+              >
+                Tạo câu hỏi nháp
+              </button>
+            )}
+            {isListening && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setListeningContentAiSuggestion(null);
+                    setIsListeningContentAiOpen(true);
+                  }}
+                  className="inline-flex min-h-10 items-center rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900 transition-colors hover:border-amber-300 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                >
+                  Gợi ý nội dung nghe
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setListeningQuestionsAiCandidates([]);
+                    setIsListeningQuestionsAiOpen(true);
+                  }}
+                  className="inline-flex min-h-10 items-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                >
+                  Tạo câu hỏi nháp
+                </button>
+              </>
+            )}
+            <span className="text-sm text-slate-500">
+              {questions.length} câu
+            </span>
+          </div>
         </div>
+
         <div className="mt-4 space-y-3">
           {questions.map((current: any, index: number) => (
-            <div key={current.id} className="rounded-lg border border-slate-200 p-4">
+            <div
+              key={current.id}
+              className="rounded-lg border border-slate-200 p-4"
+            >
               <div className="flex items-start justify-between gap-3">
-                <div><p className="text-xs font-semibold text-slate-500">Câu {index + 1} · {current.type}</p><p className="mt-1 text-sm text-slate-900">{questionToDraft(current).prompt || "Chưa có nội dung"}</p></div>
-                <div className="flex gap-2"><button onClick={() => setQuestion(questionToDraft(current))} className="min-h-10 rounded border border-slate-200 px-2.5 py-1 text-xs font-semibold">Sửa</button><button onClick={() => setPendingDeleteId(current.id)} className="min-h-10 rounded border border-rose-200 px-2.5 py-1 text-xs font-semibold text-rose-600" aria-label="Xóa câu hỏi"><Trash2 size={14} /></button></div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-500">
+                    Câu {index + 1} · {current.type}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-900">
+                    {questionToDraft(current).prompt || "Chưa có nội dung"}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setQuestion(questionToDraft(current))}
+                    className="min-h-10 rounded border border-slate-200 px-2.5 py-1 text-xs font-semibold"
+                  >
+                    Sửa
+                  </button>
+                  <button
+                    onClick={() => setPendingDeleteId(current.id)}
+                    className="min-h-10 rounded border border-rose-200 px-2.5 py-1 text-xs font-semibold text-rose-600"
+                    aria-label="Xóa câu hỏi"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
               {isListening && (
                 <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
-                  <span className="inline-flex items-center gap-1 text-xs text-slate-500"><Volume2 size={14} /> {current.audioAssets?.length ? `${current.audioAssets.length} bản audio` : "Chưa có audio câu hỏi"}</span>
-                  <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold"><Upload size={14} /> Tải audio<input type="file" accept="audio/*" className="sr-only" onChange={(event) => void uploadQuestionAudio(current.id, event.target.files?.[0])} /></label>
-                  {current.type === "DIALOGUE" && <button onClick={() => void generateDialogueAudio(current.id)} disabled={busy} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold"><FileAudio size={14} /> Sinh audio Dialogue</button>}
+                  <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+                    <Volume2 size={14} />{" "}
+                    {current.audioAssets?.length
+                      ? `${current.audioAssets.length} bản audio`
+                      : "Chưa có audio câu hỏi"}
+                  </span>
+                  <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold">
+                    <Upload size={14} /> Tải audio
+                    <input
+                      type="file"
+                      accept="audio/*"
+                      className="sr-only"
+                      onChange={(event) =>
+                        void uploadQuestionAudio(
+                          current.id,
+                          event.target.files?.[0],
+                        )
+                      }
+                    />
+                  </label>
+                  {current.type === "DIALOGUE" && (
+                    <button
+                      onClick={() => void generateDialogueAudio(current.id)}
+                      disabled={busy}
+                      className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold"
+                    >
+                      <FileAudio size={14} /> Sinh audio Dialogue
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -517,35 +1165,1434 @@ export default function SkillCmsWorkspace({
         </div>
 
         <div className="mt-5 grid gap-4 border-t border-slate-100 pt-5 md:grid-cols-2">
-          <label className="text-sm font-medium">Loại câu<select value={question.type} onChange={(event) => setQuestion({ ...question, type: event.target.value })} className={inputClassName()}>
-            {isListening ? <><option value="DICTATION">Dictation</option><option value="DIALOGUE">Dialogue</option><option value="MULTIPLE_CHOICE">Multiple choice</option></> : isWriting ? <option value="WRITING">Writing</option> : <option value="MULTIPLE_CHOICE">Multiple choice</option>}
-          </select></label>
-          <label className="text-sm font-medium">{isWriting ? "Đề bài / instruction" : "Nội dung / đề bài"}<textarea value={question.prompt} onChange={(event) => setQuestion({ ...question, prompt: event.target.value })} className={`${inputClassName()} min-h-24`} /></label>
+          <label className="text-sm font-medium">
+            Loại câu
+            <select
+              value={question.type}
+              onChange={(event) =>
+                setQuestion({ ...question, type: event.target.value })
+              }
+              className={inputClassName()}
+            >
+              {isListening ? (
+                <>
+                  <option value="DICTATION">Dictation</option>
+                  <option value="DIALOGUE">Dialogue</option>
+                  <option value="MULTIPLE_CHOICE">Multiple choice</option>
+                </>
+              ) : isWriting ? (
+                <option value="WRITING">Writing</option>
+              ) : (
+                <option value="MULTIPLE_CHOICE">Multiple choice</option>
+              )}
+            </select>
+          </label>
+          <div className="text-sm font-medium">
+            <span className="flex items-center justify-between gap-3">
+              <span>
+                {isWriting ? "Đề bài / instruction" : "Nội dung / đề bài"}
+              </span>
+              {isWriting && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setWritingAiSuggestion(null);
+                    setIsWritingAiOpen(true);
+                  }}
+                  className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-900 transition-colors hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                >
+                  Gợi ý đề bài
+                </button>
+              )}
+            </span>
+            <textarea
+              value={question.prompt}
+              onChange={(event) =>
+                setQuestion({ ...question, prompt: event.target.value })
+              }
+              className={`${inputClassName()} min-h-24`}
+            />
+          </div>
 
-          {isWriting && <>
-            <label className="text-sm font-medium">Task family<input value={question.taskType} onChange={(event) => setQuestion({ ...question, taskType: event.target.value })} placeholder={isPictureWriting ? "SENTENCE hoặc PICTURE_SENTENCE" : "EMAIL, OPINION hoặc PROPOSAL"} className={inputClassName()} /></label>
-            <label className="text-sm font-medium">Level<input value={question.level} onChange={(event) => setQuestion({ ...question, level: event.target.value })} placeholder="A2, B1, B2..." className={inputClassName()} /></label>
-            {isPictureWriting && <>
-              <div className="md:col-span-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">Picture task settings</div>
-              <label className="text-sm font-medium md:col-span-2">Image URL <span className="font-normal text-slate-500">(R2/S3 URL nếu task yêu cầu hình)</span><input value={question.imageUrl} onChange={(event) => setQuestion({ ...question, imageUrl: event.target.value })} className={inputClassName()} /></label>
-              <label className="text-sm font-medium">Keywords<textarea value={question.keywords} onChange={(event) => setQuestion({ ...question, keywords: event.target.value })} placeholder="Mỗi keyword một dòng" className={`${inputClassName()} min-h-24`} /></label>
-              <label className="text-sm font-medium">Sample sentences<textarea value={question.sampleSentences} onChange={(event) => setQuestion({ ...question, sampleSentences: event.target.value })} placeholder="Mỗi câu một dòng" className={`${inputClassName()} min-h-24`} /></label>
-            </>}
-            {!isPictureWriting && <div className="md:col-span-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">{isEssayWriting ? "Essay / opinion constraints" : "Email / message constraints"}</div>}
-            {(!isPictureWriting || writingTaskType === "SENTENCE") && <div className="grid grid-cols-2 gap-3"><label className="text-sm font-medium">Từ tối thiểu<input type="number" min="1" value={question.wordMin} onChange={(event) => setQuestion({ ...question, wordMin: event.target.value })} className={inputClassName()} /></label><label className="text-sm font-medium">Từ tối đa<input type="number" min="1" value={question.wordMax} onChange={(event) => setQuestion({ ...question, wordMax: event.target.value })} className={inputClassName()} /></label></div>}
-          </>}
+          {isWriting && (
+            <>
+              <label className="text-sm font-medium">
+                Task family
+                <input
+                  value={question.taskType}
+                  onChange={(event) =>
+                    setQuestion({ ...question, taskType: event.target.value })
+                  }
+                  placeholder={
+                    isPictureWriting
+                      ? "SENTENCE hoặc PICTURE_SENTENCE"
+                      : "EMAIL, OPINION hoặc PROPOSAL"
+                  }
+                  className={inputClassName()}
+                />
+              </label>
+              <label className="text-sm font-medium">
+                Level
+                <input
+                  value={question.level}
+                  onChange={(event) =>
+                    setQuestion({ ...question, level: event.target.value })
+                  }
+                  placeholder="A2, B1, B2..."
+                  className={inputClassName()}
+                />
+              </label>
+              {isPictureWriting && (
+                <>
+                  <div className="md:col-span-2">
+                    <ImageUploadField
+                      label="Hình ảnh miêu tả (Picture Task)"
+                      value={question.imageUrl}
+                      onChange={(url) =>
+                        setQuestion({ ...question, imageUrl: url })
+                      }
+                      helperText="Tải lên ảnh mô tả cho bài luyện viết. Hệ thống lưu trực tiếp lên Cloudflare R2."
+                    />
+                  </div>
+                  <label className="text-sm font-medium">
+                    Keywords
+                    <textarea
+                      value={question.keywords}
+                      onChange={(event) =>
+                        setQuestion({
+                          ...question,
+                          keywords: event.target.value,
+                        })
+                      }
+                      placeholder="Mỗi keyword một dòng"
+                      className={`${inputClassName()} min-h-24`}
+                    />
+                  </label>
+                  <label className="text-sm font-medium">
+                    Sample sentences
+                    <textarea
+                      value={question.sampleSentences}
+                      onChange={(event) =>
+                        setQuestion({
+                          ...question,
+                          sampleSentences: event.target.value,
+                        })
+                      }
+                      placeholder="Mỗi câu một dòng"
+                      className={`${inputClassName()} min-h-24`}
+                    />
+                  </label>
+                </>
+              )}
+              {!isPictureWriting && (
+                <div className="md:col-span-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+                  {isEssayWriting
+                    ? "Essay / opinion constraints"
+                    : "Email / message constraints"}
+                </div>
+              )}
+              {(!isPictureWriting || writingTaskType === "SENTENCE") && (
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="text-sm font-medium">
+                    Từ tối thiểu
+                    <input
+                      type="number"
+                      min="1"
+                      value={question.wordMin}
+                      onChange={(event) =>
+                        setQuestion({
+                          ...question,
+                          wordMin: event.target.value,
+                        })
+                      }
+                      className={inputClassName()}
+                    />
+                  </label>
+                  <label className="text-sm font-medium">
+                    Từ tối đa
+                    <input
+                      type="number"
+                      min="1"
+                      value={question.wordMax}
+                      onChange={(event) =>
+                        setQuestion({
+                          ...question,
+                          wordMax: event.target.value,
+                        })
+                      }
+                      className={inputClassName()}
+                    />
+                  </label>
+                </div>
+              )}
+            </>
+          )}
 
-          {domain === "reading" && <><label className="text-sm font-medium">Các lựa chọn<textarea value={question.options} onChange={(event) => setQuestion({ ...question, options: event.target.value })} placeholder="Mỗi lựa chọn một dòng" className={`${inputClassName()} min-h-24`} /></label><label className="text-sm font-medium">Vị trí đáp án đúng (0-based)<input value={question.correctIndex} onChange={(event) => setQuestion({ ...question, correctIndex: event.target.value })} className={inputClassName()} /></label></>}
-          {isListening && question.type === "DIALOGUE" && <div className="md:col-span-2 space-y-3"><div className="flex items-center justify-between"><label className="text-sm font-medium">Transcript turns</label><button type="button" onClick={() => setQuestion({ ...question, segments: [...question.segments, emptySegment()] })} className="inline-flex min-h-10 items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold"><Plus size={14} /> Thêm lượt lời</button></div>{question.segments.map((segment, index) => <div key={index} className="grid gap-3 rounded-lg bg-slate-50 p-3 md:grid-cols-[140px_1fr_1fr_auto]"><input value={segment.speaker} onChange={(event) => setQuestion({ ...question, segments: question.segments.map((value, i) => i === index ? { ...value, speaker: event.target.value } : value) })} placeholder="Speaker" className={inputClassName()} /><input value={segment.text} onChange={(event) => setQuestion({ ...question, segments: question.segments.map((value, i) => i === index ? { ...value, text: event.target.value } : value) })} placeholder="English text" className={inputClassName()} /><input value={segment.translation} onChange={(event) => setQuestion({ ...question, segments: question.segments.map((value, i) => i === index ? { ...value, translation: event.target.value } : value) })} placeholder="Bản dịch (tuỳ chọn)" className={inputClassName()} /><button type="button" onClick={() => setQuestion({ ...question, segments: question.segments.filter((_, i) => i !== index) })} className="min-h-10 self-end rounded-lg border border-rose-200 px-3 text-rose-600" aria-label="Xóa lượt lời"><Trash2 size={14} /></button></div>)}</div>}
-          <label className="text-sm font-medium md:col-span-2">Ghi chú / giải thích<textarea value={question.explanation} onChange={(event) => setQuestion({ ...question, explanation: event.target.value })} className={`${inputClassName()} min-h-20`} /></label>
+          {domain === "reading" && (
+            <>
+              <label className="text-sm font-medium">
+                Các phương án lựa chọn (mỗi dòng một phương án)
+                <textarea
+                  value={question.options}
+                  onChange={(event) =>
+                    setQuestion({ ...question, options: event.target.value })
+                  }
+                  placeholder="Phương án A&#10;Phương án B&#10;Phương án C&#10;Phương án D"
+                  className={`${inputClassName()} min-h-24`}
+                />
+              </label>
+              <label className="text-sm font-medium">
+                Đáp án đúng
+                <select
+                  value={question.correctIndex || "0"}
+                  onChange={(event) =>
+                    setQuestion({
+                      ...question,
+                      correctIndex: event.target.value,
+                    })
+                  }
+                  className={inputClassName()}
+                >
+                  {(() => {
+                    const opts = question.options
+                      .split("\n")
+                      .map((v) => v.trim())
+                      .filter(Boolean);
+                    if (opts.length > 0) {
+                      return opts.map((opt, idx) => (
+                        <option key={idx} value={String(idx)}>
+                          Phương án {String.fromCharCode(65 + idx)}:{" "}
+                          {opt.slice(0, 45)}
+                          {opt.length > 45 ? "..." : ""}
+                        </option>
+                      ));
+                    }
+                    return [
+                      <option key="0" value="0">
+                        Phương án A
+                      </option>,
+                      <option key="1" value="1">
+                        Phương án B
+                      </option>,
+                      <option key="2" value="2">
+                        Phương án C
+                      </option>,
+                      <option key="3" value="3">
+                        Phương án D
+                      </option>,
+                    ];
+                  })()}
+                </select>
+              </label>
+            </>
+          )}
+          {isListening && question.type === "DIALOGUE" && (
+            <div className="md:col-span-2 space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Transcript turns</label>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setQuestion({
+                      ...question,
+                      segments: [...question.segments, emptySegment()],
+                    })
+                  }
+                  className="inline-flex min-h-10 items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold"
+                >
+                  <Plus size={14} /> Thêm lượt lời
+                </button>
+              </div>
+              {question.segments.map((segment, index) => (
+                <div
+                  key={index}
+                  className="grid gap-3 rounded-lg bg-slate-50 p-3 md:grid-cols-[140px_1fr_1fr_auto]"
+                >
+                  <input
+                    value={segment.speaker}
+                    onChange={(event) =>
+                      setQuestion({
+                        ...question,
+                        segments: question.segments.map((value, i) =>
+                          i === index
+                            ? { ...value, speaker: event.target.value }
+                            : value,
+                        ),
+                      })
+                    }
+                    placeholder="Speaker"
+                    className={inputClassName()}
+                  />
+                  <input
+                    value={segment.text}
+                    onChange={(event) =>
+                      setQuestion({
+                        ...question,
+                        segments: question.segments.map((value, i) =>
+                          i === index
+                            ? { ...value, text: event.target.value }
+                            : value,
+                        ),
+                      })
+                    }
+                    placeholder="English text"
+                    className={inputClassName()}
+                  />
+                  <input
+                    value={segment.translation}
+                    onChange={(event) =>
+                      setQuestion({
+                        ...question,
+                        segments: question.segments.map((value, i) =>
+                          i === index
+                            ? { ...value, translation: event.target.value }
+                            : value,
+                        ),
+                      })
+                    }
+                    placeholder="Bản dịch (tuỳ chọn)"
+                    className={inputClassName()}
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setQuestion({
+                        ...question,
+                        segments: question.segments.filter(
+                          (_, i) => i !== index,
+                        ),
+                      })
+                    }
+                    className="min-h-10 self-end rounded-lg border border-rose-200 px-3 text-rose-600"
+                    aria-label="Xóa lượt lời"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <label className="text-sm font-medium md:col-span-2">
+            Ghi chú / giải thích
+            <textarea
+              value={question.explanation}
+              onChange={(event) =>
+                setQuestion({ ...question, explanation: event.target.value })
+              }
+              className={`${inputClassName()} min-h-20`}
+            />
+          </label>
         </div>
-        <button onClick={() => void saveQuestion()} disabled={busy || !id} className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white"><Plus size={16} /> {question.id ? "Cập nhật câu hỏi" : "Thêm câu hỏi"}</button>
+        <button
+          onClick={() => void saveQuestion()}
+          disabled={busy || !id}
+          className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white"
+        >
+          <Plus size={16} /> {question.id ? "Cập nhật câu hỏi" : "Thêm câu hỏi"}
+        </button>
       </section>
 
-      {isListening && <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-semibold text-slate-950">Production audio</h2><p className="mt-1 text-sm text-slate-500">Dùng artifact versioned hiện có: validate → preview → approve → publish.</p></div><button onClick={() => void audioAction("validate")} disabled={busy} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold"><CheckCircle2 size={14} /> Validate transcript</button></div><div className="mt-4 flex flex-wrap gap-2"><button onClick={() => void audioAction("generate-preview")} disabled={busy} className="min-h-10 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white">Generate preview artifact</button></div><div className="mt-4 space-y-2">{artifacts.map((artifact) => <div key={artifact.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 p-3 text-sm"><div><p className="font-semibold text-slate-900">v{artifact.version} · {artifact.status}</p><p className="mt-1 text-xs text-slate-500">{artifact.durationMs ? `${Math.round(artifact.durationMs / 1000)}s` : "Chưa có duration"} · {artifact.isStale ? "stale" : "current"}</p></div><div className="flex flex-wrap gap-2">{artifact.r2Key && !artifact.isStale && <button onClick={() => void previewArtifact(artifact.id)} disabled={busy} className="min-h-10 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold">Preview audio</button>}{artifact.status === "PREVIEW_READY" && <button onClick={() => void audioAction("approve", artifact.id)} disabled={busy} className="min-h-10 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold">Approve</button>}{artifact.status === "APPROVED" && <button onClick={() => void audioAction("publish", artifact.id)} disabled={busy} className="min-h-10 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white">Publish audio</button>}</div></div>)}{artifacts.length === 0 && <p className="rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-500">Chưa có production artifact.</p>}{previewUrl && <audio controls className="w-full" src={previewUrl} aria-label="Listening artifact preview">Audio preview</audio>}</div></section>}
+      {isListening && (
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="font-semibold text-slate-950">Production audio</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Dùng artifact versioned hiện có: validate → preview → approve →
+                publish.
+              </p>
+            </div>
+            <button
+              onClick={() => void audioAction("validate")}
+              disabled={busy}
+              className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold"
+            >
+              <CheckCircle2 size={14} /> Validate transcript
+            </button>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              onClick={() => void audioAction("generate-preview")}
+              disabled={busy}
+              className="min-h-10 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white"
+            >
+              Generate preview artifact
+            </button>
+          </div>
+          <div className="mt-4 space-y-2">
+            {artifacts.map((artifact) => (
+              <div
+                key={artifact.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 p-3 text-sm"
+              >
+                <div>
+                  <p className="font-semibold text-slate-900">
+                    v{artifact.version} · {artifact.status}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {artifact.durationMs
+                      ? `${Math.round(artifact.durationMs / 1000)}s`
+                      : "Chưa có duration"}{" "}
+                    · {artifact.isStale ? "stale" : "current"}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {artifact.r2Key && !artifact.isStale && (
+                    <button
+                      onClick={() => void previewArtifact(artifact.id)}
+                      disabled={busy}
+                      className="min-h-10 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold"
+                    >
+                      Preview audio
+                    </button>
+                  )}
+                  {artifact.status === "PREVIEW_READY" && (
+                    <button
+                      onClick={() => void audioAction("approve", artifact.id)}
+                      disabled={busy}
+                      className="min-h-10 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold"
+                    >
+                      Approve
+                    </button>
+                  )}
+                  {artifact.status === "APPROVED" && (
+                    <button
+                      onClick={() => void audioAction("publish", artifact.id)}
+                      disabled={busy}
+                      className="min-h-10 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white"
+                    >
+                      Publish audio
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+            {artifacts.length === 0 && (
+              <p className="rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-500">
+                Chưa có production artifact.
+              </p>
+            )}
+            {previewUrl && (
+              <audio
+                controls
+                className="w-full"
+                src={previewUrl}
+                aria-label="Listening artifact preview"
+              >
+                Audio preview
+              </audio>
+            )}
+          </div>
+        </section>
+      )}
 
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700"><CheckCircle2 className="mr-2 inline-block" size={16} /> Draft không xuất hiện trên learner API; publish chỉ chạy sau preflight domain.</div>
-      {pendingDeleteId !== null && <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4" role="dialog" aria-modal="true" aria-labelledby="delete-question-title"><div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl"><h2 id="delete-question-title" className="font-semibold text-slate-950">Xóa câu hỏi?</h2><p className="mt-2 text-sm text-slate-600">Thao tác chỉ được thực hiện khi nội dung chưa có lịch sử làm bài.</p><div className="mt-5 flex justify-end gap-2"><button onClick={() => setPendingDeleteId(null)} className="min-h-10 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold">Hủy</button><button onClick={() => void removeQuestion(pendingDeleteId)} disabled={busy} className="min-h-10 rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white">Xóa</button></div></div></div>}
+      {/* MODAL: LISTENING CONTENT REVIEW */}
+      {isListeningContentAiOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="listening-content-ai-title"
+        >
+          <div className="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-2xl border border-amber-100 bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[.14em] text-amber-700">
+                  Gợi ý biên soạn
+                </p>
+                <h3
+                  id="listening-content-ai-title"
+                  className="mt-1 text-lg font-bold text-slate-950"
+                >
+                  Gợi ý nội dung nghe
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  Transcript chỉ được đưa vào form hiện tại; audio artifact vẫn
+                  do quy trình Production audio xử lý.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsListeningContentAiOpen(false)}
+                className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                aria-label="Đóng gợi ý nội dung nghe"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="mt-4 flex-1 overflow-y-auto">
+              {!listeningContentAiSuggestion ? (
+                <div className="rounded-xl border border-dashed border-slate-200 p-10 text-center text-sm text-slate-500">
+                  Nhấn “Tạo gợi ý” để tạo transcript theo loại {listeningMode()}
+                  .
+                </div>
+              ) : listeningContentAiSuggestion.mode === "DICTATION" ? (
+                <label className="text-sm font-semibold text-slate-700">
+                  Transcript Dictation
+                  <textarea
+                    value={listeningContentAiSuggestion.text || ""}
+                    onChange={(event) =>
+                      setListeningContentAiSuggestion((current) =>
+                        current
+                          ? { ...current, text: event.target.value }
+                          : current,
+                      )
+                    }
+                    className={`${inputClassName()} min-h-36`}
+                  />
+                </label>
+              ) : (
+                <div className="space-y-3">
+                  {(listeningContentAiSuggestion.turns || []).map(
+                    (turn, index) => (
+                      <div
+                        key={index}
+                        className="grid gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 md:grid-cols-[120px_1fr]"
+                      >
+                        <input
+                          value={turn.speaker}
+                          onChange={(event) =>
+                            setListeningContentAiSuggestion((current) =>
+                              current
+                                ? {
+                                    ...current,
+                                    turns: current.turns?.map(
+                                      (item, itemIndex) =>
+                                        itemIndex === index
+                                          ? {
+                                              ...item,
+                                              speaker: event.target.value,
+                                            }
+                                          : item,
+                                    ),
+                                  }
+                                : current,
+                            )
+                          }
+                          className={inputClassName()}
+                          aria-label={`Speaker lượt ${index + 1}`}
+                        />
+                        <input
+                          value={turn.text}
+                          onChange={(event) =>
+                            setListeningContentAiSuggestion((current) =>
+                              current
+                                ? {
+                                    ...current,
+                                    turns: current.turns?.map(
+                                      (item, itemIndex) =>
+                                        itemIndex === index
+                                          ? {
+                                              ...item,
+                                              text: event.target.value,
+                                            }
+                                          : item,
+                                    ),
+                                  }
+                                : current,
+                            )
+                          }
+                          className={inputClassName()}
+                          aria-label={`Nội dung lượt ${index + 1}`}
+                        />
+                        <input
+                          value={turn.translation}
+                          onChange={(event) =>
+                            setListeningContentAiSuggestion((current) =>
+                              current
+                                ? {
+                                    ...current,
+                                    turns: current.turns?.map(
+                                      (item, itemIndex) =>
+                                        itemIndex === index
+                                          ? {
+                                              ...item,
+                                              translation: event.target.value,
+                                            }
+                                          : item,
+                                    ),
+                                  }
+                                : current,
+                            )
+                          }
+                          className={`${inputClassName()} md:col-start-2`}
+                          aria-label={`Bản dịch lượt ${index + 1}`}
+                          placeholder="Bản dịch (tuỳ chọn)"
+                        />
+                      </div>
+                    ),
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-4">
+              <button
+                type="button"
+                onClick={() => void handleSuggestListeningContent()}
+                disabled={isListeningContentAiLoading}
+                className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:opacity-50"
+              >
+                {isListeningContentAiLoading && (
+                  <Loader2 size={14} className="animate-spin" />
+                )}{" "}
+                {listeningContentAiSuggestion ? "Tạo lại" : "Tạo gợi ý"}
+              </button>
+              {listeningContentAiSuggestion && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const suggestion = listeningContentAiSuggestion;
+                    setQuestion((current) =>
+                      suggestion.mode === "DICTATION"
+                        ? {
+                            ...current,
+                            type: "DICTATION",
+                            prompt: suggestion.text || "",
+                          }
+                        : {
+                            ...current,
+                            type: "DIALOGUE",
+                            prompt: (suggestion.turns || [])
+                              .map((turn) => turn.text)
+                              .join(" "),
+                            segments: suggestion.turns || [],
+                          },
+                    );
+                    setIsListeningContentAiOpen(false);
+                    toast.success(
+                      "Đã áp dụng transcript vào form. Bạn có thể chỉnh sửa trước khi lưu.",
+                    );
+                  }}
+                  className="min-h-10 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                >
+                  Áp dụng vào form
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setIsListeningContentAiOpen(false)}
+                className="min-h-10 rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: LISTENING QUESTIONS REVIEW */}
+      {isListeningQuestionsAiOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="listening-questions-ai-title"
+        >
+          <div className="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[.14em] text-slate-500">
+                  Review trước khi lưu
+                </p>
+                <h3
+                  id="listening-questions-ai-title"
+                  className="mt-1 text-lg font-bold text-slate-950"
+                >
+                  Tạo câu hỏi nghe nháp
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  Câu hỏi được tạo từ transcript hiện tại, không tự thêm vào
+                  database.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsListeningQuestionsAiOpen(false)}
+                className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                aria-label="Đóng tạo câu hỏi nghe"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="mt-4 flex items-center gap-3 text-sm">
+              <label
+                htmlFor="listening-ai-count"
+                className="font-semibold text-slate-700"
+              >
+                Số câu
+              </label>
+              <select
+                id="listening-ai-count"
+                value={listeningQuestionsAiCount}
+                onChange={(event) =>
+                  setListeningQuestionsAiCount(Number(event.target.value))
+                }
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+              >
+                <option value={1}>1</option>
+                <option value={2}>2</option>
+                <option value={3}>3</option>
+                <option value={5}>5</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => void handleSuggestListeningQuestions()}
+                disabled={isListeningQuestionsAiLoading}
+                className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:opacity-50"
+              >
+                {isListeningQuestionsAiLoading && (
+                  <Loader2 size={14} className="animate-spin" />
+                )}{" "}
+                {listeningQuestionsAiCandidates.length
+                  ? "Tạo lại"
+                  : "Tạo câu hỏi nháp"}
+              </button>
+            </div>
+            <div className="mt-4 flex-1 space-y-3 overflow-y-auto pr-1">
+              {listeningQuestionsAiCandidates.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-200 p-10 text-center text-sm text-slate-500">
+                  Nhập transcript ở form trước, sau đó nhấn “Tạo câu hỏi nháp”.
+                </div>
+              ) : (
+                listeningQuestionsAiCandidates.map((candidate, index) => (
+                  <article
+                    key={index}
+                    className="rounded-xl border border-slate-200 bg-slate-50/70 p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="text-xs font-semibold text-slate-500">
+                        Câu {index + 1}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setListeningQuestionsAiCandidates((current) =>
+                            current.filter(
+                              (_, itemIndex) => itemIndex !== index,
+                            ),
+                          )
+                        }
+                        className="text-xs font-semibold text-slate-400 transition-colors hover:text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-300"
+                      >
+                        Bỏ qua
+                      </button>
+                    </div>
+                    <input
+                      value={candidate.prompt}
+                      onChange={(event) =>
+                        setListeningQuestionsAiCandidates((current) =>
+                          current.map((item, itemIndex) =>
+                            itemIndex === index
+                              ? { ...item, prompt: event.target.value }
+                              : item,
+                          ),
+                        )
+                      }
+                      className={`${inputClassName()} mt-2`}
+                      aria-label={`Đề bài câu nghe ${index + 1}`}
+                    />
+                    <div className="mt-2 grid gap-2 md:grid-cols-2">
+                      {candidate.options.map((option, optionIndex) => (
+                        <div
+                          key={optionIndex}
+                          className={`flex items-center gap-2 rounded-lg border bg-white px-2 ${candidate.correctIndex === optionIndex ? "border-emerald-400 ring-1 ring-emerald-200" : "border-slate-200"}`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setListeningQuestionsAiCandidates((current) =>
+                                current.map((item, itemIndex) =>
+                                  itemIndex === index
+                                    ? { ...item, correctIndex: optionIndex }
+                                    : item,
+                                ),
+                              )
+                            }
+                            className={`my-2 h-7 w-7 shrink-0 rounded-md text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-300 ${candidate.correctIndex === optionIndex ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+                            aria-label={`Chọn phương án ${optionIndex + 1} là đáp án đúng`}
+                          >
+                            {String.fromCharCode(65 + optionIndex)}
+                          </button>
+                          <input
+                            value={option}
+                            onChange={(event) =>
+                              setListeningQuestionsAiCandidates((current) =>
+                                current.map((item, itemIndex) =>
+                                  itemIndex === index
+                                    ? {
+                                        ...item,
+                                        options: item.options.map(
+                                          (value, valueIndex) =>
+                                            valueIndex === optionIndex
+                                              ? event.target.value
+                                              : value,
+                                        ),
+                                      }
+                                    : item,
+                                ),
+                              )
+                            }
+                            className="min-w-0 flex-1 bg-transparent py-2 text-sm text-slate-800 outline-none"
+                            aria-label={`Phương án ${optionIndex + 1} câu ${index + 1}`}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <textarea
+                      value={candidate.explanation}
+                      onChange={(event) =>
+                        setListeningQuestionsAiCandidates((current) =>
+                          current.map((item, itemIndex) =>
+                            itemIndex === index
+                              ? { ...item, explanation: event.target.value }
+                              : item,
+                          ),
+                        )
+                      }
+                      className={`${inputClassName()} mt-2 min-h-16`}
+                      aria-label={`Giải thích câu nghe ${index + 1}`}
+                      placeholder="Giải thích bằng tiếng Việt"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setQuestion({
+                          ...emptyQuestion("listening"),
+                          type: "MULTIPLE_CHOICE",
+                          prompt: candidate.prompt,
+                          options: candidate.options.join("\n"),
+                          correctIndex: String(candidate.correctIndex),
+                          explanation: candidate.explanation,
+                        });
+                        setIsListeningQuestionsAiOpen(false);
+                        toast.success(
+                          "Đã áp dụng câu hỏi nghe vào form. Bạn có thể chỉnh sửa trước khi thêm.",
+                        );
+                      }}
+                      className="mt-3 min-h-10 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                    >
+                      Áp dụng vào form
+                    </button>
+                  </article>
+                ))
+              )}
+            </div>
+            <div className="mt-4 flex justify-end border-t border-slate-100 pt-4">
+              <button
+                type="button"
+                onClick={() => setIsListeningQuestionsAiOpen(false)}
+                className="min-h-10 rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: WRITING TASK REVIEW */}
+      {isWritingAiOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="writing-ai-title"
+        >
+          <div className="flex max-h-[90vh] w-full max-w-xl flex-col rounded-2xl border border-amber-100 bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[.14em] text-amber-700">
+                  Gợi ý biên soạn
+                </p>
+                <h3
+                  id="writing-ai-title"
+                  className="mt-1 text-lg font-bold text-slate-950"
+                >
+                  Gợi ý đề bài Writing
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  Chỉ sinh nội dung chữ; ảnh của Picture Task vẫn do bạn
+                  chọn/tải lên.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsWritingAiOpen(false)}
+                className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                aria-label="Đóng gợi ý Writing"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="mt-4 flex-1 space-y-3 overflow-y-auto">
+              {!writingAiSuggestion ? (
+                <div className="rounded-xl border border-dashed border-slate-200 p-10 text-center text-sm text-slate-500">
+                  Nhấn “Tạo gợi ý” để tạo đề bài theo task family hiện tại.
+                </div>
+              ) : (
+                <>
+                  <label className="text-sm font-semibold text-slate-700">
+                    Task family
+                    <input
+                      value={writingAiSuggestion.taskType}
+                      onChange={(event) =>
+                        setWritingAiSuggestion((current) =>
+                          current
+                            ? { ...current, taskType: event.target.value }
+                            : current,
+                        )
+                      }
+                      className={inputClassName()}
+                    />
+                  </label>
+                  <label className="text-sm font-semibold text-slate-700">
+                    Đề bài
+                    <textarea
+                      value={writingAiSuggestion.prompt}
+                      onChange={(event) =>
+                        setWritingAiSuggestion((current) =>
+                          current
+                            ? { ...current, prompt: event.target.value }
+                            : current,
+                        )
+                      }
+                      className={`${inputClassName()} min-h-32`}
+                    />
+                  </label>
+                  <label className="text-sm font-semibold text-slate-700">
+                    Bối cảnh / người nhận
+                    <input
+                      value={
+                        writingAiSuggestion.context ||
+                        writingAiSuggestion.recipient ||
+                        writingAiSuggestion.scenario ||
+                        ""
+                      }
+                      onChange={(event) =>
+                        setWritingAiSuggestion((current) =>
+                          current
+                            ? { ...current, context: event.target.value }
+                            : current,
+                        )
+                      }
+                      className={inputClassName()}
+                    />
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="text-sm font-semibold text-slate-700">
+                      Từ tối thiểu
+                      <input
+                        type="number"
+                        value={writingAiSuggestion.wordRange?.[0] ?? ""}
+                        onChange={(event) =>
+                          setWritingAiSuggestion((current) =>
+                            current
+                              ? {
+                                  ...current,
+                                  wordRange: [
+                                    Number(event.target.value),
+                                    current.wordRange?.[1] || 0,
+                                  ],
+                                }
+                              : current,
+                          )
+                        }
+                        className={inputClassName()}
+                      />
+                    </label>
+                    <label className="text-sm font-semibold text-slate-700">
+                      Từ tối đa
+                      <input
+                        type="number"
+                        value={writingAiSuggestion.wordRange?.[1] ?? ""}
+                        onChange={(event) =>
+                          setWritingAiSuggestion((current) =>
+                            current
+                              ? {
+                                  ...current,
+                                  wordRange: [
+                                    current.wordRange?.[0] || 0,
+                                    Number(event.target.value),
+                                  ],
+                                }
+                              : current,
+                          )
+                        }
+                        className={inputClassName()}
+                      />
+                    </label>
+                  </div>
+                  <label className="text-sm font-semibold text-slate-700">
+                    Keywords / câu mẫu
+                    <textarea
+                      value={[
+                        ...(writingAiSuggestion.keywords || []),
+                        ...(writingAiSuggestion.sampleSentences || []),
+                      ].join("\n")}
+                      onChange={(event) =>
+                        setWritingAiSuggestion((current) =>
+                          current
+                            ? {
+                                ...current,
+                                keywords: event.target.value
+                                  .split("\n")
+                                  .filter(Boolean),
+                              }
+                            : current,
+                        )
+                      }
+                      className={`${inputClassName()} min-h-24`}
+                      placeholder="Mỗi dòng một keyword hoặc câu mẫu"
+                    />
+                  </label>
+                </>
+              )}
+            </div>
+            <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-4">
+              <button
+                type="button"
+                onClick={() => void handleSuggestWritingTask()}
+                disabled={isWritingAiLoading}
+                className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:opacity-50"
+              >
+                {isWritingAiLoading && (
+                  <Loader2 size={14} className="animate-spin" />
+                )}{" "}
+                {writingAiSuggestion ? "Tạo lại" : "Tạo gợi ý"}
+              </button>
+              {writingAiSuggestion && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const suggestion = writingAiSuggestion;
+                    setQuestion((current) => ({
+                      ...current,
+                      taskType: suggestion.taskType,
+                      prompt: suggestion.prompt,
+                      wordMin: suggestion.wordRange?.[0]
+                        ? String(suggestion.wordRange[0])
+                        : current.wordMin,
+                      wordMax: suggestion.wordRange?.[1]
+                        ? String(suggestion.wordRange[1])
+                        : current.wordMax,
+                      keywords:
+                        suggestion.keywords?.join("\n") || current.keywords,
+                      sampleSentences:
+                        suggestion.sampleSentences?.join("\n") ||
+                        current.sampleSentences,
+                    }));
+                    setIsWritingAiOpen(false);
+                    toast.success(
+                      "Đã áp dụng đề bài vào form Writing. Bạn có thể chỉnh sửa trước khi lưu.",
+                    );
+                  }}
+                  className="min-h-10 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                >
+                  Áp dụng vào form
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setIsWritingAiOpen(false)}
+                className="min-h-10 rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: AI READING PASSAGE SUGGESTION */}
+      {isPassageAiOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+          <div className="w-full max-w-xl max-h-[90vh] flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="font-bold text-slate-900">
+                  Gợi ý đoạn văn đọc bằng AI
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Tạo đoạn đọc nháp dựa trên chủ đề và trình độ.
+                </p>
+              </div>
+              <button
+                onClick={() => setIsPassageAiOpen(false)}
+                className="rounded-lg p-1 text-slate-400 hover:text-slate-700"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Chủ đề bài đọc *
+                </label>
+                <input
+                  type="text"
+                  value={passageAiTopic}
+                  onChange={(e) => setPassageAiTopic(e.target.value)}
+                  placeholder="e.g. Workplace Technology, Remote Work, Environmental Protection"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">
+                  Trình độ:{" "}
+                  <span className="font-semibold text-slate-700">
+                    {form.level || "A2"}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  disabled={
+                    isPassageAiLoading ||
+                    (!passageAiTopic.trim() && !form.title.trim())
+                  }
+                  onClick={handleSuggestPassage}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-colors"
+                >
+                  {isPassageAiLoading ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : null}
+                  {passageAiSuggestion ? "Tạo lại" : "Gợi ý đoạn đọc"}
+                </button>
+              </div>
+
+              {passageAiSuggestion && (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2.5 max-h-60 overflow-y-auto">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                    <span className="font-bold text-slate-800">
+                      {passageAiSuggestion.title}
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-medium">
+                      Bản nháp AI
+                    </span>
+                  </div>
+                  <p className="text-slate-700 font-serif whitespace-pre-line leading-relaxed">
+                    {passageAiSuggestion.passage}
+                  </p>
+                  <div className="flex justify-end pt-2 border-t border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForm((prev) => ({
+                          ...prev,
+                          passage: passageAiSuggestion.passage,
+                          title: prev.title.trim()
+                            ? prev.title
+                            : passageAiSuggestion.title,
+                        }));
+                        setIsPassageAiOpen(false);
+                        toast.success(
+                          "Đã áp dụng đoạn đọc vào form. Bạn có thể chỉnh sửa trước khi lưu.",
+                        );
+                      }}
+                      className="rounded bg-slate-900 px-3 py-1.5 font-semibold text-white hover:bg-slate-800 transition-colors"
+                    >
+                      Áp dụng vào form
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsPassageAiOpen(false)}
+                className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: AI READING QUESTIONS GENERATION & REVIEW */}
+      {isQuestionsAiOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+          <div className="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="font-bold text-slate-900">
+                  Tạo câu hỏi đọc hiểu nháp bằng AI
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Sinh câu hỏi trắc nghiệm dựa trên đoạn đọc hiện có trong form.
+                </p>
+              </div>
+              <button
+                onClick={() => setIsQuestionsAiOpen(false)}
+                className="rounded-lg p-1 text-slate-400 hover:text-slate-700"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3 text-xs">
+              <label className="font-semibold text-slate-700">
+                Số câu hỏi:
+              </label>
+              <select
+                value={readingAiCount}
+                onChange={(e) => setReadingAiCount(Number(e.target.value))}
+                disabled={isQuestionsAiLoading}
+                className="rounded-lg border border-slate-200 px-3 py-1.5 text-slate-800 outline-none"
+              >
+                <option value={1}>1 câu</option>
+                <option value={2}>2 câu</option>
+                <option value={3}>3 câu (khuyến nghị)</option>
+                <option value={5}>5 câu</option>
+              </select>
+              <button
+                type="button"
+                disabled={isQuestionsAiLoading || !form.passage.trim()}
+                onClick={handleSuggestReadingQuestions}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-1.5 font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-colors"
+              >
+                {isQuestionsAiLoading ? (
+                  <Loader2 size={13} className="animate-spin" />
+                ) : null}
+                {readingAiCandidates.length > 0
+                  ? "Tạo lại"
+                  : "Tạo câu hỏi nháp"}
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 text-xs">
+              {readingAiCandidates.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center text-slate-400">
+                  Nhấn "Tạo câu hỏi nháp" để AI đọc đoạn văn hiện tại và sinh
+                  các câu hỏi trắc nghiệm A/B/C/D kèm giải thích.
+                </div>
+              ) : (
+                readingAiCandidates.map((candidate, idx) => (
+                  <div
+                    key={idx}
+                    className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-2.5"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="font-bold text-slate-800">
+                        Câu {idx + 1}{" "}
+                        {candidate.questionType
+                          ? `• ${candidate.questionType}`
+                          : ""}
+                        :
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setReadingAiCandidates((prev) =>
+                            prev.filter((_, i) => i !== idx),
+                          )
+                        }
+                        className="text-slate-400 hover:text-rose-600 text-[11px]"
+                      >
+                        Bỏ qua
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={candidate.prompt}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setReadingAiCandidates((prev) =>
+                          prev.map((c, i) =>
+                            i === idx ? { ...c, prompt: val } : c,
+                          ),
+                        );
+                      }}
+                      className="w-full rounded border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      {candidate.options.map((opt, optIdx) => {
+                        const letter =
+                          ["A", "B", "C", "D"][optIdx] || String(optIdx);
+                        const isCorrect = candidate.correctIndex === optIdx;
+                        return (
+                          <div
+                            key={optIdx}
+                            className={`flex items-center gap-1.5 rounded border px-2 py-1.5 bg-white ${
+                              isCorrect
+                                ? "border-emerald-500 ring-1 ring-emerald-200"
+                                : "border-slate-200"
+                            }`}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setReadingAiCandidates((prev) =>
+                                  prev.map((c, i) =>
+                                    i === idx
+                                      ? { ...c, correctIndex: optIdx }
+                                      : c,
+                                  ),
+                                );
+                              }}
+                              className={`h-5 w-5 rounded text-[11px] font-bold flex items-center justify-center ${
+                                isCorrect
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                              }`}
+                              title="Đặt làm đáp án đúng"
+                            >
+                              {letter}
+                            </button>
+                            <input
+                              type="text"
+                              value={opt}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setReadingAiCandidates((prev) =>
+                                  prev.map((c, i) =>
+                                    i === idx
+                                      ? {
+                                          ...c,
+                                          options: c.options.map((o, oi) =>
+                                            oi === optIdx ? val : o,
+                                          ),
+                                        }
+                                      : c,
+                                  ),
+                                );
+                              }}
+                              className="flex-1 bg-transparent text-xs text-slate-800 outline-none"
+                            />
+                            {isCorrect ? (
+                              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded">
+                                Đúng
+                              </span>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-500 mb-0.5">
+                        Giải thích:
+                      </label>
+                      <input
+                        type="text"
+                        value={candidate.explanation}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setReadingAiCandidates((prev) =>
+                            prev.map((c, i) =>
+                              i === idx ? { ...c, explanation: val } : c,
+                            ),
+                          );
+                        }}
+                        className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 outline-none"
+                      />
+                    </div>
+                    <div className="flex justify-end pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setQuestion({
+                            ...emptyQuestion("reading"),
+                            prompt: candidate.prompt,
+                            options: candidate.options.join("\n"),
+                            correctIndex: String(candidate.correctIndex),
+                            explanation: candidate.explanation,
+                          });
+                          setIsQuestionsAiOpen(false);
+                          toast.success(
+                            "Đã áp dụng câu hỏi vào form câu hỏi. Bạn có thể kiểm tra và bấm Thêm câu hỏi.",
+                          );
+                        }}
+                        className="rounded bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 transition-colors"
+                      >
+                        Áp dụng vào form
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="flex justify-end pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsQuestionsAiOpen(false)}
+                className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+        <CheckCircle2 className="mr-2 inline-block" size={16} /> Draft không
+        xuất hiện trên learner API; publish chỉ chạy sau preflight domain.
+      </div>
+      <ConfirmDialog
+        open={pendingPublicationStatus !== null}
+        title={
+          pendingPublicationStatus === "PUBLISHED"
+            ? "Xuất bản nội dung?"
+            : "Chuyển về bản nháp?"
+        }
+        description={
+          pendingPublicationStatus === "PUBLISHED"
+            ? "Nội dung đã đạt kiểm tra sẽ hiển thị cho học viên."
+            : "Nội dung sẽ được ẩn khỏi học viên nhưng vẫn giữ nguyên trong CMS để tiếp tục chỉnh sửa."
+        }
+        confirmLabel={
+          pendingPublicationStatus === "PUBLISHED"
+            ? "Xuất bản"
+            : "Chuyển về bản nháp"
+        }
+        isPending={busy}
+        onConfirm={() => {
+          if (pendingPublicationStatus) {
+            void publish(pendingPublicationStatus).then(() =>
+              setPendingPublicationStatus(null),
+            );
+          }
+        }}
+        onCancel={() => setPendingPublicationStatus(null)}
+      />
+      {pendingDeleteId !== null && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-question-title"
+        >
+          <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl">
+            <h2
+              id="delete-question-title"
+              className="font-semibold text-slate-950"
+            >
+              Xóa câu hỏi?
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Thao tác chỉ được thực hiện khi nội dung chưa có lịch sử làm bài.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                onClick={() => setPendingDeleteId(null)}
+                className="min-h-10 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={() => void removeQuestion(pendingDeleteId)}
+                disabled={busy}
+                className="min-h-10 rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white"
+              >
+                Xóa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
