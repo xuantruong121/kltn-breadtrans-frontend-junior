@@ -19,7 +19,9 @@ import {
   Lock,
   Eye,
   EyeOff,
+  ArrowUpRight,
 } from "lucide-react";
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axiosClient from "@/lib/api/axiosClient";
@@ -333,7 +335,13 @@ export default function AdminUsersPage() {
                           ) : null}
                         </div>
                         <div>
-                          <p className="font-black text-slate-800 text-base">{user.profile?.fullName || "—"}</p>
+                          <Link
+                            href={`/admin/users/${user.id}`}
+                            className="font-black text-slate-800 text-base hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+                            aria-label={`Xem tiến độ học tập của ${user.profile?.fullName || user.email}`}
+                          >
+                            {user.profile?.fullName || "—"}
+                          </Link>
                           <p className="text-xs text-slate-400 font-medium flex items-center gap-1">
                             <Mail size={12} /> {user.email}
                           </p>
@@ -375,6 +383,16 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="py-4 px-6 text-right">
                       <div className="flex items-center justify-end gap-1.5">
+                        {user.role === "STUDENT" ? (
+                          <Link
+                            href={`/admin/users/${user.id}`}
+                            title="Xem hồ sơ và tiến độ học tập"
+                            aria-label={`Xem tiến độ học tập của ${user.profile?.fullName || user.email}`}
+                            className="p-2 text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all border border-slate-200"
+                          >
+                            <ArrowUpRight size={16} />
+                          </Link>
+                        ) : null}
                         <button
                           type="button"
                           onClick={() => handleOpenEdit(user)}

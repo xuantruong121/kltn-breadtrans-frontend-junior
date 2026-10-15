@@ -59,6 +59,29 @@ const publicationStatusLabel = (status?: string) =>
 const writingTypeLabel = (type: string) =>
   type === "WRITING_PICTURE" ? "Viết theo tranh" : "Viết email";
 
+const writingTaskOptions = (quizType: string) =>
+  quizType === "WRITING_PICTURE"
+    ? [
+        { value: "SENTENCE", label: "Viết câu theo tranh" },
+        { value: "PICTURE_SENTENCE", label: "Mô tả tranh theo từ khóa" },
+        { value: "DESCRIBE_PICTURE", label: "Mô tả tranh" },
+      ]
+    : [
+        { value: "EMAIL", label: "Phản hồi email" },
+        { value: "SHORT_MESSAGE", label: "Tin nhắn ngắn" },
+        { value: "INVITATION", label: "Email mời" },
+        { value: "REQUEST", label: "Email yêu cầu" },
+        { value: "THANK_YOU", label: "Email cảm ơn" },
+        { value: "STATUS_UPDATE", label: "Email cập nhật tình hình" },
+        { value: "CUSTOMER_EMAIL", label: "Email chăm sóc khách hàng" },
+        { value: "INFORMATION_REQUEST", label: "Email hỏi thông tin" },
+        { value: "MEETING_FOLLOWUP", label: "Email theo dõi cuộc họp" },
+        { value: "OPINION", label: "Bài luận nêu quan điểm" },
+        { value: "PROPOSAL", label: "Bài viết đề xuất giải pháp" },
+        { value: "ANALYTICAL_RESPONSE", label: "Bài phân tích" },
+        { value: "ARGUMENT", label: "Bài lập luận" },
+      ];
+
 const readingQuestionTypeLabel = (type?: string) => {
   const labels: Record<string, string> = {
     DETAIL: "Chi tiết",
@@ -1017,9 +1040,14 @@ export default function SkillCmsWorkspace({
               Dạng bài viết
               <select
                 value={form.type}
-                onChange={(event) =>
-                  setForm({ ...form, type: event.target.value })
-                }
+                onChange={(event) => {
+                  const type = event.target.value;
+                  setForm({ ...form, type });
+                  setQuestion((current) => ({
+                    ...current,
+                    taskType: type === "WRITING_PICTURE" ? "SENTENCE" : "EMAIL",
+                  }));
+                }}
                 className={inputClassName()}
               >
                 <option value="WRITING_PICTURE">
@@ -1270,18 +1298,19 @@ export default function SkillCmsWorkspace({
             <>
               <label className="text-sm font-medium">
                 Task family
-                <input
+                <select
                   value={question.taskType}
                   onChange={(event) =>
                     setQuestion({ ...question, taskType: event.target.value })
                   }
-                  placeholder={
-                    isPictureWriting
-                      ? "SENTENCE hoặc PICTURE_SENTENCE"
-                      : "EMAIL, OPINION hoặc PROPOSAL"
-                  }
                   className={inputClassName()}
-                />
+                >
+                  {writingTaskOptions(form.type).map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </label>
               <label className="text-sm font-medium">
                 Level
@@ -2086,17 +2115,23 @@ export default function SkillCmsWorkspace({
                 <>
                   <label className="text-sm font-semibold text-slate-700">
                     Task family
-                    <input
+                    <select
                       value={writingAiSuggestion.taskType}
                       onChange={(event) =>
                         setWritingAiSuggestion((current) =>
                           current
                             ? { ...current, taskType: event.target.value }
-                            : current,
+                          : current,
                         )
                       }
                       className={inputClassName()}
-                    />
+                    >
+                      {writingTaskOptions(form.type).map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
                   </label>
                   <label className="text-sm font-semibold text-slate-700">
                     Đề bài

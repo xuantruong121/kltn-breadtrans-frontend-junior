@@ -28,6 +28,7 @@ interface SpeakingExercise {
   difficulty?: string | null;
   imageUrl?: string | null;
   audioUrl?: string | null;
+  publicationStatus?: "DRAFT" | "PUBLISHED";
   order?: number;
 }
 
@@ -62,6 +63,21 @@ const STATUS_LABELS = { DRAFT: "Bản nháp", PUBLISHED: "Đã xuất bản" } a
 const levelLabel = (level?: string | null) =>
   LEVEL_LABELS[level || ""] || level?.replace("-", " – ") || "Chưa phân loại";
 
+type SpeakingExerciseForm = {
+  title: string;
+  targetText: string;
+  category: string;
+  difficulty: string;
+  categoryOverride: boolean;
+};
+
+type SpeakingExercisePayload = {
+  title: string;
+  targetText: string;
+  category?: string;
+  difficulty?: string;
+};
+
 export default function AdminSpeakingPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -91,11 +107,12 @@ export default function AdminSpeakingPage() {
   const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
   const [editingExercise, setEditingExercise] =
     useState<SpeakingExercise | null>(null);
-  const [exerciseForm, setExerciseForm] = useState({
+  const [exerciseForm, setExerciseForm] = useState<SpeakingExerciseForm>({
     title: "",
     targetText: "",
     category: "COMMUNICATION",
     difficulty: "BEGINNER",
+    categoryOverride: false,
   });
 
   // Delete confirmations
@@ -203,7 +220,7 @@ export default function AdminSpeakingPage() {
       dto,
     }: {
       setId: string;
-      dto: typeof exerciseForm;
+      dto: SpeakingExercisePayload;
     }) => {
       if (editingExercise) {
         return axiosClient.patch(
@@ -309,18 +326,23 @@ export default function AdminSpeakingPage() {
       title: "",
       targetText: "",
       category: s.category || "COMMUNICATION",
-      difficulty: s.level || "BEGINNER",
+      difficulty: LEVELS.includes(s.level || "")
+        ? s.level || "BEGINNER"
+        : "BEGINNER",
+      categoryOverride: false,
     });
     setIsExerciseModalOpen(true);
   };
 
   const openEditExercise = (ex: SpeakingExercise) => {
     setEditingExercise(ex);
+    const parentCategory = currentActiveSet?.category || "COMMUNICATION";
     setExerciseForm({
       title: ex.title || "",
       targetText: ex.targetText || "",
-      category: ex.category || "COMMUNICATION",
+      category: ex.category || parentCategory,
       difficulty: ex.difficulty || "BEGINNER",
+      categoryOverride: Boolean(ex.category && ex.category !== parentCategory),
     });
     setIsExerciseModalOpen(true);
   };
@@ -561,6 +583,22 @@ export default function AdminSpeakingPage() {
               </div>
             </div>
 
+            {currentActiveSet.publicationStatus === "PUBLISHED" &&
+            currentActiveSet.exercises.some(
+              (exercise) => exercise.publicationStatus === "DRAFT",
+            ) ? (
+              <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3 text-xs leading-5 text-amber-900">
+                <p className="font-semibold">
+                  Có câu luyện đang ở trạng thái Bản nháp.
+                </p>
+                <p className="mt-0.5 text-amber-800">
+                  Các câu này chưa xuất hiện với học viên. Bộ luyện xuất bản
+                  theo cả bộ; hãy chuyển bộ về bản nháp, kiểm tra nội dung rồi
+                  xuất bản lại để đưa các câu mới vào runtime học viên.
+                </p>
+              </div>
+            ) : null}
+
             {/* EXERCISES LIST */}
             <div className="flex-1 overflow-y-auto p-5 space-y-3">
               {currentActiveSet.exercises &&
@@ -581,6 +619,15 @@ export default function AdminSpeakingPage() {
                           </h3>
                           <span className="rounded bg-slate-50 px-1.5 py-0.2 text-[11px] font-medium text-slate-600 border border-slate-200">
                             {levelLabel(ex.difficulty)}
+                          </span>
+                          <span
+                            className={`rounded border px-1.5 py-0.2 text-[11px] font-semibold ${
+                              ex.publicationStatus === "PUBLISHED"
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                : "border-amber-200 bg-amber-50 text-amber-800"
+                            }`}
+                          >
+                            {STATUS_LABELS[ex.publicationStatus ?? "DRAFT"]}
                           </span>
                         </div>
                         <p className="text-sm font-mono text-slate-800 bg-slate-50 px-3 py-1.5 rounded border border-slate-100">
@@ -798,7 +845,14 @@ export default function AdminSpeakingPage() {
                 }
                 saveExerciseMutation.mutate({
                   setId: currentActiveSet.id,
-                  dto: exerciseForm,
+                  dto: {
+                    title: exerciseForm.title,
+                    targetText: exerciseForm.targetText,
+                    ...(exerciseForm.categoryOverride
+                      ? { category: exerciseForm.category }
+                      : {}),
+                    difficulty: exerciseForm.difficulty,
+                  },
                 });
               }}
               className="space-y-4"
@@ -842,7 +896,7 @@ export default function AdminSpeakingPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <label className="text-xs font-semibold text-slate-700">
                     Cấp độ
@@ -859,32 +913,63 @@ export default function AdminSpeakingPage() {
                   >
                     {LEVELS.map((lvl) => (
                       <option key={lvl} value={lvl}>
-                        {lvl}
+                        {levelLabel(lvl)}
                       </option>
                     ))}
                   </select>
+                  <p className="mt-2 text-[11px] text-slate-500">
+                    Cấp độ chi tiết của câu; bộ luyện dùng dải trình độ tổng quát.
+                  </p>
                 </div>
 
                 <div>
                   <label className="text-xs font-semibold text-slate-700">
                     Chủ đề
                   </label>
-                  <select
-                    value={exerciseForm.category}
-                    onChange={(e) =>
-                      setExerciseForm({
-                        ...exerciseForm,
-                        category: e.target.value,
-                      })
-                    }
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500"
-                  >
-                    {CATEGORIES.map((c) => (
-                      <option key={c.value} value={c.value}>
-                        {c.label}
-                      </option>
-                    ))}
-                  </select>
+                  {!exerciseForm.categoryOverride ? (
+                    <div className="mt-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                      {CATEGORIES.find(
+                        (item) => item.value === currentActiveSet.category,
+                      )?.label || currentActiveSet.category || "Tổng quát"}
+                      <span className="ml-1 text-xs text-slate-400">
+                        · kế thừa từ bộ luyện
+                      </span>
+                    </div>
+                  ) : (
+                    <select
+                      value={exerciseForm.category}
+                      onChange={(e) =>
+                        setExerciseForm({
+                          ...exerciseForm,
+                          category: e.target.value,
+                        })
+                      }
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500"
+                    >
+                      {CATEGORIES.map((c) => (
+                        <option key={c.value} value={c.value}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  <label className="mt-2 flex items-center gap-2 text-[11px] text-slate-500">
+                    <input
+                      type="checkbox"
+                      checked={exerciseForm.categoryOverride}
+                      onChange={(e) =>
+                        setExerciseForm({
+                          ...exerciseForm,
+                          categoryOverride: e.target.checked,
+                          category: e.target.checked
+                            ? exerciseForm.category
+                            : currentActiveSet.category || "COMMUNICATION",
+                        })
+                      }
+                      className="rounded border-slate-300"
+                    />
+                    Dùng chủ đề riêng cho câu này
+                  </label>
                 </div>
               </div>
 

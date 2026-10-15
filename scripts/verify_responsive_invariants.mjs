@@ -129,10 +129,12 @@ assertInvariant(
 // GROUP D: Floating Companion Pet & Overlap Prevention (Invariants 12 - 13)
 // -----------------------------------------------------------------------------
 const petCode = readFileSafe("src/modules/pet/components/FloatingCompanionPet.tsx");
+const petSpeechBubbleCode = readFileSafe("src/modules/pet/components/PetSpeechBubble.tsx");
 
 assertInvariant(
   "FloatingCompanionPet: Speech bubble message hidden on mobile (< 640px, hidden sm:block)",
-  petCode.includes("hidden sm:block absolute bottom-full right-0 mb-3 w-72 sm:w-80"),
+  petSpeechBubbleCode.includes("hidden sm:block") &&
+  petSpeechBubbleCode.includes("absolute bottom-[calc(100%+14px)]"),
   "Proactive speech bubble hidden on mobile to prevent obscuring filter chips; notification dot shown on avatar."
 );
 

@@ -1366,7 +1366,10 @@ export default function AdminGrammarPage() {
 
                   <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-3.5 text-xs text-slate-500">
                     <span className="font-semibold text-slate-600">
-                      {topic._count?.questions || topic.questions?.length || 0}{" "}
+                      {topic.totalQuestions ??
+                        topic._count?.questions ??
+                        topic.questions?.length ??
+                        0}{" "}
                       câu hỏi
                     </span>
                     <div className="flex items-center gap-2">
