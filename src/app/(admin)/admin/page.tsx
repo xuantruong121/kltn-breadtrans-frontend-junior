@@ -17,6 +17,12 @@ import {
   CheckCircle2,
   FileText,
   CreditCard,
+  Headphones,
+  PenTool,
+  Layers,
+  GraduationCap,
+  Award,
+  Mic,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuthStore } from "@/stores/authStore";
@@ -90,6 +96,57 @@ function getActivityIcon(type: string) {
       return Clock;
   }
 }
+
+const AI_AUTHORING_DESTINATIONS = [
+  {
+    label: "Khóa học",
+    description: "AI phân loại lộ trình và gợi ý các bài học phù hợp.",
+    href: "/admin/courses",
+    icon: BookOpen,
+  },
+  {
+    label: "Bài nghe",
+    description: "AI soạn nguồn nghe cùng câu hỏi nháp để Admin duyệt.",
+    href: "/admin/listening",
+    icon: Headphones,
+  },
+  {
+    label: "Bài nói",
+    description: "AI soạn bộ luyện và 1–10 câu nói nháp để Admin duyệt.",
+    href: "/admin/speaking",
+    icon: Mic,
+  },
+  {
+    label: "Bài đọc",
+    description: "AI soạn đoạn đọc cùng 1–10 câu hỏi nháp để Admin duyệt.",
+    href: "/admin/reading",
+    icon: FileText,
+  },
+  {
+    label: "Bài viết",
+    description: "AI gợi ý đề bài; ảnh Picture Task vẫn do Admin chọn.",
+    href: "/admin/writing",
+    icon: PenTool,
+  },
+  {
+    label: "Từ vựng",
+    description: "AI soạn chủ đề cùng 1–30 từ nháp để Admin duyệt.",
+    href: "/admin/vocab",
+    icon: Layers,
+  },
+  {
+    label: "Ngữ pháp",
+    description: "AI soạn chủ đề cùng 1–20 câu hỏi nháp để Admin duyệt.",
+    href: "/admin/grammar",
+    icon: GraduationCap,
+  },
+  {
+    label: "TOEIC Part 5",
+    description: "AI chỉ gợi ý câu hỏi Part 5, không áp dụng cho các Part khác.",
+    href: "/admin/exams",
+    icon: Award,
+  },
+] as const;
 
 export default function AdminDashboardPage() {
   const { user } = useAuthStore();
@@ -194,18 +251,57 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        {[
-          ["Listening CMS", "/admin/listening", "Dictation, Dialogue và audio"],
-          ["Reading CMS", "/admin/reading", "Passage, kỹ năng con và câu hỏi"],
-          ["Writing CMS", "/admin/writing", "Part 1, Part 2 và Part 3"],
-        ].map(([label, href, description]) => (
-          <Link key={href} href={href} className="rounded-xl border border-slate-200 bg-white p-4 transition hover:border-blue-300 hover:shadow-sm">
-            <span className="font-semibold text-slate-900">{label}</span>
-            <span className="mt-1 block text-xs text-slate-500">{description}</span>
-          </Link>
-        ))}
-      </div>
+      <section
+        aria-labelledby="ai-authoring-heading"
+        className="rounded-xl border border-amber-200/80 bg-amber-50/40 p-5 shadow-xs"
+      >
+        <div className="flex flex-col gap-3 border-b border-amber-200/70 pb-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-slate-900">
+              <FileText size={18} strokeWidth={2} aria-hidden="true" />
+              <h2 id="ai-authoring-heading" className="text-base font-bold">
+                AI hỗ trợ soạn nội dung
+              </h2>
+            </div>
+            <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
+              AI tạo nội dung gợi ý để hỗ trợ biên soạn. Admin cần kiểm tra/chỉnh sửa trước khi lưu. Nội dung không tự động xuất bản.
+            </p>
+          </div>
+          <span className="shrink-0 self-start rounded-md border border-amber-200 bg-white px-2.5 py-1 text-xs font-semibold text-amber-900">
+            Chọn Studio để bắt đầu
+          </span>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {AI_AUTHORING_DESTINATIONS.map((destination) => {
+            const Icon = destination.icon;
+            return (
+              <Link
+                key={destination.href}
+                href={destination.href}
+                className="group min-h-28 rounded-lg border border-slate-200 bg-white p-3.5 transition-colors hover:border-amber-300 hover:bg-amber-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+              >
+                <div className="flex items-start gap-3">
+                  <span className="rounded-md border border-slate-200 bg-slate-50 p-2 text-slate-700 transition-colors group-hover:border-amber-200 group-hover:bg-amber-100/60 group-hover:text-amber-900">
+                    <Icon size={16} strokeWidth={2} aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold text-slate-900">
+                      {destination.label}
+                    </span>
+                    <span className="mt-1 block text-xs leading-5 text-slate-500">
+                      {destination.description}
+                    </span>
+                    <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-amber-800">
+                      Mở Studio <ArrowRight size={13} strokeWidth={2} aria-hidden="true" />
+                    </span>
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
 
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-24 space-y-3 bg-white border border-slate-200/80 rounded-xl">

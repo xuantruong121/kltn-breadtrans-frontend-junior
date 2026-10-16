@@ -4,16 +4,34 @@ export interface SpeakingExercise {
   id: number;
   title: string;
   targetText?: string;
+  taskType?:
+    | "READ_ALOUD"
+    | "DESCRIBE_PICTURE"
+    | "RESPOND_TO_QUESTION"
+    | "RESPOND_USING_INFORMATION"
+    | "EXPRESS_OPINION"
+    | "PRONUNCIATION_DRILL"
+    | null;
   imageUrl?: string;
   audioUrl?: string;
   difficulty: string;
   category: string;
+  categoryLabel?: string;
+  categoryId?: number | null;
   translation?: string;
   description?: string;
   isCompleted?: boolean;
   isPremiumContent?: boolean;
   isLocked?: boolean;
   practiceSet?: SpeakingPracticeSetSummary;
+  stimulusId?: number | null;
+  stimulus?: {
+    id: number;
+    kind: "INFORMATION" | "IMAGE";
+    title?: string | null;
+    content?: string | null;
+    imageUrl?: string | null;
+  } | null;
 }
 
 export interface SpeakingPracticeSetSummary {
@@ -21,6 +39,7 @@ export interface SpeakingPracticeSetSummary {
   title: string;
   description: string;
   category: string;
+  categoryLabel?: string;
   exerciseCount: number;
   completedCount: number;
   exerciseIds: number[];

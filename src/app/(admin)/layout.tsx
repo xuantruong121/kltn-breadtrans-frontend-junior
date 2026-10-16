@@ -24,6 +24,7 @@ import {
   Settings,
   Headphones,
   Award,
+  FileText,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useQueryClient } from "@tanstack/react-query";
@@ -92,6 +93,18 @@ const NAV_GROUPS: NavCategory[] = [
         href: "/admin/writing",
         label: "Viết",
         icon: PenTool,
+      },
+      {
+        id: "toeic-writing-sets",
+        href: "/admin/toeic/writing-sets",
+        label: "TOEIC Writing Set",
+        icon: FileText,
+      },
+      {
+        id: "toeic-assessments",
+        href: "/admin/toeic/assessments",
+        label: "TOEIC Assessment",
+        icon: Award,
       },
       {
         id: "vocab",
@@ -258,8 +271,13 @@ export default function AdminLayout({
                 : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             }`}
           >
-            <OVERVIEW_ITEM.icon size={18} className={isOverviewActive ? "text-white" : "text-slate-500"} />
-            <span className="leading-snug text-left break-words">{OVERVIEW_ITEM.label}</span>
+            <OVERVIEW_ITEM.icon
+              size={18}
+              className={isOverviewActive ? "text-white" : "text-slate-500"}
+            />
+            <span className="leading-snug text-left break-words">
+              {OVERVIEW_ITEM.label}
+            </span>
           </Link>
 
           <div className="h-px bg-slate-200/80 my-1 mx-2 shrink-0" />
@@ -296,7 +314,11 @@ export default function AdminLayout({
                   <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-1">
                     <group.icon
                       size={16}
-                      className={isGroupActive ? "text-blue-600 shrink-0" : "text-slate-400 shrink-0"}
+                      className={
+                        isGroupActive
+                          ? "text-blue-600 shrink-0"
+                          : "text-slate-400 shrink-0"
+                      }
                     />
                     <span className="uppercase tracking-normal text-[11px] font-bold text-left leading-tight break-words flex-1">
                       {group.title}
@@ -344,7 +366,11 @@ export default function AdminLayout({
                             >
                               <item.icon
                                 size={15}
-                                className={isActive ? "text-white shrink-0" : "text-slate-400 shrink-0"}
+                                className={
+                                  isActive
+                                    ? "text-white shrink-0"
+                                    : "text-slate-400 shrink-0"
+                                }
                               />
                               <span className="leading-snug text-left break-words flex-1">
                                 {item.label}

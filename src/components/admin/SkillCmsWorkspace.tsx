@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
+  ArrowRight,
   CheckCircle2,
   FileAudio,
   FilePlus2,
@@ -46,12 +47,23 @@ type QuestionDraft = {
   wordMax: string;
   sampleSentences: string;
 };
+type CmsFullDraft = {
+  domain: "listening" | "reading";
+  title: string;
+  description: string;
+  level: string;
+  passage: string;
+  sourceQuestion?: QuestionDraft;
+  questions: QuestionDraft[];
+};
 
 const meta: Record<Domain, { label: string; type: string }> = {
   listening: { label: "Listening / Dictation", type: "LISTENING_PRACTICE" },
   reading: { label: "Reading", type: "BILINGUAL_READING" },
   writing: { label: "Writing", type: "WRITING_EMAIL" },
 };
+
+const CONTENT_LEVEL_OPTIONS = ["A1", "A2", "B1", "B2", "C1"] as const;
 
 const publicationStatusLabel = (status?: string) =>
   status === "PUBLISHED" ? "Đã xuất bản" : "Bản nháp";
@@ -272,6 +284,49 @@ export default function SkillCmsWorkspace({
     keywords?: string[];
     sampleSentences?: string[];
   } | null>(null);
+  const [fullDraft, setFullDraft] = useState<CmsFullDraft | null>(null);
+  const [fullDraftCount, setFullDraftCount] = useState(5);
+  const [pendingFullDraftQuestions, setPendingFullDraftQuestions] = useState<
+    QuestionDraft[]
+  >([]);
+
+  const questionDraftPayload = (draft: QuestionDraft) => {
+    const content: Record<string, unknown> = {
+      text: draft.prompt.trim(),
+      prompt: draft.prompt.trim(),
+      explanation: draft.explanation.trim() || undefined,
+    };
+    if (domain === "reading") {
+      content.passage = form.passage.trim();
+      content.questionType = draft.questionType || "MAIN_IDEA";
+    }
+    if (domain === "listening") {
+      if (draft.type === "DICTATION") content.correctAnswer = draft.prompt.trim();
+      if (draft.type === "DIALOGUE") {
+        content.transcriptSegments = draft.segments
+          .filter((segment) => segment.speaker.trim() && segment.text.trim())
+          .map((segment) => ({
+            speaker: segment.speaker.trim(),
+            text: segment.text.trim(),
+            ...(segment.translation.trim()
+              ? { translation: segment.translation.trim() }
+              : {}),
+          }));
+      }
+    }
+    if (
+      (domain === "reading" ||
+        (domain === "listening" && draft.type === "MULTIPLE_CHOICE")) &&
+      draft.options.trim()
+    ) {
+      content.options = draft.options
+        .split("\n")
+        .map((value) => value.trim())
+        .filter(Boolean);
+      content.correctIndex = Number(draft.correctIndex);
+    }
+    return { type: draft.type, content };
+  };
 
   const handleSuggestPassage = async () => {
     const topic = passageAiTopic.trim() || form.title.trim();
@@ -453,6 +508,92 @@ export default function SkillCmsWorkspace({
     }
   };
 
+  const handleSuggestFullDraft = async () => {
+    if (domain !== "listening" && domain !== "reading") return;
+    const topic = form.title.trim();
+    if (!topic) {
+      toast.error("Vui lòng nhập tiêu đề hoặc chủ đề trước khi soạn full draft.");
+      return;
+    }
+    try {
+      const response: any = await axiosClient.post(
+        `/admin/${domain}/ai/full-draft`,
+        domain === "reading"
+          ? {
+              topic,
+              level: form.level || "A2",
+              targetLength: 180,
+              count: fullDraftCount,
+            }
+          : {
+              topic,
+              level: form.level || "A2",
+              mode: question.type === "DIALOGUE" ? "DIALOGUE" : "DICTATION",
+              count: fullDraftCount,
+            },
+      );
+      const data = response?.data || response;
+      const questions = Array.isArray(data?.questions)
+        ? data.questions.map((candidate: any) => ({
+            ...emptyQuestion(domain),
+            type: "MULTIPLE_CHOICE",
+            prompt: String(candidate.prompt || ""),
+            options: Array.isArray(candidate.options)
+              ? candidate.options.join("\n")
+              : "",
+            correctIndex: String(candidate.correctIndex ?? ""),
+            explanation: String(candidate.explanation || ""),
+            questionType: String(candidate.questionType || "MAIN_IDEA"),
+          }))
+        : [];
+      if (!data?.title || !data?.description || !questions.length) {
+        throw new Error("AI không trả về full draft hợp lệ.");
+      }
+      const sourceQuestion =
+        domain === "listening"
+          ? data.mode === "DIALOGUE"
+            ? {
+                ...emptyQuestion(domain),
+                type: "DIALOGUE",
+                prompt: "",
+                segments: (data.turns || []).map((turn: any) => ({
+                  speaker: String(turn.speaker || ""),
+                  text: String(turn.text || ""),
+                  translation: String(turn.translation || ""),
+                })),
+              }
+            : {
+                ...emptyQuestion(domain),
+                type: "DICTATION",
+                prompt: String(data.text || ""),
+              }
+          : undefined;
+      setFullDraft({
+        domain,
+        title: String(data.title),
+        description: String(data.description),
+        level: String(data.level || form.level || "A2"),
+        passage:
+          domain === "reading"
+            ? String(data.passage || "")
+            : data.mode === "DICTATION"
+              ? String(data.text || "")
+              : (data.turns || [])
+                  .map((turn: any) => `${turn.speaker || "Speaker"}: ${turn.text || ""}`)
+                  .join("\n"),
+        sourceQuestion,
+        questions,
+      });
+      toast.success("Đã tạo full draft. Hãy review trước khi Apply.");
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Không thể soạn full draft lúc này.",
+      );
+    }
+  };
+
   const title = useMemo(
     () =>
       mode === "list"
@@ -502,6 +643,7 @@ export default function SkillCmsWorkspace({
         passage: data.passage || data.theoryContent || "",
         type: data.type || meta[domain].type,
       });
+      setPendingFullDraftQuestions([]);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Không thể tải nội dung");
     } finally {
@@ -532,7 +674,20 @@ export default function SkillCmsWorkspace({
           )
         : await axiosClient.post(`/admin/skill-content/${domain}`, payload);
       const savedItem = unwrap<any>(saved);
+      if (pendingFullDraftQuestions.length) {
+        await Promise.all(
+          pendingFullDraftQuestions.map((draft) =>
+            axiosClient.post(
+              domain === "listening"
+                ? `/admin/skill-content/listening/${savedItem.id}/questions`
+                : `/admin/skill-content/${domain}/${savedItem.id}/questions`,
+              questionDraftPayload(draft),
+            ),
+          ),
+        );
+      }
       toast.success("Đã lưu bản nháp");
+      setPendingFullDraftQuestions([]);
       router.push(`/admin/${domain}/${savedItem.id}`);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Lưu thất bại");
@@ -1003,7 +1158,36 @@ export default function SkillCmsWorkspace({
       </header>
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="font-semibold text-slate-950">Thông tin nội dung</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-semibold text-slate-950">Thông tin nội dung</h2>
+          {(isListening || domain === "reading") && (
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+                Số câu
+                <input
+                  aria-label={`Số câu trong full draft ${meta[domain].label}`}
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={fullDraftCount}
+                  onChange={(event) =>
+                    setFullDraftCount(
+                      Math.min(10, Math.max(1, Number(event.target.value) || 1)),
+                    )
+                  }
+                  className="w-14 rounded-md border border-slate-300 px-2 py-1.5 text-center text-xs text-slate-900 outline-none focus:ring-2 focus:ring-slate-400"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => void handleSuggestFullDraft()}
+                className="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-slate-950 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+              >
+                AI soạn {domain === "reading" ? "bài đọc" : "bài nghe"}
+              </button>
+            </div>
+          )}
+        </div>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <label className="text-sm font-medium">
             Tiêu đề
@@ -1016,14 +1200,24 @@ export default function SkillCmsWorkspace({
             />
           </label>
           <label className="text-sm font-medium">
-            Trình độ
-            <input
+            Trình độ tham chiếu / context
+            <select
               value={form.level}
               onChange={(event) =>
                 setForm({ ...form, level: event.target.value })
               }
               className={inputClassName()}
-            />
+            >
+              {CONTENT_LEVEL_OPTIONS.map((level) => (
+                <option key={level} value={level}>
+                  {level}
+                </option>
+              ))}
+            </select>
+            <span className="mt-1 block text-[11px] font-normal text-slate-500">
+              Dùng để định hướng nội dung AI; runtime vẫn lưu theo contract của
+              từng domain.
+            </span>
           </label>
           <label className="text-sm font-medium md:col-span-2">
             Mô tả
@@ -1075,7 +1269,7 @@ export default function SkillCmsWorkspace({
                   }}
                   className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white hover:bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 transition-colors"
                 >
-                  Gợi ý đoạn đọc
+                  AI gợi ý đoạn đọc
                 </button>
               </div>
               <textarea
@@ -1109,7 +1303,7 @@ export default function SkillCmsWorkspace({
                 }}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors"
               >
-                Tạo câu hỏi nháp
+                AI gợi ý câu hỏi nháp
               </button>
             )}
             {isListening && (
@@ -1122,7 +1316,7 @@ export default function SkillCmsWorkspace({
                   }}
                   className="inline-flex min-h-10 items-center rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900 transition-colors hover:border-amber-300 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-300"
                 >
-                  Gợi ý nội dung nghe
+                  AI gợi ý nội dung nghe
                 </button>
                 <button
                   type="button"
@@ -1132,7 +1326,7 @@ export default function SkillCmsWorkspace({
                   }}
                   className="inline-flex min-h-10 items-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300"
                 >
-                  Tạo câu hỏi nháp
+                  AI gợi ý câu hỏi nháp
                 </button>
               </>
             )}
@@ -1281,7 +1475,7 @@ export default function SkillCmsWorkspace({
                   }}
                   className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-900 transition-colors hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-300"
                 >
-                  Gợi ý đề bài
+                  AI gợi ý đề bài Writing
                 </button>
               )}
             </span>
@@ -1314,14 +1508,20 @@ export default function SkillCmsWorkspace({
               </label>
               <label className="text-sm font-medium">
                 Level
-                <input
+                <select
                   value={question.level}
                   onChange={(event) =>
                     setQuestion({ ...question, level: event.target.value })
                   }
-                  placeholder="A2, B1, B2..."
                   className={inputClassName()}
-                />
+                >
+                  <option value="">Chưa chọn (dùng context)</option>
+                  {CONTENT_LEVEL_OPTIONS.map((level) => (
+                    <option key={level} value={level}>
+                      {level}
+                    </option>
+                  ))}
+                </select>
               </label>
               {isPictureWriting && (
                 <>
@@ -1669,6 +1869,129 @@ export default function SkillCmsWorkspace({
       )}
 
       {/* MODAL: LISTENING CONTENT REVIEW */}
+      {fullDraft && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/60 p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cms-full-draft-title"
+            className="max-h-[calc(100dvh-2rem)] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl"
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-3">
+              <div>
+                <h3 id="cms-full-draft-title" className="text-base font-bold text-slate-900">
+                  Review full draft {fullDraft.domain === "reading" ? "Reading" : "Listening"}
+                </h3>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  Review, sửa hoặc loại candidate trước khi Apply. Chưa ghi database; CMS Save vẫn bắt buộc.
+                </p>
+              </div>
+              <button type="button" aria-label="Đóng review full draft" onClick={() => setFullDraft(null)} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="space-y-4 py-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="text-xs font-semibold text-slate-700">
+                  Tiêu đề
+                  <input value={fullDraft.title} onChange={(event) => setFullDraft((current) => current ? { ...current, title: event.target.value } : current)} className={inputClassName()} />
+                </label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Trình độ
+                  <select value={fullDraft.level} onChange={(event) => setFullDraft((current) => current ? { ...current, level: event.target.value } : current)} className={inputClassName()}>
+                    {CONTENT_LEVEL_OPTIONS.map((level) => (
+                      <option key={level} value={level}>
+                        {level}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <label className="block text-xs font-semibold text-slate-700">
+                Mô tả
+                <textarea rows={3} value={fullDraft.description} onChange={(event) => setFullDraft((current) => current ? { ...current, description: event.target.value } : current)} className={`${inputClassName()} min-h-20`} />
+              </label>
+              <label className="block text-xs font-semibold text-slate-700">
+                {fullDraft.domain === "reading" ? "Đoạn đọc" : "Transcript / nội dung nguồn"}
+                <textarea
+                  rows={fullDraft.domain === "reading" ? 8 : 6}
+                  value={fullDraft.passage}
+                  onChange={(event) => setFullDraft((current) => {
+                    if (!current) return current;
+                    const sourceQuestion = current.sourceQuestion?.type === "DICTATION"
+                      ? { ...current.sourceQuestion, prompt: event.target.value }
+                      : current.sourceQuestion;
+                    return { ...current, passage: event.target.value, sourceQuestion };
+                  })}
+                  className={`${inputClassName()} min-h-32 ${fullDraft.domain === "reading" ? "font-serif leading-relaxed" : "font-mono"}`}
+                />
+              </label>
+              {fullDraft.sourceQuestion && (
+                <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">
+                  Full draft sẽ lưu transcript nguồn thành một câu {fullDraft.sourceQuestion.type}; các câu hỏi bên dưới được lưu thành candidate riêng. Không tạo audio.
+                </p>
+              )}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900">Question candidates ({fullDraft.questions.filter((candidate: any) => !candidate.excluded).length})</h4>
+                  <p className="mt-1 text-xs text-slate-500">Có thể chỉnh sửa hoặc khôi phục candidate đã loại.</p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                {fullDraft.questions.map((candidate: any, index) => (
+                  <div key={`${candidate.prompt}-${index}`} className={`rounded-xl border p-3 ${candidate.excluded ? "border-slate-200 bg-slate-50 opacity-60" : "border-slate-200 bg-white"}`}>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs font-semibold text-slate-600">Câu {index + 1}</span>
+                      <button type="button" onClick={() => setFullDraft((current) => current ? { ...current, questions: current.questions.map((item: any, itemIndex) => itemIndex === index ? { ...item, excluded: !item.excluded } : item) } : current)} className="text-xs font-semibold text-slate-500 underline-offset-2 hover:text-slate-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400">
+                        {candidate.excluded ? "Khôi phục" : "Loại candidate"}
+                      </button>
+                    </div>
+                    <label className="mt-3 block text-xs font-semibold text-slate-700">
+                      Đề bài
+                      <textarea disabled={candidate.excluded} rows={2} value={candidate.prompt} onChange={(event) => setFullDraft((current) => current ? { ...current, questions: current.questions.map((item: any, itemIndex) => itemIndex === index ? { ...item, prompt: event.target.value } : item) } : current)} className={`${inputClassName()} min-h-16 disabled:cursor-not-allowed`} />
+                    </label>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_120px]">
+                      <label className="text-xs font-semibold text-slate-700">
+                        4 lựa chọn, mỗi dòng một lựa chọn
+                        <textarea disabled={candidate.excluded} rows={4} value={candidate.options} onChange={(event) => setFullDraft((current) => current ? { ...current, questions: current.questions.map((item: any, itemIndex) => itemIndex === index ? { ...item, options: event.target.value } : item) } : current)} className={`${inputClassName()} font-mono disabled:cursor-not-allowed`} />
+                      </label>
+                      <label className="text-xs font-semibold text-slate-700">
+                        Đáp án đúng (0–3)
+                        <input disabled={candidate.excluded} type="number" min={0} max={3} value={candidate.correctIndex} onChange={(event) => setFullDraft((current) => current ? { ...current, questions: current.questions.map((item: any, itemIndex) => itemIndex === index ? { ...item, correctIndex: event.target.value } : item) } : current)} className={`${inputClassName()} disabled:cursor-not-allowed`} />
+                      </label>
+                    </div>
+                    <label className="mt-3 block text-xs font-semibold text-slate-700">
+                      Giải thích
+                      <textarea disabled={candidate.excluded} rows={2} value={candidate.explanation} onChange={(event) => setFullDraft((current) => current ? { ...current, questions: current.questions.map((item: any, itemIndex) => itemIndex === index ? { ...item, explanation: event.target.value } : item) } : current)} className={`${inputClassName()} disabled:cursor-not-allowed`} />
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+              <button type="button" onClick={() => setFullDraft(null)} className="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Bỏ qua</button>
+              <button
+                type="button"
+                onClick={() => {
+                  const activeQuestions = fullDraft.questions.filter((candidate: any) => !candidate.excluded && candidate.prompt.trim() && candidate.options.split("\n").filter(Boolean).length === 4);
+                  if (!fullDraft.title.trim() || !activeQuestions.length || (fullDraft.sourceQuestion?.type === "DICTATION" && !fullDraft.sourceQuestion.prompt.trim())) {
+                    toast.error("Full draft cần tiêu đề, nguồn nội dung và ít nhất một câu hợp lệ.");
+                    return;
+                  }
+                  setForm((current) => ({ ...current, title: fullDraft.title, description: fullDraft.description, level: fullDraft.level, passage: fullDraft.passage }));
+                  setPendingFullDraftQuestions([...(fullDraft.sourceQuestion ? [fullDraft.sourceQuestion] : []), ...activeQuestions]);
+                  setFullDraft(null);
+                  toast.success("Đã Apply full draft vào form. Chưa có dữ liệu nào được lưu.");
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-950 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
+              >
+                Apply vào form <ArrowRight size={14} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {isListeningContentAiOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4"
@@ -1686,7 +2009,7 @@ export default function SkillCmsWorkspace({
                   id="listening-content-ai-title"
                   className="mt-1 text-lg font-bold text-slate-950"
                 >
-                  Gợi ý nội dung nghe
+                  AI gợi ý nội dung nghe
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">
                   Transcript chỉ được đưa vào form hiện tại; audio artifact vẫn
@@ -1817,7 +2140,7 @@ export default function SkillCmsWorkspace({
                 {isListeningContentAiLoading && (
                   <Loader2 size={14} className="animate-spin" />
                 )}{" "}
-                {listeningContentAiSuggestion ? "Tạo lại" : "Tạo gợi ý"}
+                {listeningContentAiSuggestion ? "AI gợi ý lại" : "AI gợi ý nội dung"}
               </button>
               {listeningContentAiSuggestion && (
                 <button
@@ -1880,7 +2203,7 @@ export default function SkillCmsWorkspace({
                   id="listening-questions-ai-title"
                   className="mt-1 text-lg font-bold text-slate-950"
                 >
-                  Tạo câu hỏi nghe nháp
+                  AI gợi ý câu hỏi nghe nháp
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">
                   Câu hỏi được tạo từ transcript hiện tại, không tự thêm vào
@@ -1926,14 +2249,14 @@ export default function SkillCmsWorkspace({
                   <Loader2 size={14} className="animate-spin" />
                 )}{" "}
                 {listeningQuestionsAiCandidates.length
-                  ? "Tạo lại"
-                  : "Tạo câu hỏi nháp"}
+                  ? "AI gợi ý lại"
+                  : "AI gợi ý câu hỏi nháp"}
               </button>
             </div>
             <div className="mt-4 flex-1 space-y-3 overflow-y-auto pr-1">
               {listeningQuestionsAiCandidates.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-200 p-10 text-center text-sm text-slate-500">
-                  Nhập transcript ở form trước, sau đó nhấn “Tạo câu hỏi nháp”.
+                  Nhập transcript ở form trước, sau đó nhấn “AI gợi ý câu hỏi nháp”.
                 </div>
               ) : (
                 listeningQuestionsAiCandidates.map((candidate, index) => (
@@ -2090,7 +2413,7 @@ export default function SkillCmsWorkspace({
                   id="writing-ai-title"
                   className="mt-1 text-lg font-bold text-slate-950"
                 >
-                  Gợi ý đề bài Writing
+                  AI gợi ý đề bài Writing
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">
                   Chỉ sinh nội dung chữ; ảnh của Picture Task vẫn do bạn
@@ -2246,7 +2569,7 @@ export default function SkillCmsWorkspace({
                 {isWritingAiLoading && (
                   <Loader2 size={14} className="animate-spin" />
                 )}{" "}
-                {writingAiSuggestion ? "Tạo lại" : "Tạo gợi ý"}
+                {writingAiSuggestion ? "AI gợi ý lại" : "AI gợi ý đề bài"}
               </button>
               {writingAiSuggestion && (
                 <button
@@ -2294,19 +2617,26 @@ export default function SkillCmsWorkspace({
       {/* MODAL: AI READING PASSAGE SUGGESTION */}
       {isPassageAiOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-          <div className="w-full max-w-xl max-h-[90vh] flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-xl space-y-4">
+          <div
+            className="w-full max-w-xl max-h-[90vh] flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-xl space-y-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reading-passage-ai-title"
+          >
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <h3 className="font-bold text-slate-900">
-                  Gợi ý đoạn văn đọc bằng AI
+                <h3 id="reading-passage-ai-title" className="font-bold text-slate-900">
+                  AI gợi ý đoạn đọc
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Tạo đoạn đọc nháp dựa trên chủ đề và trình độ.
+                  Tạo đoạn đọc nháp dựa trên chủ đề và trình độ; chỉ áp dụng vào form, chưa lưu hay xuất bản.
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => setIsPassageAiOpen(false)}
-                className="rounded-lg p-1 text-slate-400 hover:text-slate-700"
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                aria-label="Đóng gợi ý đoạn đọc"
               >
                 <X size={18} />
               </button>
@@ -2344,7 +2674,7 @@ export default function SkillCmsWorkspace({
                   {isPassageAiLoading ? (
                     <Loader2 size={13} className="animate-spin" />
                   ) : null}
-                  {passageAiSuggestion ? "Tạo lại" : "Gợi ý đoạn đọc"}
+                  {passageAiSuggestion ? "AI gợi ý lại" : "AI gợi ý đoạn đọc"}
                 </button>
               </div>
 
@@ -2402,19 +2732,26 @@ export default function SkillCmsWorkspace({
       {/* MODAL: AI READING QUESTIONS GENERATION & REVIEW */}
       {isQuestionsAiOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-          <div className="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-xl space-y-4">
+          <div
+            className="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-xl space-y-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reading-questions-ai-title"
+          >
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <h3 className="font-bold text-slate-900">
-                  Tạo câu hỏi đọc hiểu nháp bằng AI
+                <h3 id="reading-questions-ai-title" className="font-bold text-slate-900">
+                  AI gợi ý câu hỏi đọc hiểu
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Sinh câu hỏi trắc nghiệm dựa trên đoạn đọc hiện có trong form.
+                  Sinh câu hỏi từ đoạn đọc hiện có trong form; kết quả chỉ là bản nháp cho đến khi bạn áp dụng và lưu.
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => setIsQuestionsAiOpen(false)}
-                className="rounded-lg p-1 text-slate-400 hover:text-slate-700"
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                aria-label="Đóng gợi ý câu hỏi đọc hiểu"
               >
                 <X size={18} />
               </button>
@@ -2445,15 +2782,15 @@ export default function SkillCmsWorkspace({
                   <Loader2 size={13} className="animate-spin" />
                 ) : null}
                 {readingAiCandidates.length > 0
-                  ? "Tạo lại"
-                  : "Tạo câu hỏi nháp"}
+                  ? "AI gợi ý lại"
+                  : "AI gợi ý câu hỏi nháp"}
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 text-xs">
               {readingAiCandidates.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center text-slate-400">
-                  Nhấn "Tạo câu hỏi nháp" để AI đọc đoạn văn hiện tại và sinh
+                  Nhấn "AI gợi ý câu hỏi nháp" để AI đọc đoạn văn hiện tại và sinh
                   các câu hỏi trắc nghiệm A/B/C/D kèm giải thích.
                 </div>
               ) : (

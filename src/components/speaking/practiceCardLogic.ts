@@ -201,7 +201,7 @@ export function resolveFormatTag(exercise: PracticeExerciseItem): string {
   if (exercise.practiceSet) {
     return "Mô phỏng ETS";
   }
-  return exercise.category || "LUYỆN NÓI";
+  return exercise.categoryLabel || exercise.category || "LUYỆN NÓI";
 }
 
 /**

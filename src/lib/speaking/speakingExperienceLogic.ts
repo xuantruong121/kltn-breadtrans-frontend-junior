@@ -58,7 +58,26 @@ export function presentSpeakingProgress(
   };
 }
 
-export function resolveSpeakingMode(exercise: Pick<SpeakingExercise, "title" | "category">): SpeakingModeInfo {
+export function resolveSpeakingMode(
+  exercise: Pick<SpeakingExercise, "title" | "category" | "taskType">,
+): SpeakingModeInfo {
+  if (exercise.taskType === "READ_ALOUD") {
+    return { id: "READ_ALOUD", label: "Đọc thành tiếng", objective: "Luyện đọc rõ ràng, liền mạch và đúng ngữ điệu.", needsModel: true };
+  }
+  if (exercise.taskType === "DESCRIBE_PICTURE") {
+    return { id: "DESCRIBE", label: "Mô tả", objective: "Luyện mô tả thông tin bằng câu nói mạch lạc.", needsModel: false };
+  }
+  if (exercise.taskType === "RESPOND_TO_QUESTION" || exercise.taskType === "RESPOND_USING_INFORMATION") {
+    return { id: "QUICK_RESPONSE", label: "Phản hồi nhanh", objective: "Luyện phản xạ trả lời tự nhiên theo tình huống.", needsModel: false };
+  }
+  if (exercise.taskType === "EXPRESS_OPINION") {
+    return { id: "OPINION", label: "Nêu quan điểm", objective: "Luyện trình bày quan điểm và lý do một cách rõ ràng.", needsModel: false };
+  }
+  if (exercise.taskType === "PRONUNCIATION_DRILL") {
+    return { id: "PRONUNCIATION", label: "Phát âm", objective: "Luyện âm cuối, trọng âm và nối âm trong câu thực tế.", needsModel: true };
+  }
+
+  // Compatibility-only fallback for legacy rows whose taskType is still NULL.
   const text = `${exercise.title ?? ""} ${exercise.category ?? ""}`.toLowerCase();
 
   if (text.includes("read aloud") || text.includes("đọc thành tiếng")) {

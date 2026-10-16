@@ -180,6 +180,7 @@ export default function SpeakingExercisesPage() {
         title: first.title,
         description: first.description ?? "Bài luyện nói theo câu.",
         category: first.category,
+        categoryLabel: first.categoryLabel,
         exerciseCount: 1,
         completedCount: first.isCompleted ? 1 : 0,
         exerciseIds: [first.id],
@@ -228,7 +229,8 @@ export default function SpeakingExercisesPage() {
     const counts: Record<string, number> = {};
     if (!practiceSets) return counts;
     practiceSets.forEach((ex) => {
-      const cat = ex.category || "GENERAL";
+      const cat = ex.category;
+      if (!cat) return;
       counts[cat] = (counts[cat] || 0) + 1;
     });
     return counts;
@@ -502,7 +504,7 @@ export default function SpeakingExercisesPage() {
                       : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100"
                   }`}
                 >
-                  {cat} ({count})
+                  {practiceSets.find((item) => item.category === cat)?.categoryLabel ?? cat} ({count})
                 </button>
               );
             })}
@@ -728,4 +730,3 @@ export default function SpeakingExercisesPage() {
     </div>
   );
 }
-

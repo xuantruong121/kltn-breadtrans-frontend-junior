@@ -22,6 +22,7 @@ import toast from "react-hot-toast";
 import Link from "next/link";
 import { Pagination } from "@/components/ui";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { getCourseLevelFilterKey } from "@/lib/course/courseLevel";
 
 type ClassData = {
   id: number;
@@ -50,7 +51,6 @@ type Course = {
 };
 
 const LEVEL_OPTIONS = [
-  { value: "", label: "Không xác định" },
   { value: "BEGINNER", label: "Cơ bản" },
   { value: "INTERMEDIATE", label: "Trung cấp" },
   { value: "ADVANCED", label: "Nâng cao" },
@@ -80,6 +80,7 @@ export default function AdminCoursesPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [levelFilter, setLevelFilter] = useState<string>("ALL");
   const [showCreateCourse, setShowCreateCourse] = useState(false);
   const [showCreateClass, setShowCreateClass] = useState<number | null>(null); // courseId
   const [expandedCourse, setExpandedCourse] = useState<number | null>(null);
@@ -89,7 +90,7 @@ export default function AdminCoursesPage() {
   const [courseForm, setCourseForm] = useState({
     title: "",
     description: "",
-    level: "",
+    level: "BEGINNER",
   });
 
   const [classForm, setClassForm] = useState({
@@ -179,7 +180,7 @@ export default function AdminCoursesPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
       queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
       setShowCreateCourse(false);
-      setCourseForm({ title: "", description: "", level: "" });
+      setCourseForm({ title: "", description: "", level: "BEGINNER" });
       toast.success("Tạo khóa học thành công!");
     },
     onError: (err: any) =>
@@ -241,7 +242,9 @@ export default function AdminCoursesPage() {
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "ALL" || c.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesLevel =
+      levelFilter === "ALL" || getCourseLevelFilterKey(c.level) === levelFilter;
+    return matchesSearch && matchesStatus && matchesLevel;
   });
 
   const totalPages = Math.ceil((filteredCourses?.length || 0) / pageSize);
@@ -251,7 +254,8 @@ export default function AdminCoursesPage() {
   );
 
   const levelLabel = (l: string | null) =>
-    LEVEL_OPTIONS.find((o) => o.value === (l || ""))?.label || "—";
+    LEVEL_OPTIONS.find((o) => o.value === getCourseLevelFilterKey(l))?.label ||
+    "—";
 
   const handleCreateClassSubmit = () => {
     if (!showCreateClass) return;
@@ -348,6 +352,25 @@ export default function AdminCoursesPage() {
             className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-blue-500 text-sm"
           />
         </div>
+
+        <label className="flex shrink-0 items-center gap-2 text-sm text-slate-600">
+          <span className="whitespace-nowrap">Trình độ:</span>
+          <select
+            value={levelFilter}
+            onChange={(e) => {
+              setLevelFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
+          >
+            <option value="ALL">Tất cả</option>
+            {LEVEL_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       {/* Course List */}

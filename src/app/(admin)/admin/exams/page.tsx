@@ -742,7 +742,7 @@ export default function AdminExamsPage() {
                               }}
                               className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors"
                             >
-                              Tạo câu hỏi Part 5 nháp
+                              AI gợi ý câu hỏi TOEIC Part 5
                             </button>
                           )}
                           <button
@@ -1544,7 +1544,7 @@ export default function AdminExamsPage() {
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div>
                   <h3 className="font-bold text-slate-900">
-                    Tạo câu hỏi TOEIC Part 5 nháp bằng AI
+                    AI gợi ý câu hỏi TOEIC Part 5
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">
                     Nhóm #{aiPart5TargetGroup.groupOrder} • Hoàn thành câu
@@ -1613,8 +1613,8 @@ export default function AdminExamsPage() {
                       <Loader2 size={13} className="animate-spin" />
                     ) : null}
                     {aiPart5Candidates.length > 0
-                      ? "Tạo lại"
-                      : "Tạo câu hỏi nháp"}
+                      ? "AI gợi ý lại"
+                      : "AI gợi ý câu hỏi nháp"}
                   </button>
                 </div>
               </div>
@@ -1622,7 +1622,7 @@ export default function AdminExamsPage() {
               <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 text-xs">
                 {aiPart5Candidates.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center text-slate-400">
-                    Nhấn "Tạo câu hỏi nháp" để AI đề xuất các câu hỏi luyện tập
+                    Nhấn "AI gợi ý câu hỏi nháp" để AI đề xuất các câu hỏi luyện tập
                     format TOEIC Part 5 với chỗ trống và 4 phương án.
                   </div>
                 ) : (

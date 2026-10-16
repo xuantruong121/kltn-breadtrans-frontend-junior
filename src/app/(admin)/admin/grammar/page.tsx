@@ -46,6 +46,12 @@ interface GrammarTopicDetail {
   questions: GrammarQuestion[];
   _count?: { questions: number; grammarAttempt: number };
 }
+type GrammarDraftQuestion = Omit<GrammarQuestion, "id" | "topicId" | "order"> & { excluded?: boolean };
+const GRAMMAR_LEVEL_OPTIONS = [
+  { value: "BEGINNER", label: "Cơ bản (Beginner)" },
+  { value: "INTERMEDIATE", label: "Trung cấp (Intermediate)" },
+  { value: "ADVANCED", label: "Nâng cao (Advanced)" },
+] as const;
 
 export default function AdminGrammarPage() {
   const queryClient = useQueryClient();
@@ -103,6 +109,41 @@ export default function AdminGrammarPage() {
       explanation: string;
     }>
   >([]);
+  const [grammarFullDraft, setGrammarFullDraft] = useState<{
+    title: string;
+    description: string;
+    level: string;
+    keyFormula: string;
+    questions: GrammarDraftQuestion[];
+  } | null>(null);
+  const [grammarFullDraftCount, setGrammarFullDraftCount] = useState(10);
+  const [pendingGrammarQuestions, setPendingGrammarQuestions] = useState<GrammarDraftQuestion[]>([]);
+
+  const handleSuggestGrammarFullDraft = async () => {
+    if (!topicForm.title.trim()) {
+      toast.error("Vui lòng nhập tên chủ đề trước khi soạn full draft.");
+      return;
+    }
+    try {
+      const response: any = await axiosClient.post("/admin/grammar/ai/full-draft", {
+        topicTitle: topicForm.title.trim(),
+        level: topicForm.level,
+        objective: topicForm.description.trim() || undefined,
+        count: grammarFullDraftCount,
+      });
+      const data = response?.data || response;
+      if (!data?.title || !Array.isArray(data.questions) || !data.questions.length) throw new Error("AI không trả về full draft Grammar hợp lệ.");
+      setGrammarFullDraft({
+        title: String(data.title),
+        description: String(data.description || ""),
+        level: String(data.level || topicForm.level),
+        keyFormula: String(data.keyFormula || ""),
+        questions: data.questions.map((question: GrammarDraftQuestion) => ({ ...question, excluded: false })),
+      });
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error?.message || "Không thể soạn full draft Grammar.");
+    }
+  };
 
   const handleGenerateAiQuestions = async () => {
     if (!topicDetail) return;
@@ -166,7 +207,20 @@ export default function AdminGrammarPage() {
 
   // Mutations
   const createTopicMutation = useMutation({
-    mutationFn: async (dto: any) => axiosClient.post("/grammar/topics", dto),
+    mutationFn: async ({ dto, questions }: { dto: any; questions: GrammarDraftQuestion[] }) => {
+      const response: any = await axiosClient.post("/grammar/topics", dto);
+      const created = response?.data || response;
+      if (created?.id && questions.length) {
+        await Promise.all(questions.map((question, order) => axiosClient.post(`/grammar/topics/${created.id}/questions`, {
+          question: question.question,
+          options: question.options,
+          correctIndex: question.correctIndex,
+          explanation: question.explanation,
+          order,
+        })));
+      }
+      return response;
+    },
     onSuccess: (data: any) => {
       toast.success("Tạo chủ đề ngữ pháp mới thành công!");
       setIsTopicModalOpen(false);
@@ -177,6 +231,7 @@ export default function AdminGrammarPage() {
         keyFormula: "",
         videoYoutubeId: "",
       });
+      setPendingGrammarQuestions([]);
       queryClient.invalidateQueries({ queryKey: ["admin-grammar-topics"] });
       if (data?.id) setSelectedTopicId(data.id);
     },
@@ -468,7 +523,7 @@ export default function AdminGrammarPage() {
                   }}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-3.5 py-2 text-xs font-semibold text-slate-700 transition-colors"
                 >
-                  Tạo câu hỏi nháp bằng AI
+                  AI gợi ý câu hỏi nháp
                 </button>
                 <button
                   onClick={() => {
@@ -1023,7 +1078,7 @@ export default function AdminGrammarPage() {
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div>
                   <h3 className="font-bold text-slate-900">
-                    Tạo câu hỏi ngữ pháp nháp bằng AI
+                    AI gợi ý câu hỏi ngữ pháp
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">
                     Chủ đề:{" "}
@@ -1068,14 +1123,14 @@ export default function AdminGrammarPage() {
                   {isAiGenerating ? (
                     <Loader2 size={13} className="animate-spin" />
                   ) : null}
-                  {aiCandidates.length > 0 ? "Tạo lại" : "Tạo câu hỏi nháp"}
+                  {aiCandidates.length > 0 ? "AI gợi ý lại" : "AI gợi ý câu hỏi nháp"}
                 </button>
               </div>
 
               <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 text-xs">
                 {aiCandidates.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center text-slate-400">
-                    Nhấn "Tạo câu hỏi nháp" để AI đề xuất các câu hỏi trắc
+                    Nhấn "AI gợi ý câu hỏi nháp" để AI đề xuất các câu hỏi trắc
                     nghiệm dựa theo chủ đề và cấp độ hiện tại.
                   </div>
                 ) : (
@@ -1279,6 +1334,8 @@ export default function AdminGrammarPage() {
               keyFormula: "",
               videoYoutubeId: "",
             });
+            setPendingGrammarQuestions([]);
+            setGrammarFullDraft(null);
             setIsTopicModalOpen(true);
           }}
           className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors shadow-sm"
@@ -1430,10 +1487,21 @@ export default function AdminGrammarPage() {
               </button>
             </div>
 
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="max-w-[15rem] text-xs leading-5 text-slate-600">AI soạn topic và câu hỏi nháp; Apply chỉ cập nhật local.</p>
+              <div className="flex items-center gap-2">
+                <input aria-label="Số câu trong full draft Grammar" type="number" min={1} max={20} value={grammarFullDraftCount} onChange={(event) => setGrammarFullDraftCount(Math.min(20, Math.max(1, Number(event.target.value) || 1)))} className="w-14 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-center text-xs text-slate-900" />
+                <button type="button" onClick={() => void handleSuggestGrammarFullDraft()} className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-700">AI soạn bài ngữ pháp</button>
+              </div>
+            </div>
+
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                createTopicMutation.mutate(topicForm);
+                createTopicMutation.mutate({
+                  dto: topicForm,
+                  questions: pendingGrammarQuestions.filter((question) => !question.excluded),
+                });
               }}
               className="space-y-3.5 text-sm"
             >
@@ -1519,6 +1587,21 @@ export default function AdminGrammarPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {grammarFullDraft && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/60 p-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="grammar-full-draft-title" className="max-h-[calc(100dvh-2rem)] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-3"><div><h3 id="grammar-full-draft-title" className="font-bold text-slate-900">Review full draft Grammar</h3><p className="mt-1 text-xs text-slate-500">Sửa hoặc loại câu trước khi Apply. Chỉ Save mới ghi bản nháp vào CMS.</p></div><button type="button" aria-label="Đóng review Grammar" onClick={() => setGrammarFullDraft(null)} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><X size={18} /></button></div>
+            <div className="space-y-4 py-4">
+              <div className="grid gap-3 sm:grid-cols-2"><label className="text-xs font-semibold text-slate-700">Tiêu đề<input value={grammarFullDraft.title} onChange={(event) => setGrammarFullDraft((current) => current ? { ...current, title: event.target.value } : current)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900" /></label><label className="text-xs font-semibold text-slate-700">Level<select value={grammarFullDraft.level} onChange={(event) => setGrammarFullDraft((current) => current ? { ...current, level: event.target.value as GrammarTopicDetail["level"] } : current)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900">{GRAMMAR_LEVEL_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label></div>
+              <label className="block text-xs font-semibold text-slate-700">Mô tả<textarea rows={3} value={grammarFullDraft.description} onChange={(event) => setGrammarFullDraft((current) => current ? { ...current, description: event.target.value } : current)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900" /></label>
+              <label className="block text-xs font-semibold text-slate-700">Công thức trọng tâm<input value={grammarFullDraft.keyFormula} onChange={(event) => setGrammarFullDraft((current) => current ? { ...current, keyFormula: event.target.value } : current)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm font-normal text-slate-900" /></label>
+              <div className="space-y-3">{grammarFullDraft.questions.map((question, index) => <div key={`${question.question}-${index}`} className={`rounded-xl border p-3 ${question.excluded ? "bg-slate-50 opacity-60" : "bg-white"}`}><div className="flex items-center justify-between"><span className="text-xs font-semibold text-slate-600">Câu {index + 1}</span><button type="button" onClick={() => setGrammarFullDraft((current) => current ? { ...current, questions: current.questions.map((item, itemIndex) => itemIndex === index ? { ...item, excluded: !item.excluded } : item) } : current)} className="text-xs font-semibold text-slate-500 underline">{question.excluded ? "Khôi phục" : "Loại câu"}</button></div><label className="mt-3 block text-xs font-semibold text-slate-700">Câu hỏi<textarea disabled={question.excluded} rows={2} value={question.question} onChange={(event) => setGrammarFullDraft((current) => current ? { ...current, questions: current.questions.map((item, itemIndex) => itemIndex === index ? { ...item, question: event.target.value } : item) } : current)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900" /></label><div className="mt-3 grid gap-3 sm:grid-cols-[1fr_120px]"><label className="text-xs font-semibold text-slate-700">Bốn lựa chọn<textarea disabled={question.excluded} rows={4} value={question.options.join("\n")} onChange={(event) => setGrammarFullDraft((current) => current ? { ...current, questions: current.questions.map((item, itemIndex) => itemIndex === index ? { ...item, options: event.target.value.split("\n") } : item) } : current)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm font-normal text-slate-900" /></label><label className="text-xs font-semibold text-slate-700">Đáp án 0–3<input disabled={question.excluded} type="number" min={0} max={3} value={question.correctIndex} onChange={(event) => setGrammarFullDraft((current) => current ? { ...current, questions: current.questions.map((item, itemIndex) => itemIndex === index ? { ...item, correctIndex: Number(event.target.value) } : item) } : current)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900" /></label></div><label className="mt-3 block text-xs font-semibold text-slate-700">Giải thích<textarea disabled={question.excluded} rows={2} value={question.explanation || ""} onChange={(event) => setGrammarFullDraft((current) => current ? { ...current, questions: current.questions.map((item, itemIndex) => itemIndex === index ? { ...item, explanation: event.target.value } : item) } : current)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900" /></label></div>)}</div>
+            </div>
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3"><button type="button" onClick={() => setGrammarFullDraft(null)} className="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700">Bỏ qua</button><button type="button" onClick={() => { const questions = grammarFullDraft.questions.filter((question) => !question.excluded && question.question.trim() && question.options.filter(Boolean).length === 4); if (!grammarFullDraft.title.trim() || !questions.length) { toast.error("Full draft cần tiêu đề và ít nhất một câu hợp lệ."); return; } setTopicForm((current) => ({ ...current, title: grammarFullDraft.title, description: grammarFullDraft.description, level: grammarFullDraft.level, keyFormula: grammarFullDraft.keyFormula })); setPendingGrammarQuestions(questions); setGrammarFullDraft(null); toast.success("Đã Apply full draft vào form. Chưa ghi database."); }} className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800">Apply vào form</button></div>
           </div>
         </div>
       )}

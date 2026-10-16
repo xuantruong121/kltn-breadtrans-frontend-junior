@@ -117,3 +117,23 @@ Tài liệu này ghi chép lại toàn bộ tiến độ, kiến trúc và các 
 - Reading list/editor lifecycle, search/status filters, empty state, question ownership, save/reload, learner answer security and grading were verified with isolated API/browser fixtures.
 - Phase 5A Reading AI controls remain review-first and local-only until explicit save; AI question requests use the current editor passage.
 - Isolated responsive browser QA passed at 1440x900, 768x1024 and 390x844. Synthetic Reading fixtures were cleaned up and active Reading content was unchanged.
+
+## 7. BreadTrans Phase 8.7 — AI Authoring Discoverability — 2026-10-15
+- Admin overview now provides the navigation-only `AI hỗ trợ soạn nội dung` entrypoint to the existing Course, Listening, Reading, Writing, Vocabulary, Grammar and Exam Studios; Speaking is deliberately absent.
+- Copy makes the human workflow explicit: AI returns a suggestion/draft only; Admin reviews/edits, saves in the authoritative Studio, then publishes manually. No extra writer, persistence path or provider was introduced.
+- Contextual controls use the consistent `AI gợi ý ...` pattern. Exam scope remains TOEIC Part 5 only; Writing does not claim AI creates Picture media.
+
+## 8. BreadTrans Phase 8.8 — Speaking Contextual AI Authoring — 2026-10-15
+- `/admin/speaking` now exposes real review-first actions inside the existing set/exercise dialogs: `AI gợi ý bộ luyện` and `AI gợi ý câu luyện`. They call the Admin-only contextual AI endpoints and never save or publish directly.
+- Set review edits only persisted set fields (`title`, `description`, `category`, `level`). Exercise review edits/excludes text-only candidates (`title`, `targetText`, `difficulty`) and keeps the parent category inheritance unless Admin explicitly overrides it in the authoritative form.
+- Review overlays use named dialogs, visible keyboard focus states, explicit close controls and responsive scroll bounds. Copy distinguishes AI draft, local apply, human save and manual publish; no audio/media controls were introduced.
+- Global `/admin` AI authoring entrypoint now includes Speaking because the real authoring capability is available. Frontend typecheck/build and `test:ci` 498/498 pass; lint exit 0 with only the existing repository-wide warning baseline.
+- Authenticated owner-runtime closure passed after the owner backend returned on `:3001`: Admin overview → Speaking, set/exercise AI review/edit/exclude/local Apply, 503 form preservation, Save child Draft, learner isolation, human publish and learner browser readback passed at desktop/tablet/mobile. No real AI/audio/Azure operation occurred; all `qa-phase8-8-speaking-` data was removed.
+
+## 9. BreadTrans Phase 8.8.1 — CMS Contract Consistency & Full-Draft AI Authoring — 2026-10-15
+- Chuẩn hóa UI contract Speaking theo dữ liệu thực: parent dùng CEFR range/category riêng; child dùng difficulty riêng; không còn mapping giả level/difficulty. Full-draft Speaking có parent + 1–10 câu, mặc định 5.
+- `SkillCmsWorkspace` có full-draft review-first cho Listening và Reading; Vocabulary có topic + 1–30 từ nháp, Grammar có topic metadata + 1–20 câu nháp. Apply chỉ cập nhật local; Save mới gọi CMS writer để tạo Draft.
+- Course giữ workflow phân loại curriculum hiện có; Writing giữ single-task AI suggestion; Exam vẫn chỉ TOEIC Part 5. Dashboard mô tả đúng capability từng Studio.
+- Vocab level được hiển thị rõ là context cho AI, không tuyên bố là trường lưu của `VocabTopic`; Listening/Reading editor cũng ghi rõ level là reference/context theo contract domain.
+- Frontend `test:ci` 42 suites/498 tests, typecheck và build PASS; lint exit 0 với warning baseline repository, không có error mới từ thay đổi này.
+- Authenticated owner-runtime browser QA đã đi qua Generate → Review → Apply cho Listening, Reading, Vocabulary, Grammar và Speaking ở desktop/tablet/mobile; Apply chỉ cập nhật form local, request trước Save chỉ là AI mock và không có CMS persistence. Level/Difficulty trong review được kiểm chứng là controlled select; không overflow ở `1440x900`, `768x1024`, `390x844`. Existing Speaking lifecycle browser evidence tiếp tục giữ Save → Draft → learner isolation → Human Publish → learner readback.
