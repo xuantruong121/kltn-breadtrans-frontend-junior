@@ -84,6 +84,9 @@ export default function ToeicAttemptPage({
   const hydratedAttemptRef = useRef<number | null>(null);
   const playedAudioGroupsRef = useRef<Set<number>>(new Set());
   const loadedAudioGroupRef = useRef<number | null>(null);
+  const autosaveTimerRef = useRef<number | null>(null);
+  const autosaveInFlightRef = useRef<Promise<void> | null>(null);
+  const skipAutosaveRef = useRef(false);
 
   const {
     data: attempt,
@@ -148,14 +151,25 @@ export default function ToeicAttemptPage({
     return [...result.entries()].sort(([a], [b]) => a - b);
   }, [groups]);
   const save = useMutation({
-    mutationFn: () =>
+    mutationFn: (currentQuestionId?: number) =>
       toeicService.saveAnswers(attemptId, currentAnswers, {
         markedQuestionIds: [...marked],
-        currentQuestionId: current?.question.id,
+        currentQuestionId: currentQuestionId ?? current?.question.id,
       }),
   });
   const submit = useMutation({
-    mutationFn: () => toeicService.submitAttempt(attemptId),
+    mutationFn: async () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+        autosaveTimerRef.current = null;
+      }
+      if (autosaveInFlightRef.current) await autosaveInFlightRef.current;
+      await toeicService.saveAnswers(attemptId, currentAnswers, {
+        markedQuestionIds: [...marked],
+        currentQuestionId: current?.question.id,
+      });
+      return toeicService.submitAttempt(attemptId);
+    },
     onSuccess: () => {
       markTerminated();
       exitFullscreen();
@@ -230,15 +244,30 @@ export default function ToeicAttemptPage({
   useEffect(() => {
     if (!attempt || attempt.status !== "IN_PROGRESS" || answers === null)
       return;
+    if (skipAutosaveRef.current) {
+      skipAutosaveRef.current = false;
+      return;
+    }
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     const timer = window.setTimeout(() => {
-      void toeicService
+      autosaveTimerRef.current = null;
+      const request = toeicService
         .saveAnswers(attemptId, answers, {
           markedQuestionIds: [...marked],
           currentQuestionId: current?.question.id,
         })
         .catch(() => undefined);
+      autosaveInFlightRef.current = request;
+      void request.finally(() => {
+        if (autosaveInFlightRef.current === request)
+          autosaveInFlightRef.current = null;
+      });
     }, 500);
-    return () => window.clearTimeout(timer);
+    autosaveTimerRef.current = timer;
+    return () => {
+      window.clearTimeout(timer);
+      if (autosaveTimerRef.current === timer) autosaveTimerRef.current = null;
+    };
   }, [answers, attempt, attemptId, current?.question.id, marked]);
 
   const policy = resolveAssessmentPolicy({
@@ -375,16 +404,11 @@ export default function ToeicAttemptPage({
   const next = async (fromAudio = false) => {
     if (fullTest && isListening && !audioFinished && !audioError && !fromAudio)
       return;
-    await save.mutateAsync();
     const target = nextIndex();
+    skipAutosaveRef.current = target >= 0;
+    await save.mutateAsync(target >= 0 ? questions[target]?.question.id : undefined);
     if (target < 0) setShowSubmitSummary(true);
-    else {
-      setIndex(target);
-      void toeicService.saveAnswers(attemptId, currentAnswers, {
-        markedQuestionIds: [...marked],
-        currentQuestionId: questions[target]?.question.id,
-      });
-    }
+    else setIndex(target);
   };
   const enterFullscreen = () =>
     document.documentElement.requestFullscreen?.().catch(() => undefined);
@@ -397,6 +421,7 @@ export default function ToeicAttemptPage({
       const nextMarked = new Set(old);
       if (nextMarked.has(questionId)) nextMarked.delete(questionId);
       else nextMarked.add(questionId);
+      skipAutosaveRef.current = true;
       void toeicService
         .saveAnswers(attemptId, currentAnswers, {
           markedQuestionIds: [...nextMarked],
@@ -413,6 +438,7 @@ export default function ToeicAttemptPage({
     );
     if (targetIndex >= 0) {
       setIndex(targetIndex);
+      skipAutosaveRef.current = true;
       void toeicService
         .saveAnswers(attemptId, currentAnswers, {
           markedQuestionIds: [...marked],

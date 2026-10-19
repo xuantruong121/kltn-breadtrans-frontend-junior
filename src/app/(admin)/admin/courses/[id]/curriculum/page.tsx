@@ -92,7 +92,12 @@ export default function CourseCurriculumPage() {
   const [isCurriculumAiOpen, setIsCurriculumAiOpen] = useState(false);
   const [isCurriculumAiLoading, setIsCurriculumAiLoading] = useState(false);
   const [curriculumAiCandidates, setCurriculumAiCandidates] = useState<
-    Array<{ title: string; summary: string; objectives: string[] }>
+    Array<{
+      title: string;
+      summary: string;
+      objectives: string[];
+      sections: Array<{ type: string; heading: string; content: string }>;
+    }>
   >([]);
 
   // Delete lesson dialog
@@ -163,23 +168,20 @@ export default function CourseCurriculumPage() {
     setIsCurriculumAiLoading(true);
     try {
       const response: any = await axiosClient.post(
-        "/admin/courses/ai/suggest-curriculum",
+        `/admin/courses/${courseId}/studio/ai/curriculum/generate`,
         {
-          courseTitle: courseForm.title.trim(),
-          level: courseForm.level,
-          description: courseForm.description.trim() || undefined,
-          targetLessonCount: 5,
-          existingLessonTitles:
-            studio?.lessons.map((lesson) => lesson.title) || [],
+          brief: courseForm.description.trim() || undefined,
+          lessonCount: 3,
         },
       );
       const data = response?.data || response;
-      if (!Array.isArray(data?.candidates) || data.candidates.length === 0) {
+      const candidates = data?.candidate?.candidates;
+      if (!Array.isArray(candidates) || candidates.length === 0) {
         toast.error("Không nhận được gợi ý bài học hợp lệ.");
         return;
       }
-      setCurriculumAiCandidates(data.candidates);
-      toast.success(`Đã nhận ${data.candidates.length} gợi ý bài học nháp.`);
+      setCurriculumAiCandidates(candidates);
+      toast.success(`Đã nhận ${candidates.length} gợi ý bài học nháp.`);
     } catch (e) {
       toast.error(
         getApiErrorMessage(e, "Không thể gợi ý chương trình học lúc này."),
@@ -193,6 +195,7 @@ export default function CourseCurriculumPage() {
     title: string;
     summary: string;
     objectives: string[];
+    sections: Array<{ type: string; heading: string; content: string }>;
   }) => {
     setLessonForm({
       title: candidate.title,
@@ -207,6 +210,29 @@ export default function CourseCurriculumPage() {
     toast.success(
       "Đã đưa gợi ý vào form bài học. Hãy kiểm tra trước khi tạo bản nháp.",
     );
+  };
+
+  const applyWholeCurriculum = async () => {
+    if (!curriculumAiCandidates.length) return;
+    setBusy(true);
+    try {
+      await axiosClient.post(
+        `/admin/courses/${courseId}/studio/ai/curriculum/apply`,
+        { lessons: curriculumAiCandidates },
+      );
+      toast.success(
+        "Đã áp dụng curriculum vào Course Draft. Hãy mở từng bài để soạn nội dung và xuất bản thủ công.",
+      );
+      setCurriculumAiCandidates([]);
+      setIsCurriculumAiOpen(false);
+      await load();
+    } catch (e) {
+      toast.error(
+        getApiErrorMessage(e, "Không thể áp dụng curriculum vào Draft."),
+      );
+    } finally {
+      setBusy(false);
+    }
   };
 
   const addLesson = async (e: React.FormEvent) => {
@@ -683,6 +709,10 @@ export default function CourseCurriculumPage() {
                       className="mt-2 min-h-20 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
                       aria-label={`Tóm tắt bài gợi ý ${index + 1}`}
                     />
+                    <p className="mt-2 text-xs text-slate-500">
+                      {candidate.sections?.length || 0} section plan sẽ được tạo
+                      ở Draft; bạn vẫn có thể chỉnh sửa trong Course Studio.
+                    </p>
                     <textarea
                       value={candidate.objectives.join("\n")}
                       onChange={(event) =>
@@ -715,6 +745,16 @@ export default function CourseCurriculumPage() {
             </div>
 
             <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-4">
+              {curriculumAiCandidates.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => void applyWholeCurriculum()}
+                  disabled={busy}
+                  className="min-h-10 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:opacity-50"
+                >
+                  Áp dụng toàn bộ vào Draft
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => void suggestCurriculum()}
@@ -724,7 +764,9 @@ export default function CourseCurriculumPage() {
                 {isCurriculumAiLoading && (
                   <Loader2 size={14} className="animate-spin" />
                 )}
-                {curriculumAiCandidates.length ? "AI gợi ý lại" : "AI gợi ý chương trình"}
+                {curriculumAiCandidates.length
+                  ? "AI gợi ý lại"
+                  : "AI gợi ý chương trình"}
               </button>
               <button
                 type="button"

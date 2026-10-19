@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Check, ChevronRight, Loader2, FileStack } from "lucide-react";
 import { useRouter } from "next/navigation";
 import axiosClient from "@/lib/api/axiosClient";
@@ -24,6 +24,8 @@ const variants = [
   },
 ];
 
+const AI_JOB_STORAGE_KEY = "breadtrans:admin:toeic-ai-job";
+
 export default function NewExamPage() {
   const router = useRouter();
   const [familyCode, setFamilyCode] = useState("TOEIC");
@@ -37,6 +39,24 @@ export default function NewExamPage() {
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [aiJob, setAiJob] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const generationIdempotencyKey = useRef<string | null>(null);
+
+  const rememberAiJob = (job: any) => {
+    setAiJob(job);
+    if (!job?.id || typeof window === "undefined") return;
+    window.sessionStorage.setItem(AI_JOB_STORAGE_KEY, job.id);
+    window.history.replaceState(null, "", `/admin/exams/new?job=${encodeURIComponent(job.id)}`);
+  };
+
+  useEffect(() => {
+    const jobId = new URLSearchParams(window.location.search).get("job") ||
+      window.sessionStorage.getItem(AI_JOB_STORAGE_KEY);
+    if (!jobId) return;
+    void axiosClient
+      .get(`/admin/exams/ai/jobs/${jobId}`)
+      .then((job: any) => rememberAiJob(job))
+      .catch(() => window.sessionStorage.removeItem(AI_JOB_STORAGE_KEY));
+  }, []);
 
   const retryAiJob = async () => {
     if (!aiJob?.id) return;
@@ -45,11 +65,30 @@ export default function NewExamPage() {
       const result: any = await axiosClient.post(
         `/admin/exams/ai/jobs/${aiJob.id}/retry`,
       );
-      setAiJob(result);
+      rememberAiJob(result);
       toast.success("Đã đưa job AI lỗi vào hàng đợi thử lại");
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message || "Không thể thử lại job AI",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const applyAiCandidate = async () => {
+    if (!aiJob?.id || !aiJob?.exam?.id) return;
+    setIsSubmitting(true);
+    try {
+      const result: any = await axiosClient.post(
+        `/admin/exams/ai/jobs/${aiJob.id}/apply`,
+      );
+      rememberAiJob(result);
+      toast.success("Đã áp dụng candidate vào Draft. Hãy review, chỉnh sửa và lưu trước khi xuất bản.");
+      router.push(`/admin/exams?exam=${aiJob.exam.id}`);
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || "Không thể áp dụng candidate AI vào Draft",
       );
     } finally {
       setIsSubmitting(false);
@@ -62,6 +101,7 @@ export default function NewExamPage() {
     setIsSubmitting(true);
     try {
       if (authoringMode === "AI") {
+        generationIdempotencyKey.current ??= crypto.randomUUID();
         const result: any = await axiosClient.post("/admin/exams/ai/generate", {
           familyCode: "TOEIC",
           variantCode,
@@ -69,8 +109,8 @@ export default function NewExamPage() {
           part: generationMode === "PART" ? Number(part) : undefined,
           topic: topic.trim() || undefined,
           difficulty,
-        }, { headers: { "Idempotency-Key": crypto.randomUUID() } });
-        setAiJob(result);
+        }, { headers: { "Idempotency-Key": generationIdempotencyKey.current } });
+        rememberAiJob(result);
         toast.success("Đã tạo Draft và đưa job AI vào hàng đợi");
         return;
       }
@@ -98,7 +138,7 @@ export default function NewExamPage() {
     const timer = window.setInterval(async () => {
       try {
         const next: any = await axiosClient.get(`/admin/exams/ai/jobs/${aiJob.id}`);
-        setAiJob(next);
+        rememberAiJob(next);
       } catch {
         // The job record is durable; the next explicit refresh can recover UI.
       }
@@ -238,7 +278,7 @@ export default function NewExamPage() {
               />
             </label>
           </div>}
-          {aiJob && <section className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm"><p className="font-semibold text-slate-900">Tiến độ AI: {aiJob.stage || aiJob.status}</p><p className="mt-1 text-slate-600">{aiJob.error || "Draft vẫn chỉ hiển thị cho Admin cho đến khi review, validation và Publish thủ công."}</p><div className="mt-3 flex flex-wrap items-center gap-3">{aiJob.status === "FAILED" && <button type="button" onClick={retryAiJob} disabled={isSubmitting} className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">{isSubmitting ? "Đang thử lại..." : "Thử lại job AI"}</button>}{aiJob.exam?.id && ["GENERATED", "FAILED", "CANCELLED"].includes(aiJob.status) && <button type="button" onClick={() => router.push(`/admin/exams?exam=${aiJob.exam.id}`)} className="font-semibold text-blue-700 hover:underline">Mở Draft để review</button>}</div></section>}
+          {aiJob && <section className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm"><p className="font-semibold text-slate-900">Tiến độ AI: {aiJob.stage || aiJob.status}</p><p className="mt-1 text-slate-600">{aiJob.error || (aiJob.status === "GENERATED" ? "Candidate đã qua kiểm tra cấu trúc. Admin cần Apply vào Draft trước khi review, chỉnh sửa, validate và Publish thủ công." : "Job và candidate được lưu bền vững; bạn có thể quay lại trang này để tiếp tục.")}</p>{aiJob.candidate?.available && <p className="mt-2 text-xs text-slate-500">Candidate: {aiJob.candidate.lrBatchCount} batch L&R · {aiJob.candidate.speakingCount} Speaking · {aiJob.candidate.writingCount} Writing</p>}<div className="mt-3 flex flex-wrap items-center gap-3">{aiJob.status === "FAILED" && <button type="button" onClick={retryAiJob} disabled={isSubmitting} className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">{isSubmitting ? "Đang thử lại..." : "Thử lại job AI"}</button>}{aiJob.status === "GENERATED" && aiJob.exam?.id && <button type="button" onClick={applyAiCandidate} disabled={isSubmitting} className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">{isSubmitting ? "Đang Apply..." : "Apply candidate vào Draft"}</button>}{aiJob.exam?.id && ["APPROVED", "FAILED", "CANCELLED"].includes(aiJob.status) && <button type="button" onClick={() => router.push(`/admin/exams?exam=${aiJob.exam.id}`)} className="font-semibold text-blue-700 hover:underline">Mở Draft để review</button>}</div></section>}
           <div className="flex justify-end border-t border-slate-100 pt-5">
             <button
               disabled={isSubmitting || (authoringMode === "MANUAL" && !title.trim())}

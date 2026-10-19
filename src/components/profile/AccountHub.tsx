@@ -11,7 +11,6 @@ import {
   KeyRound,
   Smartphone,
   Laptop,
-  Bell,
   ShoppingBag,
   LogOut,
   Settings,
@@ -50,7 +49,6 @@ import { DiagnosticResultTab } from "@/components/profile/DiagnosticResultTab";
 import { MARKET_ITEMS } from "@/modules/market/services/marketData";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { useApiMutation } from "@/hooks/useApiMutation";
-import PushNotificationToggle from "@/components/pwa/PushNotificationToggle";
 import axiosClient from "@/lib/api/axiosClient";
 import { userService } from "@/lib/api/services/user.service";
 import { locationService } from "@/lib/api/services/location.service";
@@ -60,7 +58,6 @@ export type AccountTabKey =
   | "account-plan"
   | "account-password"
   | "account-device"
-  | "account-notification"
   | "account-inventory"
   | "learning-progress"
   | "diagnostic-result";
@@ -70,7 +67,6 @@ const TAB_ALIASES: Record<string, AccountTabKey> = {
   "account-plan": "account-plan",
   "account-password": "account-password",
   "account-device": "account-device",
-  "account-notification": "account-notification",
   "account-inventory": "account-inventory",
   "learning-progress": "learning-progress",
   "diagnostic-result": "diagnostic-result",
@@ -384,7 +380,6 @@ export function AccountHub() {
     { id: "account-plan", label: "Gói của tôi", icon: Crown },
     { id: "account-password", label: "Đổi mật khẩu", icon: KeyRound },
     { id: "account-device", label: "Thiết bị", icon: Smartphone },
-    { id: "account-notification", label: "Thông báo", icon: Bell },
     { id: "account-inventory", label: "Túi đồ & Ngoại trang", icon: Backpack },
     { id: "learning-progress", label: "Tiến độ học tập", icon: Activity },
     { id: "diagnostic-result", label: "Kết quả đánh giá đầu vào", icon: Award },
@@ -1043,25 +1038,7 @@ export function AccountHub() {
             </section>
           )}
 
-          {/* TAB 5: THÔNG BÁO */}
-          {activeTab === "account-notification" && (
-            <section className="space-y-6 animate-in fade-in duration-200" aria-labelledby="heading-notification">
-              <div>
-                <h1 id="heading-notification" className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-                  Thông báo
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                  Quản lý thông báo học tập và nhắc nhở trên thiết bị
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <PushNotificationToggle />
-              </div>
-            </section>
-          )}
-
-          {/* TAB 6: TÚI ĐỒ & NGOẠI TRANG */}
+          {/* TAB 5: TÚI ĐỒ & NGOẠI TRANG */}
           {activeTab === "account-inventory" && (
             <section className="space-y-6 animate-in fade-in duration-200" aria-labelledby="heading-inventory">
               <div>

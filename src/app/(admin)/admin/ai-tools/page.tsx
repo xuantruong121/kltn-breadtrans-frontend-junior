@@ -8,7 +8,6 @@ import {
   Headphones,
   UploadCloud,
   Loader2,
-  CheckCircle2,
   ArrowRight,
   Save,
   BookOpen,
@@ -20,7 +19,7 @@ import {
   History,
   Copy,
 } from "lucide-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import axiosClient from "@/lib/api/axiosClient";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -50,7 +49,6 @@ interface SmartGeneratedPayload {
 }
 
 export default function AdminAiToolsPage() {
-  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<
     "smart" | "dictation" | "toeic" | "import"
   >("smart");
@@ -86,13 +84,6 @@ export default function AdminAiToolsPage() {
   const [pubQuiz, setPubQuiz] = useState(true);
   const [pubFlashcards, setPubFlashcards] = useState(true);
   const [pubAssignment, setPubAssignment] = useState(true);
-
-  // Publish Success Result
-  const [publishResult, setPublishResult] = useState<{
-    quizId?: number;
-    vocabTopicId?: number;
-    assignmentId?: number;
-  } | null>(null);
 
   // ================= OLD TABS STATE =================
   const [topic, setTopic] = useState("");
@@ -183,7 +174,6 @@ export default function AdminAiToolsPage() {
         message: "Đang xếp hàng xử lý...",
       });
       setSmartResult(null);
-      setPublishResult(null);
       toast.success("Đã gửi tài liệu! Hệ thống đang phân tích...");
       refetchQuota();
     },
@@ -297,46 +287,6 @@ export default function AdminAiToolsPage() {
           err?.message ||
           "Không thể lưu bản nháp",
       ),
-  });
-
-  // Approval and publication are separate backend lifecycle transitions.
-  const publishContentMut = useMutation({
-    mutationFn: async () => {
-      const payload = buildReviewedPayload();
-      await axiosClient.patch(
-        `/admin/ai-generator/${activeJobId}/draft`,
-        payload,
-      );
-      await axiosClient.post(
-        `/admin/ai-generator/${activeJobId}/approve`,
-        payload,
-      );
-
-      const res: any = await axiosClient.post(
-        `/admin/ai-generator/${activeJobId}/publish`,
-        payload,
-      );
-      return res?.data || res;
-    },
-    onSuccess: (data: any) => {
-      setPublishResult({
-        quizId: data?.quizId,
-        vocabTopicId: data?.vocabTopicId,
-        assignmentId: data?.assignmentId,
-      });
-      toast.success(
-        data?.message || "Đã phê duyệt và xuất bản vào Hệ thống thành công!",
-      );
-      queryClient.invalidateQueries({ queryKey: ["admin-quizzes"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-vocab"] });
-    },
-    onError: (err: any) => {
-      toast.error(
-        err?.response?.data?.message ||
-          err?.message ||
-          "Lỗi khi lưu dữ liệu vào hệ thống",
-      );
-    },
   });
 
   // ================= OLD MUTATIONS =================
@@ -912,7 +862,7 @@ export default function AdminAiToolsPage() {
                             : "text-slate-500"
                         }`}
                       >
-                        <Layers size={16} /> 🗂️ Flashcard (
+                        <Layers size={16} /> Flashcard (
                         {editedFlashcards.length})
                       </button>
                       <button
@@ -1301,7 +1251,7 @@ export default function AdminAiToolsPage() {
                         </div>
                       </div>
 
-                      {/* Review/export actions: Save draft, copy JSON candidate, or trigger governed Gone response */}
+                      {/* Review/export actions: save the local draft or hand it to the authoritative Studio */}
                       <div className="flex flex-wrap items-center gap-3">
                         <button
                           type="button"
@@ -1314,8 +1264,7 @@ export default function AdminAiToolsPage() {
                         <button
                           onClick={() => saveDraftMut.mutate()}
                           disabled={
-                            saveDraftMut.isPending ||
-                            publishContentMut.isPending
+                            saveDraftMut.isPending
                           }
                           className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-black flex items-center gap-2 shadow-sm transition-all cursor-pointer text-sm disabled:opacity-50"
                         >
@@ -1328,47 +1277,16 @@ export default function AdminAiToolsPage() {
                             ? "Đang lưu..."
                             : "Lưu bản nháp"}
                         </button>
-                        <button
-                          onClick={() => publishContentMut.mutate()}
-                          disabled={
-                            publishContentMut.isPending ||
-                            saveDraftMut.isPending
-                          }
-                          className="px-6 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-black flex items-center gap-2 shadow-sm transition-all cursor-pointer text-sm disabled:opacity-50"
+                        <span
+                          aria-disabled="true"
                           title="Đường dẫn xuất bản cũ đã đóng (410 Gone) để bảo vệ Single-Writer"
+                          className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-slate-200 bg-slate-100 px-5 py-3 text-sm font-black text-slate-400"
                         >
-                          {publishContentMut.isPending ? (
-                            <Loader2 className="animate-spin" size={20} />
-                          ) : (
-                            <Save size={20} />
-                          )}
-                          {publishContentMut.isPending
-                            ? "Đang lưu..."
-                            : "Xuất bản trực tiếp (Đã đóng)"}
-                        </button>
+                          <Save size={18} aria-hidden="true" />
+                          Xuất bản trực tiếp đã đóng
+                        </span>
                       </div>
                     </div>
-
-                    {/* SUCCESS MODAL / BANNER */}
-                    {publishResult && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="p-6 bg-emerald-50 border border-emerald-300 rounded-2xl text-emerald-900 font-bold space-y-3"
-                      >
-                        <div className="flex items-center gap-2 text-base font-black text-emerald-800">
-                          <CheckCircle2
-                            size={24}
-                            className="text-emerald-600"
-                          />
-                          Xuất Bản Thành Công Vào Cơ Sở Dữ Liệu!
-                        </div>
-                        <p className="text-xs">
-                          Tất cả nội dung bạn phê duyệt đã được lưu vào hệ thống
-                          an toàn.
-                        </p>
-                      </motion.div>
-                    )}
                   </div>
                 </motion.div>
               )}

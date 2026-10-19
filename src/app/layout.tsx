@@ -6,7 +6,6 @@ import QueryProvider from "@/lib/providers/QueryProvider";
 import SocketProvider from "@/lib/providers/SocketProvider";
 import { ThemeProvider } from "@/lib/theme/ThemeProvider";
 import { Toaster } from "react-hot-toast";
-import PWAInstallBanner from "@/components/pwa/PWAInstallBanner";
 
 const quicksand = Quicksand({
   variable: "--font-quicksand",
@@ -17,12 +16,6 @@ export const metadata: Metadata = {
   title: "BreadTrans - Tự học tiếng Anh theo lộ trình",
   description:
     "Nền tảng tự học tiếng Anh theo kỹ năng, cấp độ và chủ đề; luyện đề theo nhiều dạng chứng chỉ và học theo khóa học có lộ trình sẵn.",
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "BreadTrans",
-  },
 };
 
 export const viewport: Viewport = {
@@ -52,6 +45,12 @@ export default function RootLayout({
             __html: `(function(){try{var p=window.location.pathname;var a=p==='/admin'||p.indexOf('/admin/')===0;var t=localStorage.getItem('breadtrans-theme');var d=!a&&(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches));if(d)document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark');}catch(e){}})();`,
           }}
         />
+        {/* Remove the legacy unfinished PWA registration without touching unrelated caches. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){var w=r.active||r.waiting||r.installing;if(w&&w.scriptURL.endsWith('/sw.js'))r.unregister();});});}if('caches' in window){caches.keys().then(function(keys){keys.filter(function(k){return k.indexOf('breadtrans-cache-')===0;}).forEach(function(k){caches.delete(k);});});}}catch(e){}})();`,
+          }}
+        />
         {/* Material Symbols is an icon font; next/font does not support this variable icon family. */}
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
@@ -71,7 +70,6 @@ export default function RootLayout({
           <ThemeProvider>
             <SocketProvider>
               {children}
-              <PWAInstallBanner />
               <Toaster
                 position="top-center"
                 toastOptions={{

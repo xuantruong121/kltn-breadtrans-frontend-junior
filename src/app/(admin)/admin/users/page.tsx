@@ -20,9 +20,10 @@ import {
   Eye,
   EyeOff,
   ArrowUpRight,
+  Coins,
 } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axiosClient from "@/lib/api/axiosClient";
 import toast from "react-hot-toast";
@@ -185,16 +186,11 @@ export default function AdminUsersPage() {
   );
 
   const totalPages = Math.ceil((filteredUsers?.length || 0) / pageSize);
+  const visiblePage = totalPages > 0 ? Math.min(currentPage, totalPages) : 1;
   const paginatedUsers = filteredUsers?.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
+    (visiblePage - 1) * pageSize,
+    visiblePage * pageSize,
   );
-
-  useEffect(() => {
-    if (totalPages > 0 && currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [totalPages, currentPage]);
 
   const roleBadge = (role: string) => {
     const map: Record<string, string> = {
@@ -395,7 +391,7 @@ export default function AdminUsersPage() {
                       {user.role === "STUDENT" ? (
                         <div className="flex items-center gap-2 text-xs">
                           <span className="font-black text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-xl">
-                            🍞 {user.stats?.totalBanhRan ?? 0}
+                            <Coins size={12} aria-hidden="true" /> {user.stats?.totalBanhRan ?? 0}
                           </span>
                           <span className="font-black text-orange-600 bg-orange-50 border border-orange-200 px-2.5 py-1 rounded-xl flex items-center gap-0.5">
                             <Flame size={12} /> {user.stats?.streakCount ?? 0}
@@ -462,7 +458,7 @@ export default function AdminUsersPage() {
             {/* PAGINATION */}
             <div className="p-4 bg-slate-50/50 border-t border-slate-100">
               <Pagination
-                currentPage={currentPage}
+                currentPage={visiblePage}
                 totalPages={totalPages}
                 totalItems={filteredUsers?.length || 0}
                 pageSize={pageSize}

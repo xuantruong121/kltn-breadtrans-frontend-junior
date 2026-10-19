@@ -24,7 +24,6 @@ import { MARKET_ITEMS } from "@/modules/market/services/marketData";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
-import PushNotificationToggle from "@/components/pwa/PushNotificationToggle";
 
 export default function ProfileSettings() {
   const user = useAuthStore((state) => state.user);
@@ -276,8 +275,6 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                 </form>
               </div>
 
-              {/* Push Notification Box */}
-              <PushNotificationToggle />
             </div>
           </motion.div>
         ) : (
@@ -550,4 +547,3 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
     </div>
   );
 }
-
