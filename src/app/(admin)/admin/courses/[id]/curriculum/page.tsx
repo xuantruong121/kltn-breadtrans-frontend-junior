@@ -91,6 +91,8 @@ export default function CourseCurriculumPage() {
 
   const [isCurriculumAiOpen, setIsCurriculumAiOpen] = useState(false);
   const [isCurriculumAiLoading, setIsCurriculumAiLoading] = useState(false);
+  const [curriculumAiCandidateCourseId, setCurriculumAiCandidateCourseId] =
+    useState<number | null>(null);
   const [curriculumAiCandidates, setCurriculumAiCandidates] = useState<
     Array<{
       title: string;
@@ -181,6 +183,7 @@ export default function CourseCurriculumPage() {
         return;
       }
       setCurriculumAiCandidates(candidates);
+      setCurriculumAiCandidateCourseId(data.candidate.candidateCourseId);
       toast.success(`Đã nhận ${candidates.length} gợi ý bài học nháp.`);
     } catch (e) {
       toast.error(
@@ -214,16 +217,24 @@ export default function CourseCurriculumPage() {
 
   const applyWholeCurriculum = async () => {
     if (!curriculumAiCandidates.length) return;
+    if (!curriculumAiCandidateCourseId) {
+      toast.error("Candidate AI không hợp lệ. Hãy tạo gợi ý lại trước khi Apply.");
+      return;
+    }
     setBusy(true);
     try {
       await axiosClient.post(
         `/admin/courses/${courseId}/studio/ai/curriculum/apply`,
-        { lessons: curriculumAiCandidates },
+        {
+          candidateCourseId: curriculumAiCandidateCourseId,
+          lessons: curriculumAiCandidates,
+        },
       );
       toast.success(
         "Đã áp dụng curriculum vào Course Draft. Hãy mở từng bài để soạn nội dung và xuất bản thủ công.",
       );
       setCurriculumAiCandidates([]);
+      setCurriculumAiCandidateCourseId(null);
       setIsCurriculumAiOpen(false);
       await load();
     } catch (e) {
@@ -499,6 +510,7 @@ export default function CourseCurriculumPage() {
               type="button"
               onClick={() => {
                 setCurriculumAiCandidates([]);
+                setCurriculumAiCandidateCourseId(null);
                 setIsCurriculumAiOpen(true);
               }}
               className="inline-flex min-h-10 items-center rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-2 text-xs font-semibold text-amber-900 transition-colors hover:border-amber-300 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-300"
