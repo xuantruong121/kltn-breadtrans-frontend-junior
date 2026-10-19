@@ -42,7 +42,24 @@ export default function ToeicAssessmentAttemptPage({
       );
       if (component?.childAttemptId) {
         await toeicService.beginAttempt(component.childAttemptId);
-        router.push(`/toeic/attempts/${component.childAttemptId}`);
+        router.push(
+          `/toeic/attempts/${component.childAttemptId}?parentAssessmentId=${id}&parentAttemptId=${attemptId}&parentComponentId=${componentId}`,
+        );
+      } else if (
+        component?.kind === "SPEAKING" &&
+        component.sourceId &&
+        component.speakingExerciseIds?.[0]
+      ) {
+        router.push(
+          `/speaking/${component.speakingExerciseIds[0]}?set=${encodeURIComponent(String(component.sourceId))}&parentAssessmentId=${id}&parentAttemptId=${attemptId}&parentComponentId=${componentId}&examExerciseIds=${component.speakingExerciseIds.join(",")}`,
+        );
+      } else if (
+        component?.kind === "WRITING" &&
+        component.writingQuizIds?.[0]
+      ) {
+        router.push(
+          `/writing/${component.writingQuizIds[0]}?parentAssessmentId=${id}&parentAttemptId=${attemptId}&parentComponentId=${componentId}`,
+        );
       }
     },
     onError: (err: any) =>
@@ -108,8 +125,24 @@ export default function ToeicAssessmentAttemptPage({
                   <p className="mt-1 text-xs text-slate-500">
                     {done
                       ? "Đã hoàn tất theo dữ liệu authoritative"
-                      : "Chưa hoàn tất"}
+                      : component.status === "IN_PROGRESS"
+                        ? "Đang thực hiện — có thể tiếp tục"
+                        : "Chưa bắt đầu"}
                   </p>
+                  {component.kind === "WRITING" &&
+                    component.writingQuizIds?.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {component.writingQuizIds.map((quizId: number, index: number) => (
+                          <Link
+                            key={quizId}
+                            href={`/writing/${quizId}?parentAssessmentId=${id}&parentAttemptId=${attemptId}&parentComponentId=${component.assessmentComponentId}`}
+                            className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700"
+                          >
+                            Bài viết {index + 1}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
                 </div>
                 {done ? (
                   <span className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-700">
@@ -129,7 +162,9 @@ export default function ToeicAssessmentAttemptPage({
                     ) : (
                       <ExternalLink size={15} />
                     )}{" "}
-                    Mở component
+                    {component.status === "IN_PROGRESS"
+                      ? "Tiếp tục component"
+                      : "Mở component"}
                   </button>
                 )}
               </div>

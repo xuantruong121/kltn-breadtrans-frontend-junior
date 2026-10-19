@@ -22,7 +22,10 @@ import {
   Eye,
   Check,
   ShieldAlert,
-  Sparkles,
+  FileStack,
+  RefreshCw,
+  Upload,
+  ImageOff,
 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { Pagination } from "@/components/ui";
@@ -82,7 +85,32 @@ interface ExamGroup {
   passageText?: string | null;
   transcriptText?: string | null;
   imageBrief?: string | null;
-  mediaMetadata?: { audio?: { stale?: boolean }; image?: { stale?: boolean } } | null;
+  mediaMetadata?: {
+    audio?: {
+      stale?: boolean;
+      status?: "READY" | "FAILED" | "MISSING";
+      errorCode?: string;
+      source?: string;
+    };
+    image?: {
+      stale?: boolean;
+      status?: "READY" | "FAILED" | "MISSING";
+      errorCode?: string;
+      source?: string;
+      provider?: string;
+      author?: string;
+      authorUrl?: string;
+      upstreamSource?: string;
+      license?: string;
+      licenseVersion?: string;
+      licenseUrl?: string;
+      attribution?: string;
+      sourcePageUrl?: string;
+      questionStatus?: string;
+      questionImageHash?: string;
+      sceneSummary?: string;
+    };
+  } | null;
   questions: ExamQuestion[];
 }
 
@@ -203,6 +231,12 @@ export default function AdminExamsPage() {
     correctIndex: 0,
     explanation: "",
   });
+  const [imageSearchGroup, setImageSearchGroup] = useState<ExamGroup | null>(
+    null,
+  );
+  const [imageSearchQuery, setImageSearchQuery] = useState("");
+  const [imageSearchCandidates, setImageSearchCandidates] = useState<any[]>([]);
+  const [isImageSearchOpen, setIsImageSearchOpen] = useState(false);
 
   // Contextual AI state: Exam TOEIC Part 5
   const [isAiPart5ModalOpen, setIsAiPart5ModalOpen] = useState(false);
@@ -392,6 +426,119 @@ export default function AdminExamsPage() {
       toast.error(err?.response?.data?.message || "Không thể lưu nhóm câu hỏi"),
   });
 
+  const regenerateMediaMutation = useMutation({
+    mutationFn: async ({
+      groupId,
+      kind,
+    }: {
+      groupId: number;
+      kind: "image" | "audio";
+    }) => {
+      if (!selectedExamId) return;
+      return axiosClient.post(
+        `/admin/exams/${selectedExamId}/ai/groups/${groupId}/media/${kind}/regenerate`,
+      );
+    },
+    onSuccess: (_data, variables) => {
+      toast.success(
+        variables.kind === "image"
+          ? "Đã tạo lại ảnh cho nhóm câu hỏi."
+          : "Đã tạo lại audio cho nhóm câu hỏi.",
+      );
+      queryClient.invalidateQueries({
+        queryKey: ["admin-exam-detail", selectedExamId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
+    },
+    onError: (err: any) =>
+      toast.error(
+        err?.response?.data?.message ||
+          "Không thể tạo lại media. Bạn có thể tải tệp lên thủ công.",
+      ),
+  });
+
+  const imageSearchMutation = useMutation({
+    mutationFn: async ({
+      group,
+      query,
+    }: {
+      group: ExamGroup;
+      query: string;
+    }) => {
+      if (!selectedExamId) return null;
+      const res: any = await axiosClient.get(
+        `/admin/exams/${selectedExamId}/ai/groups/${group.id}/image-search`,
+        { params: { query, limit: 5 } },
+      );
+      return res?.data || res;
+    },
+    onSuccess: (data) => {
+      setImageSearchCandidates(
+        Array.isArray(data?.candidates) ? data.candidates : [],
+      );
+      if (!data?.candidates?.length)
+        toast.error(
+          "Không tìm thấy ảnh phù hợp. Bạn có thể tải ảnh lên thủ công.",
+        );
+    },
+      onError: (err: any) =>
+      toast.error(
+        err?.response?.data?.message || "Không thể tìm ảnh tự động lúc này.",
+      ),
+  });
+
+  const selectImageMutation = useMutation({
+    mutationFn: async (candidateId: string) => {
+      if (!selectedExamId || !imageSearchGroup) return null;
+      return axiosClient.post(
+        `/admin/exams/${selectedExamId}/ai/groups/${imageSearchGroup.id}/image-search/select`,
+        { candidateId },
+      );
+    },
+    onSuccess: (res: any) => {
+      const data = res?.data || res;
+      toast.success(
+        data?.error
+          ? "Đã lưu ảnh; câu hỏi cần xử lý thủ công."
+          : "Đã lưu ảnh và tạo câu hỏi Part 1 nháp.",
+      );
+      setIsImageSearchOpen(false);
+      queryClient.invalidateQueries({
+        queryKey: ["admin-exam-detail", selectedExamId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể chọn ảnh."),
+  });
+
+  const visionMutation = useMutation({
+    mutationFn: async (groupId: number) => {
+      if (!selectedExamId) return null;
+      return axiosClient.post(
+        `/admin/exams/${selectedExamId}/ai/groups/${groupId}/image-vision`,
+      );
+    },
+    onSuccess: () => {
+      toast.success("Đã phân tích ảnh và tạo câu hỏi Part 1 nháp.");
+      queryClient.invalidateQueries({
+        queryKey: ["admin-exam-detail", selectedExamId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
+    },
+    onError: (err: any) =>
+      toast.error(
+        err?.response?.data?.message || "Không thể phân tích ảnh lúc này.",
+      ),
+  });
+
+  const openImageSearch = (group: ExamGroup) => {
+    setImageSearchGroup(group);
+    setImageSearchQuery(group.imageBrief || "workers meeting office");
+    setImageSearchCandidates([]);
+    setIsImageSearchOpen(true);
+  };
+
   const deleteGroupMutation = useMutation({
     mutationFn: async (groupId: number) => {
       if (!selectedExamId) return;
@@ -469,6 +616,20 @@ export default function AdminExamsPage() {
     onError: (err: any) =>
       toast.error(err?.response?.data?.message || "Không thể xóa câu hỏi"),
   });
+
+  const openGroupEditor = (group: ExamGroup) => {
+    setEditingGroup(group);
+    setGroupForm({
+      part: group.part,
+      groupOrder: group.groupOrder,
+      audioUrl: group.audioUrl || "",
+      imageUrl: group.imageUrl || "",
+      passageText: group.passageText || "",
+      transcriptText: group.transcriptText || "",
+      imageBrief: group.imageBrief || "",
+    });
+    setIsGroupModalOpen(true);
+  };
 
   const filteredExams = exams?.filter(
     (e) =>
@@ -643,6 +804,11 @@ export default function AdminExamsPage() {
                     : "Luyện tập theo Part"}
                 </span>
               </div>
+              {examDetail.description && (
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+                  {examDetail.description}
+                </p>
+              )}
               <p className="text-xs text-slate-500 mt-0.5">
                 Thời lượng: {Math.round(examDetail.durationSeconds / 60)} phút ·{" "}
                 {groups.length} nhóm · {allQuestions.length} câu hỏi ·{" "}
@@ -863,6 +1029,54 @@ export default function AdminExamsPage() {
                               </span>
                             ) : null}
                           </div>
+                          {(group.part === 1 && !group.imageUrl) ||
+                          (group.part <= 4 && !group.audioUrl) ? (
+                            <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                              <AlertTriangle size={14} className="shrink-0" />
+                              <span className="font-medium">
+                                Draft còn media cần bổ sung trước khi xuất bản.
+                              </span>
+                              {group.part === 1 && !group.imageUrl && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      regenerateMediaMutation.mutate({
+                                        groupId: group.id,
+                                        kind: "image",
+                                      })
+                                    }
+                                    disabled={regenerateMediaMutation.isPending}
+                                    className="inline-flex items-center gap-1 rounded-md border border-amber-300 bg-white px-2.5 py-1 font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+                                  >
+                                    <RefreshCw size={12} /> Tạo lại bằng AI
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => openGroupEditor(group)}
+                                    className="inline-flex items-center gap-1 rounded-md border border-amber-300 bg-white px-2.5 py-1 font-semibold text-amber-800 hover:bg-amber-100"
+                                  >
+                                    <Upload size={12} /> Tải ảnh lên
+                                  </button>
+                                </>
+                              )}
+                              {group.part <= 4 && !group.audioUrl && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    regenerateMediaMutation.mutate({
+                                      groupId: group.id,
+                                      kind: "audio",
+                                    })
+                                  }
+                                  disabled={regenerateMediaMutation.isPending}
+                                  className="inline-flex items-center gap-1 rounded-md border border-amber-300 bg-white px-2.5 py-1 font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+                                >
+                                  <RefreshCw size={12} /> Tạo lại audio
+                                </button>
+                              )}
+                            </div>
+                          ) : null}
                         </div>
 
                         {/* EXPLICIT GROUP ACTION BUTTONS */}
@@ -907,6 +1121,38 @@ export default function AdminExamsPage() {
                             >
                               AI gợi ý câu hỏi TOEIC Part 5
                             </button>
+                          )}
+                          {group.part === 1 && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => openImageSearch(group)}
+                                className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:border-blue-300 hover:bg-blue-100"
+                              >
+                                <Search size={12} />{" "}
+                                {group.imageUrl ? "Tìm ảnh khác" : "Tìm ảnh"}
+                              </button>
+                              {group.imageUrl && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    visionMutation.mutate(group.id)
+                                  }
+                                  disabled={visionMutation.isPending}
+                                  className="inline-flex items-center gap-1 rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700 transition-colors hover:border-violet-300 hover:bg-violet-100 disabled:opacity-50"
+                                >
+                                  <RefreshCw
+                                    size={12}
+                                    className={
+                                      visionMutation.isPending
+                                        ? "animate-spin"
+                                        : ""
+                                    }
+                                  />{" "}
+                                  Tạo câu hỏi từ ảnh
+                                </button>
+                              )}
+                            </>
                           )}
                           <button
                             onClick={() => {
@@ -1210,7 +1456,7 @@ export default function AdminExamsPage() {
                     </span>
                   </div>
 
-                  {group.imageUrl && (
+                  {group.imageUrl ? (
                     <div className="max-w-md mx-auto overflow-hidden rounded-lg border border-slate-200">
                       <img
                         src={group.imageUrl}
@@ -1218,9 +1464,54 @@ export default function AdminExamsPage() {
                         className="w-full h-auto object-cover"
                       />
                     </div>
-                  )}
+                  ) : group.part === 1 ? (
+                    <div
+                      role="status"
+                      aria-live="polite"
+                      className="mx-auto flex max-w-md flex-col items-center gap-3 rounded-lg border border-dashed border-amber-300 bg-amber-50 p-6 text-center text-amber-900"
+                    >
+                      <ImageOff size={28} className="text-amber-600" />
+                      <div>
+                        <p className="text-sm font-semibold">
+                          Chưa có hình ảnh
+                        </p>
+                        <p className="mt-1 text-xs leading-5 text-amber-800">
+                          Ảnh AI chưa khả dụng. Draft vẫn giữ nguyên câu hỏi và
+                          mô tả ảnh để Admin bổ sung sau.
+                        </p>
+                        {group.imageBrief && (
+                          <p className="mt-2 rounded-md bg-white/70 p-2 text-left text-xs text-slate-600">
+                            <span className="font-semibold">Image brief:</span>{" "}
+                            {group.imageBrief}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            regenerateMediaMutation.mutate({
+                              groupId: group.id,
+                              kind: "image",
+                            })
+                          }
+                          disabled={regenerateMediaMutation.isPending}
+                          className="inline-flex items-center gap-1.5 rounded-md bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
+                        >
+                          <RefreshCw size={13} /> Tạo lại bằng AI
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openGroupEditor(group)}
+                          className="inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100"
+                        >
+                          <Upload size={13} /> Tải ảnh lên
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
 
-                  {group.audioUrl && (
+                  {group.audioUrl ? (
                     <div className="rounded-lg bg-white border border-slate-200 p-3">
                       <audio
                         controls
@@ -1228,7 +1519,26 @@ export default function AdminExamsPage() {
                         className="w-full h-8"
                       />
                     </div>
-                  )}
+                  ) : group.part <= 4 ? (
+                    <div
+                      role="status"
+                      aria-live="polite"
+                      className="flex items-center justify-between gap-3 rounded-lg border border-dashed border-amber-300 bg-amber-50 p-3 text-xs text-amber-900"
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <Volume2 size={16} className="text-amber-600" />
+                        Chưa có audio stimulus; transcript vẫn được giữ trong
+                        Draft.
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => openGroupEditor(group)}
+                        className="inline-flex shrink-0 items-center gap-1 rounded-md border border-amber-300 bg-white px-2.5 py-1 font-semibold text-amber-900 hover:bg-amber-100"
+                      >
+                        <Upload size={12} /> Tải audio lên
+                      </button>
+                    </div>
+                  ) : null}
 
                   {group.passageText && (
                     <div className="rounded-lg bg-white border border-slate-200 p-4 text-xs font-serif leading-relaxed text-slate-800 whitespace-pre-line">
@@ -1413,6 +1723,185 @@ export default function AdminExamsPage() {
           </form>
         )}
 
+        {isImageSearchOpen && imageSearchGroup && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+            <div className="w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl max-h-[92vh] overflow-y-auto">
+              <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+                    Tìm ảnh · Part 1
+                  </p>
+                  <h3 className="mt-1 text-lg font-bold text-slate-900">
+                    Tìm ảnh cho nhóm #{imageSearchGroup.groupOrder}
+                  </h3>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Ảnh chỉ được lưu chính thức sau khi chọn, tải về server và
+                    upload vào R2.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsImageSearchOpen(false)}
+                  className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form
+                className="mt-5 flex flex-col gap-2 sm:flex-row"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  imageSearchMutation.mutate({
+                    group: imageSearchGroup,
+                    query: imageSearchQuery,
+                  });
+                }}
+              >
+                <label htmlFor="image-search-query" className="sr-only">
+                  Từ khóa tìm ảnh
+                </label>
+                <input
+                  id="image-search-query"
+                  value={imageSearchQuery}
+                  onChange={(event) => setImageSearchQuery(event.target.value)}
+                  placeholder="Ví dụ: office workers arranging documents"
+                  className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                />
+                <button
+                  type="submit"
+                  disabled={imageSearchMutation.isPending}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                >
+                  {imageSearchMutation.isPending ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <Search size={15} />
+                  )}
+                  {imageSearchMutation.isPending
+                    ? "Đang tìm và phân tích ảnh..."
+                    : "Tìm ảnh"}
+                </button>
+              </form>
+
+              <div className="mt-5" aria-live="polite">
+                {imageSearchMutation.isPending && (
+                  <p className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+                    Đang tìm ảnh, kiểm tra độ phù hợp và chuẩn bị ứng viên...
+                  </p>
+                )}
+                {!imageSearchMutation.isPending &&
+                  imageSearchCandidates.length === 0 && (
+                    <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+                      Nhập từ khóa rồi chọn “Tìm ảnh”. Hệ thống sẽ thử nguồn
+                      miễn phí dự phòng trước khi bạn cần tải ảnh thủ công.
+                    </p>
+                  )}
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {imageSearchCandidates.map((candidate) => (
+                    <article
+                      key={candidate.id}
+                      className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md"
+                    >
+                      <div className="aspect-[4/3] bg-slate-100">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={candidate.previewUrl}
+                          alt={`Ảnh ${candidate.provider || "nguồn mở"} của ${candidate.author}`}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="space-y-2 p-3">
+                        <div className="flex items-center justify-between gap-2 text-xs text-slate-500">
+                          <span className="truncate">
+                            {candidate.provider || "Nguồn mở"} · {candidate.author}
+                          </span>
+                          <span className="shrink-0">
+                            {candidate.width}×{candidate.height}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          Giấy phép: {candidate.license || "Cần Admin rà soát"}
+                          {candidate.licenseVersion
+                            ? ` ${candidate.licenseVersion}`
+                            : ""}
+                          {candidate.source
+                            ? ` · Nguồn gốc: ${candidate.source}`
+                            : ""}
+                        </p>
+                        {candidate.analysis ? (
+                          <div
+                            className={`rounded-md px-2.5 py-2 text-xs ${candidate.analysis.status === "SUITABLE" ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-900"}`}
+                          >
+                            <p className="font-semibold">
+                              {candidate.analysis.status === "SUITABLE"
+                                ? `Phù hợp · ${Math.round(candidate.analysis.score * 100)}%`
+                                : candidate.analysis.status === "ANALYSIS_FAILED"
+                                  ? "Chưa có kết luận AI"
+                                  : "AI đánh giá chưa tối ưu"}
+                            </p>
+                            <p className="mt-1 line-clamp-2">
+                              {candidate.analysis.status === "SUITABLE"
+                                ? candidate.analysis.sceneSummary
+                                : candidate.analysis.status === "ANALYSIS_FAILED"
+                                  ? "Admin cần kiểm tra ảnh và câu hỏi trước khi xuất bản."
+                                  : candidate.analysis.rejectionReasons?.join(", ")}
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-slate-500">
+                            Chưa có phân tích tự động; Admin vẫn có thể xem và
+                            chọn ảnh.
+                          </p>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            selectImageMutation.mutate(candidate.id)
+                          }
+                          disabled={selectImageMutation.isPending}
+                          className={`inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 ${candidate.analysis?.status === "UNSUITABLE" ? "bg-amber-600 hover:bg-amber-700" : "bg-blue-600 hover:bg-blue-700"}`}
+                          aria-label={
+                            candidate.analysis?.status === "UNSUITABLE"
+                              ? "Chọn và tiếp tục với ảnh AI đánh giá chưa tối ưu"
+                              : "Chọn ảnh này"
+                          }
+                        >
+                          {selectImageMutation.isPending ? (
+                            <Loader2 size={13} className="animate-spin" />
+                          ) : (
+                            <Check size={13} />
+                          )}{" "}
+                          {candidate.analysis?.status === "UNSUITABLE"
+                            ? "Chọn và tiếp tục"
+                            : "Chọn ảnh này"}
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4">
+                <p className="text-xs text-slate-500">
+                  Nguồn/contributor được lưu trong metadata để Admin rà soát
+                  trước khi xuất bản.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsImageSearchOpen(false);
+                    openGroupEditor(imageSearchGroup);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  <Upload size={13} /> Tải ảnh lên thủ công
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* MODAL: ADD / EDIT GROUP */}
         {isGroupModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
@@ -1499,7 +1988,12 @@ export default function AdminExamsPage() {
                       <textarea
                         rows={4}
                         value={groupForm.transcriptText}
-                        onChange={(e) => setGroupForm({ ...groupForm, transcriptText: e.target.value })}
+                        onChange={(e) =>
+                          setGroupForm({
+                            ...groupForm,
+                            transcriptText: e.target.value,
+                          })
+                        }
                         placeholder="Ví dụ: Woman: ...\nMan: ..."
                         className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs leading-relaxed text-slate-800 outline-none focus:border-slate-400"
                       />
@@ -1526,7 +2020,12 @@ export default function AdminExamsPage() {
                       <textarea
                         rows={3}
                         value={groupForm.imageBrief}
-                        onChange={(e) => setGroupForm({ ...groupForm, imageBrief: e.target.value })}
+                        onChange={(e) =>
+                          setGroupForm({
+                            ...groupForm,
+                            imageBrief: e.target.value,
+                          })
+                        }
                         placeholder="Mô tả cảnh không có chữ để có thể tạo lại ảnh đúng ngữ cảnh"
                         className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs leading-relaxed text-slate-800 outline-none focus:border-slate-400"
                       />
@@ -2062,24 +2561,29 @@ export default function AdminExamsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-        <a href="/admin/exams/new" className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-800 shadow-sm transition hover:border-amber-400 hover:bg-amber-100"><Sparkles size={16} /> AI tạo đề</a>
-        <button
-          onClick={() => {
-            setExamForm({
-              title: "",
-              description: "",
-              familyCode: "TOEIC",
-              variantCode: "TOEIC_LR",
-              type: "PRACTICE_BY_PART",
-              difficulty: "medium",
-              durationMinutes: 45,
-            });
-            setIsExamModalOpen(true);
-          }}
-          className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors shadow-sm"
-        >
-          <Plus size={16} /> Tạo đề
-        </button>
+          <a
+            href="/admin/exams/new"
+            className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-800 shadow-sm transition hover:border-amber-400 hover:bg-amber-100"
+          >
+            <FileStack size={16} /> AI tạo đề
+          </a>
+          <button
+            onClick={() => {
+              setExamForm({
+                title: "",
+                description: "",
+                familyCode: "TOEIC",
+                variantCode: "TOEIC_LR",
+                type: "PRACTICE_BY_PART",
+                difficulty: "medium",
+                durationMinutes: 45,
+              });
+              setIsExamModalOpen(true);
+            }}
+            className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors shadow-sm"
+          >
+            <Plus size={16} /> Tạo đề
+          </button>
         </div>
       </header>
 

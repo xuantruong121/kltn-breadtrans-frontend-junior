@@ -824,14 +824,16 @@ export default function ExamPracticeHubPage() {
                     const examFormat = rawFormat === "TWO_SKILL" ? "TOEIC_LR" : rawFormat === "SPEAKING_WRITING" ? "TOEIC_SW" : rawFormat === "FOUR_SKILL" ? "TOEIC_4_SKILLS" : rawFormat;
                     const isFourSkill = examFormat === "TOEIC_4_SKILLS";
                     const isSpeakingWriting = examFormat === "TOEIC_SW";
-                    const linkedBundle = (quizzes ?? []).find((candidate: any) => candidate.bilingualContent?.speakingWritingQuizId === quiz.id);
-                    const destination = isFourSkill || isSpeakingWriting
-                      ? `/toeic/bundle/${isFourSkill ? quiz.id : linkedBundle?.id || quiz.id}`
-                      : `/toeic/${quiz.runtimeId || quiz.id}`;
+                    const destination = `/exams/${quiz.id}`;
                     const formatLabel = isFourSkill ? "TOEIC 4 kỹ năng" : isSpeakingWriting ? "TOEIC S&W" : "TOEIC L&R";
                     const skillLabels = isFourSkill ? ["Listening", "Reading", "Speaking", "Writing"] : isSpeakingWriting ? ["Speaking", "Writing"] : ["Listening", "Reading"];
                     const detailsLabel = isFourSkill ? "L&R + S&W" : isSpeakingWriting ? "11 Speaking · 8 Writing" : "200 câu · 120 phút";
-                    const cardDescription = isFourSkill ? "Bundle mô phỏng kết hợp TOEIC L&R và TOEIC S&W." : isSpeakingWriting ? "Bộ nhiệm vụ Speaking và Writing theo cấu trúc TOEIC." : "Bài thi Listening & Reading gồm 100 câu mỗi phần.";
+                    const fallbackDescription = isFourSkill
+                      ? "Đề luyện tập TOEIC 4 Skills kết hợp Listening, Reading, Speaking và Writing trong một sản phẩm luyện tập. Nội dung do BreadTrans biên soạn để rèn luyện theo format TOEIC; không phải đề thi chính thức của ETS."
+                      : isSpeakingWriting
+                        ? "Đề luyện tập TOEIC 2 Skills: Speaking & Writing gồm 11 task Speaking và 8 task Writing. Nội dung do BreadTrans biên soạn để rèn luyện theo format TOEIC; không phải đề thi chính thức của ETS."
+                        : "Đề luyện tập TOEIC 2 Skills: Listening & Reading gồm 100 câu Listening và 100 câu Reading, bao quát Part 1–7. Nội dung do BreadTrans biên soạn để rèn luyện theo format TOEIC; không phải đề thi chính thức của ETS.";
+                    const cardDescription = quiz.description?.trim() || fallbackDescription;
 
                     const handleCardSelect = () => {
                       if (!user) {

@@ -58,6 +58,8 @@ export interface ToeicAttempt {
   deadline: string | null;
   exam: ToeicExam;
   answers: Array<{ questionId: number; selectedIndex: number | null }>;
+  currentQuestionId?: number | null;
+  markedQuestionIds?: number[];
 }
 
 export interface ToeicBundle {
@@ -108,6 +110,8 @@ export const toeicService = {
       totalScore: number | null;
       totalCorrect: number | null;
     }>,
+  getAssessmentHistory: async (): Promise<any[]> =>
+    (await axiosClient.get("/toeic/assessments/history")) as unknown as any[],
   getBundle: async (quizId: number): Promise<ToeicBundle> =>
     (await axiosClient.get(
       `/toeic/bundles/${quizId}`,
@@ -133,9 +137,11 @@ export const toeicService = {
   saveAnswers: async (
     attemptId: number,
     answers: Record<number, number>,
+    state?: { markedQuestionIds?: number[]; currentQuestionId?: number },
   ): Promise<void> => {
     await axiosClient.patch(`/toeic/attempts/${attemptId}/answers`, {
       answers,
+      ...state,
     });
   },
   submitAttempt: async (attemptId: number): Promise<unknown> =>
@@ -234,4 +240,12 @@ export const toeicService = {
       `/toeic/groups/${groupId}/audio?attemptId=${attemptId}`,
       { responseType: "blob", signal },
     )) as unknown as Blob,
+  completeAssessmentComponent: async (
+    attemptId: number,
+    componentId: number,
+  ): Promise<unknown> =>
+    (await axiosClient.post(
+      `/toeic/assessments/attempts/${attemptId}/components/${componentId}/complete`,
+      {},
+    )) as unknown,
 };

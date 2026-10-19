@@ -45,21 +45,40 @@ export interface WritingEvaluation {
   taskType?: string | null;
 }
 
+export type WritingExamParentContext = {
+  attemptId: number;
+  componentId: number;
+};
+
+function withExamParentContext(
+  path: string,
+  context?: WritingExamParentContext,
+) {
+  if (!context) return path;
+  return `${path}?parentAttemptId=${context.attemptId}&parentComponentId=${context.componentId}`;
+}
+
 export const writingService = {
   getTopics: async (): Promise<WritingCatalogResponse> => {
     return await axiosClient.get("/writing/topics");
   },
 
-  getQuizDetails: async (id: number): Promise<WritingQuizDetails> => {
-    return await axiosClient.get(`/writing/quizzes/${id}`);
+  getQuizDetails: async (
+    id: number,
+    context?: WritingExamParentContext,
+  ): Promise<WritingQuizDetails> => {
+    return await axiosClient.get(
+      withExamParentContext(`/writing/quizzes/${id}`, context),
+    );
   },
 
   submit: async (
     id: number,
     answer: string,
     clientAttemptId: string,
+    context?: WritingExamParentContext,
   ): Promise<WritingEvaluation> => {
-    return await axiosClient.post(`/writing/quizzes/${id}/submit`, {
+    return await axiosClient.post(withExamParentContext(`/writing/quizzes/${id}/submit`, context), {
       answer,
       clientAttemptId,
     });
@@ -69,8 +88,9 @@ export const writingService = {
     quizId: number,
     userResponse: string,
     clientAttemptId: string,
+    context?: WritingExamParentContext,
   ): Promise<WritingEvaluation> => {
-    return await axiosClient.post("/writing/part2/submit", {
+    return await axiosClient.post(withExamParentContext("/writing/part2/submit", context), {
       quizId,
       userResponse,
       clientAttemptId,
@@ -81,8 +101,9 @@ export const writingService = {
     quizId: number,
     userEssay: string,
     clientAttemptId: string,
+    context?: WritingExamParentContext,
   ): Promise<WritingEvaluation> => {
-    return await axiosClient.post("/writing/part3/submit", {
+    return await axiosClient.post(withExamParentContext("/writing/part3/submit", context), {
       quizId,
       userEssay,
       clientAttemptId,

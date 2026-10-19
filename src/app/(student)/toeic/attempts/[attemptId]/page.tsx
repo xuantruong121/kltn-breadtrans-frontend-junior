@@ -53,6 +53,9 @@ export default function ToeicAttemptPage({
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedReturnTo = searchParams.get("returnTo");
+  const parentAttemptId = searchParams.get("parentAttemptId");
+  const parentComponentId = searchParams.get("parentComponentId");
+  const parentAssessmentId = searchParams.get("parentAssessmentId");
   const courseReturn =
     requestedReturnTo && isSafeCourseReturn(requestedReturnTo)
       ? requestedReturnTo
@@ -60,6 +63,7 @@ export default function ToeicAttemptPage({
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number> | null>(null);
   const [marked, setMarked] = useState<Set<number>>(new Set());
+  const [showSubmitSummary, setShowSubmitSummary] = useState(false);
   const [showExit, setShowExit] = useState(false);
   const [showQuestionDrawer, setShowQuestionDrawer] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -77,6 +81,7 @@ export default function ToeicAttemptPage({
   const [currentTimeMs, setCurrentTimeMs] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
   const audioRequestRef = useRef(0);
+  const hydratedAttemptRef = useRef<number | null>(null);
   const playedAudioGroupsRef = useRef<Set<number>>(new Set());
   const loadedAudioGroupRef = useRef<number | null>(null);
 
@@ -143,7 +148,11 @@ export default function ToeicAttemptPage({
     return [...result.entries()].sort(([a], [b]) => a - b);
   }, [groups]);
   const save = useMutation({
-    mutationFn: () => toeicService.saveAnswers(attemptId, currentAnswers),
+    mutationFn: () =>
+      toeicService.saveAnswers(attemptId, currentAnswers, {
+        markedQuestionIds: [...marked],
+        currentQuestionId: current?.question.id,
+      }),
   });
   const submit = useMutation({
     mutationFn: () => toeicService.submitAttempt(attemptId),
@@ -151,7 +160,18 @@ export default function ToeicAttemptPage({
       markTerminated();
       exitFullscreen();
       router.push(
-        `/toeic/results/${attemptId}${courseReturn ? `?returnTo=${encodeURIComponent(courseReturn)}` : ""}`,
+        `/toeic/results/${attemptId}${
+          courseReturn || parentAttemptId
+            ? `?${[
+                courseReturn ? `returnTo=${encodeURIComponent(courseReturn)}` : "",
+                parentAttemptId ? `parentAttemptId=${parentAttemptId}` : "",
+                parentComponentId ? `parentComponentId=${parentComponentId}` : "",
+                parentAssessmentId ? `parentAssessmentId=${parentAssessmentId}` : "",
+              ]
+                .filter(Boolean)
+                .join("&")}`
+            : ""
+        }`,
       );
     },
   });
@@ -195,6 +215,31 @@ export default function ToeicAttemptPage({
     const timer = window.setInterval(() => setCurrentTimeMs(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, [attempt]);
+
+  useEffect(() => {
+    if (!attempt || !questions.length || hydratedAttemptRef.current === attempt.id)
+      return;
+    hydratedAttemptRef.current = attempt.id;
+    setMarked(new Set(attempt.markedQuestionIds ?? []));
+    const savedIndex = attempt.currentQuestionId
+      ? questions.findIndex(({ question }) => question.id === attempt.currentQuestionId)
+      : -1;
+    if (savedIndex >= 0) setIndex(savedIndex);
+  }, [attempt, questions]);
+
+  useEffect(() => {
+    if (!attempt || attempt.status !== "IN_PROGRESS" || answers === null)
+      return;
+    const timer = window.setTimeout(() => {
+      void toeicService
+        .saveAnswers(attemptId, answers, {
+          markedQuestionIds: [...marked],
+          currentQuestionId: current?.question.id,
+        })
+        .catch(() => undefined);
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [answers, attempt, attemptId, current?.question.id, marked]);
 
   const policy = resolveAssessmentPolicy({
     kind: "TOEIC",
@@ -314,7 +359,7 @@ export default function ToeicAttemptPage({
 
   const nextIndex = () => {
     if (!current) return -1;
-    if (!fullTest) return index + 1;
+    if (!fullTest) return index + 1 < questions.length ? index + 1 : -1;
     const groupPosition = groups.findIndex(
       (group) => group.id === current.group.id,
     );
@@ -332,8 +377,14 @@ export default function ToeicAttemptPage({
       return;
     await save.mutateAsync();
     const target = nextIndex();
-    if (target < 0) submit.mutate();
-    else setIndex(target);
+    if (target < 0) setShowSubmitSummary(true);
+    else {
+      setIndex(target);
+      void toeicService.saveAnswers(attemptId, currentAnswers, {
+        markedQuestionIds: [...marked],
+        currentQuestionId: questions[target]?.question.id,
+      });
+    }
   };
   const enterFullscreen = () =>
     document.documentElement.requestFullscreen?.().catch(() => undefined);
@@ -346,6 +397,12 @@ export default function ToeicAttemptPage({
       const nextMarked = new Set(old);
       if (nextMarked.has(questionId)) nextMarked.delete(questionId);
       else nextMarked.add(questionId);
+      void toeicService
+        .saveAnswers(attemptId, currentAnswers, {
+          markedQuestionIds: [...nextMarked],
+          currentQuestionId: current?.question.id,
+        })
+        .catch(() => undefined);
       return nextMarked;
     });
   const navigateToQuestion = (target: QuestionEntry) => {
@@ -354,7 +411,15 @@ export default function ToeicAttemptPage({
     const targetIndex = questions.findIndex(
       ({ question }) => question.id === target.question.id,
     );
-    if (targetIndex >= 0) setIndex(targetIndex);
+    if (targetIndex >= 0) {
+      setIndex(targetIndex);
+      void toeicService
+        .saveAnswers(attemptId, currentAnswers, {
+          markedQuestionIds: [...marked],
+          currentQuestionId: target.question.id,
+        })
+        .catch(() => undefined);
+    }
   };
 
   const navigateToPart = (part: number) => {
@@ -720,7 +785,7 @@ export default function ToeicAttemptPage({
                     <CheckCircle2 size={16} />
                   )}
                   {nextIndex() < 0
-                    ? "Nộp bài"
+                    ? "Xem tóm tắt"
                     : fullTest
                       ? "Sang nhóm tiếp theo"
                       : "Lưu và sang câu tiếp"}
@@ -917,6 +982,59 @@ export default function ToeicAttemptPage({
                   className="min-h-11 rounded-xl bg-rose-600 px-4 text-sm font-bold text-white hover:bg-rose-700 disabled:opacity-60"
                 >
                   {cancel.isPending ? "Đang hủy..." : "Hủy lượt thi"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showSubmitSummary && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="toeic-submit-summary-title"
+              className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900"
+            >
+              <h2
+                id="toeic-submit-summary-title"
+                className="text-xl font-black text-slate-900 dark:text-slate-100"
+              >
+                Kiểm tra trước khi nộp
+              </h2>
+              <div className="mt-5 grid grid-cols-3 gap-2 text-center">
+                <div className="rounded-xl bg-emerald-50 p-3 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
+                  <p className="text-2xl font-black">{answeredCount}</p>
+                  <p className="text-xs font-semibold">Đã trả lời</p>
+                </div>
+                <div className="rounded-xl bg-slate-100 p-3 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                  <p className="text-2xl font-black">{questions.length - answeredCount}</p>
+                  <p className="text-xs font-semibold">Chưa trả lời</p>
+                </div>
+                <div className="rounded-xl bg-amber-50 p-3 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                  <p className="text-2xl font-black">{marked.size}</p>
+                  <p className="text-xs font-semibold">Xem lại</p>
+                </div>
+              </div>
+              <p className="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                Sau khi nộp, hệ thống sẽ chấm bài và lưu kết quả. Bạn vẫn có thể
+                xem lại đáp án sau khi hoàn thành.
+              </p>
+              <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowSubmitSummary(false)}
+                  className="min-h-11 rounded-xl border border-slate-200 px-4 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
+                  Quay lại làm bài
+                </button>
+                <button
+                  type="button"
+                  onClick={() => submit.mutate()}
+                  disabled={submit.isPending}
+                  className="min-h-11 rounded-xl bg-amber-500 px-4 text-sm font-black text-white hover:bg-amber-600 disabled:opacity-60"
+                >
+                  {submit.isPending ? "Đang nộp..." : "Xác nhận nộp bài"}
                 </button>
               </div>
             </div>

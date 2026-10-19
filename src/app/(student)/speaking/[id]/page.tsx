@@ -30,6 +30,7 @@ import {
   SpeakingSubmissionSummary,
   WordAssessmentItem,
 } from "@/lib/api/services/speaking.service";
+import axiosClient from "@/lib/api/axiosClient";
 import { isSafeCourseReturn } from "@/lib/course/navigation";
 import {
   SpeakingAttemptPhase,
@@ -144,6 +145,19 @@ export default function SpeakingExerciseDetailPage() {
   const exerciseId = Number(id);
   const practiceSetKey = searchParams.get("set");
   const requestedReturnTo = searchParams.get("returnTo");
+  const parentAttemptId = searchParams.get("parentAttemptId");
+  const parentComponentId = searchParams.get("parentComponentId");
+  const examExerciseIds = (searchParams.get("examExerciseIds") ?? "")
+    .split(",")
+    .map(Number)
+    .filter((value) => Number.isInteger(value) && value > 0);
+  const examParentContext =
+    parentAttemptId && parentComponentId
+      ? {
+          attemptId: Number(parentAttemptId),
+          componentId: Number(parentComponentId),
+        }
+      : undefined;
   const courseReturn =
     requestedReturnTo && isSafeCourseReturn(requestedReturnTo)
       ? requestedReturnTo
@@ -171,6 +185,7 @@ export default function SpeakingExerciseDetailPage() {
   const attemptIdempotencyKeyRef = useRef<string | null>(null);
   const isMountedRef = useRef(true);
   const currentSubmissionIdRef = useRef<number | null>(null);
+  const parentCompletionRef = useRef(false);
   const pollingStartTimeRef = useRef<number>(0);
   const scoreVisibilityStartRef = useRef<number | null>(null);
   const { socket } = useSocket();
@@ -305,7 +320,7 @@ export default function SpeakingExerciseDetailPage() {
     error: exerciseError,
   } = useQuery({
     queryKey: ["speaking-exercise", exerciseId],
-    queryFn: () => speakingService.getExerciseById(exerciseId),
+    queryFn: () => speakingService.getExerciseById(exerciseId, examParentContext),
     enabled: !!exerciseId,
   });
 
@@ -864,6 +879,39 @@ export default function SpeakingExerciseDetailPage() {
               queryClient.invalidateQueries({ queryKey: ["myPet"] });
             }
             if (
+              parentAttemptId &&
+              parentComponentId &&
+              practiceSetKey &&
+              !parentCompletionRef.current
+            ) {
+              parentCompletionRef.current = true;
+              void speakingService
+                .getExercises()
+                .then((exercises) => {
+                  const sessionExercises = examExerciseIds.length
+                    ? examExerciseIds.map((id) => ({ id }))
+                    : exercises
+                    .filter((item) => item.practiceSet?.key === practiceSetKey)
+                    .sort(
+                      (a: { id: number; order?: number | null; practiceSet?: { position?: number } }, b: { id: number; order?: number | null; practiceSet?: { position?: number } }) =>
+                        (a.order ?? a.practiceSet?.position ?? Number.MAX_SAFE_INTEGER) -
+                          (b.order ?? b.practiceSet?.position ?? Number.MAX_SAFE_INTEGER) ||
+                        a.id - b.id,
+                    );
+                  if (getNextExerciseId(exerciseId, sessionExercises)) {
+                    parentCompletionRef.current = false;
+                    return;
+                  }
+                  return axiosClient.post(
+                    `/toeic/assessments/attempts/${parentAttemptId}/components/${parentComponentId}/complete`,
+                    {},
+                  );
+                })
+                .catch(() => {
+                  parentCompletionRef.current = false;
+                });
+            }
+            if (
               sub.feedbackStatus === "PENDING" ||
               sub.feedbackStatus === "PROCESSING"
             ) {
@@ -893,7 +941,13 @@ export default function SpeakingExerciseDetailPage() {
         }
       }, intervalMs);
     },
-    [queryClient, exerciseId],
+    [
+      queryClient,
+      exerciseId,
+      parentAttemptId,
+      parentComponentId,
+      practiceSetKey,
+    ],
   );
 
   /**
@@ -1024,6 +1078,7 @@ export default function SpeakingExerciseDetailPage() {
               idempotencyKey: key,
             },
             traceId,
+            examParentContext,
           );
 
           if (intent.isAlreadyFinalized && intent.submissionId) {
@@ -1090,6 +1145,7 @@ export default function SpeakingExerciseDetailPage() {
             blob,
             key,
             traceId,
+            examParentContext,
           );
 
           currentSubmissionIdRef.current = response.submissionId;
@@ -1316,22 +1372,35 @@ export default function SpeakingExerciseDetailPage() {
    */
   const handleNextExercise = useCallback(async () => {
     try {
-      const exercises = await speakingService.getExercises();
-      const sessionExercises = practiceSetKey
+      const exercises: Array<{
+        id: number;
+        order?: number | null;
+        practiceSet?: { key?: string; position?: number };
+      }> = examExerciseIds.length
+        ? examExerciseIds.map((id) => ({ id }))
+        : await speakingService.getExercises();
+      const sessionExercises = examExerciseIds.length
         ? exercises
-            .filter((item) => item.practiceSet?.key === practiceSetKey)
-            .sort(
-              (a, b) =>
-                (a.order ?? a.practiceSet?.position ?? Number.MAX_SAFE_INTEGER) -
-                  (b.order ?? b.practiceSet?.position ?? Number.MAX_SAFE_INTEGER) ||
-                a.id - b.id,
-            )
-        : exercises;
+        : practiceSetKey
+          ? exercises
+              .filter((item) => item.practiceSet?.key === practiceSetKey)
+              .sort(
+                (a, b) =>
+                  (a.order ?? a.practiceSet?.position ?? Number.MAX_SAFE_INTEGER) -
+                    (b.order ?? b.practiceSet?.position ?? Number.MAX_SAFE_INTEGER) ||
+                  a.id - b.id,
+              )
+          : exercises;
       const nextId = getNextExerciseId(exerciseId, sessionExercises);
       if (nextId) {
-        const query = practiceSetKey
-          ? `?set=${encodeURIComponent(practiceSetKey)}`
-          : "";
+        const params = new URLSearchParams();
+        if (practiceSetKey) params.set("set", practiceSetKey);
+        if (examParentContext) {
+          params.set("parentAttemptId", String(examParentContext.attemptId));
+          params.set("parentComponentId", String(examParentContext.componentId));
+          params.set("examExerciseIds", examExerciseIds.join(","));
+        }
+        const query = params.toString() ? `?${params.toString()}` : "";
         router.push(`/speaking/${nextId}${query}`);
       } else {
         router.push("/speaking");
@@ -1341,7 +1410,7 @@ export default function SpeakingExerciseDetailPage() {
       toast.error("Không thể tải bài tập tiếp theo. Đang quay về danh sách.");
       router.push("/speaking");
     }
-  }, [exerciseId, practiceSetKey, router]);
+  }, [examExerciseIds, examParentContext, exerciseId, practiceSetKey, router]);
 
   const stopTtsPlayback = useCallback(() => {
     referenceAudioRef.current?.pause();

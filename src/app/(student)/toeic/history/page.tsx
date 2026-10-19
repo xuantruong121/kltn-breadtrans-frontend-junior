@@ -1,16 +1,24 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQueries } from "@tanstack/react-query";
 import { ArrowRight, Clock3, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toeicService } from "@/lib/api/services/toeic.service";
 
 export default function ToeicHistoryPage() {
   const router = useRouter();
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["toeic-history"],
-    queryFn: toeicService.getHistory,
+  const results = useQueries({
+    queries: [
+      { queryKey: ["toeic-history"], queryFn: toeicService.getHistory },
+      {
+        queryKey: ["toeic-assessment-history"],
+        queryFn: toeicService.getAssessmentHistory,
+      },
+    ],
   });
+  const [legacy, assessments] = results;
+  const isLoading = results.some((result) => result.isLoading);
+  const isError = results.some((result) => result.isError);
   if (isLoading)
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
@@ -29,7 +37,7 @@ export default function ToeicHistoryPage() {
         Lịch sử luyện đề TOEIC
       </h1>
       <div className="mt-6 space-y-3">
-        {(data ?? []).map((item) => (
+        {(legacy.data ?? []).map((item) => (
           <article
             key={item.id}
             className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
@@ -65,7 +73,29 @@ export default function ToeicHistoryPage() {
             </div>
           </article>
         ))}
-        {!data?.length && (
+        {(assessments.data ?? []).map((item: any) => (
+          <article
+            key={`assessment-${item.id}`}
+            className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
+          >
+            <div>
+              <h2 className="font-bold text-slate-900 dark:text-slate-100">
+                {item.assessment.title}
+              </h2>
+              <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
+                <Clock3 size={13} /> {item.status === "COMPLETED" ? "Đã hoàn tất" : "Đang thực hiện"} · {item.assessment.productFamily}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => router.push(`/toeic/assessments/${item.assessment.id}/attempts/${item.id}`)}
+              className="inline-flex min-h-10 items-center gap-1 rounded-xl border border-slate-200 px-3 text-sm font-bold text-slate-700 dark:border-slate-700 dark:text-slate-200"
+            >
+              Xem tiến độ <ArrowRight size={14} />
+            </button>
+          </article>
+        ))}
+        {!(legacy.data?.length || assessments.data?.length) && (
           <p className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
             Chưa có lượt luyện đề nào.
           </p>
