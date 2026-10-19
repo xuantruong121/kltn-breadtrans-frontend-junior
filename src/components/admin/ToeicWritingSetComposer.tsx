@@ -242,18 +242,18 @@ export default function ToeicWritingSetComposer() {
     <main className="mx-auto max-w-6xl space-y-6 p-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">TOEIC Writing</p>
-          <h1 className="mt-2 text-2xl font-bold text-slate-950">Authoritative Writing Set</h1>
-          <p className="mt-1 text-sm text-slate-500">Ghép task Writing hiện có vào cấu trúc 5 Picture · 2 Request · 1 Essay.</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Luyện đề / TOEIC</p>
+          <h1 className="mt-2 text-2xl font-bold text-slate-950">Writing · 8 câu</h1>
+          <p className="mt-1 text-sm text-slate-500">Biên tập cấu trúc Writing gồm 5 câu theo tranh, 2 yêu cầu viết và 1 bài luận.</p>
         </div>
         <button type="button" onClick={createSet} disabled={busy} className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50">
-          <Plus size={16} /> Tạo Set bản nháp
+          <Plus size={16} /> Tạo nội dung Writing nháp
         </button>
       </header>
 
       <section className="grid gap-6 lg:grid-cols-[240px_1fr]">
         <aside className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <h2 className="text-sm font-semibold text-slate-900">Các Set</h2>
+          <h2 className="text-sm font-semibold text-slate-900">Các bộ Writing</h2>
           <div className="mt-3 space-y-2">
             {sets.length === 0 && <p className="text-sm text-slate-500">Chưa có Set nào.</p>}
             {sets.map((set) => (

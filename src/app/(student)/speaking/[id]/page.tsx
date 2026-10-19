@@ -327,7 +327,9 @@ export default function SpeakingExerciseDetailPage() {
       .filter((item) => item.practiceSet?.key === practiceSetKey)
       .sort(
         (a, b) =>
-          (a.practiceSet?.position ?? 0) - (b.practiceSet?.position ?? 0),
+          (a.order ?? a.practiceSet?.position ?? Number.MAX_SAFE_INTEGER) -
+            (b.order ?? b.practiceSet?.position ?? Number.MAX_SAFE_INTEGER) ||
+          a.id - b.id,
       );
   }, [allExercises, practiceSetKey]);
 
@@ -352,7 +354,8 @@ export default function SpeakingExerciseDetailPage() {
     [exercise, activeCatalogExercise],
   );
   const currentPracticeSetPosition = activePracticeSet
-    ? practiceSetExercises.findIndex((item) => item.id === exerciseId) + 1
+    ? (exercise?.order ??
+      practiceSetExercises.findIndex((item) => item.id === exerciseId) + 1)
     : 0;
 
   const isNextAvailable = useMemo(() => {
@@ -1319,7 +1322,9 @@ export default function SpeakingExerciseDetailPage() {
             .filter((item) => item.practiceSet?.key === practiceSetKey)
             .sort(
               (a, b) =>
-                (a.practiceSet?.position ?? 0) - (b.practiceSet?.position ?? 0),
+                (a.order ?? a.practiceSet?.position ?? Number.MAX_SAFE_INTEGER) -
+                  (b.order ?? b.practiceSet?.position ?? Number.MAX_SAFE_INTEGER) ||
+                a.id - b.id,
             )
         : exercises;
       const nextId = getNextExerciseId(exerciseId, sessionExercises);

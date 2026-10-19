@@ -195,14 +195,14 @@ export default function ToeicAssessmentComposer() {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-600">
-            TOEIC composition
+            Luyện đề / TOEIC
           </p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight">
-            Authoritative Assessment Composer
+            Cấu trúc đề TOEIC
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-slate-500">
-            Parent chỉ điều phối nguồn L&R, Speaking và Writing; nội dung vẫn do
-            CMS tương ứng sở hữu.
+            Thiết lập các phần của đề TOEIC. Nội dung từng kỹ năng vẫn được
+            biên tập từ CMS tương ứng.
           </p>
         </div>
         <button
@@ -211,14 +211,14 @@ export default function ToeicAssessmentComposer() {
           disabled={busy}
           className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800 disabled:opacity-50"
         >
-          <Plus size={16} /> Tạo draft
+          <Plus size={16} /> Tạo đề nháp
         </button>
       </header>
 
       <section className="grid gap-5 lg:grid-cols-[280px_1fr]">
         <aside className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
           <h2 className="px-3 py-2 text-sm font-semibold text-slate-500">
-            Assessments
+            Các đề TOEIC
           </h2>
           <div className="space-y-1">
             {assessments.map((item) => (
@@ -238,7 +238,7 @@ export default function ToeicAssessmentComposer() {
             ))}
             {!assessments.length && (
               <p className="px-3 py-6 text-sm text-slate-400">
-                Chưa có composition.
+                Chưa có đề TOEIC nào.
               </p>
             )}
           </div>
@@ -247,7 +247,7 @@ export default function ToeicAssessmentComposer() {
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="grid gap-4 md:grid-cols-2">
             <label className="text-sm font-semibold">
-              Tên assessment
+              Tên đề
               <input
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
@@ -256,7 +256,7 @@ export default function ToeicAssessmentComposer() {
               />
             </label>
             <label className="text-sm font-semibold">
-              Product family
+              Loại đề TOEIC
               <select
                 value={family}
                 onChange={(event) => setFamily(event.target.value as Family)}
@@ -302,11 +302,11 @@ export default function ToeicAssessmentComposer() {
             )}
             {family !== "TOEIC_LR" && (
               <SourceSelect
-                label={`${family === "TOEIC_4_SKILLS" ? "3" : "2"} · Authoritative Writing Set`}
+                label={`${family === "TOEIC_4_SKILLS" ? "3" : "2"} · Writing · 8 câu`}
                 value={writingId}
                 onChange={setWritingId}
                 sources={writing}
-                empty="Chọn Writing Set #2"
+                empty="Chọn nội dung Writing đã xuất bản"
               />
             )}
           </div>
@@ -322,8 +322,8 @@ export default function ToeicAssessmentComposer() {
           )}
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-5">
             <div className="flex items-center gap-2 text-xs text-slate-500">
-              <CheckCircle2 size={15} className="text-emerald-600" /> Child
-              editors remain the single writer
+              <CheckCircle2 size={15} className="text-emerald-600" /> Nội dung
+              kỹ năng được biên tập tại CMS tương ứng
             </div>
             <div className="flex gap-2">
               <button

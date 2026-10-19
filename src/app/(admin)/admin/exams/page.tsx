@@ -22,6 +22,7 @@ import {
   Eye,
   Check,
   ShieldAlert,
+  Sparkles,
 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { Pagination } from "@/components/ui";
@@ -29,6 +30,7 @@ import toast from "react-hot-toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import ImageUploadField from "@/components/admin/ImageUploadField";
 import AudioUploadField from "@/components/admin/AudioUploadField";
+import ToeicSpeakingExamComposer from "@/components/admin/ToeicSpeakingExamComposer";
 
 const TOEIC_PARTS = [
   { part: 1, label: "Part 1: Mô tả hình ảnh (Photographs)", type: "LISTENING" },
@@ -78,6 +80,9 @@ interface ExamGroup {
   imageUrl?: string | null;
   audioUrl?: string | null;
   passageText?: string | null;
+  transcriptText?: string | null;
+  imageBrief?: string | null;
+  mediaMetadata?: { audio?: { stale?: boolean }; image?: { stale?: boolean } } | null;
   questions: ExamQuestion[];
 }
 
@@ -88,7 +93,20 @@ interface ExamDetail {
   type: "FULL_TEST" | "PRACTICE_BY_PART";
   difficulty: "easy" | "medium" | "hard";
   durationSeconds: number;
+  totalQuestions?: number;
+  totalGroups?: number;
   publicationStatus: "DRAFT" | "PUBLISHED";
+  familyCode?: string;
+  variantCode?: string;
+  readiness?: {
+    listeningReading?: boolean;
+    speaking?: boolean;
+    writing?: boolean;
+    speakingCount?: number;
+    speakingExpected?: number;
+    writingCount?: number;
+    writingExpected?: number;
+  };
   groups: ExamGroup[];
   attemptsCount?: number;
   learnerReady?: boolean;
@@ -103,12 +121,23 @@ interface ExamDetail {
   };
 }
 
+const examVariantLabel = (variant?: string) =>
+  ({
+    TOEIC_LR: "Listening & Reading",
+    TOEIC_SW: "Speaking & Writing",
+    TOEIC_4_SKILLS: "4 kỹ năng",
+  })[variant || ""] ||
+  variant ||
+  "Loại đề";
+
 export default function AdminExamsPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "ALL" | "DRAFT" | "PUBLISHED"
   >("ALL");
+  const [familyFilter, setFamilyFilter] = useState("ALL");
+  const [variantFilter, setVariantFilter] = useState("ALL");
   const [selectedExamId, setSelectedExamId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(9);
@@ -148,6 +177,8 @@ export default function AdminExamsPage() {
   const [examForm, setExamForm] = useState({
     title: "",
     description: "",
+    familyCode: "TOEIC",
+    variantCode: "TOEIC_LR",
     type: "PRACTICE_BY_PART" as "FULL_TEST" | "PRACTICE_BY_PART",
     difficulty: "medium" as "easy" | "medium" | "hard",
     durationMinutes: 45,
@@ -160,6 +191,8 @@ export default function AdminExamsPage() {
     audioUrl: "",
     imageUrl: "",
     passageText: "",
+    transcriptText: "",
+    imageBrief: "",
   });
 
   // Form states: Question
@@ -252,6 +285,8 @@ export default function AdminExamsPage() {
       setExamForm({
         title: "",
         description: "",
+        familyCode: "TOEIC",
+        variantCode: "TOEIC_LR",
         type: "PRACTICE_BY_PART",
         difficulty: "medium",
         durationMinutes: 45,
@@ -439,7 +474,9 @@ export default function AdminExamsPage() {
     (e) =>
       (e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         e.description?.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (statusFilter === "ALL" || e.publicationStatus === statusFilter),
+      (statusFilter === "ALL" || e.publicationStatus === statusFilter) &&
+      (familyFilter === "ALL" || e.familyCode === familyFilter) &&
+      (variantFilter === "ALL" || e.variantCode === variantFilter),
   );
   const totalPages = Math.ceil((filteredExams?.length || 0) / pageSize);
   const paginatedExams = filteredExams?.slice(
@@ -451,6 +488,118 @@ export default function AdminExamsPage() {
   // RENDER: Exam Workspace / Editor when an exam is selected
   // -------------------------------------------------------------
   if (selectedExamId && examDetail) {
+    if (examDetail.variantCode && examDetail.variantCode !== "TOEIC_LR") {
+      const readiness = examDetail.readiness;
+      const isPublished = examDetail.publicationStatus === "PUBLISHED";
+      const sections = [
+        {
+          label: "Listening & Reading",
+          count: examDetail.totalQuestions || 0,
+          expected: 200,
+          ready: readiness?.listeningReading,
+        },
+        {
+          label: "Speaking",
+          count: readiness?.speakingCount || 0,
+          expected: readiness?.speakingExpected || 11,
+          ready: readiness?.speaking,
+        },
+        {
+          label: "Writing",
+          count: readiness?.writingCount || 0,
+          expected: readiness?.writingExpected || 8,
+          ready: readiness?.writing,
+        },
+      ].filter(
+        (section) =>
+          section.expected > 0 &&
+          (examDetail.variantCode === "TOEIC_4_SKILLS" ||
+            section.label !== "Listening & Reading"),
+      );
+      return (
+        <main className="mx-auto max-w-5xl space-y-6 p-6">
+          <button
+            onClick={() => setSelectedExamId(null)}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-950"
+          >
+            <ArrowLeft size={16} /> Quay lại kho đề
+          </button>
+          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-5">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[.16em] text-slate-500">
+                  {examDetail.familyCode} ·{" "}
+                  {examVariantLabel(examDetail.variantCode)}
+                </p>
+                <h1 className="mt-2 text-2xl font-bold text-slate-950">
+                  {examDetail.title}
+                </h1>
+                <p className="mt-1 text-sm text-slate-500">
+                  {examDetail.description || "Chưa có mô tả."}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700">
+                  {isPublished ? "Đã xuất bản" : "Bản nháp"}
+                </span>
+                {isPublished ? (
+                  <button
+                    onClick={() => unpublishExamMutation.mutate(examDetail.id)}
+                    disabled={unpublishExamMutation.isPending}
+                    className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    Chuyển về bản nháp
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => publishExamMutation.mutate(examDetail.id)}
+                    disabled={publishExamMutation.isPending}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors shadow-sm"
+                  >
+                    <CheckCircle2 size={15} /> Xuất bản đề thi
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              {sections.map((section) => (
+                <div
+                  key={section.label}
+                  className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+                >
+                  <p className="text-sm font-bold text-slate-900">
+                    {section.label}
+                  </p>
+                  <p className="mt-2 text-2xl font-black text-slate-950">
+                    {section.count}/{section.expected}
+                  </p>
+                  <p
+                    className={`mt-1 text-xs font-semibold ${section.ready ? "text-emerald-600" : "text-amber-600"}`}
+                  >
+                    {section.ready ? "Sẵn sàng" : "Chưa đủ điều kiện"}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+              Nguồn Speaking/Writing là nội bộ của đề thi. Bản nháp chưa hiển
+              thị cho học viên và chỉ được xuất bản khi đủ cấu trúc chuẩn.
+            </p>
+          </section>
+          {(examDetail.variantCode === "TOEIC_SW" ||
+            examDetail.variantCode === "TOEIC_4_SKILLS") && (
+            <ToeicSpeakingExamComposer
+              examId={examDetail.id}
+              onChanged={() =>
+                queryClient.invalidateQueries({
+                  queryKey: ["admin-exam-detail", selectedExamId],
+                })
+              }
+            />
+          )}
+        </main>
+      );
+    }
     const isPublished = examDetail.publicationStatus === "PUBLISHED";
     const groups = examDetail.groups || [];
     const allQuestions = groups.flatMap((g) => g.questions || []);
@@ -625,6 +774,8 @@ export default function AdminExamsPage() {
                     audioUrl: "",
                     imageUrl: "",
                     passageText: "",
+                    transcriptText: "",
+                    imageBrief: "",
                   });
                   setIsGroupModalOpen(true);
                 }}
@@ -678,6 +829,12 @@ export default function AdminExamsPage() {
                               </span>
                             ) : null}
 
+                            {group.mediaMetadata?.audio?.stale && (
+                              <span className="inline-flex items-center gap-1 text-amber-600 font-medium">
+                                <AlertTriangle size={13} /> Audio cần tạo lại
+                              </span>
+                            )}
+
                             {group.imageUrl ? (
                               <span className="inline-flex items-center gap-1 text-emerald-600 font-medium">
                                 <ImageIcon size={13} /> Có hình ảnh minh họa
@@ -687,6 +844,12 @@ export default function AdminExamsPage() {
                                 <AlertTriangle size={13} /> Thiếu ảnh Part 1
                               </span>
                             ) : null}
+
+                            {group.mediaMetadata?.image?.stale && (
+                              <span className="inline-flex items-center gap-1 text-amber-600 font-medium">
+                                <AlertTriangle size={13} /> Ảnh cần tạo lại
+                              </span>
+                            )}
 
                             {group.passageText ? (
                               <span className="inline-flex items-center gap-1 text-emerald-600 font-medium">
@@ -754,6 +917,8 @@ export default function AdminExamsPage() {
                                 audioUrl: group.audioUrl || "",
                                 imageUrl: group.imageUrl || "",
                                 passageText: group.passageText || "",
+                                transcriptText: group.transcriptText || "",
+                                imageBrief: group.imageBrief || "",
                               });
                               setIsGroupModalOpen(true);
                             }}
@@ -1316,29 +1481,57 @@ export default function AdminExamsPage() {
                 </div>
 
                 {groupForm.part <= 4 && (
-                  <div>
-                    <AudioUploadField
-                      label={`Tệp âm thanh nghe (Part ${groupForm.part}) *`}
-                      value={groupForm.audioUrl}
-                      onChange={(url) =>
-                        setGroupForm({ ...groupForm, audioUrl: url })
-                      }
-                      helperText="Tải file âm thanh đoạn hội thoại/bài nghe lên R2, hoặc dán URL bên ngoài."
-                    />
-                  </div>
+                  <>
+                    <div>
+                      <AudioUploadField
+                        label={`Tệp âm thanh nghe (Part ${groupForm.part}) *`}
+                        value={groupForm.audioUrl}
+                        onChange={(url) =>
+                          setGroupForm({ ...groupForm, audioUrl: url })
+                        }
+                        helperText="Tải file âm thanh đoạn hội thoại/bài nghe lên R2, hoặc dán URL bên ngoài."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Transcript chuẩn (dùng để kiểm tra audio)
+                      </label>
+                      <textarea
+                        rows={4}
+                        value={groupForm.transcriptText}
+                        onChange={(e) => setGroupForm({ ...groupForm, transcriptText: e.target.value })}
+                        placeholder="Ví dụ: Woman: ...\nMan: ..."
+                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs leading-relaxed text-slate-800 outline-none focus:border-slate-400"
+                      />
+                    </div>
+                  </>
                 )}
 
                 {groupForm.part === 1 && (
-                  <div>
-                    <ImageUploadField
-                      label="Hình ảnh bài thi (Part 1 Photo) *"
-                      value={groupForm.imageUrl}
-                      onChange={(url) =>
-                        setGroupForm({ ...groupForm, imageUrl: url })
-                      }
-                      helperText="Tải ảnh mô tả cho Part 1. Hệ thống lưu trực tiếp lên Cloudflare R2."
-                    />
-                  </div>
+                  <>
+                    <div>
+                      <ImageUploadField
+                        label="Hình ảnh bài thi (Part 1 Photo) *"
+                        value={groupForm.imageUrl}
+                        onChange={(url) =>
+                          setGroupForm({ ...groupForm, imageUrl: url })
+                        }
+                        helperText="Tải ảnh mô tả cho Part 1. Hệ thống lưu trực tiếp lên Cloudflare R2."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Mô tả ảnh gốc (AI regeneration)
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={groupForm.imageBrief}
+                        onChange={(e) => setGroupForm({ ...groupForm, imageBrief: e.target.value })}
+                        placeholder="Mô tả cảnh không có chữ để có thể tạo lại ảnh đúng ngữ cảnh"
+                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs leading-relaxed text-slate-800 outline-none focus:border-slate-400"
+                      />
+                    </div>
+                  </>
                 )}
 
                 {groupForm.part >= 6 && (
@@ -1622,8 +1815,8 @@ export default function AdminExamsPage() {
               <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 text-xs">
                 {aiPart5Candidates.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center text-slate-400">
-                    Nhấn "AI gợi ý câu hỏi nháp" để AI đề xuất các câu hỏi luyện tập
-                    format TOEIC Part 5 với chỗ trống và 4 phương án.
+                    Nhấn "AI gợi ý câu hỏi nháp" để AI đề xuất các câu hỏi luyện
+                    tập format TOEIC Part 5 với chỗ trống và 4 phương án.
                   </div>
                 ) : (
                   aiPart5Candidates.map((candidate, idx) => (
@@ -1859,21 +2052,24 @@ export default function AdminExamsPage() {
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-[.18em] text-slate-500">
-            Exam / TOEIC Studio
+            NỘI DUNG HỌC / LUYỆN ĐỀ
           </p>
           <h1 className="mt-1 text-2xl font-bold text-slate-950">
-            Quản Lý Bộ Đề Thi & Luyện Đề
+            Kho đề luyện
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Biên tập đề thi chuẩn cấu trúc 7 phần TOEIC, quản lý audio R2,
-            stimulus đoạn văn và xuất bản cho học viên.
+            Quản lý các bộ đề theo kỳ thi, loại đề và trạng thái sẵn sàng.
           </p>
         </div>
+        <div className="flex items-center gap-2">
+        <a href="/admin/exams/new" className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-800 shadow-sm transition hover:border-amber-400 hover:bg-amber-100"><Sparkles size={16} /> AI tạo đề</a>
         <button
           onClick={() => {
             setExamForm({
               title: "",
               description: "",
+              familyCode: "TOEIC",
+              variantCode: "TOEIC_LR",
               type: "PRACTICE_BY_PART",
               difficulty: "medium",
               durationMinutes: 45,
@@ -1882,8 +2078,9 @@ export default function AdminExamsPage() {
           }}
           className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors shadow-sm"
         >
-          <Plus size={16} /> Tạo bộ đề thi mới
+          <Plus size={16} /> Tạo đề
         </button>
+        </div>
       </header>
 
       {/* FILTER & SEARCH */}
@@ -1905,7 +2102,34 @@ export default function AdminExamsPage() {
           />
         </div>
         <select
-          aria-label="Lọc trạng thái bộ đề"
+          aria-label="Lọc kỳ thi"
+          value={familyFilter}
+          onChange={(event) => {
+            setFamilyFilter(event.target.value);
+            setCurrentPage(1);
+          }}
+          className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 sm:w-40"
+        >
+          <option value="ALL">Tất cả kỳ thi</option>
+          <option value="TOEIC">TOEIC</option>
+          <option value="IELTS">IELTS (Coming soon)</option>
+        </select>
+        <select
+          aria-label="Lọc loại đề"
+          value={variantFilter}
+          onChange={(event) => {
+            setVariantFilter(event.target.value);
+            setCurrentPage(1);
+          }}
+          className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 sm:w-48"
+        >
+          <option value="ALL">Tất cả loại đề</option>
+          <option value="TOEIC_LR">Listening &amp; Reading</option>
+          <option value="TOEIC_SW">Speaking &amp; Writing</option>
+          <option value="TOEIC_4_SKILLS">4 kỹ năng</option>
+        </select>
+        <select
+          aria-label="Lọc trạng thái"
           value={statusFilter}
           onChange={(event) => {
             setStatusFilter(
@@ -1939,9 +2163,12 @@ export default function AdminExamsPage() {
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-2">
                       <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
-                        {exam.type === "FULL_TEST"
-                          ? "Full Test 200 câu"
-                          : "Luyện theo Part"}
+                        {exam.familyCode || "TOEIC"} ·{" "}
+                        {exam.variantCode
+                          ? examVariantLabel(exam.variantCode)
+                          : exam.type === "FULL_TEST"
+                            ? "Đề đầy đủ"
+                            : "Theo Part"}
                       </span>
                       <span
                         className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
@@ -1970,6 +2197,11 @@ export default function AdminExamsPage() {
                       {Math.round((exam.durationSeconds || 7200) / 60)} phút ·{" "}
                       {exam.totalQuestions || 0} câu
                     </div>
+                    <span
+                      className={`text-[11px] font-semibold ${exam.learnerReady ? "text-emerald-600" : "text-amber-600"}`}
+                    >
+                      {exam.learnerReady ? "Sẵn sàng" : "Chưa sẵn sàng"}
+                    </span>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setSelectedExamId(exam.id)}
@@ -2017,7 +2249,12 @@ export default function AdminExamsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
           <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-bold text-slate-900">Tạo bộ đề thi mới</h3>
+              <div>
+                <h3 className="font-bold text-slate-900">Tạo đề</h3>
+                <p className="mt-1 text-xs text-slate-500">
+                  Hệ thống tự chọn cấu trúc phù hợp theo kỳ thi và loại đề.
+                </p>
+              </div>
               <button
                 onClick={() => setIsExamModalOpen(false)}
                 className="rounded-lg p-1 text-slate-400 hover:text-slate-700"
@@ -2052,7 +2289,47 @@ export default function AdminExamsPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Định dạng thi
+                    Kỳ thi
+                  </label>
+                  <select
+                    value={examForm.familyCode}
+                    onChange={(e) =>
+                      setExamForm({
+                        ...examForm,
+                        familyCode: e.target.value,
+                        variantCode: "TOEIC_LR",
+                      })
+                    }
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
+                  >
+                    <option value="TOEIC">TOEIC</option>
+                    <option value="IELTS" disabled>
+                      IELTS (Coming soon)
+                    </option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Loại sản phẩm
+                  </label>
+                  <select
+                    value={examForm.variantCode}
+                    onChange={(e) =>
+                      setExamForm({ ...examForm, variantCode: e.target.value })
+                    }
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
+                  >
+                    <option value="TOEIC_LR">Listening & Reading</option>
+                    <option value="TOEIC_SW">Speaking & Writing</option>
+                    <option value="TOEIC_4_SKILLS">4 kỹ năng</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Loại đề
                   </label>
                   <select
                     value={examForm.type}

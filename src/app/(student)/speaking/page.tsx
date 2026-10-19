@@ -174,7 +174,13 @@ export default function SpeakingExercisesPage() {
     }
 
     return Array.from(byKey.values()).map((items) => {
-      const first = items[0];
+      const orderedItems = items.slice().sort(
+        (a, b) =>
+          (a.order ?? Number.MAX_SAFE_INTEGER) -
+            (b.order ?? Number.MAX_SAFE_INTEGER) ||
+          a.id - b.id,
+      );
+      const first = orderedItems[0];
       const summary = first.practiceSet ?? {
         key: `legacy-${first.id}`,
         title: first.title,
@@ -183,7 +189,7 @@ export default function SpeakingExercisesPage() {
         categoryLabel: first.categoryLabel,
         exerciseCount: 1,
         completedCount: first.isCompleted ? 1 : 0,
-        exerciseIds: [first.id],
+        exerciseIds: orderedItems.map((item) => item.id),
         difficultyLabel: first.difficulty,
         position: 1,
         isCompleted: Boolean(first.isCompleted),
@@ -192,7 +198,7 @@ export default function SpeakingExercisesPage() {
       // Calculate average score across exercises in set
       let scoreSum = 0;
       let scoreCount = 0;
-      for (const item of items) {
+      for (const item of orderedItems) {
         const sc = scoreByExerciseId.get(item.id);
         if (sc !== undefined) {
           scoreSum += sc;

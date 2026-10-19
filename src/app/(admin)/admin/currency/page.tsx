@@ -25,7 +25,11 @@ export default function AdminCurrencyPage() {
   });
 
   const adjustMutation = useMutation({
-    mutationFn: async (payload: { userId: number; amount: number; reason: string }) => {
+    mutationFn: async (payload: {
+      userId: number;
+      amount: number;
+      reason: string;
+    }) => {
       return axiosClient.post("/market/currency/adjust", payload);
     },
     onSuccess: (res: any) => {
@@ -50,7 +54,8 @@ export default function AdminCurrencyPage() {
       return;
     }
 
-    const finalAmount = actionType === "add" ? Math.abs(amount) : -Math.abs(amount);
+    const finalAmount =
+      actionType === "add" ? Math.abs(amount) : -Math.abs(amount);
     adjustMutation.mutate({
       userId: Number(selectedUserId),
       amount: finalAmount,
@@ -66,7 +71,7 @@ export default function AdminCurrencyPage() {
           <Coins size={28} />
         </div>
         <div>
-          <h1 className="text-3xl font-black text-slate-800">Quản Lý Bánh Mì Học Viên</h1>
+          <h1 className="text-3xl font-black text-slate-800">Sổ Bánh Mì</h1>
           <p className="text-slate-400 font-bold text-sm">
             Thưởng hoặc phạt trừ Bánh Mì thủ công và theo dõi danh sách học viên
           </p>
@@ -87,13 +92,16 @@ export default function AdminCurrencyPage() {
               </label>
               <select
                 value={selectedUserId}
-                onChange={(e) => setSelectedUserId(Number(e.target.value) || "")}
+                onChange={(e) =>
+                  setSelectedUserId(Number(e.target.value) || "")
+                }
                 className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-3 font-bold text-sm outline-none focus:border-amber-400"
               >
                 <option value="">-- Chọn học viên --</option>
                 {users?.map((u) => (
                   <option key={u.id} value={u.id}>
-                    {u.profile?.fullName || u.email} (Hiện có: {u.stats?.totalBanhRan ?? 0} 🍞)
+                    {u.profile?.fullName || u.email} (Hiện có:{" "}
+                    {u.stats?.totalBanhRan ?? 0} 🍞)
                   </option>
                 ))}
               </select>
@@ -162,7 +170,9 @@ export default function AdminCurrencyPage() {
               className="w-full"
               disabled={adjustMutation.isPending}
             >
-              {adjustMutation.isPending ? "Đang xử lý..." : "Xác Nhận Thực Hiện"}
+              {adjustMutation.isPending
+                ? "Đang xử lý..."
+                : "Xác Nhận Thực Hiện"}
             </Button3D>
           </form>
         </div>
@@ -181,7 +191,10 @@ export default function AdminCurrencyPage() {
             <div className="space-y-4">
               {(() => {
                 const totalPages = Math.ceil((users?.length || 0) / pageSize);
-                const paginatedUsers = users?.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+                const paginatedUsers = users?.slice(
+                  (currentPage - 1) * pageSize,
+                  currentPage * pageSize,
+                );
 
                 return (
                   <>
@@ -192,18 +205,24 @@ export default function AdminCurrencyPage() {
                             <th className="py-3 px-4">ID</th>
                             <th className="py-3 px-4">Họ và Tên</th>
                             <th className="py-3 px-4">Email</th>
-                            <th className="py-3 px-4 text-center">Số Dư Bánh Mì</th>
+                            <th className="py-3 px-4 text-center">
+                              Số Dư Bánh Mì
+                            </th>
                             <th className="py-3 px-4 text-right">Hành Động</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 font-bold text-sm">
                           {paginatedUsers.map((u) => (
                             <tr key={u.id} className="hover:bg-slate-50/80">
-                              <td className="py-3 px-4 text-slate-400 font-mono text-xs">#{u.id}</td>
+                              <td className="py-3 px-4 text-slate-400 font-mono text-xs">
+                                #{u.id}
+                              </td>
                               <td className="py-3 px-4 font-black text-slate-800">
                                 {u.profile?.fullName || "Chưa đặt tên"}
                               </td>
-                              <td className="py-3 px-4 text-slate-500 text-xs">{u.email}</td>
+                              <td className="py-3 px-4 text-slate-500 text-xs">
+                                {u.email}
+                              </td>
                               <td className="py-3 px-4 text-center">
                                 <span className="inline-flex items-center gap-1 bg-amber-100/90 text-amber-800 px-2.5 py-1 rounded-xl text-xs font-black border border-amber-300">
                                   🍞 {u.stats?.totalBanhRan ?? 0}

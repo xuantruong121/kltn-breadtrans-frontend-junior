@@ -24,7 +24,6 @@ import {
   Settings,
   Headphones,
   Award,
-  FileText,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useQueryClient } from "@tanstack/react-query";
@@ -73,7 +72,7 @@ const NAV_GROUPS: NavCategory[] = [
       {
         id: "listening",
         href: "/admin/listening",
-        label: "Nghe & Dictation",
+        label: "Nghe",
         icon: Headphones,
       },
       {
@@ -93,18 +92,6 @@ const NAV_GROUPS: NavCategory[] = [
         href: "/admin/writing",
         label: "Viết",
         icon: PenTool,
-      },
-      {
-        id: "toeic-writing-sets",
-        href: "/admin/toeic/writing-sets",
-        label: "TOEIC Writing Set",
-        icon: FileText,
-      },
-      {
-        id: "toeic-assessments",
-        href: "/admin/toeic/assessments",
-        label: "TOEIC Assessment",
-        icon: Award,
       },
       {
         id: "vocab",
@@ -128,13 +115,13 @@ const NAV_GROUPS: NavCategory[] = [
   },
   {
     id: "users-group",
-    title: "Học Viên & Doanh Thu",
+    title: "NGƯỜI DÙNG & THANH TOÁN",
     icon: Users,
     items: [
       {
         id: "users",
         href: "/admin/users",
-        label: "Quản lý người dùng",
+        label: "Người dùng",
         icon: Users,
       },
       {
@@ -148,7 +135,7 @@ const NAV_GROUPS: NavCategory[] = [
   },
   {
     id: "market-group",
-    title: "Thương Mại & Gamification",
+    title: "ĐIỂM THƯỞNG & PHẦN THƯỞNG",
     icon: ShoppingBag,
     items: [
       {
@@ -160,7 +147,7 @@ const NAV_GROUPS: NavCategory[] = [
       {
         id: "currency",
         href: "/admin/currency",
-        label: "Sổ Bánh Mì (Coin)",
+        label: "Sổ Bánh Mì",
         icon: Coins,
       },
     ],
@@ -446,6 +433,7 @@ export default function AdminLayout({
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsMobileNavOpen(true)}
+              aria-label="Mở thanh điều hướng"
               className="cursor-pointer rounded-xl bg-slate-100 p-1.5 text-slate-600 hover:text-slate-900"
             >
               <Menu size={22} />

@@ -13,6 +13,8 @@ import {
   X,
   Layers,
   ArrowRight,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { Pagination } from "@/components/ui";
@@ -101,9 +103,11 @@ const STATUS_LABELS = { DRAFT: "Bản nháp", PUBLISHED: "Đã xuất bản" } a
 const levelLabel = (level?: string | null) =>
   LEVEL_LABELS[level || ""] || level?.replace("-", " – ") || "Chưa phân loại";
 const difficultyLabel = (difficulty?: string | null) =>
-  ({ BEGINNER: "Cơ bản", INTERMEDIATE: "Trung cấp", ADVANCED: "Nâng cao" }[
+  ({ BEGINNER: "Cơ bản", INTERMEDIATE: "Trung cấp", ADVANCED: "Nâng cao" })[
     difficulty || ""
-  ] || difficulty || "Chưa phân loại");
+  ] ||
+  difficulty ||
+  "Chưa phân loại";
 const categoryLabel = (categories: SpeakingCategory[], code?: string | null) =>
   categories.find((category) => category.code === code)?.name ||
   code ||
@@ -128,6 +132,7 @@ type SpeakingExercisePayload = {
   taskType: SpeakingTaskType;
   stimulusId?: number | null;
   imageUrl?: string | null;
+  order?: number;
 };
 
 type SpeakingPracticeSetSuggestion = {
@@ -165,10 +170,14 @@ export default function AdminSpeakingPage() {
   const [inlineCategoryOpen, setInlineCategoryOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryCode, setNewCategoryCode] = useState("");
-  const [newCategoryAllowExercise, setNewCategoryAllowExercise] = useState(false);
-  const [editingCategoryId, setEditingCategoryId] = useState<number | null>(null);
+  const [newCategoryAllowExercise, setNewCategoryAllowExercise] =
+    useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState<number | null>(
+    null,
+  );
   const [editingCategoryName, setEditingCategoryName] = useState("");
-  const [editingCategoryDescription, setEditingCategoryDescription] = useState("");
+  const [editingCategoryDescription, setEditingCategoryDescription] =
+    useState("");
 
   // Set selected for detail viewing/editing exercises
   const [activeSet, setActiveSet] = useState<SpeakingPracticeSet | null>(null);
@@ -233,16 +242,15 @@ export default function AdminSpeakingPage() {
     },
   });
 
-  const { data: categories = [] } =
-    useQuery<SpeakingCategory[]>({
-      queryKey: ["admin-speaking-categories"],
-      queryFn: async () => {
-        const res: any = await axiosClient.get(
-          "/admin/skill-content/speaking/categories?includeInactive=true",
-        );
-        return Array.isArray(res) ? res : res?.data || [];
-      },
-    });
+  const { data: categories = [] } = useQuery<SpeakingCategory[]>({
+    queryKey: ["admin-speaking-categories"],
+    queryFn: async () => {
+      const res: any = await axiosClient.get(
+        "/admin/skill-content/speaking/categories?includeInactive=true",
+      );
+      return Array.isArray(res) ? res : res?.data || [];
+    },
+  });
 
   const { data: stimuli = [] } = useQuery<SpeakingStimulus[]>({
     queryKey: ["admin-speaking-stimuli"],
@@ -277,7 +285,9 @@ export default function AdminSpeakingPage() {
       toast.success("Đã tạo stimulus INFORMATION và chọn cho câu luyện.");
     },
     onError: (err: any) => {
-      toast.error(getApiErrorMessage(err, "Không thể tạo stimulus INFORMATION."));
+      toast.error(
+        getApiErrorMessage(err, "Không thể tạo stimulus INFORMATION."),
+      );
     },
   });
 
@@ -307,9 +317,17 @@ export default function AdminSpeakingPage() {
       );
       return { source, category: response?.data || response };
     },
-    onSuccess: ({ source, category }: { source: string; category: SpeakingCategory }) => {
+    onSuccess: ({
+      source,
+      category,
+    }: {
+      source: string;
+      category: SpeakingCategory;
+    }) => {
       toast.success("Đã tạo phân loại Speaking.");
-      queryClient.invalidateQueries({ queryKey: ["admin-speaking-categories"] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-speaking-categories"],
+      });
       if (source === "inline") {
         setSetForm((current) => ({ ...current, category: category.code }));
         setInlineCategoryOpen(false);
@@ -330,15 +348,20 @@ export default function AdminSpeakingPage() {
     }: {
       id: number;
       data: Partial<SpeakingCategory>;
-    }) => axiosClient.patch(`/admin/skill-content/speaking/categories/${id}`, data),
+    }) =>
+      axiosClient.patch(`/admin/skill-content/speaking/categories/${id}`, data),
     onSuccess: () => {
       toast.success("Đã cập nhật phân loại Speaking.");
       setEditingCategoryId(null);
-      queryClient.invalidateQueries({ queryKey: ["admin-speaking-categories"] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-speaking-categories"],
+      });
       queryClient.invalidateQueries({ queryKey: ["admin-speaking-sets"] });
     },
     onError: (err: any) => {
-      toast.error(getApiErrorMessage(err, "Không thể cập nhật phân loại Speaking."));
+      toast.error(
+        getApiErrorMessage(err, "Không thể cập nhật phân loại Speaking."),
+      );
     },
   });
 
@@ -369,34 +392,38 @@ export default function AdminSpeakingPage() {
           dto,
         );
         const createdSet = created?.data || created;
-        if (!createdSet?.id) throw new Error("Không nhận được mã bộ luyện mới.");
+        if (!createdSet?.id)
+          throw new Error("Không nhận được mã bộ luyện mới.");
         const setId = createdSet.id as string;
-        await Promise.all(
-          exerciseCandidates.map((candidate) =>
-            axiosClient.post(`/admin/skill-content/speaking/${setId}/exercises`, {
+        const baseOrder = 0;
+        for (const [index, candidate] of exerciseCandidates.entries()) {
+          await axiosClient.post(
+            `/admin/skill-content/speaking/${setId}/exercises`,
+            {
               title: candidate.title.trim(),
               targetText: candidate.targetText.trim(),
               taskType: candidate.taskType,
               difficulty: candidate.difficulty,
-            }),
-          ),
-        );
+              order: baseOrder + index + 1,
+            },
+          );
+        }
         return created;
       }
       if (editingSet && exerciseCandidates.length) {
-        await Promise.all(
-          exerciseCandidates.map((candidate) =>
-            axiosClient.post(
-              `/admin/skill-content/speaking/${editingSet.id}/exercises`,
-              {
-                title: candidate.title.trim(),
-                targetText: candidate.targetText.trim(),
-                taskType: candidate.taskType,
-                difficulty: candidate.difficulty,
-              },
-            ),
-          ),
-        );
+        const baseOrder = editingSet.exercises.length;
+        for (const [index, candidate] of exerciseCandidates.entries()) {
+          await axiosClient.post(
+            `/admin/skill-content/speaking/${editingSet.id}/exercises`,
+            {
+              title: candidate.title.trim(),
+              targetText: candidate.targetText.trim(),
+              taskType: candidate.taskType,
+              difficulty: candidate.difficulty,
+              order: baseOrder + index + 1,
+            },
+          );
+        }
       }
     },
     onSuccess: () => {
@@ -498,10 +525,10 @@ export default function AdminSpeakingPage() {
   const suggestPracticeSetMutation = useMutation({
     mutationFn: async () => {
       const fallbackTopic =
-        categoryLabel(categories, setForm.category) ||
-        "Luyện nói tiếng Anh";
+        categoryLabel(categories, setForm.category) || "Luyện nói tiếng Anh";
       return axiosClient.post("/admin/speaking/ai/suggest-practice-set", {
-        topic: setForm.title.trim() || setForm.description.trim() || fallbackTopic,
+        topic:
+          setForm.title.trim() || setForm.description.trim() || fallbackTopic,
         level: setForm.level,
         category: setForm.category,
         currentTitle: setForm.title || undefined,
@@ -566,14 +593,19 @@ export default function AdminSpeakingPage() {
       }
       setSpeakingFullDraft({
         practiceSet: data.practiceSet,
-        exercises: data.exercises.map((candidate: SpeakingExerciseSuggestion) => ({
-          ...candidate,
-          excluded: false,
-        })),
+        exercises: data.exercises.map(
+          (candidate: SpeakingExerciseSuggestion) => ({
+            ...candidate,
+            excluded: false,
+          }),
+        ),
       });
     } catch (error: any) {
       toast.error(
-        getApiErrorMessage(error, "Không thể soạn full draft Speaking lúc này."),
+        getApiErrorMessage(
+          error,
+          "Không thể soạn full draft Speaking lúc này.",
+        ),
       );
     }
   };
@@ -598,6 +630,29 @@ export default function AdminSpeakingPage() {
     },
     onError: (err: any) => {
       toast.error(getApiErrorMessage(err, "Không thể xóa câu luyện nói."));
+    },
+  });
+
+  const reorderExerciseMutation = useMutation({
+    mutationFn: async ({
+      setId,
+      exerciseIds,
+    }: {
+      setId: string;
+      exerciseIds: number[];
+    }) =>
+      axiosClient.patch(
+        `/admin/skill-content/speaking/${setId}/exercises/reorder`,
+        { exerciseIds },
+      ),
+    onSuccess: () => {
+      toast.success("Đã cập nhật thứ tự câu luyện.");
+      queryClient.invalidateQueries({ queryKey: ["admin-speaking-sets"] });
+    },
+    onError: (err: any) => {
+      toast.error(
+        getApiErrorMessage(err, "Không thể cập nhật thứ tự câu luyện."),
+      );
     },
   });
 
@@ -676,7 +731,8 @@ export default function AdminSpeakingPage() {
 
   const openEditExercise = (ex: SpeakingExercise) => {
     setEditingExercise(ex);
-    const parentCategory = currentActiveSet?.category || defaultPracticeSetCategory;
+    const parentCategory =
+      currentActiveSet?.category || defaultPracticeSetCategory;
     setExerciseForm({
       title: ex.title || "",
       targetText: ex.targetText || "",
@@ -685,10 +741,40 @@ export default function AdminSpeakingPage() {
       difficulty: ex.difficulty || "BEGINNER",
       taskType: ex.taskType || "READ_ALOUD",
       stimulusId: ex.stimulusId ?? null,
-      categoryOverride: Boolean(ex.categoryId && ex.categoryId !== currentActiveSet?.categoryId),
+      categoryOverride: Boolean(
+        ex.categoryId && ex.categoryId !== currentActiveSet?.categoryId,
+      ),
     });
     setExerciseSuggestions([]);
     setIsExerciseModalOpen(true);
+  };
+
+  const moveExercise = (exerciseId: number, direction: -1 | 1) => {
+    if (
+      !currentActiveSet ||
+      currentActiveSet.publicationStatus === "PUBLISHED"
+    ) {
+      toast.error("Hãy chuyển bộ luyện về bản nháp trước khi sắp xếp.");
+      return;
+    }
+    const ordered = currentActiveSet.exercises
+      .slice()
+      .sort(
+        (a, b) =>
+          (a.order ?? Number.MAX_SAFE_INTEGER) -
+            (b.order ?? Number.MAX_SAFE_INTEGER) || a.id - b.id,
+      );
+    const index = ordered.findIndex((exercise) => exercise.id === exerciseId);
+    const targetIndex = index + direction;
+    if (index < 0 || targetIndex < 0 || targetIndex >= ordered.length) return;
+    [ordered[index], ordered[targetIndex]] = [
+      ordered[targetIndex],
+      ordered[index],
+    ];
+    reorderExerciseMutation.mutate({
+      setId: currentActiveSet.id,
+      exerciseIds: ordered.map((exercise) => exercise.id),
+    });
   };
 
   return (
@@ -697,15 +783,14 @@ export default function AdminSpeakingPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
-            <Mic size={14} className="text-slate-700" /> Skill CMS · Speaking
-            Studio
+            <Mic size={14} className="text-slate-700" /> NỘI DUNG HỌC · NÓI
           </div>
           <h1 className="mt-1 text-2xl font-bold text-slate-900">
-            Quản Lý Bộ Luyện Phát Âm (Speaking CMS)
+            Bộ luyện nói
           </h1>
           <p className="mt-1 text-xs text-slate-500">
-            Mô hình cấu trúc: Mỗi Bộ luyện (Practice Set) chứa nhiều Câu luyện
-            nói (Speaking Exercises) được đánh giá theo chuẩn Azure.
+            Tạo, kiểm tra và xuất bản các bài luyện nói theo đúng trải nghiệm
+            học viên.
           </p>
         </div>
 
@@ -769,7 +854,8 @@ export default function AdminSpeakingPage() {
             <option value="ALL">Tất cả phân loại</option>
             {categories.map((category) => (
               <option key={category.code} value={category.code}>
-                {category.name}{category.isActive ? "" : " (đã tắt)"}
+                {category.name}
+                {category.isActive ? "" : " (đã tắt)"}
               </option>
             ))}
           </select>
@@ -799,7 +885,8 @@ export default function AdminSpeakingPage() {
         >
           <span>Quản lý phân loại Speaking</span>
           <span className="text-xs font-normal text-slate-500">
-            {categories.length} phân loại · {showCategoryManagement ? "Thu gọn" : "Mở rộng"}
+            {categories.length} phân loại ·{" "}
+            {showCategoryManagement ? "Thu gọn" : "Mở rộng"}
           </span>
         </button>
         {showCategoryManagement ? (
@@ -842,13 +929,17 @@ export default function AdminSpeakingPage() {
                       <div className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
                         <input
                           value={editingCategoryName}
-                          onChange={(event) => setEditingCategoryName(event.target.value)}
+                          onChange={(event) =>
+                            setEditingCategoryName(event.target.value)
+                          }
                           aria-label={`Tên ${category.code}`}
                           className="rounded border border-slate-300 px-2 py-1.5 text-xs text-slate-900"
                         />
                         <input
                           value={editingCategoryDescription}
-                          onChange={(event) => setEditingCategoryDescription(event.target.value)}
+                          onChange={(event) =>
+                            setEditingCategoryDescription(event.target.value)
+                          }
                           aria-label={`Mô tả ${category.code}`}
                           placeholder="Mô tả"
                           className="rounded border border-slate-300 px-2 py-1.5 text-xs text-slate-900"
@@ -882,16 +973,26 @@ export default function AdminSpeakingPage() {
                       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-semibold text-slate-800">{category.name}</span>
+                            <span className="font-semibold text-slate-800">
+                              {category.name}
+                            </span>
                             <code className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">
                               {category.code}
                             </code>
-                            <span className={`rounded px-1.5 py-0.5 text-[11px] ${category.isActive ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                            <span
+                              className={`rounded px-1.5 py-0.5 text-[11px] ${category.isActive ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}
+                            >
                               {category.isActive ? "Đang dùng" : "Đã tắt"}
                             </span>
                           </div>
                           <p className="mt-1 text-[11px] text-slate-500">
-                            {category._count?.practiceSets || 0} bộ · {category._count?.exercises || 0} câu · {category.allowPracticeSet ? "Bộ luyện" : ""}{category.allowPracticeSet && category.allowExercise ? " · " : ""}{category.allowExercise ? "Câu luyện" : ""}
+                            {category._count?.practiceSets || 0} bộ ·{" "}
+                            {category._count?.exercises || 0} câu ·{" "}
+                            {category.allowPracticeSet ? "Bộ luyện" : ""}
+                            {category.allowPracticeSet && category.allowExercise
+                              ? " · "
+                              : ""}
+                            {category.allowExercise ? "Câu luyện" : ""}
                           </p>
                         </div>
                         <div className="flex gap-1.5">
@@ -900,7 +1001,9 @@ export default function AdminSpeakingPage() {
                             onClick={() => {
                               setEditingCategoryId(category.id);
                               setEditingCategoryName(category.name);
-                              setEditingCategoryDescription(category.description || "");
+                              setEditingCategoryDescription(
+                                category.description || "",
+                              );
                             }}
                             className="rounded border border-slate-200 px-2 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                           >
@@ -1101,7 +1204,7 @@ export default function AdminSpeakingPage() {
                   >
                     <div className="flex items-start gap-3 flex-1 min-w-60">
                       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-slate-100 text-xs font-bold text-slate-700">
-                        #{idx + 1}
+                        #{ex.order ?? idx + 1}
                       </span>
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
@@ -1128,6 +1231,34 @@ export default function AdminSpeakingPage() {
                     </div>
 
                     <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        disabled={
+                          currentActiveSet.publicationStatus === "PUBLISHED" ||
+                          idx === 0 ||
+                          reorderExerciseMutation.isPending
+                        }
+                        onClick={() => moveExercise(ex.id, -1)}
+                        className="rounded-lg border border-slate-200 p-1.5 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40"
+                        title="Đưa câu lên trước"
+                        aria-label={`Đưa câu ${ex.order ?? idx + 1} lên trước`}
+                      >
+                        <ChevronUp size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={
+                          currentActiveSet.publicationStatus === "PUBLISHED" ||
+                          idx === currentActiveSet.exercises.length - 1 ||
+                          reorderExerciseMutation.isPending
+                        }
+                        onClick={() => moveExercise(ex.id, 1)}
+                        className="rounded-lg border border-slate-200 p-1.5 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40"
+                        title="Đưa câu xuống sau"
+                        aria-label={`Đưa câu ${ex.order ?? idx + 1} xuống sau`}
+                      >
+                        <ChevronDown size={14} />
+                      </button>
                       <button
                         onClick={() => openEditExercise(ex)}
                         className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
@@ -1219,7 +1350,10 @@ export default function AdminSpeakingPage() {
                       value={speakingFullDraftCount}
                       onChange={(event) =>
                         setSpeakingFullDraftCount(
-                          Math.min(10, Math.max(1, Number(event.target.value) || 1)),
+                          Math.min(
+                            10,
+                            Math.max(1, Number(event.target.value) || 1),
+                          ),
                         )
                       }
                       className="w-14 rounded-md border border-blue-200 bg-white px-2 py-1.5 text-center text-xs text-slate-900 outline-none focus:ring-2 focus:ring-blue-500"
@@ -1329,13 +1463,17 @@ export default function AdminSpeakingPage() {
                     <div className="grid gap-2 sm:grid-cols-2">
                       <input
                         value={newCategoryName}
-                        onChange={(event) => setNewCategoryName(event.target.value)}
+                        onChange={(event) =>
+                          setNewCategoryName(event.target.value)
+                        }
                         placeholder="Tên phân loại mới"
                         className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900"
                       />
                       <input
                         value={newCategoryCode}
-                        onChange={(event) => setNewCategoryCode(event.target.value)}
+                        onChange={(event) =>
+                          setNewCategoryCode(event.target.value)
+                        }
                         placeholder="Mã (tuỳ chọn, ví dụ TRAVEL_TEST)"
                         className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900"
                       />
@@ -1344,14 +1482,19 @@ export default function AdminSpeakingPage() {
                       <input
                         type="checkbox"
                         checked={newCategoryAllowExercise}
-                        onChange={(event) => setNewCategoryAllowExercise(event.target.checked)}
+                        onChange={(event) =>
+                          setNewCategoryAllowExercise(event.target.checked)
+                        }
                         className="rounded border-slate-300"
                       />
                       Cho phép dùng làm override cho câu luyện
                     </label>
                     <button
                       type="button"
-                      disabled={!newCategoryName.trim() || createCategoryMutation.isPending}
+                      disabled={
+                        !newCategoryName.trim() ||
+                        createCategoryMutation.isPending
+                      }
                       onClick={() => createCategoryMutation.mutate("inline")}
                       className="mt-2 rounded-lg bg-blue-700 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
                     >
@@ -1473,7 +1616,10 @@ export default function AdminSpeakingPage() {
                   type="url"
                   value={exerciseForm.imageUrl}
                   onChange={(e) =>
-                    setExerciseForm({ ...exerciseForm, imageUrl: e.target.value })
+                    setExerciseForm({
+                      ...exerciseForm,
+                      imageUrl: e.target.value,
+                    })
                   }
                   placeholder="https://.../toeic/shared/images/..."
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500"
@@ -1492,7 +1638,9 @@ export default function AdminSpeakingPage() {
                   onChange={(e) =>
                     setExerciseForm({
                       ...exerciseForm,
-                      stimulusId: e.target.value ? Number(e.target.value) : null,
+                      stimulusId: e.target.value
+                        ? Number(e.target.value)
+                        : null,
                     })
                   }
                   className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500"
@@ -1634,7 +1782,8 @@ export default function AdminSpeakingPage() {
                     ))}
                   </select>
                   <p className="mt-2 text-[11px] text-slate-500">
-                    Cấp độ chi tiết của câu; bộ luyện dùng dải trình độ tổng quát.
+                    Cấp độ chi tiết của câu; bộ luyện dùng dải trình độ tổng
+                    quát.
                   </p>
                 </div>
 
@@ -1677,7 +1826,8 @@ export default function AdminSpeakingPage() {
                           categoryOverride: e.target.checked,
                           category: e.target.checked
                             ? exerciseForm.category
-                            : currentActiveSet.category || defaultPracticeSetCategory,
+                            : currentActiveSet.category ||
+                              defaultPracticeSetCategory,
                         })
                       }
                       className="rounded border-slate-300"
@@ -1721,11 +1871,15 @@ export default function AdminSpeakingPage() {
           >
             <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-3">
               <div>
-                <h3 id="speaking-full-draft-title" className="text-base font-bold text-slate-900">
+                <h3
+                  id="speaking-full-draft-title"
+                  className="text-base font-bold text-slate-900"
+                >
                   Xem lại full draft bộ luyện Speaking
                 </h3>
                 <p className="mt-1 text-xs leading-5 text-slate-500">
-                  Chỉnh sửa hoặc loại câu trước khi áp dụng. Chưa có dữ liệu nào được lưu; nút Lưu mới tạo Draft trong CMS.
+                  Chỉnh sửa hoặc loại câu trước khi áp dụng. Chưa có dữ liệu nào
+                  được lưu; nút Lưu mới tạo Draft trong CMS.
                 </p>
               </div>
               <button
@@ -1747,7 +1901,13 @@ export default function AdminSpeakingPage() {
                       onChange={(event) =>
                         setSpeakingFullDraft((current) =>
                           current
-                            ? { ...current, practiceSet: { ...current.practiceSet, title: event.target.value } }
+                            ? {
+                                ...current,
+                                practiceSet: {
+                                  ...current.practiceSet,
+                                  title: event.target.value,
+                                },
+                              }
                             : current,
                         )
                       }
@@ -1761,13 +1921,23 @@ export default function AdminSpeakingPage() {
                       onChange={(event) =>
                         setSpeakingFullDraft((current) =>
                           current
-                            ? { ...current, practiceSet: { ...current.practiceSet, level: event.target.value } }
+                            ? {
+                                ...current,
+                                practiceSet: {
+                                  ...current.practiceSet,
+                                  level: event.target.value,
+                                },
+                              }
                             : current,
                         )
                       }
                       className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
                     >
-                      {LEVELS.map((level) => <option key={level} value={level}>{levelLabel(level)}</option>)}
+                      {LEVELS.map((level) => (
+                        <option key={level} value={level}>
+                          {levelLabel(level)}
+                        </option>
+                      ))}
                     </select>
                   </label>
                 </div>
@@ -1779,7 +1949,13 @@ export default function AdminSpeakingPage() {
                     onChange={(event) =>
                       setSpeakingFullDraft((current) =>
                         current
-                          ? { ...current, practiceSet: { ...current.practiceSet, description: event.target.value } }
+                          ? {
+                              ...current,
+                              practiceSet: {
+                                ...current.practiceSet,
+                                description: event.target.value,
+                              },
+                            }
                           : current,
                       )
                     }
@@ -1789,18 +1965,47 @@ export default function AdminSpeakingPage() {
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-sm font-bold text-slate-900">Câu luyện ({speakingFullDraft.exercises.filter((candidate) => !candidate.excluded).length})</h4>
-                  <p className="mt-1 text-xs text-slate-500">Mỗi câu vẫn là Draft và kế thừa category của bộ luyện.</p>
+                  <h4 className="text-sm font-bold text-slate-900">
+                    Câu luyện (
+                    {
+                      speakingFullDraft.exercises.filter(
+                        (candidate) => !candidate.excluded,
+                      ).length
+                    }
+                    )
+                  </h4>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Mỗi câu vẫn là Draft và kế thừa category của bộ luyện.
+                  </p>
                 </div>
               </div>
               <div className="space-y-3">
                 {speakingFullDraft.exercises.map((candidate, index) => (
-                  <div key={`${candidate.title}-${index}`} className={`rounded-xl border p-3 ${candidate.excluded ? "border-slate-200 bg-slate-50 opacity-60" : "border-slate-200 bg-white"}`}>
+                  <div
+                    key={`${candidate.title}-${index}`}
+                    className={`rounded-xl border p-3 ${candidate.excluded ? "border-slate-200 bg-slate-50 opacity-60" : "border-slate-200 bg-white"}`}
+                  >
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs font-semibold text-slate-600">Câu {index + 1}</span>
+                      <span className="text-xs font-semibold text-slate-600">
+                        Câu {index + 1}
+                      </span>
                       <button
                         type="button"
-                        onClick={() => setSpeakingFullDraft((current) => current ? { ...current, exercises: current.exercises.map((item, itemIndex) => itemIndex === index ? { ...item, excluded: !item.excluded } : item) } : current)}
+                        onClick={() =>
+                          setSpeakingFullDraft((current) =>
+                            current
+                              ? {
+                                  ...current,
+                                  exercises: current.exercises.map(
+                                    (item, itemIndex) =>
+                                      itemIndex === index
+                                        ? { ...item, excluded: !item.excluded }
+                                        : item,
+                                  ),
+                                }
+                              : current,
+                          )
+                        }
                         className="text-xs font-semibold text-slate-500 underline-offset-2 hover:text-slate-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                       >
                         {candidate.excluded ? "Khôi phục" : "Loại câu"}
@@ -1812,7 +2017,24 @@ export default function AdminSpeakingPage() {
                         <input
                           disabled={candidate.excluded}
                           value={candidate.title}
-                          onChange={(event) => setSpeakingFullDraft((current) => current ? { ...current, exercises: current.exercises.map((item, itemIndex) => itemIndex === index ? { ...item, title: event.target.value } : item) } : current)}
+                          onChange={(event) =>
+                            setSpeakingFullDraft((current) =>
+                              current
+                                ? {
+                                    ...current,
+                                    exercises: current.exercises.map(
+                                      (item, itemIndex) =>
+                                        itemIndex === index
+                                          ? {
+                                              ...item,
+                                              title: event.target.value,
+                                            }
+                                          : item,
+                                    ),
+                                  }
+                                : current,
+                            )
+                          }
                           className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed"
                         />
                       </label>
@@ -1821,10 +2043,31 @@ export default function AdminSpeakingPage() {
                         <select
                           disabled={candidate.excluded}
                           value={candidate.difficulty}
-                          onChange={(event) => setSpeakingFullDraft((current) => current ? { ...current, exercises: current.exercises.map((item, itemIndex) => itemIndex === index ? { ...item, difficulty: event.target.value } : item) } : current)}
+                          onChange={(event) =>
+                            setSpeakingFullDraft((current) =>
+                              current
+                                ? {
+                                    ...current,
+                                    exercises: current.exercises.map(
+                                      (item, itemIndex) =>
+                                        itemIndex === index
+                                          ? {
+                                              ...item,
+                                              difficulty: event.target.value,
+                                            }
+                                          : item,
+                                    ),
+                                  }
+                                : current,
+                            )
+                          }
                           className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed"
                         >
-                          {EXERCISE_LEVELS.map((level) => <option key={level} value={level}>{difficultyLabel(level)}</option>)}
+                          {EXERCISE_LEVELS.map((level) => (
+                            <option key={level} value={level}>
+                              {difficultyLabel(level)}
+                            </option>
+                          ))}
                         </select>
                       </label>
                     </div>
@@ -1834,7 +2077,24 @@ export default function AdminSpeakingPage() {
                         rows={3}
                         disabled={candidate.excluded}
                         value={candidate.targetText}
-                        onChange={(event) => setSpeakingFullDraft((current) => current ? { ...current, exercises: current.exercises.map((item, itemIndex) => itemIndex === index ? { ...item, targetText: event.target.value } : item) } : current)}
+                        onChange={(event) =>
+                          setSpeakingFullDraft((current) =>
+                            current
+                              ? {
+                                  ...current,
+                                  exercises: current.exercises.map(
+                                    (item, itemIndex) =>
+                                      itemIndex === index
+                                        ? {
+                                            ...item,
+                                            targetText: event.target.value,
+                                          }
+                                        : item,
+                                  ),
+                                }
+                              : current,
+                          )
+                        }
                         className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono font-normal text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed"
                       />
                     </label>
@@ -1843,19 +2103,37 @@ export default function AdminSpeakingPage() {
               </div>
             </div>
             <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
-              <button type="button" onClick={() => setSpeakingFullDraft(null)} className="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Bỏ qua</button>
+              <button
+                type="button"
+                onClick={() => setSpeakingFullDraft(null)}
+                className="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Bỏ qua
+              </button>
               <button
                 type="button"
                 onClick={() => {
-                  const activeExercises = speakingFullDraft.exercises.filter((candidate) => !candidate.excluded && candidate.title.trim() && candidate.targetText.trim());
-                  if (!speakingFullDraft.practiceSet.title.trim() || !activeExercises.length) {
-                    toast.error("Full draft cần tên bộ luyện và ít nhất một câu hợp lệ.");
+                  const activeExercises = speakingFullDraft.exercises.filter(
+                    (candidate) =>
+                      !candidate.excluded &&
+                      candidate.title.trim() &&
+                      candidate.targetText.trim(),
+                  );
+                  if (
+                    !speakingFullDraft.practiceSet.title.trim() ||
+                    !activeExercises.length
+                  ) {
+                    toast.error(
+                      "Full draft cần tên bộ luyện và ít nhất một câu hợp lệ.",
+                    );
                     return;
                   }
                   setSetForm({ ...speakingFullDraft.practiceSet });
                   setPendingFullDraftExercises(activeExercises);
                   setSpeakingFullDraft(null);
-                  toast.success("Đã áp dụng full draft vào form. Chưa có dữ liệu nào được lưu.");
+                  toast.success(
+                    "Đã áp dụng full draft vào form. Chưa có dữ liệu nào được lưu.",
+                  );
                 }}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
               >
@@ -1982,7 +2260,9 @@ export default function AdminSpeakingPage() {
                 onClick={() => {
                   setSetForm({ ...practiceSetSuggestion });
                   setPracticeSetSuggestion(null);
-                  toast.success("Đã áp dụng bản nháp vào form. Hãy kiểm tra rồi lưu.");
+                  toast.success(
+                    "Đã áp dụng bản nháp vào form. Hãy kiểm tra rồi lưu.",
+                  );
                 }}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
               >
@@ -2124,11 +2404,15 @@ export default function AdminSpeakingPage() {
                           taskType: candidate.taskType,
                           stimulusId: null,
                           difficulty: candidate.difficulty,
-                          category: currentActiveSet?.category || defaultPracticeSetCategory,
+                          category:
+                            currentActiveSet?.category ||
+                            defaultPracticeSetCategory,
                           categoryOverride: false,
                         });
                         setExerciseSuggestions([]);
-                        toast.success("Đã áp dụng gợi ý vào form. Hãy kiểm tra rồi lưu.");
+                        toast.success(
+                          "Đã áp dụng gợi ý vào form. Hãy kiểm tra rồi lưu.",
+                        );
                       }}
                       className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                     >

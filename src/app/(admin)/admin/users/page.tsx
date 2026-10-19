@@ -37,7 +37,11 @@ type UserData = {
   lastLoginAt: string | null;
   lastActivityAt: string | null;
   loginCount: number;
-  profile: { fullName: string; avatar: string | null; phone: string | null } | null;
+  profile: {
+    fullName: string;
+    avatar: string | null;
+    phone: string | null;
+  } | null;
   stats?: { totalBanhRan: number; streakCount: number } | null;
 };
 
@@ -79,7 +83,13 @@ export default function AdminUsersPage() {
   });
 
   // Query Users
-  const { data: users, isLoading, isError, error, refetch } = useQuery<UserData[]>({
+  const {
+    data: users,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery<UserData[]>({
     queryKey: ["admin-users", roleFilter],
     queryFn: async () => {
       const res: any = await axiosClient.get("/admin/users", {
@@ -103,10 +113,19 @@ export default function AdminUsersPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       setShowCreateModal(false);
-      setCreateForm({ fullName: "", email: "", password: "", role: "STUDENT", phone: "" });
+      setCreateForm({
+        fullName: "",
+        email: "",
+        password: "",
+        role: "STUDENT",
+        phone: "",
+      });
       toast.success("Tạo tài khoản thành công!");
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Lỗi! Email có thể đã tồn tại."),
+    onError: (err: any) =>
+      toast.error(
+        err?.response?.data?.message || "Lỗi! Email có thể đã tồn tại.",
+      ),
   });
 
   // Update User Mutation
@@ -127,7 +146,10 @@ export default function AdminUsersPage() {
       setEditingUser(null);
       toast.success("Đã cập nhật thông tin người dùng!");
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Lỗi khi cập nhật tài khoản."),
+    onError: (err: any) =>
+      toast.error(
+        err?.response?.data?.message || "Lỗi khi cập nhật tài khoản.",
+      ),
   });
 
   // Delete User Mutation
@@ -140,7 +162,8 @@ export default function AdminUsersPage() {
       setDeleteTarget(null);
       toast.success("Đã xóa tài khoản thành công.");
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể xóa tài khoản."),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Không thể xóa tài khoản."),
   });
 
   const handleOpenEdit = (user: UserData) => {
@@ -156,11 +179,16 @@ export default function AdminUsersPage() {
   const filteredUsers = users?.filter(
     (u) =>
       u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (u.profile?.fullName || "").toLowerCase().includes(searchTerm.toLowerCase())
+      (u.profile?.fullName || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()),
   );
 
   const totalPages = Math.ceil((filteredUsers?.length || 0) / pageSize);
-  const paginatedUsers = filteredUsers?.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const paginatedUsers = filteredUsers?.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   useEffect(() => {
     if (totalPages > 0 && currentPage > totalPages) {
@@ -200,7 +228,10 @@ export default function AdminUsersPage() {
 
     const now = new Date().getTime();
     const activityTime = new Date(lastActivityAt).getTime();
-    const diffHours = Math.max(0, Math.floor((now - activityTime) / (1000 * 60 * 60)));
+    const diffHours = Math.max(
+      0,
+      Math.floor((now - activityTime) / (1000 * 60 * 60)),
+    );
     const diffDays = Math.floor(diffHours / 24);
 
     if (diffHours < 24) {
@@ -232,7 +263,9 @@ export default function AdminUsersPage() {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black text-slate-800 tracking-tight">Quản lý Người dùng</h1>
+          <h1 className="text-4xl font-black text-slate-800 tracking-tight">
+            Người dùng
+          </h1>
           <p className="text-slate-400 font-bold text-sm mt-1">
             Danh sách tài khoản học viên và quản trị viên trong hệ thống
           </p>
@@ -248,7 +281,10 @@ export default function AdminUsersPage() {
       {/* FILTER BAR */}
       <div className="bg-white p-5 rounded-[2rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="flex-1 w-full relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <Search
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+            size={18}
+          />
           <input
             type="text"
             placeholder="Tìm kiếm theo tên hoặc email..."
@@ -289,9 +325,12 @@ export default function AdminUsersPage() {
         ) : isError ? (
           <div className="p-16 text-center text-slate-400 space-y-3">
             <AlertTriangle size={40} className="text-rose-500 mx-auto" />
-            <h3 className="text-lg font-black text-slate-700">Không thể tải danh sách người dùng</h3>
+            <h3 className="text-lg font-black text-slate-700">
+              Không thể tải danh sách người dùng
+            </h3>
             <p className="text-sm text-rose-500">
-              {(error as any)?.response?.data?.message || "Đã xảy ra lỗi khi kết nối tới máy chủ."}
+              {(error as any)?.response?.data?.message ||
+                "Đã xảy ra lỗi khi kết nối tới máy chủ."}
             </p>
             <button
               type="button"
@@ -317,7 +356,10 @@ export default function AdminUsersPage() {
               </thead>
               <tbody className="divide-y divide-slate-100 font-bold text-sm text-slate-700">
                 {paginatedUsers?.map((user) => (
-                  <tr key={user.id} className="hover:bg-slate-50/70 transition-colors">
+                  <tr
+                    key={user.id}
+                    className="hover:bg-slate-50/70 transition-colors"
+                  >
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
                         <div className="relative w-10 h-10 rounded-2xl bg-blue-100 text-blue-600 font-black flex items-center justify-center shrink-0">
@@ -366,7 +408,8 @@ export default function AdminUsersPage() {
                     <td className="py-4 px-6 text-sm text-slate-600">
                       {user.profile?.phone ? (
                         <span className="flex items-center gap-1">
-                          <Phone size={13} className="text-slate-400" /> {user.profile.phone}
+                          <Phone size={13} className="text-slate-400" />{" "}
+                          {user.profile.phone}
                         </span>
                       ) : (
                         <span className="text-slate-300">—</span>
@@ -434,8 +477,12 @@ export default function AdminUsersPage() {
         ) : (
           <div className="p-16 text-center text-slate-400">
             <BookOpen size={40} className="text-slate-300 mx-auto mb-3" />
-            <h3 className="text-lg font-black text-slate-700">Không tìm thấy người dùng</h3>
-            <p className="text-sm mt-1">Thử thay đổi bộ lọc hoặc thêm người dùng mới.</p>
+            <h3 className="text-lg font-black text-slate-700">
+              Không tìm thấy người dùng
+            </h3>
+            <p className="text-sm mt-1">
+              Thử thay đổi bộ lọc hoặc thêm người dùng mới.
+            </p>
           </div>
         )}
       </div>
@@ -452,7 +499,8 @@ export default function AdminUsersPage() {
             >
               <div className="flex items-center justify-between border-b-2 border-slate-100 pb-3">
                 <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">
-                  <UserPlus size={24} className="text-blue-500" /> Thêm Người Dùng
+                  <UserPlus size={24} className="text-blue-500" /> Thêm Người
+                  Dùng
                 </h2>
                 <button
                   onClick={() => setShowCreateModal(false)}
@@ -464,46 +512,90 @@ export default function AdminUsersPage() {
 
               <div className="space-y-4 text-xs font-bold">
                 <div>
-                  <label className="block text-slate-600 mb-1">Họ và tên <span className="text-rose-500">*</span></label>
+                  <label className="block text-slate-600 mb-1">
+                    Họ và tên <span className="text-rose-500">*</span>
+                  </label>
                   <input
                     type="text"
                     placeholder="VD: Nguyễn Văn A"
                     value={createForm.fullName}
-                    onChange={(e) => setCreateForm({ ...createForm, fullName: e.target.value })}
+                    onChange={(e) =>
+                      setCreateForm({ ...createForm, fullName: e.target.value })
+                    }
                     className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-blue-500 text-slate-800"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-600 mb-1">Email <span className="text-rose-500">*</span></label>
+                  <label className="block text-slate-600 mb-1">
+                    Email <span className="text-rose-500">*</span>
+                  </label>
                   <input
                     type="email"
                     placeholder="email@example.com"
                     value={createForm.email}
-                    onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                    onChange={(e) =>
+                      setCreateForm({ ...createForm, email: e.target.value })
+                    }
                     className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-blue-500 text-slate-800"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-600 mb-1">Mật khẩu ban đầu <span className="text-rose-500">*</span></label>                  <div className="relative">
-                    <input type={showCreatePassword ? "text" : "password"} placeholder="Ít nhất 6 ký tự" value={createForm.password} onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })} className="w-full pr-12 border-2 border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-blue-500 text-slate-800" />
-                    <button type="button" onClick={() => setShowCreatePassword((value) => !value)} aria-label={showCreatePassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"} aria-pressed={showCreatePassword} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500">{showCreatePassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+                  <label className="block text-slate-600 mb-1">
+                    Mật khẩu ban đầu <span className="text-rose-500">*</span>
+                  </label>{" "}
+                  <div className="relative">
+                    <input
+                      type={showCreatePassword ? "text" : "password"}
+                      placeholder="Ít nhất 6 ký tự"
+                      value={createForm.password}
+                      onChange={(e) =>
+                        setCreateForm({
+                          ...createForm,
+                          password: e.target.value,
+                        })
+                      }
+                      className="w-full pr-12 border-2 border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-blue-500 text-slate-800"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCreatePassword((value) => !value)}
+                      aria-label={
+                        showCreatePassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"
+                      }
+                      aria-pressed={showCreatePassword}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
+                    >
+                      {showCreatePassword ? (
+                        <EyeOff size={18} />
+                      ) : (
+                        <Eye size={18} />
+                      )}
+                    </button>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-slate-600 mb-1">Số điện thoại</label>
+                  <label className="block text-slate-600 mb-1">
+                    Số điện thoại
+                  </label>
                   <input
                     type="tel"
                     placeholder="0912345678"
                     value={createForm.phone}
-                    onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
+                    onChange={(e) =>
+                      setCreateForm({ ...createForm, phone: e.target.value })
+                    }
                     className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-blue-500 text-slate-800"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-600 mb-1">Vai trò hệ thống</label>
+                  <label className="block text-slate-600 mb-1">
+                    Vai trò hệ thống
+                  </label>
                   <select
                     value={createForm.role}
-                    onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
+                    onChange={(e) =>
+                      setCreateForm({ ...createForm, role: e.target.value })
+                    }
                     className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-blue-500 bg-white text-slate-800 font-bold"
                   >
                     <option value="STUDENT">Học viên</option>
@@ -529,7 +621,11 @@ export default function AdminUsersPage() {
                   }
                   className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black flex items-center justify-center gap-2 transition-all shadow-md text-sm disabled:opacity-50"
                 >
-                  {createMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
+                  {createMutation.isPending ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <UserPlus size={16} />
+                  )}
                   Tạo tài khoản
                 </button>
               </div>
@@ -550,7 +646,9 @@ export default function AdminUsersPage() {
             >
               <div className="flex items-center justify-between border-b-2 border-slate-100 pb-3">
                 <div>
-                  <span className="text-xs font-mono font-black text-slate-400">ID #{editingUser.id}</span>
+                  <span className="text-xs font-mono font-black text-slate-400">
+                    ID #{editingUser.id}
+                  </span>
                   <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2 mt-0.5">
                     <Edit2 size={22} className="text-blue-500" /> Sửa Người Dùng
                   </h2>
@@ -565,7 +663,9 @@ export default function AdminUsersPage() {
 
               <div className="space-y-4 text-xs font-bold">
                 <div>
-                  <label className="block text-slate-600 mb-1">Email (Không thể đổi)</label>
+                  <label className="block text-slate-600 mb-1">
+                    Email (Không thể đổi)
+                  </label>
                   <input
                     type="email"
                     disabled
@@ -574,20 +674,28 @@ export default function AdminUsersPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-600 mb-1">Họ và tên <span className="text-rose-500">*</span></label>
+                  <label className="block text-slate-600 mb-1">
+                    Họ và tên <span className="text-rose-500">*</span>
+                  </label>
                   <input
                     type="text"
                     value={editForm.fullName}
-                    onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, fullName: e.target.value })
+                    }
                     className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-blue-500 text-slate-800"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-600 mb-1">Số điện thoại</label>
+                  <label className="block text-slate-600 mb-1">
+                    Số điện thoại
+                  </label>
                   <input
                     type="tel"
                     value={editForm.phone}
-                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, phone: e.target.value })
+                    }
                     className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-blue-500 text-slate-800"
                   />
                 </div>
@@ -603,7 +711,9 @@ export default function AdminUsersPage() {
                   <select
                     value={editForm.role}
                     disabled={currentUser?.id === editingUser.id}
-                    onChange={(e) => setEditForm({ ...editForm, role: e.target.value as any })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, role: e.target.value as any })
+                    }
                     className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-blue-500 bg-white text-slate-800 font-bold disabled:bg-slate-100 disabled:text-slate-400"
                   >
                     <option value="STUDENT">Học viên</option>
@@ -611,10 +721,38 @@ export default function AdminUsersPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-600 mb-1">Đặt lại Mật khẩu mới (Để trống nếu không đổi)</label>
+                  <label className="block text-slate-600 mb-1">
+                    Đặt lại Mật khẩu mới (Để trống nếu không đổi)
+                  </label>
                   <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />                    <input type={showEditPassword ? "text" : "password"} placeholder="Nhập mật khẩu mới..." value={editForm.password} onChange={(e) => setEditForm({ ...editForm, password: e.target.value })} className="w-full pl-10 pr-12 py-2.5 border-2 border-slate-200 rounded-xl outline-none focus:border-blue-500 text-slate-800" />
-                    <button type="button" onClick={() => setShowEditPassword((value) => !value)} aria-label={showEditPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"} aria-pressed={showEditPassword} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500">{showEditPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+                    <Lock
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                      size={16}
+                    />{" "}
+                    <input
+                      type={showEditPassword ? "text" : "password"}
+                      placeholder="Nhập mật khẩu mới..."
+                      value={editForm.password}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, password: e.target.value })
+                      }
+                      className="w-full pl-10 pr-12 py-2.5 border-2 border-slate-200 rounded-xl outline-none focus:border-blue-500 text-slate-800"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowEditPassword((value) => !value)}
+                      aria-label={
+                        showEditPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"
+                      }
+                      aria-pressed={showEditPassword}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
+                    >
+                      {showEditPassword ? (
+                        <EyeOff size={18} />
+                      ) : (
+                        <Eye size={18} />
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -627,11 +765,20 @@ export default function AdminUsersPage() {
                   Hủy
                 </button>
                 <button
-                  onClick={() => updateMutation.mutate({ id: editingUser.id, data: editForm })}
-                  disabled={updateMutation.isPending || !editForm.fullName.trim()}
+                  onClick={() =>
+                    updateMutation.mutate({
+                      id: editingUser.id,
+                      data: editForm,
+                    })
+                  }
+                  disabled={
+                    updateMutation.isPending || !editForm.fullName.trim()
+                  }
                   className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black flex items-center justify-center gap-2 transition-all shadow-md text-sm disabled:opacity-50"
                 >
-                  {updateMutation.isPending && <Loader2 size={16} className="animate-spin" />}
+                  {updateMutation.isPending && (
+                    <Loader2 size={16} className="animate-spin" />
+                  )}
                   Lưu thay đổi
                 </button>
               </div>
@@ -655,13 +802,16 @@ export default function AdminUsersPage() {
               </div>
 
               <div>
-                <h3 className="text-2xl font-black text-slate-800">Xóa Tài Khoản?</h3>
+                <h3 className="text-2xl font-black text-slate-800">
+                  Xóa Tài Khoản?
+                </h3>
                 <p className="text-slate-500 text-sm font-bold mt-2">
                   Bạn có chắc chắn muốn xóa tài khoản{" "}
                   <span className="text-rose-600 font-black">
                     "{deleteTarget.profile?.fullName || deleteTarget.email}"
                   </span>{" "}
-                  ({deleteTarget.email})? Toàn bộ tiến trình và dữ liệu sẽ bị xóa hoàn toàn.
+                  ({deleteTarget.email})? Toàn bộ tiến trình và dữ liệu sẽ bị
+                  xóa hoàn toàn.
                 </p>
               </div>
 
@@ -679,7 +829,9 @@ export default function AdminUsersPage() {
                   onClick={() => deleteMutation.mutate(deleteTarget.id)}
                   className="px-6 py-2.5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-black shadow-md flex items-center gap-2 text-sm disabled:opacity-50"
                 >
-                  {deleteMutation.isPending && <Loader2 size={16} className="animate-spin" />}
+                  {deleteMutation.isPending && (
+                    <Loader2 size={16} className="animate-spin" />
+                  )}
                   Đồng ý xóa
                 </button>
               </div>

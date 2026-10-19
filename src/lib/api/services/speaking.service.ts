@@ -15,6 +15,7 @@ export interface SpeakingExercise {
   imageUrl?: string;
   audioUrl?: string;
   difficulty: string;
+  order?: number | null;
   category: string;
   categoryLabel?: string;
   categoryId?: number | null;

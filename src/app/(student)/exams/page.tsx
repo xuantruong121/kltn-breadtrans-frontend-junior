@@ -28,13 +28,13 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { quizService, type Quiz } from "@/lib/api/services/quiz.service";
+import { examService } from "@/lib/api/services/exam.service";
 import { Pagination } from "@/components/ui";
 import { useAuthStore } from "@/stores/authStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
 
-const EMPTY_QUIZZES: Quiz[] = [];
+const EMPTY_QUIZZES: any[] = [];
 
 export type CertificateId =
   | "ALL"
@@ -76,14 +76,14 @@ const CERTIFICATES: CertificateMeta[] = [
   {
     id: "TOEIC",
     code: "TOEIC",
-    name: "TOEIC ETS",
+    name: "TOEIC Practice",
     fullName: "Test of English for International Communication",
     shortTag: "2 & 4 kỹ năng",
     status: "ACTIVE",
     badgeText: "Sẵn sàng làm bài",
     targetLevel: "Mục tiêu 450 - 990 điểm",
     description:
-      "Bài thi đánh giá khả năng sử dụng tiếng Anh trong môi trường giao tiếp quốc tế và công việc, gồm TOEIC L&R và bundle TOEIC 4 kỹ năng kết hợp L&R với S&W.",
+      "Đề luyện tập tham khảo mô phỏng cấu trúc TOEIC cho giao tiếp quốc tế và công việc, gồm L&R và bundle 4 kỹ năng kết hợp L&R với S&W. Nội dung không phải đề thi chính thức do ETS phát hành.",
     skills: [
       { label: "Nghe hiểu (Listening)", icon: Headphones },
       { label: "Đọc hiểu (Reading)", icon: BookOpen },
@@ -354,8 +354,8 @@ export default function ExamPracticeHubPage() {
   }, [launchingDestination, router]);
 
   const { data: quizzes, isLoading } = useQuery({
-    queryKey: ["toeic-papers"],
-    queryFn: quizService.getToeicPapers,
+    queryKey: ["exam-products"],
+    queryFn: examService.getPublished,
   });
 
   const filteredQuizzes = useMemo(() => {
@@ -516,7 +516,7 @@ export default function ExamPracticeHubPage() {
                 Đề thi khả dụng
               </div>
               <div className="mt-2 text-[10px] font-bold text-emerald-200 bg-emerald-950/30 px-2 py-0.5 rounded-full inline-block">
-                Hệ thống TOEIC ETS
+                TOEIC Practice
               </div>
             </div>
           </div>
@@ -827,7 +827,7 @@ export default function ExamPracticeHubPage() {
                     const linkedBundle = (quizzes ?? []).find((candidate: any) => candidate.bilingualContent?.speakingWritingQuizId === quiz.id);
                     const destination = isFourSkill || isSpeakingWriting
                       ? `/toeic/bundle/${isFourSkill ? quiz.id : linkedBundle?.id || quiz.id}`
-                      : `/toeic/${quiz.bilingualContent?.examSetId || quiz.id}`;
+                      : `/toeic/${quiz.runtimeId || quiz.id}`;
                     const formatLabel = isFourSkill ? "TOEIC 4 kỹ năng" : isSpeakingWriting ? "TOEIC S&W" : "TOEIC L&R";
                     const skillLabels = isFourSkill ? ["Listening", "Reading", "Speaking", "Writing"] : isSpeakingWriting ? ["Speaking", "Writing"] : ["Listening", "Reading"];
                     const detailsLabel = isFourSkill ? "L&R + S&W" : isSpeakingWriting ? "11 Speaking · 8 Writing" : "200 câu · 120 phút";
