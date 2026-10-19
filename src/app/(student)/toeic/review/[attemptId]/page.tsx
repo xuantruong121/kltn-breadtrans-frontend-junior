@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, CheckCircle2, CircleX, Loader2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, CircleX, CircleSlash2, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toeicService } from "@/lib/api/services/toeic.service";
 
@@ -31,6 +31,16 @@ export default function ToeicReviewPage({
         Không tải được review. Chỉ lượt thi đã nộp mới có thể review.
       </main>
     );
+  const getQuestionStatus = (question: (typeof data.questions)[number]) => {
+    const skipped =
+      question.learnerAnswer === null ||
+      question.learnerAnswer === undefined ||
+      String(question.learnerAnswer).trim() === "";
+    if (skipped) return { label: "Bỏ qua", tone: "text-amber-700 bg-amber-50", icon: CircleSlash2 };
+    if (question.isCorrect)
+      return { label: "Đúng", tone: "text-emerald-700 bg-emerald-50", icon: CheckCircle2 };
+    return { label: "Chưa đúng", tone: "text-rose-700 bg-rose-50", icon: CircleX };
+  };
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
       <button
@@ -44,20 +54,21 @@ export default function ToeicReviewPage({
         Review · {data.exam.title}
       </h1>
       <div className="mt-6 space-y-4">
-        {data.questions.map((question) => (
-          <article
-            key={question.questionId}
-            className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
-          >
+        {data.questions.map((question) => {
+          const status = getQuestionStatus(question);
+          const StatusIcon = status.icon;
+          return (
+            <article
+              key={question.questionId}
+              className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+            >
             <div className="flex items-start justify-between gap-3">
               <h2 className="font-bold text-slate-900 dark:text-slate-100">
                 Câu {question.questionNumber} · Part {question.part}
               </h2>
-              {question.isCorrect ? (
-                <CheckCircle2 className="text-emerald-600" size={19} />
-              ) : (
-                <CircleX className="text-rose-600" size={19} />
-              )}
+              <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${status.tone}`}>
+                <StatusIcon size={15} aria-hidden="true" /> {status.label}
+              </span>
             </div>
             {question.passageText && (
               <p className="mt-3 whitespace-pre-line rounded-xl bg-slate-50 p-3 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">
@@ -82,8 +93,9 @@ export default function ToeicReviewPage({
                 {question.explanation}
               </p>
             )}
-          </article>
-        ))}
+            </article>
+          );
+        })}
       </div>
     </main>
   );

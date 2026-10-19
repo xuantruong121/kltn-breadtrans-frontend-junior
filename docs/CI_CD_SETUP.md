@@ -10,11 +10,17 @@
 
 ## GitHub Actions CI
 
-The workflow uses Node 22 and `npm ci`, then runs ESLint, TypeScript, the repository's TypeScript unit-test files, and a real `next build`. It has read-only contents permission and cancels obsolete runs for the same ref.
+The workflow uses Node 22 and `npm ci`, then runs ESLint, TypeScript, the repository's TypeScript unit-test files, and a real `next build`. `setup-node` caches npm's package download cache from `package-lock.json`, while GitHub Actions persists only `.next/cache` with lockfile/config-aware keys; the generated `.next` output is not reused as a deployment artifact. It has read-only contents permission and cancels obsolete runs for the same ref.
 
 Node 22 is intentional: `test:ci` uses Node's `--experimental-strip-types` flag, which is not available in Node 20.
 
 There is no Vercel CLI deployment job. Vercel Git Integration is the single CD path.
+
+## Four-week delivery policy
+
+- Tier 1 (local/frequent development): lint, typecheck, and targeted/unit tests.
+- Tier 2 (PR merge gate): the complete Frontend CI quality job, including the production build.
+- Tier 3 (main/phase closure): the same required CI plus Vercel Production deployment validation. There is no second GitHub deployment path.
 
 ## Vercel settings
 

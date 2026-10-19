@@ -8,6 +8,24 @@ import { useRouter } from "next/navigation";
 import axiosClient from "@/lib/api/axiosClient";
 import { toeicService } from "@/lib/api/services/toeic.service";
 
+const componentLabels: Record<string, string> = {
+  LISTENING_READING: "Listening + Reading",
+  SPEAKING: "Speaking",
+  WRITING: "Writing",
+};
+
+const componentDetails: Record<string, string> = {
+  LISTENING_READING: "200 câu hỏi · khoảng 120 phút",
+  SPEAKING: "11 câu hỏi · khoảng 20 phút",
+  WRITING: "8 câu hỏi · 60 phút",
+};
+
+const statusLabels: Record<string, string> = {
+  NOT_STARTED: "Chưa bắt đầu",
+  IN_PROGRESS: "Đang làm",
+  COMPLETED: "Hoàn thành",
+};
+
 export default function ToeicAssessmentAttemptPage({
   params,
 }: {
@@ -80,20 +98,27 @@ export default function ToeicAssessmentAttemptPage({
       <main className="mx-auto max-w-4xl p-8 text-sm text-rose-700">
         Không tìm thấy lượt làm bài.
       </main>
-    );
+      );
+  const completedCount = data.components.filter(
+    (component: any) => component.status === "COMPLETED",
+  ).length;
+  const nextComponent = data.components.find(
+    (component: any) => component.status !== "COMPLETED",
+  );
+  const parentStatus = statusLabels[data.status] ?? "Đang làm";
   return (
     <main className="mx-auto max-w-4xl space-y-6 px-5 py-10">
       <Link
         href={`/toeic/assessments/${id}`}
         className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900"
       >
-        <ArrowLeft size={16} /> Chi tiết assessment
+        <ArrowLeft size={16} /> Chi tiết bài thi
       </Link>
       <section className="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-600">
-              Resume
+              TIẾN ĐỘ BÀI THI
             </p>
             <h1 className="mt-2 text-3xl font-bold text-slate-900">
               {data.assessment.title}
@@ -101,8 +126,9 @@ export default function ToeicAssessmentAttemptPage({
           </div>
           <span
             className={`rounded-full px-3 py-1 text-xs font-bold ${data.status === "COMPLETED" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}
+            aria-label={`Trạng thái bài thi: ${parentStatus}`}
           >
-            {data.status}
+            {parentStatus} · {completedCount}/{data.components.length} phần
           </span>
         </div>
         {error && (
@@ -113,6 +139,9 @@ export default function ToeicAssessmentAttemptPage({
         <div className="mt-8 space-y-3">
           {data.components.map((component: any) => {
             const done = component.status === "COMPLETED";
+            const isNext =
+              nextComponent?.assessmentComponentId === component.assessmentComponentId;
+            const componentStatus = statusLabels[component.status] ?? "Chưa bắt đầu";
             return (
               <div
                 key={component.id}
@@ -120,14 +149,17 @@ export default function ToeicAssessmentAttemptPage({
               >
                 <div className="flex-1">
                   <p className="font-semibold text-slate-900">
-                    {component.order}. {component.kind}
+                    {component.order}. {componentLabels[component.kind] ?? "Phần thi"}
+                  </p>
+                  <p className="mt-1 text-xs font-medium text-slate-500">
+                    {componentDetails[component.kind] ?? "Theo cấu trúc bài thi"}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">
                     {done
-                      ? "Đã hoàn tất theo dữ liệu authoritative"
+                      ? "Phần này đã hoàn thành"
                       : component.status === "IN_PROGRESS"
-                        ? "Đang thực hiện — có thể tiếp tục"
-                        : "Chưa bắt đầu"}
+                        ? "Tiến độ đã lưu — có thể tiếp tục"
+                        : "Sẵn sàng để bắt đầu"}
                   </p>
                   {component.kind === "WRITING" &&
                     component.writingQuizIds?.length > 0 && (
@@ -146,7 +178,7 @@ export default function ToeicAssessmentAttemptPage({
                 </div>
                 {done ? (
                   <span className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-700">
-                    <CheckCircle2 size={16} /> Hoàn tất
+                    <CheckCircle2 size={16} /> {componentStatus}
                   </span>
                 ) : (
                   <button
@@ -155,26 +187,28 @@ export default function ToeicAssessmentAttemptPage({
                     onClick={() =>
                       startComponent.mutate(component.assessmentComponentId)
                     }
-                    className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50"
+                    className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 ${isNext ? "bg-slate-900 text-white shadow-sm hover:bg-slate-700" : "border border-slate-200 bg-white text-slate-700 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700"}`}
+                    aria-label={`${isNext ? "Tiếp tục" : "Mở"} ${componentLabels[component.kind] ?? "phần thi"}`}
                   >
                     {startComponent.isPending ? (
                       <Loader2 className="animate-spin" size={15} />
                     ) : (
                       <ExternalLink size={15} />
                     )}{" "}
-                    {component.status === "IN_PROGRESS"
-                      ? "Tiếp tục component"
-                      : "Mở component"}
+                    {isNext
+                      ? component.status === "IN_PROGRESS"
+                        ? "Tiếp tục bài thi"
+                        : "Bắt đầu phần tiếp theo"
+                      : "Mở phần này"}
                   </button>
                 )}
               </div>
             );
           })}
         </div>
-        <p className="mt-6 text-xs leading-5 text-slate-500">
-          L&R mở runtime TOEIC hiện hữu. Speaking/Writing tiếp tục nộp qua
-          runtime skill tương ứng; parent chỉ nhận các submission được liên kết
-          rõ ràng.
+        <p className="mt-6 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-600">
+          Tiến độ được lưu theo từng phần. Bạn có thể rời bài và quay lại tiếp tục
+          bất cứ lúc nào.
         </p>
       </section>
     </main>
