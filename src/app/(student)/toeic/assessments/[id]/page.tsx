@@ -96,6 +96,10 @@ export default function ToeicAssessmentDetailPage({
             {error}
           </p>
         )}
+        <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-800">
+          Đây là bài luyện mô phỏng TOEIC để tự học và theo dõi tiến độ; kết quả
+          không phải điểm thi chính thức của ETS.
+        </p>
         <div className="mt-8 space-y-3">
           {data.components.map((component: any) => (
             <div

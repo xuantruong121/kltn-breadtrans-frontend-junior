@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { ArrowLeft, Check, ChevronRight, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, Loader2, FileStack } from "lucide-react";
 import { useRouter } from "next/navigation";
 import axiosClient from "@/lib/api/axiosClient";
 import toast from "react-hot-toast";
@@ -37,6 +37,24 @@ export default function NewExamPage() {
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [aiJob, setAiJob] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const retryAiJob = async () => {
+    if (!aiJob?.id) return;
+    setIsSubmitting(true);
+    try {
+      const result: any = await axiosClient.post(
+        `/admin/exams/ai/jobs/${aiJob.id}/retry`,
+      );
+      setAiJob(result);
+      toast.success("Đã đưa job AI lỗi vào hàng đợi thử lại");
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || "Không thể thử lại job AI",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -111,7 +129,7 @@ export default function NewExamPage() {
         </div>
         <div className="mt-6 grid grid-cols-2 rounded-xl bg-slate-100 p-1 text-sm font-semibold">
           <button type="button" onClick={() => setAuthoringMode("MANUAL")} className={`rounded-lg px-3 py-2 transition ${authoringMode === "MANUAL" ? "bg-white text-slate-950 shadow-sm" : "text-slate-500"}`}>Tạo thủ công</button>
-          <button type="button" onClick={() => setAuthoringMode("AI")} className={`inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 transition ${authoringMode === "AI" ? "bg-slate-950 text-white shadow-sm" : "text-slate-500"}`}><Sparkles size={15} /> AI tạo đề</button>
+          <button type="button" onClick={() => setAuthoringMode("AI")} className={`inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 transition ${authoringMode === "AI" ? "bg-slate-950 text-white shadow-sm" : "text-slate-500"}`}><FileStack size={15} /> AI tạo đề</button>
         </div>
         <form onSubmit={submit} className="mt-6 space-y-6">
           <div>
@@ -220,7 +238,7 @@ export default function NewExamPage() {
               />
             </label>
           </div>}
-          {aiJob && <section className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm"><p className="font-semibold text-slate-900">Tiến độ AI: {aiJob.stage || aiJob.status}</p><p className="mt-1 text-slate-600">{aiJob.error || "Draft vẫn chỉ hiển thị cho Admin cho đến khi review, validation và Publish thủ công."}</p>{aiJob.exam?.id && ["GENERATED", "FAILED", "CANCELLED"].includes(aiJob.status) && <button type="button" onClick={() => router.push(`/admin/exams?exam=${aiJob.exam.id}`)} className="mt-3 font-semibold text-blue-700 hover:underline">Mở Draft để review</button>}</section>}
+          {aiJob && <section className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm"><p className="font-semibold text-slate-900">Tiến độ AI: {aiJob.stage || aiJob.status}</p><p className="mt-1 text-slate-600">{aiJob.error || "Draft vẫn chỉ hiển thị cho Admin cho đến khi review, validation và Publish thủ công."}</p><div className="mt-3 flex flex-wrap items-center gap-3">{aiJob.status === "FAILED" && <button type="button" onClick={retryAiJob} disabled={isSubmitting} className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">{isSubmitting ? "Đang thử lại..." : "Thử lại job AI"}</button>}{aiJob.exam?.id && ["GENERATED", "FAILED", "CANCELLED"].includes(aiJob.status) && <button type="button" onClick={() => router.push(`/admin/exams?exam=${aiJob.exam.id}`)} className="font-semibold text-blue-700 hover:underline">Mở Draft để review</button>}</div></section>}
           <div className="flex justify-end border-t border-slate-100 pt-5">
             <button
               disabled={isSubmitting || (authoringMode === "MANUAL" && !title.trim())}

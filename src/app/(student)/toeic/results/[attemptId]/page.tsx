@@ -1,7 +1,7 @@
 "use client";
 
-import { use } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { use, useEffect, useRef } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toeicService } from "@/lib/api/services/toeic.service";
@@ -17,6 +17,9 @@ export default function ToeicResultPage({
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedReturnTo = searchParams.get("returnTo");
+  const parentAttemptId = searchParams.get("parentAttemptId");
+  const parentComponentId = searchParams.get("parentComponentId");
+  const parentAssessmentId = searchParams.get("parentAssessmentId");
   const courseReturn =
     requestedReturnTo && isSafeCourseReturn(requestedReturnTo)
       ? requestedReturnTo
@@ -26,6 +29,27 @@ export default function ToeicResultPage({
     queryFn: () => toeicService.getResult(attemptId),
     enabled: Number.isInteger(attemptId),
   });
+  const completeParent = useMutation({
+    mutationFn: async () => {
+      if (!parentAttemptId || !parentComponentId) return;
+      await toeicService.completeAssessmentComponent(
+        Number(parentAttemptId),
+        Number(parentComponentId),
+      );
+    },
+  });
+  const completedParentRef = useRef(false);
+  useEffect(() => {
+    if (
+      !data ||
+      !parentAttemptId ||
+      !parentComponentId ||
+      completedParentRef.current
+    )
+      return;
+    completedParentRef.current = true;
+    completeParent.mutate();
+  }, [data, parentAttemptId, parentComponentId]);
   if (isLoading)
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
@@ -137,6 +161,19 @@ export default function ToeicResultPage({
         >
           Xem review
         </button>
+        {parentAttemptId && (
+          <button
+            type="button"
+            onClick={() =>
+              router.push(
+                `/toeic/assessments/${parentAssessmentId}/attempts/${parentAttemptId}`,
+              )
+            }
+            className="mt-3 inline-flex min-h-11 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-5 text-sm font-black text-amber-800 hover:bg-amber-100"
+          >
+            Quay lại tiến độ bài thi
+          </button>
+        )}
         <button
           type="button"
           onClick={() => router.push(courseReturn ?? "/exams")}

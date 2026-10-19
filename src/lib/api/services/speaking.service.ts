@@ -49,6 +49,19 @@ export interface SpeakingPracticeSetSummary {
   isCompleted: boolean;
 }
 
+export type SpeakingExamParentContext = {
+  attemptId: number;
+  componentId: number;
+};
+
+function withExamParentContext(
+  path: string,
+  context?: SpeakingExamParentContext,
+) {
+  if (!context) return path;
+  return `${path}?parentAttemptId=${context.attemptId}&parentComponentId=${context.componentId}`;
+}
+
 export interface SubmitSpeakingResponse {
   submissionId: number;
   status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
@@ -172,9 +185,13 @@ export const speakingService = {
       idempotencyKey: string;
     },
     traceId?: string,
+    parentContext?: SpeakingExamParentContext,
   ): Promise<UploadIntentResponse> => {
     return await axiosClient.post(
-      `/speaking/exercises/${exerciseId}/upload-intents`,
+      withExamParentContext(
+        `/speaking/exercises/${exerciseId}/upload-intents`,
+        parentContext,
+      ),
       data,
       {
         headers: traceId ? { "x-trace-id": traceId } : undefined,
@@ -257,8 +274,13 @@ export const speakingService = {
     return await axiosClient.get("/speaking/exercises");
   },
 
-  getExerciseById: async (id: number): Promise<SpeakingExercise> => {
-    return await axiosClient.get(`/speaking/exercises/${id}`);
+  getExerciseById: async (
+    id: number,
+    parentContext?: SpeakingExamParentContext,
+  ): Promise<SpeakingExercise> => {
+    return await axiosClient.get(
+      withExamParentContext(`/speaking/exercises/${id}`, parentContext),
+    );
   },
 
   /**
@@ -269,6 +291,7 @@ export const speakingService = {
     audioBlob: Blob,
     idempotencyKey?: string,
     traceId?: string,
+    parentContext?: SpeakingExamParentContext,
   ): Promise<SubmitSpeakingResponse> => {
     const formData = new FormData();
     formData.append("audio", audioBlob, "recording.wav");
@@ -282,7 +305,7 @@ export const speakingService = {
       `spk-trace-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
     return await axiosClient.post(
-      `/speaking/exercises/${id}/submit`,
+      withExamParentContext(`/speaking/exercises/${id}/submit`, parentContext),
       formData,
       {
         headers: {

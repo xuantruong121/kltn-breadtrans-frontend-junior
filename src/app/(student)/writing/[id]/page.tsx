@@ -30,6 +30,7 @@ import {
   writingService,
   type WritingEvaluation,
 } from "@/lib/api/services/writing.service";
+import axiosClient from "@/lib/api/axiosClient";
 import { isPremiumWritingForbiddenError } from "@/modules/subscription/planLogic";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
@@ -43,6 +44,15 @@ export default function WritingDetailPage(props: {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedReturnTo = searchParams.get("returnTo");
+  const parentAttemptId = searchParams.get("parentAttemptId");
+  const parentComponentId = searchParams.get("parentComponentId");
+  const examParentContext =
+    parentAttemptId && parentComponentId
+      ? {
+          attemptId: Number(parentAttemptId),
+          componentId: Number(parentComponentId),
+        }
+      : undefined;
   const courseReturn =
     requestedReturnTo && isSafeCourseReturn(requestedReturnTo)
       ? requestedReturnTo
@@ -53,6 +63,7 @@ export default function WritingDetailPage(props: {
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [feedback, setFeedback] = useState<WritingEvaluation | null>(null);
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
+  const draftKey = user?.id ? `breadtrans:writing:draft:${user.id}:${topicId}` : null;
 
   const [minLaunchReady, setMinLaunchReady] = useState(false);
   useEffect(() => {
@@ -60,13 +71,35 @@ export default function WritingDetailPage(props: {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    if (!draftKey) return;
+    try {
+      const draft = localStorage.getItem(draftKey);
+      if (draft) setContent(draft);
+    } catch {
+      // Draft recovery is best effort; the authoritative submission is server-side.
+    }
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (!draftKey || feedback) return;
+    const timer = window.setTimeout(() => {
+      try {
+        localStorage.setItem(draftKey, content);
+      } catch {
+        // Ignore storage quota/private mode failures.
+      }
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [content, draftKey, feedback]);
+
   const {
     data: topicData,
     isLoading,
     error: topicError,
   } = useQuery({
     queryKey: ["writing-topic", topicId],
-    queryFn: () => writingService.getQuizDetails(topicId),
+    queryFn: () => writingService.getQuizDetails(topicId, examParentContext),
     enabled: !!topicId,
   });
   const topic = topicData;
@@ -148,7 +181,23 @@ export default function WritingDetailPage(props: {
         topicId,
         content.trim(),
         clientAttemptId,
+        examParentContext,
       );
+      if (parentAttemptId && parentComponentId) {
+        await axiosClient
+          .post(
+            `/toeic/assessments/attempts/${parentAttemptId}/components/${parentComponentId}/complete`,
+            {},
+          )
+          .catch(() => undefined);
+      }
+      if (draftKey) {
+        try {
+          localStorage.removeItem(draftKey);
+        } catch {
+          // Ignore storage cleanup failures.
+        }
+      }
       setIsEvaluating(false);
       const currentUserId = user?.id;
       await Promise.all([
