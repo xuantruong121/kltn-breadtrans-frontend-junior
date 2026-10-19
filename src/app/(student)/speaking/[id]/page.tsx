@@ -327,7 +327,9 @@ export default function SpeakingExerciseDetailPage() {
       .filter((item) => item.practiceSet?.key === practiceSetKey)
       .sort(
         (a, b) =>
-          (a.practiceSet?.position ?? 0) - (b.practiceSet?.position ?? 0),
+          (a.order ?? a.practiceSet?.position ?? Number.MAX_SAFE_INTEGER) -
+            (b.order ?? b.practiceSet?.position ?? Number.MAX_SAFE_INTEGER) ||
+          a.id - b.id,
       );
   }, [allExercises, practiceSetKey]);
 
@@ -352,7 +354,8 @@ export default function SpeakingExerciseDetailPage() {
     [exercise, activeCatalogExercise],
   );
   const currentPracticeSetPosition = activePracticeSet
-    ? practiceSetExercises.findIndex((item) => item.id === exerciseId) + 1
+    ? (exercise?.order ??
+      practiceSetExercises.findIndex((item) => item.id === exerciseId) + 1)
     : 0;
 
   const isNextAvailable = useMemo(() => {
@@ -1319,7 +1322,9 @@ export default function SpeakingExerciseDetailPage() {
             .filter((item) => item.practiceSet?.key === practiceSetKey)
             .sort(
               (a, b) =>
-                (a.practiceSet?.position ?? 0) - (b.practiceSet?.position ?? 0),
+                (a.order ?? a.practiceSet?.position ?? Number.MAX_SAFE_INTEGER) -
+                  (b.order ?? b.practiceSet?.position ?? Number.MAX_SAFE_INTEGER) ||
+                a.id - b.id,
             )
         : exercises;
       const nextId = getNextExerciseId(exerciseId, sessionExercises);
@@ -1675,7 +1680,7 @@ export default function SpeakingExerciseDetailPage() {
       <div className="w-full min-h-dvh flex flex-col bg-white dark:bg-slate-950 font-sans">
         <PracticeHeader
           title={activePracticeSet?.title ?? exercise.title}
-          category={exercise.category}
+          category={exercise.categoryLabel ?? exercise.category}
           difficulty={exercise.difficulty}
           positionText={
             activePracticeSet && currentPracticeSetPosition > 0
@@ -1726,7 +1731,7 @@ export default function SpeakingExerciseDetailPage() {
               {/* Focal mode badge */}
               <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-amber-100/90 text-amber-900 text-xs font-black uppercase tracking-wider shadow-2xs">
                 <Target size={13} className="text-amber-700" />
-                <span>Câu cần luyện đọc</span>
+                <span>Nhiệm vụ {speakingMode.label}</span>
                 {practiceSetKey &&
                   currentPracticeSetPosition > 0 &&
                   practiceSetExercises.length > 1 && (
@@ -1752,6 +1757,22 @@ export default function SpeakingExerciseDetailPage() {
                   />
                 </div>
               )}
+
+              {exercise.taskType === "RESPOND_USING_INFORMATION" &&
+                exercise.stimulus?.kind === "INFORMATION" &&
+                exercise.stimulus.content && (
+                  <aside
+                    aria-label="Thông tin dùng chung cho nhiệm vụ"
+                    className="w-full max-w-2xl rounded-2xl border border-blue-200 bg-blue-50/80 px-4 py-3 text-left shadow-xs dark:border-blue-900/70 dark:bg-blue-950/30"
+                  >
+                    <p className="text-xs font-black uppercase tracking-wider text-blue-800 dark:text-blue-200">
+                      {exercise.stimulus.title || "Thông tin dùng chung"}
+                    </p>
+                    <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+                      {exercise.stimulus.content}
+                    </p>
+                  </aside>
+                )}
 
               {/* 1. Practice Sentence Canvas (Widened horizontal stretch, compact vertical padding) */}
               <div className="w-full bg-gradient-to-b from-white to-slate-50/60 dark:from-slate-900 dark:to-slate-850/60 py-4 px-5 sm:py-5 sm:px-8 lg:px-10 rounded-3xl border-2 border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center">
@@ -2139,11 +2160,27 @@ export default function SpeakingExerciseDetailPage() {
                   </div>
                 )}
 
+                {exercise.taskType === "RESPOND_USING_INFORMATION" &&
+                  exercise.stimulus?.kind === "INFORMATION" &&
+                  exercise.stimulus.content && (
+                    <aside
+                      aria-label="Thông tin dùng chung cho nhiệm vụ"
+                      className="my-2 rounded-2xl border border-blue-200 bg-blue-50/80 px-4 py-3 text-left shadow-xs dark:border-blue-900/70 dark:bg-blue-950/30"
+                    >
+                      <p className="text-xs font-black uppercase tracking-wider text-blue-800 dark:text-blue-200">
+                        {exercise.stimulus.title || "Thông tin dùng chung"}
+                      </p>
+                      <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+                        {exercise.stimulus.content}
+                      </p>
+                    </aside>
+                  )}
+
                 {/* Hero Practice Sentence Canvas with Word-Level Color Grading */}
                 <div className="w-full bg-gradient-to-b from-white to-slate-50/50 p-5 sm:p-6 rounded-3xl border-2 border-slate-200/90 shadow-sm my-2 flex flex-col items-center justify-center">
                   <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black uppercase tracking-wider mb-2.5">
                     <Target size={14} className="text-amber-700" />
-                    <span>Câu luyện đọc đối chiếu</span>
+                    <span>Nội dung nhiệm vụ {speakingMode.label}</span>
                   </div>
 
                   {renderInteractiveTargetWords(

@@ -174,15 +174,22 @@ export default function SpeakingExercisesPage() {
     }
 
     return Array.from(byKey.values()).map((items) => {
-      const first = items[0];
+      const orderedItems = items.slice().sort(
+        (a, b) =>
+          (a.order ?? Number.MAX_SAFE_INTEGER) -
+            (b.order ?? Number.MAX_SAFE_INTEGER) ||
+          a.id - b.id,
+      );
+      const first = orderedItems[0];
       const summary = first.practiceSet ?? {
         key: `legacy-${first.id}`,
         title: first.title,
         description: first.description ?? "Bài luyện nói theo câu.",
         category: first.category,
+        categoryLabel: first.categoryLabel,
         exerciseCount: 1,
         completedCount: first.isCompleted ? 1 : 0,
-        exerciseIds: [first.id],
+        exerciseIds: orderedItems.map((item) => item.id),
         difficultyLabel: first.difficulty,
         position: 1,
         isCompleted: Boolean(first.isCompleted),
@@ -191,7 +198,7 @@ export default function SpeakingExercisesPage() {
       // Calculate average score across exercises in set
       let scoreSum = 0;
       let scoreCount = 0;
-      for (const item of items) {
+      for (const item of orderedItems) {
         const sc = scoreByExerciseId.get(item.id);
         if (sc !== undefined) {
           scoreSum += sc;
@@ -228,7 +235,8 @@ export default function SpeakingExercisesPage() {
     const counts: Record<string, number> = {};
     if (!practiceSets) return counts;
     practiceSets.forEach((ex) => {
-      const cat = ex.category || "GENERAL";
+      const cat = ex.category;
+      if (!cat) return;
       counts[cat] = (counts[cat] || 0) + 1;
     });
     return counts;
@@ -502,7 +510,7 @@ export default function SpeakingExercisesPage() {
                       : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100"
                   }`}
                 >
-                  {cat} ({count})
+                  {practiceSets.find((item) => item.category === cat)?.categoryLabel ?? cat} ({count})
                 </button>
               );
             })}
@@ -728,4 +736,3 @@ export default function SpeakingExercisesPage() {
     </div>
   );
 }
-

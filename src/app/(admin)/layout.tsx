@@ -72,7 +72,7 @@ const NAV_GROUPS: NavCategory[] = [
       {
         id: "listening",
         href: "/admin/listening",
-        label: "Nghe & Dictation",
+        label: "Nghe",
         icon: Headphones,
       },
       {
@@ -115,13 +115,13 @@ const NAV_GROUPS: NavCategory[] = [
   },
   {
     id: "users-group",
-    title: "Học Viên & Doanh Thu",
+    title: "NGƯỜI DÙNG & THANH TOÁN",
     icon: Users,
     items: [
       {
         id: "users",
         href: "/admin/users",
-        label: "Quản lý người dùng",
+        label: "Người dùng",
         icon: Users,
       },
       {
@@ -135,7 +135,7 @@ const NAV_GROUPS: NavCategory[] = [
   },
   {
     id: "market-group",
-    title: "Thương Mại & Gamification",
+    title: "ĐIỂM THƯỞNG & PHẦN THƯỞNG",
     icon: ShoppingBag,
     items: [
       {
@@ -147,7 +147,7 @@ const NAV_GROUPS: NavCategory[] = [
       {
         id: "currency",
         href: "/admin/currency",
-        label: "Sổ Bánh Mì (Coin)",
+        label: "Sổ Bánh Mì",
         icon: Coins,
       },
     ],
@@ -258,8 +258,13 @@ export default function AdminLayout({
                 : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             }`}
           >
-            <OVERVIEW_ITEM.icon size={18} className={isOverviewActive ? "text-white" : "text-slate-500"} />
-            <span className="leading-snug text-left break-words">{OVERVIEW_ITEM.label}</span>
+            <OVERVIEW_ITEM.icon
+              size={18}
+              className={isOverviewActive ? "text-white" : "text-slate-500"}
+            />
+            <span className="leading-snug text-left break-words">
+              {OVERVIEW_ITEM.label}
+            </span>
           </Link>
 
           <div className="h-px bg-slate-200/80 my-1 mx-2 shrink-0" />
@@ -296,7 +301,11 @@ export default function AdminLayout({
                   <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-1">
                     <group.icon
                       size={16}
-                      className={isGroupActive ? "text-blue-600 shrink-0" : "text-slate-400 shrink-0"}
+                      className={
+                        isGroupActive
+                          ? "text-blue-600 shrink-0"
+                          : "text-slate-400 shrink-0"
+                      }
                     />
                     <span className="uppercase tracking-normal text-[11px] font-bold text-left leading-tight break-words flex-1">
                       {group.title}
@@ -344,7 +353,11 @@ export default function AdminLayout({
                             >
                               <item.icon
                                 size={15}
-                                className={isActive ? "text-white shrink-0" : "text-slate-400 shrink-0"}
+                                className={
+                                  isActive
+                                    ? "text-white shrink-0"
+                                    : "text-slate-400 shrink-0"
+                                }
                               />
                               <span className="leading-snug text-left break-words flex-1">
                                 {item.label}
@@ -420,6 +433,7 @@ export default function AdminLayout({
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsMobileNavOpen(true)}
+              aria-label="Mở thanh điều hướng"
               className="cursor-pointer rounded-xl bg-slate-100 p-1.5 text-slate-600 hover:text-slate-900"
             >
               <Menu size={22} />

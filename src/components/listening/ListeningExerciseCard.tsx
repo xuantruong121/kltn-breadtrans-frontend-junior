@@ -142,7 +142,7 @@ export function ListeningExerciseCard({
 
       {/* Footer: Clean inline metadata on Left, Clear CTA on Right */}
       <div className="mt-4 border-t border-slate-100 dark:border-slate-800/80 pt-3">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           {/* Tertiary inline metadata */}
           <div className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">
             <span>{cefr.label}</span>

@@ -477,7 +477,7 @@ export default function CourseCurriculumPage() {
               }}
               className="inline-flex min-h-10 items-center rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-2 text-xs font-semibold text-amber-900 transition-colors hover:border-amber-300 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-300"
             >
-              Gợi ý chương trình học
+              AI gợi ý chương trình học
             </button>
             <button
               type="button"
@@ -608,7 +608,7 @@ export default function CourseCurriculumPage() {
                   Gợi ý biên soạn
                 </p>
                 <h3 className="mt-1 text-lg font-bold text-slate-950">
-                  Gợi ý chương trình học
+                  AI gợi ý chương trình học
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">
                   Bạn có thể xem lại từng bài. Áp dụng chỉ điền vào form tạo bài
@@ -724,7 +724,7 @@ export default function CourseCurriculumPage() {
                 {isCurriculumAiLoading && (
                   <Loader2 size={14} className="animate-spin" />
                 )}
-                {curriculumAiCandidates.length ? "Tạo lại gợi ý" : "Tạo gợi ý"}
+                {curriculumAiCandidates.length ? "AI gợi ý lại" : "AI gợi ý chương trình"}
               </button>
               <button
                 type="button"

@@ -51,6 +51,10 @@ interface TopicDetail {
   _count?: { words: number; userProgress: number };
 }
 
+type VocabDraftWord = Omit<WordItem, "id" | "topicId" | "order"> & {
+  excluded?: boolean;
+};
+
 export default function AdminVocabPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -111,6 +115,41 @@ export default function AdminVocabPage() {
     exampleVi?: string;
     collocations?: Array<{ phrase: string; meaningVi: string }>;
   } | null>(null);
+  const [vocabFullDraft, setVocabFullDraft] = useState<{
+    title: string;
+    categoryName: string;
+    words: VocabDraftWord[];
+  } | null>(null);
+  const [vocabFullDraftCount, setVocabFullDraftCount] = useState(15);
+  const [pendingVocabWords, setPendingVocabWords] = useState<VocabDraftWord[]>(
+    [],
+  );
+
+  const handleSuggestVocabFullDraft = async () => {
+    if (!topicForm.title.trim()) {
+      toast.error("Vui lòng nhập tên chủ đề trước khi soạn full draft.");
+      return;
+    }
+    try {
+      const response: any = await axiosClient.post("/admin/vocab/ai/full-draft", {
+        topic: topicForm.title.trim(),
+        level: topicForm.level,
+        context: topicForm.description.trim() || undefined,
+        count: vocabFullDraftCount,
+      });
+      const data = response?.data || response;
+      if (!data?.title || !Array.isArray(data.words) || !data.words.length) {
+        throw new Error("AI không trả về full draft Vocabulary hợp lệ.");
+      }
+      setVocabFullDraft({
+        title: String(data.title),
+        categoryName: String(data.categoryName || topicForm.categoryName),
+        words: data.words.map((word: VocabDraftWord) => ({ ...word, excluded: false })),
+      });
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error?.message || "Không thể soạn full draft Vocabulary.");
+    }
+  };
 
   const handleAiSuggestWord = async () => {
     if (!wordForm.word.trim()) {
@@ -165,8 +204,27 @@ export default function AdminVocabPage() {
 
   // Mutations
   const createTopicMutation = useMutation({
-    mutationFn: async (dto: any) =>
-      axiosClient.post("/admin/vocab/topics", dto),
+    mutationFn: async ({ dto, words }: { dto: any; words: VocabDraftWord[] }) => {
+      const response: any = await axiosClient.post("/admin/vocab/topics", dto);
+      const created = response?.data || response;
+      if (created?.id && words.length) {
+        await Promise.all(
+          words.map((word, order) =>
+            axiosClient.post(`/admin/vocab/topics/${created.id}/words`, {
+              word: word.word,
+              pos: word.pos,
+              meaning: word.meaning,
+              ipaUs: word.ipaUs || undefined,
+              ipaUk: word.ipaUk || undefined,
+              exampleEn: word.exampleEn || undefined,
+              exampleVi: word.exampleVi || undefined,
+              order,
+            }),
+          ),
+        );
+      }
+      return response;
+    },
     onSuccess: (data: any) => {
       toast.success("Tạo bộ từ vựng mới thành công!");
       setIsTopicModalOpen(false);
@@ -177,6 +235,7 @@ export default function AdminVocabPage() {
         level: "INTERMEDIATE",
         isPro: false,
       });
+      setPendingVocabWords([]);
       queryClient.invalidateQueries({ queryKey: ["admin-vocab-topics"] });
       if (data?.id) setSelectedTopicId(data.id);
     },
@@ -827,7 +886,7 @@ export default function AdminVocabPage() {
                         {isAiSuggesting ? (
                           <Loader2 size={11} className="animate-spin" />
                         ) : null}
-                        Gợi ý nội dung
+                        AI gợi ý nội dung
                       </button>
                     </div>
                     <input
@@ -1087,6 +1146,8 @@ export default function AdminVocabPage() {
               level: "INTERMEDIATE",
               isPro: false,
             });
+            setPendingVocabWords([]);
+            setVocabFullDraft(null);
             setIsTopicModalOpen(true);
           }}
           className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors shadow-sm"
@@ -1232,10 +1293,33 @@ export default function AdminVocabPage() {
               </button>
             </div>
 
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="max-w-[15rem] text-xs leading-5 text-slate-600">
+                AI soạn chủ đề và danh sách từ nháp; Apply chỉ điền local, chưa lưu.
+              </p>
+              <div className="flex items-center gap-2">
+                <input
+                  aria-label="Số từ trong full draft Vocabulary"
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={vocabFullDraftCount}
+                  onChange={(event) => setVocabFullDraftCount(Math.min(30, Math.max(1, Number(event.target.value) || 1)))}
+                  className="w-14 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-center text-xs text-slate-900 outline-none focus:ring-2 focus:ring-slate-400"
+                />
+                <button type="button" onClick={() => void handleSuggestVocabFullDraft()} className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-700">
+                  AI soạn chủ đề từ vựng
+                </button>
+              </div>
+            </div>
+
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                createTopicMutation.mutate(topicForm);
+                createTopicMutation.mutate({
+                  dto: topicForm,
+                  words: pendingVocabWords.filter((word) => !word.excluded),
+                });
               }}
               className="space-y-3.5 text-sm"
             >
@@ -1272,7 +1356,7 @@ export default function AdminVocabPage() {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Cấp độ
+                  Cấp độ tham chiếu cho AI (không lưu ở chủ đề)
                 </label>
                 <select
                   value={topicForm.level}
@@ -1284,7 +1368,11 @@ export default function AdminVocabPage() {
                   <option value="BEGINNER">Cơ bản (Beginner)</option>
                   <option value="INTERMEDIATE">Trung cấp (Intermediate)</option>
                   <option value="ADVANCED">Nâng cao (Advanced)</option>
-                </select>
+                  </select>
+                <p className="mt-1 text-[11px] text-slate-500">
+                  VocabTopic hiện không có trường cấp độ; giá trị này chỉ dùng
+                  làm ngữ cảnh cho AI soạn nháp.
+                </p>
               </div>
 
               <div>
@@ -1321,6 +1409,40 @@ export default function AdminVocabPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {vocabFullDraft && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/60 p-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="vocab-full-draft-title" className="max-h-[calc(100dvh-2rem)] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-3">
+              <div>
+                <h3 id="vocab-full-draft-title" className="font-bold text-slate-900">Review full draft Vocabulary</h3>
+                <p className="mt-1 text-xs text-slate-500">Sửa hoặc loại từ trước khi Apply. Chỉ nút Tạo bản nháp mới ghi CMS.</p>
+              </div>
+              <button type="button" aria-label="Đóng review Vocabulary" onClick={() => setVocabFullDraft(null)} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><X size={18} /></button>
+            </div>
+            <div className="space-y-4 py-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="text-xs font-semibold text-slate-700">Tên chủ đề<input value={vocabFullDraft.title} onChange={(event) => setVocabFullDraft((current) => current ? { ...current, title: event.target.value } : current)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900" /></label>
+                <label className="text-xs font-semibold text-slate-700">Chuyên mục<input value={vocabFullDraft.categoryName} onChange={(event) => setVocabFullDraft((current) => current ? { ...current, categoryName: event.target.value } : current)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900" /></label>
+              </div>
+              <div className="space-y-3">
+                {vocabFullDraft.words.map((word, index) => (
+                  <div key={`${word.word}-${index}`} className={`rounded-xl border p-3 ${word.excluded ? "bg-slate-50 opacity-60" : "bg-white"}`}>
+                    <div className="flex items-center justify-between"><span className="text-xs font-semibold text-slate-600">Từ {index + 1}</span><button type="button" onClick={() => setVocabFullDraft((current) => current ? { ...current, words: current.words.map((item, itemIndex) => itemIndex === index ? { ...item, excluded: !item.excluded } : item) } : current)} className="text-xs font-semibold text-slate-500 underline">{word.excluded ? "Khôi phục" : "Loại từ"}</button></div>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <label className="text-xs font-semibold text-slate-700">Từ vựng<input disabled={word.excluded} value={word.word} onChange={(event) => setVocabFullDraft((current) => current ? { ...current, words: current.words.map((item, itemIndex) => itemIndex === index ? { ...item, word: event.target.value } : item) } : current)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900" /></label>
+                      <label className="text-xs font-semibold text-slate-700">Loại từ<input disabled={word.excluded} value={word.pos || ""} onChange={(event) => setVocabFullDraft((current) => current ? { ...current, words: current.words.map((item, itemIndex) => itemIndex === index ? { ...item, pos: event.target.value } : item) } : current)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900" /></label>
+                    </div>
+                    <label className="mt-3 block text-xs font-semibold text-slate-700">Nghĩa<input disabled={word.excluded} value={word.meaning} onChange={(event) => setVocabFullDraft((current) => current ? { ...current, words: current.words.map((item, itemIndex) => itemIndex === index ? { ...item, meaning: event.target.value } : item) } : current)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900" /></label>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-xs font-semibold text-slate-700">Ví dụ tiếng Anh<textarea disabled={word.excluded} rows={2} value={word.exampleEn || ""} onChange={(event) => setVocabFullDraft((current) => current ? { ...current, words: current.words.map((item, itemIndex) => itemIndex === index ? { ...item, exampleEn: event.target.value } : item) } : current)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900" /></label><label className="text-xs font-semibold text-slate-700">Ví dụ tiếng Việt<textarea disabled={word.excluded} rows={2} value={word.exampleVi || ""} onChange={(event) => setVocabFullDraft((current) => current ? { ...current, words: current.words.map((item, itemIndex) => itemIndex === index ? { ...item, exampleVi: event.target.value } : item) } : current)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900" /></label></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3"><button type="button" onClick={() => setVocabFullDraft(null)} className="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700">Bỏ qua</button><button type="button" onClick={() => { const words = vocabFullDraft.words.filter((word) => !word.excluded && word.word.trim() && word.meaning.trim()); if (!vocabFullDraft.title.trim() || !words.length) { toast.error("Full draft cần tên chủ đề và ít nhất một từ hợp lệ."); return; } setTopicForm((current) => ({ ...current, title: vocabFullDraft.title, categoryName: vocabFullDraft.categoryName })); setPendingVocabWords(words); setVocabFullDraft(null); toast.success("Đã Apply full draft vào form. Chưa ghi database."); }} className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800">Apply vào form</button></div>
           </div>
         </div>
       )}

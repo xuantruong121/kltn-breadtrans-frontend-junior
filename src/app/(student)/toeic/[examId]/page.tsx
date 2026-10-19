@@ -103,6 +103,9 @@ export default function ToeicBriefingPage({
           {data.description ||
             "Bài luyện TOEIC theo cấu trúc Listening và Reading."}
         </p>
+        <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
+          Lưu ý: Đây là đề luyện tập tham khảo mô phỏng cấu trúc TOEIC. Nội dung không phải đề thi chính thức do ETS phát hành và không thay thế bài thi TOEIC chính thức.
+        </p>
         <div className="mt-8 grid gap-3 sm:grid-cols-3">
           <div className="rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4">
             <FileText className="text-sky-600 dark:text-sky-400" size={20} />
