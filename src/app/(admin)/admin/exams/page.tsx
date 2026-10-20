@@ -1476,8 +1476,8 @@ export default function AdminExamsPage() {
                           Chưa có hình ảnh
                         </p>
                         <p className="mt-1 text-xs leading-5 text-amber-800">
-                          Ảnh AI chưa khả dụng. Draft vẫn giữ nguyên câu hỏi và
-                          mô tả ảnh để Admin bổ sung sau.
+                          Nội dung đã được tạo thành công. Ảnh chưa được tạo hoặc
+                          tìm thấy. Bạn có thể bổ sung ảnh trước khi xuất bản.
                         </p>
                         {group.imageBrief && (
                           <p className="mt-2 rounded-md bg-white/70 p-2 text-left text-xs text-slate-600">

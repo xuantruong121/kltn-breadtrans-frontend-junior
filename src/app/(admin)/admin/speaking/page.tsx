@@ -21,6 +21,8 @@ import { Pagination } from "@/components/ui";
 import toast from "react-hot-toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import ImageUploadField from "@/components/admin/ImageUploadField";
+import RequiredMediaNotice from "@/components/admin/RequiredMediaNotice";
 
 interface SpeakingExercise {
   id: number;
@@ -1607,23 +1609,16 @@ export default function AdminSpeakingPage() {
             </div>
 
             {exerciseForm.taskType === "DESCRIBE_PICTURE" && (
-              <div>
-                <label className="text-xs font-semibold text-slate-700">
-                  URL hình ảnh learner-visible *
-                </label>
-                <input
-                  required
-                  type="url"
+              <div className="space-y-2">
+                <ImageUploadField
+                  label="Ảnh mô tả *"
                   value={exerciseForm.imageUrl}
-                  onChange={(e) =>
-                    setExerciseForm({
-                      ...exerciseForm,
-                      imageUrl: e.target.value,
-                    })
+                  onChange={(imageUrl) =>
+                    setExerciseForm({ ...exerciseForm, imageUrl })
                   }
-                  placeholder="https://.../toeic/shared/images/..."
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500"
+                  helperText="Dùng ảnh PNG, JPG hoặc WEBP cho bài mô tả hình. Ảnh được lưu trực tiếp trên Cloudflare R2."
                 />
+                {!exerciseForm.imageUrl.trim() && <RequiredMediaNotice />}
               </div>
             )}
 

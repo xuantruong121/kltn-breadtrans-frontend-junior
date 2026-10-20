@@ -80,7 +80,7 @@ function statusFor(item: SetItem | undefined, slot: Slot): {
     return { label: "Draft", className: "text-slate-700 bg-slate-100", icon: XCircle };
   }
   if (slot.taskKind === "PICTURE_SENTENCE" && !item.source.imageUrl) {
-    return { label: "Missing media", className: "text-amber-700 bg-amber-50", icon: XCircle };
+    return { label: "Thiếu ảnh bắt buộc", className: "text-amber-700 bg-amber-50", icon: XCircle };
   }
   return { label: "Ready", className: "text-emerald-700 bg-emerald-50", icon: CheckCircle2 };
 }

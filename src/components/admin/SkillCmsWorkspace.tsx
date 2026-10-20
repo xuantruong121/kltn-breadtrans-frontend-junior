@@ -23,6 +23,7 @@ import {
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import ImageUploadField from "@/components/admin/ImageUploadField";
+import RequiredMediaNotice from "@/components/admin/RequiredMediaNotice";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 type Domain = "listening" | "reading" | "writing";
@@ -1699,13 +1700,14 @@ export default function SkillCmsWorkspace({
                 <>
                   <div className="md:col-span-2">
                     <ImageUploadField
-                      label="Hình ảnh miêu tả (Picture Task)"
+                      label="Hình ảnh miêu tả *"
                       value={question.imageUrl}
                       onChange={(url) =>
                         setQuestion({ ...question, imageUrl: url })
                       }
                       helperText="Tải lên ảnh mô tả cho bài luyện viết. Hệ thống lưu trực tiếp lên Cloudflare R2."
                     />
+                    {!question.imageUrl.trim() && <RequiredMediaNotice className="mt-2" />}
                   </div>
                   <label className="text-sm font-medium">
                     Keywords

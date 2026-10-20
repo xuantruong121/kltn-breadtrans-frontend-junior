@@ -14,6 +14,10 @@ interface ImageUploadFieldProps {
   helperText?: string;
 }
 
+const ACCEPTED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const UNSUPPORTED_IMAGE_MESSAGE =
+  "Định dạng SVG không được hỗ trợ. Vui lòng dùng PNG, JPG hoặc WEBP.";
+
 export default function ImageUploadField({
   label = "Ảnh bìa",
   value,
@@ -29,8 +33,8 @@ export default function ImageUploadField({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      toast.error("Vui lòng chọn file hình ảnh hợp lệ (JPG, PNG, WEBP).");
+    if (!ACCEPTED_IMAGE_TYPES.has(file.type)) {
+      toast.error(UNSUPPORTED_IMAGE_MESSAGE);
       return;
     }
 
@@ -143,7 +147,7 @@ export default function ImageUploadField({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/png,image/jpeg,image/webp"
           className="hidden"
           onChange={handleFileChange}
           disabled={disabled || uploading}
