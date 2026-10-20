@@ -138,10 +138,9 @@ describe("Navigation Route Classification", () => {
     assert.equal(isMarketRoute("/market/items"), true);
     assert.equal(isMarketRoute("/arena"), false);
 
-    // 8. More (Arena, Help/Contact/Feedback)
+    // 8. More (Arena and FAQ)
     assert.equal(isMoreRoute("/arena"), true);
     assert.equal(isMoreRoute("/help"), true);
-    assert.equal(isMoreRoute("/help#feedback"), true);
     assert.equal(isMoreRoute("/dashboard"), false);
   });
 });

@@ -44,16 +44,13 @@ describe("Header Navigation Restructure Verification", () => {
     assert.equal(labels.includes("Đề xuất"), false);
   });
 
-  it("verifies the More dropdown contains exactly Bảng xếp hạng, Liên hệ, and Đề xuất", () => {
-    assert.equal(MORE_DROPDOWN_ITEMS.length, 3);
+  it("verifies the More dropdown contains exactly Bảng xếp hạng and FAQ", () => {
+    assert.equal(MORE_DROPDOWN_ITEMS.length, 2);
     assert.equal(MORE_DROPDOWN_ITEMS[0].label, "Bảng xếp hạng");
     assert.equal(MORE_DROPDOWN_ITEMS[0].href, "/arena");
 
-    assert.equal(MORE_DROPDOWN_ITEMS[1].label, "Liên hệ");
+    assert.equal(MORE_DROPDOWN_ITEMS[1].label, "FAQ");
     assert.equal(MORE_DROPDOWN_ITEMS[1].href, "/help");
-
-    assert.equal(MORE_DROPDOWN_ITEMS[2].label, "Đề xuất");
-    assert.equal(MORE_DROPDOWN_ITEMS[2].href, "/help#feedback");
   });
 
   it("activates 'Đọc' for both Reading and Grammar routes", () => {
@@ -79,11 +76,10 @@ describe("Header Navigation Restructure Verification", () => {
     assert.equal(isCoursesRoute("/market"), false);
   });
 
-  it("activates 'More' for Leaderboard and Help/Contact/Feedback routes", () => {
+  it("activates 'More' for Leaderboard and FAQ routes", () => {
     assert.equal(isMoreRoute("/arena"), true);
     assert.equal(isMoreRoute("/arena/weekly"), true);
     assert.equal(isMoreRoute("/help"), true);
-    assert.equal(isMoreRoute("/help#feedback"), true);
 
     assert.equal(isMoreRoute("/dashboard"), false);
     assert.equal(isMoreRoute("/practice"), false);

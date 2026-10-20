@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   BookOpen,
   CreditCard,
@@ -37,6 +37,8 @@ import {
   Activity,
   Sun,
   Moon,
+  Mail,
+  MessageSquare,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
@@ -61,6 +63,8 @@ import {
   isMoreRoute,
 } from "./navUtils";
 import { ThemeToggle } from "./ThemeToggle";
+import { SuggestionModal } from "@/components/suggestion/SuggestionModal";
+import { supportService } from "@/lib/api/services/support.service";
 
 const emptySubscribe = () => () => {};
 
@@ -89,6 +93,7 @@ function formatRelativeTime(dateStr: string) {
 export function AppHeader() {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, logout } = useAuthStore();
   const { breads, streak, level, exp } = useGamificationStore();
   const { resolvedTheme, toggleTheme } = useTheme();
@@ -98,6 +103,7 @@ export function AppHeader() {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [notificationsExpanded, setNotificationsExpanded] = useState(true);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [suggestionOpen, setSuggestionOpen] = useState(false);
 
   const profileRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLDivElement>(null);
@@ -105,11 +111,19 @@ export function AppHeader() {
   const isDark = isReady ? resolvedTheme === "dark" : false;
 
   useEffect(() => {
+    if (pathname === "/hub" && searchParams.get("suggestion") === "1") {
+      const timer = window.setTimeout(() => setSuggestionOpen(true), 0);
+      return () => window.clearTimeout(timer);
+    }
+  }, [pathname, searchParams]);
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setMobileOpen(false);
         setProfileMenuOpen(false);
         setMoreOpen(false);
+        setSuggestionOpen(false);
       }
     };
     const onPointerDown = (event: MouseEvent) => {
@@ -141,6 +155,11 @@ export function AppHeader() {
     setMobileOpen(false);
     setProfileMenuOpen(false);
     setMoreOpen(false);
+  };
+
+  const openSuggestion = () => {
+    closeMenus();
+    setSuggestionOpen(true);
   };
 
   const handleLogout = async () => {
@@ -183,6 +202,14 @@ export function AppHeader() {
     refetchInterval: 30000,
   });
   const unreadCount = unreadData?.count || 0;
+
+  const { data: messageUnreadData } = useQuery({
+    queryKey: ["support", "unread-count"],
+    queryFn: supportService.getMyUnreadCount,
+    enabled: !!user && user.role === "STUDENT",
+    refetchInterval: 30000,
+  });
+  const messageUnreadCount = messageUnreadData?.count || 0;
 
   const { data: inboxData, isLoading: isInboxLoading } = useQuery({
     queryKey: ["notifications", "recent", "unread"],
@@ -239,7 +266,7 @@ export function AppHeader() {
   // 7. Luyện đề (Exam Practice: TOEIC & Certificate test hub)
   // 8. Khóa học (unified Course Hub)
   // 9. Cửa hàng
-  // 10. ... More (Dropdown containing: Bảng xếp hạng, Liên hệ, Đề xuất)
+  // 10. ... More (Dropdown containing general navigation only)
   const desktopNavLinks = [
     {
       label: "Nghe",
@@ -299,10 +326,8 @@ export function AppHeader() {
     },
   ];
 
-  // The "... More" dropdown contains exactly:
-  // 1. Bảng xếp hạng (/arena)
-  // 2. Liên hệ (/help)
-  // 3. Đề xuất (/help#feedback)
+  // Contact and suggestions are account actions in the user dropdown.
+  // The compact More menu contains only general navigation destinations.
   const moreDropdownItems = [
     {
       label: "Bảng xếp hạng",
@@ -312,18 +337,11 @@ export function AppHeader() {
       description: "Bảng vàng thi đua tuần & tích lũy EXP",
     },
     {
-      label: "Liên hệ",
+      label: "FAQ",
       href: "/help",
       icon: CircleHelp,
       iconColor: "text-sky-500 dark:text-sky-400",
-      description: "Trung tâm trợ giúp & email hỗ trợ học tập",
-    },
-    {
-      label: "Đề xuất",
-      href: "/help#feedback",
-      icon: Lightbulb,
-      iconColor: "text-emerald-500 dark:text-emerald-400",
-      description: "Đóng góp ý kiến cải tiến nền tảng & bài học",
+      description: "Giải đáp các câu hỏi thường gặp",
     },
   ];
 
@@ -336,7 +354,7 @@ export function AppHeader() {
     { label: "Khóa học", href: "/courses", icon: GraduationCap },
     { label: "Cửa hàng", href: "/market", icon: ShoppingBag },
     { label: "Bảng xếp hạng", href: "/arena", icon: Trophy },
-    { label: "Trợ giúp & Liên hệ", href: "/help", icon: CircleHelp },
+    { label: "FAQ", href: "/help", icon: CircleHelp },
   ];
 
   return (
@@ -707,6 +725,16 @@ export function AppHeader() {
                     </Link>
 
                     <Link
+                      href="/messages"
+                      onClick={closeMenus}
+                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap"
+                    >
+                      <MessageSquare size={16} className="text-slate-500 dark:text-slate-400 shrink-0" />
+                      <span className="flex-1">Tin nhắn</span>
+                      {messageUnreadCount > 0 && <span className="min-w-5 rounded-full bg-amber-500 px-1.5 py-0.5 text-center text-[9px] font-black leading-none text-white" aria-label={`${messageUnreadCount > 99 ? "99+" : messageUnreadCount} tin nhắn chưa đọc`}>{messageUnreadCount > 99 ? "99+" : messageUnreadCount}</span>}
+                    </Link>
+
+                    <Link
                       href="/pet"
                       onClick={closeMenus}
                       className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap"
@@ -723,6 +751,25 @@ export function AppHeader() {
                       <KeyRound size={16} className="text-slate-400 shrink-0" />
                       <span>Đổi mật khẩu</span>
                     </Link>
+
+                    <a
+                      href="https://www.facebook.com/truongngynz.121"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={closeMenus}
+                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap"
+                    >
+                      <Mail size={16} className="text-sky-600 shrink-0" />
+                      <span>Liên hệ</span>
+                    </a>
+                    <button
+                      type="button"
+                      onClick={openSuggestion}
+                      className="flex w-full items-center gap-2.5 rounded-xl p-2 text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-orange-50 dark:hover:bg-orange-950/30 hover:text-orange-800 dark:hover:text-orange-200 transition-colors whitespace-nowrap"
+                    >
+                      <Lightbulb size={16} className="text-orange-600 shrink-0" />
+                      <span>Đề xuất &amp; Góp ý</span>
+                    </button>
 
                     {/* Dark Mode Toggle Item */}
                     <div
@@ -1053,6 +1100,32 @@ export function AppHeader() {
                         <User size={16} />
                         <span>Thông tin cá nhân</span>
                       </Link>
+                      <Link
+                        href="/messages"
+                        onClick={closeMenus}
+                        className="flex min-h-[44px] items-center justify-center gap-2 rounded-2xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        <MessageSquare size={16} />
+                        <span>Tin nhắn{messageUnreadCount > 0 ? ` (${messageUnreadCount > 99 ? "99+" : messageUnreadCount})` : ""}</span>
+                      </Link>
+                      <a
+                        href="https://www.facebook.com/truongngynz.121"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={closeMenus}
+                        className="flex min-h-[44px] items-center justify-center gap-2 rounded-2xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        <Mail size={16} />
+                        <span>Liên hệ</span>
+                      </a>
+                      <button
+                        type="button"
+                        onClick={openSuggestion}
+                        className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-2.5 text-xs font-bold text-orange-800 hover:bg-orange-100 transition-colors"
+                      >
+                        <Lightbulb size={16} />
+                        <span>Đề xuất &amp; Góp ý</span>
+                      </button>
                       <button
                         type="button"
                         onClick={handleLogout}
@@ -1108,6 +1181,7 @@ export function AppHeader() {
         ) : null,
         document.body
       )}
+      <SuggestionModal isOpen={suggestionOpen} onClose={() => setSuggestionOpen(false)} />
     </header>
   );
 }

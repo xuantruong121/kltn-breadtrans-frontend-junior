@@ -112,6 +112,5 @@ export const MAIN_NAV_ORDER: NavItemConfig[] = [
 
 export const MORE_DROPDOWN_ITEMS: NavItemConfig[] = [
   { label: "Bảng xếp hạng", href: "/arena" },
-  { label: "Liên hệ", href: "/help" },
-  { label: "Đề xuất", href: "/help#feedback" },
+  { label: "FAQ", href: "/help" },
 ];

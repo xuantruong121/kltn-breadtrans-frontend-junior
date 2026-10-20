@@ -710,7 +710,7 @@ export function AccountHub() {
 
               <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-2xs space-y-6">
                 {/* Avatar block */}
-                <div className="flex flex-col items-start gap-3">
+                <div className="flex items-center gap-3">
                   <div className="size-20 sm:size-24 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden font-black text-2xl text-slate-600 dark:text-slate-300">
                     {formData.avatar ? (
                       <img
@@ -724,7 +724,7 @@ export function AccountHub() {
                     )}
                   </div>
 
-                  <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-750 transition-colors cursor-pointer">
+                  <label className="inline-flex min-h-10 items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-750 transition-colors cursor-pointer">
                     <Camera size={14} />
                     <span>Đổi ảnh</span>
                     <input
