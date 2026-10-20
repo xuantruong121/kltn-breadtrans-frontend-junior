@@ -28,9 +28,9 @@ const authStorage = {
 
     const useSessionStorage =
       window.sessionStorage.getItem(AUTH_PERSISTENCE_MODE_KEY) === "session";
-    return (useSessionStorage ? window.sessionStorage : window.localStorage).getItem(
-      name,
-    );
+    return (
+      useSessionStorage ? window.sessionStorage : window.localStorage
+    ).getItem(name);
   },
   setItem: (name: string, value: string) => {
     if (typeof window === "undefined") return;

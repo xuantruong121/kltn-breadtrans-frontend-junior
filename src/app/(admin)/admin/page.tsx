@@ -240,15 +240,6 @@ export default function AdminDashboardPage() {
             </span>
           </p>
         </div>
-
-        <div className="flex items-center gap-2">
-          <Link
-            href="/admin/courses"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors"
-          >
-            Soạn nội dung <ArrowRight size={14} strokeWidth={2} />
-          </Link>
-        </div>
       </div>
 
       <section

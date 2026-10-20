@@ -55,7 +55,7 @@ test("Account Hub exposes only canonical tab keys after alias cleanup", () => {
   for (const legacyTab of ["profile:", "plan:", "plans:", "quotas:", "password:", "device:", "notification:", "notifications:", "inventory:", "progress:"]) {
     assert.doesNotMatch(accountHub, new RegExp(`\\b${legacyTab}`));
   }
-  for (const canonicalTab of ["account-profile", "account-plan", "account-password", "account-device", "account-notification", "account-inventory", "learning-progress"]) {
+  for (const canonicalTab of ["account-profile", "account-plan", "account-password", "account-device", "account-inventory", "learning-progress", "diagnostic-result"]) {
     assert.match(accountHub, new RegExp(canonicalTab));
   }
 });

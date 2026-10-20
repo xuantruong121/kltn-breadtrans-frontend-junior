@@ -106,10 +106,18 @@ export function AccountHub() {
     router.replace(`${currentPath}?tab=${key}`, { scroll: false });
   };
 
-  const handleLogout = () => {
-    queryClient.clear();
-    logout();
-    router.replace("/");
+  const handleLogout = async () => {
+    try {
+      // Revoke this device session server-side before removing the browser
+      // session, while retaining a safe local fallback for network failures.
+      await axiosClient.post("/auth/logout");
+    } catch {
+      // Local logout remains mandatory even when the request cannot complete.
+    } finally {
+      queryClient.clear();
+      logout();
+      router.replace("/");
+    }
   };
 
   // ── Queries & State for Profile Tab ──────────────────────────
