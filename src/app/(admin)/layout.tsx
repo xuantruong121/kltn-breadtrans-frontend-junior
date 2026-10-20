@@ -246,7 +246,10 @@ export default function AdminLayout({
           </button>
         </div>
 
-        <nav className="p-3 flex flex-col gap-1.5 overflow-y-auto flex-1 min-h-0">
+        <nav
+          aria-label="Điều hướng quản trị"
+          className="p-3 flex flex-col gap-1.5 overflow-y-auto flex-1 min-h-0"
+        >
           {/* Standalone Tổng quan Link */}
           <Link
             href={OVERVIEW_ITEM.href}
@@ -397,6 +400,12 @@ export default function AdminLayout({
       data-theme="light"
       className="light flex h-[100dvh] bg-slate-50 overflow-hidden text-slate-800"
     >
+      <a
+        href="#admin-main"
+        className="sr-only z-[100] rounded-md bg-white px-4 py-3 text-sm font-bold text-slate-900 shadow-lg focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:outline-none focus:ring-2 focus:ring-blue-600"
+      >
+        Bỏ qua thanh điều hướng, đến nội dung chính
+      </a>
       {/* Desktop Sidebar (lg+) */}
       <aside className="hidden w-64 lg:w-72 shrink-0 flex-col border-r border-slate-200 bg-white text-slate-700 lg:flex">
         {sidebarNav}
@@ -427,7 +436,11 @@ export default function AdminLayout({
       </AnimatePresence>
 
       {/* Main Content Area */}
-      <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
+      <main
+        id="admin-main"
+        tabIndex={-1}
+        className="flex-1 min-w-0 flex flex-col overflow-hidden outline-none"
+      >
         {/* Mobile Header Bar */}
         <header className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-3 text-slate-900 lg:hidden">
           <div className="flex items-center gap-3">

@@ -481,7 +481,7 @@ export default function AdminExamsPage() {
           "Không tìm thấy ảnh phù hợp. Bạn có thể tải ảnh lên thủ công.",
         );
     },
-      onError: (err: any) =>
+    onError: (err: any) =>
       toast.error(
         err?.response?.data?.message || "Không thể tìm ảnh tự động lúc này.",
       ),
@@ -1724,7 +1724,7 @@ export default function AdminExamsPage() {
         )}
 
         {isImageSearchOpen && imageSearchGroup && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
             <div className="w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl max-h-[92vh] overflow-y-auto">
               <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
                 <div>
@@ -1814,7 +1814,8 @@ export default function AdminExamsPage() {
                       <div className="space-y-2 p-3">
                         <div className="flex items-center justify-between gap-2 text-xs text-slate-500">
                           <span className="truncate">
-                            {candidate.provider || "Nguồn mở"} · {candidate.author}
+                            {candidate.provider || "Nguồn mở"} ·{" "}
+                            {candidate.author}
                           </span>
                           <span className="shrink-0">
                             {candidate.width}×{candidate.height}
@@ -1836,16 +1837,20 @@ export default function AdminExamsPage() {
                             <p className="font-semibold">
                               {candidate.analysis.status === "SUITABLE"
                                 ? `Phù hợp · ${Math.round(candidate.analysis.score * 100)}%`
-                                : candidate.analysis.status === "ANALYSIS_FAILED"
+                                : candidate.analysis.status ===
+                                    "ANALYSIS_FAILED"
                                   ? "Chưa có kết luận AI"
                                   : "AI đánh giá chưa tối ưu"}
                             </p>
                             <p className="mt-1 line-clamp-2">
                               {candidate.analysis.status === "SUITABLE"
                                 ? candidate.analysis.sceneSummary
-                                : candidate.analysis.status === "ANALYSIS_FAILED"
+                                : candidate.analysis.status ===
+                                    "ANALYSIS_FAILED"
                                   ? "Admin cần kiểm tra ảnh và câu hỏi trước khi xuất bản."
-                                  : candidate.analysis.rejectionReasons?.join(", ")}
+                                  : candidate.analysis.rejectionReasons?.join(
+                                      ", ",
+                                    )}
                             </p>
                           </div>
                         ) : (

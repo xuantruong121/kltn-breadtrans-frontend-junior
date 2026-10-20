@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { PenTool, Plus, BookOpen, Users, FileText } from "lucide-react";
+import { PenTool, Plus, BookOpen, Users, FileText, Paperclip, Zap } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import dayjs from "dayjs";
 import { Pagination } from "@/components/ui";
@@ -625,8 +625,9 @@ export default function AdminAssignmentsPage() {
                           {selectedAssignment?.type === "QUIZ" ? (
                             <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm">
                               <div className="flex items-center gap-2 text-purple-700 font-bold mb-1">
-                                <span>
-                                  ⚡ Đã được hệ thống chấm tự động 100%
+                                <span className="inline-flex items-center gap-2">
+                                  <Zap size={14} aria-hidden="true" />
+                                  Đã được hệ thống chấm tự động 100%
                                 </span>
                               </div>
                               <p className="text-slate-600 text-xs">
@@ -646,7 +647,10 @@ export default function AdminAssignmentsPage() {
                                   rel="noreferrer"
                                   className="block mt-2 text-blue-600 hover:underline"
                                 >
-                                  📎 Mở file đính kèm
+                                  <span className="inline-flex items-center gap-1">
+                                    <Paperclip size={14} aria-hidden="true" />
+                                    Mở file đính kèm
+                                  </span>
                                 </a>
                               )}
                             </div>

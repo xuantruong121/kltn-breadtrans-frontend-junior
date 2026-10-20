@@ -40,6 +40,7 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
+import axiosClient from "@/lib/api/axiosClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { notificationService, NotificationItem } from "@/lib/api/services/notification.service";
 import { planService, PLAN_QUERY_KEYS } from "@/lib/api/services/plan.service";
@@ -142,11 +143,20 @@ export function AppHeader() {
     setMoreOpen(false);
   };
 
-  const handleLogout = () => {
-    queryClient.clear();
-    logout();
-    closeMenus();
-    router.push("/");
+  const handleLogout = async () => {
+    try {
+      // The API revokes the current device refresh session and deny-lists the
+      // access token. Local cleanup still runs if the network is unavailable.
+      await axiosClient.post("/auth/logout");
+    } catch {
+      // A learner must never be trapped in an authenticated client state when
+      // server-side logout cannot be reached.
+    } finally {
+      queryClient.clear();
+      logout();
+      closeMenus();
+      router.push("/");
+    }
   };
 
   const isStudent = isReady && user?.role === "STUDENT";

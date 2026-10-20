@@ -48,7 +48,9 @@ export default function V5LessonEditorPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [isPublishConfirmOpen, setIsPublishConfirmOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"sections" | "exercises" | "info" | "preview">("sections");
+  const [activeTab, setActiveTab] = useState<
+    "sections" | "exercises" | "info" | "preview"
+  >("sections");
 
   // Lesson Info Form
   const [infoForm, setInfoForm] = useState({
@@ -56,6 +58,8 @@ export default function V5LessonEditorPage() {
     summary: "",
     learningObjectives: "",
   });
+  const [aiCandidate, setAiCandidate] = useState<any | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   // Section Modal
   const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
@@ -82,18 +86,26 @@ export default function V5LessonEditorPage() {
   });
 
   // Delete Confirmations
-  const [pendingDeleteSection, setPendingDeleteSection] = useState<{ id: number; heading: string } | null>(null);
+  const [pendingDeleteSection, setPendingDeleteSection] = useState<{
+    id: number;
+    heading: string;
+  } | null>(null);
   const [pendingDeleteQuestion, setPendingDeleteQuestion] = useState<{
     exerciseId: number;
     questionId: number;
     prompt: string;
   } | null>(null);
-  const [pendingDeleteExercise, setPendingDeleteExercise] = useState<{ id: number; title: string } | null>(null);
+  const [pendingDeleteExercise, setPendingDeleteExercise] = useState<{
+    id: number;
+    title: string;
+  } | null>(null);
 
   const load = async () => {
     setLoading(true);
     try {
-      const data: any = await axiosClient.get(`/admin/courses/${courseId}/studio`);
+      const data: any = await axiosClient.get(
+        `/admin/courses/${courseId}/studio`,
+      );
       setCourseTitle(data.course?.title || "");
       const found = data.lessons?.find((l: any) => l.id === lessonId);
       if (found) {
@@ -125,14 +137,17 @@ export default function V5LessonEditorPage() {
     }
     setBusy(true);
     try {
-      await axiosClient.patch(`/admin/courses/${courseId}/studio/lessons/${lessonId}`, {
-        title: infoForm.title.trim(),
-        summary: infoForm.summary.trim(),
-        learningObjectives: infoForm.learningObjectives
-          .split("\n")
-          .map((x) => x.trim())
-          .filter(Boolean),
-      });
+      await axiosClient.patch(
+        `/admin/courses/${courseId}/studio/lessons/${lessonId}`,
+        {
+          title: infoForm.title.trim(),
+          summary: infoForm.summary.trim(),
+          learningObjectives: infoForm.learningObjectives
+            .split("\n")
+            .map((x) => x.trim())
+            .filter(Boolean),
+        },
+      );
       toast.success("Đã lưu thông tin bài học!");
       await load();
     } catch (e) {
@@ -142,16 +157,61 @@ export default function V5LessonEditorPage() {
     }
   };
 
+  const generateAiContent = async () => {
+    setAiLoading(true);
+    try {
+      const response: any = await axiosClient.post(
+        `/admin/courses/${courseId}/studio/lessons/${lessonId}/ai/content/generate`,
+        {},
+      );
+      const data = response?.data || response;
+      if (!data?.candidate) throw new Error("missing candidate");
+      setAiCandidate(data.candidate);
+      toast.success("Đã tạo nội dung nháp. Hãy review trước khi Apply.");
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, "Không thể tạo nội dung AI lúc này."));
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const applyAiContent = async () => {
+    if (!aiCandidate) return;
+    setBusy(true);
+    try {
+      await axiosClient.post(
+        `/admin/courses/${courseId}/studio/lessons/${lessonId}/ai/content/apply`,
+        aiCandidate,
+      );
+      toast.success("Đã áp dụng nội dung AI vào Lesson Draft.");
+      setAiCandidate(null);
+      await load();
+    } catch (e) {
+      toast.error(
+        getApiErrorMessage(e, "Không thể áp dụng nội dung AI vào Draft."),
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
   // PUBLISH LESSON
   const publishLesson = async () => {
     setBusy(true);
     try {
-      await axiosClient.post(`/admin/courses/${courseId}/studio/lessons/${lessonId}/publish`);
+      await axiosClient.post(
+        `/admin/courses/${courseId}/studio/lessons/${lessonId}/publish`,
+      );
       toast.success("Đã xuất bản bài học thành công!");
       setIsPublishConfirmOpen(false);
       await load();
     } catch (e) {
-      toast.error(getApiErrorMessage(e, "Bài học chưa đủ điều kiện xuất bản (cần ít nhất 1 section và Final Check)."));
+      toast.error(
+        getApiErrorMessage(
+          e,
+          "Bài học chưa đủ điều kiện xuất bản (cần ít nhất 1 section và Final Check).",
+        ),
+      );
     } finally {
       setBusy(false);
     }
@@ -171,7 +231,10 @@ export default function V5LessonEditorPage() {
 
   const openEditSection = (s: any) => {
     setEditingSection(s);
-    const contentText = typeof s.content === "object" ? s.content?.text || JSON.stringify(s.content) : String(s.content || "");
+    const contentText =
+      typeof s.content === "object"
+        ? s.content?.text || JSON.stringify(s.content)
+        : String(s.content || "");
     setSectionForm({
       type: s.type || "THEORY",
       heading: s.heading || "",
@@ -209,7 +272,7 @@ export default function V5LessonEditorPage() {
             heading: sectionForm.heading.trim(),
             content: { text: sectionForm.content.trim() },
             isRequired: sectionForm.isRequired,
-            order: (lesson?.sections?.length || 0),
+            order: lesson?.sections?.length || 0,
           },
         );
         toast.success("Đã thêm mục nội dung mới!");
@@ -265,22 +328,31 @@ export default function V5LessonEditorPage() {
   };
 
   // EXERCISE ACTIONS
-  const createStandardExercise = async (slug: "guided-practice" | "final-check") => {
+  const createStandardExercise = async (
+    slug: "guided-practice" | "final-check",
+  ) => {
     const isFinal = slug === "final-check";
     setBusy(true);
     try {
-      await axiosClient.post(`/admin/courses/${courseId}/studio/lessons/${lessonId}/exercises`, {
-        slug,
-        type: "MULTIPLE_CHOICE",
-        title: isFinal ? "Kiểm tra cuối bài (Final Check)" : "Luyện tập có hướng dẫn (Guided Practice)",
-        prompt: isFinal
-          ? "Hoàn thành các câu hỏi sau để kiểm tra mức độ nắm vững bài học."
-          : "Thực hành ngay các kiến thức vừa học qua các câu hỏi củng cố.",
-        content: {},
-        required: true,
-        order: isFinal ? 1 : 0,
-      });
-      toast.success(isFinal ? "Đã khởi tạo Final Check" : "Đã khởi tạo Guided Practice");
+      await axiosClient.post(
+        `/admin/courses/${courseId}/studio/lessons/${lessonId}/exercises`,
+        {
+          slug,
+          type: "MULTIPLE_CHOICE",
+          title: isFinal
+            ? "Kiểm tra cuối bài (Final Check)"
+            : "Luyện tập có hướng dẫn (Guided Practice)",
+          prompt: isFinal
+            ? "Hoàn thành các câu hỏi sau để kiểm tra mức độ nắm vững bài học."
+            : "Thực hành ngay các kiến thức vừa học qua các câu hỏi củng cố.",
+          content: {},
+          required: true,
+          order: isFinal ? 1 : 0,
+        },
+      );
+      toast.success(
+        isFinal ? "Đã khởi tạo Final Check" : "Đã khởi tạo Guided Practice",
+      );
       await load();
     } catch (e) {
       toast.error(getApiErrorMessage(e, "Không thể tạo bài luyện tập."));
@@ -379,7 +451,8 @@ export default function V5LessonEditorPage() {
             prompt: questionForm.prompt.trim(),
             options,
             correctAnswer: chosenAnswer,
-            explanation: questionForm.explanation.trim() || "Chưa có giải thích chi tiết.",
+            explanation:
+              questionForm.explanation.trim() || "Chưa có giải thích chi tiết.",
           },
         );
         toast.success("Đã cập nhật câu hỏi!");
@@ -390,8 +463,9 @@ export default function V5LessonEditorPage() {
             prompt: questionForm.prompt.trim(),
             options,
             correctAnswer: chosenAnswer,
-            explanation: questionForm.explanation.trim() || "Chưa có giải thích chi tiết.",
-            order: (targetExercise.questions?.length || 0),
+            explanation:
+              questionForm.explanation.trim() || "Chưa có giải thích chi tiết.",
+            order: targetExercise.questions?.length || 0,
           },
         );
         toast.success("Đã thêm câu hỏi mới!");
@@ -438,8 +512,12 @@ export default function V5LessonEditorPage() {
     );
   }
 
-  const guidedPractice = lesson.exercises?.find((x: any) => x.slug === "guided-practice");
-  const finalCheck = lesson.exercises?.find((x: any) => x.slug === "final-check");
+  const guidedPractice = lesson.exercises?.find(
+    (x: any) => x.slug === "guided-practice",
+  );
+  const finalCheck = lesson.exercises?.find(
+    (x: any) => x.slug === "final-check",
+  );
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 p-6 md:p-8">
@@ -453,7 +531,9 @@ export default function V5LessonEditorPage() {
             <ArrowLeft size={14} /> Trở về: {courseTitle || "Chương trình học"}
           </Link>
           <div className="mt-2 flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-slate-900">{lesson.title}</h1>
+            <h1 className="text-2xl font-bold text-slate-900">
+              {lesson.title}
+            </h1>
             <span
               className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                 lesson.status === "PUBLISHED"
@@ -465,11 +545,21 @@ export default function V5LessonEditorPage() {
             </span>
           </div>
           <p className="mt-1 text-xs text-slate-500">
-            {lesson.sections?.length || 0} mục nội dung · {lesson.exercises?.length || 0} bài luyện tập
+            {lesson.sections?.length || 0} mục nội dung ·{" "}
+            {lesson.exercises?.length || 0} bài luyện tập
           </p>
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void generateAiContent()}
+            disabled={busy || aiLoading || lesson.status === "PUBLISHED"}
+            className="inline-flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-800 transition-colors hover:bg-violet-100 disabled:opacity-50"
+          >
+            {aiLoading && <Loader2 size={15} className="animate-spin" />} AI
+            soạn nội dung
+          </button>
           <button
             onClick={() => setIsPublishConfirmOpen(true)}
             disabled={busy || lesson.status === "PUBLISHED"}
@@ -479,6 +569,119 @@ export default function V5LessonEditorPage() {
           </button>
         </div>
       </div>
+
+      {aiCandidate && (
+        <section
+          className="rounded-2xl border border-violet-200 bg-violet-50/50 p-5 shadow-xs"
+          aria-label="Review nội dung AI"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide text-violet-700">
+                AI candidate · chưa lưu
+              </p>
+              <h2 className="mt-1 text-base font-bold text-slate-900">
+                Review nội dung bài học
+              </h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Bạn có thể chỉnh sửa section, bài tập và câu hỏi trước khi
+                Apply. Apply chỉ ghi vào Lesson Draft.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setAiCandidate(null)}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
+              >
+                Bỏ candidate
+              </button>
+              <button
+                type="button"
+                onClick={() => void applyAiContent()}
+                disabled={busy}
+                className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+              >
+                Apply vào Draft
+              </button>
+            </div>
+          </div>
+          <div className="mt-4 space-y-3">
+            {(aiCandidate.sections || []).map((section: any, index: number) => (
+              <div
+                key={`${section.heading}-${index}`}
+                className="rounded-xl border border-violet-100 bg-white p-3"
+              >
+                <input
+                  value={section.heading || ""}
+                  onChange={(event) =>
+                    setAiCandidate((current: any) => ({
+                      ...current,
+                      sections: current.sections.map(
+                        (item: any, itemIndex: number) =>
+                          itemIndex === index
+                            ? { ...item, heading: event.target.value }
+                            : item,
+                      ),
+                    }))
+                  }
+                  className="w-full rounded border border-slate-200 px-2 py-1.5 text-sm font-semibold"
+                  aria-label={`Tên section AI ${index + 1}`}
+                />
+                <textarea
+                  value={section.content || ""}
+                  onChange={(event) =>
+                    setAiCandidate((current: any) => ({
+                      ...current,
+                      sections: current.sections.map(
+                        (item: any, itemIndex: number) =>
+                          itemIndex === index
+                            ? { ...item, content: event.target.value }
+                            : item,
+                      ),
+                    }))
+                  }
+                  className="mt-2 min-h-20 w-full rounded border border-slate-200 px-2 py-1.5 text-sm"
+                  aria-label={`Nội dung section AI ${index + 1}`}
+                />
+              </div>
+            ))}
+            <div className="rounded-xl border border-violet-100 bg-white p-3">
+              <input
+                value={aiCandidate.exercise?.title || ""}
+                onChange={(event) =>
+                  setAiCandidate((current: any) => ({
+                    ...current,
+                    exercise: {
+                      ...current.exercise,
+                      title: event.target.value,
+                    },
+                  }))
+                }
+                className="w-full rounded border border-slate-200 px-2 py-1.5 text-sm font-semibold"
+                aria-label="Tiêu đề bài tập AI"
+              />
+              <textarea
+                value={aiCandidate.exercise?.question?.prompt || ""}
+                onChange={(event) =>
+                  setAiCandidate((current: any) => ({
+                    ...current,
+                    exercise: {
+                      ...current.exercise,
+                      question: {
+                        ...current.exercise.question,
+                        prompt: event.target.value,
+                      },
+                    },
+                  }))
+                }
+                className="mt-2 min-h-20 w-full rounded border border-slate-200 px-2 py-1.5 text-sm"
+                aria-label="Câu hỏi AI"
+              />
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* NAVIGATION TABS */}
       <div className="flex gap-2 border-b border-slate-200 pb-1">
@@ -529,9 +732,12 @@ export default function V5LessonEditorPage() {
         <section className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-base font-bold text-slate-900">Mục nội dung bài giảng</h2>
+              <h2 className="text-base font-bold text-slate-900">
+                Mục nội dung bài giảng
+              </h2>
               <p className="text-xs text-slate-500">
-                Sắp xếp lý thuyết, ví dụ, từ vựng và lưu ý học viên sẽ đọc trước khi làm bài tập.
+                Sắp xếp lý thuyết, ví dụ, từ vựng và lưu ý học viên sẽ đọc trước
+                khi làm bài tập.
               </p>
             </div>
             <button
@@ -545,8 +751,13 @@ export default function V5LessonEditorPage() {
           <div className="space-y-3">
             {lesson.sections && lesson.sections.length > 0 ? (
               lesson.sections.map((s: any, idx: number) => {
-                const typeLabel = SECTION_TYPES.find((t) => t.value === s.type)?.label || s.type;
-                const contentText = typeof s.content === "object" ? s.content?.text || JSON.stringify(s.content) : String(s.content || "");
+                const typeLabel =
+                  SECTION_TYPES.find((t) => t.value === s.type)?.label ||
+                  s.type;
+                const contentText =
+                  typeof s.content === "object"
+                    ? s.content?.text || JSON.stringify(s.content)
+                    : String(s.content || "");
 
                 return (
                   <div
@@ -561,7 +772,9 @@ export default function V5LessonEditorPage() {
                         <span className="rounded bg-slate-900 px-2 py-0.5 text-xs font-semibold text-white">
                           {s.type}
                         </span>
-                        <h3 className="text-sm font-bold text-slate-900">{s.heading}</h3>
+                        <h3 className="text-sm font-bold text-slate-900">
+                          {s.heading}
+                        </h3>
                       </div>
 
                       <div className="flex items-center gap-1">
@@ -592,7 +805,12 @@ export default function V5LessonEditorPage() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => setPendingDeleteSection({ id: s.id, heading: s.heading })}
+                          onClick={() =>
+                            setPendingDeleteSection({
+                              id: s.id,
+                              heading: s.heading,
+                            })
+                          }
                           className="rounded border border-slate-200 p-1 text-slate-400 hover:text-rose-600 hover:border-rose-200"
                         >
                           <Trash2 size={13} />
@@ -609,7 +827,8 @@ export default function V5LessonEditorPage() {
             ) : (
               <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500">
                 <FileText size={28} className="mx-auto mb-2 text-slate-300" />
-                Bài học chưa có mục nội dung nào. Hãy nhấn &quot;Thêm mục nội dung&quot; để soạn lý thuyết cho học viên.
+                Bài học chưa có mục nội dung nào. Hãy nhấn &quot;Thêm mục nội
+                dung&quot; để soạn lý thuyết cho học viên.
               </div>
             )}
           </div>
@@ -620,9 +839,13 @@ export default function V5LessonEditorPage() {
       {activeTab === "exercises" && (
         <section className="space-y-6">
           <div>
-            <h2 className="text-base font-bold text-slate-900">Bài tập thực hành V5</h2>
+            <h2 className="text-base font-bold text-slate-900">
+              Bài tập thực hành V5
+            </h2>
             <p className="text-xs text-slate-500">
-              Cấu trúc chuẩn của một bài học V5 gồm &quot;Luyện tập có hướng dẫn&quot; (Guided Practice) và &quot;Kiểm tra cuối bài&quot; (Final Check).
+              Cấu trúc chuẩn của một bài học V5 gồm &quot;Luyện tập có hướng
+              dẫn&quot; (Guided Practice) và &quot;Kiểm tra cuối bài&quot;
+              (Final Check).
             </p>
           </div>
 
@@ -634,10 +857,14 @@ export default function V5LessonEditorPage() {
                   PHASE 2 GUIDED PRACTICE
                 </span>
                 <h3 className="mt-1 text-base font-bold text-slate-900">
-                  {guidedPractice ? guidedPractice.title : "Luyện tập có hướng dẫn"}
+                  {guidedPractice
+                    ? guidedPractice.title
+                    : "Luyện tập có hướng dẫn"}
                 </h3>
                 <p className="mt-0.5 text-xs text-slate-500">
-                  {guidedPractice ? guidedPractice.prompt : "Chưa khởi tạo bài luyện tập có hướng dẫn cho bài học này."}
+                  {guidedPractice
+                    ? guidedPractice.prompt
+                    : "Chưa khởi tạo bài luyện tập có hướng dẫn cho bài học này."}
                 </p>
               </div>
 
@@ -651,7 +878,10 @@ export default function V5LessonEditorPage() {
                   </button>
                   <button
                     onClick={() =>
-                      setPendingDeleteExercise({ id: guidedPractice.id, title: guidedPractice.title })
+                      setPendingDeleteExercise({
+                        id: guidedPractice.id,
+                        title: guidedPractice.title,
+                      })
                     }
                     className="rounded-lg border border-slate-200 p-1.5 text-slate-400 hover:text-rose-600 hover:border-rose-200"
                     title="Xóa bài tập"
@@ -673,7 +903,8 @@ export default function V5LessonEditorPage() {
             {/* Questions in Guided Practice */}
             {guidedPractice && (
               <div className="space-y-3">
-                {guidedPractice.questions && guidedPractice.questions.length > 0 ? (
+                {guidedPractice.questions &&
+                guidedPractice.questions.length > 0 ? (
                   guidedPractice.questions.map((q: any, qIdx: number) => (
                     <div
                       key={q.id}
@@ -684,7 +915,9 @@ export default function V5LessonEditorPage() {
                           <span className="font-bold text-slate-800 bg-white border border-slate-200 px-1.5 py-0.5 rounded text-xs">
                             Câu {qIdx + 1}
                           </span>
-                          <p className="text-sm font-semibold text-slate-900">{q.prompt}</p>
+                          <p className="text-sm font-semibold text-slate-900">
+                            {q.prompt}
+                          </p>
                         </div>
 
                         <div className="flex items-center gap-1 shrink-0">
@@ -713,26 +946,34 @@ export default function V5LessonEditorPage() {
 
                       {/* Options */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                        {(Array.isArray(q.options) ? q.options : []).map((opt: string, optIdx: number) => {
-                          const isCorrect =
-                            opt === q.correctAnswer ||
-                            String.fromCharCode(65 + optIdx) === String(q.correctAnswer).toUpperCase();
-                          return (
-                            <div
-                              key={optIdx}
-                              className={`rounded px-2.5 py-1.5 text-xs flex items-center justify-between ${
-                                isCorrect
-                                  ? "bg-emerald-50 text-emerald-900 border border-emerald-300 font-bold"
-                                  : "bg-white text-slate-700 border border-slate-200"
-                              }`}
-                            >
-                              <span>
-                                ({String.fromCharCode(65 + optIdx)}) {opt}
-                              </span>
-                              {isCorrect && <Check size={13} className="text-emerald-600 shrink-0" />}
-                            </div>
-                          );
-                        })}
+                        {(Array.isArray(q.options) ? q.options : []).map(
+                          (opt: string, optIdx: number) => {
+                            const isCorrect =
+                              opt === q.correctAnswer ||
+                              String.fromCharCode(65 + optIdx) ===
+                                String(q.correctAnswer).toUpperCase();
+                            return (
+                              <div
+                                key={optIdx}
+                                className={`rounded px-2.5 py-1.5 text-xs flex items-center justify-between ${
+                                  isCorrect
+                                    ? "bg-emerald-50 text-emerald-900 border border-emerald-300 font-bold"
+                                    : "bg-white text-slate-700 border border-slate-200"
+                                }`}
+                              >
+                                <span>
+                                  ({String.fromCharCode(65 + optIdx)}) {opt}
+                                </span>
+                                {isCorrect && (
+                                  <Check
+                                    size={13}
+                                    className="text-emerald-600 shrink-0"
+                                  />
+                                )}
+                              </div>
+                            );
+                          },
+                        )}
                       </div>
 
                       {q.explanation && (
@@ -744,7 +985,8 @@ export default function V5LessonEditorPage() {
                   ))
                 ) : (
                   <p className="py-4 text-center text-xs text-slate-400 italic">
-                    Chưa có câu hỏi nào trong bài luyện tập này. Nhấn &quot;+ Thêm câu hỏi&quot; để soạn.
+                    Chưa có câu hỏi nào trong bài luyện tập này. Nhấn &quot;+
+                    Thêm câu hỏi&quot; để soạn.
                   </p>
                 )}
               </div>
@@ -762,7 +1004,9 @@ export default function V5LessonEditorPage() {
                   {finalCheck ? finalCheck.title : "Kiểm tra cuối bài"}
                 </h3>
                 <p className="mt-0.5 text-xs text-slate-500">
-                  {finalCheck ? finalCheck.prompt : "Chưa khởi tạo Final Check cho bài học này."}
+                  {finalCheck
+                    ? finalCheck.prompt
+                    : "Chưa khởi tạo Final Check cho bài học này."}
                 </p>
               </div>
 
@@ -776,7 +1020,10 @@ export default function V5LessonEditorPage() {
                   </button>
                   <button
                     onClick={() =>
-                      setPendingDeleteExercise({ id: finalCheck.id, title: finalCheck.title })
+                      setPendingDeleteExercise({
+                        id: finalCheck.id,
+                        title: finalCheck.title,
+                      })
                     }
                     className="rounded-lg border border-slate-200 p-1.5 text-slate-400 hover:text-rose-600 hover:border-rose-200"
                     title="Xóa bài tập"
@@ -809,7 +1056,9 @@ export default function V5LessonEditorPage() {
                           <span className="font-bold text-slate-800 bg-white border border-slate-200 px-1.5 py-0.5 rounded text-xs">
                             Câu {qIdx + 1}
                           </span>
-                          <p className="text-sm font-semibold text-slate-900">{q.prompt}</p>
+                          <p className="text-sm font-semibold text-slate-900">
+                            {q.prompt}
+                          </p>
                         </div>
 
                         <div className="flex items-center gap-1 shrink-0">
@@ -838,26 +1087,34 @@ export default function V5LessonEditorPage() {
 
                       {/* Options */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                        {(Array.isArray(q.options) ? q.options : []).map((opt: string, optIdx: number) => {
-                          const isCorrect =
-                            opt === q.correctAnswer ||
-                            String.fromCharCode(65 + optIdx) === String(q.correctAnswer).toUpperCase();
-                          return (
-                            <div
-                              key={optIdx}
-                              className={`rounded px-2.5 py-1.5 text-xs flex items-center justify-between ${
-                                isCorrect
-                                  ? "bg-emerald-50 text-emerald-900 border border-emerald-300 font-bold"
-                                  : "bg-white text-slate-700 border border-slate-200"
-                              }`}
-                            >
-                              <span>
-                                ({String.fromCharCode(65 + optIdx)}) {opt}
-                              </span>
-                              {isCorrect && <Check size={13} className="text-emerald-600 shrink-0" />}
-                            </div>
-                          );
-                        })}
+                        {(Array.isArray(q.options) ? q.options : []).map(
+                          (opt: string, optIdx: number) => {
+                            const isCorrect =
+                              opt === q.correctAnswer ||
+                              String.fromCharCode(65 + optIdx) ===
+                                String(q.correctAnswer).toUpperCase();
+                            return (
+                              <div
+                                key={optIdx}
+                                className={`rounded px-2.5 py-1.5 text-xs flex items-center justify-between ${
+                                  isCorrect
+                                    ? "bg-emerald-50 text-emerald-900 border border-emerald-300 font-bold"
+                                    : "bg-white text-slate-700 border border-slate-200"
+                                }`}
+                              >
+                                <span>
+                                  ({String.fromCharCode(65 + optIdx)}) {opt}
+                                </span>
+                                {isCorrect && (
+                                  <Check
+                                    size={13}
+                                    className="text-emerald-600 shrink-0"
+                                  />
+                                )}
+                              </div>
+                            );
+                          },
+                        )}
                       </div>
 
                       {q.explanation && (
@@ -869,7 +1126,8 @@ export default function V5LessonEditorPage() {
                   ))
                 ) : (
                   <p className="py-4 text-center text-xs text-slate-400 italic">
-                    Chưa có câu hỏi nào trong Final Check. Nhấn &quot;+ Thêm câu hỏi&quot; để soạn.
+                    Chưa có câu hỏi nào trong Final Check. Nhấn &quot;+ Thêm câu
+                    hỏi&quot; để soạn.
                   </p>
                 )}
               </div>
@@ -881,25 +1139,35 @@ export default function V5LessonEditorPage() {
       {/* TAB 3: LESSON INFO */}
       {activeTab === "info" && (
         <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
-          <h2 className="text-base font-bold text-slate-900">Thông tin bài học</h2>
+          <h2 className="text-base font-bold text-slate-900">
+            Thông tin bài học
+          </h2>
 
           <div className="space-y-4">
             <div>
-              <label className="text-xs font-semibold text-slate-700">Tên bài học *</label>
+              <label className="text-xs font-semibold text-slate-700">
+                Tên bài học *
+              </label>
               <input
                 type="text"
                 value={infoForm.title}
-                onChange={(e) => setInfoForm({ ...infoForm, title: e.target.value })}
+                onChange={(e) =>
+                  setInfoForm({ ...infoForm, title: e.target.value })
+                }
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
               />
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-700">Tóm tắt nội dung</label>
+              <label className="text-xs font-semibold text-slate-700">
+                Tóm tắt nội dung
+              </label>
               <textarea
                 rows={3}
                 value={infoForm.summary}
-                onChange={(e) => setInfoForm({ ...infoForm, summary: e.target.value })}
+                onChange={(e) =>
+                  setInfoForm({ ...infoForm, summary: e.target.value })
+                }
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
               />
             </div>
@@ -912,7 +1180,10 @@ export default function V5LessonEditorPage() {
                 rows={4}
                 value={infoForm.learningObjectives}
                 onChange={(e) =>
-                  setInfoForm({ ...infoForm, learningObjectives: e.target.value })
+                  setInfoForm({
+                    ...infoForm,
+                    learningObjectives: e.target.value,
+                  })
                 }
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
               />
@@ -939,34 +1210,52 @@ export default function V5LessonEditorPage() {
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
               Xem trước giao diện học viên
             </span>
-            <h2 className="mt-1 text-2xl font-bold text-slate-900">{lesson.title}</h2>
+            <h2 className="mt-1 text-2xl font-bold text-slate-900">
+              {lesson.title}
+            </h2>
             <p className="mt-1 text-sm text-slate-600">{lesson.summary}</p>
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-base font-bold text-slate-900">I. Nội dung bài giảng</h3>
+            <h3 className="text-base font-bold text-slate-900">
+              I. Nội dung bài giảng
+            </h3>
             {lesson.sections && lesson.sections.length > 0 ? (
               lesson.sections.map((s: any, idx: number) => (
-                <div key={s.id} className="rounded-lg bg-slate-50 border border-slate-200 p-4 space-y-2">
+                <div
+                  key={s.id}
+                  className="rounded-lg bg-slate-50 border border-slate-200 p-4 space-y-2"
+                >
                   <span className="text-xs font-bold text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">
                     Phần {idx + 1}: {s.heading}
                   </span>
                   <p className="whitespace-pre-line text-sm text-slate-800 leading-relaxed">
-                    {typeof s.content === "object" ? s.content?.text || JSON.stringify(s.content) : s.content}
+                    {typeof s.content === "object"
+                      ? s.content?.text || JSON.stringify(s.content)
+                      : s.content}
                   </p>
                 </div>
               ))
             ) : (
-              <p className="text-xs text-slate-400 italic">Chưa có nội dung lý thuyết.</p>
+              <p className="text-xs text-slate-400 italic">
+                Chưa có nội dung lý thuyết.
+              </p>
             )}
           </div>
 
           <div className="space-y-4 pt-4 border-t border-slate-100">
-            <h3 className="text-base font-bold text-slate-900">II. Bài tập thực hành</h3>
+            <h3 className="text-base font-bold text-slate-900">
+              II. Bài tập thực hành
+            </h3>
             {lesson.exercises && lesson.exercises.length > 0 ? (
               lesson.exercises.map((ex: any) => (
-                <div key={ex.id} className="rounded-lg border border-slate-200 p-4 space-y-3">
-                  <h4 className="text-sm font-bold text-slate-900">{ex.title}</h4>
+                <div
+                  key={ex.id}
+                  className="rounded-lg border border-slate-200 p-4 space-y-3"
+                >
+                  <h4 className="text-sm font-bold text-slate-900">
+                    {ex.title}
+                  </h4>
                   <p className="text-xs text-slate-600">{ex.prompt}</p>
                   <p className="text-xs text-slate-500 font-medium">
                     Tổng số câu hỏi: {ex.questions?.length || 0} câu
@@ -974,7 +1263,9 @@ export default function V5LessonEditorPage() {
                 </div>
               ))
             ) : (
-              <p className="text-xs text-slate-400 italic">Chưa có bài tập thực hành.</p>
+              <p className="text-xs text-slate-400 italic">
+                Chưa có bài tập thực hành.
+              </p>
             )}
           </div>
         </section>
@@ -986,7 +1277,9 @@ export default function V5LessonEditorPage() {
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-lg font-bold text-slate-900">
-                {editingSection ? "Chỉnh sửa mục nội dung" : "Thêm mục nội dung mới"}
+                {editingSection
+                  ? "Chỉnh sửa mục nội dung"
+                  : "Thêm mục nội dung mới"}
               </h3>
               <button
                 type="button"
@@ -999,10 +1292,14 @@ export default function V5LessonEditorPage() {
 
             <form onSubmit={saveSection} className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-slate-700">Loại mục nội dung</label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Loại mục nội dung
+                </label>
                 <select
                   value={sectionForm.type}
-                  onChange={(e) => setSectionForm({ ...sectionForm, type: e.target.value })}
+                  onChange={(e) =>
+                    setSectionForm({ ...sectionForm, type: e.target.value })
+                  }
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
                 >
                   {SECTION_TYPES.map((t) => (
@@ -1014,25 +1311,33 @@ export default function V5LessonEditorPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700">Tiêu đề mục (Heading) *</label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Tiêu đề mục (Heading) *
+                </label>
                 <input
                   type="text"
                   required
                   placeholder="Ví dụ: Quy tắc phát âm nguyên âm dài"
                   value={sectionForm.heading}
-                  onChange={(e) => setSectionForm({ ...sectionForm, heading: e.target.value })}
+                  onChange={(e) =>
+                    setSectionForm({ ...sectionForm, heading: e.target.value })
+                  }
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700">Nội dung hiển thị cho học viên *</label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Nội dung hiển thị cho học viên *
+                </label>
                 <textarea
                   rows={6}
                   required
                   placeholder="Soạn nội dung lý thuyết, ví dụ minh họa hoặc lời khuyên chi tiết..."
                   value={sectionForm.content}
-                  onChange={(e) => setSectionForm({ ...sectionForm, content: e.target.value })}
+                  onChange={(e) =>
+                    setSectionForm({ ...sectionForm, content: e.target.value })
+                  }
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
                 />
               </div>
@@ -1042,10 +1347,18 @@ export default function V5LessonEditorPage() {
                   type="checkbox"
                   id="isRequiredSec"
                   checked={sectionForm.isRequired}
-                  onChange={(e) => setSectionForm({ ...sectionForm, isRequired: e.target.checked })}
+                  onChange={(e) =>
+                    setSectionForm({
+                      ...sectionForm,
+                      isRequired: e.target.checked,
+                    })
+                  }
                   className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
                 />
-                <label htmlFor="isRequiredSec" className="text-xs text-slate-700 font-medium">
+                <label
+                  htmlFor="isRequiredSec"
+                  className="text-xs text-slate-700 font-medium"
+                >
                   Học viên bắt buộc phải đọc qua phần này
                 </label>
               </div>
@@ -1063,7 +1376,11 @@ export default function V5LessonEditorPage() {
                   disabled={busy}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors disabled:opacity-50"
                 >
-                  {busy ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                  {busy ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : (
+                    <Save size={13} />
+                  )}
                   Lưu mục nội dung
                 </button>
               </div>
@@ -1091,20 +1408,26 @@ export default function V5LessonEditorPage() {
 
             <form onSubmit={saveQuestion} className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-slate-700">Nội dung câu hỏi (Prompt) *</label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Nội dung câu hỏi (Prompt) *
+                </label>
                 <textarea
                   rows={2}
                   required
                   placeholder="Ví dụ: Chọn từ có phần gạch chân phát âm khác..."
                   value={questionForm.prompt}
-                  onChange={(e) => setQuestionForm({ ...questionForm, prompt: e.target.value })}
+                  onChange={(e) =>
+                    setQuestionForm({ ...questionForm, prompt: e.target.value })
+                  }
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
                 />
               </div>
 
               {/* 4 Options */}
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-700">Các phương án lựa chọn *</label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Các phương án lựa chọn *
+                </label>
                 <div className="grid grid-cols-1 gap-2">
                   <div className="flex items-center gap-2">
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-slate-100 text-xs font-bold text-slate-700">
@@ -1115,7 +1438,12 @@ export default function V5LessonEditorPage() {
                       required
                       placeholder="Nội dung phương án A"
                       value={questionForm.optA}
-                      onChange={(e) => setQuestionForm({ ...questionForm, optA: e.target.value })}
+                      onChange={(e) =>
+                        setQuestionForm({
+                          ...questionForm,
+                          optA: e.target.value,
+                        })
+                      }
                       className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-900 outline-none focus:border-slate-500"
                     />
                   </div>
@@ -1128,7 +1456,12 @@ export default function V5LessonEditorPage() {
                       required
                       placeholder="Nội dung phương án B"
                       value={questionForm.optB}
-                      onChange={(e) => setQuestionForm({ ...questionForm, optB: e.target.value })}
+                      onChange={(e) =>
+                        setQuestionForm({
+                          ...questionForm,
+                          optB: e.target.value,
+                        })
+                      }
                       className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-900 outline-none focus:border-slate-500"
                     />
                   </div>
@@ -1140,7 +1473,12 @@ export default function V5LessonEditorPage() {
                       type="text"
                       placeholder="Nội dung phương án C (tùy chọn)"
                       value={questionForm.optC}
-                      onChange={(e) => setQuestionForm({ ...questionForm, optC: e.target.value })}
+                      onChange={(e) =>
+                        setQuestionForm({
+                          ...questionForm,
+                          optC: e.target.value,
+                        })
+                      }
                       className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-900 outline-none focus:border-slate-500"
                     />
                   </div>
@@ -1152,7 +1490,12 @@ export default function V5LessonEditorPage() {
                       type="text"
                       placeholder="Nội dung phương án D (tùy chọn)"
                       value={questionForm.optD}
-                      onChange={(e) => setQuestionForm({ ...questionForm, optD: e.target.value })}
+                      onChange={(e) =>
+                        setQuestionForm({
+                          ...questionForm,
+                          optD: e.target.value,
+                        })
+                      }
                       className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-900 outline-none focus:border-slate-500"
                     />
                   </div>
@@ -1160,10 +1503,17 @@ export default function V5LessonEditorPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700">Đáp án đúng *</label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Đáp án đúng *
+                </label>
                 <select
                   value={questionForm.correctAnswer}
-                  onChange={(e) => setQuestionForm({ ...questionForm, correctAnswer: e.target.value })}
+                  onChange={(e) =>
+                    setQuestionForm({
+                      ...questionForm,
+                      correctAnswer: e.target.value,
+                    })
+                  }
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
                 >
                   <option value="A">Phương án A</option>
@@ -1174,12 +1524,19 @@ export default function V5LessonEditorPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700">Giải thích đáp án</label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Giải thích đáp án
+                </label>
                 <textarea
                   rows={3}
                   placeholder="Giải thích vì sao phương án này chính xác..."
                   value={questionForm.explanation}
-                  onChange={(e) => setQuestionForm({ ...questionForm, explanation: e.target.value })}
+                  onChange={(e) =>
+                    setQuestionForm({
+                      ...questionForm,
+                      explanation: e.target.value,
+                    })
+                  }
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
                 />
               </div>
@@ -1197,7 +1554,11 @@ export default function V5LessonEditorPage() {
                   disabled={busy}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors disabled:opacity-50"
                 >
-                  {busy ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                  {busy ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : (
+                    <Save size={13} />
+                  )}
                   Lưu câu hỏi
                 </button>
               </div>

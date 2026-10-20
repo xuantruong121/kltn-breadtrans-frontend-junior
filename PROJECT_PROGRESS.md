@@ -137,3 +137,25 @@ Tài liệu này ghi chép lại toàn bộ tiến độ, kiến trúc và các 
 - Vocab level được hiển thị rõ là context cho AI, không tuyên bố là trường lưu của `VocabTopic`; Listening/Reading editor cũng ghi rõ level là reference/context theo contract domain.
 - Frontend `test:ci` 42 suites/498 tests, typecheck và build PASS; lint exit 0 với warning baseline repository, không có error mới từ thay đổi này.
 - Authenticated owner-runtime browser QA đã đi qua Generate → Review → Apply cho Listening, Reading, Vocabulary, Grammar và Speaking ở desktop/tablet/mobile; Apply chỉ cập nhật form local, request trước Save chỉ là AI mock và không có CMS persistence. Level/Difficulty trong review được kiểm chứng là controlled select; không overflow ở `1440x900`, `768x1024`, `390x844`. Existing Speaking lifecycle browser evidence tiếp tục giữ Save → Draft → learner isolation → Human Publish → learner readback.
+
+## 10. BreadTrans Phase 8.13 — Admin CMS UX & Functional Audit — 2026-10-20
+- Source-first inventory đã phân loại toàn bộ 37 route `/admin/**`; sidebar giữ product object chính, còn route legacy/internal và TOEIC child composition chỉ truy cập deep-link.
+- Admin UI thay emoji bằng Lucide/vector icon hoặc text, thêm skip link/landmark/aria label cho navigation, clamp trang hiển thị ở User Management và loại bỏ trigger direct publish cũ khỏi `/admin/ai-tools`.
+- Frontend typecheck, changed-file lint, build và responsive invariants 22/22 PASS. Full `test:ci` còn một failure baseline ở `AccountHub` alias-cleanup test ngoài phạm vi; không sửa dirty unrelated changes.
+
+## 11. BreadTrans Phase 8.13.1 — Authenticated Admin Browser Closure — 2026-10-20
+- Owner FE `:3000` và BE `:3001` giữ đúng một listener mỗi cổng; không restart/kill/spawn owner process. Browser xác nhận FE hiện tại có skip link, `main#admin-main`, navigation aria-label, sidebar IA và User Management pagination/icon patch.
+- Authenticated Admin browser walkthrough PASS cho product routes và Course Studio; synthetic Course create → validation → edit/save → reload persisted PASS. Synthetic V5 publication/enrollment flow PASS; duplicate enrollment trả `409` đúng validation và revoke PASS.
+- Exam CMS choices TOEIC L&R, TOEIC S&W và TOEIC 4-skills; readiness, preview và `0` learner-attempt mutation PASS. AI mock safe smoke đi qua candidate → review → draft save; không có direct publish request/button và không gọi provider thật. AI Course Authoring giữ `PARTIAL`.
+- User Management, learner tracking, enrollment, payment, unauthenticated/learner permission denial, desktop/tablet/mobile và accessibility PASS. Critical browser/runtime errors `0`; QA prefix `qa-phase813-admin-` cleanup về `0` user/0 course.
+- **Classification**: `BREADTRANS_ADMIN_CMS_READY=true`; `PHASE_8_13=CLOSED`.
+
+## 12. BreadTrans Phase 8.14 — AI Exam Candidate / Apply Safety — 2026-10-20
+- `/admin/exams/new` now restores a durable AI job from `?job=` or session storage, keeps one idempotency key for a user generation action, and presents `Apply candidate vào Draft` only after the backend marks a candidate ready.
+- Apply is explicit and separate from Publish: the candidate is written to the Draft first, then Admin uses the established review/edit/validate/preview/publish workflow. Frontend typecheck, changed-file lint and production build PASS.
+- Owner-runtime browser closure PASS: a fresh Playwright Admin logged in through the real manual UI, restored a durable job from `?job=`, saw and used `Apply candidate vào Draft`, then landed in the linked Draft. BE persisted `APPROVED`, one Part 5 group and one question; browser page errors were `0`. The earlier blank shell came from pre-hydration store injection, not the running owner FE. The temporary `qa-phase814-ai-exam-` fixture was fully removed (`0` user / `0` exam / `0` job) and created no media.
+
+## 13. BreadTrans Phase 8.14.1 — AI Exam Authoring Production Closure — 2026-10-20
+- The durable candidate/apply workflow remains explicit: one job, `Apply candidate vào Draft`, then normal Admin review, edit, preflight, preview and human Publish.
+- Owner-runtime browser QA passed candidate Apply, edit/reload persistence, `INCOMPLETE_TEMPLATE` feedback, preview and publish block without learner attempts. Guest/learner server access is denied; `qa-phase814-ai-exam-` was fully removed.
+- Frontend typecheck, focused ESLint and production build PASS. Backend now preserves S&W text/tasks under an AI-image soft failure and blocks learner readiness until required image media is repaired manually; full evidence is in `AGENT_STATE.md`.
