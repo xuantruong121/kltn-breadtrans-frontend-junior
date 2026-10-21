@@ -1,31 +1,31 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Loader2, MessageSquare, Search, Send } from "lucide-react";
+import {
+  ArrowLeft,
+  Bot,
+  Loader2,
+  MessageSquare,
+  Search,
+  Send,
+  Shield,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import {
   supportService,
   type SupportMessageItem,
 } from "@/lib/api/services/support.service";
-
-function formatTime(value?: number | string) {
-  if (!value) return "";
-  const date = new Date(value);
-  const today = new Date();
-  if (date.toDateString() === today.toDateString()) {
-    return new Intl.DateTimeFormat("vi-VN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(date);
-  }
-  return new Intl.DateTimeFormat("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-  }).format(date);
-}
+import { ChatMessageContent } from "@/components/chat/ChatMessageContent";
+import {
+  formatMessageTimestamp,
+  formatMessageFullTooltip,
+  isSameCalendarDay,
+  formatDateDivider,
+  formatListPreviewTime,
+} from "@/lib/chat/chatDateUtils";
 
 function Avatar({
   name,
@@ -314,7 +314,7 @@ function AdminMessagesContent() {
                         {conversation.studentName}
                       </span>
                       <span className="shrink-0 text-[11px] text-slate-400">
-                        {formatTime(conversation.lastMessageTime)}
+                        {formatListPreviewTime(conversation.lastMessageTime)}
                       </span>
                     </span>
                     <span className="mt-0.5 flex items-center justify-between gap-2">
@@ -402,7 +402,7 @@ function AdminMessagesContent() {
               <div
                 ref={messagesContainerRef}
                 onScroll={handleMessagesScroll}
-                className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-slate-50/70 p-4 dark:bg-slate-950/40"
+                className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-slate-50/70 p-4 dark:bg-slate-950/40"
               >
                 {messagesQuery.isLoading ? (
                   <div className="flex justify-center pt-8">
@@ -413,49 +413,156 @@ function AdminMessagesContent() {
                     Chưa có tin nhắn. Hãy gửi tin nhắn hỗ trợ học viên.
                   </p>
                 ) : (
-                  messages.map((message: SupportMessageItem) => {
+                  messages.map((message: SupportMessageItem, idx: number) => {
                     const isAdmin = message.senderRole === "ADMIN";
                     const isSystem = message.senderRole === "SYSTEM";
-
-                    if (isSystem) {
-                      return (
-                        <p
-                          key={String(message.id)}
-                          className="py-1.5 text-center text-xs text-slate-500"
-                        >
-                          {message.content}
-                        </p>
+                    const isAi = message.senderRole === "AI";
+                    const showDateDivider =
+                      idx === 0 ||
+                      !isSameCalendarDay(
+                        messages[idx - 1].createdAt,
+                        message.createdAt,
                       );
-                    }
 
                     return (
-                      <div
-                        key={String(message.id)}
-                        className={`flex ${
-                          isAdmin ? "justify-end" : "justify-start"
-                        }`}
-                      >
-                        <div
-                          className={`max-w-[85%] sm:max-w-[75%] lg:max-w-[70%] xl:max-w-[640px] rounded-xl px-4 py-2.5 text-sm leading-relaxed ${
-                            isAdmin
-                              ? "bg-slate-900 text-white shadow-2xs dark:bg-blue-600 dark:text-white"
-                              : "border border-slate-200/90 bg-white text-slate-800 shadow-2xs dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-100"
-                          }`}
-                        >
-                          <p className="whitespace-pre-wrap break-words">
-                            {message.content}
-                          </p>
-                          <p
-                            className={`mt-1 text-[10px] ${
-                              isAdmin
-                                ? "text-slate-300 dark:text-blue-100"
-                                : "text-slate-400 dark:text-slate-400"
-                            }`}
-                          >
-                            {formatTime(message.createdAt)}
-                          </p>
-                        </div>
-                      </div>
+                      <React.Fragment key={String(message.id)}>
+                        {/* Inter-day Date Divider */}
+                        {showDateDivider && (
+                          <div className="flex items-center justify-center my-3.5 select-none">
+                            <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1" />
+                            <span className="mx-3 px-3 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-[11px] font-semibold text-slate-600 dark:text-slate-300 border border-slate-300/60 dark:border-slate-700/80 shadow-2xs">
+                              {formatDateDivider(message.createdAt)}
+                            </span>
+                            <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1" />
+                          </div>
+                        )}
+
+                        {/* System Message */}
+                        {isSystem ? (
+                          <div className="flex justify-center my-2">
+                            <div className="max-w-md rounded-full bg-slate-100 dark:bg-slate-800/80 px-3.5 py-1 text-center text-xs text-slate-500 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/60">
+                              <span>{message.content}</span>
+                              <span className="ml-2 text-[10px] text-slate-400">
+                                ({formatMessageTimestamp(message.createdAt)})
+                              </span>
+                            </div>
+                          </div>
+                        ) : isAdmin ? (
+                          /* Admin Message (Right-aligned) */
+                          <div className="flex justify-end items-end gap-2 my-2.5 group">
+                            <div className="flex flex-col items-end max-w-[85%] sm:max-w-[75%] lg:max-w-[70%] xl:max-w-[640px]">
+                              {/* Header Meta: Name, Role Badge, Full Timestamp */}
+                              <div className="flex items-center gap-1.5 mb-1 px-1 text-xs">
+                                <span
+                                  className="text-[11px] font-medium text-slate-400"
+                                  title={formatMessageFullTooltip(message.createdAt)}
+                                >
+                                  {formatMessageTimestamp(message.createdAt)}
+                                </span>
+                                <span className="font-semibold text-slate-900 dark:text-slate-100">
+                                  {message.senderName || "Quản trị viên"}
+                                </span>
+                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800">
+                                  Admin
+                                </span>
+                              </div>
+
+                              {/* Message Bubble with Markdown Content */}
+                              <div className="w-full rounded-2xl rounded-br-xs px-4 py-3 text-sm leading-relaxed bg-slate-900 text-white shadow-2xs dark:bg-blue-600 dark:text-white">
+                                <ChatMessageContent
+                                  content={message.content}
+                                  isInverse={true}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Admin Avatar */}
+                            <span
+                              className="size-8 grid shrink-0 place-items-center rounded-full bg-slate-900 text-white dark:bg-blue-600 font-bold text-xs select-none shadow-2xs mb-0.5"
+                              title="Quản trị viên"
+                            >
+                              <Shield size={14} />
+                            </span>
+                          </div>
+                        ) : isAi ? (
+                          /* AI Assistant Message (Left-aligned) */
+                          <div className="flex justify-start items-end gap-2 my-2.5 group">
+                            <span
+                              className="size-8 grid shrink-0 place-items-center rounded-full bg-purple-600 text-white font-bold text-xs select-none shadow-2xs mb-0.5"
+                              title="Trợ lý học tập AI"
+                            >
+                              <Bot size={15} />
+                            </span>
+
+                            <div className="flex flex-col items-start max-w-[85%] sm:max-w-[75%] lg:max-w-[70%] xl:max-w-[640px]">
+                              {/* Header Meta: Name, Role Badge, Full Timestamp */}
+                              <div className="flex items-center gap-1.5 mb-1 px-1 text-xs">
+                                <span className="font-semibold text-purple-900 dark:text-purple-200">
+                                  Trợ lý AI
+                                </span>
+                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800">
+                                  AI Hỗ trợ
+                                </span>
+                                <span
+                                  className="text-[11px] font-medium text-slate-400"
+                                  title={formatMessageFullTooltip(message.createdAt)}
+                                >
+                                  {formatMessageTimestamp(message.createdAt)}
+                                </span>
+                              </div>
+
+                              {/* Message Bubble with Markdown Content */}
+                              <div className="w-full rounded-2xl rounded-bl-xs px-4 py-3 text-sm leading-relaxed border border-purple-200/90 bg-purple-50/50 text-slate-800 shadow-2xs dark:border-purple-800/80 dark:bg-purple-950/30 dark:text-slate-100">
+                                <ChatMessageContent
+                                  content={message.content}
+                                  isInverse={false}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          /* Student Message (Left-aligned) */
+                          <div className="flex justify-start items-end gap-2 my-2.5 group">
+                            <Avatar
+                              name={
+                                selectedConversation?.studentName ||
+                                message.senderName ||
+                                "H"
+                              }
+                              src={selectedConversation?.studentAvatar}
+                              size="sm"
+                            />
+
+                            <div className="flex flex-col items-start max-w-[85%] sm:max-w-[75%] lg:max-w-[70%] xl:max-w-[640px]">
+                              {/* Header Meta: Name, Role Badge, Full Timestamp */}
+                              <div className="flex items-center gap-1.5 mb-1 px-1 text-xs">
+                                <span className="font-semibold text-slate-900 dark:text-slate-100">
+                                  {selectedConversation?.studentName ||
+                                    message.senderName ||
+                                    "Học viên"}
+                                </span>
+                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800">
+                                  Học viên
+                                </span>
+                                <span
+                                  className="text-[11px] font-medium text-slate-400"
+                                  title={formatMessageFullTooltip(message.createdAt)}
+                                >
+                                  {formatMessageTimestamp(message.createdAt)}
+                                </span>
+                              </div>
+
+                              {/* Message Bubble with Markdown Content */}
+                              <div className="w-full rounded-2xl rounded-bl-xs px-4 py-3 text-sm leading-relaxed border border-slate-200/90 bg-white text-slate-800 shadow-2xs dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-100">
+                                <ChatMessageContent
+                                  content={message.content}
+                                  isInverse={false}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </React.Fragment>
                     );
                   })
                 )}

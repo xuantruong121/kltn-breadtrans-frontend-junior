@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Suspense, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -90,10 +90,23 @@ function formatRelativeTime(dateStr: string) {
   }
 }
 
+function HubSuggestionParamListener({ onTrigger }: { onTrigger: () => void }) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (pathname === "/hub" && searchParams.get("suggestion") === "1") {
+      const timer = window.setTimeout(onTrigger, 0);
+      return () => window.clearTimeout(timer);
+    }
+  }, [pathname, searchParams, onTrigger]);
+
+  return null;
+}
+
 export function AppHeader() {
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { user, logout } = useAuthStore();
   const { breads, streak, level, exp } = useGamificationStore();
   const { resolvedTheme, toggleTheme } = useTheme();
@@ -109,13 +122,6 @@ export function AppHeader() {
   const moreRef = useRef<HTMLDivElement>(null);
   const isReady = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const isDark = isReady ? resolvedTheme === "dark" : false;
-
-  useEffect(() => {
-    if (pathname === "/hub" && searchParams.get("suggestion") === "1") {
-      const timer = window.setTimeout(() => setSuggestionOpen(true), 0);
-      return () => window.clearTimeout(timer);
-    }
-  }, [pathname, searchParams]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -359,6 +365,9 @@ export function AppHeader() {
 
   return (
     <header className="sticky top-0 z-[70] w-full overflow-x-clip bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 transition-all duration-200 shadow-xs">
+      <Suspense fallback={null}>
+        <HubSuggestionParamListener onTrigger={() => setSuggestionOpen(true)} />
+      </Suspense>
       <div className="w-full px-3 sm:px-6 lg:px-6 xl:px-8 2xl:px-12 h-16 sm:h-20 flex items-center justify-between gap-1.5 sm:gap-4">
         
         {/* Brand Logo & Role Tag (Item 1: Logo/Home) */}
