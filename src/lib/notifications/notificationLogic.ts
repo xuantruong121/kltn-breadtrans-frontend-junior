@@ -9,7 +9,7 @@ export function resolveNotificationAction(item: NotificationItem): string | null
   if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) return null;
   if (raw.startsWith("/practice")) return null;
 
-  const exactRoutes = ["/dashboard", "/hub", "/flashcard", "/plans", "/account"];
+  const exactRoutes = ["/dashboard", "/hub", "/flashcard", "/plans", "/account", "/messages"];
   const routePrefixes = [
     "/reading/",
     "/writing/",
@@ -20,7 +20,7 @@ export function resolveNotificationAction(item: NotificationItem): string | null
     "/courses/",
     "/my-courses/",
   ];
-  if (exactRoutes.includes(raw) || routePrefixes.some((prefix) => raw.startsWith(prefix))) return raw;
+  if (exactRoutes.includes(raw) || raw.startsWith("/hub?") || routePrefixes.some((prefix) => raw.startsWith(prefix))) return raw;
   return null;
 }
 

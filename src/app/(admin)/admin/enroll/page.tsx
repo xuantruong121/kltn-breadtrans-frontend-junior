@@ -17,7 +17,7 @@ import {
   AlertCircle,
   Layers,
 } from "lucide-react";
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import axiosClient from "@/lib/api/axiosClient";
 import toast from "react-hot-toast";
@@ -58,7 +58,7 @@ type EnrolledStudent = {
   };
 };
 
-export default function AdminEnrollPage() {
+function AdminEnrollContent() {
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const defaultClassId = searchParams.get("classId") || "";
@@ -876,5 +876,19 @@ export default function AdminEnrollPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminEnrollPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-96 items-center justify-center">
+          <Loader2 className="animate-spin text-slate-400" size={32} />
+        </div>
+      }
+    >
+      <AdminEnrollContent />
+    </Suspense>
   );
 }

@@ -24,16 +24,14 @@ import {
   Settings,
   Headphones,
   Award,
+  MessageSquare,
+  Inbox,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSyncExternalStore, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import dynamic from "next/dynamic";
-
-const FloatingAiTutor = dynamic(() => import("@/components/FloatingAiTutor"), {
-  ssr: false,
-});
+import { supportService } from "@/lib/api/services/support.service";
 
 interface NavItem {
   id: string;
@@ -57,7 +55,7 @@ const OVERVIEW_ITEM: NavItem = {
   icon: LayoutDashboard,
 };
 
-const NAV_GROUPS: NavCategory[] = [
+export const NAV_GROUPS: NavCategory[] = [
   {
     id: "content-group",
     title: "NỘI DUNG HỌC",
@@ -154,14 +152,26 @@ const NAV_GROUPS: NavCategory[] = [
   },
   {
     id: "system-group",
-    title: "Vận Hành & Hệ Thống",
+    title: "VẬN HÀNH & HỆ THỐNG",
     icon: Settings,
     items: [
+      {
+        id: "messages",
+        href: "/admin/messages",
+        label: "Tin nhắn",
+        icon: Inbox,
+      },
       {
         id: "issue-reports",
         href: "/admin/issue-reports",
         label: "Báo cáo lỗi",
         icon: Flag,
+      },
+      {
+        id: "suggestions",
+        href: "/admin/suggestions",
+        label: "Đề xuất & Góp ý",
+        icon: MessageSquare,
       },
       {
         id: "costs",
@@ -185,6 +195,14 @@ export default function AdminLayout({
   const queryClient = useQueryClient();
   const { user, logout } = useAuthStore();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+  const { data: unreadMessages } = useQuery({
+    queryKey: ["admin-support", "unread-count"],
+    queryFn: supportService.getAdminUnreadCount,
+    enabled: !!user && user.role === "ADMIN",
+    refetchInterval: 15000,
+  });
+  const unreadMessageCount = unreadMessages?.count ?? 0;
 
   // User manual collapsed state; default is all open (!collapsedGroups[group.id])
   const [collapsedGroups, setCollapsedGroups] = useState<
@@ -365,6 +383,15 @@ export default function AdminLayout({
                               <span className="leading-snug text-left break-words flex-1">
                                 {item.label}
                               </span>
+                              {item.id === "messages" && unreadMessageCount > 0 && (
+                                <span
+                                  className="min-w-5 rounded-full bg-blue-600 px-1.5 py-0.5 text-center text-[10px] font-bold leading-none text-white"
+                                  role="status"
+                                  aria-label={`${unreadMessageCount > 99 ? "99+" : unreadMessageCount} tin nhắn chưa đọc`}
+                                >
+                                  {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
+                                </span>
+                              )}
                             </Link>
                           );
                         })}
@@ -467,9 +494,6 @@ export default function AdminLayout({
           <div className="p-4 md:p-8 flex-1 min-w-0">{children}</div>
         </div>
       </main>
-
-      {/* FLOATING SUPPORT ASSISTANT */}
-      <FloatingAiTutor />
     </div>
   );
 }

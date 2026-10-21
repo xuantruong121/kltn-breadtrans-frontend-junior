@@ -1,16 +1,12 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
 import {
   Users,
   BookOpen,
   Clock,
   AlertTriangle,
   Loader2,
-  Coins,
-  TrendingUp,
-  LayoutDashboard,
   ArrowRight,
   UserPlus,
   ArrowUpRight,
@@ -23,9 +19,11 @@ import {
   GraduationCap,
   Award,
   Mic,
+  Inbox,
+  Flag,
+  MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
-import { useAuthStore } from "@/stores/authStore";
 import { useQuery } from "@tanstack/react-query";
 import axiosClient from "@/lib/api/axiosClient";
 import AdminAnalyticsChart from "@/components/admin/AdminAnalyticsChart";
@@ -40,6 +38,9 @@ type DashboardStats = {
     totalEnrollments: number;
     activeEnrollments: number;
     pendingPayments: number;
+    unreadSupportMessages: number;
+    pendingSuggestions: number;
+    openIssueReports: number;
   };
   monthlyTrends?: {
     month: string;
@@ -97,7 +98,7 @@ function getActivityIcon(type: string) {
   }
 }
 
-const AI_AUTHORING_DESTINATIONS = [
+export const AI_AUTHORING_DESTINATIONS = [
   {
     label: "Khóa học",
     description: "AI phân loại lộ trình và gợi ý các bài học phù hợp.",
@@ -141,16 +142,14 @@ const AI_AUTHORING_DESTINATIONS = [
     icon: GraduationCap,
   },
   {
-    label: "TOEIC Part 5",
-    description: "AI chỉ gợi ý câu hỏi Part 5, không áp dụng cho các Part khác.",
+    label: "Luyện đề",
+    description: "Soạn và quản lý nội dung luyện đề.",
     href: "/admin/exams",
     icon: Award,
   },
 ] as const;
 
 export default function AdminDashboardPage() {
-  const { user } = useAuthStore();
-
   const { data, isLoading } = useQuery<DashboardStats>({
     queryKey: ["admin-dashboard"],
     queryFn: async () => {
@@ -163,27 +162,24 @@ export default function AdminDashboardPage() {
     (data?.stats?.pendingPayments || 0) +
     (data?.gamification?.pendingOrders || 0);
 
-  const visibleRecentActivity =
-    data?.recentActivity?.filter(
-      (activity) => !["enrollment", "enroll"].includes(activity.type.toLowerCase()),
-    ) || [];
+  const visibleRecentActivity = data?.recentActivity || [];
 
   const STATS = data
     ? [
         {
           id: "students",
-          name: "Tổng Học Viên",
+          name: "Học viên",
           value: data.stats.totalStudents.toLocaleString(),
           icon: Users,
           color: "text-blue-600",
           bg: "bg-blue-50",
           borderColor: "border-blue-100",
           sub: `${data.stats.activeStudents || 0} hoạt động trong 30 ngày`,
-          trendPositive: true,
+          href: "/admin/users",
         },
         {
           id: "courses",
-          name: "Khóa Học Đang Mở",
+          name: "Khóa học đã xuất bản",
           value: data.stats.totalCourses.toLocaleString(),
           icon: BookOpen,
           color: "text-indigo-600",
@@ -194,100 +190,75 @@ export default function AdminDashboardPage() {
               ? `${data.stats.pendingCourses} khóa đang soạn thảo`
               : "100% đã công khai",
           alert: data.stats.pendingCourses > 0,
+          href: "/admin/courses",
         },
         {
-          id: "commerce",
-          name: "Giao Dịch Cần Duyệt",
-          value: pendingTransactionsTotal.toLocaleString(),
-          icon: CreditCard,
-          color: "text-amber-600",
+          id: "attention",
+          name: "Nội dung cần xử lý",
+          value: (data.stats.pendingCourses + data.stats.pendingSuggestions + data.stats.openIssueReports + pendingTransactionsTotal).toLocaleString(),
+          icon: AlertTriangle,
+          color: "text-amber-700",
           bg: "bg-amber-50",
           borderColor: "border-amber-100",
-          sub: `${data.stats.pendingPayments || 0} thanh toán · ${data.gamification?.pendingOrders || 0} đơn quà chờ duyệt`,
-          alert: pendingTransactionsTotal > 0,
+          sub: "Nội dung nháp, góp ý, lỗi và giao dịch",
+          alert: true,
+          href: "/admin/suggestions",
         },
         {
-          id: "gamification",
-          name: "Điểm Thưởng Tích Lũy",
-          value: (data.gamification?.totalBreads ?? 0).toLocaleString(),
-          unit: "Bánh Mì",
-          icon: Coins,
-          color: "text-emerald-600",
-          bg: "bg-emerald-50",
-          borderColor: "border-emerald-100",
-          sub: `Tổng ví học viên · ${data.gamification?.approvedOrders || 0} đơn đổi quà xong`,
+          id: "messages",
+          name: "Tin nhắn chưa đọc",
+          value: data.stats.unreadSupportMessages.toLocaleString(),
+          icon: Inbox,
+          color: "text-blue-700",
+          bg: "bg-blue-50",
+          borderColor: "border-blue-100",
+          sub: data.stats.unreadSupportMessages ? "Cần phản hồi từ học viên" : "Không có tin nhắn mới",
+          href: "/admin/messages",
         },
       ]
     : [];
 
   return (
     <div className="w-full max-w-[1720px] mx-auto space-y-6 pb-12">
-      {/* 1. HEADER */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200/70">
         <div>
-          <div className="flex items-center gap-2.5 mb-1">
-            <div className="p-2 rounded-lg bg-slate-900 text-white shadow-xs">
-              <LayoutDashboard size={20} strokeWidth={2} />
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Tổng Quan Hệ Thống
-            </h1>
-          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Tổng quan</h1>
           <p className="text-slate-500 text-sm">
-            Bảng điều khiển quản trị BreadTrans CMS &middot; Tài khoản:{" "}
-            <span className="font-semibold text-slate-800">
-              {user?.email || "Admin"}
-            </span>
+            Theo dõi hoạt động và các công việc cần xử lý.
           </p>
         </div>
       </div>
 
       <section
         aria-labelledby="ai-authoring-heading"
-        className="rounded-xl border border-amber-200/80 bg-amber-50/40 p-5 shadow-xs"
+        className="border border-slate-200 bg-white p-5 shadow-xs"
       >
-        <div className="flex flex-col gap-3 border-b border-amber-200/70 pb-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="border-b border-slate-100 pb-3">
           <div>
             <div className="flex items-center gap-2 text-slate-900">
               <FileText size={18} strokeWidth={2} aria-hidden="true" />
               <h2 id="ai-authoring-heading" className="text-base font-bold">
-                AI hỗ trợ soạn nội dung
+                Công cụ biên soạn
               </h2>
             </div>
-            <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
-              AI tạo nội dung gợi ý để hỗ trợ biên soạn. Admin cần kiểm tra/chỉnh sửa trước khi lưu. Nội dung không tự động xuất bản.
+            <p className="mt-1 text-sm text-slate-500">
+              Tạo hoặc chỉnh sửa nội dung học. Các bản nháp AI luôn cần được duyệt trước khi xuất bản.
             </p>
           </div>
-          <span className="shrink-0 self-start rounded-md border border-amber-200 bg-white px-2.5 py-1 text-xs font-semibold text-amber-900">
-            Chọn Studio để bắt đầu
-          </span>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-8">
           {AI_AUTHORING_DESTINATIONS.map((destination) => {
             const Icon = destination.icon;
             return (
               <Link
                 key={destination.href}
                 href={destination.href}
-                className="group min-h-28 rounded-lg border border-slate-200 bg-white p-3.5 transition-colors hover:border-amber-300 hover:bg-amber-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                className="group flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
               >
-                <div className="flex items-start gap-3">
-                  <span className="rounded-md border border-slate-200 bg-slate-50 p-2 text-slate-700 transition-colors group-hover:border-amber-200 group-hover:bg-amber-100/60 group-hover:text-amber-900">
-                    <Icon size={16} strokeWidth={2} aria-hidden="true" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-sm font-semibold text-slate-900">
-                      {destination.label}
-                    </span>
-                    <span className="mt-1 block text-xs leading-5 text-slate-500">
-                      {destination.description}
-                    </span>
-                    <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-amber-800">
-                      Mở Studio <ArrowRight size={13} strokeWidth={2} aria-hidden="true" />
-                    </span>
-                  </span>
-                </div>
+                <Icon size={16} strokeWidth={2} aria-hidden="true" className="shrink-0 text-slate-500 group-hover:text-blue-700" />
+                <span className="min-w-0 truncate">{destination.label}</span>
               </Link>
             );
           })}
@@ -305,15 +276,13 @@ export default function AdminDashboardPage() {
         <>
           {/* 2. TOP 4 METRIC STATS CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {STATS.map((stat, index) => {
+            {STATS.map((stat) => {
               const Icon = stat.icon;
               return (
-                <motion.div
+                <Link
                   key={stat.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05, duration: 0.3 }}
-                  className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all"
+                  href={stat.href}
+                  className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
                 >
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
@@ -330,11 +299,6 @@ export default function AdminDashboardPage() {
                     <span className="text-2xl font-bold tracking-tight text-slate-900">
                       {stat.value}
                     </span>
-                    {stat.unit && (
-                      <span className="text-xs font-semibold text-slate-500">
-                        {stat.unit}
-                      </span>
-                    )}
                   </div>
 
                   <div className="mt-2.5 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
@@ -343,44 +307,31 @@ export default function AdminDashboardPage() {
                     >
                       {stat.sub}
                     </span>
-                    {stat.trendPositive && (
-                      <span className="text-emerald-600 flex items-center gap-0.5 font-semibold text-[11px]">
-                        <TrendingUp size={12} strokeWidth={2} /> Hoạt động
-                      </span>
-                    )}
                   </div>
-                </motion.div>
+                </Link>
               );
             })}
           </div>
 
-          {/* 3. PENDING APPROVAL ALERT */}
-          {data && data.stats.pendingCourses > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-amber-50/90 border border-amber-200/90 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-950"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-1.5 bg-amber-100 text-amber-800 rounded-lg shrink-0">
-                  <AlertTriangle size={18} strokeWidth={2} />
-                </div>
-                <div className="text-sm">
-                  <span className="font-semibold text-amber-900">
-                    Nội dung chờ duyệt:
-                  </span>{" "}
-                  Hiện có <strong>{data.stats.pendingCourses}</strong> khóa học
-                  đang ở trạng thái chờ kiểm duyệt nội dung trước khi xuất bản.
-                </div>
-              </div>
-              <Link
-                href="/admin/courses"
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs rounded-lg shadow-xs transition-colors whitespace-nowrap self-end sm:self-auto"
-              >
-                Xét duyệt ngay <ArrowRight size={14} strokeWidth={2} />
-              </Link>
-            </motion.div>
-          )}
+          <section aria-labelledby="attention-heading" className="border border-slate-200 bg-white p-5 shadow-xs">
+            <div className="border-b border-slate-100 pb-3">
+              <h2 id="attention-heading" className="text-base font-bold text-slate-950">Cần xử lý</h2>
+              <p className="mt-0.5 text-xs text-slate-500">Các việc được lấy từ dữ liệu vận hành hiện tại.</p>
+            </div>
+            <div className="mt-2 divide-y divide-slate-100">
+              {[
+                { count: data?.stats.unreadSupportMessages ?? 0, label: "tin nhắn chưa đọc", href: "/admin/messages", icon: Inbox },
+                { count: data?.stats.pendingSuggestions ?? 0, label: "đề xuất đang chờ", href: "/admin/suggestions", icon: MessageSquare },
+                { count: data?.stats.openIssueReports ?? 0, label: "báo cáo lỗi cần xem", href: "/admin/issue-reports", icon: Flag },
+                { count: data?.stats.pendingCourses ?? 0, label: "khóa học ở trạng thái nháp", href: "/admin/courses", icon: BookOpen },
+                { count: pendingTransactionsTotal, label: "giao dịch cần duyệt", href: "/admin/payments", icon: CreditCard },
+              ].filter((item) => item.count > 0).map((item) => {
+                const Icon = item.icon;
+                return <Link key={item.href} href={item.href} className="flex min-h-12 items-center justify-between gap-4 py-2 text-sm hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"><span className="flex items-center gap-3"><Icon size={16} className="text-slate-500" aria-hidden="true" /><span><strong className="text-slate-950">{item.count}</strong> <span className="text-slate-600">{item.label}</span></span></span><ArrowRight size={15} aria-hidden="true" /></Link>;
+              })}
+              {(data?.stats.unreadSupportMessages ?? 0) + (data?.stats.pendingSuggestions ?? 0) + (data?.stats.openIssueReports ?? 0) + (data?.stats.pendingCourses ?? 0) + pendingTransactionsTotal === 0 && <p className="py-4 text-sm text-slate-500">Không có công việc cần xử lý.</p>}
+            </div>
+          </section>
 
           {/* 4. MAIN WORKSPACE & STICKY ACTIVITY FEED */}
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">

@@ -50,10 +50,21 @@ export interface SupportPaginatedConversations {
   totalPages: number;
 }
 
+export interface SupportLearnerResult {
+  id: number;
+  name: string;
+  email: string;
+  avatar: string | null;
+  conversationId: number | null;
+}
+
 export const supportService = {
   // Student endpoints
   getMyConversation: (): Promise<SupportConversationSummary> =>
     axiosClient.get("/support/conversations/me"),
+
+  getMyUnreadCount: (): Promise<{ count: number }> =>
+    axiosClient.get("/support/unread-count"),
 
   getMessages: (
     conversationId: number,
@@ -95,10 +106,20 @@ export const supportService = {
   getAdminConversations: (
     page = 1,
     limit = 50,
+    options?: { search?: string; unreadOnly?: boolean },
   ): Promise<SupportPaginatedConversations> =>
     axiosClient.get("/admin/support/conversations", {
-      params: { page, limit },
+      params: { page, limit, ...options },
     }),
+
+  getAdminUnreadCount: (): Promise<{ count: number }> =>
+    axiosClient.get("/admin/support/unread-count"),
+
+  searchLearners: (search: string): Promise<{ data: SupportLearnerResult[] }> =>
+    axiosClient.get("/admin/support/learners", { params: { search } }),
+
+  startAdminConversation: (studentId: number): Promise<SupportConversationSummary> =>
+    axiosClient.post(`/admin/support/conversations/start/${studentId}`),
 
   getAdminConversation: (
     conversationId: number,

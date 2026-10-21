@@ -159,6 +159,10 @@ export default function SocketProvider({ children }: { children: React.ReactNode
       console.log("⚡ [WebSocket] chat:new_message received:", payload);
       const { studentId, studentName, studentEmail, studentAvatar, message, fromRole, targetUserId } = payload;
       const chatStore = useChatAssistantStore.getState();
+      queryClient.invalidateQueries({ queryKey: ["admin-support"] });
+      queryClient.invalidateQueries({ queryKey: ["support"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", "recent", "unread"] });
 
       // Thêm tin nhắn vào thread tương ứng
       chatStore.addMessageToThread(
