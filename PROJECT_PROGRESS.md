@@ -165,3 +165,8 @@ Tài liệu này ghi chép lại toàn bộ tiến độ, kiến trúc và các 
 - Lesson Studio trở thành Canvas theo thứ tự học: block có nhãn tiếng Việt, chèn giữa các block, outline gọn, summary Guided Practice/Final Check, drawer soạn nội dung có bullets/examples và không hiển thị JSON.
 - AI hỗ trợ chuyển sang menu theo phần thiếu; backend trả candidate scope riêng cho Sections, Guided Practice hoặc Final Check và UI cho chọn phần trước Apply. Candidate vẫn không tự ghi Draft/Publish.
 - Runtime QA Course 17 và IPA legacy PASS sau khi owner BE restart; Course 17 giữ DRAFT, không có Gemini/media call hoặc dữ liệu demo mới.
+
+## 15. Course AI Orchestrator — 2026-10-21
+- Course Studio có action `AI hỗ trợ hoàn thiện`: mở workspace ngắn gọn, hiển thị audit deterministic, task theo mức cần thiết/tùy chọn, chọn từng mục, chạy từng batch bounded, review candidate và chỉ Apply từng kết quả vào Draft.
+- Workspace ID được lưu trong session storage để Admin đóng/mở lại UI; backend giữ source of truth Redis TTL nên không phụ thuộc process FE/BE đơn lẻ. UI không có auto-publish, model selector, token chart hay Apply All mù quáng.
+- Candidate media chỉ được dùng qua nút riêng sau preview; Course/Lesson content/exercise cũng cần explicit Apply. Không có thay đổi schema Prisma hoặc workflow AI Lesson hiện hữu.

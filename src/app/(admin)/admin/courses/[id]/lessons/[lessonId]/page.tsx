@@ -111,9 +111,11 @@ export default function V5LessonEditorPage() {
 
   const [lesson, setLesson] = useState<any | null>(null);
   const [courseTitle, setCourseTitle] = useState("");
+  const [courseStatus, setCourseStatus] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [isPublishConfirmOpen, setIsPublishConfirmOpen] = useState(false);
+  const [isRevertConfirmOpen, setIsRevertConfirmOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "sections" | "exercises" | "info" | "preview"
   >("info");
@@ -141,9 +143,9 @@ export default function V5LessonEditorPage() {
     finalCheck: true,
   });
   const [aiLoading, setAiLoading] = useState(false);
-  const [sectionAiMenuOpenId, setSectionAiMenuOpenId] = useState<
-    number | null
-  >(null);
+  const [sectionAiMenuOpenId, setSectionAiMenuOpenId] = useState<number | null>(
+    null,
+  );
   const [sectionRefineLoadingId, setSectionRefineLoadingId] = useState<
     number | null
   >(null);
@@ -181,9 +183,9 @@ export default function V5LessonEditorPage() {
     }>,
     isRequired: true,
   });
-  const [sectionEditorTab, setSectionEditorTab] = useState<
-    "edit" | "preview"
-  >("edit");
+  const [sectionEditorTab, setSectionEditorTab] = useState<"edit" | "preview">(
+    "edit",
+  );
   const [isSectionFormDirty, setIsSectionFormDirty] = useState(false);
   const [isSectionCloseConfirmOpen, setIsSectionCloseConfirmOpen] =
     useState(false);
@@ -224,6 +226,7 @@ export default function V5LessonEditorPage() {
         `/admin/courses/${courseId}/studio`,
       );
       setCourseTitle(data.course?.title || "");
+      setCourseStatus(data.course?.status || "");
       const found = data.lessons?.find((l: any) => l.id === lessonId);
       if (found) {
         setLesson(found);
@@ -331,7 +334,11 @@ export default function V5LessonEditorPage() {
         : {}),
       ...(aiSelection.finalCheck ? { finalCheck: aiCandidate.finalCheck } : {}),
     };
-    if (!selectedCandidate.sections?.length && !selectedCandidate.guidedPractice && !selectedCandidate.finalCheck) {
+    if (
+      !selectedCandidate.sections?.length &&
+      !selectedCandidate.guidedPractice &&
+      !selectedCandidate.finalCheck
+    ) {
       toast.error("Hãy chọn ít nhất một phần đề xuất để áp dụng.");
       return;
     }
@@ -375,9 +382,13 @@ export default function V5LessonEditorPage() {
         action,
         section: suggestion,
       });
-      toast.success("Đã tạo đề xuất AI cho mục này. Hãy review trước khi áp dụng.");
+      toast.success(
+        "Đã tạo đề xuất AI cho mục này. Hãy review trước khi áp dụng.",
+      );
     } catch (e) {
-      toast.error(getApiErrorMessage(e, "Không thể tạo đề xuất AI cho mục này."));
+      toast.error(
+        getApiErrorMessage(e, "Không thể tạo đề xuất AI cho mục này."),
+      );
     } finally {
       setSectionRefineLoadingId(null);
     }
@@ -427,13 +438,34 @@ export default function V5LessonEditorPage() {
     }
   };
 
+  const revertLessonToDraft = async () => {
+    setBusy(true);
+    try {
+      await axiosClient.post(
+        `/admin/courses/${courseId}/studio/lessons/${lessonId}/revert-to-draft`,
+      );
+      toast.success("Bài học đã được chuyển về bản nháp.");
+      setIsRevertConfirmOpen(false);
+      await load();
+    } catch (e) {
+      toast.error(
+        getApiErrorMessage(e, "Không thể chuyển bài học về bản nháp."),
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const validateLesson = async () => {
     setBusy(true);
     try {
       const result: any = await axiosClient.get(
         `/admin/courses/${courseId}/studio/lessons/${lessonId}/validate`,
       );
-      setValidation({ valid: Boolean(result.valid), errors: result.errors || [] });
+      setValidation({
+        valid: Boolean(result.valid),
+        errors: result.errors || [],
+      });
       if (result.valid) toast.success("Bài học đã sẵn sàng để xuất bản.");
       else toast.error("Bài học chưa đủ điều kiện xuất bản.");
     } catch (e) {
@@ -834,104 +866,220 @@ export default function V5LessonEditorPage() {
   const finalCheck = lesson.exercises?.find(
     (x: any) => x.slug === "final-check",
   );
+  const isReadOnly =
+    courseStatus === "PUBLISHED" || lesson.status === "PUBLISHED";
 
   return (
     <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-8">
       {/* HEADER */}
       <div className="sticky top-0 z-20 -mx-4 border-b border-slate-200 bg-slate-50/95 px-4 py-4 backdrop-blur md:-mx-8 md:px-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <Link
-            href={`/admin/courses/${courseId}/curriculum`}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors"
-          >
-            <ArrowLeft size={14} /> Trở về: {courseTitle || "Chương trình học"}
-          </Link>
-          <div className="mt-2 flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-slate-900">
-              {lesson.title}
-            </h1>
-            <span
-              className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                lesson.status === "PUBLISHED"
-                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                  : "bg-amber-50 text-amber-700 border border-amber-200"
-              }`}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <Link
+              href={`/admin/courses/${courseId}/curriculum`}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors"
             >
-              {lesson.status === "PUBLISHED" ? "Đã xuất bản" : "Bản nháp"}
-            </span>
+              <ArrowLeft size={14} /> Trở về:{" "}
+              {courseTitle || "Chương trình học"}
+            </Link>
+            <div className="mt-2 flex items-center gap-3">
+              <h1 className="text-2xl font-bold text-slate-900">
+                {lesson.title}
+              </h1>
+              <span
+                className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                  lesson.status === "PUBLISHED"
+                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                    : "bg-amber-50 text-amber-700 border border-amber-200"
+                }`}
+              >
+                {lesson.status === "PUBLISHED" ? "Đã xuất bản" : "Bản nháp"}
+              </span>
+            </div>
+            <p className="mt-1 flex items-center gap-2 text-xs text-slate-500">
+              <span>
+                {lesson.sections?.length || 0} mục nội dung ·{" "}
+                {lesson.exercises?.length || 0} bài luyện tập
+              </span>
+              <span
+                aria-live="polite"
+                className={
+                  hasUnsavedChanges
+                    ? "font-semibold text-amber-700"
+                    : "text-emerald-700"
+                }
+              >
+                {hasUnsavedChanges ? "Có thay đổi chưa lưu" : "Đã lưu"}
+              </span>
+            </p>
           </div>
-          <p className="mt-1 flex items-center gap-2 text-xs text-slate-500">
-            <span>{lesson.sections?.length || 0} mục nội dung · {lesson.exercises?.length || 0} bài luyện tập</span>
-            <span aria-live="polite" className={hasUnsavedChanges ? "font-semibold text-amber-700" : "text-emerald-700"}>
-              {hasUnsavedChanges ? "Có thay đổi chưa lưu" : "Đã lưu"}
-            </span>
-          </p>
-        </div>
 
-        <div className="flex items-center gap-2">
-          <div className="relative">
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsAiMenuOpen((open) => !open)}
+                disabled={busy || aiLoading || isReadOnly}
+                aria-expanded={isAiMenuOpen}
+                aria-haspopup="menu"
+                className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3.5 py-2 text-sm font-semibold text-amber-900 transition-colors hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:opacity-50"
+              >
+                {aiLoading ? (
+                  <Loader2 size={15} className="animate-spin" />
+                ) : (
+                  <PanelRight size={15} />
+                )}
+                AI hỗ trợ <ChevronDown size={14} aria-hidden="true" />
+              </button>
+              {isAiMenuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-[calc(100%+0.5rem)] z-30 w-72 rounded-xl border border-slate-200 bg-white p-2 shadow-lg"
+                >
+                  <p className="px-2 py-2 text-xs leading-relaxed text-slate-500">
+                    {lesson.sections?.length && guidedPractice && finalCheck
+                      ? "Bài học đã có nội dung và bài tập. Chỉ tạo đề xuất mới khi bạn muốn bổ sung một phần cụ thể."
+                      : "AI tạo đề xuất để bạn xem lại trước khi áp dụng vào bản nháp."}
+                  </p>
+                  {!lesson.sections?.length && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => void generateAiContent("FULL")}
+                      className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-slate-800 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none"
+                    >
+                      Hoàn thiện bài học
+                    </button>
+                  )}
+                  {!lesson.sections?.length && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => void generateAiContent("SECTIONS")}
+                      className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none"
+                    >
+                      Gợi ý nội dung bài học
+                    </button>
+                  )}
+                  {Boolean(lesson.sections?.length) && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => void generateAiContent("IMPROVE_SECTIONS")}
+                      className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none"
+                    >
+                      Cải thiện nội dung bài học
+                    </button>
+                  )}
+                  {!guidedPractice && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => void generateAiContent("GUIDED_PRACTICE")}
+                      className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none"
+                    >
+                      Tạo Luyện tập có hướng dẫn
+                    </button>
+                  )}
+                  {!finalCheck && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => void generateAiContent("FINAL_CHECK")}
+                      className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none"
+                    >
+                      Tạo Kiểm tra cuối bài
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setIsAiMenuOpen(false);
+                      document.getElementById("lesson-media")?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                      });
+                    }}
+                    className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none"
+                  >
+                    Tải ảnh minh họa riêng
+                  </button>
+                </div>
+              )}
+            </div>
             <button
               type="button"
-              onClick={() => setIsAiMenuOpen((open) => !open)}
-              disabled={busy || aiLoading || lesson.status === "PUBLISHED"}
-              aria-expanded={isAiMenuOpen}
-              aria-haspopup="menu"
-              className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3.5 py-2 text-sm font-semibold text-amber-900 transition-colors hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:opacity-50"
+              onClick={() => setActiveTab("preview")}
+              className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300"
             >
-              {aiLoading ? <Loader2 size={15} className="animate-spin" /> : <PanelRight size={15} />}
-              AI hỗ trợ <ChevronDown size={14} aria-hidden="true" />
+              <Eye size={15} /> Xem trước
             </button>
-            {isAiMenuOpen && (
-              <div role="menu" className="absolute right-0 top-[calc(100%+0.5rem)] z-30 w-72 rounded-xl border border-slate-200 bg-white p-2 shadow-lg">
-                <p className="px-2 py-2 text-xs leading-relaxed text-slate-500">
-                  {lesson.sections?.length && guidedPractice && finalCheck
-                    ? "Bài học đã có nội dung và bài tập. Chỉ tạo đề xuất mới khi bạn muốn bổ sung một phần cụ thể."
-                    : "AI tạo đề xuất để bạn xem lại trước khi áp dụng vào bản nháp."}
-                </p>
-                {!lesson.sections?.length && (
-                  <button type="button" role="menuitem" onClick={() => void generateAiContent("FULL")} className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-slate-800 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none">Hoàn thiện bài học</button>
-                )}
-                {!lesson.sections?.length && <button type="button" role="menuitem" onClick={() => void generateAiContent("SECTIONS")} className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none">Gợi ý nội dung bài học</button>}
-                {Boolean(lesson.sections?.length) && (
-                  <button type="button" role="menuitem" onClick={() => void generateAiContent("IMPROVE_SECTIONS")} className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none">
-                    Cải thiện nội dung bài học
-                  </button>
-                )}
-                {!guidedPractice && <button type="button" role="menuitem" onClick={() => void generateAiContent("GUIDED_PRACTICE")} className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none">Tạo Luyện tập có hướng dẫn</button>}
-                {!finalCheck && <button type="button" role="menuitem" onClick={() => void generateAiContent("FINAL_CHECK")} className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none">Tạo Kiểm tra cuối bài</button>}
-                <button type="button" role="menuitem" onClick={() => { setIsAiMenuOpen(false); document.getElementById("lesson-media")?.scrollIntoView({ behavior: "smooth", block: "center" }); }} className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none">Tải ảnh minh họa riêng</button>
-              </div>
+            <button
+              type="button"
+              onClick={() => void validateLesson()}
+              disabled={busy}
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
+            >
+              <CheckCircle2 size={15} /> Kiểm tra
+            </button>
+            {lesson.status === "PUBLISHED" ? (
+              <button
+                type="button"
+                onClick={() => setIsRevertConfirmOpen(true)}
+                disabled={busy || courseStatus === "PUBLISHED"}
+                className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 transition-colors disabled:opacity-50"
+              >
+                <Edit2 size={15} /> Chuyển về bản nháp
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsPublishConfirmOpen(true)}
+                disabled={busy || courseStatus === "PUBLISHED"}
+                className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
+              >
+                <Check size={15} /> Xuất bản bài học
+              </button>
             )}
           </div>
-          <button type="button" onClick={() => setActiveTab("preview")} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300"><Eye size={15} /> Xem trước</button>
-          <button
-            type="button"
-            onClick={() => void validateLesson()}
-            disabled={busy}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
-          >
-            <CheckCircle2 size={15} /> Kiểm tra
-          </button>
-          <button
-            onClick={() => setIsPublishConfirmOpen(true)}
-            disabled={busy || lesson.status === "PUBLISHED"}
-            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
-          >
-            <Check size={15} /> Xuất bản bài học
-          </button>
         </div>
-      </div>
+
+        {isReadOnly && (
+          <section className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            {courseStatus === "PUBLISHED"
+              ? "Khóa học đang được xuất bản. Hãy chuyển khóa học về bản nháp trước khi chỉnh sửa bài học."
+              : "Bài học đang được xuất bản và ở chế độ chỉ đọc. Chuyển về bản nháp để chỉnh sửa nội dung, bài tập hoặc ảnh."}
+          </section>
+        )}
       </div>
 
       {validation && (
-        <section aria-live="polite" className={`rounded-xl border p-4 ${validation.valid ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"}`}>
+        <section
+          aria-live="polite"
+          className={`rounded-xl border p-4 ${validation.valid ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"}`}
+        >
           <div className="flex items-start gap-3">
-            {validation.valid ? <CheckCircle2 className="mt-0.5 text-emerald-700" size={18} /> : <CircleAlert className="mt-0.5 text-amber-700" size={18} />}
+            {validation.valid ? (
+              <CheckCircle2 className="mt-0.5 text-emerald-700" size={18} />
+            ) : (
+              <CircleAlert className="mt-0.5 text-amber-700" size={18} />
+            )}
             <div>
-              <h2 className="text-sm font-bold text-slate-900">{validation.valid ? "Sẵn sàng xuất bản" : "Chưa thể xuất bản"}</h2>
-              <p className="mt-1 text-sm text-slate-700">{validation.valid ? "Có nội dung, bài luyện tập và đáp án hợp lệ. Ảnh minh họa là tùy chọn." : "Hãy hoàn thiện các mục bên dưới trước khi xuất bản."}</p>
-              {!validation.valid && <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">{validation.errors.map((error, index) => <li key={`${error}-${index}`}>{error}</li>)}</ul>}
+              <h2 className="text-sm font-bold text-slate-900">
+                {validation.valid ? "Sẵn sàng xuất bản" : "Chưa thể xuất bản"}
+              </h2>
+              <p className="mt-1 text-sm text-slate-700">
+                {validation.valid
+                  ? "Có nội dung, bài luyện tập và đáp án hợp lệ. Ảnh minh họa là tùy chọn."
+                  : "Hãy hoàn thiện các mục bên dưới trước khi xuất bản."}
+              </p>
+              {!validation.valid && (
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                  {validation.errors.map((error, index) => (
+                    <li key={`${error}-${index}`}>{error}</li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         </section>
@@ -980,9 +1128,11 @@ export default function V5LessonEditorPage() {
                   Ghi chú rà soát (không chặn Apply)
                 </p>
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
-                  {aiCandidate.warnings.map((warning: string, index: number) => (
-                    <li key={`${warning}-${index}`}>{warning}</li>
-                  ))}
+                  {aiCandidate.warnings.map(
+                    (warning: string, index: number) => (
+                      <li key={`${warning}-${index}`}>{warning}</li>
+                    ),
+                  )}
                 </ul>
               </div>
             )}
@@ -1026,7 +1176,16 @@ export default function V5LessonEditorPage() {
               >
                 {index === 0 && (
                   <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-800">
-                    <input type="checkbox" checked={aiSelection.sections} onChange={(event) => setAiSelection((current) => ({ ...current, sections: event.target.checked }))} />
+                    <input
+                      type="checkbox"
+                      checked={aiSelection.sections}
+                      onChange={(event) =>
+                        setAiSelection((current) => ({
+                          ...current,
+                          sections: event.target.checked,
+                        }))
+                      }
+                    />
                     Áp dụng nội dung bài học ({aiCandidate.sections.length} mục)
                   </label>
                 )}
@@ -1104,7 +1263,20 @@ export default function V5LessonEditorPage() {
                   className="rounded-xl border border-slate-200 bg-white p-3"
                 >
                   <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-800">
-                    <input type="checkbox" checked={key === "guidedPractice" ? aiSelection.guidedPractice : aiSelection.finalCheck} onChange={(event) => setAiSelection((current) => ({ ...current, [key]: event.target.checked }))} />
+                    <input
+                      type="checkbox"
+                      checked={
+                        key === "guidedPractice"
+                          ? aiSelection.guidedPractice
+                          : aiSelection.finalCheck
+                      }
+                      onChange={(event) =>
+                        setAiSelection((current) => ({
+                          ...current,
+                          [key]: event.target.checked,
+                        }))
+                      }
+                    />
                     Áp dụng {label}
                   </label>
                   <p className="mb-2 text-xs font-bold uppercase tracking-wide text-violet-700">
@@ -1200,340 +1372,450 @@ export default function V5LessonEditorPage() {
 
       {/* TAB 1: SECTIONS */}
       {activeTab === "sections" && (
-        <section className="space-y-4">
+        <section
+          className={`space-y-4 ${isReadOnly ? "pointer-events-none opacity-60" : ""}`}
+        >
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_12rem]">
-          <div className="space-y-4">
-          <section id="lesson-media" className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">
-                  Ảnh đại diện bài học
-                </h3>
-                <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                  Tùy chọn. Dùng khi bài học cần một hình minh họa chung. Hỗ trợ PNG, JPG và WEBP.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => mediaInputRef.current?.click()}
-                disabled={busy || mediaUploading}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            <div className="space-y-4">
+              <section
+                id="lesson-media"
+                className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs"
               >
-                {mediaUploading ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <Upload size={14} />
-                )}{" "}
-                {mediaUploading ? "Đang tải..." : "Tải ảnh"}
-              </button>
-              <input
-                ref={mediaInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                className="hidden"
-                onChange={uploadLessonImage}
-                disabled={busy || mediaUploading}
-              />
-            </div>
-            {lesson.media?.length > 0 ? (
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {lesson.media.map((media: any) => (
-                  <figure
-                    key={media.id}
-                    className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">
+                      Ảnh đại diện bài học
+                    </h3>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                      Tùy chọn. Dùng khi bài học cần một hình minh họa chung. Hỗ
+                      trợ PNG, JPG và WEBP.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => mediaInputRef.current?.click()}
+                    disabled={busy || mediaUploading || isReadOnly}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                   >
-                    <img
-                      src={media.url}
-                      alt={media.altText || "Hình minh họa bài học"}
-                      className="h-32 w-full object-cover"
-                    />
-                    <figcaption className="flex items-center justify-between gap-2 p-2">
-                      <span className="inline-flex items-center gap-1 text-xs text-slate-500">
-                        <ImageIcon size={13} /> Hình minh họa
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => void removeLessonMedia(media.id)}
-                        disabled={busy}
-                        className="text-xs font-semibold text-rose-600 hover:text-rose-700 disabled:opacity-50"
+                    {mediaUploading ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Upload size={14} />
+                    )}{" "}
+                    {mediaUploading ? "Đang tải..." : "Tải ảnh"}
+                  </button>
+                  <input
+                    ref={mediaInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={uploadLessonImage}
+                    disabled={busy || mediaUploading || isReadOnly}
+                  />
+                </div>
+                {lesson.media?.length > 0 ? (
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    {lesson.media.map((media: any) => (
+                      <figure
+                        key={media.id}
+                        className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
                       >
-                        Xóa
-                      </button>
-                    </figcaption>
-                  </figure>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-4 text-xs text-slate-500">
-                Chưa có hình minh họa. Đây là phần tùy chọn.
-              </p>
-            )}
-            <div className="mt-4 border-t border-slate-100 pt-4">
-              <MediaSearchPanel
-                searchUrl={`/admin/courses/${courseId}/studio/lessons/${lessonId}/media/search`}
-                acceptUrl={`/admin/courses/${courseId}/studio/lessons/${lessonId}/media/accept`}
-                generateUrl={`/admin/courses/${courseId}/studio/lessons/${lessonId}/media/generate`}
-                generateAcceptUrl={`/admin/courses/${courseId}/studio/lessons/${lessonId}/media/generate/accept`}
-                onAccepted={() => void load()}
-                onUploadInstead={() => mediaInputRef.current?.click()}
-              />
-            </div>
-          </section>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-base font-bold text-slate-900">
-                Nội dung bài học
-              </h2>
-              <p className="text-xs text-slate-500">
-                Soạn nội dung theo đúng thứ tự học viên sẽ trải nghiệm.
-              </p>
-            </div>
-            <button
-              onClick={() => openAddSection()}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors"
-            >
-              <Plus size={14} /> Thêm nội dung
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            {lesson.sections?.length > 0 && (
-              <button type="button" onClick={() => openAddSection(0)} className="flex w-full items-center gap-2 py-1 text-xs font-semibold text-slate-500 before:h-px before:flex-1 before:bg-slate-200 after:h-px after:flex-1 after:bg-slate-200 hover:text-slate-800" aria-label="Thêm nội dung trước mục đầu tiên"><Plus size={14} /> Thêm nội dung</button>
-            )}
-            {lesson.sections && lesson.sections.length > 0 ? (
-              lesson.sections.map((s: any, idx: number) => {
-                return (
-                  <React.Fragment key={s.id}>
-                  <div
-                    id={`section-${s.id}`}
-                    className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-3"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
-                      <div className="flex items-center gap-2">
-                        <span className="flex h-6 w-6 items-center justify-center rounded bg-slate-100 text-xs font-bold text-slate-700">
-                          #{idx + 1}
-                        </span>
-                        <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
-                          {sectionTypeLabel(s.type)}
-                        </span>
-                        <h3 className="text-sm font-bold text-slate-900">
-                          {s.heading}
-                        </h3>
-                      </div>
-
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => reorderSection(idx, "up")}
-                          disabled={idx === 0 || busy}
-                          title="Di chuyển lên"
-                          className="rounded border border-slate-200 p-1 text-slate-600 hover:bg-slate-100 disabled:opacity-30"
-                        >
-                          <ArrowUp size={13} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => reorderSection(idx, "down")}
-                          disabled={idx === lesson.sections.length - 1 || busy}
-                          title="Di chuyển xuống"
-                          className="rounded border border-slate-200 p-1 text-slate-600 hover:bg-slate-100 disabled:opacity-30"
-                        >
-                          <ArrowDown size={13} />
-                        </button>
-                        <div className="relative">
+                        <img
+                          src={media.url}
+                          alt={media.altText || "Hình minh họa bài học"}
+                          className="aspect-video w-full object-cover"
+                        />
+                        <figcaption className="flex items-center justify-between gap-2 p-2">
+                          <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+                            <ImageIcon size={13} /> Hình minh họa
+                          </span>
                           <button
                             type="button"
-                            onClick={() =>
-                              setSectionAiMenuOpenId((current) =>
-                                current === s.id ? null : s.id,
-                              )
-                            }
-                            disabled={
-                              busy || sectionRefineLoadingId === s.id
-                            }
-                            aria-expanded={sectionAiMenuOpenId === s.id}
-                            aria-haspopup="menu"
-                            className="inline-flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100 disabled:opacity-50"
+                            onClick={() => void removeLessonMedia(media.id)}
+                            disabled={busy || isReadOnly}
+                            className="text-xs font-semibold text-rose-600 hover:text-rose-700 disabled:opacity-50"
                           >
-                            {sectionRefineLoadingId === s.id ? (
-                              <Loader2 size={12} className="animate-spin" />
-                            ) : (
-                              <PanelRight size={12} />
-                            )}
-                            AI hỗ trợ
+                            Xóa
                           </button>
-                          {sectionAiMenuOpenId === s.id && (
-                            <div
-                              role="menu"
-                              className="absolute right-0 top-[calc(100%+0.25rem)] z-20 w-52 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg"
-                            >
-                              {SECTION_AI_ACTIONS.map((action) => (
-                                <button
-                                  key={action.value}
-                                  type="button"
-                                  role="menuitem"
-                                  onClick={() => void refineSection(s, action.value)}
-                                  className="w-full rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none"
-                                >
-                                  {action.label}
-                                </button>
-                              ))}
+                        </figcaption>
+                      </figure>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-4 text-xs text-slate-500">
+                    Chưa có hình minh họa. Đây là phần tùy chọn.
+                  </p>
+                )}
+                {!isReadOnly && (
+                  <div className="mt-4 border-t border-slate-100 pt-4">
+                    <MediaSearchPanel
+                      searchUrl={`/admin/courses/${courseId}/studio/lessons/${lessonId}/media/search`}
+                      acceptUrl={`/admin/courses/${courseId}/studio/lessons/${lessonId}/media/accept`}
+                      generateUrl={`/admin/courses/${courseId}/studio/lessons/${lessonId}/media/generate`}
+                      generateAcceptUrl={`/admin/courses/${courseId}/studio/lessons/${lessonId}/media/generate/accept`}
+                      onAccepted={() => void load()}
+                      onUploadInstead={() => mediaInputRef.current?.click()}
+                    />
+                  </div>
+                )}
+              </section>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-bold text-slate-900">
+                    Nội dung bài học
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Soạn nội dung theo đúng thứ tự học viên sẽ trải nghiệm.
+                  </p>
+                </div>
+                <button
+                  onClick={() => openAddSection()}
+                  disabled={isReadOnly}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors"
+                >
+                  <Plus size={14} /> Thêm nội dung
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {lesson.sections?.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => openAddSection(0)}
+                    disabled={isReadOnly}
+                    className="flex w-full items-center gap-2 py-1 text-xs font-semibold text-slate-500 before:h-px before:flex-1 before:bg-slate-200 after:h-px after:flex-1 after:bg-slate-200 hover:text-slate-800 disabled:opacity-50"
+                    aria-label="Thêm nội dung trước mục đầu tiên"
+                  >
+                    <Plus size={14} /> Thêm nội dung
+                  </button>
+                )}
+                {lesson.sections && lesson.sections.length > 0 ? (
+                  lesson.sections.map((s: any, idx: number) => {
+                    return (
+                      <React.Fragment key={s.id}>
+                        <div
+                          id={`section-${s.id}`}
+                          className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-3"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                            <div className="flex items-center gap-2">
+                              <span className="flex h-6 w-6 items-center justify-center rounded bg-slate-100 text-xs font-bold text-slate-700">
+                                #{idx + 1}
+                              </span>
+                              <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                                {sectionTypeLabel(s.type)}
+                              </span>
+                              <h3 className="text-sm font-bold text-slate-900">
+                                {s.heading}
+                              </h3>
                             </div>
-                          )}
+
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => reorderSection(idx, "up")}
+                                disabled={idx === 0 || busy}
+                                title="Di chuyển lên"
+                                className="rounded border border-slate-200 p-1 text-slate-600 hover:bg-slate-100 disabled:opacity-30"
+                              >
+                                <ArrowUp size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => reorderSection(idx, "down")}
+                                disabled={
+                                  idx === lesson.sections.length - 1 || busy
+                                }
+                                title="Di chuyển xuống"
+                                className="rounded border border-slate-200 p-1 text-slate-600 hover:bg-slate-100 disabled:opacity-30"
+                              >
+                                <ArrowDown size={13} />
+                              </button>
+                              <div className="relative">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setSectionAiMenuOpenId((current) =>
+                                      current === s.id ? null : s.id,
+                                    )
+                                  }
+                                  disabled={
+                                    busy || sectionRefineLoadingId === s.id
+                                  }
+                                  aria-expanded={sectionAiMenuOpenId === s.id}
+                                  aria-haspopup="menu"
+                                  className="inline-flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100 disabled:opacity-50"
+                                >
+                                  {sectionRefineLoadingId === s.id ? (
+                                    <Loader2
+                                      size={12}
+                                      className="animate-spin"
+                                    />
+                                  ) : (
+                                    <PanelRight size={12} />
+                                  )}
+                                  AI hỗ trợ
+                                </button>
+                                {sectionAiMenuOpenId === s.id && (
+                                  <div
+                                    role="menu"
+                                    className="absolute right-0 top-[calc(100%+0.25rem)] z-20 w-52 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg"
+                                  >
+                                    {SECTION_AI_ACTIONS.map((action) => (
+                                      <button
+                                        key={action.value}
+                                        type="button"
+                                        role="menuitem"
+                                        onClick={() =>
+                                          void refineSection(s, action.value)
+                                        }
+                                        className="w-full rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none"
+                                      >
+                                        {action.label}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => openEditSection(s)}
+                                className="inline-flex items-center gap-1 rounded border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                              >
+                                <Edit2 size={12} /> Sửa
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setPendingDeleteSection({
+                                    id: s.id,
+                                    heading: s.heading,
+                                  })
+                                }
+                                className="rounded border border-slate-200 p-1 text-slate-400 hover:text-rose-600 hover:border-rose-200"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </div>
+
+                          {(() => {
+                            const normalized = normalizeSectionContent(
+                              s.content,
+                            );
+                            const isCollapsed = collapsedSectionIds.has(s.id);
+                            const counts = [
+                              normalized.paragraphs.length
+                                ? `${normalized.paragraphs.length} đoạn văn`
+                                : null,
+                              normalized.bullets.length
+                                ? `${normalized.bullets.length} ý chính`
+                                : null,
+                              normalized.examples.length
+                                ? `${normalized.examples.length} ví dụ`
+                                : null,
+                            ].filter(Boolean);
+                            return (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setCollapsedSectionIds((current) => {
+                                      const next = new Set(current);
+                                      if (next.has(s.id)) next.delete(s.id);
+                                      else next.add(s.id);
+                                      return next;
+                                    })
+                                  }
+                                  className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700"
+                                  aria-expanded={!isCollapsed}
+                                >
+                                  <ChevronDown
+                                    size={13}
+                                    className={`transition-transform ${isCollapsed ? "-rotate-90" : ""}`}
+                                  />
+                                  {counts.length
+                                    ? counts.join(" · ")
+                                    : "Chưa có nội dung"}
+                                </button>
+                                {!isCollapsed && (
+                                  <SectionContentPreview
+                                    content={s.content}
+                                    sectionId={s.id}
+                                  />
+                                )}
+                              </>
+                            );
+                          })()}
+
+                          {(() => {
+                            const refine = sectionRefineCandidate;
+                            if (!refine || refine.sectionId !== s.id)
+                              return null;
+                            return (
+                              <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <p className="text-xs font-bold text-amber-800">
+                                    Đề xuất AI ·{" "}
+                                    {
+                                      SECTION_AI_ACTIONS.find(
+                                        (action) =>
+                                          action.value === refine.action,
+                                      )?.label
+                                    }{" "}
+                                    · chưa áp dụng
+                                  </p>
+                                  <div className="flex gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setSectionRefineCandidate(null)
+                                      }
+                                      className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700"
+                                    >
+                                      Bỏ qua
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => void applySectionRefine()}
+                                      disabled={busy}
+                                      className="rounded-lg bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                                    >
+                                      Áp dụng
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className="mt-2 rounded-lg border border-slate-200 bg-white p-3">
+                                  <SectionContentPreview
+                                    content={{
+                                      paragraphs: refine.section.paragraphs,
+                                      bullets: refine.section.bullets,
+                                      examples: refine.section.examples,
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
                         <button
                           type="button"
-                          onClick={() => openEditSection(s)}
-                          className="inline-flex items-center gap-1 rounded border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                          onClick={() => openAddSection(idx + 1)}
+                          className="flex w-full items-center gap-2 py-1 text-xs font-semibold text-slate-500 before:h-px before:flex-1 before:bg-slate-200 after:h-px after:flex-1 after:bg-slate-200 hover:text-slate-800"
+                          aria-label={`Thêm nội dung sau ${s.heading}`}
                         >
-                          <Edit2 size={12} /> Sửa
+                          <Plus size={14} /> Thêm nội dung
                         </button>
+                      </React.Fragment>
+                    );
+                  })
+                ) : (
+                  <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500">
+                    <FileText
+                      size={28}
+                      className="mx-auto mb-2 text-slate-300"
+                    />
+                    Bài học chưa có mục nội dung nào. Hãy nhấn &quot;Thêm mục
+                    nội dung&quot; để soạn lý thuyết cho học viên.
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3 border-t border-slate-200 pt-5">
+                {[
+                  {
+                    exercise: guidedPractice,
+                    title: "Luyện tập có hướng dẫn",
+                    description: "Củng cố nội dung vừa học.",
+                    tone: "border-blue-200 bg-blue-50/60",
+                  },
+                  {
+                    exercise: finalCheck,
+                    title: "Kiểm tra cuối bài",
+                    description: "Đánh giá các mục tiêu của bài học.",
+                    tone: "border-emerald-200 bg-emerald-50/60",
+                  },
+                ].map(({ exercise, title, description, tone }) => (
+                  <section
+                    key={title}
+                    className={`rounded-xl border p-4 ${tone}`}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-900">
+                          {title}
+                        </h3>
+                        <p className="mt-1 text-xs text-slate-600">
+                          {description}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-slate-900">
+                          {exercise?.questions?.length || 0} câu
+                        </p>
                         <button
                           type="button"
-                          onClick={() =>
-                            setPendingDeleteSection({
-                              id: s.id,
-                              heading: s.heading,
-                            })
-                          }
-                          className="rounded border border-slate-200 p-1 text-slate-400 hover:text-rose-600 hover:border-rose-200"
+                          onClick={() => setActiveTab("exercises")}
+                          className="mt-1 text-xs font-semibold text-slate-700 underline underline-offset-2"
                         >
-                          <Trash2 size={13} />
+                          Chỉnh sửa câu hỏi
                         </button>
                       </div>
                     </div>
-
-                    {(() => {
-                      const normalized = normalizeSectionContent(s.content);
-                      const isCollapsed = collapsedSectionIds.has(s.id);
-                      const counts = [
-                        normalized.paragraphs.length
-                          ? `${normalized.paragraphs.length} đoạn văn`
-                          : null,
-                        normalized.bullets.length
-                          ? `${normalized.bullets.length} ý chính`
-                          : null,
-                        normalized.examples.length
-                          ? `${normalized.examples.length} ví dụ`
-                          : null,
-                      ].filter(Boolean);
-                      return (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setCollapsedSectionIds((current) => {
-                                const next = new Set(current);
-                                if (next.has(s.id)) next.delete(s.id);
-                                else next.add(s.id);
-                                return next;
-                              })
-                            }
-                            className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700"
-                            aria-expanded={!isCollapsed}
-                          >
-                            <ChevronDown
-                              size={13}
-                              className={`transition-transform ${isCollapsed ? "-rotate-90" : ""}`}
-                            />
-                            {counts.length ? counts.join(" · ") : "Chưa có nội dung"}
-                          </button>
-                          {!isCollapsed && (
-                            <SectionContentPreview
-                              content={s.content}
-                              sectionId={s.id}
-                            />
-                          )}
-                        </>
-                      );
-                    })()}
-
-                    {(() => {
-                      const refine = sectionRefineCandidate;
-                      if (!refine || refine.sectionId !== s.id) return null;
-                      return (
-                        <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <p className="text-xs font-bold text-amber-800">
-                              Đề xuất AI ·{" "}
-                              {
-                                SECTION_AI_ACTIONS.find(
-                                  (action) => action.value === refine.action,
-                                )?.label
-                              }{" "}
-                              · chưa áp dụng
-                            </p>
-                            <div className="flex gap-2">
-                              <button
-                                type="button"
-                                onClick={() => setSectionRefineCandidate(null)}
-                                className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700"
-                              >
-                                Bỏ qua
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => void applySectionRefine()}
-                                disabled={busy}
-                                className="rounded-lg bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white disabled:opacity-50"
-                              >
-                                Áp dụng
-                              </button>
-                            </div>
-                          </div>
-                          <div className="mt-2 rounded-lg border border-slate-200 bg-white p-3">
-                            <SectionContentPreview
-                              content={{
-                                paragraphs: refine.section.paragraphs,
-                                bullets: refine.section.bullets,
-                                examples: refine.section.examples,
-                              }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                  <button type="button" onClick={() => openAddSection(idx + 1)} className="flex w-full items-center gap-2 py-1 text-xs font-semibold text-slate-500 before:h-px before:flex-1 before:bg-slate-200 after:h-px after:flex-1 after:bg-slate-200 hover:text-slate-800" aria-label={`Thêm nội dung sau ${s.heading}`}><Plus size={14} /> Thêm nội dung</button>
-                  </React.Fragment>
-                );
-              })
-            ) : (
-              <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500">
-                <FileText size={28} className="mx-auto mb-2 text-slate-300" />
-                Bài học chưa có mục nội dung nào. Hãy nhấn &quot;Thêm mục nội
-                dung&quot; để soạn lý thuyết cho học viên.
+                  </section>
+                ))}
               </div>
-            )}
-          </div>
-
-          <div className="space-y-3 border-t border-slate-200 pt-5">
-            {[
-              { exercise: guidedPractice, title: "Luyện tập có hướng dẫn", description: "Củng cố nội dung vừa học.", tone: "border-blue-200 bg-blue-50/60" },
-              { exercise: finalCheck, title: "Kiểm tra cuối bài", description: "Đánh giá các mục tiêu của bài học.", tone: "border-emerald-200 bg-emerald-50/60" },
-            ].map(({ exercise, title, description, tone }) => (
-              <section key={title} className={`rounded-xl border p-4 ${tone}`}>
-                <div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="text-sm font-bold text-slate-900">{title}</h3><p className="mt-1 text-xs text-slate-600">{description}</p></div><div className="text-right"><p className="text-sm font-bold text-slate-900">{exercise?.questions?.length || 0} câu</p><button type="button" onClick={() => setActiveTab("exercises")} className="mt-1 text-xs font-semibold text-slate-700 underline underline-offset-2">Chỉnh sửa câu hỏi</button></div></div>
-              </section>
-            ))}
-          </div>
-          </div>
-          <aside className="h-fit rounded-xl border border-slate-200 bg-white p-4 shadow-xs lg:sticky lg:top-28">
-            <h2 className="text-sm font-bold text-slate-900">Cấu trúc bài học</h2>
-            <nav aria-label="Cấu trúc bài học" className="mt-3 space-y-2 text-xs text-slate-600">
-              <a href="#lesson-media" className="block rounded-md px-2 py-1.5 hover:bg-slate-100"><span className="mr-1 text-slate-400">○</span>Ảnh minh họa</a>
-              {lesson.sections.map((section: any, index: number) => <a key={section.id} href={`#section-${section.id}`} className="block rounded-md px-2 py-1.5 hover:bg-slate-100"><span className="mr-1 text-emerald-700">✓</span>{index + 1}. {sectionTypeLabel(section.type)}</a>)}
-              <button type="button" onClick={() => setActiveTab("exercises")} className="block w-full rounded-md px-2 py-1.5 text-left hover:bg-slate-100"><span className="mr-1 text-emerald-700">✓</span>Luyện tập</button>
-              <button type="button" onClick={() => setActiveTab("exercises")} className="block w-full rounded-md px-2 py-1.5 text-left hover:bg-slate-100"><span className="mr-1 text-emerald-700">✓</span>Kiểm tra cuối bài</button>
-            </nav>
-          </aside>
+            </div>
+            <aside className="h-fit rounded-xl border border-slate-200 bg-white p-4 shadow-xs lg:sticky lg:top-28">
+              <h2 className="text-sm font-bold text-slate-900">
+                Cấu trúc bài học
+              </h2>
+              <nav
+                aria-label="Cấu trúc bài học"
+                className="mt-3 space-y-2 text-xs text-slate-600"
+              >
+                <a
+                  href="#lesson-media"
+                  className="block rounded-md px-2 py-1.5 hover:bg-slate-100"
+                >
+                  <span className="mr-1 text-slate-400">○</span>Ảnh minh họa
+                </a>
+                {lesson.sections.map((section: any, index: number) => (
+                  <a
+                    key={section.id}
+                    href={`#section-${section.id}`}
+                    className="block rounded-md px-2 py-1.5 hover:bg-slate-100"
+                  >
+                    <span className="mr-1 text-emerald-700">✓</span>
+                    {index + 1}. {sectionTypeLabel(section.type)}
+                  </a>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("exercises")}
+                  className="block w-full rounded-md px-2 py-1.5 text-left hover:bg-slate-100"
+                >
+                  <span className="mr-1 text-emerald-700">✓</span>Luyện tập
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("exercises")}
+                  className="block w-full rounded-md px-2 py-1.5 text-left hover:bg-slate-100"
+                >
+                  <span className="mr-1 text-emerald-700">✓</span>Kiểm tra cuối
+                  bài
+                </button>
+              </nav>
+            </aside>
           </div>
         </section>
       )}
 
       {/* TAB 2: EXERCISES */}
       {activeTab === "exercises" && (
-        <section className="space-y-6">
+        <section
+          className={`space-y-6 ${isReadOnly ? "pointer-events-none opacity-60" : ""}`}
+        >
           <div>
             <h2 className="text-base font-bold text-slate-900">
               Bài luyện tập
@@ -1847,6 +2129,7 @@ export default function V5LessonEditorPage() {
               <input
                 type="text"
                 value={infoForm.title}
+                disabled={isReadOnly}
                 onChange={(e) => {
                   setHasUnsavedChanges(true);
                   setInfoForm({ ...infoForm, title: e.target.value });
@@ -1862,6 +2145,7 @@ export default function V5LessonEditorPage() {
               <textarea
                 rows={3}
                 value={infoForm.summary}
+                disabled={isReadOnly}
                 onChange={(e) => {
                   setHasUnsavedChanges(true);
                   setInfoForm({ ...infoForm, summary: e.target.value });
@@ -1877,6 +2161,7 @@ export default function V5LessonEditorPage() {
               <textarea
                 rows={4}
                 value={infoForm.learningObjectives}
+                disabled={isReadOnly}
                 onChange={(e) => {
                   setHasUnsavedChanges(true);
                   setInfoForm({
@@ -1892,6 +2177,7 @@ export default function V5LessonEditorPage() {
               <input
                 type="checkbox"
                 checked={infoForm.requiresFinalCheck}
+                disabled={isReadOnly}
                 onChange={(e) => {
                   setHasUnsavedChanges(true);
                   setInfoForm({
@@ -1916,7 +2202,7 @@ export default function V5LessonEditorPage() {
               <button
                 type="button"
                 onClick={saveLessonInfo}
-                disabled={busy}
+                disabled={busy || isReadOnly}
                 className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition-colors disabled:opacity-50"
               >
                 <Save size={15} /> Lưu thay đổi
@@ -1992,7 +2278,10 @@ export default function V5LessonEditorPage() {
 
       {/* SECTION MODAL */}
       {isSectionModalOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40" role="presentation">
+        <div
+          className="fixed inset-0 z-50 flex justify-end bg-slate-900/40"
+          role="presentation"
+        >
           <div
             role="dialog"
             aria-modal="true"
@@ -2016,7 +2305,10 @@ export default function V5LessonEditorPage() {
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   {sectionTypeLabel(sectionForm.type)}
                 </p>
-                <h3 id="section-editor-title" className="mt-0.5 text-lg font-bold text-slate-900">
+                <h3
+                  id="section-editor-title"
+                  className="mt-0.5 text-lg font-bold text-slate-900"
+                >
                   {sectionForm.heading.trim() ||
                     (editingSection
                       ? "Chỉnh sửa mục nội dung"
@@ -2121,7 +2413,8 @@ export default function V5LessonEditorPage() {
                       Nội dung chính *
                     </label>
                     <p className="mt-0.5 text-xs text-slate-400">
-                      Để trống một dòng giữa hai đoạn để tách thành nhiều đoạn văn.
+                      Để trống một dòng giữa hai đoạn để tách thành nhiều đoạn
+                      văn.
                     </p>
                     <textarea
                       rows={6}
@@ -2192,7 +2485,9 @@ export default function V5LessonEditorPage() {
                                     ),
                                   })
                                 }
-                                disabled={index === sectionForm.bullets.length - 1}
+                                disabled={
+                                  index === sectionForm.bullets.length - 1
+                                }
                                 aria-label={`Di chuyển ý ${index + 1} xuống`}
                                 className="rounded border border-slate-200 px-1 text-slate-500 hover:bg-slate-50 disabled:opacity-30"
                               >
@@ -2339,7 +2634,9 @@ export default function V5LessonEditorPage() {
                                       ),
                                     })
                                   }
-                                  placeholder={'"Nice to meet you." hoặc /naɪs tə miːt juː/'}
+                                  placeholder={
+                                    '"Nice to meet you." hoặc /naɪs tə miːt juː/'
+                                  }
                                   className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
                                 />
                               </label>
@@ -2455,7 +2752,8 @@ export default function V5LessonEditorPage() {
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    index < sectionForm.audioExamples.length - 1 &&
+                                    index <
+                                      sectionForm.audioExamples.length - 1 &&
                                     patchSectionForm({
                                       audioExamples: swapAt(
                                         sectionForm.audioExamples,
@@ -2465,7 +2763,8 @@ export default function V5LessonEditorPage() {
                                     })
                                   }
                                   disabled={
-                                    index === sectionForm.audioExamples.length - 1
+                                    index ===
+                                    sectionForm.audioExamples.length - 1
                                   }
                                   aria-label={`Di chuyển audio ${index + 1} xuống`}
                                   className="rounded border border-slate-200 px-1 text-slate-500 hover:bg-white disabled:opacity-30"
@@ -2476,9 +2775,10 @@ export default function V5LessonEditorPage() {
                                   type="button"
                                   onClick={() =>
                                     patchSectionForm({
-                                      audioExamples: sectionForm.audioExamples.filter(
-                                        (_, itemIndex) => itemIndex !== index,
-                                      ),
+                                      audioExamples:
+                                        sectionForm.audioExamples.filter(
+                                          (_, itemIndex) => itemIndex !== index,
+                                        ),
                                     })
                                   }
                                   aria-label={`Xóa audio ${index + 1}`}
@@ -2495,12 +2795,13 @@ export default function V5LessonEditorPage() {
                                   value={item.term}
                                   onChange={(e) =>
                                     patchSectionForm({
-                                      audioExamples: sectionForm.audioExamples.map(
-                                        (row, rowIndex) =>
-                                          rowIndex === index
-                                            ? { ...row, term: e.target.value }
-                                            : row,
-                                      ),
+                                      audioExamples:
+                                        sectionForm.audioExamples.map(
+                                          (row, rowIndex) =>
+                                            rowIndex === index
+                                              ? { ...row, term: e.target.value }
+                                              : row,
+                                        ),
                                     })
                                   }
                                   placeholder="hello"
@@ -2513,12 +2814,13 @@ export default function V5LessonEditorPage() {
                                   value={item.ipa}
                                   onChange={(e) =>
                                     patchSectionForm({
-                                      audioExamples: sectionForm.audioExamples.map(
-                                        (row, rowIndex) =>
-                                          rowIndex === index
-                                            ? { ...row, ipa: e.target.value }
-                                            : row,
-                                      ),
+                                      audioExamples:
+                                        sectionForm.audioExamples.map(
+                                          (row, rowIndex) =>
+                                            rowIndex === index
+                                              ? { ...row, ipa: e.target.value }
+                                              : row,
+                                        ),
                                     })
                                   }
                                   placeholder="/həˈloʊ/"
@@ -2531,12 +2833,16 @@ export default function V5LessonEditorPage() {
                                   value={item.meaning}
                                   onChange={(e) =>
                                     patchSectionForm({
-                                      audioExamples: sectionForm.audioExamples.map(
-                                        (row, rowIndex) =>
-                                          rowIndex === index
-                                            ? { ...row, meaning: e.target.value }
-                                            : row,
-                                      ),
+                                      audioExamples:
+                                        sectionForm.audioExamples.map(
+                                          (row, rowIndex) =>
+                                            rowIndex === index
+                                              ? {
+                                                  ...row,
+                                                  meaning: e.target.value,
+                                                }
+                                              : row,
+                                        ),
                                     })
                                   }
                                   placeholder="Xin chào"
@@ -2549,12 +2855,16 @@ export default function V5LessonEditorPage() {
                                   value={item.accent}
                                   onChange={(e) =>
                                     patchSectionForm({
-                                      audioExamples: sectionForm.audioExamples.map(
-                                        (row, rowIndex) =>
-                                          rowIndex === index
-                                            ? { ...row, accent: e.target.value }
-                                            : row,
-                                      ),
+                                      audioExamples:
+                                        sectionForm.audioExamples.map(
+                                          (row, rowIndex) =>
+                                            rowIndex === index
+                                              ? {
+                                                  ...row,
+                                                  accent: e.target.value,
+                                                }
+                                              : row,
+                                        ),
                                     })
                                   }
                                   placeholder="Anh-Mỹ"
@@ -2567,12 +2877,16 @@ export default function V5LessonEditorPage() {
                                   value={item.audioUrl}
                                   onChange={(e) =>
                                     patchSectionForm({
-                                      audioExamples: sectionForm.audioExamples.map(
-                                        (row, rowIndex) =>
-                                          rowIndex === index
-                                            ? { ...row, audioUrl: e.target.value }
-                                            : row,
-                                      ),
+                                      audioExamples:
+                                        sectionForm.audioExamples.map(
+                                          (row, rowIndex) =>
+                                            rowIndex === index
+                                              ? {
+                                                  ...row,
+                                                  audioUrl: e.target.value,
+                                                }
+                                              : row,
+                                        ),
                                     })
                                   }
                                   placeholder="https://..."
@@ -2857,6 +3171,15 @@ export default function V5LessonEditorPage() {
         isPending={busy}
         onConfirm={publishLesson}
         onCancel={() => setIsPublishConfirmOpen(false)}
+      />
+      <ConfirmDialog
+        open={isRevertConfirmOpen}
+        title="Chuyển bài học về bản nháp?"
+        description="Bài học sẽ trở lại trạng thái bản nháp để bạn có thể chỉnh sửa. Bạn cần xuất bản lại bài học trước khi xuất bản khóa học."
+        confirmLabel="Chuyển về bản nháp"
+        isPending={busy}
+        onConfirm={() => void revertLessonToDraft()}
+        onCancel={() => setIsRevertConfirmOpen(false)}
       />
     </main>
   );

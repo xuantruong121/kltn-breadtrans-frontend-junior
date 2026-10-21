@@ -9,6 +9,7 @@ import {
   ArrowUp,
   BookOpen,
   Check,
+  ClipboardCheck,
   Edit2,
   Layers,
   Loader2,
@@ -25,6 +26,7 @@ import { getApiErrorMessage } from "@/lib/utils/apiError";
 import ImageUploadField from "@/components/admin/ImageUploadField";
 import MediaSearchPanel from "@/components/admin/MediaSearchPanel";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { CourseAiWorkspaceDialog } from "@/components/admin/CourseAiWorkspaceDialog";
 
 type Lesson = {
   id: number;
@@ -70,6 +72,9 @@ export default function CourseCurriculumPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [isPublishConfirmOpen, setIsPublishConfirmOpen] = useState(false);
+  const [isRevertCourseConfirmOpen, setIsRevertCourseConfirmOpen] =
+    useState(false);
+  const [isCourseAiWorkspaceOpen, setIsCourseAiWorkspaceOpen] = useState(false);
 
   // Course overview form
   const [courseForm, setCourseForm] = useState({
@@ -376,6 +381,22 @@ export default function CourseCurriculumPage() {
     }
   };
 
+  const revertCourseToDraft = async () => {
+    setBusy(true);
+    try {
+      await axiosClient.post(`/admin/courses/${courseId}/revert-to-draft`);
+      toast.success("Khóa học đã được chuyển về bản nháp.");
+      setIsRevertCourseConfirmOpen(false);
+      await load();
+    } catch (e) {
+      toast.error(
+        getApiErrorMessage(e, "Không thể chuyển khóa học về bản nháp."),
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (loading) {
     return (
       <main className="mx-auto flex min-h-64 max-w-6xl items-center justify-center p-8">
@@ -391,6 +412,8 @@ export default function CourseCurriculumPage() {
       </main>
     );
   }
+
+  const isCoursePublished = studio.course.status === "PUBLISHED";
 
   return (
     <main className="mx-auto max-w-6xl space-y-6 p-6 md:p-8">
@@ -425,6 +448,14 @@ export default function CourseCurriculumPage() {
         <div className="flex items-center gap-2">
           <button
             type="button"
+            onClick={() => setIsCourseAiWorkspaceOpen(true)}
+            disabled={busy}
+            className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100 transition-colors disabled:opacity-50"
+          >
+            <ClipboardCheck size={15} /> AI hỗ trợ hoàn thiện
+          </button>
+          <button
+            type="button"
             onClick={() => void validateCourse()}
             disabled={busy}
             className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
@@ -433,26 +464,40 @@ export default function CourseCurriculumPage() {
           </button>
           <button
             onClick={saveCourse}
-            disabled={busy}
+            disabled={busy || isCoursePublished}
             className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
           >
             <Save size={15} /> Lưu thông tin
           </button>
-          <button
-            onClick={() => setIsPublishConfirmOpen(true)}
-            disabled={busy || studio.course.status === "PUBLISHED"}
-            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
-          >
-            <Send size={15} />{" "}
-            {studio.course.status === "PUBLISHED"
-              ? "Đã xuất bản"
-              : "Xuất bản khóa học"}
-          </button>
+          {isCoursePublished ? (
+            <button
+              type="button"
+              onClick={() => setIsRevertCourseConfirmOpen(true)}
+              disabled={busy}
+              className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 transition-colors disabled:opacity-50"
+            >
+              <Edit2 size={15} /> Chuyển về bản nháp
+            </button>
+          ) : (
+            <button
+              onClick={() => setIsPublishConfirmOpen(true)}
+              disabled={busy}
+              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
+            >
+              <Send size={15} /> Xuất bản khóa học
+            </button>
+          )}
         </div>
       </div>
 
       {/* SECTION 1: COURSE OVERVIEW */}
       <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-5">
+        {isCoursePublished && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            Khóa học đang được xuất bản và chỉ có thể xem. Chuyển về bản nháp để
+            chỉnh sửa nội dung hoặc lộ trình.
+          </div>
+        )}
         <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
           <Settings2 size={18} className="text-slate-700" />
           <h2 className="font-semibold text-slate-900">Tổng quan khóa học</h2>
@@ -460,75 +505,83 @@ export default function CourseCurriculumPage() {
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.65fr)_minmax(17rem,1fr)]">
           <div className="grid gap-5">
-          <div>
-            <label className="text-sm font-semibold text-slate-800">
-              Tên khóa học
-            </label>
-            <input
-              type="text"
-              className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
-              value={courseForm.title}
-              onChange={(e) =>
-                setCourseForm({ ...courseForm, title: e.target.value })
-              }
-            />
-          </div>
+            <div>
+              <label className="text-sm font-semibold text-slate-800">
+                Tên khóa học
+              </label>
+              <input
+                type="text"
+                className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
+                value={courseForm.title}
+                disabled={isCoursePublished}
+                onChange={(e) =>
+                  setCourseForm({ ...courseForm, title: e.target.value })
+                }
+              />
+            </div>
 
-          <div>
-            <label className="text-sm font-semibold text-slate-800">
-              Trình độ khóa học
-            </label>
-            <select
-              className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
-              value={courseForm.level}
-              onChange={(e) =>
-                setCourseForm({ ...courseForm, level: e.target.value })
-              }
-            >
-              <option value="BEGINNER">{levelLabel("BEGINNER")}</option>
-              <option value="INTERMEDIATE">{levelLabel("INTERMEDIATE")}</option>
-              <option value="ADVANCED">{levelLabel("ADVANCED")}</option>
-            </select>
-          </div>
+            <div>
+              <label className="text-sm font-semibold text-slate-800">
+                Trình độ khóa học
+              </label>
+              <select
+                className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
+                value={courseForm.level}
+                disabled={isCoursePublished}
+                onChange={(e) =>
+                  setCourseForm({ ...courseForm, level: e.target.value })
+                }
+              >
+                <option value="BEGINNER">{levelLabel("BEGINNER")}</option>
+                <option value="INTERMEDIATE">
+                  {levelLabel("INTERMEDIATE")}
+                </option>
+                <option value="ADVANCED">{levelLabel("ADVANCED")}</option>
+              </select>
+            </div>
 
-          <div>
-            <label className="text-sm font-semibold text-slate-800">
-              Mô tả khóa học
-            </label>
-            <textarea
-              rows={3}
-              className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
-              placeholder="Giới thiệu nội dung và đối tượng phù hợp cho khóa học..."
-              value={courseForm.description}
-              onChange={(e) =>
-                setCourseForm({ ...courseForm, description: e.target.value })
-              }
-            />
-          </div>
-
+            <div>
+              <label className="text-sm font-semibold text-slate-800">
+                Mô tả khóa học
+              </label>
+              <textarea
+                rows={3}
+                className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
+                placeholder="Giới thiệu nội dung và đối tượng phù hợp cho khóa học..."
+                value={courseForm.description}
+                disabled={isCoursePublished}
+                onChange={(e) =>
+                  setCourseForm({ ...courseForm, description: e.target.value })
+                }
+              />
+            </div>
           </div>
           <aside className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
-            <ImageUploadField
-              label="Ảnh bìa khóa học"
-              value={courseForm.thumbnail}
-              onChange={(url) =>
-                setCourseForm({ ...courseForm, thumbnail: url })
-              }
-              helperText="Tùy chọn. Khuyến nghị ảnh ngang 16:9, PNG, JPG hoặc WEBP."
-              compact
-            />
-            <MediaSearchPanel
-              searchUrl={`/admin/courses/${courseId}/studio/media/search`}
-              acceptUrl={`/admin/courses/${courseId}/studio/media/accept`}
-              generateUrl={`/admin/courses/${courseId}/studio/media/generate`}
-              generateAcceptUrl={`/admin/courses/${courseId}/studio/media/generate/accept`}
-              onAccepted={(data) =>
-                setCourseForm((current) => ({
-                  ...current,
-                  thumbnail: data.thumbnail || current.thumbnail,
-                }))
-              }
-            />
+            {!isCoursePublished && (
+              <>
+                <ImageUploadField
+                  label="Ảnh bìa khóa học"
+                  value={courseForm.thumbnail}
+                  onChange={(url) =>
+                    setCourseForm({ ...courseForm, thumbnail: url })
+                  }
+                  helperText="Tùy chọn. Khuyến nghị ảnh ngang 16:9, PNG, JPG hoặc WEBP."
+                  compact
+                />
+                <MediaSearchPanel
+                  searchUrl={`/admin/courses/${courseId}/studio/media/search`}
+                  acceptUrl={`/admin/courses/${courseId}/studio/media/accept`}
+                  generateUrl={`/admin/courses/${courseId}/studio/media/generate`}
+                  generateAcceptUrl={`/admin/courses/${courseId}/studio/media/generate/accept`}
+                  onAccepted={(data) =>
+                    setCourseForm((current) => ({
+                      ...current,
+                      thumbnail: data.thumbnail || current.thumbnail,
+                    }))
+                  }
+                />
+              </>
+            )}
           </aside>
         </div>
       </section>
@@ -555,6 +608,7 @@ export default function CourseCurriculumPage() {
                 setCurriculumAiCandidateCourseId(null);
                 setIsCurriculumAiOpen(true);
               }}
+              disabled={isCoursePublished}
               className="inline-flex min-h-10 items-center rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-2 text-xs font-semibold text-amber-900 transition-colors hover:border-amber-300 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-300"
             >
               AI gợi ý chương trình học
@@ -572,6 +626,7 @@ export default function CourseCurriculumPage() {
                 setShowAdvancedSlug(false);
                 setIsCreateLessonOpen(true);
               }}
+              disabled={isCoursePublished}
               className="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
             >
               <Plus size={15} /> Tạo bài học mới
@@ -612,11 +667,49 @@ export default function CourseCurriculumPage() {
                   </div>
 
                   <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600">
-                    <span className={lesson.sections.length ? "text-emerald-700" : "text-amber-700"}>{lesson.sections.length ? "✓" : "○"} Nội dung {lesson.sections.length}</span>
-                    <span className={lesson.exercises.length ? "text-emerald-700" : "text-amber-700"}>{lesson.exercises.length ? "✓" : "○"} Bài luyện tập {lesson.exercises.length}</span>
-                    <span className="text-slate-500">{lesson.media.length ? "✓" : "○"} Hình minh họa</span>
-                    <span className={lesson.sections.length > 0 && lesson.exercises.some((exercise: any) => exercise.slug === "final-check" && exercise.questions?.length > 0) ? "font-semibold text-emerald-700" : "font-semibold text-amber-700"}>
-                      {lesson.sections.length > 0 && lesson.exercises.some((exercise: any) => exercise.slug === "final-check" && exercise.questions?.length > 0) ? "Sẵn sàng" : "Chưa hoàn thiện"}
+                    <span
+                      className={
+                        lesson.sections.length
+                          ? "text-emerald-700"
+                          : "text-amber-700"
+                      }
+                    >
+                      {lesson.sections.length ? "✓" : "○"} Nội dung{" "}
+                      {lesson.sections.length}
+                    </span>
+                    <span
+                      className={
+                        lesson.exercises.length
+                          ? "text-emerald-700"
+                          : "text-amber-700"
+                      }
+                    >
+                      {lesson.exercises.length ? "✓" : "○"} Bài luyện tập{" "}
+                      {lesson.exercises.length}
+                    </span>
+                    <span className="text-slate-500">
+                      {lesson.media.length ? "✓" : "○"} Hình minh họa
+                    </span>
+                    <span
+                      className={
+                        lesson.sections.length > 0 &&
+                        lesson.exercises.some(
+                          (exercise: any) =>
+                            exercise.slug === "final-check" &&
+                            exercise.questions?.length > 0,
+                        )
+                          ? "font-semibold text-emerald-700"
+                          : "font-semibold text-amber-700"
+                      }
+                    >
+                      {lesson.sections.length > 0 &&
+                      lesson.exercises.some(
+                        (exercise: any) =>
+                          exercise.slug === "final-check" &&
+                          exercise.questions?.length > 0,
+                      )
+                        ? "Sẵn sàng"
+                        : "Chưa hoàn thiện"}
                     </span>
                   </div>
                 </div>
@@ -628,7 +721,7 @@ export default function CourseCurriculumPage() {
                 <button
                   type="button"
                   onClick={() => reorderLesson(index, "up")}
-                  disabled={index === 0 || busy}
+                  disabled={isCoursePublished || index === 0 || busy}
                   title="Di chuyển lên"
                   className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-100 disabled:opacity-30 transition-colors"
                 >
@@ -637,7 +730,11 @@ export default function CourseCurriculumPage() {
                 <button
                   type="button"
                   onClick={() => reorderLesson(index, "down")}
-                  disabled={index === studio.lessons.length - 1 || busy}
+                  disabled={
+                    isCoursePublished ||
+                    index === studio.lessons.length - 1 ||
+                    busy
+                  }
                   title="Di chuyển xuống"
                   className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-100 disabled:opacity-30 transition-colors"
                 >
@@ -661,7 +758,7 @@ export default function CourseCurriculumPage() {
                       title: lesson.title,
                     })
                   }
-                  disabled={busy}
+                  disabled={busy || isCoursePublished}
                   title="Xóa bài học"
                   className="rounded-lg border border-slate-200 p-1.5 text-slate-400 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 transition-colors"
                 >
@@ -970,6 +1067,15 @@ export default function CourseCurriculumPage() {
         }}
         onCancel={() => setIsPublishConfirmOpen(false)}
       />
+      <ConfirmDialog
+        open={isRevertCourseConfirmOpen}
+        title="Chuyển khóa học về bản nháp?"
+        description="Khóa học sẽ tạm ngừng trạng thái xuất bản để bạn có thể chỉnh sửa. Các bài học đã hoàn thiện vẫn giữ nguyên trạng thái hiện tại."
+        confirmLabel="Chuyển về bản nháp"
+        isPending={busy}
+        onConfirm={() => void revertCourseToDraft()}
+        onCancel={() => setIsRevertCourseConfirmOpen(false)}
+      />
 
       {/* CONFIRM DELETE LESSON */}
       {pendingDeleteLesson && (
@@ -982,6 +1088,13 @@ export default function CourseCurriculumPage() {
           onCancel={() => setPendingDeleteLesson(null)}
         />
       )}
+      <CourseAiWorkspaceDialog
+        courseId={courseId}
+        courseStatus={studio.course.status}
+        open={isCourseAiWorkspaceOpen}
+        onClose={() => setIsCourseAiWorkspaceOpen(false)}
+        onApplied={() => void load()}
+      />
     </main>
   );
 }
