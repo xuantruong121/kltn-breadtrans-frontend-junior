@@ -22,7 +22,7 @@ test("course overview exposes every lesson without a lock gate", () => {
 });
 
 test("course lessons expose native media and open response practice", () => {
-  assert.match(lessonSource, /controls preload="metadata"/);
+  assert.match(lessonSource, /controls\s+preload="metadata"/);
   assert.match(lessonSource, /<textarea/);
   assert.match(lessonSource, /rubric/);
   assert.match(lessonSource, /Bạn còn .* câu chưa trả lời/);
