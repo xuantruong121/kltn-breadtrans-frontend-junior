@@ -1,45 +1,111 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ArrowDown,
   ArrowLeft,
   ArrowUp,
+  ChevronDown,
   Check,
   CheckCircle2,
+  CircleAlert,
   Edit2,
   Eye,
   FileText,
-  HelpCircle,
-  Layers,
+  Image as ImageIcon,
   Loader2,
   Plus,
   Save,
-  Send,
+  PanelRight,
   Trash2,
+  Upload,
   X,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import MediaSearchPanel from "@/components/admin/MediaSearchPanel";
+import {
+  LessonAudioExamplesBlock,
+  LessonExampleCard,
+} from "@/components/course/LessonContentBlocks";
+import {
+  normalizeSectionContent,
+  sectionToFormState,
+  swapAt,
+  toSectionContentPayload,
+} from "@/lib/course/sectionContent";
 
 const SECTION_TYPES = [
-  { value: "THEORY", label: "Lý thuyết trọng tâm (THEORY)" },
-  { value: "EXAMPLE", label: "Ví dụ minh họa (EXAMPLE)" },
-  { value: "VOCABULARY", label: "Từ vựng then chốt (VOCABULARY)" },
-  { value: "GRAMMAR", label: "Cấu trúc ngữ pháp (GRAMMAR)" },
-  { value: "TIP", label: "Mẹo làm bài & Lưu ý (TIP)" },
-  { value: "COMMON_MISTAKE", label: "Lỗi thường gặp (COMMON_MISTAKE)" },
-  { value: "SUMMARY", label: "Tổng kết bài học (SUMMARY)" },
-  { value: "INTRO", label: "Mở đầu bài học (INTRO)" },
+  { value: "INTRO", label: "Mở đầu" },
+  { value: "THEORY", label: "Lý thuyết" },
+  { value: "EXAMPLE", label: "Ví dụ" },
+  { value: "VOCABULARY", label: "Từ vựng" },
+  { value: "GRAMMAR", label: "Ngữ pháp" },
+  { value: "TIP", label: "Lưu ý" },
+  { value: "COMMON_MISTAKE", label: "Lỗi thường gặp" },
+  { value: "SUMMARY", label: "Tổng kết" },
 ];
+
+const sectionTypeLabel = (value?: string) =>
+  SECTION_TYPES.find((item) => item.value === value)?.label || "Nội dung";
+
+const SECTION_AI_ACTIONS = [
+  { value: "EXPAND", label: "Viết chi tiết hơn" },
+  { value: "SIMPLIFY", label: "Đơn giản hóa" },
+  { value: "ADD_EXAMPLES", label: "Thêm ví dụ" },
+  { value: "KEY_POINTS", label: "Gợi ý ý chính" },
+] as const;
+
+/** Reuses the same learner-compatible example/audio cards as the learner
+ * lesson runtime, so Admin Live Preview and Canvas previews show the real
+ * visual language instead of a plainer placeholder. */
+function SectionContentPreview({
+  content,
+  sectionId = "preview",
+}: {
+  content: unknown;
+  sectionId?: string | number;
+}) {
+  const normalized = normalizeSectionContent(content);
+  return (
+    <div className="space-y-2.5 text-sm leading-relaxed text-slate-700">
+      {normalized.paragraphs.map((paragraph, index) => (
+        <p key={`${paragraph}-${index}`} className="whitespace-pre-line">
+          {paragraph}
+        </p>
+      ))}
+      {normalized.bullets.length > 0 && (
+        <ul className="list-disc space-y-1 pl-5 marker:text-slate-400">
+          {normalized.bullets.map((bullet, index) => (
+            <li key={`${bullet}-${index}`}>{bullet}</li>
+          ))}
+        </ul>
+      )}
+      {normalized.examples.length > 0 && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {normalized.examples.map((example, index) => (
+            <LessonExampleCard
+              key={`${sectionId}-example-${index}`}
+              index={index}
+              example={example}
+            />
+          ))}
+        </div>
+      )}
+      <LessonAudioExamplesBlock
+        sectionId={sectionId}
+        audioExamples={normalized.audioExamples}
+      />
+    </div>
+  );
+}
 
 export default function V5LessonEditorPage() {
   const params = useParams();
-  const router = useRouter();
   const courseId = Number(params?.id);
   const lessonId = Number(params?.lessonId);
 
@@ -50,26 +116,77 @@ export default function V5LessonEditorPage() {
   const [isPublishConfirmOpen, setIsPublishConfirmOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "sections" | "exercises" | "info" | "preview"
-  >("sections");
+  >("info");
+  const [isAiMenuOpen, setIsAiMenuOpen] = useState(false);
+  const [validation, setValidation] = useState<{
+    valid: boolean;
+    errors: string[];
+  } | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [sectionInsertIndex, setSectionInsertIndex] = useState<number | null>(
+    null,
+  );
 
   // Lesson Info Form
   const [infoForm, setInfoForm] = useState({
     title: "",
     summary: "",
     learningObjectives: "",
+    requiresFinalCheck: true,
   });
   const [aiCandidate, setAiCandidate] = useState<any | null>(null);
+  const [aiSelection, setAiSelection] = useState({
+    sections: true,
+    guidedPractice: true,
+    finalCheck: true,
+  });
   const [aiLoading, setAiLoading] = useState(false);
+  const [sectionAiMenuOpenId, setSectionAiMenuOpenId] = useState<
+    number | null
+  >(null);
+  const [sectionRefineLoadingId, setSectionRefineLoadingId] = useState<
+    number | null
+  >(null);
+  const [sectionRefineCandidate, setSectionRefineCandidate] = useState<{
+    sectionId: number;
+    originalHeading: string;
+    action: "EXPAND" | "SIMPLIFY" | "ADD_EXAMPLES" | "KEY_POINTS";
+    section: any;
+  } | null>(null);
+  const mediaInputRef = useRef<HTMLInputElement>(null);
+  const [mediaUploading, setMediaUploading] = useState(false);
+  const [collapsedSectionIds, setCollapsedSectionIds] = useState<Set<number>>(
+    new Set(),
+  );
 
-  // Section Modal
+  // Section drawer
   const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
   const [editingSection, setEditingSection] = useState<any | null>(null);
   const [sectionForm, setSectionForm] = useState({
     type: "THEORY",
     heading: "",
-    content: "",
+    text: "",
+    bullets: [] as string[],
+    examples: [] as Array<{
+      text: string;
+      translation: string;
+      explanation: string;
+    }>,
+    audioExamples: [] as Array<{
+      term: string;
+      ipa: string;
+      meaning: string;
+      audioUrl: string;
+      accent: string;
+    }>,
     isRequired: true,
   });
+  const [sectionEditorTab, setSectionEditorTab] = useState<
+    "edit" | "preview"
+  >("edit");
+  const [isSectionFormDirty, setIsSectionFormDirty] = useState(false);
+  const [isSectionCloseConfirmOpen, setIsSectionCloseConfirmOpen] =
+    useState(false);
 
   // Question Modal
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
@@ -116,7 +233,9 @@ export default function V5LessonEditorPage() {
           learningObjectives: Array.isArray(found.learningObjectives)
             ? found.learningObjectives.join("\n")
             : "",
+          requiresFinalCheck: found.requiresFinalCheck !== false,
         });
+        setHasUnsavedChanges(false);
       }
     } catch (e) {
       toast.error(getApiErrorMessage(e, "Không thể tải thông tin bài học."));
@@ -128,6 +247,16 @@ export default function V5LessonEditorPage() {
   useEffect(() => {
     if (courseId && lessonId) void load();
   }, [courseId, lessonId]);
+
+  useEffect(() => {
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      if (!hasUnsavedChanges && !aiCandidate) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+  }, [aiCandidate, hasUnsavedChanges]);
 
   // SAVE LESSON INFO
   const saveLessonInfo = async () => {
@@ -146,9 +275,11 @@ export default function V5LessonEditorPage() {
             .split("\n")
             .map((x) => x.trim())
             .filter(Boolean),
+          requiresFinalCheck: infoForm.requiresFinalCheck,
         },
       );
       toast.success("Đã lưu thông tin bài học!");
+      setHasUnsavedChanges(false);
       await load();
     } catch (e) {
       toast.error(getApiErrorMessage(e, "Lưu thông tin thất bại."));
@@ -157,16 +288,30 @@ export default function V5LessonEditorPage() {
     }
   };
 
-  const generateAiContent = async () => {
+  const generateAiContent = async (
+    scope:
+      | "FULL"
+      | "SECTIONS"
+      | "GUIDED_PRACTICE"
+      | "FINAL_CHECK"
+      | "IMPROVE_SECTIONS" = "FULL",
+  ) => {
+    setIsAiMenuOpen(false);
     setAiLoading(true);
     try {
       const response: any = await axiosClient.post(
         `/admin/courses/${courseId}/studio/lessons/${lessonId}/ai/content/generate`,
-        {},
+        { scope },
       );
       const data = response?.data || response;
       if (!data?.candidate) throw new Error("missing candidate");
       setAiCandidate(data.candidate);
+      setAiSelection({
+        sections: Boolean(data.candidate.sections?.length),
+        guidedPractice: Boolean(data.candidate.guidedPractice),
+        finalCheck: Boolean(data.candidate.finalCheck),
+      });
+      setHasUnsavedChanges(false);
       toast.success("Đã tạo nội dung nháp. Hãy review trước khi Apply.");
     } catch (e) {
       toast.error(getApiErrorMessage(e, "Không thể tạo nội dung AI lúc này."));
@@ -177,19 +322,84 @@ export default function V5LessonEditorPage() {
 
   const applyAiContent = async () => {
     if (!aiCandidate) return;
+    const selectedCandidate = {
+      candidateCourseId: aiCandidate.candidateCourseId,
+      candidateLessonId: aiCandidate.candidateLessonId,
+      ...(aiSelection.sections ? { sections: aiCandidate.sections || [] } : {}),
+      ...(aiSelection.guidedPractice
+        ? { guidedPractice: aiCandidate.guidedPractice }
+        : {}),
+      ...(aiSelection.finalCheck ? { finalCheck: aiCandidate.finalCheck } : {}),
+    };
+    if (!selectedCandidate.sections?.length && !selectedCandidate.guidedPractice && !selectedCandidate.finalCheck) {
+      toast.error("Hãy chọn ít nhất một phần đề xuất để áp dụng.");
+      return;
+    }
     setBusy(true);
     try {
       await axiosClient.post(
         `/admin/courses/${courseId}/studio/lessons/${lessonId}/ai/content/apply`,
-        aiCandidate,
+        selectedCandidate,
       );
       toast.success("Đã áp dụng nội dung AI vào Lesson Draft.");
       setAiCandidate(null);
+      setHasUnsavedChanges(false);
       await load();
     } catch (e) {
       toast.error(
         getApiErrorMessage(e, "Không thể áp dụng nội dung AI vào Draft."),
       );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // SECTION-LEVEL AI ASSIST — candidate-only; never mutates the Draft directly.
+  const refineSection = async (
+    section: any,
+    action: "EXPAND" | "SIMPLIFY" | "ADD_EXAMPLES" | "KEY_POINTS",
+  ) => {
+    setSectionAiMenuOpenId(null);
+    setSectionRefineLoadingId(section.id);
+    try {
+      const response: any = await axiosClient.post(
+        `/admin/courses/${courseId}/studio/lessons/${lessonId}/ai/sections/${section.id}/refine`,
+        { action },
+      );
+      const data = response?.data || response;
+      const suggestion = data?.candidate?.sections?.[0];
+      if (!suggestion) throw new Error("missing candidate");
+      setSectionRefineCandidate({
+        sectionId: section.id,
+        originalHeading: section.heading,
+        action,
+        section: suggestion,
+      });
+      toast.success("Đã tạo đề xuất AI cho mục này. Hãy review trước khi áp dụng.");
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, "Không thể tạo đề xuất AI cho mục này."));
+    } finally {
+      setSectionRefineLoadingId(null);
+    }
+  };
+
+  const applySectionRefine = async () => {
+    if (!sectionRefineCandidate) return;
+    setBusy(true);
+    try {
+      await axiosClient.post(
+        `/admin/courses/${courseId}/studio/lessons/${lessonId}/ai/content/apply`,
+        {
+          candidateCourseId: courseId,
+          candidateLessonId: lessonId,
+          sections: [sectionRefineCandidate.section],
+        },
+      );
+      toast.success("Đã áp dụng đề xuất AI cho mục này.");
+      setSectionRefineCandidate(null);
+      await load();
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, "Không thể áp dụng đề xuất AI."));
     } finally {
       setBusy(false);
     }
@@ -217,49 +427,97 @@ export default function V5LessonEditorPage() {
     }
   };
 
+  const validateLesson = async () => {
+    setBusy(true);
+    try {
+      const result: any = await axiosClient.get(
+        `/admin/courses/${courseId}/studio/lessons/${lessonId}/validate`,
+      );
+      setValidation({ valid: Boolean(result.valid), errors: result.errors || [] });
+      if (result.valid) toast.success("Bài học đã sẵn sàng để xuất bản.");
+      else toast.error("Bài học chưa đủ điều kiện xuất bản.");
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, "Không thể kiểm tra bài học."));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   // SECTION ACTIONS
-  const openAddSection = () => {
+  const openAddSection = (insertIndex: number | null = null) => {
     setEditingSection(null);
     setSectionForm({
       type: "THEORY",
       heading: "",
-      content: "",
+      text: "",
+      bullets: [],
+      examples: [],
+      audioExamples: [],
       isRequired: true,
     });
+    setSectionInsertIndex(insertIndex);
+    setSectionEditorTab("edit");
+    setIsSectionFormDirty(false);
     setIsSectionModalOpen(true);
   };
 
   const openEditSection = (s: any) => {
     setEditingSection(s);
-    const contentText =
-      typeof s.content === "object"
-        ? s.content?.text || JSON.stringify(s.content)
-        : String(s.content || "");
-    setSectionForm({
-      type: s.type || "THEORY",
-      heading: s.heading || "",
-      content: contentText,
-      isRequired: s.isRequired !== false,
-    });
+    setSectionForm(sectionToFormState(s));
+    setSectionInsertIndex(null);
+    setSectionEditorTab("edit");
+    setIsSectionFormDirty(false);
     setIsSectionModalOpen(true);
+  };
+
+  /** Patches the section draft form and marks it dirty so a close attempt
+   * can confirm before discarding edits. */
+  const patchSectionForm = (patch: Partial<typeof sectionForm>) => {
+    setIsSectionFormDirty(true);
+    setSectionForm((current) => ({ ...current, ...patch }));
+  };
+
+  const requestCloseSectionModal = () => {
+    if (isSectionFormDirty) {
+      setIsSectionCloseConfirmOpen(true);
+      return;
+    }
+    setIsSectionModalOpen(false);
+  };
+
+  const discardSectionModal = () => {
+    setIsSectionCloseConfirmOpen(false);
+    setIsSectionModalOpen(false);
   };
 
   const saveSection = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!sectionForm.heading.trim() || !sectionForm.content.trim()) {
+    if (!sectionForm.heading.trim() || !sectionForm.text.trim()) {
       toast.error("Vui lòng nhập tiêu đề và nội dung section.");
       return;
     }
 
     setBusy(true);
     try {
+      const content = toSectionContentPayload(
+        {
+          paragraphs: sectionForm.text
+            .split(/\n{2,}/)
+            .map((value) => value.trim())
+            .filter(Boolean),
+          bullets: sectionForm.bullets,
+          examples: sectionForm.examples,
+          audioExamples: sectionForm.audioExamples,
+        },
+        editingSection ? editingSection.content : undefined,
+      );
       if (editingSection) {
         await axiosClient.patch(
           `/admin/courses/${courseId}/studio/lessons/${lessonId}/sections/${editingSection.id}`,
           {
             type: sectionForm.type,
             heading: sectionForm.heading.trim(),
-            content: { text: sectionForm.content.trim() },
+            content,
             isRequired: sectionForm.isRequired,
           },
         );
@@ -270,14 +528,16 @@ export default function V5LessonEditorPage() {
           {
             type: sectionForm.type,
             heading: sectionForm.heading.trim(),
-            content: { text: sectionForm.content.trim() },
+            content,
             isRequired: sectionForm.isRequired,
-            order: lesson?.sections?.length || 0,
+            order: sectionInsertIndex ?? (lesson?.sections?.length || 0),
           },
         );
         toast.success("Đã thêm mục nội dung mới!");
       }
+      setIsSectionFormDirty(false);
       setIsSectionModalOpen(false);
+      setHasUnsavedChanges(false);
       await load();
     } catch (e) {
       toast.error(getApiErrorMessage(e, "Lưu section thất bại."));
@@ -322,6 +582,62 @@ export default function V5LessonEditorPage() {
       await load();
     } catch (e) {
       toast.error(getApiErrorMessage(e, "Xóa section thất bại."));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const uploadLessonImage = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!new Set(["image/jpeg", "image/png", "image/webp"]).has(file.type)) {
+      toast.error("Chỉ hỗ trợ ảnh PNG, JPG hoặc WEBP.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Kích thước ảnh không được vượt quá 10MB.");
+      return;
+    }
+    setMediaUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const uploaded: any = await axiosClient.post("/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      const url = uploaded?.url || uploaded?.data?.url;
+      if (!url) throw new Error("missing media url");
+      await axiosClient.post(
+        `/admin/courses/${courseId}/studio/lessons/${lessonId}/media`,
+        {
+          type: "image",
+          url,
+          altText: lesson?.title || "Hình minh họa bài học",
+          provenance: "manual-upload",
+        },
+      );
+      toast.success("Đã thêm hình minh họa cho bài học.");
+      await load();
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, "Không thể tải hình minh họa."));
+    } finally {
+      setMediaUploading(false);
+      if (mediaInputRef.current) mediaInputRef.current.value = "";
+    }
+  };
+
+  const removeLessonMedia = async (mediaId: number) => {
+    setBusy(true);
+    try {
+      await axiosClient.delete(
+        `/admin/courses/${courseId}/studio/lessons/${lessonId}/media/${mediaId}`,
+      );
+      toast.success("Đã xóa hình minh họa.");
+      await load();
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, "Không thể xóa hình minh họa."));
     } finally {
       setBusy(false);
     }
@@ -520,8 +836,9 @@ export default function V5LessonEditorPage() {
   );
 
   return (
-    <main className="mx-auto max-w-5xl space-y-6 p-6 md:p-8">
+    <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-8">
       {/* HEADER */}
+      <div className="sticky top-0 z-20 -mx-4 border-b border-slate-200 bg-slate-50/95 px-4 py-4 backdrop-blur md:-mx-8 md:px-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <Link
@@ -544,21 +861,57 @@ export default function V5LessonEditorPage() {
               {lesson.status === "PUBLISHED" ? "Đã xuất bản" : "Bản nháp"}
             </span>
           </div>
-          <p className="mt-1 text-xs text-slate-500">
-            {lesson.sections?.length || 0} mục nội dung ·{" "}
-            {lesson.exercises?.length || 0} bài luyện tập
+          <p className="mt-1 flex items-center gap-2 text-xs text-slate-500">
+            <span>{lesson.sections?.length || 0} mục nội dung · {lesson.exercises?.length || 0} bài luyện tập</span>
+            <span aria-live="polite" className={hasUnsavedChanges ? "font-semibold text-amber-700" : "text-emerald-700"}>
+              {hasUnsavedChanges ? "Có thay đổi chưa lưu" : "Đã lưu"}
+            </span>
           </p>
         </div>
 
         <div className="flex items-center gap-2">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsAiMenuOpen((open) => !open)}
+              disabled={busy || aiLoading || lesson.status === "PUBLISHED"}
+              aria-expanded={isAiMenuOpen}
+              aria-haspopup="menu"
+              className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3.5 py-2 text-sm font-semibold text-amber-900 transition-colors hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:opacity-50"
+            >
+              {aiLoading ? <Loader2 size={15} className="animate-spin" /> : <PanelRight size={15} />}
+              AI hỗ trợ <ChevronDown size={14} aria-hidden="true" />
+            </button>
+            {isAiMenuOpen && (
+              <div role="menu" className="absolute right-0 top-[calc(100%+0.5rem)] z-30 w-72 rounded-xl border border-slate-200 bg-white p-2 shadow-lg">
+                <p className="px-2 py-2 text-xs leading-relaxed text-slate-500">
+                  {lesson.sections?.length && guidedPractice && finalCheck
+                    ? "Bài học đã có nội dung và bài tập. Chỉ tạo đề xuất mới khi bạn muốn bổ sung một phần cụ thể."
+                    : "AI tạo đề xuất để bạn xem lại trước khi áp dụng vào bản nháp."}
+                </p>
+                {!lesson.sections?.length && (
+                  <button type="button" role="menuitem" onClick={() => void generateAiContent("FULL")} className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-slate-800 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none">Hoàn thiện bài học</button>
+                )}
+                {!lesson.sections?.length && <button type="button" role="menuitem" onClick={() => void generateAiContent("SECTIONS")} className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none">Gợi ý nội dung bài học</button>}
+                {Boolean(lesson.sections?.length) && (
+                  <button type="button" role="menuitem" onClick={() => void generateAiContent("IMPROVE_SECTIONS")} className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none">
+                    Cải thiện nội dung bài học
+                  </button>
+                )}
+                {!guidedPractice && <button type="button" role="menuitem" onClick={() => void generateAiContent("GUIDED_PRACTICE")} className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none">Tạo Luyện tập có hướng dẫn</button>}
+                {!finalCheck && <button type="button" role="menuitem" onClick={() => void generateAiContent("FINAL_CHECK")} className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none">Tạo Kiểm tra cuối bài</button>}
+                <button type="button" role="menuitem" onClick={() => { setIsAiMenuOpen(false); document.getElementById("lesson-media")?.scrollIntoView({ behavior: "smooth", block: "center" }); }} className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none">Tải ảnh minh họa riêng</button>
+              </div>
+            )}
+          </div>
+          <button type="button" onClick={() => setActiveTab("preview")} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300"><Eye size={15} /> Xem trước</button>
           <button
             type="button"
-            onClick={() => void generateAiContent()}
-            disabled={busy || aiLoading || lesson.status === "PUBLISHED"}
-            className="inline-flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-800 transition-colors hover:bg-violet-100 disabled:opacity-50"
+            onClick={() => void validateLesson()}
+            disabled={busy}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
           >
-            {aiLoading && <Loader2 size={15} className="animate-spin" />} AI
-            soạn nội dung
+            <CheckCircle2 size={15} /> Kiểm tra
           </button>
           <button
             onClick={() => setIsPublishConfirmOpen(true)}
@@ -569,23 +922,37 @@ export default function V5LessonEditorPage() {
           </button>
         </div>
       </div>
+      </div>
+
+      {validation && (
+        <section aria-live="polite" className={`rounded-xl border p-4 ${validation.valid ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"}`}>
+          <div className="flex items-start gap-3">
+            {validation.valid ? <CheckCircle2 className="mt-0.5 text-emerald-700" size={18} /> : <CircleAlert className="mt-0.5 text-amber-700" size={18} />}
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">{validation.valid ? "Sẵn sàng xuất bản" : "Chưa thể xuất bản"}</h2>
+              <p className="mt-1 text-sm text-slate-700">{validation.valid ? "Có nội dung, bài luyện tập và đáp án hợp lệ. Ảnh minh họa là tùy chọn." : "Hãy hoàn thiện các mục bên dưới trước khi xuất bản."}</p>
+              {!validation.valid && <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">{validation.errors.map((error, index) => <li key={`${error}-${index}`}>{error}</li>)}</ul>}
+            </div>
+          </div>
+        </section>
+      )}
 
       {aiCandidate && (
         <section
-          className="rounded-2xl border border-violet-200 bg-violet-50/50 p-5 shadow-xs"
+          className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 shadow-xs"
           aria-label="Review nội dung AI"
         >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-violet-700">
-                AI candidate · chưa lưu
+              <p className="text-xs font-bold text-amber-800">
+                Đề xuất AI · chưa áp dụng
               </p>
               <h2 className="mt-1 text-base font-bold text-slate-900">
                 Review nội dung bài học
               </h2>
               <p className="mt-1 text-sm text-slate-600">
-                Bạn có thể chỉnh sửa section, bài tập và câu hỏi trước khi
-                Apply. Apply chỉ ghi vào Lesson Draft.
+                Chọn phần cần áp dụng. Nội dung chỉ được ghi vào bản nháp sau
+                khi bạn xác nhận.
               </p>
             </div>
             <div className="flex gap-2">
@@ -594,7 +961,7 @@ export default function V5LessonEditorPage() {
                 onClick={() => setAiCandidate(null)}
                 className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
               >
-                Bỏ candidate
+                Hủy đề xuất
               </button>
               <button
                 type="button"
@@ -602,32 +969,90 @@ export default function V5LessonEditorPage() {
                 disabled={busy}
                 className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
               >
-                Apply vào Draft
+                Áp dụng đã chọn
               </button>
             </div>
           </div>
+          {Array.isArray(aiCandidate.warnings) &&
+            aiCandidate.warnings.length > 0 && (
+              <div className="mt-4 rounded-xl border border-amber-300 bg-white p-3">
+                <p className="text-xs font-bold text-amber-800">
+                  Ghi chú rà soát (không chặn Apply)
+                </p>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                  {aiCandidate.warnings.map((warning: string, index: number) => (
+                    <li key={`${warning}-${index}`}>{warning}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          {aiCandidate.pedagogyPlan && (
+            <details className="mt-4 rounded-xl border border-slate-200 bg-white p-3">
+              <summary className="cursor-pointer text-xs font-bold text-slate-700">
+                Kế hoạch sư phạm (tham khảo, không hiển thị cho học viên)
+              </summary>
+              <div className="mt-2 grid gap-3 text-sm text-slate-700 sm:grid-cols-2">
+                {(
+                  [
+                    ["keyConcepts", "Ý chính"],
+                    ["realWorldContexts", "Bối cảnh thực tế"],
+                    ["commonMistakes", "Lỗi thường gặp"],
+                    ["practiceCoverage", "Phần luyện tập bao phủ"],
+                  ] as const
+                ).map(([key, label]) => {
+                  const items = aiCandidate.pedagogyPlan?.[key];
+                  if (!Array.isArray(items) || !items.length) return null;
+                  return (
+                    <div key={key}>
+                      <p className="text-xs font-semibold text-slate-500">
+                        {label}
+                      </p>
+                      <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                        {items.map((item: string, index: number) => (
+                          <li key={`${item}-${index}`}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+            </details>
+          )}
           <div className="mt-4 space-y-3">
             {(aiCandidate.sections || []).map((section: any, index: number) => (
               <div
                 key={`${section.heading}-${index}`}
-                className="rounded-xl border border-violet-100 bg-white p-3"
+                className="rounded-xl border border-slate-200 bg-white p-3"
               >
-                <input
-                  value={section.heading || ""}
-                  onChange={(event) =>
-                    setAiCandidate((current: any) => ({
-                      ...current,
-                      sections: current.sections.map(
-                        (item: any, itemIndex: number) =>
-                          itemIndex === index
-                            ? { ...item, heading: event.target.value }
-                            : item,
-                      ),
-                    }))
-                  }
-                  className="w-full rounded border border-slate-200 px-2 py-1.5 text-sm font-semibold"
-                  aria-label={`Tên section AI ${index + 1}`}
-                />
+                {index === 0 && (
+                  <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-800">
+                    <input type="checkbox" checked={aiSelection.sections} onChange={(event) => setAiSelection((current) => ({ ...current, sections: event.target.checked }))} />
+                    Áp dụng nội dung bài học ({aiCandidate.sections.length} mục)
+                  </label>
+                )}
+                <div className="flex items-center justify-between gap-2">
+                  <input
+                    value={section.heading || ""}
+                    onChange={(event) =>
+                      setAiCandidate((current: any) => ({
+                        ...current,
+                        sections: current.sections.map(
+                          (item: any, itemIndex: number) =>
+                            itemIndex === index
+                              ? { ...item, heading: event.target.value }
+                              : item,
+                        ),
+                      }))
+                    }
+                    className="w-full rounded border border-slate-200 px-2 py-1.5 text-sm font-semibold"
+                    aria-label={`Tên section AI ${index + 1}`}
+                  />
+                  {section.sectionId && (
+                    <span className="shrink-0 rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700">
+                      Cập nhật mục hiện có
+                    </span>
+                  )}
+                </div>
                 <textarea
                   value={section.content || ""}
                   onChange={(event) =>
@@ -644,47 +1069,103 @@ export default function V5LessonEditorPage() {
                   className="mt-2 min-h-20 w-full rounded border border-slate-200 px-2 py-1.5 text-sm"
                   aria-label={`Nội dung section AI ${index + 1}`}
                 />
+                {(Boolean(section.bullets?.length) ||
+                  Boolean(section.examples?.length)) && (
+                  <div className="mt-2 rounded-lg bg-slate-50 p-2 text-xs text-slate-600">
+                    {Boolean(section.bullets?.length) && (
+                      <p>
+                        {section.bullets.length} ý chính:{" "}
+                        {section.bullets.join(" · ")}
+                      </p>
+                    )}
+                    {Boolean(section.examples?.length) && (
+                      <p className="mt-1">
+                        {section.examples.length} ví dụ:{" "}
+                        {section.examples
+                          .map((example: any) => example.text)
+                          .join(" · ")}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
-            <div className="rounded-xl border border-violet-100 bg-white p-3">
-              <input
-                value={aiCandidate.exercise?.title || ""}
-                onChange={(event) =>
-                  setAiCandidate((current: any) => ({
-                    ...current,
-                    exercise: {
-                      ...current.exercise,
-                      title: event.target.value,
-                    },
-                  }))
-                }
-                className="w-full rounded border border-slate-200 px-2 py-1.5 text-sm font-semibold"
-                aria-label="Tiêu đề bài tập AI"
-              />
-              <textarea
-                value={aiCandidate.exercise?.question?.prompt || ""}
-                onChange={(event) =>
-                  setAiCandidate((current: any) => ({
-                    ...current,
-                    exercise: {
-                      ...current.exercise,
-                      question: {
-                        ...current.exercise.question,
-                        prompt: event.target.value,
-                      },
-                    },
-                  }))
-                }
-                className="mt-2 min-h-20 w-full rounded border border-slate-200 px-2 py-1.5 text-sm"
-                aria-label="Câu hỏi AI"
-              />
-            </div>
+            {(
+              [
+                ["guidedPractice", "Luyện tập có hướng dẫn"],
+                ["finalCheck", "Kiểm tra cuối bài"],
+              ] as const
+            ).map(([key, label]) => {
+              const exercise = aiCandidate[key];
+              if (!exercise) return null;
+              return (
+                <div
+                  key={key}
+                  className="rounded-xl border border-slate-200 bg-white p-3"
+                >
+                  <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-800">
+                    <input type="checkbox" checked={key === "guidedPractice" ? aiSelection.guidedPractice : aiSelection.finalCheck} onChange={(event) => setAiSelection((current) => ({ ...current, [key]: event.target.checked }))} />
+                    Áp dụng {label}
+                  </label>
+                  <p className="mb-2 text-xs font-bold uppercase tracking-wide text-violet-700">
+                    {label}
+                  </p>
+                  <input
+                    value={exercise.title || ""}
+                    onChange={(event) =>
+                      setAiCandidate((current: any) => ({
+                        ...current,
+                        [key]: { ...current[key], title: event.target.value },
+                      }))
+                    }
+                    className="w-full rounded border border-slate-200 px-2 py-1.5 text-sm font-semibold"
+                    aria-label={`Tiêu đề ${label}`}
+                  />
+                  <div className="mt-3 space-y-2">
+                    {(exercise.questions || []).map(
+                      (question: any, index: number) => (
+                        <textarea
+                          key={`${key}-${index}`}
+                          value={question.prompt || ""}
+                          onChange={(event) =>
+                            setAiCandidate((current: any) => ({
+                              ...current,
+                              [key]: {
+                                ...current[key],
+                                questions: current[key].questions.map(
+                                  (item: any, itemIndex: number) =>
+                                    itemIndex === index
+                                      ? { ...item, prompt: event.target.value }
+                                      : item,
+                                ),
+                              },
+                            }))
+                          }
+                          className="min-h-16 w-full rounded border border-slate-200 px-2 py-1.5 text-sm"
+                          aria-label={`${label} câu ${index + 1}`}
+                        />
+                      ),
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
       )}
 
       {/* NAVIGATION TABS */}
       <div className="flex gap-2 border-b border-slate-200 pb-1">
+        <button
+          onClick={() => setActiveTab("info")}
+          className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
+            activeTab === "info"
+              ? "bg-slate-900 text-white"
+              : "text-slate-600 hover:bg-slate-100"
+          }`}
+        >
+          Thông tin bài học
+        </button>
         <button
           onClick={() => setActiveTab("sections")}
           className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
@@ -706,16 +1187,6 @@ export default function V5LessonEditorPage() {
           Bài luyện tập ({lesson.exercises?.length || 0})
         </button>
         <button
-          onClick={() => setActiveTab("info")}
-          className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
-            activeTab === "info"
-              ? "bg-slate-900 text-white"
-              : "text-slate-600 hover:bg-slate-100"
-          }`}
-        >
-          Thông tin chung
-        </button>
-        <button
           onClick={() => setActiveTab("preview")}
           className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
             activeTab === "preview"
@@ -730,38 +1201,111 @@ export default function V5LessonEditorPage() {
       {/* TAB 1: SECTIONS */}
       {activeTab === "sections" && (
         <section className="space-y-4">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_12rem]">
+          <div className="space-y-4">
+          <section id="lesson-media" className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">
+                  Ảnh đại diện bài học
+                </h3>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                  Tùy chọn. Dùng khi bài học cần một hình minh họa chung. Hỗ trợ PNG, JPG và WEBP.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => mediaInputRef.current?.click()}
+                disabled={busy || mediaUploading}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                {mediaUploading ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Upload size={14} />
+                )}{" "}
+                {mediaUploading ? "Đang tải..." : "Tải ảnh"}
+              </button>
+              <input
+                ref={mediaInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="hidden"
+                onChange={uploadLessonImage}
+                disabled={busy || mediaUploading}
+              />
+            </div>
+            {lesson.media?.length > 0 ? (
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {lesson.media.map((media: any) => (
+                  <figure
+                    key={media.id}
+                    className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
+                  >
+                    <img
+                      src={media.url}
+                      alt={media.altText || "Hình minh họa bài học"}
+                      className="h-32 w-full object-cover"
+                    />
+                    <figcaption className="flex items-center justify-between gap-2 p-2">
+                      <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+                        <ImageIcon size={13} /> Hình minh họa
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => void removeLessonMedia(media.id)}
+                        disabled={busy}
+                        className="text-xs font-semibold text-rose-600 hover:text-rose-700 disabled:opacity-50"
+                      >
+                        Xóa
+                      </button>
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-4 text-xs text-slate-500">
+                Chưa có hình minh họa. Đây là phần tùy chọn.
+              </p>
+            )}
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              <MediaSearchPanel
+                searchUrl={`/admin/courses/${courseId}/studio/lessons/${lessonId}/media/search`}
+                acceptUrl={`/admin/courses/${courseId}/studio/lessons/${lessonId}/media/accept`}
+                generateUrl={`/admin/courses/${courseId}/studio/lessons/${lessonId}/media/generate`}
+                generateAcceptUrl={`/admin/courses/${courseId}/studio/lessons/${lessonId}/media/generate/accept`}
+                onAccepted={() => void load()}
+                onUploadInstead={() => mediaInputRef.current?.click()}
+              />
+            </div>
+          </section>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-base font-bold text-slate-900">
-                Mục nội dung bài giảng
+                Nội dung bài học
               </h2>
               <p className="text-xs text-slate-500">
-                Sắp xếp lý thuyết, ví dụ, từ vựng và lưu ý học viên sẽ đọc trước
-                khi làm bài tập.
+                Soạn nội dung theo đúng thứ tự học viên sẽ trải nghiệm.
               </p>
             </div>
             <button
-              onClick={openAddSection}
+              onClick={() => openAddSection()}
               className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors"
             >
-              <Plus size={14} /> Thêm mục nội dung (Section)
+              <Plus size={14} /> Thêm nội dung
             </button>
           </div>
 
           <div className="space-y-3">
+            {lesson.sections?.length > 0 && (
+              <button type="button" onClick={() => openAddSection(0)} className="flex w-full items-center gap-2 py-1 text-xs font-semibold text-slate-500 before:h-px before:flex-1 before:bg-slate-200 after:h-px after:flex-1 after:bg-slate-200 hover:text-slate-800" aria-label="Thêm nội dung trước mục đầu tiên"><Plus size={14} /> Thêm nội dung</button>
+            )}
             {lesson.sections && lesson.sections.length > 0 ? (
               lesson.sections.map((s: any, idx: number) => {
-                const typeLabel =
-                  SECTION_TYPES.find((t) => t.value === s.type)?.label ||
-                  s.type;
-                const contentText =
-                  typeof s.content === "object"
-                    ? s.content?.text || JSON.stringify(s.content)
-                    : String(s.content || "");
-
                 return (
+                  <React.Fragment key={s.id}>
                   <div
-                    key={s.id}
+                    id={`section-${s.id}`}
                     className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-3"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
@@ -769,8 +1313,8 @@ export default function V5LessonEditorPage() {
                         <span className="flex h-6 w-6 items-center justify-center rounded bg-slate-100 text-xs font-bold text-slate-700">
                           #{idx + 1}
                         </span>
-                        <span className="rounded bg-slate-900 px-2 py-0.5 text-xs font-semibold text-white">
-                          {s.type}
+                        <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                          {sectionTypeLabel(s.type)}
                         </span>
                         <h3 className="text-sm font-bold text-slate-900">
                           {s.heading}
@@ -796,6 +1340,47 @@ export default function V5LessonEditorPage() {
                         >
                           <ArrowDown size={13} />
                         </button>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSectionAiMenuOpenId((current) =>
+                                current === s.id ? null : s.id,
+                              )
+                            }
+                            disabled={
+                              busy || sectionRefineLoadingId === s.id
+                            }
+                            aria-expanded={sectionAiMenuOpenId === s.id}
+                            aria-haspopup="menu"
+                            className="inline-flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100 disabled:opacity-50"
+                          >
+                            {sectionRefineLoadingId === s.id ? (
+                              <Loader2 size={12} className="animate-spin" />
+                            ) : (
+                              <PanelRight size={12} />
+                            )}
+                            AI hỗ trợ
+                          </button>
+                          {sectionAiMenuOpenId === s.id && (
+                            <div
+                              role="menu"
+                              className="absolute right-0 top-[calc(100%+0.25rem)] z-20 w-52 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg"
+                            >
+                              {SECTION_AI_ACTIONS.map((action) => (
+                                <button
+                                  key={action.value}
+                                  type="button"
+                                  role="menuitem"
+                                  onClick={() => void refineSection(s, action.value)}
+                                  className="w-full rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none"
+                                >
+                                  {action.label}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                         <button
                           type="button"
                           onClick={() => openEditSection(s)}
@@ -818,10 +1403,99 @@ export default function V5LessonEditorPage() {
                       </div>
                     </div>
 
-                    <p className="whitespace-pre-line text-sm text-slate-700 leading-relaxed font-sans">
-                      {contentText}
-                    </p>
+                    {(() => {
+                      const normalized = normalizeSectionContent(s.content);
+                      const isCollapsed = collapsedSectionIds.has(s.id);
+                      const counts = [
+                        normalized.paragraphs.length
+                          ? `${normalized.paragraphs.length} đoạn văn`
+                          : null,
+                        normalized.bullets.length
+                          ? `${normalized.bullets.length} ý chính`
+                          : null,
+                        normalized.examples.length
+                          ? `${normalized.examples.length} ví dụ`
+                          : null,
+                      ].filter(Boolean);
+                      return (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setCollapsedSectionIds((current) => {
+                                const next = new Set(current);
+                                if (next.has(s.id)) next.delete(s.id);
+                                else next.add(s.id);
+                                return next;
+                              })
+                            }
+                            className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700"
+                            aria-expanded={!isCollapsed}
+                          >
+                            <ChevronDown
+                              size={13}
+                              className={`transition-transform ${isCollapsed ? "-rotate-90" : ""}`}
+                            />
+                            {counts.length ? counts.join(" · ") : "Chưa có nội dung"}
+                          </button>
+                          {!isCollapsed && (
+                            <SectionContentPreview
+                              content={s.content}
+                              sectionId={s.id}
+                            />
+                          )}
+                        </>
+                      );
+                    })()}
+
+                    {(() => {
+                      const refine = sectionRefineCandidate;
+                      if (!refine || refine.sectionId !== s.id) return null;
+                      return (
+                        <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-xs font-bold text-amber-800">
+                              Đề xuất AI ·{" "}
+                              {
+                                SECTION_AI_ACTIONS.find(
+                                  (action) => action.value === refine.action,
+                                )?.label
+                              }{" "}
+                              · chưa áp dụng
+                            </p>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setSectionRefineCandidate(null)}
+                                className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700"
+                              >
+                                Bỏ qua
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => void applySectionRefine()}
+                                disabled={busy}
+                                className="rounded-lg bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                              >
+                                Áp dụng
+                              </button>
+                            </div>
+                          </div>
+                          <div className="mt-2 rounded-lg border border-slate-200 bg-white p-3">
+                            <SectionContentPreview
+                              content={{
+                                paragraphs: refine.section.paragraphs,
+                                bullets: refine.section.bullets,
+                                examples: refine.section.examples,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
+                  <button type="button" onClick={() => openAddSection(idx + 1)} className="flex w-full items-center gap-2 py-1 text-xs font-semibold text-slate-500 before:h-px before:flex-1 before:bg-slate-200 after:h-px after:flex-1 after:bg-slate-200 hover:text-slate-800" aria-label={`Thêm nội dung sau ${s.heading}`}><Plus size={14} /> Thêm nội dung</button>
+                  </React.Fragment>
                 );
               })
             ) : (
@@ -832,6 +1506,28 @@ export default function V5LessonEditorPage() {
               </div>
             )}
           </div>
+
+          <div className="space-y-3 border-t border-slate-200 pt-5">
+            {[
+              { exercise: guidedPractice, title: "Luyện tập có hướng dẫn", description: "Củng cố nội dung vừa học.", tone: "border-blue-200 bg-blue-50/60" },
+              { exercise: finalCheck, title: "Kiểm tra cuối bài", description: "Đánh giá các mục tiêu của bài học.", tone: "border-emerald-200 bg-emerald-50/60" },
+            ].map(({ exercise, title, description, tone }) => (
+              <section key={title} className={`rounded-xl border p-4 ${tone}`}>
+                <div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="text-sm font-bold text-slate-900">{title}</h3><p className="mt-1 text-xs text-slate-600">{description}</p></div><div className="text-right"><p className="text-sm font-bold text-slate-900">{exercise?.questions?.length || 0} câu</p><button type="button" onClick={() => setActiveTab("exercises")} className="mt-1 text-xs font-semibold text-slate-700 underline underline-offset-2">Chỉnh sửa câu hỏi</button></div></div>
+              </section>
+            ))}
+          </div>
+          </div>
+          <aside className="h-fit rounded-xl border border-slate-200 bg-white p-4 shadow-xs lg:sticky lg:top-28">
+            <h2 className="text-sm font-bold text-slate-900">Cấu trúc bài học</h2>
+            <nav aria-label="Cấu trúc bài học" className="mt-3 space-y-2 text-xs text-slate-600">
+              <a href="#lesson-media" className="block rounded-md px-2 py-1.5 hover:bg-slate-100"><span className="mr-1 text-slate-400">○</span>Ảnh minh họa</a>
+              {lesson.sections.map((section: any, index: number) => <a key={section.id} href={`#section-${section.id}`} className="block rounded-md px-2 py-1.5 hover:bg-slate-100"><span className="mr-1 text-emerald-700">✓</span>{index + 1}. {sectionTypeLabel(section.type)}</a>)}
+              <button type="button" onClick={() => setActiveTab("exercises")} className="block w-full rounded-md px-2 py-1.5 text-left hover:bg-slate-100"><span className="mr-1 text-emerald-700">✓</span>Luyện tập</button>
+              <button type="button" onClick={() => setActiveTab("exercises")} className="block w-full rounded-md px-2 py-1.5 text-left hover:bg-slate-100"><span className="mr-1 text-emerald-700">✓</span>Kiểm tra cuối bài</button>
+            </nav>
+          </aside>
+          </div>
         </section>
       )}
 
@@ -840,7 +1536,7 @@ export default function V5LessonEditorPage() {
         <section className="space-y-6">
           <div>
             <h2 className="text-base font-bold text-slate-900">
-              Bài tập thực hành V5
+              Bài luyện tập
             </h2>
             <p className="text-xs text-slate-500">
               Cấu trúc chuẩn của một bài học V5 gồm &quot;Luyện tập có hướng
@@ -854,7 +1550,7 @@ export default function V5LessonEditorPage() {
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
               <div>
                 <span className="rounded bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700 border border-blue-200">
-                  PHASE 2 GUIDED PRACTICE
+                  LUYỆN TẬP CÓ HƯỚNG DẪN
                 </span>
                 <h3 className="mt-1 text-base font-bold text-slate-900">
                   {guidedPractice
@@ -998,7 +1694,7 @@ export default function V5LessonEditorPage() {
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
               <div>
                 <span className="rounded bg-violet-50 px-2 py-0.5 text-xs font-bold text-violet-700 border border-violet-200">
-                  PHASE 2 FINAL CHECK (BẮT BUỘC ĐỂ XUẤT BẢN)
+                  KIỂM TRA CUỐI BÀI · BẮT BUỘC ĐỂ XUẤT BẢN
                 </span>
                 <h3 className="mt-1 text-base font-bold text-slate-900">
                   {finalCheck ? finalCheck.title : "Kiểm tra cuối bài"}
@@ -1151,9 +1847,10 @@ export default function V5LessonEditorPage() {
               <input
                 type="text"
                 value={infoForm.title}
-                onChange={(e) =>
-                  setInfoForm({ ...infoForm, title: e.target.value })
-                }
+                onChange={(e) => {
+                  setHasUnsavedChanges(true);
+                  setInfoForm({ ...infoForm, title: e.target.value });
+                }}
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
               />
             </div>
@@ -1165,9 +1862,10 @@ export default function V5LessonEditorPage() {
               <textarea
                 rows={3}
                 value={infoForm.summary}
-                onChange={(e) =>
-                  setInfoForm({ ...infoForm, summary: e.target.value })
-                }
+                onChange={(e) => {
+                  setHasUnsavedChanges(true);
+                  setInfoForm({ ...infoForm, summary: e.target.value });
+                }}
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
               />
             </div>
@@ -1179,15 +1877,40 @@ export default function V5LessonEditorPage() {
               <textarea
                 rows={4}
                 value={infoForm.learningObjectives}
-                onChange={(e) =>
+                onChange={(e) => {
+                  setHasUnsavedChanges(true);
                   setInfoForm({
                     ...infoForm,
                     learningObjectives: e.target.value,
-                  })
-                }
+                  });
+                }}
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
               />
             </div>
+
+            <label className="flex items-start gap-2.5 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                checked={infoForm.requiresFinalCheck}
+                onChange={(e) => {
+                  setHasUnsavedChanges(true);
+                  setInfoForm({
+                    ...infoForm,
+                    requiresFinalCheck: e.target.checked,
+                  });
+                }}
+                className="mt-0.5"
+              />
+              <span>
+                <span className="font-semibold text-slate-900">
+                  Bài học này cần Kiểm tra cuối bài
+                </span>
+                <span className="mt-0.5 block text-xs text-slate-500">
+                  Bỏ chọn nếu đây là bài học luyện tập không cần bài Kiểm tra
+                  cuối bài để xuất bản.
+                </span>
+              </span>
+            </label>
 
             <div className="pt-2">
               <button
@@ -1229,11 +1952,7 @@ export default function V5LessonEditorPage() {
                   <span className="text-xs font-bold text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">
                     Phần {idx + 1}: {s.heading}
                   </span>
-                  <p className="whitespace-pre-line text-sm text-slate-800 leading-relaxed">
-                    {typeof s.content === "object"
-                      ? s.content?.text || JSON.stringify(s.content)
-                      : s.content}
-                  </p>
+                  <SectionContentPreview content={s.content} sectionId={s.id} />
                 </div>
               ))
             ) : (
@@ -1273,120 +1992,648 @@ export default function V5LessonEditorPage() {
 
       {/* SECTION MODAL */}
       {isSectionModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-lg font-bold text-slate-900">
-                {editingSection
-                  ? "Chỉnh sửa mục nội dung"
-                  : "Thêm mục nội dung mới"}
-              </h3>
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40" role="presentation">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="section-editor-title"
+            className="flex h-full w-full max-w-2xl flex-col bg-white shadow-xl"
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.preventDefault();
+                requestCloseSectionModal();
+              } else if (
+                (event.ctrlKey || event.metaKey) &&
+                event.key === "Enter"
+              ) {
+                event.preventDefault();
+                void saveSection(event as unknown as React.FormEvent);
+              }
+            }}
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 p-5 sm:p-6">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {sectionTypeLabel(sectionForm.type)}
+                </p>
+                <h3 id="section-editor-title" className="mt-0.5 text-lg font-bold text-slate-900">
+                  {sectionForm.heading.trim() ||
+                    (editingSection
+                      ? "Chỉnh sửa mục nội dung"
+                      : "Thêm mục nội dung mới")}
+                </h3>
+              </div>
               <button
                 type="button"
-                onClick={() => setIsSectionModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+                onClick={requestCloseSectionModal}
+                className="shrink-0 text-slate-400 hover:text-slate-600"
+                aria-label="Đóng trình chỉnh sửa"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={saveSection} className="space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-slate-700">
-                  Loại mục nội dung
-                </label>
-                <select
-                  value={sectionForm.type}
-                  onChange={(e) =>
-                    setSectionForm({ ...sectionForm, type: e.target.value })
-                  }
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
-                >
-                  {SECTION_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="flex gap-1 border-b border-slate-100 px-5 pt-3 sm:px-6">
+              <button
+                type="button"
+                onClick={() => setSectionEditorTab("edit")}
+                className={`rounded-t-lg px-3 py-2 text-xs font-semibold transition-colors ${
+                  sectionEditorTab === "edit"
+                    ? "border-b-2 border-slate-900 text-slate-900"
+                    : "text-slate-500 hover:text-slate-700"
+                }`}
+              >
+                Soạn thảo
+              </button>
+              <button
+                type="button"
+                onClick={() => setSectionEditorTab("preview")}
+                className={`rounded-t-lg px-3 py-2 text-xs font-semibold transition-colors ${
+                  sectionEditorTab === "preview"
+                    ? "border-b-2 border-slate-900 text-slate-900"
+                    : "text-slate-500 hover:text-slate-700"
+                }`}
+              >
+                Xem trước
+              </button>
+            </div>
 
-              <div>
-                <label className="text-xs font-semibold text-slate-700">
-                  Tiêu đề mục (Heading) *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ví dụ: Quy tắc phát âm nguyên âm dài"
-                  value={sectionForm.heading}
-                  onChange={(e) =>
-                    setSectionForm({ ...sectionForm, heading: e.target.value })
-                  }
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
-                />
-              </div>
+            <form
+              id="section-editor-form"
+              onSubmit={saveSection}
+              className="flex-1 overflow-y-auto p-5 sm:p-6"
+            >
+              {sectionEditorTab === "preview" ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <SectionContentPreview
+                    content={toSectionContentPayload({
+                      paragraphs: sectionForm.text
+                        .split(/\n{2,}/)
+                        .map((value) => value.trim())
+                        .filter(Boolean),
+                      bullets: sectionForm.bullets,
+                      examples: sectionForm.examples,
+                      audioExamples: sectionForm.audioExamples,
+                    })}
+                  />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">
+                      Loại mục nội dung
+                    </label>
+                    <select
+                      value={sectionForm.type}
+                      onChange={(e) => {
+                        setHasUnsavedChanges(true);
+                        patchSectionForm({ type: e.target.value });
+                      }}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
+                    >
+                      {SECTION_TYPES.map((t) => (
+                        <option key={t.value} value={t.value}>
+                          {t.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div>
-                <label className="text-xs font-semibold text-slate-700">
-                  Nội dung hiển thị cho học viên *
-                </label>
-                <textarea
-                  rows={6}
-                  required
-                  placeholder="Soạn nội dung lý thuyết, ví dụ minh họa hoặc lời khuyên chi tiết..."
-                  value={sectionForm.content}
-                  onChange={(e) =>
-                    setSectionForm({ ...sectionForm, content: e.target.value })
-                  }
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
-                />
-              </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">
+                      Tiêu đề mục *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ví dụ: Quy tắc phát âm nguyên âm dài"
+                      value={sectionForm.heading}
+                      onChange={(e) => {
+                        setHasUnsavedChanges(true);
+                        patchSectionForm({ heading: e.target.value });
+                      }}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
+                    />
+                  </div>
 
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="isRequiredSec"
-                  checked={sectionForm.isRequired}
-                  onChange={(e) =>
-                    setSectionForm({
-                      ...sectionForm,
-                      isRequired: e.target.checked,
-                    })
-                  }
-                  className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
-                />
-                <label
-                  htmlFor="isRequiredSec"
-                  className="text-xs text-slate-700 font-medium"
-                >
-                  Học viên bắt buộc phải đọc qua phần này
-                </label>
-              </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">
+                      Nội dung chính *
+                    </label>
+                    <p className="mt-0.5 text-xs text-slate-400">
+                      Để trống một dòng giữa hai đoạn để tách thành nhiều đoạn văn.
+                    </p>
+                    <textarea
+                      rows={6}
+                      required
+                      placeholder="Soạn nội dung lý thuyết, ví dụ minh họa hoặc lời khuyên chi tiết..."
+                      value={sectionForm.text}
+                      onChange={(e) => {
+                        setHasUnsavedChanges(true);
+                        patchSectionForm({ text: e.target.value });
+                      }}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400"
+                    />
+                  </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setIsSectionModalOpen(false)}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={busy}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors disabled:opacity-50"
-                >
-                  {busy ? (
-                    <Loader2 size={13} className="animate-spin" />
-                  ) : (
-                    <Save size={13} />
-                  )}
-                  Lưu mục nội dung
-                </button>
-              </div>
+                  <div className="border-t border-slate-100 pt-4">
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <label className="text-xs font-semibold text-slate-700">
+                        Ý chính dạng gạch đầu dòng
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          patchSectionForm({
+                            bullets: [...sectionForm.bullets, ""],
+                          })
+                        }
+                        className="text-xs font-semibold text-slate-700 underline underline-offset-2"
+                      >
+                        Thêm ý
+                      </button>
+                    </div>
+                    {sectionForm.bullets.length === 0 ? (
+                      <p className="rounded-lg border border-dashed border-slate-200 px-3 py-2.5 text-xs text-slate-400">
+                        Chưa có ý chính.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {sectionForm.bullets.map((bullet, index) => (
+                          <div key={`bullet-${index}`} className="flex gap-2">
+                            <div className="flex flex-col">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  index > 0 &&
+                                  patchSectionForm({
+                                    bullets: swapAt(
+                                      sectionForm.bullets,
+                                      index,
+                                      index - 1,
+                                    ),
+                                  })
+                                }
+                                disabled={index === 0}
+                                aria-label={`Di chuyển ý ${index + 1} lên`}
+                                className="rounded border border-slate-200 px-1 text-slate-500 hover:bg-slate-50 disabled:opacity-30"
+                              >
+                                <ArrowUp size={11} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  index < sectionForm.bullets.length - 1 &&
+                                  patchSectionForm({
+                                    bullets: swapAt(
+                                      sectionForm.bullets,
+                                      index,
+                                      index + 1,
+                                    ),
+                                  })
+                                }
+                                disabled={index === sectionForm.bullets.length - 1}
+                                aria-label={`Di chuyển ý ${index + 1} xuống`}
+                                className="rounded border border-slate-200 px-1 text-slate-500 hover:bg-slate-50 disabled:opacity-30"
+                              >
+                                <ArrowDown size={11} />
+                              </button>
+                            </div>
+                            <input
+                              value={bullet}
+                              onChange={(e) =>
+                                patchSectionForm({
+                                  bullets: sectionForm.bullets.map(
+                                    (item, itemIndex) =>
+                                      itemIndex === index
+                                        ? e.target.value
+                                        : item,
+                                  ),
+                                })
+                              }
+                              placeholder="Ví dụ: Hello dùng trong tình huống thân mật"
+                              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                patchSectionForm({
+                                  bullets: sectionForm.bullets.filter(
+                                    (_, itemIndex) => itemIndex !== index,
+                                  ),
+                                })
+                              }
+                              aria-label={`Xóa ý ${index + 1}`}
+                              className="rounded-lg border border-slate-200 px-2 text-slate-500 hover:border-rose-200 hover:text-rose-600"
+                            >
+                              <X size={15} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="border-t border-slate-100 pt-4">
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <label className="text-xs font-semibold text-slate-700">
+                        Ví dụ minh họa
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          patchSectionForm({
+                            examples: [
+                              ...sectionForm.examples,
+                              { text: "", translation: "", explanation: "" },
+                            ],
+                          })
+                        }
+                        className="text-xs font-semibold text-slate-700 underline underline-offset-2"
+                      >
+                        Thêm ví dụ
+                      </button>
+                    </div>
+                    {sectionForm.examples.length === 0 ? (
+                      <p className="rounded-lg border border-dashed border-slate-200 px-3 py-2.5 text-xs text-slate-400">
+                        Chưa có ví dụ minh họa.
+                      </p>
+                    ) : (
+                      <div className="space-y-3">
+                        {sectionForm.examples.map((example, index) => (
+                          <div
+                            key={`example-${index}`}
+                            className="rounded-lg border border-slate-200 bg-slate-50 p-3"
+                          >
+                            <div className="mb-2 flex items-center justify-between">
+                              <span className="text-xs font-medium text-slate-600">
+                                Ví dụ {index + 1}
+                              </span>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    index > 0 &&
+                                    patchSectionForm({
+                                      examples: swapAt(
+                                        sectionForm.examples,
+                                        index,
+                                        index - 1,
+                                      ),
+                                    })
+                                  }
+                                  disabled={index === 0}
+                                  aria-label={`Di chuyển ví dụ ${index + 1} lên`}
+                                  className="rounded border border-slate-200 px-1 text-slate-500 hover:bg-white disabled:opacity-30"
+                                >
+                                  <ArrowUp size={11} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    index < sectionForm.examples.length - 1 &&
+                                    patchSectionForm({
+                                      examples: swapAt(
+                                        sectionForm.examples,
+                                        index,
+                                        index + 1,
+                                      ),
+                                    })
+                                  }
+                                  disabled={
+                                    index === sectionForm.examples.length - 1
+                                  }
+                                  aria-label={`Di chuyển ví dụ ${index + 1} xuống`}
+                                  className="rounded border border-slate-200 px-1 text-slate-500 hover:bg-white disabled:opacity-30"
+                                >
+                                  <ArrowDown size={11} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    patchSectionForm({
+                                      examples: sectionForm.examples.filter(
+                                        (_, itemIndex) => itemIndex !== index,
+                                      ),
+                                    })
+                                  }
+                                  aria-label={`Xóa ví dụ ${index + 1}`}
+                                  className="text-slate-400 hover:text-rose-600"
+                                >
+                                  <X size={15} />
+                                </button>
+                              </div>
+                            </div>
+                            <div className="grid gap-2">
+                              <label className="text-xs font-medium text-slate-600">
+                                Câu tiếng Anh / phiên âm
+                                <input
+                                  value={example.text}
+                                  onChange={(e) =>
+                                    patchSectionForm({
+                                      examples: sectionForm.examples.map(
+                                        (item, itemIndex) =>
+                                          itemIndex === index
+                                            ? { ...item, text: e.target.value }
+                                            : item,
+                                      ),
+                                    })
+                                  }
+                                  placeholder={'"Nice to meet you." hoặc /naɪs tə miːt juː/'}
+                                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                                />
+                              </label>
+                              <label className="text-xs font-medium text-slate-600">
+                                Nghĩa tiếng Việt
+                                <input
+                                  value={example.translation}
+                                  onChange={(e) =>
+                                    patchSectionForm({
+                                      examples: sectionForm.examples.map(
+                                        (item, itemIndex) =>
+                                          itemIndex === index
+                                            ? {
+                                                ...item,
+                                                translation: e.target.value,
+                                              }
+                                            : item,
+                                      ),
+                                    })
+                                  }
+                                  placeholder={'"Rất vui được gặp bạn."'}
+                                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                                />
+                              </label>
+                              <label className="text-xs font-medium text-slate-600">
+                                Giải thích ngữ cảnh
+                                <input
+                                  value={example.explanation}
+                                  onChange={(e) =>
+                                    patchSectionForm({
+                                      examples: sectionForm.examples.map(
+                                        (item, itemIndex) =>
+                                          itemIndex === index
+                                            ? {
+                                                ...item,
+                                                explanation: e.target.value,
+                                              }
+                                            : item,
+                                      ),
+                                    })
+                                  }
+                                  placeholder={'"Dùng khi gặp ai đó lần đầu."'}
+                                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                                />
+                              </label>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="border-t border-slate-100 pt-4">
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <label className="text-xs font-semibold text-slate-700">
+                        Audio mẫu phát âm
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          patchSectionForm({
+                            audioExamples: [
+                              ...sectionForm.audioExamples,
+                              {
+                                term: "",
+                                ipa: "",
+                                meaning: "",
+                                audioUrl: "",
+                                accent: "",
+                              },
+                            ],
+                          })
+                        }
+                        className="text-xs font-semibold text-slate-700 underline underline-offset-2"
+                      >
+                        Thêm audio
+                      </button>
+                    </div>
+                    {sectionForm.audioExamples.length === 0 ? (
+                      <p className="rounded-lg border border-dashed border-slate-200 px-3 py-2.5 text-xs text-slate-400">
+                        Chưa có audio mẫu.
+                      </p>
+                    ) : (
+                      <div className="space-y-3">
+                        {sectionForm.audioExamples.map((item, index) => (
+                          <div
+                            key={`audio-example-${index}`}
+                            className="rounded-lg border border-slate-200 bg-slate-50 p-3"
+                          >
+                            <div className="mb-2 flex items-center justify-between">
+                              <span className="text-xs font-medium text-slate-600">
+                                Audio {index + 1}
+                              </span>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    index > 0 &&
+                                    patchSectionForm({
+                                      audioExamples: swapAt(
+                                        sectionForm.audioExamples,
+                                        index,
+                                        index - 1,
+                                      ),
+                                    })
+                                  }
+                                  disabled={index === 0}
+                                  aria-label={`Di chuyển audio ${index + 1} lên`}
+                                  className="rounded border border-slate-200 px-1 text-slate-500 hover:bg-white disabled:opacity-30"
+                                >
+                                  <ArrowUp size={11} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    index < sectionForm.audioExamples.length - 1 &&
+                                    patchSectionForm({
+                                      audioExamples: swapAt(
+                                        sectionForm.audioExamples,
+                                        index,
+                                        index + 1,
+                                      ),
+                                    })
+                                  }
+                                  disabled={
+                                    index === sectionForm.audioExamples.length - 1
+                                  }
+                                  aria-label={`Di chuyển audio ${index + 1} xuống`}
+                                  className="rounded border border-slate-200 px-1 text-slate-500 hover:bg-white disabled:opacity-30"
+                                >
+                                  <ArrowDown size={11} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    patchSectionForm({
+                                      audioExamples: sectionForm.audioExamples.filter(
+                                        (_, itemIndex) => itemIndex !== index,
+                                      ),
+                                    })
+                                  }
+                                  aria-label={`Xóa audio ${index + 1}`}
+                                  className="text-slate-400 hover:text-rose-600"
+                                >
+                                  <X size={15} />
+                                </button>
+                              </div>
+                            </div>
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <label className="text-xs font-medium text-slate-600">
+                                Từ / cụm từ
+                                <input
+                                  value={item.term}
+                                  onChange={(e) =>
+                                    patchSectionForm({
+                                      audioExamples: sectionForm.audioExamples.map(
+                                        (row, rowIndex) =>
+                                          rowIndex === index
+                                            ? { ...row, term: e.target.value }
+                                            : row,
+                                      ),
+                                    })
+                                  }
+                                  placeholder="hello"
+                                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                                />
+                              </label>
+                              <label className="text-xs font-medium text-slate-600">
+                                Phiên âm
+                                <input
+                                  value={item.ipa}
+                                  onChange={(e) =>
+                                    patchSectionForm({
+                                      audioExamples: sectionForm.audioExamples.map(
+                                        (row, rowIndex) =>
+                                          rowIndex === index
+                                            ? { ...row, ipa: e.target.value }
+                                            : row,
+                                      ),
+                                    })
+                                  }
+                                  placeholder="/həˈloʊ/"
+                                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                                />
+                              </label>
+                              <label className="text-xs font-medium text-slate-600">
+                                Nghĩa
+                                <input
+                                  value={item.meaning}
+                                  onChange={(e) =>
+                                    patchSectionForm({
+                                      audioExamples: sectionForm.audioExamples.map(
+                                        (row, rowIndex) =>
+                                          rowIndex === index
+                                            ? { ...row, meaning: e.target.value }
+                                            : row,
+                                      ),
+                                    })
+                                  }
+                                  placeholder="Xin chào"
+                                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                                />
+                              </label>
+                              <label className="text-xs font-medium text-slate-600">
+                                Giọng
+                                <input
+                                  value={item.accent}
+                                  onChange={(e) =>
+                                    patchSectionForm({
+                                      audioExamples: sectionForm.audioExamples.map(
+                                        (row, rowIndex) =>
+                                          rowIndex === index
+                                            ? { ...row, accent: e.target.value }
+                                            : row,
+                                      ),
+                                    })
+                                  }
+                                  placeholder="Anh-Mỹ"
+                                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                                />
+                              </label>
+                              <label className="text-xs font-medium text-slate-600 sm:col-span-2">
+                                URL âm thanh
+                                <input
+                                  value={item.audioUrl}
+                                  onChange={(e) =>
+                                    patchSectionForm({
+                                      audioExamples: sectionForm.audioExamples.map(
+                                        (row, rowIndex) =>
+                                          rowIndex === index
+                                            ? { ...row, audioUrl: e.target.value }
+                                            : row,
+                                      ),
+                                    })
+                                  }
+                                  placeholder="https://..."
+                                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                                />
+                              </label>
+                            </div>
+                            {item.audioUrl.trim() && (
+                              <audio
+                                className="mt-2 w-full"
+                                controls
+                                preload="none"
+                                src={item.audioUrl}
+                                aria-label={`Nghe thử audio ${item.term || index + 1}`}
+                              />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </form>
+
+            <div className="sticky bottom-0 flex justify-end gap-2 border-t border-slate-100 bg-white p-4">
+              <button
+                type="button"
+                onClick={requestCloseSectionModal}
+                className="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                type="submit"
+                form="section-editor-form"
+                disabled={busy}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors disabled:opacity-50"
+              >
+                {busy ? (
+                  <Loader2 size={13} className="animate-spin" />
+                ) : (
+                  <Save size={13} />
+                )}
+                Lưu mục nội dung
+              </button>
+            </div>
           </div>
         </div>
+      )}
+
+      {/* CONFIRM CLOSE SECTION EDITOR WITHOUT SAVING */}
+      {isSectionCloseConfirmOpen && (
+        <ConfirmDialog
+          open={true}
+          title="Bỏ thay đổi?"
+          description="Bạn có thay đổi chưa lưu. Bỏ thay đổi?"
+          confirmLabel="Bỏ thay đổi"
+          onConfirm={discardSectionModal}
+          onCancel={() => setIsSectionCloseConfirmOpen(false)}
+        />
       )}
 
       {/* QUESTION MODAL */}

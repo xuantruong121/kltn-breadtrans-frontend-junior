@@ -12,6 +12,7 @@ import {
   Menu,
   PanelRightClose,
   PanelRightOpen,
+  Target,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import {
@@ -19,6 +20,12 @@ import {
   CourseV5Exercise,
 } from "@/lib/api/services/course.service";
 import { courseLessonPath } from "@/lib/course/navigation";
+import { normalizeSectionContent } from "@/lib/course/sectionContent";
+import { isDuplicateLearningObjectivesSection } from "@/lib/course/lessonObjectives";
+import {
+  LessonAudioExamplesBlock,
+  LessonExampleCard,
+} from "@/components/course/LessonContentBlocks";
 
 const listValue = (value: unknown): string[] =>
   Array.isArray(value)
@@ -30,9 +37,18 @@ const objectValue = (value: unknown): Record<string, unknown> =>
     : {};
 const formatAnswer = (value: unknown): string => {
   if (value === null || value === undefined || value === "") return "—";
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return String(value);
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  )
+    return String(value);
   if (Array.isArray(value)) return value.map(formatAnswer).join(", ");
-  try { return JSON.stringify(value); } catch { return "—"; }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return "—";
+  }
 };
 type LessonExample = {
   label?: string;
@@ -60,13 +76,20 @@ const parseMistake = (value: unknown) => {
     return {
       wrong,
       correct,
-      reason: typeof item.reason === "string" ? item.reason : mistakeReason(wrong, correct),
+      reason:
+        typeof item.reason === "string"
+          ? item.reason
+          : mistakeReason(wrong, correct),
     };
   }
   const raw = typeof value === "string" ? value : "";
   const [wrong = "", correct = ""] = raw.split(/\s*→\s*/);
   if (!correct) {
-    return { wrong: "", correct: "", reason: raw || "Hãy kiểm tra lại cấu trúc trước khi dùng câu này." };
+    return {
+      wrong: "",
+      correct: "",
+      reason: raw || "Hãy kiểm tra lại cấu trúc trước khi dùng câu này.",
+    };
   }
   return { wrong, correct, reason: mistakeReason(wrong, correct) };
 };
@@ -136,7 +159,9 @@ function ExerciseCard({
       });
     },
     onError: () => {
-      setSubmitError("Không thể nộp bài. Kiểm tra kết nối rồi thử lại; câu trả lời của bạn vẫn được giữ lại.");
+      setSubmitError(
+        "Không thể nộp bài. Kiểm tra kết nối rồi thử lại; câu trả lời của bạn vẫn được giữ lại.",
+      );
       toast.error("Không thể nộp bài. Vui lòng thử lại.");
     },
   });
@@ -153,8 +178,12 @@ function ExerciseCard({
   const modelStructure = listValue(exerciseContent.modelStructure);
   const targetWords = listValue(exerciseContent.targetWords);
   const collocations = listValue(exerciseContent.collocations);
-  const recordingTask = typeof exerciseContent.recordingTask === "string" ? exerciseContent.recordingTask : null;
-  const rule = typeof exerciseContent.rule === "string" ? exerciseContent.rule : null;
+  const recordingTask =
+    typeof exerciseContent.recordingTask === "string"
+      ? exerciseContent.recordingTask
+      : null;
+  const rule =
+    typeof exerciseContent.rule === "string" ? exerciseContent.rule : null;
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 dark:border-slate-800 dark:bg-slate-900 shadow-xs">
       <div className="flex items-start justify-between gap-3">
@@ -173,12 +202,26 @@ function ExerciseCard({
           <CheckCircle2 className="shrink-0 text-emerald-500" size={24} />
         )}
       </div>
-      {(contentAudio || passage || usefulLanguage.length > 0 || modelStructure.length > 0 || targetWords.length > 0 || collocations.length > 0 || recordingTask || rule) && (
+      {(contentAudio ||
+        passage ||
+        usefulLanguage.length > 0 ||
+        modelStructure.length > 0 ||
+        targetWords.length > 0 ||
+        collocations.length > 0 ||
+        recordingTask ||
+        rule) && (
         <div className="mt-6 space-y-4 rounded-2xl bg-slate-50 p-5 text-base sm:text-lg dark:bg-slate-950">
           {contentAudio && (
             <div>
-              <p className="font-bold text-slate-800 dark:text-slate-200">Audio nhiệm vụ</p>
-              <audio className="mt-2.5 w-full" controls preload="metadata" src={contentAudio} />
+              <p className="font-bold text-slate-800 dark:text-slate-200">
+                Audio nhiệm vụ
+              </p>
+              <audio
+                className="mt-2.5 w-full"
+                controls
+                preload="metadata"
+                src={contentAudio}
+              />
             </div>
           )}
           {passage && (
@@ -188,26 +231,53 @@ function ExerciseCard({
           )}
           {usefulLanguage.length > 0 && (
             <div>
-              <p className="font-bold text-slate-800 dark:text-slate-200">Cụm từ hữu ích</p>
+              <p className="font-bold text-slate-800 dark:text-slate-200">
+                Cụm từ hữu ích
+              </p>
               <ul className="mt-2 list-disc space-y-1.5 pl-6 text-slate-600 dark:text-slate-300">
-                {usefulLanguage.map((item) => <li key={item}>{item}</li>)}
+                {usefulLanguage.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
               </ul>
             </div>
           )}
           {modelStructure.length > 0 && (
             <div>
-              <p className="font-bold text-slate-800 dark:text-slate-200">Cấu trúc bài viết</p>
+              <p className="font-bold text-slate-800 dark:text-slate-200">
+                Cấu trúc bài viết
+              </p>
               <ol className="mt-2 list-decimal space-y-1.5 pl-6 text-slate-600 dark:text-slate-300">
-                {modelStructure.map((item) => <li key={item}>{item}</li>)}
+                {modelStructure.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
               </ol>
             </div>
           )}
-          {recordingTask && <p className="leading-relaxed text-slate-700 dark:text-slate-200"><strong>Nhiệm vụ nói:</strong> {recordingTask}</p>}
-          {rule && <p className="leading-relaxed text-slate-700 dark:text-slate-200"><strong>Quy tắc:</strong> {rule}</p>}
-          {targetWords.length > 0 && <p className="leading-relaxed text-slate-700 dark:text-slate-200"><strong>Từ mục tiêu:</strong> {targetWords.join(" · ")}</p>}
-          {collocations.length > 0 && <p className="leading-relaxed text-slate-700 dark:text-slate-200"><strong>Cụm từ:</strong> {collocations.join(" · ")}</p>}
+          {recordingTask && (
+            <p className="leading-relaxed text-slate-700 dark:text-slate-200">
+              <strong>Nhiệm vụ nói:</strong> {recordingTask}
+            </p>
+          )}
+          {rule && (
+            <p className="leading-relaxed text-slate-700 dark:text-slate-200">
+              <strong>Quy tắc:</strong> {rule}
+            </p>
+          )}
+          {targetWords.length > 0 && (
+            <p className="leading-relaxed text-slate-700 dark:text-slate-200">
+              <strong>Từ mục tiêu:</strong> {targetWords.join(" · ")}
+            </p>
+          )}
+          {collocations.length > 0 && (
+            <p className="leading-relaxed text-slate-700 dark:text-slate-200">
+              <strong>Cụm từ:</strong> {collocations.join(" · ")}
+            </p>
+          )}
           {listValue(objectValue(exercise.rubric).criteria).length > 0 && (
-            <p className="leading-relaxed text-slate-700 dark:text-slate-200"><strong>Tiêu chí rubric:</strong> {listValue(objectValue(exercise.rubric).criteria).join(" · ")}</p>
+            <p className="leading-relaxed text-slate-700 dark:text-slate-200">
+              <strong>Tiêu chí rubric:</strong>{" "}
+              {listValue(objectValue(exercise.rubric).criteria).join(" · ")}
+            </p>
           )}
         </div>
       )}
@@ -218,7 +288,12 @@ function ExerciseCard({
             : [];
           const answer = answers[question.id];
           return (
-            <div key={question.id} ref={(node) => { questionRefs.current[question.id] = node; }}>
+            <div
+              key={question.id}
+              ref={(node) => {
+                questionRefs.current[question.id] = node;
+              }}
+            >
               <p className="text-base sm:text-lg font-semibold text-slate-800 dark:text-slate-200">
                 {question.order}. {renderQuestionPrompt(question.prompt)}
               </p>
@@ -228,7 +303,7 @@ function ExerciseCard({
                     const label =
                       typeof option === "string"
                         ? option
-                        : JSON.stringify(option) ?? "";
+                        : (JSON.stringify(option) ?? "");
                     const selected =
                       answers[question.id] === option ||
                       answers[question.id] === label;
@@ -269,12 +344,15 @@ function ExerciseCard({
         })}
       </div>
       <button
-      type="button"
+        type="button"
         disabled={mutation.isPending}
         onClick={() => {
           const unanswered = exercise.questions.filter((question) => {
             const answer = answers[question.id];
-            return answer === undefined || (typeof answer === "string" && !answer.trim());
+            return (
+              answer === undefined ||
+              (typeof answer === "string" && !answer.trim())
+            );
           });
           if (unanswered.length > 0) {
             setSubmitError(`Bạn còn ${unanswered.length} câu chưa trả lời.`);
@@ -291,17 +369,47 @@ function ExerciseCard({
         {mutation.isPending ? "Đang chấm..." : "Nộp bài"}
         <ArrowRight size={18} />
       </button>
-      {submitError && <p role="alert" className="mt-3 text-sm font-semibold text-rose-700 dark:text-rose-300">{submitError}</p>}
+      {submitError && (
+        <p
+          role="alert"
+          className="mt-3 text-sm font-semibold text-rose-700 dark:text-rose-300"
+        >
+          {submitError}
+        </p>
+      )}
       {result && (
         <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-5 text-base text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
           <p className="font-bold text-lg">Hoàn thành bài tập</p>
-          <p className="mt-1 text-xl font-extrabold text-blue-700 dark:text-blue-300">{result.score}/{result.maxScore} câu đúng · {result.percentage}%</p>
+          <p className="mt-1 text-xl font-extrabold text-blue-700 dark:text-blue-300">
+            {result.score}/{result.maxScore} câu đúng · {result.percentage}%
+          </p>
           <ul className="mt-4 space-y-3">
             {result.feedback.map((item) => (
-              <li key={item.questionId} className={`rounded-xl border p-3 ${item.isCorrect ? "border-emerald-200 bg-emerald-50/70 dark:border-emerald-900/60 dark:bg-emerald-950/30" : "border-rose-200 bg-rose-50/70 dark:border-rose-900/60 dark:bg-rose-950/30"}`}>
-                <p className={`font-bold ${item.isCorrect ? "text-emerald-700 dark:text-emerald-300" : "text-rose-700 dark:text-rose-300"}`}>{item.isCorrect ? "✓ Chính xác" : "✕ Chưa chính xác"}</p>
-                {!item.isCorrect && <div className="mt-2 space-y-1 text-sm"><p><strong>Bạn chọn:</strong> {formatAnswer(item.answer)}</p><p><strong>Đáp án đúng:</strong> {formatAnswer(item.correctAnswer)}</p></div>}
-                {item.explanation && <p className="mt-2 text-sm leading-relaxed"><strong>Giải thích:</strong> {item.explanation}</p>}
+              <li
+                key={item.questionId}
+                className={`rounded-xl border p-3 ${item.isCorrect ? "border-emerald-200 bg-emerald-50/70 dark:border-emerald-900/60 dark:bg-emerald-950/30" : "border-rose-200 bg-rose-50/70 dark:border-rose-900/60 dark:bg-rose-950/30"}`}
+              >
+                <p
+                  className={`font-bold ${item.isCorrect ? "text-emerald-700 dark:text-emerald-300" : "text-rose-700 dark:text-rose-300"}`}
+                >
+                  {item.isCorrect ? "✓ Chính xác" : "✕ Chưa chính xác"}
+                </p>
+                {!item.isCorrect && (
+                  <div className="mt-2 space-y-1 text-sm">
+                    <p>
+                      <strong>Bạn chọn:</strong> {formatAnswer(item.answer)}
+                    </p>
+                    <p>
+                      <strong>Đáp án đúng:</strong>{" "}
+                      {formatAnswer(item.correctAnswer)}
+                    </p>
+                  </div>
+                )}
+                {item.explanation && (
+                  <p className="mt-2 text-sm leading-relaxed">
+                    <strong>Giải thích:</strong> {item.explanation}
+                  </p>
+                )}
               </li>
             ))}
           </ul>
@@ -324,7 +432,14 @@ export default function CourseLessonPage(props: {
     queryFn: () => courseService.getCourseLearningLesson(courseId, lessonId),
     enabled: Number.isInteger(courseId) && Number.isInteger(lessonId),
   });
-  const sections = useMemo(() => data?.lesson.sections ?? [], [data]);
+  const sections = useMemo(() => {
+    const all = data?.lesson.sections ?? [];
+    const objectives = data?.lesson.learningObjectives;
+    return all.filter(
+      (section) =>
+        !isDuplicateLearningObjectivesSection(section, objectives),
+    );
+  }, [data]);
   if (isLoading)
     return (
       <div className="flex min-h-[60vh] items-center justify-center text-sm text-slate-500">
@@ -399,17 +514,27 @@ export default function CourseLessonPage(props: {
               {lesson.summary}
             </p>
             {listValue(lesson.learningObjectives).length > 0 && (
-              <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-                {listValue(lesson.learningObjectives).map((item) => (
-                  <li
-                    key={item}
-                    className="flex items-start gap-2.5 text-base sm:text-lg text-slate-700 dark:text-slate-200 leading-relaxed"
-                  >
-                    <span className="text-emerald-500 font-bold shrink-0">✓</span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
+              <div className="mt-6">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 dark:text-slate-500">
+                  <Target size={13} /> Mục tiêu
+                </div>
+                <p className="mt-1 text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                  MỤC TIÊU BÀI HỌC
+                </p>
+                <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+                  {listValue(lesson.learningObjectives).map((item) => (
+                    <li
+                      key={item}
+                      className="flex items-start gap-2.5 text-base sm:text-lg text-slate-700 dark:text-slate-200 leading-relaxed"
+                    >
+                      <span className="text-emerald-500 font-bold shrink-0">
+                        ✓
+                      </span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </header>
           {lesson.media.length > 0 && (
@@ -429,114 +554,133 @@ export default function CourseLessonPage(props: {
                     <div className="flex items-center gap-2.5 text-base sm:text-lg font-bold text-blue-800 dark:text-blue-200">
                       <Headphones size={20} /> Nghe mẫu trong bài học
                     </div>
-                    <audio className="mt-4 w-full" controls preload="metadata" src={media.url} />
+                    <audio
+                      className="mt-4 w-full"
+                      controls
+                      preload="metadata"
+                      src={media.url}
+                    />
                   </div>
-                ) : (() => {
-                  const isFullWidthMedia =
-                    lessonId === 656 ||
-                    media.url.includes("lesson-656") ||
-                    (Boolean(media.altText) &&
-                      /international phonetic alphabet|bảng ký hiệu.*ipa/i.test(
-                        media.altText ?? "",
-                      ));
-                  if (isFullWidthMedia) {
+                ) : (
+                  (() => {
+                    const isFullWidthMedia =
+                      lessonId === 656 ||
+                      media.url.includes("lesson-656") ||
+                      (Boolean(media.altText) &&
+                        /international phonetic alphabet|bảng ký hiệu.*ipa/i.test(
+                          media.altText ?? "",
+                        ));
+                    if (isFullWidthMedia) {
+                      return (
+                        <figure
+                          key={media.id}
+                          className="mx-auto flex w-full max-w-none items-center justify-center overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 p-0 shadow-xs dark:border-slate-800 dark:bg-slate-950/40"
+                        >
+                          <img
+                            src={media.url}
+                            alt={media.altText ?? lesson.title}
+                            className="h-auto max-h-none w-[104%] max-w-none -translate-x-[2%] object-contain"
+                            loading={mediaIndex === 0 ? "eager" : "lazy"}
+                            decoding="async"
+                          />
+                        </figure>
+                      );
+                    }
+
+                    const isLargeMedia =
+                      lessonId === 660 ||
+                      lessonId === 57 ||
+                      lessonId === 5 ||
+                      media.url.includes("lesson-660") ||
+                      media.url.includes("lesson-57") ||
+                      /\/lesson-5\//.test(media.url) ||
+                      (Boolean(media.altText) &&
+                        /bảng phụ âm|so sánh hiện tại đơn|mặt bằng nhà/i.test(
+                          media.altText ?? "",
+                        ));
+
+                    const isMediumLargeMedia =
+                      lessonId === 663 ||
+                      media.url.includes("lesson-663") ||
+                      (Boolean(media.altText) &&
+                        /nhận diện âm thanh/i.test(media.altText ?? ""));
+
+                    const containerMaxW = isLargeMedia
+                      ? "max-w-4xl sm:p-5"
+                      : isMediumLargeMedia
+                        ? "max-w-3xl"
+                        : "max-w-2xl";
+
+                    const imgMaxH = isLargeMedia
+                      ? "max-h-[560px] sm:max-h-[640px]"
+                      : isMediumLargeMedia
+                        ? "max-h-[500px] sm:max-h-[560px]"
+                        : "max-h-[380px] sm:max-h-[420px]";
+
                     return (
                       <figure
                         key={media.id}
-                        className="mx-auto flex w-full max-w-none items-center justify-center overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 p-0 shadow-xs dark:border-slate-800 dark:bg-slate-950/40"
+                        className={`mx-auto flex w-full items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 sm:p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900/60 ${containerMaxW}`}
                       >
                         <img
                           src={media.url}
                           alt={media.altText ?? lesson.title}
-                          className="h-auto max-h-none w-[104%] max-w-none -translate-x-[2%] object-contain"
+                          className={`h-auto w-auto max-w-full rounded-xl object-contain ${imgMaxH}`}
                           loading={mediaIndex === 0 ? "eager" : "lazy"}
                           decoding="async"
                         />
                       </figure>
                     );
-                  }
-
-                  const isLargeMedia =
-                    lessonId === 660 ||
-                    lessonId === 57 ||
-                    lessonId === 5 ||
-                    media.url.includes("lesson-660") ||
-                    media.url.includes("lesson-57") ||
-                    /\/lesson-5\//.test(media.url) ||
-                    (Boolean(media.altText) &&
-                      /bảng phụ âm|so sánh hiện tại đơn|mặt bằng nhà/i.test(
-                        media.altText ?? "",
-                      ));
-
-                  const isMediumLargeMedia =
-                    lessonId === 663 ||
-                    media.url.includes("lesson-663") ||
-                    (Boolean(media.altText) &&
-                      /nhận diện âm thanh/i.test(media.altText ?? ""));
-
-                  const containerMaxW = isLargeMedia
-                    ? "max-w-4xl sm:p-5"
-                    : isMediumLargeMedia
-                      ? "max-w-3xl"
-                      : "max-w-2xl";
-
-                  const imgMaxH = isLargeMedia
-                    ? "max-h-[560px] sm:max-h-[640px]"
-                    : isMediumLargeMedia
-                      ? "max-h-[500px] sm:max-h-[560px]"
-                      : "max-h-[380px] sm:max-h-[420px]";
-
-                  return (
-                    <figure
-                      key={media.id}
-                      className={`mx-auto flex w-full items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 sm:p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900/60 ${containerMaxW}`}
-                    >
-                      <img
-                        src={media.url}
-                        alt={media.altText ?? lesson.title}
-                        className={`h-auto w-auto max-w-full rounded-xl object-contain ${imgMaxH}`}
-                        loading={mediaIndex === 0 ? "eager" : "lazy"}
-                        decoding="async"
-                      />
-                    </figure>
-                  );
-                })(),
+                  })()
+                ),
               )}
             </section>
           )}
           {sections.map((section) => {
-            const content = objectValue(section.content);
-            const paragraphs = listValue(content.paragraphs);
-            const bullets = listValue(content.bullets);
+            let rawContent = section.content;
+            if (typeof rawContent === "string") {
+              try {
+                rawContent = JSON.parse(rawContent);
+              } catch {
+                // Legacy plain text is handled by the shared normalizer below.
+              }
+            }
+            const content = objectValue(rawContent);
+            const normalizedContent = normalizeSectionContent(section.content);
+            const paragraphs = listValue(content.paragraphs).length
+              ? listValue(content.paragraphs)
+              : normalizedContent.paragraphs;
+            const bullets = listValue(content.bullets).length
+              ? listValue(content.bullets)
+              : normalizedContent.bullets;
             const formulas = listValue(content.formulas);
             const examples = Array.isArray(content.examples)
               ? content.examples.filter(
                   (item): item is LessonExample =>
                     Boolean(item) && typeof item === "object",
                 )
-              : [];
+              : normalizedContent.examples;
             const mistakeItems = Array.isArray(content.bullets)
-              ? content.bullets.filter((item) => typeof item === "string" || (item && typeof item === "object"))
-              : [];
-            const audioExamples = Array.isArray(content.audioExamples)
-              ? content.audioExamples.filter(
-                  (item): item is {
-                    term?: string;
-                    ipa?: string | null;
-                    meaning?: string;
-                    audioUrl?: string;
-                    accent?: string;
-                  } =>
-                    Boolean(item) &&
-                    typeof item === "object" &&
-                    typeof (item as Record<string, unknown>).term === "string" &&
-                    typeof (item as Record<string, unknown>).audioUrl === "string",
+              ? content.bullets.filter(
+                  (item) =>
+                    typeof item === "string" ||
+                    (item && typeof item === "object"),
                 )
               : [];
+            const audioExamples = normalizedContent.audioExamples;
             const vocabulary = Array.isArray(content.items)
               ? content.items.filter(
-                  (item): item is { term?: string; meaning?: string; partOfSpeech?: string; ipa?: string; example?: string; translation?: string; note?: string } =>
-                    Boolean(item) && typeof item === "object",
+                  (
+                    item,
+                  ): item is {
+                    term?: string;
+                    meaning?: string;
+                    partOfSpeech?: string;
+                    ipa?: string;
+                    example?: string;
+                    translation?: string;
+                    note?: string;
+                  } => Boolean(item) && typeof item === "object",
                 )
               : [];
             return (
@@ -549,12 +693,16 @@ export default function CourseLessonPage(props: {
                 </h2>
                 {section.type === "EXAMPLE" && (
                   <p className="mt-3 max-w-3xl text-base leading-relaxed text-slate-600 dark:text-slate-300">
-                    Đọc câu tiếng Anh trước, đối chiếu nghĩa tiếng Việt, sau đó chú ý phần giải thích để biết vì sao cấu trúc này phù hợp với ngữ cảnh.
+                    Đọc câu tiếng Anh trước, đối chiếu nghĩa tiếng Việt, sau đó
+                    chú ý phần giải thích để biết vì sao cấu trúc này phù hợp
+                    với ngữ cảnh.
                   </p>
                 )}
                 {section.type === "COMMON_MISTAKE" && (
                   <p className="mt-3 max-w-3xl text-base leading-relaxed text-slate-600 dark:text-slate-300">
-                    Những lỗi dưới đây thường xuất hiện khi người học chia động từ theo thói quen tiếng Việt hoặc trộn lẫn hai thì. Mỗi ví dụ đều chỉ rõ nguyên nhân để bạn tự sửa được câu mới.
+                    Những lỗi dưới đây thường xuất hiện khi người học chia động
+                    từ theo thói quen tiếng Việt hoặc trộn lẫn hai thì. Mỗi ví
+                    dụ đều chỉ rõ nguyên nhân để bạn tự sửa được câu mới.
                   </p>
                 )}
                 {paragraphs.map((paragraph) => (
@@ -565,7 +713,8 @@ export default function CourseLessonPage(props: {
                     {paragraph}
                   </p>
                 ))}
-                {section.type === "COMMON_MISTAKE" && mistakeItems.length > 0 ? (
+                {section.type === "COMMON_MISTAKE" &&
+                mistakeItems.length > 0 ? (
                   <div className="mt-6 grid gap-4 lg:grid-cols-2">
                     {mistakeItems.map((item, index) => {
                       const parsed = parseMistake(item);
@@ -575,7 +724,9 @@ export default function CourseLessonPage(props: {
                           className="rounded-2xl border border-rose-200/80 bg-rose-50/50 p-5 dark:border-rose-900/60 dark:bg-rose-950/20"
                         >
                           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-rose-700 dark:text-rose-300">
-                            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-rose-100 text-sm dark:bg-rose-900/60">!</span>
+                            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-rose-100 text-sm dark:bg-rose-900/60">
+                              !
+                            </span>
                             Lỗi cần tránh {index + 1}
                           </div>
                           {parsed.correct ? (
@@ -584,7 +735,8 @@ export default function CourseLessonPage(props: {
                                 {parsed.wrong}
                               </p>
                               <p className="mt-2 text-base font-bold text-emerald-700 dark:text-emerald-300">
-                                <span className="mr-2 no-underline">✓</span>{parsed.correct}
+                                <span className="mr-2 no-underline">✓</span>
+                                {parsed.correct}
                               </p>
                             </>
                           ) : (
@@ -601,90 +753,87 @@ export default function CourseLessonPage(props: {
                       );
                     })}
                   </div>
-                ) : bullets.length > 0 && (
-                  <ul className="mt-4 space-y-2.5 text-base sm:text-lg leading-relaxed text-slate-700 dark:text-slate-200">
-                    {bullets.map((bullet) => (
-                      <li key={bullet} className="flex items-start gap-2.5">
-                        <span className="text-blue-500 font-bold">•</span>
-                        <span>{bullet}</span>
-                      </li>
-                    ))}
-                  </ul>
+                ) : (
+                  bullets.length > 0 && (
+                    <ul className="mt-4 space-y-2.5 text-base sm:text-lg leading-relaxed text-slate-700 dark:text-slate-200">
+                      {bullets.map((bullet) => (
+                        <li key={bullet} className="flex items-start gap-2.5">
+                          <span className="text-blue-500 font-bold">•</span>
+                          <span>{bullet}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )
                 )}
                 {formulas.length > 0 && (
                   <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 dark:border-amber-900/60 dark:bg-amber-950/30">
-                    <p className="font-bold text-amber-900 dark:text-amber-200">Cấu trúc cần nhớ</p>
+                    <p className="font-bold text-amber-900 dark:text-amber-200">
+                      Cấu trúc cần nhớ
+                    </p>
                     <ul className="mt-2 space-y-1.5 font-mono text-sm leading-relaxed text-amber-950 dark:text-amber-100">
-                      {formulas.map((formula) => <li key={formula}>{formula}</li>)}
+                      {formulas.map((formula) => (
+                        <li key={formula}>{formula}</li>
+                      ))}
                     </ul>
                   </div>
                 )}
                 {examples.length > 0 && (
                   <div className="mt-6 grid gap-4 sm:grid-cols-2">
                     {examples.map((example, index) => (
-                      <article key={`${section.id}-example-${index}`} className="relative overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50/90 to-white p-5 text-base shadow-xs dark:border-blue-900/60 dark:from-blue-950/40 dark:to-slate-900">
-                        <span className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-300">Ví dụ {String(index + 1).padStart(2, "0")}</span>
-                        <p className="mt-3 text-lg font-bold leading-relaxed text-slate-950 dark:text-white">{example.label ?? example.text ?? "Ví dụ"}</p>
-                        {example.translation && <div className="mt-4 border-t border-blue-100 pt-3 dark:border-blue-900/60"><p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Nghĩa tiếng Việt</p><p className="mt-1 leading-relaxed text-slate-700 dark:text-slate-200">{example.translation}</p></div>}
-                        {example.explanation && <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/80 p-3 dark:border-amber-900/60 dark:bg-amber-950/30"><p className="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">Vì sao dùng cấu trúc này?</p><p className="mt-1 leading-relaxed text-amber-950 dark:text-amber-100">{example.explanation}</p></div>}
-                      </article>
+                      <LessonExampleCard
+                        key={`${section.id}-example-${index}`}
+                        index={index}
+                        example={example}
+                      />
                     ))}
                   </div>
                 )}
-                {audioExamples.length > 0 && (
-                  <div className="mt-6 rounded-2xl border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-900/60 dark:bg-blue-950/30">
-                    <p className="font-bold text-blue-900 dark:text-blue-200">
-                      Nghe mẫu phát âm
-                    </p>
-                    <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                      Nghe từ mẫu, nhìn IPA rồi lặp lại. Audio được lấy từ kho phát âm BreadTrans đã quản lý.
-                    </p>
-                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                      {audioExamples.map((item, index) => (
-                        <div
-                          key={`${section.id}-audio-example-${index}`}
-                          className="rounded-xl border border-blue-100 bg-white p-3 dark:border-blue-900/60 dark:bg-slate-900"
-                        >
-                          <div className="flex items-baseline justify-between gap-2">
-                            <p className="font-bold text-slate-900 dark:text-white">
-                              {item.term}
-                            </p>
-                            {item.ipa && (
-                              <span className="font-mono text-sm text-slate-500 dark:text-slate-400">
-                                {item.ipa}
-                              </span>
-                            )}
-                          </div>
-                          {item.meaning && (
-                            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                              {item.meaning}
-                            </p>
-                          )}
-                          <audio
-                            className="mt-2 w-full"
-                            controls
-                            preload="metadata"
-                            src={item.audioUrl}
-                            aria-label={`Nghe phát âm từ ${item.term}`}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <LessonAudioExamplesBlock
+                  sectionId={section.id}
+                  audioExamples={audioExamples}
+                />
                 {vocabulary.length > 0 && (
                   <div className="mt-6 grid gap-3 sm:grid-cols-2">
                     {vocabulary.map((item, index) => (
-                      <div key={`${section.id}-vocabulary-${index}`} className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/30">
+                      <div
+                        key={`${section.id}-vocabulary-${index}`}
+                        className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/30"
+                      >
                         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                          <p className="font-bold text-emerald-900 dark:text-emerald-200">{item.term ?? "Từ vựng"}</p>
-                          {item.ipa && <span className="font-mono text-sm text-slate-500 dark:text-slate-400">{item.ipa}</span>}
-                          {item.partOfSpeech && <span className="text-sm italic text-slate-500 dark:text-slate-400">({item.partOfSpeech})</span>}
+                          <p className="font-bold text-emerald-900 dark:text-emerald-200">
+                            {item.term ?? "Từ vựng"}
+                          </p>
+                          {item.ipa && (
+                            <span className="font-mono text-sm text-slate-500 dark:text-slate-400">
+                              {item.ipa}
+                            </span>
+                          )}
+                          {item.partOfSpeech && (
+                            <span className="text-sm italic text-slate-500 dark:text-slate-400">
+                              ({item.partOfSpeech})
+                            </span>
+                          )}
                         </div>
-                        {item.meaning && <p className="mt-1 text-slate-700 dark:text-slate-200">{item.meaning}</p>}
-                        {item.example && <p className="mt-2 text-sm font-semibold text-slate-700 dark:text-slate-200">{item.example}</p>}
-                        {item.translation && <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{item.translation}</p>}
-                        {item.note && <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{item.note}</p>}
+                        {item.meaning && (
+                          <p className="mt-1 text-slate-700 dark:text-slate-200">
+                            {item.meaning}
+                          </p>
+                        )}
+                        {item.example && (
+                          <p className="mt-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                            {item.example}
+                          </p>
+                        )}
+                        {item.translation && (
+                          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                            {item.translation}
+                          </p>
+                        )}
+                        {item.note && (
+                          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                            {item.note}
+                          </p>
+                        )}
                       </div>
                     ))}
                   </div>

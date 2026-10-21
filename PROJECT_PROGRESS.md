@@ -159,3 +159,9 @@ Tài liệu này ghi chép lại toàn bộ tiến độ, kiến trúc và các 
 - The durable candidate/apply workflow remains explicit: one job, `Apply candidate vào Draft`, then normal Admin review, edit, preflight, preview and human Publish.
 - Owner-runtime browser QA passed candidate Apply, edit/reload persistence, `INCOMPLETE_TEMPLATE` feedback, preview and publish block without learner attempts. Guest/learner server access is denied; `qa-phase814-ai-exam-` was fully removed.
 - Frontend typecheck, focused ESLint and production build PASS. Backend now preserves S&W text/tasks under an AI-image soft failure and blocks learner readiness until required image media is repaired manually; full evidence is in `AGENT_STATE.md`.
+
+## 14. Course / Lesson Studio Authoring UX Upgrade — 2026-10-21
+- Course Studio giữ phạm vi metadata/cover/curriculum/readiness; overview có layout cover gọn hai cột và lesson row cho biết ngay nội dung, bài luyện tập, ảnh tùy chọn và trạng thái hoàn thiện.
+- Lesson Studio trở thành Canvas theo thứ tự học: block có nhãn tiếng Việt, chèn giữa các block, outline gọn, summary Guided Practice/Final Check, drawer soạn nội dung có bullets/examples và không hiển thị JSON.
+- AI hỗ trợ chuyển sang menu theo phần thiếu; backend trả candidate scope riêng cho Sections, Guided Practice hoặc Final Check và UI cho chọn phần trước Apply. Candidate vẫn không tự ghi Draft/Publish.
+- Runtime QA Course 17 và IPA legacy PASS sau khi owner BE restart; Course 17 giữ DRAFT, không có Gemini/media call hoặc dữ liệu demo mới.
