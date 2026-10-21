@@ -8,8 +8,8 @@ import {
   ArrowLeft,
   ArrowUp,
   BookOpen,
+  Check,
   Edit2,
-  ExternalLink,
   Layers,
   Loader2,
   Plus,
@@ -23,6 +23,7 @@ import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import ImageUploadField from "@/components/admin/ImageUploadField";
+import MediaSearchPanel from "@/components/admin/MediaSearchPanel";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 type Lesson = {
@@ -218,7 +219,9 @@ export default function CourseCurriculumPage() {
   const applyWholeCurriculum = async () => {
     if (!curriculumAiCandidates.length) return;
     if (!curriculumAiCandidateCourseId) {
-      toast.error("Candidate AI không hợp lệ. Hãy tạo gợi ý lại trước khi Apply.");
+      toast.error(
+        "Candidate AI không hợp lệ. Hãy tạo gợi ý lại trước khi Apply.",
+      );
       return;
     }
     setBusy(true);
@@ -355,6 +358,24 @@ export default function CourseCurriculumPage() {
     }
   };
 
+  const validateCourse = async () => {
+    setBusy(true);
+    try {
+      const result: any = await axiosClient.get(
+        `/admin/courses/${courseId}/studio/validate`,
+      );
+      if (result.valid) toast.success("Khóa học đã sẵn sàng để xuất bản.");
+      else
+        toast.error(
+          ["Chưa thể xuất bản:", ...(result.errors || [])].join("\n"),
+        );
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, "Không thể kiểm tra khóa học."));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (loading) {
     return (
       <main className="mx-auto flex min-h-64 max-w-6xl items-center justify-center p-8">
@@ -384,7 +405,7 @@ export default function CourseCurriculumPage() {
           </Link>
           <div className="mt-2 flex items-center gap-3">
             <h1 className="text-2xl font-bold text-slate-900">
-              Course Studio · {studio.course.title}
+              {studio.course.title}
             </h1>
             <span
               className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
@@ -397,11 +418,19 @@ export default function CourseCurriculumPage() {
             </span>
           </div>
           <p className="mt-1 text-xs text-slate-500">
-            Quản lý thông tin tổng quan, chương trình học và thứ tự bài học V5.
+            Quản lý thông tin khóa học và lộ trình bài học.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void validateCourse()}
+            disabled={busy}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
+          >
+            <Check size={15} /> Kiểm tra
+          </button>
           <button
             onClick={saveCourse}
             disabled={busy}
@@ -429,7 +458,8 @@ export default function CourseCurriculumPage() {
           <h2 className="font-semibold text-slate-900">Tổng quan khóa học</h2>
         </div>
 
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.65fr)_minmax(17rem,1fr)]">
+          <div className="grid gap-5">
           <div>
             <label className="text-sm font-semibold text-slate-800">
               Tên khóa học
@@ -461,7 +491,7 @@ export default function CourseCurriculumPage() {
             </select>
           </div>
 
-          <div className="md:col-span-2">
+          <div>
             <label className="text-sm font-semibold text-slate-800">
               Mô tả khóa học
             </label>
@@ -476,16 +506,30 @@ export default function CourseCurriculumPage() {
             />
           </div>
 
-          <div className="md:col-span-2">
+          </div>
+          <aside className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
             <ImageUploadField
               label="Ảnh bìa khóa học"
               value={courseForm.thumbnail}
               onChange={(url) =>
                 setCourseForm({ ...courseForm, thumbnail: url })
               }
-              helperText="Tải ảnh bìa sắc nét để hiển thị ở danh mục khóa học cho học viên (khuyến nghị tỷ lệ 16:9)."
+              helperText="Tùy chọn. Khuyến nghị ảnh ngang 16:9, PNG, JPG hoặc WEBP."
+              compact
             />
-          </div>
+            <MediaSearchPanel
+              searchUrl={`/admin/courses/${courseId}/studio/media/search`}
+              acceptUrl={`/admin/courses/${courseId}/studio/media/accept`}
+              generateUrl={`/admin/courses/${courseId}/studio/media/generate`}
+              generateAcceptUrl={`/admin/courses/${courseId}/studio/media/generate/accept`}
+              onAccepted={(data) =>
+                setCourseForm((current) => ({
+                  ...current,
+                  thumbnail: data.thumbnail || current.thumbnail,
+                }))
+              }
+            />
+          </aside>
         </div>
       </section>
 
@@ -495,9 +539,7 @@ export default function CourseCurriculumPage() {
           <div className="flex items-center gap-2">
             <BookOpen size={18} className="text-slate-700" />
             <div>
-              <h2 className="font-semibold text-slate-900">
-                Chương trình học (Curriculum)
-              </h2>
+              <h2 className="font-semibold text-slate-900">Chương trình học</h2>
               <p className="text-xs text-slate-500">
                 Thứ tự danh sách phản ánh lộ trình học viên trải nghiệm từ bài
                 đầu đến bài cuối.
@@ -569,11 +611,14 @@ export default function CourseCurriculumPage() {
                     </span>
                   </div>
 
-                  <p className="mt-1 text-xs text-slate-500">
-                    {lesson.sections.length} mục nội dung ·{" "}
-                    {lesson.exercises.length} bài luyện · {lesson.media.length}{" "}
-                    tệp phương tiện
-                  </p>
+                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600">
+                    <span className={lesson.sections.length ? "text-emerald-700" : "text-amber-700"}>{lesson.sections.length ? "✓" : "○"} Nội dung {lesson.sections.length}</span>
+                    <span className={lesson.exercises.length ? "text-emerald-700" : "text-amber-700"}>{lesson.exercises.length ? "✓" : "○"} Bài luyện tập {lesson.exercises.length}</span>
+                    <span className="text-slate-500">{lesson.media.length ? "✓" : "○"} Hình minh họa</span>
+                    <span className={lesson.sections.length > 0 && lesson.exercises.some((exercise: any) => exercise.slug === "final-check" && exercise.questions?.length > 0) ? "font-semibold text-emerald-700" : "font-semibold text-amber-700"}>
+                      {lesson.sections.length > 0 && lesson.exercises.some((exercise: any) => exercise.slug === "final-check" && exercise.questions?.length > 0) ? "Sẵn sàng" : "Chưa hoàn thiện"}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -604,7 +649,7 @@ export default function CourseCurriculumPage() {
                   href={`/admin/courses/${courseId}/lessons/${lesson.id}`}
                   className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors"
                 >
-                  <Edit2 size={13} /> Mở Editor
+                  <Edit2 size={13} /> Chỉnh sửa bài học
                 </Link>
 
                 {/* Delete Button */}

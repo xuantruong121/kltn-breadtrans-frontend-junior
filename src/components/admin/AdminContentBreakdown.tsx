@@ -1,8 +1,5 @@
 "use client";
 
-import React from "react";
-import { Layers, GraduationCap, PenTool, Mic, Film, PieChart } from "lucide-react";
-
 interface ContentBreakdown {
   vocab: number;
   grammar: number;
@@ -16,146 +13,45 @@ interface AdminContentBreakdownProps {
 }
 
 export default function AdminContentBreakdown({ data }: AdminContentBreakdownProps) {
-  const content = data || {
-    vocab: 0,
-    grammar: 0,
-    quizzes: 0,
-    speaking: 0,
-    media: 0,
-  };
-
-  const totalItems =
-    content.vocab + content.grammar + content.quizzes + content.speaking + content.media;
-
-  const CATEGORIES = [
-    {
-      id: "vocab",
-      label: "Từ vựng (Flashcard & SRS)",
-      count: content.vocab,
-      unit: "chủ đề",
-      barColor: "bg-amber-500",
-      textColor: "text-amber-700",
-      badgeBg: "bg-amber-50",
-      badgeBorder: "border-amber-200",
-      icon: Layers,
-    },
-    {
-      id: "grammar",
-      label: "Ngữ pháp TOEIC (Video)",
-      count: content.grammar,
-      unit: "bài học",
-      barColor: "bg-emerald-500",
-      textColor: "text-emerald-700",
-      badgeBg: "bg-emerald-50",
-      badgeBorder: "border-emerald-200",
-      icon: GraduationCap,
-    },
-    {
-      id: "quizzes",
-      label: "Đề thi & Bộ câu hỏi",
-      count: content.quizzes,
-      unit: "bộ đề",
-      barColor: "bg-blue-500",
-      textColor: "text-blue-700",
-      badgeBg: "bg-blue-50",
-      badgeBorder: "border-blue-200",
-      icon: PenTool,
-    },
-    {
-      id: "speaking",
-      label: "Luyện phát âm & Phỏng vấn",
-      count: content.speaking,
-      unit: "bài mẫu",
-      barColor: "bg-indigo-500",
-      textColor: "text-indigo-700",
-      badgeBg: "bg-indigo-50",
-      badgeBorder: "border-indigo-200",
-      icon: Mic,
-    },
-    {
-      id: "media",
-      label: "Nội dung đa phương tiện",
-      count: content.media,
-      unit: "tư liệu",
-      barColor: "bg-slate-500",
-      textColor: "text-slate-700",
-      badgeBg: "bg-slate-100",
-      badgeBorder: "border-slate-200",
-      icon: Film,
-    },
+  const content = data ?? { vocab: 0, grammar: 0, quizzes: 0, speaking: 0, media: 0 };
+  const total = content.vocab + content.grammar + content.quizzes + content.speaking + content.media;
+  const categories = [
+    { label: "Từ vựng", count: content.vocab, unit: "chủ đề", color: "bg-amber-500" },
+    { label: "Ngữ pháp", count: content.grammar, unit: "chủ đề", color: "bg-emerald-600" },
+    { label: "Bài luyện & câu hỏi", count: content.quizzes, unit: "bài", color: "bg-blue-600" },
+    { label: "Bài nói", count: content.speaking, unit: "bài luyện", color: "bg-violet-600" },
+    { label: "Tài nguyên khác", count: content.media, unit: "mục", color: "bg-slate-500" },
   ];
 
   return (
-    <div className="space-y-5">
-      {/* HEADER */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-slate-100 text-slate-700 rounded-lg border border-slate-200">
-            <PieChart size={18} strokeWidth={2} />
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-slate-900">
-              Phân Bổ Nội Dung Học Liệu
-            </h3>
-            <p className="text-xs text-slate-500">
-              Tỷ lệ phân phối các dạng học phần và tài nguyên giáo trình trên nền tảng
-            </p>
-          </div>
+    <section aria-labelledby="content-breakdown-heading" className="space-y-5">
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 pb-4">
+        <div>
+          <h2 id="content-breakdown-heading" className="text-base font-bold text-slate-950">Nội dung học tập</h2>
+          <p className="mt-1 text-sm text-slate-500">Số lượng nội dung hiện có theo từng khu vực.</p>
         </div>
-        <span className="text-xs text-slate-500">
-          Tổng cộng: <strong className="text-slate-900 font-bold">{totalItems}</strong> danh mục
-        </span>
+        <p className="text-sm text-slate-500">Tổng: <span className="font-semibold text-slate-950">{total.toLocaleString()} mục</span></p>
+      </header>
+
+      <div className="flex h-2 overflow-hidden bg-slate-100" aria-label={`Thanh tỷ trọng của ${total} mục nội dung; màu tương ứng được ghi ở từng dòng bên dưới`}>
+        {categories.map((category) => category.count > 0 && (
+          <span key={category.label} className={category.color} style={{ width: `${(category.count / total) * 100}%` }} title={`${category.label}: ${category.count} ${category.unit}`} />
+        ))}
       </div>
 
-      {/* MULTI-SEGMENT PROGRESS BAR */}
-      <div className="w-full bg-slate-100 h-3 rounded-md overflow-hidden flex border border-slate-200/80">
-        {totalItems > 0 ? (
-          CATEGORIES.map((cat) => {
-            if (cat.count === 0) return null;
-            const widthPct = (cat.count / totalItems) * 100;
-            return (
-              <div
-                key={cat.id}
-                className={`${cat.barColor} h-full transition-all duration-300 hover:opacity-90`}
-                style={{ width: `${widthPct}%` }}
-                title={`${cat.label}: ${cat.count} ${cat.unit}`}
-              />
-            );
-          })
-        ) : (
-          <div className="w-full h-full bg-slate-100" title="Chưa có dữ liệu học liệu" />
-        )}
-      </div>
-
-      {/* CATEGORY GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-3.5 pt-1">
-        {CATEGORIES.map((cat) => {
-          const Icon = cat.icon;
-          const percentage = totalItems > 0 ? Math.round((cat.count / totalItems) * 100) : 0;
-
+      <dl className="divide-y divide-slate-100">
+        {categories.map((category) => {
           return (
-            <div
-              key={cat.id}
-              className="p-3.5 rounded-lg border border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50/50 transition-all flex items-center justify-between shadow-2xs"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-md bg-slate-100 text-slate-700 border border-slate-200/60">
-                  <Icon size={16} strokeWidth={2} />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-xs text-slate-800">{cat.label}</h4>
-                  <span className="text-[11px] text-slate-500">
-                    {cat.count} {cat.unit}
-                  </span>
-                </div>
-              </div>
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${cat.badgeBg} ${cat.badgeBorder} ${cat.textColor}`}>
-                {percentage}%
-              </span>
+            <div key={category.label} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 py-3">
+              <dt className="flex items-center gap-2 text-sm font-medium text-slate-800">
+                <span className={`size-2.5 shrink-0 ${category.color}`} aria-hidden="true" />
+                {category.label}
+              </dt>
+              <dd className="text-sm text-slate-500">{category.count.toLocaleString()} {category.unit}</dd>
             </div>
           );
         })}
-      </div>
-    </div>
+      </dl>
+    </section>
   );
 }
