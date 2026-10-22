@@ -38,11 +38,13 @@ test("Theme Logic & Admin Isolation Test Suite", async (t) => {
     assert.equal(theme, "dark");
   });
 
-  await t.test("getInitialTheme falls back to matchMedia when no localStorage", () => {
+  await t.test("getInitialTheme ignores OS prefers-color-scheme and defaults to light when no localStorage", () => {
     globalThis.window = {
       localStorage: {
         getItem: () => null,
       } as unknown as Storage,
+      // Simulate an OS/browser set to dark mode — this must NOT leak into
+      // the resolved theme; a new visitor always starts on light.
       matchMedia: (query: string) =>
         ({
           matches: query === "(prefers-color-scheme: dark)",
@@ -50,7 +52,7 @@ test("Theme Logic & Admin Isolation Test Suite", async (t) => {
     } as unknown as Window & typeof globalThis;
 
     const theme = getInitialTheme("light");
-    assert.equal(theme, "dark");
+    assert.equal(theme, "light");
   });
 
   await t.test("applyTheme adds 'dark' class when dark and not admin", () => {

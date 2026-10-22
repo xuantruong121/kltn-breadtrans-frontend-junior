@@ -29,26 +29,26 @@ interface RarityVisualConfig {
 const RARITY_CONFIG: Record<string, RarityVisualConfig> = {
   COMMON: {
     label: "Phổ biến",
-    badgeClass: "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
-    stageClass: "bg-slate-50 dark:bg-slate-800/60",
+    badgeClass: "bg-slate-100 text-slate-700 border-slate-200/80 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+    stageClass: "bg-slate-50/90 dark:bg-slate-800/40",
     rarityDot: "bg-slate-400",
   },
   RARE: {
     label: "Hiếm",
-    badgeClass: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/50 dark:text-sky-300 dark:border-sky-800/60",
-    stageClass: "bg-sky-50 dark:bg-sky-950/30",
+    badgeClass: "bg-sky-50 text-sky-700 border-sky-200/80 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800/60",
+    stageClass: "bg-slate-50/90 dark:bg-slate-800/40",
     rarityDot: "bg-sky-500",
   },
   EPIC: {
     label: "Sử thi",
-    badgeClass: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-800/60",
-    stageClass: "bg-purple-50 dark:bg-purple-950/30",
+    badgeClass: "bg-purple-50 text-purple-700 border-purple-200/80 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800/60",
+    stageClass: "bg-slate-50/90 dark:bg-slate-800/40",
     rarityDot: "bg-purple-500",
   },
   LEGENDARY: {
     label: "Huyền thoại",
-    badgeClass: "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800/60",
-    stageClass: "bg-amber-50 dark:bg-amber-950/30",
+    badgeClass: "bg-amber-50 text-amber-800 border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60",
+    stageClass: "bg-slate-50/90 dark:bg-slate-800/40",
     rarityDot: "bg-amber-500",
   },
 };
@@ -79,33 +79,33 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({
   return (
     <div
       className={clsx(
-        "flex flex-col justify-between rounded-xl border bg-white dark:bg-slate-900 p-5 transition-colors",
+        "group relative flex flex-col justify-between rounded-2xl border bg-white dark:bg-slate-900 p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
         isEquipped
-          ? "border-amber-300 dark:border-amber-700"
-          : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+          ? "border-emerald-300/80 dark:border-emerald-700/80 ring-1 ring-emerald-500/20"
+          : "border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
       )}
     >
       <div>
         {/* Card Header: Rarity & Category */}
-        <div className="flex items-center justify-between gap-2 mb-3.5">
+        <div className="flex items-center justify-between gap-2 mb-3">
           <span
             className={clsx(
-              "inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] font-medium",
+              "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
               rarity.badgeClass
             )}
           >
             <span className={clsx("h-1.5 w-1.5 rounded-full", rarity.rarityDot)} />
             {rarity.label}
           </span>
-          <span className="text-[11px] text-slate-400">
+          <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">
             {categoryLabel}
           </span>
         </div>
 
-        {/* Product Visual Stage — flat tint, no gradient, no glow */}
+        {/* Product Visual Stage — DO NOT TOUCH IMAGE (Rule: không động vào hình item trong cửa hàng) */}
         <div
           className={clsx(
-            "relative mb-4 flex h-32 w-full items-center justify-center overflow-hidden rounded-lg",
+            "relative mb-3.5 flex h-36 w-full items-center justify-center overflow-hidden rounded-xl border border-slate-100/90 dark:border-slate-800/80 transition-colors",
             rarity.stageClass
           )}
         >
@@ -114,7 +114,7 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({
             alt={`${product.name} — ${visual.alt}`}
             width={144}
             height={144}
-            className="h-24 w-24 object-contain"
+            className="h-24 w-24 object-contain transition-transform duration-300 group-hover:scale-105"
             onError={() => setImgSrc((current) => current === visual.src ? visual.fallbackSrc : "/images/market/badge-star.svg")}
             loading="lazy"
           />
@@ -123,23 +123,23 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({
           {(product.fulfillmentType === "PHYSICAL" ||
             product.requiresShippingAddress ||
             product.category === "PHYSICAL") && (
-            <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-md border border-amber-200 bg-white dark:border-amber-800/60 dark:bg-slate-900 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:text-amber-300">
-              <Truck size={12} className="text-amber-600 dark:text-amber-400" />
+            <span className="absolute top-2.5 right-2.5 inline-flex items-center gap-1 rounded-md border border-slate-200/80 bg-white/95 dark:border-slate-700 dark:bg-slate-900/95 px-2 py-0.5 text-[10px] font-semibold text-slate-700 dark:text-slate-300 shadow-2xs backdrop-blur-xs">
+              <Truck size={12} className="text-slate-600 dark:text-slate-400" />
               <span>Quà vật lý</span>
             </span>
           )}
 
           {/* Limited Stock Notice */}
           {!isOutOfStock && product.stock <= 10 && (
-            <span className="absolute bottom-2 left-2 inline-flex items-center rounded-md border border-rose-200 bg-white dark:border-rose-800/60 dark:bg-slate-900 px-2 py-0.5 text-[11px] font-medium text-rose-700 dark:text-rose-300">
+            <span className="absolute top-2.5 left-2.5 inline-flex items-center rounded-md border border-rose-200 bg-rose-50/95 dark:border-rose-900/60 dark:bg-rose-950/80 px-2 py-0.5 text-[10px] font-semibold text-rose-700 dark:text-rose-300 shadow-2xs">
               Còn {product.stock}
             </span>
           )}
 
           {/* Out of Stock Overlay */}
           {isOutOfStock && (
-            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60">
-              <span className="rounded-md bg-slate-900 px-3 py-1 text-xs font-medium text-white">
+            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-[1px]">
+              <span className="rounded-lg border border-slate-700 bg-slate-900/90 px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
                 Hết hàng
               </span>
             </div>
@@ -147,43 +147,44 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({
         </div>
 
         {/* Name & Description */}
-        <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 line-clamp-1 mb-1.5">
+        <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 line-clamp-1 mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
           {product.name}
         </h3>
-        <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2 min-h-[34px] mb-4">
+        <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2 min-h-[34px] mb-3">
           {product.description || "Vật phẩm phần thưởng được quản lý bởi hệ thống học tập BreadTrans."}
         </p>
       </div>
 
       {/* Card Footer: Price & Action */}
-      <div className="pt-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+      <div className="pt-3.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-3">
         {/* Price */}
         <div className="flex flex-col">
-          <span className="text-[11px] text-slate-400">Giá</span>
-          <span className="flex items-center gap-1 text-base font-semibold text-slate-900 dark:text-slate-100 leading-none">
+          <span className="text-[10px] uppercase tracking-wider font-medium text-slate-400 dark:text-slate-500">Giá</span>
+          <span className="flex items-center gap-1 text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 leading-none">
             {product.price.toLocaleString("vi-VN")}
-            <Wheat size={14} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
+            <Wheat size={15} className="text-amber-500 dark:text-amber-400" aria-hidden="true" />
           </span>
         </div>
 
-        {/* Action Button */}
+        {/* Action Button — Strictly NO ORANGE, NO BLACK */}
         {isEquippable ? (
           <button
             type="button"
             onClick={() => onEquipToggle?.(product)}
             className={clsx(
-              "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg px-4 text-xs font-semibold transition-colors cursor-pointer",
+              "inline-flex h-10 items-center justify-center gap-1.5 rounded-xl px-4 text-xs font-semibold transition active:scale-[0.98] cursor-pointer shadow-2xs",
               isEquipped
-                ? "bg-amber-700 text-white hover:bg-amber-800"
-                : "border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-750 dark:hover:border-slate-600"
+                ? "border border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+                : "border border-slate-200 bg-white text-slate-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
             )}
           >
             {isEquipped ? (
               <>
-                <Check size={15} /> Đang dùng
+                <Check size={14} className="stroke-[2.5]" />
+                <span>Đang dùng</span>
               </>
             ) : (
-              "Trang bị"
+              <span>Trang bị</span>
             )}
           </button>
         ) : (
@@ -192,14 +193,12 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({
             onClick={() => onRedeem(product)}
             disabled={!isGuest && (isOutOfStock || !canAfford)}
             className={clsx(
-              "inline-flex min-h-11 items-center justify-center rounded-lg px-4 text-xs font-semibold transition-colors",
+              "inline-flex h-10 items-center justify-center rounded-xl px-4 text-xs font-semibold transition",
               isGuest
-                ? "bg-amber-700 text-white hover:bg-amber-800 cursor-pointer"
-                : isOutOfStock
-                ? "bg-slate-100 text-slate-400 border border-slate-200 dark:bg-slate-800/50 dark:text-slate-500 dark:border-slate-800 cursor-not-allowed"
-                : !canAfford
-                ? "bg-slate-100 text-slate-400 border border-slate-200 dark:bg-slate-800/50 dark:text-slate-500 dark:border-slate-800 cursor-not-allowed"
-                : "bg-amber-700 text-white hover:bg-amber-800 cursor-pointer"
+                ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-500/25 active:scale-[0.98] cursor-pointer"
+                : isOutOfStock || !canAfford
+                ? "bg-slate-100 text-slate-400 border border-slate-200/70 dark:bg-slate-800/40 dark:text-slate-500 dark:border-slate-800 cursor-not-allowed shadow-none"
+                : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-500/25 active:scale-[0.98] cursor-pointer"
             )}
           >
             {isGuest

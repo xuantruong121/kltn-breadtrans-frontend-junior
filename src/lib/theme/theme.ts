@@ -24,7 +24,9 @@ function getDocument(): Document | undefined {
 
 /**
  * Resolves the initial theme.
- * Checks localStorage first, then falls back to system preference (prefers-color-scheme).
+ * Checks localStorage for an explicit user choice; otherwise always falls
+ * back to `defaultFallback` (light) — the OS/browser's prefers-color-scheme
+ * is intentionally ignored so a new visitor always starts on light theme.
  * Safe to call during SSR (returns 'light' if window is not available).
  */
 export function getInitialTheme(defaultFallback: Theme = "light"): Theme {
@@ -37,10 +39,6 @@ export function getInitialTheme(defaultFallback: Theme = "light"): Theme {
     const saved = win.localStorage?.getItem(THEME_STORAGE_KEY);
     if (saved === "light" || saved === "dark") {
       return saved;
-    }
-
-    if (win.matchMedia && win.matchMedia("(prefers-color-scheme: dark)").matches) {
-      return "dark";
     }
   } catch {
     // Ignore storage quota or access errors

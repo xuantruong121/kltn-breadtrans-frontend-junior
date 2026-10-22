@@ -4,18 +4,11 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
-  Award,
-  CalendarPlus,
   CheckCircle2,
   Clock,
-  CreditCard,
-  Eye,
-  History,
   Loader2,
   Plus,
-  Receipt,
   Search,
-  ShieldCheck,
   XCircle,
   Ban,
 } from "lucide-react";
@@ -80,12 +73,12 @@ function TransactionStatusBadge({ item }: { item: AdminPlanPurchase }) {
   const status = item.payment.status;
   const style =
     status === "CONFIRMED"
-      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+      ? "bg-emerald-50 text-emerald-700"
       : status === "REJECTED"
-      ? "bg-rose-50 text-rose-700 border-rose-200"
+      ? "bg-rose-50 text-rose-700"
       : status === "REPORTED" || status === "REVIEW_REQUIRED"
-      ? "bg-amber-50 text-amber-700 border-amber-200"
-      : "bg-slate-100 text-slate-700 border-slate-200";
+      ? "bg-amber-50 text-amber-700"
+      : "bg-slate-100 text-slate-600";
   const text: Record<string, string> = {
     PENDING: "Chờ thanh toán",
     REPORTED: "Chờ đối soát",
@@ -96,9 +89,7 @@ function TransactionStatusBadge({ item }: { item: AdminPlanPurchase }) {
     SUPERSEDED: "Đã thay thế",
   };
   return (
-    <span
-      className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold ${style}`}
-    >
+    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${style}`}>
       {text[status] ?? status}
     </span>
   );
@@ -108,20 +99,20 @@ function EntitlementStatusBadge({ status }: { status: "ACTIVE" | "EXPIRED" | "RE
   switch (status) {
     case "ACTIVE":
       return (
-        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
           <CheckCircle2 size={12} /> Đang hoạt động
         </span>
       );
     case "REVOKED":
       return (
-        <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 text-xs font-semibold text-rose-700">
+        <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700">
           <Ban size={12} /> Đã thu hồi
         </span>
       );
     case "EXPIRED":
     default:
       return (
-        <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
+        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
           <Clock size={12} /> Đã hết hạn
         </span>
       );
@@ -272,11 +263,9 @@ export default function AdminPlanPurchasesPage() {
   return (
     <main className="mx-auto max-w-7xl space-y-6 pb-12">
       {/* Top Header */}
-      <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-950">
-            <CreditCard className="text-orange-600" /> Gói nâng cấp
-          </h1>
+          <h1 className="text-2xl font-semibold text-slate-900">Gói nâng cấp</h1>
           <p className="mt-1 text-sm text-slate-500">
             Quản lý quyền học viên Pro và đối soát giao dịch mua gói nâng cấp.
           </p>
@@ -290,7 +279,7 @@ export default function AdminPlanPurchasesPage() {
               setGrantPreselectedLearner(null);
               setIsGrantOpen(true);
             }}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors cursor-pointer self-start sm:self-auto"
+            className="inline-flex items-center gap-1.5 self-start rounded-md bg-slate-900 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 cursor-pointer sm:self-auto"
           >
             <Plus size={16} /> Tặng gói Pro
           </button>
@@ -298,29 +287,27 @@ export default function AdminPlanPurchasesPage() {
       </header>
 
       {/* Main Two-Tab Navigation */}
-      <div className="flex border-b border-slate-200 gap-6">
+      <div className="flex gap-6 border-b border-slate-200">
         <button
           type="button"
           onClick={() => setMainTab("ENTITLEMENTS")}
-          className={`pb-3 text-sm font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
+          className={`-mb-px border-b-2 px-1 py-3 text-sm font-medium transition-colors cursor-pointer ${
             mainTab === "ENTITLEMENTS"
-              ? "border-orange-600 text-orange-600"
-              : "border-transparent text-slate-500 hover:text-slate-800"
+              ? "border-slate-900 text-slate-900"
+              : "border-transparent text-slate-500 hover:text-slate-700"
           }`}
         >
-          <ShieldCheck size={18} />
           Quyền học viên
         </button>
         <button
           type="button"
           onClick={() => setMainTab("TRANSACTIONS")}
-          className={`pb-3 text-sm font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
+          className={`-mb-px border-b-2 px-1 py-3 text-sm font-medium transition-colors cursor-pointer ${
             mainTab === "TRANSACTIONS"
-              ? "border-orange-600 text-orange-600"
-              : "border-transparent text-slate-500 hover:text-slate-800"
+              ? "border-slate-900 text-slate-900"
+              : "border-transparent text-slate-500 hover:text-slate-700"
           }`}
         >
-          <Receipt size={18} />
           Giao dịch
         </button>
       </div>
@@ -341,10 +328,10 @@ export default function AdminPlanPurchasesPage() {
                       setEntitlementStatus(tab.value);
                       setEntitlementPage(1);
                     }}
-                    className={`whitespace-nowrap rounded-lg border px-3 py-2 text-xs font-semibold cursor-pointer transition-colors ${
+                    className={`whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs font-medium cursor-pointer transition-colors ${
                       isActive
-                        ? "border-blue-600 bg-blue-600 text-white shadow-2xs"
-                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                        ? "bg-slate-900 text-white"
+                        : "text-slate-500 hover:bg-slate-100"
                     }`}
                   >
                     {tab.label}
@@ -360,16 +347,16 @@ export default function AdminPlanPurchasesPage() {
                 value={entitlementSearchInput}
                 onChange={(e) => setEntitlementSearchInput(e.target.value)}
                 placeholder="Tìm email hoặc họ tên học viên..."
-                className="h-10 w-full rounded-lg border border-slate-300 pl-9 pr-3 text-sm lg:w-80 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="h-9 w-full rounded-md border border-slate-200 pl-9 pr-3 text-sm lg:w-80 outline-none focus:border-slate-400"
               />
             </label>
           </div>
 
           {/* Entitlement Table */}
-          <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
             {subscriptionsQuery.isLoading ? (
               <div className="flex justify-center py-20">
-                <Loader2 className="animate-spin text-blue-600 size-8" />
+                <Loader2 className="animate-spin text-slate-400 size-6" />
               </div>
             ) : subscriptionsQuery.isError ? (
               <div className="p-8 text-center text-rose-700">
@@ -380,54 +367,50 @@ export default function AdminPlanPurchasesPage() {
               <>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[900px] text-left text-sm">
-                    <thead className="border-b bg-slate-50 text-xs font-semibold text-slate-500">
+                    <thead className="text-xs text-slate-400">
                       <tr>
-                        <th className="px-5 py-3">Học viên</th>
-                        <th className="px-5 py-3">Gói</th>
-                        <th className="px-5 py-3">Trạng thái</th>
-                        <th className="px-5 py-3">Hiệu lực</th>
-                        <th className="px-5 py-3">Còn lại</th>
-                        <th className="px-5 py-3">Nguồn</th>
-                        <th className="px-5 py-3 text-right">Thao tác</th>
+                        <th className="px-5 py-2.5 font-normal">Học viên</th>
+                        <th className="px-5 py-2.5 font-normal">Gói</th>
+                        <th className="px-5 py-2.5 font-normal">Trạng thái</th>
+                        <th className="px-5 py-2.5 font-normal">Hiệu lực</th>
+                        <th className="px-5 py-2.5 font-normal">Còn lại</th>
+                        <th className="px-5 py-2.5 font-normal">Nguồn</th>
+                        <th className="px-5 py-2.5 font-normal text-right">Thao tác</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {entitlementRows.map((item) => {
                         const isActive = item.status === "ACTIVE";
                         return (
-                          <tr key={item.id} className="hover:bg-slate-50/80">
+                          <tr key={item.id} className="hover:bg-slate-50">
                             {/* Learner */}
-                            <td className="px-5 py-4">
-                              <div className="font-semibold text-slate-900">
+                            <td className="px-5 py-3.5">
+                              <div className="font-medium text-slate-900">
                                 {item.userFullName || "Chưa đặt tên"}
                               </div>
-                              <div className="text-xs text-slate-400 font-mono">
-                                {item.userEmail}
-                              </div>
+                              <div className="text-xs text-slate-400">{item.userEmail}</div>
                             </td>
 
                             {/* Plan */}
-                            <td className="px-5 py-4">
-                              <div className="font-medium text-slate-800">
-                                {item.planDisplayName}
-                              </div>
+                            <td className="px-5 py-3.5 text-slate-800">
+                              {item.planDisplayName}
                             </td>
 
                             {/* Status */}
-                            <td className="px-5 py-4">
+                            <td className="px-5 py-3.5">
                               <EntitlementStatusBadge status={item.status} />
                             </td>
 
                             {/* Validity */}
-                            <td className="px-5 py-4 text-xs text-slate-600 whitespace-nowrap">
+                            <td className="px-5 py-3.5 text-xs text-slate-600 whitespace-nowrap">
                               <div>{dateOnly(item.startsAt)}</div>
                               <div className="text-slate-400">đến {dateOnly(item.endsAt)}</div>
                             </td>
 
                             {/* Remaining Days */}
-                            <td className="px-5 py-4 text-xs">
+                            <td className="px-5 py-3.5 text-xs">
                               {isActive ? (
-                                <span className="font-bold text-emerald-700">
+                                <span className="font-medium text-emerald-700">
                                   Còn {item.remainingDays} ngày
                                 </span>
                               ) : item.status === "REVOKED" ? (
@@ -438,28 +421,28 @@ export default function AdminPlanPurchasesPage() {
                             </td>
 
                             {/* Source */}
-                            <td className="px-5 py-4">
-                              {item.source === "PAYMENT" ? (
-                                <span className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
-                                  Thanh toán
-                                </span>
-                              ) : (
-                                <span className="inline-flex rounded-full border border-purple-200 bg-purple-50 px-2.5 py-0.5 text-xs font-semibold text-purple-700">
-                                  Admin tặng
-                                </span>
-                              )}
+                            <td className="px-5 py-3.5">
+                              <span
+                                className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                                  item.source === "PAYMENT"
+                                    ? "bg-sky-50 text-sky-700"
+                                    : "bg-violet-50 text-violet-700"
+                                }`}
+                              >
+                                {item.source === "PAYMENT" ? "Thanh toán" : "Admin tặng"}
+                              </span>
                             </td>
 
                             {/* Actions */}
-                            <td className="px-5 py-4 text-right">
-                              <div className="inline-flex items-center gap-1.5 justify-end">
+                            <td className="px-5 py-3.5 text-right">
+                              <div className="inline-flex items-center justify-end gap-3">
                                 <button
                                   type="button"
                                   onClick={() => setHistoryTarget(item)}
-                                  className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                                  className="text-xs font-medium text-slate-600 hover:text-slate-900 cursor-pointer"
                                   title="Xem lịch sử kiểm toán"
                                 >
-                                  <History size={13} /> Lịch sử
+                                  Lịch sử
                                 </button>
 
                                 {isActive ? (
@@ -467,18 +450,18 @@ export default function AdminPlanPurchasesPage() {
                                     <button
                                       type="button"
                                       onClick={() => setExtendTarget(item)}
-                                      className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 cursor-pointer"
+                                      className="text-xs font-medium text-slate-600 hover:text-slate-900 cursor-pointer"
                                       title="Gia hạn thêm ngày"
                                     >
-                                      <CalendarPlus size={13} /> Gia hạn
+                                      Gia hạn
                                     </button>
                                     <button
                                       type="button"
                                       onClick={() => setRevokeTarget(item)}
-                                      className="inline-flex items-center gap-1 rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 cursor-pointer"
+                                      className="text-xs font-medium text-rose-600 hover:text-rose-700 cursor-pointer"
                                       title="Thu hồi quyền Pro"
                                     >
-                                      <Ban size={13} /> Thu hồi
+                                      Thu hồi
                                     </button>
                                   </>
                                 ) : (
@@ -492,10 +475,10 @@ export default function AdminPlanPurchasesPage() {
                                       });
                                       setIsGrantOpen(true);
                                     }}
-                                    className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100 cursor-pointer"
+                                    className="text-xs font-medium text-slate-600 hover:text-slate-900 cursor-pointer"
                                     title="Tặng lại gói Pro mới"
                                   >
-                                    <Award size={13} /> Tặng gói
+                                    Tặng gói
                                   </button>
                                 )}
                               </div>
@@ -543,10 +526,10 @@ export default function AdminPlanPurchasesPage() {
                       setPurchaseStatus(tab.value);
                       setPurchasePage(1);
                     }}
-                    className={`whitespace-nowrap rounded-lg border px-3 py-2 text-xs font-semibold cursor-pointer transition-colors ${
+                    className={`whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs font-medium cursor-pointer transition-colors ${
                       isActive
-                        ? "border-orange-600 bg-orange-600 text-white"
-                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                        ? "bg-slate-900 text-white"
+                        : "text-slate-500 hover:bg-slate-100"
                     }`}
                   >
                     {tab.label}
@@ -561,15 +544,15 @@ export default function AdminPlanPurchasesPage() {
                 value={purchaseSearchInput}
                 onChange={(event) => setPurchaseSearchInput(event.target.value)}
                 placeholder="Tìm email hoặc mã chuyển khoản"
-                className="h-10 w-full rounded-lg border border-slate-300 pl-9 pr-3 text-sm lg:w-80 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+                className="h-9 w-full rounded-md border border-slate-200 pl-9 pr-3 text-sm lg:w-80 outline-none focus:border-slate-400"
               />
             </label>
           </div>
 
-          <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
             {purchasesQuery.isLoading ? (
               <div className="flex justify-center py-20">
-                <Loader2 className="animate-spin text-orange-600 size-8" />
+                <Loader2 className="animate-spin text-slate-400 size-6" />
               </div>
             ) : purchasesQuery.isError ? (
               <div className="p-8 text-center text-rose-700">
@@ -580,48 +563,48 @@ export default function AdminPlanPurchasesPage() {
               <>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[850px] text-left text-sm">
-                    <thead className="border-b bg-slate-50 text-xs font-semibold text-slate-500">
+                    <thead className="text-xs text-slate-400">
                       <tr>
-                        <th className="px-5 py-3">Học viên</th>
-                        <th className="px-5 py-3">Gói</th>
-                        <th className="px-5 py-3">Mã giao dịch</th>
-                        <th className="px-5 py-3">Giá trị</th>
-                        <th className="px-5 py-3">Trạng thái</th>
-                        <th className="px-5 py-3">Tạo lúc</th>
-                        <th className="px-5 py-3 text-right">Chi tiết</th>
+                        <th className="px-5 py-2.5 font-normal">Học viên</th>
+                        <th className="px-5 py-2.5 font-normal">Gói</th>
+                        <th className="px-5 py-2.5 font-normal">Mã giao dịch</th>
+                        <th className="px-5 py-2.5 font-normal text-right">Giá trị</th>
+                        <th className="px-5 py-2.5 font-normal">Trạng thái</th>
+                        <th className="px-5 py-2.5 font-normal">Tạo lúc</th>
+                        <th className="px-5 py-2.5 font-normal text-right">Chi tiết</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {purchaseRows.map((item) => (
                         <tr key={item.id} className="hover:bg-slate-50">
-                          <td className="px-5 py-4 font-medium text-slate-800">
+                          <td className="px-5 py-3 font-medium text-slate-900">
                             {item.userEmail}
                           </td>
-                          <td className="px-5 py-4">
-                            <div className="font-medium">{item.planDisplayName}</div>
-                            <div className="text-xs text-slate-500">
+                          <td className="px-5 py-3">
+                            <div className="text-slate-800">{item.planDisplayName}</div>
+                            <div className="text-xs text-slate-400">
                               {item.durationDays} ngày
                             </div>
                           </td>
-                          <td className="px-5 py-4 font-mono text-xs text-slate-600">
+                          <td className="px-5 py-3 text-xs text-slate-500">
                             {item.payment.transferCode}
                           </td>
-                          <td className="px-5 py-4 font-medium">
+                          <td className="px-5 py-3 text-right tabular-nums font-medium text-slate-900">
                             {money(item.amountVnd)}
                           </td>
-                          <td className="px-5 py-4">
+                          <td className="px-5 py-3">
                             <TransactionStatusBadge item={item} />
                           </td>
-                          <td className="px-5 py-4 text-xs text-slate-500">
+                          <td className="px-5 py-3 text-xs text-slate-500">
                             {dateTime(item.createdAt)}
                           </td>
-                          <td className="px-5 py-4 text-right">
+                          <td className="px-5 py-3 text-right">
                             <button
                               type="button"
                               onClick={() => setSelectedPurchaseId(item.id)}
-                              className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                              className="text-xs font-medium text-slate-600 hover:text-slate-900 cursor-pointer"
                             >
-                              <Eye size={14} /> Xem
+                              Xem
                             </button>
                           </td>
                         </tr>

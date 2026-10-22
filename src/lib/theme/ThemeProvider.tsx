@@ -53,23 +53,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
-  // Listen for OS system preference changes if no manual override is stored
-  useEffect(() => {
-    if (!window.matchMedia) return;
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-
-    const handleChange = (e: MediaQueryListEvent) => {
-      const stored = localStorage.getItem(THEME_STORAGE_KEY);
-      if (!stored) {
-        const next = e.matches ? "dark" : "light";
-        setThemeState(next);
-      }
-    };
-
-    media.addEventListener("change", handleChange);
-    return () => media.removeEventListener("change", handleChange);
-  }, []);
-
   const setTheme = useCallback(
     (newTheme: Theme) => {
       setThemeState(newTheme);

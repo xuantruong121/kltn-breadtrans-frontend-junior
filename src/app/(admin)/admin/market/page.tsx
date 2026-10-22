@@ -3,8 +3,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  ShoppingBag,
-  Package,
   Plus,
   Search,
   CheckCircle,
@@ -15,9 +13,7 @@ import {
   Edit,
   Eye,
   EyeOff,
-  Clock,
   User,
-  Gift,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import {
@@ -119,32 +115,18 @@ export default function AdminMarketPage() {
   });
 
   const handleToggleProductActive = (p: AdminMarketProduct) => {
-    const actionText = p.isActive ? "ngừng hiển thị" : "kích hoạt hiển thị lại";
-    if (
-      window.confirm(
-        `Bạn có chắc chắn muốn ${actionText} quà tặng "${p.name}" trong Cửa Hàng Bánh Mì không?`,
-      )
-    ) {
-      toggleProductActiveMutation.mutate({ id: p.id, isActive: !p.isActive });
-    }
+    toggleProductActiveMutation.mutate({ id: p.id, isActive: !p.isActive });
   };
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-16">
       {/* PAGE HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="bg-rose-500 p-3.5 rounded-2xl text-white shadow-xs">
-            <ShoppingBag size={28} />
-          </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-black text-slate-800">
-              Cửa Hàng Đổi Quà
-            </h1>
-            <p className="text-slate-500 font-medium text-xs md:text-sm">
-              Quản lý danh mục quà tặng đổi bằng Bánh Mì và phê duyệt yêu cầu đổi quà của học viên
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">Cửa hàng đổi quà</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Quản lý danh mục quà tặng đổi bằng Bánh Mì và phê duyệt yêu cầu đổi quà của học viên
+          </p>
         </div>
 
         {activeTab === "catalog" && (
@@ -153,38 +135,36 @@ export default function AdminMarketPage() {
               setEditingProduct(null);
               setIsProductModalOpen(true);
             }}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm rounded-xl shadow-xs transition-colors cursor-pointer self-start md:self-auto"
+            className="inline-flex items-center gap-1.5 self-start rounded-md bg-slate-900 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 cursor-pointer md:self-auto"
           >
-            <Plus size={18} />
+            <Plus size={16} />
             <span>Thêm quà mới</span>
           </button>
         )}
       </div>
 
       {/* TOP TABS NAVIGATION */}
-      <div className="flex items-center gap-2 border-b border-slate-200">
+      <div className="flex items-center gap-6 border-b border-slate-200">
         <button
           onClick={() => setActiveTab("catalog")}
-          className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 transition-colors cursor-pointer ${
+          className={`-mb-px border-b-2 px-1 py-3 text-sm font-medium transition-colors cursor-pointer ${
             activeTab === "catalog"
-              ? "border-rose-600 text-rose-600"
-              : "border-transparent text-slate-500 hover:text-slate-800"
+              ? "border-slate-900 text-slate-900"
+              : "border-transparent text-slate-500 hover:text-slate-700"
           }`}
         >
-          <Package size={18} />
-          <span>Danh mục quà ({products.length})</span>
+          Danh mục quà ({products.length})
         </button>
 
         <button
           onClick={() => setActiveTab("orders")}
-          className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 transition-colors cursor-pointer ${
+          className={`-mb-px border-b-2 px-1 py-3 text-sm font-medium transition-colors cursor-pointer ${
             activeTab === "orders"
-              ? "border-rose-600 text-rose-600"
-              : "border-transparent text-slate-500 hover:text-slate-800"
+              ? "border-slate-900 text-slate-900"
+              : "border-transparent text-slate-500 hover:text-slate-700"
           }`}
         >
-          <ShoppingBag size={18} />
-          <span>Yêu cầu đổi quà ({orders.length})</span>
+          Yêu cầu đổi quà ({orders.length})
         </button>
       </div>
 
@@ -192,35 +172,35 @@ export default function AdminMarketPage() {
       {activeTab === "catalog" && (
         <div className="space-y-4">
           {/* CATALOG FILTERS */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-4">
             <div className="relative">
               <Search
-                size={16}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                size={15}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
               />
               <input
                 type="text"
                 value={catalogSearch}
                 onChange={(e) => setCatalogSearch(e.target.value)}
                 placeholder="Tìm tên hoặc slug quà..."
-                className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-colors"
+                className="w-full rounded-md border border-slate-200 bg-white py-2 pl-8 pr-3 text-xs text-slate-800 outline-none focus:border-slate-400"
               />
             </div>
 
             <select
               value={catalogActiveFilter}
               onChange={(e) => setCatalogActiveFilter(e.target.value)}
-              className="px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:bg-white focus:border-rose-500 transition-colors cursor-pointer"
+              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-slate-400 cursor-pointer"
             >
               <option value="all">Tất cả trạng thái</option>
-              <option value="true">Đang hiển thị (Active)</option>
-              <option value="false">Đang ẩn (Tạm khóa)</option>
+              <option value="true">Đang hiển thị</option>
+              <option value="false">Đang ẩn</option>
             </select>
 
             <select
               value={catalogFulfillmentFilter}
               onChange={(e) => setCatalogFulfillmentFilter(e.target.value)}
-              className="px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:bg-white focus:border-rose-500 transition-colors cursor-pointer"
+              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-slate-400 cursor-pointer"
             >
               <option value="all">Tất cả hình thức</option>
               <option value="DIGITAL">Kỹ thuật số (In-App / Voucher)</option>
@@ -230,7 +210,7 @@ export default function AdminMarketPage() {
             <select
               value={catalogCategoryFilter}
               onChange={(e) => setCatalogCategoryFilter(e.target.value)}
-              className="px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:bg-white focus:border-rose-500 transition-colors cursor-pointer"
+              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-slate-400 cursor-pointer"
             >
               <option value="all">Tất cả danh mục</option>
               <option value="GENERAL">Chung (Phổ thông)</option>
@@ -243,145 +223,97 @@ export default function AdminMarketPage() {
           </div>
 
           {/* CATALOG TABLE */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+          <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
             {isLoadingProducts ? (
               <div className="flex justify-center py-16">
-                <Loader2 className="animate-spin text-rose-500" size={36} />
+                <Loader2 className="animate-spin text-slate-400" size={28} />
               </div>
             ) : products.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-left text-sm">
                   <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50 text-slate-500 font-bold text-xs uppercase tracking-wider">
-                      <th className="py-3.5 px-5">Quà tặng</th>
-                      <th className="py-3.5 px-4">Loại giao</th>
-                      <th className="py-3.5 px-4">Độ hiếm</th>
-                      <th className="py-3.5 px-4">Giá Bánh Mì</th>
-                      <th className="py-3.5 px-4">Tồn kho</th>
-                      <th className="py-3.5 px-4">Đã đổi</th>
-                      <th className="py-3.5 px-4">Trạng thái</th>
-                      <th className="py-3.5 px-5 text-right">Thao tác</th>
+                    <tr className="text-xs text-slate-400">
+                      <th className="py-2.5 px-5 font-normal">Quà tặng</th>
+                      <th className="py-2.5 px-4 font-normal">Loại giao</th>
+                      <th className="py-2.5 px-4 font-normal">Độ hiếm</th>
+                      <th className="py-2.5 px-4 font-normal text-right">Giá Bánh Mì</th>
+                      <th className="py-2.5 px-4 font-normal text-right">Tồn kho</th>
+                      <th className="py-2.5 px-4 font-normal text-right">Đã đổi</th>
+                      <th className="py-2.5 px-4 font-normal">Trạng thái</th>
+                      <th className="py-2.5 px-5 font-normal text-right">Thao tác</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 font-medium text-sm">
+                  <tbody className="divide-y divide-slate-100">
                     {products.map((p) => (
-                      <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="py-3.5 px-5">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 shrink-0 overflow-hidden flex items-center justify-center">
-                              {p.imageUrl ? (
-                                <img
-                                  src={p.imageUrl}
-                                  alt={p.name}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).src =
-                                      "/images/market/default.svg";
-                                  }}
-                                />
-                              ) : (
-                                <Package size={22} className="text-slate-400" />
-                              )}
-                            </div>
-                            <div className="min-w-0">
-                              <div className="text-slate-800 font-bold truncate">
-                                {p.name}
-                              </div>
-                              <div className="text-[11px] font-mono text-slate-400">
-                                slug: {p.slug}
-                              </div>
-                            </div>
-                          </div>
+                      <tr key={p.id} className="hover:bg-slate-50">
+                        <td className="py-3 px-5">
+                          <div className="font-medium text-slate-900">{p.name}</div>
+                          <div className="text-xs text-slate-400">{p.slug}</div>
                         </td>
 
-                        <td className="py-3.5 px-4">
-                          <span
-                            className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border ${
-                              p.fulfillmentType === "PHYSICAL"
-                                ? "bg-amber-50 text-amber-800 border-amber-200"
-                                : "bg-sky-50 text-sky-800 border-sky-200"
-                            }`}
-                          >
+                        <td className="py-3 px-4">
+                          <span className="inline-flex items-center gap-1 text-xs text-slate-600">
                             {p.fulfillmentType === "PHYSICAL" ? (
                               <>
                                 <Truck size={12} />
                                 <span>Vật lý</span>
                               </>
                             ) : (
-                              <>
-                                <Gift size={12} />
-                                <span>Kỹ thuật số</span>
-                              </>
+                              <span>Kỹ thuật số</span>
                             )}
                           </span>
                         </td>
 
-                        <td className="py-3.5 px-4">
-                          <span className="text-xs font-semibold text-slate-600">
-                            {p.rarity}
-                          </span>
+                        <td className="py-3 px-4 text-xs text-slate-600">{p.rarity}</td>
+
+                        <td className="py-3 px-4 text-right tabular-nums font-medium text-slate-900">
+                          {p.price}
                         </td>
 
-                        <td className="py-3.5 px-4">
-                          <span className="font-black text-amber-600 text-sm">
-                            {p.price} Bánh Mì
-                          </span>
+                        <td className="py-3 px-4 text-right tabular-nums text-sm">
+                          {p.stock === 0 ? (
+                            <span className="text-rose-600 font-medium">Hết hàng</span>
+                          ) : (
+                            <span className="text-slate-700">{p.stock}</span>
+                          )}
                         </td>
 
-                        <td className="py-3.5 px-4">
+                        <td className="py-3 px-4 text-right tabular-nums text-slate-600">
+                          {p.purchaseCount}
+                        </td>
+
+                        <td className="py-3 px-4">
                           <span
-                            className={`font-bold text-xs ${
-                              p.stock === 0
-                                ? "text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md"
-                                : "text-slate-700"
-                            }`}
-                          >
-                            {p.stock === 0 ? "Hết hàng (0)" : `${p.stock} cái`}
-                          </span>
-                        </td>
-
-                        <td className="py-3.5 px-4">
-                          <span className="text-xs font-bold text-slate-600">
-                            {p.purchaseCount} lượt
-                          </span>
-                        </td>
-
-                        <td className="py-3.5 px-4">
-                          <span
-                            className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                               p.isActive
-                                ? "bg-emerald-100 text-emerald-800"
-                                : "bg-slate-200 text-slate-600"
+                                ? "bg-emerald-50 text-emerald-700"
+                                : "bg-slate-100 text-slate-600"
                             }`}
                           >
                             {p.isActive ? "Đang hiển thị" : "Đã ẩn"}
                           </span>
                         </td>
 
-                        <td className="py-3.5 px-5 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
+                        <td className="py-3 px-5 text-right">
+                          <div className="flex items-center justify-end gap-1">
                             <button
                               onClick={() => {
                                 setEditingProduct(p);
                                 setIsProductModalOpen(true);
                               }}
-                              className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                              className="p-1.5 text-slate-400 hover:text-slate-700 rounded-md transition-colors cursor-pointer"
                               title="Chỉnh sửa quà tặng"
                             >
-                              <Edit size={16} />
+                              <Edit size={15} />
                             </button>
 
                             <button
                               disabled={toggleProductActiveMutation.isPending}
                               onClick={() => handleToggleProductActive(p)}
-                              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                                p.isActive
-                                  ? "text-slate-400 hover:text-rose-600 hover:bg-rose-50"
-                                  : "text-slate-400 hover:text-emerald-600 hover:bg-emerald-50"
-                              }`}
+                              className="p-1.5 text-slate-400 hover:text-slate-700 rounded-md transition-colors cursor-pointer"
                               title={p.isActive ? "Ngừng hiển thị" : "Kích hoạt hiển thị"}
                             >
-                              {p.isActive ? <EyeOff size={16} /> : <Eye size={16} />}
+                              {p.isActive ? <EyeOff size={15} /> : <Eye size={15} />}
                             </button>
                           </div>
                         </td>
@@ -391,7 +323,7 @@ export default function AdminMarketPage() {
                 </table>
               </div>
             ) : (
-              <div className="text-center py-16 text-slate-400 font-medium text-sm">
+              <div className="py-16 text-center text-sm text-slate-400">
                 Không tìm thấy quà tặng nào phù hợp với bộ lọc hiện tại.
               </div>
             )}
@@ -403,22 +335,22 @@ export default function AdminMarketPage() {
       {activeTab === "orders" && (
         <div className="space-y-4">
           {/* ORDERS FILTERS */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="relative w-full sm:w-72">
               <Search
-                size={16}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                size={15}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
               />
               <input
                 type="text"
                 value={orderSearch}
                 onChange={(e) => setOrderSearch(e.target.value)}
                 placeholder="Tìm mã đơn, tên hoặc email học viên..."
-                className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-colors"
+                className="w-full rounded-md border border-slate-200 bg-white py-2 pl-8 pr-3 text-xs text-slate-800 outline-none focus:border-slate-400"
               />
             </div>
 
-            <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto">
+            <div className="flex items-center gap-1 overflow-x-auto w-full sm:w-auto">
               {[
                 { key: "all", label: "Tất cả" },
                 { key: "pending", label: "Chờ duyệt" },
@@ -429,9 +361,9 @@ export default function AdminMarketPage() {
                 <button
                   key={st.key}
                   onClick={() => setOrderStatusFilter(st.key)}
-                  className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer shrink-0 ${
+                  className={`shrink-0 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
                     orderStatusFilter === st.key
-                      ? "bg-rose-600 text-white shadow-2xs"
+                      ? "bg-slate-900 text-white"
                       : "text-slate-500 hover:bg-slate-100"
                   }`}
                 >
@@ -442,27 +374,27 @@ export default function AdminMarketPage() {
           </div>
 
           {/* ORDERS TABLE */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+          <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
             {isLoadingOrders ? (
               <div className="flex justify-center py-16">
-                <Loader2 className="animate-spin text-rose-500" size={36} />
+                <Loader2 className="animate-spin text-slate-400" size={28} />
               </div>
             ) : orders.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-left text-sm">
                   <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50 text-slate-500 font-bold text-xs uppercase tracking-wider">
-                      <th className="py-3.5 px-5">Mã đơn</th>
-                      <th className="py-3.5 px-4">Học viên</th>
-                      <th className="py-3.5 px-4">Vật phẩm đổi & Địa chỉ giao</th>
-                      <th className="py-3.5 px-4">Bánh Mì trừ</th>
-                      <th className="py-3.5 px-4">Thời gian</th>
-                      <th className="py-3.5 px-4">Trạng thái</th>
-                      <th className="py-3.5 px-4">Người xử lý / Lý do</th>
-                      <th className="py-3.5 px-5 text-right">Thao tác</th>
+                    <tr className="text-xs text-slate-400">
+                      <th className="py-2.5 px-5 font-normal">Mã đơn</th>
+                      <th className="py-2.5 px-4 font-normal">Học viên</th>
+                      <th className="py-2.5 px-4 font-normal">Vật phẩm đổi & Địa chỉ giao</th>
+                      <th className="py-2.5 px-4 font-normal text-right">Bánh Mì trừ</th>
+                      <th className="py-2.5 px-4 font-normal">Thời gian</th>
+                      <th className="py-2.5 px-4 font-normal">Trạng thái</th>
+                      <th className="py-2.5 px-4 font-normal">Người xử lý / Lý do</th>
+                      <th className="py-2.5 px-5 font-normal text-right">Thao tác</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 font-medium text-sm">
+                  <tbody className="divide-y divide-slate-100 text-sm">
                     {orders.map((ord) => {
                       const itemsList = Array.isArray(ord.items)
                         ? ord.items
@@ -473,46 +405,40 @@ export default function AdminMarketPage() {
                       const physical = ord.physicalRedemptions?.[0];
 
                       return (
-                        <tr key={ord.id} className="hover:bg-slate-50/70 transition-colors">
-                          <td className="py-3.5 px-5 text-slate-400 font-mono text-xs">
-                            #{ord.id}
-                          </td>
+                        <tr key={ord.id} className="hover:bg-slate-50">
+                          <td className="py-3 px-5 text-xs text-slate-400">#{ord.id}</td>
 
-                          <td className="py-3.5 px-4">
-                            <div className="text-slate-800 font-bold">
+                          <td className="py-3 px-4">
+                            <div className="font-medium text-slate-900">
                               {ord.studentName ||
                                 ord.user?.profile?.fullName ||
                                 "Học viên"}
                             </div>
-                            <div className="text-xs text-slate-400 font-normal">
-                              {ord.user?.email}
-                            </div>
+                            <div className="text-xs text-slate-400">{ord.user?.email}</div>
                           </td>
 
-                          <td className="py-3.5 px-4 text-slate-700 max-w-xs">
-                            <div className="font-semibold text-xs leading-relaxed">
-                              {itemsList}
-                            </div>
+                          <td className="py-3 px-4 max-w-xs text-slate-700">
+                            <div className="text-xs leading-relaxed">{itemsList}</div>
                             {physical && (
-                              <div className="mt-1.5 p-2 rounded-lg bg-amber-50 border border-amber-200/80 text-xs space-y-0.5">
-                                <div className="flex items-center gap-1 font-bold text-amber-900 text-[11px]">
-                                  <Truck size={12} className="text-amber-700 shrink-0" />
+                              <div className="mt-1.5 rounded-md bg-slate-50 p-2 text-xs space-y-0.5">
+                                <div className="flex items-center gap-1 font-medium text-slate-700">
+                                  <Truck size={12} className="shrink-0 text-slate-400" />
                                   <span>
                                     {physical.recipientName} ({physical.phone})
                                   </span>
                                 </div>
-                                <div className="text-slate-600 font-normal text-[11px] leading-relaxed">
+                                <div className="text-slate-500 leading-relaxed">
                                   {physical.formattedAddress}
                                 </div>
                               </div>
                             )}
                           </td>
 
-                          <td className="py-3.5 px-4 font-black text-amber-600 text-sm">
-                            -{ord.totalBanh} Bánh Mì
+                          <td className="py-3 px-4 text-right tabular-nums font-medium text-slate-900">
+                            -{ord.totalBanh}
                           </td>
 
-                          <td className="py-3.5 px-4 text-xs text-slate-500 whitespace-nowrap">
+                          <td className="py-3 px-4 text-xs text-slate-500 whitespace-nowrap">
                             {new Date(ord.createdAt).toLocaleDateString("vi-VN", {
                               hour: "2-digit",
                               minute: "2-digit",
@@ -522,16 +448,16 @@ export default function AdminMarketPage() {
                             })}
                           </td>
 
-                          <td className="py-3.5 px-4">
+                          <td className="py-3 px-4">
                             <span
-                              className={`inline-flex items-center gap-1 text-xs font-black px-2.5 py-1 rounded-full border ${
+                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                                 ord.status === "approved" || ord.status === "completed"
-                                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                                  ? "bg-emerald-50 text-emerald-700"
                                   : ord.status === "rejected"
-                                    ? "bg-rose-50 text-rose-800 border-rose-200"
+                                    ? "bg-rose-50 text-rose-700"
                                     : ord.status === "refunded"
-                                      ? "bg-slate-100 text-slate-700 border-slate-300"
-                                      : "bg-amber-50 text-amber-800 border-amber-200"
+                                      ? "bg-slate-100 text-slate-600"
+                                      : "bg-amber-50 text-amber-700"
                               }`}
                             >
                               {ord.status === "approved"
@@ -546,17 +472,15 @@ export default function AdminMarketPage() {
                             </span>
                           </td>
 
-                          <td className="py-3.5 px-4 text-xs text-slate-600 max-w-xs">
+                          <td className="py-3 px-4 max-w-xs text-xs text-slate-600">
                             {ord.reviewedBy ? (
                               <div className="space-y-0.5">
-                                <div className="font-semibold text-slate-800 flex items-center gap-1">
+                                <div className="flex items-center gap-1 font-medium text-slate-800">
                                   <User size={12} className="text-slate-400" />
                                   <span>{ord.reviewedBy}</span>
                                 </div>
                                 {ord.reason && (
-                                  <div className="text-[11px] text-rose-600 italic">
-                                    "{ord.reason}"
-                                  </div>
+                                  <div className="text-rose-600">"{ord.reason}"</div>
                                 )}
                               </div>
                             ) : (
@@ -564,39 +488,39 @@ export default function AdminMarketPage() {
                             )}
                           </td>
 
-                          <td className="py-3.5 px-5 text-right whitespace-nowrap">
+                          <td className="py-3 px-5 text-right whitespace-nowrap">
                             {ord.status === "pending" ? (
-                              <div className="flex items-center justify-end gap-1.5">
+                              <div className="flex items-center justify-end gap-3">
                                 <button
                                   disabled={approveOrderMutation.isPending}
                                   onClick={() => approveOrderMutation.mutate(ord.id)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-2xs"
+                                  className="inline-flex items-center gap-1 text-xs font-medium text-slate-700 hover:text-slate-900 cursor-pointer"
                                   title="Phê duyệt đơn hàng"
                                 >
-                                  <CheckCircle size={14} />
+                                  <CheckCircle size={13} />
                                   <span>Duyệt</span>
                                 </button>
 
                                 <button
                                   onClick={() => setRejectingOrder(ord)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-2xs"
+                                  className="inline-flex items-center gap-1 text-xs font-medium text-rose-600 hover:text-rose-700 cursor-pointer"
                                   title="Từ chối đơn hàng"
                                 >
-                                  <XCircle size={14} />
+                                  <XCircle size={13} />
                                   <span>Từ chối</span>
                                 </button>
                               </div>
                             ) : ord.status === "approved" || ord.status === "completed" ? (
                               <button
                                 onClick={() => setFailingOrder(ord)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-rose-600 cursor-pointer"
                                 title="Đánh dấu giao/thực hiện thất bại và hoàn Bánh Mì"
                               >
-                                <AlertTriangle size={14} />
+                                <AlertTriangle size={13} />
                                 <span>Giao thất bại</span>
                               </button>
                             ) : (
-                              <span className="text-xs text-slate-300 font-mono">—</span>
+                              <span className="text-xs text-slate-300">—</span>
                             )}
                           </td>
                         </tr>
@@ -606,7 +530,7 @@ export default function AdminMarketPage() {
                 </table>
               </div>
             ) : (
-              <div className="text-center py-16 text-slate-400 font-medium text-sm">
+              <div className="py-16 text-center text-sm text-slate-400">
                 Không có yêu cầu đổi quà nào phù hợp với bộ lọc hiện tại.
               </div>
             )}

@@ -337,7 +337,7 @@ export const MarketScreen: React.FC = () => {
             </div>
             <Link
               href="/login?redirect=/market"
-              className="inline-flex items-center justify-center rounded-lg bg-amber-700 px-3.5 py-2 text-xs font-semibold text-white hover:bg-amber-800 transition-colors shrink-0"
+              className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 active:scale-[0.97] transition shadow-sm shadow-blue-500/25 shrink-0"
             >
               Đăng nhập ngay
             </Link>
@@ -354,7 +354,7 @@ export const MarketScreen: React.FC = () => {
             onClick={() => setActiveTab("shop")}
             className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition-colors cursor-pointer ${
               activeTab === "shop"
-                ? "bg-amber-700 text-white shadow-2xs"
+                ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs"
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/60"
             }`}
           >
@@ -368,7 +368,7 @@ export const MarketScreen: React.FC = () => {
               onClick={() => setActiveTab("orders")}
               className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition-colors cursor-pointer ${
                 activeTab === "orders"
-                  ? "bg-amber-700 text-white shadow-2xs"
+                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs"
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/60"
               }`}
             >
@@ -413,7 +413,7 @@ export const MarketScreen: React.FC = () => {
                   onClick={() => setSelectedCategory(cat.id)}
                   className={`rounded-xl px-3.5 py-2 text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
                     selectedCategory === cat.id
-                      ? "bg-slate-900 text-white dark:bg-amber-500 dark:text-slate-950 shadow-2xs"
+                      ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs"
                       : "bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:text-slate-900 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:text-slate-200"
                   }`}
                 >

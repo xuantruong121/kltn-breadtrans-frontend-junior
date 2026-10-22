@@ -3,22 +3,14 @@
 import React, { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Coins,
-  PlusCircle,
-  MinusCircle,
-  Users,
   Loader2,
-  History,
-  SlidersHorizontal,
   CheckCircle2,
   AlertTriangle,
   ChevronDown,
   ChevronUp,
-  ArrowUpCircle,
-  ArrowDownCircle,
 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
-import { Button3D, Pagination } from "@/components/ui";
+import { Pagination } from "@/components/ui";
 import toast from "react-hot-toast";
 
 type ReconciliationRow = {
@@ -85,39 +77,32 @@ export default function AdminCurrencyPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">
-      <div className="flex items-center gap-3">
-        <div className="bg-amber-500 p-3.5 rounded-2xl text-white shadow-sm">
-          <Coins size={28} />
-        </div>
-        <div>
-          <h1 className="text-3xl font-black text-slate-800">Sổ Bánh Mì</h1>
-          <p className="text-slate-400 font-bold text-sm">
-            Số dư, lịch sử giao dịch và điều chỉnh Bánh Mì của học viên
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-semibold text-slate-900">Sổ Bánh Mì</h1>
+        <p className="mt-1 text-sm text-slate-500">
+          Số dư, lịch sử giao dịch và điều chỉnh Bánh Mì của học viên
+        </p>
       </div>
 
-      <div className="inline-flex items-center gap-2 bg-white p-1.5 rounded-2xl border-2 border-slate-200">
-        <button
-          onClick={() => setActiveTab("ledger")}
-          className={`px-4 py-2 rounded-xl font-black text-sm transition-colors cursor-pointer ${
-            activeTab === "ledger"
-              ? "bg-amber-500 text-white shadow-xs"
-              : "text-slate-500 hover:bg-slate-100"
-          }`}
-        >
-          Số dư & Lịch sử
-        </button>
-        <button
-          onClick={() => setActiveTab("adjust")}
-          className={`px-4 py-2 rounded-xl font-black text-sm transition-colors cursor-pointer ${
-            activeTab === "adjust"
-              ? "bg-amber-500 text-white shadow-xs"
-              : "text-slate-500 hover:bg-slate-100"
-          }`}
-        >
-          Điều chỉnh
-        </button>
+      <div className="flex items-center gap-6 border-b border-slate-200">
+        {(
+          [
+            { id: "ledger", label: "Số dư & Lịch sử" },
+            { id: "adjust", label: "Điều chỉnh" },
+          ] as const
+        ).map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`-mb-px border-b-2 px-1 py-3 text-sm font-medium transition-colors cursor-pointer ${
+              activeTab === tab.id
+                ? "border-slate-900 text-slate-900"
+                : "border-transparent text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {activeTab === "ledger" ? (
@@ -193,89 +178,83 @@ function LedgerTab() {
 
   return (
     <div className="space-y-6">
-      {/* SUMMARY CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <SummaryCard
+      {/* SUMMARY — one container split by dividers, no icon chips */}
+      <div className="grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0 rounded-lg border border-slate-200 bg-white">
+        <SummaryCell
           label="Tổng đang lưu hành"
           value={summary?.totalCurrentBalance}
           loading={isSummaryLoading}
-          tone="amber"
         />
-        <SummaryCard
+        <SummaryCell
           label="Tổng đã phát hành"
           value={summary?.totalIssued}
           loading={isSummaryLoading}
-          tone="emerald"
         />
-        <SummaryCard
+        <SummaryCell
           label="Tổng đã sử dụng"
           value={summary?.totalSpent}
           loading={isSummaryLoading}
-          tone="rose"
         />
       </div>
 
       {/* LEARNER BALANCE TABLE */}
-      <div className="bg-white rounded-[2rem] border-2 border-slate-200 p-6 space-y-4">
-        <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-          <Users className="text-sky-500" size={20} /> Học viên
-        </h2>
+      <div className="rounded-lg border border-slate-200 bg-white">
+        <div className="border-b border-slate-100 px-5 py-4">
+          <h2 className="text-base font-medium text-slate-900">Học viên</h2>
+        </div>
         {isReconciliationLoading ? (
           <div className="flex justify-center py-10">
-            <Loader2 className="animate-spin text-amber-500" size={32} />
+            <Loader2 className="animate-spin text-slate-400" size={24} />
           </div>
         ) : rows.length === 0 ? (
-          <div className="text-center py-8 text-slate-400 font-bold text-sm">
+          <div className="py-8 text-center text-sm text-slate-400">
             Chưa có học viên nào.
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-sm">
+            <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b-2 border-slate-100 text-slate-400 font-black text-xs uppercase">
-                  <th className="py-2.5 px-3">Học viên</th>
-                  <th className="py-2.5 px-3 text-center">Số dư hiện tại</th>
-                  <th className="py-2.5 px-3 text-center">Trạng thái đối soát</th>
-                  <th className="py-2.5 px-3">Giao dịch gần nhất</th>
-                  <th className="py-2.5 px-3 text-right">Hành động</th>
+                <tr className="text-xs text-slate-400">
+                  <th className="py-2.5 px-5 font-normal">Học viên</th>
+                  <th className="py-2.5 px-5 font-normal text-right">Số dư hiện tại</th>
+                  <th className="py-2.5 px-5 font-normal">Trạng thái đối soát</th>
+                  <th className="py-2.5 px-5 font-normal">Giao dịch gần nhất</th>
+                  <th className="py-2.5 px-5 font-normal text-right">Hành động</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {rows.map((row) => (
                   <React.Fragment key={row.userId}>
-                    <tr className="hover:bg-slate-50/80">
-                      <td className="py-3 px-3 font-black text-slate-800">
+                    <tr className="hover:bg-slate-50">
+                      <td className="py-3 px-5 font-medium text-slate-900">
                         {row.displayName}
                       </td>
-                      <td className="py-3 px-3 text-center">
-                        <span className="inline-flex items-center gap-1 bg-amber-100/90 text-amber-800 px-2.5 py-1 rounded-xl text-xs font-black border border-amber-300">
-                          <Coins size={12} /> {row.storedBalance}
-                        </span>
+                      <td className="py-3 px-5 text-right font-medium tabular-nums text-slate-900">
+                        {row.storedBalance}
                       </td>
-                      <td className="py-3 px-3 text-center">
+                      <td className="py-3 px-5">
                         {row.status === "CONSISTENT" ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-black px-2.5 py-1 rounded-full border bg-emerald-100 text-emerald-800 border-emerald-200">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
                             <CheckCircle2 size={12} /> Khớp
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-xs font-black px-2.5 py-1 rounded-full border bg-rose-100 text-rose-800 border-rose-200">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700">
                             <AlertTriangle size={12} /> Chênh lệch
                           </span>
                         )}
                       </td>
-                      <td className="py-3 px-3 text-xs text-slate-400">
+                      <td className="py-3 px-5 text-xs text-slate-400">
                         {formatDateTime(row.lastTransactionAt)}
                       </td>
-                      <td className="py-3 px-3 text-right">
+                      <td className="py-3 px-5 text-right">
                         <button
                           onClick={() =>
                             setExpandedUserId(
                               expandedUserId === row.userId ? null : row.userId,
                             )
                           }
-                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 font-extrabold text-xs rounded-xl border border-sky-200 transition-colors cursor-pointer"
+                          className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-slate-900 cursor-pointer"
                         >
-                          <History size={13} />
                           Xem lịch sử
                           {expandedUserId === row.userId ? (
                             <ChevronUp size={13} />
@@ -287,7 +266,7 @@ function LedgerTab() {
                     </tr>
                     {expandedUserId === row.userId && (
                       <tr>
-                        <td colSpan={5} className="bg-slate-50 px-3 py-4">
+                        <td colSpan={5} className="bg-slate-50 px-5 py-4">
                           <UserLedgerHistory userId={row.userId} />
                         </td>
                       </tr>
@@ -301,19 +280,19 @@ function LedgerTab() {
       </div>
 
       {/* LEDGER LIST + FILTERS */}
-      <div className="bg-white rounded-[2rem] border-2 border-slate-200 p-6 space-y-4">
-        <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-          <SlidersHorizontal className="text-amber-500" size={20} /> Toàn bộ giao dịch
-        </h2>
+      <div className="rounded-lg border border-slate-200 bg-white">
+        <div className="border-b border-slate-100 px-5 py-4">
+          <h2 className="text-base font-medium text-slate-900">Toàn bộ giao dịch</h2>
+        </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+        <div className="grid grid-cols-2 gap-2 px-5 pt-4 sm:grid-cols-5">
           <select
             value={filterUserId}
             onChange={(e) => {
               setFilterUserId(e.target.value);
               setPage(1);
             }}
-            className="bg-slate-50 border-2 border-slate-200 rounded-xl px-2.5 py-2 text-xs font-bold outline-none"
+            className="rounded-md border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-700 outline-none focus:border-slate-400"
           >
             <option value="">Tất cả học viên</option>
             {rows.map((r) => (
@@ -328,7 +307,7 @@ function LedgerTab() {
               setFilterDirection(e.target.value);
               setPage(1);
             }}
-            className="bg-slate-50 border-2 border-slate-200 rounded-xl px-2.5 py-2 text-xs font-bold outline-none"
+            className="rounded-md border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-700 outline-none focus:border-slate-400"
           >
             <option value="">Tăng & Giảm</option>
             <option value="earning">Chỉ tăng</option>
@@ -340,7 +319,7 @@ function LedgerTab() {
               setFilterSource(e.target.value);
               setPage(1);
             }}
-            className="bg-slate-50 border-2 border-slate-200 rounded-xl px-2.5 py-2 text-xs font-bold outline-none"
+            className="rounded-md border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-700 outline-none focus:border-slate-400"
           >
             <option value="">Mọi nguồn</option>
             {Object.keys(SOURCE_LABELS).map((s) => (
@@ -356,7 +335,7 @@ function LedgerTab() {
               setFilterDateFrom(e.target.value);
               setPage(1);
             }}
-            className="bg-slate-50 border-2 border-slate-200 rounded-xl px-2.5 py-2 text-xs font-bold outline-none"
+            className="rounded-md border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-700 outline-none focus:border-slate-400"
           />
           <input
             type="date"
@@ -365,55 +344,52 @@ function LedgerTab() {
               setFilterDateTo(e.target.value);
               setPage(1);
             }}
-            className="bg-slate-50 border-2 border-slate-200 rounded-xl px-2.5 py-2 text-xs font-bold outline-none"
+            className="rounded-md border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-700 outline-none focus:border-slate-400"
           />
         </div>
 
-        {isLedgerLoading ? (
-          <div className="flex justify-center py-10">
-            <Loader2 className="animate-spin text-amber-500" size={32} />
-          </div>
-        ) : entries.length === 0 ? (
-          <div className="text-center py-8 text-slate-400 font-bold text-sm">
-            Không có giao dịch nào phù hợp bộ lọc.
-          </div>
-        ) : (
-          <>
-            <LedgerTable entries={entries} showUser />
-            <Pagination
-              currentPage={page}
-              totalPages={ledger?.totalPages || 1}
-              totalItems={ledger?.total}
-              pageSize={pageSize}
-              onPageChange={setPage}
-            />
-          </>
-        )}
+        <div className="p-5">
+          {isLedgerLoading ? (
+            <div className="flex justify-center py-10">
+              <Loader2 className="animate-spin text-slate-400" size={24} />
+            </div>
+          ) : entries.length === 0 ? (
+            <div className="py-8 text-center text-sm text-slate-400">
+              Không có giao dịch nào phù hợp bộ lọc.
+            </div>
+          ) : (
+            <>
+              <LedgerTable entries={entries} showUser />
+              <div className="pt-4">
+                <Pagination
+                  currentPage={page}
+                  totalPages={ledger?.totalPages || 1}
+                  totalItems={ledger?.total}
+                  pageSize={pageSize}
+                  onPageChange={setPage}
+                />
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-function SummaryCard({
+function SummaryCell({
   label,
   value,
   loading,
-  tone,
 }: {
   label: string;
   value: number | undefined;
   loading: boolean;
-  tone: "amber" | "emerald" | "rose";
 }) {
-  const toneClass = {
-    amber: "text-amber-600",
-    emerald: "text-emerald-600",
-    rose: "text-rose-600",
-  }[tone];
   return (
-    <div className="bg-white rounded-2xl border-2 border-slate-200 p-5">
-      <p className="text-xs font-black text-slate-400 uppercase">{label}</p>
-      <p className={`text-3xl font-black mt-1 ${toneClass}`}>
+    <div className="p-5">
+      <p className="text-xs text-slate-400">{label}</p>
+      <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-900">
         {loading ? "…" : (value ?? 0).toLocaleString("vi-VN")}
       </p>
     </div>
@@ -429,45 +405,38 @@ function LedgerTable({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left border-collapse text-sm">
+      <table className="w-full text-left text-sm">
         <thead>
-          <tr className="border-b-2 border-slate-100 text-slate-400 font-black text-xs uppercase">
-            <th className="py-2 px-3">Thời gian</th>
-            {showUser && <th className="py-2 px-3">Học viên</th>}
-            <th className="py-2 px-3 text-center">Biến động</th>
-            <th className="py-2 px-3">Nguồn</th>
-            <th className="py-2 px-3 text-center">Số dư sau</th>
+          <tr className="text-xs text-slate-400">
+            <th className="py-2 pr-3 font-normal">Thời gian</th>
+            {showUser && <th className="py-2 pr-3 font-normal">Học viên</th>}
+            <th className="py-2 pr-3 font-normal text-right">Biến động</th>
+            <th className="py-2 pr-3 font-normal">Nguồn</th>
+            <th className="py-2 pr-3 font-normal text-right">Số dư sau</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
           {entries.map((tx) => (
-            <tr key={tx.id} className="hover:bg-slate-50/60">
-              <td className="py-2.5 px-3 text-xs text-slate-400 whitespace-nowrap">
+            <tr key={tx.id} className="hover:bg-slate-50">
+              <td className="py-2.5 pr-3 text-xs text-slate-400 whitespace-nowrap">
                 {formatDateTime(tx.createdAt)}
               </td>
               {showUser && (
-                <td className="py-2.5 px-3 font-bold text-slate-700">
+                <td className="py-2.5 pr-3 font-medium text-slate-700">
                   {tx.user?.profile?.fullName || `Học viên #${tx.userId}`}
                 </td>
               )}
-              <td className="py-2.5 px-3 text-center">
-                <span
-                  className={`inline-flex items-center gap-1 font-black text-xs ${
-                    tx.amount >= 0 ? "text-emerald-600" : "text-rose-600"
-                  }`}
-                >
-                  {tx.amount >= 0 ? (
-                    <ArrowUpCircle size={13} />
-                  ) : (
-                    <ArrowDownCircle size={13} />
-                  )}
-                  {tx.amount >= 0 ? `+${tx.amount}` : tx.amount}
-                </span>
+              <td
+                className={`py-2.5 pr-3 text-right tabular-nums font-medium ${
+                  tx.amount >= 0 ? "text-emerald-700" : "text-rose-700"
+                }`}
+              >
+                {tx.amount >= 0 ? `+${tx.amount}` : tx.amount}
               </td>
-              <td className="py-2.5 px-3 text-xs font-bold text-slate-600">
+              <td className="py-2.5 pr-3 text-xs text-slate-600">
                 {sourceLabel(tx.source)}
               </td>
-              <td className="py-2.5 px-3 text-center text-xs font-black text-slate-700">
+              <td className="py-2.5 pr-3 text-right tabular-nums text-xs font-medium text-slate-700">
                 {tx.balanceAfter}
               </td>
             </tr>
@@ -490,7 +459,7 @@ function UserLedgerHistory({ userId }: { userId: number }) {
   if (isLoading) {
     return (
       <div className="flex justify-center py-6">
-        <Loader2 className="animate-spin text-amber-500" size={24} />
+        <Loader2 className="animate-spin text-slate-400" size={20} />
       </div>
     );
   }
@@ -498,7 +467,7 @@ function UserLedgerHistory({ userId }: { userId: number }) {
   const entries: LedgerEntry[] = data?.transactions || [];
   if (entries.length === 0) {
     return (
-      <p className="text-center text-xs text-slate-400 font-bold py-4">
+      <p className="py-4 text-center text-xs text-slate-400">
         Học viên này chưa có giao dịch Bánh Mì nào.
       </p>
     );
@@ -571,22 +540,20 @@ function AdjustTab({ onAdjusted }: { onAdjusted: () => void }) {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* FORM ADJUSTMENT (LEFT 1/3) */}
-      <div className="bg-white rounded-[2.5rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] p-6 space-y-5">
-        <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
-          <Coins className="text-amber-500" /> Điều Chỉnh Bánh Mì
-        </h2>
+      <div className="rounded-lg border border-slate-200 bg-white p-5 space-y-4">
+        <h2 className="text-base font-medium text-slate-900">Điều chỉnh Bánh Mì</h2>
 
         <form onSubmit={handleAdjustSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-black text-slate-500 uppercase mb-1 block">
-              Chọn Học Viên
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              Học viên
             </label>
             <select
               value={selectedUserId}
               onChange={(e) => setSelectedUserId(Number(e.target.value) || "")}
-              className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-3 font-bold text-sm outline-none focus:border-amber-400"
+              className="w-full rounded-md border border-slate-200 p-2.5 text-sm text-slate-800 outline-none focus:border-slate-400"
             >
               <option value="">-- Chọn học viên --</option>
               {users?.map((u) => (
@@ -599,85 +566,83 @@ function AdjustTab({ onAdjusted }: { onAdjusted: () => void }) {
           </div>
 
           <div>
-            <label className="text-xs font-black text-slate-500 uppercase mb-1 block">
-              Loại Thao Tác
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              Loại thao tác
             </label>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setActionType("add")}
-                className={`p-3 rounded-xl border-2 font-black text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${
                   actionType === "add"
-                    ? "bg-emerald-500 text-white border-emerald-600 shadow-xs"
-                    : "bg-slate-50 text-slate-600 border-slate-200"
+                    ? "border-slate-900 bg-slate-900 text-white"
+                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                 }`}
               >
-                <PlusCircle size={16} /> Cộng Bánh Mì
+                Cộng Bánh Mì
               </button>
               <button
                 type="button"
                 onClick={() => setActionType("subtract")}
-                className={`p-3 rounded-xl border-2 font-black text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${
                   actionType === "subtract"
-                    ? "bg-rose-500 text-white border-rose-600 shadow-xs"
-                    : "bg-slate-50 text-slate-600 border-slate-200"
+                    ? "border-slate-900 bg-slate-900 text-white"
+                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                 }`}
               >
-                <MinusCircle size={16} /> Trừ Bánh Mì
+                Trừ Bánh Mì
               </button>
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-black text-slate-500 uppercase mb-1 block">
-              Số Lượng Bánh Mì
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              Số lượng Bánh Mì
             </label>
             <input
               type="number"
               min="1"
               value={amount}
               onChange={(e) => setAmount(Number(e.target.value))}
-              className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-3 font-black text-lg text-amber-600 outline-none focus:border-amber-400"
+              className="w-full rounded-md border border-slate-200 p-2.5 text-sm font-medium tabular-nums text-slate-900 outline-none focus:border-slate-400"
             />
           </div>
 
           <div>
-            <label className="text-xs font-black text-slate-500 uppercase mb-1 block">
-              Lý Do
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              Lý do
             </label>
             <textarea
               rows={3}
               placeholder="VD: Thưởng hoàn thành xuất sắc thử thách tuần..."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-3 font-bold text-sm outline-none focus:border-amber-400"
+              className="w-full rounded-md border border-slate-200 p-2.5 text-sm text-slate-800 outline-none focus:border-slate-400"
             />
           </div>
 
-          <Button3D
+          <button
             type="submit"
-            variant={actionType === "add" ? "green" : "orange"}
-            size="md"
-            className="w-full"
             disabled={adjustMutation.isPending}
+            className="w-full rounded-md bg-slate-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:opacity-60 cursor-pointer"
           >
-            {adjustMutation.isPending ? "Đang xử lý..." : "Xác Nhận Thực Hiện"}
-          </Button3D>
+            {adjustMutation.isPending ? "Đang xử lý..." : "Xác nhận thực hiện"}
+          </button>
         </form>
       </div>
 
       {/* USERS LIST (RIGHT 2/3) */}
-      <div className="lg:col-span-2 bg-white rounded-[2.5rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] p-6 space-y-4">
-        <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
-          <Users className="text-sky-500" /> Danh Sách Học Viên
-        </h2>
+      <div className="lg:col-span-2 rounded-lg border border-slate-200 bg-white">
+        <div className="border-b border-slate-100 px-5 py-4">
+          <h2 className="text-base font-medium text-slate-900">Danh sách học viên</h2>
+        </div>
 
         {isUsersLoading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="animate-spin text-amber-500" size={36} />
+            <Loader2 className="animate-spin text-slate-400" size={28} />
           </div>
         ) : users && users.length > 0 ? (
-          <div className="space-y-4">
+          <div>
             {(() => {
               const totalPages = Math.ceil((users?.length || 0) / pageSize);
               const paginatedUsers = users?.slice(
@@ -688,36 +653,33 @@ function AdjustTab({ onAdjusted }: { onAdjusted: () => void }) {
               return (
                 <>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full text-left text-sm">
                       <thead>
-                        <tr className="border-b-2 border-slate-100 bg-slate-50 text-slate-400 font-black text-xs uppercase">
-                          <th className="py-3 px-4">Họ và Tên</th>
-                          <th className="py-3 px-4">Email</th>
-                          <th className="py-3 px-4 text-center">
-                            Số Dư Bánh Mì
+                        <tr className="text-xs text-slate-400">
+                          <th className="py-2.5 px-5 font-normal">Họ và tên</th>
+                          <th className="py-2.5 px-5 font-normal">Email</th>
+                          <th className="py-2.5 px-5 font-normal text-right">
+                            Số dư Bánh Mì
                           </th>
-                          <th className="py-3 px-4 text-right">Hành Động</th>
+                          <th className="py-2.5 px-5 font-normal text-right">Hành động</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 font-bold text-sm">
+                      <tbody className="divide-y divide-slate-100">
                         {paginatedUsers.map((u) => (
-                          <tr key={u.id} className="hover:bg-slate-50/80">
-                            <td className="py-3 px-4 font-black text-slate-800">
+                          <tr key={u.id} className="hover:bg-slate-50">
+                            <td className="py-3 px-5 font-medium text-slate-900">
                               {u.profile?.fullName || "Chưa đặt tên"}
                             </td>
-                            <td className="py-3 px-4 text-slate-500 text-xs">
+                            <td className="py-3 px-5 text-xs text-slate-500">
                               {u.email}
                             </td>
-                            <td className="py-3 px-4 text-center">
-                              <span className="inline-flex items-center gap-1 bg-amber-100/90 text-amber-800 px-2.5 py-1 rounded-xl text-xs font-black border border-amber-300">
-                                <Coins size={12} aria-hidden="true" />{" "}
-                                {u.stats?.totalBanhRan ?? 0}
-                              </span>
+                            <td className="py-3 px-5 text-right font-medium tabular-nums text-slate-900">
+                              {u.stats?.totalBanhRan ?? 0}
                             </td>
-                            <td className="py-3 px-4 text-right">
+                            <td className="py-3 px-5 text-right">
                               <button
                                 onClick={() => setSelectedUserId(u.id)}
-                                className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 font-extrabold text-xs rounded-xl border border-amber-200 transition-colors cursor-pointer"
+                                className="text-xs font-medium text-slate-600 hover:text-slate-900 cursor-pointer"
                               >
                                 Chọn điều chỉnh
                               </button>
@@ -728,7 +690,7 @@ function AdjustTab({ onAdjusted }: { onAdjusted: () => void }) {
                     </table>
                   </div>
 
-                  <div className="pt-2">
+                  <div className="px-5 pb-4 pt-2">
                     <Pagination
                       currentPage={currentPage}
                       totalPages={totalPages}
@@ -746,7 +708,7 @@ function AdjustTab({ onAdjusted }: { onAdjusted: () => void }) {
             })()}
           </div>
         ) : (
-          <div className="text-center py-12 text-slate-400 font-bold">
+          <div className="py-12 text-center text-sm text-slate-400">
             Chưa có học viên nào trong hệ thống.
           </div>
         )}

@@ -9,7 +9,7 @@ export const FlashcardStudySummary: React.FC<FlashcardStudySummaryProps> = ({ me
   return (
     <section
       aria-label="Thống kê học tập"
-      className="grid grid-cols-2 divide-x divide-y divide-slate-100 dark:divide-slate-800 sm:grid-cols-4 sm:divide-y-0 rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+      className="grid grid-cols-2 divide-x divide-y divide-slate-100 dark:divide-slate-800 sm:grid-cols-4 sm:divide-y-0 rounded-2xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-xs"
     >
       <div className="p-4">
         <p className="text-xs text-slate-400">Cần ôn hôm nay</p>
