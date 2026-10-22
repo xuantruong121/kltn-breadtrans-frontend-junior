@@ -129,7 +129,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroupConfig[] = [
   },
   {
     id: "users-group",
-    title: "NGƯỜI DÙNG & THANH TOÁN",
+    title: "NGƯỜI DÙNG & GÓI THÀNH VIÊN",
     iconName: "Users",
     items: [
       {
@@ -139,9 +139,9 @@ export const ADMIN_NAV_GROUPS: AdminNavGroupConfig[] = [
         iconName: "Users",
       },
       {
-        id: "payments",
-        href: "/admin/payments",
-        label: "Thanh toán",
+        id: "plan-purchases",
+        href: "/admin/plan-purchases",
+        label: "Gói nâng cấp",
         iconName: "CreditCard",
         roles: ["ADMIN"],
       },

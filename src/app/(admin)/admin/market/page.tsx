@@ -2,13 +2,24 @@
 
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ShoppingBag, CheckCircle, XCircle, Loader2, Truck } from "lucide-react";
+import {
+  ShoppingBag,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  Truck,
+  AlertTriangle,
+} from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import toast from "react-hot-toast";
 
 export default function AdminMarketOrdersPage() {
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [failureFormOrderId, setFailureFormOrderId] = useState<number | null>(
+    null,
+  );
+  const [failureReason, setFailureReason] = useState("");
 
   const { data: orders, isLoading } = useQuery<any[]>({
     queryKey: ["admin-market-orders"],
@@ -35,6 +46,23 @@ export default function AdminMarketOrdersPage() {
           : "Đã từ chối đơn hàng!",
       );
       queryClient.invalidateQueries({ queryKey: ["admin-market-orders"] });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || "Có lỗi xảy ra");
+    },
+  });
+
+  const markFailedMutation = useMutation({
+    mutationFn: async ({ id, reason }: { id: number; reason: string }) => {
+      return axiosClient.patch(`/market/orders/${id}/mark-fulfillment-failed`, {
+        reason,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Đã hoàn Bánh Mì cho học viên.");
+      queryClient.invalidateQueries({ queryKey: ["admin-market-orders"] });
+      setFailureFormOrderId(null);
+      setFailureReason("");
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message || "Có lỗi xảy ra");
@@ -161,18 +189,24 @@ export default function AdminMarketOrdersPage() {
                       <td className="py-4 px-6">
                         <span
                           className={`inline-flex items-center gap-1 text-xs font-black px-2.5 py-1 rounded-full border ${
-                            ord.status === "approved"
+                            ord.status === "approved" || ord.status === "completed"
                               ? "bg-emerald-100 text-emerald-800 border-emerald-200"
                               : ord.status === "rejected"
                                 ? "bg-rose-100 text-rose-800 border-rose-200"
-                                : "bg-amber-100 text-amber-800 border-amber-200"
+                                : ord.status === "refunded"
+                                  ? "bg-slate-200 text-slate-700 border-slate-300"
+                                  : "bg-amber-100 text-amber-800 border-amber-200"
                           }`}
                         >
                           {ord.status === "approved"
                             ? "Đã duyệt"
-                            : ord.status === "rejected"
-                              ? "Từ chối"
-                              : "Chờ duyệt"}
+                            : ord.status === "completed"
+                              ? "Hoàn tất"
+                              : ord.status === "rejected"
+                                ? "Từ chối"
+                                : ord.status === "refunded"
+                                  ? "Đã hoàn tiền"
+                                  : "Chờ duyệt"}
                         </span>
                       </td>
                       <td className="py-4 px-6 text-right">
@@ -205,10 +239,56 @@ export default function AdminMarketOrdersPage() {
                               <XCircle size={16} />
                             </button>
                           </div>
+                        ) : ord.status === "approved" || ord.status === "completed" ? (
+                          failureFormOrderId === ord.id ? (
+                            <div className="flex items-center justify-end gap-1.5">
+                              <input
+                                autoFocus
+                                value={failureReason}
+                                onChange={(e) => setFailureReason(e.target.value)}
+                                placeholder="Lý do thất bại..."
+                                className="w-40 rounded-lg border border-slate-300 px-2 py-1 text-xs"
+                              />
+                              <button
+                                disabled={
+                                  markFailedMutation.isPending ||
+                                  !failureReason.trim()
+                                }
+                                onClick={() =>
+                                  markFailedMutation.mutate({
+                                    id: ord.id,
+                                    reason: failureReason.trim(),
+                                  })
+                                }
+                                className="px-2 py-1 bg-slate-700 hover:bg-slate-800 text-white rounded-lg text-xs font-bold disabled:opacity-50 cursor-pointer"
+                              >
+                                Xác nhận
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setFailureFormOrderId(null);
+                                  setFailureReason("");
+                                }}
+                                className="px-2 py-1 text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
+                              >
+                                Huỷ
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setFailureFormOrderId(ord.id);
+                                setFailureReason("");
+                              }}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                              title="Đánh dấu giao/thực hiện thất bại và hoàn Bánh Mì"
+                            >
+                              <AlertTriangle size={14} />
+                              Giao thất bại
+                            </button>
+                          )
                         ) : (
-                          <span className="text-xs text-slate-300">
-                            Hoàn tất
-                          </span>
+                          <span className="text-xs text-slate-300">—</span>
                         )}
                       </td>
                     </tr>

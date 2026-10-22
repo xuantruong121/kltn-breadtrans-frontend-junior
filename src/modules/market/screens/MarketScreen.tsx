@@ -53,6 +53,25 @@ export const MarketScreen: React.FC = () => {
   const [pendingItemName, setPendingItemName] = useState<string>("vật phẩm này");
   const [productToExchange, setProductToExchange] = useState<MarketProduct | null>(null);
   const [exchangeError, setExchangeError] = useState<string | null>(null);
+  // One stable operation id per checkout attempt — reused across retries of
+  // THE SAME confirm dialog (network error, click again) so the backend's
+  // idempotency guard can actually dedupe them, but regenerated whenever a
+  // genuinely new exchange starts so a later, separate purchase is never
+  // silently treated as "already applied".
+  const exchangeIdempotencyKeyRef = useRef<{
+    productKey: string;
+    key: string;
+  } | null>(null);
+  const getExchangeIdempotencyKey = (product: MarketProduct) => {
+    const productKey = String(product.slug || product.id);
+    if (exchangeIdempotencyKeyRef.current?.productKey !== productKey) {
+      exchangeIdempotencyKeyRef.current = {
+        productKey,
+        key: crypto.randomUUID(),
+      };
+    }
+    return exchangeIdempotencyKeyRef.current.key;
+  };
   const triggerButtonRef = useRef<HTMLElement | null>(null);
 
   const {
@@ -217,6 +236,7 @@ export const MarketScreen: React.FC = () => {
 
   const handleCancelExchange = () => {
     if (isSubmitting) return;
+    exchangeIdempotencyKeyRef.current = null;
     setProductToExchange(null);
     setExchangeError(null);
     triggerButtonRef.current?.focus();
@@ -232,9 +252,16 @@ export const MarketScreen: React.FC = () => {
       await axiosClient.post(
         "/market/orders",
         buildMarketOrderPayload(productToExchange),
-        { headers: { "Idempotency-Key": crypto.randomUUID() } },
+        {
+          headers: {
+            "Idempotency-Key": getExchangeIdempotencyKey(productToExchange),
+          },
+        },
       );
 
+      // Success — the next exchange (even of the same product, another day)
+      // must get a fresh operation id, not reuse this one.
+      exchangeIdempotencyKeyRef.current = null;
       unlockItem(productToExchange.slug || String(productToExchange.id));
 
       const isPhysical =

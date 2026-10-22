@@ -113,7 +113,7 @@ export const NAV_GROUPS: NavCategory[] = [
   },
   {
     id: "users-group",
-    title: "NGƯỜI DÙNG & THANH TOÁN",
+    title: "NGƯỜI DÙNG & GÓI THÀNH VIÊN",
     icon: Users,
     items: [
       {
@@ -123,9 +123,9 @@ export const NAV_GROUPS: NavCategory[] = [
         icon: Users,
       },
       {
-        id: "payments",
-        href: "/admin/payments",
-        label: "Thanh toán",
+        id: "plan-purchases",
+        href: "/admin/plan-purchases",
+        label: "Gói nâng cấp",
         icon: CreditCard,
         roles: ["ADMIN"],
       },

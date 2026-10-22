@@ -77,7 +77,7 @@ export default function AdminDashboardPage() {
     { count: data?.stats.unreadSupportMessages ?? 0, label: "tin nhắn chưa đọc", href: "/admin/messages", icon: Inbox },
     { count: data?.stats.pendingSuggestions ?? 0, label: "đề xuất đang chờ", href: "/admin/suggestions", icon: MessageSquare },
     { count: data?.stats.pendingCourses ?? 0, label: "khóa học ở trạng thái nháp", href: "/admin/courses", icon: BookOpen },
-    { count: pendingTransactions, label: "giao dịch cần duyệt", href: "/admin/payments", icon: CreditCard },
+    { count: pendingTransactions, label: "giao dịch gói cần duyệt", href: "/admin/plan-purchases", icon: CreditCard },
   ].filter((item) => item.count > 0);
   const attentionTotal = attentionItems.reduce((sum, item) => sum + item.count, 0);
   const stats = data ? [
