@@ -1170,7 +1170,13 @@ export function AccountHub() {
                       >
                         <div className="space-y-2">
                           <div className="flex items-center gap-3">
-                            <span className="text-2xl">{item.icon}</span>
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800">
+                              <img
+                                src={item.icon}
+                                alt={item.name}
+                                className="h-7 w-7 object-contain"
+                              />
+                            </span>
                             <div>
                               <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">
                                 {item.name}

@@ -26,15 +26,15 @@ test("skill navigation uses canonical home routes and practice is not a hub CTA"
   assert.doesNotMatch(nav, /href: ["']\/practice["']/);
 });
 
-test("Reading detailed tracking is rendered from Account Hub, not the Reading home", () => {
+test("Reading micro-skill telemetry remains internal and is not rendered in Account Hub", () => {
   const progressTab = read("components/profile/LearningProgressTab.tsx");
   const readingHome = read("app/(student)/reading/page.tsx");
   const mistakesPage = read("app/(student)/reading/mistakes/page.tsx");
   const nextConfig = read("../next.config.ts");
 
-  assert.match(progressTab, /Theo dõi kỹ năng con/);
-  assert.match(progressTab, /readingService\.getTracking/);
-  assert.match(progressTab, /href="\/reading\/mistakes"/);
+  assert.doesNotMatch(progressTab, /Theo dõi kỹ năng con/);
+  assert.doesNotMatch(progressTab, /readingService\.getTracking/);
+  assert.doesNotMatch(progressTab, /href="\/reading\/mistakes"/);
   assert.match(mistakesPage, /href="\/hub\?tab=learning-progress"/);
   assert.doesNotMatch(nextConfig, /practice\/reading\/mistakes/);
   assert.doesNotMatch(nextConfig, /rewrites\(\)/);

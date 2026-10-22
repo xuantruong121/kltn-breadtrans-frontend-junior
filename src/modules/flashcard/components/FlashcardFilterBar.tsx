@@ -37,7 +37,7 @@ export const FlashcardFilterBar: React.FC<FlashcardFilterBarProps> = ({
   return (
     <div
       aria-label="Tìm kiếm và bộ lọc bộ từ vựng"
-      className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-4"
+      className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900 sm:p-4"
     >
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         {/* Search input */}

@@ -30,7 +30,7 @@ export interface MarketBalanceResponse {
 export interface MarketOrder {
   id: number;
   userId: number;
-  totalPrice: number;
+  totalBanh: number;
   status: "PENDING" | "APPROVED" | "REJECTED" | "REFUNDED" | string;
   items: Array<{
     productId?: number;

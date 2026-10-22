@@ -6,7 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   Bookmark,
-  BookOpen,
   Library,
   RotateCcw,
 } from "lucide-react";
@@ -24,7 +23,7 @@ import {
 
 // Skeleton card for non-distracting loading state
 const DeckCardSkeleton = () => (
-  <div className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 animate-pulse min-h-[230px]">
+  <div className="flex flex-col justify-between rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 animate-pulse min-h-[230px]">
     <div>
       <div className="flex items-center justify-between gap-2">
         <div className="h-4 w-24 rounded-md bg-slate-200 dark:bg-slate-800" />
@@ -89,30 +88,22 @@ export const FlashcardScreen: React.FC = () => {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-12">
-      {/* ── Page Header: Compact, study-focused, no oversized hero ── */}
+      {/* ── Page Header: a noun title, no icon chip, no hero ── */}
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/80 pb-6 dark:border-slate-800">
-        <div className="flex items-start gap-3">
-          <span
-            className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-amber-400 text-amber-950 dark:bg-amber-500 dark:text-slate-950 shadow-xs"
-            aria-hidden="true"
-          >
-            <BookOpen size={22} />
-          </span>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
-              Flashcard & từ vựng
-            </h1>
-            <p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-400">
-              Học từ mới, ôn đúng lúc và theo dõi tiến độ từng bộ từ.
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+            Flashcard & từ vựng
+          </h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Học từ mới, ôn đúng lúc và theo dõi tiến độ từng bộ từ.
+          </p>
         </div>
 
         {/* Saved words secondary action */}
         <div className="flex shrink-0 items-center">
           <Link
             href="/vocabulary/saved"
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-xs transition-colors hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             <Bookmark size={16} className="text-amber-500 dark:text-amber-400" aria-hidden="true" />
             <span>Từ đã lưu</span>

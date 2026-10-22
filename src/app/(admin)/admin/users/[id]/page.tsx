@@ -16,10 +16,12 @@ import {
   Mic2,
   PenLine,
   RefreshCw,
+  ShieldCheck,
   Trophy,
   UserRound,
 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
+import { adminSubscriptionService } from "@/lib/api/services/admin-subscription.service";
 
 type Row = Record<string, any>;
 type Tracking = {
@@ -140,6 +142,14 @@ export default function AdminLearnerTrackingPage() {
     },
   });
 
+  const learnerEmail = data?.learner?.email;
+  const { data: entitlementList } = useQuery({
+    queryKey: ["admin-learner-entitlement", learnerEmail],
+    enabled: !!learnerEmail,
+    queryFn: () => adminSubscriptionService.searchLearners(learnerEmail!),
+  });
+  const activeSub = entitlementList?.[0]?.activeSubscription;
+
   if (isLoading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
@@ -207,6 +217,44 @@ export default function AdminLearnerTrackingPage() {
           <div><p className="text-xs font-semibold text-slate-500">Vai trò</p><p className="mt-1 font-bold text-slate-900">{learner.role === "STUDENT" ? "Học viên" : learner.role}</p></div>
           <div><p className="text-xs font-semibold text-slate-500">Ngày tham gia</p><p className="mt-1 font-bold text-slate-900">{dateOnly(learner.createdAt)}</p></div>
           <div><p className="text-xs font-semibold text-slate-500">Đăng nhập gần nhất</p><p className="mt-1 font-bold text-slate-900">{dateTime(learner.lastLoginAt)}</p></div>
+        </div>
+      </section>
+
+      {/* Compact Pro Entitlement Card */}
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className={`p-2.5 rounded-xl ${activeSub ? "bg-blue-50 text-blue-600" : "bg-slate-100 text-slate-500"}`}>
+              <ShieldCheck size={22} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-slate-900 text-base">
+                  Gói học viên: {activeSub ? activeSub.planDisplayName : "Tài khoản Miễn phí"}
+                </h3>
+                {activeSub ? (
+                  <span className="inline-flex rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 text-xs font-semibold">
+                    Đang hoạt động (Còn {activeSub.remainingDays} ngày)
+                  </span>
+                ) : (
+                  <span className="inline-flex rounded-full bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-0.5 text-xs font-semibold">
+                    Chưa kích hoạt Pro
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {activeSub
+                  ? `Hiệu lực: ${dateOnly(activeSub.startsAt)} → ${dateOnly(activeSub.endsAt)} · Nguồn: ${activeSub.sourceLabel}`
+                  : "Học viên chưa được cấp quyền hoặc chưa đăng ký gói nâng cấp."}
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/admin/plan-purchases"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs self-start sm:self-auto"
+          >
+            Quản lý tại Gói nâng cấp &rarr;
+          </Link>
         </div>
       </section>
 

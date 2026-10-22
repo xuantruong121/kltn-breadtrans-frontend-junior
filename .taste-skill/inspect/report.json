@@ -1,0 +1,1616 @@
+{
+ "url": "http://localhost:3000/market",
+ "at": "2026-10-22T07:47:23.012Z",
+ "allow": [],
+ "viewports": [
+  {
+   "width": 1440,
+   "height": 900,
+   "load": "load",
+   "screens": 3,
+   "filled": [
+    0.62,
+    0.79,
+    0.86
+   ],
+   "motion": {
+    "elements": 1,
+    "css": 0,
+    "transitions": 0,
+    "scripted": 1,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "page": {
+     "height": 2361,
+     "screens": 2.6,
+     "words": 622,
+     "img": 12,
+     "video": 0,
+     "canvas": 0,
+     "svg": 45,
+     "sections": 0,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Cửa hàng Bánh Mì",
+     "words": 4,
+     "chars": 16,
+     "lines": 1,
+     "size": 24,
+     "vw": 1.7,
+     "font": "Quicksand",
+     "weight": 600,
+     "tracking": 0,
+     "leading": 1.33,
+     "top": 113,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Cửa hàng Bánh Mì",
+     "words": 4,
+     "lines": 1,
+     "size": 24,
+     "font": "Quicksand"
+    },
+    "headings": [],
+    "headingSummary": {
+     "count": 0,
+     "maxLines": 0,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Quicksand",
+       "share": 1,
+       "mono": false
+      }
+     ],
+     "familyCount": 1,
+     "sizes": [
+      11,
+      12,
+      14,
+      16,
+      20,
+      24
+     ],
+     "sizeCount": 6,
+     "notLoaded": [],
+     "body": {
+      "font": "Quicksand",
+      "size": 12,
+      "leading": 1.63,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": 6.8
+     },
+     "measureChars": 41,
+     "max": {
+      "size": 24,
+      "vw": 1.7,
+      "font": "Quicksand",
+      "text": "Cửa hàng Bánh Mì"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 3,
+     "microLabelShare": 0.013,
+     "microSamples": [
+      "Khám phá",
+      "Luyện kỹ năng",
+      "Thông tin dự án"
+     ],
+     "upperShare": 0.01,
+     "centerShare": 0.12,
+     "smallText": 38
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#0b1120",
+     "bodyBgHsl": {
+      "h": 223,
+      "s": 0.49,
+      "l": 0.08
+     },
+     "dark": true,
+     "sectionBgs": [
+      {
+       "color": "#0b1120",
+       "top": 0,
+       "hsl": {
+        "h": 223,
+        "s": 0.49,
+        "l": 0.08
+       }
+      },
+      {
+       "color": "#020618",
+       "top": 1951,
+       "hsl": {
+        "h": 229,
+        "s": 0.85,
+        "l": 0.05
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#90a1b9",
+       "share": 0.65
+      },
+      {
+       "color": "#f1f5f9",
+       "share": 0.15
+      },
+      {
+       "color": "#62748e",
+       "share": 0.05
+      },
+      {
+       "color": "#ffffff",
+       "share": 0.05
+      },
+      {
+       "color": "#cad5e2",
+       "share": 0.03
+      }
+     ],
+     "button": {
+      "bg": "#bb4d00",
+      "hsl": {
+       "h": 25,
+       "s": 1,
+       "l": 0.37
+      },
+      "fg": "#ffffff"
+     },
+     "lowContrast": [
+      {
+       "text": "Đăng ký",
+       "ratio": 3.2,
+       "need": 4.5,
+       "size": 14,
+       "fg": "#ffffff",
+       "bg": "#e17100"
+      },
+      {
+       "text": "miễn phí",
+       "ratio": 3.2,
+       "need": 4.5,
+       "size": 14,
+       "fg": "#ffffff",
+       "bg": "#e17100"
+      },
+      {
+       "text": "Điều khoản dịch vụ",
+       "ratio": 4.2,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#62748e",
+       "bg": "#020618"
+      },
+      {
+       "text": "Chính sách bảo mật",
+       "ratio": 4.2,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#62748e",
+       "bg": "#020618"
+      },
+      {
+       "text": "Trung tâm trợ giúp",
+       "ratio": 4.2,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#62748e",
+       "bg": "#020618"
+      },
+      {
+       "text": "© 2026 BreadTrans — Nền tảng tự học tiến",
+       "ratio": 4.2,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#62748e",
+       "bg": "#020618"
+      }
+     ]
+    },
+    "buttons": {
+     "count": 23,
+     "inHero": 14,
+     "radius": 8,
+     "height": 44,
+     "withShadow": 1,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Cửa hàng",
+      "Đăng nhập",
+      "Đăng ký miễn phí",
+      "Đăng nhập ngay",
+      "Vật phẩm (12)"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 5,
+     "shadowOverlay": 4,
+     "shadowSamples": [
+      "div.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "button.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "a.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "button.rounded-xl.px-3.5 → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0"
+     ],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 15,
+     "hairlineSamples": [
+      "header.sticky.top-0 1440px",
+      "div.pt-3.5.border-t 329px",
+      "div.pt-3.5.border-t 329px",
+      "div.pt-3.5.border-t 329px",
+      "div.pt-3.5.border-t 329px"
+     ],
+     "outlinedBoxes": 13,
+     "dashed": 0,
+     "blurred": 1,
+     "roundedBoxes": 25,
+     "boxRadius": 12,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": [
+      {
+       "count": 12,
+       "iconTopped": false,
+       "rounded": true,
+       "top": 345
+      }
+     ]
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 14,
+     "fixed": true,
+     "height": 81,
+     "floatingPill": false,
+     "blur": true
+    },
+    "fontsLoaded": [
+     "quicksand",
+     "__nextjs-geist"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "pageH": 2361,
+    "margins": {
+     "left": 144,
+     "right": 61
+    },
+    "sections": [
+     {
+      "sel": "main.min-w-0.w-full",
+      "tag": "main",
+      "top": 81,
+      "height": 1870,
+      "words": 424,
+      "media": 0,
+      "middle": 35,
+      "heading": {
+       "text": "Cửa hàng Bánh Mì",
+       "size": 24,
+       "tag": "h1"
+      },
+      "left": 144,
+      "right": 144,
+      "textLeft": 144,
+      "textRight": 159,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "footer.w-full.border-t",
+      "tag": "footer",
+      "top": 1951,
+      "height": 410,
+      "words": 141,
+      "media": 0,
+      "middle": 92,
+      "heading": {
+       "text": "Bread",
+       "size": 24,
+       "tag": "span"
+      },
+      "left": 40,
+      "right": 41,
+      "textLeft": 40,
+      "textRight": 41,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Cửa hàng Bánh Mì",
+      "size": 24,
+      "top": 113,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [
+     {
+      "text": "miễn phí",
+      "side": "right",
+      "px": 0
+     }
+    ],
+    "edges": [
+     {
+      "x": 165,
+      "n": 4
+     },
+     {
+      "x": 556,
+      "n": 4
+     },
+     {
+      "x": 946,
+      "n": 4
+     },
+     {
+      "x": 144,
+      "n": 2
+     }
+    ],
+    "leftBlocks": 14,
+    "bodySize": 12,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0.07,
+    "voidBox": {
+     "x": 0,
+     "y": 120,
+     "w": 120,
+     "h": 780
+    }
+   },
+   "app": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "dark": true,
+    "ground": "#0b1120",
+    "sidebar": null,
+    "topbar": {
+     "h": 81
+    },
+    "canvas": {
+     "left": 100,
+     "right": 144
+    },
+    "hero": {
+     "text": "Cửa hàng Bánh Mì",
+     "words": 4,
+     "chars": 16,
+     "lines": 1,
+     "size": 24,
+     "vw": 1.7,
+     "font": "Quicksand",
+     "weight": 600,
+     "tracking": 0,
+     "leading": 1.33,
+     "top": 113,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 13,
+     "firstScreen": 7,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 13,
+     "radii": [
+      [
+       12,
+       12
+      ],
+      [
+       16,
+       1
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 1,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 1,
+     "hues": 1,
+     "samples": [
+      {
+       "hue": 218,
+       "size": 44,
+       "radius": "16px"
+      }
+     ]
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 0,
+     "tabularShare": null,
+     "kpiMax": null
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.61,
+     "tiny": 0,
+     "tinySamples": [],
+     "sizes": [
+      11,
+      12,
+      14,
+      16,
+      20,
+      24
+     ]
+    },
+    "title": {
+     "text": "Cửa hàng Bánh Mì",
+     "size": 24,
+     "top": 113
+    },
+    "colourShare": 0.036
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 768,
+   "height": 1024,
+   "load": "load",
+   "screens": 4,
+   "filled": [
+    0.74,
+    0.86,
+    0.83,
+    0.91
+   ],
+   "motion": {
+    "elements": 1,
+    "css": 0,
+    "transitions": 0,
+    "scripted": 1,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "page": {
+     "height": 3362,
+     "screens": 3.3,
+     "words": 590,
+     "img": 12,
+     "video": 0,
+     "canvas": 0,
+     "svg": 45,
+     "sections": 0,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Cửa hàng Bánh Mì",
+     "words": 4,
+     "chars": 16,
+     "lines": 1,
+     "size": 24,
+     "vw": 3.1,
+     "font": "Quicksand",
+     "weight": 600,
+     "tracking": 0,
+     "leading": 1.33,
+     "top": 113,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Cửa hàng Bánh Mì",
+     "words": 4,
+     "lines": 1,
+     "size": 24,
+     "font": "Quicksand"
+    },
+    "headings": [],
+    "headingSummary": {
+     "count": 0,
+     "maxLines": 0,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Quicksand",
+       "share": 1,
+       "mono": false
+      }
+     ],
+     "familyCount": 1,
+     "sizes": [
+      11,
+      12,
+      14,
+      16,
+      20,
+      24
+     ],
+     "sizeCount": 6,
+     "notLoaded": [],
+     "body": {
+      "font": "Quicksand",
+      "size": 12,
+      "leading": 1.63,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": 6.8
+     },
+     "measureChars": 45,
+     "max": {
+      "size": 24,
+      "vw": 3.1,
+      "font": "Quicksand",
+      "text": "Cửa hàng Bánh Mì"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 3,
+     "microLabelShare": 0.014,
+     "microSamples": [
+      "Khám phá",
+      "Luyện kỹ năng",
+      "Thông tin dự án"
+     ],
+     "upperShare": 0.01,
+     "centerShare": 0.13,
+     "smallText": 36
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#0b1120",
+     "bodyBgHsl": {
+      "h": 223,
+      "s": 0.49,
+      "l": 0.08
+     },
+     "dark": true,
+     "sectionBgs": [
+      {
+       "color": "#0b1120",
+       "top": 0,
+       "hsl": {
+        "h": 223,
+        "s": 0.49,
+        "l": 0.08
+       }
+      },
+      {
+       "color": "#020618",
+       "top": 2746,
+       "hsl": {
+        "h": 229,
+        "s": 0.85,
+        "l": 0.05
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#90a1b9",
+       "share": 0.66
+      },
+      {
+       "color": "#f1f5f9",
+       "share": 0.16
+      },
+      {
+       "color": "#62748e",
+       "share": 0.06
+      },
+      {
+       "color": "#ffffff",
+       "share": 0.05
+      },
+      {
+       "color": "#ffd230",
+       "share": 0.03
+      }
+     ],
+     "button": {
+      "bg": "#bb4d00",
+      "hsl": {
+       "h": 25,
+       "s": 1,
+       "l": 0.37
+      },
+      "fg": "#ffffff"
+     },
+     "lowContrast": [
+      {
+       "text": "Đăng ký",
+       "ratio": 3.2,
+       "need": 4.5,
+       "size": 14,
+       "fg": "#ffffff",
+       "bg": "#e17100"
+      },
+      {
+       "text": "miễn phí",
+       "ratio": 3.2,
+       "need": 4.5,
+       "size": 14,
+       "fg": "#ffffff",
+       "bg": "#e17100"
+      },
+      {
+       "text": "Điều khoản dịch vụ",
+       "ratio": 4.2,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#62748e",
+       "bg": "#020618"
+      },
+      {
+       "text": "Chính sách bảo mật",
+       "ratio": 4.2,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#62748e",
+       "bg": "#020618"
+      },
+      {
+       "text": "Trung tâm trợ giúp",
+       "ratio": 4.2,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#62748e",
+       "bg": "#020618"
+      },
+      {
+       "text": "© 2026 BreadTrans — Nền tảng tự học tiến",
+       "ratio": 4.2,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#62748e",
+       "bg": "#020618"
+      }
+     ]
+    },
+    "buttons": {
+     "count": 22,
+     "inHero": 12,
+     "radius": 8,
+     "height": 44,
+     "withShadow": 1,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Đăng nhập",
+      "Đăng ký miễn phí",
+      "Đăng nhập ngay",
+      "Vật phẩm (12)",
+      "Bảng xếp hạng"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 5,
+     "shadowOverlay": 3,
+     "shadowSamples": [
+      "div.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "button.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "a.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "button.rounded-xl.px-3.5 → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0"
+     ],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 15,
+     "hairlineSamples": [
+      "header.sticky.top-0 768px",
+      "div.pt-3.5.border-t 308px",
+      "div.pt-3.5.border-t 308px",
+      "div.pt-3.5.border-t 308px",
+      "div.pt-3.5.border-t 308px"
+     ],
+     "outlinedBoxes": 12,
+     "dashed": 0,
+     "blurred": 1,
+     "roundedBoxes": 24,
+     "boxRadius": 12,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": [
+      {
+       "count": 12,
+       "iconTopped": false,
+       "rounded": true,
+       "top": 367
+      }
+     ]
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 4,
+     "fixed": true,
+     "height": 81,
+     "floatingPill": false,
+     "blur": true
+    },
+    "fontsLoaded": [
+     "quicksand"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "pageH": 3362,
+    "margins": {
+     "left": 24,
+     "right": 45
+    },
+    "sections": [
+     {
+      "sel": "main.min-w-0.w-full",
+      "tag": "main",
+      "top": 81,
+      "height": 2665,
+      "words": 424,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Cửa hàng Bánh Mì",
+       "size": 24,
+       "tag": "h1"
+      },
+      "left": 24,
+      "right": 24,
+      "textLeft": 24,
+      "textRight": 39,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "footer.w-full.border-t",
+      "tag": "footer",
+      "top": 2746,
+      "height": 616,
+      "words": 141,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Bread",
+       "size": 24,
+       "tag": "span"
+      },
+      "left": 24,
+      "right": 46,
+      "textLeft": 24,
+      "textRight": 46,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Cửa hàng Bánh Mì",
+      "size": 24,
+      "top": 113,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 45,
+      "n": 6
+     },
+     {
+      "x": 415,
+      "n": 6
+     },
+     {
+      "x": 24,
+      "n": 2
+     }
+    ],
+    "leftBlocks": 14,
+    "bodySize": 12,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "dark": true,
+    "ground": "#0b1120",
+    "sidebar": null,
+    "topbar": {
+     "h": 81
+    },
+    "canvas": {
+     "left": 24,
+     "right": 39
+    },
+    "hero": {
+     "text": "Cửa hàng Bánh Mì",
+     "words": 4,
+     "chars": 16,
+     "lines": 1,
+     "size": 24,
+     "vw": 3.1,
+     "font": "Quicksand",
+     "weight": 600,
+     "tracking": 0,
+     "leading": 1.33,
+     "top": 113,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 12,
+     "firstScreen": 4,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 12,
+     "radii": [
+      [
+       12,
+       12
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 1,
+     "hues": 1,
+     "samples": [
+      {
+       "hue": 218,
+       "size": 44,
+       "radius": "16px"
+      }
+     ]
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 0,
+     "tabularShare": null,
+     "kpiMax": null
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.61,
+     "tiny": 0,
+     "tinySamples": [],
+     "sizes": [
+      11,
+      12,
+      14,
+      16,
+      20,
+      24
+     ]
+    },
+    "title": {
+     "text": "Cửa hàng Bánh Mì",
+     "size": 24,
+     "top": 113
+    },
+    "colourShare": 0.047
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 390,
+   "height": 844,
+   "load": "load",
+   "screens": 8,
+   "filled": [
+    0.76,
+    0.87,
+    0.87,
+    0.93,
+    0.93,
+    0.81,
+    0.86,
+    1
+   ],
+   "motion": {
+    "elements": 1,
+    "css": 0,
+    "transitions": 0,
+    "scripted": 1,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "page": {
+     "height": 6346,
+     "screens": 7.5,
+     "words": 595,
+     "img": 12,
+     "video": 0,
+     "canvas": 0,
+     "svg": 45,
+     "sections": 0,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Cửa hàng Bánh Mì",
+     "words": 4,
+     "chars": 16,
+     "lines": 1,
+     "size": 24,
+     "vw": 6.2,
+     "font": "Quicksand",
+     "weight": 600,
+     "tracking": 0,
+     "leading": 1.33,
+     "top": 81,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Cửa hàng Bánh Mì",
+     "words": 4,
+     "lines": 1,
+     "size": 24,
+     "font": "Quicksand"
+    },
+    "headings": [
+     {
+      "text": "Cửa hàng Bánh Mì",
+      "words": 4,
+      "chars": 16,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Quicksand",
+      "weight": 600,
+      "tracking": 0,
+      "leading": 1.33,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.92,
+      "top": 81,
+      "tag": "h1",
+      "kind": "heading"
+     },
+     {
+      "text": "BreadTrans",
+      "words": 1,
+      "chars": 10,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": -0.025,
+      "leading": 1.33,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.48,
+      "top": 5373,
+      "tag": "a",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 2,
+     "maxLines": 1,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": 1,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Quicksand",
+       "share": 1,
+       "mono": false
+      }
+     ],
+     "familyCount": 1,
+     "sizes": [
+      11,
+      12,
+      14,
+      16,
+      18,
+      24
+     ],
+     "sizeCount": 6,
+     "notLoaded": [],
+     "body": {
+      "font": "Quicksand",
+      "size": 12,
+      "leading": 1.63,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": 6.8
+     },
+     "measureChars": 47,
+     "max": {
+      "size": 24,
+      "vw": 6.2,
+      "font": "Quicksand",
+      "text": "Cửa hàng Bánh Mì"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 3,
+     "microLabelShare": 0.014,
+     "microSamples": [
+      "Khám phá",
+      "Luyện kỹ năng",
+      "Thông tin dự án"
+     ],
+     "upperShare": 0.01,
+     "centerShare": 0.12,
+     "smallText": 36
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#0b1120",
+     "bodyBgHsl": {
+      "h": 223,
+      "s": 0.49,
+      "l": 0.08
+     },
+     "dark": true,
+     "sectionBgs": [
+      {
+       "color": "#0b1120",
+       "top": 0,
+       "hsl": {
+        "h": 223,
+        "s": 0.49,
+        "l": 0.08
+       }
+      },
+      {
+       "color": "#0f172b",
+       "top": 570,
+       "hsl": {
+        "h": 223,
+        "s": 0.48,
+        "l": 0.11
+       }
+      },
+      {
+       "color": "#020618",
+       "top": 5316,
+       "hsl": {
+        "h": 229,
+        "s": 0.85,
+        "l": 0.05
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#90a1b9",
+       "share": 0.67
+      },
+      {
+       "color": "#f1f5f9",
+       "share": 0.15
+      },
+      {
+       "color": "#62748e",
+       "share": 0.06
+      },
+      {
+       "color": "#ffffff",
+       "share": 0.05
+      },
+      {
+       "color": "#ffd230",
+       "share": 0.03
+      }
+     ],
+     "button": {
+      "bg": "#bb4d00",
+      "hsl": {
+       "h": 25,
+       "s": 1,
+       "l": 0.37
+      },
+      "fg": "#ffffff"
+     },
+     "lowContrast": [
+      {
+       "text": "Đăng ký",
+       "ratio": 3.2,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#ffffff",
+       "bg": "#e17100"
+      }
+     ]
+    },
+    "buttons": {
+     "count": 22,
+     "inHero": 10,
+     "radius": 8,
+     "height": 44,
+     "withShadow": 1,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Đăng nhập",
+      "Đăng ký",
+      "Đăng nhập ngay",
+      "Vật phẩm (12)",
+      "Bảng xếp hạng"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 5,
+     "shadowOverlay": 4,
+     "shadowSamples": [
+      "div.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "button.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "a.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "button.rounded-xl.px-3.5 → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0"
+     ],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 16,
+     "hairlineSamples": [
+      "header.sticky.top-0 390px",
+      "div.pt-3.5.border-t 316px",
+      "div.pt-3.5.border-t 316px",
+      "div.pt-3.5.border-t 316px",
+      "div.pt-3.5.border-t 316px"
+     ],
+     "outlinedBoxes": 13,
+     "dashed": 0,
+     "blurred": 2,
+     "roundedBoxes": 25,
+     "boxRadius": 8,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 3,
+     "fixed": true,
+     "height": 65,
+     "floatingPill": false,
+     "blur": true
+    },
+    "fontsLoaded": [
+     "quicksand",
+     "__nextjs-geist"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "pageH": 6346,
+    "margins": {
+     "left": 16,
+     "right": 29
+    },
+    "sections": [
+     {
+      "sel": "main.min-w-0.w-full",
+      "tag": "main",
+      "top": 65,
+      "height": 5251,
+      "words": 424,
+      "media": 0,
+      "middle": 50,
+      "heading": {
+       "text": "Cửa hàng Bánh Mì",
+       "size": 24,
+       "tag": "h1"
+      },
+      "left": 16,
+      "right": 0,
+      "textLeft": 16,
+      "textRight": -123,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "footer.w-full.border-t",
+      "tag": "footer",
+      "top": 5316,
+      "height": 1030,
+      "words": 141,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Bread",
+       "size": 24,
+       "tag": "span"
+      },
+      "left": 16,
+      "right": 26,
+      "textLeft": 16,
+      "textRight": 26,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Cửa hàng Bánh Mì",
+      "size": 24,
+      "top": 81,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 37,
+      "n": 12
+     },
+     {
+      "x": 16,
+      "n": 2
+     }
+    ],
+    "leftBlocks": 14,
+    "bodySize": 12,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "dark": true,
+    "ground": "#0b1120",
+    "sidebar": null,
+    "topbar": {
+     "h": 65
+    },
+    "canvas": {
+     "left": 16,
+     "right": -14
+    },
+    "hero": {
+     "text": "Cửa hàng Bánh Mì",
+     "words": 4,
+     "chars": 16,
+     "lines": 1,
+     "size": 24,
+     "vw": 6.2,
+     "font": "Quicksand",
+     "weight": 600,
+     "tracking": 0,
+     "leading": 1.33,
+     "top": 81,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 14,
+     "firstScreen": 2,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 14,
+     "radii": [
+      [
+       12,
+       12
+      ],
+      [
+       8,
+       1
+      ],
+      [
+       0,
+       1
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 1,
+     "hues": 1,
+     "samples": [
+      {
+       "hue": 218,
+       "size": 44,
+       "radius": "16px"
+      }
+     ]
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 0,
+     "tabularShare": null,
+     "kpiMax": null
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.62,
+     "tiny": 0,
+     "tinySamples": [],
+     "sizes": [
+      11,
+      12,
+      14,
+      16,
+      18,
+      24
+     ]
+    },
+    "title": {
+     "text": "Cửa hàng Bánh Mì",
+     "size": 24,
+     "top": 81
+    },
+    "colourShare": 0.047
+   },
+   "consoleErrors": []
+  }
+ ],
+ "findings": [
+  {
+   "level": "FAIL",
+   "id": "micro-label",
+   "width": 1440,
+   "message": "3 tiny uppercase letter-spaced labels (e.g. \"Khám phá\", \"Luyện kỹ năng\", \"Thông tin dự án\").",
+   "fix": "Use sentence-case text at a readable size, or delete the label.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "button-fx",
+   "width": 1440,
+   "message": "Buttons with shadow/glow.",
+   "fix": "Flat fill, one colour.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "WARN",
+   "id": "contrast",
+   "width": 1440,
+   "message": "Low-contrast text: \"Đăng ký\" 3.2:1 needs 4.5:1; \"miễn phí\" 3.2:1 needs 4.5:1; \"Điều khoản dịch vụ\" 4.2:1 needs 4.5:1; \"Chính sách bảo mật\" 4.2:1 needs 4.5:1",
+   "fix": "Darken or lighten the text colour.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "edge-text",
+   "width": 1440,
+   "message": "1 text block(s) sit within 16px of the screen edge: \"miễn phí\" (0px from the right)",
+   "fix": "Keep text inside the page margin (16–32px or more). Only display type deliberately bled past the edge may touch it."
+  },
+  {
+   "level": "WARN",
+   "id": "tiny-text",
+   "width": 1440,
+   "message": "61% of the text is under 13px.",
+   "fix": "Data and labels read at 13–14px; keep 11–12px for sublines and axis ticks.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  }
+ ],
+ "images": [
+  {
+   "viewport": "desktop",
+   "width": 1440,
+   "fold": "D:\\Study\\KLTN\\Project\\kltn-breadtrans-frontend-junior\\.taste-skill\\inspect\\desktop-fold.jpg",
+   "pages": [
+    "D:\\Study\\KLTN\\Project\\kltn-breadtrans-frontend-junior\\.taste-skill\\inspect\\desktop-page-01.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "tablet",
+   "width": 768,
+   "fold": "D:\\Study\\KLTN\\Project\\kltn-breadtrans-frontend-junior\\.taste-skill\\inspect\\tablet-fold.jpg",
+   "pages": [
+    "D:\\Study\\KLTN\\Project\\kltn-breadtrans-frontend-junior\\.taste-skill\\inspect\\tablet-page-01.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "mobile",
+   "width": 390,
+   "fold": "D:\\Study\\KLTN\\Project\\kltn-breadtrans-frontend-junior\\.taste-skill\\inspect\\mobile-fold.jpg",
+   "pages": [
+    "D:\\Study\\KLTN\\Project\\kltn-breadtrans-frontend-junior\\.taste-skill\\inspect\\mobile-page-01.jpg"
+   ],
+   "film": []
+  }
+ ]
+}

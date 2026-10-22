@@ -12,14 +12,12 @@ import {
   Headphones,
   Mic,
   PenTool,
-  TriangleAlert,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import {
   userService,
   type SkillProgressSummary,
 } from "@/lib/api/services/user.service";
-import { readingService } from "@/lib/api/services/reading.service";
 
 const SKILL_META: Record<
   SkillProgressSummary["skill"],
@@ -73,12 +71,6 @@ export function LearningProgressTab() {
   const { data: history } = useQuery({
     queryKey: ["account-learning-history", user?.id],
     queryFn: () => userService.getLearningHistory(),
-    enabled: Boolean(user),
-    staleTime: 30_000,
-  });
-  const { data: readingTracking } = useQuery({
-    queryKey: ["account-reading-tracking", user?.id],
-    queryFn: readingService.getTracking,
     enabled: Boolean(user),
     staleTime: 30_000,
   });
@@ -159,32 +151,6 @@ export function LearningProgressTab() {
           );
         })}
       </section>
-
-      {readingTracking && (
-        <section className="rounded-2xl border border-emerald-200/80 bg-emerald-50/30 p-5 dark:border-emerald-900/60 dark:bg-emerald-950/20" aria-labelledby="reading-progress-detail">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-300">Reading</p>
-              <h2 id="reading-progress-detail" className="mt-1 text-lg font-black text-slate-900 dark:text-slate-100">Theo dõi kỹ năng con</h2>
-              <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">Mỗi kỹ năng cần tối thiểu {readingTracking.sampleSize} lượt trước khi gắn nhãn ổn định.</p>
-            </div>
-            <Link href="/reading/mistakes" className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 text-xs font-black text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300">
-              <TriangleAlert size={14} aria-hidden="true" /> Lỗi cần xem lại ({readingTracking.mistakes?.total ?? 0})
-            </Link>
-          </div>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {(readingTracking.subskills ?? []).map((skill: any) => (
-              <div key={skill.key} className="rounded-xl border border-emerald-200/70 bg-white/80 p-3 dark:border-emerald-900/50 dark:bg-slate-900/60">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-black text-slate-800 dark:text-slate-100">{skill.key}</span>
-                  <span className="text-xs font-black text-emerald-700 dark:text-emerald-300">{skill.attempted >= (readingTracking.sampleSize ?? 3) ? `${skill.accuracy}%` : "—"}</span>
-                </div>
-                <p className="mt-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">{skill.statusLabel} · {skill.attempted} lượt</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
 
       <section className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-2xs dark:border-slate-800 dark:bg-slate-900" aria-labelledby="learning-activity-heading">
         <div className="flex items-center justify-between gap-3">

@@ -28,7 +28,7 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
     <article
       data-testid="flashcard-deck-card"
       data-status={status}
-      className={`group relative flex flex-col justify-between rounded-2xl border bg-white dark:bg-slate-900 p-5 shadow-xs transition-all hover:shadow-sm ${
+      className={`group relative flex flex-col justify-between rounded-lg border bg-white dark:bg-slate-900 p-5 transition-colors ${
         status === "REVIEW_DUE"
           ? "border-amber-300 dark:border-amber-800/80 hover:border-amber-400"
           : status === "COMPLETED"
@@ -39,7 +39,7 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
       {/* ── Top Row: Category Label & Status Pill ───────────────────── */}
       <div>
         <div className="flex items-center justify-between gap-2">
-          <span className="truncate text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+          <span className="truncate text-xs font-medium text-amber-700 dark:text-amber-400">
             {topic.categoryName || "Từ vựng"}
           </span>
           {isLocked ? (
@@ -120,7 +120,7 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
           <button
             type="button"
             onClick={() => setShowPaywall(true)}
-            className="mt-4 flex min-h-10 sm:min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 px-4 text-sm font-bold text-amber-900 dark:text-amber-200 shadow-2xs transition-colors cursor-pointer"
+            className="mt-4 flex min-h-10 sm:min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 px-4 text-sm font-semibold text-amber-900 dark:text-amber-200 transition-colors cursor-pointer"
           >
             <Lock size={15} aria-hidden="true" />
             <span>Mở khóa với Plus</span>
@@ -131,12 +131,10 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
             className="mt-4 block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-xl"
           >
             <span
-              className={`flex min-h-10 sm:min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold transition-colors ${
+              className={`flex min-h-10 sm:min-h-11 w-full items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold transition-colors ${
                 status === "COMPLETED"
                   ? "border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200 dark:hover:bg-slate-700"
-                  : status === "REVIEW_DUE"
-                    ? "bg-amber-500 text-white shadow-xs hover:bg-amber-600 dark:bg-amber-500 dark:hover:bg-amber-600"
-                    : "bg-amber-500 text-white shadow-xs hover:bg-amber-600 dark:bg-amber-500 dark:hover:bg-amber-600"
+                  : "bg-amber-700 text-white hover:bg-amber-800"
               }`}
             >
               {status === "COMPLETED" || status === "REVIEW_DUE" ? (
