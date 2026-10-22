@@ -511,7 +511,7 @@ export function AppHeader() {
                   onClick={() => setProfileMenuOpen((prev) => !prev)}
                   aria-expanded={profileMenuOpen}
                   aria-label="Menu tài khoản"
-                  className="relative flex size-9 sm:size-auto sm:min-h-11 sm:min-w-11 items-center justify-center sm:gap-1.5 rounded-full bg-white dark:bg-slate-800/90 p-0.5 sm:px-1.5 ring-2 ring-amber-500/60 dark:ring-amber-500/50 shadow-2xs transition-all hover:bg-amber-50 dark:hover:bg-slate-750 hover:ring-amber-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-amber-700 cursor-pointer shrink-0"
+                  className="relative flex size-9 sm:size-auto sm:min-h-11 sm:min-w-11 items-center justify-center sm:gap-1.5 rounded-full bg-white dark:bg-slate-800/90 p-0.5 sm:px-1.5 ring-1 ring-slate-200/90 dark:ring-slate-700/80 shadow-2xs transition-all hover:bg-slate-50 dark:hover:bg-slate-750 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 cursor-pointer shrink-0"
                 >
                   <UserAvatarWithFrame
                     avatarUrl={user?.profile?.avatar}
@@ -529,14 +529,22 @@ export function AppHeader() {
 
                 {profileMenuOpen && (
                   <div className="absolute right-0 top-full mt-2 w-[320px] sm:w-[350px] max-w-[calc(100vw-1.5rem)] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xl p-2.5 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
-                    {/* User Identity */}
-                    <div className="px-2 pt-1 pb-1">
-                      <p className="text-sm font-extrabold text-slate-900 dark:text-slate-100 truncate">
-                        {user?.profile?.fullName || user?.email}
-                      </p>
-                      {user?.profile?.fullName && user?.email && (
-                        <p className="text-[11px] font-medium text-slate-400 truncate mt-0.5">{user.email}</p>
-                      )}
+                    {/* User Identity Header Card */}
+                    <div className="flex items-center gap-3 px-2 py-2 border-b border-slate-100 dark:border-slate-800">
+                      <UserAvatarWithFrame
+                        avatarUrl={user?.profile?.avatar}
+                        name={user?.profile?.fullName || user?.email}
+                        size="md"
+                        showBadge
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-extrabold text-slate-900 dark:text-slate-100 truncate">
+                          {user?.profile?.fullName || user?.email}
+                        </p>
+                        {user?.profile?.fullName && user?.email && (
+                          <p className="text-[11px] font-medium text-slate-400 truncate mt-0.5">{user.email}</p>
+                        )}
+                      </div>
                     </div>
 
                     {/* Gamification Stats Strip (Streak, Breads, Level) */}

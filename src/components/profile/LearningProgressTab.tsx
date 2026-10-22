@@ -21,7 +21,8 @@ import {
   userService,
   type SkillProgressSummary,
 } from "@/lib/api/services/user.service";
-import { courseService } from "@/lib/api/services/course.service";
+import { courseService, type CourseV5Overview } from "@/lib/api/services/course.service";
+import { courseLessonPath } from "@/lib/course/navigation";
 import {
   computeWeeklyActivity,
   groupRecentActivities,
@@ -107,13 +108,30 @@ export function LearningProgressTab() {
     staleTime: 60_000,
   });
 
-  // 4. Enrolled courses
-  const { data: enrolledClasses } = useQuery({
-    queryKey: ["my-learning-classes", user?.id],
-    queryFn: courseService.getMyLearningClasses,
+  // 4. Canonical Course V5 progress. Enrollment.progress is legacy class data,
+  // not the learner's actual lesson completion record.
+  const { data: courseOverviews } = useQuery({
+    queryKey: ["course-v5-learning-progress", user?.id],
+    queryFn: async (): Promise<CourseV5Overview[]> => {
+      const catalog = await courseService.getPublicCatalog();
+      const accessibleCourses = catalog.filter((course) => course.canAccess);
+      return Promise.all(
+        accessibleCourses.map((course) =>
+          courseService.getCourseLearningOverview(course.id),
+        ),
+      );
+    },
     enabled: Boolean(user?.id),
     staleTime: 60_000,
   });
+
+  const learningCourses = useMemo(
+    () =>
+      (courseOverviews ?? []).filter(
+        (course) => course.progress.totalLessons > 0,
+      ),
+    [courseOverviews],
+  );
 
   // 5. Daily practice recommendations (fallback for Continue Learning)
   const { data: dailyPractice } = useQuery({
@@ -146,22 +164,25 @@ export function LearningProgressTab() {
 
   // Resumable Continue Learning Item
   const resumableItem = useMemo(() => {
-    // Priority 1: Unfinished enrolled course
-    if (enrolledClasses && enrolledClasses.length > 0) {
-      const activeUnfinished = enrolledClasses.find(
-        (cls) =>
-          cls.enrollmentStatus === "ACTIVE" &&
-          cls.enrollmentProgress != null &&
-          cls.enrollmentProgress < 100,
+    // Priority 1: unfinished Course V5 lesson with a learner-safe route.
+    if (learningCourses.length > 0) {
+      const activeUnfinished = learningCourses.find(
+        (course) =>
+          course.progress.totalLessons > 0 && !course.progress.isComplete,
       );
       if (activeUnfinished) {
+        const nextLesson = activeUnfinished.lessons.find(
+          (lesson) => !lesson.completed,
+        );
         return {
           type: "COURSE" as const,
           badge: "Khóa học đang học",
           title: activeUnfinished.course.title,
-          subtitle: activeUnfinished.name || activeUnfinished.course.description,
-          progress: activeUnfinished.enrollmentProgress,
-          route: `/my-courses/${activeUnfinished.courseId}`,
+          subtitle: `${activeUnfinished.progress.completedLessons}/${activeUnfinished.progress.totalLessons} bài học đã hoàn thành`,
+          progress: activeUnfinished.progress.percentage,
+          route: nextLesson
+            ? courseLessonPath(activeUnfinished.course.id, nextLesson.id)
+            : `/my-courses/${activeUnfinished.course.id}`,
           ctaText: "Tiếp tục học",
         };
       }
@@ -193,7 +214,7 @@ export function LearningProgressTab() {
       route: "/courses",
       ctaText: "Khám phá khóa học",
     };
-  }, [enrolledClasses, dailyPractice]);
+  }, [dailyPractice, learningCourses]);
 
   if (isSkillsLoading && isHistoryLoading) {
     return (
@@ -223,7 +244,7 @@ export function LearningProgressTab() {
   }
 
   const streak = statsData?.streakCount ?? overall?.currentStreak ?? 0;
-  const completedTotal = overall?.completedItems ?? historyData?.summary.completedCount ?? 0;
+  const completedTotal = overall?.completedItems ?? 0;
   const masteredVocab = statsData?.masteredVocabCount ?? 0;
   const latestDateDisplay = formatFriendlyDate(historyData?.activities?.[0]?.occurredAt);
 
@@ -257,14 +278,14 @@ export function LearningProgressTab() {
       <section aria-label="Tổng quan tiến độ" className="grid grid-cols-2 gap-3.5 sm:grid-cols-4">
         <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <span>Bài hoàn thành</span>
+            <span>Bài luyện đã hoàn thành</span>
             <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
           </div>
           <p className="mt-2 font-mono text-2xl font-bold text-slate-900 tabular-nums dark:text-white">
             {completedTotal}
           </p>
           <p className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-            Tổng lượt bài đã đạt
+            Tổng bài luyện thuộc bốn kỹ năng
           </p>
         </div>
 
@@ -483,7 +504,7 @@ export function LearningProgressTab() {
                   Tiến độ khóa học
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Các khóa học đang ghi danh và lộ trình bài bản.
+                  Tiến độ bài học thực tế trong các khóa học bạn có quyền truy cập.
                 </p>
               </div>
               <Link
@@ -494,10 +515,15 @@ export function LearningProgressTab() {
               </Link>
             </div>
 
-            {enrolledClasses && enrolledClasses.length > 0 ? (
+            {learningCourses.length > 0 ? (
               <div className="mt-4 divide-y divide-slate-100 dark:divide-slate-800">
-                {enrolledClasses.slice(0, 3).map((item) => (
-                  <div key={item.id} className="py-3.5 first:pt-0 last:pb-0">
+                {learningCourses.slice(0, 3).map((item) => {
+                  const nextLesson = item.lessons.find((lesson) => !lesson.completed);
+                  const courseRoute = nextLesson
+                    ? courseLessonPath(item.course.id, nextLesson.id)
+                    : `/my-courses/${item.course.id}`;
+                  return (
+                  <div key={item.course.id} className="py-3.5 first:pt-0 last:pb-0">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
@@ -506,16 +532,16 @@ export function LearningProgressTab() {
                           </h3>
                           {item.course.level && (
                             <span className="rounded bg-slate-100 px-1.5 py-0.2 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                              {item.course.level}
+                          {item.course.level}
                             </span>
                           )}
                         </div>
                         <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
-                          {item.name}
+                          {item.progress.completedLessons}/{item.progress.totalLessons} bài học đã hoàn thành
                         </p>
                       </div>
                       <Link
-                        href={`/my-courses/${item.courseId}`}
+                        href={courseRoute}
                         className="inline-flex shrink-0 items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                       >
                         Vào học <ArrowRight className="h-3 w-3" />
@@ -526,27 +552,28 @@ export function LearningProgressTab() {
                       <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
                         <span>Hoàn thành</span>
                         <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
-                          {item.enrollmentProgress ?? 0}%
+                          {item.progress.percentage}%
                         </span>
                       </div>
                       <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                         <div
                           className="h-full rounded-full bg-blue-600 dark:bg-blue-500 transition-all duration-300"
-                          style={{ width: `${Math.min(100, Math.max(item.enrollmentProgress ? 4 : 0, item.enrollmentProgress ?? 0))}%` }}
+                          style={{ width: `${Math.min(100, Math.max(item.progress.percentage ? 4 : 0, item.progress.percentage))}%` }}
                         />
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="mt-4 flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 p-6 text-center dark:border-slate-700">
                 <BookOpen className="h-8 w-8 text-slate-400" />
                 <p className="mt-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  Bạn chưa bắt đầu khóa học nào
+                  Bạn chưa có khóa học nào để theo dõi
                 </p>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-sm">
-                  Khám phá danh mục khóa học để bắt đầu lộ trình học có cấu trúc và giảng viên hướng dẫn.
+                  Khám phá danh mục khóa học để bắt đầu một lộ trình học có cấu trúc.
                 </p>
                 <Link
                   href="/courses"
@@ -571,10 +598,10 @@ export function LearningProgressTab() {
                   id="weekly-activity-heading"
                   className="text-base font-bold text-slate-900 dark:text-slate-100"
                 >
-                  Hoạt động 7 ngày
+                  Hoạt động học tập
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Duy trì việc học đều đặn mỗi ngày.
+                  Tất cả hoạt động học tập được ghi nhận trong 7 ngày gần nhất.
                 </p>
               </div>
               <span className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
@@ -601,7 +628,7 @@ export function LearningProgressTab() {
                     />
                     {/* Tooltip on hover */}
                     <div className="absolute -top-7 left-1/2 -translate-x-1/2 hidden group-hover:flex items-center justify-center rounded bg-slate-900 px-1.5 py-0.5 text-[10px] text-white pointer-events-none whitespace-nowrap shadow-xs dark:bg-slate-100 dark:text-slate-900 z-10">
-                      {day.count} bài
+                      {day.count} hoạt động
                     </div>
                   </div>
                   <span
@@ -620,8 +647,8 @@ export function LearningProgressTab() {
 
           <p className="mt-4 text-[11px] font-medium text-slate-500 dark:text-slate-400 text-center border-t border-slate-100 pt-3 dark:border-slate-800">
             {weeklyActivity.totalActivitiesThisWeek > 0
-              ? `Đã hoàn thành ${weeklyActivity.totalActivitiesThisWeek} lượt bài tập trong 7 ngày qua`
-              : "Chưa có lượt bài tập nào trong tuần này"}
+              ? `${weeklyActivity.totalActivitiesThisWeek} hoạt động trong tuần`
+              : "Chưa có hoạt động học tập nào trong tuần này"}
           </p>
         </section>
       </div>

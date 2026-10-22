@@ -41,6 +41,15 @@ test("Reading micro-skill telemetry remains internal and is not rendered in Acco
   assert.doesNotMatch(readingHome, /Theo dõi tiến bộ theo kỹ năng con/);
 });
 
+test("Learning Progress uses canonical Course V5 lesson attempts instead of legacy enrollment progress", () => {
+  const progressTab = read("components/profile/LearningProgressTab.tsx");
+
+  assert.match(progressTab, /courseService\.getCourseLearningOverview/);
+  assert.match(progressTab, /courseLessonPath/);
+  assert.doesNotMatch(progressTab, /getMyLearningClasses/);
+  assert.doesNotMatch(progressTab, /enrollmentProgress/);
+});
+
 test("canonical skill homes own their implementations and obsolete aliases are absent", () => {
   for (const route of ["listening", "speaking", "reading", "writing"]) {
     assert.equal(fs.existsSync(new URL(`app/(student)/${route}/page.tsx`, root)), true);

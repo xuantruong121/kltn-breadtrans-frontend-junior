@@ -21,6 +21,10 @@ import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { UserAvatarWithFrame } from "@/components/ui";
 import { MARKET_ITEMS } from "@/modules/market/services/marketData";
+import {
+  resolveAvatarFrame,
+  resolveUserBadge,
+} from "@/lib/avatar/avatarCustomizationLogic";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -91,8 +95,10 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
   };
 
   const myUnlockedList = MARKET_ITEMS.filter((item) => unlockedItems.includes(item.id));
-  const activeFrameItem = MARKET_ITEMS.find((i) => i.id === equippedAvatarFrame);
-  const activeBadgeItem = MARKET_ITEMS.find((i) => i.id === equippedBadge);
+  const activeFrameConfig = resolveAvatarFrame(equippedAvatarFrame);
+  const activeBadgeConfig = resolveUserBadge(equippedBadge);
+  const activeFrameItem = activeFrameConfig || MARKET_ITEMS.find((i) => i.id === equippedAvatarFrame);
+  const activeBadgeItem = activeBadgeConfig || MARKET_ITEMS.find((i) => i.id === equippedBadge);
 
   const filteredInventory = myUnlockedList.filter((item) => {
     if (inventoryCategory === "all") return true;
@@ -180,9 +186,14 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                   {user?.role === "STUDENT" ? "Học Sinh" : user?.role || "Thành viên"}
                 </p>
 
-                {activeBadgeItem ? (
+                {activeBadgeConfig ? (
                   <div className="mt-3 px-3 py-1 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 rounded-full text-amber-800 dark:text-amber-300 text-xs font-bold flex items-center gap-1.5 shadow-xs">
-                    <span>{activeBadgeItem.icon}</span> {activeBadgeItem.name}
+                    {activeBadgeConfig.type === "svg" ? (
+                      <img src={activeBadgeConfig.content} alt="" className="size-4 object-contain" />
+                    ) : (
+                      <span className="leading-none">{activeBadgeConfig.content}</span>
+                    )}
+                    <span>{activeBadgeConfig.name}</span>
                   </div>
                 ) : (
                   <div className="mt-3 px-3 py-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-slate-400 dark:text-slate-500 text-xs font-medium">
@@ -418,8 +429,8 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                   const isBoost = item.category === "boost";
 
                   const isEquipped =
-                    (isFrame && equippedAvatarFrame === item.id) ||
-                    (isBadge && equippedBadge === item.id);
+                    (isFrame && activeFrameConfig?.key === item.id) ||
+                    (isBadge && activeBadgeConfig?.key === item.id);
 
                   return (
                     <div

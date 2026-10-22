@@ -47,6 +47,21 @@ export interface LearnerMilestone {
   description: string;
 }
 
+const VIETNAM_TIME_ZONE = "Asia/Ho_Chi_Minh";
+
+function vietnamDateKey(value: Date | string): string {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: VIETNAM_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const part = (type: string) => parts.find((item) => item.type === type)?.value;
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+
 /**
  * Format a timestamp into user-friendly Vietnamese relative / calendar date.
  */
@@ -57,14 +72,14 @@ export function formatFriendlyDate(dateStr?: string | null): string {
     if (Number.isNaN(d.getTime())) return "Chưa học";
 
     const now = new Date();
-    const todayStr = now.toISOString().slice(0, 10);
-    const itemStr = d.toISOString().slice(0, 10);
+    const todayStr = vietnamDateKey(now);
+    const itemStr = vietnamDateKey(d);
 
     if (itemStr === todayStr) return "Hôm nay";
 
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
-    if (itemStr === yesterday.toISOString().slice(0, 10)) return "Hôm qua";
+    if (itemStr === vietnamDateKey(yesterday)) return "Hôm qua";
 
     const day = String(d.getDate()).padStart(2, "0");
     const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -94,7 +109,7 @@ export function computeWeeklyActivity(
   for (const act of activities) {
     if (!act.occurredAt) continue;
     try {
-      const dateKey = new Date(act.occurredAt).toISOString().slice(0, 10);
+      const dateKey = vietnamDateKey(act.occurredAt);
       countByDate.set(dateKey, (countByDate.get(dateKey) ?? 0) + 1);
     } catch {
       // Ignore invalid date
@@ -105,9 +120,9 @@ export function computeWeeklyActivity(
   for (let i = 6; i >= 0; i--) {
     const current = new Date(referenceDate);
     current.setDate(referenceDate.getDate() - i);
-    const dateStr = current.toISOString().slice(0, 10);
+    const dateStr = vietnamDateKey(current);
     const count = countByDate.get(dateStr) ?? 0;
-    const dayOfWeek = current.getDay();
+    const dayOfWeek = new Date(`${dateStr}T12:00:00+07:00`).getUTCDay();
 
     days.push({
       dayLabel: dayNames[dayOfWeek],
@@ -164,6 +179,13 @@ function sanitizeActivityCategory(title: string, type?: string | null): string {
   if (t.includes("bài học") || t.includes("lesson") || rawType.includes("LESSON") || rawType.includes("COURSE")) {
     return "Bài học khóa học";
   }
+  if (
+    rawType ||
+    /^[A-Z0-9_]+$/.test(title || "") ||
+    /courselessonattempt/i.test(title || "")
+  ) {
+    return "Hoạt động học tập";
+  }
   return title || "Hoạt động học tập";
 }
 
@@ -185,7 +207,9 @@ export function groupRecentActivities(
     const dateKey = current.occurredAt ? current.occurredAt.slice(0, 10) : "";
     const category = sanitizeActivityCategory(current.title, current.type);
 
-    // Collect same category on the same calendar day
+    // Only vocabulary and diagnostic events are semantically safe to aggregate.
+    const canAggregate =
+      category === "Học từ vựng" || category === "Đánh giá đầu vào";
     const sameGroup: LearningActivity[] = [current];
     handled.add(current.id);
 
@@ -196,7 +220,12 @@ export function groupRecentActivities(
       const nextDateKey = next.occurredAt ? next.occurredAt.slice(0, 10) : "";
       const nextCategory = sanitizeActivityCategory(next.title, next.type);
 
-      if (dateKey && nextDateKey === dateKey && nextCategory === category) {
+      if (
+        canAggregate &&
+        dateKey &&
+        nextDateKey === dateKey &&
+        nextCategory === category
+      ) {
         sameGroup.push(next);
         handled.add(next.id);
       }
@@ -278,7 +307,10 @@ export function getSkillDisplayMetrics(skill: SkillProgressSummary): SkillDispla
   } else {
     if (total > 0) {
       primaryValue = `${completed}/${total} ${skill.unitLabel || "bài"}`;
-      primarySub = `${skill.progressPercent}% hoàn thành`;
+      primarySub =
+        completed === 0 && !skill.completedAttempts
+          ? "Chưa bắt đầu luyện"
+          : `${skill.progressPercent}% hoàn thành`;
       percent = skill.progressPercent;
     } else {
       primaryValue = "Chưa có bài";

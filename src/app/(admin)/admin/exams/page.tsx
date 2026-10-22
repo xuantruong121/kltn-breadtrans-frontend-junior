@@ -138,6 +138,7 @@ interface ExamDetail {
   groups: ExamGroup[];
   attemptsCount?: number;
   learnerReady?: boolean;
+  aiGenerationJobId?: string | null;
   validation?: {
     counts: Record<string, number>;
     issues: Array<{
@@ -818,6 +819,14 @@ export default function AdminExamsPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            {examDetail.aiGenerationJobId && (
+              <a
+                href={`/admin/exams/ai/${examDetail.aiGenerationJobId}`}
+                className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                Candidate AI
+              </a>
+            )}
             {isPublished ? (
               <button
                 onClick={() => unpublishExamMutation.mutate(examDetail.id)}
@@ -1804,7 +1813,7 @@ export default function AdminExamsPage() {
                       className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md"
                     >
                       <div className="aspect-[4/3] bg-slate-100">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        { }
                         <img
                           src={candidate.previewUrl}
                           alt={`Ảnh ${candidate.provider || "nguồn mở"} của ${candidate.author}`}

@@ -30,6 +30,10 @@ import { ShippingCompletionModal } from "../components/ShippingCompletionModal";
 import { userService, UserShippingProfile } from "@/lib/api/services/user.service";
 import { validateMarketExchange, buildMarketOrderPayload } from "../marketExchangeLogic";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import {
+  resolveAvatarFrame,
+  resolveUserBadge,
+} from "@/lib/avatar/avatarCustomizationLogic";
 
 const CATEGORIES = [
   { id: "ALL", label: "Tất cả" },
@@ -163,7 +167,12 @@ export const MarketScreen: React.FC = () => {
   const handleEquipToggle = (product: MarketProduct) => {
     const slugOrId = product.slug || String(product.id);
     if (product.category === "AVATAR_FRAME") {
-      if (equippedAvatarFrame === slugOrId) {
+      const isAlreadyEquipped =
+        resolveAvatarFrame(equippedAvatarFrame)?.key === (product.slug || String(product.id)) ||
+        equippedAvatarFrame === slugOrId ||
+        equippedAvatarFrame === String(product.id);
+
+      if (isAlreadyEquipped) {
         equipAvatarFrame(null);
         toast.success("Đã tháo khung avatar");
       } else {
@@ -171,7 +180,12 @@ export const MarketScreen: React.FC = () => {
         toast.success(`Đã trang bị khung "${product.name}"`);
       }
     } else if (product.category === "BADGE") {
-      if (equippedBadge === slugOrId) {
+      const isAlreadyEquipped =
+        resolveUserBadge(equippedBadge)?.key === (product.slug || String(product.id)) ||
+        equippedBadge === slugOrId ||
+        equippedBadge === String(product.id);
+
+      if (isAlreadyEquipped) {
         equipBadge(null);
         toast.success("Đã tháo huy hiệu");
       } else {
@@ -510,9 +524,13 @@ export const MarketScreen: React.FC = () => {
                 const unlocked = isItemUnlocked(product);
                 const isEquipped =
                   (product.category === "AVATAR_FRAME" &&
-                    (equippedAvatarFrame === product.slug || equippedAvatarFrame === String(product.id))) ||
+                    (resolveAvatarFrame(equippedAvatarFrame)?.key === (product.slug || String(product.id)) ||
+                      equippedAvatarFrame === product.slug ||
+                      equippedAvatarFrame === String(product.id))) ||
                   (product.category === "BADGE" &&
-                    (equippedBadge === product.slug || equippedBadge === String(product.id)));
+                    (resolveUserBadge(equippedBadge)?.key === (product.slug || String(product.id)) ||
+                      equippedBadge === product.slug ||
+                      equippedBadge === String(product.id)));
 
                 return (
                   <MarketItemCard

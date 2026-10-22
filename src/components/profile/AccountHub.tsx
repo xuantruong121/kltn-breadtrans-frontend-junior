@@ -52,6 +52,10 @@ import { useApiMutation } from "@/hooks/useApiMutation";
 import axiosClient from "@/lib/api/axiosClient";
 import { userService } from "@/lib/api/services/user.service";
 import { locationService } from "@/lib/api/services/location.service";
+import {
+  resolveAvatarFrame,
+  resolveUserBadge,
+} from "@/lib/avatar/avatarCustomizationLogic";
 
 export type AccountTabKey =
   | "account-profile"
@@ -371,16 +375,42 @@ export function AccountHub() {
 
   // ── State for Inventory Tab ─────────────────────────────────
   const [inventoryCategory, setInventoryCategory] = useState<"all" | "avatar" | "badge" | "boost">("all");
-  const myUnlockedList = useMemo(
-    () => MARKET_ITEMS.filter((item) => unlockedItems.includes(item.id)),
-    [unlockedItems]
-  );
+
+  const marketInventoryQuery = useQuery({
+    queryKey: ["market-inventory"],
+    queryFn: async () => {
+      const res: any = await axiosClient.get("/market/inventory");
+      return res?.data || res;
+    },
+    enabled: !!user && user.role === "STUDENT",
+    staleTime: 60_000,
+  });
+
+  const myUnlockedList = useMemo(() => {
+    const ownedSlugs = marketInventoryQuery.data?.ownedSlugs || [];
+    const ownedIds = (marketInventoryQuery.data?.ownedProductIds || []).map(String);
+    const ownedNames = (marketInventoryQuery.data?.ownedItemNames || []).map((n: string) => n.toLowerCase());
+
+    return MARKET_ITEMS.filter((item) => {
+      if (unlockedItems.includes(item.id)) return true;
+      if (ownedSlugs.includes(item.id)) return true;
+      if (ownedNames.includes(item.name.toLowerCase())) return true;
+      if (item.id === "frame-orange" && ownedIds.includes("2")) return true;
+      if (item.id === "badge-star" && ownedIds.includes("1")) return true;
+      if (item.id === "badge-master" && ownedIds.includes("6")) return true;
+      if (item.id === "frame-crown" && ownedIds.includes("7")) return true;
+      if (item.id === "frame-cyber" && ownedIds.includes("8")) return true;
+      return false;
+    });
+  }, [unlockedItems, marketInventoryQuery.data]);
+
   const filteredInventory = useMemo(() => {
     if (inventoryCategory === "all") return myUnlockedList;
     return myUnlockedList.filter((item) => item.category === inventoryCategory);
   }, [myUnlockedList, inventoryCategory]);
 
-  const activeBadgeItem = MARKET_ITEMS.find((i) => i.id === equippedBadge);
+  const activeBadgeConfig = resolveUserBadge(equippedBadge);
+  const activeFrameConfig = resolveAvatarFrame(equippedAvatarFrame);
 
   // Sidebar Items Definition
   const SIDEBAR_ITEMS: Array<{ id: AccountTabKey; label: string; icon: React.ElementType }> = [
@@ -710,18 +740,14 @@ export function AccountHub() {
 
               <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-2xs space-y-6">
                 {/* Avatar block */}
-                <div className="flex items-center gap-3">
-                  <div className="size-20 sm:size-24 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden font-black text-2xl text-slate-600 dark:text-slate-300">
-                    {formData.avatar ? (
-                      <img
-                        src={formData.avatar}
-                        alt="Avatar"
-                        className="w-full h-full object-cover"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      <span>{getInitials(formData.fullName || user?.email || "BT")}</span>
-                    )}
+                <div className="flex items-center gap-4">
+                  <div className="relative shrink-0 p-1">
+                    <UserAvatarWithFrame
+                      avatarUrl={formData.avatar}
+                      name={formData.fullName || user?.email}
+                      size="xl"
+                      showBadge
+                    />
                   </div>
 
                   <label className="inline-flex min-h-10 items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-750 transition-colors cursor-pointer">
@@ -1077,10 +1103,21 @@ export function AccountHub() {
                       Trang bị đang đeo sẽ hiển thị đồng bộ trong lớp học và bài thi.
                     </p>
                     <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
-                      {activeBadgeItem ? (
+                      {activeFrameConfig ? (
+                        <span className="text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1.5 bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/60">
+                          <Crown size={14} className="text-amber-600 dark:text-amber-400" />
+                          {activeFrameConfig.name}
+                        </span>
+                      ) : (
+                        <span className="text-xs px-3 py-1 rounded-full font-medium bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                          Chưa đeo khung avatar
+                        </span>
+                      )}
+
+                      {activeBadgeConfig ? (
                         <span className="text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1.5 bg-indigo-50 text-indigo-800 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-900/60">
                           <Medal size={14} className="text-indigo-600 dark:text-indigo-400" />
-                          {activeBadgeItem.name}
+                          {activeBadgeConfig.name}
                         </span>
                       ) : (
                         <span className="text-xs px-3 py-1 rounded-full font-medium bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
@@ -1156,8 +1193,8 @@ export function AccountHub() {
                     const isFrame = item.category === "avatar";
                     const isBadge = item.category === "badge";
                     const isEquipped =
-                      (isFrame && equippedAvatarFrame === item.id) ||
-                      (isBadge && equippedBadge === item.id);
+                      (isFrame && activeFrameConfig?.key === item.id) ||
+                      (isBadge && activeBadgeConfig?.key === item.id);
 
                     return (
                       <div
