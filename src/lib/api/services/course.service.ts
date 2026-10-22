@@ -116,7 +116,7 @@ export interface Course {
   curriculum?: CourseCurriculum;
   progress?: CourseProgress | null;
   canAccess?: boolean;
-  accessSource?: "ADMIN" | "PRO_SUBSCRIPTION" | "LEGACY_PURCHASE" | null;
+  accessSource?: "ADMIN" | "PRO_SUBSCRIPTION" | null;
   requiresPro?: boolean;
   isStarted?: boolean;
   isCompleted?: boolean;
@@ -209,7 +209,7 @@ export interface PublicCourseCard {
   teacher?: PublicTeacher;
   curriculumType?: string;
   canAccess: boolean;
-  accessSource: "ADMIN" | "PRO_SUBSCRIPTION" | "LEGACY_PURCHASE" | null;
+  accessSource: "ADMIN" | "PRO_SUBSCRIPTION" | null;
   requiresPro: boolean;
   isSelfPaced: boolean;
   learning?: CourseLearningProfile;
@@ -252,7 +252,7 @@ export interface PublicCourseDetail {
   classes?: PublicClass[];
   curriculum?: CourseCurriculum;
   canAccess: boolean;
-  accessSource: "ADMIN" | "PRO_SUBSCRIPTION" | "LEGACY_PURCHASE" | null;
+  accessSource: "ADMIN" | "PRO_SUBSCRIPTION" | null;
   requiresPro: boolean;
   isSelfPaced: boolean;
   learning?: CourseLearningProfile;

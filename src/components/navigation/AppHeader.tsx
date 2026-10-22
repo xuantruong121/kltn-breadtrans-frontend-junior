@@ -50,6 +50,7 @@ import { resolveEffectivePlanDisplay } from "@/modules/subscription/planLogic";
 import { getNotificationActionLabel, resolveNotificationAction } from "@/lib/notifications/notificationLogic";
 import { useTheme } from "@/lib/theme/useTheme";
 import { BrandLogo } from "@/components/brand";
+import { UserAvatarWithFrame } from "@/components/ui";
 import {
   isExamRoute,
   isSkillsRoute,
@@ -512,20 +513,12 @@ export function AppHeader() {
                   aria-label="Menu tài khoản"
                   className="relative flex size-9 sm:size-auto sm:min-h-11 sm:min-w-11 items-center justify-center sm:gap-1.5 rounded-full bg-white dark:bg-slate-800/90 p-0.5 sm:px-1.5 ring-2 ring-amber-500/60 dark:ring-amber-500/50 shadow-2xs transition-all hover:bg-amber-50 dark:hover:bg-slate-750 hover:ring-amber-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-amber-700 cursor-pointer shrink-0"
                 >
-                  <div className="size-7.5 sm:size-8 rounded-full bg-amber-600 text-white font-black text-xs flex items-center justify-center overflow-hidden shrink-0">
-                    {user?.profile?.avatar ? (
-                      <img
-                        src={user.profile.avatar}
-                        alt="Avatar"
-                        className="w-full h-full object-cover"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : user?.profile?.fullName ? (
-                      user.profile.fullName.charAt(0).toUpperCase()
-                    ) : (
-                      <User size={16} />
-                    )}
-                  </div>
+                  <UserAvatarWithFrame
+                    avatarUrl={user?.profile?.avatar}
+                    name={user?.profile?.fullName || user?.email}
+                    size="sm"
+                    showBadge
+                  />
                   <ChevronDown size={14} className="hidden sm:inline-block text-slate-400 dark:text-slate-300 mr-0.5 shrink-0" />
                   {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-black text-white ring-2 ring-white dark:ring-slate-900">
@@ -557,7 +550,7 @@ export function AppHeader() {
                       <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
 
                       <Link
-                        href="/hub?tab=account-plan"
+                        href="/market"
                         onClick={closeMenus}
                         title={`Số dư bánh mì: ${breads || 0}`}
                         className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
@@ -938,15 +931,12 @@ export function AppHeader() {
                 {user && isStudent && (
                   <div className="rounded-2xl bg-amber-50/80 dark:bg-slate-800/80 border border-amber-200/90 dark:border-slate-700 p-3.5 flex items-center justify-between gap-3 shadow-2xs">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-10 h-10 rounded-full bg-amber-600 text-white font-black text-xs flex items-center justify-center overflow-hidden shrink-0">
-                        {user?.profile?.avatar ? (
-                          <img src={user.profile.avatar} alt="Avatar" className="w-full h-full object-cover" />
-                        ) : user?.profile?.fullName ? (
-                          user.profile.fullName.charAt(0).toUpperCase()
-                        ) : (
-                          <User size={18} />
-                        )}
-                      </div>
+                      <UserAvatarWithFrame
+                        avatarUrl={user?.profile?.avatar}
+                        name={user?.profile?.fullName || user?.email}
+                        size="md"
+                        showBadge
+                      />
                       <div className="min-w-0">
                         <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">{user?.profile?.fullName || user?.email}</p>
                         <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
@@ -954,7 +944,7 @@ export function AppHeader() {
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <Link
-                        href="/hub?tab=account-plan"
+                        href="/market"
                         onClick={closeMenus}
                         className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 px-2.5 py-1.5 rounded-xl text-xs font-black text-amber-900 dark:text-amber-300 shadow-2xs hover:border-amber-400 dark:hover:border-amber-600 transition-colors"
                       >

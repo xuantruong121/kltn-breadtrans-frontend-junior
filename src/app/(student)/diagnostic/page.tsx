@@ -50,9 +50,9 @@ function nowMs() {
 
 const diagnosticDisplayTitle = "Bài đánh giá năng lực đầu vào";
 const diagnosticDisplayDescription =
-  "Bài đánh giá gồm 52 nhiệm vụ (48 câu trắc nghiệm khách quan chấm điểm cùng 4 bài thực hành Nói và Viết) giúp hệ thống xác định điểm xuất phát phù hợp nhất với năng lực của bạn.";
+  "Bài đánh giá gồm 52 nhiệm vụ: 48 câu trắc nghiệm khách quan và 4 bài thực hành Nói, Viết. Kết quả giúp bạn hiểu năng lực hiện tại và chọn bài luyện phù hợp hơn.";
 const diagnosticDisplayGuidance =
-  "Hãy hoàn thành bài đánh giá nghiêm túc. Mỗi học viên chỉ thực hiện bài đánh giá chính thức một lần duy nhất để bảo đảm tính chuẩn hóa.";
+  "Hãy hoàn thành nghiêm túc để nhận nhận xét và gợi ý luyện tập phù hợp. Đây là kết quả tham khảo nội bộ, không phải chứng chỉ tiếng Anh.";
 
 export default function DiagnosticPage() {
   const queryClient = useQueryClient();
@@ -73,6 +73,7 @@ export default function DiagnosticPage() {
   } = useQuery({
     queryKey: ["diagnostic-latest-result"],
     queryFn: diagnosticService.getLatestResult,
+    refetchInterval: (query) => query.state.data?.productivePending ? 3000 : false,
   });
 
   const [started, setStarted] = useState(false);
@@ -782,7 +783,14 @@ function DiagnosticResultView({
   assessment: DiagnosticAssessment;
   result: DiagnosticResult;
 }) {
+  const queryClient = useQueryClient();
   const [reviewFilter, setReviewFilter] = useState<string>("ALL");
+  const retryWriting = useMutation({
+    mutationFn: (questionId: number) =>
+      diagnosticService.retryWriting(assessment.id, result.attemptId, questionId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["diagnostic-latest-result"] }),
+    onError: () => toast.error("Chưa thể xếp hàng chấm lại bài viết. Vui lòng thử sau."),
+  });
 
   const practiceItems = result.practiceRecommendations || [];
 
@@ -823,7 +831,7 @@ function DiagnosticResultView({
         </div>
 
         <h1 className="mt-4 text-3xl font-black text-slate-900 dark:text-slate-100 sm:text-4xl">
-          Mức khởi điểm ước tính: {formatPlacementLevel(result.level)}
+          Mức năng lực tham khảo: {formatPlacementLevel(result.referenceLevel ?? result.level)}
         </h1>
 
         {/* 48 VS 52 CLEAR EXPLANATION */}
@@ -836,7 +844,7 @@ function DiagnosticResultView({
             ({result.percentage}%)
           </p>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 leading-5">
-            Bài đánh giá gồm 52 nhiệm vụ, trong đó 48 câu trắc nghiệm được chấm điểm khách quan trực tiếp (16 Ngữ pháp &amp; Từ vựng, 16 Đọc hiểu, 16 Nghe hiểu) và 4 bài thực hành bổ trợ (2 bài Nói, 2 bài Viết) dùng để ghi nhận bằng chứng năng lực.
+            Mức tham khảo được tính từ 48 câu trắc nghiệm khách quan (16 Ngữ pháp &amp; Từ vựng, 16 Đọc hiểu, 16 Nghe hiểu). Hai bài Nói và hai bài Viết được nhận xét riêng để gợi ý luyện tập; chúng không thay đổi mức này.
           </p>
         </div>
 
@@ -849,11 +857,13 @@ function DiagnosticResultView({
                 <span className="font-bold">Nói: </span>
                 {result.speakingEvidenceCount && result.speakingEvidenceCount > 0
                   ? `Đã ghi nhận ${result.speakingEvidenceCount}/2 nhiệm vụ${result.speakingScore !== null ? ` (điểm ước lượng: ${result.speakingScore}/100, độ tin cậy: ${result.speakingEvidenceConfidence === "FULL_DIAGNOSTIC_SAMPLE" ? "đầy đủ mẫu" : "một phần"})` : ""}.`
-                  : "Chưa đủ dữ liệu để đưa ra nhận định; điểm xếp lớp hiện dựa trên 48 câu trắc nghiệm khách quan."}
+                  : "Đang chờ hoặc chưa đủ dữ liệu để nhận xét kỹ năng Nói; mức năng lực tham khảo vẫn dựa trên 48 câu trắc nghiệm khách quan."}
               </p>
               <p>
                 <span className="font-bold">Viết: </span>
-                Đã ghi nhận 2 nhiệm vụ tự luận vào hồ sơ học tập để theo dõi tiến độ.
+                {result.writingFeedback?.some((item) => item.status === "GRADED")
+                  ? "Đã có nhận xét tự động cho bài viết của bạn."
+                  : "Bài viết đang được nhận xét tự động; kết quả sẽ tự cập nhật khi hoàn tất."}
               </p>
             </div>
             {result.speakingResponses?.some((r) => r.status === "GRADING_FAILED") && (
@@ -863,6 +873,24 @@ function DiagnosticResultView({
             )}
           </div>
         ) : null}
+
+        {result.writingFeedback && result.writingFeedback.length > 0 && (
+          <div className="mt-4 space-y-3">
+            {result.writingFeedback.map((item, index) => (
+              <article key={item.questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-900">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="font-black text-slate-900 dark:text-slate-100">Nhận xét bài Viết {index + 1}</h3>
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                    {item.status === "GRADED" ? `Điểm tham khảo: ${item.score}/5` : item.status === "GRADING_FAILED" ? "Chưa có nhận xét" : "Đang chấm"}
+                  </span>
+                </div>
+                {item.feedback && <p className="mt-2 leading-6 text-slate-700 dark:text-slate-300">{item.feedback}</p>}
+                {item.suggestions.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-600 dark:text-slate-400">{item.suggestions.map((suggestion) => <li key={suggestion}>{suggestion}</li>)}</ul>}
+                {item.status === "GRADING_FAILED" && <button type="button" onClick={() => retryWriting.mutate(item.questionId)} disabled={retryWriting.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-violet-300 px-3 text-xs font-bold text-violet-700 transition hover:bg-violet-50 disabled:opacity-50 dark:border-violet-800 dark:text-violet-300"><RotateCcw size={14} /> Chấm lại</button>}
+              </article>
+            ))}
+          </div>
+        )}
 
         {/* Skill Profiles Breakdown */}
         {result.skillProfiles && result.skillProfiles.length > 0 && (

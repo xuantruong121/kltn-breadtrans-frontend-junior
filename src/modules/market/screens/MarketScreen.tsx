@@ -53,6 +53,25 @@ export const MarketScreen: React.FC = () => {
   const [pendingItemName, setPendingItemName] = useState<string>("vật phẩm này");
   const [productToExchange, setProductToExchange] = useState<MarketProduct | null>(null);
   const [exchangeError, setExchangeError] = useState<string | null>(null);
+  // One stable operation id per checkout attempt — reused across retries of
+  // THE SAME confirm dialog (network error, click again) so the backend's
+  // idempotency guard can actually dedupe them, but regenerated whenever a
+  // genuinely new exchange starts so a later, separate purchase is never
+  // silently treated as "already applied".
+  const exchangeIdempotencyKeyRef = useRef<{
+    productKey: string;
+    key: string;
+  } | null>(null);
+  const getExchangeIdempotencyKey = (product: MarketProduct) => {
+    const productKey = String(product.slug || product.id);
+    if (exchangeIdempotencyKeyRef.current?.productKey !== productKey) {
+      exchangeIdempotencyKeyRef.current = {
+        productKey,
+        key: crypto.randomUUID(),
+      };
+    }
+    return exchangeIdempotencyKeyRef.current.key;
+  };
   const triggerButtonRef = useRef<HTMLElement | null>(null);
 
   const {
@@ -217,6 +236,7 @@ export const MarketScreen: React.FC = () => {
 
   const handleCancelExchange = () => {
     if (isSubmitting) return;
+    exchangeIdempotencyKeyRef.current = null;
     setProductToExchange(null);
     setExchangeError(null);
     triggerButtonRef.current?.focus();
@@ -232,9 +252,16 @@ export const MarketScreen: React.FC = () => {
       await axiosClient.post(
         "/market/orders",
         buildMarketOrderPayload(productToExchange),
-        { headers: { "Idempotency-Key": crypto.randomUUID() } },
+        {
+          headers: {
+            "Idempotency-Key": getExchangeIdempotencyKey(productToExchange),
+          },
+        },
       );
 
+      // Success — the next exchange (even of the same product, another day)
+      // must get a fresh operation id, not reuse this one.
+      exchangeIdempotencyKeyRef.current = null;
       unlockItem(productToExchange.slug || String(productToExchange.id));
 
       const isPhysical =
@@ -282,53 +309,40 @@ export const MarketScreen: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">
-      {/* HEADER BANNER */}
-      <div className="relative overflow-hidden rounded-3xl border border-amber-200/80 bg-gradient-to-br from-amber-500/10 via-amber-100/40 to-white dark:border-amber-900/40 dark:from-amber-950/40 dark:via-slate-900 dark:to-slate-900 p-6 sm:p-8">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-xl">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/80 bg-white/80 dark:border-amber-800/60 dark:bg-slate-900/80 px-3 py-1 text-xs font-bold text-amber-900 dark:text-amber-300 shadow-2xs backdrop-blur-xs">
-              <Wheat size={14} className="text-amber-600 dark:text-amber-400" />
-              <span>Cửa hàng phần thưởng BreadTrans</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-              Đổi quà từ Bánh Mì tích lũy
-            </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Hoàn thành các bài tập rèn kỹ năng và đề thi TOEIC để nhận Bánh Mì, sau đó mở khóa các vật phẩm hỗ trợ học tập và quà tặng gửi tận nhà.
+      {/* PAGE TITLE */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1.5 max-w-xl">
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+            Cửa hàng Bánh Mì
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+            Hoàn thành bài tập và đề thi TOEIC để nhận Bánh Mì, rồi đổi lấy vật phẩm hỗ trợ học tập hoặc quà gửi tận nhà.
+          </p>
+        </div>
+
+        {/* User Balance or Guest Prompt */}
+        {!isGuest ? (
+          <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 px-4 py-3 shrink-0">
+            <span className="text-[11px] text-slate-400">Số dư Bánh Mì</span>
+            <p className="flex items-center gap-1.5 text-2xl font-semibold text-slate-900 dark:text-slate-100 leading-tight">
+              {(balanceData?.totalBanh || 0).toLocaleString("vi-VN")}
+              <Wheat size={18} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
             </p>
           </div>
-
-          {/* User Balance Card or Guest Prompt */}
-          {!isGuest ? (
-            <div className="flex items-center gap-3.5 rounded-2xl border border-amber-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-xs shrink-0">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400">
-                <Wheat size={24} aria-hidden="true" />
-              </div>
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Số dư Bánh Mì
-                </span>
-                <p className="text-2xl font-black text-amber-900 dark:text-amber-400 leading-tight">
-                  {(balanceData?.totalBanh || 0).toLocaleString("vi-VN")}
-                  <span className="text-xs font-semibold text-slate-500 ml-1">bánh</span>
-                </p>
-              </div>
+        ) : (
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 px-4 py-3 shrink-0">
+            <div>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-200">Bạn đang duyệt ở chế độ khách</span>
+              <p className="text-[11px] text-slate-400">Đăng nhập để tích lũy Bánh Mì và nhận quà.</p>
             </div>
-          ) : (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 rounded-2xl border border-amber-200/80 bg-white/90 dark:border-slate-800 dark:bg-slate-900 p-4 shadow-xs shrink-0">
-              <div>
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-200">Bạn đang duyệt ở chế độ Khách</span>
-                <p className="text-[11px] text-slate-500">Đăng nhập để tích lũy Bánh Mì và nhận quà.</p>
-              </div>
-              <Link
-                href="/login?redirect=/market"
-                className="inline-flex items-center justify-center rounded-xl bg-amber-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-amber-700 transition-colors shrink-0"
-              >
-                Đăng nhập ngay
-              </Link>
-            </div>
-          )}
-        </div>
+            <Link
+              href="/login?redirect=/market"
+              className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 active:scale-[0.97] transition shadow-sm shadow-blue-500/25 shrink-0"
+            >
+              Đăng nhập ngay
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* TOP NAVIGATION TABS & QUICK LINKS */}
@@ -340,7 +354,7 @@ export const MarketScreen: React.FC = () => {
             onClick={() => setActiveTab("shop")}
             className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition-colors cursor-pointer ${
               activeTab === "shop"
-                ? "bg-amber-600 text-white shadow-2xs"
+                ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs"
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/60"
             }`}
           >
@@ -354,7 +368,7 @@ export const MarketScreen: React.FC = () => {
               onClick={() => setActiveTab("orders")}
               className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition-colors cursor-pointer ${
                 activeTab === "orders"
-                  ? "bg-amber-600 text-white shadow-2xs"
+                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs"
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/60"
               }`}
             >
@@ -399,7 +413,7 @@ export const MarketScreen: React.FC = () => {
                   onClick={() => setSelectedCategory(cat.id)}
                   className={`rounded-xl px-3.5 py-2 text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
                     selectedCategory === cat.id
-                      ? "bg-slate-900 text-white dark:bg-amber-500 dark:text-slate-950 shadow-2xs"
+                      ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs"
                       : "bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:text-slate-900 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:text-slate-200"
                   }`}
                 >
@@ -437,7 +451,7 @@ export const MarketScreen: React.FC = () => {
               {[...Array(6)].map((_, i) => (
                 <div
                   key={i}
-                  className="animate-pulse rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 space-y-4"
+                  className="animate-pulse rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 space-y-4"
                 >
                   <div className="flex justify-between">
                     <div className="h-4 w-16 bg-slate-100 dark:bg-slate-800 rounded" />
@@ -455,7 +469,7 @@ export const MarketScreen: React.FC = () => {
             </div>
           ) : isProductsError ? (
             /* Error State */
-            <div className="rounded-2xl border border-rose-200 bg-rose-50/50 dark:border-rose-900/60 dark:bg-rose-950/40 p-8 text-center space-y-3">
+            <div className="rounded-lg border border-rose-200 bg-rose-50/50 dark:border-rose-900/60 dark:bg-rose-950/40 p-8 text-center space-y-3">
               <AlertCircle size={32} className="mx-auto text-rose-500" />
               <h3 className="text-base font-bold text-rose-900 dark:text-rose-200">Không thể tải danh sách vật phẩm</h3>
               <p className="text-xs text-rose-700 dark:text-rose-300 max-w-sm mx-auto">
@@ -471,7 +485,7 @@ export const MarketScreen: React.FC = () => {
             </div>
           ) : filteredProducts.length === 0 ? (
             /* Empty State */
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-12 text-center space-y-3">
+            <div className="rounded-lg border border-dashed border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-12 text-center space-y-3">
               <ShoppingBag size={36} className="mx-auto text-slate-300 dark:text-slate-600" />
               <h3 className="text-base font-bold text-slate-700 dark:text-slate-200">Không tìm thấy vật phẩm</h3>
               <p className="text-xs text-slate-400 max-w-sm mx-auto">
@@ -520,7 +534,7 @@ export const MarketScreen: React.FC = () => {
 
       {/* TAB CONTENT: ORDERS */}
       {!isGuest && activeTab === "orders" && (
-        <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-5">
+        <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-5">
           <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Lịch sử đổi quà của bạn</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -571,7 +585,7 @@ export const MarketScreen: React.FC = () => {
                           Chi phí
                         </span>
                         <span className="text-sm font-bold text-amber-900 dark:text-amber-400">
-                          {order.totalPrice.toLocaleString("vi-VN")} Bánh Mì
+                          {order.totalBanh.toLocaleString("vi-VN")} Bánh Mì
                         </span>
                       </div>
 

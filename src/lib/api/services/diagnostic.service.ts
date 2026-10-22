@@ -64,17 +64,17 @@ export interface DiagnosticResult {
   totalTaskCount?: number;
   percentage: number;
   level: string;
+  referenceLevel?: string;
   objectiveTotalCount?: number;
   productiveTaskCount?: number;
   productiveUnavailable?: boolean;
+  productivePending?: boolean;
   objectiveCoreScore?: number;
-  objectivePlacementBand?: string;
   speakingEvidenceCount?: number;
   speakingScore?: number | null;
   speakingEvidenceConfidence?: string;
-  finalEvidenceScore?: number;
-  finalEstimatedBand?: string;
   speakingResponses?: DiagnosticSpeakingResponse[];
+  writingFeedback?: DiagnosticWritingFeedback[];
   submittedAt?: string;
   completedAt?: string;
   skillProfiles?: DiagnosticSkillProfile[];
@@ -101,6 +101,18 @@ export interface DiagnosticSpeakingResponse {
   durationMs?: number | null;
   score?: number | null;
   failureReason?: string | null;
+}
+
+export interface DiagnosticWritingFeedback {
+  questionId: number;
+  status: "QUEUED" | "GRADING" | "GRADED" | "GRADING_FAILED";
+  answer: string;
+  score: number | null;
+  feedback: string | null;
+  suggestions: string[];
+  provider: string | null;
+  failureReason: string | null;
+  gradedAt: string | null;
 }
 
 export interface DiagnosticAssessment {
@@ -170,5 +182,13 @@ export const diagnosticService = {
   ): Promise<DiagnosticSpeakingResponse> =>
     axiosClient.post(
       `/diagnostic/${assessmentId}/attempts/${attemptId}/speaking/${questionId}/skip`,
+    ),
+  retryWriting: (
+    assessmentId: number,
+    attemptId: number,
+    questionId: number,
+  ): Promise<{ questionId: number; status: "QUEUED" }> =>
+    axiosClient.post(
+      `/diagnostic/${assessmentId}/attempts/${attemptId}/writing/${questionId}/retry`,
     ),
 };

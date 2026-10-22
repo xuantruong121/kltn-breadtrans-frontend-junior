@@ -1,0 +1,3198 @@
+{
+ "url": "http://localhost:3000/admin/currency",
+ "at": "2026-10-22T09:09:42.145Z",
+ "allow": [],
+ "viewports": [
+  {
+   "width": 1440,
+   "height": 900,
+   "load": "load",
+   "screens": 8,
+   "filled": [
+    0.87,
+    0.71,
+    0.61,
+    0.6,
+    0.63,
+    0.6,
+    0.52,
+    0.86
+   ],
+   "motion": {
+    "elements": 118,
+    "css": 2,
+    "transitions": 115,
+    "scripted": 1,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "page": {
+     "height": 7142,
+     "screens": 7.9,
+     "words": 2097,
+     "img": 3,
+     "video": 0,
+     "canvas": 0,
+     "svg": 81,
+     "sections": 9,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [
+      "🍞"
+     ],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Tự học Tiếng Anh theo lộ trình, chinh phục từng mục tiêu cùng Gia sư AI thông minh",
+     "words": 18,
+     "chars": 82,
+     "lines": 4,
+     "size": 52,
+     "vw": 3.6,
+     "font": "Quicksand",
+     "weight": 900,
+     "tracking": 0,
+     "leading": 1.18,
+     "top": 179,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Tự học Tiếng Anh theo lộ trình, chinh phục từng mục tiêu cùng Gia sư AI thông minh",
+     "words": 18,
+     "lines": 4,
+     "size": 52,
+     "font": "Quicksand"
+    },
+    "headings": [
+     {
+      "text": "Tự học Tiếng Anh theo lộ trình, chinh phục từng mục tiêu cùng Gia sư AI thông minh",
+      "words": 18,
+      "chars": 82,
+      "lines": 4,
+      "size": 52,
+      "vw": 3.6,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.18,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.48,
+      "top": 179,
+      "gradientText": true,
+      "tag": "h1",
+      "kind": "heading"
+     },
+     {
+      "text": "Mọi công cụ bạn cần để làm chủ tiếng Anh & mục tiêu chứng chỉ",
+      "words": 15,
+      "chars": 61,
+      "lines": 2,
+      "size": 36,
+      "vw": 2.5,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.36,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.62,
+      "top": 915,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Ước Tính Lộ Trình & Mục Tiêu Chứng Chỉ Của Bạn",
+      "words": 11,
+      "chars": 46,
+      "lines": 2,
+      "size": 30,
+      "vw": 2.1,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.36,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.38,
+      "top": 2227,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "4 Bước Đơn Giản Để Bứt Phá Năng Lực Tiếng Anh",
+      "words": 11,
+      "chars": 45,
+      "lines": 1,
+      "size": 36,
+      "vw": 2.5,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.36,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.59,
+      "top": 2733,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "01",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 30,
+      "vw": 2.1,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.02,
+      "top": 2895,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "02",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 30,
+      "vw": 2.1,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.02,
+      "top": 2895,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "03",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 30,
+      "vw": 2.1,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.02,
+      "top": 2895,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "04",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 30,
+      "vw": 2.1,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.03,
+      "top": 2895,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "Khám phá các lộ trình học tiêu biểu",
+      "words": 8,
+      "chars": 35,
+      "lines": 1,
+      "size": 36,
+      "vw": 2.5,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.36,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.43,
+      "top": 3320,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Học viên nói gì về trải nghiệm cùng BreadTrans?",
+      "words": 9,
+      "chars": 47,
+      "lines": 1,
+      "size": 36,
+      "vw": 2.5,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.36,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.58,
+      "top": 4207,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Tại sao BreadTrans là lựa chọn thông minh hơn?",
+      "words": 9,
+      "chars": 46,
+      "lines": 1,
+      "size": 36,
+      "vw": 2.5,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.36,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.58,
+      "top": 4768,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Câu hỏi thường gặp trước khi bắt đầu",
+      "words": 8,
+      "chars": 36,
+      "lines": 1,
+      "size": 30,
+      "vw": 2.1,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.36,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.38,
+      "top": 5512,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Sẵn sàng bứt phá trình độ Tiếng Anh của bạn ngay hôm nay?",
+      "words": 13,
+      "chars": 57,
+      "lines": 2,
+      "size": 36,
+      "vw": 2.5,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.36,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.53,
+      "top": 6286,
+      "tag": "h2",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 13,
+     "maxLines": 4,
+     "over2Lines": 1,
+     "statements": 0,
+     "centered": 6,
+     "medianWords": 9,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Quicksand",
+       "share": 1,
+       "mono": false
+      }
+     ],
+     "familyCount": 1,
+     "sizes": [
+      10,
+      11,
+      12,
+      14,
+      16,
+      18,
+      20,
+      24,
+      30,
+      36,
+      52
+     ],
+     "sizeCount": 11,
+     "notLoaded": [],
+     "body": {
+      "font": "Quicksand",
+      "size": 14,
+      "leading": 1.63,
+      "weight": 600,
+      "tracking": 0,
+      "contrast": null
+     },
+     "measureChars": 47,
+     "max": {
+      "size": 52,
+      "vw": 3.6,
+      "font": "Quicksand",
+      "text": "Tự học Tiếng Anh theo lộ trình, chinh ph"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 16,
+     "microLabelShare": 0.031,
+     "microSamples": [
+      "BreadTrans AI Tutor",
+      "Trụ Cột Đột Phá",
+      "Công Cụ Tương Tác Miễn Phí",
+      "Hành Trình Chinh Phục",
+      "Giáo Trình Thực Chiến",
+      "Câu Chuyện Thành Công"
+     ],
+     "upperShare": 0.05,
+     "centerShare": 0.19,
+     "smallText": 99
+    },
+    "eyebrows": [
+     {
+      "text": "Trụ Cột Đột Phá",
+      "above": "Mọi công cụ bạn cần để làm chủ tiếng Anh",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 867
+     },
+     {
+      "text": "Công Cụ Tương Tác Miễn Phí",
+      "above": "Ước Tính Lộ Trình & Mục Tiêu Chứng Chỉ C",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 2181
+     },
+     {
+      "text": "Hành Trình Chinh Phục",
+      "above": "4 Bước Đơn Giản Để Bứt Phá Năng Lực Tiến",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 2685
+     },
+     {
+      "text": "Giáo Trình Thực Chiến",
+      "above": "Khám phá các lộ trình học tiêu biểu",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 3276
+     },
+     {
+      "text": "Câu Chuyện Thành Công",
+      "above": "Học viên nói gì về trải nghiệm cùng Brea",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 4159
+     },
+     {
+      "text": "Sự Khác Biệt",
+      "above": "Tại sao BreadTrans là lựa chọn thông min",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 4720
+     },
+     {
+      "text": "Hỗ Trợ & Giải Đáp",
+      "above": "Câu hỏi thường gặp trước khi bắt đầu",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 5464
+     },
+     {
+      "text": "Khởi Đầu Vững Chắc Cùng BreadTrans",
+      "above": "Sẵn sàng bứt phá trình độ Tiếng Anh của ",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 6238
+     }
+    ],
+    "numbered": [
+     {
+      "text": "01",
+      "size": 30,
+      "top": 2895
+     },
+     {
+      "text": "02",
+      "size": 30,
+      "top": 2895
+     },
+     {
+      "text": "03",
+      "size": 30,
+      "top": 2895
+     },
+     {
+      "text": "04",
+      "size": 30,
+      "top": 2895
+     }
+    ],
+    "color": {
+     "bodyBg": "#0b1120",
+     "bodyBgHsl": {
+      "h": 223,
+      "s": 0.49,
+      "l": 0.08
+     },
+     "dark": true,
+     "sectionBgs": [
+      {
+       "color": "#0b1120",
+       "top": 0,
+       "hsl": {
+        "h": 223,
+        "s": 0.49,
+        "l": 0.08
+       }
+      },
+      {
+       "color": "#0f172b",
+       "top": 4889,
+       "hsl": {
+        "h": 223,
+        "s": 0.48,
+        "l": 0.11
+       }
+      },
+      {
+       "color": "#020618",
+       "top": 6732,
+       "hsl": {
+        "h": 229,
+        "s": 0.85,
+        "l": 0.05
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#cad5e2",
+       "share": 0.38
+      },
+      {
+       "color": "#90a1b9",
+       "share": 0.22
+      },
+      {
+       "color": "#f1f5f9",
+       "share": 0.15
+      },
+      {
+       "color": "#ffd230",
+       "share": 0.08
+      },
+      {
+       "color": "#ffffff",
+       "share": 0.04
+      }
+     ],
+     "button": {
+      "bg": "#e17100",
+      "hsl": {
+       "h": 30,
+       "s": 1,
+       "l": 0.44
+      },
+      "fg": "#ffffff"
+     },
+     "lowContrast": [
+      {
+       "text": "Đăng ký",
+       "ratio": 3.2,
+       "need": 4.5,
+       "size": 14,
+       "fg": "#ffffff",
+       "bg": "#e17100"
+      },
+      {
+       "text": "miễn phí",
+       "ratio": 3.2,
+       "need": 4.5,
+       "size": 14,
+       "fg": "#ffffff",
+       "bg": "#e17100"
+      },
+      {
+       "text": "Bắt đầu học",
+       "ratio": 3.2,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#ffffff",
+       "bg": "#e17100"
+      },
+      {
+       "text": "Bắt đầu học",
+       "ratio": 3.2,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#ffffff",
+       "bg": "#e17100"
+      },
+      {
+       "text": "Bắt đầu học",
+       "ratio": 3.2,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#ffffff",
+       "bg": "#e17100"
+      },
+      {
+       "text": "Bắt đầu học",
+       "ratio": 3.2,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#ffffff",
+       "bg": "#e17100"
+      }
+     ]
+    },
+    "buttons": {
+     "count": 22,
+     "inHero": 4,
+     "radius": 12,
+     "height": 32,
+     "withShadow": 1,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Đăng nhập",
+      "Đăng ký miễn phí",
+      "Bắt đầu học miễn phí ngay",
+      "Làm test chẩn đoán 5 phút"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 51,
+     "shadowOverlay": 4,
+     "shadowSamples": [
+      "div.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "button.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "button.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "div.relative.bg-white → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0"
+     ],
+     "gradients": 8,
+     "scrims": 0,
+     "gradientSamples": [
+      "section.relative.overflow-hidden → linear-gradient(oklab(0.207998 -0.00311178 -0.0418783 / 0.9) 0%, lab(7.78673 1.82346 -15.0537) 50%, rgb(11, 17",
+      "div.absolute.inset-0 → linear-gradient(to right top, lab(86.4156 6.13147 78.3961) 0%, lab(70.0429 42.5156 75.8207) 100%)",
+      "div.md:col-span-2.bg-gradient-to-br → linear-gradient(to right bottom, lab(7.78673 1.82346 -15.0537) 0%, lab(7.78673 1.82346 -15.0537) 50%, rgb(20, ",
+      "div.bg-gradient-to-br.from-blue-50/50 → linear-gradient(to right bottom, lab(7.78673 1.82346 -15.0537) 0%, lab(7.78673 1.82346 -15.0537) 50%, rgb(20, "
+     ],
+     "gradientText": 1,
+     "hairlines": 19,
+     "hairlineSamples": [
+      "header.sticky.top-0 1440px",
+      "section.relative.overflow-hidden 1440px",
+      "div.flex.items-center 419px",
+      "div.pt-2.border-t 419px",
+      "div.pt-6.mt-6 737px"
+     ],
+     "outlinedBoxes": 20,
+     "dashed": 0,
+     "blurred": 1,
+     "roundedBoxes": 31,
+     "boxRadius": 24,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": [
+      {
+       "count": 3,
+       "iconTopped": false,
+       "rounded": true,
+       "top": 1388
+      },
+      {
+       "count": 4,
+       "iconTopped": true,
+       "rounded": true,
+       "top": 2866
+      },
+      {
+       "count": 4,
+       "iconTopped": true,
+       "rounded": true,
+       "top": 3438
+      },
+      {
+       "count": 3,
+       "iconTopped": true,
+       "rounded": true,
+       "top": 4332
+      }
+     ]
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 14,
+     "fixed": true,
+     "height": 81,
+     "floatingPill": false,
+     "blur": true
+    },
+    "fontsLoaded": [
+     "quicksand",
+     "__nextjs-geist"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "pageH": 7142,
+    "margins": {
+     "left": 112,
+     "right": 133
+    },
+    "sections": [
+     {
+      "sel": "main.flex-1.min-w-0",
+      "tag": "main",
+      "top": 81,
+      "height": 6651,
+      "words": 1784,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Tự học Tiếng Anh theo lộ trình, chinh phục từng mụ",
+       "size": 52,
+       "tag": "h1"
+      },
+      "left": 112,
+      "right": 111,
+      "textLeft": 112,
+      "textRight": 111,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "footer.w-full.border-t",
+      "tag": "footer",
+      "top": 6732,
+      "height": 410,
+      "words": 141,
+      "media": 0,
+      "middle": 92,
+      "heading": {
+       "text": "Bread",
+       "size": 24,
+       "tag": "span"
+      },
+      "left": 40,
+      "right": 41,
+      "textLeft": 40,
+      "textRight": 41,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Tự học Tiếng Anh theo lộ trình, chinh phục từng mục tiêu cùng Gia sư AI thông mi",
+      "size": 52,
+      "top": 179,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [
+     {
+      "text": "miễn phí",
+      "side": "right",
+      "px": 2
+     }
+    ],
+    "edges": [
+     {
+      "x": 141,
+      "n": 11
+     },
+     {
+      "x": 761,
+      "n": 6
+     },
+     {
+      "x": 112,
+      "n": 5
+     },
+     {
+      "x": 554,
+      "n": 3
+     },
+     {
+      "x": 968,
+      "n": 3
+     },
+     {
+      "x": 152,
+      "n": 2
+     },
+     {
+      "x": 451,
+      "n": 2
+     },
+     {
+      "x": 1071,
+      "n": 2
+     },
+     {
+      "x": 197,
+      "n": 1
+     },
+     {
+      "x": 325,
+      "n": 1
+     },
+     {
+      "x": 610,
+      "n": 1
+     },
+     {
+      "x": 798,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 40,
+    "bodySize": 14,
+    "stage": false,
+    "explains": true,
+    "slivers": [],
+    "voidShare": 0.14,
+    "voidBox": {
+     "x": 420,
+     "y": 660,
+     "w": 1020,
+     "h": 180
+    }
+   },
+   "app": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "dark": true,
+    "ground": "#0b1120",
+    "sidebar": null,
+    "topbar": {
+     "h": 81
+    },
+    "canvas": {
+     "left": 112,
+     "right": 133
+    },
+    "hero": {
+     "text": "Tự học Tiếng Anh theo lộ trình, chinh phục từng mục tiêu cùng Gia sư AI thông minh",
+     "words": 18,
+     "chars": 82,
+     "lines": 4,
+     "size": 52,
+     "vw": 3.6,
+     "font": "Quicksand",
+     "weight": 900,
+     "tracking": 0,
+     "leading": 1.18,
+     "top": 179,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 21,
+     "firstScreen": 2,
+     "ragged": [],
+     "voids": [
+      {
+       "gap": 49,
+       "at": 3947,
+       "panel": "Chỉnh Phát Âm Chuẩn Âm Vị IPA & Ngữ Điệu"
+      },
+      {
+       "gap": 46,
+       "at": 4488,
+       "panel": "Lê Hoàng Đức"
+      }
+     ]
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 36,
+     "radii": [
+      [
+       24,
+       20
+      ],
+      [
+       16,
+       6
+      ],
+      [
+       12,
+       6
+      ],
+      [
+       0,
+       4
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 48,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 13,
+     "hues": 6,
+     "samples": [
+      {
+       "hue": 218,
+       "size": 44,
+       "radius": "16px"
+      },
+      {
+       "hue": 30,
+       "size": 44,
+       "radius": "12px"
+      },
+      {
+       "hue": 14,
+       "size": 24,
+       "radius": "8px"
+      },
+      {
+       "hue": 263,
+       "size": 56,
+       "radius": "16px"
+      }
+     ]
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 5,
+     "tabularShare": 0,
+     "kpiMax": 30
+    },
+    "rows": {
+     "count": 5,
+     "median": 81
+    },
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.29,
+     "tiny": 6,
+     "tinySamples": [
+      "Phát âm 10px",
+      "Trôi chảy 10px",
+      "Mục tiêu format 10px",
+      "Sau 70 ngày 10px"
+     ],
+     "sizes": [
+      10,
+      11,
+      12,
+      14,
+      16,
+      18,
+      20,
+      24,
+      30,
+      36,
+      52
+     ]
+    },
+    "title": {
+     "text": "Tự học Tiếng Anh theo lộ trình, chinh phục từng mục tiêu cùn",
+     "size": 52,
+     "top": 179
+    },
+    "colourShare": 0.043
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 768,
+   "height": 1024,
+   "load": "load",
+   "screens": 10,
+   "filled": [
+    1,
+    0.68,
+    0.85,
+    0.76,
+    0.66,
+    0.72,
+    0.73,
+    0.61,
+    0.84,
+    0.85
+   ],
+   "motion": {
+    "elements": 105,
+    "css": 2,
+    "transitions": 102,
+    "scripted": 1,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "page": {
+     "height": 9308,
+     "screens": 9.1,
+     "words": 2065,
+     "img": 3,
+     "video": 0,
+     "canvas": 0,
+     "svg": 81,
+     "sections": 9,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [
+      "🍞"
+     ],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Tự học Tiếng Anh theo lộ trình, chinh phục từng mục tiêu cùng Gia sư AI thông minh",
+     "words": 18,
+     "chars": 82,
+     "lines": 3,
+     "size": 48,
+     "vw": 6.3,
+     "font": "Quicksand",
+     "weight": 900,
+     "tracking": 0,
+     "leading": 1.18,
+     "top": 179,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Tự học Tiếng Anh theo lộ trình, chinh phục từng mục tiêu cùng Gia sư AI thông minh",
+     "words": 18,
+     "lines": 3,
+     "size": 48,
+     "font": "Quicksand"
+    },
+    "headings": [
+     {
+      "text": "Tự học Tiếng Anh theo lộ trình, chinh phục từng mục tiêu cùng Gia sư AI thông minh",
+      "words": 18,
+      "chars": 82,
+      "lines": 3,
+      "size": 48,
+      "vw": 6.3,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.18,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.94,
+      "top": 179,
+      "gradientText": true,
+      "tag": "h1",
+      "kind": "heading"
+     },
+     {
+      "text": "Mọi công cụ bạn cần để làm chủ tiếng Anh & mục tiêu chứng chỉ",
+      "words": 15,
+      "chars": 61,
+      "lines": 2,
+      "size": 30,
+      "vw": 3.9,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.36,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.94,
+      "top": 1379,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Ước Tính Lộ Trình & Mục Tiêu Chứng Chỉ Của Bạn",
+      "words": 11,
+      "chars": 46,
+      "lines": 2,
+      "size": 30,
+      "vw": 3.9,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.36,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.83,
+      "top": 2966,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "4 Bước Đơn Giản Để Bứt Phá Năng Lực Tiếng Anh",
+      "words": 11,
+      "chars": 45,
+      "lines": 1,
+      "size": 30,
+      "vw": 3.9,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.36,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.91,
+      "top": 3885,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "01",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 30,
+      "vw": 3.9,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.04,
+      "top": 4039,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "02",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 30,
+      "vw": 3.9,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.05,
+      "top": 4039,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "03",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 30,
+      "vw": 3.9,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.04,
+      "top": 4346,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "04",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 30,
+      "vw": 3.9,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.05,
+      "top": 4346,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "Khám phá các lộ trình học tiêu biểu",
+      "words": 8,
+      "chars": 35,
+      "lines": 2,
+      "size": 30,
+      "vw": 3.9,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.36,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.52,
+      "top": 4724,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Học viên nói gì về trải nghiệm cùng BreadTrans?",
+      "words": 9,
+      "chars": 47,
+      "lines": 1,
+      "size": 30,
+      "vw": 3.9,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.36,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.91,
+      "top": 5785,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Tại sao BreadTrans là lựa chọn thông minh hơn?",
+      "words": 9,
+      "chars": 46,
+      "lines": 1,
+      "size": 30,
+      "vw": 3.9,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.36,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.91,
+      "top": 6504,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Câu hỏi thường gặp trước khi bắt đầu",
+      "words": 8,
+      "chars": 36,
+      "lines": 1,
+      "size": 30,
+      "vw": 3.9,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.36,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.7,
+      "top": 7377,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Sẵn sàng bứt phá trình độ Tiếng Anh của bạn ngay hôm nay?",
+      "words": 13,
+      "chars": 57,
+      "lines": 2,
+      "size": 36,
+      "vw": 4.7,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.36,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.81,
+      "top": 8174,
+      "tag": "h2",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 13,
+     "maxLines": 3,
+     "over2Lines": 1,
+     "statements": 0,
+     "centered": 6,
+     "medianWords": 9,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Quicksand",
+       "share": 1,
+       "mono": false
+      }
+     ],
+     "familyCount": 1,
+     "sizes": [
+      10,
+      11,
+      12,
+      14,
+      16,
+      18,
+      20,
+      24,
+      30,
+      36,
+      48
+     ],
+     "sizeCount": 11,
+     "notLoaded": [],
+     "body": {
+      "font": "Quicksand",
+      "size": 14,
+      "leading": 1.63,
+      "weight": 600,
+      "tracking": 0,
+      "contrast": null
+     },
+     "measureChars": 24,
+     "max": {
+      "size": 48,
+      "vw": 6.3,
+      "font": "Quicksand",
+      "text": "Tự học Tiếng Anh theo lộ trình, chinh ph"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 16,
+     "microLabelShare": 0.032,
+     "microSamples": [
+      "BreadTrans AI Tutor",
+      "Trụ Cột Đột Phá",
+      "Công Cụ Tương Tác Miễn Phí",
+      "Hành Trình Chinh Phục",
+      "Giáo Trình Thực Chiến",
+      "Câu Chuyện Thành Công"
+     ],
+     "upperShare": 0.05,
+     "centerShare": 0.19,
+     "smallText": 97
+    },
+    "eyebrows": [
+     {
+      "text": "Trụ Cột Đột Phá",
+      "above": "Mọi công cụ bạn cần để làm chủ tiếng Anh",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 1331
+     },
+     {
+      "text": "Công Cụ Tương Tác Miễn Phí",
+      "above": "Ước Tính Lộ Trình & Mục Tiêu Chứng Chỉ C",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 2920
+     },
+     {
+      "text": "Hành Trình Chinh Phục",
+      "above": "4 Bước Đơn Giản Để Bứt Phá Năng Lực Tiến",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 3837
+     },
+     {
+      "text": "Giáo Trình Thực Chiến",
+      "above": "Khám phá các lộ trình học tiêu biểu",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 4680
+     },
+     {
+      "text": "Câu Chuyện Thành Công",
+      "above": "Học viên nói gì về trải nghiệm cùng Brea",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 5737
+     },
+     {
+      "text": "Sự Khác Biệt",
+      "above": "Tại sao BreadTrans là lựa chọn thông min",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 6456
+     },
+     {
+      "text": "Hỗ Trợ & Giải Đáp",
+      "above": "Câu hỏi thường gặp trước khi bắt đầu",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 7329
+     },
+     {
+      "text": "Khởi Đầu Vững Chắc Cùng BreadTrans",
+      "above": "Sẵn sàng bứt phá trình độ Tiếng Anh của ",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 8126
+     }
+    ],
+    "numbered": [
+     {
+      "text": "01",
+      "size": 30,
+      "top": 4039
+     },
+     {
+      "text": "02",
+      "size": 30,
+      "top": 4039
+     },
+     {
+      "text": "03",
+      "size": 30,
+      "top": 4346
+     },
+     {
+      "text": "04",
+      "size": 30,
+      "top": 4346
+     }
+    ],
+    "color": {
+     "bodyBg": "#0b1120",
+     "bodyBgHsl": {
+      "h": 223,
+      "s": 0.49,
+      "l": 0.08
+     },
+     "dark": true,
+     "sectionBgs": [
+      {
+       "color": "#0b1120",
+       "top": 0,
+       "hsl": {
+        "h": 223,
+        "s": 0.49,
+        "l": 0.08
+       }
+      },
+      {
+       "color": "#0f172b",
+       "top": 655,
+       "hsl": {
+        "h": 223,
+        "s": 0.48,
+        "l": 0.11
+       }
+      },
+      {
+       "color": "#020618",
+       "top": 8692,
+       "hsl": {
+        "h": 229,
+        "s": 0.85,
+        "l": 0.05
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#cad5e2",
+       "share": 0.37
+      },
+      {
+       "color": "#90a1b9",
+       "share": 0.22
+      },
+      {
+       "color": "#f1f5f9",
+       "share": 0.16
+      },
+      {
+       "color": "#ffd230",
+       "share": 0.08
+      },
+      {
+       "color": "#ffffff",
+       "share": 0.04
+      }
+     ],
+     "button": {
+      "bg": "#e17100",
+      "hsl": {
+       "h": 30,
+       "s": 1,
+       "l": 0.44
+      },
+      "fg": "#ffffff"
+     },
+     "lowContrast": [
+      {
+       "text": "Đăng ký",
+       "ratio": 3.2,
+       "need": 4.5,
+       "size": 14,
+       "fg": "#ffffff",
+       "bg": "#e17100"
+      },
+      {
+       "text": "miễn phí",
+       "ratio": 3.2,
+       "need": 4.5,
+       "size": 14,
+       "fg": "#ffffff",
+       "bg": "#e17100"
+      },
+      {
+       "text": "Bắt đầu học",
+       "ratio": 3.2,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#ffffff",
+       "bg": "#e17100"
+      },
+      {
+       "text": "Bắt đầu học",
+       "ratio": 3.2,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#ffffff",
+       "bg": "#e17100"
+      },
+      {
+       "text": "Bắt đầu học",
+       "ratio": 3.2,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#ffffff",
+       "bg": "#e17100"
+      },
+      {
+       "text": "Bắt đầu học",
+       "ratio": 3.2,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#ffffff",
+       "bg": "#e17100"
+      }
+     ]
+    },
+    "buttons": {
+     "count": 22,
+     "inHero": 4,
+     "radius": 12,
+     "height": 46,
+     "withShadow": 1,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Đăng nhập",
+      "Đăng ký miễn phí",
+      "Bắt đầu học miễn phí ngay",
+      "Làm test chẩn đoán 5 phút"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 51,
+     "shadowOverlay": 3,
+     "shadowSamples": [
+      "div.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "button.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "button.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "div.relative.bg-white → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0"
+     ],
+     "gradients": 8,
+     "scrims": 0,
+     "gradientSamples": [
+      "section.relative.overflow-hidden → linear-gradient(oklab(0.207998 -0.00311178 -0.0418783 / 0.9) 0%, lab(7.78673 1.82346 -15.0537) 50%, rgb(11, 17",
+      "div.absolute.inset-0 → linear-gradient(to right top, lab(86.4156 6.13147 78.3961) 0%, lab(70.0429 42.5156 75.8207) 100%)",
+      "div.md:col-span-2.bg-gradient-to-br → linear-gradient(to right bottom, lab(7.78673 1.82346 -15.0537) 0%, lab(7.78673 1.82346 -15.0537) 50%, rgb(20, ",
+      "div.bg-gradient-to-br.from-blue-50/50 → linear-gradient(to right bottom, lab(7.78673 1.82346 -15.0537) 0%, lab(7.78673 1.82346 -15.0537) 50%, rgb(20, "
+     ],
+     "gradientText": 1,
+     "hairlines": 14,
+     "hairlineSamples": [
+      "header.sticky.top-0 768px",
+      "section.relative.overflow-hidden 768px",
+      "div.flex.items-center 388px",
+      "div.pt-2.border-t 388px",
+      "div.pt-6.mt-6 406px"
+     ],
+     "outlinedBoxes": 19,
+     "dashed": 0,
+     "blurred": 1,
+     "roundedBoxes": 30,
+     "boxRadius": 24,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": [
+      {
+       "count": 4,
+       "iconTopped": true,
+       "rounded": true,
+       "top": 4010
+      },
+      {
+       "count": 4,
+       "iconTopped": true,
+       "rounded": true,
+       "top": 4897
+      },
+      {
+       "count": 3,
+       "iconTopped": true,
+       "rounded": true,
+       "top": 5902
+      }
+     ]
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 4,
+     "fixed": true,
+     "height": 81,
+     "floatingPill": false,
+     "blur": true
+    },
+    "fontsLoaded": [
+     "quicksand",
+     "__nextjs-geist"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "pageH": 9308,
+    "margins": {
+     "left": 24,
+     "right": 25
+    },
+    "sections": [
+     {
+      "sel": "main.flex-1.min-w-0",
+      "tag": "main",
+      "top": 81,
+      "height": 8611,
+      "words": 1784,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Tự học Tiếng Anh theo lộ trình, chinh phục từng mụ",
+       "size": 48,
+       "tag": "h1"
+      },
+      "left": 24,
+      "right": 25,
+      "textLeft": 24,
+      "textRight": 33,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "footer.w-full.border-t",
+      "tag": "footer",
+      "top": 8692,
+      "height": 616,
+      "words": 141,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Bread",
+       "size": 24,
+       "tag": "span"
+      },
+      "left": 24,
+      "right": 46,
+      "textLeft": 24,
+      "textRight": 46,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Tự học Tiếng Anh theo lộ trình, chinh phục từng mục tiêu cùng Gia sư AI thông mi",
+      "size": 48,
+      "top": 179,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 45,
+      "n": 12
+     },
+     {
+      "x": 425,
+      "n": 8
+     },
+     {
+      "x": 24,
+      "n": 4
+     },
+     {
+      "x": 57,
+      "n": 4
+     },
+     {
+      "x": 301,
+      "n": 3
+     },
+     {
+      "x": 549,
+      "n": 3
+     },
+     {
+      "x": 109,
+      "n": 1
+     },
+     {
+      "x": 122,
+      "n": 1
+     },
+     {
+      "x": 205,
+      "n": 1
+     },
+     {
+      "x": 251,
+      "n": 1
+     },
+     {
+      "x": 357,
+      "n": 1
+     },
+     {
+      "x": 605,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 40,
+    "bodySize": 14,
+    "stage": false,
+    "explains": true,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "dark": true,
+    "ground": "#0b1120",
+    "sidebar": null,
+    "topbar": {
+     "h": 81
+    },
+    "canvas": {
+     "left": 24,
+     "right": 25
+    },
+    "hero": {
+     "text": "Tự học Tiếng Anh theo lộ trình, chinh phục từng mục tiêu cùng Gia sư AI thông minh",
+     "words": 18,
+     "chars": 82,
+     "lines": 3,
+     "size": 48,
+     "vw": 6.3,
+     "font": "Quicksand",
+     "weight": 900,
+     "tracking": 0,
+     "leading": 1.18,
+     "top": 179,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 21,
+     "firstScreen": 1,
+     "ragged": [],
+     "voids": [
+      {
+       "gap": 88,
+       "at": 6165,
+       "panel": "Lê Hoàng Đức"
+      },
+      {
+       "gap": 76,
+       "at": 2024,
+       "panel": "Phòng Luyện Nói & Chấm Điểm Âm Vị Tức Th"
+      },
+      {
+       "gap": 49,
+       "at": 5133,
+       "panel": "Luyện Thi TOEIC Bứt Phá 750+"
+      },
+      {
+       "gap": 44,
+       "at": 5530,
+       "panel": "Chỉnh Phát Âm Chuẩn Âm Vị IPA & Ngữ Điệu"
+      }
+     ]
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 32,
+     "radii": [
+      [
+       24,
+       20
+      ],
+      [
+       16,
+       6
+      ],
+      [
+       0,
+       4
+      ],
+      [
+       12,
+       2
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 41,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 11,
+     "hues": 4,
+     "samples": [
+      {
+       "hue": 218,
+       "size": 44,
+       "radius": "16px"
+      },
+      {
+       "hue": 30,
+       "size": 44,
+       "radius": "12px"
+      },
+      {
+       "hue": 14,
+       "size": 24,
+       "radius": "8px"
+      },
+      {
+       "hue": 263,
+       "size": 56,
+       "radius": "16px"
+      }
+     ]
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 5,
+     "tabularShare": 0,
+     "kpiMax": 30
+    },
+    "rows": {
+     "count": 5,
+     "median": 101
+    },
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.29,
+     "tiny": 6,
+     "tinySamples": [
+      "Phát âm 10px",
+      "Trôi chảy 10px",
+      "Mục tiêu format 10px",
+      "Sau 70 ngày 10px"
+     ],
+     "sizes": [
+      10,
+      11,
+      12,
+      14,
+      16,
+      18,
+      20,
+      24,
+      30,
+      36,
+      48
+     ]
+    },
+    "title": {
+     "text": "Tự học Tiếng Anh theo lộ trình, chinh phục từng mục tiêu cùn",
+     "size": 48,
+     "top": 179
+    },
+    "colourShare": 0.057
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 390,
+   "height": 844,
+   "load": "load",
+   "screens": 12,
+   "filled": [
+    1,
+    0.78,
+    0.87,
+    0.87,
+    0.81,
+    0.81,
+    0.74,
+    0.68,
+    0.87,
+    0.78,
+    0.74,
+    0.78
+   ],
+   "motion": {
+    "elements": 109,
+    "css": 1,
+    "transitions": 107,
+    "scripted": 1,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "page": {
+     "height": 12547,
+     "screens": 14.9,
+     "words": 2068,
+     "img": 3,
+     "video": 0,
+     "canvas": 0,
+     "svg": 81,
+     "sections": 9,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 1,
+     "brokenImages": [],
+     "emoji": [
+      "🍞"
+     ],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Tự học Tiếng Anh theo lộ trình, chinh phục từng mục tiêu cùng Gia sư AI thông minh",
+     "words": 18,
+     "chars": 82,
+     "lines": 4,
+     "size": 30,
+     "vw": 7.7,
+     "font": "Quicksand",
+     "weight": 900,
+     "tracking": 0,
+     "leading": 1.24,
+     "top": 159,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Tự học Tiếng Anh theo lộ trình, chinh phục từng mục tiêu cùng Gia sư AI thông minh",
+     "words": 18,
+     "lines": 4,
+     "size": 30,
+     "font": "Quicksand"
+    },
+    "headings": [
+     {
+      "text": "Tự học Tiếng Anh theo lộ trình, chinh phục từng mục tiêu cùng Gia sư AI thông minh",
+      "words": 18,
+      "chars": 82,
+      "lines": 4,
+      "size": 30,
+      "vw": 7.7,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.24,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.92,
+      "top": 159,
+      "gradientText": true,
+      "tag": "h1",
+      "kind": "heading"
+     },
+     {
+      "text": "Mọi công cụ bạn cần để làm chủ tiếng Anh & mục tiêu chứng chỉ",
+      "words": 15,
+      "chars": 61,
+      "lines": 3,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.38,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.92,
+      "top": 1442,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "🍞",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.33,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.14,
+      "top": 3236,
+      "tag": "div",
+      "kind": "heading"
+     },
+     {
+      "text": "Ước Tính Lộ Trình & Mục Tiêu Chứng Chỉ Của Bạn",
+      "words": 11,
+      "chars": 46,
+      "lines": 2,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.38,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.79,
+      "top": 3986,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "10 tuần",
+      "words": 2,
+      "chars": 7,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": -0.025,
+      "leading": 1.33,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.2,
+      "top": 4531,
+      "tag": "strong",
+      "kind": "heading"
+     },
+     {
+      "text": "4 Bước Đơn Giản Để Bứt Phá Năng Lực Tiếng Anh",
+      "words": 11,
+      "chars": 45,
+      "lines": 2,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.38,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.92,
+      "top": 4988,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "01",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.33,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.06,
+      "top": 5179,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "02",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.33,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.07,
+      "top": 5461,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "03",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.33,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.07,
+      "top": 5744,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "04",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.33,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.07,
+      "top": 6026,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "Khám phá các lộ trình học tiêu biểu",
+      "words": 8,
+      "chars": 35,
+      "lines": 2,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.38,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.92,
+      "top": 6364,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Học viên nói gì về trải nghiệm cùng BreadTrans?",
+      "words": 9,
+      "chars": 47,
+      "lines": 2,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.38,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.92,
+      "top": 8083,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Tại sao BreadTrans là lựa chọn thông minh hơn?",
+      "words": 9,
+      "chars": 46,
+      "lines": 2,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.38,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.92,
+      "top": 9208,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Câu hỏi thường gặp trước khi bắt đầu",
+      "words": 8,
+      "chars": 36,
+      "lines": 2,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.38,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.92,
+      "top": 9993,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Sẵn sàng bứt phá trình độ Tiếng Anh của bạn ngay hôm nay?",
+      "words": 13,
+      "chars": 57,
+      "lines": 3,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": 0,
+      "leading": 1.38,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "center",
+      "position": "center",
+      "widthRatio": 0.75,
+      "top": 10907,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "BreadTrans",
+      "words": 1,
+      "chars": 10,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Quicksand",
+      "weight": 900,
+      "tracking": -0.025,
+      "leading": 1.33,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.48,
+      "top": 11574,
+      "tag": "a",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 16,
+     "maxLines": 4,
+     "over2Lines": 3,
+     "statements": 0,
+     "centered": 6,
+     "medianWords": 8,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Quicksand",
+       "share": 1,
+       "mono": false
+      }
+     ],
+     "familyCount": 1,
+     "sizes": [
+      10,
+      11,
+      12,
+      14,
+      16,
+      18,
+      20,
+      24,
+      30
+     ],
+     "sizeCount": 9,
+     "notLoaded": [],
+     "body": {
+      "font": "Quicksand",
+      "size": 12,
+      "leading": 1.33,
+      "weight": 900,
+      "tracking": 0.025,
+      "contrast": null
+     },
+     "measureChars": 51,
+     "max": {
+      "size": 30,
+      "vw": 7.7,
+      "font": "Quicksand",
+      "text": "Tự học Tiếng Anh theo lộ trình, chinh ph"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 16,
+     "microLabelShare": 0.032,
+     "microSamples": [
+      "BreadTrans AI Tutor",
+      "Trụ Cột Đột Phá",
+      "Công Cụ Tương Tác Miễn Phí",
+      "Hành Trình Chinh Phục",
+      "Giáo Trình Thực Chiến",
+      "Câu Chuyện Thành Công"
+     ],
+     "upperShare": 0.05,
+     "centerShare": 0.2,
+     "smallText": 135
+    },
+    "eyebrows": [
+     {
+      "text": "Trụ Cột Đột Phá",
+      "above": "Mọi công cụ bạn cần để làm chủ tiếng Anh",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 1398
+     },
+     {
+      "text": "Công Cụ Tương Tác Miễn Phí",
+      "above": "Ước Tính Lộ Trình & Mục Tiêu Chứng Chỉ C",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 3944
+     },
+     {
+      "text": "Thời gian dự kiến",
+      "above": "10 tuần",
+      "upper": true,
+      "tracked": false,
+      "mono": false,
+      "pill": false,
+      "size": 12,
+      "top": 4498
+     },
+     {
+      "text": "Hành Trình Chinh Phục",
+      "above": "4 Bước Đơn Giản Để Bứt Phá Năng Lực Tiến",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 4944
+     },
+     {
+      "text": "Giáo Trình Thực Chiến",
+      "above": "Khám phá các lộ trình học tiêu biểu",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 6324
+     },
+     {
+      "text": "Câu Chuyện Thành Công",
+      "above": "Học viên nói gì về trải nghiệm cùng Brea",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 8039
+     },
+     {
+      "text": "Sự Khác Biệt",
+      "above": "Tại sao BreadTrans là lựa chọn thông min",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 9164
+     },
+     {
+      "text": "Hỗ Trợ & Giải Đáp",
+      "above": "Câu hỏi thường gặp trước khi bắt đầu",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 9949
+     },
+     {
+      "text": "Khởi Đầu Vững Chắc Cùng BreadTrans",
+      "above": "Sẵn sàng bứt phá trình độ Tiếng Anh của ",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": true,
+      "size": 12,
+      "top": 10847
+     }
+    ],
+    "numbered": [
+     {
+      "text": "01",
+      "size": 24,
+      "top": 5179
+     },
+     {
+      "text": "02",
+      "size": 24,
+      "top": 5461
+     },
+     {
+      "text": "03",
+      "size": 24,
+      "top": 5744
+     },
+     {
+      "text": "04",
+      "size": 24,
+      "top": 6026
+     }
+    ],
+    "color": {
+     "bodyBg": "#0b1120",
+     "bodyBgHsl": {
+      "h": 223,
+      "s": 0.49,
+      "l": 0.08
+     },
+     "dark": true,
+     "sectionBgs": [
+      {
+       "color": "#0b1120",
+       "top": 0,
+       "hsl": {
+        "h": 223,
+        "s": 0.49,
+        "l": 0.08
+       }
+      },
+      {
+       "color": "#0f172b",
+       "top": 714,
+       "hsl": {
+        "h": 223,
+        "s": 0.48,
+        "l": 0.11
+       }
+      },
+      {
+       "color": "#020618",
+       "top": 11517,
+       "hsl": {
+        "h": 229,
+        "s": 0.85,
+        "l": 0.05
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#cad5e2",
+       "share": 0.37
+      },
+      {
+       "color": "#90a1b9",
+       "share": 0.22
+      },
+      {
+       "color": "#f1f5f9",
+       "share": 0.15
+      },
+      {
+       "color": "#ffd230",
+       "share": 0.08
+      },
+      {
+       "color": "#ffffff",
+       "share": 0.04
+      }
+     ],
+     "button": {
+      "bg": "#e17100",
+      "hsl": {
+       "h": 30,
+       "s": 1,
+       "l": 0.44
+      },
+      "fg": "#ffffff"
+     },
+     "lowContrast": [
+      {
+       "text": "Đăng ký",
+       "ratio": 3.2,
+       "need": 4.5,
+       "size": 12,
+       "fg": "#ffffff",
+       "bg": "#e17100"
+      }
+     ]
+    },
+    "buttons": {
+     "count": 22,
+     "inHero": 4,
+     "radius": 12,
+     "height": 32,
+     "withShadow": 1,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Đăng nhập",
+      "Đăng ký",
+      "Bắt đầu học miễn phí ngay",
+      "Làm test chẩn đoán 5 phút"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 49,
+     "shadowOverlay": 4,
+     "shadowSamples": [
+      "div.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "button.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "button.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+      "div.relative.bg-white → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0"
+     ],
+     "gradients": 8,
+     "scrims": 0,
+     "gradientSamples": [
+      "section.relative.overflow-hidden → linear-gradient(oklab(0.207998 -0.00311178 -0.0418783 / 0.9) 0%, lab(7.78673 1.82346 -15.0537) 50%, rgb(11, 17",
+      "div.absolute.inset-0 → linear-gradient(to right top, lab(86.4156 6.13147 78.3961) 0%, lab(70.0429 42.5156 75.8207) 100%)",
+      "div.md:col-span-2.bg-gradient-to-br → linear-gradient(to right bottom, lab(7.78673 1.82346 -15.0537) 0%, lab(7.78673 1.82346 -15.0537) 50%, rgb(20, ",
+      "div.bg-gradient-to-br.from-blue-50/50 → linear-gradient(to right bottom, lab(7.78673 1.82346 -15.0537) 0%, lab(7.78673 1.82346 -15.0537) 50%, rgb(20, "
+     ],
+     "gradientText": 1,
+     "hairlines": 20,
+     "hairlineSamples": [
+      "header.sticky.top-0 390px",
+      "section.relative.overflow-hidden 390px",
+      "div.flex.items-center 306px",
+      "div.pt-2.border-t 306px",
+      "div.pt-6.mt-6 308px"
+     ],
+     "outlinedBoxes": 20,
+     "dashed": 0,
+     "blurred": 2,
+     "roundedBoxes": 32,
+     "boxRadius": 24,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 3,
+     "fixed": true,
+     "height": 65,
+     "floatingPill": false,
+     "blur": true
+    },
+    "fontsLoaded": [
+     "quicksand",
+     "__nextjs-geist"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "pageH": 12547,
+    "margins": {
+     "left": 16,
+     "right": 17
+    },
+    "sections": [
+     {
+      "sel": "main.flex-1.min-w-0",
+      "tag": "main",
+      "top": 65,
+      "height": 11452,
+      "words": 1781,
+      "media": 0,
+      "middle": 85,
+      "heading": {
+       "text": "Tự học Tiếng Anh theo lộ trình, chinh phục từng mụ",
+       "size": 30,
+       "tag": "h1"
+      },
+      "left": 16,
+      "right": 0,
+      "textLeft": 16,
+      "textRight": -261,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "footer.w-full.border-t",
+      "tag": "footer",
+      "top": 11517,
+      "height": 1030,
+      "words": 141,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Bread",
+       "size": 24,
+       "tag": "span"
+      },
+      "left": 16,
+      "right": 26,
+      "textLeft": 16,
+      "textRight": 26,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Tự học Tiếng Anh theo lộ trình, chinh phục từng mục tiêu cùng Gia sư AI thông mi",
+      "size": 30,
+      "top": 159,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 40,
+      "n": 16
+     },
+     {
+      "x": 16,
+      "n": 5
+     },
+     {
+      "x": 87,
+      "n": 4
+     },
+     {
+      "x": 57,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 26,
+    "bodySize": 12,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "dark": true,
+    "ground": "#0b1120",
+    "sidebar": null,
+    "topbar": {
+     "h": 65
+    },
+    "canvas": {
+     "left": 16,
+     "right": -215
+    },
+    "hero": {
+     "text": "Tự học Tiếng Anh theo lộ trình, chinh phục từng mục tiêu cùng Gia sư AI thông minh",
+     "words": 18,
+     "chars": 82,
+     "lines": 4,
+     "size": 30,
+     "vw": 7.7,
+     "font": "Quicksand",
+     "weight": 900,
+     "tracking": 0,
+     "leading": 1.24,
+     "top": 159,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 26,
+     "firstScreen": 1,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 38,
+     "radii": [
+      [
+       24,
+       20
+      ],
+      [
+       16,
+       9
+      ],
+      [
+       0,
+       8
+      ],
+      [
+       12,
+       1
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 48,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 12,
+     "hues": 5,
+     "samples": [
+      {
+       "hue": 218,
+       "size": 44,
+       "radius": "16px"
+      },
+      {
+       "hue": 30,
+       "size": 44,
+       "radius": "12px"
+      },
+      {
+       "hue": 263,
+       "size": 54,
+       "radius": "16px"
+      },
+      {
+       "hue": 225,
+       "size": 56,
+       "radius": "16px"
+      }
+     ]
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 5,
+     "tabularShare": 0,
+     "kpiMax": 24
+    },
+    "rows": {
+     "count": 5,
+     "median": 81
+    },
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.62,
+     "tiny": 6,
+     "tinySamples": [
+      "Phát âm 10px",
+      "Trôi chảy 10px",
+      "Mục tiêu format 10px",
+      "Sau 70 ngày 10px"
+     ],
+     "sizes": [
+      10,
+      11,
+      12,
+      14,
+      16,
+      18,
+      20,
+      24,
+      30
+     ]
+    },
+    "title": {
+     "text": "Tự học Tiếng Anh theo lộ trình, chinh phục từng mục tiêu cùn",
+     "size": 30,
+     "top": 159
+    },
+    "colourShare": 0.101
+   },
+   "consoleErrors": []
+  }
+ ],
+ "findings": [
+  {
+   "level": "FAIL",
+   "id": "headline-lines",
+   "width": 1440,
+   "message": "1 headline(s) wrap past two lines at 1440px: \"Tự học Tiếng Anh theo lộ trình, chinh phục từng \" → 4 lines (18 words, 52px)",
+   "fix": "Cut words first (a headline is a title, not a sentence). Then give it a wider measure. Lower the size only as a last resort and never below the scale you chose. A real statement paragraph belongs in a <p> or <blockquote> at 36px or less."
+  },
+  {
+   "level": "FAIL",
+   "id": "micro-label",
+   "width": 1440,
+   "message": "16 tiny uppercase letter-spaced labels (e.g. \"BreadTrans AI Tutor\", \"Trụ Cột Đột Phá\", \"Công Cụ Tương Tác Miễn Phí\", \"Hành Trình Chinh Phục\").",
+   "fix": "Use sentence-case text at a readable size, or delete the label.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "emoji",
+   "width": 1440,
+   "message": "Emoji in the page: 🍞",
+   "fix": "Remove. Use words or real imagery.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "gradient",
+   "width": 1440,
+   "message": "8 gradient fill(s): section.relative.overflow-hidden → linear-gradient(oklab(0.207998 -0.00311178 -0.0418783 / 0.9) 0%, lab(7.78673 1.82346 -15.0537) 50%, rgb(11, 17 | div.absolute.inset-0 → linear-gradient(to right top, lab(86.4156 6.13147 78.3961) 0%, lab(70.0429 42.5156 75.8207) 100%) | div.md:col-span-2.bg-gradient-to-br → linear-gradient(to right bottom, lab(7.78673 1.82346 -15.0537) 0%, lab(7.78673 1.82346 -15.0537) 50%, rgb(20, ",
+   "fix": "Use a flat colour or a real image. The only gradient allowed by default is a neutral scrim over a photo for legibility.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "gradient-text",
+   "width": 1440,
+   "message": "1 gradient-filled text element(s).",
+   "fix": "Solid colour text.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "button-fx",
+   "width": 1440,
+   "message": "Buttons with shadow/glow.",
+   "fix": "Flat fill, one colour.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "WARN",
+   "id": "contrast",
+   "width": 1440,
+   "message": "Low-contrast text: \"Đăng ký\" 3.2:1 needs 4.5:1; \"miễn phí\" 3.2:1 needs 4.5:1; \"Bắt đầu học\" 3.2:1 needs 4.5:1; \"Bắt đầu học\" 3.2:1 needs 4.5:1",
+   "fix": "Darken or lighten the text colour.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "edge-text",
+   "width": 1440,
+   "message": "1 text block(s) sit within 16px of the screen edge: \"miễn phí\" (2px from the right)",
+   "fix": "Keep text inside the page margin (16–32px or more). Only display type deliberately bled past the edge may touch it."
+  },
+  {
+   "level": "WARN",
+   "id": "radius-mix",
+   "width": 1440,
+   "message": "Panels use 4 corner radii (24, 16, 12, 0px).",
+   "fix": "One radius for panels, one for controls, full round only for pills and avatars.",
+   "alsoAt": [
+    768
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "icon-chips",
+   "width": 1440,
+   "message": "13 icons sit in tinted squares or circles in 6 different colours.",
+   "fix": "This is the commonest tell of a generated dashboard. Drop the tinted square: a KPI is a label and a number; an icon, if it helps, is plain and in the text colour.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "tiny-text",
+   "width": 1440,
+   "message": "6 text blocks under 11px: Phát âm 10px, Trôi chảy 10px, Mục tiêu format 10px, Sau 70 ngày 10px.",
+   "fix": "Nothing below 11px; secondary text 12px, data 13–14px.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "WARN",
+   "id": "below-fold",
+   "width": 1440,
+   "message": "Only 2 of 21 blocks start on the first 1440px screen.",
+   "fix": "Every block the brief names shows its header and first rows on the first desktop screen: size the headline block to its question, cap long lists with \"View all\", and put time-sensitive blocks before long tables."
+  },
+  {
+   "level": "WARN",
+   "id": "panel-void",
+   "width": 1440,
+   "message": "2 card(s) hold a blank band inside: 49px in \"Chỉnh Phát Âm Chuẩn Âm Vị IPA & Ngữ Điệu\", 46px in \"Lê Hoàng Đức\".",
+   "fix": "A card stretches to its neighbour only when it has content to fill. Keep a legend or a note directly under its chart (only an action or a total may sit at a stretched card's foot), let a short card keep its own height (align-items: start), and let a filtered block shrink to its rows."
+  },
+  {
+   "level": "WARN",
+   "id": "app-title-size",
+   "width": 1440,
+   "message": "The h1 is 52px (\"Tự học Tiếng Anh theo lộ trình, chinh ph\").",
+   "fix": "An app screen is not a landing page: the title is 18-32px (20-24px on a phone).",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "headline-lines",
+   "width": 768,
+   "message": "1 headline(s) wrap past two lines at 768px: \"Tự học Tiếng Anh theo lộ trình, chinh phục từng \" → 3 lines (18 words, 48px)",
+   "fix": "Cut words first (a headline is a title, not a sentence). Then give it a wider measure. Lower the size only as a last resort and never below the scale you chose. A real statement paragraph belongs in a <p> or <blockquote> at 32px or less."
+  },
+  {
+   "level": "FAIL",
+   "id": "headline-lines",
+   "width": 390,
+   "message": "3 headline(s) wrap past two lines at 390px: \"Tự học Tiếng Anh theo lộ trình, chinh phục từng \" → 4 lines (18 words, 30px); \"Mọi công cụ bạn cần để làm chủ tiếng Anh & mục t\" → 3 lines (15 words, 24px); \"Sẵn sàng bứt phá trình độ Tiếng Anh của bạn ngay\" → 3 lines (13 words, 24px)",
+   "fix": "Cut words first (a headline is a title, not a sentence). Then give it a wider measure. Lower the size only as a last resort and never below the scale you chose. A real statement paragraph belongs in a <p> or <blockquote> at 24px or less."
+  }
+ ],
+ "images": [
+  {
+   "viewport": "desktop",
+   "width": 1440,
+   "fold": "D:\\Study\\KLTN\\Project\\kltn-breadtrans-frontend-junior\\.taste-skill\\inspect\\desktop-fold.jpg",
+   "pages": [
+    "D:\\Study\\KLTN\\Project\\kltn-breadtrans-frontend-junior\\.taste-skill\\inspect\\desktop-page-01.jpg",
+    "D:\\Study\\KLTN\\Project\\kltn-breadtrans-frontend-junior\\.taste-skill\\inspect\\desktop-page-02.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "tablet",
+   "width": 768,
+   "fold": "D:\\Study\\KLTN\\Project\\kltn-breadtrans-frontend-junior\\.taste-skill\\inspect\\tablet-fold.jpg",
+   "pages": [
+    "D:\\Study\\KLTN\\Project\\kltn-breadtrans-frontend-junior\\.taste-skill\\inspect\\tablet-page-01.jpg",
+    "D:\\Study\\KLTN\\Project\\kltn-breadtrans-frontend-junior\\.taste-skill\\inspect\\tablet-page-02.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "mobile",
+   "width": 390,
+   "fold": "D:\\Study\\KLTN\\Project\\kltn-breadtrans-frontend-junior\\.taste-skill\\inspect\\mobile-fold.jpg",
+   "pages": [
+    "D:\\Study\\KLTN\\Project\\kltn-breadtrans-frontend-junior\\.taste-skill\\inspect\\mobile-page-01.jpg",
+    "D:\\Study\\KLTN\\Project\\kltn-breadtrans-frontend-junior\\.taste-skill\\inspect\\mobile-page-02.jpg"
+   ],
+   "film": []
+  }
+ ]
+}

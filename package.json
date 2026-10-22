@@ -33,7 +33,7 @@
     "test:functional-reconnection": "node --no-warnings --test --experimental-strip-types src/lib/speaking/speakingFunctionalReconnection.test.ts",
     "test:writing-experience": "node --no-warnings --test --experimental-strip-types src/lib/writing/writingExperienceLogic.test.ts src/components/writing/writingCardLogic.test.ts",
     "test:daily-practice": "node --no-warnings --test --experimental-strip-types src/components/practice/dailyPracticeLogic.test.ts src/components/practice/dailyPracticeContext.test.ts",
-    "test:learner-ia": "node --no-warnings --test --experimental-strip-types src/components/profile/accountHubProgress.test.ts src/lib/api/services/userSkillProgressLogic.test.ts",
+    "test:learner-ia": "node --no-warnings --test --experimental-strip-types src/components/profile/accountHubProgress.test.ts src/lib/api/services/userSkillProgressLogic.test.ts src/components/profile/learningProgressLogic.test.ts",
     "test:responsive-invariants": "node scripts/verify_responsive_invariants.mjs",
     "test:flashcard-logic": "node --no-warnings --test --experimental-strip-types src/modules/flashcard/flashcardLogic.test.ts",
     "test:plan-logic": "node --no-warnings --test --experimental-strip-types src/modules/subscription/planLogic.test.ts",

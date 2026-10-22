@@ -1,19 +1,18 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion } from "framer-motion";
 import {
-  Activity,
   Cpu,
   Mic,
   HardDrive,
-  Zap,
-  TrendingDown,
   Trash2,
   RefreshCw,
-  Server,
-  Layers,
+  DollarSign,
   ShieldCheck,
+  Users,
+  CheckCircle2,
+  AlertCircle,
+  Database,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axiosClient from "@/lib/api/axiosClient";
@@ -25,7 +24,7 @@ type SystemCostsResponse = {
     totalCostVnd: number;
     savedCostUsd: number;
     savedCostVnd: number;
-    status: string;
+    status: "MEASURED" | "PARTIAL" | "UNAVAILABLE";
     activeUsers: number;
   };
   services: {
@@ -76,12 +75,13 @@ export default function AdminCostsPage() {
   const [isPurgingCache, setIsPurgingCache] = useState(false);
   const [isCleaningR2, setIsCleaningR2] = useState(false);
 
-  const { data, isLoading, refetch, isRefetching } =
+  const { data, isLoading, isError, refetch, isRefetching } =
     useQuery<SystemCostsResponse>({
       queryKey: ["admin", "system-costs"],
       queryFn: async () => {
-        const res: any = await axiosClient.get("/admin/system-costs");
-        return res?.data || res;
+        const res: unknown = await axiosClient.get("/admin/system-costs");
+        const parsed = res as { data?: SystemCostsResponse } | SystemCostsResponse;
+        return "data" in parsed && parsed.data ? parsed.data : (parsed as SystemCostsResponse);
       },
       refetchInterval: 30000,
     });
@@ -89,13 +89,14 @@ export default function AdminCostsPage() {
   const purgeCacheMutation = useMutation({
     mutationFn: async () => {
       setIsPurgingCache(true);
-      const res: any = await axiosClient.post(
+      const res: unknown = await axiosClient.post(
         "/admin/system-costs/purge-ai-cache",
       );
-      return res?.data || res;
+      const parsed = res as { message?: string; data?: { message?: string } };
+      return parsed?.data?.message || parsed?.message || "Đã làm sạch cache dữ liệu trên Redis!";
     },
-    onSuccess: (res: any) => {
-      toast.success(res?.message || "Đã làm sạch cache dữ liệu trên Redis!");
+    onSuccess: (message: string) => {
+      toast.success(message);
       queryClient.invalidateQueries({ queryKey: ["admin", "system-costs"] });
     },
     onError: () => {
@@ -109,13 +110,14 @@ export default function AdminCostsPage() {
   const cleanupR2Mutation = useMutation({
     mutationFn: async () => {
       setIsCleaningR2(true);
-      const res: any = await axiosClient.post(
+      const res: unknown = await axiosClient.post(
         "/admin/system-costs/trigger-r2-cleanup",
       );
-      return res?.data || res;
+      const parsed = res as { message?: string; data?: { message?: string } };
+      return parsed?.data?.message || parsed?.message || "Đã dọn dẹp file ghi âm cũ thành công!";
     },
-    onSuccess: (res: any) => {
-      toast.success(res?.message || "Đã dọn dẹp file ghi âm cũ thành công!");
+    onSuccess: (message: string) => {
+      toast.success(message);
       queryClient.invalidateQueries({ queryKey: ["admin", "system-costs"] });
     },
     onError: () => {
@@ -128,535 +130,595 @@ export default function AdminCostsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <RefreshCw className="w-10 h-10 animate-spin text-blue-500" />
-        <p className="text-slate-500 font-bold animate-pulse text-sm">
-          Đang quét tài nguyên & tính toán chi phí Cloud FinOps...
-        </p>
+      <div className="mx-auto max-w-[1500px] space-y-6 pb-12 animate-pulse">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-5">
+          <div className="space-y-2">
+            <div className="h-7 w-64 rounded-md bg-slate-200" />
+            <div className="h-4 w-96 rounded-md bg-slate-100" />
+          </div>
+          <div className="h-10 w-36 rounded-lg bg-slate-200" />
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="h-32 rounded-xl border border-slate-200 bg-slate-50" />
+          <div className="h-32 rounded-xl border border-slate-200 bg-slate-50" />
+          <div className="h-32 rounded-xl border border-slate-200 bg-slate-50" />
+        </div>
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          <div className="h-72 rounded-xl border border-slate-200 bg-slate-50" />
+          <div className="h-72 rounded-xl border border-slate-200 bg-slate-50" />
+          <div className="h-72 rounded-xl border border-slate-200 bg-slate-50" />
+        </div>
       </div>
     );
   }
 
-  const summary = data?.summary || {
+  if (isError || !data) {
+    return (
+      <div className="mx-auto max-w-4xl py-12">
+        <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-6 text-center">
+          <AlertCircle className="mx-auto h-8 w-8 text-rose-600" />
+          <h2 className="mt-2 text-base font-semibold text-rose-950">
+            Không thể tải dữ liệu chi phí & tài nguyên Cloud
+          </h2>
+          <p className="mt-1 text-sm text-rose-700">
+            Vui lòng kiểm tra kết nối với hệ thống backend hoặc thử lại sau.
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-rose-700 cursor-pointer"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Thử tải lại
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const summary = data.summary || {
     totalCostUsd: 0,
     totalCostVnd: 0,
     savedCostUsd: 0,
     savedCostVnd: 0,
-    status: "UNAVAILABLE",
+    status: "UNAVAILABLE" as const,
     activeUsers: 0,
   };
 
-  const services = data?.services;
-  const hasMeasuredBilling = summary.status === "MEASURED";
+  const services = data.services;
+  const hasCostEstimate = summary.status !== "UNAVAILABLE";
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 pb-12">
-      {/* Top Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b-2 border-slate-100 pb-5">
+    <main className="mx-auto w-full max-w-[1500px] space-y-6 pb-12">
+      {/* Header */}
+      <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl text-white shadow-md shadow-blue-500/20">
-              <Activity className="w-6 h-6" />
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-950">
+              Chi phí & Tài nguyên Cloud
+            </h1>
+            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Live Telemetry
+            </span>
+          </div>
+          <p className="mt-1 text-sm text-slate-600">
+            Giám sát mức tiêu thụ hạn mức Free Tier và chi phí vận hành thực tế của các dịch vụ đám mây (FinOps).
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          disabled={isRefetching}
+          className="inline-flex items-center gap-2 self-start rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-800 shadow-xs transition-all hover:bg-slate-50 hover:border-slate-400 active:scale-[0.98] disabled:opacity-50 cursor-pointer sm:self-auto"
+        >
+          <RefreshCw className={`h-4 w-4 text-slate-600 ${isRefetching ? "animate-spin" : ""}`} />
+          <span>{isRefetching ? "Đang đồng bộ..." : "Làm mới dữ liệu"}</span>
+        </button>
+      </header>
+
+      {/* Top 3 KPI Summary Cards */}
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3" aria-label="Thống kê tổng quan chi phí">
+        {/* Card 1: Actual Cost */}
+        <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs transition hover:border-slate-300">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Chi phí tháng này
+            </span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+              <DollarSign className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-bold tracking-tight text-slate-950 font-mono tabular-nums">
+              {hasCostEstimate ? `$${summary.totalCostUsd.toFixed(2)}` : "$0.00"}
+            </span>
+            <span className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700 border border-blue-200/50">
+              Pay-as-you-go
+            </span>
+          </div>
+          <p className="mt-2 text-xs font-medium text-slate-600">
+            {hasCostEstimate
+              ? `≈ ${summary.totalCostVnd.toLocaleString("vi-VN")} đ · Gemini AI (tính theo token thực)`
+              : "Chưa phát sinh chi phí ngoài Free Tier"}
+          </p>
+        </div>
+
+        {/* Card 2: Free Tier Coverage */}
+        <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs transition hover:border-slate-300">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Trạng thái Free Tier
+            </span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
+              <ShieldCheck className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-bold tracking-tight text-emerald-700 font-mono tabular-nums">
+              100% Free
+            </span>
+            <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200/50">
+              Tối ưu chi phí
+            </span>
+          </div>
+          <p className="mt-2 text-xs font-medium text-slate-600">
+            Azure Speech & Cloudflare R2 vận hành hoàn toàn trong gói miễn phí hàng tháng.
+          </p>
+        </div>
+
+        {/* Card 3: Active Learners Scale */}
+        <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs transition hover:border-slate-300">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Quy mô người dùng
+            </span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+              <Users className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-bold tracking-tight text-slate-950 font-mono tabular-nums">
+              {summary.activeUsers}
+            </span>
+            <span className="text-xs font-medium text-slate-500">tài khoản</span>
+          </div>
+          <p className="mt-2 text-xs font-medium text-slate-600">
+            Hạ tầng đáp ứng mượt mà giai đoạn kiểm thử và bảo vệ đồ án tốt nghiệp.
+          </p>
+        </div>
+      </section>
+
+      {/* Services Grid (3 columns for perfect balance) */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-bold tracking-tight text-slate-900">
+            Chi tiết 3 dịch vụ Cloud đang tích hợp
+          </h2>
+          <span className="text-xs font-medium text-slate-500">
+            Tự động cập nhật mỗi 30 giây
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          {/* Card 1: Google Gemini Generative AI */}
+          {services?.gemini && (
+            <div className="flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs transition hover:border-slate-300">
+              <div>
+                {/* Provider Header */}
+                <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100">
+                      <Cpu className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900">
+                        Google Gemini
+                      </h3>
+                      <p className="text-xs font-medium text-slate-500 font-mono">
+                        {services.gemini.model}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">
+                    1.500 req/ngày (Free)
+                  </span>
+                </div>
+
+                {/* Primary Cost Box */}
+                <div className="mt-4 rounded-lg border border-slate-200/70 bg-slate-50/80 p-3.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-slate-600">
+                      Chi phí ước tính:
+                    </span>
+                    <span className="font-mono text-sm font-bold text-slate-950 tabular-nums">
+                      ${services.gemini.costUsd.toFixed(4)} USD
+                    </span>
+                  </div>
+                  <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500">
+                    <span>Quy đổi VND:</span>
+                    <span className="font-medium text-slate-700 font-mono">
+                      ≈ {services.gemini.costVnd.toLocaleString("vi-VN")} đ
+                    </span>
+                  </div>
+                </div>
+
+                {/* 2x2 Metric Grid */}
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-lg border border-slate-100 bg-white p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                      Tổng Request
+                    </p>
+                    <p className="mt-1 font-mono text-lg font-bold text-slate-900 tabular-nums">
+                      {services.gemini.totalRequests}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-slate-100 bg-white p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                      Redis Cache
+                    </p>
+                    <p className="mt-1 font-mono text-lg font-bold text-slate-900 tabular-nums">
+                      {services.gemini.cachedEntries}{" "}
+                      <span className="text-xs font-normal text-slate-500">keys</span>
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-slate-100 bg-white p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                      Input Tokens
+                    </p>
+                    <p className="mt-1 font-mono text-base font-bold text-slate-900 tabular-nums">
+                      {services.gemini.inputTokens.toLocaleString("vi-VN")}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-slate-100 bg-white p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                      Output Tokens
+                    </p>
+                    <p className="mt-1 font-mono text-base font-bold text-slate-900 tabular-nums">
+                      {services.gemini.outputTokens.toLocaleString("vi-VN")}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer status */}
+              <div className="mt-4 flex items-center gap-1.5 border-t border-slate-100 pt-3 text-xs text-slate-600">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                <span>Redis cache giúp giảm thiểu số lượng token gọi trực tiếp tới API.</span>
+              </div>
+            </div>
+          )}
+
+          {/* Card 2: Microsoft Azure AI Speech */}
+          {services?.azureSpeech && (
+            <div className="flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs transition hover:border-slate-300">
+              <div>
+                {/* Provider Header */}
+                <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700 border border-blue-100">
+                      <Mic className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900">
+                        Azure AI Speech
+                      </h3>
+                      <p className="text-xs font-medium text-slate-500">
+                        Pronunciation Assessment
+                      </p>
+                    </div>
+                  </div>
+                  <span className="shrink-0 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700">
+                    5 giờ audio/tháng (Free)
+                  </span>
+                </div>
+
+                {/* Usage Progress Box */}
+                <div className="mt-4 rounded-lg border border-slate-200/70 bg-slate-50/80 p-3.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-slate-700">
+                      Hạn mức sử dụng tháng:
+                    </span>
+                    <span className="font-mono font-bold text-slate-950 tabular-nums">
+                      {services.azureSpeech.audioMinutesThisMonth} / {services.azureSpeech.freeQuotaMinutes} phút ({services.azureSpeech.usedPercent}%)
+                    </span>
+                  </div>
+                  <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        services.azureSpeech.usedPercent > 80 ? "bg-amber-500" : "bg-blue-600"
+                      }`}
+                      style={{
+                        width: `${Math.min(100, Math.max(services.azureSpeech.usedPercent > 0 ? 3 : 0, services.azureSpeech.usedPercent))}%`,
+                      }}
+                    />
+                  </div>
+                  <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500">
+                    <span>Còn lại trong hạn mức:</span>
+                    <span className="font-semibold text-emerald-700">
+                      {Math.max(0, services.azureSpeech.freeQuotaMinutes - services.azureSpeech.audioMinutesThisMonth)} phút miễn phí
+                    </span>
+                  </div>
+                </div>
+
+                {/* 2x2 Metric Grid */}
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-lg border border-slate-100 bg-white p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                      Lượt chấm tháng này
+                    </p>
+                    <p className="mt-1 font-mono text-lg font-bold text-slate-900 tabular-nums">
+                      {services.azureSpeech.submissionsThisMonth}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-slate-100 bg-white p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                      Tổng lượt tích lũy
+                    </p>
+                    <p className="mt-1 font-mono text-lg font-bold text-slate-900 tabular-nums">
+                      {services.azureSpeech.totalSubmissions}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-slate-100 bg-white p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                      Thời lượng chấm
+                    </p>
+                    <p className="mt-1 font-mono text-base font-bold text-slate-900 tabular-nums">
+                      {services.azureSpeech.audioMinutesThisMonth}{" "}
+                      <span className="text-xs font-normal text-slate-500">phút</span>
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-slate-100 bg-white p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                      Chi phí phát sinh
+                    </p>
+                    <p className="mt-1 font-mono text-base font-bold text-emerald-700 tabular-nums">
+                      $0.00{" "}
+                      <span className="text-xs font-normal text-slate-500">(Gói Free)</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer status */}
+              <div className="mt-4 flex items-center gap-1.5 border-t border-slate-100 pt-3 text-xs text-slate-600">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                <span>Mỗi bài tập nói tiêu thụ trung bình 15–30 giây audio Azure.</span>
+              </div>
+            </div>
+          )}
+
+          {/* Card 3: Cloudflare R2 Object Storage */}
+          {services?.cloudflareR2 && (
+            <div className="flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs transition hover:border-slate-300">
+              <div>
+                {/* Provider Header */}
+                <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-700 border border-amber-100">
+                      <HardDrive className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900">
+                        Cloudflare R2
+                      </h3>
+                      <p className="text-xs font-medium text-slate-500">
+                        Object Storage (0 phí egress)
+                      </p>
+                    </div>
+                  </div>
+                  <span className="shrink-0 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
+                    10 GB lưu trữ (Free)
+                  </span>
+                </div>
+
+                {/* Storage Progress Box */}
+                <div className="mt-4 rounded-lg border border-slate-200/70 bg-slate-50/80 p-3.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-slate-700">
+                      Dung lượng đã dùng:
+                    </span>
+                    <span className="font-mono font-bold text-slate-950 tabular-nums">
+                      {services.cloudflareR2.usedStorageMb.toFixed(1)} / {(services.cloudflareR2.freeQuotaGb * 1024).toLocaleString("vi-VN")} MB ({services.cloudflareR2.usedPercent}%)
+                    </span>
+                  </div>
+                  <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        services.cloudflareR2.usedPercent > 80 ? "bg-amber-500" : "bg-emerald-600"
+                      }`}
+                      style={{
+                        width: `${Math.min(100, Math.max(services.cloudflareR2.usedPercent > 0 ? 3 : 0, services.cloudflareR2.usedPercent))}%`,
+                      }}
+                    />
+                  </div>
+                  <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500">
+                    <span>Dung lượng còn trống:</span>
+                    <span className="font-semibold text-emerald-700">
+                      {(services.cloudflareR2.freeQuotaGb - services.cloudflareR2.usedStorageGb).toFixed(2)} GB miễn phí
+                    </span>
+                  </div>
+                </div>
+
+                {/* 2x2 Metric Grid */}
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-lg border border-slate-100 bg-white p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                      Audio Đang Lưu
+                    </p>
+                    <p className="mt-1 font-mono text-lg font-bold text-slate-900 tabular-nums">
+                      {services.cloudflareR2.activeAudioFiles}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-slate-100 bg-white p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                      Đã dọn dẹp (TTL 90d)
+                    </p>
+                    <p className="mt-1 font-mono text-lg font-bold text-slate-900 tabular-nums">
+                      {services.cloudflareR2.archivedAudioFiles}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-slate-100 bg-white p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                      Tài liệu hệ thống
+                    </p>
+                    <p className="mt-1 font-mono text-base font-bold text-slate-900 tabular-nums">
+                      {services.cloudflareR2.totalMaterials}{" "}
+                      <span className="text-xs font-normal text-slate-500">file</span>
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-slate-100 bg-white p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                      Phí Egress (Tải ra)
+                    </p>
+                    <p className="mt-1 font-mono text-base font-bold text-emerald-700 tabular-nums">
+                      $0.00{" "}
+                      <span className="text-xs font-normal text-slate-500">(Miễn phí)</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer status */}
+              <div className="mt-4 flex items-center gap-1.5 border-t border-slate-100 pt-3 text-xs text-slate-600">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                <span>Không mất phí tải ra (Egress $0). Tự động dọn file audio cũ sau 90 ngày.</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Maintenance Controls */}
+      <section className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+              <Database className="h-4 w-4" />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight flex items-center gap-2.5">
-                Quản Lý Chi Phí & Tài Nguyên Cloud
-                <span className="text-[11px] uppercase bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 rounded-full font-black">
-                  FinOps Monitor
-                </span>
-              </h1>
-              <p className="text-slate-500 text-xs sm:text-sm font-medium mt-0.5">
-                Giám sát hạn mức Free Tier, hiệu năng Cache và tối ưu hóa ngân
-                sách vận hành tự động.
+              <h2 className="text-sm font-bold text-slate-900">
+                Tác vụ bảo trì bộ nhớ & lưu trữ
+              </h2>
+              <p className="mt-0.5 text-xs text-slate-600">
+                Chủ động dọn dẹp bộ nhớ tạm Redis và dọn các file ghi âm cũ trên Cloudflare R2 để tối ưu chi phí.
               </p>
             </div>
           </div>
-        </div>
-
-        <div className="flex items-center gap-3 self-start md:self-auto">
-          <button
-            onClick={() => refetch()}
-            disabled={isRefetching}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 rounded-2xl font-black text-xs transition-all border-2 border-slate-200 shadow-xs cursor-pointer disabled:opacity-50"
-          >
-            <RefreshCw
-              className={`w-4 h-4 ${isRefetching ? "animate-spin text-blue-500" : ""}`}
-            />
-            {isRefetching ? "Đang đồng bộ..." : "Làm mới dữ liệu"}
-          </button>
-        </div>
-      </div>
-
-      {/* 1. Top Executive KPI Cards (Light Mode) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Monthly Cost */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-xs relative overflow-hidden"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-              Chi Phí Tháng Này
-            </span>
-            <span className="inline-flex items-center gap-1 text-xs font-black text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
-              <Activity className="w-3.5 h-3.5" /> Chưa đủ dữ liệu billing
-            </span>
-          </div>
-          <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-4xl font-black text-slate-800 tracking-tight">
-              {hasMeasuredBilling
-                ? `$${summary.totalCostUsd.toFixed(2)}`
-                : "Chưa xác định"}
-            </span>
-            <span className="text-slate-400 text-sm font-bold">
-              {hasMeasuredBilling
-                ? `(~${summary.totalCostVnd.toLocaleString("vi-VN")} đ)`
-                : ""}
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 font-medium mt-2.5 flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
-            Chưa kết nối nguồn billing của Gemini, Azure và R2; các số chi phí
-            không được ước đoán.
-          </p>
-        </motion.div>
-
-        {/* Savings */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-xs relative overflow-hidden"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-              Tiết Kiệm Nhờ Tối Ưu
-            </span>
-            <span className="inline-flex items-center gap-1 text-xs font-black text-slate-600 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full">
-              <TrendingDown className="w-3.5 h-3.5" /> Chưa tính được
-            </span>
-          </div>
-          <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-4xl font-black text-blue-600 tracking-tight">
-              {hasMeasuredBilling
-                ? `+$${summary.savedCostUsd.toFixed(2)}`
-                : "--"}
-            </span>
-            <span className="text-slate-400 text-sm font-bold">
-              {hasMeasuredBilling
-                ? `(~${summary.savedCostVnd.toLocaleString("vi-VN")} đ)`
-                : ""}
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 font-medium mt-2.5 flex items-center gap-1.5">
-            <Zap className="w-4 h-4 text-amber-500 shrink-0" />
-            Chỉ hiển thị sau khi hệ thống nhận được số liệu billing thực tế.
-          </p>
-        </motion.div>
-
-        {/* Infrastructure Status */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-xs relative overflow-hidden"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-              Trạng Thái Hạ Tầng
-            </span>
-            <span className="inline-flex items-center gap-1 text-xs font-black text-slate-700 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full">
-              <Server className="w-3.5 h-3.5" /> Dữ liệu vận hành
-            </span>
-          </div>
-          <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-3xl font-black text-slate-800 tracking-tight">
-              {summary.activeUsers} người dùng trong hệ thống
-            </span>
-          </div>
-          <div className="text-xs font-bold text-slate-600 mt-3 flex items-center gap-3">
-            <span className="flex items-center gap-1 text-emerald-600">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-              CSDL đang truy vấn
-            </span>
-            <span className="flex items-center gap-1 text-emerald-600">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              Redis đã kiểm tra
-            </span>
-            <span className="flex items-center gap-1 text-emerald-600">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              Billing chưa kết nối
-            </span>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* 2. 4 Core Services Grid (Light Mode) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* 1. Dịch vụ LLM */}
-        {services?.gemini && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-xs relative overflow-hidden"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-2xl text-blue-600">
-                  <Cpu className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-black text-slate-800 text-base flex items-center gap-2">
-                    {services.gemini.name}
-                  </h3>
-                  <p className="text-xs text-slate-400 font-mono">
-                    Model: {services.gemini.model}
-                  </p>
-                </div>
-              </div>
-              <span className="text-[11px] font-black px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-xl">
-                1.500 RPD Free
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200/80 mb-4">
-              <div>
-                <span className="text-[11px] font-bold text-slate-400 block">
-                  Tổng Request
-                </span>
-                <span className="text-lg font-black text-slate-800">
-                  {services.gemini.totalRequests}
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] font-bold text-slate-400 block">
-                  Cache Hit (Redis)
-                </span>
-                <span className="text-lg font-black text-blue-600">
-                  {services.gemini.cacheHitCount}
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] font-bold text-slate-400 block">
-                  Tỷ Lệ Cache Hit
-                </span>
-                <span className="text-lg font-black text-emerald-600">
-                  {services.gemini.cacheHitRate}%
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] font-bold text-slate-400 block">
-                  Chi Phí Thực
-                </span>
-                <span className="text-lg font-black text-slate-800">
-                  ${services.gemini.costUsd.toFixed(2)}
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-1 text-xs font-semibold text-slate-500">
-              <div className="flex justify-between">
-                <span>Ước tính Input Tokens:</span>
-                <span className="font-mono text-slate-700 font-bold">
-                  {services.gemini.inputTokens.toLocaleString()} tokens
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Ước tính Output Tokens:</span>
-                <span className="font-mono text-slate-700 font-bold">
-                  {services.gemini.outputTokens.toLocaleString()} tokens
-                </span>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* 2. Dịch vụ Speech */}
-        {services?.azureSpeech && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-xs relative overflow-hidden"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-violet-50 border border-violet-200 rounded-2xl text-violet-600">
-                  <Mic className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-black text-slate-800 text-base flex items-center gap-2">
-                    {services.azureSpeech.name}
-                  </h3>
-                  <p className="text-xs text-slate-400 font-medium">
-                    Phát âm âm vị (Pronunciation Assessment)
-                  </p>
-                </div>
-              </div>
-              <span className="text-[11px] font-black px-2.5 py-1 bg-violet-50 text-violet-700 border border-violet-200 rounded-xl">
-                5h Audio / Tháng Free
-              </span>
-            </div>
-
-            <div className="space-y-2 mb-4">
-              <div className="flex justify-between text-xs font-bold">
-                <span className="text-slate-600">
-                  Hạn mức Free Tier đã dùng:
-                </span>
-                <span className="text-violet-700">
-                  {services.azureSpeech.audioMinutesThisMonth} /{" "}
-                  {services.azureSpeech.freeQuotaMinutes} phút (
-                  {services.azureSpeech.usedPercent}%)
-                </span>
-              </div>
-              <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/60">
-                <div
-                  className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full transition-all duration-500"
-                  style={{
-                    width: `${Math.max(4, services.azureSpeech.usedPercent)}%`,
-                  }}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
-              <div>
-                <span className="text-[11px] font-bold text-slate-400 block">
-                  Lượt Chấm Tháng Này
-                </span>
-                <span className="text-lg font-black text-slate-800">
-                  {services.azureSpeech.submissionsThisMonth}
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] font-bold text-slate-400 block">
-                  Tổng Lượt Chấm
-                </span>
-                <span className="text-lg font-black text-slate-700">
-                  {services.azureSpeech.totalSubmissions}
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] font-bold text-slate-400 block">
-                  Chi Phí Vượt Mức
-                </span>
-                <span className="text-lg font-black text-emerald-600">
-                  ${services.azureSpeech.costUsd.toFixed(2)}
-                </span>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* 4. Cloudflare R2 Storage */}
-        {services?.cloudflareR2 && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-xs relative overflow-hidden"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-orange-50 border border-orange-200 rounded-2xl text-orange-600">
-                  <HardDrive className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-black text-slate-800 text-base flex items-center gap-2">
-                    {services.cloudflareR2.name}
-                  </h3>
-                  <p className="text-xs text-slate-400 font-medium">
-                    Lưu trữ Audio, PDF, Slides (Zero-Egress Fee)
-                  </p>
-                </div>
-              </div>
-              <span className="text-[11px] font-black px-2.5 py-1 bg-orange-50 text-orange-800 border border-orange-200 rounded-xl">
-                10 GB Storage Free
-              </span>
-            </div>
-
-            <div className="space-y-2 mb-4">
-              <div className="flex justify-between text-xs font-bold">
-                <span className="text-slate-600">Dung lượng lưu trữ:</span>
-                <span className="text-orange-700">
-                  {services.cloudflareR2.usedStorageMb} MB /{" "}
-                  {services.cloudflareR2.freeQuotaGb * 1024} MB (
-                  {services.cloudflareR2.usedPercent}%)
-                </span>
-              </div>
-              <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/60">
-                <div
-                  className="h-full bg-gradient-to-r from-orange-500 to-rose-500 rounded-full transition-all duration-500"
-                  style={{
-                    width: `${Math.max(4, services.cloudflareR2.usedPercent)}%`,
-                  }}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
-              <div>
-                <span className="text-[11px] font-bold text-slate-400 block">
-                  Audio Đang Lưu
-                </span>
-                <span className="text-lg font-black text-slate-800">
-                  {services.cloudflareR2.activeAudioFiles}
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] font-bold text-slate-400 block">
-                  Đã Dọn Dẹp (TTL 90d)
-                </span>
-                <span className="text-lg font-black text-blue-600">
-                  {services.cloudflareR2.archivedAudioFiles}
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] font-bold text-slate-400 block">
-                  Phí Băng Thông Tải
-                </span>
-                <span className="text-lg font-black text-emerald-600">
-                  $0.00 (Free)
-                </span>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </div>
-
-      {/* 3. Quick Actions Panel (Light Mode) */}
-      <div className="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-xs">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div>
-            <h3 className="text-base font-black text-slate-800 flex items-center gap-2">
-              <Zap className="w-5 h-5 text-amber-500" />
-              Tác Vụ Tối Ưu Nhanh Dành Cho Quản Trị Viên (FinOps Quick Actions)
-            </h3>
-            <p className="text-xs text-slate-400 font-medium mt-1">
-              Thao tác dọn dẹp bộ nhớ tạm Redis và kích hoạt bảo trì Storage
-              theo yêu cầu.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
             <button
+              type="button"
               onClick={() => purgeCacheMutation.mutate()}
               disabled={isPurgingCache}
-              className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-2xl text-xs font-black transition-all cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50/70 px-3.5 py-2 text-xs font-bold text-rose-700 transition hover:bg-rose-100 hover:border-rose-300 active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-2xs"
             >
-              <Trash2
-                className={`w-4 h-4 ${isPurgingCache ? "animate-spin" : ""}`}
-              />
-              {isPurgingCache ? "Đang xóa..." : "Xóa Cache Bộ Đệm (Redis)"}
+              <Trash2 className="h-3.5 w-3.5" />
+              <span>{isPurgingCache ? "Đang xóa Redis..." : "Xóa cache Redis"}</span>
             </button>
-
             <button
+              type="button"
               onClick={() => cleanupR2Mutation.mutate()}
               disabled={isCleaningR2}
-              className="flex items-center gap-2 px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-2xl text-xs font-black transition-all cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 hover:border-slate-400 active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-2xs"
             >
-              <RefreshCw
-                className={`w-4 h-4 ${isCleaningR2 ? "animate-spin" : ""}`}
-              />
-              {isCleaningR2 ? "Đang quét..." : "Quét & Dọn Dẹp R2 Ngay"}
+              <RefreshCw className={`h-3.5 w-3.5 ${isCleaningR2 ? "animate-spin" : ""}`} />
+              <span>{isCleaningR2 ? "Đang quét R2..." : "Dọn dẹp R2 (> 90 ngày)"}</span>
             </button>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* 4. Traffic Scalability Projections Table (Light Mode) */}
-      <div className="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-xs overflow-hidden">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-base font-black text-slate-800 flex items-center gap-2">
-              <Layers className="w-5 h-5 text-blue-600" />
-              Bảng Dự Toán Chi Phí Khi Mở Rộng Quy Mô (Traffic Scalability
-              Matrix)
-            </h3>
-            <p className="text-xs text-slate-400 font-medium mt-0.5">
-              Dự toán chi phí từng thành phần theo 4 mốc tăng trưởng người dùng
-              thực tế.
-            </p>
+      {/* Scalability Projection Table */}
+      <section className="rounded-xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+        <div className="border-b border-slate-200 bg-slate-50/70 px-5 py-4">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">
+                Dự toán chi phí khi mở rộng quy mô (Unit Economics)
+              </h2>
+              <p className="text-xs text-slate-600">
+                Mô hình tài chính điện toán đám mây theo 4 mốc tăng trưởng người dùng (tính toán bảo vệ đồ án KLTN & triển khai thực tế).
+              </p>
+            </div>
+            <span className="self-start sm:self-auto rounded-md bg-slate-200/70 px-2.5 py-1 text-[11px] font-semibold text-slate-700 font-mono">
+              Tỷ giá quy đổi: 25.400 đ / USD
+            </span>
           </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-600 font-black border-b border-slate-200">
-              <tr>
-                <th className="p-3.5 rounded-l-xl">Thành phần dịch vụ</th>
-                <th className="p-3.5">Giai đoạn MVP (100 - 500 HS)</th>
-                <th className="p-3.5">Giai đoạn Tăng trưởng (1K - 5K HS)</th>
-                <th className="p-3.5">Giai đoạn Mở rộng (10K - 50K HS)</th>
-                <th className="p-3.5 rounded-r-xl">Toàn quốc (100K+ HS)</th>
+            <thead>
+              <tr className="border-b border-slate-200 bg-slate-100/75 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
+                <th className="px-5 py-3.5">Thành phần</th>
+                <th className="px-4 py-3.5 bg-blue-50/50 text-blue-950 border-x border-blue-200/60">
+                  <div className="flex items-center gap-1.5">
+                    <span>MVP (100–500 HS)</span>
+                    <span className="rounded bg-blue-600 px-1.5 py-0.2 text-[9px] font-bold text-white uppercase tracking-tight">
+                      Hiện tại
+                    </span>
+                  </div>
+                </th>
+                <th className="px-4 py-3.5">Tăng trưởng (1K–5K HS)</th>
+                <th className="px-4 py-3.5">Mở rộng (10K–50K HS)</th>
+                <th className="px-4 py-3.5">Toàn quốc (100K+ HS)</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 font-semibold text-slate-600">
-              <tr className="hover:bg-slate-50/60 transition-colors">
-                <td className="p-3.5 font-bold text-slate-800 flex items-center gap-2">
-                  <Cpu className="w-4 h-4 text-blue-600" /> Dịch vụ xử lý nội
-                  dung văn bản (LLM)
+            <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+              <tr className="hover:bg-slate-50/60 transition">
+                <td className="px-5 py-3.5 font-bold text-slate-900">Google Gemini (LLM)</td>
+                <td className="px-4 py-3.5 bg-blue-50/30 font-semibold text-emerald-700 border-x border-blue-200/40">
+                  $0 (Free Tier 1.5K req/ngày)
                 </td>
-                <td className="p-3.5 text-emerald-600 font-black">
-                  $0 (Free Tier)
-                </td>
-                <td className="p-3.5">$10 - $35 (~250K - 875K đ)</td>
-                <td className="p-3.5">$80 - $250 (~2M - 6.2M đ)</td>
-                <td className="p-3.5">$450 - $1.200</td>
+                <td className="px-4 py-3.5 font-mono text-slate-800">$10–35 (~250K–875K đ)</td>
+                <td className="px-4 py-3.5 font-mono text-slate-800">$80–250 (~2M–6,2M đ)</td>
+                <td className="px-4 py-3.5 font-mono text-slate-800">$450–1.200</td>
               </tr>
-              <tr className="hover:bg-slate-50/60 transition-colors">
-                <td className="p-3.5 font-bold text-slate-800 flex items-center gap-2">
-                  <Mic className="w-4 h-4 text-violet-600" /> Dịch vụ xử lý phát
-                  âm & âm vị (Speech)
+              <tr className="hover:bg-slate-50/60 transition">
+                <td className="px-5 py-3.5 font-bold text-slate-900">Azure AI Speech</td>
+                <td className="px-4 py-3.5 bg-blue-50/30 font-semibold text-emerald-700 border-x border-blue-200/40">
+                  $0 (Free Tier 5 giờ audio)
                 </td>
-                <td className="p-3.5 text-emerald-600 font-black">
-                  $0 (Free Tier)
-                </td>
-                <td className="p-3.5">$20 - $60 (~500K - 1.5M đ)</td>
-                <td className="p-3.5">$150 - $450 (~3.7M - 11.2M đ)</td>
-                <td className="p-3.5">$800 - $2.000</td>
+                <td className="px-4 py-3.5 font-mono text-slate-800">$20–60 (~500K–1,5M đ)</td>
+                <td className="px-4 py-3.5 font-mono text-slate-800">$150–450 (~3,7M–11,2M đ)</td>
+                <td className="px-4 py-3.5 font-mono text-slate-800">$800–2.000</td>
               </tr>
-              <tr className="hover:bg-slate-50/60 transition-colors">
-                <td className="p-3.5 font-bold text-slate-800 flex items-center gap-2">
-                  <HardDrive className="w-4 h-4 text-orange-600" /> Cloudflare
-                  R2 Storage
+              <tr className="hover:bg-slate-50/60 transition">
+                <td className="px-5 py-3.5 font-bold text-slate-900">Cloudflare R2</td>
+                <td className="px-4 py-3.5 bg-blue-50/30 font-semibold text-emerald-700 border-x border-blue-200/40">
+                  $0 (0 phí egress · 10 GB Free)
                 </td>
-                <td className="p-3.5 text-emerald-600 font-black">
-                  $0 ($0 Egress)
-                </td>
-                <td className="p-3.5">$0 - $3</td>
-                <td className="p-3.5">$15 - $45</td>
-                <td className="p-3.5">$100 - $300</td>
+                <td className="px-4 py-3.5 font-mono text-slate-800">$0–3 (~0–76K đ)</td>
+                <td className="px-4 py-3.5 font-mono text-slate-800">$15–45 (~380K–1,1M đ)</td>
+                <td className="px-4 py-3.5 font-mono text-slate-800">$100–300</td>
               </tr>
-              <tr className="bg-slate-50/80 font-black text-slate-800">
-                <td className="p-3.5 rounded-l-xl text-blue-700 font-black">
-                  TỔNG CHI PHÍ / THÁNG
+              <tr className="bg-slate-100/90 font-bold text-slate-950 border-t-2 border-slate-200">
+                <td className="px-5 py-4 text-sm">Tổng chi phí / tháng</td>
+                <td className="px-4 py-4 bg-blue-100/60 text-blue-950 border-x border-blue-200/60 font-mono text-sm">
+                  ~$0–20 (0–500K đ)
                 </td>
-                <td className="p-3.5 text-emerald-600 font-black">
-                  ~$0 - $20 (0 - 500K đ)
+                <td className="px-4 py-4 font-mono text-slate-900 text-sm">
+                  ~$117–305 (~2,9M–7,6M đ)
                 </td>
-                <td className="p-3.5 text-blue-700">
-                  ~$117 - $305 (~2.9M - 7.6M đ)
+                <td className="px-4 py-4 font-mono text-slate-900 text-sm">
+                  ~$620–1.700 (~15,5M–42,5M đ)
                 </td>
-                <td className="p-3.5 text-indigo-700">
-                  ~$620 - $1.700 (~15.5M - 42.5M đ)
-                </td>
-                <td className="p-3.5 rounded-r-xl text-amber-700">
-                  ~$3.160 - $8.310
+                <td className="px-4 py-4 font-mono text-slate-900 text-sm">
+                  ~$3.160–8.310
                 </td>
               </tr>
-              <tr className="text-emerald-700 font-black bg-emerald-50/40">
-                <td className="p-3.5 rounded-l-xl">
-                  Chi phí / 1 Học sinh / Tháng
+              <tr className="bg-slate-50/70 font-semibold text-slate-800">
+                <td className="px-5 py-3.5">Chi phí / học sinh / tháng</td>
+                <td className="px-4 py-3.5 bg-blue-50/40 text-blue-900 border-x border-blue-200/40 font-mono">
+                  ~1.000–2.500 đ
                 </td>
-                <td className="p-3.5">~1.000 - 2.500 đ</td>
-                <td className="p-3.5">~1.500 - 2.900 đ</td>
-                <td className="p-3.5">~850 - 1.550 đ</td>
-                <td className="p-3.5 rounded-r-xl">~790 - 1.200 đ</td>
+                <td className="px-4 py-3.5 font-mono text-slate-700">~1.500–2.900 đ</td>
+                <td className="px-4 py-3.5 font-mono text-slate-700">~850–1.550 đ</td>
+                <td className="px-4 py-3.5 font-mono text-slate-700">~790–1.200 đ</td>
               </tr>
             </tbody>
           </table>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

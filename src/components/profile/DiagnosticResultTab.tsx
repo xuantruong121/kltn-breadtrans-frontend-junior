@@ -168,13 +168,13 @@ export function DiagnosticResultTab() {
         <div className="mt-5 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <span className="text-xs font-black uppercase tracking-wider text-violet-600 dark:text-violet-400">
-              Trình độ khởi điểm ước tính
+              Mức năng lực tham khảo
             </span>
             <h2 className="mt-1 text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100">
-              {formatPlacementLevel(result.level)}
+              {formatPlacementLevel(result.referenceLevel ?? result.level)}
             </h2>
             <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 max-w-xl">
-              Kết quả này được dùng để gợi ý điểm bắt đầu học tập và bài luyện phù hợp trên BreadTrans, không thay thế chứng chỉ CEFR chính thức.
+              Đây là ước lượng nội bộ để gợi ý bài luyện phù hợp, không phải chứng chỉ CEFR và không khóa nội dung học tập.
             </p>
           </div>
 
@@ -200,11 +200,11 @@ export function DiagnosticResultTab() {
                 <span className="font-bold">Nói: </span>
                 {result.speakingEvidenceCount && result.speakingEvidenceCount > 0
                   ? `Đã ghi nhận ${result.speakingEvidenceCount}/2 nhiệm vụ${result.speakingScore !== null ? ` (Điểm phát âm: ${result.speakingScore}/100)` : ""}.`
-                  : "Chưa đủ dữ liệu để đưa ra nhận định; điểm xếp lớp hiện dựa trên 48 câu trắc nghiệm khách quan."}
+                  : "Đang chờ hoặc chưa đủ dữ liệu để nhận xét kỹ năng Nói; mức tham khảo vẫn dựa trên 48 câu trắc nghiệm khách quan."}
               </p>
               <p>
                 <span className="font-bold">Viết: </span>
-                Đã ghi nhận 2 nhiệm vụ tự luận vào hồ sơ học tập để theo dõi tiến độ.
+                {result.writingFeedback?.some((item) => item.status === "GRADED") ? "Đã có nhận xét tự động cho bài viết." : "Bài viết đang được nhận xét tự động; kết quả sẽ tự cập nhật khi hoàn tất."}
               </p>
             </div>
           </div>
