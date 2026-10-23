@@ -1,3 +1,7 @@
+import {
+  buildQuestionAudioRequestPath,
+  type PublishedListeningAudioIdentity,
+} from "@/lib/audio/questionAudioRequest";
 import axiosClient from "../axiosClient";
 
 export interface StructuredExplanation {
@@ -86,10 +90,7 @@ export interface Quiz {
   listeningAudioArtifact?: ListeningAudioArtifactIdentity | null;
 }
 
-export interface ListeningAudioArtifactIdentity {
-  id: number;
-  version: number;
-  checksumSha256?: string | null;
+export interface ListeningAudioArtifactIdentity extends PublishedListeningAudioIdentity {
   durationMs?: number | null;
 }
 
@@ -234,17 +235,10 @@ export const quizService = {
     quizId: number,
     questionId: number,
     signal?: AbortSignal,
-    audioVersion?: number,
     artifact?: ListeningAudioArtifactIdentity | null,
   ): Promise<Blob> => {
-    const params = new URLSearchParams();
-    if (artifact?.id) params.set("artifactId", String(artifact.id));
-    if (artifact?.version) params.set("v", String(artifact.version));
-    if (artifact?.checksumSha256) params.set("checksum", artifact.checksumSha256);
-    if (!artifact && Number.isFinite(audioVersion)) params.set("v", String(audioVersion));
-    const query = params.toString() ? `?${params.toString()}` : "";
     return await axiosClient.get(
-      `/quizzes/${quizId}/questions/${questionId}/audio${query}`,
+      buildQuestionAudioRequestPath(quizId, questionId, artifact),
       { responseType: "blob", signal },
     );
   },

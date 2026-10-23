@@ -623,7 +623,6 @@ export function DailyDictationWorkspace({
         quiz.id,
         currentQuestion.id,
         controller.signal,
-        activeAudioVersion,
         quiz.listeningAudioArtifact,
       )
       .then((blob) => {

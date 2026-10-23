@@ -60,7 +60,7 @@ export function ListeningAudioPlayer({
     let isMounted = true;
 
     quizService
-      .getQuestionAudioBlob(quizId, questionId, controller.signal, audioVersion)
+      .getQuestionAudioBlob(quizId, questionId, controller.signal)
       .then((blob) => {
         if (!isMounted) return;
         if (objectUrlRef.current) {
