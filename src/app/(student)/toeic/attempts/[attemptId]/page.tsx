@@ -25,6 +25,10 @@ import { resolveAssessmentPolicy } from "@/lib/practice/focusMode";
 import { useAssessmentAntiCheat } from "@/hooks/useAssessmentAntiCheat";
 import { PracticeHeader } from "@/components/practice/PracticeHeader";
 import { isSafeCourseReturn } from "@/lib/course/navigation";
+import {
+  ToeicQuestionCard,
+  ToeicGroupContext,
+} from "@/components/toeic/ToeicQuestionCard";
 
 type QuestionEntry = {
   question: NonNullable<ToeicQuestionGroup["questions"]>[number];
@@ -714,73 +718,27 @@ export default function ToeicAttemptPage({
                     : undefined
                 }
               >
-                <div>
-                  {current.group.imageUrl && (
-                    <img
-                      src={current.group.imageUrl}
-                      alt={`Hình minh họa Part ${current.group.part}`}
-                      className="mx-auto mb-6 max-h-96 rounded-xl object-contain"
-                    />
-                  )}
-                  {!isListening && current.group.passageText && (
-                    <div className="mb-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 p-5 text-base leading-8 text-slate-800 dark:text-slate-100 sm:text-lg">
-                      {current.group.passageText}
-                    </div>
-                  )}
-                </div>
+                <ToeicGroupContext
+                  group={current.group}
+                  isListening={isListening}
+                />
                 <div className="space-y-6">
                   {renderedEntries.map(({ question }) => {
                     const audioOnly = fullTest && current.group.part <= 2;
                     return (
-                      <article
+                      <ToeicQuestionCard
                         key={question.id}
-                        className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900"
-                      >
-                        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-4 py-3">
-                          <h2 className="text-base font-black text-slate-900 dark:text-slate-100 sm:text-lg">
-                            Câu {question.questionNumber}
-                            {audioOnly
-                              ? " · Chọn đáp án"
-                              : question.text
-                                ? ` · ${question.text}`
-                                : ""}
-                          </h2>
-                          {marked.has(question.id) && (
-                            <Flag
-                              size={16}
-                              className="text-amber-600 dark:text-amber-400"
-                              aria-label="Đã đánh dấu xem lại"
-                            />
-                          )}
-                        </div>
-                        <div className="grid gap-2.5 p-4 sm:grid-cols-2 sm:gap-3">
-                          {question.options.map((option, optionIndex) => (
-                            <button
-                              key={optionIndex}
-                              type="button"
-                              onClick={() =>
-                                setAnswers((old) => ({
-                                  ...(old ?? persistedAnswers),
-                                  [question.id]: optionIndex,
-                                }))
-                              }
-                              className={`min-h-14 rounded-xl border-2 p-3.5 text-left text-sm font-semibold transition-colors sm:p-4 sm:text-base ${currentAnswers[question.id] === optionIndex ? "border-amber-500 bg-amber-50 dark:bg-amber-950/40 text-amber-950 dark:text-amber-200" : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 text-slate-700 dark:text-slate-200 hover:border-amber-300 dark:hover:border-amber-600"}`}
-                            >
-                              <span className="mr-2 font-black">
-                                {String.fromCharCode(65 + optionIndex)}.
-                              </span>
-                              {audioOnly ? (
-                                <span className="sr-only">
-                                  Lựa chọn{" "}
-                                  {String.fromCharCode(65 + optionIndex)}
-                                </span>
-                              ) : (
-                                option
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      </article>
+                        question={question}
+                        selectedIndex={currentAnswers[question.id]}
+                        onSelect={(optionIndex) =>
+                          setAnswers((old) => ({
+                            ...(old ?? persistedAnswers),
+                            [question.id]: optionIndex,
+                          }))
+                        }
+                        marked={marked.has(question.id)}
+                        audioOnly={audioOnly}
+                      />
                     );
                   })}
                 </div>

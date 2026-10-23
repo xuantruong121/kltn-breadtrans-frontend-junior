@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   CheckCircle2,
   ExternalLink,
@@ -10,6 +11,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
+import { legacyAssessmentTreatment } from "@/lib/examStudio/legacyRouteLogic";
 
 type Family = "TOEIC_LR" | "TOEIC_SW" | "TOEIC_4_SKILLS";
 type Assessment = {
@@ -20,6 +22,7 @@ type Assessment = {
   publicationStatus: string;
   components: any[];
   readiness?: any[];
+  examId?: number | null;
 };
 type Source = {
   id: number | string;
@@ -244,6 +247,24 @@ export default function ToeicAssessmentComposer() {
           </div>
         </aside>
 
+        {legacyAssessmentTreatment(active) === "REDIRECT_TO_STUDIO" ? (
+          <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+            <p className="text-sm font-semibold text-slate-900">
+              Trang quản lý cũ
+            </p>
+            <p className="mt-2 max-w-lg text-sm text-slate-600">
+              Nội dung này hiện được quản lý trong Luyện đề. Chỉnh sửa trực
+              tiếp tại trang này đã bị khóa để tránh hai quy trình soạn đề
+              cạnh tranh nhau.
+            </p>
+            <Link
+              href={`/admin/exams/${active?.examId}`}
+              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
+            >
+              <ExternalLink size={15} /> Đi tới Luyện đề
+            </Link>
+          </section>
+        ) : (
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="grid gap-4 md:grid-cols-2">
             <label className="text-sm font-semibold">
@@ -351,26 +372,27 @@ export default function ToeicAssessmentComposer() {
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-500">
-            <a
+            <Link
               href="/admin/exams"
               className="inline-flex items-center gap-1 hover:text-slate-900"
             >
               Edit L&R <ExternalLink size={13} />
-            </a>
-            <a
+            </Link>
+            <Link
               href="/admin/speaking"
               className="inline-flex items-center gap-1 hover:text-slate-900"
             >
               Edit Speaking <ExternalLink size={13} />
-            </a>
-            <a
+            </Link>
+            <Link
               href="/admin/toeic/writing-sets"
               className="inline-flex items-center gap-1 hover:text-slate-900"
             >
               Edit Writing <ExternalLink size={13} />
-            </a>
+            </Link>
           </div>
         </section>
+        )}
       </section>
     </main>
   );
