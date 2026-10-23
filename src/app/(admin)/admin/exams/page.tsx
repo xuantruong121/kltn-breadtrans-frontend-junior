@@ -36,6 +36,10 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import ImageUploadField from "@/components/admin/ImageUploadField";
 import AudioUploadField from "@/components/admin/AudioUploadField";
 import ToeicSpeakingExamComposer from "@/components/admin/ToeicSpeakingExamComposer";
+import {
+  getPublishReadinessUi,
+  getReadinessIssueLabel,
+} from "@/lib/examStudio/readinessUi";
 
 const TOEIC_PARTS = [
   { part: 1, label: "Part 1: Mô tả hình ảnh (Photographs)", type: "LISTENING" },
@@ -146,6 +150,7 @@ interface ExamDetail {
     issues: Array<{
       code: string;
       message: string;
+      humanMessage?: string;
       groupId?: number;
       questionId?: number;
     }>;
@@ -661,6 +666,10 @@ export default function AdminExamsPage() {
     if (examDetail.variantCode && examDetail.variantCode !== "TOEIC_LR") {
       const readiness = examDetail.readiness;
       const isPublished = examDetail.publicationStatus === "PUBLISHED";
+      const publishReadiness = getPublishReadinessUi(
+        examDetail.learnerReady,
+        examDetail.validation?.issues.length ?? 0,
+      );
       const sections = [
         {
           label: "Listening & Reading",
@@ -721,13 +730,21 @@ export default function AdminExamsPage() {
                     Chuyển về bản nháp
                   </button>
                 ) : (
-                  <button
-                    onClick={() => publishExamMutation.mutate(examDetail.id)}
-                    disabled={publishExamMutation.isPending}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors shadow-sm"
-                  >
-                    <CheckCircle2 size={15} /> Xuất bản đề thi
-                  </button>
+                  <div className="flex flex-col items-end gap-1">
+                    <button
+                      onClick={() => publishExamMutation.mutate(examDetail.id)}
+                      disabled={publishExamMutation.isPending || !publishReadiness.canPublish}
+                      title={publishReadiness.helpText}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none"
+                    >
+                      <CheckCircle2 size={15} /> {publishReadiness.label}
+                    </button>
+                    {!publishReadiness.canPublish && (
+                      <p className="max-w-[260px] text-right text-[11px] leading-4 text-slate-500">
+                        {publishReadiness.helpText}
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -775,6 +792,24 @@ export default function AdminExamsPage() {
     const allQuestions = groups.flatMap((g) => g.questions || []);
     const validation = examDetail.validation;
     const issues = validation?.issues || [];
+    const publishReadiness = getPublishReadinessUi(
+      examDetail.learnerReady,
+      issues.length,
+    );
+
+    const focusReadinessIssue = (issue: (typeof issues)[number]) => {
+      const targetGroup = issue.groupId
+        ? groups.find((group) => group.id === issue.groupId)
+        : undefined;
+      setActiveTab("structure");
+      if (!targetGroup) return;
+      setActivePartFilter(targetGroup.part);
+      requestAnimationFrame(() => {
+        document
+          .getElementById(`exam-group-${targetGroup.id}`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    };
 
     const visibleGroups =
       activePartFilter === "all"
@@ -843,15 +878,23 @@ export default function AdminExamsPage() {
               >
                 Chuyển về bản nháp
               </button>
-            ) : (
-              <button
-                onClick={() => publishExamMutation.mutate(examDetail.id)}
-                disabled={publishExamMutation.isPending}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors shadow-sm"
-              >
-                <CheckCircle2 size={15} /> Xuất bản đề thi
-              </button>
-            )}
+                ) : (
+                  <div className="flex flex-col items-end gap-1">
+                    <button
+                      onClick={() => publishExamMutation.mutate(examDetail.id)}
+                      disabled={publishExamMutation.isPending || !publishReadiness.canPublish}
+                      title={publishReadiness.helpText}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none"
+                    >
+                      <CheckCircle2 size={15} /> {publishReadiness.label}
+                    </button>
+                    {!publishReadiness.canPublish && (
+                      <p className="max-w-[260px] text-right text-[11px] leading-4 text-slate-500">
+                        {publishReadiness.helpText}
+                      </p>
+                    )}
+                  </div>
+                )}
           </div>
         </div>
 
@@ -894,7 +937,7 @@ export default function AdminExamsPage() {
                 : "text-slate-600 hover:bg-slate-100"
             }`}
           >
-            Xem trước đề thi
+            Xem nhanh
           </button>
           <button
             onClick={() => setActiveTab("info")}
@@ -983,6 +1026,7 @@ export default function AdminExamsPage() {
                   return (
                     <div
                       key={group.id}
+                      id={`exam-group-${group.id}`}
                       className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4 hover:border-slate-300 transition-colors"
                     >
                       {/* GROUP HEADER */}
@@ -1398,26 +1442,27 @@ export default function AdminExamsPage() {
                   </h3>
                   <div className="space-y-2">
                     {issues.map((issue, idx) => (
-                      <div
+                      <button
                         key={idx}
+                        type="button"
+                        onClick={() => focusReadinessIssue(issue)}
                         className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-900 flex items-start gap-2"
                       >
                         <AlertTriangle
                           size={15}
                           className="text-rose-600 shrink-0 mt-0.5"
                         />
-                        <div>
-                          <span className="font-bold font-mono">
-                            [{issue.code}]
-                          </span>{" "}
-                          {issue.message}
+                        <div className="text-left">
+                          <span className="font-semibold">
+                            {getReadinessIssueLabel(issue)}
+                          </span>
                           {issue.groupId && (
-                            <span className="text-rose-700 ml-1">
-                              (Nhóm ID: {issue.groupId})
+                            <span className="mt-1 block text-rose-700 underline underline-offset-2">
+                              Mở đúng nhóm để hoàn thiện
                             </span>
                           )}
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -1454,9 +1499,16 @@ export default function AdminExamsPage() {
                   {examDetail.title}
                 </h2>
                 <p className="text-xs text-slate-500 mt-1">
-                  Mô phỏng giao diện làm bài thi của học viên · Thời lượng:{" "}
+                  Xem nhanh dành cho quản trị viên · Có thể dùng các thao tác
+                  khắc phục media bên dưới · Thời lượng:{" "}
                   {Math.round(examDetail.durationSeconds / 60)} phút
                 </p>
+                <a
+                  href={`/admin/exams/${examDetail.id}/learner-preview`}
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                >
+                  <Eye size={14} /> Xem như học viên
+                </a>
               </div>
 
               {groups.map((group, idx) => (

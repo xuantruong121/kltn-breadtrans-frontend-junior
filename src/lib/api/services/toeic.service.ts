@@ -60,6 +60,11 @@ export interface ToeicAttempt {
   answers: Array<{ questionId: number; selectedIndex: number | null }>;
   currentQuestionId?: number | null;
   markedQuestionIds?: number[];
+  /** Strict Full Test section state — server-authoritative, null for Practice. */
+  section?: "LISTENING" | "READING" | null;
+  listeningPosition?: number;
+  readingStartedAt?: string | null;
+  readingDeadline?: string | null;
 }
 
 export interface ToeicBundle {
@@ -146,6 +151,17 @@ export const toeicService = {
   },
   submitAttempt: async (attemptId: number): Promise<unknown> =>
     (await axiosClient.post(`/toeic/attempts/${attemptId}/submit`)) as unknown,
+  getRemainingTime: async (
+    attemptId: number,
+  ): Promise<{ remaining: number | null; section?: "LISTENING" | "READING" | null }> =>
+    (await axiosClient.get(
+      `/toeic/attempts/${attemptId}/remaining-time`,
+    )) as unknown as { remaining: number | null; section?: "LISTENING" | "READING" | null },
+  /** Advances the one-pass Listening cursor by exactly one segment (server-authoritative). */
+  advanceListening: async (attemptId: number): Promise<ToeicAttempt> =>
+    (await axiosClient.post(
+      `/toeic/attempts/${attemptId}/listening/advance`,
+    )) as unknown as ToeicAttempt,
   recordIntegrityEvent: async (
     attemptId: number,
     eventType:
