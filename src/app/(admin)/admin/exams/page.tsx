@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Award,
@@ -161,13 +163,19 @@ const examVariantLabel = (variant?: string) =>
 
 export default function AdminExamsPage() {
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "ALL" | "DRAFT" | "PUBLISHED"
   >("ALL");
   const [familyFilter, setFamilyFilter] = useState("ALL");
   const [variantFilter, setVariantFilter] = useState("ALL");
-  const [selectedExamId, setSelectedExamId] = useState<number | null>(null);
+  const examIdFromUrl = Number(
+    searchParams.get("exam") ?? searchParams.get("examId"),
+  );
+  const [selectedExamId, setSelectedExamId] = useState<number | null>(
+    Number.isInteger(examIdFromUrl) && examIdFromUrl > 0 ? examIdFromUrl : null,
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(9);
   const [activeTab, setActiveTab] = useState<
@@ -2575,12 +2583,6 @@ export default function AdminExamsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <a
-            href="/admin/exams/new"
-            className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-800 shadow-sm transition hover:border-amber-400 hover:bg-amber-100"
-          >
-            <FileStack size={16} /> AI tạo đề
-          </a>
           <button
             onClick={() => {
               setExamForm({
@@ -2594,10 +2596,16 @@ export default function AdminExamsPage() {
               });
               setIsExamModalOpen(true);
             }}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+          >
+            <Plus size={16} /> Tạo thủ công
+          </button>
+          <Link
+            href="/admin/exams/new"
             className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors shadow-sm"
           >
-            <Plus size={16} /> Tạo đề
-          </button>
+            <FileStack size={16} /> AI soạn đề
+          </Link>
         </div>
       </header>
 

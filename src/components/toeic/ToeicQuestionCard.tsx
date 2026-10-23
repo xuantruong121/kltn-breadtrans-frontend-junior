@@ -1,7 +1,16 @@
 import { Flag } from "lucide-react";
-import type { ToeicQuestionGroup } from "@/lib/api/services/toeic.service";
 
-type Question = NonNullable<ToeicQuestionGroup["questions"]>[number];
+/**
+ * Minimal shape this card actually renders — intentionally looser than the
+ * full learner `ToeicQuestionGroup["questions"][number]` type so the Admin
+ * "Xem như học viên" preview (whose DTO strictly omits answer-key fields)
+ * can reuse this exact component without widening what it exposes.
+ */
+type Question = {
+  questionNumber: number;
+  text?: string | null;
+  options: string[];
+};
 
 /**
  * The single reusable TOEIC L&R question rendering unit — shared between the
@@ -70,7 +79,11 @@ export function ToeicGroupContext({
   group,
   isListening,
 }: {
-  group: Pick<ToeicQuestionGroup, "part" | "imageUrl" | "passageText">;
+  group: {
+    part: number;
+    imageUrl?: string | null;
+    passageText?: string | null;
+  };
   isListening: boolean;
 }) {
   if (!group.imageUrl && (isListening || !group.passageText)) return null;

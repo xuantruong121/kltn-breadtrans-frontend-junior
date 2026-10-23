@@ -56,6 +56,16 @@ export default function ExamAiCandidateWorkspacePage({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<Record<string, string>>({});
+  type QuestionDraft = {
+    text: string;
+    options: string[];
+    correctIndex: number;
+    explanation: string;
+  };
+  const [questionDrafts, setQuestionDrafts] = useState<
+    Record<number, QuestionDraft>
+  >({});
+  const [regenerating, setRegenerating] = useState<string | null>(null);
 
   const statusQuery = useQuery({
     queryKey: ["exam-ai-status", jobId],
@@ -148,11 +158,30 @@ export default function ExamAiCandidateWorkspacePage({
       passageText: group.passageText ?? "",
       imageBrief: group.imageBrief ?? "",
     });
+    setQuestionDrafts(
+      Object.fromEntries(
+        group.questions.map((q, index) => [
+          index,
+          {
+            text: q.text ?? "",
+            options: [...q.options],
+            correctIndex: q.correctIndex,
+            explanation: q.explanation ?? "",
+          },
+        ]),
+      ),
+    );
   };
 
   const saveEdit = async (candidateKey: string) => {
     try {
-      await examAiService.updateCandidate(jobId, candidateKey, editDraft);
+      await examAiService.updateCandidate(jobId, candidateKey, {
+        ...editDraft,
+        questions: Object.entries(questionDrafts).map(([index, q]) => ({
+          questionIndex: Number(index),
+          ...q,
+        })),
+      });
       toast.success("Đã lưu chỉnh sửa candidate");
       setEditingKey(null);
       await queryClient.invalidateQueries({
@@ -160,6 +189,37 @@ export default function ExamAiCandidateWorkspacePage({
       });
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Không thể lưu chỉnh sửa");
+    }
+  };
+
+  const regenerateGroup = async (candidateKey: string) => {
+    setRegenerating(candidateKey);
+    try {
+      await examAiService.regenerateGroup(jobId, candidateKey);
+      toast.success("Đã tạo lại nhóm — candidate đã cập nhật");
+      await queryClient.invalidateQueries({
+        queryKey: ["exam-ai-candidate", jobId],
+      });
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Không thể tạo lại nhóm");
+    } finally {
+      setRegenerating(null);
+    }
+  };
+
+  const regeneratePart = async (part: number) => {
+    const key = `PART_${part}`;
+    setRegenerating(key);
+    try {
+      await examAiService.regeneratePart(jobId, part);
+      toast.success(`Đã tạo lại Part ${part} (bỏ qua nội dung đã áp dụng)`);
+      await queryClient.invalidateQueries({
+        queryKey: ["exam-ai-candidate", jobId],
+      });
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Không thể tạo lại Part");
+    } finally {
+      setRegenerating(null);
     }
   };
 
@@ -311,13 +371,25 @@ export default function ExamAiCandidateWorkspacePage({
                   <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     {partLabel(part)}
                   </h2>
-                  <button
-                    type="button"
-                    onClick={() => selectPart(part)}
-                    className="text-xs font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
-                  >
-                    Chọn cả Part
-                  </button>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => regeneratePart(part)}
+                      disabled={regenerating === `PART_${part}`}
+                      className="text-xs font-medium text-slate-500 hover:text-slate-800 disabled:opacity-40 dark:text-slate-400 dark:hover:text-slate-100"
+                    >
+                      {regenerating === `PART_${part}`
+                        ? "Đang tạo lại..."
+                        : "Tạo lại Part"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => selectPart(part)}
+                      className="text-xs font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+                    >
+                      Chọn cả Part
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-3">
                   {visible.map((group) => {
@@ -346,17 +418,29 @@ export default function ExamAiCandidateWorkspacePage({
                               {state.label}
                             </span>
                             {!group.applied && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  isEditing
-                                    ? setEditingKey(null)
-                                    : startEdit(group)
-                                }
-                                className="text-xs font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
-                              >
-                                {isEditing ? "Đóng" : "Chỉnh sửa"}
-                              </button>
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => regenerateGroup(group.candidateKey)}
+                                  disabled={regenerating === group.candidateKey}
+                                  className="text-xs font-medium text-slate-500 hover:text-slate-800 disabled:opacity-40 dark:text-slate-400 dark:hover:text-slate-100"
+                                >
+                                  {regenerating === group.candidateKey
+                                    ? "Đang tạo lại..."
+                                    : "Tạo lại nhóm"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    isEditing
+                                      ? setEditingKey(null)
+                                      : startEdit(group)
+                                  }
+                                  className="text-xs font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+                                >
+                                  {isEditing ? "Đóng" : "Chỉnh sửa"}
+                                </button>
+                              </>
                             )}
                           </div>
                         </div>
@@ -411,6 +495,76 @@ export default function ExamAiCandidateWorkspacePage({
                                 />
                               </div>
                             )}
+                            <div className="space-y-3 border-t border-slate-100 pt-3 dark:border-slate-800">
+                              {group.questions.map((q, qIndex) => {
+                                const draft = questionDrafts[qIndex];
+                                if (!draft) return null;
+                                return (
+                                  <div
+                                    key={qIndex}
+                                    className="rounded-md border border-slate-200 p-3 dark:border-slate-700"
+                                  >
+                                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                                      Câu {q.questionNumber}
+                                    </p>
+                                    <input
+                                      className="mt-1 w-full rounded-md border border-slate-300 p-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                                      value={draft.text}
+                                      placeholder="Nội dung câu hỏi"
+                                      onChange={(e) =>
+                                        setQuestionDrafts((d) => ({
+                                          ...d,
+                                          [qIndex]: { ...draft, text: e.target.value },
+                                        }))
+                                      }
+                                    />
+                                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                                      {draft.options.map((opt, optIndex) => (
+                                        <label
+                                          key={optIndex}
+                                          className="flex items-center gap-2 text-sm"
+                                        >
+                                          <input
+                                            type="radio"
+                                            name={`correct-${group.candidateKey}-${qIndex}`}
+                                            checked={draft.correctIndex === optIndex}
+                                            onChange={() =>
+                                              setQuestionDrafts((d) => ({
+                                                ...d,
+                                                [qIndex]: { ...draft, correctIndex: optIndex },
+                                              }))
+                                            }
+                                          />
+                                          <input
+                                            className="flex-1 rounded-md border border-slate-300 p-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
+                                            value={opt}
+                                            onChange={(e) =>
+                                              setQuestionDrafts((d) => {
+                                                const options = [...draft.options];
+                                                options[optIndex] = e.target.value;
+                                                return { ...d, [qIndex]: { ...draft, options } };
+                                              })
+                                            }
+                                          />
+                                        </label>
+                                      ))}
+                                    </div>
+                                    <textarea
+                                      className="mt-2 w-full rounded-md border border-slate-300 p-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                                      rows={2}
+                                      placeholder="Giải thích đáp án"
+                                      value={draft.explanation}
+                                      onChange={(e) =>
+                                        setQuestionDrafts((d) => ({
+                                          ...d,
+                                          [qIndex]: { ...draft, explanation: e.target.value },
+                                        }))
+                                      }
+                                    />
+                                  </div>
+                                );
+                              })}
+                            </div>
                             <div className="flex justify-end gap-2">
                               <button
                                 type="button"

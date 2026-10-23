@@ -89,6 +89,21 @@ export const examAiService = {
     )) as unknown as ExamAiJobStatus;
   },
 
+  async regenerateGroup(
+    jobId: string,
+    candidateKey: string,
+  ): Promise<ExamAiCandidate> {
+    return (await axiosClient.post(
+      `/admin/exams/ai/jobs/${jobId}/candidate/${candidateKey}/regenerate`,
+    )) as unknown as ExamAiCandidate;
+  },
+
+  async regeneratePart(jobId: string, part: number): Promise<ExamAiCandidate> {
+    return (await axiosClient.post(
+      `/admin/exams/ai/jobs/${jobId}/candidate/parts/${part}/regenerate`,
+    )) as unknown as ExamAiCandidate;
+  },
+
   async retry(jobId: string): Promise<ExamAiJobStatus> {
     return (await axiosClient.post(
       `/admin/exams/ai/jobs/${jobId}/retry`,

@@ -76,23 +76,9 @@ export default function NewExamPage() {
     }
   };
 
-  const applyAiCandidate = async () => {
-    if (!aiJob?.id || !aiJob?.exam?.id) return;
-    setIsSubmitting(true);
-    try {
-      const result: any = await axiosClient.post(
-        `/admin/exams/ai/jobs/${aiJob.id}/apply`,
-      );
-      rememberAiJob(result);
-      toast.success("Đã áp dụng candidate vào Draft. Hãy review, chỉnh sửa và lưu trước khi xuất bản.");
-      router.push(`/admin/exams?exam=${aiJob.exam.id}`);
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data?.message || "Không thể áp dụng candidate AI vào Draft",
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+  const openCandidateWorkspace = () => {
+    if (!aiJob?.id) return;
+    router.push(`/admin/exams/ai/${aiJob.id}`);
   };
 
   const submit = async (event: FormEvent) => {
@@ -278,7 +264,7 @@ export default function NewExamPage() {
               />
             </label>
           </div>}
-          {aiJob && <section className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm"><p className="font-semibold text-slate-900">Tiến độ AI: {aiJob.stage || aiJob.status}</p><p className="mt-1 text-slate-600">{aiJob.error || (aiJob.status === "GENERATED" ? "Candidate đã qua kiểm tra cấu trúc. Admin cần Apply vào Draft trước khi review, chỉnh sửa, validate và Publish thủ công." : "Job và candidate được lưu bền vững; bạn có thể quay lại trang này để tiếp tục.")}</p>{aiJob.candidate?.available && <p className="mt-2 text-xs text-slate-500">Candidate: {aiJob.candidate.lrBatchCount} batch L&R · {aiJob.candidate.speakingCount} Speaking · {aiJob.candidate.writingCount} Writing</p>}<div className="mt-3 flex flex-wrap items-center gap-3">{aiJob.status === "FAILED" && <button type="button" onClick={retryAiJob} disabled={isSubmitting} className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">{isSubmitting ? "Đang thử lại..." : "Thử lại job AI"}</button>}{aiJob.status === "GENERATED" && aiJob.exam?.id && <button type="button" onClick={applyAiCandidate} disabled={isSubmitting} className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">{isSubmitting ? "Đang Apply..." : "Apply candidate vào Draft"}</button>}{aiJob.exam?.id && ["APPROVED", "FAILED", "CANCELLED"].includes(aiJob.status) && <button type="button" onClick={() => router.push(`/admin/exams?exam=${aiJob.exam.id}`)} className="font-semibold text-blue-700 hover:underline">Mở Draft để review</button>}</div></section>}
+          {aiJob && <section className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm"><p className="font-semibold text-slate-900">Tiến độ AI: {aiJob.stage || aiJob.status}</p><p className="mt-1 text-slate-600">{aiJob.error || (aiJob.status === "GENERATED" ? "Candidate đã qua kiểm tra cấu trúc. Admin cần Apply vào Draft trước khi review, chỉnh sửa, validate và Publish thủ công." : "Job và candidate được lưu bền vững; bạn có thể quay lại trang này để tiếp tục.")}</p>{aiJob.candidate?.available && <p className="mt-2 text-xs text-slate-500">Candidate: {aiJob.candidate.lrBatchCount} batch L&R · {aiJob.candidate.speakingCount} Speaking · {aiJob.candidate.writingCount} Writing</p>}<div className="mt-3 flex flex-wrap items-center gap-3">{aiJob.status === "FAILED" && <button type="button" onClick={retryAiJob} disabled={isSubmitting} className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">{isSubmitting ? "Đang thử lại..." : "Thử lại job AI"}</button>}{aiJob.status === "GENERATED" && <button type="button" onClick={openCandidateWorkspace} className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800">Xem candidate & Apply</button>}{aiJob.exam?.id && ["APPROVED", "FAILED", "CANCELLED"].includes(aiJob.status) && <button type="button" onClick={() => router.push(`/admin/exams?exam=${aiJob.exam.id}`)} className="font-semibold text-blue-700 hover:underline">Mở Draft để review</button>}</div></section>}
           <div className="flex justify-end border-t border-slate-100 pt-5">
             <button
               disabled={isSubmitting || (authoringMode === "MANUAL" && !title.trim())}
