@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { 
-  Award, 
+  ShieldCheck, 
   Shield, 
   Flame, 
   Crown, 
@@ -197,8 +197,8 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
         {/* Header Title */}
         <div className="flex items-center justify-between gap-2 mb-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 flex items-center justify-center border border-amber-200 dark:border-amber-900/60 shadow-xs">
-              <Award size={22} />
+            <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 flex items-center justify-center border border-slate-200/90 dark:border-slate-700/80 shadow-2xs">
+              <ShieldCheck size={20} strokeWidth={1.8} />
             </div>
             <div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 leading-tight">
