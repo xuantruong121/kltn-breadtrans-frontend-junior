@@ -31,10 +31,21 @@ export type ExamAiCandidateTask = {
   applied: boolean;
 };
 
+export type ExamAiFailedUnit = {
+  batchKey: string;
+  part: number;
+  offset: number;
+  groupOrder: number;
+  code: "CONTENT_CONTRACT_FAILURE";
+  message: string;
+  attempts: number;
+};
+
 export type ExamAiCandidate = {
   lrGroups: ExamAiCandidateGroup[];
   speaking: ExamAiCandidateTask[];
   writing: ExamAiCandidateTask[];
+  failedUnits: ExamAiFailedUnit[];
   flaggedCount: number;
   appliedCandidateKeys: string[];
 };

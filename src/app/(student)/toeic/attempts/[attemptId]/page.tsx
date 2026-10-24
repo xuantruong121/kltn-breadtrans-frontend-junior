@@ -35,7 +35,6 @@ type QuestionEntry = {
   group: ToeicQuestionGroup;
 };
 
-const LISTENING_SECONDS = 45 * 60;
 const READING_SECONDS = 75 * 60;
 
 function formatTime(seconds: number) {
@@ -81,7 +80,6 @@ export default function ToeicAttemptPage({
   const [audioVolume, setAudioVolume] = useState(1);
   const [audioRate, setAudioRate] = useState(1);
   const [showAudioSettings, setShowAudioSettings] = useState(false);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [currentTimeMs, setCurrentTimeMs] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
   const audioRequestRef = useRef(0);
@@ -216,17 +214,6 @@ export default function ToeicAttemptPage({
     },
     [],
   );
-
-  useEffect(() => {
-    if (!fullTest || !attempt?.startedAt) return;
-    const startedAt = Date.parse(attempt.startedAt);
-    if (!Number.isFinite(startedAt)) return;
-    const update = () =>
-      setElapsedSeconds(Math.max(0, (Date.now() - startedAt) / 1000));
-    update();
-    const timer = window.setInterval(update, 1000);
-    return () => window.clearInterval(timer);
-  }, [attempt?.startedAt, fullTest]);
 
   useEffect(() => {
     if (!attempt) return;
@@ -409,6 +396,19 @@ export default function ToeicAttemptPage({
     if (fullTest && isListening && !audioFinished && !audioError && !fromAudio)
       return;
     const target = nextIndex();
+    // Every fullTest "next" during Listening consumes exactly one manifest
+    // segment (nextIndex() always jumps to the next group, never a question
+    // within the same group) — so the server's one-pass cursor must advance
+    // in lockstep, or its audio-fetch gate will reject the very next group.
+    if (fullTest && isListening) {
+      try {
+        await toeicService.advanceListening(attemptId);
+      } catch {
+        // Server is authoritative: if it refuses to advance, stay put
+        // rather than let the client view drift ahead of server truth.
+        return;
+      }
+    }
     skipAutosaveRef.current = target >= 0;
     await save.mutateAsync(target >= 0 ? questions[target]?.question.id : undefined);
     if (target < 0) setShowSubmitSummary(true);
@@ -481,13 +481,16 @@ export default function ToeicAttemptPage({
   const lastQuestionNumber =
     renderedEntries.at(-1)?.question.questionNumber ?? index + 1;
   const readingPhase = !isListening;
+  // Reading's countdown comes from the server's readingDeadline (set the
+  // moment Listening finished); the client clock only drives the display
+  // tick, never the deadline value itself. Listening has no countdown here
+  // — its pacing is the audio manifest, not a timer (Rule C).
   const sectionRemaining = fullTest
     ? readingPhase
-      ? Math.max(
-          0,
-          READING_SECONDS - Math.max(0, elapsedSeconds - LISTENING_SECONDS),
-        )
-      : Math.max(0, LISTENING_SECONDS - elapsedSeconds)
+      ? attempt.readingDeadline
+        ? Math.max(0, (Date.parse(attempt.readingDeadline) - currentTimeMs) / 1000)
+        : READING_SECONDS
+      : null
     : attempt.deadline
       ? currentTimeMs > 0
         ? Math.max(0, (Date.parse(attempt.deadline) - currentTimeMs) / 1000)
@@ -509,7 +512,7 @@ export default function ToeicAttemptPage({
               <span className="hidden sm:inline">
                 {readingPhase ? "Reading" : "Listening"}{" "}
               </span>
-              {formatTime(sectionRemaining)}
+              {sectionRemaining === null ? "Đang nghe" : formatTime(sectionRemaining)}
             </div>
           ) : null
         }

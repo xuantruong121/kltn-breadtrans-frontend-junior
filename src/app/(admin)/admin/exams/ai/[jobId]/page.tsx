@@ -84,6 +84,7 @@ export default function ExamAiCandidateWorkspacePage({
   });
 
   const candidate = candidateQuery.data;
+  const failedUnits = candidate?.failedUnits ?? [];
 
   const lrByPart = useMemo(() => {
     const map = new Map<number, ExamAiCandidateGroup[]>();
@@ -247,6 +248,7 @@ export default function ExamAiCandidateWorkspacePage({
   const isProcessing =
     status && ["QUEUED", "PROCESSING"].includes(status.status);
   const isFailed = status?.status === "FAILED";
+  const hasFailedUnits = failedUnits.length > 0;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
@@ -285,6 +287,30 @@ export default function ExamAiCandidateWorkspacePage({
         </div>
       )}
 
+      {hasFailedUnits && !isProcessing && (
+        <section className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="font-semibold">Một số nhóm chưa sinh hoàn tất</p>
+              <ul className="mt-1 space-y-1 text-xs leading-5">
+                {failedUnits.map((unit) => (
+                  <li key={unit.batchKey}>
+                    {partLabel(unit.part)} · Nhóm {unit.groupOrder}: {unit.message}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <button
+              type="button"
+              onClick={retryJob}
+              className="shrink-0 rounded-md border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100 dark:border-amber-800 dark:bg-slate-900 dark:text-amber-200"
+            >
+              Thử lại nhóm chưa hoàn tất
+            </button>
+          </div>
+        </section>
+      )}
+
       {candidate && !isProcessing && (
         <>
           {/* Summary banner */}
@@ -303,6 +329,14 @@ export default function ExamAiCandidateWorkspacePage({
               </p>
               <p className="text-lg font-semibold text-amber-600 dark:text-amber-400">
                 {candidate.flaggedCount}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Chưa hoàn tất
+              </p>
+              <p className="text-lg font-semibold text-amber-600 dark:text-amber-400">
+                {failedUnits.length}
               </p>
             </div>
             <div>

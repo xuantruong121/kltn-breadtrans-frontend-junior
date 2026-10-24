@@ -7,6 +7,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { adminExamService } from "@/lib/api/services/adminExam.service";
 import { ExamOutline } from "@/components/admin/exam/ExamOutline";
+import { getPublishReadinessUi } from "@/lib/examStudio/readinessUi";
 
 type Tab = "info" | "structure" | "quality" | "preview";
 
@@ -95,6 +96,10 @@ export default function ExamStudioPage({
   const isPublished = exam.publicationStatus === "PUBLISHED";
   const hasAttempts = (exam.attemptsCount ?? 0) > 0;
   const isLR = (exam.variantCode ?? "TOEIC_LR") !== "TOEIC_SW";
+  const publishReadiness = getPublishReadinessUi(
+    exam.learnerReady,
+    exam.validation?.issues.length ?? 0,
+  );
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
@@ -159,14 +164,22 @@ export default function ExamStudioPage({
               </button>
             )
           ) : (
-            <button
-              type="button"
-              onClick={() => publishMutation.mutate()}
-              disabled={publishMutation.isPending}
-              className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white dark:bg-slate-100 dark:text-slate-900"
-            >
-              Xuất bản đề thi
-            </button>
+            <div className="flex flex-col items-end gap-1">
+              <button
+                type="button"
+                onClick={() => publishMutation.mutate()}
+                disabled={publishMutation.isPending || !publishReadiness.canPublish}
+                title={publishReadiness.helpText}
+                className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 dark:bg-slate-100 dark:text-slate-900"
+              >
+                {publishReadiness.label}
+              </button>
+              {!publishReadiness.canPublish && (
+                <p className="max-w-[240px] text-right text-[11px] leading-4 text-slate-500 dark:text-slate-400">
+                  {publishReadiness.helpText}
+                </p>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -177,7 +190,7 @@ export default function ExamStudioPage({
             ["info", "Thông tin"],
             ["structure", "Cấu trúc & nội dung"],
             ["quality", "Kiểm tra"],
-            ["preview", "Xem trước"],
+            ["preview", "Xem như học viên"],
           ] as [Tab, string][]
         ).map(([key, label]) => (
           <button
