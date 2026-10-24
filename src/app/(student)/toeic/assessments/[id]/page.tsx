@@ -1,28 +1,26 @@
 "use client";
 
 import { use, useState } from "react";
-import Link from "next/link";
-import {
-  ArrowLeft,
-  CheckCircle2,
-  Loader2,
-  Play,
-  LockKeyhole,
-} from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import axiosClient from "@/lib/api/axiosClient";
+import ToeicExamDetailShell from "@/components/toeic/ToeicExamDetailShell";
+import {
+  buildAssessmentStructureRows,
+  buildAssessmentSummaryFacts,
+  getToeicDetailPresentation,
+  resolveAssessmentReadiness,
+  type ToeicAssessmentComponentView,
+} from "@/lib/toeic/detailPresentation";
 
-const kindLabels: Record<string, string> = {
-  LISTENING_READING: "Listening + Reading",
-  SPEAKING: "Speaking",
-  WRITING: "Writing",
-};
-
-const componentMeta: Record<string, { detail: string; duration: string }> = {
-  LISTENING_READING: { detail: "200 câu hỏi", duration: "Khoảng 120 phút" },
-  SPEAKING: { detail: "11 câu hỏi", duration: "Khoảng 20 phút" },
-  WRITING: { detail: "8 câu hỏi", duration: "60 phút" },
+type AssessmentDetail = {
+  id: number;
+  title: string;
+  description: string | null;
+  productFamily: string;
+  components: ToeicAssessmentComponentView[];
+  attempt?: { id: number; status: string } | null;
 };
 
 export default function ToeicAssessmentDetailPage({
@@ -37,109 +35,155 @@ export default function ToeicAssessmentDetailPage({
   const { data, isLoading } = useQuery({
     queryKey: ["toeic-assessment", id],
     queryFn: async () =>
-      (await axiosClient.get(`/toeic/assessments/${id}`)) as any,
+      (await axiosClient.get(
+        `/toeic/assessments/${id}`,
+      )) as unknown as AssessmentDetail,
     enabled: Number.isInteger(id),
   });
+  // Unchanged orchestration: the same attempt endpoint and the same runtime
+  // route as before this page was moved onto the shared detail shell.
   const start = useMutation({
     mutationFn: async () =>
       (await axiosClient.post(`/toeic/assessments/${id}/attempts`, {
         idempotencyKey: `learner-${id}`,
-      })) as any,
+      })) as unknown as { id: number },
     onSuccess: (attempt) =>
       router.push(`/toeic/assessments/${id}/attempts/${attempt.id}`),
-    onError: (err: any) =>
-      setError(err?.response?.data?.message ?? "Không thể bắt đầu bài thi."),
+    onError: (err: unknown) => {
+      const message = (
+        err as { response?: { data?: { message?: string } } } | null
+      )?.response?.data?.message;
+      setError(message ?? "Không thể bắt đầu bài thi.");
+    },
   });
+
   if (isLoading)
     return (
-      <main className="mx-auto max-w-4xl p-8 text-sm text-slate-500">
-        Đang tải assessment…
-      </main>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="animate-spin text-amber-600 dark:text-amber-400" />
+      </div>
     );
   if (!data)
     return (
-      <main className="mx-auto max-w-4xl p-8 text-sm text-rose-700">
-        Không tìm thấy assessment.
-      </main>
+      <div className="mx-auto max-w-xl py-24 text-center text-slate-600 dark:text-slate-400">
+        Không tìm thấy bài thi này.
+      </div>
     );
-  return (
-    <main className="mx-auto max-w-4xl space-y-6 px-5 py-10">
-      <Link
-        href="/toeic/assessments"
-        className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900"
-      >
-        <ArrowLeft size={16} /> Tất cả bài thi
-      </Link>
-      <section className="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-600">
-              BÀI THI TOEIC
-            </p>
-            <h1 className="mt-2 text-3xl font-bold text-slate-900">
-              {data.title}
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
-              {data.description}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => start.mutate()}
-            disabled={start.isPending || data.attempt?.status === "COMPLETED"}
-            className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-orange-700 disabled:opacity-50"
-          >
-            {start.isPending ? (
-              <Loader2 className="animate-spin" size={16} />
-            ) : (
-              <Play size={16} />
-            )}{" "}
-            {data.attempt?.status === "COMPLETED"
-              ? "Đã hoàn thành"
-              : data.attempt
-                ? "Tiếp tục"
-                : "Bắt đầu"}
-          </button>
-        </div>
-        {error && (
-          <p className="mt-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">
-            {error}
-          </p>
-        )}
-        <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-800">
-          Đây là bài luyện mô phỏng TOEIC để tự học và theo dõi tiến độ; kết quả
-          không phải điểm thi chính thức của ETS.
-        </p>
-        <div className="mt-8 space-y-3">
-          {data.components.map((component: any) => (
-              <div
-                key={component.id}
-                className="flex items-start gap-4 rounded-2xl border border-slate-200 p-4"
-              >
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-700">
-                {component.order}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="font-semibold text-slate-900">
-                  {kindLabels[component.kind]}
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  {componentMeta[component.kind]?.detail ?? "Nội dung theo cấu trúc TOEIC"}
-                  <span className="mx-1.5 text-slate-300" aria-hidden="true">·</span>
-                  {componentMeta[component.kind]?.duration ?? "Theo tiến độ bài thi"}
-                </p>
-              </div>
-              <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-emerald-700">
-                <CheckCircle2 size={15} /> Sẵn sàng
-              </span>
-            </div>
+
+  const presentation = getToeicDetailPresentation(data.productFamily);
+  const components = data.components ?? [];
+  const structureRows = buildAssessmentStructureRows(components);
+  const facts = buildAssessmentSummaryFacts(components, data.productFamily);
+  const readiness = resolveAssessmentReadiness(components);
+  const isCompleted = data.attempt?.status === "COMPLETED";
+
+  const summaryRows = [
+    // One total only when every skill shares the same unit; otherwise the
+    // sizes are listed per skill so questions are never added to tasks.
+    ...(facts.totalValue && facts.totalLabel
+      ? [{ label: facts.totalLabel, value: facts.totalValue }]
+      : facts.itemLines.length
+        ? [
+            {
+              label: "Quy mô đề thi",
+              value: (
+                <span className="block space-y-0.5">
+                  {facts.itemLines.map((line) => (
+                    <span key={line} className="block">
+                      {line}
+                    </span>
+                  ))}
+                </span>
+              ),
+            },
+          ]
+        : []),
+    {
+      label: "Thời lượng thi",
+      value: (
+        <span className="block space-y-0.5">
+          {facts.durationLines.map((line) => (
+            <span key={line} className="block">
+              {line}
+            </span>
           ))}
-        </div>
-        <p className="mt-6 flex items-center gap-2 text-xs text-slate-500">
-          <LockKeyhole size={14} /> Quyền truy cập các phần thi được kiểm tra
-          trước khi bắt đầu.
-        </p>
-      </section>
-    </main>
+        </span>
+      ),
+    },
+    { label: "Hình thức thi", value: facts.format },
+    {
+      label: "Quyền truy cập",
+      value: "Kiểm tra trước khi bắt đầu",
+      muted: true,
+    },
+  ];
+
+  return (
+    <ToeicExamDetailShell
+      backHref="/exams"
+      backLabel="Quay lại danh sách đề thi"
+      badge={presentation.badge}
+      title={data.title}
+      description={data.description || presentation.summary}
+      structureHeading="Cấu trúc nội dung đề thi"
+      structureSubtitle={
+        facts.totalValue
+          ? `Tổng quy mô ${facts.totalValue} theo từng kỹ năng`
+          : "Quy mô đề thi theo từng kỹ năng"
+      }
+      structureBadge={`${structureRows.length} kỹ năng`}
+      sections={[
+        {
+          items: structureRows.map((row) => ({
+            label: row.label,
+            measure: row.measure,
+            meta: row.meta,
+          })),
+        },
+      ]}
+      disclaimer={
+        <>
+          <span className="font-bold text-slate-800 dark:text-slate-200">
+            Quy chế khảo thí &amp; Bản quyền:
+          </span>{" "}
+          Đây là bài luyện mô phỏng TOEIC để tự học và theo dõi tiến độ. Nội
+          dung không phải đề thi chính thức do ETS phát hành và kết quả không
+          thay thế chứng chỉ TOEIC chính thức.
+        </>
+      }
+      summaryHeading="Quy cách phòng thi"
+      summaryRows={summaryRows}
+      notices={
+        <>
+          {data.attempt && !isCompleted && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50/80 dark:border-amber-900/50 dark:bg-amber-950/30 p-3 text-xs text-amber-900 dark:text-amber-200 font-medium">
+              Bạn đang có một lượt thi dở dang cho đề này. Bấm để tiếp tục làm
+              tiếp.
+            </div>
+          )}
+          {!readiness.ready && (
+            <div className="rounded-lg border border-rose-200 bg-rose-50 dark:border-rose-900/50 dark:bg-rose-950/30 p-3 text-xs text-rose-800 dark:text-rose-200 font-medium">
+              <p>Đề thi này chưa đủ điều kiện để bắt đầu.</p>
+              <ul className="mt-1 list-disc space-y-0.5 pl-4 font-normal">
+                {readiness.reasons.map((reason) => (
+                  <li key={reason}>{reason}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
+      }
+      cta={{
+        label: isCompleted
+          ? "Đã hoàn thành"
+          : data.attempt
+            ? "Tiếp tục làm bài"
+            : "Bắt đầu làm bài",
+        onClick: () => start.mutate(),
+        disabled: isCompleted || !readiness.ready,
+        pending: start.isPending,
+      }}
+      ctaError={error || null}
+    />
   );
 }
