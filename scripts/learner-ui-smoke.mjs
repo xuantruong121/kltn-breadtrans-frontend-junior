@@ -50,15 +50,23 @@ let environmentalTotal = 0;
  * Pre-existing feature gaps, reported separately so they never silently count
  * as a pass and never mask a genuine recovery regression.
  *
- * transcript/audio: the seamless whole-quiz audio is an admin-authored
- * artifact (ListeningAudioArtifact) produced on demand by the TTS authoring
- * flow. No seed or canonical reconstruction step creates it, so the table is
- * canonically empty and the endpoint answers 503 for every listening quiz.
- * Per-question dictation audio is a different path and does work.
+ * transcript/audio: the whole-quiz audio DID exist before the incident - the
+ * rendered tracks are still in object storage (quiz 23/24/28 under
+ * catalog/listening/practice/quiz-<id>/audio/v<n>/full.mp3 and quiz 25 under
+ * premium/listening/quiz-25/artifact-v<n>/full.mp3, with two acoustically
+ * distinct voice clusters inside them). What was destroyed is the
+ * ListeningAudioArtifact row, including the per-turn `timeline` that the
+ * player needs to seek. Publishing a relinked artifact without that timeline
+ * makes the per-question endpoint serve the whole track for every question, so
+ * the relinked rows are parked as STALE and this control still answers 503.
+ * Restoring it requires re-rendering through the canonical authoring pipeline,
+ * which is the only thing that produces a timeline. Classified RECOVERY_LOSS,
+ * not "never authored". Per-question dictation audio is a separate path and
+ * works.
  */
 const KNOWN_GAPS = [
   {
-    id: 'WHOLE_QUIZ_TRANSCRIPT_AUDIO_NOT_AUTHORED',
+    id: 'WHOLE_QUIZ_TRANSCRIPT_AUDIO_TIMELINE_LOST',
     match: /\/transcript\/audio/,
   },
 ];
