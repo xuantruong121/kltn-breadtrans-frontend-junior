@@ -261,22 +261,22 @@ export default function ExamAiCandidateWorkspacePage({
       </button>
 
       <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-        Candidate AI — Luyện đề
+        Duyệt bản nháp đề thi tự động
       </h1>
       <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-        Nội dung AI sinh ra chỉ là gợi ý. Chọn nội dung cần dùng rồi Áp dụng
-        vào bản nháp — chưa xuất bản.
+        Bản nháp câu hỏi được tổng hợp theo cấu trúc đề thi. Rà soát, đối chiếu
+        và chọn các nhóm câu hỏi hợp lệ trước khi áp dụng vào đề thi.
       </p>
 
       {isProcessing && (
         <div className="mt-6 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
           <Loader2 size={15} className="animate-spin" />
-          Đang tạo candidate — trang sẽ tự cập nhật...
+          Đang tổng hợp dữ liệu bản nháp — trang sẽ tự cập nhật...
         </div>
       )}
       {isFailed && (
         <div className="mt-6 flex items-center justify-between rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
-          <span>Tạo candidate thất bại: {status?.error ?? "Lỗi không xác định"}</span>
+          <span>Khởi tạo bản nháp thất bại: {status?.error ?? "Lỗi không xác định"}</span>
           <button
             type="button"
             onClick={retryJob}

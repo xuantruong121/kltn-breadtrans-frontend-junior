@@ -87,7 +87,7 @@ export function AdminGrantModal({
       });
     },
     onSuccess: () => {
-      toast.success("Tặng gói Pro cho học viên thành công.");
+      toast.success("Tặng gói cho học viên thành công.");
       setReason("");
       setSelectedStudent(null);
       onSuccess();
@@ -114,7 +114,7 @@ export function AdminGrantModal({
               <Award size={20} />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Tặng gói Pro cho học viên</h2>
+              <h2 className="text-lg font-bold text-slate-900">Tặng gói cho học viên</h2>
               <p className="text-xs text-slate-500">
                 Cấp quyền trực tiếp mà không qua cổng thanh toán.
               </p>

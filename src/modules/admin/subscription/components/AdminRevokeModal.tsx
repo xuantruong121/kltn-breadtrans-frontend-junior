@@ -42,7 +42,7 @@ export function AdminRevokeModal({
       });
     },
     onSuccess: () => {
-      toast.success("Đã thu hồi quyền Pro của học viên.");
+      toast.success("Đã thu hồi quyền gói của học viên.");
       onSuccess();
       onClose();
     },
@@ -65,9 +65,9 @@ export function AdminRevokeModal({
               <Ban size={20} />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Thu hồi quyền Pro</h2>
+              <h2 className="text-lg font-bold text-slate-900">Thu hồi quyền gói</h2>
               <p className="text-xs text-slate-500">
-                Ngừng quyền truy cập tính năng Pro của học viên.
+                Ngừng quyền truy cập tính năng nâng cấp (Plus/Pro) của học viên.
               </p>
             </div>
           </div>
@@ -93,7 +93,7 @@ export function AdminRevokeModal({
             <div>
               <p className="font-bold">Cảnh báo thu hồi quyền</p>
               <p className="mt-0.5 text-rose-800 leading-relaxed">
-                Học viên sẽ mất quyền truy cập Pro ngay sau khi xác nhận. Dữ liệu gói vẫn được lưu vết kiểm toán và không bị xóa khỏi cơ sở dữ liệu.
+                Học viên sẽ mất quyền truy cập gói nâng cấp ngay sau khi xác nhận. Dữ liệu gói vẫn được lưu vết kiểm toán và không bị xóa khỏi cơ sở dữ liệu.
               </p>
             </div>
           </div>
