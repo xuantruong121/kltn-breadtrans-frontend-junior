@@ -80,7 +80,30 @@ test("groupQuestionsBySection organizes 52 questions into canonical 5 sections",
   assert.equal(groups[4].questions.length, 2);
 });
 
-test("formatPlacementLevel converts CEFR codes and legacy labels to natural Vietnamese", () => {
+test("formatPlacementLevel shows the active form's internal band without inventing CEFR", () => {
+  // The active Entry Diagnostic reports Starter / Foundation / Intermediate.
+  // Converting those to Pre-A1 / A2 / B1 claimed a CEFR classification this
+  // project has never validated, so the band is now shown as itself.
+  assert.equal(formatPlacementLevel("Starter"), "Starter – Mới bắt đầu");
+  assert.equal(formatPlacementLevel("Foundation"), "Foundation – Cơ bản");
+  assert.equal(
+    formatPlacementLevel("Intermediate"),
+    "Intermediate – Trung cấp",
+  );
+  for (const band of ["Starter", "Foundation", "Intermediate"]) {
+    assert.doesNotMatch(
+      formatPlacementLevel(band),
+      /Pre-A1|\bA1\b|\bA2\b|\bB1\b|\bB2\b|\bC1\b|\bC2\b/,
+    );
+  }
+  // An unknown band must not default into a CEFR claim either.
+  assert.equal(formatPlacementLevel(""), "Chưa xác định");
+  assert.doesNotMatch(formatPlacementLevel(""), /Pre-A1|A1|A2|B1|B2/);
+});
+
+test("formatPlacementLevel still localizes a CEFR band the backend itself reports", () => {
+  // The section/band scorer returns real CEFR bands; those are localized, not
+  // rewritten, because the claim originates in the backend result.
   assert.equal(
     formatPlacementLevel("Pre-A1 / Beginner foundation needed"),
     "Pre-A1 – Cần củng cố nền tảng",
@@ -89,8 +112,16 @@ test("formatPlacementLevel converts CEFR codes and legacy labels to natural Viet
   assert.equal(formatPlacementLevel("A2"), "A2 – Sơ trung cấp");
   assert.equal(formatPlacementLevel("B1"), "B1 – Trung cấp");
   assert.equal(formatPlacementLevel("B2"), "B2 – Trung cấp trên");
-  assert.equal(formatPlacementLevel("A1 — đang tiến tới A2"), "A1 – Đang tiến tới A2");
-  assert.equal(formatPlacementLevel("A2 — đang tiến tới B1"), "A2 – Đang tiến tới B1");
-  assert.equal(formatPlacementLevel("B1 — đang tiến tới B2"), "B1 – Đang tiến tới B2");
-  assert.equal(formatPlacementLevel(""), "Pre-A1 – Cần củng cố nền tảng");
+  assert.equal(
+    formatPlacementLevel("A1 — đang tiến tới A2"),
+    "A1 – Đang tiến tới A2",
+  );
+  assert.equal(
+    formatPlacementLevel("A2 — đang tiến tới B1"),
+    "A2 – Đang tiến tới B1",
+  );
+  assert.equal(
+    formatPlacementLevel("B1 — đang tiến tới B2"),
+    "B1 – Đang tiến tới B2",
+  );
 });

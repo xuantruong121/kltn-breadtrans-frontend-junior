@@ -18,6 +18,7 @@ import {
   canonicalExamDetailPath,
   resolveCanonicalExamIdFromLegacy,
 } from "@/lib/toeic/canonicalExamRoute";
+import { EXAM_PRODUCT_LINKS_QUERY_KEY } from "@/lib/toeic/useCanonicalExamPath";
 
 export default function LegacyExamRouteRedirect({
   examSetId,
@@ -31,7 +32,7 @@ export default function LegacyExamRouteRedirect({
 }) {
   const router = useRouter();
   const { data, isError } = useQuery({
-    queryKey: ["exam-products-for-legacy-redirect"],
+    queryKey: EXAM_PRODUCT_LINKS_QUERY_KEY,
     queryFn: () => examService.getPublished(),
   });
 

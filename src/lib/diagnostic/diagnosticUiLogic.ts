@@ -134,13 +134,36 @@ export function groupQuestionsBySection(
     .filter((g) => g && g.questions.length > 0);
 }
 
+/**
+ * Present a placement band to the learner.
+ *
+ * The active Entry Diagnostic is 20 objective multiple-choice items with no
+ * listening audio and no productive speaking or writing, and its backend
+ * result is an internal three-band scale (Starter / Foundation /
+ * Intermediate). This function used to convert those bands into CEFR labels -
+ * Starter to "Pre-A1", Foundation to "A2", Intermediate to "B1" - which
+ * presented the learner with a CEFR classification nothing in this project
+ * has validated. The internal band is now shown faithfully instead.
+ *
+ * A genuine CEFR string still passes through: the section/band scorer returns
+ * real CEFR bands, so when the backend itself reports one it is localized
+ * rather than rewritten. No CEFR code is ever invented here.
+ */
 export function formatPlacementLevel(level?: string | null): string {
   const trimmed = (level || "").trim();
-  if (!trimmed) return "Pre-A1 – Cần củng cố nền tảng";
+  if (!trimmed) return "Chưa xác định";
+
+  // Internal bands of the active form: shown as themselves, with a short
+  // descriptor. Deliberately no CEFR code.
+  const lower = trimmed.toLowerCase();
+  if (lower.includes("starter")) return "Starter – Mới bắt đầu";
+  if (lower === "foundation") return "Foundation – Cơ bản";
+  if (lower === "intermediate") return "Intermediate – Trung cấp";
+
+  // Genuine CEFR results reported by the backend, localized as before.
   if (
     trimmed === "Pre-A1 / Beginner foundation needed" ||
-    trimmed === "Pre-A1" ||
-    trimmed.toLowerCase().includes("starter")
+    trimmed === "Pre-A1"
   ) {
     return "Pre-A1 – Cần củng cố nền tảng";
   }
@@ -148,16 +171,23 @@ export function formatPlacementLevel(level?: string | null): string {
   if (trimmed === "A2") return "A2 – Sơ trung cấp";
   if (trimmed === "B1") return "B1 – Trung cấp";
   if (trimmed === "B2") return "B2 – Trung cấp trên";
-  if (trimmed === "A1 — đang tiến tới A2" || trimmed === "A1 – Đang tiến tới A2") {
+  if (
+    trimmed === "A1 — đang tiến tới A2" ||
+    trimmed === "A1 – Đang tiến tới A2"
+  ) {
     return "A1 – Đang tiến tới A2";
   }
-  if (trimmed === "A2 — đang tiến tới B1" || trimmed === "A2 – Đang tiến tới B1") {
+  if (
+    trimmed === "A2 — đang tiến tới B1" ||
+    trimmed === "A2 – Đang tiến tới B1"
+  ) {
     return "A2 – Đang tiến tới B1";
   }
-  if (trimmed === "B1 — đang tiến tới B2" || trimmed === "B1 – Đang tiến tới B2") {
+  if (
+    trimmed === "B1 — đang tiến tới B2" ||
+    trimmed === "B1 – Đang tiến tới B2"
+  ) {
     return "B1 – Đang tiến tới B2";
   }
-  if (trimmed === "Foundation") return "A2 – Sơ trung cấp";
-  if (trimmed === "Intermediate") return "B1 – Trung cấp";
   return trimmed;
 }

@@ -8,6 +8,7 @@ import { toeicService } from "@/lib/api/services/toeic.service";
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
 import { useAuthStore } from "@/stores/authStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
+import { useCanonicalExamPath } from "@/lib/toeic/useCanonicalExamPath";
 
 export default function ToeicBundlePage({ params }: { params: Promise<{ quizId: string }> }) {
   const { quizId: rawQuizId } = use(params);
@@ -23,14 +24,22 @@ export default function ToeicBundlePage({ params }: { params: Promise<{ quizId: 
     enabled: Number.isInteger(quizId),
   });
 
+  // The bundle only knows the ToeicExamSet behind its L&R half; the learner
+  // facing destination is the canonical product URL, resolved by real linkage.
+  const { path: canonicalLrPath } = useCanonicalExamPath({
+    examSetId: bundle?.listeningReading?.id,
+  });
+
   useEffect(() => {
-    if (!isLaunching || !bundle?.listeningReading?.id) return;
+    // Waits for the canonical path so the learner is never sent through the
+    // legacy detail URL on the way to the exam briefing.
+    if (!isLaunching || !canonicalLrPath) return;
 
     let animId2: number;
 
     const animId1 = requestAnimationFrame(() => {
       animId2 = requestAnimationFrame(() => {
-        router.push(`/toeic/${bundle.listeningReading.id}`);
+        router.push(canonicalLrPath);
       });
     });
 
@@ -38,7 +47,7 @@ export default function ToeicBundlePage({ params }: { params: Promise<{ quizId: 
       cancelAnimationFrame(animId1);
       if (animId2) cancelAnimationFrame(animId2);
     };
-  }, [isLaunching, bundle?.listeningReading?.id, router]);
+  }, [isLaunching, canonicalLrPath, router]);
 
   if (isLaunching) {
     return (
@@ -113,7 +122,7 @@ export default function ToeicBundlePage({ params }: { params: Promise<{ quizId: 
         isOpen={authGate}
         onClose={() => setAuthGate(false)}
         targetLabel={bundle?.title ? `Gói đề ${bundle.title}` : "Gói luyện thi TOEIC"}
-        targetRoute={bundle?.listeningReading ? `/toeic/${bundle.listeningReading.id}` : `/toeic/bundle/${quizId}`}
+        targetRoute={canonicalLrPath ?? `/toeic/bundle/${quizId}`}
         onOpenLogin={() => router.push("/login")}
         onOpenRegister={() => router.push("/register")}
       />

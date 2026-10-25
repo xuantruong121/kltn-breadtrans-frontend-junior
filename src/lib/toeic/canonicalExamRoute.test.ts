@@ -118,3 +118,51 @@ test("the canonical route never resolves back into a legacy route", () => {
     assert.doesNotMatch(path, /^\/toeic\//);
   }
 });
+
+// --- runtime back-link call sites -----------------------------------------
+// These mirror what the runtime pages actually know: the assessment attempt
+// page knows only an assessmentId, the bundle page only an examSetId.
+
+test("assessment attempt backlink resolves to the canonical exam url", () => {
+  const assessmentId = 1; // what /toeic/assessments/1/attempts/:id knows
+  const examId = resolveCanonicalExamIdFromLegacy(PRODUCTS, { assessmentId });
+  assert.equal(examId, 3);
+  assert.equal(canonicalExamDetailPath(examId as number), "/exams/3");
+});
+
+test("bundle backlink resolves to the canonical exam url", () => {
+  const examSetId = 1; // what the bundle knows about its L&R half
+  const examId = resolveCanonicalExamIdFromLegacy(PRODUCTS, { examSetId });
+  assert.equal(examId, 2);
+  assert.equal(canonicalExamDetailPath(examId as number), "/exams/2");
+});
+
+test("reverse mapping follows linkage, not a hardcoded number table", () => {
+  // Same aggregate ids, different owners: the result must follow the linkage.
+  const relinked: ExamProductLink[] = [
+    { id: 77, variantCode: "TOEIC_LR", runtimeId: 1, assessment: null },
+    { id: 88, variantCode: "TOEIC_SW", runtimeId: null, assessment: { id: 1 } },
+  ];
+  assert.equal(
+    resolveCanonicalExamIdFromLegacy(relinked, { examSetId: 1 }),
+    77,
+  );
+  assert.equal(
+    resolveCanonicalExamIdFromLegacy(relinked, { assessmentId: 1 }),
+    88,
+  );
+  // and the original fixture still maps to its own owners
+  assert.equal(resolveCanonicalExamIdFromLegacy(PRODUCTS, { examSetId: 1 }), 2);
+});
+
+test("a resolved runtime backlink needs no compatibility redirect", () => {
+  // Every back-link destination is already canonical, so it never lands on a
+  // /toeic/* URL that would then have to redirect.
+  for (const legacy of [{ assessmentId: 1 }, { assessmentId: 2 }, { examSetId: 1 }]) {
+    const examId = resolveCanonicalExamIdFromLegacy(PRODUCTS, legacy);
+    assert.notEqual(examId, null);
+    const path = canonicalExamDetailPath(examId as number);
+    assert.match(path, /^\/exams\/\d+$/);
+    assert.doesNotMatch(path, /\/toeic\//);
+  }
+});
