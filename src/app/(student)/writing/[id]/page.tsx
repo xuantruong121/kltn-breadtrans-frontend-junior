@@ -48,6 +48,8 @@ export default function WritingDetailPage(props: {
   const requestedReturnTo = searchParams.get("returnTo");
   const parentAttemptId = searchParams.get("parentAttemptId");
   const parentComponentId = searchParams.get("parentComponentId");
+  // The task of a multi-task exercise being answered (?q=<questionId>).
+  const requestedTaskId = Number(searchParams.get("q")) || null;
   const examParentContext =
     parentAttemptId && parentComponentId
       ? {
@@ -65,7 +67,9 @@ export default function WritingDetailPage(props: {
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [feedback, setFeedback] = useState<WritingEvaluation | null>(null);
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
-  const draftKey = user?.id ? `breadtrans:writing:draft:${user.id}:${topicId}` : null;
+  const draftKey = user?.id
+    ? `breadtrans:writing:draft:${user.id}:${topicId}${requestedTaskId ? `:${requestedTaskId}` : ""}`
+    : null;
 
   const [minLaunchReady, setMinLaunchReady] = useState(false);
   useEffect(() => {
@@ -76,8 +80,8 @@ export default function WritingDetailPage(props: {
   useEffect(() => {
     if (!draftKey) return;
     try {
-      const draft = localStorage.getItem(draftKey);
-      if (draft) setContent(draft);
+      // Each task keeps its own draft; switching task shows that task's text.
+      setContent(localStorage.getItem(draftKey) ?? "");
     } catch {
       // Draft recovery is best effort; the authoritative submission is server-side.
     }
@@ -104,7 +108,33 @@ export default function WritingDetailPage(props: {
     queryFn: () => writingService.getQuizDetails(topicId, examParentContext),
     enabled: !!topicId,
   });
-  const topic = topicData;
+  const exercise = topicData?.exercise;
+  const currentTask =
+    exercise?.questions.find((q) => q.id === requestedTaskId) ??
+    exercise?.questions.find((q) => q.id === exercise.nextQuestionId) ??
+    exercise?.questions[0] ??
+    null;
+  // The page shows the selected task's own prompt, keywords and length.
+  const topic =
+    topicData && currentTask
+      ? {
+          ...topicData,
+          prompt: currentTask.prompt ?? topicData.prompt,
+          imageUrl: currentTask.imageUrl ?? undefined,
+          keywords: currentTask.keywords,
+          wordRange: currentTask.wordRange ?? undefined,
+          taskType: currentTask.taskType ?? topicData.taskType,
+          maxScore: currentTask.maxScore ?? topicData.maxScore,
+        }
+      : topicData;
+
+  // Land on a task explicitly so its draft and submission are keyed to it.
+  useEffect(() => {
+    if (!exercise || requestedTaskId || !currentTask) return;
+    const next = new URLSearchParams(searchParams.toString());
+    next.set("q", String(currentTask.id));
+    router.replace(`/writing/${topicId}?${next.toString()}`);
+  }, [exercise, requestedTaskId, currentTask, searchParams, router, topicId]);
 
   const wordCount = countWritingWords(content);
   const charCount = content.length;
@@ -184,6 +214,7 @@ export default function WritingDetailPage(props: {
         content.trim(),
         clientAttemptId,
         examParentContext,
+        currentTask?.id,
       );
       if (parentAttemptId && parentComponentId) {
         await axiosClient
@@ -193,6 +224,9 @@ export default function WritingDetailPage(props: {
           )
           .catch(() => undefined);
       }
+      // Empty the editor first, or the pending 300 ms draft save writes the
+      // submitted text back as a draft.
+      setContent("");
       if (draftKey) {
         try {
           localStorage.removeItem(draftKey);
@@ -274,6 +308,46 @@ export default function WritingDetailPage(props: {
                   </div>
                 </div>
 
+                {exercise && exercise.total > 1 && (
+                  <nav aria-label="Các câu trong bài" className="space-y-2">
+                    <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                      Bài gồm {exercise.total} câu · đã chấm {exercise.answered}/{exercise.total}
+                      {exercise.complete && exercise.percent !== null ? ` · điểm bài ${exercise.percent}%` : ""}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {exercise.questions.map((q) => {
+                        const active = q.id === currentTask?.id;
+                        return (
+                          <button
+                            key={q.id}
+                            type="button"
+                            aria-current={active ? "step" : undefined}
+                            onClick={() => {
+                              const next = new URLSearchParams(searchParams.toString());
+                              next.set("q", String(q.id));
+                              router.replace(`/writing/${topicId}?${next.toString()}`);
+                            }}
+                            className={`inline-flex min-h-10 items-center gap-2 rounded-xl border px-3.5 text-sm font-bold transition-colors ${
+                              active
+                                ? "border-rose-500 bg-rose-600 text-white"
+                                : q.latest
+                                  ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                            }`}
+                          >
+                            <span>Câu {q.position}</span>
+                            {q.latest && (
+                              <span className="tabular-nums opacity-90">
+                                {q.latest.score}/{q.latest.maxScore}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </nav>
+                )}
+
                 <div className="bg-rose-50/60 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/40 p-5 rounded-2xl space-y-2">
                   <span className="text-xs font-extrabold text-rose-800 dark:text-rose-300 uppercase tracking-wide">
                     Yêu cầu đề bài (Prompt):
@@ -284,6 +358,15 @@ export default function WritingDetailPage(props: {
                       "Đọc kỹ yêu cầu và viết câu trả lời phù hợp với tình huống."}
                   </p>
                 </div>
+
+                {topicData?.email && (
+                  <div className="rounded-2xl bg-slate-50 p-5 dark:bg-slate-800/60">
+                    <p className="text-sm font-bold text-slate-700 dark:text-slate-300">E-mail cần trả lời</p>
+                    <p className="mt-2 whitespace-pre-line text-base leading-7 text-slate-800 dark:text-slate-100">
+                      {topicData.email}
+                    </p>
+                  </div>
+                )}
 
                 {/* Contextual prompt image (only displayed when imageUrl is provided) */}
                 {topic?.imageUrl && !imageLoadFailed && (

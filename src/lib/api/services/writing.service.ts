@@ -27,12 +27,38 @@ export interface WritingCatalogResponse {
   quizzes: WritingTopic[];
 }
 
+/** Progress through a catalog exercise of 1-5 independent Writing tasks. */
+export interface WritingExerciseSummary {
+  total: number;
+  answered: number;
+  complete: boolean;
+  /** Mean of the latest grade of every task, only once all are graded. */
+  percent: number | null;
+  nextQuestionId: number | null;
+}
+
+export interface WritingExerciseTask {
+  id: number;
+  position: number;
+  taskType: string | null;
+  prompt: string | null;
+  imageUrl: string | null;
+  keywords: string[];
+  requirements: string[];
+  wordRange: [number, number] | null;
+  maxScore: number | null;
+  latest: { submissionId: number; score: number; maxScore: number } | null;
+}
+
 export interface WritingQuizDetails extends WritingTopic {
+  exercise?: WritingExerciseSummary & { questions: WritingExerciseTask[] };
   quizId: number;
   title: string;
   description?: string | null;
   maxScore: number;
   sampleSentences?: string[];
+  /** The e-mail a written-request task answers (TOEIC Writing Q6-7). */
+  email?: string | null;
 }
 
 /** Present on catalog practice tasks graded with their own rubric. */
@@ -54,6 +80,7 @@ export interface WritingEvaluation extends Partial<PracticeWritingDetail> {
   feedback: string;
   suggestions: string[];
   taskType?: string | null;
+  exercise?: WritingExerciseSummary & { questionId: number; position: number };
 }
 
 export function practiceDetailOf(value: Partial<PracticeWritingDetail> | null | undefined): PracticeWritingDetail | null {
@@ -102,10 +129,12 @@ export const writingService = {
     answer: string,
     clientAttemptId: string,
     context?: WritingExamParentContext,
+    questionId?: number,
   ): Promise<WritingEvaluation> => {
     return await axiosClient.post(withExamParentContext(`/writing/quizzes/${id}/submit`, context), {
       answer,
       clientAttemptId,
+      ...(questionId ? { questionId } : {}),
     });
   },
 

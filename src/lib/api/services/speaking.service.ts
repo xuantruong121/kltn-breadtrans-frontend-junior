@@ -14,6 +14,8 @@ export interface SpeakingExercise {
     | null;
   imageUrl?: string;
   audioUrl?: string;
+  /** Server timing contract (ETS format for TOEIC exam tasks). */
+  timing?: { readingSeconds: number; prepSeconds: number; responseSeconds: number };
   /** British English twin of the reference clip, when one exists. */
   audioUrlUk?: string | null;
   difficulty: string;

@@ -144,8 +144,9 @@ export default function ToeicAssessmentAttemptPage({
           </p>
         )}
         <div className="mt-8 space-y-3">
-          {data.components.map((component: any) => {
+          {data.components.map((component: any, index: number) => {
             const done = component.status === "COMPLETED";
+            const skill = data.result?.skills?.[index];
             const isNext =
               nextComponent?.assessmentComponentId === component.assessmentComponentId;
             const componentStatus = statusLabels[component.status] ?? "Chưa bắt đầu";
@@ -168,6 +169,33 @@ export default function ToeicAssessmentAttemptPage({
                         ? "Tiến độ đã lưu — có thể tiếp tục"
                         : "Sẵn sàng để bắt đầu"}
                   </p>
+                  {skill?.kind === "LISTENING_READING" && skill.complete && (
+                    <p className="mt-2 text-sm font-semibold text-slate-800">
+                      Listening {skill.listeningScore} · Reading {skill.readingScore} · Tổng {skill.totalScore}
+                      {component.childAttemptId && (
+                        <Link
+                          href={`/toeic/results/${component.childAttemptId}`}
+                          className="ml-2 font-semibold text-orange-700 hover:underline"
+                        >
+                          Xem kết quả L&amp;R
+                        </Link>
+                      )}
+                    </p>
+                  )}
+                  {skill?.kind === "SPEAKING" && skill.taskCount > 0 && (
+                    <p className="mt-2 text-sm font-semibold text-slate-800">
+                      {skill.meanScore !== null
+                        ? `Điểm luyện trung bình ${skill.meanScore}/10`
+                        : "Chưa có bài nói được chấm điểm"}
+                      {` · đã chấm ${skill.gradedCount}/${skill.taskCount} bài`}
+                      {skill.noSpeechCount > 0 ? ` · ${skill.noSpeechCount} bài không nhận ra lời nói` : ""}
+                    </p>
+                  )}
+                  {skill?.kind === "WRITING" && skill.taskCount > 0 && (
+                    <p className="mt-2 text-sm font-semibold text-slate-800">
+                      {skill.points}/{skill.maxPoints} điểm · đã chấm {skill.gradedCount}/{skill.taskCount} bài
+                    </p>
+                  )}
                   {component.kind === "WRITING" &&
                     component.writingQuizIds?.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-2">
@@ -213,6 +241,12 @@ export default function ToeicAssessmentAttemptPage({
             );
           })}
         </div>
+        {data.status === "COMPLETED" && (
+          <p className="mt-6 text-sm text-slate-600">
+            Điểm trên là chỉ số luyện tập nội bộ của BreadTrans theo từng kỹ năng, không phải điểm thi chính thức của ETS
+            và không gộp thành một điểm tổng.
+          </p>
+        )}
         <p className="mt-6 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-600">
           Tiến độ được lưu theo từng phần. Bạn có thể rời bài và quay lại tiếp tục
           bất cứ lúc nào.

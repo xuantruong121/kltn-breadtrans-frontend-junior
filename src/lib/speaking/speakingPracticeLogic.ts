@@ -163,6 +163,8 @@ export function encodeWAV(samples: Float32Array, sampleRate = 16000): Blob {
  */
 export function validateWavBinary(
   arrayBuffer: ArrayBuffer,
+  /** The task's own limit from exercise.timing; 45 s when omitted. */
+  maxDurationMs: number = MAX_DURATION_MS,
 ): AudioValidationResult {
   if (!arrayBuffer || arrayBuffer.byteLength < 44) {
     return {
@@ -293,11 +295,11 @@ export function validateWavBinary(
     };
   }
 
-  if (durationMs > MAX_DURATION_MS) {
+  if (durationMs > maxDurationMs) {
     return {
       ok: false,
       reason: "TOO_LONG",
-      message: `Bản ghi âm vượt quá thời lượng tối đa cho phép (45 giây).`,
+      message: `Bản ghi âm vượt quá thời lượng tối đa cho phép (${Math.floor(maxDurationMs / 1000)} giây).`,
     };
   }
 
