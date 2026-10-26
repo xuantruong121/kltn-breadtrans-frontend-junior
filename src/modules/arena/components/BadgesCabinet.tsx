@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { 
-  Award, 
+  ShieldCheck, 
   Shield, 
   Flame, 
   Crown, 
@@ -46,7 +46,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
       color: "text-amber-600",
       bgColor: "bg-amber-100",
       borderColor: "border-amber-400",
-      shadowColor: "shadow-[0_6px_0_0_#f59e0b]",
+      shadowColor: "shadow-xs",
       accentGlow: "bg-amber-400",
       currentValue: Math.min(totalExp, 100),
       targetValue: 100,
@@ -63,7 +63,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
       color: "text-orange-600",
       bgColor: "bg-orange-100",
       borderColor: "border-orange-400",
-      shadowColor: "shadow-[0_6px_0_0_#ea580c]",
+      shadowColor: "shadow-xs",
       accentGlow: "bg-orange-400",
       currentValue: Math.min(streakCount, 3),
       targetValue: 3,
@@ -80,7 +80,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
       color: "text-yellow-600",
       bgColor: "bg-yellow-100",
       borderColor: "border-yellow-400",
-      shadowColor: "shadow-[0_6px_0_0_#eab308]",
+      shadowColor: "shadow-xs",
       accentGlow: "bg-yellow-400",
       currentValue: 0,
       targetValue: 1,
@@ -97,7 +97,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
       color: "text-purple-600",
       bgColor: "bg-purple-100",
       borderColor: "border-purple-400",
-      shadowColor: "shadow-[0_6px_0_0_#9333ea]",
+      shadowColor: "shadow-xs",
       accentGlow: "bg-purple-400",
       currentValue: totalExp,
       targetValue: 1000,
@@ -114,7 +114,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
       color: "text-sky-600",
       bgColor: "bg-sky-100",
       borderColor: "border-sky-400",
-      shadowColor: "shadow-[0_6px_0_0_#0284c7]",
+      shadowColor: "shadow-xs",
       accentGlow: "bg-sky-400",
       currentValue: 0,
       targetValue: 3,
@@ -131,7 +131,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
       color: "text-rose-600",
       bgColor: "bg-rose-100",
       borderColor: "border-rose-400",
-      shadowColor: "shadow-[0_6px_0_0_#e11d48]",
+      shadowColor: "shadow-xs",
       accentGlow: "bg-rose-400",
       currentValue: 0,
       targetValue: 3,
@@ -148,7 +148,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
       color: "text-emerald-600",
       bgColor: "bg-emerald-100",
       borderColor: "border-emerald-400",
-      shadowColor: "shadow-[0_6px_0_0_#059669]",
+      shadowColor: "shadow-xs",
       accentGlow: "bg-emerald-400",
       currentValue: 0,
       targetValue: 5,
@@ -165,7 +165,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
       color: "text-pink-600",
       bgColor: "bg-pink-100",
       borderColor: "border-pink-400",
-      shadowColor: "shadow-[0_6px_0_0_#db2777]",
+      shadowColor: "shadow-xs",
       accentGlow: "bg-pink-400",
       currentValue: petLevel,
       targetValue: 2,
@@ -197,8 +197,8 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
         {/* Header Title */}
         <div className="flex items-center justify-between gap-2 mb-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 flex items-center justify-center border border-amber-200 dark:border-amber-900/60 shadow-xs">
-              <Award size={22} />
+            <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 flex items-center justify-center border border-slate-200/90 dark:border-slate-700/80 shadow-2xs">
+              <ShieldCheck size={20} strokeWidth={1.8} />
             </div>
             <div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 leading-tight">
@@ -212,51 +212,52 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
         </div>
 
         {/* Overall Completion Progress Banner */}
-        <div className="bg-gradient-to-r from-amber-500 via-amber-600 to-orange-600 dark:from-amber-600 dark:via-amber-700 dark:to-orange-700 rounded-2xl p-3.5 text-white shadow-xs mb-4">
-          <div className="flex justify-between items-center text-xs font-black mb-1.5">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850/60 p-3.5 mb-4">
+          <div className="flex justify-between items-center text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
             <span className="flex items-center gap-1.5">
-              <BadgeCheck size={14} /> Đã Mở Khóa: {unlockedBadgesCount}/{ALL_BADGES.length} Huy Hiệu
+              <BadgeCheck size={15} className="text-emerald-600 dark:text-emerald-400" />
+              <span>Đã mở khóa: <strong className="text-slate-900 dark:text-slate-100 font-bold">{unlockedBadgesCount}/{ALL_BADGES.length}</strong> huy hiệu</span>
             </span>
-            <span className="bg-white/20 px-2 py-0.5 rounded-full text-[10px]">
+            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
               {progressTotalPercent}%
             </span>
           </div>
-          <div className="w-full bg-black/20 h-2.5 rounded-full overflow-hidden p-0.5">
+          <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
             <div
-              className="bg-amber-200 h-full rounded-full transition-all duration-500"
+              className="bg-emerald-600 dark:bg-emerald-500 h-full rounded-full transition-all duration-500"
               style={{ width: `${progressTotalPercent}%` }}
             />
           </div>
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4 text-xs font-bold">
+        <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl mb-4 text-xs font-semibold">
           <button
             onClick={() => setFilterTab("all")}
-            className={`flex-1 py-1.5 rounded-lg transition-all cursor-pointer text-center ${
+            className={`flex-1 py-1.5 rounded-lg transition-colors cursor-pointer text-center text-xs font-semibold ${
               filterTab === "all"
-                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs font-black"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
             }`}
           >
             Tất cả ({ALL_BADGES.length})
           </button>
           <button
             onClick={() => setFilterTab("unlocked")}
-            className={`flex-1 py-1.5 rounded-lg transition-all cursor-pointer text-center ${
+            className={`flex-1 py-1.5 rounded-lg transition-colors cursor-pointer text-center text-xs font-semibold ${
               filterTab === "unlocked"
-                ? "bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-xs font-black"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                ? "bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
             }`}
           >
             Đã đạt ({unlockedBadgesCount})
           </button>
           <button
             onClick={() => setFilterTab("locked")}
-            className={`flex-1 py-1.5 rounded-lg transition-all cursor-pointer text-center ${
+            className={`flex-1 py-1.5 rounded-lg transition-colors cursor-pointer text-center text-xs font-semibold ${
               filterTab === "locked"
-                ? "bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 shadow-xs font-black"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-200 shadow-xs"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
             }`}
           >
             Đang khóa ({ALL_BADGES.length - unlockedBadgesCount})
@@ -276,41 +277,39 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
             return (
               <motion.div
                 key={badge.id}
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.99 }}
                 onClick={() => setSelectedBadge(badge)}
-                className={`relative flex flex-col justify-between p-3.5 rounded-2xl border transition-all cursor-pointer text-center select-none group ${
+                className={`relative flex flex-col justify-between p-3.5 rounded-xl border transition-all cursor-pointer text-center select-none ${
                   hasUnlocked
-                    ? `bg-white dark:bg-slate-850/80 border-slate-200 dark:border-slate-700 shadow-2xs`
-                    : "bg-slate-50/80 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 opacity-75 hover:opacity-100"
+                    ? "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs"
+                    : "bg-slate-50/70 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 opacity-80 hover:opacity-100"
                 }`}
               >
-                {/* Equipped Ribbon or Status Tag */}
-
                 <div>
-                  {/* Badge Medal Orb */}
-                  <div className="relative mx-auto mb-2 flex justify-center">
+                  {/* Badge Icon */}
+                  <div className="relative mx-auto mb-2.5 flex justify-center">
                     <div
-                      className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:rotate-6 ${
+                      className={`w-11 h-11 rounded-xl flex items-center justify-center transition-colors ${
                         hasUnlocked
-                          ? `${badge.bgColor} ${badge.color} border-2 ${badge.borderColor} shadow-xs dark:bg-opacity-20`
-                          : "bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-500 border border-slate-300 dark:border-slate-700 grayscale"
+                          ? `${badge.bgColor} ${badge.color} border border-slate-200/80 dark:border-slate-700/80 dark:bg-opacity-20`
+                          : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 border border-slate-200 dark:border-slate-700 grayscale"
                       }`}
                     >
-                      <Icon size={24} />
+                      <Icon size={22} strokeWidth={1.8} />
                     </div>
 
                     {/* Mini lock indicator */}
                     {!hasUnlocked && (
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-slate-800 dark:bg-slate-700 text-white flex items-center justify-center text-[10px] border border-white dark:border-slate-800">
-                        <Lock size={10} />
+                      <div className="absolute -bottom-1 -right-1 w-4.5 h-4.5 rounded-full bg-slate-800 dark:bg-slate-700 text-white flex items-center justify-center text-[9px] border border-white dark:border-slate-900">
+                        <Lock size={9} />
                       </div>
                     )}
                   </div>
 
                   {/* Badge Name */}
                   <h4
-                    className={`font-black text-xs leading-tight mb-1 truncate ${
+                    className={`font-semibold text-xs leading-tight mb-1 truncate ${
                       hasUnlocked ? "text-slate-900 dark:text-slate-100" : "text-slate-600 dark:text-slate-400"
                     }`}
                     title={badge.name}
@@ -319,7 +318,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
                   </h4>
 
                   {/* Description */}
-                  <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 line-clamp-2 leading-snug mb-2">
+                  <p className="text-[11px] font-normal text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed mb-2.5">
                     {badge.description}
                   </p>
                 </div>
@@ -327,18 +326,18 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
                 {/* Bottom Progress Bar / Status Pill */}
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                   {hasUnlocked ? (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-900/60">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-900/60">
                       <CheckCircle2 size={11} /> Đã Mở Khóa
                     </span>
                   ) : (
                     <div>
-                      <div className="flex justify-between text-[9px] font-bold text-slate-500 dark:text-slate-400 mb-0.5">
-                        <span>{badge.currentValue || 0}/{badge.targetValue}</span>
+                      <div className="flex justify-between text-[10px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                        <span>{badge.currentValue || 0}/{badge.targetValue} {badge.unit}</span>
                         <span>{progress}%</span>
                       </div>
-                      <div className="w-full bg-slate-200 dark:bg-slate-750 h-1.5 rounded-full overflow-hidden">
+                      <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
                         <div
-                          className="bg-purple-500 h-full rounded-full"
+                          className="bg-indigo-600 dark:bg-indigo-500 h-full rounded-full"
                           style={{ width: `${progress}%` }}
                         />
                       </div>
@@ -353,7 +352,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
         {/* Footer Note */}
         <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-center">
           <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-            👉 Nhấp vào huy hiệu để soi chi tiết 3D & đeo lên Avatar!
+            Nhấp vào huy hiệu để xem chi tiết và kích hoạt lên hồ sơ học tập.
           </p>
         </div>
       </div>

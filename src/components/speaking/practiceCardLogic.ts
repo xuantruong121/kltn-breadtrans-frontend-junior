@@ -196,10 +196,10 @@ export function resolveFormatTag(exercise: PracticeExerciseItem): string {
     title.includes("ets") ||
     title.includes("nhiệm vụ")
   ) {
-    return "Mô phỏng ETS";
+    return "Mô phỏng TOEIC";
   }
   if (exercise.practiceSet) {
-    return "Mô phỏng ETS";
+    return "Mô phỏng TOEIC";
   }
   return exercise.categoryLabel || exercise.category || "LUYỆN NÓI";
 }

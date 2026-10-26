@@ -34,8 +34,8 @@ interface RecoveryDestination {
 const RECOVERY_DESTINATIONS: RecoveryDestination[] = [
   {
     title: "Luyện đề thi TOEIC",
-    badge: "Kho đề chuẩn ETS",
-    description: "Hàng chục bộ đề có bấm giờ, đáp án chi tiết và phân tích năng lực.",
+    badge: "Theo cấu trúc TOEIC",
+    description: "Đề luyện tập có bấm giờ, đáp án và giải thích từng câu.",
     href: "/exams",
     icon: BookOpen,
     iconBg: "bg-blue-50 dark:bg-blue-950/50",
@@ -52,8 +52,8 @@ const RECOVERY_DESTINATIONS: RecoveryDestination[] = [
   },
   {
     title: "Flashcard từ vựng",
-    badge: "Thuật toán Spaced Repetition",
-    description: "Ôn tập ngắt quãng thông minh giúp khắc sâu từ mới vào trí nhớ dài hạn.",
+    badge: "Ôn tập theo lịch",
+    description: "Học từ theo chủ đề; từ chưa thuộc được đưa lại để ôn sau những khoảng thời gian tăng dần.",
     href: "/flashcard",
     icon: Layers,
     iconBg: "bg-emerald-50 dark:bg-emerald-950/50",
@@ -62,7 +62,7 @@ const RECOVERY_DESTINATIONS: RecoveryDestination[] = [
   {
     title: "Đấu trường xếp hạng",
     badge: "Thử thách kiến thức",
-    description: "So tài từ vựng tốc độ cao với các học viên khác và nhận bánh rán.",
+    description: "So tài từ vựng với học viên khác; người thắng nhận phần Bánh Mì đặt cược.",
     href: "/arena",
     icon: Trophy,
     iconBg: "bg-orange-50 dark:bg-orange-950/50",

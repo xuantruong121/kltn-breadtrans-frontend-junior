@@ -12,7 +12,95 @@ export interface DiagnosticQuestion {
   passageBody?: string | null;
   passageText?: string | null;
   audioUrl?: string | null;
+  /** LISTENING only: null audio is an explicit NOT_READY state. */
+  mediaStatus?: "READY" | "NOT_READY" | null;
+  taskType?: "MCQ" | "SPEAKING_RESPONSE" | "WRITING_RESPONSE" | string;
+  instructions?: string | null;
+  prepSeconds?: number | null;
+  responseSeconds?: number | null;
+  wordMin?: number | null;
+  wordMax?: number | null;
+  productive?: boolean;
   order: number;
+}
+
+export type DiagnosticSkillState =
+  | "NOT_STARTED"
+  | "IN_PROGRESS"
+  | "PENDING_GRADING"
+  | "COMPLETE"
+  | "GRADING_FAILED";
+
+export interface DiagnosticFourSkillSkill {
+  skill: "LISTENING" | "READING" | "SPEAKING" | "WRITING" | "LANGUAGE_USE";
+  state: DiagnosticSkillState;
+  score: number | null;
+  weight: number;
+  itemsScored: number;
+  itemsTotal: number;
+  tasksGraded?: number;
+  tasksPending?: number;
+  tasksFailed?: number;
+  tasksSkipped?: number;
+}
+
+export type DiagnosticSkillKey = DiagnosticFourSkillSkill["skill"];
+
+export interface DiagnosticAdviceResource {
+  kind: "LISTENING_QUIZ" | "READING_QUIZ" | "WRITING_QUIZ" | "SPEAKING_EXERCISE" | "COURSE";
+  id: number;
+  title: string;
+  route: string;
+  access: "OPEN" | "LOCKED";
+  requirement: string | null;
+}
+
+export interface DiagnosticAdviceFinding {
+  skill: DiagnosticSkillKey;
+  areaKey: string;
+  area: string;
+  evidence: string;
+}
+
+export interface DiagnosticAdvicePriority extends DiagnosticAdviceFinding {
+  rank: number;
+  why: string;
+  action: string;
+  graderFeedback: string[];
+  resources: DiagnosticAdviceResource[];
+}
+
+/** D1 advice (V2): evidence-based findings and links to published content. */
+export interface DiagnosticAdvice {
+  version: string;
+  basis: "D1_ADVISORY_SCORES_ONLY";
+  profile: {
+    assessed: DiagnosticSkillKey[];
+    strongest: DiagnosticSkillKey[];
+    weakest: DiagnosticSkillKey[];
+    balanced: boolean;
+    spread: number | null;
+  };
+  strengths: DiagnosticAdviceFinding[];
+  priorities: DiagnosticAdvicePriority[];
+  supplemental: DiagnosticAdvicePriority[];
+  unassessed: Array<{
+    skill: DiagnosticSkillKey;
+    reason: "SKIPPED" | "PENDING_GRADING" | "GRADING_FAILED" | "NOT_SUBMITTED";
+    generalPractice: DiagnosticAdviceResource | null;
+  }>;
+  mockGraderEvidence: boolean;
+  noWeaknessFound: boolean;
+}
+
+/** FOUR_SKILL_PLACEMENT_V2 only. `overall` is null until all four skills are COMPLETE. */
+export interface DiagnosticFourSkillResult {
+  scoringVersion: "FOUR_SKILL_PLACEMENT_V2";
+  state: DiagnosticSkillState;
+  skills: Record<DiagnosticFourSkillSkill["skill"], DiagnosticFourSkillSkill>;
+  overall: number | null;
+  placementBand: null;
+  placementBandStatus: string;
 }
 
 export interface DiagnosticSkillProfile {
@@ -75,6 +163,14 @@ export interface DiagnosticResult {
   speakingEvidenceConfidence?: string;
   speakingResponses?: DiagnosticSpeakingResponse[];
   writingFeedback?: DiagnosticWritingFeedback[];
+  administeredForm?: {
+    totalItems: number;
+    objectiveCount: number;
+    productiveCount: number;
+    itemsBySkill: Record<string, number>;
+  };
+  fourSkill?: DiagnosticFourSkillResult | null;
+  advice?: DiagnosticAdvice | null;
   submittedAt?: string;
   completedAt?: string;
   skillProfiles?: DiagnosticSkillProfile[];
@@ -99,15 +195,29 @@ export interface DiagnosticSpeakingResponse {
   taskKey?: string;
   status: string;
   durationMs?: number | null;
+  /** Task rubric percentage 0-100; null unless GRADED. */
   score?: number | null;
+  scoreScale?: "PERCENT_0_100";
   failureReason?: string | null;
+  rubricVersion?: string | null;
+  criteria?: Record<string, number> | null;
+  criterionFeedback?: Record<string, string> | null;
+  feedback?: string | null;
+  suggestions?: string[];
+  transcript?: string | null;
 }
 
 export interface DiagnosticWritingFeedback {
   questionId: number;
   status: "QUEUED" | "GRADING" | "GRADED" | "GRADING_FAILED";
   answer: string;
+  /** Task rubric percentage 0-100; null unless GRADED. */
   score: number | null;
+  scoreScale?: "PERCENT_0_100";
+  criteria?: Record<string, number> | null;
+  criterionFeedback?: Record<string, string> | null;
+  rubricVersion?: string | null;
+  wordCount?: number | null;
   feedback: string | null;
   suggestions: string[];
   provider: string | null;
@@ -182,6 +292,14 @@ export const diagnosticService = {
   ): Promise<DiagnosticSpeakingResponse> =>
     axiosClient.post(
       `/diagnostic/${assessmentId}/attempts/${attemptId}/speaking/${questionId}/skip`,
+    ),
+  retrySpeaking: (
+    assessmentId: number,
+    attemptId: number,
+    questionId: number,
+  ): Promise<DiagnosticSpeakingResponse> =>
+    axiosClient.post(
+      `/diagnostic/${assessmentId}/attempts/${attemptId}/speaking/${questionId}/retry`,
     ),
   retryWriting: (
     assessmentId: number,

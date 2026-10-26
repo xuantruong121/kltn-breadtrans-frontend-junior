@@ -107,7 +107,7 @@ export function AdminHistoryModal({
               <History size={20} />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Lịch sử kiểm toán quyền Pro</h2>
+              <h2 className="text-lg font-bold text-slate-900">Lịch sử kiểm toán gói học viên</h2>
               <p className="text-xs text-slate-500">
                 Toàn bộ các mốc thay đổi trạng thái của gói học viên.
               </p>

@@ -148,18 +148,18 @@ export function WritingTopicCard({
 
       {/* Footer: Metadata on Left, Action CTA on Right */}
       <div className="mt-4 border-t border-slate-100 dark:border-slate-800/80 pt-3">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-2.5">
           {/* Metadata */}
-          <div className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">
+          <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
             <span>{formatTag}</span>
-            <span className="mx-1.5">·</span>
+            <span>·</span>
             <span>{diffConfig.label}</span>
-            <span className="mx-1.5">·</span>
+            <span>·</span>
             <span>~5 phút</span>
           </div>
 
           {/* Action CTA */}
-          <div className="shrink-0">
+          <div className="shrink-0 ml-auto">
             {status === "COMPLETED" ? (
               <button
                 type="button"

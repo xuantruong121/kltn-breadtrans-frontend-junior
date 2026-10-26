@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import axiosClient from "@/lib/api/axiosClient";
 import { toeicService } from "@/lib/api/services/toeic.service";
+import { useCanonicalExamPath } from "@/lib/toeic/useCanonicalExamPath";
 
 const componentLabels: Record<string, string> = {
   LISTENING_READING: "Listening + Reading",
@@ -83,6 +84,12 @@ export default function ToeicAssessmentAttemptPage({
     onError: (err: any) =>
       setError(err?.response?.data?.message ?? "Không thể mở component."),
   });
+  // The back-link goes straight to the canonical product URL instead of the
+  // legacy aggregate URL, so normal runtime navigation needs no compatibility
+  // redirect. The legacy path stays as the fallback until the lookup settles.
+  const { path: canonicalDetailPath } = useCanonicalExamPath({
+    assessmentId: id,
+  });
   useEffect(() => {
     if (data?.status === "COMPLETED")
       void client.invalidateQueries({ queryKey: ["toeic-assessment", id] });
@@ -109,7 +116,7 @@ export default function ToeicAssessmentAttemptPage({
   return (
     <main className="mx-auto max-w-4xl space-y-6 px-5 py-10">
       <Link
-        href={`/toeic/assessments/${id}`}
+        href={canonicalDetailPath ?? `/toeic/assessments/${id}`}
         className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900"
       >
         <ArrowLeft size={16} /> Chi tiết bài thi

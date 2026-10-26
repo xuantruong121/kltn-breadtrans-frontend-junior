@@ -701,3 +701,21 @@ test("Helper quizContainsDictation accurately classifies quiz modes", () => {
   assert.equal(quizContainsDictation({ questions: [{ type: "MULTIPLE_CHOICE" }] }), false);
   assert.equal(quizContainsDictation({ questions: [] }), false);
 });
+
+test("Dictation without a published full-quiz artifact shows the notice without requesting audio", async () => {
+  const { fetcher, calls } = createMockFetcher({
+    getQuizTranscript: async (quizId) => {
+      calls.getQuizTranscript.push(quizId);
+      return {
+        items: [{ questionId: 101, order: 1, transcript: "Hello.", translation: "Xin chào." }],
+        audioArtifact: null,
+      };
+    },
+  });
+  const quiz = createSampleQuiz(true, false);
+  const entry = await revealAndFetchTranscript(quiz.id, quiz, undefined, fetcher);
+  assert.equal(entry.authorizationStatus, "authorized");
+  assert.equal(calls.getTranscriptAudioBlob.length, 0);
+  assert.equal(entry.audioError, true);
+  assert.match(entry.audioNotice ?? "", /đang được quản trị viên chuẩn bị/);
+});

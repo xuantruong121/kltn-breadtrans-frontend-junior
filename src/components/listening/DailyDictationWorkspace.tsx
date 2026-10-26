@@ -61,6 +61,12 @@ import {
   moveTranscriptIndex,
   resolveTranscriptPlaybackState,
 } from "./listeningDictationUtils";
+import {
+  claimListeningPlayback,
+  mayReplaceListeningSource,
+  ownsListeningPlayback,
+  type ListeningPlaybackOwner,
+} from "./listeningPlaybackOwnership";
 
 export interface DictationAttemptMetrics {
   attemptCount: number;
@@ -221,6 +227,22 @@ export function DailyDictationWorkspace({
 
   // Audio Player State
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playbackOwnershipRef = useRef({
+    owner: "NONE" as ListeningPlaybackOwner,
+    generation: 0,
+  });
+  const appliedSourceRef = useRef<{
+    owner: ListeningPlaybackOwner;
+    generation: number;
+    url: string;
+  } | null>(null);
+  const pendingSourceResetRef = useRef<{
+    owner: ListeningPlaybackOwner;
+    generation: number;
+    seconds: number;
+  } | null>(null);
+  const fullScriptReadyRef = useRef(false);
+  const fullScriptSourceRef = useRef<string | null>(null);
   const playbackRateRef = useRef(1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -235,6 +257,7 @@ export function DailyDictationWorkspace({
   const [wordSuggestions, setWordSuggestions] = useState(false);
   const [showShortcutTips, setShowShortcutTips] = useState(true);
   const [audioLoading, setAudioLoading] = useState(true);
+  const [isFullScriptReady, setIsFullScriptReady] = useState(false);
   const [audioError, setAudioError] = useState(false);
   const [audioNotice, setAudioNotice] = useState<string | null>(null);
   const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
@@ -243,6 +266,68 @@ export function DailyDictationWorkspace({
     return cached?.transcript ?? [];
   });
   const [isSkipping, setIsSkipping] = useState(false);
+
+  const claimPlaybackOwner = useCallback((owner: ListeningPlaybackOwner) => {
+    const next = claimListeningPlayback(playbackOwnershipRef.current, owner);
+    playbackOwnershipRef.current = next;
+    appliedSourceRef.current = null;
+    pendingSourceResetRef.current = null;
+    fullScriptReadyRef.current = false;
+    setIsFullScriptReady(false);
+    if (owner !== "FULL_SCRIPT") fullScriptSourceRef.current = null;
+    return next.generation;
+  }, []);
+
+  const ownsPlayback = useCallback((owner: ListeningPlaybackOwner, generation: number) => (
+    ownsListeningPlayback(playbackOwnershipRef.current, owner, generation)
+  ), []);
+
+  const applyAudioSource = useCallback((
+    owner: ListeningPlaybackOwner,
+    generation: number,
+    url: string,
+    resetToSeconds?: number,
+    allowFullScriptReplacement = false,
+  ) => {
+    if (!ownsListeningPlayback(playbackOwnershipRef.current, owner, generation)) return false;
+    const audio = audioRef.current;
+    if (!audio) return false;
+
+    const applied = appliedSourceRef.current;
+    // A transcript probe and an explicit reveal may finish in either order.
+    // Once this generation has a usable full-script blob, a late equivalent
+    // fetch must not replace the media element during play/pause/resume.
+    if (!mayReplaceListeningSource(applied, owner, generation, url)) {
+      return false;
+    }
+    if (
+      owner === "FULL_SCRIPT" &&
+      fullScriptSourceRef.current &&
+      fullScriptSourceRef.current !== url &&
+      !allowFullScriptReplacement
+    ) return false;
+
+    audio.pause();
+    setIsPlaying(false);
+    setAudioBlobUrl(url);
+    if (audio.src !== url) {
+      audio.src = url;
+      audio.load();
+    }
+    appliedSourceRef.current = { owner, generation, url };
+    if (owner === "FULL_SCRIPT") {
+      fullScriptSourceRef.current = url;
+      fullScriptReadyRef.current = true;
+      setIsFullScriptReady(true);
+    }
+    if (resetToSeconds !== undefined) {
+      pendingSourceResetRef.current = { owner, generation, seconds: resetToSeconds };
+      audio.currentTime = resetToSeconds;
+      setCurrentTime(resetToSeconds);
+    }
+    audio.playbackRate = playbackRateRef.current;
+    return true;
+  }, []);
 
   useEffect(() => {
     if (fullTranscript.length === 0) {
@@ -292,12 +377,12 @@ export function DailyDictationWorkspace({
   const transcriptAudioRequestRef = useRef<AbortController | null>(null);
   const questionAudioCacheRef = useRef<Map<string, { blob: Blob; url: string }>>(new Map());
   const activeAudioVersion = currentQuestion?.audioAssets?.find((asset) => asset.isActive)?.version;
-  const currentSegment = Array.isArray(currentContent.transcriptSegments)
+  const currentSegment = currentQuestion?.listeningSegment ?? (Array.isArray(currentContent.transcriptSegments)
     ? currentContent.transcriptSegments.find(
         (segment: any) =>
           Number.isFinite(segment?.startMs) && Number.isFinite(segment?.endMs),
       )
-    : undefined;
+    : undefined);
   const segmentStartSeconds =
     activeTab === "dictation" && currentSegment
       ? Number(currentSegment.startMs) / 1000
@@ -307,6 +392,12 @@ export function DailyDictationWorkspace({
       ? Number(currentSegment.endMs) / 1000
       : 0;
   const isSegmentAudio = segmentEndSeconds > segmentStartSeconds;
+  // A whole-quiz artifact is safe to request only for a question with the
+  // timing-only contract. Other Listening items retain their per-question
+  // fallback rather than receiving a full track from 0 seconds.
+  const currentArtifact = currentQuestion?.listeningSegment
+    ? quiz.listeningAudioArtifact
+    : null;
 
   // Speech Recognition (Mic)
   const [isListeningSpeech, setIsListeningSpeech] = useState(false);
@@ -589,19 +680,17 @@ export function DailyDictationWorkspace({
 
   // Fetch audio blob when question changes; cached to prevent re-downloads on tab switches
   useEffect(() => {
+    if (activeTab !== "dictation") return;
+    const owner: ListeningPlaybackOwner = "QUESTION_SEGMENT";
+    const generation = claimPlaybackOwner(owner);
     const questionCacheKey = `${quiz.id}:${currentQuestion.id}:${activeAudioVersion ?? 0}`;
     const cached = questionAudioCacheRef.current.get(questionCacheKey);
 
     if (cached) {
-      if (activeTab === "dictation") {
-        setAudioBlobUrl(cached.url);
+      if (ownsPlayback(owner, generation)) {
         setAudioLoading(false);
         setAudioError(false);
-        if (audioRef.current) {
-          audioRef.current.src = cached.url;
-          audioRef.current.playbackRate = playbackRateRef.current;
-          audioRef.current.load();
-        }
+        applyAudioSource(owner, generation, cached.url);
       }
       return;
     }
@@ -610,7 +699,7 @@ export function DailyDictationWorkspace({
     let isMounted = true;
     const resetTimer = window.setTimeout(() => {
       if (!isMounted) return;
-      if (activeTab === "dictation") {
+      if (ownsPlayback(owner, generation)) {
         setAudioLoading(true);
         setAudioError(false);
         setIsPlaying(false);
@@ -623,32 +712,25 @@ export function DailyDictationWorkspace({
         quiz.id,
         currentQuestion.id,
         controller.signal,
-        quiz.listeningAudioArtifact,
+        currentArtifact,
       )
       .then((blob) => {
         if (!isMounted) return;
         const url = URL.createObjectURL(blob);
         questionAudioCacheRef.current.set(questionCacheKey, { blob, url });
 
-        if (activeTab === "dictation") {
-          setAudioBlobUrl(url);
+        if (ownsPlayback(owner, generation)) {
           setAudioLoading(false);
           setAudioError(false);
-
-          if (audioRef.current) {
-            audioRef.current.src = url;
-            audioRef.current.playbackRate = playbackRateRef.current;
-            audioRef.current.load();
-            if (autoplayOnLoadRef.current) {
-              autoplayOnLoadRef.current = false;
-              void audioRef.current.play().catch(() => setIsPlaying(false));
-            }
+          if (applyAudioSource(owner, generation, url) && autoplayOnLoadRef.current) {
+            autoplayOnLoadRef.current = false;
+            void audioRef.current?.play().catch(() => setIsPlaying(false));
           }
         }
       })
       .catch((err) => {
         if (!isMounted || err?.name === "AbortError" || err?.name === "CanceledError") return;
-        if (activeTab === "dictation") {
+        if (ownsPlayback(owner, generation)) {
           setAudioError(true);
           setAudioLoading(false);
         }
@@ -659,7 +741,7 @@ export function DailyDictationWorkspace({
       window.clearTimeout(resetTimer);
       controller.abort();
     };
-  }, [activeAudioVersion, currentQuestion.id, quiz.id, quiz.listeningAudioArtifact, activeTab]);
+  }, [activeAudioVersion, applyAudioSource, claimPlaybackOwner, currentQuestion.id, currentArtifact, ownsPlayback, quiz.id, activeTab]);
 
   useEffect(() => {
     if (!audioRef.current) return;
@@ -751,8 +833,8 @@ export function DailyDictationWorkspace({
 
   // Audio player methods
   const togglePlay = useCallback(() => {
-    if (activeTab === "transcript") {
-      if (!audioRef.current || audioError) return;
+    if (playbackOwnershipRef.current.owner === "FULL_SCRIPT") {
+      if (!audioRef.current || audioError || !fullScriptReadyRef.current) return;
       if (isPlaying) {
         audioRef.current.pause();
         return;
@@ -1050,7 +1132,13 @@ export function DailyDictationWorkspace({
     return () => window.removeEventListener("keydown", handleEscape);
   }, [showSettings, showShortcutsModal, showNotesModal]);
 
-  const transcriptCursorIndex = clampTranscriptIndex(selectedTranscriptItemIndex, fullTranscript.length);
+  // Full-script playback has one authority: the turn resolved from the
+  // artifact timeline.  A manual cursor is only a fallback before the first
+  // timeupdate, otherwise the large focus panel could remain on a previously
+  // selected sentence while the transcript list correctly followed the audio.
+  const transcriptCursorIndex = activeTab === "transcript" && activeTranscriptItemIndex >= 0
+    ? clampTranscriptIndex(activeTranscriptItemIndex, fullTranscript.length)
+    : clampTranscriptIndex(selectedTranscriptItemIndex, fullTranscript.length);
   const activeTranscriptItem =
     fullTranscript[transcriptCursorIndex] ??
     fullTranscript.find((item) => item.questionId === currentQuestion?.id);
@@ -1062,7 +1150,7 @@ export function DailyDictationWorkspace({
   const vocabLevel = level || quiz.bilingualContent?.skillLabel || "A1";
 
   const loadTranscript = useCallback(
-    async (forceReload = false) => {
+    async (generation: number, forceReload = false) => {
       setIsTranscriptLoading(true);
       setTranscriptError(null);
       const controller = new AbortController();
@@ -1077,25 +1165,25 @@ export function DailyDictationWorkspace({
           forceReload,
         );
 
+        if (!ownsPlayback("FULL_SCRIPT", generation)) return;
         setFullTranscript(res.transcript ?? []);
         setSelectedTranscriptItemIndex(0);
         setActiveTranscriptItemIndex(0);
         setActiveTranscriptSpeakerTurnId(res.transcript?.[0]?.speakerTurnId ?? null);
         setAudioNotice(res.audioNotice);
         setAudioError(res.audioError);
-        setAudioLoading(false);
 
         if (res.audioBlobUrl) {
-          setAudioBlobUrl(res.audioBlobUrl);
-          if (audioRef.current) {
-            audioRef.current.src = res.audioBlobUrl;
-            audioRef.current.playbackRate = playbackRateRef.current;
-            audioRef.current.load();
-            setCurrentTime(0);
-          }
+          applyAudioSource("FULL_SCRIPT", generation, res.audioBlobUrl, 0, forceReload);
+          setAudioLoading(false);
+        } else {
+          setAudioError(true);
+          setAudioLoading(false);
+          setTranscriptError("Audio toàn bộ kịch bản chưa sẵn sàng. Bạn hãy thử lại.");
         }
       } catch (error: any) {
         if (error?.name === "AbortError" || error?.name === "CanceledError") return;
+        if (!ownsPlayback("FULL_SCRIPT", generation)) return;
         setTranscriptError("Chưa tải được toàn bộ kịch bản. Bạn hãy thử lại.");
         setAudioError(true);
         setAudioLoading(false);
@@ -1106,12 +1194,14 @@ export function DailyDictationWorkspace({
         }
       }
     },
-    [quiz],
+    [applyAudioSource, ownsPlayback, quiz],
   );
 
   const openTranscriptTab = () => {
+    const generation = claimPlaybackOwner("FULL_SCRIPT");
     setTranscriptError(null);
     setActiveTab("transcript");
+    setAudioLoading(true);
 
     if (audioRef.current) {
       audioRef.current.pause();
@@ -1124,25 +1214,20 @@ export function DailyDictationWorkspace({
       setIsTranscriptLoading(false);
       setAudioNotice(cached.audioNotice);
       setAudioError(cached.audioError);
-      setAudioLoading(false);
 
       if (cached.audioBlobUrl) {
-        setAudioBlobUrl(cached.audioBlobUrl);
-        if (audioRef.current) {
-          audioRef.current.src = cached.audioBlobUrl;
-          audioRef.current.playbackRate = playbackRateRef.current;
-          audioRef.current.load();
-          setCurrentTime(0);
-        }
+        applyAudioSource("FULL_SCRIPT", generation, cached.audioBlobUrl, 0);
+        setAudioLoading(false);
+        return;
       }
-      return;
     }
 
     setIsTranscriptLoading(true);
-    void loadTranscript();
+    void loadTranscript(generation);
   };
 
   const openDictationTab = () => {
+    const generation = claimPlaybackOwner("QUESTION_SEGMENT");
     setActiveTab("dictation");
 
     if (audioRef.current) {
@@ -1153,23 +1238,18 @@ export function DailyDictationWorkspace({
     const questionCacheKey = `${quiz.id}:${currentQuestion.id}:${activeAudioVersion ?? 0}`;
     const cachedQuestion = questionAudioCacheRef.current.get(questionCacheKey);
     if (cachedQuestion) {
-      setAudioBlobUrl(cachedQuestion.url);
       setAudioLoading(false);
       setAudioError(false);
-      if (audioRef.current) {
-        audioRef.current.src = cachedQuestion.url;
-        audioRef.current.playbackRate = playbackRateRef.current;
-        audioRef.current.load();
-        setCurrentTime(0);
-      }
+      applyAudioSource("QUESTION_SEGMENT", generation, cachedQuestion.url, 0);
     }
     focusInputAtEnd();
   };
 
   const retryTranscript = () => {
+    const generation = claimPlaybackOwner("FULL_SCRIPT");
     setTranscriptError(null);
     setIsTranscriptLoading(true);
-    void loadTranscript(true);
+    void loadTranscript(generation, true);
   };
 
   return (
@@ -1252,7 +1332,6 @@ export function DailyDictationWorkspace({
       {/* Shared audio instance across Dictation and Full Transcript modes */}
       <audio
         ref={audioRef}
-        src={audioBlobUrl ?? undefined}
         preload="metadata"
         className="hidden"
         onTimeUpdate={() => {
@@ -1281,6 +1360,19 @@ export function DailyDictationWorkspace({
         onLoadedMetadata={() => {
           if (audioRef.current) {
             const fullDuration = audioRef.current.duration || 0;
+            const pendingReset = pendingSourceResetRef.current;
+            if (
+              pendingReset &&
+              ownsListeningPlayback(
+                playbackOwnershipRef.current,
+                pendingReset.owner,
+                pendingReset.generation,
+              )
+            ) {
+              audioRef.current.currentTime = pendingReset.seconds;
+              setCurrentTime(pendingReset.seconds);
+              pendingSourceResetRef.current = null;
+            }
             if (activeTab === "dictation" && isSegmentAudio) {
               audioRef.current.currentTime = segmentStartSeconds;
               setDuration(Math.max(0, segmentEndSeconds - segmentStartSeconds));
@@ -1995,7 +2087,7 @@ export function DailyDictationWorkspace({
                   <button
                     type="button"
                     onClick={togglePlay}
-                    disabled={audioLoading || audioError}
+                    disabled={audioLoading || audioError || (activeTab === "transcript" && !isFullScriptReady)}
                     title={isPlaying ? "Tạm dừng" : "Phát câu"}
                     aria-label={isPlaying ? "Tạm dừng" : "Phát câu"}
                     className="flex size-9 items-center justify-center rounded-full bg-amber-500 hover:bg-amber-600 text-white shadow-xs transition-all active:scale-95 disabled:opacity-40 cursor-pointer shrink-0"

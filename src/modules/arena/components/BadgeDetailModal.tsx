@@ -3,7 +3,6 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, CheckCircle2, Lock, BadgeCheck, Calendar } from "lucide-react";
-import { Button3D } from "@/components/ui";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import toast from "react-hot-toast";
 
@@ -68,70 +67,58 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-md w-full max-h-[min(90dvh,calc(100dvh-3rem))] overflow-y-auto p-6 sm:p-8 text-center relative"
         >
-          {/* Ambient Glow */}
-          <div
-            className={`absolute -top-16 left-1/2 -translate-x-1/2 w-64 h-64 rounded-full blur-3xl opacity-30 pointer-events-none ${badge.accentGlow}`}
-          />
-
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute top-5 right-5 w-9 h-9 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors cursor-pointer z-10"
+            className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors cursor-pointer z-10"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
 
-          {/* 3D Medal Orb */}
+          {/* Badge Icon Display */}
           <div className="relative my-4 flex justify-center">
-            <motion.div
-              animate={hasUnlocked ? { rotate: [0, 5, -5, 0] } : {}}
-              transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-              className={`w-28 h-28 rounded-full border-4 flex items-center justify-center relative shadow-lg ${
+            <div
+              className={`w-24 h-24 rounded-2xl border-2 flex items-center justify-center relative shadow-xs ${
                 hasUnlocked
                   ? `${badge.bgColor} ${badge.borderColor} ${badge.color} dark:bg-opacity-20`
                   : "bg-slate-100 border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-slate-400 dark:text-slate-500 grayscale"
               }`}
             >
-              {/* Shine effect */}
-              {hasUnlocked && (
-                <div className="absolute top-1 inset-x-0 h-10 bg-white/30 rounded-full blur-xs pointer-events-none" />
-              )}
-
-              <Icon size={52} className="drop-shadow-md" />
+              <Icon size={44} strokeWidth={1.75} />
 
               {/* Status Badge */}
-              <div className="absolute -bottom-2 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider text-white shadow-xs flex items-center gap-1 bg-slate-800 dark:bg-slate-700">
+              <div className="absolute -bottom-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-white shadow-xs flex items-center gap-1 bg-slate-800 dark:bg-slate-700">
                 {hasUnlocked ? (
                   <>
-                    <CheckCircle2 size={12} className="text-emerald-400" /> ĐÃ MỞ KHÓA
+                    <CheckCircle2 size={11} className="text-emerald-400" /> ĐÃ MỞ KHÓA
                   </>
                 ) : (
                   <>
-                    <Lock size={12} className="text-amber-400" /> ĐANG KHÓA
+                    <Lock size={11} className="text-amber-400" /> ĐANG KHÓA
                   </>
                 )}
               </div>
-            </motion.div>
+            </div>
           </div>
 
           {/* Title & Category */}
           <div className="mb-4">
-            <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+            <span className="text-[10px] font-semibold uppercase px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
               {badge.category}
             </span>
-            <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-1 mb-1">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-2 mb-1">
               {badge.name}
             </h3>
-            <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 px-2 leading-relaxed">
+            <p className="text-xs sm:text-sm font-normal text-slate-500 dark:text-slate-400 px-2 leading-relaxed">
               {badge.description}
             </p>
           </div>
 
           {/* Progress / Status Card */}
-          <div className="bg-slate-50 dark:bg-slate-850/70 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 mb-5 text-left">
-            <div className="flex justify-between items-center text-xs font-bold mb-1.5">
+          <div className="bg-slate-50 dark:bg-slate-850/70 rounded-xl p-4 border border-slate-200 dark:border-slate-800 mb-5 text-left">
+            <div className="flex justify-between items-center text-xs font-semibold mb-1.5">
               <span className="text-slate-600 dark:text-slate-400">Tiến trình thử thách:</span>
-              <span className={hasUnlocked ? "text-emerald-600 dark:text-emerald-400" : "text-purple-600 dark:text-purple-400"}>
+              <span className={hasUnlocked ? "text-emerald-600 dark:text-emerald-400" : "text-indigo-600 dark:text-indigo-400"}>
                 {hasUnlocked
                   ? "Hoàn thành 100%"
                   : `${badge.currentValue || 0} / ${badge.targetValue} ${badge.unit} (${progressPercent}%)`}
@@ -139,26 +126,24 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
             </div>
 
             {/* Bar */}
-            <div className="w-full bg-slate-200 dark:bg-slate-750 h-3 rounded-full overflow-hidden border border-slate-300 dark:border-slate-700">
+            <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all ${
-                  hasUnlocked
-                    ? "bg-gradient-to-r from-emerald-400 to-teal-500"
-                    : "bg-gradient-to-r from-purple-500 to-indigo-500"
+                  hasUnlocked ? "bg-emerald-600 dark:bg-emerald-500" : "bg-indigo-600 dark:bg-indigo-500"
                 }`}
                 style={{ width: `${hasUnlocked ? 100 : progressPercent}%` }}
               />
             </div>
 
             {/* Rewards */}
-            <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-600 dark:text-slate-400">
+            <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-600 dark:text-slate-400">
               <span>Phần thưởng danh dự:</span>
               <div className="flex items-center gap-3">
-                <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold">
+                <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-semibold">
                   🍞 +{badge.rewardBreads}
                 </span>
-                <span className="flex items-center gap-1 text-purple-600 dark:text-purple-400 font-bold">
-                  ⭐ +{badge.rewardExp} EXP
+                <span className="flex items-center gap-1 text-slate-800 dark:text-slate-200 font-semibold">
+                  +{badge.rewardExp} EXP
                 </span>
               </div>
             </div>
@@ -175,33 +160,28 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="space-y-2">
+          <div>
             {hasUnlocked ? (
-              <Button3D
-                variant={isEquipped ? "yellow" : "green"}
-                size="md"
+              <button
+                type="button"
                 onClick={handleToggleEquip}
-                className="w-full font-black text-sm py-3 flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                className={`w-full font-semibold text-sm py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-xs ${
+                  isEquipped
+                    ? "bg-amber-600 hover:bg-amber-700 text-white"
+                    : "bg-emerald-600 hover:bg-emerald-700 text-white"
+                }`}
               >
-                {isEquipped ? (
-                  <>
-                    <BadgeCheck size={16} /> Đang Đeo Trên Avatar (Bấm để gỡ)
-                  </>
-                ) : (
-                  <>
-                    <BadgeCheck size={16} /> Đeo Huy Hiệu Này Lên Avatar
-                  </>
-                )}
-              </Button3D>
+                <BadgeCheck size={16} />
+                {isEquipped ? "Đang ghim trên Avatar (Bấm để gỡ)" : "Ghim huy hiệu lên Avatar"}
+              </button>
             ) : (
-              <Button3D
-                variant="white"
-                size="md"
+              <button
+                type="button"
                 disabled
-                className="w-full font-black text-sm py-3 flex items-center justify-center gap-2 opacity-70"
+                className="w-full font-medium text-sm py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-700"
               >
-                <Lock size={16} /> Chưa Đủ Điều Kiện Mở Khóa
-              </Button3D>
+                <Lock size={15} /> Chưa đủ điều kiện mở khóa
+              </button>
             )}
           </div>
         </motion.div>

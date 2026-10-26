@@ -14,11 +14,13 @@ import {
   SkipForward,
   Square,
   Target,
+  Timer,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import {
   diagnosticService,
   DiagnosticAssessment,
+  DiagnosticFourSkillResult,
   DiagnosticResult,
 } from "@/lib/api/services/diagnostic.service";
 import { useAuthStore } from "@/stores/authStore";
@@ -28,6 +30,7 @@ import { useAssessmentAntiCheat } from "@/hooks/useAssessmentAntiCheat";
 import { useLearningFocusMode } from "@/contexts/LearningFocusContext";
 import { ClozePrompt } from "@/components/diagnostic/ClozePrompt";
 import { DiagnosticQuestionNavigator } from "@/components/diagnostic/DiagnosticQuestionNavigator";
+import { DiagnosticAdvicePanel as AdvicePanel } from "@/components/diagnostic/DiagnosticAdvicePanel";
 import {
   formatPlacementLevel,
   formatSkillName,
@@ -35,10 +38,24 @@ import {
   resolveReviewAnswer,
 } from "@/lib/diagnostic/diagnosticUiLogic";
 import {
-  DIAGNOSTIC_SPEAKING_MAX_DURATION_MS,
   isValidDiagnosticRecording,
   selectDiagnosticRecordingMimeType,
 } from "@/lib/diagnostic/diagnosticSpeakingRecorderLogic";
+import {
+  countSkippedTasks,
+  countWords,
+  describeForm,
+  draftKey,
+  parseDraft,
+  toSubmissionAnswers,
+  WRITING_SKIPPED,
+  describeSkillState,
+  formatCriterionName,
+  isSpeakingTask,
+  isWritingTask,
+  speakingLimitMs,
+  writingGuidance,
+} from "@/lib/diagnostic/diagnosticTaskLogic";
 
 function createSubmissionToken() {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
@@ -50,7 +67,7 @@ function nowMs() {
 
 const diagnosticDisplayTitle = "Bài đánh giá năng lực đầu vào";
 const diagnosticDisplayDescription =
-  "Bài đánh giá gồm 52 nhiệm vụ: 48 câu trắc nghiệm khách quan và 4 bài thực hành Nói, Viết. Kết quả giúp bạn hiểu năng lực hiện tại và chọn bài luyện phù hợp hơn.";
+  "Kết quả giúp bạn hiểu năng lực hiện tại và chọn bài luyện phù hợp hơn.";
 const diagnosticDisplayGuidance =
   "Hãy hoàn thành nghiêm túc để nhận nhận xét và gợi ý luyện tập phù hợp. Đây là kết quả tham khảo nội bộ, không phải chứng chỉ tiếng Anh.";
 
@@ -73,7 +90,10 @@ export default function DiagnosticPage() {
   } = useQuery({
     queryKey: ["diagnostic-latest-result"],
     queryFn: diagnosticService.getLatestResult,
-    refetchInterval: (query) => query.state.data?.productivePending ? 3000 : false,
+    refetchInterval: (query) =>
+      query.state.data?.productivePending || query.state.data?.fourSkill?.state === "PENDING_GRADING"
+        ? 3000
+        : false,
   });
 
   const [started, setStarted] = useState(false);
@@ -96,6 +116,10 @@ export default function DiagnosticPage() {
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const recordingStartedAtRef = useRef(0);
+  // Preparation countdown before a speaking task (the task's prepSeconds).
+  const [prep, setPrep] = useState<{ questionId: number; endsAt: number } | null>(null);
+  const [prepRemainingMs, setPrepRemainingMs] = useState(0);
+  const prepTimeoutRef = useRef<number | null>(null);
 
   // Resume in-progress attempt if exists
   useEffect(() => {
@@ -106,8 +130,27 @@ export default function DiagnosticPage() {
     for (const response of inProgress.speakingResponses) {
       persisted[String(response.questionId)] = response.status;
     }
-    setAnswers((current) => ({ ...persisted, ...current }));
+    // Objective choices and Writing text kept locally for this attempt;
+    // Speaking statuses always come from the server.
+    let draft: Record<string, number | string> = {};
+    try {
+      draft = parseDraft(window.localStorage.getItem(draftKey(inProgress.id)));
+    } catch {
+      draft = {};
+    }
+    setAnswers((current) => ({ ...draft, ...persisted, ...current }));
   }, [assessment?.inProgressAttempt]);
+
+  useEffect(() => {
+    if (!attemptId) return;
+    try {
+      window.localStorage.setItem(draftKey(attemptId), JSON.stringify(answers));
+    } catch {
+      // Storage unavailable: the attempt still works, only the draft is not kept.
+    }
+  }, [attemptId, answers]);
+
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
   useEffect(() => {
     if (!recording) return;
@@ -117,7 +160,24 @@ export default function DiagnosticPage() {
     return () => window.clearInterval(timer);
   }, [recording]);
 
+  useEffect(() => {
+    if (!prep) return;
+    const timer = window.setInterval(
+      () => setPrepRemainingMs(Math.max(0, prep.endsAt - Date.now())),
+      200,
+    );
+    return () => window.clearInterval(timer);
+  }, [prep]);
+
+  // Leaving a task cancels its pending auto-start; the countdown display is
+  // tied to the task's id, so it disappears with it.
+  useEffect(() => {
+    if (prepTimeoutRef.current !== null) window.clearTimeout(prepTimeoutRef.current);
+    prepTimeoutRef.current = null;
+  }, [step]);
+
   useEffect(() => () => {
+    if (prepTimeoutRef.current !== null) window.clearTimeout(prepTimeoutRef.current);
     streamRef.current?.getTracks().forEach((track) => track.stop());
     if (recordedUrl) URL.revokeObjectURL(recordedUrl);
     if (autoAdvanceTimer) clearTimeout(autoAdvanceTimer);
@@ -132,13 +192,18 @@ export default function DiagnosticPage() {
     mutationFn: () =>
       diagnosticService.submit(
         assessment!.id,
-        answers,
+        toSubmissionAnswers(answers),
         submissionToken,
         attemptId ?? undefined,
       ),
     onSuccess: (data) => {
       if (document.fullscreenElement) {
         void document.exitFullscreen?.().catch(() => undefined);
+      }
+      try {
+        if (attemptId) window.localStorage.removeItem(draftKey(attemptId));
+      } catch {
+        // ignore
       }
       setStarted(false);
       setFocusMode(false);
@@ -196,7 +261,12 @@ export default function DiagnosticPage() {
       ),
   });
 
-  const result: DiagnosticResult | undefined = submit.data ?? latestResult ?? undefined;
+  // The polled latest result supersedes the submit response for the same
+  // attempt, so grading progress keeps updating after submission.
+  const result: DiagnosticResult | undefined =
+    latestResult && (!submit.data || latestResult.attemptId === submit.data.attemptId)
+      ? latestResult
+      : (submit.data ?? latestResult ?? undefined);
 
   useAssessmentAntiCheat({
     enabled: started && !result && !submit.isPending,
@@ -257,7 +327,26 @@ export default function DiagnosticPage() {
     }
   };
 
-  const startRecording = async () => {
+  const cancelPrep = () => {
+    if (prepTimeoutRef.current !== null) window.clearTimeout(prepTimeoutRef.current);
+    prepTimeoutRef.current = null;
+    setPrep(null);
+  };
+
+  const startPrep = (questionId: number, seconds: number, limitMs: number) => {
+    cancelPrep();
+    setSpeakingError(null);
+    setPrepRemainingMs(seconds * 1000);
+    setPrep({ questionId, endsAt: nowMs() + seconds * 1000 });
+    prepTimeoutRef.current = window.setTimeout(() => {
+      prepTimeoutRef.current = null;
+      setPrep(null);
+      void startRecording(limitMs);
+    }, seconds * 1000);
+  };
+
+  const startRecording = async (limitMs: number) => {
+    cancelPrep();
     setSpeakingError(null);
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
       setSpeakingError("Trình duyệt này chưa hỗ trợ ghi âm. Bạn có thể bỏ qua phần nói.");
@@ -298,7 +387,7 @@ export default function DiagnosticPage() {
         if (recorderRef.current === recorder && recorder.state === "recording") {
           stopRecording();
         }
-      }, DIAGNOSTIC_SPEAKING_MAX_DURATION_MS);
+      }, limitMs);
     } catch (error) {
       streamRef.current?.getTracks().forEach((track) => track.stop());
       setSpeakingError(
@@ -349,6 +438,11 @@ export default function DiagnosticPage() {
       toast.error(`Bạn còn ${unansweredIndexes.length} câu chưa hoàn thành.`);
       return;
     }
+    const skipped = countSkippedTasks(assessment.questions, answers);
+    if (skipped.speaking + skipped.writing > 0) {
+      setShowSubmitConfirm(true);
+      return;
+    }
     submit.mutate();
   };
 
@@ -377,6 +471,8 @@ export default function DiagnosticPage() {
   // Not started yet
   if (!started) {
     const isResuming = !!assessment.inProgressAttempt;
+    const form = describeForm(assessment.questions);
+    const practiceCount = form.speaking + form.writing;
     return (
       <div className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-10">
@@ -396,13 +492,15 @@ export default function DiagnosticPage() {
             <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-850">
               <span className="text-xs font-bold text-slate-500">Quy mô</span>
               <p className="mt-1 font-extrabold text-slate-900 dark:text-slate-100">
-                52 nhiệm vụ (48 trắc nghiệm + 4 thực hành)
+                {practiceCount
+                  ? `${form.total} nhiệm vụ (${form.objective} trắc nghiệm + ${practiceCount} thực hành)`
+                  : `${form.total} câu trắc nghiệm`}
               </p>
             </div>
             <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-850">
-              <span className="text-xs font-bold text-slate-500">Thời lượng ước tính</span>
-              <p className="mt-1 font-extrabold text-slate-900 dark:text-slate-100">
-                35–50 phút
+              <span className="text-xs font-bold text-slate-500">Thành phần</span>
+              <p className="mt-1 text-sm font-extrabold text-slate-900 dark:text-slate-100">
+                {form.parts.map((part) => `${part.label} ${part.count}`).join(" · ")}
               </p>
             </div>
             <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-850">
@@ -441,8 +539,18 @@ export default function DiagnosticPage() {
   const current = assessment.questions[step];
   const isReading = current.section === "READING";
   const isListening = current.section === "LISTENING";
-  const isSpeaking = current.section === "SPEAKING" && current.questionType === "OPEN_TEXT";
-  const isOpenText = current.questionType === "OPEN_TEXT" && !isSpeaking;
+  const isSpeaking = isSpeakingTask(current);
+  const isOpenText = isWritingTask(current);
+  const limitMs = speakingLimitMs(current);
+  const limitSeconds = Math.round(limitMs / 1000);
+  const prepSeconds = isSpeaking && current.prepSeconds && current.prepSeconds > 0 ? current.prepSeconds : 0;
+  const preparing = prep?.questionId === current.id;
+  const writingSkipped = isOpenText && answers[current.id] === WRITING_SKIPPED;
+  const writtenText =
+    typeof answers[current.id] === "string" && !writingSkipped ? (answers[current.id] as string) : "";
+  const skippedSummary = countSkippedTasks(assessment.questions, answers);
+  const guidance = isOpenText ? writingGuidance(countWords(writtenText), current.wordMin, current.wordMax) : null;
+  const listeningNotReady = isListening && (current.mediaStatus === "NOT_READY" || !current.audioUrl);
 
   // Passage extraction for Reading
   const passageTitle = current.passageTitle?.trim() || "";
@@ -504,7 +612,7 @@ export default function DiagnosticPage() {
                 <p className="text-sm font-extrabold text-violet-900 dark:text-violet-100">
                   Nghe đoạn âm thanh dưới đây rồi chọn câu trả lời đúng nhất:
                 </p>
-                {current.audioUrl ? (
+                {!listeningNotReady && current.audioUrl ? (
                   <audio
                     className="mt-3 w-full"
                     controls
@@ -513,8 +621,8 @@ export default function DiagnosticPage() {
                     aria-label="Âm thanh bài nghe"
                   />
                 ) : (
-                  <p className="mt-2 text-sm font-bold text-rose-600">
-                    Âm thanh chưa sẵn sàng. Vui lòng thử lại sau.
+                  <p className="mt-2 text-sm font-bold text-rose-600" role="status">
+                    Âm thanh của câu này chưa được phát hành nên chưa thể trả lời. Vui lòng quay lại sau.
                   </p>
                 )}
               </div>
@@ -528,6 +636,12 @@ export default function DiagnosticPage() {
               <ClozePrompt prompt={current.question} />
             </h2>
 
+            {(isSpeaking || isOpenText) && current.instructions?.trim() && (
+              <p className="mt-4 whitespace-pre-line rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700 dark:border-slate-700 dark:bg-slate-850 dark:text-slate-300">
+                {current.instructions}
+              </p>
+            )}
+
             {/* QUESTION INTERACTION BODY */}
             {isSpeaking ? (
               <div className="mt-8 rounded-2xl border border-violet-200 bg-violet-50/70 p-5 dark:border-violet-900 dark:bg-violet-950/30 sm:p-6">
@@ -536,13 +650,20 @@ export default function DiagnosticPage() {
                   <span>Hãy nói câu trả lời của bạn</span>
                 </div>
                 <p className="mt-1.5 text-xs text-violet-700 dark:text-violet-300">
-                  Thời lượng tối đa 90 giây. Bạn có thể nghe lại, ghi âm lại hoặc bỏ qua nếu chưa tiện nói.
+                  {prepSeconds ? `Chuẩn bị ${prepSeconds} giây, sau đó nói tối đa ${limitSeconds} giây.` : `Thời lượng tối đa ${limitSeconds} giây.`}{" "}
+                  Bản ghi tự dừng khi hết giờ. Bạn có thể nghe lại, ghi âm lại hoặc bỏ qua nếu chưa tiện nói.
                 </p>
+
+                {preparing && (
+                  <div className="mt-4 flex items-center gap-3 text-sm font-black text-amber-700 dark:text-amber-300" role="timer" aria-live="polite">
+                    Thời gian chuẩn bị còn {Math.ceil(prepRemainingMs / 1000)}s — ghi âm sẽ tự bắt đầu.
+                  </div>
+                )}
 
                 {recording && (
                   <div className="mt-4 flex items-center gap-3 text-sm font-black text-rose-600">
                     <span className="size-3 animate-pulse rounded-full bg-rose-500" />
-                    Đang ghi âm {Math.floor(recordingMs / 1000)}s / 90s
+                    Đang ghi âm {Math.floor(recordingMs / 1000)}s / {limitSeconds}s
                   </div>
                 )}
 
@@ -563,14 +684,28 @@ export default function DiagnosticPage() {
                 )}
 
                 <div className="mt-5 flex flex-wrap gap-3">
+                  {!recording && !recordedAudio && prepSeconds > 0 && !preparing && (
+                    <button
+                      type="button"
+                      onClick={() => startPrep(current.id, prepSeconds, limitMs)}
+                      className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-extrabold text-white hover:bg-violet-700"
+                    >
+                      <Timer size={17} />
+                      <span>Bắt đầu chuẩn bị ({prepSeconds}s)</span>
+                    </button>
+                  )}
                   {!recording && !recordedAudio && (
                     <button
                       type="button"
-                      onClick={startRecording}
-                      className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-extrabold text-white hover:bg-violet-700"
+                      onClick={() => void startRecording(limitMs)}
+                      className={
+                        prepSeconds > 0 && !preparing
+                          ? "inline-flex min-h-11 items-center gap-2 rounded-xl border border-violet-300 bg-white px-5 text-sm font-extrabold text-violet-700 hover:bg-violet-50 dark:border-violet-800 dark:bg-slate-800 dark:text-violet-200"
+                          : "inline-flex min-h-11 items-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-extrabold text-white hover:bg-violet-700"
+                      }
                     >
                       <Mic size={17} />
-                      <span>Bắt đầu ghi âm</span>
+                      <span>{preparing || prepSeconds > 0 ? "Ghi âm ngay" : "Bắt đầu ghi âm"}</span>
                     </button>
                   )}
                   {recording && (
@@ -614,7 +749,7 @@ export default function DiagnosticPage() {
                       </button>
                     </>
                   )}
-                  {!recording && (
+                  {!recording && !preparing && (
                     <button
                       type="button"
                       onClick={() => void skipSpeaking(current.id)}
@@ -627,12 +762,9 @@ export default function DiagnosticPage() {
                 </div>
               </div>
             ) : isOpenText ? (
+              <>
               <textarea
-                value={
-                  typeof answers[current.id] === "string"
-                    ? (answers[current.id] as string)
-                    : ""
-                }
+                value={writtenText}
                 onChange={(event) =>
                   setAnswers((old) => ({
                     ...old,
@@ -642,7 +774,42 @@ export default function DiagnosticPage() {
                 className="mt-8 min-h-36 w-full rounded-2xl border-2 border-slate-200 bg-white p-4 text-base leading-6 text-slate-800 outline-none focus:border-violet-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                 placeholder="Nhập câu trả lời của bạn..."
                 aria-label="Câu trả lời tự luận"
+                aria-describedby={guidance ? "writing-guidance" : undefined}
               />
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                {writingSkipped ? (
+                  <p className="text-xs font-bold text-amber-700 dark:text-amber-300" role="status">
+                    Bạn đã chọn bỏ qua bài viết này. Bài bỏ qua không được chấm và kỹ năng Viết sẽ không có điểm. Gõ vào ô trên để làm lại.
+                  </p>
+                ) : (
+                  !writtenText.trim() && (
+                    <button
+                      type="button"
+                      onClick={() => setAnswers((old) => ({ ...old, [current.id]: WRITING_SKIPPED }))}
+                      className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-amber-300 bg-white px-4 text-xs font-extrabold text-amber-800 hover:bg-amber-50 dark:border-amber-800 dark:bg-slate-800 dark:text-amber-200"
+                    >
+                      <SkipForward size={14} />
+                      <span>Bỏ qua bài viết này</span>
+                    </button>
+                  )
+                )}
+              </div>
+              {guidance && !writingSkipped && (
+                <p
+                  id="writing-guidance"
+                  aria-live="polite"
+                  className={`mt-2 text-xs font-bold ${
+                    guidance.tone === "within"
+                      ? "text-emerald-700 dark:text-emerald-300"
+                      : guidance.tone === "neutral"
+                        ? "text-slate-500 dark:text-slate-400"
+                        : "text-amber-700 dark:text-amber-300"
+                  }`}
+                >
+                  {guidance.message}
+                </p>
+              )}
+              </>
             ) : (
               /* OBJECTIVE MULTIPLE CHOICE OPTIONS WITH AUTO-ADVANCE */
               <div
@@ -710,7 +877,7 @@ export default function DiagnosticPage() {
                   (typeof answers[current.id] === "string" &&
                     !(answers[current.id] as string).trim()) ||
                   submit.isPending ||
-                  (isListening && !current.audioUrl)
+                  listeningNotReady
                 }
                 onClick={() => {
                   if (autoAdvanceTimer) {
@@ -756,7 +923,7 @@ export default function DiagnosticPage() {
       <ConfirmDialog
         open={showExitConfirm}
         title="Tạm dừng bài đánh giá đầu vào?"
-        description="Tiến độ các câu đã trả lời của bạn đã được ghi nhận. Bạn có thể quay lại tiếp tục bài đánh giá bất cứ lúc nào."
+        description="Bài Nói đã xác nhận được lưu trên hệ thống; các câu trắc nghiệm và bài Viết được lưu tạm trên thiết bị và trình duyệt này. Bạn có thể quay lại tiếp tục bất cứ lúc nào."
         confirmLabel="Rời đi"
         cancelLabel="Tiếp tục làm"
         onCancel={() => setShowExitConfirm(false)}
@@ -766,13 +933,32 @@ export default function DiagnosticPage() {
           setFocusMode(false);
         }}
       />
+
+      <ConfirmDialog
+        open={showSubmitConfirm}
+        title="Nộp bài khi còn phần bỏ qua?"
+        description={`Bạn đã bỏ qua ${[
+          skippedSummary.speaking ? `${skippedSummary.speaking} bài Nói` : "",
+          skippedSummary.writing ? `${skippedSummary.writing} bài Viết` : "",
+        ]
+          .filter(Boolean)
+          .join(" và ")}. Phần bỏ qua không được chấm và không bị tính là 0 điểm, nhưng kỹ năng đó sẽ không có điểm và bạn sẽ không có điểm tổng bốn kỹ năng. Sau khi nộp, bạn không thể quay lại làm phần này.`}
+        confirmLabel="Vẫn nộp bài"
+        cancelLabel="Quay lại làm tiếp"
+        onCancel={() => setShowSubmitConfirm(false)}
+        onConfirm={() => {
+          setShowSubmitConfirm(false);
+          submit.mutate();
+        }}
+      />
     </>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // REDESIGNED DIAGNOSTIC RESULT VIEW
-// Explains 48 objective vs 52 total items, practice recommendations,
+// Counts come from the administered form; V2 attempts show the four-skill
+// profile. Practice recommendations,
 // deduplicated skills, no contradictory course cards, no retake button,
 // filterable grouped answer review.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -791,6 +977,17 @@ function DiagnosticResultView({
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["diagnostic-latest-result"] }),
     onError: () => toast.error("Chưa thể xếp hàng chấm lại bài viết. Vui lòng thử sau."),
   });
+  const retrySpeaking = useMutation({
+    mutationFn: (questionId: number) =>
+      diagnosticService.retrySpeaking(assessment.id, result.attemptId, questionId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["diagnostic-latest-result"] }),
+    onError: () => toast.error("Chưa thể xếp hàng chấm lại bài nói. Vui lòng thử sau."),
+  });
+
+  const fourSkill = result.fourSkill ?? null;
+  const totalTasks = result.administeredForm?.totalItems ?? result.totalTaskCount ?? assessment.questions.length;
+  const speakingTaskIds = assessment.questions.filter(isSpeakingTask).map((q) => q.id);
+  const writingTaskIds = assessment.questions.filter(isWritingTask).map((q) => q.id);
 
   const practiceItems = result.practiceRecommendations || [];
 
@@ -818,7 +1015,7 @@ function DiagnosticResultView({
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-      {/* 1. Header Card with Canonical Blueprint Explanation */}
+      {/* 1. Header Card: what was administered and how it was scored */}
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-9">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
@@ -826,74 +1023,121 @@ function DiagnosticResultView({
             <span>Đã hoàn thành đánh giá đầu vào</span>
           </span>
           <span className="text-xs font-bold text-slate-400">
-            Tổng cộng: 52 nhiệm vụ
+            Tổng cộng: {totalTasks} nhiệm vụ
           </span>
         </div>
 
-        <h1 className="mt-4 text-3xl font-black text-slate-900 dark:text-slate-100 sm:text-4xl">
-          Mức năng lực tham khảo: {formatPlacementLevel(result.referenceLevel ?? result.level)}
-        </h1>
+        {fourSkill ? (
+          <FourSkillPanel result={fourSkill} />
+        ) : (
+          <>
+            <h1 className="mt-4 text-3xl font-black text-slate-900 dark:text-slate-100 sm:text-4xl">
+              Mức năng lực tham khảo: {formatPlacementLevel(result.referenceLevel ?? result.level)}
+            </h1>
 
-        {/* 48 VS 52 CLEAR EXPLANATION */}
-        <div className="mt-3 rounded-2xl border border-slate-100 bg-slate-50 p-4.5 dark:border-slate-800 dark:bg-slate-850">
-          <p className="text-sm font-extrabold text-slate-800 dark:text-slate-200">
-            Phần trắc nghiệm khách quan:{" "}
-            <span className="text-emerald-600 dark:text-emerald-400">
-              {result.correctCount}/{result.totalCount} câu đúng
-            </span>{" "}
-            ({result.percentage}%)
-          </p>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 leading-5">
-            Mức tham khảo được tính từ 48 câu trắc nghiệm khách quan (16 Ngữ pháp &amp; Từ vựng, 16 Đọc hiểu, 16 Nghe hiểu). Hai bài Nói và hai bài Viết được nhận xét riêng để gợi ý luyện tập; chúng không thay đổi mức này.
-          </p>
-        </div>
-
-        {/* Productive Evidence note */}
-        {result.productiveTaskCount ? (
-          <div className="mt-4 rounded-2xl border border-violet-200 bg-violet-50/70 p-4 text-xs leading-5 text-violet-900 dark:border-violet-900/60 dark:bg-violet-950/30 dark:text-violet-200">
-            <span className="font-black">Bằng chứng kỹ năng Nói &amp; Viết:</span>
-            <div className="mt-1.5 space-y-1">
-              <p>
-                <span className="font-bold">Nói: </span>
-                {result.speakingEvidenceCount && result.speakingEvidenceCount > 0
-                  ? `Đã ghi nhận ${result.speakingEvidenceCount}/2 nhiệm vụ${result.speakingScore !== null ? ` (điểm ước lượng: ${result.speakingScore}/100, độ tin cậy: ${result.speakingEvidenceConfidence === "FULL_DIAGNOSTIC_SAMPLE" ? "đầy đủ mẫu" : "một phần"})` : ""}.`
-                  : "Đang chờ hoặc chưa đủ dữ liệu để nhận xét kỹ năng Nói; mức năng lực tham khảo vẫn dựa trên 48 câu trắc nghiệm khách quan."}
+            <div className="mt-3 rounded-2xl border border-slate-100 bg-slate-50 p-4.5 dark:border-slate-800 dark:bg-slate-850">
+              <p className="text-sm font-extrabold text-slate-800 dark:text-slate-200">
+                Phần trắc nghiệm khách quan:{" "}
+                <span className="text-emerald-600 dark:text-emerald-400">
+                  {result.correctCount}/{result.totalCount} câu đúng
+                </span>{" "}
+                ({result.percentage}%)
               </p>
-              <p>
-                <span className="font-bold">Viết: </span>
-                {result.writingFeedback?.some((item) => item.status === "GRADED")
-                  ? "Đã có nhận xét tự động cho bài viết của bạn."
-                  : "Bài viết đang được nhận xét tự động; kết quả sẽ tự cập nhật khi hoàn tất."}
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 leading-5">
+                Mức tham khảo được tính từ {result.totalCount} câu trắc nghiệm khách quan.
+                {speakingTaskIds.length + writingTaskIds.length > 0
+                  ? " Các bài Nói và Viết được nhận xét riêng để gợi ý luyện tập; chúng không thay đổi mức này."
+                  : ""}
               </p>
             </div>
-            {result.speakingResponses?.some((r) => r.status === "GRADING_FAILED") && (
-              <span className="mt-1 block font-bold text-amber-700 dark:text-amber-300">
-                Lưu ý: Hệ thống đã ghi nhận đầy đủ bản ghi âm của bạn để tham chiếu năng lực.
-              </span>
-            )}
-          </div>
-        ) : null}
+          </>
+        )}
 
-        {result.writingFeedback && result.writingFeedback.length > 0 && (
-          <div className="mt-4 space-y-3">
-            {result.writingFeedback.map((item, index) => (
+        {/* Speaking feedback, one card per task */}
+        {speakingTaskIds.length > 0 && (
+          <div className="mt-6 space-y-3">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              Bài Nói
+            </h3>
+            {speakingTaskIds.map((questionId, index) => {
+              const item = result.speakingResponses?.find((row) => row.questionId === questionId);
+              return (
+                <article key={questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-900">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h4 className="font-black text-slate-900 dark:text-slate-100">Bài Nói {index + 1}</h4>
+                    <TaskStatusChip status={item?.status} score={item?.score ?? null} />
+                  </div>
+                  {item?.status === "GRADED" && (
+                    <>
+                      <CriteriaList criteria={item.criteria} feedback={item.criterionFeedback} />
+                      {item.feedback && <p className="mt-2 leading-6 text-slate-700 dark:text-slate-300">{item.feedback}</p>}
+                      {item.suggestions && item.suggestions.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-600 dark:text-slate-400">{item.suggestions.map((suggestion) => <li key={suggestion}>{suggestion}</li>)}</ul>}
+                    </>
+                  )}
+                  {item?.status === "SKIPPED" && (
+                    <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-400">
+                      Bạn đã bỏ qua bài này nên bài không được chấm; kỹ năng Nói không có điểm và không bị tính là 0.
+                    </p>
+                  )}
+                  {item?.status === "GRADING_FAILED" && (
+                    <>
+                      <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-400">
+                        Bản ghi của bạn vẫn được lưu nhưng chưa chấm được. Kỹ năng Nói chưa có điểm cho tới khi chấm lại thành công.
+                      </p>
+                      <button type="button" onClick={() => retrySpeaking.mutate(questionId)} disabled={retrySpeaking.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-violet-300 px-3 text-xs font-bold text-violet-700 transition hover:bg-violet-50 disabled:opacity-50 dark:border-violet-800 dark:text-violet-300"><RotateCcw size={14} /> Chấm lại</button>
+                    </>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Writing feedback, one card per task */}
+        {writingTaskIds.length > 0 && (
+          <div className="mt-6 space-y-3">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              Bài Viết
+            </h3>
+            {writingTaskIds.map((questionId, index) => {
+              const item = result.writingFeedback?.find((row) => row.questionId === questionId);
+              const skipped =
+                !item && result.questionsResult.find((row) => row.questionId === questionId)?.selectedText === "";
+              if (!item)
+                return (
+                  <article key={questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-900">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h4 className="font-black text-slate-900 dark:text-slate-100">Bài Viết {index + 1}</h4>
+                      <TaskStatusChip status={skipped ? "SKIPPED" : undefined} score={null} />
+                    </div>
+                    {skipped && (
+                      <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-400">
+                        Bạn đã bỏ qua bài này nên bài không được chấm; kỹ năng Viết không có điểm và không bị tính là 0.
+                      </p>
+                    )}
+                  </article>
+                );
+              return (
               <article key={item.questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-900">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="font-black text-slate-900 dark:text-slate-100">Nhận xét bài Viết {index + 1}</h3>
-                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                    {item.status === "GRADED" ? `Điểm tham khảo: ${item.score}/5` : item.status === "GRADING_FAILED" ? "Chưa có nhận xét" : "Đang chấm"}
-                  </span>
+                  <h4 className="font-black text-slate-900 dark:text-slate-100">Bài Viết {index + 1}</h4>
+                  <TaskStatusChip status={item.status} score={item.score} />
                 </div>
+                {typeof item.wordCount === "number" && (
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{item.wordCount} từ</p>
+                )}
+                {item.status === "GRADED" && <CriteriaList criteria={item.criteria} feedback={item.criterionFeedback} />}
                 {item.feedback && <p className="mt-2 leading-6 text-slate-700 dark:text-slate-300">{item.feedback}</p>}
                 {item.suggestions.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-600 dark:text-slate-400">{item.suggestions.map((suggestion) => <li key={suggestion}>{suggestion}</li>)}</ul>}
                 {item.status === "GRADING_FAILED" && <button type="button" onClick={() => retryWriting.mutate(item.questionId)} disabled={retryWriting.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-violet-300 px-3 text-xs font-bold text-violet-700 transition hover:bg-violet-50 disabled:opacity-50 dark:border-violet-800 dark:text-violet-300"><RotateCcw size={14} /> Chấm lại</button>}
               </article>
-            ))}
+              );
+            })}
           </div>
         )}
 
         {/* Skill Profiles Breakdown */}
-        {result.skillProfiles && result.skillProfiles.length > 0 && (
+        {!fourSkill && result.skillProfiles && result.skillProfiles.length > 0 && (
           <div className="mt-7">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
               Kết quả theo kỹ năng
@@ -918,7 +1162,8 @@ function DiagnosticResultView({
           </div>
         )}
 
-        {/* Strengths & Weaknesses */}
+        {/* Strengths & Weaknesses (V1 results; V2 shows the D1 advice) */}
+        {!result.advice && (
         <div className="mt-7 grid gap-4 border-t border-slate-100 pt-6 sm:grid-cols-2 dark:border-slate-800">
           <div>
             <h3 className="text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
@@ -941,7 +1186,10 @@ function DiagnosticResultView({
             </p>
           </div>
         </div>
+        )}
       </section>
+
+      {result.advice && <AdvicePanel advice={result.advice} />}
 
       {/* 2. Concrete Practice Recommendations (NO Course Cards) */}
       {practiceItems.length > 0 && (
@@ -1032,6 +1280,37 @@ function DiagnosticResultView({
                 question?.options,
                 item.selectedOption,
               );
+
+              // Speaking and Writing have no answer key: the stored value is a
+              // recording status or the learner's text, graded by rubric above.
+              if (question && (isSpeakingTask(question) || isWritingTask(question))) {
+                const speaking = isSpeakingTask(question);
+                return (
+                  <div
+                    key={item.questionId}
+                    className="rounded-2xl border border-slate-200 bg-slate-50/40 p-4 text-xs dark:border-slate-800 dark:bg-slate-850"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-extrabold text-slate-800 dark:text-slate-200">
+                        Câu {question.order}: {question.question.slice(0, 80)}
+                      </span>
+                      <span className="inline-flex shrink-0 items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-black text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                        Chấm theo tiêu chí
+                      </span>
+                    </div>
+                    <p className="mt-2 text-slate-600 dark:text-slate-400">
+                      {speaking ? (
+                        "Bài nói được chấm theo tiêu chí; xem nhận xét ở phần Bài Nói phía trên."
+                      ) : (
+                        <>
+                          <span className="font-bold">Bài làm: </span>
+                          <span className="line-clamp-3 whitespace-pre-line">{item.selectedText ?? "Chưa trả lời"}</span>
+                        </>
+                      )}
+                    </p>
+                  </div>
+                );
+              }
 
               return (
                 <div
@@ -1124,5 +1403,128 @@ function DiagnosticResultView({
         </div>
       </div>
     </div>
+  );
+}
+
+const FOUR_SKILL_ORDER = ["LISTENING", "READING", "SPEAKING", "WRITING"] as const;
+const FOUR_SKILL_LABELS: Record<string, string> = {
+  LISTENING: "Nghe",
+  READING: "Đọc",
+  SPEAKING: "Nói",
+  WRITING: "Viết",
+  LANGUAGE_USE: "Ngữ pháp & Từ vựng",
+};
+
+const SKILL_TONE_CLASS: Record<string, string> = {
+  done: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300",
+  pending: "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300",
+  failed: "bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300",
+  missing: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+  skipped: "bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-600",
+};
+
+// FOUR_SKILL_PLACEMENT_V2: each skill on its own 0-100 scale. The overall is
+// shown only when all four skills are scored; no placement band is shown
+// (DEF-004 decided as D1: advisory scores only).
+function FourSkillPanel({ result }: { result: DiagnosticFourSkillResult }) {
+  const languageUse = result.skills.LANGUAGE_USE;
+  const pending = result.state === "PENDING_GRADING";
+  return (
+    <div className="mt-4">
+      <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 sm:text-3xl">
+        Kết quả theo bốn kỹ năng
+      </h1>
+      <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+        {result.overall !== null
+          ? <>Điểm tổng tham khảo: <span className="font-black text-slate-900 dark:text-slate-100">{result.overall}/100</span> (trung bình bốn kỹ năng, mỗi kỹ năng 25%).</>
+          : pending
+            ? "Bài Nói hoặc Viết đang được chấm. Điểm tổng chỉ hiển thị khi cả bốn kỹ năng đều có điểm; trang sẽ tự cập nhật."
+            : `Điểm tổng chưa có vì ${FOUR_SKILL_ORDER.filter((k) => result.skills[k]?.state !== "COMPLETE")
+                .map((k) => `${FOUR_SKILL_LABELS[k]} (${describeSkillState(result.skills[k]?.state, result.skills[k]).label.toLowerCase()})`)
+                .join(", ")} chưa có điểm. Các kỹ năng đã có điểm vẫn hiển thị bên dưới.`}
+      </p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {FOUR_SKILL_ORDER.map((key) => {
+          const skill = result.skills[key];
+          const state = describeSkillState(skill?.state, skill);
+          return (
+            <div key={key} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-850">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-black text-slate-700 dark:text-slate-300">{FOUR_SKILL_LABELS[key]}</p>
+                <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${SKILL_TONE_CLASS[state.tone]}`}>{state.label}</span>
+              </div>
+              <p className="mt-2 text-xl font-black text-slate-900 dark:text-slate-100">
+                {skill?.score !== null && skill?.score !== undefined ? `${skill.score}/100` : "—"}
+              </p>
+              {skill && (key === "LISTENING" || key === "READING") && skill.itemsTotal > 0 && (
+                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{skill.itemsScored}/{skill.itemsTotal} câu đúng</p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {languageUse && languageUse.itemsTotal > 0 && (
+        <p className="mt-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
+          {FOUR_SKILL_LABELS.LANGUAGE_USE}: {languageUse.itemsScored}/{languageUse.itemsTotal} câu đúng. Phần này chỉ dùng để gợi ý luyện tập, không tính vào điểm tổng.
+        </p>
+      )}
+      <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+        Đây là chỉ số luyện tập nội bộ của BreadTrans, không phải điểm thi hay chứng chỉ chính thức.
+      </p>
+    </div>
+  );
+}
+
+function TaskStatusChip({ status, score }: { status?: string; score: number | null }) {
+  const label =
+    status === "GRADED" && score !== null
+      ? `${Math.round(score)}/100`
+      : status === "GRADING_FAILED"
+        ? "Chấm chưa thành công"
+        : status === "SKIPPED"
+          ? "Đã bỏ qua"
+          : status && ["SUBMITTED", "QUEUED", "GRADING"].includes(status)
+            ? "Đang chấm"
+            : "Chưa có bài làm";
+  const tone =
+    status === "GRADED"
+      ? "done"
+      : status === "GRADING_FAILED"
+        ? "failed"
+        : status === "SKIPPED"
+          ? "skipped"
+          : status && ["SUBMITTED", "QUEUED", "GRADING"].includes(status)
+            ? "pending"
+            : "missing";
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${SKILL_TONE_CLASS[tone]}`}>
+      {tone === "pending" && <Loader2 size={12} className="animate-spin" />}
+      {label}
+    </span>
+  );
+}
+
+// Rubric criteria are scored 0-4 each.
+function CriteriaList({
+  criteria,
+  feedback,
+}: {
+  criteria?: Record<string, number> | null;
+  feedback?: Record<string, string> | null;
+}) {
+  const entries = criteria ? Object.entries(criteria) : [];
+  if (!entries.length) return null;
+  return (
+    <dl className="mt-3 grid gap-2 sm:grid-cols-2">
+      {entries.map(([key, value]) => (
+        <div key={key} className="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-850">
+          <dt className="flex items-center justify-between gap-2 text-xs font-black text-slate-700 dark:text-slate-300">
+            <span>{formatCriterionName(key)}</span>
+            <span>{value}/4</span>
+          </dt>
+          {feedback?.[key] && <dd className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-400">{feedback[key]}</dd>}
+        </div>
+      ))}
+    </dl>
   );
 }

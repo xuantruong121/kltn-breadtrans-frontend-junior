@@ -59,7 +59,7 @@ export function AdminExtendModal({
       });
     },
     onSuccess: () => {
-      toast.success("Gia hạn gói Pro cho học viên thành công.");
+      toast.success("Gia hạn gói cho học viên thành công.");
       setReason("");
       onSuccess();
       onClose();
@@ -88,7 +88,7 @@ export function AdminExtendModal({
               <CalendarPlus size={20} />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Gia hạn gói Pro</h2>
+              <h2 className="text-lg font-bold text-slate-900">Gia hạn gói học viên</h2>
               <p className="text-xs text-slate-500">
                 Bảo toàn số ngày còn lại của học viên và cộng dồn thời hạn mới.
               </p>

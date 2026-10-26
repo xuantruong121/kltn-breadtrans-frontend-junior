@@ -176,21 +176,21 @@ export const ShippingCompletionModal: React.FC<ShippingCompletionModalProps> = (
               value={shippingData.phone}
               onChange={(e) => setShippingData({ ...shippingData, phone: e.target.value })}
               className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-900 dark:text-slate-100 outline-none focus:border-amber-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
-              placeholder="0987654321 hoặc +84987654321"
+              placeholder="Ví dụ: 0912 345 678"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                Tỉnh / Thành phố <span className="text-rose-500">*</span>
+                Tỉnh/Thành phố <span className="text-rose-500">*</span>
               </label>
               <AddressCombobox
                 id="modal-shipping-province-select"
                 value={shippingData.provinceCode}
                 options={provinces}
                 isLoading={isLoadingProvinces}
-                placeholder="Chọn hoặc nhập tỉnh/thành phố..."
+                placeholder="Chọn tỉnh/thành phố"
                 loadingPlaceholder="Đang tải tỉnh/thành phố..."
                 accentColor="amber"
                 onChange={(code) => {

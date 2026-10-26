@@ -154,18 +154,27 @@ export default function PublicCourseDetailPage() {
   const activities =
     course.curriculum?.lessons.flatMap((lesson) => lesson.activities) ?? [];
   const v5Lessons = learningOverview?.lessons ?? [];
-  const displayLessons = v5Lessons.length
-    ? v5Lessons.map((lesson) => ({
-        id: lesson.id,
-        title: lesson.title,
-        description: lesson.summary,
-        order: lesson.order,
-        activities: [],
-      }))
-    : course.lessons;
-  const activityCount = v5Lessons.length
-    ? v5Lessons.reduce((total, lesson) => total + lesson.exerciseCount, 0)
-    : activities.length;
+  const displayLessons =
+    course.lessons.length > 0
+      ? course.lessons.map((lesson) => {
+          const v5 = v5Lessons.find((v) => v.id === lesson.id);
+          return {
+            ...lesson,
+            completed: v5?.completed ?? false,
+          };
+        })
+      : v5Lessons.map((lesson) => ({
+          id: lesson.id,
+          title: lesson.title,
+          description: lesson.summary,
+          order: lesson.order,
+          activities: [],
+          completed: lesson.completed,
+        }));
+  const activityCount =
+    activities.length > 0
+      ? activities.length
+      : v5Lessons.reduce((total, lesson) => total + lesson.exerciseCount, 0);
   const media = getCourseCardMedia(course);
   const mediaSrc = mediaFailed ? null : media.src;
 
@@ -363,7 +372,11 @@ export default function PublicCourseDetailPage() {
               </div>
               {course.curriculum && (
                 <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
-                  {course.curriculum.readiness}
+                  {course.curriculum.readiness === "READY"
+                    ? "Sẵn sàng"
+                    : course.curriculum.readiness === "EMPTY"
+                      ? "Chưa có bài học"
+                      : course.curriculum.readiness}
                 </span>
               )}
             </div>

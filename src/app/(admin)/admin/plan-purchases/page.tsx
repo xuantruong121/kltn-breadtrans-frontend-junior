@@ -40,7 +40,10 @@ const transactionTabs: Array<{ label: string; value?: PlanPurchaseStatus }> = [
   { label: "Tất cả" },
 ];
 
-const entitlementTabs: Array<{ label: string; value: AdminSubscriptionStatusFilter }> = [
+const entitlementTabs: Array<{
+  label: string;
+  value: AdminSubscriptionStatusFilter;
+}> = [
   { label: "Đang hoạt động", value: "ACTIVE" },
   { label: "Tất cả", value: "ALL" },
   { label: "Đã hết hạn", value: "EXPIRED" },
@@ -48,7 +51,9 @@ const entitlementTabs: Array<{ label: string; value: AdminSubscriptionStatusFilt
 ];
 
 const money = (amount: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
+  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
+    amount,
+  );
 
 const dateTime = (value?: string | null) =>
   value ? new Date(value).toLocaleString("vi-VN") : "—";
@@ -75,10 +80,10 @@ function TransactionStatusBadge({ item }: { item: AdminPlanPurchase }) {
     status === "CONFIRMED"
       ? "bg-emerald-50 text-emerald-700"
       : status === "REJECTED"
-      ? "bg-rose-50 text-rose-700"
-      : status === "REPORTED" || status === "REVIEW_REQUIRED"
-      ? "bg-amber-50 text-amber-700"
-      : "bg-slate-100 text-slate-600";
+        ? "bg-rose-50 text-rose-700"
+        : status === "REPORTED" || status === "REVIEW_REQUIRED"
+          ? "bg-amber-50 text-amber-700"
+          : "bg-slate-100 text-slate-600";
   const text: Record<string, string> = {
     PENDING: "Chờ thanh toán",
     REPORTED: "Chờ đối soát",
@@ -89,13 +94,19 @@ function TransactionStatusBadge({ item }: { item: AdminPlanPurchase }) {
     SUPERSEDED: "Đã thay thế",
   };
   return (
-    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${style}`}>
+    <span
+      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${style}`}
+    >
       {text[status] ?? status}
     </span>
   );
 }
 
-function EntitlementStatusBadge({ status }: { status: "ACTIVE" | "EXPIRED" | "REVOKED" }) {
+function EntitlementStatusBadge({
+  status,
+}: {
+  status: "ACTIVE" | "EXPIRED" | "REVOKED";
+}) {
   switch (status) {
     case "ACTIVE":
       return (
@@ -141,9 +152,12 @@ export default function AdminPlanPurchasesPage() {
     fullName?: string | null;
   } | null>(null);
 
-  const [extendTarget, setExtendTarget] = useState<AdminSubscriptionItem | null>(null);
-  const [revokeTarget, setRevokeTarget] = useState<AdminSubscriptionItem | null>(null);
-  const [historyTarget, setHistoryTarget] = useState<AdminSubscriptionItem | null>(null);
+  const [extendTarget, setExtendTarget] =
+    useState<AdminSubscriptionItem | null>(null);
+  const [revokeTarget, setRevokeTarget] =
+    useState<AdminSubscriptionItem | null>(null);
+  const [historyTarget, setHistoryTarget] =
+    useState<AdminSubscriptionItem | null>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -181,7 +195,9 @@ export default function AdminPlanPurchasesPage() {
   const [purchaseSearchInput, setPurchaseSearchInput] = useState("");
   const [purchaseSearch, setPurchaseSearch] = useState("");
   const [purchasePage, setPurchasePage] = useState(1);
-  const [selectedPurchaseId, setSelectedPurchaseId] = useState<number | null>(null);
+  const [selectedPurchaseId, setSelectedPurchaseId] = useState<number | null>(
+    null,
+  );
   const [rejectingPurchase, setRejectingPurchase] =
     useState<AdminPlanPurchase | null>(null);
   const [rejectReason, setRejectReason] = useState("");
@@ -261,11 +277,17 @@ export default function AdminPlanPurchasesPage() {
   const selectedPurchase = purchaseDetail.data;
 
   // Compute KPI summary metrics
-  const activeEntitlementCount = subscriptionsQuery.data?.total ?? entitlementRows.filter((r) => r.status === "ACTIVE").length;
+  const activeEntitlementCount =
+    subscriptionsQuery.data?.total ??
+    entitlementRows.filter((r) => r.status === "ACTIVE").length;
   const pendingTransactionsCount = purchaseRows.filter(
-    (p) => p.status === "PENDING_PAYMENT" || p.payment.status === "REPORTED" || p.payment.status === "REVIEW_REQUIRED",
+    (p) =>
+      p.status === "PENDING_PAYMENT" ||
+      p.payment.status === "REPORTED" ||
+      p.payment.status === "REVIEW_REQUIRED",
   ).length;
-  const totalTransactionsCount = purchasesQuery.data?.total ?? purchaseRows.length;
+  const totalTransactionsCount =
+    purchasesQuery.data?.total ?? purchaseRows.length;
 
   return (
     <main className="mx-auto max-w-7xl space-y-6 pb-12">
@@ -273,14 +295,13 @@ export default function AdminPlanPurchasesPage() {
       <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-950">Gói nâng cấp</h1>
-            <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" />
-              Pro Entitlements
-            </span>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-950">
+              Gói nâng cấp
+            </h1>
           </div>
           <p className="mt-1 text-sm text-slate-600">
-            Quản lý quyền học viên Pro, cấp quyền thủ công và đối soát giao dịch mua gói nâng cấp.
+            Quản lý gói cho học viên, cấp gói thủ công và đối soát giao dịch mua
+            gói nâng cấp.
           </p>
         </div>
 
@@ -294,17 +315,20 @@ export default function AdminPlanPurchasesPage() {
             }}
             className="inline-flex items-center gap-2 self-start rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-all hover:bg-slate-800 active:scale-[0.98] cursor-pointer sm:self-auto"
           >
-            <Plus size={16} /> <span>Tặng gói Pro</span>
+            <Plus size={16} /> <span>Tặng gói</span>
           </button>
         )}
       </header>
 
       {/* 3 KPI Summary Cards */}
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3" aria-label="Thống kê gói nâng cấp">
+      <section
+        className="grid grid-cols-1 gap-4 sm:grid-cols-3"
+        aria-label="Thống kê gói nâng cấp"
+      >
         <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs transition hover:border-slate-300">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Quyền Pro hoạt động
+              Quyền gói hoạt động
             </span>
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100">
               <CheckCircle2 className="h-4 w-4" />
@@ -315,11 +339,11 @@ export default function AdminPlanPurchasesPage() {
               {activeEntitlementCount}
             </span>
             <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200/50">
-              Học viên Pro
+              Học viên có gói
             </span>
           </div>
           <p className="mt-2 text-xs font-medium text-slate-600">
-            Tài khoản hiện đang có quyền học bài giảng V5 và tính năng Pro.
+            Tài khoản hiện đang có quyền học bài giảng và tính năng Plus/Pro.
           </p>
         </div>
 
@@ -464,13 +488,18 @@ export default function AdminPlanPurchasesPage() {
                       {entitlementRows.map((item) => {
                         const isActive = item.status === "ACTIVE";
                         return (
-                          <tr key={item.id} className="hover:bg-slate-50/70 transition">
+                          <tr
+                            key={item.id}
+                            className="hover:bg-slate-50/70 transition"
+                          >
                             {/* Learner */}
                             <td className="px-5 py-3.5">
                               <div className="font-bold text-slate-950">
                                 {item.userFullName || "Chưa đặt tên"}
                               </div>
-                              <div className="text-xs text-slate-500 font-mono">{item.userEmail}</div>
+                              <div className="text-xs text-slate-500 font-mono">
+                                {item.userEmail}
+                              </div>
                             </td>
 
                             {/* Plan */}
@@ -486,7 +515,9 @@ export default function AdminPlanPurchasesPage() {
                             {/* Validity */}
                             <td className="px-5 py-3.5 text-xs text-slate-600 whitespace-nowrap font-mono">
                               <div>{dateOnly(item.startsAt)}</div>
-                              <div className="text-slate-500">đến {dateOnly(item.endsAt)}</div>
+                              <div className="text-slate-500">
+                                đến {dateOnly(item.endsAt)}
+                              </div>
                             </td>
 
                             {/* Remaining Days */}
@@ -496,9 +527,13 @@ export default function AdminPlanPurchasesPage() {
                                   Còn {item.remainingDays} ngày
                                 </span>
                               ) : item.status === "REVOKED" ? (
-                                <span className="text-slate-500 font-medium">Đã thu hồi</span>
+                                <span className="text-slate-500 font-medium">
+                                  Đã thu hồi
+                                </span>
                               ) : (
-                                <span className="text-slate-500 font-medium">Đã hết hạn</span>
+                                <span className="text-slate-500 font-medium">
+                                  Đã hết hạn
+                                </span>
                               )}
                             </td>
 
@@ -511,7 +546,9 @@ export default function AdminPlanPurchasesPage() {
                                     : "bg-blue-50 text-blue-700 border-blue-200/80"
                                 }`}
                               >
-                                {item.source === "PAYMENT" ? "Thanh toán" : "Admin tặng"}
+                                {item.source === "PAYMENT"
+                                  ? "Thanh toán"
+                                  : "Admin tặng"}
                               </span>
                             </td>
 
@@ -541,7 +578,7 @@ export default function AdminPlanPurchasesPage() {
                                       type="button"
                                       onClick={() => setRevokeTarget(item)}
                                       className="text-rose-600 hover:text-rose-700 transition active:scale-[0.98] cursor-pointer"
-                                      title="Thu hồi quyền Pro"
+                                      title="Thu hồi quyền gói"
                                     >
                                       Thu hồi
                                     </button>
@@ -558,7 +595,7 @@ export default function AdminPlanPurchasesPage() {
                                       setIsGrantOpen(true);
                                     }}
                                     className="text-slate-600 hover:text-slate-950 transition active:scale-[0.98] cursor-pointer"
-                                    title="Tặng lại gói Pro mới"
+                                    title="Tặng lại gói mới"
                                   >
                                     Tặng gói
                                   </button>
@@ -658,12 +695,17 @@ export default function AdminPlanPurchasesPage() {
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-medium">
                       {purchaseRows.map((item) => (
-                        <tr key={item.id} className="hover:bg-slate-50/70 transition">
+                        <tr
+                          key={item.id}
+                          className="hover:bg-slate-50/70 transition"
+                        >
                           <td className="px-5 py-3.5 font-bold text-slate-950 font-mono text-xs">
                             {item.userEmail}
                           </td>
                           <td className="px-5 py-3.5">
-                            <div className="font-semibold text-slate-800">{item.planDisplayName}</div>
+                            <div className="font-semibold text-slate-800">
+                              {item.planDisplayName}
+                            </div>
                             <div className="text-xs text-slate-500 font-mono">
                               {item.durationDays} ngày
                             </div>
@@ -743,7 +785,9 @@ export default function AdminPlanPurchasesPage() {
                   <div className="grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-4">
                     <div>
                       <p className="text-xs text-slate-500">Học viên</p>
-                      <p className="font-medium">{selectedPurchase.userEmail}</p>
+                      <p className="font-medium">
+                        {selectedPurchase.userEmail}
+                      </p>
                     </div>
                     <div>
                       <p className="text-xs text-slate-500">Trạng thái</p>
@@ -752,16 +796,21 @@ export default function AdminPlanPurchasesPage() {
                     <div>
                       <p className="text-xs text-slate-500">Gói</p>
                       <p className="font-medium">
-                        {selectedPurchase.planDisplayName} · {selectedPurchase.durationDays} ngày
+                        {selectedPurchase.planDisplayName} ·{" "}
+                        {selectedPurchase.durationDays} ngày
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-slate-500">Giá trị</p>
-                      <p className="font-medium">{money(selectedPurchase.amountVnd)}</p>
+                      <p className="font-medium">
+                        {money(selectedPurchase.amountVnd)}
+                      </p>
                     </div>
                     <div>
                       <p className="text-xs text-slate-500">Mã chuyển khoản</p>
-                      <p className="font-mono">{selectedPurchase.payment.transferCode}</p>
+                      <p className="font-mono">
+                        {selectedPurchase.payment.transferCode}
+                      </p>
                     </div>
                     <div>
                       <p className="text-xs text-slate-500">Hoàn tất</p>
@@ -778,8 +827,8 @@ export default function AdminPlanPurchasesPage() {
                     {selectedPurchase.confirmedById
                       ? "Quản trị viên"
                       : selectedPurchase.payment.status === "CONFIRMED"
-                      ? "Tự động/PayOS"
-                      : "Chưa xác nhận"}
+                        ? "Tự động/PayOS"
+                        : "Chưa xác nhận"}
                   </p>
                   <div className="flex justify-end gap-2 border-t pt-4">
                     {canReject(selectedPurchase) && (
@@ -795,7 +844,9 @@ export default function AdminPlanPurchasesPage() {
                       <button
                         type="button"
                         disabled={confirmPurchaseMutation.isPending}
-                        onClick={() => confirmPurchaseMutation.mutate(selectedPurchase.id)}
+                        onClick={() =>
+                          confirmPurchaseMutation.mutate(selectedPurchase.id)
+                        }
                         className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60 cursor-pointer"
                       >
                         <CheckCircle2 size={16} /> Xác nhận & kích hoạt
@@ -826,7 +877,8 @@ export default function AdminPlanPurchasesPage() {
           >
             <h2 className="text-lg font-bold">Từ chối giao dịch</h2>
             <p className="mt-1 text-sm text-slate-500">
-              Lý do sẽ được lưu cùng giao dịch của {rejectingPurchase.userEmail}.
+              Lý do sẽ được lưu cùng giao dịch của {rejectingPurchase.userEmail}
+              .
             </p>
             <textarea
               required
@@ -845,7 +897,9 @@ export default function AdminPlanPurchasesPage() {
               </button>
               <button
                 type="submit"
-                disabled={rejectPurchaseMutation.isPending || !rejectReason.trim()}
+                disabled={
+                  rejectPurchaseMutation.isPending || !rejectReason.trim()
+                }
                 className="rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-60 cursor-pointer"
               >
                 Xác nhận từ chối
@@ -855,7 +909,7 @@ export default function AdminPlanPurchasesPage() {
         </div>
       )}
 
-      {/* ===================== PRO ENTITLEMENT MODALS ===================== */}
+      {/* ===================== SUBSCRIPTION ENTITLEMENT MODALS ===================== */}
       <AdminGrantModal
         isOpen={isGrantOpen}
         onClose={() => {

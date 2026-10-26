@@ -64,6 +64,13 @@ export interface Question {
     startMs?: number | null;
     endMs?: number | null;
   }>;
+  /** Timing-only binding to a published whole-quiz artifact. It deliberately
+   * excludes transcript text so it is safe before the learner reveals it. */
+  listeningSegment?: {
+    turnId: string;
+    startMs: number;
+    endMs: number;
+  };
 }
 
 export interface Quiz {

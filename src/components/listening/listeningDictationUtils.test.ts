@@ -446,3 +446,14 @@ test("cursor is empty before the first chunk and holds the final chunk until med
   });
   assert.equal(resolveTranscriptPlaybackState(3200, timeline).activeSpeakerTurnId, "ST1");
 });
+
+test("only a failed Dictation check is discarded when leaving the question", async () => {
+  const { shouldDiscardFailedCheckOnLeave } = await import("./listeningDictationUtils.ts");
+  assert.equal(shouldDiscardFailedCheckOnLeave("DICTATION", { isCorrect: false }), true);
+  assert.equal(shouldDiscardFailedCheckOnLeave("DICTATION", { isCorrect: true }), false);
+  assert.equal(shouldDiscardFailedCheckOnLeave("DICTATION", { isCorrect: false, skipped: true }), false);
+  assert.equal(shouldDiscardFailedCheckOnLeave("DICTATION", undefined), false);
+  // A wrong multiple-choice answer is final: keeping it is what makes the score honest.
+  assert.equal(shouldDiscardFailedCheckOnLeave("MULTIPLE_CHOICE", { isCorrect: false }), false);
+  assert.equal(shouldDiscardFailedCheckOnLeave("FILL_IN_BLANK", { isCorrect: false }), false);
+});

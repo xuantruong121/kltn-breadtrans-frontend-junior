@@ -108,7 +108,7 @@ test("PracticeCard Format Tag: resolves format badge accurately", () => {
       isCompleted: false,
     },
   };
-  assert.equal(resolveFormatTag(toeicEx), "Mô phỏng ETS");
+  assert.equal(resolveFormatTag(toeicEx), "Mô phỏng TOEIC");
 });
 
 test("PracticeCard Pedagogical Description: produces concise objective without content leakage", () => {

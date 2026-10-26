@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -14,6 +14,7 @@ import { useGamificationStore } from "@/stores/gamificationStore";
 import { LearningFocusProvider, useLearningFocusMode } from "@/contexts/LearningFocusContext";
 import { isLearningFocusRoute } from "@/lib/practice/focusMode";
 import { isInsideCourseRoute } from "@/modules/pet/petLogic";
+import { shouldResetScrollOnPathChange } from "@/lib/navigation/forwardScrollPolicy";
 
 const FloatingAiTutor = dynamic(
   () =>
@@ -130,11 +131,33 @@ function StudentLayoutContent({
   isPetManagementPage: boolean;
 }) {
   const pathname = usePathname();
+  const isHistoryPopRef = useRef(false);
   const { isFocusMode } = useLearningFocusMode();
   const isPracticeRoomPage = isFocusMode || isLearningFocusRoute(pathname);
   const isPracticeCatalogPage = ["/listening", "/speaking", "/reading", "/writing", "/exams", "/toeic", "/flashcard"].includes(pathname);
   const isCourseRoute = isInsideCourseRoute(pathname) || pathname.startsWith("/my-courses") || pathname.startsWith("/courses");
   const isDiagnosticRoute = pathname === "/diagnostic" || pathname.startsWith("/diagnostic/");
+
+  // App Router keeps this shared learner layout mounted across page changes.
+  // Restore browser Back/Forward natively, but make a new content route begin
+  // at the top rather than inheriting the previous page's scroll position.
+  useEffect(() => {
+    const markHistoryPop = () => {
+      isHistoryPopRef.current = true;
+    };
+    window.addEventListener("popstate", markHistoryPop);
+    return () => window.removeEventListener("popstate", markHistoryPop);
+  }, []);
+
+  useEffect(() => {
+    const isHistoryNavigation = isHistoryPopRef.current;
+    if (!shouldResetScrollOnPathChange({ isHistoryNavigation })) {
+      isHistoryPopRef.current = false;
+      return;
+    }
+    const frame = window.requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
+    return () => window.cancelAnimationFrame(frame);
+  }, [pathname]);
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background text-foreground antialiased selection:bg-amber-600 selection:text-white font-['Quicksand',sans-serif] transition-colors duration-150">

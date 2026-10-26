@@ -36,12 +36,34 @@ test("normal Reading catalog opens the exact selected exercise directly", () => 
 });
 
 test("TOEIC retains a functional briefing boundary before timed attempt creation", () => {
-  const briefing = read("src/app/(student)/toeic/[examId]/page.tsx");
+  // The briefing now lives in the component rendered by the canonical route
+  // /exams/:examId; the old /toeic/:examSetId path is a compatibility redirect.
+  const briefing = read("src/modules/toeic/ToeicLrExamDetail.tsx");
   const attempt = read("src/app/(student)/toeic/attempts/[attemptId]/page.tsx");
   assert.match(briefing, /startAttempt/);
   assert.match(briefing, /Bắt đầu làm bài/);
   assert.match(attempt, /useAssessmentAntiCheat/);
   assert.match(attempt, /formatTime/);
+});
+
+test("the canonical exam route renders the briefing instead of redirecting away", () => {
+  // Guards the regression this phase fixed: /exams/:examId used to resolve the
+  // product and then replace itself with an aggregate URL, so the briefing was
+  // never reached at a canonical URL.
+  const canonical = read("src/app/(student)/exams/[id]/page.tsx");
+  assert.match(canonical, /ToeicLrExamDetail/);
+  assert.match(canonical, /ToeicAssessmentDetail/);
+  assert.doesNotMatch(canonical, /router\.replace/);
+
+  // and the legacy paths are redirect-only, owning no briefing UI
+  for (const legacy of [
+    "src/app/(student)/toeic/[examId]/page.tsx",
+    "src/app/(student)/toeic/assessments/[id]/page.tsx",
+  ]) {
+    const source = read(legacy);
+    assert.match(source, /LegacyExamRouteRedirect/);
+    assert.doesNotMatch(source, /startAttempt/);
+  }
 });
 
 test("learner practice route tree remains deleted", () => {

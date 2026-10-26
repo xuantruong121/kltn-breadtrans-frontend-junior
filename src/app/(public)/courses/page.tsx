@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -8,6 +8,7 @@ import {
   ArrowRight,
   BookOpen,
   AlertCircle,
+  RotateCw,
 } from "lucide-react";
 import {
   courseService,
@@ -97,30 +98,27 @@ export default function PublicCoursesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<string>("ALL");
 
-  useEffect(() => {
-    let isMounted = true;
+  const loadCourses = useCallback(() => {
+    setIsLoading(true);
+    setError(null);
     courseService
       .getPublicCatalog()
       .then((data) => {
-        if (isMounted) {
-          setCourses(data);
-          setIsLoading(false);
-        }
+        setCourses(data);
+        setIsLoading(false);
       })
       .catch((err) => {
         console.error("Error fetching catalog:", err);
-        if (isMounted) {
-          setError(
-            "Không thể tải danh sách khóa học lúc này. Vui lòng thử lại sau.",
-          );
-          setIsLoading(false);
-        }
+        setError(
+          "Không thể tải danh sách khóa học lúc này. Vui lòng thử lại sau.",
+        );
+        setIsLoading(false);
       });
-
-    return () => {
-      isMounted = false;
-    };
   }, []);
+
+  useEffect(() => {
+    loadCourses();
+  }, [loadCourses]);
 
   const filteredCourses = useMemo(() => {
     return courses.filter((c) => {
@@ -149,7 +147,7 @@ export default function PublicCoursesPage() {
       {/* Compact catalog header */}
       <div className="space-y-2.5">
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
-          Danh mục Khóa học
+          Danh sách khóa học
         </h1>
         <p className="max-w-4xl text-base sm:text-lg leading-relaxed text-slate-600 dark:text-slate-300">
           Tìm kiếm và lựa chọn lộ trình đào tạo tiếng Anh phù hợp nhất với năng
@@ -200,9 +198,20 @@ export default function PublicCoursesPage() {
 
       {/* 3. Error Banner */}
       {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300 rounded-2xl flex items-center gap-3">
-          <AlertCircle size={20} className="shrink-0" />
-          <p className="text-sm font-medium">{error}</p>
+        <div className="p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300 rounded-2xl flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <AlertCircle size={20} className="shrink-0" />
+            <p className="text-sm font-medium">{error}</p>
+          </div>
+          <button
+            type="button"
+            onClick={loadCourses}
+            disabled={isLoading}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-red-100 hover:bg-red-200 dark:bg-red-900/50 dark:hover:bg-red-900/70 text-red-800 dark:text-red-200 transition-colors cursor-pointer disabled:opacity-60"
+          >
+            <RotateCw size={14} className={isLoading ? "animate-spin" : ""} />
+            <span>Tải lại</span>
+          </button>
         </div>
       )}
 
@@ -231,27 +240,34 @@ export default function PublicCoursesPage() {
           ))}
         </div>
       ) : (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center space-y-4 max-w-lg mx-auto">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-10 text-center space-y-4 max-w-lg mx-auto">
           <BookOpen
             className="mx-auto text-slate-300 dark:text-slate-600"
             size={48}
           />
           <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
-            Không tìm thấy khóa học phù hợp
+            {error ? "Không thể tải danh sách khóa học" : "Không tìm thấy khóa học phù hợp"}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Hãy thử tìm kiếm với từ khóa khác hoặc bỏ chọn bộ lọc trình độ để
-            xem thêm khóa học.
+          <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+            {error
+              ? "Hệ thống gặp sự cố kết nối. Vui lòng bấm nút bên dưới để tải lại."
+              : "Hãy thử tìm kiếm với từ khóa khác hoặc bấm tải lại để làm mới danh sách khóa học."}
           </p>
-          <button
-            onClick={() => {
-              setSearchQuery("");
-              setSelectedLevel("ALL");
-            }}
-            className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-750 transition-colors cursor-pointer"
-          >
-            Đặt lại bộ lọc
-          </button>
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery("");
+                setSelectedLevel("ALL");
+                loadCourses();
+              }}
+              disabled={isLoading}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900 transition-colors cursor-pointer shadow-xs disabled:opacity-60"
+            >
+              <RotateCw size={13} className={isLoading ? "animate-spin" : ""} />
+              <span>Tải lại</span>
+            </button>
+          </div>
         </div>
       )}
     </div>
