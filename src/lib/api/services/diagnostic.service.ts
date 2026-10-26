@@ -38,6 +38,59 @@ export interface DiagnosticFourSkillSkill {
   weight: number;
   itemsScored: number;
   itemsTotal: number;
+  tasksGraded?: number;
+  tasksPending?: number;
+  tasksFailed?: number;
+  tasksSkipped?: number;
+}
+
+export type DiagnosticSkillKey = DiagnosticFourSkillSkill["skill"];
+
+export interface DiagnosticAdviceResource {
+  kind: "LISTENING_QUIZ" | "READING_QUIZ" | "WRITING_QUIZ" | "SPEAKING_EXERCISE" | "COURSE";
+  id: number;
+  title: string;
+  route: string;
+  access: "OPEN" | "LOCKED";
+  requirement: string | null;
+}
+
+export interface DiagnosticAdviceFinding {
+  skill: DiagnosticSkillKey;
+  areaKey: string;
+  area: string;
+  evidence: string;
+}
+
+export interface DiagnosticAdvicePriority extends DiagnosticAdviceFinding {
+  rank: number;
+  why: string;
+  action: string;
+  graderFeedback: string[];
+  resources: DiagnosticAdviceResource[];
+}
+
+/** D1 advice (V2): evidence-based findings and links to published content. */
+export interface DiagnosticAdvice {
+  version: string;
+  basis: "D1_ADVISORY_SCORES_ONLY";
+  profile: {
+    assessed: DiagnosticSkillKey[];
+    strongest: DiagnosticSkillKey[];
+    weakest: DiagnosticSkillKey[];
+    balanced: boolean;
+    spread: number | null;
+  };
+  strengths: DiagnosticAdviceFinding[];
+  priorities: DiagnosticAdvicePriority[];
+  supplemental: DiagnosticAdvicePriority[];
+  unassessed: Array<{
+    skill: DiagnosticSkillKey;
+    reason: "SKIPPED" | "PENDING_GRADING" | "GRADING_FAILED" | "NOT_SUBMITTED";
+    generalPractice: DiagnosticAdviceResource | null;
+  }>;
+  mockGraderEvidence: boolean;
+  noWeaknessFound: boolean;
 }
 
 /** FOUR_SKILL_PLACEMENT_V2 only. `overall` is null until all four skills are COMPLETE. */
@@ -117,6 +170,7 @@ export interface DiagnosticResult {
     itemsBySkill: Record<string, number>;
   };
   fourSkill?: DiagnosticFourSkillResult | null;
+  advice?: DiagnosticAdvice | null;
   submittedAt?: string;
   completedAt?: string;
   skillProfiles?: DiagnosticSkillProfile[];

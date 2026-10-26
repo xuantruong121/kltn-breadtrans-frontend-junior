@@ -30,6 +30,7 @@ import { useAssessmentAntiCheat } from "@/hooks/useAssessmentAntiCheat";
 import { useLearningFocusMode } from "@/contexts/LearningFocusContext";
 import { ClozePrompt } from "@/components/diagnostic/ClozePrompt";
 import { DiagnosticQuestionNavigator } from "@/components/diagnostic/DiagnosticQuestionNavigator";
+import { DiagnosticAdvicePanel as AdvicePanel } from "@/components/diagnostic/DiagnosticAdvicePanel";
 import {
   formatPlacementLevel,
   formatSkillName,
@@ -41,8 +42,13 @@ import {
   selectDiagnosticRecordingMimeType,
 } from "@/lib/diagnostic/diagnosticSpeakingRecorderLogic";
 import {
+  countSkippedTasks,
   countWords,
   describeForm,
+  draftKey,
+  parseDraft,
+  toSubmissionAnswers,
+  WRITING_SKIPPED,
   describeSkillState,
   formatCriterionName,
   isSpeakingTask,
@@ -124,8 +130,27 @@ export default function DiagnosticPage() {
     for (const response of inProgress.speakingResponses) {
       persisted[String(response.questionId)] = response.status;
     }
-    setAnswers((current) => ({ ...persisted, ...current }));
+    // Objective choices and Writing text kept locally for this attempt;
+    // Speaking statuses always come from the server.
+    let draft: Record<string, number | string> = {};
+    try {
+      draft = parseDraft(window.localStorage.getItem(draftKey(inProgress.id)));
+    } catch {
+      draft = {};
+    }
+    setAnswers((current) => ({ ...draft, ...persisted, ...current }));
   }, [assessment?.inProgressAttempt]);
+
+  useEffect(() => {
+    if (!attemptId) return;
+    try {
+      window.localStorage.setItem(draftKey(attemptId), JSON.stringify(answers));
+    } catch {
+      // Storage unavailable: the attempt still works, only the draft is not kept.
+    }
+  }, [attemptId, answers]);
+
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
   useEffect(() => {
     if (!recording) return;
@@ -167,13 +192,18 @@ export default function DiagnosticPage() {
     mutationFn: () =>
       diagnosticService.submit(
         assessment!.id,
-        answers,
+        toSubmissionAnswers(answers),
         submissionToken,
         attemptId ?? undefined,
       ),
     onSuccess: (data) => {
       if (document.fullscreenElement) {
         void document.exitFullscreen?.().catch(() => undefined);
+      }
+      try {
+        if (attemptId) window.localStorage.removeItem(draftKey(attemptId));
+      } catch {
+        // ignore
       }
       setStarted(false);
       setFocusMode(false);
@@ -408,6 +438,11 @@ export default function DiagnosticPage() {
       toast.error(`Bạn còn ${unansweredIndexes.length} câu chưa hoàn thành.`);
       return;
     }
+    const skipped = countSkippedTasks(assessment.questions, answers);
+    if (skipped.speaking + skipped.writing > 0) {
+      setShowSubmitConfirm(true);
+      return;
+    }
     submit.mutate();
   };
 
@@ -510,7 +545,10 @@ export default function DiagnosticPage() {
   const limitSeconds = Math.round(limitMs / 1000);
   const prepSeconds = isSpeaking && current.prepSeconds && current.prepSeconds > 0 ? current.prepSeconds : 0;
   const preparing = prep?.questionId === current.id;
-  const writtenText = typeof answers[current.id] === "string" ? (answers[current.id] as string) : "";
+  const writingSkipped = isOpenText && answers[current.id] === WRITING_SKIPPED;
+  const writtenText =
+    typeof answers[current.id] === "string" && !writingSkipped ? (answers[current.id] as string) : "";
+  const skippedSummary = countSkippedTasks(assessment.questions, answers);
   const guidance = isOpenText ? writingGuidance(countWords(writtenText), current.wordMin, current.wordMax) : null;
   const listeningNotReady = isListening && (current.mediaStatus === "NOT_READY" || !current.audioUrl);
 
@@ -738,7 +776,25 @@ export default function DiagnosticPage() {
                 aria-label="Câu trả lời tự luận"
                 aria-describedby={guidance ? "writing-guidance" : undefined}
               />
-              {guidance && (
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                {writingSkipped ? (
+                  <p className="text-xs font-bold text-amber-700 dark:text-amber-300" role="status">
+                    Bạn đã chọn bỏ qua bài viết này. Bài bỏ qua không được chấm và kỹ năng Viết sẽ không có điểm. Gõ vào ô trên để làm lại.
+                  </p>
+                ) : (
+                  !writtenText.trim() && (
+                    <button
+                      type="button"
+                      onClick={() => setAnswers((old) => ({ ...old, [current.id]: WRITING_SKIPPED }))}
+                      className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-amber-300 bg-white px-4 text-xs font-extrabold text-amber-800 hover:bg-amber-50 dark:border-amber-800 dark:bg-slate-800 dark:text-amber-200"
+                    >
+                      <SkipForward size={14} />
+                      <span>Bỏ qua bài viết này</span>
+                    </button>
+                  )
+                )}
+              </div>
+              {guidance && !writingSkipped && (
                 <p
                   id="writing-guidance"
                   aria-live="polite"
@@ -867,7 +923,7 @@ export default function DiagnosticPage() {
       <ConfirmDialog
         open={showExitConfirm}
         title="Tạm dừng bài đánh giá đầu vào?"
-        description="Tiến độ các câu đã trả lời của bạn đã được ghi nhận. Bạn có thể quay lại tiếp tục bài đánh giá bất cứ lúc nào."
+        description="Bài Nói đã xác nhận được lưu trên hệ thống; các câu trắc nghiệm và bài Viết được lưu tạm trên thiết bị và trình duyệt này. Bạn có thể quay lại tiếp tục bất cứ lúc nào."
         confirmLabel="Rời đi"
         cancelLabel="Tiếp tục làm"
         onCancel={() => setShowExitConfirm(false)}
@@ -875,6 +931,24 @@ export default function DiagnosticPage() {
           setShowExitConfirm(false);
           setStarted(false);
           setFocusMode(false);
+        }}
+      />
+
+      <ConfirmDialog
+        open={showSubmitConfirm}
+        title="Nộp bài khi còn phần bỏ qua?"
+        description={`Bạn đã bỏ qua ${[
+          skippedSummary.speaking ? `${skippedSummary.speaking} bài Nói` : "",
+          skippedSummary.writing ? `${skippedSummary.writing} bài Viết` : "",
+        ]
+          .filter(Boolean)
+          .join(" và ")}. Phần bỏ qua không được chấm và không bị tính là 0 điểm, nhưng kỹ năng đó sẽ không có điểm và bạn sẽ không có điểm tổng bốn kỹ năng. Sau khi nộp, bạn không thể quay lại làm phần này.`}
+        confirmLabel="Vẫn nộp bài"
+        cancelLabel="Quay lại làm tiếp"
+        onCancel={() => setShowSubmitConfirm(false)}
+        onConfirm={() => {
+          setShowSubmitConfirm(false);
+          submit.mutate();
         }}
       />
     </>
@@ -1000,6 +1074,11 @@ function DiagnosticResultView({
                       {item.suggestions && item.suggestions.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-600 dark:text-slate-400">{item.suggestions.map((suggestion) => <li key={suggestion}>{suggestion}</li>)}</ul>}
                     </>
                   )}
+                  {item?.status === "SKIPPED" && (
+                    <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-400">
+                      Bạn đã bỏ qua bài này nên bài không được chấm; kỹ năng Nói không có điểm và không bị tính là 0.
+                    </p>
+                  )}
                   {item?.status === "GRADING_FAILED" && (
                     <>
                       <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-400">
@@ -1015,12 +1094,30 @@ function DiagnosticResultView({
         )}
 
         {/* Writing feedback, one card per task */}
-        {result.writingFeedback && result.writingFeedback.length > 0 && (
+        {writingTaskIds.length > 0 && (
           <div className="mt-6 space-y-3">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
               Bài Viết
             </h3>
-            {result.writingFeedback.map((item, index) => (
+            {writingTaskIds.map((questionId, index) => {
+              const item = result.writingFeedback?.find((row) => row.questionId === questionId);
+              const skipped =
+                !item && result.questionsResult.find((row) => row.questionId === questionId)?.selectedText === "";
+              if (!item)
+                return (
+                  <article key={questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-900">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h4 className="font-black text-slate-900 dark:text-slate-100">Bài Viết {index + 1}</h4>
+                      <TaskStatusChip status={skipped ? "SKIPPED" : undefined} score={null} />
+                    </div>
+                    {skipped && (
+                      <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-400">
+                        Bạn đã bỏ qua bài này nên bài không được chấm; kỹ năng Viết không có điểm và không bị tính là 0.
+                      </p>
+                    )}
+                  </article>
+                );
+              return (
               <article key={item.questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-900">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h4 className="font-black text-slate-900 dark:text-slate-100">Bài Viết {index + 1}</h4>
@@ -1034,7 +1131,8 @@ function DiagnosticResultView({
                 {item.suggestions.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-600 dark:text-slate-400">{item.suggestions.map((suggestion) => <li key={suggestion}>{suggestion}</li>)}</ul>}
                 {item.status === "GRADING_FAILED" && <button type="button" onClick={() => retryWriting.mutate(item.questionId)} disabled={retryWriting.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-violet-300 px-3 text-xs font-bold text-violet-700 transition hover:bg-violet-50 disabled:opacity-50 dark:border-violet-800 dark:text-violet-300"><RotateCcw size={14} /> Chấm lại</button>}
               </article>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -1064,7 +1162,8 @@ function DiagnosticResultView({
           </div>
         )}
 
-        {/* Strengths & Weaknesses */}
+        {/* Strengths & Weaknesses (V1 results; V2 shows the D1 advice) */}
+        {!result.advice && (
         <div className="mt-7 grid gap-4 border-t border-slate-100 pt-6 sm:grid-cols-2 dark:border-slate-800">
           <div>
             <h3 className="text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
@@ -1087,7 +1186,10 @@ function DiagnosticResultView({
             </p>
           </div>
         </div>
+        )}
       </section>
+
+      {result.advice && <AdvicePanel advice={result.advice} />}
 
       {/* 2. Concrete Practice Recommendations (NO Course Cards) */}
       {practiceItems.length > 0 && (
@@ -1318,11 +1420,12 @@ const SKILL_TONE_CLASS: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300",
   failed: "bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300",
   missing: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+  skipped: "bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-600",
 };
 
 // FOUR_SKILL_PLACEMENT_V2: each skill on its own 0-100 scale. The overall is
 // shown only when all four skills are scored; no placement band is shown
-// while the band model is undecided.
+// (DEF-004 decided as D1: advisory scores only).
 function FourSkillPanel({ result }: { result: DiagnosticFourSkillResult }) {
   const languageUse = result.skills.LANGUAGE_USE;
   const pending = result.state === "PENDING_GRADING";
@@ -1336,12 +1439,14 @@ function FourSkillPanel({ result }: { result: DiagnosticFourSkillResult }) {
           ? <>Điểm tổng tham khảo: <span className="font-black text-slate-900 dark:text-slate-100">{result.overall}/100</span> (trung bình bốn kỹ năng, mỗi kỹ năng 25%).</>
           : pending
             ? "Bài Nói hoặc Viết đang được chấm. Điểm tổng chỉ hiển thị khi cả bốn kỹ năng đều có điểm; trang sẽ tự cập nhật."
-            : "Điểm tổng chưa hiển thị vì còn kỹ năng chưa có điểm."}
+            : `Điểm tổng chưa có vì ${FOUR_SKILL_ORDER.filter((k) => result.skills[k]?.state !== "COMPLETE")
+                .map((k) => `${FOUR_SKILL_LABELS[k]} (${describeSkillState(result.skills[k]?.state, result.skills[k]).label.toLowerCase()})`)
+                .join(", ")} chưa có điểm. Các kỹ năng đã có điểm vẫn hiển thị bên dưới.`}
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {FOUR_SKILL_ORDER.map((key) => {
           const skill = result.skills[key];
-          const state = describeSkillState(skill?.state);
+          const state = describeSkillState(skill?.state, skill);
           return (
             <div key={key} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-850">
               <div className="flex items-center justify-between gap-2">
@@ -1382,7 +1487,15 @@ function TaskStatusChip({ status, score }: { status?: string; score: number | nu
             ? "Đang chấm"
             : "Chưa có bài làm";
   const tone =
-    status === "GRADED" ? "done" : status === "GRADING_FAILED" ? "failed" : status && ["SUBMITTED", "QUEUED", "GRADING"].includes(status) ? "pending" : "missing";
+    status === "GRADED"
+      ? "done"
+      : status === "GRADING_FAILED"
+        ? "failed"
+        : status === "SKIPPED"
+          ? "skipped"
+          : status && ["SUBMITTED", "QUEUED", "GRADING"].includes(status)
+            ? "pending"
+            : "missing";
   return (
     <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${SKILL_TONE_CLASS[tone]}`}>
       {tone === "pending" && <Loader2 size={12} className="animate-spin" />}

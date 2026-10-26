@@ -2,11 +2,16 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  countSkippedTasks,
   countWords,
   describeForm,
+  draftKey,
   describeSkillState,
   formatCriterionName,
+  parseDraft,
   speakingLimitMs,
+  toSubmissionAnswers,
+  WRITING_SKIPPED,
   writingGuidance,
 } from "./diagnosticTaskLogic.ts";
 
@@ -50,6 +55,25 @@ test("word range is guidance and never blocks", () => {
   assert.equal(writingGuidance(75, 60, 90)?.tone, "within");
   assert.equal(writingGuidance(140, 90, 130)?.tone, "above");
   assert.equal(writingGuidance(10, null, null), null);
+});
+
+test("a skipped Writing task is sent as the empty string and counted", () => {
+  const answers = { "1": 2, "20": "SKIPPED", "22": WRITING_SKIPPED, "23": "My answer" };
+  assert.deepEqual(toSubmissionAnswers(answers), { "1": 2, "20": "SKIPPED", "22": "", "23": "My answer" });
+  assert.deepEqual(countSkippedTasks(v2Form, answers), { speaking: 1, writing: 1 });
+});
+
+test("skill state distinguishes skipped from not submitted", () => {
+  assert.equal(describeSkillState("NOT_STARTED", { tasksSkipped: 2, itemsTotal: 2 }).label, "Đã bỏ qua");
+  assert.equal(describeSkillState("NOT_STARTED", { tasksSkipped: 1, itemsTotal: 2 }).label, "Bỏ qua 1/2 bài");
+  assert.equal(describeSkillState("NOT_STARTED", { tasksSkipped: 0, itemsTotal: 2 }).tone, "missing");
+});
+
+test("a local draft keeps only question answers and survives bad input", () => {
+  assert.deepEqual(parseDraft('{"3":1,"22":"text","__permScheme":"x","5":{"a":1}}'), { "3": 1, "22": "text" });
+  assert.deepEqual(parseDraft("not json"), {});
+  assert.deepEqual(parseDraft(null), {});
+  assert.equal(draftKey(7), "breadtrans:diagnostic-draft:7");
 });
 
 test("criterion keys and skill states have Vietnamese labels", () => {

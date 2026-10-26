@@ -97,11 +97,67 @@ export function formatCriterionName(key: string): string {
   return CRITERION_LABELS[key] ?? key;
 }
 
-export type SkillStateLabel = { label: string; tone: "done" | "pending" | "failed" | "missing" };
+export type SkillStateLabel = { label: string; tone: "done" | "pending" | "failed" | "missing" | "skipped" };
 
-export function describeSkillState(state: string | null | undefined): SkillStateLabel {
+export function describeSkillState(
+  state: string | null | undefined,
+  counts?: { tasksSkipped?: number; itemsTotal?: number } | null,
+): SkillStateLabel {
   if (state === "COMPLETE") return { label: "Đã có điểm", tone: "done" };
   if (state === "PENDING_GRADING") return { label: "Đang chấm", tone: "pending" };
   if (state === "GRADING_FAILED") return { label: "Chấm chưa thành công", tone: "failed" };
+  const skipped = counts?.tasksSkipped ?? 0;
+  if (skipped > 0)
+    return {
+      label: skipped === counts?.itemsTotal ? "Đã bỏ qua" : `Bỏ qua ${skipped}/${counts?.itemsTotal} bài`,
+      tone: "skipped",
+    };
   return { label: "Chưa đủ bài làm", tone: "missing" };
+}
+
+/**
+ * Front-end marker for "the learner chose to skip this Writing task". It is
+ * sent to the server as the empty string, which the server records as an
+ * explicit skip; it is never graded and never scored as 0.
+ */
+export const WRITING_SKIPPED = "__WRITING_SKIPPED__";
+
+export function toSubmissionAnswers(answers: Record<string, number | string>): Record<string, number | string> {
+  return Object.fromEntries(Object.entries(answers).map(([k, v]) => [k, v === WRITING_SKIPPED ? "" : v]));
+}
+
+/** Productive tasks the learner skipped, for the pre-submit confirmation. */
+export function countSkippedTasks(questions: DiagnosticTaskQuestion[], answers: Record<string, number | string>) {
+  let speaking = 0;
+  let writing = 0;
+  for (const q of questions) {
+    const a = answers[q.id];
+    if (isSpeakingTask(q) && a === "SKIPPED") speaking += 1;
+    else if (isWritingTask(q) && a === WRITING_SKIPPED) writing += 1;
+  }
+  return { speaking, writing };
+}
+
+/**
+ * Local draft of an unfinished attempt (objective choices and Writing text),
+ * so returning to the attempt does not lose them. Speaking is not kept here:
+ * its recordings are stored on the server. Storage failures are ignored.
+ */
+export function draftKey(attemptId: number) {
+  return `breadtrans:diagnostic-draft:${attemptId}`;
+}
+
+export function parseDraft(raw: string | null): Record<string, number | string> {
+  if (!raw) return {};
+  try {
+    const value: unknown = JSON.parse(raw);
+    if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).filter(
+        ([k, v]) => /^\d+$/.test(k) && (typeof v === "number" || typeof v === "string"),
+      ),
+    ) as Record<string, number | string>;
+  } catch {
+    return {};
+  }
 }
