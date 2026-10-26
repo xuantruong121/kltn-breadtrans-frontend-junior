@@ -264,6 +264,8 @@ export const diagnosticService = {
       submissionToken,
       attemptId,
     }),
+  abandonAttempt: (assessmentId: number, attemptId: number): Promise<{ attemptId: number; status: "ABANDONED" }> =>
+    axiosClient.post(`/diagnostic/${assessmentId}/attempts/${attemptId}/abandon`),
   startAttempt: async (assessmentId: number): Promise<{ attemptId: number; submissionToken: string }> =>
     (await axiosClient.post(`/diagnostic/${assessmentId}/attempts/start`)) as unknown as {
       attemptId: number;
@@ -274,11 +276,12 @@ export const diagnosticService = {
     attemptId: number,
     questionId: number,
     audio: Blob,
-    durationMs: number,
+    /** The recording's own decoded length; omitted when it could not be measured. */
+    durationMs?: number,
   ): Promise<DiagnosticSpeakingResponse> => {
     const form = new FormData();
     form.append("audio", audio, "diagnostic-speaking.webm");
-    form.append("durationMs", String(durationMs));
+    if (durationMs !== undefined) form.append("durationMs", String(durationMs));
     return axiosClient.post(
       `/diagnostic/${assessmentId}/attempts/${attemptId}/speaking/${questionId}/confirm`,
       form,

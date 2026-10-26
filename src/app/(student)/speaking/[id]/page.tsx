@@ -1058,6 +1058,36 @@ export default function SpeakingExerciseDetailPage() {
 
       const traceId = `trace-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
+      // Upload through the API: the server stores the audio itself, so the
+      // browser needs no CORS access to the storage bucket.
+      const submitThroughApi = async () => {
+        setPhase("SUBMITTING");
+        const response = await speakingService.submitAudio(
+          exerciseId,
+          blob,
+          key,
+          traceId,
+          examParentContext,
+        );
+
+        currentSubmissionIdRef.current = response.submissionId;
+        if (typeof window !== "undefined") {
+          try {
+            sessionStorage.setItem(
+              `breadtrans:speaking:pending:${exerciseId}`,
+              JSON.stringify({
+                submissionId: response.submissionId,
+                submittedAt: Date.now(),
+              }),
+            );
+          } catch {}
+        }
+
+        pollingStartTimeRef.current = Date.now();
+        setPhase("POLLING");
+        pollSubmissionStatus(response.submissionId, 0);
+      };
+
       try {
         const capabilities = await speakingService.getCapabilities();
 
@@ -1106,13 +1136,22 @@ export default function SpeakingExerciseDetailPage() {
           const abortController = new AbortController();
           uploadAbortControllerRef.current = abortController;
 
-          await speakingService.uploadAudioDirectToR2(
-            intent.uploadUrl,
-            blob,
-            intent.signedHeaders,
-            (pct) => setUploadProgress(pct),
-            abortController.signal,
-          );
+          try {
+            await speakingService.uploadAudioDirectToR2(
+              intent.uploadUrl,
+              blob,
+              intent.signedHeaders,
+              (pct) => setUploadProgress(pct),
+              abortController.signal,
+            );
+          } catch (uploadErr: any) {
+            if (abortController.signal.aborted) throw uploadErr;
+            // A bucket without a CORS rule for this origin refuses the
+            // browser PUT. The unused intent simply expires.
+            console.warn("Direct storage upload failed, sending through the API:", uploadErr);
+            await submitThroughApi();
+            return;
+          }
 
           // ── Step C: Authoritative Backend Finalization ─────────────────────
           setPhase("FINALIZING");
@@ -1139,31 +1178,7 @@ export default function SpeakingExerciseDetailPage() {
           pollSubmissionStatus(response.submissionId, 0);
         } else {
           // ── Legacy Proxy Fallback ──────────────────────────────────────────
-          setPhase("SUBMITTING");
-          const response = await speakingService.submitAudio(
-            exerciseId,
-            blob,
-            key,
-            traceId,
-            examParentContext,
-          );
-
-          currentSubmissionIdRef.current = response.submissionId;
-          if (typeof window !== "undefined") {
-            try {
-              sessionStorage.setItem(
-                `breadtrans:speaking:pending:${exerciseId}`,
-                JSON.stringify({
-                  submissionId: response.submissionId,
-                  submittedAt: Date.now(),
-                }),
-              );
-            } catch {}
-          }
-
-          pollingStartTimeRef.current = Date.now();
-          setPhase("POLLING");
-          pollSubmissionStatus(response.submissionId, 0);
+          await submitThroughApi();
         }
       } catch (err: any) {
         if (err?.message?.includes("aborted")) {
@@ -1881,6 +1896,11 @@ export default function SpeakingExerciseDetailPage() {
                 <div className="flex items-center gap-2">
                   {(() => {
                     const hasReferenceAudio = Boolean(exercise.audioUrl);
+                    // Reading tasks play a model reading; question tasks play the
+                    // prompt itself (no model answer is provided).
+                    const isPromptAudio = !["READ_ALOUD", "PRONUNCIATION_DRILL"].includes(
+                      String(exercise.taskType ?? ""),
+                    );
                     return (
                       <button
                         type="button"
@@ -1892,7 +1912,9 @@ export default function SpeakingExerciseDetailPage() {
                             ? "Audio mẫu chưa khả dụng"
                             : isPlayingTTS
                               ? "Dừng nghe mẫu"
-                              : "Nghe mẫu phát âm"
+                              : isPromptAudio
+                                ? "Nghe câu hỏi"
+                                : "Nghe mẫu phát âm"
                         }
                         title={
                           hasReferenceAudio
@@ -1923,7 +1945,7 @@ export default function SpeakingExerciseDetailPage() {
                               size={15}
                               className="shrink-0 text-amber-400"
                             />
-                            <span>Nghe câu mẫu</span>
+                            <span>{isPromptAudio ? "Nghe câu hỏi" : "Nghe câu mẫu"}</span>
                           </>
                         )}
                       </button>
@@ -2200,13 +2222,16 @@ export default function SpeakingExerciseDetailPage() {
                 <div className="flex items-center justify-between gap-2 mb-3 shrink-0">
                   <div className="space-y-0.5">
                     <p className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">
-                      {phase === "COMPLETED"
-                        ? "Kết quả đánh giá phát âm từng từ:"
-                        : "Đọc to câu văn bên dưới với phát âm rõ ràng và tự nhiên:"}
+                      {!["READ_ALOUD", "PRONUNCIATION_DRILL"].includes(String(exercise.taskType ?? "READ_ALOUD"))
+                        ? "Trả lời câu hỏi bên dưới bằng tiếng Anh, nói thành câu đầy đủ:"
+                        : phase === "COMPLETED"
+                          ? "Kết quả đánh giá phát âm từng từ:"
+                          : "Đọc to câu văn bên dưới với phát âm rõ ràng và tự nhiên:"}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                      Màu sắc thể hiện mức độ chính xác của từng từ bạn đã phát
-                      âm
+                      {["READ_ALOUD", "PRONUNCIATION_DRILL"].includes(String(exercise.taskType ?? "READ_ALOUD"))
+                        ? "Màu sắc thể hiện mức độ chính xác của từng từ bạn đã phát âm"
+                        : "Bài được chấm trên chính câu trả lời bạn nói, không so với câu hỏi"}
                     </p>
                   </div>
                   <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold border border-slate-200/80 dark:border-slate-700 shrink-0">
@@ -2391,6 +2416,7 @@ export default function SpeakingExerciseDetailPage() {
                 phase={phase}
                 submission={currentSubmission}
                 targetText={exercise.targetText || ""}
+                scripted={["READ_ALOUD", "PRONUNCIATION_DRILL"].includes(String(exercise.taskType ?? "READ_ALOUD"))}
                 userAudioUrl={audioUrl}
                 qualityWarning={qualityWarning}
                 recordingSeconds={recordingSeconds}
@@ -2620,7 +2646,11 @@ export default function SpeakingExerciseDetailPage() {
                   className="px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 transition-all shadow-xs hover:shadow-sm active:scale-95 cursor-pointer"
                 >
                   <RotateCcw size={14} aria-hidden="true" />
-                  <span>Thử đọc lại</span>
+                  <span>
+                    {["READ_ALOUD", "PRONUNCIATION_DRILL"].includes(String(exercise.taskType ?? "READ_ALOUD"))
+                      ? "Thử đọc lại"
+                      : "Trả lời lại"}
+                  </span>
                 </button>
 
                 <button

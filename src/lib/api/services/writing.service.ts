@@ -35,7 +35,18 @@ export interface WritingQuizDetails extends WritingTopic {
   sampleSentences?: string[];
 }
 
-export interface WritingEvaluation {
+/** Present on catalog practice tasks graded with their own rubric. */
+export interface PracticeWritingDetail {
+  rubricVersion: "PRACTICE_WRITING_V1";
+  criteria: Array<{ key: string; label: string; score: number; max: number; comment: string }>;
+  strengths: string[];
+  corrections: Array<{ original: string; corrected: string; explanation: string }>;
+  wordCount: number | null;
+  wordRange: [number, number] | null;
+  keywords: Array<{ keyword: string; present: boolean }>;
+}
+
+export interface WritingEvaluation extends Partial<PracticeWritingDetail> {
   submissionId: number;
   status?: "COMPLETED";
   score: number;
@@ -43,6 +54,20 @@ export interface WritingEvaluation {
   feedback: string;
   suggestions: string[];
   taskType?: string | null;
+}
+
+export function practiceDetailOf(value: Partial<PracticeWritingDetail> | null | undefined): PracticeWritingDetail | null {
+  return value?.rubricVersion === "PRACTICE_WRITING_V1" && Array.isArray(value.criteria)
+    ? {
+        rubricVersion: value.rubricVersion,
+        criteria: value.criteria,
+        strengths: value.strengths ?? [],
+        corrections: value.corrections ?? [],
+        wordCount: value.wordCount ?? null,
+        wordRange: value.wordRange ?? null,
+        keywords: value.keywords ?? [],
+      }
+    : null;
 }
 
 export type WritingExamParentContext = {

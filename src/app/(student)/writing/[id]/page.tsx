@@ -27,9 +27,11 @@ import {
 } from "@/lib/writing/writingExperienceLogic";
 import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
 import {
+  practiceDetailOf,
   writingService,
   type WritingEvaluation,
 } from "@/lib/api/services/writing.service";
+import { PracticeWritingDetail } from "@/components/writing/PracticeWritingDetail";
 import axiosClient from "@/lib/api/axiosClient";
 import { isPremiumWritingForbiddenError } from "@/modules/subscription/planLogic";
 import toast from "react-hot-toast";
@@ -423,15 +425,26 @@ export default function WritingDetailPage(props: {
                       </div>
                     </div>
 
+                    {practiceDetailOf(feedback) && (
+                      <PracticeWritingDetail detail={practiceDetailOf(feedback)!} />
+                    )}
+
                     {/* FEEDBACK & NEXT STEPS */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 space-y-2">
                         <h4 className="text-xs font-bold text-emerald-800 dark:text-emerald-300 uppercase flex items-center gap-1.5">
-                          <CheckCircle2 size={14} /> Điểm mạnh nổi bật
+                          <CheckCircle2 size={14} /> Nhận xét chung
                         </h4>
                         <p className="text-sm font-semibold leading-relaxed text-emerald-900 dark:text-emerald-200">
                           {feedback.feedback}
                         </p>
+                        {(feedback.strengths?.length ?? 0) > 0 && (
+                          <ul className="space-y-1 text-sm text-emerald-900 dark:text-emerald-200 list-disc pl-5">
+                            {feedback.strengths!.map((s: string) => (
+                              <li key={s}>{s}</li>
+                            ))}
+                          </ul>
+                        )}
                       </div>
 
                       <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 space-y-2">

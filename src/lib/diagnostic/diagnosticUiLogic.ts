@@ -129,9 +129,13 @@ export function groupQuestionsBySection(
     groups[key].questions.push({ index, id: q.id });
   });
 
+  // Sections appear in the assessment's own order (where each one starts),
+  // never in a fixed list: V2 runs Listening, Reading, Speaking, Writing,
+  // then Language Use.
   return sectionOrder
     .map((s) => groups[s.key])
-    .filter((g) => g && g.questions.length > 0);
+    .filter((g) => g && g.questions.length > 0)
+    .sort((a, b) => a.startIndex - b.startIndex);
 }
 
 /**

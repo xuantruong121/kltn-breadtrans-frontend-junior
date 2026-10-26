@@ -2,16 +2,17 @@
 
 import React from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRight,
   BookOpen,
   Calendar,
   CheckCircle2,
-  Clock,
   ExternalLink,
   Loader2,
   Mic,
+  RotateCcw,
   Target,
 } from "lucide-react";
 import {
@@ -20,9 +21,18 @@ import {
   DiagnosticResult,
 } from "@/lib/api/services/diagnostic.service";
 import { formatPlacementLevel, formatSkillName } from "@/lib/diagnostic/diagnosticUiLogic";
-import { describeForm, describeSkillState, isSpeakingTask } from "@/lib/diagnostic/diagnosticTaskLogic";
+import {
+  describeForm,
+  describeSkillState,
+  draftKey,
+  isSpeakingTask,
+  learnerErrorMessage,
+} from "@/lib/diagnostic/diagnosticTaskLogic";
 
 export function DiagnosticResultTab() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [confirmingRestart, setConfirmingRestart] = React.useState(false);
   const {
     data: assessment,
     isLoading: isLoadingAssessment,
@@ -39,6 +49,23 @@ export function DiagnosticResultTab() {
     queryKey: ["diagnostic-latest-result"],
     queryFn: diagnosticService.getLatestResult,
     refetchOnMount: "always",
+  });
+
+  const restart = useMutation({
+    mutationFn: async () => {
+      const attemptId = assessment?.inProgressAttempt?.id;
+      if (!assessment || !attemptId) throw new Error("Không còn lượt làm bài đang dở.");
+      await diagnosticService.abandonAttempt(assessment.id, attemptId);
+      try {
+        window.localStorage.removeItem(draftKey(attemptId));
+      } catch {
+        // Storage may be unavailable; the abandoned attempt is never resumed.
+      }
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["diagnostic-current"] });
+      router.push("/diagnostic");
+    },
   });
 
   const isLoading = isLoadingAssessment || isLoadingResult;
@@ -111,25 +138,73 @@ export function DiagnosticResultTab() {
   if (inProgress) {
     return (
       <div className="space-y-6">
-        <div className="rounded-3xl border border-amber-200 bg-amber-50/70 p-6 shadow-xs dark:border-amber-900/60 dark:bg-amber-950/30 sm:p-8">
-          <div className="flex size-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
-            <Clock size={24} />
-          </div>
-          <h2 className="mt-4 text-2xl font-black text-slate-900 dark:text-slate-100">
-            Bạn đang có bài đánh giá chưa hoàn thành
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+          <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100">
+            Bài đánh giá đầu vào đang làm dở
           </h2>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-400">
-            Tiến độ làm bài của bạn đã được hệ thống lưu tự động. Bạn có thể tiếp tục làm bài bất kỳ lúc nào để nhận kết quả đánh giá năng lực.
+          <p className="mt-3 max-w-2xl text-base leading-7 text-slate-700 dark:text-slate-300">
+            Các bài Nói bạn đã gửi được lưu trên hệ thống. Câu trắc nghiệm và bài Viết được lưu trên trình duyệt bạn
+            đang dùng, nên hãy tiếp tục trên chính trình duyệt này để không phải làm lại.
           </p>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              href="/diagnostic"
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-amber-600 px-5 text-sm font-extrabold text-white hover:bg-amber-700"
+          {confirmingRestart ? (
+            <div
+              role="alertdialog"
+              aria-labelledby="diagnostic-restart-title"
+              aria-describedby="diagnostic-restart-text"
+              className="mt-6 max-w-2xl rounded-xl bg-rose-50 p-5 dark:bg-rose-950/30"
             >
-              Tiếp tục bài đánh giá <ArrowRight size={16} />
-            </Link>
-          </div>
+              <p id="diagnostic-restart-title" className="text-base font-bold text-rose-900 dark:text-rose-200">
+                Làm lại bài đánh giá từ đầu?
+              </p>
+              <p id="diagnostic-restart-text" className="mt-1 text-sm leading-6 text-rose-900/90 dark:text-rose-200/90">
+                Câu trả lời và bài Nói của lượt này sẽ không được dùng nữa. Bạn sẽ bắt đầu lại từ câu 1.
+              </p>
+              {restart.isError && (
+                <p className="mt-2 text-sm font-semibold text-rose-700 dark:text-rose-300" role="alert">
+                  {learnerErrorMessage(restart.error)}
+                </p>
+              )}
+              <div className="mt-4 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => restart.mutate()}
+                  disabled={restart.isPending}
+                  className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-rose-600 px-5 text-sm font-extrabold text-white transition-colors hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {restart.isPending ? (
+                    <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                  ) : (
+                    <RotateCcw size={16} aria-hidden="true" />
+                  )}
+                  Xác nhận làm lại
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmingRestart(false)}
+                  disabled={restart.isPending}
+                  className="inline-flex min-h-11 items-center rounded-xl bg-white px-5 text-sm font-bold text-slate-800 transition-colors hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                >
+                  Giữ lượt đang làm
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <Link
+                href="/diagnostic"
+                className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-violet-600 px-6 text-sm font-extrabold text-white transition-colors hover:bg-violet-700"
+              >
+                Tiếp tục làm bài <ArrowRight size={16} aria-hidden="true" />
+              </Link>
+              <button
+                type="button"
+                onClick={() => setConfirmingRestart(true)}
+                className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-slate-300 bg-white px-6 text-sm font-bold text-slate-800 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                <RotateCcw size={16} aria-hidden="true" /> Làm lại từ đầu
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );

@@ -40,6 +40,12 @@ export interface PronunciationReportCardProps {
   phase: SpeakingAttemptPhase;
   submission: SpeakingSubmissionDetail | null;
   targetText: string;
+  /**
+   * False for a free answer (respond to a question, opinion, picture): it is
+   * assessed on what the learner said, so there is no completeness score and
+   * no per-word comparison against the prompt.
+   */
+  scripted?: boolean;
   userAudioUrl?: string | null;
   qualityWarning?: string | null;
   recordingSeconds?: number;
@@ -117,6 +123,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
   phase,
   submission,
   targetText,
+  scripted = true,
   userAudioUrl,
   qualityWarning,
   recordingSeconds = 0,
@@ -406,7 +413,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
           </button>
           <div className="text-center space-y-1">
             <p className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">
-              Nhấn vào Micro hoặc bấm phím <kbd className="px-2 py-0.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-mono text-xs font-black text-slate-800 dark:text-slate-200 shadow-2xs">Space</kbd> để bắt đầu đọc
+              Nhấn vào Micro hoặc bấm phím <kbd className="px-2 py-0.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-mono text-xs font-black text-slate-800 dark:text-slate-200 shadow-2xs">Space</kbd> để bắt đầu {scripted ? "đọc" : "trả lời"}
             </p>
             <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
               Chuẩn hóa 16kHz mono WAV • Tự động chấm điểm và đánh giá ngay khi dừng
@@ -460,7 +467,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
           </div>
 
           <p className="font-bold text-xs text-rose-600 text-center">
-            Đang thu âm giọng đọc... Bấm nút đỏ hoặc phím [Space] để dừng &amp; chấm điểm tức thì
+            Đang thu âm {scripted ? "giọng đọc" : "câu trả lời"}... Bấm nút đỏ hoặc phím [Space] để dừng &amp; chấm điểm tức thì
           </p>
         </div>
       )}
@@ -788,7 +795,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
       {/* 4. 4-DIMENSION METRIC DASHBOARD & RHYTHM GUIDANCE */}
       <div className="space-y-3">
         {/* Row A: 3 Provider-Backed Numeric Dimension Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className={`grid grid-cols-1 gap-3 ${scripted ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
           {/* Dimension 1: Độ chính xác (Accuracy) */}
           <div className="rounded-2xl bg-white dark:bg-slate-850 p-4 border border-slate-200/90 dark:border-slate-800 flex flex-col items-center justify-between text-center shadow-xs">
             <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
@@ -832,6 +839,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
           </div>
 
           {/* Dimension 3: Độ hoàn thiện (Completeness) */}
+          {scripted && (
           <div className="rounded-2xl bg-white dark:bg-slate-850 p-4 border border-slate-200/90 dark:border-slate-800 flex flex-col items-center justify-between text-center shadow-xs">
             <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Độ hoàn thiện (Completeness)
@@ -851,9 +859,11 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
                 : "Đọc đủ từng từ"}
             </span>
           </div>
+          )}
         </div>
 
         {/* Row B: Dedicated Rhythm Guidance Card (Full width, clear legible typography) */}
+        {scripted && (
         <div className="rounded-2xl border border-amber-200/90 dark:border-amber-900/60 bg-gradient-to-r from-amber-50/90 via-amber-50/60 to-orange-50/40 dark:from-amber-950/40 dark:via-amber-950/20 dark:to-orange-950/30 p-4 sm:p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 shadow-xs">
           <div className="flex items-start sm:items-center gap-3.5 min-w-0">
             <div className="size-11 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
@@ -884,6 +894,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
             <span>Nghe nhịp mẫu</span>
           </button>
         </div>
+        )}
       </div>
 
       {/* 5. BOTTOM DIAGNOSTIC DECK: Word-Level Assessment */}
@@ -892,15 +903,21 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
             <span className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
               <Activity size={18} className="text-amber-700 dark:text-amber-400" />
-              <span>Đánh giá theo từng từ</span>
+              <span>{scripted ? "Đánh giá theo từng từ" : "Hệ thống nghe được"}</span>
             </span>
-            <span className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400">
-              Nhấp vào từ để xem chi tiết và tra từ điển
-            </span>
+            {scripted && (
+              <span className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400">
+                Nhấp vào từ để xem chi tiết và tra từ điển
+              </span>
+            )}
           </div>
 
           {/* Word-level diagnostic badges */}
-          {wordsList && wordsList.length > 0 ? (
+          {!scripted ? (
+            <p className="text-sm sm:text-base leading-relaxed text-slate-800 dark:text-slate-200">
+              {feedback?.transcript ? `"${feedback.transcript}"` : "Không có bản ghi chữ."}
+            </p>
+          ) : wordsList && wordsList.length > 0 ? (
             <div className="flex flex-wrap gap-2 py-1">
               {wordsList.map((item, idx) => {
                 const isSelected = selectedWordIndex === idx;
@@ -1017,7 +1034,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
               className="flex-1 py-3 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-200 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shadow-xs hover:shadow-sm"
             >
               <RotateCcw size={16} />
-              <span>Thử đọc lại</span>
+              <span>{scripted ? "Thử đọc lại" : "Trả lời lại"}</span>
             </button>
 
             {onNextExercise && (
@@ -1032,7 +1049,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
             )}
           </div>
         </div>
-      ) : (
+      ) : scripted ? (
         /* READY / RECORDING Phase: Key words for pronunciation practice */
         <div className="rounded-2xl bg-slate-50/80 dark:bg-slate-850 p-3 border border-slate-200/80 dark:border-slate-800 space-y-2">
           <div className="flex items-center justify-between gap-2">
@@ -1061,7 +1078,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
             ))}
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

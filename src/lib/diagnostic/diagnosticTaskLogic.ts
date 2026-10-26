@@ -139,6 +139,64 @@ export function countSkippedTasks(questions: DiagnosticTaskQuestion[], answers: 
 }
 
 /**
+ * The passage span a Reading question points at, for bolding it.
+ *
+ * Deterministic and conservative: only a phrase the question quotes is
+ * considered, and only when it can be placed exactly once.
+ *   - `"X" in "Y"` (e.g. "it" in "it feels worse"): Y must occur once in the
+ *     passage; X is the first occurrence inside it.
+ *   - `"X"`: X must occur once in the passage (whole words, any case).
+ * Anything ambiguous returns null. Answer options are never consulted.
+ */
+export function findReferenceHighlight(
+  question: string,
+  passage: string,
+): { start: number; end: number } | null {
+  const quoted = [...question.matchAll(/["“”']([^"“”']{1,80})["“”']/g)].map((m) => m[1].trim()).filter(Boolean);
+  if (!quoted.length) return null;
+  const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const occurrences = (needle: string, hay: string) =>
+    [...hay.matchAll(new RegExp(`(?<![A-Za-z])${escape(needle)}(?![A-Za-z])`, "gi"))].map((m) => m.index as number);
+
+  if (quoted.length >= 2) {
+    const [target, context] = quoted;
+    const at = occurrences(context, passage);
+    if (at.length !== 1) return null;
+    const inner = occurrences(target, passage.slice(at[0], at[0] + context.length));
+    if (!inner.length) return null;
+    const start = at[0] + inner[0];
+    return { start, end: start + target.length };
+  }
+  const at = occurrences(quoted[0], passage);
+  if (at.length !== 1) return null;
+  return { start: at[0], end: at[0] + quoted[0].length };
+}
+
+/**
+ * A learner-facing message for a failed Speaking/Writing request. Raw
+ * transport text ("Request failed with status code 400") is never shown.
+ */
+export function learnerErrorMessage(error: unknown): string {
+  const e = error as { response?: { status?: number; data?: { message?: unknown } }; code?: string; message?: string };
+  if (e?.message === "MIC_DENIED") return "Chưa được cấp quyền sử dụng micro. Hãy kiểm tra quyền truy cập và thử lại.";
+  if (e?.message === "MIC_UNAVAILABLE") return "Không thể dùng micro trên thiết bị này. Hãy kiểm tra micro và thử lại.";
+  if (e?.message === "EMPTY_RECORDING") return "Không thể sử dụng bản ghi này. Vui lòng ghi âm lại.";
+  const status = e?.response?.status;
+  const raw = e?.response?.data?.message;
+  const text = Array.isArray(raw) ? raw.join(" ") : typeof raw === "string" ? raw : "";
+  if (!e?.response) return "Không thể tải bản ghi âm lên. Kiểm tra kết nối và thử lại.";
+  if (status === 429) return "Có quá nhiều yêu cầu. Vui lòng thử lại sau.";
+  if (status === 503 || status === 502) return "Dịch vụ chấm bài đang tạm thời gián đoạn. Bạn có thể thử lại sau.";
+  if (status === 400) {
+    if (/Thời lượng|ngắn|dài/i.test(text)) return "Không thể xác nhận bản ghi âm. Vui lòng ghi âm lại.";
+    if (/rỗng|Định dạng|Không đọc được|10MB/i.test(text)) return "Không thể sử dụng bản ghi này. Vui lòng ghi âm lại.";
+    if (/hoàn tất/i.test(text)) return "Bài đánh giá đã được nộp nên không thể thay đổi phần này.";
+  }
+  if (status === 401 || status === 403) return "Phiên làm bài không còn hợp lệ. Hãy tải lại trang và đăng nhập lại.";
+  return "Không thể lưu bản ghi âm. Vui lòng thử lại.";
+}
+
+/**
  * Local draft of an unfinished attempt (objective choices and Writing text),
  * so returning to the attempt does not lose them. Speaking is not kept here:
  * its recordings are stored on the server. Storage failures are ignored.
