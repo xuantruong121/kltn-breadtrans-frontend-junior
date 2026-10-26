@@ -14,6 +14,8 @@ export interface SpeakingExercise {
     | null;
   imageUrl?: string;
   audioUrl?: string;
+  /** British English twin of the reference clip, when one exists. */
+  audioUrlUk?: string | null;
   difficulty: string;
   order?: number | null;
   category: string;

@@ -40,6 +40,7 @@ import {
   formatSpeakingTime,
   shouldHandleSpeakingShortcut,
   getNextExerciseId,
+  getPreviousExerciseId,
 } from "@/lib/speaking/speakingPracticeLogic";
 import { getSpeakingFailureMessage } from "@/lib/speaking/speakingRecoveryLogic";
 import {
@@ -59,6 +60,7 @@ import {
   findPreviousCompletedAttempt,
   resolveSpeakingMode,
   scoreDelta,
+  formatSpeakingScore,
 } from "@/lib/speaking/speakingExperienceLogic";
 import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
 import { ReportIssueButton } from "@/components/issue-report";
@@ -324,6 +326,10 @@ export default function SpeakingExerciseDetailPage() {
     enabled: !!exerciseId,
   });
 
+  // UK plays the British twin when the exercise has one, otherwise the US clip.
+  const referenceAudioUrl =
+    (ttsAccent === "UK" ? exercise?.audioUrlUk : null) ?? exercise?.audioUrl ?? null;
+
   const { data: allExercises } = useQuery({
     queryKey: ["speaking-exercises"],
     queryFn: () => speakingService.getExercises(),
@@ -372,6 +378,19 @@ export default function SpeakingExerciseDetailPage() {
     ? (exercise?.order ??
       practiceSetExercises.findIndex((item) => item.id === exerciseId) + 1)
     : 0;
+
+  // Same order as "Câu tiếp theo": the exam's task list, the practice set, or the catalog.
+  // Same order as "Câu tiếp theo": the exam's task list, the practice set, or the catalog.
+  const examExerciseIdsParam = searchParams.get("examExerciseIds") ?? "";
+  const previousExerciseId = useMemo(() => {
+    const examIds = examExerciseIdsParam
+      .split(",")
+      .map(Number)
+      .filter((value) => Number.isInteger(value) && value > 0);
+    return examIds.length
+      ? getPreviousExerciseId(exerciseId, examIds.map((id) => ({ id })))
+      : getPreviousExerciseId(exerciseId, orderedExercises);
+  }, [examExerciseIdsParam, exerciseId, orderedExercises]);
 
   const isNextAvailable = useMemo(() => {
     if (!orderedExercises.length || !exerciseId) return false;
@@ -1204,8 +1223,9 @@ export default function SpeakingExerciseDetailPage() {
   );
 
   /**
-   * Stops and validates the local recording without spending provider quota.
-   * Submission is an explicit second action after playback preview.
+   * Stops and validates the local recording, then submits it for grading
+   * right away. An invalid recording is refused locally and costs no quota;
+   * the learner re-records from the result or the error state.
    */
   const prepareRecording = useCallback(async () => {
     if (stopInFlightRef.current) return;
@@ -1282,13 +1302,12 @@ export default function SpeakingExerciseDetailPage() {
     setAudioBlob(wavBlob);
     setAudioUrl(newLocalUrl);
 
-    // Keep the validated recording local until the learner explicitly submits.
     const idempotencyKey = generateSpeakingIdempotencyKey(exerciseId);
     attemptIdempotencyKeyRef.current = idempotencyKey;
 
-    setPhase("READY");
-    toast.success("Bản ghi đã sẵn sàng. Hãy nghe lại trước khi gửi đánh giá.");
-  }, [audioUrl, exerciseId, releaseMediaStream]);
+    // submitRecordedBlob resets stopInFlightRef when it settles.
+    await submitRecordedBlob(wavBlob, idempotencyKey);
+  }, [audioUrl, exerciseId, releaseMediaStream, submitRecordedBlob]);
 
   const submitPreparedRecording = useCallback(async () => {
     if (!audioBlob || !attemptIdempotencyKeyRef.current) return;
@@ -1296,7 +1315,7 @@ export default function SpeakingExerciseDetailPage() {
   }, [audioBlob, submitRecordedBlob]);
 
   /**
-   * Stops recording and opens the local playback preview.
+   * Stops recording and submits it for grading.
    */
   const stopRecording = useCallback(() => {
     if (phase === "RECORDING") {
@@ -1367,9 +1386,14 @@ export default function SpeakingExerciseDetailPage() {
     attemptIdempotencyKeyRef.current = null;
     stopInFlightRef.current = false;
     submissionInFlightRef.current = false;
+    // A reload must not resume the attempt the learner chose to leave; it
+    // still finishes on the server and appears in the history.
+    try {
+      sessionStorage.removeItem(`breadtrans:speaking:pending:${exerciseId}`);
+    } catch {}
 
     setPhase("READY");
-  }, [audioUrl]);
+  }, [audioUrl, exerciseId]);
 
   /**
    * Action 2: "Thử lại với bản ghi này" (for FAILED phase, reuses same Idempotency-Key)
@@ -1446,7 +1470,7 @@ export default function SpeakingExerciseDetailPage() {
 
   /** Play only approved exercise media; never synthesize reference audio at runtime. */
   const handleTogglePlayTTS = async () => {
-    const source = exercise?.audioUrl;
+    const source = referenceAudioUrl;
     if (!source) return;
 
     if (isPlayingTTS) {
@@ -1454,7 +1478,9 @@ export default function SpeakingExerciseDetailPage() {
       return;
     }
 
-    const audio = referenceAudioRef.current ?? new Audio(source);
+    // The accent can change between plays; reuse the element only for the same clip.
+    const cached = referenceAudioRef.current;
+    const audio = cached && cached.src === source ? cached : new Audio(source);
     referenceAudioRef.current = audio;
     audio.preload = "auto";
     audio.playbackRate = Number(ttsRate);
@@ -1761,7 +1787,7 @@ export default function SpeakingExerciseDetailPage() {
       mode={speakingMode.label}
       variant="immersive"
     >
-      <div className="w-full min-h-dvh flex flex-col bg-white dark:bg-slate-950 font-sans">
+      <div className="w-full h-dvh overflow-hidden flex flex-col bg-white dark:bg-slate-950 font-sans">
         <PracticeHeader
           title={activePracticeSet?.title ?? exercise.title}
           category={exercise.categoryLabel ?? exercise.category}
@@ -2065,7 +2091,7 @@ export default function SpeakingExerciseDetailPage() {
                       để nói
                     </p>
                     <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-semibold">
-                      Sau khi dừng, bạn có thể nghe lại trước khi gửi đánh giá
+                      Bấm dừng là bài được chấm ngay. Bạn có thể ghi âm lại sau khi có kết quả
                     </p>
                   </div>
                 </div>
@@ -2127,7 +2153,7 @@ export default function SpeakingExerciseDetailPage() {
                       onClick={stopRecording}
                       className="size-16 sm:size-20 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center border border-rose-700/20 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 transition-all cursor-pointer active:scale-95 group"
                       title="Dừng ghi âm (Phím Space / R)"
-                      aria-label="Dừng ghi âm để nghe lại"
+                      aria-label="Dừng ghi âm và chấm điểm"
                     >
                       <StopCircle
                         size={30}
@@ -2147,8 +2173,8 @@ export default function SpeakingExerciseDetailPage() {
                   </div>
 
                   <p className="font-bold text-xs sm:text-sm text-rose-600 text-center">
-                    Đang thu âm... Bấm nút đỏ hoặc nhấn [Space] để hoàn tất và
-                    nghe lại
+                    Đang thu âm... Bấm nút đỏ hoặc nhấn [Space] để dừng và chấm
+                    điểm
                   </p>
                 </div>
               )}
@@ -2214,9 +2240,9 @@ export default function SpeakingExerciseDetailPage() {
           </main>
         ) : (
           /* STAGE 2: 1:1 COMPARATIVE ANALYSIS STUDIO (50/50 Split Canvas) */
-          <main className="flex-1 w-full grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-slate-800 overflow-hidden min-h-0 transition-all duration-500">
+          <main className="flex-1 w-full grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-slate-800 overflow-y-auto lg:overflow-hidden min-h-0 transition-all duration-500">
             {/* Left Panel: Target Text & Context Canvas */}
-            <section className="w-full h-full p-5 sm:p-6 lg:p-7 flex flex-col justify-between overflow-y-auto bg-white dark:bg-slate-900 min-h-0">
+            <section className="w-full lg:h-full p-5 sm:p-6 lg:p-7 flex flex-col justify-between lg:overflow-y-auto bg-white dark:bg-slate-900 lg:min-h-0">
               <div className="flex-1 flex flex-col min-h-0">
                 {/* Instruction Header */}
                 <div className="flex items-center justify-between gap-2 mb-3 shrink-0">
@@ -2411,7 +2437,7 @@ export default function SpeakingExerciseDetailPage() {
             </section>
 
             {/* Right Panel: Unified Assessment Studio */}
-            <section className="w-full h-full p-4 sm:p-5 lg:p-6 flex flex-col justify-between overflow-y-auto bg-slate-50/40 min-h-0">
+            <section className="w-full lg:h-full p-4 sm:p-5 lg:p-6 flex flex-col justify-between lg:overflow-y-auto bg-slate-50/40 lg:min-h-0">
               <PronunciationReportCard
                 phase={phase}
                 submission={currentSubmission}
@@ -2434,6 +2460,7 @@ export default function SpeakingExerciseDetailPage() {
                 onPlaySample={handlePlayIsolatedWordSample}
                 ttsAccent={ttsAccent}
                 ttsRate={ttsRate}
+                referenceAudioUrl={referenceAudioUrl}
                 isNextAvailable={isNextAvailable}
                 isProlongedProcessing={isProlongedProcessing}
               />
@@ -2450,7 +2477,7 @@ export default function SpeakingExerciseDetailPage() {
                           Lần trước
                         </p>
                         <p className="text-xl font-black text-slate-700 dark:text-slate-200">
-                          {Math.round(previousAttempt.overallScore ?? 0)}
+                          {formatSpeakingScore(previousAttempt.overallScore)}
                         </p>
                       </div>
                       <div>
@@ -2458,7 +2485,7 @@ export default function SpeakingExerciseDetailPage() {
                           Lần này
                         </p>
                         <p className="text-xl font-black text-violet-700 dark:text-violet-300">
-                          {Math.round(currentSubmission.overallScore)}
+                          {formatSpeakingScore(currentSubmission.overallScore)}
                         </p>
                       </div>
                       <div>
@@ -2474,9 +2501,11 @@ export default function SpeakingExerciseDetailPage() {
                           ) ?? 0) > 0
                             ? "+"
                             : ""}
-                          {scoreDelta(
-                            currentSubmission.overallScore,
-                            previousAttempt.overallScore,
+                          {formatSpeakingScore(
+                            scoreDelta(
+                              currentSubmission.overallScore,
+                              previousAttempt.overallScore,
+                            ),
                           )}
                         </p>
                       </div>
@@ -2562,6 +2591,26 @@ export default function SpeakingExerciseDetailPage() {
 
           {/* Right Navigation Dock */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {previousExerciseId && (
+              <button
+                type="button"
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  if (practiceSetKey) params.set("set", practiceSetKey);
+                  if (examParentContext) {
+                    params.set("parentAttemptId", String(examParentContext.attemptId));
+                    params.set("parentComponentId", String(examParentContext.componentId));
+                    params.set("examExerciseIds", examExerciseIds.join(","));
+                  }
+                  const query = params.toString() ? `?${params.toString()}` : "";
+                  router.push(`/speaking/${previousExerciseId}${query}`);
+                }}
+                disabled={phase === "RECORDING" || isAnalyzing}
+                className="px-3.5 py-1.5 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 cursor-pointer transition-colors text-xs sm:text-sm inline-flex items-center gap-1 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <ArrowLeft size={14} aria-hidden="true" /> Câu trước
+              </button>
+            )}
             <button
               type="button"
               onClick={() => confirmExit(courseReturn)}
@@ -2632,7 +2681,7 @@ export default function SpeakingExerciseDetailPage() {
                   className="px-4 sm:px-5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1.5 text-xs sm:text-sm animate-pulse"
                 >
                   <StopCircle size={15} aria-hidden="true" />
-                  <span>Dừng &amp; nghe lại</span>
+                  <span>Dừng &amp; chấm điểm</span>
                   <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-rose-700 font-mono text-[10px] text-white">
                     Space
                   </kbd>
@@ -2646,11 +2695,7 @@ export default function SpeakingExerciseDetailPage() {
                   className="px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 transition-all shadow-xs hover:shadow-sm active:scale-95 cursor-pointer"
                 >
                   <RotateCcw size={14} aria-hidden="true" />
-                  <span>
-                    {["READ_ALOUD", "PRONUNCIATION_DRILL"].includes(String(exercise.taskType ?? "READ_ALOUD"))
-                      ? "Thử đọc lại"
-                      : "Trả lời lại"}
-                  </span>
+                  <span>Ghi âm lại</span>
                 </button>
 
                 <button

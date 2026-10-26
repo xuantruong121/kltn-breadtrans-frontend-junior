@@ -26,7 +26,6 @@ import {
   Pause,
   BookOpen,
   CheckCircle2,
-  ArrowRight,
   RotateCcw,
   Headphones,
   Mic,
@@ -46,6 +45,8 @@ export interface PronunciationReportCardProps {
    * no per-word comparison against the prompt.
    */
   scripted?: boolean;
+  /** The exercise's approved reference clip for the selected accent. */
+  referenceAudioUrl?: string | null;
   userAudioUrl?: string | null;
   qualityWarning?: string | null;
   recordingSeconds?: number;
@@ -124,6 +125,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
   submission,
   targetText,
   scripted = true,
+  referenceAudioUrl,
   userAudioUrl,
   qualityWarning,
   recordingSeconds = 0,
@@ -134,12 +136,10 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
   onRetryRecord,
   onRetrySubmit,
   isPreviewReady = false,
-  onNextExercise,
   onSelectWord,
   onPlaySample,
   ttsAccent = "US",
   ttsRate = 1.0,
-  isNextAvailable = true,
   isProlongedProcessing = false,
   uploadProgress = 0,
 }) => {
@@ -184,10 +184,25 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
     return Array.from(new Set(tokens)).slice(0, 5);
   }, [targetText]);
 
+  // Which accent/clip the cached reference track belongs to.
+  const nativeTrackKeyRef = useRef<string | null>(null);
+
   // Fetch or generate native TTS audio
   const getOrFetchNativeAudio = useCallback(async (): Promise<HTMLAudioElement | null> => {
-    if (nativeAudioRef.current && nativeSrc) {
+    const trackKey = `${ttsAccent}|${referenceAudioUrl ?? ""}`;
+    if (nativeAudioRef.current && nativeSrc && nativeTrackKeyRef.current === trackKey) {
       return nativeAudioRef.current;
+    }
+    nativeAudioRef.current?.pause();
+    nativeTrackKeyRef.current = trackKey;
+    if (referenceAudioUrl) {
+      const audio = new Audio(referenceAudioUrl);
+      audio.playbackRate = Number(ttsRate);
+      audio.onloadedmetadata = () => setNativeDuration(audio.duration || 0);
+      audio.ontimeupdate = () => setNativeCurrentTime(audio.currentTime);
+      nativeAudioRef.current = audio;
+      setNativeSrc(referenceAudioUrl);
+      return audio;
     }
     try {
       setIsLoadingNative(true);
@@ -212,7 +227,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
       setIsLoadingNative(false);
       return null;
     }
-  }, [targetText, ttsAccent, ttsRate, nativeSrc]);
+  }, [targetText, ttsAccent, ttsRate, nativeSrc, referenceAudioUrl]);
 
   // Handle single track playback for Native audio
   const handleTogglePlayNative = async () => {
@@ -348,7 +363,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
       : null;
 
   return (
-    <div className="h-full flex-1 flex flex-col justify-between space-y-3.5 rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs animate-in fade-in duration-300 min-h-0 overflow-y-auto">
+    <div className="lg:h-full flex-1 flex flex-col justify-between space-y-3.5 rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs animate-in fade-in duration-300 lg:min-h-0 lg:overflow-y-auto">
       {/* Hidden audio element for learner recording */}
       {activeLearnerSrc && (
         <audio
@@ -514,6 +529,15 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
                 ? "AI đang tiến hành phân tích phát âm và chuẩn bị báo cáo..."
                 : "Đang chuẩn hóa định dạng 16kHz mono WAV..."}
             </p>
+            {isProlongedProcessing && phase === "POLLING" && (
+              <button
+                type="button"
+                onClick={onRetryRecord}
+                className="mt-2 inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 text-sm font-bold text-slate-800 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              >
+                <RotateCcw size={14} aria-hidden="true" /> Ghi âm lại
+              </button>
+            )}
             {phase === "UPLOADING" && uploadProgress > 0 && (
               <div className="w-48 h-1.5 bg-amber-200 rounded-full mx-auto overflow-hidden mt-2">
                 <div
@@ -884,15 +908,6 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleTogglePlayNative}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-amber-100/80 dark:hover:bg-slate-700 border border-amber-200 dark:border-amber-800 text-xs sm:text-sm font-extrabold text-amber-900 dark:text-amber-300 transition-all shadow-2xs cursor-pointer active:scale-95 shrink-0 self-start sm:self-auto"
-            title="Nghe lại audio mẫu để cảm nhận nhịp điệu"
-          >
-            <Volume2 size={15} className="text-amber-700 dark:text-amber-400" />
-            <span>Nghe nhịp mẫu</span>
-          </button>
         </div>
         )}
       </div>
@@ -1025,29 +1040,6 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
               </ul>
             </div>
           )}
-
-          {/* Result Actions: [ ↺ Thử đọc lại ] and [ Bài tiếp theo → ] */}
-          <div className="pt-3 border-t border-slate-200/80 dark:border-slate-800 flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onRetryRecord}
-              className="flex-1 py-3 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-200 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shadow-xs hover:shadow-sm"
-            >
-              <RotateCcw size={16} />
-              <span>{scripted ? "Thử đọc lại" : "Trả lời lại"}</span>
-            </button>
-
-            {onNextExercise && (
-              <button
-                type="button"
-                onClick={onNextExercise}
-                className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 font-extrabold text-sm sm:text-base text-white flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shadow-xs hover:shadow-sm"
-              >
-                <span>{isNextAvailable ? "Bài tiếp theo" : "Về danh sách"}</span>
-                <ArrowRight size={16} />
-              </button>
-            )}
-          </div>
         </div>
       ) : scripted ? (
         /* READY / RECORDING Phase: Key words for pronunciation practice */

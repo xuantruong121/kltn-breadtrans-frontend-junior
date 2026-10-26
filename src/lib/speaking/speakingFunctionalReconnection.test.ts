@@ -28,7 +28,13 @@ test("dictionary pronunciation preserves the selected playback rate", () => {
 
 test("speaking does not reintroduce runtime TTS for sentence reference audio", () => {
   assert.doesNotMatch(speakingPage, /speakingService\.generateTts\(/);
-  assert.match(speakingPage, /const source = exercise\?\.audioUrl/);
+  // Reference audio is only the exercise's approved media: its US clip or the
+  // published British twin.
+  assert.match(speakingPage, /const source = referenceAudioUrl;/);
+  assert.match(
+    speakingPage,
+    /\(ttsAccent === "UK" \? exercise\?\.audioUrlUk : null\) \?\? exercise\?\.audioUrl \?\? null/,
+  );
 });
 
 test("sentence words remain connected to normalized dictionary lookup", () => {

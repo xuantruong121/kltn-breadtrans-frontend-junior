@@ -19,6 +19,7 @@ import {
   formatSpeakingTime,
   shouldHandleSpeakingShortcut,
   getNextExerciseId,
+  getPreviousExerciseId,
   classifyWordAssessmentStatus,
   getTruthfulScoreDimensions,
   getSequentialPlaybackNextTrack,
@@ -276,6 +277,9 @@ test("Next Exercise Traversal: traverses exercises in sequential order", () => {
   assert.equal(getNextExerciseId(15, exercises), 22);
   assert.equal(getNextExerciseId(22, exercises), null, "Last exercise has no next exercise");
   assert.equal(getNextExerciseId(999, exercises), null, "Unknown exercise returns null");
+  assert.equal(getPreviousExerciseId(22, exercises), 15);
+  assert.equal(getPreviousExerciseId(10, exercises), null, "First exercise has no previous one");
+  assert.equal(getPreviousExerciseId(999, exercises), null);
 });
 
 test("Time Formatter: formats seconds into MM:SS correctly", () => {

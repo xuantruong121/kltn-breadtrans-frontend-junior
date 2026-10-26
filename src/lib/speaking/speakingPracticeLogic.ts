@@ -414,6 +414,15 @@ export function getNextExerciseId(
   return null;
 }
 
+export function getPreviousExerciseId(
+  currentId: number,
+  exercises: Array<{ id: number }>,
+): number | null {
+  if (!Array.isArray(exercises) || exercises.length === 0) return null;
+  const currentIndex = exercises.findIndex((e) => e.id === currentId);
+  return currentIndex > 0 ? exercises[currentIndex - 1].id : null;
+}
+
 export type WordAssessmentStatus =
   | "CORRECT"
   | "NEEDS_IMPROVEMENT"

@@ -110,5 +110,12 @@ export function findPreviousCompletedAttempt(
 
 export function scoreDelta(current?: number | null, previous?: number | null): number | null {
   if (!Number.isFinite(current) || !Number.isFinite(previous)) return null;
-  return Math.round((current as number) - (previous as number));
+  // Scores are on a 0-10 scale with one decimal; keep that precision so the
+  // change matches the two scores shown beside it.
+  return Math.round(((current as number) - (previous as number)) * 10) / 10;
+}
+
+/** A 0-10 practice score as shown to the learner: one decimal. */
+export function formatSpeakingScore(score?: number | null): string {
+  return Number.isFinite(score) ? (score as number).toFixed(1) : "—";
 }

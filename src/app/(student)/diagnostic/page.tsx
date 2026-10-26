@@ -205,6 +205,19 @@ export default function DiagnosticPage() {
     return () => setFocusMode(false);
   }, [started, setFocusMode]);
 
+  // Fullscreen belongs to taking the test. Whatever path leads out of it
+  // (submit, result reload, leaving the page), the browser leaves it too.
+  useEffect(() => {
+    if (!started && document.fullscreenElement)
+      void document.exitFullscreen?.().catch(() => undefined);
+  }, [started]);
+  useEffect(
+    () => () => {
+      if (document.fullscreenElement) void document.exitFullscreen?.().catch(() => undefined);
+    },
+    [],
+  );
+
   const submit = useMutation({
     mutationFn: () =>
       diagnosticService.submit(
@@ -257,7 +270,9 @@ export default function DiagnosticPage() {
         durationMs,
       );
     },
-    // The learner stays on the task to listen back or record again.
+    // Once the recording is accepted the learner moves on to the next task.
+    // Grading continues on the server; the navigator lets them come back to
+    // record again. The last task does not submit the whole test by itself.
     onSuccess: (response, variables) => {
       setAnswers((current) => ({
         ...current,
@@ -270,6 +285,9 @@ export default function DiagnosticPage() {
           ? "Đã nhận bản ghi nhưng chưa chấm được. Bạn có thể chấm lại ở trang kết quả."
           : "Đã nhận bản ghi. Bài nói đang được chấm.",
       );
+      const index = assessment?.questions.findIndex((q) => q.id === variables.questionId) ?? -1;
+      if (assessment && index >= 0 && index < assessment.questions.length - 1)
+        setStep((current) => (current === index ? index + 1 : current));
     },
     onError: (error) => {
       console.error("[diagnostic] speaking confirm failed", error);
@@ -485,7 +503,7 @@ export default function DiagnosticPage() {
   // If completed, always render the saved result view
   const hasCompleted = !!result || assessment.hasCompleted;
   if (hasCompleted && result) {
-    return <DiagnosticResultView assessment={assessment} result={result} />;
+    return <DiagnosticResultView assessment={assessment} result={result} onBack={goBack} />;
   }
 
   // Not started yet
@@ -963,9 +981,11 @@ export default function DiagnosticPage() {
 function DiagnosticResultView({
   assessment,
   result,
+  onBack,
 }: {
   assessment: DiagnosticAssessment;
   result: DiagnosticResult;
+  onBack: () => void;
 }) {
   const queryClient = useQueryClient();
   const [reviewFilter, setReviewFilter] = useState<string>("ALL");
@@ -983,7 +1003,6 @@ function DiagnosticResultView({
   });
 
   const fourSkill = result.fourSkill ?? null;
-  const totalTasks = result.administeredForm?.totalItems ?? result.totalTaskCount ?? assessment.questions.length;
   const speakingTaskIds = assessment.questions.filter(isSpeakingTask).map((q) => q.id);
   const writingTaskIds = assessment.questions.filter(isWritingTask).map((q) => q.id);
 
@@ -1013,15 +1032,20 @@ function DiagnosticResultView({
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <button
+        type="button"
+        onClick={onBack}
+        className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-base font-bold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-violet-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+      >
+        <ArrowLeft size={18} strokeWidth={2.25} aria-hidden="true" />
+        <span>Quay lại</span>
+      </button>
       {/* 1. Header Card: what was administered and how it was scored */}
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-9">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-sm font-black text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
             <CheckCircle2 size={15} />
             <span>Đã hoàn thành đánh giá đầu vào</span>
-          </span>
-          <span className="text-xs font-bold text-slate-400">
-            Tổng cộng: {totalTasks} nhiệm vụ
           </span>
         </div>
 
@@ -1034,14 +1058,14 @@ function DiagnosticResultView({
             </h1>
 
             <div className="mt-3 rounded-2xl border border-slate-100 bg-slate-50 p-4.5 dark:border-slate-800 dark:bg-slate-850">
-              <p className="text-sm font-extrabold text-slate-800 dark:text-slate-200">
+              <p className="text-base font-extrabold text-slate-800 dark:text-slate-200">
                 Phần trắc nghiệm khách quan:{" "}
                 <span className="text-emerald-600 dark:text-emerald-400">
                   {result.correctCount}/{result.totalCount} câu đúng
                 </span>{" "}
                 ({result.percentage}%)
               </p>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 leading-5">
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 leading-6">
                 Mức tham khảo được tính từ {result.totalCount} câu trắc nghiệm khách quan.
                 {speakingTaskIds.length + writingTaskIds.length > 0
                   ? " Các bài Nói và Viết được nhận xét riêng để gợi ý luyện tập; chúng không thay đổi mức này."
@@ -1054,13 +1078,13 @@ function DiagnosticResultView({
         {/* Speaking feedback, one card per task */}
         {speakingTaskIds.length > 0 && (
           <div className="mt-6 space-y-3">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
               Bài Nói
             </h3>
             {speakingTaskIds.map((questionId, index) => {
               const item = result.speakingResponses?.find((row) => row.questionId === questionId);
               return (
-                <article key={questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-900">
+                <article key={questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-base dark:border-slate-700 dark:bg-slate-900">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <h4 className="font-black text-slate-900 dark:text-slate-100">Bài Nói {index + 1}</h4>
                     <TaskStatusChip status={item?.status} score={item?.score ?? null} />
@@ -1073,16 +1097,16 @@ function DiagnosticResultView({
                     </>
                   )}
                   {item?.status === "SKIPPED" && (
-                    <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-400">
+                    <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
                       Bạn đã bỏ qua bài này nên bài không được chấm; kỹ năng Nói không có điểm và không bị tính là 0.
                     </p>
                   )}
                   {item?.status === "GRADING_FAILED" && (
                     <>
-                      <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-400">
+                      <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
                         Bản ghi của bạn vẫn được lưu nhưng chưa chấm được. Kỹ năng Nói chưa có điểm cho tới khi chấm lại thành công.
                       </p>
-                      <button type="button" onClick={() => retrySpeaking.mutate(questionId)} disabled={retrySpeaking.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-violet-300 px-3 text-xs font-bold text-violet-700 transition hover:bg-violet-50 disabled:opacity-50 dark:border-violet-800 dark:text-violet-300"><RotateCcw size={14} /> Chấm lại</button>
+                      <button type="button" onClick={() => retrySpeaking.mutate(questionId)} disabled={retrySpeaking.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-violet-300 px-3 text-sm font-bold text-violet-700 transition hover:bg-violet-50 disabled:opacity-50 dark:border-violet-800 dark:text-violet-300"><RotateCcw size={14} /> Chấm lại</button>
                     </>
                   )}
                 </article>
@@ -1094,7 +1118,7 @@ function DiagnosticResultView({
         {/* Writing feedback, one card per task */}
         {writingTaskIds.length > 0 && (
           <div className="mt-6 space-y-3">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
               Bài Viết
             </h3>
             {writingTaskIds.map((questionId, index) => {
@@ -1103,31 +1127,31 @@ function DiagnosticResultView({
                 !item && result.questionsResult.find((row) => row.questionId === questionId)?.selectedText === "";
               if (!item)
                 return (
-                  <article key={questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-900">
+                  <article key={questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-base dark:border-slate-700 dark:bg-slate-900">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <h4 className="font-black text-slate-900 dark:text-slate-100">Bài Viết {index + 1}</h4>
                       <TaskStatusChip status={skipped ? "SKIPPED" : undefined} score={null} />
                     </div>
                     {skipped && (
-                      <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-400">
+                      <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
                         Bạn đã bỏ qua bài này nên bài không được chấm; kỹ năng Viết không có điểm và không bị tính là 0.
                       </p>
                     )}
                   </article>
                 );
               return (
-              <article key={item.questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-900">
+              <article key={item.questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-base dark:border-slate-700 dark:bg-slate-900">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h4 className="font-black text-slate-900 dark:text-slate-100">Bài Viết {index + 1}</h4>
                   <TaskStatusChip status={item.status} score={item.score} />
                 </div>
                 {typeof item.wordCount === "number" && (
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{item.wordCount} từ</p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{item.wordCount} từ</p>
                 )}
                 {item.status === "GRADED" && <CriteriaList criteria={item.criteria} feedback={item.criterionFeedback} />}
                 {item.feedback && <p className="mt-2 leading-6 text-slate-700 dark:text-slate-300">{item.feedback}</p>}
                 {item.suggestions.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-600 dark:text-slate-400">{item.suggestions.map((suggestion) => <li key={suggestion}>{suggestion}</li>)}</ul>}
-                {item.status === "GRADING_FAILED" && <button type="button" onClick={() => retryWriting.mutate(item.questionId)} disabled={retryWriting.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-violet-300 px-3 text-xs font-bold text-violet-700 transition hover:bg-violet-50 disabled:opacity-50 dark:border-violet-800 dark:text-violet-300"><RotateCcw size={14} /> Chấm lại</button>}
+                {item.status === "GRADING_FAILED" && <button type="button" onClick={() => retryWriting.mutate(item.questionId)} disabled={retryWriting.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-violet-300 px-3 text-sm font-bold text-violet-700 transition hover:bg-violet-50 disabled:opacity-50 dark:border-violet-800 dark:text-violet-300"><RotateCcw size={14} /> Chấm lại</button>}
               </article>
               );
             })}
@@ -1137,7 +1161,7 @@ function DiagnosticResultView({
         {/* Skill Profiles Breakdown */}
         {!fourSkill && result.skillProfiles && result.skillProfiles.length > 0 && (
           <div className="mt-7">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
               Kết quả theo kỹ năng
             </h3>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -1146,10 +1170,10 @@ function DiagnosticResultView({
                   key={p.skill}
                   className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-850"
                 >
-                  <p className="text-xs font-black text-slate-700 dark:text-slate-300">
+                  <p className="text-sm font-black text-slate-700 dark:text-slate-300">
                     {formatSkillName(p.skill)}
                   </p>
-                  <p className="mt-1 text-sm font-black text-slate-900 dark:text-slate-100">
+                  <p className="mt-1 text-base font-black text-slate-900 dark:text-slate-100">
                     {p.percentage !== null
                       ? `${p.percentage}% (${p.correctCount}/${p.totalCount})`
                       : "Chưa đủ dữ liệu"}
@@ -1164,20 +1188,20 @@ function DiagnosticResultView({
         {!result.advice && (
         <div className="mt-7 grid gap-4 border-t border-slate-100 pt-6 sm:grid-cols-2 dark:border-slate-800">
           <div>
-            <h3 className="text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            <h3 className="text-sm font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
               Điểm mạnh
             </h3>
-            <p className="mt-1 text-sm font-bold text-slate-800 dark:text-slate-200">
+            <p className="mt-1 text-base font-bold text-slate-800 dark:text-slate-200">
               {result.strengths && result.strengths.length > 0
                 ? result.strengths.map(formatSkillName).join(", ")
                 : "Chưa ghi nhận kỹ năng nổi trội từ kết quả hiện tại."}
             </p>
           </div>
           <div>
-            <h3 className="text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
+            <h3 className="text-sm font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
               Nên củng cố
             </h3>
-            <p className="mt-1 text-sm font-bold text-slate-800 dark:text-slate-200">
+            <p className="mt-1 text-base font-bold text-slate-800 dark:text-slate-200">
               {result.weaknesses && result.weaknesses.length > 0
                 ? result.weaknesses.map(formatSkillName).join(", ")
                 : "Chưa ghi nhận kỹ năng cần ưu tiên cải thiện."}
@@ -1198,7 +1222,7 @@ function DiagnosticResultView({
               Bài luyện đề xuất
             </h2>
           </div>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Dựa trên phân tích kết quả bài kiểm tra, hệ thống gợi ý các lộ trình luyện tập mục tiêu cho bạn:
           </p>
 
@@ -1213,14 +1237,14 @@ function DiagnosticResultView({
                   <span className="inline-block rounded-md bg-violet-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-violet-700 dark:bg-violet-950 dark:text-violet-300">
                     {rec.badge}
                   </span>
-                  <h3 className="mt-2 text-sm font-black text-slate-900 group-hover:text-violet-600 dark:text-slate-100 dark:group-hover:text-violet-400">
+                  <h3 className="mt-2 text-base font-black text-slate-900 group-hover:text-violet-600 dark:text-slate-100 dark:group-hover:text-violet-400">
                     {rec.title}
                   </h3>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-5">
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-6">
                     {rec.description}
                   </p>
                 </div>
-                <div className="mt-4 flex items-center gap-1 text-xs font-extrabold text-violet-600 dark:text-violet-400">
+                <div className="mt-4 flex items-center gap-1 text-sm font-extrabold text-violet-600 dark:text-violet-400">
                   <span>Luyện tập ngay</span>
                   <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
                 </div>
@@ -1248,7 +1272,7 @@ function DiagnosticResultView({
                 key={f.id}
                 type="button"
                 onClick={() => setReviewFilter(f.id)}
-                className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-all ${
+                className={`rounded-xl px-3 py-1.5 text-sm font-bold transition-all ${
                   reviewFilter === f.id
                     ? "bg-violet-600 text-white"
                     : "border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
@@ -1262,7 +1286,7 @@ function DiagnosticResultView({
 
         <div className="mt-5 space-y-3">
           {filteredReviews.length === 0 ? (
-            <p className="py-6 text-center text-xs font-bold text-slate-400">
+            <p className="py-6 text-center text-sm font-bold text-slate-400">
               Không có câu hỏi nào trong danh mục này.
             </p>
           ) : (
@@ -1286,7 +1310,7 @@ function DiagnosticResultView({
                 return (
                   <div
                     key={item.questionId}
-                    className="rounded-2xl border border-slate-200 bg-slate-50/40 p-4 text-xs dark:border-slate-800 dark:bg-slate-850"
+                    className="rounded-2xl border border-slate-200 bg-slate-50/40 p-4 text-sm dark:border-slate-800 dark:bg-slate-850"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-extrabold text-slate-800 dark:text-slate-200">
@@ -1313,7 +1337,7 @@ function DiagnosticResultView({
               return (
                 <div
                   key={item.questionId}
-                  className={`rounded-2xl border p-4 text-xs transition-colors ${
+                  className={`rounded-2xl border p-4 text-sm transition-colors ${
                     item.isCorrect
                       ? "border-emerald-200/90 bg-emerald-50/30 dark:border-emerald-950 dark:bg-emerald-950/20"
                       : item.isCorrect === false
@@ -1361,7 +1385,7 @@ function DiagnosticResultView({
                   </div>
 
                   {item.explanation && (
-                    <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 leading-4">
+                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-4">
                       {item.explanation}
                     </p>
                   )}
@@ -1375,10 +1399,10 @@ function DiagnosticResultView({
       {/* 4. Bottom CTAs: Dashboard & Profile Tab Link (NO RETAKE BUTTON) */}
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-7">
         <div>
-          <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">
+          <h3 className="text-base font-black text-slate-900 dark:text-slate-100">
             Kết quả đã được lưu vĩnh viễn vào hồ sơ
           </h3>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
             Bạn có thể xem lại kết quả này bất kỳ lúc nào tại mục Tài khoản.
           </p>
         </div>
@@ -1386,14 +1410,14 @@ function DiagnosticResultView({
         <div className="flex flex-wrap items-center gap-3">
           <Link
             href="/hub?tab=diagnostic-result"
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-slate-200 px-4 text-xs font-extrabold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-slate-200 px-4 text-sm font-extrabold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             <Award size={15} />
             <span>Xem trong Hồ sơ</span>
           </Link>
           <Link
             href="/dashboard"
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-violet-600 px-5 text-xs font-extrabold text-white hover:bg-violet-700"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-extrabold text-white hover:bg-violet-700"
           >
             <span>Về Bảng điều khiển</span>
             <ArrowRight size={15} />
@@ -1429,10 +1453,10 @@ function FourSkillPanel({ result }: { result: DiagnosticFourSkillResult }) {
   const pending = result.state === "PENDING_GRADING";
   return (
     <div className="mt-4">
-      <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 sm:text-3xl">
+      <h1 className="text-3xl font-black text-slate-900 dark:text-slate-100 sm:text-4xl">
         Kết quả theo bốn kỹ năng
       </h1>
-      <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+      <p className="mt-2 text-base leading-6 text-slate-600 dark:text-slate-300">
         {result.overall !== null
           ? <>Điểm tổng tham khảo: <span className="font-black text-slate-900 dark:text-slate-100">{result.overall}/100</span> (trung bình bốn kỹ năng, mỗi kỹ năng 25%).</>
           : pending
@@ -1448,25 +1472,25 @@ function FourSkillPanel({ result }: { result: DiagnosticFourSkillResult }) {
           return (
             <div key={key} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-850">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-black text-slate-700 dark:text-slate-300">{FOUR_SKILL_LABELS[key]}</p>
-                <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${SKILL_TONE_CLASS[state.tone]}`}>{state.label}</span>
+                <p className="text-sm font-black text-slate-700 dark:text-slate-300">{FOUR_SKILL_LABELS[key]}</p>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${SKILL_TONE_CLASS[state.tone]}`}>{state.label}</span>
               </div>
-              <p className="mt-2 text-xl font-black text-slate-900 dark:text-slate-100">
+              <p className="mt-2 text-3xl font-black text-slate-900 dark:text-slate-100">
                 {skill?.score !== null && skill?.score !== undefined ? `${skill.score}/100` : "—"}
               </p>
               {skill && (key === "LISTENING" || key === "READING") && skill.itemsTotal > 0 && (
-                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{skill.itemsScored}/{skill.itemsTotal} câu đúng</p>
+                <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{skill.itemsScored}/{skill.itemsTotal} câu đúng</p>
               )}
             </div>
           );
         })}
       </div>
       {languageUse && languageUse.itemsTotal > 0 && (
-        <p className="mt-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
+        <p className="mt-3 text-sm leading-6 text-slate-500 dark:text-slate-400">
           {FOUR_SKILL_LABELS.LANGUAGE_USE}: {languageUse.itemsScored}/{languageUse.itemsTotal} câu đúng. Phần này chỉ dùng để gợi ý luyện tập, không tính vào điểm tổng.
         </p>
       )}
-      <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+      <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
         Đây là chỉ số luyện tập nội bộ của BreadTrans, không phải điểm thi hay chứng chỉ chính thức.
       </p>
     </div>
@@ -1495,7 +1519,7 @@ function TaskStatusChip({ status, score }: { status?: string; score: number | nu
             ? "pending"
             : "missing";
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${SKILL_TONE_CLASS[tone]}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-bold ${SKILL_TONE_CLASS[tone]}`}>
       {tone === "pending" && <Loader2 size={12} className="animate-spin" />}
       {label}
     </span>
@@ -1516,11 +1540,11 @@ function CriteriaList({
     <dl className="mt-3 grid gap-2 sm:grid-cols-2">
       {entries.map(([key, value]) => (
         <div key={key} className="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-850">
-          <dt className="flex items-center justify-between gap-2 text-xs font-black text-slate-700 dark:text-slate-300">
+          <dt className="flex items-center justify-between gap-2 text-sm font-black text-slate-700 dark:text-slate-300">
             <span>{formatCriterionName(key)}</span>
             <span>{value}/4</span>
           </dt>
-          {feedback?.[key] && <dd className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-400">{feedback[key]}</dd>}
+          {feedback?.[key] && <dd className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">{feedback[key]}</dd>}
         </div>
       ))}
     </dl>
