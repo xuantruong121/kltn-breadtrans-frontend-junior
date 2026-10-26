@@ -2,16 +2,17 @@
 
 import React from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRight,
   BookOpen,
   Calendar,
   CheckCircle2,
-  Clock,
   ExternalLink,
   Loader2,
   Mic,
+  RotateCcw,
   Target,
 } from "lucide-react";
 import {
@@ -20,9 +21,18 @@ import {
   DiagnosticResult,
 } from "@/lib/api/services/diagnostic.service";
 import { formatPlacementLevel, formatSkillName } from "@/lib/diagnostic/diagnosticUiLogic";
-import { describeForm, describeSkillState, isSpeakingTask } from "@/lib/diagnostic/diagnosticTaskLogic";
+import {
+  describeForm,
+  describeSkillState,
+  draftKey,
+  isSpeakingTask,
+  learnerErrorMessage,
+} from "@/lib/diagnostic/diagnosticTaskLogic";
 
 export function DiagnosticResultTab() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [confirmingRestart, setConfirmingRestart] = React.useState(false);
   const {
     data: assessment,
     isLoading: isLoadingAssessment,
@@ -39,6 +49,23 @@ export function DiagnosticResultTab() {
     queryKey: ["diagnostic-latest-result"],
     queryFn: diagnosticService.getLatestResult,
     refetchOnMount: "always",
+  });
+
+  const restart = useMutation({
+    mutationFn: async () => {
+      const attemptId = assessment?.inProgressAttempt?.id;
+      if (!assessment || !attemptId) throw new Error("Không còn lượt làm bài đang dở.");
+      await diagnosticService.abandonAttempt(assessment.id, attemptId);
+      try {
+        window.localStorage.removeItem(draftKey(attemptId));
+      } catch {
+        // Storage may be unavailable; the abandoned attempt is never resumed.
+      }
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["diagnostic-current"] });
+      router.push("/diagnostic");
+    },
   });
 
   const isLoading = isLoadingAssessment || isLoadingResult;
@@ -111,25 +138,73 @@ export function DiagnosticResultTab() {
   if (inProgress) {
     return (
       <div className="space-y-6">
-        <div className="rounded-3xl border border-amber-200 bg-amber-50/70 p-6 shadow-xs dark:border-amber-900/60 dark:bg-amber-950/30 sm:p-8">
-          <div className="flex size-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
-            <Clock size={24} />
-          </div>
-          <h2 className="mt-4 text-2xl font-black text-slate-900 dark:text-slate-100">
-            Bạn đang có bài đánh giá chưa hoàn thành
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+          <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100">
+            Bài đánh giá đầu vào đang làm dở
           </h2>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-400">
-            Tiến độ làm bài của bạn đã được hệ thống lưu tự động. Bạn có thể tiếp tục làm bài bất kỳ lúc nào để nhận kết quả đánh giá năng lực.
+          <p className="mt-3 max-w-2xl text-base leading-7 text-slate-700 dark:text-slate-300">
+            Các bài Nói bạn đã gửi được lưu trên hệ thống. Câu trắc nghiệm và bài Viết được lưu trên trình duyệt bạn
+            đang dùng, nên hãy tiếp tục trên chính trình duyệt này để không phải làm lại.
           </p>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              href="/diagnostic"
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-amber-600 px-5 text-sm font-extrabold text-white hover:bg-amber-700"
+          {confirmingRestart ? (
+            <div
+              role="alertdialog"
+              aria-labelledby="diagnostic-restart-title"
+              aria-describedby="diagnostic-restart-text"
+              className="mt-6 max-w-2xl rounded-xl bg-rose-50 p-5 dark:bg-rose-950/30"
             >
-              Tiếp tục bài đánh giá <ArrowRight size={16} />
-            </Link>
-          </div>
+              <p id="diagnostic-restart-title" className="text-base font-bold text-rose-900 dark:text-rose-200">
+                Làm lại bài đánh giá từ đầu?
+              </p>
+              <p id="diagnostic-restart-text" className="mt-1 text-sm leading-6 text-rose-900/90 dark:text-rose-200/90">
+                Câu trả lời và bài Nói của lượt này sẽ không được dùng nữa. Bạn sẽ bắt đầu lại từ câu 1.
+              </p>
+              {restart.isError && (
+                <p className="mt-2 text-sm font-semibold text-rose-700 dark:text-rose-300" role="alert">
+                  {learnerErrorMessage(restart.error)}
+                </p>
+              )}
+              <div className="mt-4 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => restart.mutate()}
+                  disabled={restart.isPending}
+                  className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-rose-600 px-5 text-sm font-extrabold text-white transition-colors hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {restart.isPending ? (
+                    <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                  ) : (
+                    <RotateCcw size={16} aria-hidden="true" />
+                  )}
+                  Xác nhận làm lại
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmingRestart(false)}
+                  disabled={restart.isPending}
+                  className="inline-flex min-h-11 items-center rounded-xl bg-white px-5 text-sm font-bold text-slate-800 transition-colors hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                >
+                  Giữ lượt đang làm
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <Link
+                href="/diagnostic"
+                className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-violet-600 px-6 text-sm font-extrabold text-white transition-colors hover:bg-violet-700"
+              >
+                Tiếp tục làm bài <ArrowRight size={16} aria-hidden="true" />
+              </Link>
+              <button
+                type="button"
+                onClick={() => setConfirmingRestart(true)}
+                className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-slate-300 bg-white px-6 text-sm font-bold text-slate-800 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                <RotateCcw size={16} aria-hidden="true" /> Làm lại từ đầu
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -164,17 +239,17 @@ export function DiagnosticResultTab() {
       {/* Overview Card */}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-sm font-black text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
             <CheckCircle2 size={14} /> Đã hoàn thành đánh giá
           </span>
-          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-400">
+          <span className="inline-flex items-center gap-1.5 text-sm font-bold text-slate-400">
             <Calendar size={13} /> {formattedDate}
           </span>
         </div>
 
         <div className="mt-5 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <span className="text-xs font-black uppercase tracking-wider text-violet-600 dark:text-violet-400">
+            <span className="text-sm font-black uppercase tracking-wider text-violet-600 dark:text-violet-400">
               {fourSkill ? "Kết quả theo bốn kỹ năng" : "Mức năng lực tham khảo"}
             </span>
             <h2 className="mt-1 text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100">
@@ -185,7 +260,7 @@ export function DiagnosticResultTab() {
                 : formatPlacementLevel(result.referenceLevel ?? result.level)}
             </h2>
             {fourSkill && (
-              <p className="mt-2 text-sm font-bold text-slate-700 dark:text-slate-300">
+              <p className="mt-2 text-base font-bold text-slate-700 dark:text-slate-300">
                 {(["LISTENING", "READING", "SPEAKING", "WRITING"] as const)
                   .map((key) => {
                     const skill = fourSkill.skills[key];
@@ -195,17 +270,17 @@ export function DiagnosticResultTab() {
                   .join(" · ")}
               </p>
             )}
-            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 max-w-xl">
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 max-w-xl">
               Đây là ước lượng nội bộ để gợi ý bài luyện phù hợp, không phải chứng chỉ CEFR và không khóa nội dung học tập.
             </p>
           </div>
 
           <div className="flex flex-col items-start sm:items-end rounded-2xl bg-slate-50 p-4 dark:bg-slate-850">
-            <span className="text-xs font-bold text-slate-500">Phần trắc nghiệm</span>
+            <span className="text-sm font-bold text-slate-500">Phần trắc nghiệm</span>
             <span className="mt-0.5 text-2xl font-black text-slate-900 dark:text-slate-100">
               {result.correctCount} / {result.totalCount} câu đúng
             </span>
-            <span className="text-xs font-extrabold text-emerald-600">
+            <span className="text-sm font-extrabold text-emerald-600">
               {result.percentage}% độ chính xác
             </span>
           </div>
@@ -213,22 +288,28 @@ export function DiagnosticResultTab() {
 
         {/* Speaking / Writing Evidence Note */}
         {result.productiveTaskCount ? (
-          <div className="mt-6 rounded-2xl border border-violet-100 bg-violet-50/70 p-4 text-xs leading-6 text-violet-900 dark:border-violet-900/60 dark:bg-violet-950/30 dark:text-violet-200">
+          <div className="mt-6 rounded-2xl border border-violet-100 bg-violet-50/70 p-4 text-sm leading-6 text-violet-900 dark:border-violet-900/60 dark:bg-violet-950/30 dark:text-violet-200">
             <div className="flex items-center gap-2 font-black text-violet-800 dark:text-violet-300">
-              <Mic size={15} /> Bằng chứng kỹ năng Nói &amp; Viết
+              <Mic size={16} /> Bài Nói và Viết
             </div>
             <div className="mt-1.5 space-y-1">
               <p>
                 <span className="font-bold">Nói: </span>
                 {result.speakingEvidenceCount && result.speakingEvidenceCount > 0
-                  ? `Đã chấm ${result.speakingEvidenceCount}/${speakingTaskCount} nhiệm vụ${result.speakingScore !== null && result.speakingScore !== undefined ? ` (điểm Nói: ${result.speakingScore}/100)` : ""}.`
+                  ? `Đã chấm ${result.speakingEvidenceCount}/${speakingTaskCount} bài${result.speakingScore !== null && result.speakingScore !== undefined ? ` (điểm Nói: ${result.speakingScore}/100)` : ""}.`
                   : fourSkill
                     ? "Đang chờ hoặc chưa đủ dữ liệu để chấm kỹ năng Nói."
                     : `Đang chờ hoặc chưa đủ dữ liệu để nhận xét kỹ năng Nói; mức tham khảo vẫn dựa trên ${result.totalCount} câu trắc nghiệm khách quan.`}
               </p>
               <p>
                 <span className="font-bold">Viết: </span>
-                {result.writingFeedback?.some((item) => item.status === "GRADED") ? "Đã có nhận xét tự động cho bài viết." : "Bài viết đang được nhận xét tự động; kết quả sẽ tự cập nhật khi hoàn tất."}
+                {(() => {
+                  const graded = result.writingFeedback?.filter((item) => item.status === "GRADED").length ?? 0;
+                  const total = Math.max(0, (result.productiveTaskCount ?? 0) - speakingTaskCount);
+                  return graded > 0
+                    ? `Đã chấm ${graded}/${total} bài.`
+                    : "Bài viết đang được chấm; kết quả sẽ tự cập nhật khi xong.";
+                })()}
               </p>
             </div>
           </div>
@@ -237,7 +318,7 @@ export function DiagnosticResultTab() {
         {/* Skill Profiles Breakdown */}
         {!fourSkill && result.skillProfiles && result.skillProfiles.length > 0 && (
           <div className="mt-6">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
               Kết quả theo kỹ năng
             </h3>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -246,10 +327,10 @@ export function DiagnosticResultTab() {
                   key={profile.skill}
                   className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3.5 dark:border-slate-800 dark:bg-slate-850"
                 >
-                  <p className="text-xs font-black text-slate-800 dark:text-slate-200">
+                  <p className="text-sm font-black text-slate-800 dark:text-slate-200">
                     {formatSkillName(profile.skill)}
                   </p>
-                  <p className="mt-1 text-sm font-extrabold text-slate-900 dark:text-slate-100">
+                  <p className="mt-1 text-base font-extrabold text-slate-900 dark:text-slate-100">
                     {profile.percentage !== null
                       ? `${profile.percentage}% (${profile.correctCount}/${profile.totalCount})`
                       : "Chưa đủ dữ liệu"}
@@ -263,20 +344,20 @@ export function DiagnosticResultTab() {
         {/* Strengths & Weaknesses */}
         <div className="mt-6 grid gap-4 border-t border-slate-100 pt-6 sm:grid-cols-2 dark:border-slate-800">
           <div>
-            <h4 className="text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            <h4 className="text-sm font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
               Điểm mạnh
             </h4>
-            <p className="mt-1 text-sm font-bold text-slate-800 dark:text-slate-200">
+            <p className="mt-1 text-base font-bold text-slate-800 dark:text-slate-200">
               {result.strengths && result.strengths.length > 0
                 ? result.strengths.map(formatSkillName).join(", ")
                 : "Chưa ghi nhận kỹ năng nổi trội từ kết quả hiện tại."}
             </p>
           </div>
           <div>
-            <h4 className="text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
+            <h4 className="text-sm font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
               Nên củng cố
             </h4>
-            <p className="mt-1 text-sm font-bold text-slate-800 dark:text-slate-200">
+            <p className="mt-1 text-base font-bold text-slate-800 dark:text-slate-200">
               {result.weaknesses && result.weaknesses.length > 0
                 ? result.weaknesses.map(formatSkillName).join(", ")
                 : "Chưa ghi nhận kỹ năng cần ưu tiên cải thiện."}
@@ -294,7 +375,7 @@ export function DiagnosticResultTab() {
               Bài luyện đề xuất
             </h3>
           </div>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Được gợi ý riêng theo kết quả phân tích điểm mạnh và điểm cần củng cố của bạn.
           </p>
 
@@ -306,17 +387,17 @@ export function DiagnosticResultTab() {
                 className="group flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-4 transition-all hover:border-violet-500 hover:shadow-sm dark:border-slate-800 dark:bg-slate-850 dark:hover:border-violet-500"
               >
                 <div>
-                  <span className="inline-block rounded-md bg-violet-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+                  <span className="inline-block rounded-md bg-violet-100 px-2 py-0.5 text-xs font-black uppercase tracking-wider text-violet-700 dark:bg-violet-950 dark:text-violet-300">
                     {rec.badge}
                   </span>
-                  <h4 className="mt-2 text-sm font-black text-slate-900 group-hover:text-violet-600 dark:text-slate-100 dark:group-hover:text-violet-400">
+                  <h4 className="mt-2 text-base font-black text-slate-900 group-hover:text-violet-600 dark:text-slate-100 dark:group-hover:text-violet-400">
                     {rec.title}
                   </h4>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-5">
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-6">
                     {rec.description}
                   </p>
                 </div>
-                <div className="mt-4 flex items-center gap-1 text-xs font-bold text-violet-600 dark:text-violet-400">
+                <div className="mt-4 flex items-center gap-1 text-sm font-bold text-violet-600 dark:text-violet-400">
                   <span>Luyện tập ngay</span>
                   <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
                 </div>
@@ -328,12 +409,12 @@ export function DiagnosticResultTab() {
 
       {/* Answer Review Link CTA */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
-        <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+        <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
           Bạn muốn đối chiếu chi tiết từng câu trả lời và xem giải thích?
         </span>
         <Link
           href="/diagnostic"
-          className="inline-flex items-center gap-1.5 text-xs font-extrabold text-violet-600 hover:underline dark:text-violet-400"
+          className="inline-flex items-center gap-1.5 text-sm font-extrabold text-violet-600 hover:underline dark:text-violet-400"
         >
           <span>Xem lại toàn bộ bài làm</span>
           <ExternalLink size={13} />

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { findPreviousCompletedAttempt, presentSpeakingProgress, resolveSpeakingMode, scoreDelta } from "./speakingExperienceLogic.ts";
+import { findPreviousCompletedAttempt, formatSpeakingScore, presentSpeakingProgress, resolveSpeakingMode, scoreDelta } from "./speakingExperienceLogic.ts";
 
 test("resolves learner-friendly speaking modes from existing metadata", () => {
   assert.equal(resolveSpeakingMode({ title: "Read Aloud A1", category: "GENERAL" }).id, "READ_ALOUD");
@@ -15,6 +15,10 @@ test("compares only compatible completed attempts", () => {
   ], 4, 3);
   assert.equal(previous?.overallScore, 65);
   assert.equal(scoreDelta(78, previous?.overallScore), 13);
+  // Owner case: 8.8 then 7.6 is -1.2, not 9 -> 8 and -1.
+  assert.equal(scoreDelta(7.6, 8.8), -1.2);
+  assert.equal(formatSpeakingScore(8.8), "8.8");
+  assert.equal(formatSpeakingScore(scoreDelta(7.6, 8.8)), "-1.2");
 });
 
 test("does not invent a completion denominator from a performance score", () => {

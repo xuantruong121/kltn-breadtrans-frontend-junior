@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
+  ArrowLeft,
   ArrowRight,
   Award,
   BookOpen,
@@ -14,7 +16,6 @@ import {
   SkipForward,
   Square,
   Target,
-  Timer,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import {
@@ -39,6 +40,7 @@ import {
 } from "@/lib/diagnostic/diagnosticUiLogic";
 import {
   isValidDiagnosticRecording,
+  measureRecordingDurationMs,
   selectDiagnosticRecordingMimeType,
 } from "@/lib/diagnostic/diagnosticSpeakingRecorderLogic";
 import {
@@ -46,6 +48,8 @@ import {
   countWords,
   describeForm,
   draftKey,
+  findReferenceHighlight,
+  learnerErrorMessage,
   parseDraft,
   toSubmissionAnswers,
   WRITING_SKIPPED,
@@ -69,10 +73,17 @@ const diagnosticDisplayTitle = "Bài đánh giá năng lực đầu vào";
 const diagnosticDisplayDescription =
   "Kết quả giúp bạn hiểu năng lực hiện tại và chọn bài luyện phù hợp hơn.";
 const diagnosticDisplayGuidance =
-  "Hãy hoàn thành nghiêm túc để nhận nhận xét và gợi ý luyện tập phù hợp. Đây là kết quả tham khảo nội bộ, không phải chứng chỉ tiếng Anh.";
+  "Hãy làm bài nghiêm túc để nhận được nhận xét và gợi ý luyện tập sát với năng lực của bạn. Đây là kết quả tham khảo nội bộ, không phải chứng chỉ tiếng Anh.";
 
 export default function DiagnosticPage() {
   const queryClient = useQueryClient();
+  const router = useRouter();
+  // Back to the previous page; straight to the dashboard when the page was
+  // opened directly (no in-app history to return to).
+  const goBack = () => {
+    if (window.history.length > 1) router.back();
+    else router.push("/dashboard");
+  };
   const { setFocusMode } = useLearningFocusMode();
 
   const {
@@ -106,20 +117,24 @@ export default function DiagnosticPage() {
   // Auto-advance feedback state
   const [autoAdvanceTimer, setAutoAdvanceTimer] = useState<NodeJS.Timeout | null>(null);
 
-  // Speaking state
-  const [recording, setRecording] = useState(false);
+  // Speaking: one control drives the real recorder lifecycle.
+  //   idle -> starting (mic opening) -> recording -> processing (upload +
+  //   confirm) -> done. Stopping uploads and confirms this task only.
+  const [speakingPhase, setSpeakingPhase] = useState<
+    "idle" | "starting" | "recording" | "processing" | "done"
+  >("idle");
   const [recordingMs, setRecordingMs] = useState(0);
-  const [recordedAudio, setRecordedAudio] = useState<Blob | null>(null);
   const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
   const [speakingError, setSpeakingError] = useState<string | null>(null);
+  const [speakingNotice, setSpeakingNotice] = useState<string | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const recordingStartedAtRef = useRef(0);
-  // Preparation countdown before a speaking task (the task's prepSeconds).
-  const [prep, setPrep] = useState<{ questionId: number; endsAt: number } | null>(null);
-  const [prepRemainingMs, setPrepRemainingMs] = useState(0);
-  const prepTimeoutRef = useRef<number | null>(null);
+  const autoStopRef = useRef<number | null>(null);
+  // Set when the learner leaves the task mid-recording: that take is dropped.
+  const discardTakeRef = useRef(false);
+  const recording = speakingPhase === "recording";
 
   // Resume in-progress attempt if exists
   useEffect(() => {
@@ -160,24 +175,26 @@ export default function DiagnosticPage() {
     return () => window.clearInterval(timer);
   }, [recording]);
 
+  // Leaving a task drops a take that is still being recorded, and resets
+  // the speaking panel for the next task.
   useEffect(() => {
-    if (!prep) return;
-    const timer = window.setInterval(
-      () => setPrepRemainingMs(Math.max(0, prep.endsAt - Date.now())),
-      200,
-    );
-    return () => window.clearInterval(timer);
-  }, [prep]);
-
-  // Leaving a task cancels its pending auto-start; the countdown display is
-  // tied to the task's id, so it disappears with it.
-  useEffect(() => {
-    if (prepTimeoutRef.current !== null) window.clearTimeout(prepTimeoutRef.current);
-    prepTimeoutRef.current = null;
+    const recorder = recorderRef.current;
+    if (recorder && recorder.state === "recording") {
+      discardTakeRef.current = true;
+      recorder.stop();
+    }
+    setSpeakingPhase("idle");
+    setSpeakingError(null);
+    setSpeakingNotice(null);
+    setRecordingMs(0);
+    setRecordedUrl((url) => {
+      if (url) URL.revokeObjectURL(url);
+      return null;
+    });
   }, [step]);
 
   useEffect(() => () => {
-    if (prepTimeoutRef.current !== null) window.clearTimeout(prepTimeoutRef.current);
+    if (autoStopRef.current !== null) window.clearTimeout(autoStopRef.current);
     streamRef.current?.getTracks().forEach((track) => track.stop());
     if (recordedUrl) URL.revokeObjectURL(recordedUrl);
     if (autoAdvanceTimer) clearTimeout(autoAdvanceTimer);
@@ -187,6 +204,19 @@ export default function DiagnosticPage() {
     setFocusMode(started);
     return () => setFocusMode(false);
   }, [started, setFocusMode]);
+
+  // Fullscreen belongs to taking the test. Whatever path leads out of it
+  // (submit, result reload, leaving the page), the browser leaves it too.
+  useEffect(() => {
+    if (!started && document.fullscreenElement)
+      void document.exitFullscreen?.().catch(() => undefined);
+  }, [started]);
+  useEffect(
+    () => () => {
+      if (document.fullscreenElement) void document.exitFullscreen?.().catch(() => undefined);
+    },
+    [],
+  );
 
   const submit = useMutation({
     mutationFn: () =>
@@ -229,7 +259,7 @@ export default function DiagnosticPage() {
     }: {
       questionId: number;
       blob: Blob;
-      durationMs: number;
+      durationMs?: number;
     }) => {
       if (!assessment || !attemptId) throw new Error("Phiên kiểm tra chưa sẵn sàng");
       return diagnosticService.confirmSpeaking(
@@ -240,25 +270,30 @@ export default function DiagnosticPage() {
         durationMs,
       );
     },
+    // Once the recording is accepted the learner moves on to the next task.
+    // Grading continues on the server; the navigator lets them come back to
+    // record again. The last task does not submit the whole test by itself.
     onSuccess: (response, variables) => {
       setAnswers((current) => ({
         ...current,
         [variables.questionId]: response.status,
       }));
-      setRecordedAudio(null);
-      if (recordedUrl) URL.revokeObjectURL(recordedUrl);
-      setRecordedUrl(null);
-      setSpeakingError(
+      setSpeakingPhase("done");
+      setSpeakingError(null);
+      setSpeakingNotice(
         response.status === "GRADING_FAILED"
-          ? "Đã ghi nhận bài nói nhưng chưa thể chấm tự động."
-          : null,
+          ? "Đã nhận bản ghi nhưng chưa chấm được. Bạn có thể chấm lại ở trang kết quả."
+          : "Đã nhận bản ghi. Bài nói đang được chấm.",
       );
-      setStep((value) => Math.min(assessment!.questions.length - 1, value + 1));
+      const index = assessment?.questions.findIndex((q) => q.id === variables.questionId) ?? -1;
+      if (assessment && index >= 0 && index < assessment.questions.length - 1)
+        setStep((current) => (current === index ? index + 1 : current));
     },
-    onError: (error) =>
-      setSpeakingError(
-        error instanceof Error ? error.message : "Không thể lưu bản ghi âm.",
-      ),
+    onError: (error) => {
+      console.error("[diagnostic] speaking confirm failed", error);
+      setSpeakingPhase("idle");
+      setSpeakingError(learnerErrorMessage(error));
+    },
   });
 
   // The polled latest result supersedes the submit response for the same
@@ -327,104 +362,107 @@ export default function DiagnosticPage() {
     }
   };
 
-  const cancelPrep = () => {
-    if (prepTimeoutRef.current !== null) window.clearTimeout(prepTimeoutRef.current);
-    prepTimeoutRef.current = null;
-    setPrep(null);
-  };
-
-  const startPrep = (questionId: number, seconds: number, limitMs: number) => {
-    cancelPrep();
+  const startRecording = async (questionId: number, limitMs: number) => {
+    if (speakingPhase === "starting" || speakingPhase === "recording" || speakingPhase === "processing") return;
     setSpeakingError(null);
-    setPrepRemainingMs(seconds * 1000);
-    setPrep({ questionId, endsAt: nowMs() + seconds * 1000 });
-    prepTimeoutRef.current = window.setTimeout(() => {
-      prepTimeoutRef.current = null;
-      setPrep(null);
-      void startRecording(limitMs);
-    }, seconds * 1000);
-  };
-
-  const startRecording = async (limitMs: number) => {
-    cancelPrep();
-    setSpeakingError(null);
+    setSpeakingNotice(null);
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
-      setSpeakingError("Trình duyệt này chưa hỗ trợ ghi âm. Bạn có thể bỏ qua phần nói.");
+      setSpeakingError(learnerErrorMessage({ message: "MIC_UNAVAILABLE" }));
       return;
     }
+    setSpeakingPhase("starting");
+    let stream: MediaStream;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mimeType = selectDiagnosticRecordingMimeType((type) =>
-        MediaRecorder.isTypeSupported(type),
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (error) {
+      setSpeakingPhase("idle");
+      setSpeakingError(
+        learnerErrorMessage({
+          message:
+            error instanceof DOMException && error.name === "NotAllowedError" ? "MIC_DENIED" : "MIC_UNAVAILABLE",
+        }),
       );
-      const recorder = mimeType
-        ? new MediaRecorder(stream, { mimeType })
-        : new MediaRecorder(stream);
-      chunksRef.current = [];
-      recorder.ondataavailable = (event) => {
-        if (event.data.size) chunksRef.current.push(event.data);
-      };
-      recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, {
-          type: recorder.mimeType || mimeType || "audio/webm",
-        });
-        const duration = nowMs() - recordingStartedAtRef.current;
-        if (!isValidDiagnosticRecording(blob.size, duration)) {
-          setSpeakingError("Bản ghi quá ngắn. Vui lòng thử lại hoặc bỏ qua.");
-          return;
-        }
-        setRecordedAudio(blob);
-        setRecordedUrl(URL.createObjectURL(blob));
-        setRecordingMs(duration);
-      };
-      streamRef.current = stream;
-      recorderRef.current = recorder;
+      return;
+    }
+    const mimeType = selectDiagnosticRecordingMimeType((type) => MediaRecorder.isTypeSupported(type));
+    const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+    chunksRef.current = [];
+    discardTakeRef.current = false;
+    recorder.ondataavailable = (event) => {
+      if (event.data.size) chunksRef.current.push(event.data);
+    };
+    // Timing starts when the recorder really records, not when start() is called.
+    recorder.onstart = () => {
       recordingStartedAtRef.current = nowMs();
       setRecordingMs(0);
-      setRecording(true);
-      recorder.start();
-      window.setTimeout(() => {
-        if (recorderRef.current === recorder && recorder.state === "recording") {
-          stopRecording();
-        }
+      setSpeakingPhase("recording");
+      autoStopRef.current = window.setTimeout(() => {
+        if (recorder.state === "recording") recorder.stop();
       }, limitMs);
-    } catch (error) {
-      streamRef.current?.getTracks().forEach((track) => track.stop());
-      setSpeakingError(
-        error instanceof DOMException && error.name === "NotAllowedError"
-          ? "Bạn đã từ chối quyền micro. Bạn có thể bỏ qua phần nói."
-          : "Không thể truy cập micro. Bạn có thể bỏ qua phần nói.",
-      );
-    }
+    };
+    // The microphone is released only after the last chunk has been flushed.
+    recorder.onstop = async () => {
+      if (autoStopRef.current !== null) window.clearTimeout(autoStopRef.current);
+      autoStopRef.current = null;
+      stream.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+      recorderRef.current = null;
+      if (discardTakeRef.current) {
+        discardTakeRef.current = false;
+        setSpeakingPhase("idle");
+        return;
+      }
+      const blob = new Blob(chunksRef.current, { type: recorder.mimeType || mimeType || "audio/webm" });
+      const mediaMs = await measureRecordingDurationMs(blob);
+      if (!blob.size || (mediaMs !== null && !isValidDiagnosticRecording(blob.size, mediaMs))) {
+        setSpeakingPhase("idle");
+        setSpeakingError(learnerErrorMessage({ message: "EMPTY_RECORDING" }));
+        return;
+      }
+      setRecordedUrl((url) => {
+        if (url) URL.revokeObjectURL(url);
+        return URL.createObjectURL(blob);
+      });
+      if (mediaMs !== null) setRecordingMs(mediaMs);
+      setSpeakingPhase("processing");
+      confirmSpeaking.mutate({ questionId, blob, durationMs: mediaMs ?? undefined });
+    };
+    streamRef.current = stream;
+    recorderRef.current = recorder;
+    recorder.start();
   };
 
   const stopRecording = () => {
-    recorderRef.current?.stop();
-    streamRef.current?.getTracks().forEach((track) => track.stop());
-    streamRef.current = null;
-    recorderRef.current = null;
-    setRecording(false);
-    setRecordingMs((value) => Math.max(value, Date.now() - recordingStartedAtRef.current));
+    const recorder = recorderRef.current;
+    if (recorder && recorder.state === "recording") recorder.stop();
   };
 
-  const discardRecording = () => {
-    setRecordedAudio(null);
-    if (recordedUrl) URL.revokeObjectURL(recordedUrl);
-    setRecordedUrl(null);
-    setRecordingMs(0);
-    setSpeakingError(null);
+  const goToNextOrSubmit = () => {
+    if (!assessment) return;
+    if (step >= assessment.questions.length - 1) handleSubmit();
+    else setStep((value) => Math.min(assessment.questions.length - 1, value + 1));
   };
 
+  const [skipping, setSkipping] = useState(false);
   const skipSpeaking = async (questionId: number) => {
-    if (!assessment || !attemptId) return;
+    if (!assessment || !attemptId || skipping) return;
+    setSkipping(true);
+    setSpeakingError(null);
     try {
       await diagnosticService.skipSpeaking(assessment.id, attemptId, questionId);
       setAnswers((current) => ({ ...current, [questionId]: "SKIPPED" }));
-      discardRecording();
-      setStep((value) => Math.min(assessment.questions.length - 1, value + 1));
-    } catch {
-      setSpeakingError("Không thể ghi nhận thao tác bỏ qua. Vui lòng thử lại.");
+      goToNextOrSubmit();
+    } catch (error) {
+      console.error("[diagnostic] speaking skip failed", error);
+      setSpeakingError(learnerErrorMessage(error));
+    } finally {
+      setSkipping(false);
     }
+  };
+
+  const skipWriting = (questionId: number) => {
+    setAnswers((old) => ({ ...old, [questionId]: WRITING_SKIPPED }));
+    goToNextOrSubmit();
   };
 
   const handleSubmit = () => {
@@ -465,7 +503,7 @@ export default function DiagnosticPage() {
   // If completed, always render the saved result view
   const hasCompleted = !!result || assessment.hasCompleted;
   if (hasCompleted && result) {
-    return <DiagnosticResultView assessment={assessment} result={result} />;
+    return <DiagnosticResultView assessment={assessment} result={result} onBack={goBack} />;
   }
 
   // Not started yet
@@ -474,7 +512,15 @@ export default function DiagnosticPage() {
     const form = describeForm(assessment.questions);
     const practiceCount = form.speaking + form.writing;
     return (
-      <div className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-4xl space-y-4 px-4 py-8 sm:px-6 lg:px-8">
+        <button
+          type="button"
+          onClick={goBack}
+          className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-violet-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+        >
+          <ArrowLeft size={18} strokeWidth={2.25} aria-hidden="true" />
+          <span>Quay lại</span>
+        </button>
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-10">
           <div className="flex size-14 items-center justify-center rounded-2xl bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300">
             <Target size={28} />
@@ -484,13 +530,13 @@ export default function DiagnosticPage() {
             {diagnosticDisplayTitle}
           </h1>
 
-          <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300 sm:text-base">
+          <p className="mt-3 text-base leading-7 text-slate-700 dark:text-slate-300 sm:text-lg">
             {diagnosticDisplayDescription}
           </p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
             <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-850">
-              <span className="text-xs font-bold text-slate-500">Quy mô</span>
+              <span className="text-sm font-bold text-slate-600 dark:text-slate-400">Quy mô</span>
               <p className="mt-1 font-extrabold text-slate-900 dark:text-slate-100">
                 {practiceCount
                   ? `${form.total} nhiệm vụ (${form.objective} trắc nghiệm + ${practiceCount} thực hành)`
@@ -498,22 +544,22 @@ export default function DiagnosticPage() {
               </p>
             </div>
             <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-850">
-              <span className="text-xs font-bold text-slate-500">Thành phần</span>
-              <p className="mt-1 text-sm font-extrabold text-slate-900 dark:text-slate-100">
+              <span className="text-sm font-bold text-slate-600 dark:text-slate-400">Thành phần</span>
+              <p className="mt-1 font-extrabold text-slate-900 dark:text-slate-100">
                 {form.parts.map((part) => `${part.label} ${part.count}`).join(" · ")}
               </p>
             </div>
             <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-850">
-              <span className="text-xs font-bold text-slate-500">Quy tắc lượt làm</span>
+              <span className="text-sm font-bold text-slate-600 dark:text-slate-400">Quy tắc lượt làm</span>
               <p className="mt-1 font-extrabold text-slate-900 dark:text-slate-100">
                 1 lần chính thức duy nhất
               </p>
             </div>
           </div>
 
-          <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-xs font-medium leading-5 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
+          <p className="mt-6 rounded-2xl border border-amber-200 bg-amber-50/70 px-5 py-4 text-sm font-medium leading-6 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200 sm:text-base sm:leading-7">
             {diagnosticDisplayGuidance}
-          </div>
+          </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <button
@@ -542,9 +588,6 @@ export default function DiagnosticPage() {
   const isSpeaking = isSpeakingTask(current);
   const isOpenText = isWritingTask(current);
   const limitMs = speakingLimitMs(current);
-  const limitSeconds = Math.round(limitMs / 1000);
-  const prepSeconds = isSpeaking && current.prepSeconds && current.prepSeconds > 0 ? current.prepSeconds : 0;
-  const preparing = prep?.questionId === current.id;
   const writingSkipped = isOpenText && answers[current.id] === WRITING_SKIPPED;
   const writtenText =
     typeof answers[current.id] === "string" && !writingSkipped ? (answers[current.id] as string) : "";
@@ -555,6 +598,12 @@ export default function DiagnosticPage() {
   // Passage extraction for Reading
   const passageTitle = current.passageTitle?.trim() || "";
   const passageBody = current.passageBody?.trim() || current.passageText?.trim() || "";
+  const passageHighlight = isReading && passageBody ? findReferenceHighlight(current.question, passageBody) : null;
+  // A confirmed recording for this task (rerecording replaces it).
+  const speakingAnswer = isSpeaking ? answers[current.id] : undefined;
+  const hasRecording = typeof speakingAnswer === "string" && speakingAnswer !== "SKIPPED";
+  const speakingBusy = speakingPhase === "starting" || speakingPhase === "processing";
+  const elapsed = `${Math.floor(recordingMs / 60000)}:${String(Math.floor((recordingMs % 60000) / 1000)).padStart(2, "0")}`;
 
   // Dynamic layout: if any option is long (>45 chars), use single column
   const hasLongOptions = current.options?.some((opt) => opt.length > 45);
@@ -572,38 +621,44 @@ export default function DiagnosticPage() {
           exitLabel="Tạm dừng"
         />
 
-        <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
-          {/* Section Progress & Collapsible Drawer Navigator */}
-          <DiagnosticQuestionNavigator
-            questions={assessment.questions}
-            currentStep={step}
-            answers={answers}
-            onSelectStep={(targetStep) => {
-              if (autoAdvanceTimer) {
-                clearTimeout(autoAdvanceTimer);
-                setAutoAdvanceTimer(null);
-              }
-              setStep(targetStep);
-            }}
-          />
+        <main className="mx-auto grid w-full max-w-7xl flex-1 content-start gap-6 p-4 sm:p-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:p-8">
+          {/* Question list: a bar with a drawer below lg, a sticky sidebar from lg. */}
+          <div className="lg:order-2 lg:sticky lg:top-6">
+            <DiagnosticQuestionNavigator
+              questions={assessment.questions}
+              currentStep={step}
+              answers={answers}
+              onSelectStep={(targetStep) => {
+                if (autoAdvanceTimer) {
+                  clearTimeout(autoAdvanceTimer);
+                  setAutoAdvanceTimer(null);
+                }
+                setStep(targetStep);
+              }}
+            />
+          </div>
 
-          {/* Main Question Card (Enlarged max-w-5xl responsive layout) */}
-          <section className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8 lg:p-10">
+          <section className="min-w-0 rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8 lg:order-1 lg:p-10">
             {/* READING PASSAGE UI HIERARCHY */}
             {isReading && passageBody && (
-              <div className="mb-8 rounded-2xl border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-700 dark:bg-slate-850 sm:p-7">
-                <span className="inline-block rounded-md bg-blue-100 px-2.5 py-0.5 text-xs font-black uppercase tracking-wider text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-                  Đoạn đọc
-                </span>
-                {passageTitle && (
-                  <h3 className="mt-3 text-lg font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-xl">
-                    {passageTitle}
-                  </h3>
-                )}
-                <div className="mt-3 whitespace-pre-line text-base leading-relaxed text-slate-700 dark:text-slate-300 sm:text-[17px] sm:leading-loose">
-                  {passageBody}
+              <article className="mb-8 rounded-2xl bg-slate-50 px-5 py-5 dark:bg-slate-850 sm:px-7 sm:py-6" aria-label="Đoạn đọc">
+                <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
+                  {passageTitle || "Đoạn đọc"}
+                </p>
+                <div className="mt-3 max-w-[68ch] whitespace-pre-line text-[17px] leading-8 text-slate-800 dark:text-slate-200">
+                  {passageHighlight ? (
+                    <>
+                      {passageBody.slice(0, passageHighlight.start)}
+                      <strong className="rounded bg-amber-100 px-0.5 font-bold text-slate-900 dark:bg-amber-900/50 dark:text-amber-100">
+                        {passageBody.slice(passageHighlight.start, passageHighlight.end)}
+                      </strong>
+                      {passageBody.slice(passageHighlight.end)}
+                    </>
+                  ) : (
+                    passageBody
+                  )}
                 </div>
-              </div>
+              </article>
             )}
 
             {/* LISTENING AUDIO PLAYER */}
@@ -644,121 +699,82 @@ export default function DiagnosticPage() {
 
             {/* QUESTION INTERACTION BODY */}
             {isSpeaking ? (
-              <div className="mt-8 rounded-2xl border border-violet-200 bg-violet-50/70 p-5 dark:border-violet-900 dark:bg-violet-950/30 sm:p-6">
-                <div className="flex items-center gap-2 text-sm font-black text-violet-900 dark:text-violet-100">
-                  <Mic size={18} />
-                  <span>Hãy nói câu trả lời của bạn</span>
-                </div>
-                <p className="mt-1.5 text-xs text-violet-700 dark:text-violet-300">
-                  {prepSeconds ? `Chuẩn bị ${prepSeconds} giây, sau đó nói tối đa ${limitSeconds} giây.` : `Thời lượng tối đa ${limitSeconds} giây.`}{" "}
-                  Bản ghi tự dừng khi hết giờ. Bạn có thể nghe lại, ghi âm lại hoặc bỏ qua nếu chưa tiện nói.
-                </p>
-
-                {preparing && (
-                  <div className="mt-4 flex items-center gap-3 text-sm font-black text-amber-700 dark:text-amber-300" role="timer" aria-live="polite">
-                    Thời gian chuẩn bị còn {Math.ceil(prepRemainingMs / 1000)}s — ghi âm sẽ tự bắt đầu.
-                  </div>
-                )}
-
+              <div className="mt-8 space-y-4 rounded-2xl bg-slate-50 p-5 dark:bg-slate-850 sm:p-6">
                 {recording && (
-                  <div className="mt-4 flex items-center gap-3 text-sm font-black text-rose-600">
-                    <span className="size-3 animate-pulse rounded-full bg-rose-500" />
-                    Đang ghi âm {Math.floor(recordingMs / 1000)}s / {limitSeconds}s
-                  </div>
+                  <p className="flex items-center gap-2.5 text-sm font-bold text-rose-700 dark:text-rose-300" role="status">
+                    <span className="size-2.5 animate-pulse rounded-full bg-rose-600" aria-hidden="true" />
+                    Đang ghi âm · {elapsed}
+                  </p>
                 )}
-
-                {recordedUrl && !recording && (
-                  <audio
-                    className="mt-4 w-full"
-                    controls
-                    src={recordedUrl}
-                    preload="metadata"
-                    aria-label="Nghe lại bài nói"
-                  />
+                {speakingPhase === "processing" && (
+                  <p className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300" role="status">
+                    <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                    Đang gửi bản ghi…
+                  </p>
                 )}
-
+                {speakingNotice && speakingPhase === "done" && (
+                  <p className="flex items-center gap-2 text-sm font-bold text-emerald-700 dark:text-emerald-300" role="status">
+                    <CheckCircle2 size={16} aria-hidden="true" />
+                    {speakingNotice}
+                  </p>
+                )}
+                {!recording && speakingPhase !== "processing" && hasRecording && speakingPhase !== "done" && (
+                  <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300" role="status">
+                    Bạn đã gửi bản ghi cho câu này. Có thể ghi lại nếu muốn.
+                  </p>
+                )}
+                {speakingAnswer === "SKIPPED" && !recording && speakingPhase === "idle" && (
+                  <p className="text-sm font-bold text-slate-600 dark:text-slate-400" role="status">
+                    Bạn đã bỏ qua câu này. Có thể ghi âm nếu muốn làm.
+                  </p>
+                )}
                 {speakingError && (
-                  <p className="mt-3 text-sm font-bold text-rose-600" role="alert">
+                  <p className="text-sm font-bold text-rose-700 dark:text-rose-300" role="alert">
                     {speakingError}
                   </p>
                 )}
+                {recordedUrl && !recording && (
+                  <audio className="w-full" controls src={recordedUrl} preload="metadata" aria-label="Nghe lại bài nói" />
+                )}
 
-                <div className="mt-5 flex flex-wrap gap-3">
-                  {!recording && !recordedAudio && prepSeconds > 0 && !preparing && (
-                    <button
-                      type="button"
-                      onClick={() => startPrep(current.id, prepSeconds, limitMs)}
-                      className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-extrabold text-white hover:bg-violet-700"
-                    >
-                      <Timer size={17} />
-                      <span>Bắt đầu chuẩn bị ({prepSeconds}s)</span>
-                    </button>
-                  )}
-                  {!recording && !recordedAudio && (
-                    <button
-                      type="button"
-                      onClick={() => void startRecording(limitMs)}
-                      className={
-                        prepSeconds > 0 && !preparing
-                          ? "inline-flex min-h-11 items-center gap-2 rounded-xl border border-violet-300 bg-white px-5 text-sm font-extrabold text-violet-700 hover:bg-violet-50 dark:border-violet-800 dark:bg-slate-800 dark:text-violet-200"
-                          : "inline-flex min-h-11 items-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-extrabold text-white hover:bg-violet-700"
-                      }
-                    >
-                      <Mic size={17} />
-                      <span>{preparing || prepSeconds > 0 ? "Ghi âm ngay" : "Bắt đầu ghi âm"}</span>
-                    </button>
-                  )}
-                  {recording && (
-                    <button
-                      type="button"
-                      onClick={stopRecording}
-                      className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-rose-600 px-5 text-sm font-extrabold text-white hover:bg-rose-700"
-                    >
-                      <Square size={16} />
-                      <span>Dừng ghi âm</span>
-                    </button>
-                  )}
-                  {recordedAudio && !recording && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={discardRecording}
-                        className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-extrabold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                      >
-                        <RotateCcw size={16} />
-                        <span>Ghi âm lại</span>
-                      </button>
-                      <button
-                        type="button"
-                        disabled={confirmSpeaking.isPending || recordingMs < 300}
-                        onClick={() =>
-                          confirmSpeaking.mutate({
-                            questionId: current.id,
-                            blob: recordedAudio,
-                            durationMs: recordingMs,
-                          })
-                        }
-                        className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-extrabold text-white hover:bg-emerald-700 disabled:opacity-50"
-                      >
-                        {confirmSpeaking.isPending ? (
-                          <Loader2 className="animate-spin" size={16} />
-                        ) : (
-                          <CheckCircle2 size={16} />
-                        )}
-                        <span>Xác nhận & tiếp tục</span>
-                      </button>
-                    </>
-                  )}
-                  {!recording && !preparing && (
-                    <button
-                      type="button"
-                      onClick={() => void skipSpeaking(current.id)}
-                      className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-300 bg-white px-5 text-sm font-extrabold text-amber-800 hover:bg-amber-50 dark:border-amber-800 dark:bg-slate-800 dark:text-amber-200"
-                    >
-                      <SkipForward size={16} />
-                      <span>Bỏ qua phần này</span>
-                    </button>
-                  )}
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => (recording ? stopRecording() : void startRecording(current.id, limitMs))}
+                    disabled={speakingBusy || skipping}
+                    aria-pressed={recording}
+                    className={`inline-flex min-h-12 items-center gap-2 rounded-xl px-6 text-sm font-extrabold text-white transition-colors disabled:opacity-60 ${
+                      recording ? "bg-rose-600 hover:bg-rose-700" : "bg-violet-600 hover:bg-violet-700"
+                    }`}
+                  >
+                    {speakingBusy ? (
+                      <Loader2 size={17} className="animate-spin" aria-hidden="true" />
+                    ) : recording ? (
+                      <Square size={16} aria-hidden="true" />
+                    ) : (
+                      <Mic size={17} aria-hidden="true" />
+                    )}
+                    <span>
+                      {speakingPhase === "starting"
+                        ? "Đang mở micro…"
+                        : speakingPhase === "processing"
+                          ? "Đang gửi…"
+                          : recording
+                            ? "Dừng ghi âm"
+                            : hasRecording || speakingPhase === "done"
+                              ? "Ghi lại"
+                              : "Ghi âm"}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void skipSpeaking(current.id)}
+                    disabled={recording || speakingBusy || skipping}
+                    className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-extrabold text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                  >
+                    <SkipForward size={16} aria-hidden="true" />
+                    <span>Bỏ qua</span>
+                  </button>
                 </div>
               </div>
             ) : isOpenText ? (
@@ -778,18 +794,18 @@ export default function DiagnosticPage() {
               />
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 {writingSkipped ? (
-                  <p className="text-xs font-bold text-amber-700 dark:text-amber-300" role="status">
-                    Bạn đã chọn bỏ qua bài viết này. Bài bỏ qua không được chấm và kỹ năng Viết sẽ không có điểm. Gõ vào ô trên để làm lại.
+                  <p className="text-sm font-bold text-slate-600 dark:text-slate-400" role="status">
+                    Bạn đã bỏ qua bài viết này. Gõ vào ô trên nếu muốn làm lại.
                   </p>
                 ) : (
                   !writtenText.trim() && (
                     <button
                       type="button"
-                      onClick={() => setAnswers((old) => ({ ...old, [current.id]: WRITING_SKIPPED }))}
-                      className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-amber-300 bg-white px-4 text-xs font-extrabold text-amber-800 hover:bg-amber-50 dark:border-amber-800 dark:bg-slate-800 dark:text-amber-200"
+                      onClick={() => skipWriting(current.id)}
+                      className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-extrabold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
                     >
-                      <SkipForward size={14} />
-                      <span>Bỏ qua bài viết này</span>
+                      <SkipForward size={16} aria-hidden="true" />
+                      <span>Bỏ qua</span>
                     </button>
                   )
                 )}
@@ -965,9 +981,11 @@ export default function DiagnosticPage() {
 function DiagnosticResultView({
   assessment,
   result,
+  onBack,
 }: {
   assessment: DiagnosticAssessment;
   result: DiagnosticResult;
+  onBack: () => void;
 }) {
   const queryClient = useQueryClient();
   const [reviewFilter, setReviewFilter] = useState<string>("ALL");
@@ -985,7 +1003,6 @@ function DiagnosticResultView({
   });
 
   const fourSkill = result.fourSkill ?? null;
-  const totalTasks = result.administeredForm?.totalItems ?? result.totalTaskCount ?? assessment.questions.length;
   const speakingTaskIds = assessment.questions.filter(isSpeakingTask).map((q) => q.id);
   const writingTaskIds = assessment.questions.filter(isWritingTask).map((q) => q.id);
 
@@ -1015,15 +1032,20 @@ function DiagnosticResultView({
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <button
+        type="button"
+        onClick={onBack}
+        className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-base font-bold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-violet-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+      >
+        <ArrowLeft size={18} strokeWidth={2.25} aria-hidden="true" />
+        <span>Quay lại</span>
+      </button>
       {/* 1. Header Card: what was administered and how it was scored */}
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-9">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-sm font-black text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
             <CheckCircle2 size={15} />
             <span>Đã hoàn thành đánh giá đầu vào</span>
-          </span>
-          <span className="text-xs font-bold text-slate-400">
-            Tổng cộng: {totalTasks} nhiệm vụ
           </span>
         </div>
 
@@ -1036,14 +1058,14 @@ function DiagnosticResultView({
             </h1>
 
             <div className="mt-3 rounded-2xl border border-slate-100 bg-slate-50 p-4.5 dark:border-slate-800 dark:bg-slate-850">
-              <p className="text-sm font-extrabold text-slate-800 dark:text-slate-200">
+              <p className="text-base font-extrabold text-slate-800 dark:text-slate-200">
                 Phần trắc nghiệm khách quan:{" "}
                 <span className="text-emerald-600 dark:text-emerald-400">
                   {result.correctCount}/{result.totalCount} câu đúng
                 </span>{" "}
                 ({result.percentage}%)
               </p>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 leading-5">
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 leading-6">
                 Mức tham khảo được tính từ {result.totalCount} câu trắc nghiệm khách quan.
                 {speakingTaskIds.length + writingTaskIds.length > 0
                   ? " Các bài Nói và Viết được nhận xét riêng để gợi ý luyện tập; chúng không thay đổi mức này."
@@ -1056,13 +1078,13 @@ function DiagnosticResultView({
         {/* Speaking feedback, one card per task */}
         {speakingTaskIds.length > 0 && (
           <div className="mt-6 space-y-3">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
               Bài Nói
             </h3>
             {speakingTaskIds.map((questionId, index) => {
               const item = result.speakingResponses?.find((row) => row.questionId === questionId);
               return (
-                <article key={questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-900">
+                <article key={questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-base dark:border-slate-700 dark:bg-slate-900">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <h4 className="font-black text-slate-900 dark:text-slate-100">Bài Nói {index + 1}</h4>
                     <TaskStatusChip status={item?.status} score={item?.score ?? null} />
@@ -1075,16 +1097,16 @@ function DiagnosticResultView({
                     </>
                   )}
                   {item?.status === "SKIPPED" && (
-                    <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-400">
+                    <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
                       Bạn đã bỏ qua bài này nên bài không được chấm; kỹ năng Nói không có điểm và không bị tính là 0.
                     </p>
                   )}
                   {item?.status === "GRADING_FAILED" && (
                     <>
-                      <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-400">
+                      <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
                         Bản ghi của bạn vẫn được lưu nhưng chưa chấm được. Kỹ năng Nói chưa có điểm cho tới khi chấm lại thành công.
                       </p>
-                      <button type="button" onClick={() => retrySpeaking.mutate(questionId)} disabled={retrySpeaking.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-violet-300 px-3 text-xs font-bold text-violet-700 transition hover:bg-violet-50 disabled:opacity-50 dark:border-violet-800 dark:text-violet-300"><RotateCcw size={14} /> Chấm lại</button>
+                      <button type="button" onClick={() => retrySpeaking.mutate(questionId)} disabled={retrySpeaking.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-violet-300 px-3 text-sm font-bold text-violet-700 transition hover:bg-violet-50 disabled:opacity-50 dark:border-violet-800 dark:text-violet-300"><RotateCcw size={14} /> Chấm lại</button>
                     </>
                   )}
                 </article>
@@ -1096,7 +1118,7 @@ function DiagnosticResultView({
         {/* Writing feedback, one card per task */}
         {writingTaskIds.length > 0 && (
           <div className="mt-6 space-y-3">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
               Bài Viết
             </h3>
             {writingTaskIds.map((questionId, index) => {
@@ -1105,31 +1127,31 @@ function DiagnosticResultView({
                 !item && result.questionsResult.find((row) => row.questionId === questionId)?.selectedText === "";
               if (!item)
                 return (
-                  <article key={questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-900">
+                  <article key={questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-base dark:border-slate-700 dark:bg-slate-900">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <h4 className="font-black text-slate-900 dark:text-slate-100">Bài Viết {index + 1}</h4>
                       <TaskStatusChip status={skipped ? "SKIPPED" : undefined} score={null} />
                     </div>
                     {skipped && (
-                      <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-400">
+                      <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
                         Bạn đã bỏ qua bài này nên bài không được chấm; kỹ năng Viết không có điểm và không bị tính là 0.
                       </p>
                     )}
                   </article>
                 );
               return (
-              <article key={item.questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-900">
+              <article key={item.questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-base dark:border-slate-700 dark:bg-slate-900">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h4 className="font-black text-slate-900 dark:text-slate-100">Bài Viết {index + 1}</h4>
                   <TaskStatusChip status={item.status} score={item.score} />
                 </div>
                 {typeof item.wordCount === "number" && (
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{item.wordCount} từ</p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{item.wordCount} từ</p>
                 )}
                 {item.status === "GRADED" && <CriteriaList criteria={item.criteria} feedback={item.criterionFeedback} />}
                 {item.feedback && <p className="mt-2 leading-6 text-slate-700 dark:text-slate-300">{item.feedback}</p>}
                 {item.suggestions.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-600 dark:text-slate-400">{item.suggestions.map((suggestion) => <li key={suggestion}>{suggestion}</li>)}</ul>}
-                {item.status === "GRADING_FAILED" && <button type="button" onClick={() => retryWriting.mutate(item.questionId)} disabled={retryWriting.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-violet-300 px-3 text-xs font-bold text-violet-700 transition hover:bg-violet-50 disabled:opacity-50 dark:border-violet-800 dark:text-violet-300"><RotateCcw size={14} /> Chấm lại</button>}
+                {item.status === "GRADING_FAILED" && <button type="button" onClick={() => retryWriting.mutate(item.questionId)} disabled={retryWriting.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-violet-300 px-3 text-sm font-bold text-violet-700 transition hover:bg-violet-50 disabled:opacity-50 dark:border-violet-800 dark:text-violet-300"><RotateCcw size={14} /> Chấm lại</button>}
               </article>
               );
             })}
@@ -1139,7 +1161,7 @@ function DiagnosticResultView({
         {/* Skill Profiles Breakdown */}
         {!fourSkill && result.skillProfiles && result.skillProfiles.length > 0 && (
           <div className="mt-7">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
               Kết quả theo kỹ năng
             </h3>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -1148,10 +1170,10 @@ function DiagnosticResultView({
                   key={p.skill}
                   className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-850"
                 >
-                  <p className="text-xs font-black text-slate-700 dark:text-slate-300">
+                  <p className="text-sm font-black text-slate-700 dark:text-slate-300">
                     {formatSkillName(p.skill)}
                   </p>
-                  <p className="mt-1 text-sm font-black text-slate-900 dark:text-slate-100">
+                  <p className="mt-1 text-base font-black text-slate-900 dark:text-slate-100">
                     {p.percentage !== null
                       ? `${p.percentage}% (${p.correctCount}/${p.totalCount})`
                       : "Chưa đủ dữ liệu"}
@@ -1166,20 +1188,20 @@ function DiagnosticResultView({
         {!result.advice && (
         <div className="mt-7 grid gap-4 border-t border-slate-100 pt-6 sm:grid-cols-2 dark:border-slate-800">
           <div>
-            <h3 className="text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            <h3 className="text-sm font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
               Điểm mạnh
             </h3>
-            <p className="mt-1 text-sm font-bold text-slate-800 dark:text-slate-200">
+            <p className="mt-1 text-base font-bold text-slate-800 dark:text-slate-200">
               {result.strengths && result.strengths.length > 0
                 ? result.strengths.map(formatSkillName).join(", ")
                 : "Chưa ghi nhận kỹ năng nổi trội từ kết quả hiện tại."}
             </p>
           </div>
           <div>
-            <h3 className="text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
+            <h3 className="text-sm font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
               Nên củng cố
             </h3>
-            <p className="mt-1 text-sm font-bold text-slate-800 dark:text-slate-200">
+            <p className="mt-1 text-base font-bold text-slate-800 dark:text-slate-200">
               {result.weaknesses && result.weaknesses.length > 0
                 ? result.weaknesses.map(formatSkillName).join(", ")
                 : "Chưa ghi nhận kỹ năng cần ưu tiên cải thiện."}
@@ -1200,7 +1222,7 @@ function DiagnosticResultView({
               Bài luyện đề xuất
             </h2>
           </div>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Dựa trên phân tích kết quả bài kiểm tra, hệ thống gợi ý các lộ trình luyện tập mục tiêu cho bạn:
           </p>
 
@@ -1215,14 +1237,14 @@ function DiagnosticResultView({
                   <span className="inline-block rounded-md bg-violet-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-violet-700 dark:bg-violet-950 dark:text-violet-300">
                     {rec.badge}
                   </span>
-                  <h3 className="mt-2 text-sm font-black text-slate-900 group-hover:text-violet-600 dark:text-slate-100 dark:group-hover:text-violet-400">
+                  <h3 className="mt-2 text-base font-black text-slate-900 group-hover:text-violet-600 dark:text-slate-100 dark:group-hover:text-violet-400">
                     {rec.title}
                   </h3>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-5">
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-6">
                     {rec.description}
                   </p>
                 </div>
-                <div className="mt-4 flex items-center gap-1 text-xs font-extrabold text-violet-600 dark:text-violet-400">
+                <div className="mt-4 flex items-center gap-1 text-sm font-extrabold text-violet-600 dark:text-violet-400">
                   <span>Luyện tập ngay</span>
                   <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
                 </div>
@@ -1250,7 +1272,7 @@ function DiagnosticResultView({
                 key={f.id}
                 type="button"
                 onClick={() => setReviewFilter(f.id)}
-                className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-all ${
+                className={`rounded-xl px-3 py-1.5 text-sm font-bold transition-all ${
                   reviewFilter === f.id
                     ? "bg-violet-600 text-white"
                     : "border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
@@ -1264,7 +1286,7 @@ function DiagnosticResultView({
 
         <div className="mt-5 space-y-3">
           {filteredReviews.length === 0 ? (
-            <p className="py-6 text-center text-xs font-bold text-slate-400">
+            <p className="py-6 text-center text-sm font-bold text-slate-400">
               Không có câu hỏi nào trong danh mục này.
             </p>
           ) : (
@@ -1288,7 +1310,7 @@ function DiagnosticResultView({
                 return (
                   <div
                     key={item.questionId}
-                    className="rounded-2xl border border-slate-200 bg-slate-50/40 p-4 text-xs dark:border-slate-800 dark:bg-slate-850"
+                    className="rounded-2xl border border-slate-200 bg-slate-50/40 p-4 text-sm dark:border-slate-800 dark:bg-slate-850"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-extrabold text-slate-800 dark:text-slate-200">
@@ -1315,7 +1337,7 @@ function DiagnosticResultView({
               return (
                 <div
                   key={item.questionId}
-                  className={`rounded-2xl border p-4 text-xs transition-colors ${
+                  className={`rounded-2xl border p-4 text-sm transition-colors ${
                     item.isCorrect
                       ? "border-emerald-200/90 bg-emerald-50/30 dark:border-emerald-950 dark:bg-emerald-950/20"
                       : item.isCorrect === false
@@ -1363,7 +1385,7 @@ function DiagnosticResultView({
                   </div>
 
                   {item.explanation && (
-                    <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 leading-4">
+                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-4">
                       {item.explanation}
                     </p>
                   )}
@@ -1377,10 +1399,10 @@ function DiagnosticResultView({
       {/* 4. Bottom CTAs: Dashboard & Profile Tab Link (NO RETAKE BUTTON) */}
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-7">
         <div>
-          <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">
+          <h3 className="text-base font-black text-slate-900 dark:text-slate-100">
             Kết quả đã được lưu vĩnh viễn vào hồ sơ
           </h3>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
             Bạn có thể xem lại kết quả này bất kỳ lúc nào tại mục Tài khoản.
           </p>
         </div>
@@ -1388,14 +1410,14 @@ function DiagnosticResultView({
         <div className="flex flex-wrap items-center gap-3">
           <Link
             href="/hub?tab=diagnostic-result"
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-slate-200 px-4 text-xs font-extrabold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-slate-200 px-4 text-sm font-extrabold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             <Award size={15} />
             <span>Xem trong Hồ sơ</span>
           </Link>
           <Link
             href="/dashboard"
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-violet-600 px-5 text-xs font-extrabold text-white hover:bg-violet-700"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-extrabold text-white hover:bg-violet-700"
           >
             <span>Về Bảng điều khiển</span>
             <ArrowRight size={15} />
@@ -1431,10 +1453,10 @@ function FourSkillPanel({ result }: { result: DiagnosticFourSkillResult }) {
   const pending = result.state === "PENDING_GRADING";
   return (
     <div className="mt-4">
-      <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 sm:text-3xl">
+      <h1 className="text-3xl font-black text-slate-900 dark:text-slate-100 sm:text-4xl">
         Kết quả theo bốn kỹ năng
       </h1>
-      <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+      <p className="mt-2 text-base leading-6 text-slate-600 dark:text-slate-300">
         {result.overall !== null
           ? <>Điểm tổng tham khảo: <span className="font-black text-slate-900 dark:text-slate-100">{result.overall}/100</span> (trung bình bốn kỹ năng, mỗi kỹ năng 25%).</>
           : pending
@@ -1450,25 +1472,25 @@ function FourSkillPanel({ result }: { result: DiagnosticFourSkillResult }) {
           return (
             <div key={key} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-850">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-black text-slate-700 dark:text-slate-300">{FOUR_SKILL_LABELS[key]}</p>
-                <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${SKILL_TONE_CLASS[state.tone]}`}>{state.label}</span>
+                <p className="text-sm font-black text-slate-700 dark:text-slate-300">{FOUR_SKILL_LABELS[key]}</p>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${SKILL_TONE_CLASS[state.tone]}`}>{state.label}</span>
               </div>
-              <p className="mt-2 text-xl font-black text-slate-900 dark:text-slate-100">
+              <p className="mt-2 text-3xl font-black text-slate-900 dark:text-slate-100">
                 {skill?.score !== null && skill?.score !== undefined ? `${skill.score}/100` : "—"}
               </p>
               {skill && (key === "LISTENING" || key === "READING") && skill.itemsTotal > 0 && (
-                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{skill.itemsScored}/{skill.itemsTotal} câu đúng</p>
+                <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{skill.itemsScored}/{skill.itemsTotal} câu đúng</p>
               )}
             </div>
           );
         })}
       </div>
       {languageUse && languageUse.itemsTotal > 0 && (
-        <p className="mt-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
+        <p className="mt-3 text-sm leading-6 text-slate-500 dark:text-slate-400">
           {FOUR_SKILL_LABELS.LANGUAGE_USE}: {languageUse.itemsScored}/{languageUse.itemsTotal} câu đúng. Phần này chỉ dùng để gợi ý luyện tập, không tính vào điểm tổng.
         </p>
       )}
-      <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+      <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
         Đây là chỉ số luyện tập nội bộ của BreadTrans, không phải điểm thi hay chứng chỉ chính thức.
       </p>
     </div>
@@ -1497,7 +1519,7 @@ function TaskStatusChip({ status, score }: { status?: string; score: number | nu
             ? "pending"
             : "missing";
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${SKILL_TONE_CLASS[tone]}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-bold ${SKILL_TONE_CLASS[tone]}`}>
       {tone === "pending" && <Loader2 size={12} className="animate-spin" />}
       {label}
     </span>
@@ -1518,11 +1540,11 @@ function CriteriaList({
     <dl className="mt-3 grid gap-2 sm:grid-cols-2">
       {entries.map(([key, value]) => (
         <div key={key} className="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-850">
-          <dt className="flex items-center justify-between gap-2 text-xs font-black text-slate-700 dark:text-slate-300">
+          <dt className="flex items-center justify-between gap-2 text-sm font-black text-slate-700 dark:text-slate-300">
             <span>{formatCriterionName(key)}</span>
             <span>{value}/4</span>
           </dt>
-          {feedback?.[key] && <dd className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-400">{feedback[key]}</dd>}
+          {feedback?.[key] && <dd className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">{feedback[key]}</dd>}
         </div>
       ))}
     </dl>

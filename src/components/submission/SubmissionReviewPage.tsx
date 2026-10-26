@@ -15,6 +15,8 @@ import {
   resolveReadingCorrectAnswer,
 } from "@/lib/reading/readingQuizUtils";
 import { readingSubskillLabel } from "@/components/reading/readingTrackingLogic";
+import { PracticeWritingDetail } from "@/components/writing/PracticeWritingDetail";
+import { practiceDetailOf } from "@/lib/api/services/writing.service";
 import { isSafeCourseReturn, withSafeReturnTo } from "@/lib/course/navigation";
 
 export default function SubmissionAnalyticsPage(props: {
@@ -134,6 +136,10 @@ export default function SubmissionAnalyticsPage(props: {
                 : "Không có nội dung hiển thị"}
             </p>
           </div>
+
+          {practiceDetailOf(writingFeedback?.practice) && (
+            <PracticeWritingDetail detail={practiceDetailOf(writingFeedback?.practice)!} />
+          )}
 
           {writingFeedback ? (
             <div className="grid gap-4 sm:grid-cols-2">

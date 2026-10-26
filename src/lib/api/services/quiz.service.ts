@@ -145,6 +145,7 @@ export interface SubmissionAnalytics {
     maxScore: number;
     score: number;
     skill: "WRITING";
+    practice?: Partial<import("./writing.service").PracticeWritingDetail>;
   } | null;
   submittedAnswer?: unknown;
 }

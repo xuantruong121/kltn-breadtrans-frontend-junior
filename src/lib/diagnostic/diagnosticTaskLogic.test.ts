@@ -6,6 +6,8 @@ import {
   countWords,
   describeForm,
   draftKey,
+  findReferenceHighlight,
+  learnerErrorMessage,
   describeSkillState,
   formatCriterionName,
   parseDraft,
@@ -74,6 +76,36 @@ test("a local draft keeps only question answers and survives bad input", () => {
   assert.deepEqual(parseDraft("not json"), {});
   assert.deepEqual(parseDraft(null), {});
   assert.equal(draftKey(7), "breadtrans:diagnostic-draft:7");
+});
+
+const PASSAGE =
+  "Many students prepare for exams by reading their notes over and over. It feels productive: the material becomes familiar. This is the illusion of fluency.\nRetrieval is harder, and it feels worse at first, but it works. Accepting that trade-off pays off.";
+
+test("reference highlight: a quoted phrase that occurs once is found exactly", () => {
+  const h = findReferenceHighlight('In the passage, "the illusion of fluency" refers to', PASSAGE)!;
+  assert.equal(PASSAGE.slice(h.start, h.end), "the illusion of fluency");
+  const t = findReferenceHighlight('In the passage, "that trade-off" means accepting', PASSAGE)!;
+  assert.equal(PASSAGE.slice(t.start, t.end), "that trade-off");
+});
+
+test("reference highlight: an ambiguous pronoun is placed only through its quoted context", () => {
+  const h = findReferenceHighlight('In the second paragraph, "it" in "it feels worse" refers to', PASSAGE)!;
+  assert.equal(PASSAGE.slice(h.start, h.end), "it");
+  assert.equal(PASSAGE.slice(h.start, h.start + 14), "it feels worse");
+  // "it" alone occurs several times: no guess.
+  assert.equal(findReferenceHighlight('What does "it" refer to?', PASSAGE), null);
+  assert.equal(findReferenceHighlight("What is the writer's main point?", PASSAGE), null);
+});
+
+test("learner errors never show raw transport text", () => {
+  const ax = (status: number, message: string) => ({ response: { status, data: { message } } });
+  assert.equal(learnerErrorMessage(ax(400, "Thời lượng bản ghi không khớp với nội dung âm thanh")), "Không thể xác nhận bản ghi âm. Vui lòng ghi âm lại.");
+  assert.equal(learnerErrorMessage(ax(400, "Bản ghi rỗng")), "Không thể sử dụng bản ghi này. Vui lòng ghi âm lại.");
+  assert.equal(learnerErrorMessage(ax(429, "x")), "Có quá nhiều yêu cầu. Vui lòng thử lại sau.");
+  assert.equal(learnerErrorMessage(ax(503, "x")), "Dịch vụ chấm bài đang tạm thời gián đoạn. Bạn có thể thử lại sau.");
+  assert.equal(learnerErrorMessage({ message: "Network Error" }), "Không thể tải bản ghi âm lên. Kiểm tra kết nối và thử lại.");
+  assert.equal(learnerErrorMessage({ message: "MIC_DENIED" }), "Chưa được cấp quyền sử dụng micro. Hãy kiểm tra quyền truy cập và thử lại.");
+  assert.doesNotMatch(learnerErrorMessage(ax(400, "Request failed with status code 400")), /status code/);
 });
 
 test("criterion keys and skill states have Vietnamese labels", () => {

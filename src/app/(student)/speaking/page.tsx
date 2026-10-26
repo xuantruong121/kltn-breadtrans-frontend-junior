@@ -10,7 +10,6 @@ import {
   Mic,
   RotateCcw,
   Search,
-  Target,
   X,
 } from "lucide-react";
 import {
@@ -385,10 +384,6 @@ export default function SpeakingExercisesPage() {
                 <span>Chuỗi học: {streak ?? 0} ngày liên tiếp</span>
               </div>
 
-              <div className="inline-flex items-center gap-1.5 rounded-xl border border-violet-200 dark:border-violet-800/60 bg-violet-50 dark:bg-violet-950/40 px-3 py-1.5 text-xs font-black text-violet-800 dark:text-violet-300">
-                <Target size={14} className="text-violet-600 dark:text-violet-400" aria-hidden="true" />
-                <span>{speakingProgress?.normalizedScore != null ? `Điểm gần đây: ${Math.round(speakingProgress.normalizedScore)}/100` : "Chưa đủ dữ liệu để đánh giá"}</span>
-              </div>
             </div>
           </div>
 
