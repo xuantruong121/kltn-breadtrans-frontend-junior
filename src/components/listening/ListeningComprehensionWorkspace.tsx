@@ -45,6 +45,7 @@ import {
   canonicalizeSubmittedDictation,
   diffDictationAnswer,
   generateSafeRelativeDictationHint,
+  shouldDiscardFailedCheckOnLeave,
   type DictationDiffToken,
 } from "./listeningDictationUtils";
 import { DailyDictationWorkspace } from "./DailyDictationWorkspace";
@@ -724,8 +725,15 @@ export function ListeningComprehensionWorkspace({
     setValidationNotice(null);
     if (currentIndex < questions.length - 1) {
       const nextQ = questions[currentIndex + 1];
-      // Clear failed (not-yet-correct) check so error panel doesn't persist on return
-      if (currentQuestion && checkResults[currentQuestion.id] && !checkResults[currentQuestion.id]?.isCorrect && !checkResults[currentQuestion.id]?.skipped) {
+      // A failed Dictation check is cleared so the learner retries on return;
+      // a checked multiple-choice answer is final and is kept.
+      if (
+        currentQuestion &&
+        shouldDiscardFailedCheckOnLeave(
+          currentQuestion.type,
+          checkResults[currentQuestion.id],
+        )
+      ) {
         setCheckResults((prev) => {
           const next = { ...prev };
           delete next[currentQuestion.id];
@@ -753,8 +761,14 @@ export function ListeningComprehensionWorkspace({
   const handlePrevQuestion = () => {
     setValidationNotice(null);
     if (currentIndex > 0) {
-      // Clear failed check so error panel hides when returning to prev question
-      if (currentQuestion && checkResults[currentQuestion.id] && !checkResults[currentQuestion.id]?.isCorrect && !checkResults[currentQuestion.id]?.skipped) {
+      // Same rule as moving forward: only Dictation discards a failed check.
+      if (
+        currentQuestion &&
+        shouldDiscardFailedCheckOnLeave(
+          currentQuestion.type,
+          checkResults[currentQuestion.id],
+        )
+      ) {
         setCheckResults((prev) => {
           const next = { ...prev };
           delete next[currentQuestion.id];

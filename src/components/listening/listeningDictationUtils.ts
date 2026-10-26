@@ -669,3 +669,24 @@ export function buildProgressiveAnswer(
 
   return [];
 }
+
+/**
+ * Whether leaving a question should discard its failed check and answer.
+ *
+ * Only Dictation is a retry loop: an incorrect attempt stays editable until
+ * it is right. A multiple-choice answer is final once checked, because the
+ * check reveals the correct option; discarding a wrong choice blocked
+ * submission until the learner re-answered with the revealed key, which made
+ * every listening score all-correct.
+ */
+export function shouldDiscardFailedCheckOnLeave(
+  questionType: string | undefined,
+  check: { isCorrect?: boolean; skipped?: boolean } | undefined,
+): boolean {
+  return (
+    questionType === "DICTATION" &&
+    !!check &&
+    !check.isCorrect &&
+    !check.skipped
+  );
+}

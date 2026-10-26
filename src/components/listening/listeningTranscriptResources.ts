@@ -778,32 +778,41 @@ async function fetchAudioForTranscript(
   let audioError = false;
   let audioNotice: string | null = null;
 
-  try {
-    audioBlob = await fetcher.getTranscriptAudioBlob(
-      quizId,
-      signal,
-      effectiveArtifact,
-    );
-    if (signal.aborted) {
-      throw createAbortError();
-    }
-    audioBlobUrl = fetcher.createObjectUrl(audioBlob);
-    if (existing?.audioBlobUrl && existing.audioBlobUrl !== audioBlobUrl) {
-      if ((urlRefCounts.get(existing.audioBlobUrl) ?? 0) <= 0) {
-        const r = urlRevokers.get(existing.audioBlobUrl) ?? toRevokerFn(fetcher);
-        try { r?.(existing.audioBlobUrl); } catch { /* ignore */ }
-        urlRefCounts.delete(existing.audioBlobUrl);
-        urlRevokers.delete(existing.audioBlobUrl);
-      }
-    }
-    registerQuizBlobUrl(quizId, audioBlobUrl, fetcher);
-  } catch (err: any) {
-    if (signal.aborted || err?.name === "AbortError") {
-      throw createAbortError();
-    }
+  // No published full-quiz artifact: there is nothing to stream, and asking
+  // anyway only produced a 503 (logged as a server error) for the same
+  // learner-facing notice.
+  if (!effectiveArtifact) {
     audioError = true;
     audioNotice =
       "Bản ghi âm toàn bài đang được quản trị viên chuẩn bị. Bạn vẫn có thể xem kịch bản.";
+  } else {
+    try {
+      audioBlob = await fetcher.getTranscriptAudioBlob(
+        quizId,
+        signal,
+        effectiveArtifact,
+      );
+      if (signal.aborted) {
+        throw createAbortError();
+      }
+      audioBlobUrl = fetcher.createObjectUrl(audioBlob);
+      if (existing?.audioBlobUrl && existing.audioBlobUrl !== audioBlobUrl) {
+        if ((urlRefCounts.get(existing.audioBlobUrl) ?? 0) <= 0) {
+          const r = urlRevokers.get(existing.audioBlobUrl) ?? toRevokerFn(fetcher);
+          try { r?.(existing.audioBlobUrl); } catch { /* ignore */ }
+          urlRefCounts.delete(existing.audioBlobUrl);
+          urlRevokers.delete(existing.audioBlobUrl);
+        }
+      }
+      registerQuizBlobUrl(quizId, audioBlobUrl, fetcher);
+    } catch (err: any) {
+      if (signal.aborted || err?.name === "AbortError") {
+        throw createAbortError();
+      }
+      audioError = true;
+      audioNotice =
+        "Bản ghi âm toàn bài đang được quản trị viên chuẩn bị. Bạn vẫn có thể xem kịch bản.";
+    }
   }
 
   const entry: TranscriptResourceCacheEntry = {

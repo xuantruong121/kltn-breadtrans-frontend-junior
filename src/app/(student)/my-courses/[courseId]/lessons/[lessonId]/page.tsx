@@ -133,7 +133,7 @@ function ExerciseCard({
       questionId: number;
       answer: unknown;
       correctAnswer: unknown;
-      isCorrect: boolean;
+      isCorrect: boolean | null;
       explanation: string | null;
     }>;
   } | null>(null);
@@ -380,11 +380,42 @@ function ExerciseCard({
       {result && (
         <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-5 text-base text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
           <p className="font-bold text-lg">Hoàn thành bài tập</p>
-          <p className="mt-1 text-xl font-extrabold text-blue-700 dark:text-blue-300">
-            {result.score}/{result.maxScore} câu đúng · {result.percentage}%
-          </p>
+          {result.maxScore > 0 && (
+            <p className="mt-1 text-xl font-extrabold text-blue-700 dark:text-blue-300">
+              {result.score}/{result.maxScore} câu trắc nghiệm đúng · {result.percentage}%
+            </p>
+          )}
+          {result.feedback.some((item) => item.isCorrect === null) && (
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+              Câu tự viết không chấm đúng/sai vì có nhiều cách trả lời hợp lệ. Hãy so câu của bạn với câu tham khảo.
+            </p>
+          )}
           <ul className="mt-4 space-y-3">
-            {result.feedback.map((item) => (
+            {result.feedback.map((item) =>
+              item.isCorrect === null ? (
+                <li
+                  key={item.questionId}
+                  className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900"
+                >
+                  <p className="font-bold text-slate-700 dark:text-slate-200">
+                    Câu tự viết
+                  </p>
+                  <div className="mt-2 space-y-1 text-sm">
+                    <p>
+                      <strong>Bạn viết:</strong> {formatAnswer(item.answer)}
+                    </p>
+                    <p>
+                      <strong>Câu tham khảo:</strong>{" "}
+                      {formatAnswer(item.correctAnswer)}
+                    </p>
+                  </div>
+                  {item.explanation && (
+                    <p className="mt-2 text-sm leading-relaxed">
+                      <strong>Giải thích:</strong> {item.explanation}
+                    </p>
+                  )}
+                </li>
+              ) : (
               <li
                 key={item.questionId}
                 className={`rounded-xl border p-3 ${item.isCorrect ? "border-emerald-200 bg-emerald-50/70 dark:border-emerald-900/60 dark:bg-emerald-950/30" : "border-rose-200 bg-rose-50/70 dark:border-rose-900/60 dark:bg-rose-950/30"}`}
@@ -411,7 +442,8 @@ function ExerciseCard({
                   </p>
                 )}
               </li>
-            ))}
+              ),
+            )}
           </ul>
         </div>
       )}

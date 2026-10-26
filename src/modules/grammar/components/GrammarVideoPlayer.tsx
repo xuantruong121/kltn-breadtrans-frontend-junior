@@ -29,7 +29,7 @@ export const GrammarVideoPlayer: React.FC<GrammarVideoPlayerProps> = ({ topic })
           <Lightbulb size={13} aria-hidden="true" />
           Công thức cốt lõi
         </div>
-        <p className="font-mono text-base font-bold leading-relaxed text-amber-950 dark:text-amber-200">
+        <p className="font-mono text-base font-bold leading-relaxed break-words [overflow-wrap:anywhere] text-amber-950 dark:text-amber-200">
           {topic.keyFormula}
         </p>
       </div>

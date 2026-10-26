@@ -10,9 +10,7 @@ import {
   ChevronRight,
   ChevronDown,
   Clock,
-  Route,
   Milestone,
-  Headphones,
   Gift,
   Mic,
   Trophy,
@@ -21,8 +19,6 @@ import {
   Play,
   Award,
   Zap,
-  Star,
-  Check,
   Target,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
@@ -33,167 +29,60 @@ import { motion } from "framer-motion";
 
 // --- DATA CONSTANTS ---
 
+// Every statement here must match what the product actually does. No learner
+// counts, success rates, testimonials or exam-board claims: BreadTrans writes
+// its own practice material and its results are internal practice indicators.
 const ROADMAP_STEPS = [
   {
     step: "01",
-    title: "Chẩn đoán năng lực 5 phút",
-    desc: "Làm bài test thích ứng thông minh để xác định chính xác trình độ CEFR (A1 - C1) và các lỗ hổng phát âm, từ vựng ban đầu.",
-    badge: "Miễn phí 100%",
+    title: "Làm bài kiểm tra đầu vào",
+    desc: "Trả lời bộ câu hỏi đầu vào để thấy kỹ năng nào đang mạnh, kỹ năng nào cần luyện thêm. Kết quả là ước lượng nội bộ để gợi ý bài luyện, không phải chứng chỉ hay cấp độ CEFR.",
+    badge: "Miễn phí",
     icon: Target,
   },
   {
     step: "02",
-    title: "Thiết kế lộ trình mục tiêu tối ưu",
-    desc: "Hệ thống tự động phân bổ khối lượng học tập theo mục tiêu điểm số và quỹ thời gian thực tế của riêng bạn.",
-    badge: "Cá nhân hóa",
+    title: "Nhận gợi ý bài luyện",
+    desc: "Từ những câu bạn làm sai, hệ thống gợi ý bài luyện cho kỹ năng còn yếu. Bạn vẫn có thể chọn bất kỳ bài nào trong thư viện.",
+    badge: "Theo kết quả của bạn",
     icon: Milestone,
   },
   {
     step: "03",
-    title: "Luyện 4 kỹ năng & Sửa lỗi tức thì",
-    desc: "Rèn luyện Nghe, Nói, Đọc, Viết có trợ lý học tập đồng hành 24/7, phát hiện từng âm vị sai và gợi ý sửa lỗi trong 2 giây.",
-    badge: "Phản hồi thời gian thực",
+    title: "Luyện Nghe, Nói, Đọc, Viết",
+    desc: "Bài Nghe và Đọc được chấm ngay sau khi nộp. Bài Nói được chấm phát âm từng từ, bài Viết nhận nhận xét tự động theo tiêu chí.",
+    badge: "Phản hồi tự động",
     icon: Zap,
   },
   {
     step: "04",
-    title: "Thi thử ETS & Bứt phá điểm số",
-    desc: "Cọ xát phòng thi 200 câu áp lực bấm giờ thực tế, khắc phục triệt để bẫy đề thi và tự tin đạt chứng chỉ mơ ước.",
-    badge: "Chuẩn format 2024",
+    title: "Luyện đề theo cấu trúc TOEIC",
+    desc: "Làm đề Nghe & Đọc 200 câu trong 120 phút có đồng hồ, rồi xem lại đáp án và giải thích. Đề do BreadTrans biên soạn; điểm là chỉ số luyện tập, không phải điểm thi chính thức.",
+    badge: "Có giới hạn thời gian",
     icon: Trophy,
-  },
-];
-
-const CURRICULUM_COURSES = [
-  {
-    id: "toeic-mastery",
-    category: "toeic",
-    title: "Luyện Thi TOEIC Bứt Phá 750+",
-    desc: "Khóa học trọng điểm gồm 120 chủ đề trọng tâm, chiến lược xử lý Part 1-7 và ngân hàng 50 đề thi thử ETS có phân tích đáp án chi tiết.",
-    level: "Intermediate",
-    lessonsCount: "120 bài học",
-    duration: "60 giờ",
-    highlight: "Khóa học trọng tâm",
-    link: "/exams",
-  },
-  {
-    id: "workplace-comm",
-    category: "comm",
-    title: "Tiếng Anh Giao Tiếp Công Sở & Phỏng Vấn",
-    desc: "Luyện phản xạ viết email chuyên nghiệp, hội thoại đàm phán, thuyết trình dự án và trả lời phỏng vấn trôi chảy cùng gia sư đồng hành.",
-    level: "All Levels",
-    lessonsCount: "60 bài giảng",
-    duration: "40 giờ",
-    highlight: "Giao tiếp thực tế",
-    link: "/courses",
-  },
-  {
-    id: "pronunciation-lab",
-    category: "comm",
-    title: "Chỉnh Phát Âm Chuẩn Âm Vị IPA & Ngữ Điệu",
-    desc: "Chuyên sâu 44 âm IPA quốc tế, nối âm, nuốt âm, trọng âm từ và ngữ điệu câu với công nghệ đối sánh giọng đọc bản xứ.",
-    level: "Beginner",
-    lessonsCount: "44 bài luyện",
-    duration: "25 giờ",
-    highlight: "Nhận diện âm vị",
-    link: "/speaking",
-  },
-  {
-    id: "grammar-vocab-srs",
-    category: "vocab",
-    title: "Hệ Thống 3000 Từ Vựng Cốt Lõi & 24 Chuyên Đề Ngữ Pháp",
-    desc: "Bộ thẻ Flashcard ghi nhớ ngắt quãng SRS kết hợp 24 sơ đồ tư duy ngữ pháp giúp nắm chắc cấu trúc câu mà không cần học vẹt.",
-    level: "All Levels",
-    lessonsCount: "3000 từ • 24 chủ điểm",
-    duration: "Không giới hạn",
-    highlight: "Thuật toán SRS",
-    link: "/flashcard",
-  },
-];
-
-const TESTIMONIALS = [
-  {
-    name: "Nguyễn Tuấn Anh",
-    role: "Sinh viên năm cuối ĐH Bách Khoa",
-    tag: "TOEIC 450 → 820",
-    timeframe: "Sau 70 ngày",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-    quote:
-      "Trước đây mình rất sợ phần Nghe Part 3, 4 vì tốc độ nói quá nhanh. Nhờ tính năng luyện nghe ngắt câu và giải thích bẫy đề thi của BreadTrans, mình đã nâng từ 450 lên 820 điểm để kịp nộp hồ sơ tốt nghiệp.",
-  },
-  {
-    name: "Trần Thị Minh Thư",
-    role: "Chuyên viên Kiểm toán Deloitte",
-    tag: "Phát âm 62% → 96%",
-    timeframe: "Sau 45 ngày",
-    avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
-    quote:
-      "Đi làm bận rộn không có thời gian tới trung tâm, mình chọn BreadTrans vì có thể luyện nói bất cứ lúc nào. AI chỉ rõ mình nuốt âm đuôi ở đâu, hướng dẫn uốn lưỡi rất tỉ mỉ, bây giờ mình tự tin họp với đối tác nước ngoài.",
-  },
-  {
-    name: "Lê Hoàng Đức",
-    role: "Kỹ sư Phần mềm FPT Software",
-    tag: "Chuỗi học 90 ngày Streak",
-    timeframe: "Học mỗi ngày",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-    quote:
-      "Cơ chế nuôi thú cưng ảo và kiếm Bánh Mì làm mình nghiện học thực sự. Mỗi ngày chỉ cần 20 phút hoàn thành nhiệm vụ là cảm giác như đang chơi game mà tiếng Anh lại tiến bộ trông thấy.",
-  },
-];
-
-const COMPARISON_ROWS = [
-  {
-    feature: "Thời gian & Không gian học tập",
-    traditional: "Cố định theo lịch trung tâm, mất thời gian di chuyển",
-    selfStudy: "Dễ chán nản, hay trì hoãn, không có người đốc thúc",
-    breadtrans: "Linh hoạt 24/7 mọi lúc mọi nơi trên mọi thiết bị",
-  },
-  {
-    feature: "Chấm phát âm & Sửa bài nói",
-    traditional: "Giáo viên sửa chung cả lớp, ít cơ hội được nói riêng",
-    selfStudy: "Tự ghi âm nghe lại, không biết đúng sai âm vị",
-    breadtrans: "Chấm chi tiết từng âm vị, ngữ điệu chuẩn xác trong 2 giây",
-  },
-  {
-    feature: "Luyện đề theo format chứng chỉ",
-    traditional: "1-2 buổi thi thử mỗi khóa, trả kết quả sau vài ngày",
-    selfStudy: "Làm sách photo, tự tra đáp án, không rõ bẫy đề",
-    breadtrans: "Kho đề theo từng format, hiện có 200+ đề TOEIC/ETS và phân tích lỗ hổng tức thì",
-  },
-  {
-    feature: "Động lực duy trì thói quen",
-    traditional: "Phụ thuộc vào điểm danh, dễ bỏ dở khi bận",
-    selfStudy: "Bỏ cuộc sau 1-2 tuần đầu tiên",
-    breadtrans: "Thú cưng đồng hành, chuỗi Streak rực lửa, đổi quà Bánh Mì",
-  },
-  {
-    feature: "Chi phí đầu tư",
-    traditional: "Từ 5.000.000đ - 12.000.000đ / khóa",
-    selfStudy: "Mua sách vở, tài liệu rải rác không hệ thống",
-    breadtrans: "Bắt đầu miễn phí 100%, tiết kiệm 90% chi phí",
   },
 ];
 
 const FAQ_LIST = [
   {
-    q: "BreadTrans có hoàn toàn miễn phí để bắt đầu học không?",
-    a: "Hoàn toàn miễn phí! Bạn có thể đăng ký tài khoản trong 30 giây để làm bài kiểm tra trình độ 5 phút, nhận ngay 50 Bánh Mì tân thủ và trải nghiệm các bài luyện tập 4 kỹ năng cơ bản mà không cần nhập thẻ ngân hàng.",
+    q: "BreadTrans có miễn phí để bắt đầu không?",
+    a: "Có. Bạn đăng ký bằng email, không cần thẻ ngân hàng, rồi làm bài kiểm tra đầu vào và các bài luyện được đánh dấu miễn phí. Một số bài và khóa học cần gói PLUS hoặc PRO; các bài đó hiển thị nhãn khóa rõ ràng.",
   },
   {
-    q: "Hệ thống chấm điểm phát âm và ngữ điệu hoạt động như thế nào?",
-    a: "Hệ thống sẽ lắng nghe và đối chiếu trực tiếp giọng đọc của bạn với chuẩn phát âm bản ngữ. Bạn sẽ biết ngay mình đọc đúng hay sai ở từng từ, có bị nuốt âm đuôi hay sai trọng âm không, đồng thời nhận được hướng dẫn cụ thể cách đặt lưỡi và mở khẩu hình để chỉnh lại thật chuẩn.",
+    q: "Bài Nói được chấm như thế nào?",
+    a: "Bạn đọc theo câu mẫu và ghi âm. Hệ thống nhận dạng giọng nói rồi chấm độ chính xác của từng từ cùng độ trôi chảy, đánh dấu những từ nên luyện lại. Trước khi ghi âm, bạn có thể nghe câu mẫu ở tốc độ 0.75×, 0.9× hoặc 1×.",
   },
   {
-    q: "Đề thi thử TOEIC trên BreadTrans có sát với đề thi thật ETS không?",
-    a: "Toàn bộ ngân hàng đề thi thử trên BreadTrans được biên soạn bám sát cấu trúc đề thi TOEIC mới nhất của ETS (2024), đầy đủ 200 câu hỏi trong 120 phút (Part 1 đến Part 7), có đồng hồ đếm ngược đồng bộ và hệ thống phân tích chi tiết bẫy đề thi cho từng câu hỏi.",
+    q: "Đề luyện TOEIC trên BreadTrans có phải đề thi thật không?",
+    a: "Không. Đề do BreadTrans tự biên soạn theo cấu trúc bài thi TOEIC Nghe & Đọc (Part 1 đến Part 7, 200 câu, 120 phút). BreadTrans không liên kết với ETS và không cấp chứng chỉ; điểm hiển thị chỉ dùng để theo dõi tiến bộ khi luyện tập.",
   },
   {
-    q: "Bánh Mì trong hệ thống dùng để làm gì và làm sao để tích lũy?",
-    a: "Bánh Mì là điểm thưởng bạn nhận được khi chăm chỉ học tập trên BreadTrans. Cứ mỗi khi hoàn thành bài học, giữ vững chuỗi ngày học liên tục hoặc đạt điểm cao trong bài thi, bạn sẽ được cộng thêm Bánh Mì. Bạn có thể dùng Bánh Mì để nuôi thú cưng đồng hành tăng cấp, mở khóa đề thi nâng cao hoặc đổi quà trong Cửa hàng.",
+    q: "Bánh Mì dùng để làm gì?",
+    a: "Bánh Mì là điểm thưởng nhận được khi hoàn thành bài luyện và nhiệm vụ; lần đầu hoàn thành bài kiểm tra đầu vào được thưởng 50 Bánh Mì (tính trong giới hạn thưởng mỗi ngày). Bạn dùng Bánh Mì để cho thú cưng ăn hoặc đổi vật phẩm trong Cửa hàng, ví dụ khung avatar, vé bảo vệ chuỗi học và một số quà tặng.",
   },
   {
-    q: "Tôi có thể học BreadTrans trên điện thoại di động không?",
-    a: "Hoàn toàn được! BreadTrans hoạt động mượt mà trên mọi thiết bị từ iPhone, Android đến máy tính bảng và laptop. Bạn cũng có thể dễ dàng thêm BreadTrans ra màn hình chính điện thoại như một ứng dụng thông thường để vào học tiện lợi mọi lúc mọi nơi.",
+    q: "Tôi có học được trên điện thoại không?",
+    a: "Có. BreadTrans chạy trên trình duyệt, giao diện co giãn theo màn hình điện thoại, máy tính bảng và máy tính. Hiện chưa có ứng dụng cài đặt riêng.",
   },
 ];
 
@@ -214,13 +103,6 @@ export default function PublicLandingPage() {
   // Quick modals state
   const [quickLoginOpen, setQuickLoginOpen] = useState(false);
   const [quickRegisterOpen, setQuickRegisterOpen] = useState(false);
-
-  // Interactive Test-Drive Widget State
-  const [calcLevel, setCalcLevel] = useState<"BEGINNER" | "INTERMEDIATE" | "ADVANCED">("BEGINNER");
-  const [calcTarget, setCalcTarget] = useState<600 | 750 | 850>(600);
-
-  // Curriculum Filter Tab
-  const [activeCourseTab, setActiveCourseTab] = useState<"all" | "toeic" | "comm" | "vocab">("all");
 
   // FAQ Accordion State
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
@@ -250,43 +132,6 @@ export default function PublicLandingPage() {
     setTargetRoute(route);
     setQuickRegisterOpen(true);
   };
-
-  // Dynamic estimate calculation for interactive widget
-  const getCalculationResult = () => {
-    if (calcLevel === "BEGINNER") {
-      if (calcTarget === 600) {
-        return { weeks: 10, dailyMins: 30, listeningP: "Part 1, 2 (Trọng âm & Ngắt nghỉ)", readingP: "Part 5 (Ngữ pháp cơ bản)", examSet: "ETS 2024 Starter" };
-      }
-      if (calcTarget === 750) {
-        return { weeks: 16, dailyMins: 45, listeningP: "Part 1, 2, 3 (Hội thoại ngắn)", readingP: "Part 5, 6 (Điền từ & Đọc hiểu đoạn)", examSet: "ETS 2024 Intensive" };
-      }
-      return { weeks: 24, dailyMins: 60, listeningP: "Full Part 1-4 (Phản xạ tốc độ cao)", readingP: "Full Part 5-7 (Đoạn kép & Ba)", examSet: "ETS 2024 Mastery 850+" };
-    }
-    if (calcLevel === "INTERMEDIATE") {
-      if (calcTarget === 600) {
-        return { weeks: 4, dailyMins: 25, listeningP: "Speed-up Part 2 & Phản xạ bẫy", readingP: "Part 5 (Từ loại & Cụm collocation)", examSet: "ETS 2024 Quick Sprint" };
-      }
-      if (calcTarget === 750) {
-        return { weeks: 8, dailyMins: 40, listeningP: "Paraphrase Part 3, 4 chuyên sâu", readingP: "Part 6, 7 (Kỹ thuật Skimming/Scanning)", examSet: "ETS 2024 High-Scorer" };
-      }
-      return { weeks: 14, dailyMins: 50, listeningP: "Distractor & Giọng đa vùng US/UK/AU", readingP: "Triple Passage Part 7 tốc độ", examSet: "ETS 2024 Advanced 850+" };
-    }
-    // ADVANCED (700+)
-    if (calcTarget === 600) {
-      return { weeks: 2, dailyMins: 20, listeningP: "Luyện lướt tổng hợp Part 1-4", readingP: "Rà soát bẫy đề Part 5-7", examSet: "ETS 2024 Fast Review (Đã đạt chuẩn)" };
-    }
-    if (calcTarget === 750) {
-      return { weeks: 4, dailyMins: 30, listeningP: "Tối ưu hóa điểm số Part 3, 4", readingP: "Khắc phục bẫy ngữ nghĩa Part 7", examSet: "ETS 2024 Intensive Sprint" };
-    }
-    return { weeks: 6, dailyMins: 40, listeningP: "Accent Variation US/UK/AU/NZ", readingP: "Speed Reading Part 7 (Đoạn 3 bài)", examSet: "ETS 2024 Elite 900+ Master" };
-  };
-
-  const calcResult = getCalculationResult();
-
-  const filteredCourses =
-    activeCourseTab === "all"
-      ? CURRICULUM_COURSES
-      : CURRICULUM_COURSES.filter((c) => c.category === activeCourseTab);
 
   const toggleFaq = (index: number) => {
     setOpenFaqIndex(openFaqIndex === index ? null : index);
@@ -427,7 +272,7 @@ export default function PublicLandingPage() {
                   type="button"
                 >
                   <Clock size={18} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
-                  <span>Làm test chẩn đoán 5 phút</span>
+                  <span>Làm bài kiểm tra đầu vào</span>
                 </button>
               </div>
 
@@ -469,7 +314,7 @@ export default function PublicLandingPage() {
                       </span>
                     </div>
                     <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
-                      Chấm điểm âm vị thời gian thực
+                      Ví dụ minh họa
                     </span>
                   </div>
 
@@ -523,15 +368,12 @@ export default function PublicLandingPage() {
                       ))}
                     </div>
 
-                    <span className="text-xs font-black text-amber-800 dark:text-amber-300 bg-amber-100/80 dark:bg-amber-950/60 px-2.5 py-1 rounded-lg shrink-0">
-                      Chuẩn US 100%
-                    </span>
                   </div>
 
                   {/* Phoneme Breakdown Chips */}
                   <div className="space-y-1.5">
                     <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                      Phân tích từng từ &amp; âm vị:
+                      Kết quả chấm từng từ (minh họa):
                     </span>
                     <div className="flex flex-wrap gap-1.5 text-xs font-bold">
                       <span className="px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
@@ -550,7 +392,7 @@ export default function PublicLandingPage() {
                   </div>
 
                   {/* Interactive Result Badges Footer */}
-                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 grid grid-cols-3 gap-2 text-center">
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-2 text-center">
                     <div className="p-2 rounded-xl bg-amber-50/50 dark:bg-slate-800/60 border border-amber-200/60 dark:border-slate-700/60">
                       <span className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Phát âm</span>
                       <strong className="text-base font-black text-emerald-700 dark:text-emerald-400">98%</strong>
@@ -558,10 +400,6 @@ export default function PublicLandingPage() {
                     <div className="p-2 rounded-xl bg-amber-50/50 dark:bg-slate-800/60 border border-amber-200/60 dark:border-slate-700/60">
                       <span className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Trôi chảy</span>
                       <strong className="text-base font-black text-amber-700 dark:text-amber-400">95 / 100</strong>
-                    </div>
-                    <div className="p-2 rounded-xl bg-amber-50/50 dark:bg-slate-800/60 border border-amber-200/60 dark:border-slate-700/60">
-                      <span className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Mục tiêu format</span>
-                      <strong className="text-base font-black text-blue-700 dark:text-blue-400">820+</strong>
                     </div>
                   </div>
                 </div>
@@ -576,8 +414,6 @@ export default function PublicLandingPage() {
                   </div>
                   <p className="text-xs font-black text-slate-800 dark:text-slate-100">
                     Chuỗi <span className="text-orange-600 dark:text-orange-400 font-extrabold">14 ngày</span>
-                    <span className="hidden md:inline ml-1 text-[11px] font-bold text-orange-700 dark:text-orange-300">(+350 XP &amp; Bánh Mì)</span>
-                    <span className="inline md:hidden ml-1 text-[11px] font-bold text-orange-700 dark:text-orange-300">(+350 XP)</span>
                   </p>
                 </div>
 
@@ -605,14 +441,14 @@ export default function PublicLandingPage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 space-y-8">
         <div className="flex flex-col items-center text-center max-w-4xl mx-auto gap-3.5 sm:gap-4.5">
           <span className="inline-flex items-center text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50 px-3.5 py-1.5 rounded-full border border-amber-200 dark:border-amber-900/60">
-            Trụ Cột Đột Phá
+            Tính năng chính
           </span>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 leading-snug sm:leading-[1.36] text-balance">
             Mọi công cụ bạn cần để làm chủ tiếng Anh &amp; mục tiêu chứng chỉ
           </h2>
           <p className="text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl text-pretty">
-            Tạm biệt phương pháp học nhồi nhét truyền thống. BreadTrans kết hợp AI phân tích âm vị,
-            lộ trình học theo kỹ năng, kho luyện đề theo format chứng chỉ và động lực Gamification giữ lửa mỗi ngày.
+            Luyện từng kỹ năng với phản hồi tự động, học theo khóa học, luyện đề theo cấu trúc TOEIC,
+            và giữ thói quen học bằng Bánh Mì, thú cưng và bảng xếp hạng.
           </p>
         </div>
 
@@ -625,38 +461,38 @@ export default function PublicLandingPage() {
                   <Mic size={28} aria-hidden="true" />
                 </div>
                 <span className="px-3 py-1 rounded-full bg-violet-100 dark:bg-violet-950/50 text-violet-800 dark:text-violet-300 border border-violet-200 dark:border-violet-900/60 text-xs font-black">
-                  Công nghệ Gemini &amp; Speech-to-Phoneme
+                  Đánh giá phát âm tự động
                 </span>
               </div>
               <div>
                 <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100">
-                  Phòng Luyện Nói &amp; Chấm Điểm Âm Vị Tức Thì
+                  Luyện Nói &amp; Chấm Phát Âm Từng Từ
                 </h3>
                 <p className="text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
-                  Không còn mơ hồ về phát âm của mình. Hệ thống nhận diện từng âm vị (Phonemes) bạn đọc sai
-                  như các âm khó /θ/, /ð/, /ʃ/, /tʃ/, đo lường ngữ điệu và hướng dẫn khẩu hình sửa lỗi ngay lập tức.
+                  Đọc theo câu mẫu và ghi âm. Hệ thống chấm độ chính xác của từng từ và độ trôi chảy,
+                  đánh dấu những từ nên luyện lại, và lưu lại các lần nói để bạn so sánh.
                 </p>
               </div>
 
               {/* Visual Feature Pill list */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                 <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 shadow-2xs">
-                  <span className="text-xs font-extrabold text-violet-800 dark:text-violet-300 block">Độ chính xác âm học</span>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Đối chiếu trực tiếp với phát âm US/UK chuẩn</span>
+                  <span className="text-xs font-extrabold text-violet-800 dark:text-violet-300 block">Chấm từng từ</span>
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Điểm chính xác cho mỗi từ trong câu</span>
                 </div>
                 <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 shadow-2xs">
-                  <span className="text-xs font-extrabold text-violet-800 dark:text-violet-300 block">Sửa lỗi trong 2s</span>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Phản hồi ngữ điệu và trọng âm không độ trễ</span>
+                  <span className="text-xs font-extrabold text-violet-800 dark:text-violet-300 block">Lưu lịch sử</span>
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Xem lại các lần nói trước của bạn</span>
                 </div>
                 <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 shadow-2xs">
-                  <span className="text-xs font-extrabold text-violet-800 dark:text-violet-300 block">Đổi giọng &amp; Tốc độ</span>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Lựa chọn 0.75x, 0.9x, 1x và chất giọng linh hoạt</span>
+                  <span className="text-xs font-extrabold text-violet-800 dark:text-violet-300 block">Nghe mẫu</span>
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Tốc độ 0.75×, 0.9×, 1×, giọng US hoặc UK</span>
                 </div>
               </div>
             </div>
 
             <div className="pt-6 mt-6 border-t border-slate-200/70 dark:border-slate-800 flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Hơn 500+ bài tập hội thoại thực tế</span>
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Bài luyện theo chủ đề và cấp độ</span>
               <button
                 onClick={() => handleProtectedAction("phòng luyện nói", "/speaking")}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-extrabold text-xs transition-colors shadow-2xs cursor-pointer"
@@ -676,16 +512,16 @@ export default function PublicLandingPage() {
                   <Trophy size={28} aria-hidden="true" />
                 </div>
                 <span className="px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-900/60 text-xs font-black">
-                  Ví dụ: TOEIC ETS 2024
+                  TOEIC Nghe &amp; Đọc
                 </span>
               </div>
               <div>
                 <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100">
-                  Đấu Trường Thi Thử theo Format Chứng Chỉ
+                  Luyện Đề Theo Cấu Trúc TOEIC
                 </h3>
                 <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
-                  Trải nghiệm format TOEIC 200 câu với áp lực làm bài 120 phút và đồng hồ đếm ngược đồng bộ server.
-                  Báo cáo tự động phân tích điểm mạnh - điểm yếu theo từng Part.
+                  Đề 200 câu làm trong 120 phút, đồng hồ do máy chủ tính. Sau khi nộp, xem lại từng câu kèm
+                  đáp án và giải thích. Đề do BreadTrans biên soạn, không phải đề thi chính thức.
                 </p>
               </div>
               <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 space-y-1.5 text-xs font-bold">
@@ -701,13 +537,13 @@ export default function PublicLandingPage() {
             </div>
 
             <div className="pt-5 mt-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">200+ đề thi có giải</span>
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Có giải thích từng câu</span>
               <button
                 onClick={() => handleProtectedAction("phòng thi theo format chứng chỉ", "/exams")}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs transition-colors shadow-2xs cursor-pointer"
                 type="button"
               >
-                <span>Làm đề TOEIC/ETS</span>
+                <span>Luyện đề TOEIC</span>
                 <ChevronRight size={14} aria-hidden="true" />
               </button>
             </div>
@@ -721,26 +557,26 @@ export default function PublicLandingPage() {
                   <BookOpen size={28} aria-hidden="true" />
                 </div>
                 <span className="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/60 text-xs font-black">
-                  Thuật toán SRS Leitner
+                  Ôn tập theo lịch
                 </span>
               </div>
               <div>
                 <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100">
-                  Ghi Nhớ Siêu Tốc &amp; 24 Chuyên Đề Ngữ Pháp
+                  Flashcard Từ Vựng &amp; Chuyên Đề Ngữ Pháp
                 </h3>
                 <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
-                  Luyện từ vựng theo chu kỳ ngắt quãng thông minh: từ nào hay quên sẽ tự động lặp lại nhiều hơn.
-                  Bản đồ tư duy 24 chủ điểm ngữ pháp cốt lõi bám sát kỳ thi.
+                  Học từ vựng theo chủ đề bằng thẻ lật; từ chưa thuộc được đưa lại để ôn sau những khoảng
+                  thời gian tăng dần. Luyện ngữ pháp theo chuyên đề với câu hỏi được chấm và giải thích.
                 </p>
               </div>
               <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 space-y-1.5 text-xs font-bold text-slate-700 dark:text-slate-300">
                 <p className="flex items-center gap-1.5 text-emerald-800 dark:text-emerald-300">
                   <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  <span>3.000+ từ vựng học thuật &amp; công sở</span>
+                  <span>Từ vựng theo chủ đề, có phát âm và ví dụ</span>
                 </p>
                 <p className="flex items-center gap-1.5 text-emerald-800 dark:text-emerald-300">
                   <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  <span>Sơ đồ tư duy ngữ pháp tương tác</span>
+                  <span>Bài tập ngữ pháp có giải thích</span>
                 </p>
               </div>
             </div>
@@ -763,7 +599,7 @@ export default function PublicLandingPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="size-14 rounded-2xl bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 flex items-center justify-center border border-amber-200 dark:border-amber-900/60 text-2xl font-black">
-                  <span>🍞</span>
+                  <Gift size={28} strokeWidth={1.75} aria-hidden="true" />
                 </div>
                 <span className="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-900/60 text-xs font-black">
                   Học Mà Chơi • Chơi Mà Tiến Bộ
@@ -774,8 +610,8 @@ export default function PublicLandingPage() {
                   Hệ Thống Gamification &amp; Thú Cưng Học Tập (Pet Companion)
                 </h3>
                 <p className="text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
-                  Nuôi thú cưng học tập ảo: mỗi bài luyện Nghe, Nói, Flashcard bạn hoàn thành sẽ là một phần ăn
-                  giúp Pet tăng cấp và mở khóa diện mạo mới. Thu thập điểm Bánh Mì đổi quà và thi đua trên Bảng xếp hạng tuần.
+                  Hoàn thành bài luyện để nhận Bánh Mì, dùng Bánh Mì cho thú cưng ăn để thú cưng lên cấp,
+                  hoặc đổi vật phẩm trong Cửa hàng. Điểm tích lũy được xếp hạng theo tuần.
                 </p>
               </div>
 
@@ -799,13 +635,13 @@ export default function PublicLandingPage() {
                     <Gift size={16} className="text-amber-600 dark:text-amber-400" />
                     Cửa Hàng Đổi Quà
                   </span>
-                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">Dùng Bánh Mì đổi avatar, freeze streak và voucher</p>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">Dùng Bánh Mì đổi khung avatar, vé bảo vệ chuỗi học và quà tặng</p>
                 </div>
               </div>
             </div>
 
             <div className="pt-6 mt-6 border-t border-slate-200/70 dark:border-slate-800 flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Tặng ngay 50 Bánh Mì cho tân thủ</span>
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Bảng xếp hạng cập nhật theo tuần</span>
               <button
                 onClick={() => handleProtectedAction("đấu trường và cửa hàng", "/arena")}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs transition-colors shadow-2xs cursor-pointer"
@@ -820,156 +656,6 @@ export default function PublicLandingPage() {
       </section>
 
       {/* ========================================================================= */}
-      {/* 4. INTERACTIVE TEST-DRIVE WIDGET (Ước tính lộ trình & mục tiêu chứng chỉ) */}
-      {/* ========================================================================= */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20">
-        <div className="bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 rounded-3xl p-6 sm:p-10 text-white shadow-card relative overflow-hidden">
-          {/* Decorative Pattern Background */}
-          <div
-            className="pointer-events-none absolute -right-20 -bottom-20 size-80 rounded-full bg-white/10 blur-2xl"
-            aria-hidden="true"
-          />
-
-          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
-            {/* Left Column: Selector Form (6 Cols) */}
-            <div className="lg:col-span-6 space-y-6">
-              <div className="flex flex-col items-start gap-3 sm:gap-4">
-                <span className="inline-flex items-center text-xs font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full bg-white/20 border border-white/30 text-amber-100">
-                  Công Cụ Tương Tác Miễn Phí
-                </span>
-                <h2 className="text-2xl sm:text-3xl font-black text-white leading-snug sm:leading-[1.36] text-balance">
-                  Ước Tính Lộ Trình &amp; Mục Tiêu Chứng Chỉ Của Bạn
-                </h2>
-                <p className="text-amber-100 text-sm sm:text-base font-semibold leading-relaxed text-pretty">
-                  Chọn trình độ xuất phát và band điểm mục tiêu để hệ thống tính toán thời gian và khối lượng học tập tối ưu nhất.
-                </p>
-              </div>
-
-              {/* Step 1: Current Level */}
-              <div className="space-y-2">
-                <label className="text-xs font-extrabold uppercase tracking-wide text-amber-200">
-                  1. Trình độ hiện tại của bạn:
-                </label>
-                <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                  {[
-                    { id: "BEGINNER", label: "Mất gốc / 350" },
-                    { id: "INTERMEDIATE", label: "Trung bình 500" },
-                    { id: "ADVANCED", label: "Khá 700+" },
-                  ].map((lvl) => (
-                    <button
-                      key={lvl.id}
-                      onClick={() => setCalcLevel(lvl.id as "BEGINNER" | "INTERMEDIATE" | "ADVANCED")}
-                      className={`p-3 rounded-2xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer text-center ${
-                        calcLevel === lvl.id
-                          ? "bg-white dark:bg-amber-400 text-amber-900 dark:text-amber-950 shadow-md scale-[1.02]"
-                          : "bg-white/15 text-white hover:bg-white/25 border border-white/20"
-                      }`}
-                      type="button"
-                    >
-                      {lvl.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Step 2: Target Score */}
-              <div className="space-y-2">
-                <label className="text-xs font-extrabold uppercase tracking-wide text-amber-200">
-                  2. Mục tiêu điểm theo format đang chọn:
-                </label>
-                <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                  {[
-                    { val: 600, label: "600+ (Tốt nghiệp)" },
-                    { val: 750, label: "750+ (Đi làm)" },
-                    { val: 850, label: "850+ (Master)" },
-                  ].map((sc) => (
-                    <button
-                      key={sc.val}
-                      onClick={() => setCalcTarget(sc.val as 600 | 750 | 850)}
-                      className={`p-3 rounded-2xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer text-center ${
-                        calcTarget === sc.val
-                          ? "bg-white dark:bg-amber-400 text-amber-900 dark:text-amber-950 shadow-md scale-[1.02]"
-                          : "bg-white/15 text-white hover:bg-white/25 border border-white/20"
-                      }`}
-                      type="button"
-                    >
-                      {sc.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column: Calculated Dynamic Result Card (6 Cols) */}
-            <div className="lg:col-span-6">
-              <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-3xl p-6 sm:p-7 shadow-xl space-y-5 border-2 border-amber-200 dark:border-slate-800">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-2">
-                    <Route className="text-amber-600 dark:text-amber-400 size-5" />
-                    <h3 className="text-base font-black text-slate-900 dark:text-slate-100">Lộ Trình Đề Xuất Cá Nhân Hóa</h3>
-                  </div>
-                  <span className="text-xs font-black px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
-                    Tỷ lệ đạt 96.2%
-                  </span>
-                </div>
-
-                {/* Calculation Outputs Grid */}
-                <div className="grid grid-cols-2 gap-3.5">
-                  <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-slate-800/60 border border-amber-200/80 dark:border-slate-700">
-                    <span className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Thời gian dự kiến</span>
-                    <strong className="text-2xl font-black text-amber-800 dark:text-amber-300 tracking-tight">
-                      {calcResult.weeks} tuần
-                    </strong>
-                    <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
-                      ~ {calcResult.dailyMins} phút luyện tập / ngày
-                    </span>
-                  </div>
-
-                  <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-slate-800/60 border border-amber-200/80 dark:border-slate-700">
-                    <span className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Bộ đề thực chiến</span>
-                    <strong className="text-lg font-black text-slate-900 dark:text-slate-100 tracking-tight block">
-                      {calcResult.examSet}
-                    </strong>
-                    <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
-                      200 câu chuẩn ETS bấm giờ
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-2 text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/70 dark:border-slate-700">
-                  <p className="flex items-center gap-2">
-                    <Headphones size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
-                    <span>Trọng tâm Nghe: <strong>{calcResult.listeningP}</strong></span>
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <BookOpen size={16} className="text-blue-600 dark:text-blue-400 shrink-0" />
-                    <span>Trọng tâm Đọc: <strong>{calcResult.readingP}</strong></span>
-                  </p>
-                </div>
-
-                <motion.button
-                  onClick={() => {
-                    if (user) {
-                      router.push("/dashboard");
-                    } else {
-                      openDirectRegister("lộ trình cá nhân hóa", "/dashboard");
-                    }
-                  }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-black text-sm sm:text-base py-3.5 rounded-2xl shadow-[0_6px_0_0_#c2410c] active:translate-y-[6px] active:shadow-none transition-all cursor-pointer"
-                  type="button"
-                >
-                  <span>Bắt đầu theo lộ trình này miễn phí</span>
-                  <ArrowRight size={18} aria-hidden="true" />
-                </motion.button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
       {/* 5. THE 4-STEP LEARNING JOURNEY (Lộ Trình Vàng)                           */}
       {/* ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 space-y-10">
@@ -978,10 +664,10 @@ export default function PublicLandingPage() {
             Hành Trình Chinh Phục
           </span>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 leading-snug sm:leading-[1.36] text-balance">
-            4 Bước Đơn Giản Để Bứt Phá Năng Lực Tiếng Anh
+            Bắt đầu với BreadTrans trong 4 bước
           </h2>
           <p className="text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-300 leading-relaxed text-pretty max-w-2xl">
-            Từng bước đi rõ ràng, có đo lường cụ thể, không lo học lan man mất định hướng.
+            Bắt đầu từ bài kiểm tra đầu vào, rồi luyện theo kỹ năng bạn cần nhất.
           </p>
         </div>
 
@@ -1014,200 +700,6 @@ export default function PublicLandingPage() {
             );
           })}
         </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* 6. CURRICULUM & SKILL EXPLORER (Xem Trước Giáo Trình)                     */}
-      {/* ========================================================================= */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 space-y-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div className="flex flex-col items-start gap-2.5 sm:gap-3.5">
-            <span className="inline-flex items-center text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50 px-3.5 py-1.5 rounded-full border border-amber-200 dark:border-amber-900/60">
-              Giáo Trình Thực Chiến
-            </span>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 leading-snug sm:leading-[1.36] text-balance">
-              Khám phá các lộ trình học tiêu biểu
-            </h2>
-            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 leading-relaxed text-pretty">
-              Được thiết kế bài bản theo từng mục tiêu: thi chứng chỉ, giao tiếp công sở hoặc củng cố gốc tiếng Anh.
-            </p>
-          </div>
-
-          {/* Filter Tabs */}
-          <div className="flex flex-wrap items-center gap-2 bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700">
-            {[
-              { id: "all", label: "Tất cả" },
-              { id: "toeic", label: "Luyện thi TOEIC" },
-              { id: "comm", label: "Giao tiếp công sở" },
-              { id: "vocab", label: "Từ vựng & Ngữ pháp" },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveCourseTab(tab.id as "all" | "toeic" | "comm" | "vocab")}
-                className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition-colors cursor-pointer ${
-                  activeCourseTab === tab.id
-                    ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs border border-slate-200 dark:border-slate-700"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
-                }`}
-                type="button"
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Course Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredCourses.map((course) => (
-            <div
-              key={course.id}
-              className="bg-white dark:bg-slate-900 border-2 border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-soft hover:border-amber-300 dark:hover:border-slate-700 transition-colors group"
-            >
-              <div className="space-y-3.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-900/60">
-                    {course.highlight}
-                  </span>
-                  <span className="text-xs font-extrabold text-slate-500 dark:text-slate-400">{course.level}</span>
-                </div>
-                <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100 group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors">
-                  {course.title}
-                </h3>
-                <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 leading-relaxed">{course.desc}</p>
-                <div className="flex items-center gap-4 text-xs font-bold text-slate-500 dark:text-slate-400 pt-1">
-                  <span>{course.lessonsCount}</span>
-                  <span>•</span>
-                  <span>{course.duration}</span>
-                </div>
-              </div>
-
-              <div className="pt-5 mt-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <Link
-                  href="/courses"
-                  className="text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-amber-800 dark:hover:text-amber-300 transition-colors"
-                >
-                  Xem chi tiết giáo trình
-                </Link>
-                <button
-                  onClick={() => handleProtectedAction(course.title, course.link)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs transition-colors shadow-2xs cursor-pointer"
-                  type="button"
-                >
-                  <span>Bắt đầu học</span>
-                  <ArrowRight size={14} aria-hidden="true" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* 7. REAL LEARNER TRANSFORMATIONS (Đánh Giá Học Viên)                       */}
-      {/* ========================================================================= */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 space-y-8">
-        <div className="flex flex-col items-center text-center max-w-4xl mx-auto gap-3.5 sm:gap-4.5">
-          <span className="inline-flex items-center text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50 px-3.5 py-1.5 rounded-full border border-amber-200 dark:border-amber-900/60">
-            Câu Chuyện Thành Công
-          </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 leading-snug sm:leading-[1.36] text-balance">
-            Học viên nói gì về trải nghiệm cùng BreadTrans?
-          </h2>
-          <p className="text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-300 leading-relaxed text-pretty max-w-2xl">
-            Hơn 10.000 học viên đã vượt qua nỗi sợ tiếng Anh và đạt được chứng chỉ mong muốn.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {TESTIMONIALS.map((item, idx) => (
-            <div
-              key={idx}
-              className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-soft space-y-5"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex -space-x-1" aria-hidden="true">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <Star key={s} size={15} className="fill-amber-500 text-amber-500" />
-                    ))}
-                  </div>
-                  <span className="text-[11px] font-black px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
-                    {item.tag}
-                  </span>
-                </div>
-                <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 leading-relaxed italic">
-                  &ldquo;{item.quote}&rdquo;
-                </p>
-              </div>
-
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center gap-3">
-                <div className="size-11 rounded-full bg-amber-600 text-white font-black flex items-center justify-center text-sm shrink-0 overflow-hidden">
-                  {item.avatar ? (
-                    <img src={item.avatar} alt={item.name} className="size-full object-cover" />
-                  ) : (
-                    item.name.charAt(0)
-                  )}
-                </div>
-                <div>
-                  <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">{item.name}</h3>
-                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400">{item.role}</p>
-                  <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400">{item.timeframe}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* 8. WHY BREADTRANS? (Bảng So Sánh Toàn Diện)                               */}
-      {/* ========================================================================= */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 space-y-8">
-        <div className="flex flex-col items-center text-center max-w-4xl mx-auto gap-3.5 sm:gap-4.5">
-          <span className="inline-flex items-center text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50 px-3.5 py-1.5 rounded-full border border-amber-200 dark:border-amber-900/60">
-            Sự Khác Biệt
-          </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 leading-snug sm:leading-[1.36] text-balance">
-            Tại sao BreadTrans là lựa chọn thông minh hơn?
-          </h2>
-          <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 leading-relaxed text-pretty max-w-2xl">
-            Bảng đối chiếu minh bạch giữa học truyền thống, tự học và giải pháp toàn diện tại BreadTrans.
-          </p>
-        </div>
-
-        <div className="overflow-x-auto rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-soft">
-          <table className="w-full text-left border-collapse min-w-[650px]">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-850/80 text-xs uppercase tracking-wider font-black text-slate-600 dark:text-slate-300">
-                <th className="p-4 sm:p-5">Tiêu chí so sánh</th>
-                <th className="p-4 sm:p-5 text-slate-500 dark:text-slate-400">Trung tâm truyền thống</th>
-                <th className="p-4 sm:p-5 text-slate-500 dark:text-slate-400">Tự học tự phát</th>
-                <th className="p-4 sm:p-5 bg-amber-50/70 dark:bg-amber-950/30 text-amber-900 dark:text-amber-300 font-black border-l border-amber-200 dark:border-amber-900/50">
-                  Nền tảng BreadTrans
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
-              {COMPARISON_ROWS.map((row, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/50 transition-colors">
-                  <td className="p-4 sm:p-5 font-black text-slate-900 dark:text-slate-100">{row.feature}</td>
-                  <td className="p-4 sm:p-5 text-slate-500 dark:text-slate-400">{row.traditional}</td>
-                  <td className="p-4 sm:p-5 text-slate-500 dark:text-slate-400">{row.selfStudy}</td>
-                  <td className="p-4 sm:p-5 bg-amber-50/40 dark:bg-amber-950/20 font-extrabold text-amber-900 dark:text-amber-300 border-l border-amber-200 dark:border-amber-900/50">
-                    <div className="flex items-center gap-2">
-                      <Check className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0 stroke-[3]" />
-                      <span>{row.breadtrans}</span>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="sm:hidden text-xs font-semibold text-slate-400 dark:text-slate-500 text-center">
-          ← Vuốt ngang để xem toàn bộ bảng so sánh →
-        </p>
       </section>
 
       {/* ========================================================================= */}
@@ -1278,11 +770,11 @@ export default function PublicLandingPage() {
               Khởi Đầu Vững Chắc Cùng BreadTrans
             </span>
             <h2 className="text-2xl sm:text-4xl font-black text-white leading-snug sm:leading-[1.36] text-balance">
-              Sẵn sàng bứt phá trình độ Tiếng Anh của bạn ngay hôm nay?
+              Bắt đầu luyện tiếng Anh với BreadTrans
             </h2>
             <p className="text-amber-100 text-sm sm:text-base font-semibold max-w-2xl mx-auto leading-relaxed text-pretty">
-              Đăng ký tài khoản miễn phí trong 30 giây, nhận ngay 50 Bánh Mì tân thủ và bắt đầu
-              bài kiểm tra chẩn đoán năng lực 5 phút để nhận lộ trình cá nhân hóa.
+              Đăng ký tài khoản miễn phí, làm bài kiểm tra đầu vào và nhận gợi ý bài luyện
+              cho những kỹ năng bạn cần cải thiện.
             </p>
 
             <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -1314,7 +806,7 @@ export default function PublicLandingPage() {
             </div>
 
             <p className="text-xs font-bold text-amber-200/90 pt-2">
-              Không mất phí khởi tạo • Không ràng buộc • Bảo mật thông tin 100%
+              Đăng ký miễn phí • Không cần thẻ ngân hàng
             </p>
           </div>
         </div>

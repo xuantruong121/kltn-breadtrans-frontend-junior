@@ -392,7 +392,8 @@ export interface CourseV5SubmitResult {
     questionId: number;
     answer: unknown;
     correctAnswer: unknown;
-    isCorrect: boolean;
+    /** null for free-text items: answered in the learner's own words, not scored. */
+    isCorrect: boolean | null;
     explanation: string | null;
   }>;
 }

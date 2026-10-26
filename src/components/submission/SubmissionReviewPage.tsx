@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
-import { Loader2, Trophy, Target, Star, RefreshCw } from "lucide-react";
+import { Loader2, Trophy, Target, Star, RefreshCw, ListChecks } from "lucide-react";
 import { quizService } from "@/lib/api/services/quiz.service";
 import { BackButton } from "@/components/ui";
 import Confetti from "react-confetti";
@@ -240,7 +240,7 @@ export default function SubmissionAnalyticsPage(props: {
         <div className="col-span-12 lg:col-span-8 space-y-4">
           <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
             <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <span>📝</span> Chi Tiết Từng Câu Hỏi
+              <ListChecks size={20} strokeWidth={1.75} aria-hidden="true" /> Chi Tiết Từng Câu Hỏi
             </h2>
 
             <div className="flex flex-col gap-4">
@@ -352,8 +352,11 @@ export default function SubmissionAnalyticsPage(props: {
               <h2 className="text-xl font-black text-slate-800 dark:text-slate-100">
                 Tổng Điểm Của Bạn
               </h2>
-              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 mt-0.5">
-                Hoàn thành bài luyện tập xuất sắc
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-0.5">
+                {analytics.totalQuestions > 0 &&
+                analytics.totalCorrect === analytics.totalQuestions
+                  ? "Bạn trả lời đúng tất cả các câu"
+                  : "Xem lại các câu sai ở danh sách bên cạnh"}
               </p>
             </div>
 

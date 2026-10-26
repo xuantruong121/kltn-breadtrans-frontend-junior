@@ -719,7 +719,7 @@ export default function ExamPracticeHubPage() {
                 <BookmarkCheck size={16} className="text-amber-700 dark:text-amber-400" />
                 <span>
                   {paperFilter === "ALL"
-                    ? "Đề thi TOEIC mô phỏng chuẩn ETS"
+                    ? "Đề luyện tập theo cấu trúc TOEIC"
                     : paperFilter === "TOEIC_LR"
                       ? "Đề thi TOEIC Listening & Reading"
                       : paperFilter === "TOEIC_SW"

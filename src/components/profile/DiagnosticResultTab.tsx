@@ -20,6 +20,7 @@ import {
   DiagnosticResult,
 } from "@/lib/api/services/diagnostic.service";
 import { formatPlacementLevel, formatSkillName } from "@/lib/diagnostic/diagnosticUiLogic";
+import { describeForm, describeSkillState, isSpeakingTask } from "@/lib/diagnostic/diagnosticTaskLogic";
 
 export function DiagnosticResultTab() {
   const {
@@ -51,6 +52,8 @@ export function DiagnosticResultTab() {
   }
 
   const hasCompleted = Boolean(latestResult || assessment?.hasCompleted);
+  const form = describeForm(assessment?.questions ?? []);
+  const practiceCount = form.speaking + form.writing;
   const inProgress = Boolean(assessment?.inProgressAttempt && !hasCompleted);
 
   // ── STATE 1: NEVER STARTED ──────────────────────────────────────────
@@ -65,20 +68,22 @@ export function DiagnosticResultTab() {
             Đánh giá năng lực đầu vào
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-400">
-            Bài đánh giá gồm 52 nhiệm vụ (Ngữ pháp & Từ vựng, Đọc hiểu, Nghe hiểu, Nói và Viết) giúp hệ thống xác định chính xác trình độ khởi điểm của bạn và đề xuất các bài luyện tập phù hợp.
+            Bài đánh giá giúp bạn biết điểm xuất phát của mình và nhận gợi ý bài luyện tập phù hợp.
           </p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
             <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-850">
-              <span className="text-xs font-bold text-slate-500">Thời lượng</span>
-              <p className="mt-1 font-extrabold text-slate-800 dark:text-slate-200">
-                Khoảng 35–50 phút
+              <span className="text-xs font-bold text-slate-500">Thành phần</span>
+              <p className="mt-1 text-sm font-extrabold text-slate-800 dark:text-slate-200">
+                {form.parts.map((part) => `${part.label} ${part.count}`).join(" · ") || "—"}
               </p>
             </div>
             <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-850">
               <span className="text-xs font-bold text-slate-500">Cấu trúc</span>
               <p className="mt-1 font-extrabold text-slate-800 dark:text-slate-200">
-                48 câu trắc nghiệm + 4 bài thực hành
+                {practiceCount
+                  ? `${form.objective} câu trắc nghiệm + ${practiceCount} bài thực hành`
+                  : `${form.total} câu trắc nghiệm`}
               </p>
             </div>
             <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-850">
@@ -140,6 +145,8 @@ export function DiagnosticResultTab() {
   }
 
   const result: DiagnosticResult = latestResult;
+  const fourSkill = result.fourSkill ?? null;
+  const speakingTaskCount = (assessment?.questions ?? []).filter(isSpeakingTask).length;
   const completedDate = result.completedAt || result.submittedAt;
   const formattedDate = completedDate
     ? new Date(completedDate).toLocaleDateString("vi-VN", {
@@ -168,11 +175,26 @@ export function DiagnosticResultTab() {
         <div className="mt-5 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <span className="text-xs font-black uppercase tracking-wider text-violet-600 dark:text-violet-400">
-              Mức năng lực tham khảo
+              {fourSkill ? "Kết quả theo bốn kỹ năng" : "Mức năng lực tham khảo"}
             </span>
             <h2 className="mt-1 text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100">
-              {formatPlacementLevel(result.referenceLevel ?? result.level)}
+              {fourSkill
+                ? fourSkill.overall !== null
+                  ? `${fourSkill.overall}/100`
+                  : "Chưa có điểm tổng"
+                : formatPlacementLevel(result.referenceLevel ?? result.level)}
             </h2>
+            {fourSkill && (
+              <p className="mt-2 text-sm font-bold text-slate-700 dark:text-slate-300">
+                {(["LISTENING", "READING", "SPEAKING", "WRITING"] as const)
+                  .map((key) => {
+                    const skill = fourSkill.skills[key];
+                    const label = { LISTENING: "Nghe", READING: "Đọc", SPEAKING: "Nói", WRITING: "Viết" }[key];
+                    return `${label}: ${skill?.score !== null && skill?.score !== undefined ? `${skill.score}/100` : describeSkillState(skill?.state).label}`;
+                  })
+                  .join(" · ")}
+              </p>
+            )}
             <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 max-w-xl">
               Đây là ước lượng nội bộ để gợi ý bài luyện phù hợp, không phải chứng chỉ CEFR và không khóa nội dung học tập.
             </p>
@@ -199,8 +221,10 @@ export function DiagnosticResultTab() {
               <p>
                 <span className="font-bold">Nói: </span>
                 {result.speakingEvidenceCount && result.speakingEvidenceCount > 0
-                  ? `Đã ghi nhận ${result.speakingEvidenceCount}/2 nhiệm vụ${result.speakingScore !== null ? ` (Điểm phát âm: ${result.speakingScore}/100)` : ""}.`
-                  : "Đang chờ hoặc chưa đủ dữ liệu để nhận xét kỹ năng Nói; mức tham khảo vẫn dựa trên 48 câu trắc nghiệm khách quan."}
+                  ? `Đã chấm ${result.speakingEvidenceCount}/${speakingTaskCount} nhiệm vụ${result.speakingScore !== null && result.speakingScore !== undefined ? ` (điểm Nói: ${result.speakingScore}/100)` : ""}.`
+                  : fourSkill
+                    ? "Đang chờ hoặc chưa đủ dữ liệu để chấm kỹ năng Nói."
+                    : `Đang chờ hoặc chưa đủ dữ liệu để nhận xét kỹ năng Nói; mức tham khảo vẫn dựa trên ${result.totalCount} câu trắc nghiệm khách quan.`}
               </p>
               <p>
                 <span className="font-bold">Viết: </span>
@@ -211,7 +235,7 @@ export function DiagnosticResultTab() {
         ) : null}
 
         {/* Skill Profiles Breakdown */}
-        {result.skillProfiles && result.skillProfiles.length > 0 && (
+        {!fourSkill && result.skillProfiles && result.skillProfiles.length > 0 && (
           <div className="mt-6">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
               Kết quả theo kỹ năng

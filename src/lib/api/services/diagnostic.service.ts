@@ -12,7 +12,42 @@ export interface DiagnosticQuestion {
   passageBody?: string | null;
   passageText?: string | null;
   audioUrl?: string | null;
+  /** LISTENING only: null audio is an explicit NOT_READY state. */
+  mediaStatus?: "READY" | "NOT_READY" | null;
+  taskType?: "MCQ" | "SPEAKING_RESPONSE" | "WRITING_RESPONSE" | string;
+  instructions?: string | null;
+  prepSeconds?: number | null;
+  responseSeconds?: number | null;
+  wordMin?: number | null;
+  wordMax?: number | null;
+  productive?: boolean;
   order: number;
+}
+
+export type DiagnosticSkillState =
+  | "NOT_STARTED"
+  | "IN_PROGRESS"
+  | "PENDING_GRADING"
+  | "COMPLETE"
+  | "GRADING_FAILED";
+
+export interface DiagnosticFourSkillSkill {
+  skill: "LISTENING" | "READING" | "SPEAKING" | "WRITING" | "LANGUAGE_USE";
+  state: DiagnosticSkillState;
+  score: number | null;
+  weight: number;
+  itemsScored: number;
+  itemsTotal: number;
+}
+
+/** FOUR_SKILL_PLACEMENT_V2 only. `overall` is null until all four skills are COMPLETE. */
+export interface DiagnosticFourSkillResult {
+  scoringVersion: "FOUR_SKILL_PLACEMENT_V2";
+  state: DiagnosticSkillState;
+  skills: Record<DiagnosticFourSkillSkill["skill"], DiagnosticFourSkillSkill>;
+  overall: number | null;
+  placementBand: null;
+  placementBandStatus: string;
 }
 
 export interface DiagnosticSkillProfile {
@@ -75,6 +110,13 @@ export interface DiagnosticResult {
   speakingEvidenceConfidence?: string;
   speakingResponses?: DiagnosticSpeakingResponse[];
   writingFeedback?: DiagnosticWritingFeedback[];
+  administeredForm?: {
+    totalItems: number;
+    objectiveCount: number;
+    productiveCount: number;
+    itemsBySkill: Record<string, number>;
+  };
+  fourSkill?: DiagnosticFourSkillResult | null;
   submittedAt?: string;
   completedAt?: string;
   skillProfiles?: DiagnosticSkillProfile[];
@@ -99,15 +141,29 @@ export interface DiagnosticSpeakingResponse {
   taskKey?: string;
   status: string;
   durationMs?: number | null;
+  /** Task rubric percentage 0-100; null unless GRADED. */
   score?: number | null;
+  scoreScale?: "PERCENT_0_100";
   failureReason?: string | null;
+  rubricVersion?: string | null;
+  criteria?: Record<string, number> | null;
+  criterionFeedback?: Record<string, string> | null;
+  feedback?: string | null;
+  suggestions?: string[];
+  transcript?: string | null;
 }
 
 export interface DiagnosticWritingFeedback {
   questionId: number;
   status: "QUEUED" | "GRADING" | "GRADED" | "GRADING_FAILED";
   answer: string;
+  /** Task rubric percentage 0-100; null unless GRADED. */
   score: number | null;
+  scoreScale?: "PERCENT_0_100";
+  criteria?: Record<string, number> | null;
+  criterionFeedback?: Record<string, string> | null;
+  rubricVersion?: string | null;
+  wordCount?: number | null;
   feedback: string | null;
   suggestions: string[];
   provider: string | null;
@@ -182,6 +238,14 @@ export const diagnosticService = {
   ): Promise<DiagnosticSpeakingResponse> =>
     axiosClient.post(
       `/diagnostic/${assessmentId}/attempts/${attemptId}/speaking/${questionId}/skip`,
+    ),
+  retrySpeaking: (
+    assessmentId: number,
+    attemptId: number,
+    questionId: number,
+  ): Promise<DiagnosticSpeakingResponse> =>
+    axiosClient.post(
+      `/diagnostic/${assessmentId}/attempts/${attemptId}/speaking/${questionId}/retry`,
     ),
   retryWriting: (
     assessmentId: number,
