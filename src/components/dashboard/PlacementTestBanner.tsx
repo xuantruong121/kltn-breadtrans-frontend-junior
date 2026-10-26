@@ -49,13 +49,13 @@ export function PlacementTestBanner({
               </div>
 
               <h2 className="text-lg font-black text-slate-900 dark:text-slate-100 sm:text-xl leading-snug">
-                Xác định trình độ của bạn để nhận lộ trình cá nhân hóa
+                Đánh giá 4 kỹ năng để biết nên luyện gì trước
               </h2>
 
               <p className="max-w-3xl text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                Chỉ mất khoảng 10–15 phút để ước tính điểm bắt đầu từ Listening,
-                Reading, Grammar và Vocabulary. Kết quả giúp bạn chọn khóa học
-                phù hợp hơn.
+                Khoảng 30–40 phút cho Nghe, Đọc, Nói và Viết, kèm một phần nhỏ
+                Ngữ pháp &amp; Từ vựng. Bạn nhận điểm tham khảo cho từng kỹ năng,
+                nhận xét bài Nói và Viết, cùng gợi ý bài luyện và khóa học phù hợp.
               </p>
             </div>
           </div>
@@ -66,7 +66,7 @@ export function PlacementTestBanner({
               href="/diagnostic"
               className="inline-flex min-h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3.5 text-sm font-black text-white shadow-md shadow-blue-600/20 transition-all hover:from-blue-700 hover:to-indigo-700 hover:scale-[1.02] active:scale-95"
             >
-              <span>Kiểm tra trình độ</span>
+              <span>Làm bài đánh giá</span>
               <ArrowRight size={17} aria-hidden="true" />
             </Link>
           </div>
