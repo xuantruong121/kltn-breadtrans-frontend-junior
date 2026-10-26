@@ -833,7 +833,7 @@ export function AccountHub() {
                             setShippingData({ ...shippingData, phone: e.target.value })
                           }
                           className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
-                          placeholder="0987654321 hoặc +84..."
+                          placeholder="Ví dụ: 0912 345 678"
                         />
                       </div>
                     </div>
@@ -841,14 +841,14 @@ export function AccountHub() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
-                          Tỉnh / Thành phố
+                          Tỉnh/Thành phố
                         </label>
                         <AddressCombobox
                           id="shipping-province-select"
                           value={shippingData.provinceCode}
                           options={provincesQuery.data || []}
                           isLoading={provincesQuery.isLoading}
-                          placeholder="Chọn hoặc nhập tỉnh/thành phố..."
+                          placeholder="Chọn tỉnh/thành phố"
                           loadingPlaceholder="Đang tải tỉnh/thành phố..."
                           accentColor="blue"
                           onChange={(nextProvince) => {
