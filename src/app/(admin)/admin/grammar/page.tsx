@@ -444,7 +444,7 @@ export default function AdminGrammarPage() {
                   {isPublished ? "Đã xuất bản" : "Bản nháp"}
                 </span>
                 <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
-                  {topicDetail.level}
+                  {levelLabel(topicDetail.level)}
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">

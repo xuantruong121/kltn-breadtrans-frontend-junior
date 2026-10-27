@@ -283,6 +283,9 @@ function ReadingTopicsContent() {
       if (a.type !== b.type) {
         return a.type === "READING" ? -1 : 1;
       }
+      // Grammar topics keep the API's authored order (a replacement topic
+      // takes its original's place); sort is stable, so 0 preserves it.
+      if (a.type === "GRAMMAR") return 0;
       return (a.data.id || 0) - (b.data.id || 0);
     });
 
