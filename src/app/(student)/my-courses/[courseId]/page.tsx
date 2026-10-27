@@ -36,7 +36,7 @@ export default function CourseDetailPage(props: {
     data.lessons.find((lesson) => !lesson.completed) ?? data.lessons[0];
   const learning = data.course.learning;
   return (
-    <main className="w-full space-y-8 px-4 sm:px-6 lg:px-8 xl:px-10 py-6 sm:py-8">
+    <div className="w-full space-y-8 px-4 sm:px-6 lg:px-8 xl:px-10 py-6 sm:py-8">
       <Link
         href="/courses"
         className="inline-flex items-center gap-2 text-base font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
@@ -152,6 +152,6 @@ export default function CourseDetailPage(props: {
           </Link>
         ))}
       </section>
-    </main>
+    </div>
   );
 }

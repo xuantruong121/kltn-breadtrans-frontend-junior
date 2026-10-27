@@ -41,9 +41,11 @@ test("TOEIC retains a functional briefing boundary before timed attempt creation
   const briefing = read("src/modules/toeic/ToeicLrExamDetail.tsx");
   const attempt = read("src/app/(student)/toeic/attempts/[attemptId]/page.tsx");
   assert.match(briefing, /startAttempt/);
-  assert.match(briefing, /Bắt đầu làm bài/);
+  // The start button names the fullscreen start and the learner picks the mode first.
+  assert.match(briefing, /Bắt đầu ở chế độ toàn màn hình/);
+  assert.match(briefing, /name="toeic-mode"/);
   assert.match(attempt, /useAssessmentAntiCheat/);
-  assert.match(attempt, /formatTime/);
+  assert.match(attempt, /formatMinutes/);
 });
 
 test("the canonical exam route renders the briefing instead of redirecting away", () => {

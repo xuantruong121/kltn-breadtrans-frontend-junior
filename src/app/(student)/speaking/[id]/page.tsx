@@ -160,10 +160,17 @@ export default function SpeakingExerciseDetailPage() {
           componentId: Number(parentComponentId),
         }
       : undefined;
+  const parentAssessmentId = searchParams.get("parentAssessmentId");
+  // In a TOEIC assessment, "back" means the exam's section list, not the
+  // practice catalogue.
+  const examReturn =
+    parentAssessmentId && parentAttemptId
+      ? `/toeic/assessments/${parentAssessmentId}/attempts/${parentAttemptId}`
+      : null;
   const courseReturn =
     requestedReturnTo && isSafeCourseReturn(requestedReturnTo)
       ? requestedReturnTo
-      : "/speaking";
+      : (examReturn ?? "/speaking");
   const queryClient = useQueryClient();
 
   // Explicit Attempt State Machine
@@ -228,7 +235,7 @@ export default function SpeakingExerciseDetailPage() {
   const completionToastShownRef = useRef<Set<number>>(new Set());
 
   // Utilities State
-  const [isBilingual, setIsBilingual] = useState(true);
+  const [isBilingual, setIsBilingual] = useState(!examReturn);
   const [isSaved, setIsSaved] = useState(() => {
     if (typeof window === "undefined" || !exerciseId) return false;
     try {
@@ -1509,19 +1516,21 @@ export default function SpeakingExerciseDetailPage() {
         if (examParentContext) {
           params.set("parentAttemptId", String(examParentContext.attemptId));
           params.set("parentComponentId", String(examParentContext.componentId));
+          if (parentAssessmentId) params.set("parentAssessmentId", parentAssessmentId);
           params.set("examExerciseIds", examExerciseIds.join(","));
         }
         const query = params.toString() ? `?${params.toString()}` : "";
         router.push(`/speaking/${nextId}${query}`);
       } else {
-        router.push("/speaking");
+        // After the last exam task, back to the exam, not the practice list.
+        router.push(examReturn ?? "/speaking");
       }
     } catch (err) {
       console.error("Failed to load next exercise:", err);
       toast.error("Không thể tải bài tập tiếp theo. Đang quay về danh sách.");
-      router.push("/speaking");
+      router.push(examReturn ?? "/speaking");
     }
-  }, [examExerciseIds, examParentContext, exerciseId, practiceSetKey, router]);
+  }, [examExerciseIds, examParentContext, examReturn, exerciseId, parentAssessmentId, practiceSetKey, router]);
 
   const stopTtsPlayback = useCallback(() => {
     referenceAudioRef.current?.pause();
@@ -1869,10 +1878,11 @@ export default function SpeakingExerciseDetailPage() {
               ? `Câu ${currentPracticeSetPosition}/${activePracticeSet.exerciseCount}`
               : undefined
           }
-          activityLabel="Đánh giá phát âm"
+          activityLabel={examReturn ? "TOEIC Speaking" : "Đánh giá phát âm"}
           onExit={() => confirmExit(courseReturn)}
           exitLabel="Thoát"
-          bilingualEnabled
+          // Vietnamese translation is coaching; it is off during an exam.
+          bilingualEnabled={!examReturn}
           isBilingual={isBilingual}
           onToggleBilingual={() => setIsBilingual((v) => !v)}
           notesEnabled
@@ -2707,6 +2717,7 @@ export default function SpeakingExerciseDetailPage() {
                   if (examParentContext) {
                     params.set("parentAttemptId", String(examParentContext.attemptId));
                     params.set("parentComponentId", String(examParentContext.componentId));
+                    if (parentAssessmentId) params.set("parentAssessmentId", parentAssessmentId);
                     params.set("examExerciseIds", examExerciseIds.join(","));
                   }
                   const query = params.toString() ? `?${params.toString()}` : "";
@@ -2723,7 +2734,7 @@ export default function SpeakingExerciseDetailPage() {
               onClick={() => confirmExit(courseReturn)}
               className="px-3.5 py-1.5 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 cursor-pointer transition-colors text-xs sm:text-sm"
             >
-              ← Danh sách bài
+              {examReturn ? "← Về bài thi" : "← Danh sách bài"}
             </button>
 
             {/* Contextual Action Button */}
@@ -2824,7 +2835,9 @@ export default function SpeakingExerciseDetailPage() {
                       ? activePracticeSet
                         ? "Câu tiếp theo"
                         : "Tiếp tục bài sau"
-                      : "Về danh sách"}
+                      : examReturn
+                        ? "Về bài thi"
+                        : "Về danh sách"}
                   </span>
                   <ArrowLeft
                     size={14}

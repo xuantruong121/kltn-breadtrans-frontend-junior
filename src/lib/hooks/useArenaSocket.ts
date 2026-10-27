@@ -128,7 +128,7 @@ export function useArenaSocket() {
         p1: { userId: data.player1.userId, score: 0, answered: 0 },
         p2: { userId: data.player2.userId, score: 0, answered: 0 },
       });
-      toast.success("Đã tìm thấy đối thủ! Trận đấu chuẩn bị bắt đầu!", { icon: "⚔️" });
+      toast.success("Đã tìm thấy đối thủ! Trận đấu chuẩn bị bắt đầu!");
     });
 
     // Synchronized Round Start
@@ -205,7 +205,7 @@ export function useArenaSocket() {
       setMatchResult(data);
       setOpponentDisconnected(null);
       if (data.isForfeit) {
-        toast.success("Đối thủ đã bỏ cuộc sau 15s mất kết nối!", { icon: "🏆" });
+        toast.success("Đối thủ đã bỏ cuộc sau 15s mất kết nối!");
       }
     });
 

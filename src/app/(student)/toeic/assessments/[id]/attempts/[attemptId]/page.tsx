@@ -76,8 +76,13 @@ export default function ToeicAssessmentAttemptPage({
         component?.kind === "WRITING" &&
         component.writingQuizIds?.[0]
       ) {
+        // Resume at the first task not yet written, not always task 1.
+        const written: number[] = component.writtenQuizIds ?? [];
+        const target =
+          component.writingQuizIds.find((quizId: number) => !written.includes(quizId)) ??
+          component.writingQuizIds[0];
         router.push(
-          `/writing/${component.writingQuizIds[0]}?parentAssessmentId=${id}&parentAttemptId=${attemptId}&parentComponentId=${componentId}`,
+          `/writing/${target}?parentAssessmentId=${id}&parentAttemptId=${attemptId}&parentComponentId=${componentId}`,
         );
       }
     },
@@ -199,15 +204,19 @@ export default function ToeicAssessmentAttemptPage({
                   {component.kind === "WRITING" &&
                     component.writingQuizIds?.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-2">
-                        {component.writingQuizIds.map((quizId: number, index: number) => (
-                          <Link
-                            key={quizId}
-                            href={`/writing/${quizId}?parentAssessmentId=${id}&parentAttemptId=${attemptId}&parentComponentId=${component.assessmentComponentId}`}
-                            className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700"
-                          >
-                            Bài viết {index + 1}
-                          </Link>
-                        ))}
+                        {component.writingQuizIds.map((quizId: number, index: number) => {
+                          const written = (component.writtenQuizIds ?? []).includes(quizId);
+                          return (
+                            <Link
+                              key={quizId}
+                              href={`/writing/${quizId}?parentAssessmentId=${id}&parentAttemptId=${attemptId}&parentComponentId=${component.assessmentComponentId}`}
+                              className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition ${written ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-slate-200 text-slate-600 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700"}`}
+                            >
+                              {written && <CheckCircle2 size={12} aria-hidden="true" />}
+                              Câu {index + 1}
+                            </Link>
+                          );
+                        })}
                       </div>
                     )}
                 </div>
@@ -219,9 +228,15 @@ export default function ToeicAssessmentAttemptPage({
                   <button
                     type="button"
                     disabled={startComponent.isPending}
-                    onClick={() =>
-                      startComponent.mutate(component.assessmentComponentId)
-                    }
+                    onClick={() => {
+                      // Fullscreen needs this click's user activation; the
+                      // L&R paper then opens inside the same document.
+                      if (component.kind === "LISTENING_READING")
+                        void document.documentElement
+                          .requestFullscreen?.()
+                          .catch(() => undefined);
+                      startComponent.mutate(component.assessmentComponentId);
+                    }}
                     className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 ${isNext ? "bg-slate-900 text-white shadow-sm hover:bg-slate-700" : "border border-slate-200 bg-white text-slate-700 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700"}`}
                     aria-label={`${isNext ? "Tiếp tục" : "Mở"} ${componentLabels[component.kind] ?? "phần thi"}`}
                   >
@@ -241,6 +256,14 @@ export default function ToeicAssessmentAttemptPage({
             );
           })}
         </div>
+        {completedCount > 0 && (
+          <Link
+            href={`/toeic/assessments/${id}/attempts/${attemptId}/result`}
+            className="mt-6 inline-flex min-h-11 items-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+          >
+            Xem kết quả chi tiết
+          </Link>
+        )}
         {data.status === "COMPLETED" && (
           <p className="mt-6 text-sm text-slate-600">
             Điểm trên là chỉ số luyện tập nội bộ của BreadTrans theo từng kỹ năng, không phải điểm thi chính thức của ETS

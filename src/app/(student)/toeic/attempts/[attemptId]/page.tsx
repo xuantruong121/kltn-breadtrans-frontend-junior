@@ -1,1033 +1,852 @@
 "use client";
 
-import { use, useEffect, useMemo, useRef, useState } from "react";
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Clock3,
-  Flag,
-  ListOrdered,
-  Loader2,
-  Maximize2,
-  Pause,
-  Play,
-  Settings,
-  Volume2,
-  X,
-} from "lucide-react";
+/**
+ * TOEIC L&R attempt, laid out like a paper exam page:
+ *  - Part tabs; only the active Part's questions are rendered, all of them.
+ *  - Compact right sidebar: time left, submit, restore/save, review hint and
+ *    the question numbers grouped by Part (click = open that Part and go there).
+ *  - One persistent <audio> for Listening: the continuous master (intro, Part
+ *    directions, number cues, questions) in both modes, pausable and seekable.
+ *    A part practice plays only its selected Listening Parts. Without a
+ *    master the page plays the group clips in order and says so.
+ *
+ * Answers autosave to the server. "Lưu bài làm" flushes and records a
+ * checkpoint; "Khôi phục" returns to that checkpoint. Attempts begun under
+ * the old one-pass rules (`section` set) keep their server-enforced locks.
+ */
+import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AlertTriangle, ArrowUp, ListOrdered, Loader2, Maximize2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import {
-  toeicService,
-  type ToeicQuestionGroup,
-} from "@/lib/api/services/toeic.service";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+
+import { toeicService, type ToeicListeningMaster, type ToeicQuestionGroup } from "@/lib/api/services/toeic.service";
 import { resolveAssessmentPolicy } from "@/lib/practice/focusMode";
 import { useAssessmentAntiCheat } from "@/hooks/useAssessmentAntiCheat";
 import { PracticeHeader } from "@/components/practice/PracticeHeader";
 import { isSafeCourseReturn } from "@/lib/course/navigation";
 import {
-  ToeicQuestionCard,
-  ToeicGroupContext,
-} from "@/components/toeic/ToeicQuestionCard";
+  buildPaperParts,
+  formatMinutes,
+  nextPlayable,
+  playbackSegments,
+  realToVirtual,
+  segmentsDuration,
+  virtualToReal,
+} from "@/lib/toeic/examPaper";
+import { ToeicExamPaper } from "@/components/toeic/paper/ToeicExamPaper";
+import { ToeicQuestionNavigator } from "@/components/toeic/paper/ToeicQuestionNavigator";
+import { ToeicListeningBar } from "@/components/toeic/paper/ToeicListeningBar";
 
-type QuestionEntry = {
-  question: NonNullable<ToeicQuestionGroup["questions"]>[number];
-  group: ToeicQuestionGroup;
+type SaveState = "idle" | "saving" | "saved" | "error";
+type ReadyMaster = Extract<ToeicListeningMaster, { available: true }>;
+type Checkpoint = { answers: Record<number, number>; marked: number[]; savedAt: string };
+
+const checkpointKey = (id: number) => `breadtrans:toeic-checkpoint:${id}`;
+const draftKey = (id: number) => `breadtrans:toeic-draft:${id}`;
+const readJson = <T,>(key: string): T | null => {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : null;
+  } catch {
+    return null;
+  }
 };
+const writeJson = (key: string, value: unknown) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Storage full or blocked: the server copy is still authoritative.
+  }
+};
+const sameState = (a: Record<number, number>, am: Iterable<number>, b: Record<number, number>, bm: Iterable<number>) =>
+  JSON.stringify(Object.entries(a).sort()) === JSON.stringify(Object.entries(b).sort()) &&
+  JSON.stringify([...am].sort()) === JSON.stringify([...bm].sort());
+const timeOf = (iso: string) => new Date(iso).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
-const READING_SECONDS = 75 * 60;
-
-function formatTime(seconds: number) {
-  const safe = Math.max(0, Math.floor(seconds));
-  const minutes = Math.floor(safe / 60)
-    .toString()
-    .padStart(2, "0");
-  const remainder = (safe % 60).toString().padStart(2, "0");
-  return `${minutes}:${remainder}`;
-}
-
-export default function ToeicAttemptPage({
-  params,
-}: {
-  params: Promise<{ attemptId: string }>;
-}) {
+export default function ToeicAttemptPage({ params }: { params: Promise<{ attemptId: string }> }) {
   const { attemptId: raw } = use(params);
   const attemptId = Number(raw);
   const router = useRouter();
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const requestedReturnTo = searchParams.get("returnTo");
   const parentAttemptId = searchParams.get("parentAttemptId");
   const parentComponentId = searchParams.get("parentComponentId");
   const parentAssessmentId = searchParams.get("parentAssessmentId");
-  const courseReturn =
-    requestedReturnTo && isSafeCourseReturn(requestedReturnTo)
-      ? requestedReturnTo
-      : null;
-  const [index, setIndex] = useState(0);
+  const courseReturn = requestedReturnTo && isSafeCourseReturn(requestedReturnTo) ? requestedReturnTo : null;
+
   const [answers, setAnswers] = useState<Record<number, number> | null>(null);
   const [marked, setMarked] = useState<Set<number>>(new Set());
+  const [activePart, setActivePart] = useState<number | null>(null);
+  const [currentQuestionId, setCurrentQuestionId] = useState<number | null>(null);
+  const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [checkpoint, setCheckpoint] = useState<Checkpoint | null>(null);
+  const [confirmRestore, setConfirmRestore] = useState(false);
+  const [draftOffer, setDraftOffer] = useState<Checkpoint | null>(null);
   const [showSubmitSummary, setShowSubmitSummary] = useState(false);
   const [showExit, setShowExit] = useState(false);
-  const [showQuestionDrawer, setShowQuestionDrawer] = useState(false);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [showDrawer, setShowDrawer] = useState(false);
+  const [showTop, setShowTop] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [nowMs, setNowMs] = useState(0);
+  // Audio: one element for the whole attempt.
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [audioPlaying, setAudioPlaying] = useState(false);
   const [audioLoading, setAudioLoading] = useState(false);
   const [audioBlocked, setAudioBlocked] = useState(false);
-  const [audioError, setAudioError] = useState(false);
-  const [audioFinished, setAudioFinished] = useState(false);
-  const [audioPlaying, setAudioPlaying] = useState(false);
-  const [audioDuration, setAudioDuration] = useState(0);
-  const [audioPosition, setAudioPosition] = useState(0);
-  const [audioVolume, setAudioVolume] = useState(1);
-  const [audioRate, setAudioRate] = useState(1);
-  const [showAudioSettings, setShowAudioSettings] = useState(false);
-  const [currentTimeMs, setCurrentTimeMs] = useState(0);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const [audioError, setAudioError] = useState<string | null>(null);
+  const [realPosition, setRealPosition] = useState(0);
+  const [clipDuration, setClipDuration] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [groupCursor, setGroupCursor] = useState(0);
+  const blobUrlRef = useRef<string | null>(null);
   const audioRequestRef = useRef(0);
-  const hydratedAttemptRef = useRef<number | null>(null);
-  const playedAudioGroupsRef = useRef<Set<number>>(new Set());
-  const loadedAudioGroupRef = useRef<number | null>(null);
-  const autosaveTimerRef = useRef<number | null>(null);
-  const autosaveInFlightRef = useRef<Promise<void> | null>(null);
-  const skipAutosaveRef = useRef(false);
+  const hydratedRef = useRef<number | null>(null);
+  const advancingRef = useRef(false);
+  const pendingJumpRef = useRef<number | null>(null);
 
-  const {
-    data: attempt,
-    isLoading,
-    isError,
-  } = useQuery({
+  const { data: attempt, isLoading, isError } = useQuery({
     queryKey: ["toeic-attempt", attemptId],
     queryFn: () => toeicService.getAttempt(attemptId),
     enabled: Number.isInteger(attemptId),
   });
-  const questions = useMemo<QuestionEntry[]>(
-    () =>
-      (attempt?.exam.groups ?? []).flatMap((group) =>
-        group.questions.map((question) => ({ question, group })),
-      ),
-    [attempt],
-  );
-  const current = questions[index];
+  const legacyStrict = Boolean(attempt?.section);
+  const section = attempt?.section ?? null;
+  const selectedParts = useMemo(() => attempt?.selectedParts ?? [], [attempt?.selectedParts]);
+  const { data: master } = useQuery({
+    queryKey: ["toeic-listening-master", attemptId],
+    queryFn: () => toeicService.getListeningMaster(attemptId),
+    enabled: Boolean(attempt && !legacyStrict && attempt.status === "IN_PROGRESS"),
+    staleTime: Infinity,
+  });
+  const masterReady: ReadyMaster | null = master?.available ? (master as ReadyMaster) : null;
+  const masterSrc = masterReady ? (masterReady.url ?? toeicService.apiUrl(masterReady.path ?? "")) : null;
+
+  const parts = useMemo(() => buildPaperParts<ToeicQuestionGroup>(attempt?.exam.groups ?? []), [attempt?.exam.groups]);
+  const questionMeta = useMemo(() => {
+    const map = new Map<number, { part: number; number: number }>();
+    for (const p of parts) for (const g of p.groups) for (const q of g.questions) map.set(q.id, { part: p.part, number: q.questionNumber });
+    return map;
+  }, [parts]);
+  const numberToPart = useMemo(() => new Map([...questionMeta.values()].map((m) => [m.number, m.part])), [questionMeta]);
+  const listeningGroups = useMemo(() => parts.filter((p) => p.part <= 4).flatMap((p) => p.groups), [parts]);
+  const total = questionMeta.size;
+  const shownPart = parts.find((p) => p.part === activePart) ?? parts[0] ?? null;
+
   const persistedAnswers = useMemo(
     () =>
       Object.fromEntries(
-        (attempt?.answers ?? [])
-          .filter((answer) => answer.selectedIndex !== null)
-          .map((answer) => [answer.questionId, answer.selectedIndex as number]),
-      ),
+        (attempt?.answers ?? []).filter((a) => a.selectedIndex !== null).map((a) => [a.questionId, a.selectedIndex as number]),
+      ) as Record<number, number>,
     [attempt],
   );
   const currentAnswers = answers ?? persistedAnswers;
   const answeredCount = Object.keys(currentAnswers).length;
-  const fullTest = attempt?.mode === "FULL_TEST";
-  const isListening = (current?.group.part ?? 5) <= 4;
-  const currentGroupId = current?.group.id;
-  const currentGroupEntries = useMemo(
-    () =>
-      current
-        ? questions.filter(({ group }) => group.id === current.group.id)
-        : [],
-    [current, questions],
+  const persistedRef = useRef(persistedAnswers);
+  useEffect(() => {
+    persistedRef.current = persistedAnswers;
+  }, [persistedAnswers]);
+
+  const lockedReason = (part: number) =>
+    legacyStrict && section === "READING" && part <= 4
+      ? "Phần Nghe của lượt thi này đã kết thúc, đáp án đã khóa."
+      : legacyStrict && section === "LISTENING" && part >= 5
+        ? "Phần Đọc của lượt thi này mở khi phần Nghe kết thúc."
+        : null;
+
+  /** Legacy strict attempts accept only the open section's answers. */
+  const sendable = useCallback(
+    (all: Record<number, number>) => {
+      if (!legacyStrict || !section) return all;
+      return Object.fromEntries(
+        Object.entries(all).filter(([id]) => {
+          const part = questionMeta.get(Number(id))?.part ?? 0;
+          return section === "LISTENING" ? part <= 4 : part >= 5;
+        }),
+      ) as Record<number, number>;
+    },
+    [legacyStrict, section, questionMeta],
   );
-  const renderedEntries = fullTest
-    ? currentGroupEntries
-    : current
-      ? [current]
-      : [];
-  const groups = useMemo(() => {
-    const seen = new Set<number>();
-    return questions
-      .filter(({ group }) => {
-        if (seen.has(group.id)) return false;
-        seen.add(group.id);
-        return true;
-      })
-      .map(({ group }) => group);
-  }, [questions]);
-  const groupsByPart = useMemo(() => {
-    const result = new Map<number, ToeicQuestionGroup[]>();
-    for (const group of groups) {
-      const partGroups = result.get(group.part) ?? [];
-      partGroups.push(group);
-      result.set(group.part, partGroups);
+
+  // ---------- Fullscreen: never left by the page except on purpose ----------
+  useEffect(() => {
+    const sync = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    sync();
+    document.addEventListener("fullscreenchange", sync);
+    return () => document.removeEventListener("fullscreenchange", sync);
+  }, []);
+  const enterFullscreen = () => void document.documentElement.requestFullscreen?.().catch(() => undefined);
+  const exitFullscreen = () => {
+    if (document.fullscreenElement) void document.exitFullscreen?.().catch(() => undefined);
+  };
+  // Leave fullscreen when the page is really gone. React Strict Mode mounts
+  // effects twice in development, so the exit waits a tick and is skipped
+  // when the page mounted again (a plain cleanup dropped fullscreen at once).
+  const mountTokenRef = useRef(0);
+  useEffect(() => {
+    const token = ++mountTokenRef.current;
+    const audio = audioRef.current;
+    return () => {
+      window.setTimeout(() => {
+        if (mountTokenRef.current !== token) return;
+        audio?.pause();
+        if (document.fullscreenElement) void document.exitFullscreen?.().catch(() => undefined);
+      }, 0);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!attempt) return;
+    const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [attempt]);
+  useEffect(() => {
+    const onScroll = () => setShowTop(window.scrollY > 600);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // ---------- Hydrate once: flags, active Part, checkpoint, unsaved draft ----------
+  useEffect(() => {
+    if (!attempt || !parts.length || hydratedRef.current === attempt.id) return;
+    hydratedRef.current = attempt.id;
+    const serverMarked = new Set(attempt.markedQuestionIds ?? []);
+    setMarked(serverMarked);
+    setGroupCursor(legacyStrict ? (attempt.listeningPosition ?? 0) : 0);
+    const resumeId = attempt.currentQuestionId ?? null;
+    setActivePart(resumeId && questionMeta.has(resumeId) ? questionMeta.get(resumeId)!.part : parts[0].part);
+    if (resumeId && questionMeta.has(resumeId)) {
+      setCurrentQuestionId(resumeId);
+      pendingJumpRef.current = questionMeta.get(resumeId)!.number;
     }
-    return [...result.entries()].sort(([a], [b]) => a - b);
-  }, [groups]);
-  const save = useMutation({
-    mutationFn: (currentQuestionId?: number) =>
-      toeicService.saveAnswers(attemptId, currentAnswers, {
-        markedQuestionIds: [...marked],
-        currentQuestionId: currentQuestionId ?? current?.question.id,
-      }),
+    setCheckpoint(readJson<Checkpoint>(checkpointKey(attempt.id)));
+    const draft = readJson<Checkpoint>(draftKey(attempt.id));
+    if (draft && !sameState(draft.answers, draft.marked, persistedRef.current, serverMarked)) setDraftOffer(draft);
+  }, [attempt, parts, questionMeta, legacyStrict]);
+
+  // ---------- Autosave (server), with a local draft while unsaved ----------
+  const saveTimerRef = useRef<number | null>(null);
+  const inFlightRef = useRef<Promise<unknown> | null>(null);
+  const latestRef = useRef({ answers: currentAnswers, marked, currentQuestionId });
+  const clearedRef = useRef<Set<number>>(new Set());
+  useEffect(() => {
+    latestRef.current = { answers: currentAnswers, marked, currentQuestionId };
+  }, [currentAnswers, marked, currentQuestionId]);
+  const saveNow = useCallback(async () => {
+    setSaveState("saving");
+    // One save at a time: each waits for the previous one and then sends the
+    // newest snapshot, so an older snapshot can never land after a newer one.
+    const previous = inFlightRef.current;
+    const request = (async () => {
+      if (previous) await previous.catch(() => undefined);
+      const { answers: a, marked: m, currentQuestionId: c } = latestRef.current;
+      // Answers a restore removed are cleared on the server too.
+      const clearing = [...clearedRef.current].filter((id) => !(id in a));
+      await toeicService.saveAnswers(attemptId, { ...sendable(a), ...Object.fromEntries(clearing.map((id) => [id, null])) }, { markedQuestionIds: [...m], currentQuestionId: c ?? undefined });
+      clearing.forEach((id) => clearedRef.current.delete(id));
+    })();
+    inFlightRef.current = request;
+    try {
+      await request;
+      setSaveState("saved");
+      try {
+        localStorage.removeItem(draftKey(attemptId));
+      } catch {
+        // ignore
+      }
+    } catch (error) {
+      setSaveState("error");
+      throw error;
+    } finally {
+      if (inFlightRef.current === request) inFlightRef.current = null;
+    }
+  }, [attemptId, sendable]);
+  const scheduleSave = useCallback(
+    (delay = 600) => {
+      if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = window.setTimeout(() => {
+        saveTimerRef.current = null;
+        void saveNow().catch(() => {
+          saveTimerRef.current = window.setTimeout(() => void saveNow().catch(() => undefined), 4000);
+        });
+      }, delay);
+    },
+    [saveNow],
+  );
+  useEffect(
+    () => () => {
+      if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+    },
+    [],
+  );
+  // Keep a local draft of every change until the server confirms it.
+  useEffect(() => {
+    if (!attempt || answers === null) return;
+    writeJson(draftKey(attemptId), { answers, marked: [...marked], savedAt: new Date().toISOString() });
+  }, [answers, marked, attempt, attemptId]);
+
+  const onSelect = useCallback(
+    (questionId: number, optionIndex: number) => {
+      setAnswers((old) => ({ ...(old ?? persistedRef.current), [questionId]: optionIndex }));
+      setCurrentQuestionId(questionId);
+      scheduleSave();
+    },
+    [scheduleSave],
+  );
+  const onToggleMark = useCallback(
+    (questionId: number) => {
+      setAnswers((old) => old ?? persistedRef.current);
+      setMarked((old) => {
+        const next = new Set(old);
+        if (next.has(questionId)) next.delete(questionId);
+        else next.add(questionId);
+        return next;
+      });
+      scheduleSave(200);
+    },
+    [scheduleSave],
+  );
+
+  // ---------- Manual save and restore ----------
+  const flushSave = useCallback(async () => {
+    if (saveTimerRef.current) {
+      window.clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+    if (inFlightRef.current) await inFlightRef.current.catch(() => undefined);
+    await saveNow();
+  }, [saveNow]);
+  const manualSave = useMutation({
+    mutationFn: flushSave,
+    onSuccess: () => {
+      const point: Checkpoint = { answers: { ...latestRef.current.answers }, marked: [...latestRef.current.marked], savedAt: new Date().toISOString() };
+      writeJson(checkpointKey(attemptId), point);
+      setCheckpoint(point);
+      toast.success(`Đã lưu bài làm lúc ${timeOf(point.savedAt)}`);
+    },
+    onError: () => toast.error("Chưa lưu được lên máy chủ. Bản nháp vẫn được giữ trên máy này; hãy thử lại khi có mạng."),
   });
+  const applyState = (state: Checkpoint) => {
+    for (const id of Object.keys(latestRef.current.answers)) if (!(id in state.answers)) clearedRef.current.add(Number(id));
+    setAnswers({ ...state.answers });
+    setMarked(new Set(state.marked));
+    scheduleSave(100);
+  };
+  const restore = () => {
+    if (!checkpoint) return;
+    if (sameState(currentAnswers, marked, checkpoint.answers, checkpoint.marked)) {
+      toast("Bài làm đang giống bản đã lưu.");
+      return;
+    }
+    setConfirmRestore(true);
+  };
+
+  // ---------- Current question from scroll; deliberate jumps only ----------
+  useEffect(() => {
+    if (!shownPart) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const hit = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        const id = hit ? Number((hit.target as HTMLElement).dataset.questionId) : null;
+        if (id) setCurrentQuestionId(id);
+      },
+      { rootMargin: "-30% 0px -60% 0px" },
+    );
+    document.querySelectorAll("article[data-question-id]").forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [shownPart]);
+  const scrollToNumber = (number: number) => {
+    const el = document.getElementById(`q-${number}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    (el?.querySelector("input, button") as HTMLElement | null)?.focus({ preventScroll: true });
+  };
+  useEffect(() => {
+    const number = pendingJumpRef.current;
+    if (number === null) return;
+    pendingJumpRef.current = null;
+    window.requestAnimationFrame(() => scrollToNumber(number));
+  }, [activePart, shownPart]);
+  const jumpToQuestion = useCallback(
+    (questionNumber: number) => {
+      const part = numberToPart.get(questionNumber);
+      if (!part) return;
+      setShowDrawer(false);
+      if (shownPart?.part === part) {
+        window.requestAnimationFrame(() => scrollToNumber(questionNumber));
+        return;
+      }
+      pendingJumpRef.current = questionNumber;
+      setActivePart(part);
+    },
+    [numberToPart, shownPart?.part],
+  );
+  // Remember where the learner is, a little after they stop scrolling.
+  const lastSavedCursorRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!attempt || attempt.status !== "IN_PROGRESS" || !currentQuestionId || lastSavedCursorRef.current === currentQuestionId) return;
+    const timer = window.setTimeout(() => {
+      lastSavedCursorRef.current = currentQuestionId;
+      if (!saveTimerRef.current) void saveNow().catch(() => undefined);
+    }, 2500);
+    return () => window.clearTimeout(timer);
+  }, [attempt, currentQuestionId, saveNow]);
+
+  // ---------- Audio ----------
+  const segments = useMemo(
+    () => (masterReady ? playbackSegments(masterReady.timeline, masterReady.durationSeconds, selectedParts.length ? selectedParts : null) : []),
+    [masterReady, selectedParts],
+  );
+  const playElement = useCallback(async () => {
+    const el = audioRef.current;
+    if (!el) return;
+    try {
+      await el.play();
+      setAudioBlocked(false);
+    } catch {
+      setAudioBlocked(true);
+    }
+  }, []);
+  const loadGroupClip = useCallback(
+    async (group: ToeicQuestionGroup, autoPlay: boolean) => {
+      const requestId = ++audioRequestRef.current;
+      setAudioLoading(true);
+      setAudioError(null);
+      try {
+        const blob = await toeicService.getGroupAudio(group.id, attemptId);
+        if (requestId !== audioRequestRef.current) return;
+        if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = URL.createObjectURL(blob);
+        const el = audioRef.current;
+        if (!el) return;
+        el.src = blobUrlRef.current;
+        setRealPosition(0);
+        if (autoPlay) await playElement();
+      } catch {
+        if (requestId === audioRequestRef.current) setAudioError("Không tải được audio của nhóm câu này.");
+      } finally {
+        if (requestId === audioRequestRef.current) setAudioLoading(false);
+      }
+    },
+    [attemptId, playElement],
+  );
+  useEffect(
+    () => () => {
+      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+    },
+    [],
+  );
+  // The master source is set once; Part switches never touch the element.
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el || !masterSrc || el.dataset.masterSrc === masterSrc) return;
+    el.dataset.masterSrc = masterSrc;
+    el.src = masterSrc;
+    el.load();
+  }, [masterSrc]);
+  // Legacy strict: the server's one-pass manifest drives the audio.
+  const strictGroup = legacyStrict && section === "LISTENING" ? listeningGroups[groupCursor] : undefined;
+  useEffect(() => {
+    if (!strictGroup || attempt?.status !== "IN_PROGRESS") return;
+    void loadGroupClip(strictGroup, true);
+    // One load per manifest step.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [strictGroup?.id, attempt?.status]);
+  const advanceStrict = useCallback(async () => {
+    if (advancingRef.current) return;
+    advancingRef.current = true;
+    try {
+      const next = await toeicService.advanceListening(attemptId);
+      if (next.section === "READING") await queryClient.invalidateQueries({ queryKey: ["toeic-attempt", attemptId] });
+      else setGroupCursor(next.listeningPosition ?? groupCursor + 1);
+    } catch {
+      setAudioError("Máy chủ chưa chuyển sang nhóm tiếp theo.");
+    } finally {
+      advancingRef.current = false;
+    }
+  }, [attemptId, groupCursor, queryClient]);
+
+  const onTimeUpdate = (el: HTMLAudioElement) => {
+    if (masterReady && segments.length) {
+      const next = nextPlayable(segments, el.currentTime);
+      if (next === null) {
+        el.pause();
+        el.currentTime = segments[segments.length - 1].end;
+      } else if (next !== el.currentTime) el.currentTime = next;
+    }
+    setRealPosition(el.currentTime);
+  };
+  const onEnded = () => {
+    setAudioPlaying(false);
+    if (legacyStrict) {
+      void advanceStrict();
+      return;
+    }
+    if (!masterReady && groupCursor + 1 < listeningGroups.length) {
+      setGroupCursor(groupCursor + 1);
+      void loadGroupClip(listeningGroups[groupCursor + 1], true);
+    }
+  };
+  const toggleAudio = () => {
+    const el = audioRef.current;
+    if (!el || legacyStrict) return;
+    if (!masterReady && !el.src) {
+      void loadGroupClip(listeningGroups[groupCursor], true);
+      return;
+    }
+    if (masterReady && segments.length && el.currentTime < segments[0].start) el.currentTime = segments[0].start;
+    if (el.paused) void playElement();
+    else el.pause();
+  };
+  const seek = (seconds: number) => {
+    const el = audioRef.current;
+    if (!el || legacyStrict) return;
+    el.currentTime = masterReady ? virtualToReal(segments, seconds) : Math.max(0, seconds);
+    setRealPosition(el.currentTime);
+  };
+  const audioPosition = masterReady ? realToVirtual(segments, realPosition) : realPosition;
+  const audioDuration = masterReady ? segmentsDuration(segments) : clipDuration;
+  const hasListening = parts.some((p) => p.part <= 4);
+  const showListeningBar = attempt?.status === "IN_PROGRESS" && hasListening && (!legacyStrict || section === "LISTENING");
+
+  // ---------- Submit / cancel ----------
+  const policy = resolveAssessmentPolicy({ kind: "TOEIC", mode: attempt?.mode });
+  const { markTerminated } = useAssessmentAntiCheat({
+    enabled: policy.enableAntiCheat && legacyStrict && attempt?.status === "IN_PROGRESS",
+    onViolation: (eventType) => {
+      const persisted = eventType === "CUT_ATTEMPT" ? "COPY_ATTEMPT" : eventType;
+      void toeicService.recordIntegrityEvent(attempt!.id, persisted, currentQuestionId ?? undefined).catch(() => undefined);
+    },
+    preventClipboard: !policy.allowCopyPaste,
+    preventContextMenu: !policy.allowContextMenu,
+  });
+  const leave = () => {
+    markTerminated();
+    audioRef.current?.pause();
+    exitFullscreen();
+    try {
+      localStorage.removeItem(checkpointKey(attemptId));
+      localStorage.removeItem(draftKey(attemptId));
+    } catch {
+      // ignore
+    }
+  };
   const submit = useMutation({
     mutationFn: async () => {
-      if (autosaveTimerRef.current) {
-        clearTimeout(autosaveTimerRef.current);
-        autosaveTimerRef.current = null;
-      }
-      if (autosaveInFlightRef.current) await autosaveInFlightRef.current;
-      await toeicService.saveAnswers(attemptId, currentAnswers, {
-        markedQuestionIds: [...marked],
-        currentQuestionId: current?.question.id,
-      });
+      await flushSave();
       return toeicService.submitAttempt(attemptId);
     },
     onSuccess: () => {
-      markTerminated();
-      exitFullscreen();
-      router.push(
-        `/toeic/results/${attemptId}${
-          courseReturn || parentAttemptId
-            ? `?${[
-                courseReturn ? `returnTo=${encodeURIComponent(courseReturn)}` : "",
-                parentAttemptId ? `parentAttemptId=${parentAttemptId}` : "",
-                parentComponentId ? `parentComponentId=${parentComponentId}` : "",
-                parentAssessmentId ? `parentAssessmentId=${parentAssessmentId}` : "",
-              ]
-                .filter(Boolean)
-                .join("&")}`
-            : ""
-        }`,
-      );
+      leave();
+      const query = [
+        courseReturn ? `returnTo=${encodeURIComponent(courseReturn)}` : "",
+        parentAttemptId ? `parentAttemptId=${parentAttemptId}` : "",
+        parentComponentId ? `parentComponentId=${parentComponentId}` : "",
+        parentAssessmentId ? `parentAssessmentId=${parentAssessmentId}` : "",
+      ]
+        .filter(Boolean)
+        .join("&");
+      router.push(`/toeic/results/${attemptId}${query ? `?${query}` : ""}`);
     },
   });
   const cancel = useMutation({
     mutationFn: () => toeicService.cancelAttempt(attemptId),
     onSuccess: () => {
-      markTerminated();
-      exitFullscreen();
+      leave();
       router.push(courseReturn ?? "/exams");
     },
   });
 
-  useEffect(
-    () => () => {
-      if (audioUrl) URL.revokeObjectURL(audioUrl);
-    },
-    [audioUrl],
-  );
-
-  useEffect(
-    () => () => {
-      if (document.fullscreenElement)
-        void document.exitFullscreen?.().catch(() => undefined);
-    },
-    [],
-  );
-
-  useEffect(() => {
-    if (!attempt) return;
-    const timer = window.setInterval(() => setCurrentTimeMs(Date.now()), 1000);
-    return () => window.clearInterval(timer);
-  }, [attempt]);
-
-  useEffect(() => {
-    if (!attempt || !questions.length || hydratedAttemptRef.current === attempt.id)
-      return;
-    hydratedAttemptRef.current = attempt.id;
-    setMarked(new Set(attempt.markedQuestionIds ?? []));
-    const savedIndex = attempt.currentQuestionId
-      ? questions.findIndex(({ question }) => question.id === attempt.currentQuestionId)
-      : -1;
-    if (savedIndex >= 0) setIndex(savedIndex);
-  }, [attempt, questions]);
-
-  useEffect(() => {
-    if (!attempt || attempt.status !== "IN_PROGRESS" || answers === null)
-      return;
-    if (skipAutosaveRef.current) {
-      skipAutosaveRef.current = false;
-      return;
-    }
-    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
-    const timer = window.setTimeout(() => {
-      autosaveTimerRef.current = null;
-      const request = toeicService
-        .saveAnswers(attemptId, answers, {
-          markedQuestionIds: [...marked],
-          currentQuestionId: current?.question.id,
-        })
-        .catch(() => undefined);
-      autosaveInFlightRef.current = request;
-      void request.finally(() => {
-        if (autosaveInFlightRef.current === request)
-          autosaveInFlightRef.current = null;
-      });
-    }, 500);
-    autosaveTimerRef.current = timer;
-    return () => {
-      window.clearTimeout(timer);
-      if (autosaveTimerRef.current === timer) autosaveTimerRef.current = null;
-    };
-  }, [answers, attempt, attemptId, current?.question.id, marked]);
-
-  const policy = resolveAssessmentPolicy({
-    kind: "TOEIC",
-    mode: attempt?.mode,
-  });
-
-  const { markTerminated } = useAssessmentAntiCheat({
-    enabled: policy.enableAntiCheat && attempt?.status === "IN_PROGRESS",
-    onViolation: (eventType) => {
-      // The existing backend enum has no CUT_ATTEMPT value; preserve its
-      // established clipboard violation contract without changing the backend.
-      const persistedEventType =
-        eventType === "CUT_ATTEMPT" ? "COPY_ATTEMPT" : eventType;
-      void toeicService
-        .recordIntegrityEvent(
-          attempt!.id,
-          persistedEventType,
-          current?.question.id,
-        )
-        .catch(() => undefined);
-    },
-    preventClipboard: !policy.allowCopyPaste,
-    preventContextMenu: !policy.allowContextMenu,
-  });
-
-  const loadAudio = async (group: ToeicQuestionGroup, autoPlay: boolean) => {
-    const requestId = ++audioRequestRef.current;
-    setAudioLoading(true);
-    setAudioBlocked(false);
-    setAudioError(false);
-    try {
-      const blob = await toeicService.getGroupAudio(group.id, attemptId);
-      if (requestId !== audioRequestRef.current) return;
-      if (audioUrl) URL.revokeObjectURL(audioUrl);
-      const url = URL.createObjectURL(blob);
-      setAudioUrl(url);
-      loadedAudioGroupRef.current = group.id;
-      if (audioRef.current) {
-        audioRef.current.src = url;
-        audioRef.current.volume = audioVolume;
-        audioRef.current.playbackRate = audioRate;
-        setAudioPosition(0);
-        setAudioDuration(0);
-        if (autoPlay) {
-          try {
-            await audioRef.current.play();
-          } catch {
-            if (requestId === audioRequestRef.current) setAudioBlocked(true);
-          }
-        }
-      }
-    } catch {
-      if (requestId === audioRequestRef.current) setAudioError(true);
-    } finally {
-      if (requestId === audioRequestRef.current) setAudioLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!attempt || !current?.group || !fullTest || !isListening) return;
-    if (
-      playedAudioGroupsRef.current.has(current.group.id) &&
-      loadedAudioGroupRef.current === current.group.id
-    )
-      return;
-    setAudioFinished(false);
-    const audioElement = audioRef.current;
-    setAudioPosition(0);
-    setAudioDuration(0);
-    setAudioPlaying(false);
-    if (audioElement) audioElement.src = "";
-    window.setTimeout(() => {
-      void loadAudio(current.group, true);
-    }, 0);
-    playedAudioGroupsRef.current.add(current.group.id);
-    return () => {
-      audioRequestRef.current += 1;
-      audioElement?.pause();
-    };
-    // Loading is intentionally tied to the audio group, not each question.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [attempt?.id, currentGroupId, fullTest, isListening]);
-
-  const playPracticeAudio = () => {
-    if (current && isListening) void loadAudio(current.group, true);
-  };
-  const toggleAudio = () => {
-    if (!audioRef.current) return;
-    if (audioRef.current.paused) {
-      void audioRef.current
-        .play()
-        .then(() => setAudioBlocked(false))
-        .catch(() => setAudioBlocked(true));
-    } else audioRef.current.pause();
-  };
-  const changeAudioPosition = (value: number) => {
-    if (!audioRef.current || !Number.isFinite(value)) return;
-    audioRef.current.currentTime = value;
-    setAudioPosition(value);
-  };
-  const changeAudioVolume = (value: number) => {
-    setAudioVolume(value);
-    if (audioRef.current) audioRef.current.volume = value;
-  };
-  const changeAudioRate = (value: number) => {
-    if (fullTest) return;
-    setAudioRate(value);
-    if (audioRef.current) audioRef.current.playbackRate = value;
-  };
-  const retryBlockedAudio = () => {
-    if (audioRef.current)
-      void audioRef.current
-        .play()
-        .then(() => setAudioBlocked(false))
-        .catch(() => setAudioBlocked(true));
-  };
-
-  const nextIndex = () => {
-    if (!current) return -1;
-    if (!fullTest) return index + 1 < questions.length ? index + 1 : -1;
-    const groupPosition = groups.findIndex(
-      (group) => group.id === current.group.id,
-    );
-    const nextGroup = groups[groupPosition + 1];
-    return nextGroup
-      ? questions.findIndex(({ group }) => group.id === nextGroup.id)
-      : -1;
-  };
-  const previousIndex = () => {
-    if (!current || fullTest) return Math.max(0, index - 1);
-    return index - 1;
-  };
-  const next = async (fromAudio = false) => {
-    if (fullTest && isListening && !audioFinished && !audioError && !fromAudio)
-      return;
-    const target = nextIndex();
-    // Every fullTest "next" during Listening consumes exactly one manifest
-    // segment (nextIndex() always jumps to the next group, never a question
-    // within the same group) — so the server's one-pass cursor must advance
-    // in lockstep, or its audio-fetch gate will reject the very next group.
-    if (fullTest && isListening) {
-      try {
-        await toeicService.advanceListening(attemptId);
-      } catch {
-        // Server is authoritative: if it refuses to advance, stay put
-        // rather than let the client view drift ahead of server truth.
-        return;
-      }
-    }
-    skipAutosaveRef.current = target >= 0;
-    await save.mutateAsync(target >= 0 ? questions[target]?.question.id : undefined);
-    if (target < 0) setShowSubmitSummary(true);
-    else setIndex(target);
-  };
-  const enterFullscreen = () =>
-    document.documentElement.requestFullscreen?.().catch(() => undefined);
-  const exitFullscreen = () => {
-    if (document.fullscreenElement && document.exitFullscreen)
-      void document.exitFullscreen().catch(() => undefined);
-  };
-  const toggleMarked = (questionId: number) =>
-    setMarked((old) => {
-      const nextMarked = new Set(old);
-      if (nextMarked.has(questionId)) nextMarked.delete(questionId);
-      else nextMarked.add(questionId);
-      skipAutosaveRef.current = true;
-      void toeicService
-        .saveAnswers(attemptId, currentAnswers, {
-          markedQuestionIds: [...nextMarked],
-          currentQuestionId: current?.question.id,
-        })
-        .catch(() => undefined);
-      return nextMarked;
-    });
-  const navigateToQuestion = (target: QuestionEntry) => {
-    if (fullTest && isListening && target.group.part > 4) return;
-    if (fullTest && !isListening && target.group.part <= 4) return;
-    const targetIndex = questions.findIndex(
-      ({ question }) => question.id === target.question.id,
-    );
-    if (targetIndex >= 0) {
-      setIndex(targetIndex);
-      skipAutosaveRef.current = true;
-      void toeicService
-        .saveAnswers(attemptId, currentAnswers, {
-          markedQuestionIds: [...marked],
-          currentQuestionId: target.question.id,
-        })
-        .catch(() => undefined);
-    }
-  };
-
-  const navigateToPart = (part: number) => {
-    const first = groupsByPart.find(
-      ([candidate]) => candidate === part,
-    )?.[1][0];
-    if (first) {
-      const target = questions.find((entry) => entry.group.id === first.id);
-      if (target) navigateToQuestion(target);
-    }
-  };
-
   if (isLoading)
     return (
       <div className="flex min-h-[70vh] items-center justify-center">
-        <Loader2 className="animate-spin text-amber-600" />
+        <Loader2 className="animate-spin text-blue-600" />
       </div>
     );
-  if (isError || !attempt || !current)
-    return (
-      <div className="mx-auto max-w-xl py-24 text-center text-slate-600">
-        Không tải được lượt thi.
-      </div>
-    );
+  if (isError || !attempt || !parts.length || !shownPart)
+    return <div className="mx-auto max-w-xl py-24 text-center text-slate-600">Không tải được lượt thi.</div>;
 
-  const partLabel = `Part ${current.group.part}`;
-  const firstQuestionNumber =
-    renderedEntries[0]?.question.questionNumber ?? index + 1;
-  const lastQuestionNumber =
-    renderedEntries.at(-1)?.question.questionNumber ?? index + 1;
-  const readingPhase = !isListening;
-  // Reading's countdown comes from the server's readingDeadline (set the
-  // moment Listening finished); the client clock only drives the display
-  // tick, never the deadline value itself. Listening has no countdown here
-  // — its pacing is the audio manifest, not a timer (Rule C).
-  const sectionRemaining = fullTest
-    ? readingPhase
-      ? attempt.readingDeadline
-        ? Math.max(0, (Date.parse(attempt.readingDeadline) - currentTimeMs) / 1000)
-        : READING_SECONDS
-      : null
-    : attempt.deadline
-      ? currentTimeMs > 0
-        ? Math.max(0, (Date.parse(attempt.deadline) - currentTimeMs) / 1000)
-        : attempt.durationSeconds
-      : attempt.durationSeconds;
+  const fullTest = attempt.mode === "FULL_TEST";
+  const remaining =
+    legacyStrict && section === "READING" && attempt.readingDeadline
+      ? Math.max(0, (Date.parse(attempt.readingDeadline) - nowMs) / 1000)
+      : attempt.deadline && nowMs
+        ? Math.max(0, (Date.parse(attempt.deadline) - nowMs) / 1000)
+        : attempt.durationSeconds;
+  const scopeLabel = fullTest ? "Full Test" : selectedParts.length ? `Luyện tập Part ${selectedParts.join(", ")}` : "Luyện tập toàn bộ đề";
+  const saveStatus =
+    saveState === "saving"
+      ? "Đang lưu…"
+      : saveState === "error"
+        ? "Chưa lưu được lên máy chủ, đang thử lại."
+        : checkpoint
+          ? `Bản lưu lúc ${timeOf(checkpoint.savedAt)}`
+          : "Đáp án được tự động lưu.";
+
+  const navigator = (
+    <ToeicQuestionNavigator
+      parts={parts}
+      answers={currentAnswers}
+      marked={marked}
+      currentQuestionId={currentQuestionId}
+      timerValue={formatMinutes(remaining)}
+      saveStatus={saveStatus}
+      saveError={saveState === "error"}
+      saving={manualSave.isPending}
+      restoreDisabled={!checkpoint}
+      submitting={submit.isPending}
+      onJumpQuestion={jumpToQuestion}
+      onSubmit={() => setShowSubmitSummary(true)}
+      onSave={() => manualSave.mutate()}
+      onRestore={restore}
+    />
+  );
 
   return (
-    <div className="min-h-dvh flex flex-col bg-slate-50 dark:bg-slate-950 font-sans">
-      <PracticeHeader
-        title={attempt.exam.title}
-        category={fullTest ? "Đề thi đầy đủ" : "Chế độ luyện tập"}
-        activityLabel={readingPhase ? "Reading" : "Listening"}
-        onExit={() => setShowExit(true)}
-        exitLabel="Thoát"
-        statusContent={
-          fullTest ? (
-            <div className="flex items-center gap-1 sm:gap-1.5 rounded-xl border border-slate-700 bg-slate-800/90 px-2 sm:px-3 py-1 text-[11px] sm:text-xs font-bold text-white">
-              <Clock3 size={14} className="text-amber-400" />
-              <span className="hidden sm:inline">
-                {readingPhase ? "Reading" : "Listening"}{" "}
-              </span>
-              {sectionRemaining === null ? "Đang nghe" : formatTime(sectionRemaining)}
-            </div>
-          ) : null
-        }
-        additionalActions={
-          <>
-            <button
-              type="button"
-              onClick={() => setShowQuestionDrawer(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1 text-xs font-bold text-white hover:bg-slate-700 lg:hidden"
-              aria-label="Mở bảng câu hỏi"
-            >
-              <ListOrdered size={14} />
-              <span className="hidden xs:inline">Câu hỏi </span>({answeredCount}
-              /{questions.length})
-            </button>
-            <button
-              type="button"
-              onClick={enterFullscreen}
-              className="hidden sm:inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1 text-xs font-bold text-slate-300 hover:text-white"
-              title="Toàn màn hình"
-            >
-              <Maximize2 size={14} />
-              <span className="hidden md:inline">Toàn màn hình</span>
-            </button>
-          </>
-        }
-      />
-
-      <main className="flex-1 w-full px-3 py-4 sm:px-4 sm:py-5">
-        <div className="mx-auto max-w-7xl space-y-4 sm:space-y-5">
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-            <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-6">
-              <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                    {partLabel} · Câu {firstQuestionNumber}
-                    {firstQuestionNumber !== lastQuestionNumber
-                      ? `–${lastQuestionNumber}`
-                      : ""}
-                    /{questions.length}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    {fullTest
-                      ? isListening
-                        ? "Audio chạy liên tục theo luồng thi · không tạm dừng hoặc tua"
-                        : "Đọc đoạn văn và trả lời theo thời gian còn lại"
-                      : "Chế độ luyện tập · có thể nghe lại audio"}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => toggleMarked(current.question.id)}
-                  className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 text-sm font-bold ${marked.has(current.question.id) ? "border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300" : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
-                >
-                  <Flag size={16} />{" "}
-                  {marked.has(current.question.id) ? "Đã đánh dấu" : "Đánh dấu"}
-                </button>
-              </div>
-
-              <nav
-                aria-label="Điều hướng Part TOEIC"
-                className="mb-5 flex flex-wrap gap-2"
+    <div className="min-h-dvh bg-white font-sans dark:bg-slate-950">
+      <div className="sticky top-0 z-30">
+        <PracticeHeader
+          title={attempt.exam.title}
+          category={fullTest ? "FULL TEST" : "LUYỆN TẬP"}
+          activityLabel={scopeLabel}
+          onExit={() => setShowExit(true)}
+          exitLabel="Thoát"
+          additionalActions={
+            <>
+              <button
+                type="button"
+                onClick={() => setShowDrawer(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1 text-xs font-bold text-white hover:bg-slate-700 lg:hidden"
+                aria-label="Mở bảng câu hỏi"
               >
-                {groupsByPart.map(([part]) => {
-                  const active = current.group.part === part;
-                  const disabled =
-                    fullTest &&
-                    ((isListening && part > 4) || (!isListening && part <= 4));
-                  return (
-                    <button
-                      key={part}
-                      type="button"
-                      disabled={disabled}
-                      onClick={() => navigateToPart(part)}
-                      className={`min-h-11 rounded-xl border px-4 text-sm font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${active ? "border-amber-500 bg-amber-500 text-white" : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-amber-300 dark:hover:border-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30"}`}
-                    >
-                      Part {part}
-                    </button>
-                  );
-                })}
-              </nav>
-
-              {isListening && (
-                <div className="mb-5 rounded-xl border border-sky-100 dark:border-sky-900/50 bg-sky-50/60 dark:bg-sky-950/40 px-3 py-3 text-sm text-sky-900 dark:text-sky-200">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={audioUrl ? toggleAudio : playPracticeAudio}
-                      disabled={audioLoading || fullTest}
-                      className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg bg-sky-600 px-3 text-white hover:bg-sky-700 disabled:opacity-60"
-                      aria-label={
-                        fullTest
-                          ? "Audio thi đang phát tự động"
-                          : audioPlaying
-                            ? "Tạm dừng audio"
-                            : "Phát audio"
-                      }
-                    >
-                      {audioLoading ? (
-                        <Loader2 size={17} className="animate-spin" />
-                      ) : audioPlaying ? (
-                        <Pause size={17} />
-                      ) : (
-                        <Play size={17} />
-                      )}
-                    </button>
-                    <span className="min-w-20 text-xs font-semibold tabular-nums">
-                      {formatTime(audioPosition)}
-                    </span>
-                    <input
-                      aria-label="Tua audio"
-                      type="range"
-                      min={0}
-                      max={audioDuration || 0}
-                      step={0.1}
-                      value={Math.min(audioPosition, audioDuration || 0)}
-                      onChange={(event) =>
-                        changeAudioPosition(Number(event.target.value))
-                      }
-                      disabled={fullTest || !audioUrl || !audioDuration}
-                      className="min-w-[140px] flex-1 accent-sky-600"
-                    />
-                    <span className="text-xs font-semibold tabular-nums">
-                      {formatTime(audioDuration)}
-                    </span>
-                    <Volume2 size={16} aria-hidden="true" />
-                    <input
-                      aria-label="Âm lượng audio"
-                      type="range"
-                      min={0}
-                      max={1}
-                      step={0.05}
-                      value={audioVolume}
-                      onChange={(event) =>
-                        changeAudioVolume(Number(event.target.value))
-                      }
-                      className="w-20 accent-sky-600"
-                    />
-                    {!fullTest && (
-                      <button
-                        type="button"
-                        onClick={() => setShowAudioSettings((value) => !value)}
-                        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-sky-200 dark:border-sky-800 bg-white dark:bg-slate-800 text-sky-800 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/40"
-                        aria-expanded={showAudioSettings}
-                        aria-label="Cài đặt audio"
-                      >
-                        <Settings size={17} />
-                      </button>
-                    )}
-                  </div>
-                  {showAudioSettings && (
-                    <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-sky-100 dark:border-sky-900/40 pt-3 text-xs font-semibold">
-                      <span>Tốc độ đọc:</span>
-                      {[0.75, 1, 1.25, 1.5].map((rate) => (
-                        <button
-                          type="button"
-                          key={rate}
-                          onClick={() => changeAudioRate(rate)}
-                          disabled={fullTest && rate !== 1}
-                          className={`min-h-10 rounded-lg border px-3 ${audioRate === rate ? "border-sky-600 bg-sky-600 text-white" : "border-sky-200 dark:border-sky-800 bg-white dark:bg-slate-800 text-sky-800 dark:text-sky-300"} disabled:cursor-not-allowed disabled:opacity-50`}
-                        >
-                          {rate.toFixed(2).replace(".00", "")}x
-                          {fullTest && rate !== 1 ? " · thi thật" : ""}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  <div className="mt-2 flex items-center justify-between gap-2 text-xs text-sky-800 dark:text-sky-300">
-                    <span className="inline-flex items-center gap-2 font-semibold">
-                      <Volume2 size={15} />{" "}
-                      {fullTest
-                        ? audioError
-                          ? "Không tải được audio"
-                          : "Audio theo nhóm câu · phát liên tục"
-                        : "Đoạn ghi âm"}
-                    </span>
-                    {audioBlocked && (
-                      <button
-                        type="button"
-                        onClick={retryBlockedAudio}
-                        className="min-h-10 rounded-lg border border-sky-200 dark:border-sky-800 bg-white dark:bg-slate-800 px-3 font-bold text-sky-700 dark:text-sky-300"
-                      >
-                        Bấm để bắt đầu audio
-                      </button>
-                    )}
-                    {audioError && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          playedAudioGroupsRef.current.delete(current.group.id);
-                          void loadAudio(current.group, true);
-                        }}
-                        className="min-h-10 rounded-lg border border-rose-200 dark:border-rose-800 bg-white dark:bg-slate-800 px-3 font-bold text-rose-700 dark:text-rose-300"
-                      >
-                        Thử tải lại audio
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <ListOrdered size={14} /> {answeredCount}/{total}
+              </button>
+              {!isFullscreen && (
+                <button type="button" onClick={enterFullscreen} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1 text-xs font-bold text-slate-200 hover:text-white">
+                  <Maximize2 size={14} />
+                  <span className="hidden md:inline">Vào toàn màn hình</span>
+                </button>
               )}
+            </>
+          }
+        />
+        {showListeningBar && (
+          <div className="border-b border-slate-200 bg-white px-3 py-2 sm:px-5 dark:border-slate-800 dark:bg-slate-900">
+            <ToeicListeningBar
+              playing={audioPlaying}
+              loading={audioLoading}
+              position={audioPosition}
+              duration={audioDuration}
+              volume={volume}
+              seekable={!legacyStrict}
+              blocked={audioBlocked}
+              error={audioError}
+              note={
+                legacyStrict
+                  ? "Lượt thi này bắt đầu theo luật cũ: audio phát lần lượt từng nhóm câu."
+                  : masterReady
+                    ? null
+                    : "Chưa có bản ghi phần Nghe liền mạch; đang phát audio từng nhóm câu theo thứ tự."
+              }
+              onToggle={toggleAudio}
+              onSeek={seek}
+              onVolume={(v) => {
+                setVolume(v);
+                if (audioRef.current) audioRef.current.volume = v;
+              }}
+              onRetry={() => {
+                if (audioError) {
+                  if (strictGroup) void loadGroupClip(strictGroup, true);
+                  else if (masterReady) audioRef.current?.load();
+                  else void loadGroupClip(listeningGroups[groupCursor], true);
+                } else void playElement();
+              }}
+            />
+          </div>
+        )}
+      </div>
 
-              <div
-                className={
-                  !isListening && fullTest
-                    ? "grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(360px,1.1fr)]"
-                    : undefined
-                }
+      <div className="grid gap-5 px-3 py-4 sm:px-5 lg:grid-cols-[minmax(0,1fr)_220px]">
+        <div className="min-w-0">
+          {draftOffer && (
+            <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200">
+              Có bản nháp chưa lưu lên máy chủ trên máy này (lúc {timeOf(draftOffer.savedAt)}).
+              <button
+                type="button"
+                onClick={() => {
+                  applyState(draftOffer);
+                  setDraftOffer(null);
+                }}
+                className="rounded-md bg-amber-600 px-2.5 py-1 font-bold text-white hover:bg-amber-700"
               >
-                <ToeicGroupContext
-                  group={current.group}
-                  isListening={isListening}
-                />
-                <div className="space-y-6">
-                  {renderedEntries.map(({ question }) => {
-                    const audioOnly = fullTest && current.group.part <= 2;
-                    return (
-                      <ToeicQuestionCard
-                        key={question.id}
-                        question={question}
-                        selectedIndex={currentAnswers[question.id]}
-                        onSelect={(optionIndex) =>
-                          setAnswers((old) => ({
-                            ...(old ?? persistedAnswers),
-                            [question.id]: optionIndex,
-                          }))
-                        }
-                        marked={marked.has(question.id)}
-                        audioOnly={audioOnly}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="mt-7 flex flex-wrap items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIndex(Math.max(0, previousIndex()))}
-                  disabled={fullTest || index === 0}
-                  className="inline-flex min-h-12 items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40"
-                >
-                  Câu trước
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void next()}
-                  disabled={
-                    save.isPending ||
-                    submit.isPending ||
-                    (fullTest && isListening && !audioFinished && !audioError)
+                Dùng bản nháp
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setDraftOffer(null);
+                  try {
+                    localStorage.removeItem(draftKey(attemptId));
+                  } catch {
+                    // ignore
                   }
-                  className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-amber-500 px-5 text-sm font-black text-white shadow-xs hover:bg-amber-600 disabled:opacity-60"
-                >
-                  {submit.isPending ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <CheckCircle2 size={16} />
-                  )}
-                  {nextIndex() < 0
-                    ? "Xem tóm tắt"
-                    : fullTest
-                      ? "Sang nhóm tiếp theo"
-                      : "Lưu và sang câu tiếp"}
-                </button>
-              </div>
-            </section>
-
-            <aside className="hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 lg:block">
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <p className="font-black text-slate-900 dark:text-slate-100">
-                    Bảng câu hỏi
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    Đã trả lời {answeredCount}/{questions.length}
-                  </p>
-                </div>
-                <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                  {fullTest
-                    ? isListening
-                      ? "Listening"
-                      : "Reading"
-                    : "Luyện tập"}
-                </span>
-              </div>
-              <div className="mb-4 grid grid-cols-2 gap-2 text-[11px] text-slate-500 dark:text-slate-400">
-                <span>● Hiện tại</span>
-                <span>● Đã trả lời</span>
-                <span>○ Chưa trả lời</span>
-                <span>⚑ Đánh dấu xem lại</span>
-              </div>
-              <div className="max-h-[calc(100dvh-300px)] space-y-4 overflow-y-auto pr-1">
-                {groupsByPart.map(([part, partGroups]) => (
-                  <section key={part}>
-                    <p className="mb-2 text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      Part {part}
-                    </p>
-                    <div className="grid grid-cols-5 gap-2">
-                      {partGroups
-                        .flatMap((group) => group.questions)
-                        .map((question) => {
-                          const target = questions.find(
-                            (entry) => entry.question.id === question.id,
-                          );
-                          if (!target) return null;
-                          const active = current.question.id === question.id;
-                          const disabled =
-                            fullTest &&
-                            ((isListening && part > 4) ||
-                              (!isListening && part <= 4));
-                          return (
-                            <button
-                              key={question.id}
-                              type="button"
-                              disabled={disabled}
-                              onClick={() => navigateToQuestion(target)}
-                              className={`relative min-h-10 rounded-lg border text-sm font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-35 ${active ? "border-amber-500 bg-amber-500 text-white" : currentAnswers[question.id] !== undefined ? "border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300" : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"}`}
-                            >
-                              {question.questionNumber}
-                              {marked.has(question.id) && (
-                                <Flag
-                                  size={11}
-                                  className="absolute -right-1 -top-1 fill-amber-500 text-amber-600"
-                                />
-                              )}
-                            </button>
-                          );
-                        })}
-                    </div>
-                  </section>
-                ))}
-              </div>
-            </aside>
+                }}
+                className="rounded-md border border-amber-300 px-2.5 py-1 font-semibold"
+              >
+                Bỏ qua
+              </button>
+            </div>
+          )}
+          <div role="tablist" aria-label="Part" className="mb-3 flex flex-wrap gap-1.5">
+            {parts.map((p) => (
+              <button
+                key={p.part}
+                type="button"
+                role="tab"
+                aria-selected={shownPart.part === p.part}
+                onClick={() => setActivePart(p.part)}
+                className={`min-h-9 rounded-full px-4 text-sm font-semibold transition-colors ${shownPart.part === p.part ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"}`}
+              >
+                Part {p.part}
+              </button>
+            ))}
+          </div>
+          <div role="tabpanel" aria-label={`Part ${shownPart.part}`}>
+            <ToeicExamPaper
+              part={shownPart}
+              answers={currentAnswers}
+              marked={marked}
+              lockedReason={lockedReason(shownPart.part)}
+              onSelect={onSelect}
+              onToggleMark={onToggleMark}
+            />
           </div>
         </div>
+        <aside className="hidden lg:block">
+          <div className={`sticky ${showListeningBar ? "top-[7.5rem]" : "top-16"} h-[calc(100dvh-8.5rem)] rounded-md border border-slate-200 p-3 dark:border-slate-800`}>{navigator}</div>
+        </aside>
+      </div>
 
-        {showQuestionDrawer && (
-          <div className="fixed inset-0 z-50 flex flex-col justify-end bg-slate-950/60 lg:hidden">
-            <button
-              type="button"
-              className="flex-1"
-              onClick={() => setShowQuestionDrawer(false)}
-              aria-label="Đóng bảng câu hỏi"
-            />
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-label="Bảng câu hỏi"
-              className="max-h-[80dvh] w-full overflow-y-auto rounded-t-3xl bg-white dark:bg-slate-900 p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]"
-            >
-              <div className="mb-3 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-                <div>
-                  <p className="font-black text-slate-900 dark:text-slate-100">
-                    Bảng câu hỏi
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Đã trả lời {answeredCount}/{questions.length} câu
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowQuestionDrawer(false)}
-                  className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                  aria-label="Đóng"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              {groupsByPart.map(([part, partGroups]) => (
-                <section key={part} className="mb-4">
-                  <p className="mb-2 text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Part {part}
-                  </p>
-                  <div className="grid grid-cols-5 gap-2">
-                    {partGroups
-                      .flatMap((group) => group.questions)
-                      .map((question) => {
-                        const target = questions.find(
-                          (entry) => entry.question.id === question.id,
-                        );
-                        if (!target) return null;
-                        const disabled =
-                          fullTest &&
-                          ((isListening && part > 4) ||
-                            (!isListening && part <= 4));
-                        return (
-                          <button
-                            key={question.id}
-                            type="button"
-                            disabled={disabled}
-                            onClick={() => {
-                              navigateToQuestion(target);
-                              setShowQuestionDrawer(false);
-                            }}
-                            className={`min-h-11 rounded-xl border text-sm font-bold disabled:opacity-35 ${current.question.id === question.id ? "border-amber-500 bg-amber-500 text-white" : currentAnswers[question.id] !== undefined ? "border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300" : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300"}`}
-                          >
-                            {question.questionNumber}
-                          </button>
-                        );
-                      })}
-                  </div>
-                </section>
-              ))}
+      {showTop && (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          aria-label="Lên đầu trang"
+          className="fixed bottom-6 left-1/2 z-30 inline-flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+        >
+          <ArrowUp size={18} />
+        </button>
+      )}
+
+      <audio
+        ref={audioRef}
+        preload="metadata"
+        onLoadedMetadata={(e) => setClipDuration(e.currentTarget.duration || 0)}
+        onTimeUpdate={(e) => onTimeUpdate(e.currentTarget)}
+        onPlay={() => setAudioPlaying(true)}
+        onPause={() => setAudioPlaying(false)}
+        onEnded={onEnded}
+        onError={() => {
+          if (masterReady) setAudioError("Không tải được bản ghi phần Nghe.");
+        }}
+        className="hidden"
+      />
+
+      {showDrawer && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-slate-950/60 lg:hidden">
+          <button type="button" className="flex-1" onClick={() => setShowDrawer(false)} aria-label="Đóng bảng câu hỏi" />
+          <div role="dialog" aria-modal="true" aria-label="Bảng câu hỏi" className="h-[80dvh] w-full rounded-t-2xl bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] dark:bg-slate-900">
+            <div className="mb-2 flex justify-end">
+              <button type="button" onClick={() => setShowDrawer(false)} aria-label="Đóng" className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
+                <X size={20} />
+              </button>
             </div>
+            <div className="h-[calc(100%-3rem)]">{navigator}</div>
           </div>
-        )}
+        </div>
+      )}
 
-        <audio
-          ref={audioRef}
-          preload="auto"
-          onLoadedMetadata={(event) =>
-            setAudioDuration(event.currentTarget.duration)
-          }
-          onTimeUpdate={(event) =>
-            setAudioPosition(event.currentTarget.currentTime)
-          }
-          onPlay={() => setAudioPlaying(true)}
-          onPause={() => setAudioPlaying(false)}
-          onEnded={() => {
-            setAudioPlaying(false);
-            setAudioFinished(true);
-            if (fullTest && isListening) void next(true);
-          }}
-          className="sr-only"
-        />
-
-        {showExit && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
-            <div
-              role="dialog"
-              aria-modal="true"
-              className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-xl"
-            >
-              <AlertTriangle className="text-rose-600 dark:text-rose-400" />
-              <h2 className="mt-3 text-xl font-black text-slate-900 dark:text-slate-100">
-                Thoát và làm lại từ đầu?
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                Lượt thi đang làm dở sẽ bị hủy và toàn bộ câu trả lời chưa nộp
-                sẽ mất.
-              </p>
-              <div className="mt-6 flex flex-col-reverse justify-end gap-2.5 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={() => setShowExit(false)}
-                  className="min-h-11 rounded-xl border border-slate-200 dark:border-slate-700 px-4 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
-                >
-                  Ở lại làm bài
-                </button>
-                <button
-                  type="button"
-                  onClick={() => cancel.mutate()}
-                  disabled={cancel.isPending}
-                  className="min-h-11 rounded-xl bg-rose-600 px-4 text-sm font-bold text-white hover:bg-rose-700 disabled:opacity-60"
-                >
-                  {cancel.isPending ? "Đang hủy..." : "Hủy lượt thi"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {showSubmitSummary && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="toeic-submit-summary-title"
-              className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900"
-            >
-              <h2
-                id="toeic-submit-summary-title"
-                className="text-xl font-black text-slate-900 dark:text-slate-100"
+      {confirmRestore && checkpoint && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="restore-title" className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+            <h2 id="restore-title" className="text-lg font-bold text-slate-900 dark:text-slate-100">
+              Khôi phục bản lưu lúc {timeOf(checkpoint.savedAt)}?
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Các đáp án và đánh dấu đã thay đổi sau thời điểm đó sẽ bị thay bằng bản đã lưu.</p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button type="button" onClick={() => setConfirmRestore(false)} className="min-h-10 rounded-md border border-slate-200 px-4 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200">
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  applyState(checkpoint);
+                  setConfirmRestore(false);
+                  toast.success("Đã khôi phục bản lưu.");
+                }}
+                className="min-h-10 rounded-md bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700"
               >
-                Kiểm tra trước khi nộp
-              </h2>
-              <div className="mt-5 grid grid-cols-3 gap-2 text-center">
-                <div className="rounded-xl bg-emerald-50 p-3 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
-                  <p className="text-2xl font-black">{answeredCount}</p>
-                  <p className="text-xs font-semibold">Đã trả lời</p>
-                </div>
-                <div className="rounded-xl bg-slate-100 p-3 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                  <p className="text-2xl font-black">{questions.length - answeredCount}</p>
-                  <p className="text-xs font-semibold">Chưa trả lời</p>
-                </div>
-                <div className="rounded-xl bg-amber-50 p-3 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-                  <p className="text-2xl font-black">{marked.size}</p>
-                  <p className="text-xs font-semibold">Xem lại</p>
-                </div>
-              </div>
-              <p className="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                Sau khi nộp, hệ thống sẽ chấm bài và lưu kết quả. Bạn vẫn có thể
-                xem lại đáp án sau khi hoàn thành.
-              </p>
-              <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                <button
-                  type="button"
-                  onClick={() => setShowSubmitSummary(false)}
-                  className="min-h-11 rounded-xl border border-slate-200 px-4 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                >
-                  Quay lại làm bài
-                </button>
-                <button
-                  type="button"
-                  onClick={() => submit.mutate()}
-                  disabled={submit.isPending}
-                  className="min-h-11 rounded-xl bg-amber-500 px-4 text-sm font-black text-white hover:bg-amber-600 disabled:opacity-60"
-                >
-                  {submit.isPending ? "Đang nộp..." : "Xác nhận nộp bài"}
-                </button>
-              </div>
+                Khôi phục
+              </button>
             </div>
           </div>
-        )}
-      </main>
+        </div>
+      )}
+
+      {showExit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+          <div role="dialog" aria-modal="true" className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+            <AlertTriangle className="text-rose-600 dark:text-rose-400" />
+            <h2 className="mt-3 text-xl font-bold text-slate-900 dark:text-slate-100">Thoát và hủy lượt thi?</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Lượt thi đang làm dở sẽ bị hủy và các câu trả lời chưa nộp sẽ mất.</p>
+            <div className="mt-6 flex flex-col-reverse justify-end gap-2.5 sm:flex-row">
+              <button type="button" onClick={() => setShowExit(false)} className="min-h-11 rounded-md border border-slate-200 px-4 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+                Ở lại làm bài
+              </button>
+              <button type="button" onClick={() => cancel.mutate()} disabled={cancel.isPending} className="min-h-11 rounded-md bg-rose-600 px-4 text-sm font-bold text-white hover:bg-rose-700 disabled:opacity-60">
+                {cancel.isPending ? "Đang hủy..." : "Hủy lượt thi"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSubmitSummary && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="toeic-submit-summary-title" className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+            <h2 id="toeic-submit-summary-title" className="text-xl font-bold text-slate-900 dark:text-slate-100">
+              Nộp bài {scopeLabel}?
+            </h2>
+            <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+              <div className="rounded-md bg-blue-50 p-3 text-blue-800 dark:bg-blue-950/40 dark:text-blue-200">
+                <p className="text-2xl font-bold">{answeredCount}</p>
+                <p className="text-xs font-semibold">Đã trả lời</p>
+              </div>
+              <div className="rounded-md bg-slate-100 p-3 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                <p className="text-2xl font-bold">{total - answeredCount}</p>
+                <p className="text-xs font-semibold">Chưa trả lời</p>
+              </div>
+              <div className="rounded-md bg-amber-50 p-3 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                <p className="text-2xl font-bold">{marked.size}</p>
+                <p className="text-xs font-semibold">Đánh dấu review</p>
+              </div>
+            </div>
+            {submit.isError && (
+              <p className="mt-4 text-sm font-semibold text-rose-700 dark:text-rose-300" role="alert">
+                Chưa nộp được bài. Kiểm tra kết nối rồi thử lại; đáp án vẫn được giữ.
+              </p>
+            )}
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button type="button" onClick={() => setShowSubmitSummary(false)} className="min-h-11 rounded-md border border-slate-200 px-4 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+                Quay lại làm bài
+              </button>
+              <button type="button" onClick={() => submit.mutate()} disabled={submit.isPending} className="min-h-11 rounded-md bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-60">
+                {submit.isPending ? "Đang nộp..." : "Xác nhận nộp bài"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

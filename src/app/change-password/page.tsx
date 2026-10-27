@@ -51,6 +51,10 @@ export default function ChangePasswordPage() {
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (!form.currentPassword || !form.newPassword || !form.confirmPassword) {
+      setError("Vui lòng nhập đầy đủ mật khẩu hiện tại, mật khẩu mới và xác nhận.");
+      return;
+    }
     if (form.newPassword.length < 8) {
       setError("Mật khẩu mới cần có ít nhất 8 ký tự.");
       return;
@@ -87,7 +91,7 @@ export default function ChangePasswordPage() {
 
         {error && <div role="alert" className="mt-6 flex items-start gap-2 rounded-xl border border-error/20 bg-error-container p-3 text-sm font-medium text-on-error-container"><CircleAlert size={19} className="mt-0.5 shrink-0 text-error" aria-hidden="true" />{error}</div>}
 
-        <form onSubmit={submit} className="mt-6 space-y-4">
+        <form onSubmit={submit} noValidate className="mt-6 space-y-4">
           <PasswordField id="current-password" label="Mật khẩu hiện tại" value={form.currentPassword} show={showCurrent} onToggle={() => setShowCurrent((value) => !value)} onChange={(value) => updateField("currentPassword", value)} autoComplete="current-password" hasError={Boolean(error)} />
           <PasswordField id="new-password" label="Mật khẩu mới" value={form.newPassword} show={showNew} onToggle={() => setShowNew((value) => !value)} onChange={(value) => updateField("newPassword", value)} autoComplete="new-password" hint="Tối thiểu 8 ký tự. Không dùng lại mật khẩu cũ." hasError={Boolean(error)} />
           <PasswordField id="confirm-password" label="Xác nhận mật khẩu mới" value={form.confirmPassword} show={showConfirm} onToggle={() => setShowConfirm((value) => !value)} onChange={(value) => updateField("confirmPassword", value)} autoComplete="new-password" hasError={Boolean(error)} />

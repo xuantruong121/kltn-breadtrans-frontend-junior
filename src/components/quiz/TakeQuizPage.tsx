@@ -17,7 +17,6 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Cookie,
   FileText,
   Lightbulb,
   Loader2,
@@ -1376,27 +1375,6 @@ export default function TakeQuizPage(props: {
                 </div>
               </div>
 
-              {/* Generic quiz reward card. Reading rewards are rendered only by
-                server-backed gamification surfaces, never as hardcoded copy. */}
-              {!isReading && (
-                <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 p-5 rounded-2xl flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-amber-400 flex items-center justify-center shadow-sm shrink-0">
-                    <Cookie
-                      size={24}
-                      aria-hidden="true"
-                      className="text-amber-950"
-                    />
-                  </div>
-                  <div>
-                    <p className="font-black text-slate-800 dark:text-slate-100 text-sm">
-                      Phần Thưởng Hoàn Thành
-                    </p>
-                    <p className="text-xs font-bold text-amber-800 dark:text-amber-300 mt-0.5">
-                      +20 EXP • +1 Điểm Nhiệm Vụ Ngày
-                    </p>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         )}

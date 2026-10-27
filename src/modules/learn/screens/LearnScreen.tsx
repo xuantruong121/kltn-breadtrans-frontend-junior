@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { 
   Film, 
@@ -18,7 +18,6 @@ import { learnService } from "@/lib/api/services/learn.service";
 import { ContentTopic } from "../types";
 import { Button3D } from "@/components/ui";
 import toast from "react-hot-toast";
-import { useAuthStore } from "@/stores/authStore";
 
 interface TopicProgress {
   userAnswers: Record<number, number>;
@@ -27,7 +26,6 @@ interface TopicProgress {
 }
 
 export default function LearnScreen() {
-  const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<"movie" | "music">("movie");
   const [selectedTopic, setSelectedTopic] = useState<ContentTopic | null>(null);
@@ -83,15 +81,8 @@ export default function LearnScreen() {
     setProgressMap(nextMap);
       setResultMap((previous) => ({ ...previous, [currentTopicId]: result.questionsResult }));
 
-    if (result.rewardBanh > 0) {
-      toast.success(`Chúc mừng! Bạn đã trả lời đúng ${correctCount}/${currentTopic.exercises.length} câu và nhận +${result.rewardBanh} 🍞 Bánh Mì!`, {
-        icon: "🎉",
-      });
-      const currentUserId = useAuthStore.getState().user?.id;
-      queryClient.invalidateQueries({ queryKey: ["user-stats", currentUserId] });
-    } else {
-      toast("Hãy xem lại video và thử lại để kiếm Bánh Mì nhé!", { icon: "💡" });
-    }
+    // Lessons earn no Bánh mì or XP (owner policy); report the result only.
+    toast.success(`Bạn đã trả lời đúng ${correctCount}/${currentTopic.exercises.length} câu.`);
     } catch { toast.error("Không thể nộp bài. Vui lòng thử lại."); }
   };
 
@@ -281,7 +272,7 @@ export default function LearnScreen() {
                         </Button3D>
                       ) : (
                         <Button3D variant="orange" size="md" onClick={handleSubmitQuiz}>
-                          Nộp Bài & Nhận Bánh Mì 🍞
+                          Nộp bài
                         </Button3D>
                       )}
                     </div>

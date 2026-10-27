@@ -43,6 +43,7 @@ import {
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import axiosClient from "@/lib/api/axiosClient";
+import { useApiQuery } from "@/hooks/useApiQuery";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { notificationService, NotificationItem } from "@/lib/api/services/notification.service";
 import { planService, PLAN_QUERY_KEYS } from "@/lib/api/services/plan.service";
@@ -195,6 +196,12 @@ export function AppHeader() {
     queryFn: planService.getEffectivePlan,
     enabled: isStudent,
     staleTime: 60 * 1000,
+  });
+  // Google sign-in accounts have no password of their own to change.
+  const { data: withoutPassword = false } = useApiQuery(["userProfile", user?.id], "/users/profile", {
+    // Only an explicit false hides it; an unknown answer keeps the tab.
+    select: (res: any) => res?.hasPassword === false,
+    enabled: !!user?.id,
   });
   const planDisplay = resolveEffectivePlanDisplay(effectivePlan);
   const headerPlanLabel =
@@ -753,6 +760,7 @@ export function AppHeader() {
                       <span>Thú cưng đồng hành</span>
                     </Link>
 
+                    {!withoutPassword && (
                     <Link
                       href="/hub?tab=account-password"
                       onClick={closeMenus}
@@ -761,6 +769,7 @@ export function AppHeader() {
                       <KeyRound size={16} className="text-slate-400 shrink-0" />
                       <span>Đổi mật khẩu</span>
                     </Link>
+                    )}
 
                     <a
                       href="https://www.facebook.com/truongngynz.121"

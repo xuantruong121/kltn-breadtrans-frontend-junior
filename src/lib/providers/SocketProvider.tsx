@@ -7,6 +7,7 @@ import { useGamificationStore } from "@/stores/gamificationStore";
 import { useChatAssistantStore } from "@/stores/chatAssistantStore";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { Wheat } from "lucide-react";
 
 interface SocketContextType {
   socket: Socket | null;
@@ -121,14 +122,14 @@ export default function SocketProvider({ children }: { children: React.ReactNode
 
         // Hiển thị thông báo chúc mừng / thông tin
         if (data.amount > 0) {
-          toast.success(`🍞 +${data.amount} Bánh Mì! Lý do: ${data.reason || "Thưởng học tập"}`, {
+          toast.success(`+${data.amount} Bánh Mì! Lý do: ${data.reason || "Thưởng học tập"}`, {
             duration: 6000,
-            icon: "🎉",
+            icon: <Wheat size={18} className="text-amber-600" aria-hidden="true" />,
           });
         } else if (data.amount < 0) {
-          toast(`🍞 ${data.amount} Bánh Mì. Lý do: ${data.reason || "Trừ điểm"}`, {
+          toast(`${data.amount} Bánh Mì. Lý do: ${data.reason || "Trừ điểm"}`, {
             duration: 6000,
-            icon: "⚠️",
+            icon: <Wheat size={18} className="text-slate-500" aria-hidden="true" />,
           });
         }
       }

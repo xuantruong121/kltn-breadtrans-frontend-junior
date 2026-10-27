@@ -83,46 +83,15 @@ export default function ToeicAssessmentDetail({
   const readiness = resolveAssessmentReadiness(components);
   const isCompleted = data.attempt?.status === "COMPLETED";
 
-  const summaryRows = [
-    // One total only when every skill shares the same unit; otherwise the
-    // sizes are listed per skill so questions are never added to tasks.
-    ...(facts.totalValue && facts.totalLabel
+  // Each skill's size and time are already on its "Cấu trúc đề" card; the
+  // side panel repeats only a single total, when every skill shares a unit.
+  const summaryRows =
+    facts.totalValue && facts.totalLabel
       ? [{ label: facts.totalLabel, value: facts.totalValue }]
-      : facts.itemLines.length
-        ? [
-            {
-              label: "Quy mô đề thi",
-              value: (
-                <span className="block space-y-0.5">
-                  {facts.itemLines.map((line) => (
-                    <span key={line} className="block">
-                      {line}
-                    </span>
-                  ))}
-                </span>
-              ),
-            },
-          ]
-        : []),
-    {
-      label: "Thời lượng thi",
-      value: (
-        <span className="block space-y-0.5">
-          {facts.durationLines.map((line) => (
-            <span key={line} className="block">
-              {line}
-            </span>
-          ))}
-        </span>
-      ),
-    },
-    { label: "Hình thức thi", value: facts.format },
-    {
-      label: "Quyền truy cập",
-      value: "Kiểm tra trước khi bắt đầu",
-      muted: true,
-    },
-  ];
+      : [];
+  // Say "not an official ETS test" once: only when the description does not.
+  const description = data.description || presentation.summary;
+  const mentionsEts = /ETS/.test(description);
 
   return (
     <ToeicExamDetailShell
@@ -130,14 +99,8 @@ export default function ToeicAssessmentDetail({
       backLabel="Quay lại danh sách đề thi"
       badge={presentation.badge}
       title={data.title}
-      description={data.description || presentation.summary}
-      structureHeading="Cấu trúc nội dung đề thi"
-      structureSubtitle={
-        facts.totalValue
-          ? `Tổng quy mô ${facts.totalValue} theo từng kỹ năng`
-          : "Quy mô đề thi theo từng kỹ năng"
-      }
-      structureBadge={`${structureRows.length} kỹ năng`}
+      description={description}
+      structureHeading="Cấu trúc đề"
       sections={[
         {
           items: structureRows.map((row) => ({
@@ -148,27 +111,22 @@ export default function ToeicAssessmentDetail({
         },
       ]}
       disclaimer={
-        <>
-          <span className="font-bold text-slate-800 dark:text-slate-200">
-            Quy chế khảo thí &amp; Bản quyền:
-          </span>{" "}
-          Đây là bài luyện mô phỏng TOEIC để tự học và theo dõi tiến độ. Nội
-          dung không phải đề thi chính thức do ETS phát hành và kết quả không
-          thay thế chứng chỉ TOEIC chính thức.
-        </>
+        mentionsEts
+          ? undefined
+          : "Bài luyện mô phỏng TOEIC để tự học, không phải đề thi chính thức của ETS; kết quả không thay thế chứng chỉ TOEIC."
       }
-      summaryHeading="Quy cách phòng thi"
+      summaryHeading="Thông tin bài thi"
       summaryRows={summaryRows}
       notices={
         <>
           {data.attempt && !isCompleted && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50/80 dark:border-amber-900/50 dark:bg-amber-950/30 p-3 text-xs text-amber-900 dark:text-amber-200 font-medium">
+            <div className="rounded-lg border border-amber-200 bg-amber-50/80 dark:border-amber-900/50 dark:bg-amber-950/30 p-3 text-sm text-amber-900 dark:text-amber-200 font-medium">
               Bạn đang có một lượt thi dở dang cho đề này. Bấm để tiếp tục làm
               tiếp.
             </div>
           )}
           {!readiness.ready && (
-            <div className="rounded-lg border border-rose-200 bg-rose-50 dark:border-rose-900/50 dark:bg-rose-950/30 p-3 text-xs text-rose-800 dark:text-rose-200 font-medium">
+            <div className="rounded-lg border border-rose-200 bg-rose-50 dark:border-rose-900/50 dark:bg-rose-950/30 p-3 text-sm text-rose-800 dark:text-rose-200 font-medium">
               <p>Đề thi này chưa đủ điều kiện để bắt đầu.</p>
               <ul className="mt-1 list-disc space-y-0.5 pl-4 font-normal">
                 {readiness.reasons.map((reason) => (

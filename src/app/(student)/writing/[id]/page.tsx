@@ -32,6 +32,7 @@ import {
   type WritingEvaluation,
 } from "@/lib/api/services/writing.service";
 import { PracticeWritingDetail } from "@/components/writing/PracticeWritingDetail";
+import { ToeicWritingExamStrip } from "@/components/toeic/ToeicWritingExamStrip";
 import axiosClient from "@/lib/api/axiosClient";
 import { isPremiumWritingForbiddenError } from "@/modules/subscription/planLogic";
 import toast from "react-hot-toast";
@@ -57,10 +58,30 @@ export default function WritingDetailPage(props: {
           componentId: Number(parentComponentId),
         }
       : undefined;
+  const parentAssessmentId = searchParams.get("parentAssessmentId");
+  // TOEIC Writing in an assessment: the 8 task quizzes and which are written.
+  const { data: parentAttempt } = useQuery({
+    queryKey: ["toeic-assessment-attempt", Number(parentAttemptId)],
+    queryFn: async () =>
+      (await axiosClient.get(
+        `/toeic/assessments/attempts/${parentAttemptId}`,
+      )) as any,
+    enabled: Boolean(examParentContext),
+  });
+  const examComponent = parentAttempt?.components?.find(
+    (c: any) => c.assessmentComponentId === Number(parentComponentId),
+  );
+  const examQuizIds: number[] = examComponent?.writingQuizIds ?? [];
+  const writtenQuizIds: number[] = examComponent?.writtenQuizIds ?? [];
+  const examHref = (quizId: number) =>
+    `/writing/${quizId}?parentAssessmentId=${parentAssessmentId}&parentAttemptId=${parentAttemptId}&parentComponentId=${parentComponentId}`;
+  const inExam = Boolean(examParentContext);
   const courseReturn =
     requestedReturnTo && isSafeCourseReturn(requestedReturnTo)
       ? requestedReturnTo
-      : "/writing";
+      : inExam && parentAssessmentId
+        ? `/toeic/assessments/${parentAssessmentId}/attempts/${parentAttemptId}`
+        : "/writing";
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
   const [content, setContent] = useState("");
@@ -249,6 +270,25 @@ export default function WritingDetailPage(props: {
         }),
         queryClient.invalidateQueries({ queryKey: ["learning-history"] }),
       ]);
+      if (inExam && examQuizIds.length > 0) {
+        // Exam flow: go straight to the next unwritten task; results are
+        // reviewed on the assessment page once the section is done.
+        await queryClient.invalidateQueries({
+          queryKey: ["toeic-assessment-attempt", Number(parentAttemptId)],
+        });
+        const done = new Set([...writtenQuizIds, topicId]);
+        const after = examQuizIds.slice(examQuizIds.indexOf(topicId) + 1);
+        const nextQuiz =
+          after.find((id) => !done.has(id)) ??
+          examQuizIds.find((id) => !done.has(id));
+        toast.success(
+          nextQuiz
+            ? "Đã nộp câu này. Chuyển sang câu tiếp theo."
+            : "Đã nộp đủ phần Viết.",
+        );
+        router.push(nextQuiz ? examHref(nextQuiz) : courseReturn);
+        return;
+      }
       toast.success("Hệ thống đã hoàn tất đánh giá bài viết!");
       router.push(
         withSafeReturnTo(
@@ -274,8 +314,12 @@ export default function WritingDetailPage(props: {
       <div className="w-full min-h-dvh flex flex-col bg-slate-50 dark:bg-slate-950 font-sans">
         <PracticeHeader
           title={topic?.title || "Luyện viết"}
-          category={topic?.taskType || topic?.type || "Writing"}
-          activityLabel="Luyện viết"
+          category={
+            inExam && examQuizIds.length
+              ? `Câu ${examQuizIds.indexOf(topicId) + 1}/${examQuizIds.length}`
+              : topic?.taskType || topic?.type || "Writing"
+          }
+          activityLabel={inExam ? "TOEIC Writing" : "Luyện viết"}
           onExit={() => confirmExit(courseReturn)}
           exitLabel="Thoát"
           statusContent={
@@ -288,10 +332,20 @@ export default function WritingDetailPage(props: {
         />
 
         <main className="max-w-6xl mx-auto w-full space-y-6 pb-20 px-4 sm:px-6 pt-6 flex-1">
+          {inExam && examQuizIds.includes(topicId) && (
+            <ToeicWritingExamStrip
+              quizIds={examQuizIds}
+              currentQuizId={topicId}
+              writtenQuizIds={writtenQuizIds}
+              hrefFor={examHref}
+            />
+          )}
           {/* 2. 2-COLUMN MAIN LAYOUT */}
           <div className="grid grid-cols-12 gap-6 items-start">
             {/* LEFT COLUMN: PROMPT, EDITOR & FEEDBACK */}
-            <div className="col-span-12 lg:col-span-8 space-y-6">
+            <div
+              className={`col-span-12 space-y-6 ${inExam ? "lg:col-span-10 lg:col-start-2" : "lg:col-span-8"}`}
+            >
               {/* HEADER PROMPT */}
               <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
                 <div className="flex items-center gap-3">
@@ -311,8 +365,11 @@ export default function WritingDetailPage(props: {
                 {exercise && exercise.total > 1 && (
                   <nav aria-label="Các câu trong bài" className="space-y-2">
                     <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                      Bài gồm {exercise.total} câu · đã chấm {exercise.answered}/{exercise.total}
-                      {exercise.complete && exercise.percent !== null ? ` · điểm bài ${exercise.percent}%` : ""}
+                      Bài gồm {exercise.total} câu · đã chấm {exercise.answered}
+                      /{exercise.total}
+                      {exercise.complete && exercise.percent !== null
+                        ? ` · điểm bài ${exercise.percent}%`
+                        : ""}
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {exercise.questions.map((q) => {
@@ -323,9 +380,13 @@ export default function WritingDetailPage(props: {
                             type="button"
                             aria-current={active ? "step" : undefined}
                             onClick={() => {
-                              const next = new URLSearchParams(searchParams.toString());
+                              const next = new URLSearchParams(
+                                searchParams.toString(),
+                              );
                               next.set("q", String(q.id));
-                              router.replace(`/writing/${topicId}?${next.toString()}`);
+                              router.replace(
+                                `/writing/${topicId}?${next.toString()}`,
+                              );
                             }}
                             className={`inline-flex min-h-10 items-center gap-2 rounded-xl border px-3.5 text-sm font-bold transition-colors ${
                               active
@@ -359,9 +420,27 @@ export default function WritingDetailPage(props: {
                   </p>
                 </div>
 
+                {topic?.keywords && topic.keywords.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                      Từ bắt buộc:
+                    </span>
+                    {topic.keywords.map((keyword) => (
+                      <span
+                        key={keyword}
+                        className="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1 text-sm font-bold text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200"
+                      >
+                        {keyword}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
                 {topicData?.email && (
                   <div className="rounded-2xl bg-slate-50 p-5 dark:bg-slate-800/60">
-                    <p className="text-sm font-bold text-slate-700 dark:text-slate-300">E-mail cần trả lời</p>
+                    <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                      E-mail cần trả lời
+                    </p>
                     <p className="mt-2 whitespace-pre-line text-base leading-7 text-slate-800 dark:text-slate-100">
                       {topicData.email}
                     </p>
@@ -509,7 +588,9 @@ export default function WritingDetailPage(props: {
                     </div>
 
                     {practiceDetailOf(feedback) && (
-                      <PracticeWritingDetail detail={practiceDetailOf(feedback)!} />
+                      <PracticeWritingDetail
+                        detail={practiceDetailOf(feedback)!}
+                      />
                     )}
 
                     {/* FEEDBACK & NEXT STEPS */}
@@ -561,34 +642,36 @@ export default function WritingDetailPage(props: {
               </AnimatePresence>
             </div>
 
-            {/* RIGHT COLUMN: USEFUL PHRASES & RUBRICS */}
-            <div className="col-span-12 lg:col-span-4 space-y-6">
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
-                <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-base flex items-center gap-2">
-                  <BookOpen
-                    size={18}
-                    className="text-blue-600 dark:text-blue-400"
-                  />{" "}
-                  Mẫu Câu Hữu Ích
-                </h3>
+            {/* RIGHT COLUMN: USEFUL PHRASES & RUBRICS (practice only: no coaching during an exam) */}
+            {!inExam && (
+              <div className="col-span-12 lg:col-span-4 space-y-6">
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
+                  <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-base flex items-center gap-2">
+                    <BookOpen
+                      size={18}
+                      className="text-blue-600 dark:text-blue-400"
+                    />{" "}
+                    Mẫu Câu Hữu Ích
+                  </h3>
 
-                <div className="space-y-3 text-xs">
-                  {writingMode.guidance.map((item) => (
-                    <div
-                      key={item.title}
-                      className="p-3 bg-slate-50 dark:bg-slate-800/70 rounded-xl border border-slate-100 dark:border-slate-800 space-y-1"
-                    >
-                      <p className="font-bold text-slate-800 dark:text-slate-200">
-                        {item.title}
-                      </p>
-                      <p className="text-slate-600 dark:text-slate-400 italic">
-                        “{item.stem}”
-                      </p>
-                    </div>
-                  ))}
+                  <div className="space-y-3 text-xs">
+                    {writingMode.guidance.map((item) => (
+                      <div
+                        key={item.title}
+                        className="p-3 bg-slate-50 dark:bg-slate-800/70 rounded-xl border border-slate-100 dark:border-slate-800 space-y-1"
+                      >
+                        <p className="font-bold text-slate-800 dark:text-slate-200">
+                          {item.title}
+                        </p>
+                        <p className="text-slate-600 dark:text-slate-400 italic">
+                          “{item.stem}”
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Shared Exit Confirmation Modal */}

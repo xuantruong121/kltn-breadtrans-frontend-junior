@@ -25,6 +25,7 @@ import {
   PenTool,
   BookmarkCheck,
   ShieldCheck,
+  BarChart3,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -99,7 +100,6 @@ const CERTIFICATES: CertificateMeta[] = [
       "Bấm giờ thi chuẩn xác theo từng phần",
       "Đáp án và giải thích chi tiết từng câu",
       "Lưu lịch sử và phân tích độ chính xác",
-      "Hệ thống cộng thưởng Bánh Mì khi hoàn thành",
     ],
     roadmapDate: "Đã phát hành",
     theme: {
@@ -433,7 +433,7 @@ export default function ExamPracticeHubPage() {
       </div>
 
       {/* Page introduction: factual, content-first, not a marketing hero. */}
-      <section className="mb-8 border-b border-slate-200/80 pb-6 dark:border-slate-800">
+      <section className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800">
         <div className="max-w-2xl">
           <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
             Khảo thí & Luyện đề
@@ -445,6 +445,12 @@ export default function ExamPracticeHubPage() {
             Chọn định dạng bài thi chuẩn hóa, làm bài theo đúng áp lực thời gian quy định và xem lại phân tích đáp án chi tiết.
           </p>
         </div>
+        <Link
+          href="/toeic/stats"
+          className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-800 shadow-xs transition-colors hover:border-blue-300 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:text-blue-300"
+        >
+          <BarChart3 size={18} aria-hidden="true" /> Thống kê kết quả
+        </Link>
       </section>
 
       {/* Certificate Selector Navigation (Interactive Tab Bar) */}

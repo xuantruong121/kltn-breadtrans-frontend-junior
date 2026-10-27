@@ -129,6 +129,7 @@ function ExerciseCard({
     score: number;
     maxScore: number;
     percentage: number;
+    completed: boolean;
     feedback: Array<{
       questionId: number;
       answer: unknown;
@@ -379,7 +380,15 @@ function ExerciseCard({
       )}
       {result && (
         <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-5 text-base text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
-          <p className="font-bold text-lg">Hoàn thành bài tập</p>
+          {/* The server decides completion; a submitted attempt with wrong answers is not done. */}
+          <p className={`font-bold text-lg ${result.completed ? "text-emerald-700 dark:text-emerald-300" : "text-amber-700 dark:text-amber-300"}`}>
+            {result.completed ? "Hoàn thành bài tập" : "Chưa đạt bài tập này"}
+          </p>
+          {!result.completed && (
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+              Xem lại các câu sai bên dưới rồi nộp lại để hoàn thành.
+            </p>
+          )}
           {result.maxScore > 0 && (
             <p className="mt-1 text-xl font-extrabold text-blue-700 dark:text-blue-300">
               {result.score}/{result.maxScore} câu trắc nghiệm đúng · {result.percentage}%
@@ -510,7 +519,7 @@ export default function CourseLessonPage(props: {
     </div>
   );
   return (
-    <main className="w-full space-y-6 px-4 sm:px-6 lg:px-8 xl:px-10 py-6 sm:py-8">
+    <div className="w-full space-y-6 px-4 sm:px-6 lg:px-8 xl:px-10 py-6 sm:py-8">
       <div className="flex items-center justify-between">
         <Link
           href={`/my-courses/${courseId}`}
@@ -961,6 +970,6 @@ export default function CourseLessonPage(props: {
           </aside>
         </div>
       )}
-    </main>
+    </div>
   );
 }

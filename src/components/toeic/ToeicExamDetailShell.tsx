@@ -52,7 +52,8 @@ export type ToeicExamDetailShellProps = {
   structureSubtitle?: string;
   structureBadge?: string;
   sections: ToeicStructureSection[];
-  disclaimer: ReactNode;
+  /** Omit when the description already carries the not-ETS statement. */
+  disclaimer?: ReactNode;
   summaryHeading: string;
   summaryRows: ToeicSummaryRow[];
   /** Active-attempt hints, readiness warnings, access notes. */
@@ -92,20 +93,20 @@ export default function ToeicExamDetailShell({
             <div className="flex flex-wrap items-center justify-between gap-3">
               <Link
                 href={backHref}
-                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm sm:text-base font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
               >
                 <ArrowLeft size={16} /> {backLabel}
               </Link>
-              <span className="inline-flex items-center rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <span className="inline-flex items-center rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-3 py-1 text-sm font-semibold text-slate-700 dark:text-slate-300">
                 {badge}
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
               {title}
             </h1>
 
-            <p className="text-sm sm:text-base leading-relaxed text-slate-600 dark:text-slate-300">
+            <p className="text-base sm:text-lg leading-relaxed text-slate-700 dark:text-slate-300">
               {description}
             </p>
           </div>
@@ -113,17 +114,17 @@ export default function ToeicExamDetailShell({
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs overflow-hidden">
             <div className="border-b border-slate-100 dark:border-slate-800 px-5 py-4 flex items-center justify-between">
               <div>
-                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
+                <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100">
                   {structureHeading}
                 </h2>
                 {structureSubtitle && (
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                     {structureSubtitle}
                   </p>
                 )}
               </div>
               {structureBadge && (
-                <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md shrink-0 ml-3">
+                <span className="text-sm font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md shrink-0 ml-3">
                   {structureBadge}
                 </span>
               )}
@@ -141,12 +142,12 @@ export default function ToeicExamDetailShell({
                 {(section.heading || section.measure) && (
                   <div className="flex items-center justify-between">
                     {section.heading && (
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                         {section.heading}
                       </h3>
                     )}
                     {section.measure && (
-                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
                         {section.measure}
                       </span>
                     )}
@@ -156,12 +157,12 @@ export default function ToeicExamDetailShell({
                   {section.items.map((item, itemIndex) => (
                     <div
                       key={itemIndex}
-                      className="flex items-start justify-between rounded-lg border border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-800/30 px-3.5 py-2.5 text-xs sm:text-sm"
+                      className="flex items-start justify-between rounded-lg border border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-800/30 px-4 py-3 text-base"
                     >
                       <span className="font-medium text-slate-800 dark:text-slate-200">
                         {item.label}
                         {item.meta && (
-                          <span className="mt-0.5 block text-xs font-normal text-slate-500 dark:text-slate-400">
+                          <span className="mt-0.5 block text-sm font-normal text-slate-500 dark:text-slate-400">
                             {item.meta}
                           </span>
                         )}
@@ -178,41 +179,47 @@ export default function ToeicExamDetailShell({
             ))}
           </div>
 
-          <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/40 p-4 sm:p-5 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-            {disclaimer}
-          </div>
+          {disclaimer && (
+            <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/40 p-4 sm:p-5 text-sm sm:text-base leading-relaxed text-slate-600 dark:text-slate-400">
+              {disclaimer}
+            </div>
+          )}
         </div>
 
         {/* CỘT PHẢI: Quy cách phòng thi + CTA */}
         <div className="lg:col-span-4 sticky top-6 space-y-4">
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xs space-y-5">
-            <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
-                {summaryHeading}
-              </h2>
-            </div>
-
-            <dl className="divide-y divide-slate-100 dark:divide-slate-800 text-xs sm:text-sm">
-              {summaryRows.map((row) => (
-                <div
-                  key={row.label}
-                  className="flex items-start justify-between py-2.5"
-                >
-                  <dt className="text-slate-500 dark:text-slate-400">
-                    {row.label}
-                  </dt>
-                  <dd
-                    className={`text-right ${
-                      row.muted
-                        ? "font-medium text-slate-700 dark:text-slate-300"
-                        : "font-bold text-slate-900 dark:text-slate-100"
-                    }`}
-                  >
-                    {row.value}
-                  </dd>
+            {summaryRows.length > 0 && (
+              <>
+                <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <h2 className="text-sm sm:text-base font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                    {summaryHeading}
+                  </h2>
                 </div>
-              ))}
-            </dl>
+
+                <dl className="divide-y divide-slate-100 dark:divide-slate-800 text-sm sm:text-base">
+                  {summaryRows.map((row) => (
+                    <div
+                      key={row.label}
+                      className="flex items-start justify-between py-2.5"
+                    >
+                      <dt className="text-slate-500 dark:text-slate-400">
+                        {row.label}
+                      </dt>
+                      <dd
+                        className={`text-right ${
+                          row.muted
+                            ? "font-medium text-slate-700 dark:text-slate-300"
+                            : "font-bold text-slate-900 dark:text-slate-100"
+                        }`}
+                      >
+                        {row.value}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </>
+            )}
 
             {notices}
 
@@ -235,7 +242,7 @@ export default function ToeicExamDetailShell({
             {ctaError && (
               <p
                 role="alert"
-                className="text-center text-xs font-semibold text-rose-600 dark:text-rose-400"
+                className="text-center text-sm font-semibold text-rose-600 dark:text-rose-400"
               >
                 {ctaError}
               </p>
