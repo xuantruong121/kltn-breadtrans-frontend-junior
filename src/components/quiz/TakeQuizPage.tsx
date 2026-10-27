@@ -51,6 +51,7 @@ import {
 } from "@/lib/reading/readingDraft";
 import { isSafeCourseReturn, withSafeReturnTo } from "@/lib/course/navigation";
 import { calculateProgressiveDictationFeedback } from "@/components/listening/listeningDictationUtils";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 export type QuizRouteContext = "listening" | "reading" | "exams";
 
@@ -145,10 +146,10 @@ export default function TakeQuizPage(props: {
       router.push(withSafeReturnTo(submissionRoute, safeCourseReturn));
     },
     onError: (error: any) => {
-      const message =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Không thể nộp bài lúc này. Vui lòng thử lại.";
+      const message = getApiErrorMessage(
+        error,
+        "Không thể nộp bài lúc này. Vui lòng thử lại.",
+      );
       setSubmitError(message);
       toast.error(message);
     },

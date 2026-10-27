@@ -18,6 +18,7 @@ import { learnService } from "@/lib/api/services/learn.service";
 import { ContentTopic } from "../types";
 import { Button3D } from "@/components/ui";
 import toast from "react-hot-toast";
+import { levelLabel } from "@/lib/ui/displayLabels";
 
 interface TopicProgress {
   userAnswers: Record<number, number>;
@@ -173,7 +174,7 @@ export default function LearnScreen() {
                   <div className="p-6 space-y-3">
                     <div className="flex items-center gap-2">
                       <span className="bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-900/60 font-extrabold text-xs px-3 py-1 rounded-full border border-rose-200 uppercase">
-                        {currentTopic.materialLinks?.level || "BEGINNER"}
+                        {levelLabel(currentTopic.materialLinks?.level) || "Cơ bản"}
                       </span>
                       {currentTopic.materialLinks?.duration && (
                         <span className="flex items-center gap-1 text-slate-400 dark:text-slate-500 text-xs font-bold">
@@ -328,7 +329,7 @@ export default function LearnScreen() {
                         </div>
                         <div className="flex items-center justify-between text-[11px] font-bold">
                           <span className="text-slate-400 dark:text-slate-500">
-                            {topic.materialLinks?.level || "Beginner"} • {topic.exercises?.length || 0} bài tập
+                            {levelLabel(topic.materialLinks?.level) || "Cơ bản"} • {topic.exercises?.length || 0} bài tập
                           </span>
                           {isDone && (
                             <span className="text-emerald-700 dark:text-emerald-300 font-extrabold text-[10px] bg-emerald-100 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">

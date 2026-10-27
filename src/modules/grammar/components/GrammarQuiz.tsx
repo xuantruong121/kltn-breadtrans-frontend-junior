@@ -20,6 +20,7 @@ import {
   getPrevIndex,
   isGrammarDirty,
 } from "./grammarNavigationUtils";
+import { levelLabel } from "@/lib/ui/displayLabels";
 
 type QuestionResult = GrammarAttemptResult["questionsResult"][number];
 
@@ -270,7 +271,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
                 {topic.title}
               </h2>
               <span className="mt-2.5 inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-                {topic.level}
+                {levelLabel(topic.level)}
               </span>
             </div>
 

@@ -8,6 +8,7 @@ import {
   adminSubscriptionService,
   type AdminSubscriptionItem,
 } from "@/lib/api/services/admin-subscription.service";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 interface AdminExtendModalProps {
   subscription: AdminSubscriptionItem | null;
@@ -66,7 +67,7 @@ export function AdminExtendModal({
     },
     onError: (err: any) => {
       const msg =
-        err?.response?.data?.message || err?.message || "Không thể gia hạn gói cho học viên.";
+        getApiErrorMessage(err, "Không thể gia hạn gói cho học viên.");
       toast.error(msg);
     },
   });

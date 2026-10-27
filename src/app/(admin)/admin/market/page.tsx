@@ -27,6 +27,7 @@ import {
 import AdminRewardCreateEditModal from "@/modules/admin/market/components/AdminRewardCreateEditModal";
 import AdminRejectOrderModal from "@/modules/admin/market/components/AdminRejectOrderModal";
 import AdminFulfillmentFailedModal from "@/modules/admin/market/components/AdminFulfillmentFailedModal";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 type ActiveTab = "catalog" | "orders";
 
@@ -96,7 +97,7 @@ export default function AdminMarketPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-market-orders"] });
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Không thể phê duyệt đơn hàng");
+      toast.error(getApiErrorMessage(err, "Không thể phê duyệt đơn hàng"));
     },
   });
 
@@ -113,7 +114,7 @@ export default function AdminMarketPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-market-products"] });
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Không thể thay đổi trạng thái quà tặng");
+      toast.error(getApiErrorMessage(err, "Không thể thay đổi trạng thái quà tặng"));
     },
   });
 

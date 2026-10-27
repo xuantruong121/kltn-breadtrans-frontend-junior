@@ -92,7 +92,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
       id: 4,
       name: "Thợ Săn",
       category: "Kinh Nghiệm",
-      description: "Thu thập đủ 1000 điểm kinh nghiệm học tập toàn diện",
+      description: "Đạt 1000 điểm kinh nghiệm (XP)",
       icon: Zap,
       color: "text-purple-600",
       bgColor: "bg-purple-100",

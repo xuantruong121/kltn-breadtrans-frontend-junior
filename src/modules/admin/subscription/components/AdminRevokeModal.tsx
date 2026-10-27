@@ -8,6 +8,7 @@ import {
   adminSubscriptionService,
   type AdminSubscriptionItem,
 } from "@/lib/api/services/admin-subscription.service";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 interface AdminRevokeModalProps {
   subscription: AdminSubscriptionItem | null;
@@ -48,7 +49,7 @@ export function AdminRevokeModal({
     },
     onError: (err: any) => {
       const msg =
-        err?.response?.data?.message || err?.message || "Không thể thu hồi quyền của học viên.";
+        getApiErrorMessage(err, "Không thể thu hồi quyền của học viên.");
       toast.error(msg);
     },
   });

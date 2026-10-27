@@ -315,7 +315,7 @@ export default function V5LessonEditorPage() {
         finalCheck: Boolean(data.candidate.finalCheck),
       });
       setHasUnsavedChanges(false);
-      toast.success("Đã tạo nội dung nháp. Hãy review trước khi Apply.");
+      toast.success("Đã tạo nội dung nháp. Hãy xem lại trước khi áp dụng.");
     } catch (e) {
       toast.error(getApiErrorMessage(e, "Không thể tạo nội dung AI lúc này."));
     } finally {
@@ -383,7 +383,7 @@ export default function V5LessonEditorPage() {
         section: suggestion,
       });
       toast.success(
-        "Đã tạo đề xuất AI cho mục này. Hãy review trước khi áp dụng.",
+        "Đã tạo đề xuất AI cho mục này. Hãy xem lại trước khi áp dụng.",
       );
     } catch (e) {
       toast.error(
@@ -1125,7 +1125,7 @@ export default function V5LessonEditorPage() {
             aiCandidate.warnings.length > 0 && (
               <div className="mt-4 rounded-xl border border-amber-300 bg-white p-3">
                 <p className="text-xs font-bold text-amber-800">
-                  Ghi chú rà soát (không chặn Apply)
+                  Ghi chú rà soát (không chặn việc áp dụng)
                 </p>
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
                   {aiCandidate.warnings.map(

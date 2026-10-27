@@ -8,6 +8,7 @@ import {
 } from "@/lib/api/services/payment.service";
 import toast from "react-hot-toast";
 import { Loader2, X, CheckCircle2, AlertTriangle } from "lucide-react";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 interface ConfirmPaymentDialogProps {
   paymentId: number;
@@ -59,8 +60,7 @@ export const ConfirmPaymentDialog: React.FC<ConfirmPaymentDialogProps> = ({
     },
     onError: (err: any) => {
       const msg =
-        err?.response?.data?.message ||
-        "Không thể xác nhận thanh toán. Vui lòng thử lại.";
+        getApiErrorMessage(err, "Không thể xác nhận thanh toán. Vui lòng thử lại.");
       toast.error(msg);
     },
   });

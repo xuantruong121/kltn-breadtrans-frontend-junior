@@ -14,6 +14,7 @@ import {
   CreateMarketProductPayload,
   adminMarketService,
 } from "@/lib/api/services/admin-market.service";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 interface AdminRewardCreateEditModalProps {
   isOpen: boolean;
@@ -102,7 +103,7 @@ function AdminRewardCreateEditModalInner({
         toast.success("Tải ảnh quà tặng thành công!");
       }
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Không thể tải ảnh lên hệ thống");
+      toast.error(getApiErrorMessage(err, "Không thể tải ảnh lên hệ thống"));
     } finally {
       setIsUploading(false);
     }
@@ -154,7 +155,7 @@ function AdminRewardCreateEditModalInner({
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Có lỗi xảy ra khi lưu quà tặng");
+      toast.error(getApiErrorMessage(err, "Có lỗi xảy ra khi lưu quà tặng"));
     } finally {
       setIsSubmitting(false);
     }
@@ -356,7 +357,7 @@ function AdminRewardCreateEditModalInner({
                 <div className="relative w-16 h-16 rounded-xl border border-slate-200 overflow-hidden bg-slate-100 shrink-0">
                   <img
                     src={formData.imageUrl}
-                    alt="Preview"
+                    alt="Ảnh xem trước"
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = "/images/market/default.svg";
@@ -402,7 +403,7 @@ function AdminRewardCreateEditModalInner({
                   </label>
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  Hỗ trợ tải file ảnh lên Cloudflare R2 hoặc nhập URL trực tiếp.
+                  Tải ảnh lên hoặc dán đường dẫn ảnh.
                 </p>
               </div>
             </div>

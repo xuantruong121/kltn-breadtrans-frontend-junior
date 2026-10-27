@@ -122,7 +122,7 @@ const CERTIFICATES: CertificateMeta[] = [
     badgeText: "Đang biên soạn",
     targetLevel: "Mục tiêu Band 5.0 - 8.5+",
     description:
-      "Hệ thống kiểm tra tiếng Anh học thuật quốc tế hàng đầu dành cho du học sinh và xét tuyển đại học. Mô phỏng dạng thi máy (Computer-delivered IELTS).",
+      "Kỳ thi tiếng Anh học thuật dùng cho du học và xét tuyển. Nội dung đang được biên soạn.",
     skills: [
       { label: "Listening (40 câu / 30 phút)", icon: Headphones },
       { label: "Academic Reading (40 câu / 60 phút)", icon: BookOpen },
@@ -241,7 +241,7 @@ const CERTIFICATES: CertificateMeta[] = [
     badgeText: "Đang biên soạn",
     targetLevel: "B2 First & C1 Advanced",
     description:
-      "Chứng chỉ quốc tế giá trị trọn đời của Đại học Cambridge. Bộ đề đánh giá toàn diện năng lực ngôn ngữ theo khung tham chiếu châu Âu.",
+      "Chứng chỉ tiếng Anh của Cambridge cho trình độ B2–C1. Nội dung đang được biên soạn.",
     skills: [
       { label: "Reading & Use of English (75 phút)", icon: BookOpen },
       { label: "Writing (2 tasks / 80 phút)", icon: PenTool },
@@ -763,7 +763,7 @@ export default function ExamPracticeHubPage() {
                     const skillLabels = isFourSkill ? ["Listening", "Reading", "Speaking", "Writing"] : isSpeakingWriting ? ["Speaking", "Writing"] : ["Listening", "Reading"];
                     const detailsLabel = isFourSkill ? "L&R + S&W" : isSpeakingWriting ? "11 Speaking · 8 Writing" : "200 câu · 120 phút";
                     const fallbackDescription = isFourSkill
-                      ? "Bài thi tổng hợp 4 kỹ năng kết hợp Nghe, Đọc, Nói và Viết trong một buổi thi hoàn chỉnh. Đánh giá toàn diện năng lực giao tiếp môi trường quốc tế."
+                      ? "Đề luyện 4 kỹ năng Nghe, Đọc, Nói và Viết trong một lượt làm bài."
                       : isSpeakingWriting
                         ? "Mô phỏng 11 câu hỏi Nói và 8 bài tập Viết theo chuẩn khảo thí. Hệ thống ghi âm trực tiếp và đánh giá tiêu chí phát âm, ngữ pháp."
                         : "Mô phỏng bài thi Nghe và Đọc 200 câu bao quát Part 1–7. Chấm điểm tự động theo thang 990 kèm giải thích chi tiết từng câu.";

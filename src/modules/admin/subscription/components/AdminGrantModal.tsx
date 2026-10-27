@@ -8,6 +8,7 @@ import {
   adminSubscriptionService,
   type AdminLearnerLookup,
 } from "@/lib/api/services/admin-subscription.service";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 interface AdminGrantModalProps {
   isOpen: boolean;
@@ -95,7 +96,7 @@ export function AdminGrantModal({
     },
     onError: (err: any) => {
       const msg =
-        err?.response?.data?.message || err?.message || "Không thể tặng gói cho học viên.";
+        getApiErrorMessage(err, "Không thể tặng gói cho học viên.");
       toast.error(msg);
     },
   });

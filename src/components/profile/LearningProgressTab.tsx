@@ -30,6 +30,7 @@ import {
   getLearnerMilestones,
   formatFriendlyDate,
 } from "./learningProgressLogic";
+import { levelLabel } from "@/lib/ui/displayLabels";
 
 const SKILL_THEME: Record<
   SkillProgressSummary["skill"],
@@ -532,7 +533,7 @@ export function LearningProgressTab() {
                           </h3>
                           {item.course.level && (
                             <span className="rounded bg-slate-100 px-1.5 py-0.2 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                          {item.course.level}
+                          {levelLabel(item.course.level)}
                             </span>
                           )}
                         </div>

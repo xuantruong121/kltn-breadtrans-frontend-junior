@@ -8,6 +8,7 @@ import axiosClient from "@/lib/api/axiosClient";
 import { Button3D } from "@/components/ui";
 import toast from "react-hot-toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 export default function AdminPracticePage() {
   const queryClient = useQueryClient();
@@ -45,7 +46,7 @@ export default function AdminPracticePage() {
       queryClient.invalidateQueries({ queryKey: ["admin-practice-topics"] });
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Có lỗi xảy ra");
+      toast.error(getApiErrorMessage(err, "Có lỗi xảy ra"));
     },
   });
 
@@ -59,7 +60,7 @@ export default function AdminPracticePage() {
       setPendingDelete(null);
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Có lỗi xảy ra");
+      toast.error(getApiErrorMessage(err, "Có lỗi xảy ra"));
     },
   });
 

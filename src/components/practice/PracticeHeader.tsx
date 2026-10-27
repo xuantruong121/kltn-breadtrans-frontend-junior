@@ -11,6 +11,7 @@ import {
   X,
   Activity,
 } from "lucide-react";
+import { levelLabel } from "@/lib/ui/displayLabels";
 
 export interface PracticeHeaderProps {
   /**
@@ -148,7 +149,7 @@ export const PracticeHeader: React.FC<PracticeHeaderProps> = ({
     };
   }, [showShortcutsPopover]);
 
-  const displayCategory = category || subtitle;
+  const displayCategory = levelLabel(category || subtitle) || undefined;
   const displayPosition =
     positionText ??
     (typeof currentItem === "number" && typeof totalItems === "number"
@@ -185,7 +186,7 @@ export const PracticeHeader: React.FC<PracticeHeaderProps> = ({
 
           {difficulty && (
             <span className="shrink-0 rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider hidden sm:inline-block">
-              {difficulty}
+              {levelLabel(difficulty)}
             </span>
           )}
 

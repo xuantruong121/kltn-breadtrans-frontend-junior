@@ -25,6 +25,7 @@ import axiosClient from "@/lib/api/axiosClient";
 import ImageUploadField from "@/components/admin/ImageUploadField";
 import RequiredMediaNotice from "@/components/admin/RequiredMediaNotice";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 type Domain = "listening" | "reading" | "writing";
 type ListeningMode = "COMPREHENSION" | "DICTATION" | "DIALOGUE";
@@ -394,7 +395,7 @@ export default function SkillCmsWorkspace({
       toast.success("Đã nhận gợi ý đoạn đọc từ AI");
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message || "Không thể lấy gợi ý đoạn đọc từ AI.",
+        getApiErrorMessage(err, "Không thể lấy gợi ý đoạn đọc từ AI."),
       );
     } finally {
       setIsPassageAiLoading(false);
@@ -425,8 +426,7 @@ export default function SkillCmsWorkspace({
       }
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message ||
-          "Không thể tạo câu hỏi đọc hiểu lúc này.",
+        getApiErrorMessage(err, "Không thể tạo câu hỏi đọc hiểu lúc này."),
       );
     } finally {
       setIsQuestionsAiLoading(false);
@@ -481,8 +481,7 @@ export default function SkillCmsWorkspace({
       toast.success("Đã nhận transcript nháp. Hãy kiểm tra trước khi lưu.");
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message ||
-          "Không thể gợi ý nội dung nghe lúc này.",
+        getApiErrorMessage(error, "Không thể gợi ý nội dung nghe lúc này."),
       );
     } finally {
       setIsListeningContentAiLoading(false);
@@ -515,7 +514,7 @@ export default function SkillCmsWorkspace({
       toast.success(`AI đã gợi ý ${data.candidates.length} câu hỏi nghe nháp.`);
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message || "Không thể tạo câu hỏi nghe lúc này.",
+        getApiErrorMessage(error, "Không thể tạo câu hỏi nghe lúc này."),
       );
     } finally {
       setIsListeningQuestionsAiLoading(false);
@@ -545,8 +544,7 @@ export default function SkillCmsWorkspace({
       toast.success("Đã nhận đề bài Writing nháp. Hãy kiểm tra trước khi lưu.");
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message ||
-          "Không thể gợi ý đề bài Writing lúc này.",
+        getApiErrorMessage(error, "Không thể gợi ý đề bài Writing lúc này."),
       );
     } finally {
       setIsWritingAiLoading(false);
@@ -558,7 +556,7 @@ export default function SkillCmsWorkspace({
     const topic = form.title.trim();
     if (!topic) {
       toast.error(
-        "Vui lòng nhập tiêu đề hoặc chủ đề trước khi soạn full draft.",
+        "Vui lòng nhập tiêu đề hoặc chủ đề trước khi soạn bản nháp.",
       );
       return;
     }
@@ -594,7 +592,7 @@ export default function SkillCmsWorkspace({
           }))
         : [];
       if (!data?.title || !data?.description || !questions.length) {
-        throw new Error("AI không trả về full draft hợp lệ.");
+        throw new Error("AI không trả về bản nháp hợp lệ.");
       }
       const sourceQuestion =
         domain === "listening"
@@ -634,12 +632,12 @@ export default function SkillCmsWorkspace({
         sourceQuestion,
         questions,
       });
-      toast.success("Đã tạo full draft. Hãy review trước khi Apply.");
+      toast.success("Đã tạo bản nháp. Hãy xem lại trước khi áp dụng.");
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Không thể soạn full draft lúc này.",
+        error instanceof Error && !("response" in error)
+          ? error.message
+          : getApiErrorMessage(error, "Không thể soạn bản nháp lúc này."),
       );
     }
   };
@@ -662,7 +660,7 @@ export default function SkillCmsWorkspace({
       );
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message || "Không thể tải nội dung CMS",
+        getApiErrorMessage(error, "Không thể tải nội dung CMS"),
       );
     } finally {
       setLoading(false);
@@ -710,7 +708,7 @@ export default function SkillCmsWorkspace({
       });
       setPendingFullDraftQuestions([]);
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Không thể tải nội dung");
+      toast.error(getApiErrorMessage(error, "Không thể tải nội dung"));
     } finally {
       setLoading(false);
     }
@@ -763,7 +761,7 @@ export default function SkillCmsWorkspace({
       setPendingFullDraftQuestions([]);
       router.push(`/admin/${domain}/${savedItem.id}`);
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Lưu thất bại");
+      toast.error(getApiErrorMessage(error, "Lưu thất bại"));
     } finally {
       setBusy(false);
     }
@@ -890,7 +888,7 @@ export default function SkillCmsWorkspace({
       setQuestion(emptyQuestion(domain));
       await loadItem();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Lưu câu hỏi thất bại");
+      toast.error(getApiErrorMessage(error, "Lưu câu hỏi thất bại"));
     } finally {
       setBusy(false);
     }
@@ -907,7 +905,7 @@ export default function SkillCmsWorkspace({
       setPendingDeleteId(null);
       await loadItem();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Không thể xóa");
+      toast.error(getApiErrorMessage(error, "Không thể xóa"));
     } finally {
       setBusy(false);
     }
@@ -932,7 +930,7 @@ export default function SkillCmsWorkspace({
       );
       await loadItem();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Không thể xuất bản");
+      toast.error(getApiErrorMessage(error, "Không thể xuất bản"));
     } finally {
       setBusy(false);
     }
@@ -959,7 +957,7 @@ export default function SkillCmsWorkspace({
       setPreviewUrl(URL.createObjectURL(response as unknown as Blob));
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message || "Không thể tải audio preview",
+        getApiErrorMessage(error, "Không thể tải audio preview"),
       );
     } finally {
       setBusy(false);
@@ -991,7 +989,7 @@ export default function SkillCmsWorkspace({
       await refreshArtifacts();
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message || "Không thể thực hiện thao tác audio",
+        getApiErrorMessage(error, "Không thể thực hiện thao tác audio"),
       );
     } finally {
       setBusy(false);
@@ -1014,7 +1012,7 @@ export default function SkillCmsWorkspace({
       toast.success("Đã tải audio câu hỏi lên R2");
       await loadItem();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Không thể tải audio lên");
+      toast.error(getApiErrorMessage(error, "Không thể tải audio lên"));
     } finally {
       setBusy(false);
     }
@@ -1031,7 +1029,7 @@ export default function SkillCmsWorkspace({
       await loadItem();
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message || "Không thể sinh audio Dialogue",
+        getApiErrorMessage(error, "Không thể sinh audio Dialogue"),
       );
     } finally {
       setBusy(false);
@@ -1080,7 +1078,7 @@ export default function SkillCmsWorkspace({
               {title}
             </h1>
             <p className="mt-1 text-sm text-slate-500">
-              Tạo, kiểm tra và xuất bản nội dung theo đúng runtime learner.
+              Tạo, kiểm tra và xuất bản bài luyện cho học viên.
             </p>
           </div>
           {domain === "listening" ? (
@@ -1325,7 +1323,7 @@ export default function SkillCmsWorkspace({
               <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
                 Số câu
                 <input
-                  aria-label={`Số câu trong full draft ${meta[domain].label}`}
+                  aria-label={`Số câu trong bản nháp ${meta[domain].label}`}
                   type="number"
                   min={1}
                   max={10}
@@ -1705,7 +1703,7 @@ export default function SkillCmsWorkspace({
                       onChange={(url) =>
                         setQuestion({ ...question, imageUrl: url })
                       }
-                      helperText="Tải lên ảnh mô tả cho bài luyện viết. Hệ thống lưu trực tiếp lên Cloudflare R2."
+                      helperText="Tải lên ảnh mô tả cho bài luyện viết (PNG, JPG hoặc WEBP)."
                     />
                     {!question.imageUrl.trim() && <RequiredMediaNotice className="mt-2" />}
                   </div>
@@ -2057,17 +2055,17 @@ export default function SkillCmsWorkspace({
                   id="cms-full-draft-title"
                   className="text-base font-bold text-slate-900"
                 >
-                  Review full draft{" "}
+                  Xem lại bản nháp{" "}
                   {fullDraft.domain === "reading" ? "Reading" : "Listening"}
                 </h3>
                 <p className="mt-1 text-xs leading-5 text-slate-500">
-                  Review, sửa hoặc loại candidate trước khi Apply. Chưa ghi
+                  Xem lại, sửa hoặc bỏ bớt câu đề xuất trước khi áp dụng. Chưa ghi
                   database; CMS Save vẫn bắt buộc.
                 </p>
               </div>
               <button
                 type="button"
-                aria-label="Đóng review full draft"
+                aria-label="Đóng xem lại bản nháp"
                 onClick={() => setFullDraft(null)}
                 className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
               >
@@ -2368,12 +2366,12 @@ export default function SkillCmsWorkspace({
                   ]);
                   setFullDraft(null);
                   toast.success(
-                    "Đã Apply full draft vào form. Chưa có dữ liệu nào được lưu.",
+                    "Đã áp dụng bản nháp vào biểu mẫu. Chưa có dữ liệu nào được lưu.",
                   );
                 }}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-slate-950 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
               >
-                Apply vào form <ArrowRight size={14} />
+                Áp dụng vào biểu mẫu <ArrowRight size={14} />
               </button>
             </div>
           </div>
@@ -2555,7 +2553,7 @@ export default function SkillCmsWorkspace({
                     );
                     setIsListeningContentAiOpen(false);
                     toast.success(
-                      "Đã áp dụng transcript vào form. Bạn có thể chỉnh sửa trước khi lưu.",
+                      "Đã áp dụng transcript vào biểu mẫu. Bạn có thể chỉnh sửa trước khi lưu.",
                     );
                   }}
                   className="min-h-10 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
@@ -2762,7 +2760,7 @@ export default function SkillCmsWorkspace({
                         });
                         setIsListeningQuestionsAiOpen(false);
                         toast.success(
-                          "Đã áp dụng câu hỏi nghe vào form. Bạn có thể chỉnh sửa trước khi thêm.",
+                          "Đã áp dụng câu hỏi nghe vào biểu mẫu. Bạn có thể chỉnh sửa trước khi thêm.",
                         );
                       }}
                       className="mt-3 min-h-10 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
@@ -3099,7 +3097,7 @@ export default function SkillCmsWorkspace({
                         }));
                         setIsPassageAiOpen(false);
                         toast.success(
-                          "Đã áp dụng đoạn đọc vào form. Bạn có thể chỉnh sửa trước khi lưu.",
+                          "Đã áp dụng đoạn đọc vào biểu mẫu. Bạn có thể chỉnh sửa trước khi lưu.",
                         );
                       }}
                       className="rounded bg-slate-900 px-3 py-1.5 font-semibold text-white hover:bg-slate-800 transition-colors"

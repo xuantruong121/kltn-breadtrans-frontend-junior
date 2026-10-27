@@ -87,7 +87,7 @@ export default function ImageUploadField({
             <div className="relative h-28 w-44 shrink-0 overflow-hidden rounded-md border border-slate-200 bg-slate-100">
               <img
                 src={value}
-                alt="Preview"
+                alt="Ảnh xem trước"
                 className="h-full w-full object-cover"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = "";

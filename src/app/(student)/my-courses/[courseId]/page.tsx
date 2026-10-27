@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, BookOpen, Loader2 } from "lucide-react";
 import { courseService } from "@/lib/api/services/course.service";
 import { courseLessonPath } from "@/lib/course/navigation";
+import { levelLabel } from "@/lib/ui/displayLabels";
 
 export default function CourseDetailPage(props: {
   params: Promise<{ courseId: string }>;
@@ -45,7 +46,7 @@ export default function CourseDetailPage(props: {
       </Link>
       <header className="space-y-4">
         <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-blue-600">
-          {data.course.level ?? "Course"}
+          {levelLabel(data.course.level) || "Khóa học"}
         </p>
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15]">
           {data.course.title}

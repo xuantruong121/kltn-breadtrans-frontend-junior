@@ -9,6 +9,9 @@ export function getApiErrorMessage(
   if (!err) return defaultMessage;
 
   const response = err.response;
+  if (!response && (err.code === "ERR_NETWORK" || err.message === "Network Error")) {
+    return "Không thể kết nối tới máy chủ. Vui lòng kiểm tra mạng và thử lại.";
+  }
   const rawMessage = response?.data?.message;
 
   let message = "";
@@ -99,7 +102,9 @@ export function getApiErrorMessage(
         message,
       );
     if (technicalLeak) return defaultMessage;
-    return message;
+    // A message with no Vietnamese letter is an internal English message from
+    // the API ("Quiz not found"); show the status-based Vietnamese text instead.
+    if (/[À-ỹĐđ]/.test(message)) return message;
   }
 
   // HTTP status fallback mapping
@@ -109,8 +114,14 @@ export function getApiErrorMessage(
   if (response?.status === 403) {
     return "Bạn không có quyền thực hiện thao tác này.";
   }
+  if (response?.status === 400 || response?.status === 422) {
+    return "Dữ liệu chưa hợp lệ. Vui lòng kiểm tra lại.";
+  }
   if (response?.status === 404) {
     return "Không tìm thấy dữ liệu yêu cầu hoặc mục đã bị xóa.";
+  }
+  if (response?.status === 429) {
+    return "Bạn thao tác quá nhanh. Vui lòng đợi một lát rồi thử lại.";
   }
   if (response?.status === 409) {
     return "Dữ liệu bị trùng lặp hoặc đã bị thay đổi bởi phiên làm việc khác.";

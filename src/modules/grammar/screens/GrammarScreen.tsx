@@ -11,6 +11,7 @@ import { PracticeHeader } from "@/components/practice/PracticeHeader";
 import { useLearningFocusMode } from "@/contexts/LearningFocusContext";
 import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
 import { PracticeExitConfirmDialog } from "@/components/practice/PracticeExitConfirmDialog";
+import { levelLabel } from "@/lib/ui/displayLabels";
 
 export interface GrammarScreenProps {
   activeTopicId?: number | null;
@@ -202,7 +203,7 @@ export const GrammarScreen: React.FC<GrammarScreenProps> = ({
           >
             <div className="mb-2 flex items-center justify-between gap-2">
               <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:text-slate-300">
-                {topic.level}
+                {levelLabel(topic.level)}
               </span>
               {topic.isCompleted && (
                 <CheckCircle2

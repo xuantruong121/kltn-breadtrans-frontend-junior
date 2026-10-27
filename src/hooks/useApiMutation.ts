@@ -1,6 +1,7 @@
 import { useMutation, UseMutationOptions, UseMutationResult } from "@tanstack/react-query";
 import axiosClient from "@/lib/api/axiosClient";
 import toast from "react-hot-toast";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 type HttpMethod = "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -30,8 +31,8 @@ export function useApiMutation<TData = any, TVariables = any, TError = any>(
         return (response as any).data !== undefined ? (response as any).data : response;
       } catch (error: any) {
         // Centralized error handling
-        const message = error.response?.data?.message || error.message || "Đã xảy ra lỗi khi thực hiện thao tác";
-        toast.error(`Thất bại: ${message}`);
+        const message = getApiErrorMessage(error);
+        toast.error(message);
         throw error;
       }
     },

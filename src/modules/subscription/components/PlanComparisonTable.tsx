@@ -11,81 +11,61 @@ interface ComparisonFeature {
   pro: string | boolean;
 }
 
+// Only privileges the API actually enforces (canonical plan catalog and the
+// practice level policy). Do not list a feature here that no plan unlocks.
 const COMPARISON_FEATURES: ComparisonFeature[] = [
   {
-    category: "Nội dung & Luyện tập 4 kỹ năng",
-    name: "Kho bài luyện 4 kỹ năng (Nghe, Nói, Đọc, Viết)",
-    free: "Giới hạn bài cơ bản",
-    plus: "Toàn bộ bài học & đề luyện tập",
-    pro: "Toàn bộ bài học + toàn bộ khóa học tự học",
+    category: "Luyện 4 kỹ năng",
+    name: "Luyện Nghe, Đọc, Nói, Viết",
+    free: "Bài cấp độ A1–A2",
+    plus: "Thêm bài B1–C1",
+    pro: "Thêm bài B1–C1",
   },
   {
-    name: "Chủ đề Từ vựng Premium",
-    free: "Chủ đề cơ bản",
-    plus: "Toàn bộ chủ đề nâng cao",
-    pro: "Toàn bộ chủ đề + Thư viện từ chuyên ngành",
+    name: "Chấm bài Nói và Viết tự động (AI)",
+    free: "Với các bài được mở",
+    plus: "Với các bài được mở",
+    pro: "Với các bài được mở",
   },
   {
-    name: "Luyện nghe chính tả & Audio Full-track",
-    free: "Giới hạn 1/2 bài nghe",
-    plus: "Toàn bộ kho nghe Full-track",
-    pro: "Toàn bộ kho nghe + Tùy chỉnh tốc độ & giọng đọc",
+    category: "Từ vựng và ngữ pháp",
+    name: "Thẻ ghi nhớ, từ vựng và ngữ pháp",
+    free: true,
+    plus: true,
+    pro: true,
   },
   {
-    name: "Đề thi thử & Bài tập định kỳ",
-    free: "Bộ đề mẫu cơ bản",
-    plus: "Toàn bộ đề thi thử không giới hạn",
-    pro: "Đề thi thử + Dự đoán band điểm chuẩn hóa",
+    category: "Kiểm tra và luyện đề",
+    name: "Bài đánh giá đầu vào",
+    free: true,
+    plus: true,
+    pro: true,
   },
   {
-    name: "Ngữ pháp & Luyện đề theo Part",
-    free: "Nhóm từ loại & cơ bản",
-    plus: "Toàn bộ chủ điểm ngữ pháp",
-    pro: "Toàn bộ chủ điểm + Phân tích bẫy đề thi",
+    name: "Luyện đề TOEIC (L&R, S&W, 4 kỹ năng)",
+    free: true,
+    plus: true,
+    pro: true,
   },
   {
-    category: "Công cụ & Chấm chữa AI",
-    name: "Chấm chữa AI Writing (Sửa lỗi & Gợi ý câu)",
-    free: "Chấm chữa cơ bản",
-    plus: "Phân tích chi tiết hơn",
-    pro: "Phân tích chuyên sâu + Band điểm",
+    category: "Khóa học",
+    name: "Khóa học tự học theo lộ trình",
+    free: false,
+    plus: false,
+    pro: true,
   },
   {
-    name: "Đánh giá phát âm & AI Speaking",
-    free: "Chấm âm cơ bản",
-    plus: "Chấm ngữ điệu & lưu loát chi tiết",
-    pro: "Hội thoại 1-1 với Gia sư AI tương tác",
+    category: "Khác",
+    name: "Đấu trường từ vựng, cửa hàng và thú cưng",
+    free: true,
+    plus: true,
+    pro: true,
   },
   {
-    name: "Flashcard & Thuật toán lặp lại ngắt quãng (SRS)",
-    free: "Tối đa 100 từ",
-    plus: "Không giới hạn từ vựng & thẻ",
-    pro: "Không giới hạn + Thuật toán thông minh tối ưu",
-  },
-  {
-    name: "Tra cứu từ điển & Dịch ngữ cảnh",
-    free: "Tra từ cơ bản",
-    plus: "Tra từ điển nâng cao & Collocations",
-    pro: "Tra cứu ngữ cảnh AI không giới hạn",
-  },
-  {
-    category: "Quản lý tiến độ & Đặc quyền học viên",
-    name: "Theo dõi tiến độ & Báo cáo năng lực",
-    free: "Thống kê hôm nay",
-    plus: "Báo cáo chi tiết theo tuần, tháng",
-    pro: "Radar năng lực AI & Lộ trình tự thích ứng",
-  },
-  {
-    name: "Đồng bộ học tập đa thiết bị (Web, Mobile, Tablet)",
-    free: "1 thiết bị",
-    plus: "Đồng bộ đa thiết bị",
-    pro: "Đồng bộ không giới hạn",
-  },
-  {
-    name: "Hỗ trợ học viên & Kỹ thuật",
-    free: "Cộng đồng học tập",
-    plus: "Hỗ trợ kỹ thuật ưu tiên 24/7",
-    pro: "Cố vấn học tập 1-on-1 riêng biệt",
+    name: "Thời hạn",
+    free: "Không giới hạn",
+    plus: "30 ngày",
+    pro: "30 ngày",
   },
 ];
 
@@ -101,7 +81,7 @@ export function PlanComparisonTable() {
             <span>So sánh chi tiết 3 gói dịch vụ</span>
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Đối chiếu chi tiết quyền lợi giữa gói Free, gói Plus và gói Pro để lựa chọn phù hợp nhất
+            Quyền lợi của từng gói
           </p>
         </div>
 

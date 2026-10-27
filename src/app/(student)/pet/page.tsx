@@ -12,6 +12,7 @@ import { ArrowLeft, RefreshCw, Award, Heart, Zap, AlertCircle, Loader2 } from "l
 import axiosClient from "@/lib/api/axiosClient";
 import { useAuthStore } from "@/stores/authStore";
 import { canFeedPet, handleFeedFailure } from "@/modules/pet/petLogic";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 export default function PetPage() {
   const queryClient = useQueryClient();
@@ -95,7 +96,7 @@ export default function PetPage() {
     },
     onError: (err: any) => {
       toast.error(
-        err?.response?.data?.message || "Không thể đổi thú cưng lúc này!"
+        getApiErrorMessage(err, "Không thể đổi thú cưng lúc này!")
       );
     },
   });

@@ -60,6 +60,7 @@ import {
   speakingLimitMs,
   writingGuidance,
 } from "@/lib/diagnostic/diagnosticTaskLogic";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 function createSubmissionToken() {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
@@ -327,8 +328,7 @@ export default function DiagnosticPage() {
         setSubmissionToken(startedAttempt.submissionToken || submissionToken);
       } catch (err: any) {
         toast.error(
-          err?.response?.data?.message ||
-            "Không thể khởi tạo phiên kiểm tra. Vui lòng thử lại.",
+          getApiErrorMessage(err, "Không thể khởi tạo phiên kiểm tra. Vui lòng thử lại."),
         );
         return;
       }

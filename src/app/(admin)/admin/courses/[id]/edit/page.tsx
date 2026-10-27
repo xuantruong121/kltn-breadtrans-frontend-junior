@@ -536,10 +536,10 @@ export default function AdminCourseEditStudioPage() {
                   {isDraft
                     ? "Bản nháp"
                     : isPendingReview
-                      ? "Chờ duyệt (Legacy)"
+                      ? "Chờ duyệt"
                       : isPublished
                         ? "Đã xuất bản"
-                        : "Bị từ chối (Legacy)"}
+                        : "Bị từ chối"}
                 </span>
               </div>
               <h1 className="text-base font-bold text-slate-900 truncate max-w-xs sm:max-w-md">
@@ -825,7 +825,7 @@ export default function AdminCourseEditStudioPage() {
                     {basicForm.thumbnail ? (
                       <img
                         src={basicForm.thumbnail}
-                        alt="Preview"
+                        alt="Ảnh xem trước"
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           (e.target as HTMLElement).style.display = "none";

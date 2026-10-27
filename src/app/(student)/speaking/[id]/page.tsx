@@ -66,6 +66,7 @@ import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
 import { ReportIssueButton } from "@/components/issue-report";
 import { isPremiumSpeakingForbiddenError } from "@/modules/subscription/planLogic";
 import toast from "react-hot-toast";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 /**
  * Resamples raw audio data to exactly 16,000 Hz using native OfflineAudioContext.
@@ -1235,8 +1236,7 @@ export default function SpeakingExerciseDetailPage() {
         setPhase("FAILED");
         setIsProlongedProcessing(false);
         const msg =
-          err?.response?.data?.message ||
-          "Có lỗi xảy ra khi gửi bài phát âm. Bạn có thể thử lại với bản ghi này.";
+          getApiErrorMessage(err, "Có lỗi xảy ra khi gửi bài phát âm. Bạn có thể thử lại với bản ghi này.");
         toast.error(msg);
       } finally {
         submissionInFlightRef.current = false;

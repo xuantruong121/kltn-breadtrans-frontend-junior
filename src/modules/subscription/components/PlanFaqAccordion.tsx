@@ -14,37 +14,37 @@ const FAQS: FaqItem[] = [
     id: "payment-methods",
     question: "Tôi có thể thanh toán gói học qua những hình thức nào?",
     answer:
-      "BreadTrans hỗ trợ thanh toán chuyển khoản ngân hàng qua mã VietQR tự động 24/7 đối với tất cả các ngân hàng tại Việt Nam (Vietcombank, MB, Techcombank, ACB, v.v.) và các ứng dụng ví điện tử (MoMo, ZaloPay, ViettelPay). Bạn chỉ cần mở app ngân hàng quét mã QR có sẵn số tiền và mã giao dịch để hoàn tất trong vài giây.",
+      "Thanh toán bằng chuyển khoản ngân hàng qua mã VietQR do PayOS tạo. Quét mã bằng ứng dụng ngân hàng hoặc ví điện tử có hỗ trợ VietQR; mã đã có sẵn số tiền và nội dung chuyển khoản.",
   },
   {
     id: "activation-time",
-    question: "Sau khi chuyển khoản, bao lâu thì tài khoản của tôi được kích hoạt gói Plus?",
+    question: "Sau khi chuyển khoản, bao lâu thì gói được kích hoạt?",
     answer:
-      "Hệ thống sẽ đối soát tự động ngay khi nhận được biến động số dư (thông thường chỉ mất từ 30 giây đến 1 phút). Sau khi chuyển khoản xong, bạn bấm nút 'Tôi đã chuyển khoản' trên màn hình để hệ thống ưu tiên kích hoạt và cập nhật quyền lợi ngay lập tức.",
+      "Gói được kích hoạt khi PayOS xác nhận giao dịch, thường trong vài phút. Màn hình thanh toán tự cập nhật trạng thái, bạn không cần gửi ảnh chuyển khoản.",
   },
   {
     id: "auto-renew",
-    question: "Gói BreadTrans Plus có tự động trừ tiền gia hạn hàng tháng không?",
+    question: "Gói có tự động gia hạn và trừ tiền không?",
     answer:
-      "Không. BreadTrans cam kết KHÔNG tự động trừ tiền trong thẻ hay tài khoản của bạn. Gói học có thời hạn sử dụng cố định (ví dụ 30 ngày). Khi hết hạn, tài khoản của bạn sẽ tự chuyển về gói Free cơ bản và bạn có thể chủ động lựa chọn có tiếp tục gia hạn hay không.",
+      "Không. Gói có thời hạn cố định 30 ngày và không tự gia hạn. Khi hết hạn, tài khoản trở về gói Free; bạn có thể mua lại bất cứ lúc nào.",
   },
   {
     id: "multi-device",
     question: "Tôi có thể học trên nhiều thiết bị (máy tính, điện thoại, máy tính bảng) không?",
     answer:
-      "Có. Bạn có thể đăng nhập tài khoản BreadTrans trên máy tính, điện thoại thông minh và máy tính bảng. Mọi tiến độ học tập, bài thi thử đã làm và kho từ vựng cá nhân đều được đồng bộ tự động theo thời gian thực giữa các thiết bị.",
+      "Có. Bạn đăng nhập được trên máy tính, điện thoại và máy tính bảng. Tiến độ học được lưu trên máy chủ nên giống nhau trên mọi thiết bị.",
   },
   {
     id: "ai-assessment",
-    question: "AI Writing & Speaking hoạt động như thế nào?",
+    question: "Bài Nói và bài Viết được chấm như thế nào?",
     answer:
-      "Bạn có thể gửi bài trực tiếp từ khu vực Writing hoặc Speaking. Hệ thống kiểm tra đăng nhập và quyền truy cập nội dung, sau đó xử lý bài qua pipeline chấm hiện có. Mức độ phân tích phụ thuộc vào gói và nội dung bạn đang được cấp quyền.",
+      "Bài Nói được chấm tự động về phát âm và độ trôi chảy; bài Viết được chấm tự động theo tiêu chí. Nhận xét do AI tạo, chỉ để tham khảo và có thể chưa phản ánh đầy đủ năng lực của bạn. Cách chấm như nhau ở mọi gói; gói trả phí chỉ mở thêm bài luyện.",
   },
   {
     id: "support-channel",
     question: "Nếu gặp sự cố trong quá trình nâng cấp, tôi có thể liên hệ hỗ trợ ở đâu?",
     answer:
-      "Bạn có thể bấm vào mục 'Trợ giúp & Liên hệ' trên thanh điều hướng hoặc gửi đề xuất phản hồi trực tiếp. Đội ngũ hỗ trợ học viên và kỹ thuật của BreadTrans luôn túc trực để hỗ trợ kiểm tra và giải đáp cho bạn nhanh nhất.",
+      "Dùng mục Trợ giúp hoặc gửi phản hồi ngay trong ứng dụng. Nhóm hỗ trợ sẽ trả lời sớm nhất có thể.",
   },
 ];
 

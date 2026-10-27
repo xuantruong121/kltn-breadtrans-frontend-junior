@@ -162,13 +162,13 @@ export function useArenaSocket() {
         disconnectedUserName: data.disconnectedUserName || "Đối thủ",
         gracePeriodSeconds: data.gracePeriodSeconds || 15,
       });
-      toast.error(data.message || "Đối thủ đang mất kết nối...", { icon: "⚠️" });
+      toast.error(data.message || "Đối thủ đang mất kết nối...");
     });
 
     // Opponent reconnected
     socket.on("arena:opponent_reconnected", (data: any) => {
       setOpponentDisconnected(null);
-      toast.success(data.message || "Đối thủ đã kết nối lại!", { icon: "🟢" });
+      toast.success(data.message || "Đối thủ đã kết nối lại!");
     });
 
     // State restoration when this client reconnected
@@ -197,7 +197,7 @@ export function useArenaSocket() {
           question: data.questions[data.currentRound],
         });
       }
-      toast.success("Đã khôi phục lại trận đấu đang diễn ra!", { icon: "⚡" });
+      toast.success("Đã khôi phục lại trận đấu đang diễn ra!");
     });
 
     // Match Ended

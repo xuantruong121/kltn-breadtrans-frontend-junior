@@ -30,6 +30,7 @@ import { use, useState } from "react";
 import dayjs from "dayjs";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 export default function ClassDetailPage(props: { params: Promise<{ classId: string }> }) {
   const params = use(props.params);
@@ -81,7 +82,7 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
       setSubmissionLink(fileUrl);
       toast.success("Tải tệp lên thành công! 📎");
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Tải tệp thất bại, vui lòng thử lại!");
+      toast.error(getApiErrorMessage(err, "Tải tệp thất bại, vui lòng thử lại!"));
     } finally {
       setIsUploading(false);
     }
@@ -118,10 +119,10 @@ export default function ClassDetailPage(props: { params: Promise<{ classId: stri
       setSubmissionLink("");
       setUploadedFile(null);
       setQuizAnswers([]);
-      toast.success("Nộp bài tập thành công! 🎉");
+      toast.success("Đã nộp bài tập.");
     },
     onError: (err: any) => {
-      toast.error(err?.message || err?.response?.data?.message || "Có lỗi xảy ra khi nộp bài!");
+      toast.error(getApiErrorMessage(err, "Không thể nộp bài lúc này. Vui lòng thử lại."));
     }
   });
 

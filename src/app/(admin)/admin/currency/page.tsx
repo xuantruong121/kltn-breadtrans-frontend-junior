@@ -15,6 +15,7 @@ import {
 import axiosClient from "@/lib/api/axiosClient";
 import { Pagination } from "@/components/ui";
 import toast from "react-hot-toast";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 type ReconciliationRow = {
   userId: number;
@@ -544,7 +545,7 @@ function AdjustTab({ onAdjusted }: { onAdjusted: () => void }) {
       onAdjusted();
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Có lỗi xảy ra");
+      toast.error(getApiErrorMessage(err, "Có lỗi xảy ra"));
     },
   });
 

@@ -148,7 +148,7 @@ export default function SocketProvider({ children }: { children: React.ReactNode
             duration: 5000,
           });
         } else {
-          toast.error(`❌ Đơn đổi quà #${data.orderId} đã bị từ chối bởi ${data.reviewerName || "Ban Quản Trị"}.`, {
+          toast.error(`Đơn đổi quà #${data.orderId} đã bị từ chối bởi ${data.reviewerName || "Ban Quản Trị"}.`, {
             duration: 5000,
           });
         }
@@ -175,8 +175,7 @@ export default function SocketProvider({ children }: { children: React.ReactNode
       // Thông báo Toast nếu tin nhắn đến từ đối phương
       if (user?.role === "ADMIN") {
         if (fromRole === "STUDENT") {
-          toast(`💬 ${studentName}: "${message.content.substring(0, 35)}..."`, {
-            icon: "📩",
+          toast(`Tin nhắn mới từ ${studentName}: "${message.content.substring(0, 35)}..."`, {
             duration: 4000,
           });
         }
