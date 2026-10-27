@@ -7,6 +7,7 @@ import {
   AdminMarketOrder,
   adminMarketService,
 } from "@/lib/api/services/admin-market.service";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 interface AdminFulfillmentFailedModalProps {
   isOpen: boolean;
@@ -43,7 +44,7 @@ export default function AdminFulfillmentFailedModal({
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Không thể xử lý giao thất bại");
+      toast.error(getApiErrorMessage(err, "Không thể xử lý giao thất bại"));
     } finally {
       setIsSubmitting(false);
     }

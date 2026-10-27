@@ -50,11 +50,11 @@ const SLOTS: Slot[] = [
   ...Array.from({ length: 5 }, (_, index) => ({
     order: index + 1,
     taskKind: "PICTURE_SENTENCE" as const,
-    label: "Picture sentence",
+    label: "Viết câu theo tranh",
   })),
-  { order: 6, taskKind: "WRITTEN_REQUEST", label: "Written request" },
-  { order: 7, taskKind: "WRITTEN_REQUEST", label: "Written request" },
-  { order: 8, taskKind: "OPINION_ESSAY", label: "Opinion essay" },
+  { order: 6, taskKind: "WRITTEN_REQUEST", label: "Trả lời yêu cầu qua email" },
+  { order: 7, taskKind: "WRITTEN_REQUEST", label: "Trả lời yêu cầu qua email" },
+  { order: 8, taskKind: "OPINION_ESSAY", label: "Bài luận nêu ý kiến" },
 ];
 
 function unwrap<T>(value: unknown): T {
@@ -62,7 +62,7 @@ function unwrap<T>(value: unknown): T {
 }
 
 function sourceLabel(source: Source) {
-  return `#${source.id} · ${source.title} · ${source.type}`;
+  return `#${source.id} · ${source.title}`;
 }
 
 function statusFor(item: SetItem | undefined, slot: Slot): {
@@ -71,18 +71,18 @@ function statusFor(item: SetItem | undefined, slot: Slot): {
   icon: typeof CheckCircle2;
 } {
   if (!item) {
-    return { label: "Missing", className: "text-amber-700 bg-amber-50", icon: XCircle };
+    return { label: "Chưa chọn bài", className: "text-amber-700 bg-amber-50", icon: XCircle };
   }
   if (item.taskKind !== slot.taskKind || !item.source) {
-    return { label: "Invalid type", className: "text-red-700 bg-red-50", icon: XCircle };
+    return { label: "Sai dạng bài", className: "text-red-700 bg-red-50", icon: XCircle };
   }
   if (item.source.publicationStatus !== "PUBLISHED") {
-    return { label: "Draft", className: "text-slate-700 bg-slate-100", icon: XCircle };
+    return { label: "Bài viết còn là bản nháp", className: "text-slate-700 bg-slate-100", icon: XCircle };
   }
   if (slot.taskKind === "PICTURE_SENTENCE" && !item.source.imageUrl) {
     return { label: "Thiếu ảnh bắt buộc", className: "text-amber-700 bg-amber-50", icon: XCircle };
   }
-  return { label: "Ready", className: "text-emerald-700 bg-emerald-50", icon: CheckCircle2 };
+  return { label: "Sẵn sàng", className: "text-emerald-700 bg-emerald-50", icon: CheckCircle2 };
 }
 
 export default function ToeicWritingSetComposer() {
@@ -101,7 +101,7 @@ export default function ToeicWritingSetComposer() {
     [activeSet],
   );
   const readySlotCount = activeSet
-    ? SLOTS.filter((slot) => statusFor(itemsByOrder.get(slot.order), slot).label === "Ready").length
+    ? SLOTS.filter((slot) => statusFor(itemsByOrder.get(slot.order), slot).label === "Sẵn sàng").length
     : 0;
 
   const load = async () => {
@@ -255,7 +255,7 @@ export default function ToeicWritingSetComposer() {
         <aside className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <h2 className="text-sm font-semibold text-slate-900">Các bộ Writing</h2>
           <div className="mt-3 space-y-2">
-            {sets.length === 0 && <p className="text-sm text-slate-500">Chưa có Set nào.</p>}
+            {sets.length === 0 && <p className="text-sm text-slate-500">Chưa có bộ đề nào.</p>}
             {sets.map((set) => (
               <button key={set.id} type="button" onClick={() => chooseSet(set.id)} className={`w-full rounded-xl border px-3 py-2 text-left text-sm ${set.id === activeId ? "border-blue-300 bg-blue-50 text-blue-900" : "border-slate-200 hover:bg-slate-50"}`}>
                 <span className="block truncate font-medium">{set.title}</span>
@@ -267,18 +267,18 @@ export default function ToeicWritingSetComposer() {
 
         <section className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           {!activeSet ? (
-            <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500">Tạo một Set để bắt đầu.</div>
+            <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500">Tạo một bộ đề để bắt đầu.</div>
           ) : (
             <>
               <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
-                <label className="text-sm font-medium text-slate-700">Tên Set<input value={title} onChange={(event) => setTitle(event.target.value)} disabled={activeSet.publicationStatus === "PUBLISHED"} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" /></label>
+                <label className="text-sm font-medium text-slate-700">Tên bộ đề<input value={title} onChange={(event) => setTitle(event.target.value)} disabled={activeSet.publicationStatus === "PUBLISHED"} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" /></label>
                 <label className="text-sm font-medium text-slate-700">Mô tả<input value={description} onChange={(event) => setDescription(event.target.value)} disabled={activeSet.publicationStatus === "PUBLISHED"} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" /></label>
                 <button type="button" onClick={saveDetails} disabled={busy || activeSet.publicationStatus === "PUBLISHED"} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-50"><Save size={16} /> Lưu</button>
               </div>
 
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3 text-sm">
-                <span className="font-semibold text-slate-800">Readiness: {readySlotCount}/8 hợp lệ</span>
-                <div className="flex items-center gap-2"><span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold">{activeSet.publicationStatus}</span><button type="button" onClick={publish} disabled={busy || activeSet.publicationStatus === "PUBLISHED"} className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"><Send size={15} /> Publish</button></div>
+                <span className="font-semibold text-slate-800">Đã sẵn sàng {readySlotCount}/8 câu</span>
+                <div className="flex items-center gap-2"><span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold">{activeSet.publicationStatus === "PUBLISHED" ? "Đã xuất bản" : "Bản nháp"}</span><button type="button" onClick={publish} disabled={busy || activeSet.publicationStatus === "PUBLISHED"} className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"><Send size={15} /> Xuất bản</button></div>
               </div>
 
               <div className="space-y-3">
@@ -290,12 +290,12 @@ export default function ToeicWritingSetComposer() {
                     <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-700">{slot.order}</span>
                     <div><p className="text-sm font-semibold text-slate-900">{slot.label}</p><span className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${status.className}`}><StatusIcon size={13} /> {status.label}</span></div>
                     <select value={draftSelections[slot.order] ?? String(item?.writingQuizId ?? "")} onChange={(event) => setDraftSelections((current) => ({ ...current, [slot.order]: event.target.value }))} disabled={activeSet.publicationStatus === "PUBLISHED"} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">Chọn bài Writing</option>{compatibleSources(slot).map((source) => <option key={source.id} value={source.id}>{sourceLabel(source)}</option>)}</select>
-                    <div className="flex flex-wrap gap-2"><button type="button" onClick={() => void saveSlot(slot)} disabled={busy || activeSet.publicationStatus === "PUBLISHED"} className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-700 disabled:opacity-50">Lưu slot</button>{item?.writingQuizId && <Link href={`/admin/writing/${item.writingQuizId}`} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Mở <ExternalLink size={13} /></Link>}</div>
+                    <div className="flex flex-wrap gap-2"><button type="button" onClick={() => void saveSlot(slot)} disabled={busy || activeSet.publicationStatus === "PUBLISHED"} className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-700 disabled:opacity-50">Lưu câu</button>{item?.writingQuizId && <Link href={`/admin/writing/${item.writingQuizId}`} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Mở <ExternalLink size={13} /></Link>}</div>
                   </div>;
                 })}
               </div>
               {!activeSet.structure.valid && activeSet.structure.issues.length > 0 && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><p className="font-semibold">Chưa sẵn sàng xuất bản</p><ul className="mt-2 list-disc space-y-1 pl-5">{activeSet.structure.issues.map((issue) => <li key={issue}>{issue}</li>)}</ul></div>}
-              <p className="text-xs text-slate-500">+ Tạo bài Writing mới tại <Link href="/admin/writing/new" className="font-semibold text-blue-700 hover:underline">Writing CMS</Link>. Composer chỉ tham chiếu task, không tạo pipeline Writing thứ hai.</p>
+              <p className="text-xs text-slate-500">Cần bài mới? Tạo tại <Link href="/admin/writing/new" className="font-semibold text-blue-700 hover:underline">Quản lý bài viết</Link>, rồi chọn bài đó cho câu tương ứng.</p>
             </>
           )}
         </section>

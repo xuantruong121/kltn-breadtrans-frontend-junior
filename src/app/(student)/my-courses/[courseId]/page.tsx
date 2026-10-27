@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, BookOpen, Loader2 } from "lucide-react";
 import { courseService } from "@/lib/api/services/course.service";
 import { courseLessonPath } from "@/lib/course/navigation";
+import { levelLabel } from "@/lib/ui/displayLabels";
 
 export default function CourseDetailPage(props: {
   params: Promise<{ courseId: string }>;
@@ -36,7 +37,7 @@ export default function CourseDetailPage(props: {
     data.lessons.find((lesson) => !lesson.completed) ?? data.lessons[0];
   const learning = data.course.learning;
   return (
-    <main className="w-full space-y-8 px-4 sm:px-6 lg:px-8 xl:px-10 py-6 sm:py-8">
+    <div className="w-full space-y-8 px-4 sm:px-6 lg:px-8 xl:px-10 py-6 sm:py-8">
       <Link
         href="/courses"
         className="inline-flex items-center gap-2 text-base font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
@@ -45,7 +46,7 @@ export default function CourseDetailPage(props: {
       </Link>
       <header className="space-y-4">
         <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-blue-600">
-          {data.course.level ?? "Course"}
+          {levelLabel(data.course.level) || "Khóa học"}
         </p>
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15]">
           {data.course.title}
@@ -152,6 +153,6 @@ export default function CourseDetailPage(props: {
           </Link>
         ))}
       </section>
-    </main>
+    </div>
   );
 }

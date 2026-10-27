@@ -762,7 +762,7 @@ export default function DashboardPage() {
               )}
 
               <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 max-w-xl leading-relaxed">
-                Luyện tiếng Anh toàn diện theo 4 kỹ năng: Nghe, Nói, Đọc và Viết. Theo dõi tiến độ học tập và duy trì nhịp rèn luyện mỗi ngày.
+                Luyện Nghe, Nói, Đọc, Viết và theo dõi tiến độ của bạn.
               </p>
             </div>
           </div>

@@ -225,7 +225,7 @@ export default function CourseCurriculumPage() {
     if (!curriculumAiCandidates.length) return;
     if (!curriculumAiCandidateCourseId) {
       toast.error(
-        "Candidate AI không hợp lệ. Hãy tạo gợi ý lại trước khi Apply.",
+        "Đề xuất của AI không hợp lệ. Hãy tạo lại đề xuất trước khi áp dụng.",
       );
       return;
     }

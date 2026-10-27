@@ -66,6 +66,7 @@ import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
 import { ReportIssueButton } from "@/components/issue-report";
 import { isPremiumSpeakingForbiddenError } from "@/modules/subscription/planLogic";
 import toast from "react-hot-toast";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 /**
  * Resamples raw audio data to exactly 16,000 Hz using native OfflineAudioContext.
@@ -160,10 +161,17 @@ export default function SpeakingExerciseDetailPage() {
           componentId: Number(parentComponentId),
         }
       : undefined;
+  const parentAssessmentId = searchParams.get("parentAssessmentId");
+  // In a TOEIC assessment, "back" means the exam's section list, not the
+  // practice catalogue.
+  const examReturn =
+    parentAssessmentId && parentAttemptId
+      ? `/toeic/assessments/${parentAssessmentId}/attempts/${parentAttemptId}`
+      : null;
   const courseReturn =
     requestedReturnTo && isSafeCourseReturn(requestedReturnTo)
       ? requestedReturnTo
-      : "/speaking";
+      : (examReturn ?? "/speaking");
   const queryClient = useQueryClient();
 
   // Explicit Attempt State Machine
@@ -172,7 +180,9 @@ export default function SpeakingExerciseDetailPage() {
     "UNKNOWN" | "READY" | "DENIED" | "MISSING"
   >("UNKNOWN");
   const [recordingSeconds, setRecordingSeconds] = useState(0);
-  const MAX_RECORDING_SECONDS = 45;
+  // Per-task limit from the server timing contract (kept in a ref for the
+  // recording timer callback).
+  const maxRecordingSecondsRef = useRef(45);
 
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -226,7 +236,7 @@ export default function SpeakingExerciseDetailPage() {
   const completionToastShownRef = useRef<Set<number>>(new Set());
 
   // Utilities State
-  const [isBilingual, setIsBilingual] = useState(true);
+  const [isBilingual, setIsBilingual] = useState(!examReturn);
   const [isSaved, setIsSaved] = useState(() => {
     if (typeof window === "undefined" || !exerciseId) return false;
     try {
@@ -325,6 +335,19 @@ export default function SpeakingExerciseDetailPage() {
     queryFn: () => speakingService.getExerciseById(exerciseId, examParentContext),
     enabled: !!exerciseId,
   });
+
+  const responseSeconds = exercise?.timing?.responseSeconds ?? 45;
+  useEffect(() => {
+    maxRecordingSecondsRef.current = responseSeconds;
+  }, [responseSeconds]);
+  // TOEIC exam tasks run on the exam clock: reading and preparation time,
+  // then the recording starts by itself.
+  const isExamTask = examExerciseIds.length > 0 || Boolean(parentAttemptId);
+  const prepTotalSeconds = isExamTask
+    ? (exercise?.timing?.readingSeconds ?? 0) + (exercise?.timing?.prepSeconds ?? 0)
+    : 0;
+  const [prepRemaining, setPrepRemaining] = useState<number | null>(null);
+  const [promptPlaying, setPromptPlaying] = useState(false);
 
   // UK plays the British twin when the exercise has one, otherwise the US clip.
   const referenceAudioUrl =
@@ -1115,7 +1138,10 @@ export default function SpeakingExerciseDetailPage() {
           setPhase("REQUESTING_UPLOAD");
           const durationMs = Math.max(
             300,
-            Math.min(45000, Math.round(((blob.size - 44) / 32000) * 1000)),
+            Math.min(
+              maxRecordingSecondsRef.current * 1000 + 1500,
+              Math.round(((blob.size - 44) / 32000) * 1000),
+            ),
           );
 
           const intent = await speakingService.createUploadIntent(
@@ -1210,8 +1236,7 @@ export default function SpeakingExerciseDetailPage() {
         setPhase("FAILED");
         setIsProlongedProcessing(false);
         const msg =
-          err?.response?.data?.message ||
-          "Có lỗi xảy ra khi gửi bài phát âm. Bạn có thể thử lại với bản ghi này.";
+          getApiErrorMessage(err, "Có lỗi xảy ra khi gửi bài phát âm. Bạn có thể thử lại với bản ghi này.");
         toast.error(msg);
       } finally {
         submissionInFlightRef.current = false;
@@ -1287,7 +1312,10 @@ export default function SpeakingExerciseDetailPage() {
     // 3. Pre-upload WAV validation
     setPhase("VALIDATING_AUDIO");
     const arrayBuffer = await wavBlob.arrayBuffer();
-    const validation = validateWavBinary(arrayBuffer);
+    const validation = validateWavBinary(
+      arrayBuffer,
+      maxRecordingSecondsRef.current * 1000 + 1500,
+    );
 
     if (!validation.ok) {
       setQualityWarning(validation.message);
@@ -1348,14 +1376,65 @@ export default function SpeakingExerciseDetailPage() {
     }
   }, [phase, startWaveformVisualizer]);
 
-  // Countdown timer during recording (max 45s, auto-submits on expiry)
+  // Exam clock: start the reading/preparation time once per task, then
+  // record automatically when it runs out (ETS TOEIC Speaking flow).
+  const prepStartedForRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!isExamTask || !exercise || prepTotalSeconds <= 0) return;
+    if (phase !== "READY" || audioBlob || currentSubmission) return;
+    if (prepStartedForRef.current === exerciseId) return;
+    prepStartedForRef.current = exerciseId;
+    const startPrep = () => {
+      setPromptPlaying(false);
+      setPrepRemaining(prepTotalSeconds);
+    };
+    // Spoken questions are heard first, then the preparation clock runs. If
+    // the browser blocks autoplay the clock still starts and "Nghe câu hỏi"
+    // stays available.
+    const spoken =
+      exercise.audioUrl &&
+      !["READ_ALOUD", "PRONUNCIATION_DRILL"].includes(String(exercise.taskType ?? ""));
+    if (!spoken) {
+      startPrep();
+      return;
+    }
+    const question = new Audio(exercise.audioUrl!);
+    question.onended = startPrep;
+    question.onerror = startPrep;
+    setPromptPlaying(true);
+    question.play().catch(startPrep);
+    return () => {
+      question.onended = null;
+      question.onerror = null;
+      question.pause();
+    };
+  }, [isExamTask, exercise, prepTotalSeconds, phase, audioBlob, currentSubmission, exerciseId]);
+  useEffect(() => {
+    if (prepRemaining === null) return;
+    if (phase !== "READY") {
+      setPrepRemaining(null);
+      return;
+    }
+    if (prepRemaining <= 0) {
+      setPrepRemaining(null);
+      void startRecording();
+      return;
+    }
+    const tick = setTimeout(
+      () => setPrepRemaining((left) => (left === null ? null : left - 1)),
+      1000,
+    );
+    return () => clearTimeout(tick);
+  }, [prepRemaining, phase, startRecording]);
+
+  // Countdown timer during recording (per-task limit, auto-submits on expiry)
   useEffect(() => {
     if (phase === "RECORDING") {
       timerIntervalRef.current = setInterval(() => {
         setRecordingSeconds((prev) => {
-          if (prev + 1 >= MAX_RECORDING_SECONDS) {
+          if (prev + 1 >= maxRecordingSecondsRef.current) {
             stopRecording();
-            return MAX_RECORDING_SECONDS;
+            return maxRecordingSecondsRef.current;
           }
           return prev + 1;
         });
@@ -1437,19 +1516,21 @@ export default function SpeakingExerciseDetailPage() {
         if (examParentContext) {
           params.set("parentAttemptId", String(examParentContext.attemptId));
           params.set("parentComponentId", String(examParentContext.componentId));
+          if (parentAssessmentId) params.set("parentAssessmentId", parentAssessmentId);
           params.set("examExerciseIds", examExerciseIds.join(","));
         }
         const query = params.toString() ? `?${params.toString()}` : "";
         router.push(`/speaking/${nextId}${query}`);
       } else {
-        router.push("/speaking");
+        // After the last exam task, back to the exam, not the practice list.
+        router.push(examReturn ?? "/speaking");
       }
     } catch (err) {
       console.error("Failed to load next exercise:", err);
       toast.error("Không thể tải bài tập tiếp theo. Đang quay về danh sách.");
-      router.push("/speaking");
+      router.push(examReturn ?? "/speaking");
     }
-  }, [examExerciseIds, examParentContext, exerciseId, practiceSetKey, router]);
+  }, [examExerciseIds, examParentContext, examReturn, exerciseId, parentAssessmentId, practiceSetKey, router]);
 
   const stopTtsPlayback = useCallback(() => {
     referenceAudioRef.current?.pause();
@@ -1797,10 +1878,11 @@ export default function SpeakingExerciseDetailPage() {
               ? `Câu ${currentPracticeSetPosition}/${activePracticeSet.exerciseCount}`
               : undefined
           }
-          activityLabel="Đánh giá phát âm"
+          activityLabel={examReturn ? "TOEIC Speaking" : "Đánh giá phát âm"}
           onExit={() => confirmExit(courseReturn)}
           exitLabel="Thoát"
-          bilingualEnabled
+          // Vietnamese translation is coaching; it is off during an exam.
+          bilingualEnabled={!examReturn}
           isBilingual={isBilingual}
           onToggleBilingual={() => setIsBilingual((v) => !v)}
           notesEnabled
@@ -2059,6 +2141,41 @@ export default function SpeakingExerciseDetailPage() {
               {/* 3. Audio Recording Controls */}
               {phase === "READY" && !audioBlob ? (
                 <div className="flex flex-col items-center justify-center gap-2 my-1">
+                  {promptPlaying && (
+                    <p role="status" className="w-full max-w-md rounded-2xl bg-sky-50 p-4 text-center text-sm font-bold text-sky-900 dark:bg-sky-950/30 dark:text-sky-200">
+                      Đang phát câu hỏi. Thời gian chuẩn bị bắt đầu khi câu hỏi kết thúc.
+                    </p>
+                  )}
+                  {prepRemaining !== null && (
+                    <div
+                      role="timer"
+                      aria-live="polite"
+                      className="w-full max-w-md rounded-2xl bg-amber-50 p-4 text-center dark:bg-amber-950/30"
+                    >
+                      <p className="text-sm font-bold text-amber-900 dark:text-amber-200">
+                        {exercise?.timing?.readingSeconds &&
+                        prepRemaining > (exercise.timing.prepSeconds ?? 0)
+                          ? "Thời gian đọc thông tin"
+                          : "Thời gian chuẩn bị"}
+                      </p>
+                      <p className="mt-1 text-4xl font-black tabular-nums text-amber-900 dark:text-amber-100">
+                        {prepRemaining}s
+                      </p>
+                      <p className="mt-1 text-sm text-amber-900/80 dark:text-amber-200/80">
+                        Hết giờ, máy sẽ tự ghi âm trong {responseSeconds} giây.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPrepRemaining(null);
+                          void startRecording();
+                        }}
+                        className="mt-3 inline-flex min-h-10 items-center rounded-xl bg-amber-600 px-4 text-sm font-bold text-white hover:bg-amber-700"
+                      >
+                        Bắt đầu nói ngay
+                      </button>
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={startRecording}
@@ -2091,7 +2208,7 @@ export default function SpeakingExerciseDetailPage() {
                       để nói
                     </p>
                     <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-semibold">
-                      Bấm dừng là bài được chấm ngay. Bạn có thể ghi âm lại sau khi có kết quả
+                      Thời gian trả lời tối đa {responseSeconds} giây. Bấm dừng là bài được chấm ngay.
                     </p>
                   </div>
                 </div>
@@ -2446,7 +2563,7 @@ export default function SpeakingExerciseDetailPage() {
                 userAudioUrl={audioUrl}
                 qualityWarning={qualityWarning}
                 recordingSeconds={recordingSeconds}
-                maxRecordingSeconds={MAX_RECORDING_SECONDS}
+                maxRecordingSeconds={responseSeconds}
                 canvasRef={canvasRef}
                 uploadProgress={uploadProgress}
                 onStartRecording={startRecording}
@@ -2600,6 +2717,7 @@ export default function SpeakingExerciseDetailPage() {
                   if (examParentContext) {
                     params.set("parentAttemptId", String(examParentContext.attemptId));
                     params.set("parentComponentId", String(examParentContext.componentId));
+                    if (parentAssessmentId) params.set("parentAssessmentId", parentAssessmentId);
                     params.set("examExerciseIds", examExerciseIds.join(","));
                   }
                   const query = params.toString() ? `?${params.toString()}` : "";
@@ -2616,7 +2734,7 @@ export default function SpeakingExerciseDetailPage() {
               onClick={() => confirmExit(courseReturn)}
               className="px-3.5 py-1.5 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 cursor-pointer transition-colors text-xs sm:text-sm"
             >
-              ← Danh sách bài
+              {examReturn ? "← Về bài thi" : "← Danh sách bài"}
             </button>
 
             {/* Contextual Action Button */}
@@ -2638,11 +2756,20 @@ export default function SpeakingExerciseDetailPage() {
             ) : phase === "READY" && !audioBlob ? (
               <button
                 type="button"
-                onClick={startRecording}
+                onClick={() => {
+                  setPrepRemaining(null);
+                  void startRecording();
+                }}
                 className="px-4 sm:px-5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1.5 text-xs sm:text-sm"
               >
                 <Mic size={15} aria-hidden="true" />
-                <span>Bắt đầu thu âm</span>
+                <span>
+                  {promptPlaying
+                    ? "Đang phát câu hỏi"
+                    : prepRemaining !== null
+                      ? `Chuẩn bị ${prepRemaining}s · Nói ngay`
+                      : "Bắt đầu thu âm"}
+                </span>
                 <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-amber-600/60 font-mono text-[10px] text-white">
                   Space
                 </kbd>
@@ -2708,7 +2835,9 @@ export default function SpeakingExerciseDetailPage() {
                       ? activePracticeSet
                         ? "Câu tiếp theo"
                         : "Tiếp tục bài sau"
-                      : "Về danh sách"}
+                      : examReturn
+                        ? "Về bài thi"
+                        : "Về danh sách"}
                   </span>
                   <ArrowLeft
                     size={14}

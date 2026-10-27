@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { locationService } from "@/lib/api/services/location.service";
 import { userService } from "@/lib/api/services/user.service";
 import { AddressCombobox } from "@/components/ui";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 interface ShippingCompletionModalProps {
   isOpen: boolean;
@@ -108,7 +109,7 @@ export const ShippingCompletionModal: React.FC<ShippingCompletionModalProps> = (
       } else if (errCode === "WARD_PROVINCE_MISMATCH") {
         toast.error("Phường/xã đã chọn không thuộc tỉnh/thành phố tương ứng.");
       } else {
-        toast.error(err?.response?.data?.message || "Không thể lưu thông tin nhận quà. Vui lòng kiểm tra lại.");
+        toast.error(getApiErrorMessage(err, "Không thể lưu thông tin nhận quà. Vui lòng kiểm tra lại."));
       }
     } finally {
       setIsSaving(false);

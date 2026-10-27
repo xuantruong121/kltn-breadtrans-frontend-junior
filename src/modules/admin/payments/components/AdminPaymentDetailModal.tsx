@@ -22,6 +22,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import Image from "next/image";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 interface AdminPaymentDetailModalProps {
   paymentId: number | null;
@@ -125,8 +126,7 @@ export const AdminPaymentDetailModal: React.FC<AdminPaymentDetailModalProps> = (
     },
     onError: (err: any) => {
       const msg =
-        err?.response?.data?.message ||
-        "Không thể kích hoạt lại ghi danh. Vui lòng thử lại.";
+        getApiErrorMessage(err, "Không thể kích hoạt lại ghi danh. Vui lòng thử lại.");
       toast.error(msg);
     },
   });

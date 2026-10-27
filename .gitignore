@@ -16,6 +16,10 @@
 # next.js
 /.next/
 /.next-harness/
+# Any alternate NEXT_DIST_DIR build (e.g. a production check). Tailwind skips
+# gitignored paths when scanning for classes; an unignored build tree here
+# fed binary cache bytes into globals.css and broke the dev server.
+/.next-*/
 /out/
 
 # production

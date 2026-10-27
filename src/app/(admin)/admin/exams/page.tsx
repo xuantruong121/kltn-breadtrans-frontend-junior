@@ -40,6 +40,7 @@ import {
   getPublishReadinessUi,
   getReadinessIssueLabel,
 } from "@/lib/examStudio/readinessUi";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 const TOEIC_PARTS = [
   { part: 1, label: "Part 1: Mô tả hình ảnh (Photographs)", type: "LISTENING" },
@@ -288,7 +289,7 @@ export default function AdminExamsPage() {
       }
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message || "Không thể tạo câu hỏi Part 5 lúc này.",
+        getApiErrorMessage(err, "Không thể tạo câu hỏi Part 5 lúc này."),
       );
     } finally {
       setIsAiPart5Loading(false);
@@ -343,7 +344,7 @@ export default function AdminExamsPage() {
       if (data?.id) setSelectedExamId(data.id);
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message || "Không thể tạo bộ đề thi"),
+      toast.error(getApiErrorMessage(err, "Không thể tạo bộ đề thi")),
   });
 
   const updateExamMutation = useMutation({
@@ -357,7 +358,7 @@ export default function AdminExamsPage() {
       });
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message || "Không thể cập nhật đề thi"),
+      toast.error(getApiErrorMessage(err, "Không thể cập nhật đề thi")),
   });
 
   const publishExamMutation = useMutation({
@@ -397,7 +398,7 @@ export default function AdminExamsPage() {
       });
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message || "Không thể gỡ xuất bản"),
+      toast.error(getApiErrorMessage(err, "Không thể gỡ xuất bản")),
   });
 
   const deleteExamMutation = useMutation({
@@ -409,7 +410,7 @@ export default function AdminExamsPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message || "Không thể xóa đề thi"),
+      toast.error(getApiErrorMessage(err, "Không thể xóa đề thi")),
   });
 
   const saveGroupMutation = useMutation({
@@ -437,7 +438,7 @@ export default function AdminExamsPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message || "Không thể lưu nhóm câu hỏi"),
+      toast.error(getApiErrorMessage(err, "Không thể lưu nhóm câu hỏi")),
   });
 
   const regenerateMediaMutation = useMutation({
@@ -466,8 +467,7 @@ export default function AdminExamsPage() {
     },
     onError: (err: any) =>
       toast.error(
-        err?.response?.data?.message ||
-          "Không thể tạo lại media. Bạn có thể tải tệp lên thủ công.",
+        getApiErrorMessage(err, "Không thể tạo lại media. Bạn có thể tải tệp lên thủ công."),
       ),
   });
 
@@ -497,7 +497,7 @@ export default function AdminExamsPage() {
     },
     onError: (err: any) =>
       toast.error(
-        err?.response?.data?.message || "Không thể tìm ảnh tự động lúc này.",
+        getApiErrorMessage(err, "Không thể tìm ảnh tự động lúc này."),
       ),
   });
 
@@ -523,7 +523,7 @@ export default function AdminExamsPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message || "Không thể chọn ảnh."),
+      toast.error(getApiErrorMessage(err, "Không thể chọn ảnh.")),
   });
 
   const visionMutation = useMutation({
@@ -542,7 +542,7 @@ export default function AdminExamsPage() {
     },
     onError: (err: any) =>
       toast.error(
-        err?.response?.data?.message || "Không thể phân tích ảnh lúc này.",
+        getApiErrorMessage(err, "Không thể phân tích ảnh lúc này."),
       ),
   });
 
@@ -569,7 +569,7 @@ export default function AdminExamsPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message || "Không thể xóa nhóm câu hỏi"),
+      toast.error(getApiErrorMessage(err, "Không thể xóa nhóm câu hỏi")),
   });
 
   const saveQuestionMutation = useMutation({
@@ -603,7 +603,7 @@ export default function AdminExamsPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message || "Không thể lưu câu hỏi"),
+      toast.error(getApiErrorMessage(err, "Không thể lưu câu hỏi")),
   });
 
   const deleteQuestionMutation = useMutation({
@@ -628,7 +628,7 @@ export default function AdminExamsPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message || "Không thể xóa câu hỏi"),
+      toast.error(getApiErrorMessage(err, "Không thể xóa câu hỏi")),
   });
 
   const openGroupEditor = (group: ExamGroup) => {
@@ -2084,7 +2084,7 @@ export default function AdminExamsPage() {
                         onChange={(url) =>
                           setGroupForm({ ...groupForm, imageUrl: url })
                         }
-                        helperText="Tải ảnh mô tả cho Part 1. Hệ thống lưu trực tiếp lên Cloudflare R2."
+                        helperText="Tải ảnh mô tả cho Part 1 (PNG, JPG hoặc WEBP)."
                       />
                     </div>
                     <div>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { 
   Film, 
@@ -18,7 +18,7 @@ import { learnService } from "@/lib/api/services/learn.service";
 import { ContentTopic } from "../types";
 import { Button3D } from "@/components/ui";
 import toast from "react-hot-toast";
-import { useAuthStore } from "@/stores/authStore";
+import { levelLabel } from "@/lib/ui/displayLabels";
 
 interface TopicProgress {
   userAnswers: Record<number, number>;
@@ -27,7 +27,6 @@ interface TopicProgress {
 }
 
 export default function LearnScreen() {
-  const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<"movie" | "music">("movie");
   const [selectedTopic, setSelectedTopic] = useState<ContentTopic | null>(null);
@@ -83,15 +82,8 @@ export default function LearnScreen() {
     setProgressMap(nextMap);
       setResultMap((previous) => ({ ...previous, [currentTopicId]: result.questionsResult }));
 
-    if (result.rewardBanh > 0) {
-      toast.success(`Chúc mừng! Bạn đã trả lời đúng ${correctCount}/${currentTopic.exercises.length} câu và nhận +${result.rewardBanh} 🍞 Bánh Mì!`, {
-        icon: "🎉",
-      });
-      const currentUserId = useAuthStore.getState().user?.id;
-      queryClient.invalidateQueries({ queryKey: ["user-stats", currentUserId] });
-    } else {
-      toast("Hãy xem lại video và thử lại để kiếm Bánh Mì nhé!", { icon: "💡" });
-    }
+    // Lessons earn no Bánh mì or XP (owner policy); report the result only.
+    toast.success(`Bạn đã trả lời đúng ${correctCount}/${currentTopic.exercises.length} câu.`);
     } catch { toast.error("Không thể nộp bài. Vui lòng thử lại."); }
   };
 
@@ -182,7 +174,7 @@ export default function LearnScreen() {
                   <div className="p-6 space-y-3">
                     <div className="flex items-center gap-2">
                       <span className="bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-900/60 font-extrabold text-xs px-3 py-1 rounded-full border border-rose-200 uppercase">
-                        {currentTopic.materialLinks?.level || "BEGINNER"}
+                        {levelLabel(currentTopic.materialLinks?.level) || "Cơ bản"}
                       </span>
                       {currentTopic.materialLinks?.duration && (
                         <span className="flex items-center gap-1 text-slate-400 dark:text-slate-500 text-xs font-bold">
@@ -281,7 +273,7 @@ export default function LearnScreen() {
                         </Button3D>
                       ) : (
                         <Button3D variant="orange" size="md" onClick={handleSubmitQuiz}>
-                          Nộp Bài & Nhận Bánh Mì 🍞
+                          Nộp bài
                         </Button3D>
                       )}
                     </div>
@@ -337,7 +329,7 @@ export default function LearnScreen() {
                         </div>
                         <div className="flex items-center justify-between text-[11px] font-bold">
                           <span className="text-slate-400 dark:text-slate-500">
-                            {topic.materialLinks?.level || "Beginner"} • {topic.exercises?.length || 0} bài tập
+                            {levelLabel(topic.materialLinks?.level) || "Cơ bản"} • {topic.exercises?.length || 0} bài tập
                           </span>
                           {isDone && (
                             <span className="text-emerald-700 dark:text-emerald-300 font-extrabold text-[10px] bg-emerald-100 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">

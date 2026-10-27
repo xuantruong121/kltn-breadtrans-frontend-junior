@@ -27,6 +27,7 @@ import {
   READING_MICRO_SKILLS,
   resolveReadingAuthoringAnswer,
 } from "@/lib/reading/readingAuthoringUtils";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 const QUIZ_TYPES = [
   { value: "all", label: "Tất cả thể loại" },
@@ -36,6 +37,9 @@ const QUIZ_TYPES = [
   { value: "WRITING_PICTURE", label: "Viết Mô Tả Tranh" },
   { value: "WRITING_EMAIL", label: "Viết Thư / Email" },
 ];
+
+const quizTypeLabel = (type?: string) =>
+  QUIZ_TYPES.find((option) => option.value === type)?.label ?? type ?? "";
 
 function formatQuestionExplanation(value: unknown): string {
   if (typeof value === "string") return value;
@@ -127,7 +131,7 @@ export default function AdminQuizzesPage() {
       setEditingQuiz(null);
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Có lỗi xảy ra khi lưu đề thi");
+      toast.error(getApiErrorMessage(err, "Có lỗi xảy ra khi lưu đề thi"));
     },
   });
 
@@ -145,7 +149,7 @@ export default function AdminQuizzesPage() {
       }
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Không thể xóa đề thi");
+      toast.error(getApiErrorMessage(err, "Không thể xóa đề thi"));
     },
   });
 
@@ -157,7 +161,7 @@ export default function AdminQuizzesPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-quizzes"] });
       queryClient.invalidateQueries({ queryKey: ["admin-listening-analytics"] });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể cập nhật trạng thái"),
+    onError: (err: any) => toast.error(getApiErrorMessage(err, "Không thể cập nhật trạng thái")),
   });
 
   // Add Question Mutation
@@ -171,7 +175,7 @@ export default function AdminQuizzesPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-quizzes"] });
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Không thể thêm câu hỏi");
+      toast.error(getApiErrorMessage(err, "Không thể thêm câu hỏi"));
     },
   });
 
@@ -186,7 +190,7 @@ export default function AdminQuizzesPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-quizzes"] });
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Không thể xóa câu hỏi");
+      toast.error(getApiErrorMessage(err, "Không thể xóa câu hỏi"));
     },
   });
 
@@ -203,7 +207,7 @@ export default function AdminQuizzesPage() {
       refetchDetail();
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Không thể tải audio lên");
+      toast.error(getApiErrorMessage(err, "Không thể tải audio lên"));
     },
   });
 
@@ -215,7 +219,7 @@ export default function AdminQuizzesPage() {
       refetchDetail();
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Không thể sinh audio hội thoại");
+      toast.error(getApiErrorMessage(err, "Không thể sinh audio hội thoại"));
     },
   });
 
@@ -228,7 +232,7 @@ export default function AdminQuizzesPage() {
       setDiagnosticClipForm({ label: "", key: "", url: "" });
       refetchDetail();
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Không thể gắn clip chẩn đoán"),
+    onError: (err: any) => toast.error(getApiErrorMessage(err, "Không thể gắn clip chẩn đoán")),
   });
 
   const listeningAudioAction = useMutation({
@@ -250,7 +254,7 @@ export default function AdminQuizzesPage() {
       toast.success(messages[variables.action]);
       void refetchListeningArtifacts();
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || err?.message || "Không thể thực hiện thao tác audio"),
+    onError: (err: any) => toast.error(getApiErrorMessage(err, "Không thể xử lý audio lúc này.")),
   });
 
   // Open Create Modal
@@ -332,9 +336,9 @@ export default function AdminQuizzesPage() {
       {/* BANNER: TOEIC CMS SINGLE AUTHORING PATH */}
       <div className="rounded-2xl border border-blue-200 bg-blue-50/80 p-4 text-xs text-blue-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
         <div>
-          <p className="font-bold text-sm text-blue-950">Chuyên mục Luyện đề & TOEIC đã có Studio chuyên biệt</p>
+          <p className="font-bold text-sm text-blue-950">Đề TOEIC được quản lý ở Studio Luyện đề</p>
           <p className="text-blue-700 mt-0.5">
-            Đề thi TOEIC hiện được quản lý tại Studio Luyện đề với đầy đủ cấu trúc 7 phần, audio R2, đoạn văn và bảo vệ lịch sử làm bài.
+            Đề thi TOEIC được quản lý tại Studio Luyện đề: đủ 7 phần, có audio, đoạn văn và giữ nguyên lịch sử làm bài của học viên.
           </p>
         </div>
         <Link
@@ -428,7 +432,7 @@ export default function AdminQuizzesPage() {
                       </td>
                       <td className="py-4 px-6">
                         <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-1 rounded-xl text-xs font-black uppercase">
-                          {quiz.type}
+                          {quizTypeLabel(quiz.type)}
                         </span>
                       </td>
                       <td className="py-4 px-6">
@@ -688,7 +692,7 @@ export default function AdminQuizzesPage() {
               <div className="flex items-center justify-between border-b-2 border-slate-100 pb-4 shrink-0">
                 <div>
                   <span className="text-xs font-black uppercase text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
-                    Đề thi #{selectedQuizForQuestions.id} - {selectedQuizForQuestions.type}
+                    Đề thi #{selectedQuizForQuestions.id} - {quizTypeLabel(selectedQuizForQuestions.type)}
                   </span>
                   <h3 className="text-2xl font-black text-slate-800 mt-1">
                     {selectedQuizForQuestions.title}
@@ -707,7 +711,7 @@ export default function AdminQuizzesPage() {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <h4 className="text-sm font-black text-slate-800">Audio production toàn bài</h4>
-                      <p className="mt-1 text-xs text-slate-600">Tạo preview bằng Azure, kiểm tra timeline rồi duyệt và phát hành lên R2. Học viên chỉ dùng artifact PUBLISHED.</p>
+                      <p className="mt-1 text-xs text-slate-600">Tạo bản nghe thử, kiểm tra mốc thời gian rồi duyệt và phát hành. Học viên chỉ nghe bản đã phát hành.</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <button type="button" onClick={() => listeningAudioAction.mutate({ action: "validate" })} disabled={listeningAudioAction.isPending} className="min-h-10 rounded-lg border border-sky-300 bg-white px-3 text-xs font-black text-sky-700 hover:bg-sky-100 disabled:opacity-50">Kiểm tra nội dung</button>
@@ -721,7 +725,7 @@ export default function AdminQuizzesPage() {
                           <span className="font-black text-slate-800">v{artifact.version} · {artifact.isStale ? "STALE" : artifact.status}</span>
                           <span className="ml-2 text-slate-500">{artifact.durationMs ? `${Math.round(artifact.durationMs / 1000)}s` : "Chưa có thời lượng"}</span>
                           <p className="truncate text-[11px] text-slate-500">Hash: {artifact.synthesisHash?.slice(0, 16) || "—"} · {artifact.r2Key || "Chưa có R2 object"}</p>
-                          {artifact.isStale && <p className="mt-1 text-[11px] font-bold text-amber-700">Nội dung đã đổi; cần tạo và duyệt artifact mới.</p>}
+                          {artifact.isStale && <p className="mt-1 text-[11px] font-bold text-amber-700">Nội dung đã đổi; cần tạo và duyệt bản audio mới.</p>}
                         </div>
                         <div className="flex shrink-0 gap-2">
                           {artifact.status === "PREVIEW_READY" && <button type="button" onClick={() => listeningAudioAction.mutate({ action: "approve", artifactId: artifact.id })} disabled={listeningAudioAction.isPending} className="min-h-9 rounded-lg border border-emerald-300 px-2.5 font-black text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">Duyệt</button>}
@@ -772,7 +776,7 @@ export default function AdminQuizzesPage() {
                           </div>
                         )}
                       </div>
-                    )) : <p className="text-xs text-slate-500">Chưa có artifact. Hãy kiểm tra nội dung trước khi tạo preview.</p>}
+                    )) : <p className="text-xs text-slate-500">Chưa có bản audio. Hãy kiểm tra nội dung trước khi tạo bản nghe thử.</p>}
                   </div>
                 </section>
               )}

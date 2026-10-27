@@ -1,6 +1,7 @@
 import { useQuery, UseQueryOptions, UseQueryResult } from "@tanstack/react-query";
 import axiosClient from "@/lib/api/axiosClient";
 import toast from "react-hot-toast";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 export function useApiQuery<TData = any, TError = any>(
   queryKey: unknown[],
@@ -17,9 +18,9 @@ export function useApiQuery<TData = any, TError = any>(
         return (response as any).data !== undefined ? (response as any).data : response;
       } catch (error: any) {
         // Centralized error handling
-        const message = error.response?.data?.message || error.message || "Đã xảy ra lỗi hệ thống";
+        const message = getApiErrorMessage(error, "Không tải được dữ liệu. Vui lòng thử lại.");
         if (error.response?.status !== 401 && error.response?.status !== 404) {
-          toast.error(`Lỗi tải dữ liệu: ${message}`);
+          toast.error(message);
         }
         throw error;
       }

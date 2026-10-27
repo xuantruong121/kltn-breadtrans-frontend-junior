@@ -147,6 +147,13 @@ export interface SubmissionAnalytics {
     skill: "WRITING";
     practice?: Partial<import("./writing.service").PracticeWritingDetail>;
   } | null;
+  writingExercise?:
+    | (import("./writing.service").WritingExerciseSummary & {
+        questionId: number;
+        position: number;
+        prompt: string | null;
+      })
+    | null;
   submittedAnswer?: unknown;
 }
 

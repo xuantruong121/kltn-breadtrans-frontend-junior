@@ -109,6 +109,12 @@
 }
 
 @layer base {
+  /* Password fields render their own show/hide toggle; hide Edge's built-in one. */
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear {
+    display: none;
+  }
+
   :root {
     color-scheme: light;
     --background: #fbfaf8;

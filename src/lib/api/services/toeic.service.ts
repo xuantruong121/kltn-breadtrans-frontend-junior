@@ -45,7 +45,79 @@ export interface ToeicExamBriefing {
     status: "PENDING_START" | "IN_PROGRESS";
     deadline: string | null;
   } | null;
+  /** Every unfinished attempt on this exam, with its mode. */
+  activeAttempts?: Array<{
+    id: number;
+    status: "PENDING_START" | "IN_PROGRESS";
+    deadline: string | null;
+    mode: "PRACTICE" | "FULL_TEST";
+    selectedParts?: number[];
+  }>;
 }
+
+export type ToeicLrSkillStats = {
+  attempts: number;
+  correct: number;
+  total: number;
+  accuracy: number | null;
+  averageScore: number | null;
+  bestScore: number | null;
+  averageSeconds: number | null;
+  trend: Array<{ attemptId: number; submittedAt: string; accuracy: number | null }>;
+  parts: Array<{
+    part: number;
+    correct: number;
+    wrong: number;
+    unanswered: number;
+    accuracy: number | null;
+    types: Array<{ type: string; correct: number; wrong: number; unanswered: number; accuracy: number | null }>;
+  }>;
+};
+
+export type ToeicGoal = { examDate: string | null; daysUntilExam: number | null; targetScore: number | null };
+
+/** Learner statistics over submitted L&R attempts (scores are internal practice conversions). */
+export type ToeicLrStats = {
+  window: { days: number | null; from: string | null; to: string | null };
+  overview: { attempts: number; practiceSeconds: number; averageSeconds: number | null };
+  skills: { LISTENING: ToeicLrSkillStats; READING: ToeicLrSkillStats };
+  goal: ToeicGoal;
+  attempts: Array<{
+    id: number;
+    examId: number;
+    examTitle: string;
+    mode: "PRACTICE" | "FULL_TEST";
+    inAssessment: boolean;
+    /** Part practice: its Parts; empty = the whole exam. */
+    parts: number[];
+    submittedAt: string;
+    durationSeconds: number | null;
+    listeningCorrect: number;
+    listeningTotal: number;
+    readingCorrect: number;
+    readingTotal: number;
+    totalScore: number | null;
+  }>;
+};
+
+/** Continuous Listening recording; only flexible Practice attempts get one. */
+export type ToeicListeningMaster =
+  | {
+      available: true;
+      /** Published object, or null when served locally from `path`. */
+      url: string | null;
+      path: string | null;
+      durationSeconds: number;
+      timeline: Array<{
+        kind: "INTRO" | "DIRECTIONS" | "GROUP" | "END";
+        part?: number;
+        groupId?: number;
+        questionNumbers?: number[];
+        start: number;
+        end: number;
+      }>;
+    }
+  | { available: false; reason: string };
 
 export interface ToeicAttempt {
   id: number;
@@ -60,6 +132,8 @@ export interface ToeicAttempt {
   answers: Array<{ questionId: number; selectedIndex: number | null }>;
   currentQuestionId?: number | null;
   markedQuestionIds?: number[];
+  /** Practice by Part: the chosen Parts; empty = the whole exam. */
+  selectedParts?: number[];
   /** Strict Full Test section state — server-authoritative, null for Practice. */
   section?: "LISTENING" | "READING" | null;
   listeningPosition?: number;
@@ -85,6 +159,119 @@ export interface ToeicBundle {
     }>;
   };
 }
+
+export type ToeicReviewStatus = "CORRECT" | "INCORRECT" | "SKIPPED";
+
+export type ToeicReviewTally = {
+  total: number;
+  correct: number;
+  incorrect: number;
+  skipped: number;
+  /** Percent, two decimals; null when total is 0. */
+  accuracy: number | null;
+};
+
+export type ToeicReviewQuestion = {
+  questionId: number;
+  questionNumber: number;
+  part: number;
+  groupId: number;
+  passageText: string | null;
+  imageUrl: string | null;
+  /** Authored script the group's audio was made from (Parts 1-4). */
+  transcript: string | null;
+  questionText: string | null;
+  options: string[];
+  selectedIndex: number | null;
+  correctIndex: number;
+  learnerAnswer: string | null;
+  standardAnswer: string | null;
+  status: ToeicReviewStatus;
+  isCorrect: boolean;
+  flagged: boolean;
+  explanation: string | null;
+};
+
+export type ToeicReview = {
+  attemptId: number;
+  exam: { id: number; title: string; type: string };
+  mode: "PRACTICE" | "FULL_TEST";
+  selectedParts: number[];
+  inAssessment: boolean;
+  startedAt: string | null;
+  submittedAt: string | null;
+  durationSeconds: number | null;
+  /** Internal 5-points-per-correct conversion; null for a part practice. */
+  scores: { listening: number | null; reading: number | null; total: number | null };
+  summary: {
+    overall: ToeicReviewTally;
+    listening: ToeicReviewTally;
+    reading: ToeicReviewTally;
+    parts: Array<{ part: number } & ToeicReviewTally>;
+  };
+  questions: ToeicReviewQuestion[];
+};
+
+export type ToeicTaskStatus = "NOT_SUBMITTED" | "PENDING" | "FAILED" | "NO_SPEECH" | "GRADED";
+
+export type ToeicSpeakingTask = {
+  number: number;
+  exerciseId: number;
+  title: string;
+  taskType: string | null;
+  prompt: string;
+  imageUrl: string | null;
+  status: ToeicTaskStatus;
+  submission: null | {
+    id: number;
+    submittedAt: string;
+    overallScore: number | null;
+    transcript: string | null;
+    hasRecording: boolean;
+    criteria: { accuracy: number | null; fluency: number | null; completeness: number | null; prosody: number | null };
+    feedback: string | null;
+    suggestions: string[];
+  };
+};
+
+export type ToeicWritingTask = {
+  number: number;
+  quizId: number;
+  taskKind: string;
+  title: string;
+  status: ToeicTaskStatus;
+  submission: null | {
+    id: number;
+    submittedAt: string;
+    score: number | null;
+    maxScore: number | null;
+    criteria: Array<{ label: string; score: number | null; max: number | null; comment: string | null }>;
+    feedback: string | null;
+  };
+};
+
+export type ToeicAssessmentReviewComponent = {
+  id: number;
+  kind: "LISTENING_READING" | "SPEAKING" | "WRITING";
+  order: number;
+  status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
+  startedAt: string | null;
+  completedAt: string | null;
+  childAttemptId?: number | null;
+  childStatus?: string | null;
+  tasks?: Array<ToeicSpeakingTask | ToeicWritingTask>;
+};
+
+export type ToeicAssessmentReview = {
+  id: number;
+  assessmentId: number;
+  assessment: { id: number; title: string; productFamily: string };
+  status: "IN_PROGRESS" | "COMPLETED" | string;
+  startedAt: string | null;
+  completedAt: string | null;
+  skills: Array<Record<string, any> & { kind: string; complete: boolean }>;
+  components: ToeicAssessmentReviewComponent[];
+};
 
 export const toeicService = {
   getBriefing: async (examId: number): Promise<ToeicExamBriefing> =>
@@ -115,6 +302,12 @@ export const toeicService = {
       totalScore: number | null;
       totalCorrect: number | null;
     }>,
+  getLrStats: async (days: number | null): Promise<ToeicLrStats> =>
+    (await axiosClient.get("/toeic/stats/listening-reading", {
+      params: days ? { days } : {},
+    })) as unknown as ToeicLrStats,
+  saveToeicGoal: async (goal: { examDate: string | null; targetScore: number | null }): Promise<ToeicGoal> =>
+    (await axiosClient.patch("/toeic/stats/goal", goal)) as unknown as ToeicGoal,
   getAssessmentHistory: async (): Promise<any[]> =>
     (await axiosClient.get("/toeic/assessments/history")) as unknown as any[],
   getBundle: async (quizId: number): Promise<ToeicBundle> =>
@@ -124,10 +317,15 @@ export const toeicService = {
   startAttempt: async (
     examId: number,
     mode?: "PRACTICE" | "FULL_TEST",
+    /** Practice only: Parts to practise; omitted = all. */
+    parts?: number[],
   ): Promise<{ id: number }> =>
     (await axiosClient.post(`/toeic/exams/${examId}/attempts`, {
       mode: mode ?? "FULL_TEST",
+      ...(parts?.length ? { parts } : {}),
     })) as unknown as { id: number },
+  /** Absolute URL of the API (for media served by the backend itself). */
+  apiUrl: (path: string) => `${axiosClient.defaults.baseURL}${path}`,
   beginAttempt: async (attemptId: number): Promise<ToeicAttempt> =>
     (await axiosClient.post(
       `/toeic/attempts/${attemptId}/begin`,
@@ -141,7 +339,8 @@ export const toeicService = {
   },
   saveAnswers: async (
     attemptId: number,
-    answers: Record<number, number>,
+    /** Option index per question; null clears a saved answer. */
+    answers: Record<number, number | null>,
     state?: { markedQuestionIds?: number[]; currentQuestionId?: number },
   ): Promise<void> => {
     await axiosClient.patch(`/toeic/attempts/${attemptId}/answers`, {
@@ -158,6 +357,10 @@ export const toeicService = {
       `/toeic/attempts/${attemptId}/remaining-time`,
     )) as unknown as { remaining: number | null; section?: "LISTENING" | "READING" | null },
   /** Advances the one-pass Listening cursor by exactly one segment (server-authoritative). */
+  getListeningMaster: async (attemptId: number): Promise<ToeicListeningMaster> =>
+    (await axiosClient.get(
+      `/toeic/attempts/${attemptId}/listening/master`,
+    )) as unknown as ToeicListeningMaster,
   advanceListening: async (attemptId: number): Promise<ToeicAttempt> =>
     (await axiosClient.post(
       `/toeic/attempts/${attemptId}/listening/advance`,
@@ -207,46 +410,16 @@ export const toeicService = {
       scoreLabel?: string;
       partBreakdown?: Array<{ part: number; correct: number; total: number }>;
     },
-  getReview: async (
-    attemptId: number,
-  ): Promise<{
-    attemptId: number;
-    exam: { id: number; title: string; type: string };
-    submittedAt: string | null;
-    questions: Array<{
-      questionId: number;
-      questionNumber: number;
-      part: number;
-      passageText: string | null;
-      imageUrl: string | null;
-      questionText: string | null;
-      options: string[];
-      learnerAnswer: string | null;
-      standardAnswer: string | null;
-      isCorrect: boolean;
-      explanation: string | null;
-    }>;
-  }> =>
+  /** Post-submission answer review; the server refuses it before submission. */
+  getReview: async (attemptId: number): Promise<ToeicReview> =>
     (await axiosClient.get(
       `/toeic/attempts/${attemptId}/review`,
-    )) as unknown as {
-      attemptId: number;
-      exam: { id: number; title: string; type: string };
-      submittedAt: string | null;
-      questions: Array<{
-        questionId: number;
-        questionNumber: number;
-        part: number;
-        passageText: string | null;
-        imageUrl: string | null;
-        questionText: string | null;
-        options: string[];
-        learnerAnswer: string | null;
-        standardAnswer: string | null;
-        isCorrect: boolean;
-        explanation: string | null;
-      }>;
-    },
+    )) as unknown as ToeicReview,
+  /** Per-task Speaking/Writing review of an assessment attempt (read-only). */
+  getAssessmentReview: async (attemptId: number): Promise<ToeicAssessmentReview> =>
+    (await axiosClient.get(
+      `/toeic/assessments/attempts/${attemptId}/review`,
+    )) as unknown as ToeicAssessmentReview,
   getGroupAudio: async (
     groupId: number,
     attemptId: number,

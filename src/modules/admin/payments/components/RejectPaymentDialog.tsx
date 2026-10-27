@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { paymentService } from "@/lib/api/services/payment.service";
 import toast from "react-hot-toast";
 import { Loader2, X, AlertCircle } from "lucide-react";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 interface RejectPaymentDialogProps {
   paymentId: number;
@@ -46,8 +47,7 @@ export const RejectPaymentDialog: React.FC<RejectPaymentDialogProps> = ({
     },
     onError: (err: any) => {
       const msg =
-        err?.response?.data?.message ||
-        "Không thể từ chối thanh toán. Vui lòng thử lại.";
+        getApiErrorMessage(err, "Không thể từ chối thanh toán. Vui lòng thử lại.");
       toast.error(msg);
     },
   });

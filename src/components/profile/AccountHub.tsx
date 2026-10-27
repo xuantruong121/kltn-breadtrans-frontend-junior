@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -48,7 +48,8 @@ import { LearningProgressTab } from "@/components/profile/LearningProgressTab";
 import { DiagnosticResultTab } from "@/components/profile/DiagnosticResultTab";
 import { MARKET_ITEMS } from "@/modules/market/services/marketData";
 import { useApiQuery } from "@/hooks/useApiQuery";
-import { useApiMutation } from "@/hooks/useApiMutation";
+import { resizeAvatarImage } from "@/lib/avatar/resizeAvatarImage";
+import { isValidVietnamPhone } from "@/lib/utils/vietnamPhone";
 import axiosClient from "@/lib/api/axiosClient";
 import { userService } from "@/lib/api/services/user.service";
 import { locationService } from "@/lib/api/services/location.service";
@@ -102,7 +103,19 @@ export function AccountHub() {
 
   // Resolve active tab from URL query param
   const rawTab = searchParams.get("tab") || "account-profile";
-  const activeTab: AccountTabKey = TAB_ALIASES[rawTab] || "account-profile";
+  // Accounts with no password of their own (Google sign-up) have nothing to change, so the tab is hidden.
+  const { data: withoutPassword = false } = useApiQuery(
+    ["userProfile", user?.id],
+    "/users/profile",
+    {
+      // Only an explicit false hides it; an unknown answer keeps the tab.
+    select: (res: any) => res?.hasPassword === false,
+      enabled: !!user?.id,
+    }
+  );
+  const requestedTab: AccountTabKey = TAB_ALIASES[rawTab] || "account-profile";
+  const activeTab: AccountTabKey =
+    requestedTab === "account-password" && withoutPassword ? "account-profile" : requestedTab;
 
   const handleTabChange = (key: AccountTabKey) => {
     // Preserve current route while updating search params
@@ -175,8 +188,13 @@ export function AccountHub() {
     }
   }, [profileData, user]);
 
+  // Fill the shipping form only when the server's shipping data itself changes.
+  // Re-running on every profile/user change wiped what the learner had typed
+  // whenever a save refreshed the profile but the shipping update was rejected.
+  const hydratedShippingAt = useRef(0);
   useEffect(() => {
-    if (shippingProfileQuery.data) {
+    if (shippingProfileQuery.data && shippingProfileQuery.dataUpdatedAt !== hydratedShippingAt.current) {
+      hydratedShippingAt.current = shippingProfileQuery.dataUpdatedAt;
       const sp = shippingProfileQuery.data;
       setShippingData({
         recipientName:
@@ -187,53 +205,49 @@ export function AccountHub() {
         addressLine: sp.addressLine || "",
       });
     }
-  }, [shippingProfileQuery.data, profileData, user]);
+  }, [shippingProfileQuery.data, shippingProfileQuery.dataUpdatedAt, profileData, user]);
 
   const [isSaving, setIsSaving] = useState(false);
-
-  const updateProfileMutation = useApiMutation("/users/profile", "PATCH", {
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
-      if (data) {
-        setProfile(data);
-      }
-    },
-  });
+  const [phoneError, setPhoneError] = useState("");
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Name/avatar and the shipping address are two separate endpoints, so they
+    // cannot be saved atomically. Everything checkable is validated here first,
+    // before either request, so a typo never leaves a half-saved form.
+    const hasAnyShippingInput =
+      shippingData.recipientName.trim() ||
+      shippingData.phone.trim() ||
+      shippingData.provinceCode ||
+      shippingData.wardCode ||
+      shippingData.addressLine.trim();
+
+    if (hasAnyShippingInput) {
+      if (
+        !shippingData.recipientName.trim() ||
+        !shippingData.phone.trim() ||
+        !shippingData.provinceCode ||
+        !shippingData.wardCode ||
+        !shippingData.addressLine.trim()
+      ) {
+        toast.error(
+          "Vui lòng điền đầy đủ: Tên người nhận, Số điện thoại, Tỉnh/Thành phố, Phường/Xã và Địa chỉ chi tiết.",
+          { duration: 4000 }
+        );
+        return;
+      }
+      if (!isValidVietnamPhone(shippingData.phone)) {
+        setPhoneError("Số điện thoại không hợp lệ. Vui lòng nhập số di động Việt Nam (vd: 0987654321 hoặc +84987654321).");
+        document.getElementById("shipping-phone")?.focus();
+        return;
+      }
+    }
+
     setIsSaving(true);
+    let shippingSaved = false;
     try {
-      // 1. Cập nhật thông tin profile cơ bản (Họ tên, avatar)
-      await updateProfileMutation.mutateAsync({
-        fullName: formData.fullName,
-        avatar: formData.avatar,
-      });
-
-      // 2. Cập nhật thông tin địa chỉ nhận quà nếu có nhập liệu
-      const hasAnyShippingInput =
-        shippingData.recipientName.trim() ||
-        shippingData.phone.trim() ||
-        shippingData.provinceCode ||
-        shippingData.wardCode ||
-        shippingData.addressLine.trim();
-
+      // 1. Địa chỉ nhận quà (server vẫn kiểm lại; nếu bị từ chối thì chưa có gì được lưu).
       if (hasAnyShippingInput) {
-        if (
-          !shippingData.recipientName.trim() ||
-          !shippingData.phone.trim() ||
-          !shippingData.provinceCode ||
-          !shippingData.wardCode ||
-          !shippingData.addressLine.trim()
-        ) {
-          toast.error(
-            "Vui lòng điền đầy đủ: Tên người nhận, Số điện thoại, Tỉnh/Thành phố, Phường/Xã và Địa chỉ chi tiết.",
-            { duration: 4000 }
-          );
-          setIsSaving(false);
-          return;
-        }
-
         await userService.updateShippingProfile({
           recipientName: shippingData.recipientName.trim(),
           phone: shippingData.phone.trim(),
@@ -241,24 +255,38 @@ export function AccountHub() {
           wardCode: shippingData.wardCode.trim(),
           addressLine: shippingData.addressLine.trim(),
         });
+        shippingSaved = true;
         queryClient.invalidateQueries({ queryKey: ["shippingProfile", user?.id] });
       }
+
+      // 2. Cập nhật thông tin profile cơ bản (Họ tên, avatar)
+      // Called directly (not via useApiMutation) so a failure shows one toast, from the catch below.
+      const updatedProfile = await axiosClient.patch("/users/profile", {
+        fullName: formData.fullName,
+        avatar: formData.avatar,
+      });
+      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+      if (updatedProfile) setProfile(updatedProfile as any);
 
       toast.success("Cập nhật thông tin thành công!");
     } catch (err: any) {
       const errCode = err?.response?.data?.code;
+      const serverMessage = err?.response?.data?.message;
       if (errCode === "INVALID_VIETNAM_PHONE") {
-        toast.error(
-          "Số điện thoại không hợp lệ. Vui lòng nhập số di động Việt Nam (vd: 0987654321 hoặc +84987654321)."
-        );
+        setPhoneError("Số điện thoại không hợp lệ. Vui lòng nhập số di động Việt Nam (vd: 0987654321 hoặc +84987654321).");
+        document.getElementById("shipping-phone")?.focus();
       } else if (errCode === "WARD_PROVINCE_MISMATCH") {
         toast.error("Phường/xã đã chọn không thuộc tỉnh/thành phố tương ứng.");
       } else if (errCode === "INVALID_PROVINCE") {
         toast.error("Mã tỉnh/thành phố không hợp lệ.");
-      } else {
+      } else if (shippingSaved) {
+        // Say exactly what happened: the address is stored, the name/avatar is not.
         toast.error(
-          err?.response?.data?.message || "Không thể cập nhật thông tin. Vui lòng thử lại."
+          `Đã lưu địa chỉ nhận quà, nhưng chưa lưu được tên/ảnh đại diện: ${serverMessage || "vui lòng thử lại."}`,
+          { duration: 5000 }
         );
+      } else {
+        toast.error(serverMessage || "Không thể cập nhật thông tin. Vui lòng thử lại.");
       }
     } finally {
       setIsSaving(false);
@@ -272,14 +300,14 @@ export function AccountHub() {
       toast.error("Vui lòng chọn ảnh dung lượng dưới 3MB");
       return;
     }
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (typeof reader.result === "string") {
-        setFormData((prev) => ({ ...prev, avatar: reader.result as string }));
+    // The avatar is saved as a data URL inside the JSON body, so shrink it to a small
+    // square first; a full-size photo exceeds the server's request size limit.
+    resizeAvatarImage(file)
+      .then((dataUrl) => {
+        setFormData((prev) => ({ ...prev, avatar: dataUrl }));
         toast.success("Đã chọn ảnh đại diện mới. Bấm 'Lưu thay đổi' để lưu lại!");
-      }
-    };
-    reader.readAsDataURL(file);
+      })
+      .catch(() => toast.error("Không đọc được ảnh này. Vui lòng chọn ảnh JPG, PNG hoặc WebP khác."));
   };
 
   // ── Queries & State for Subscription Plan Tab ────────────────
@@ -341,16 +369,28 @@ export function AccountHub() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
+  const [passwordFieldErrors, setPasswordFieldErrors] = useState<Partial<Record<keyof typeof passwordForm, string>>>({});
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  const updatePasswordField = (field: keyof typeof passwordForm, value: string) => {
+    setPasswordForm((previous) => ({ ...previous, [field]: value }));
+    setPasswordFieldErrors((previous) => ({ ...previous, [field]: undefined }));
+  };
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordForm.newPassword.length < 8) {
-      setPasswordError("Mật khẩu mới cần có ít nhất 8 ký tự.");
-      return;
-    }
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setPasswordError("Xác nhận mật khẩu mới chưa khớp.");
+    // Validation runs here instead of the browser's native bubbles (the form is noValidate).
+    const fieldErrors: Partial<Record<keyof typeof passwordForm, string>> = {};
+    if (!passwordForm.currentPassword) fieldErrors.currentPassword = "Vui lòng nhập mật khẩu hiện tại.";
+    if (!passwordForm.newPassword) fieldErrors.newPassword = "Vui lòng nhập mật khẩu mới.";
+    else if (passwordForm.newPassword.length < 8) fieldErrors.newPassword = "Mật khẩu mới cần có ít nhất 8 ký tự.";
+    if (!passwordForm.confirmPassword) fieldErrors.confirmPassword = "Vui lòng nhập lại mật khẩu mới.";
+    else if (passwordForm.newPassword !== passwordForm.confirmPassword) fieldErrors.confirmPassword = "Xác nhận mật khẩu mới chưa khớp.";
+    setPasswordFieldErrors(fieldErrors);
+    const firstInvalid = (["currentPassword", "newPassword", "confirmPassword"] as const).find((field) => fieldErrors[field]);
+    if (firstInvalid) {
+      setPasswordError("");
+      document.getElementById(`account-${firstInvalid}`)?.focus();
       return;
     }
 
@@ -366,8 +406,14 @@ export function AccountHub() {
     } catch (err: any) {
       const msg = err?.response?.data?.message;
       const formatted = Array.isArray(msg) ? msg.join(". ") : msg || "Không thể đổi mật khẩu. Vui lòng kiểm tra lại.";
-      setPasswordError(formatted);
-      toast.error(formatted);
+      // A wrong current password belongs under its own field, not in a toast.
+      // The English text is what backends before the Vietnamese message returned.
+      if (/mật khẩu hiện tại không đúng|current password is invalid/i.test(formatted)) {
+        setPasswordFieldErrors({ currentPassword: "Mật khẩu hiện tại không đúng." });
+        document.getElementById("account-currentPassword")?.focus();
+      } else {
+        setPasswordError(formatted);
+      }
     } finally {
       setIsChangingPassword(false);
     }
@@ -416,7 +462,7 @@ export function AccountHub() {
   const SIDEBAR_ITEMS: Array<{ id: AccountTabKey; label: string; icon: React.ElementType }> = [
     { id: "account-profile", label: "Thông tin cá nhân", icon: User },
     { id: "account-plan", label: "Gói của tôi", icon: Crown },
-    { id: "account-password", label: "Đổi mật khẩu", icon: KeyRound },
+    ...(withoutPassword ? [] : [{ id: "account-password" as const, label: "Đổi mật khẩu", icon: KeyRound }]),
     { id: "account-device", label: "Thiết bị", icon: Smartphone },
     { id: "account-inventory", label: "Túi đồ & Ngoại trang", icon: Backpack },
     { id: "learning-progress", label: "Tiến độ học tập", icon: Activity },
@@ -827,14 +873,24 @@ export function AccountHub() {
                           Số điện thoại nhận quà
                         </label>
                         <input
+                          id="shipping-phone"
                           type="tel"
                           value={shippingData.phone}
-                          onChange={(e) =>
-                            setShippingData({ ...shippingData, phone: e.target.value })
-                          }
-                          className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
+                          onChange={(e) => {
+                            setShippingData({ ...shippingData, phone: e.target.value });
+                            setPhoneError("");
+                          }}
+                          aria-invalid={Boolean(phoneError)}
+                          aria-describedby={phoneError ? "shipping-phone-error" : undefined}
+                          className={`w-full border bg-slate-50/50 dark:bg-slate-800/50 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:bg-white dark:focus:bg-slate-800 transition-all ${phoneError ? "border-rose-400 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 dark:border-rose-700" : "border-slate-200 dark:border-slate-700 focus:border-blue-500"}`}
                           placeholder="Ví dụ: 0912 345 678"
                         />
+                        {phoneError && (
+                          <p id="shipping-phone-error" className="mt-1.5 flex items-start gap-1.5 text-xs font-bold text-rose-600 dark:text-rose-400">
+                            <AlertCircle size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
+                            {phoneError}
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -908,10 +964,10 @@ export function AccountHub() {
                   <div className="pt-2">
                     <button
                       type="submit"
-                      disabled={isSaving || updateProfileMutation.isPending}
+                      disabled={isSaving}
                       className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-sm shadow-sm transition-all cursor-pointer disabled:opacity-60 flex items-center gap-2"
                     >
-                      {(isSaving || updateProfileMutation.isPending) && (
+                      {isSaving && (
                         <Loader2 size={16} className="animate-spin" />
                       )}
                       <span>Lưu thay đổi</span>
@@ -942,9 +998,9 @@ export function AccountHub() {
                   </div>
                 )}
 
-                <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                <form onSubmit={handlePasswordSubmit} noValidate className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
+                    <label htmlFor="account-currentPassword" className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
                       Mật khẩu hiện tại
                     </label>
                     <div className="relative">
@@ -952,8 +1008,11 @@ export function AccountHub() {
                         type={showCurrentPassword ? "text" : "password"}
                         required
                         value={passwordForm.currentPassword}
-                        onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                        className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl px-4 py-2.5 pr-11 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
+                        onChange={(e) => updatePasswordField("currentPassword", e.target.value)}
+                        id="account-currentPassword"
+                        aria-invalid={Boolean(passwordFieldErrors.currentPassword)}
+                        aria-describedby={passwordFieldErrors.currentPassword ? "account-currentPassword-error" : undefined}
+                        className={`w-full border bg-slate-50/50 dark:bg-slate-800/50 rounded-xl px-4 py-2.5 pr-11 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:bg-white dark:focus:bg-slate-800 transition-all ${passwordFieldErrors.currentPassword ? "border-rose-400 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 dark:border-rose-700" : "border-slate-200 dark:border-slate-700 focus:border-blue-500"}`}
                         placeholder="Nhập mật khẩu hiện tại"
                       />
                       <button
@@ -965,10 +1024,16 @@ export function AccountHub() {
                         {showCurrentPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                       </button>
                     </div>
+                    {passwordFieldErrors.currentPassword && (
+                      <p id="account-currentPassword-error" className="mt-1.5 flex items-center gap-1.5 text-xs font-bold text-rose-600 dark:text-rose-400">
+                        <AlertCircle size={14} className="shrink-0" aria-hidden="true" />
+                        {passwordFieldErrors.currentPassword}
+                      </p>
+                    )}
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
+                    <label htmlFor="account-newPassword" className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
                       Mật khẩu mới
                     </label>
                     <div className="relative">
@@ -977,8 +1042,11 @@ export function AccountHub() {
                         required
                         minLength={8}
                         value={passwordForm.newPassword}
-                        onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                        className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl px-4 py-2.5 pr-11 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
+                        onChange={(e) => updatePasswordField("newPassword", e.target.value)}
+                        id="account-newPassword"
+                        aria-invalid={Boolean(passwordFieldErrors.newPassword)}
+                        aria-describedby={passwordFieldErrors.newPassword ? "account-newPassword-error" : undefined}
+                        className={`w-full border bg-slate-50/50 dark:bg-slate-800/50 rounded-xl px-4 py-2.5 pr-11 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:bg-white dark:focus:bg-slate-800 transition-all ${passwordFieldErrors.newPassword ? "border-rose-400 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 dark:border-rose-700" : "border-slate-200 dark:border-slate-700 focus:border-blue-500"}`}
                         placeholder="Tối thiểu 8 ký tự"
                       />
                       <button
@@ -990,10 +1058,16 @@ export function AccountHub() {
                         {showNewPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                       </button>
                     </div>
+                    {passwordFieldErrors.newPassword && (
+                      <p id="account-newPassword-error" className="mt-1.5 flex items-center gap-1.5 text-xs font-bold text-rose-600 dark:text-rose-400">
+                        <AlertCircle size={14} className="shrink-0" aria-hidden="true" />
+                        {passwordFieldErrors.newPassword}
+                      </p>
+                    )}
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
+                    <label htmlFor="account-confirmPassword" className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
                       Xác nhận mật khẩu mới
                     </label>
                     <div className="relative">
@@ -1001,8 +1075,11 @@ export function AccountHub() {
                         type={showConfirmPassword ? "text" : "password"}
                         required
                         value={passwordForm.confirmPassword}
-                        onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                        className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl px-4 py-2.5 pr-11 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
+                        onChange={(e) => updatePasswordField("confirmPassword", e.target.value)}
+                        id="account-confirmPassword"
+                        aria-invalid={Boolean(passwordFieldErrors.confirmPassword)}
+                        aria-describedby={passwordFieldErrors.confirmPassword ? "account-confirmPassword-error" : undefined}
+                        className={`w-full border bg-slate-50/50 dark:bg-slate-800/50 rounded-xl px-4 py-2.5 pr-11 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:bg-white dark:focus:bg-slate-800 transition-all ${passwordFieldErrors.confirmPassword ? "border-rose-400 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 dark:border-rose-700" : "border-slate-200 dark:border-slate-700 focus:border-blue-500"}`}
                         placeholder="Nhập lại mật khẩu mới"
                       />
                       <button
@@ -1014,6 +1091,12 @@ export function AccountHub() {
                         {showConfirmPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                       </button>
                     </div>
+                    {passwordFieldErrors.confirmPassword && (
+                      <p id="account-confirmPassword-error" className="mt-1.5 flex items-center gap-1.5 text-xs font-bold text-rose-600 dark:text-rose-400">
+                        <AlertCircle size={14} className="shrink-0" aria-hidden="true" />
+                        {passwordFieldErrors.confirmPassword}
+                      </p>
+                    )}
                   </div>
 
                   <div className="pt-2">

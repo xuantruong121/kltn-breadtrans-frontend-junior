@@ -11,7 +11,7 @@ export function AppFooter() {
           <div className="space-y-4">
             <BrandLogo href="/" variant="compact" size="lg" />
             <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-              Nền tảng tự học tiếng Anh 4 kỹ năng kết hợp Flashcard, ngữ pháp cùng công cụ luyện phát âm và viết câu thông minh.
+              Nền tảng tự học tiếng Anh 4 kỹ năng: thẻ ghi nhớ, ngữ pháp, luyện phát âm và luyện viết có chấm tự động.
             </p>
           </div>
 

@@ -7,6 +7,7 @@ import {
   AdminMarketOrder,
   adminMarketService,
 } from "@/lib/api/services/admin-market.service";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 interface AdminRejectOrderModalProps {
   isOpen: boolean;
@@ -41,7 +42,7 @@ export default function AdminRejectOrderModal({
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Không thể từ chối đơn hàng");
+      toast.error(getApiErrorMessage(err, "Không thể từ chối đơn hàng"));
     } finally {
       setIsSubmitting(false);
     }

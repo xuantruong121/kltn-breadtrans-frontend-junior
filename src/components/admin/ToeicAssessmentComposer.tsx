@@ -12,6 +12,7 @@ import {
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { legacyAssessmentTreatment } from "@/lib/examStudio/legacyRouteLogic";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 type Family = "TOEIC_LR" | "TOEIC_SW" | "TOEIC_4_SKILLS";
 type Assessment = {
@@ -185,8 +186,10 @@ export default function ToeicAssessmentComposer() {
       toast.success("Đã publish assessment.");
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message ??
-          "Publish bị chặn bởi readiness guard.",
+        getApiErrorMessage(
+          error,
+          "Chưa thể xuất bản: còn phần thi chưa sẵn sàng.",
+        ),
       );
     } finally {
       setBusy(false);
@@ -205,7 +208,7 @@ export default function ToeicAssessmentComposer() {
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-slate-500">
             Thiết lập các phần của đề TOEIC. Nội dung từng kỹ năng vẫn được
-            biên tập từ CMS tương ứng.
+            soạn ở trang quản lý của từng kỹ năng.
           </p>
         </div>
         <button
@@ -235,7 +238,7 @@ export default function ToeicAssessmentComposer() {
                   {item.title}
                 </span>
                 <span className="mt-1 block text-xs text-slate-500">
-                  {item.productFamily} · {item.publicationStatus}
+                  {({ TOEIC_LR: "TOEIC Listening & Reading", TOEIC_SW: "TOEIC Speaking & Writing", TOEIC_4_SKILLS: "TOEIC 4 kỹ năng" } as Record<string, string>)[item.productFamily] ?? item.productFamily} · {item.publicationStatus === "PUBLISHED" ? "Đã xuất bản" : "Bản nháp"}
                 </span>
               </button>
             ))}
@@ -273,7 +276,7 @@ export default function ToeicAssessmentComposer() {
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
                 className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
-                placeholder="TOEIC 4 Skills Practice 01"
+                placeholder="VD: TOEIC 4 kỹ năng — Đề luyện tập 01"
               />
             </label>
             <label className="text-sm font-semibold">
@@ -303,22 +306,22 @@ export default function ToeicAssessmentComposer() {
           <div className="mt-6 space-y-4 rounded-2xl bg-slate-50 p-4">
             {family !== "TOEIC_SW" && (
               <SourceSelect
-                label="1 · L&R Exam Set"
+                label="1 · Đề Listening & Reading"
                 value={lrId}
                 onChange={setLrId}
                 sources={exams}
-                empty="Chọn Exam Set đã publish"
+                empty="Chọn đề L&R đã xuất bản"
               />
             )}
             {family !== "TOEIC_LR" && (
               <SourceSelect
-                label={`${family === "TOEIC_4_SKILLS" ? "2" : "1"} · Speaking Practice Set`}
+                label={`${family === "TOEIC_4_SKILLS" ? "2" : "1"} · Bộ luyện Speaking`}
                 value={speakingId}
                 onChange={setSpeakingId}
                 sources={speaking}
                 stringValue
                 onChangeString={setSpeakingId}
-                empty="Chọn Speaking Set; Publish sẽ kiểm tra đủ 11 task"
+                empty="Chọn bộ luyện nói; khi xuất bản sẽ kiểm tra đủ 11 câu"
               />
             )}
             {family !== "TOEIC_LR" && (
@@ -336,15 +339,14 @@ export default function ToeicAssessmentComposer() {
             <div className="mt-5 flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
               <ShieldAlert className="mt-0.5 shrink-0" size={18} />
               <span>
-                Readiness chưa đạt. Parent sẽ không publish khi child source còn
-                thiếu hoặc chưa PUBLISHED.
+                Chưa thể xuất bản: còn phần thi chưa được chọn hoặc chưa xuất bản.
               </span>
             </div>
           )}
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-5">
             <div className="flex items-center gap-2 text-xs text-slate-500">
               <CheckCircle2 size={15} className="text-emerald-600" /> Nội dung
-              kỹ năng được biên tập tại CMS tương ứng
+              từng kỹ năng được soạn ở trang quản lý của kỹ năng đó
             </div>
             <div className="flex gap-2">
               <button
@@ -356,7 +358,7 @@ export default function ToeicAssessmentComposer() {
                 {busy ? (
                   <Loader2 className="animate-spin" size={16} />
                 ) : (
-                  "Lưu draft"
+                  "Lưu bản nháp"
                 )}
               </button>
               <button
@@ -367,7 +369,7 @@ export default function ToeicAssessmentComposer() {
                 }
                 className="rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-700 disabled:opacity-50"
               >
-                Publish
+                Xuất bản
               </button>
             </div>
           </div>
@@ -376,19 +378,19 @@ export default function ToeicAssessmentComposer() {
               href="/admin/exams"
               className="inline-flex items-center gap-1 hover:text-slate-900"
             >
-              Edit L&R <ExternalLink size={13} />
+              Sửa phần L&R <ExternalLink size={13} />
             </Link>
             <Link
               href="/admin/speaking"
               className="inline-flex items-center gap-1 hover:text-slate-900"
             >
-              Edit Speaking <ExternalLink size={13} />
+              Sửa phần Speaking <ExternalLink size={13} />
             </Link>
             <Link
               href="/admin/toeic/writing-sets"
               className="inline-flex items-center gap-1 hover:text-slate-900"
             >
-              Edit Writing <ExternalLink size={13} />
+              Sửa phần Writing <ExternalLink size={13} />
             </Link>
           </div>
         </section>
@@ -431,7 +433,7 @@ function SourceSelect({
         {sources.map((source) => (
           <option key={String(source.id)} value={String(source.id)}>
             {source.title}{" "}
-            {source.publicationStatus ? `· ${source.publicationStatus}` : ""}
+            {source.publicationStatus ? `· ${source.publicationStatus === "PUBLISHED" ? "Đã xuất bản" : "Bản nháp"}` : ""}
           </option>
         ))}
       </select>

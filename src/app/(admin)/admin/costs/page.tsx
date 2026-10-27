@@ -93,7 +93,7 @@ export default function AdminCostsPage() {
         "/admin/system-costs/purge-ai-cache",
       );
       const parsed = res as { message?: string; data?: { message?: string } };
-      return parsed?.data?.message || parsed?.message || "Đã làm sạch cache dữ liệu trên Redis!";
+      return parsed?.data?.message || parsed?.message || "Đã xóa bộ nhớ đệm.";
     },
     onSuccess: (message: string) => {
       toast.success(message);
@@ -383,7 +383,7 @@ export default function AdminCostsPage() {
               {/* Footer status */}
               <div className="mt-4 flex items-center gap-1.5 border-t border-slate-100 pt-3 text-xs text-slate-600">
                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                <span>Redis cache giúp giảm thiểu số lượng token gọi trực tiếp tới API.</span>
+                <span>Bộ nhớ đệm giúp giảm số lượt gọi dịch vụ AI.</span>
               </div>
             </div>
           )}
@@ -600,7 +600,7 @@ export default function AdminCostsPage() {
                 Tác vụ bảo trì bộ nhớ & lưu trữ
               </h2>
               <p className="mt-0.5 text-xs text-slate-600">
-                Chủ động dọn dẹp bộ nhớ tạm Redis và dọn các file ghi âm cũ trên Cloudflare R2 để tối ưu chi phí.
+                Dọn bộ nhớ đệm và các bản ghi âm cũ để giảm chi phí lưu trữ.
               </p>
             </div>
           </div>
@@ -612,7 +612,7 @@ export default function AdminCostsPage() {
               className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50/70 px-3.5 py-2 text-xs font-bold text-rose-700 transition hover:bg-rose-100 hover:border-rose-300 active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-2xs"
             >
               <Trash2 className="h-3.5 w-3.5" />
-              <span>{isPurgingCache ? "Đang xóa Redis..." : "Xóa cache Redis"}</span>
+              <span>{isPurgingCache ? "Đang xóa bộ nhớ đệm..." : "Xóa bộ nhớ đệm"}</span>
             </button>
             <button
               type="button"

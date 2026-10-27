@@ -25,6 +25,7 @@ import {
   PenTool,
   BookmarkCheck,
   ShieldCheck,
+  BarChart3,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -99,7 +100,6 @@ const CERTIFICATES: CertificateMeta[] = [
       "Bấm giờ thi chuẩn xác theo từng phần",
       "Đáp án và giải thích chi tiết từng câu",
       "Lưu lịch sử và phân tích độ chính xác",
-      "Hệ thống cộng thưởng Bánh Mì khi hoàn thành",
     ],
     roadmapDate: "Đã phát hành",
     theme: {
@@ -122,7 +122,7 @@ const CERTIFICATES: CertificateMeta[] = [
     badgeText: "Đang biên soạn",
     targetLevel: "Mục tiêu Band 5.0 - 8.5+",
     description:
-      "Hệ thống kiểm tra tiếng Anh học thuật quốc tế hàng đầu dành cho du học sinh và xét tuyển đại học. Mô phỏng dạng thi máy (Computer-delivered IELTS).",
+      "Kỳ thi tiếng Anh học thuật dùng cho du học và xét tuyển. Nội dung đang được biên soạn.",
     skills: [
       { label: "Listening (40 câu / 30 phút)", icon: Headphones },
       { label: "Academic Reading (40 câu / 60 phút)", icon: BookOpen },
@@ -241,7 +241,7 @@ const CERTIFICATES: CertificateMeta[] = [
     badgeText: "Đang biên soạn",
     targetLevel: "B2 First & C1 Advanced",
     description:
-      "Chứng chỉ quốc tế giá trị trọn đời của Đại học Cambridge. Bộ đề đánh giá toàn diện năng lực ngôn ngữ theo khung tham chiếu châu Âu.",
+      "Chứng chỉ tiếng Anh của Cambridge cho trình độ B2–C1. Nội dung đang được biên soạn.",
     skills: [
       { label: "Reading & Use of English (75 phút)", icon: BookOpen },
       { label: "Writing (2 tasks / 80 phút)", icon: PenTool },
@@ -433,7 +433,7 @@ export default function ExamPracticeHubPage() {
       </div>
 
       {/* Page introduction: factual, content-first, not a marketing hero. */}
-      <section className="mb-8 border-b border-slate-200/80 pb-6 dark:border-slate-800">
+      <section className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800">
         <div className="max-w-2xl">
           <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
             Khảo thí & Luyện đề
@@ -445,6 +445,12 @@ export default function ExamPracticeHubPage() {
             Chọn định dạng bài thi chuẩn hóa, làm bài theo đúng áp lực thời gian quy định và xem lại phân tích đáp án chi tiết.
           </p>
         </div>
+        <Link
+          href="/toeic/stats"
+          className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-800 shadow-xs transition-colors hover:border-blue-300 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:text-blue-300"
+        >
+          <BarChart3 size={18} aria-hidden="true" /> Thống kê kết quả
+        </Link>
       </section>
 
       {/* Certificate Selector Navigation (Interactive Tab Bar) */}
@@ -757,7 +763,7 @@ export default function ExamPracticeHubPage() {
                     const skillLabels = isFourSkill ? ["Listening", "Reading", "Speaking", "Writing"] : isSpeakingWriting ? ["Speaking", "Writing"] : ["Listening", "Reading"];
                     const detailsLabel = isFourSkill ? "L&R + S&W" : isSpeakingWriting ? "11 Speaking · 8 Writing" : "200 câu · 120 phút";
                     const fallbackDescription = isFourSkill
-                      ? "Bài thi tổng hợp 4 kỹ năng kết hợp Nghe, Đọc, Nói và Viết trong một buổi thi hoàn chỉnh. Đánh giá toàn diện năng lực giao tiếp môi trường quốc tế."
+                      ? "Đề luyện 4 kỹ năng Nghe, Đọc, Nói và Viết trong một lượt làm bài."
                       : isSpeakingWriting
                         ? "Mô phỏng 11 câu hỏi Nói và 8 bài tập Viết theo chuẩn khảo thí. Hệ thống ghi âm trực tiếp và đánh giá tiêu chí phát âm, ngữ pháp."
                         : "Mô phỏng bài thi Nghe và Đọc 200 câu bao quát Part 1–7. Chấm điểm tự động theo thang 990 kèm giải thích chi tiết từng câu.";

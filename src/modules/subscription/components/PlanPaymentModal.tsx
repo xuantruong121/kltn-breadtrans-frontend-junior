@@ -180,7 +180,7 @@ export const PlanPaymentModal: React.FC<PlanPaymentModalProps> = ({
       )
     ) {
       confirmedNotifiedRef.current = true;
-      toast.success("Thanh toán thành công! Gói PLUS đã được kích hoạt.", {
+      toast.success(`Thanh toán thành công! Gói ${purchase.planDisplayName || purchase.planCode} đã được kích hoạt.`, {
         id: `payment-confirmed-${purchase.id}`,
       });
       queryClient.invalidateQueries({
@@ -236,6 +236,8 @@ export const PlanPaymentModal: React.FC<PlanPaymentModalProps> = ({
 
   if (!purchaseId || !isReady || typeof document === "undefined") return null;
 
+  // The plan actually bought (PLUS or PRO), never a hard-coded name.
+  const planName = purchase?.planDisplayName || "BreadTrans";
   const transferCode =
     purchase?.bankInstructions?.transferCode ||
     purchase?.payment?.transferCode ||
@@ -250,7 +252,7 @@ export const PlanPaymentModal: React.FC<PlanPaymentModalProps> = ({
           ? "Thanh toán không thành công"
           : isIntentExpired
             ? "Phiên thanh toán đã hết hạn"
-            : "Thanh toán BreadTrans Plus";
+            : `Thanh toán ${planName}`;
 
   return createPortal(
     <AnimatePresence>
@@ -351,7 +353,7 @@ export const PlanPaymentModal: React.FC<PlanPaymentModalProps> = ({
                     Thanh toán thành công
                   </h3>
                   <p className="mt-1.5 text-sm sm:text-base text-slate-600 dark:text-slate-400">
-                    Gói BreadTrans Plus đã được kích hoạt trên tài khoản của
+                    Gói {planName} đã được kích hoạt trên tài khoản của
                     bạn.
                   </p>
                 </div>
@@ -361,7 +363,7 @@ export const PlanPaymentModal: React.FC<PlanPaymentModalProps> = ({
                       Gói sử dụng
                     </span>
                     <span className="font-bold text-slate-900 dark:text-slate-100">
-                      BreadTrans Plus
+                      {planName}
                     </span>
                   </div>
                   <div className="flex items-center justify-between gap-4 text-sm sm:text-base">
@@ -387,7 +389,7 @@ export const PlanPaymentModal: React.FC<PlanPaymentModalProps> = ({
                     onClick={handleStartLearning}
                     className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-sm sm:text-base font-bold text-white transition-colors hover:bg-blue-700 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   >
-                    Bắt đầu học với PLUS
+                    Bắt đầu học với {purchase.planCode}
                     <ArrowRight size={18} aria-hidden="true" />
                   </button>
                   <button
@@ -565,6 +567,7 @@ function ActivePaymentView({
 }) {
   const bank = purchase.bankInstructions;
   const payos = purchase.payos;
+  const planName = purchase.planDisplayName || "BreadTrans";
   const accountNumber = bank?.accountNumber || "";
   const accountName = bank?.accountName || "";
 
@@ -608,7 +611,7 @@ function ActivePaymentView({
             <>
               <PaymentDetail
                 label="Gói"
-                value={purchase.planDisplayName || "BreadTrans Plus"}
+                value={planName}
               />
               <PaymentDetail
                 label="Chủ tài khoản"
@@ -626,7 +629,7 @@ function ActivePaymentView({
               />
               <PaymentDetail
                 label="Nội dung thanh toán"
-                value={payos.description || "BreadTrans Plus"}
+                value={payos.description || planName}
               />
             </>
           ) : (

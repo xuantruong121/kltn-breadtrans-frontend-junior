@@ -1,11 +1,16 @@
 "use client";
 
-import { use } from "react";
+import { use, useMemo, useState } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, CheckCircle2, CircleX, CircleSlash2, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { toeicService } from "@/lib/api/services/toeic.service";
+import { PART_TITLES } from "@/lib/toeic/examPaper";
+import { REVIEW_FILTERS, filterReview, groupByPart, type ReviewFilter } from "@/lib/toeic/resultReview";
+import { StatusBadge, ToeicAnswerBody } from "@/components/toeic/result/ToeicAnswerDetail";
+import { useReviewAudio } from "@/components/toeic/result/ToeicLrResult";
 
+/** Full read-only review: every question of the attempt with its context. */
 export default function ToeicReviewPage({
   params,
 }: {
@@ -13,90 +18,72 @@ export default function ToeicReviewPage({
 }) {
   const { attemptId: raw } = use(params);
   const attemptId = Number(raw);
-  const router = useRouter();
+  const [filter, setFilter] = useState<ReviewFilter>("ALL");
   const { data, isLoading, isError } = useQuery({
     queryKey: ["toeic-review", attemptId],
     queryFn: () => toeicService.getReview(attemptId),
     enabled: Number.isInteger(attemptId),
   });
+  const { audioFor, note } = useReviewAudio(attemptId, Boolean(data?.questions.some((q) => q.part <= 4)));
+  const parts = useMemo(() => groupByPart(filterReview(data?.questions ?? [], filter)), [data, filter]);
   if (isLoading)
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <Loader2 className="animate-spin text-amber-600" />
+        <Loader2 className="animate-spin text-blue-600" aria-label="Đang tải" />
       </div>
     );
   if (isError || !data)
     return (
-      <main className="mx-auto max-w-2xl px-4 py-16 text-center text-rose-700">
-        Không tải được review. Chỉ lượt thi đã nộp mới có thể review.
+      <main className="mx-auto max-w-2xl px-4 py-16 text-center text-slate-700 dark:text-slate-300">
+        Không tải được đáp án. Chỉ lượt thi đã nộp mới xem được đáp án.
       </main>
     );
-  const getQuestionStatus = (question: (typeof data.questions)[number]) => {
-    const skipped =
-      question.learnerAnswer === null ||
-      question.learnerAnswer === undefined ||
-      String(question.learnerAnswer).trim() === "";
-    if (skipped) return { label: "Bỏ qua", tone: "text-amber-700 bg-amber-50", icon: CircleSlash2 };
-    if (question.isCorrect)
-      return { label: "Đúng", tone: "text-emerald-700 bg-emerald-50", icon: CheckCircle2 };
-    return { label: "Chưa đúng", tone: "text-rose-700 bg-rose-50", icon: CircleX };
-  };
+  // A group (passage, picture, audio) is shown once, before its first question.
+  const seenGroups = new Set<number>();
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10">
-      <button
-        type="button"
-        onClick={() => router.push(`/toeic/results/${attemptId}`)}
-        className="mb-5 inline-flex min-h-10 items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300"
-      >
-        <ArrowLeft size={16} /> Kết quả
-      </button>
-      <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100">
-        Review · {data.exam.title}
-      </h1>
-      <div className="mt-6 space-y-4">
-        {data.questions.map((question) => {
-          const status = getQuestionStatus(question);
-          const StatusIcon = status.icon;
-          return (
-            <article
-              key={question.questionId}
-              className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
-            >
-            <div className="flex items-start justify-between gap-3">
-              <h2 className="font-bold text-slate-900 dark:text-slate-100">
-                Câu {question.questionNumber} · Part {question.part}
-              </h2>
-              <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${status.tone}`}>
-                <StatusIcon size={15} aria-hidden="true" /> {status.label}
-              </span>
-            </div>
-            {question.passageText && (
-              <p className="mt-3 whitespace-pre-line rounded-xl bg-slate-50 p-3 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                {question.passageText}
-              </p>
-            )}
-            {question.questionText && (
-              <p className="mt-3 text-sm font-semibold text-slate-800 dark:text-slate-200">
-                {question.questionText}
-              </p>
-            )}
-            <p className="mt-3 text-sm">
-              Bạn chọn:{" "}
-              <strong>{question.learnerAnswer ?? "Chưa trả lời"}</strong>
-            </p>
-            <p className="mt-1 text-sm">
-              Đáp án đúng:{" "}
-              <strong>{question.standardAnswer ?? "Chưa có dữ liệu"}</strong>
-            </p>
-            {question.explanation && (
-              <p className="mt-3 border-t border-slate-100 pt-3 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-300">
-                {question.explanation}
-              </p>
-            )}
-            </article>
-          );
-        })}
+    <main className="mx-auto max-w-4xl px-4 pb-20 pt-8 sm:px-6">
+      <Link href={`/toeic/results/${attemptId}`} className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-900 dark:text-slate-300">
+        <ArrowLeft size={16} aria-hidden="true" /> Kết quả
+      </Link>
+      <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100 sm:text-3xl">Chi tiết đáp án: {data.exam.title}</h1>
+      <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Lọc câu hỏi">
+        {REVIEW_FILTERS.map((f) => (
+          <button
+            key={f.id}
+            type="button"
+            aria-pressed={filter === f.id}
+            onClick={() => setFilter(f.id)}
+            className={`inline-flex min-h-10 items-center rounded-full border px-3.5 text-sm font-semibold transition-colors ${filter === f.id ? "border-blue-600 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"}`}
+          >
+            {f.label}
+          </button>
+        ))}
       </div>
+      {parts.length === 0 && <p className="mt-6 text-slate-600 dark:text-slate-400">Không có câu nào trong mục này.</p>}
+      {parts.map((p) => (
+        <section key={p.part} className="mt-8">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+            Part {p.part} <span className="text-base font-semibold text-slate-600 dark:text-slate-400">· {PART_TITLES[p.part]}</span>
+          </h2>
+          <div className="mt-3 space-y-4">
+            {p.questions.map((q) => {
+              const firstOfGroup = !seenGroups.has(q.groupId);
+              seenGroups.add(q.groupId);
+              // Later questions of a shared group omit the repeated media.
+              const view = firstOfGroup ? q : { ...q, imageUrl: null, passageText: null, transcript: null };
+              return (
+                <article key={q.questionId} id={`q-${q.questionNumber}`} className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 sm:p-5">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <h3 className="font-bold text-slate-900 dark:text-slate-100">Câu {q.questionNumber}</h3>
+                    <StatusBadge status={q.status} />
+                  </div>
+                  <ToeicAnswerBody question={view} audio={firstOfGroup ? audioFor(q) : null} audioNote={firstOfGroup ? note : null} />
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      ))}
     </main>
   );
 }

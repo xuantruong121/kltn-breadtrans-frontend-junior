@@ -9,7 +9,12 @@ import {
   ArrowRight,
   WifiOff,
   Flame,
-  Zap
+  Zap,
+  Trophy,
+  Handshake,
+  HeartCrack,
+  Swords,
+  Wheat,
 } from "lucide-react";
 import { Button3D } from "@/components/ui";
 import { 
@@ -205,7 +210,7 @@ export default function ArenaMatchRoom({
           <div className="flex justify-between text-[11px] sm:text-xs font-black text-slate-400 dark:text-slate-500 mb-1.5">
             <span>Bạn: {myProgress?.answered || 0}/{totalRounds}</span>
             <span className="bg-amber-100 text-amber-800 px-2 sm:px-2.5 py-0.5 rounded-full font-extrabold border border-amber-200 text-[10px] sm:text-xs">
-              Cược: {matchData.stake} 🍞
+              Cược: {matchData.stake} <Wheat size={12} className="inline -mt-0.5" aria-label="Bánh Mì" />
             </span>
             <span>Đối thủ: {opponentProgress?.answered || 0}/{totalRounds}</span>
           </div>
@@ -336,7 +341,7 @@ export default function ArenaMatchRoom({
       {!matchResult && !currentQ && (
         <div className="bg-card dark:bg-slate-900 rounded-[2.5rem] border-4 border-slate-200 dark:border-slate-800 shadow-sm p-12 text-center space-y-4">
           <div className="w-16 h-16 bg-amber-100 border-4 border-amber-300 rounded-3xl mx-auto flex items-center justify-center text-3xl animate-bounce">
-            ⚔️
+            <Swords size={30} strokeWidth={2.25} className="text-amber-700" aria-hidden="true" />
           </div>
           <h3 className="text-2xl font-black text-slate-800 dark:text-slate-100">Trận Đấu Đang Khởi Động</h3>
           <p className="text-sm font-bold text-slate-400 dark:text-slate-500">
@@ -357,7 +362,13 @@ export default function ArenaMatchRoom({
 
             <div className="bg-card dark:bg-slate-900 max-w-md w-full rounded-[2.5rem] border-4 border-slate-200 dark:border-slate-800 shadow-[0_12px_0_0_#cbd5e1] dark:shadow-none p-8 text-center space-y-6">
               <div className="w-24 h-24 mx-auto rounded-3xl bg-amber-100 border-4 border-amber-300 flex items-center justify-center text-5xl shadow-lg">
-                {isMeWinner ? "🏆" : isDraw ? "🤝" : "💔"}
+                {isMeWinner ? (
+                  <Trophy size={44} strokeWidth={2.25} className="text-amber-600" aria-hidden="true" />
+                ) : isDraw ? (
+                  <Handshake size={44} strokeWidth={2.25} className="text-slate-600" aria-hidden="true" />
+                ) : (
+                  <HeartCrack size={44} strokeWidth={2.25} className="text-rose-600" aria-hidden="true" />
+                )}
               </div>
 
               <div>
@@ -386,7 +397,10 @@ export default function ArenaMatchRoom({
                 <div>
                   <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Bánh Mì</span>
                   <p className="text-2xl font-black text-amber-600">
-                    {isMeWinner ? `+${matchResult.reward} 🍞` : isDraw ? `Hoàn cược` : `-${matchData.stake} 🍞`}
+                    <span className="inline-flex items-center gap-1">
+                      {isMeWinner ? `+${matchResult.reward}` : isDraw ? `Hoàn cược` : `-${matchData.stake}`}
+                      {!isDraw && <Wheat size={20} strokeWidth={2.25} aria-label="Bánh Mì" />}
+                    </span>
                   </p>
                 </div>
               </div>

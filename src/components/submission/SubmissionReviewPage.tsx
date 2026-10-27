@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
-import { Loader2, Trophy, Target, Star, RefreshCw, ListChecks } from "lucide-react";
+import { ArrowRight, Loader2, Trophy, Target, Star, RefreshCw, ListChecks } from "lucide-react";
 import { quizService } from "@/lib/api/services/quiz.service";
 import { BackButton } from "@/components/ui";
 import Confetti from "react-confetti";
@@ -79,6 +79,9 @@ export default function SubmissionAnalyticsPage(props: {
     analytics.quizType === "WRITING_EMAIL";
   if (isWritingResult) {
     const writingFeedback = analytics.writingFeedback;
+    const exercise = analytics.writingExercise;
+    const taskHref = (questionId: number) =>
+      withSafeReturnTo(`/writing/${analytics.quizId}?q=${questionId}`, courseReturn);
     return (
       <div className="max-w-4xl mx-auto space-y-6 pb-20">
         <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -91,8 +94,10 @@ export default function SubmissionAnalyticsPage(props: {
             <h1 className="text-xl font-black text-slate-800 dark:text-slate-100 line-clamp-1">
               {analytics.quizTitle}
             </h1>
-            <p className="text-xs font-bold text-slate-400 dark:text-slate-500">
-              Kết quả Writing đã lưu
+            <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
+              {exercise && exercise.total > 1
+                ? `Câu ${exercise.position}/${exercise.total} · Kết quả đã lưu`
+                : "Kết quả Writing đã lưu"}
             </p>
           </div>
         </div>
@@ -114,10 +119,9 @@ export default function SubmissionAnalyticsPage(props: {
               type="button"
               onClick={() =>
                 router.push(
-                  withSafeReturnTo(
-                    `/writing/${analytics.quizId}`,
-                    courseReturn,
-                  ),
+                  exercise
+                    ? taskHref(exercise.questionId)
+                    : withSafeReturnTo(`/writing/${analytics.quizId}`, courseReturn),
                 )
               }
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-500 px-4 py-3 text-sm font-black text-white hover:bg-sky-600"
@@ -125,6 +129,32 @@ export default function SubmissionAnalyticsPage(props: {
               <RefreshCw size={16} /> Viết lại
             </button>
           </div>
+
+          {exercise && exercise.total > 1 && (
+            <div className="flex flex-col gap-3 rounded-xl bg-slate-50 p-4 dark:bg-slate-800/70 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                {exercise.complete && exercise.percent !== null
+                  ? `Đã hoàn thành cả ${exercise.total} câu · điểm bài ${exercise.percent}%`
+                  : `Đã chấm ${exercise.answered}/${exercise.total} câu. Bài được tính hoàn thành khi xong cả ${exercise.total} câu.`}
+              </p>
+              {!exercise.complete && exercise.nextQuestionId && (
+                <button
+                  type="button"
+                  onClick={() => router.push(taskHref(exercise.nextQuestionId!))}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 text-sm font-bold text-white hover:bg-rose-700"
+                >
+                  Làm câu tiếp theo <ArrowRight size={16} aria-hidden="true" />
+                </button>
+              )}
+            </div>
+          )}
+
+          {exercise?.prompt && (
+            <div className="rounded-xl bg-rose-50/60 p-4 dark:bg-rose-950/30">
+              <p className="text-sm font-bold text-rose-800 dark:text-rose-300">Đề bài</p>
+              <p className="mt-1 text-base text-slate-800 dark:text-slate-200">{exercise.prompt}</p>
+            </div>
+          )}
 
           <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 p-4">
             <p className="text-xs font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">

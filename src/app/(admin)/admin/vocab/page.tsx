@@ -23,6 +23,7 @@ import axiosClient from "@/lib/api/axiosClient";
 import { Pagination } from "@/components/ui";
 import toast from "react-hot-toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 interface WordItem {
   id: number;
@@ -127,7 +128,7 @@ export default function AdminVocabPage() {
 
   const handleSuggestVocabFullDraft = async () => {
     if (!topicForm.title.trim()) {
-      toast.error("Vui lòng nhập tên chủ đề trước khi soạn full draft.");
+      toast.error("Vui lòng nhập tên chủ đề trước khi soạn bản nháp.");
       return;
     }
     try {
@@ -139,7 +140,7 @@ export default function AdminVocabPage() {
       });
       const data = response?.data || response;
       if (!data?.title || !Array.isArray(data.words) || !data.words.length) {
-        throw new Error("AI không trả về full draft Vocabulary hợp lệ.");
+        throw new Error("AI không trả về bản nháp từ vựng hợp lệ.");
       }
       setVocabFullDraft({
         title: String(data.title),
@@ -147,7 +148,7 @@ export default function AdminVocabPage() {
         words: data.words.map((word: VocabDraftWord) => ({ ...word, excluded: false })),
       });
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || error?.message || "Không thể soạn full draft Vocabulary.");
+      toast.error(error instanceof Error && !("response" in error) ? error.message : getApiErrorMessage(error, "Không thể soạn bản nháp từ vựng."));
     }
   };
 
@@ -167,8 +168,7 @@ export default function AdminVocabPage() {
       toast.success("Đã nhận bản nháp gợi ý từ AI");
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message ||
-          "Không thể lấy gợi ý AI lúc này. Vui lòng thử lại sau.",
+        getApiErrorMessage(err, "Không thể lấy gợi ý AI lúc này. Vui lòng thử lại sau."),
       );
     } finally {
       setIsAiSuggesting(false);
@@ -240,7 +240,7 @@ export default function AdminVocabPage() {
       if (data?.id) setSelectedTopicId(data.id);
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message || "Không thể tạo bộ từ vựng"),
+      toast.error(getApiErrorMessage(err, "Không thể tạo bộ từ vựng")),
   });
 
   const updateTopicMutation = useMutation({
@@ -254,7 +254,7 @@ export default function AdminVocabPage() {
       });
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message || "Không thể cập nhật chủ đề"),
+      toast.error(getApiErrorMessage(err, "Không thể cập nhật chủ đề")),
   });
 
   const publishTopicMutation = useMutation({
@@ -268,7 +268,7 @@ export default function AdminVocabPage() {
       });
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message || "Không thể xuất bản"),
+      toast.error(getApiErrorMessage(err, "Không thể xuất bản")),
   });
 
   const unpublishTopicMutation = useMutation({
@@ -282,7 +282,7 @@ export default function AdminVocabPage() {
       });
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message || "Không thể gỡ xuất bản"),
+      toast.error(getApiErrorMessage(err, "Không thể gỡ xuất bản")),
   });
 
   const deleteTopicMutation = useMutation({
@@ -295,7 +295,7 @@ export default function AdminVocabPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-vocab-topics"] });
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message || "Không thể xóa bộ từ vựng"),
+      toast.error(getApiErrorMessage(err, "Không thể xóa bộ từ vựng")),
   });
 
   const saveWordMutation = useMutation({
@@ -337,7 +337,7 @@ export default function AdminVocabPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-vocab-topics"] });
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message || "Không thể lưu từ vựng"),
+      toast.error(getApiErrorMessage(err, "Không thể lưu từ vựng")),
   });
 
   const deleteWordMutation = useMutation({
@@ -356,7 +356,7 @@ export default function AdminVocabPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-vocab-topics"] });
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message || "Không thể xóa từ vựng"),
+      toast.error(getApiErrorMessage(err, "Không thể xóa từ vựng")),
   });
 
   const reorderWordsMutation = useMutation({
@@ -374,7 +374,7 @@ export default function AdminVocabPage() {
       });
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message || "Không thể sắp xếp từ vựng"),
+      toast.error(getApiErrorMessage(err, "Không thể sắp xếp từ vựng")),
   });
 
   // Reorder helper
@@ -988,7 +988,7 @@ export default function AdminVocabPage() {
                           }));
                           setVocabSuggestion(null);
                           toast.success(
-                            "Đã áp dụng gợi ý vào form. Bạn có thể chỉnh sửa trước khi lưu.",
+                            "Đã áp dụng gợi ý vào biểu mẫu. Bạn có thể chỉnh sửa trước khi lưu.",
                           );
                         }}
                         className="rounded bg-slate-900 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-800 transition-colors"
@@ -1295,11 +1295,11 @@ export default function AdminVocabPage() {
 
             <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
               <p className="max-w-[15rem] text-xs leading-5 text-slate-600">
-                AI soạn chủ đề và danh sách từ nháp; Apply chỉ điền local, chưa lưu.
+                AI soạn chủ đề và danh sách từ nháp; Áp dụng chỉ điền vào biểu mẫu, chưa lưu.
               </p>
               <div className="flex items-center gap-2">
                 <input
-                  aria-label="Số từ trong full draft Vocabulary"
+                  aria-label="Số từ trong bản nháp từ vựng"
                   type="number"
                   min={1}
                   max={30}
@@ -1418,8 +1418,8 @@ export default function AdminVocabPage() {
           <div role="dialog" aria-modal="true" aria-labelledby="vocab-full-draft-title" className="max-h-[calc(100dvh-2rem)] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl">
             <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-3">
               <div>
-                <h3 id="vocab-full-draft-title" className="font-bold text-slate-900">Review full draft Vocabulary</h3>
-                <p className="mt-1 text-xs text-slate-500">Sửa hoặc loại từ trước khi Apply. Chỉ nút Tạo bản nháp mới ghi CMS.</p>
+                <h3 id="vocab-full-draft-title" className="font-bold text-slate-900">Review bản nháp từ vựng</h3>
+                <p className="mt-1 text-xs text-slate-500">Sửa hoặc bỏ bớt từ trước khi áp dụng. Chỉ khi bấm Tạo bản nháp, nội dung mới được lưu.</p>
               </div>
               <button type="button" aria-label="Đóng review Vocabulary" onClick={() => setVocabFullDraft(null)} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><X size={18} /></button>
             </div>
@@ -1442,7 +1442,7 @@ export default function AdminVocabPage() {
                 ))}
               </div>
             </div>
-            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3"><button type="button" onClick={() => setVocabFullDraft(null)} className="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700">Bỏ qua</button><button type="button" onClick={() => { const words = vocabFullDraft.words.filter((word) => !word.excluded && word.word.trim() && word.meaning.trim()); if (!vocabFullDraft.title.trim() || !words.length) { toast.error("Full draft cần tên chủ đề và ít nhất một từ hợp lệ."); return; } setTopicForm((current) => ({ ...current, title: vocabFullDraft.title, categoryName: vocabFullDraft.categoryName })); setPendingVocabWords(words); setVocabFullDraft(null); toast.success("Đã Apply full draft vào form. Chưa ghi database."); }} className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800">Apply vào form</button></div>
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3"><button type="button" onClick={() => setVocabFullDraft(null)} className="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700">Bỏ qua</button><button type="button" onClick={() => { const words = vocabFullDraft.words.filter((word) => !word.excluded && word.word.trim() && word.meaning.trim()); if (!vocabFullDraft.title.trim() || !words.length) { toast.error("Full draft cần tên chủ đề và ít nhất một từ hợp lệ."); return; } setTopicForm((current) => ({ ...current, title: vocabFullDraft.title, categoryName: vocabFullDraft.categoryName })); setPendingVocabWords(words); setVocabFullDraft(null); toast.success("Đã áp dụng bản nháp vào biểu mẫu. Chưa ghi database."); }} className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800">Áp dụng vào biểu mẫu</button></div>
           </div>
         </div>
       )}

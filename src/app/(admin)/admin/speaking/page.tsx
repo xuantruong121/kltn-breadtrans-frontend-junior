@@ -606,7 +606,7 @@ export default function AdminSpeakingPage() {
       toast.error(
         getApiErrorMessage(
           error,
-          "Không thể soạn full draft Speaking lúc này.",
+          "Không thể soạn bản nháp luyện nói lúc này.",
         ),
       );
     }
@@ -1151,7 +1151,7 @@ export default function AdminSpeakingPage() {
                         : "bg-amber-50 text-amber-700 border border-amber-200"
                     }`}
                   >
-                    {currentActiveSet.publicationStatus}
+                    {STATUS_LABELS[currentActiveSet.publicationStatus as keyof typeof STATUS_LABELS] ?? currentActiveSet.publicationStatus}
                   </span>
                 </div>
                 <h2 className="mt-1 text-xl font-bold text-slate-900">
@@ -1345,7 +1345,7 @@ export default function AdminSpeakingPage() {
                   <label className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600">
                     Số câu
                     <input
-                      aria-label="Số câu trong full draft Speaking"
+                      aria-label="Số câu trong bản nháp luyện nói"
                       type="number"
                       min={1}
                       max={10}
@@ -1616,7 +1616,7 @@ export default function AdminSpeakingPage() {
                   onChange={(imageUrl) =>
                     setExerciseForm({ ...exerciseForm, imageUrl })
                   }
-                  helperText="Dùng ảnh PNG, JPG hoặc WEBP cho bài mô tả hình. Ảnh được lưu trực tiếp trên Cloudflare R2."
+                  helperText="Dùng ảnh PNG, JPG hoặc WEBP cho bài mô tả hình."
                 />
                 {!exerciseForm.imageUrl.trim() && <RequiredMediaNotice />}
               </div>
@@ -1870,7 +1870,7 @@ export default function AdminSpeakingPage() {
                   id="speaking-full-draft-title"
                   className="text-base font-bold text-slate-900"
                 >
-                  Xem lại full draft bộ luyện Speaking
+                  Xem lại bản nháp bộ luyện nói
                 </h3>
                 <p className="mt-1 text-xs leading-5 text-slate-500">
                   Chỉnh sửa hoặc loại câu trước khi áp dụng. Chưa có dữ liệu nào
@@ -1879,7 +1879,7 @@ export default function AdminSpeakingPage() {
               </div>
               <button
                 type="button"
-                aria-label="Đóng full draft Speaking"
+                aria-label="Đóng bản nháp luyện nói"
                 onClick={() => setSpeakingFullDraft(null)}
                 className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               >
@@ -2127,7 +2127,7 @@ export default function AdminSpeakingPage() {
                   setPendingFullDraftExercises(activeExercises);
                   setSpeakingFullDraft(null);
                   toast.success(
-                    "Đã áp dụng full draft vào form. Chưa có dữ liệu nào được lưu.",
+                    "Đã áp dụng bản nháp vào biểu mẫu. Chưa có dữ liệu nào được lưu.",
                   );
                 }}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
@@ -2256,7 +2256,7 @@ export default function AdminSpeakingPage() {
                   setSetForm({ ...practiceSetSuggestion });
                   setPracticeSetSuggestion(null);
                   toast.success(
-                    "Đã áp dụng bản nháp vào form. Hãy kiểm tra rồi lưu.",
+                    "Đã áp dụng bản nháp vào biểu mẫu. Hãy kiểm tra rồi lưu.",
                   );
                 }}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
@@ -2406,7 +2406,7 @@ export default function AdminSpeakingPage() {
                         });
                         setExerciseSuggestions([]);
                         toast.success(
-                          "Đã áp dụng gợi ý vào form. Hãy kiểm tra rồi lưu.",
+                          "Đã áp dụng gợi ý vào biểu mẫu. Hãy kiểm tra rồi lưu.",
                         );
                       }}
                       className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"

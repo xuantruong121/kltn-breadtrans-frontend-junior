@@ -27,6 +27,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { getCourseCardMedia } from "@/lib/course/catalogVisual";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import toast from "react-hot-toast";
+import { levelLabel } from "@/lib/ui/displayLabels";
 
 function getActivityIcon(skill: string | null) {
   switch (skill) {
@@ -196,7 +197,7 @@ export default function PublicCourseDetailPage() {
           <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 lg:p-7 shadow-xs dark:border-slate-800 dark:bg-slate-900">
             <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
               <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
-                {course.level || "Cơ bản"}
+                {levelLabel(course.level) || "Cơ bản"}
               </span>
               <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
                 Tự học theo lộ trình

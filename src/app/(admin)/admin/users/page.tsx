@@ -29,6 +29,7 @@ import axiosClient from "@/lib/api/axiosClient";
 import toast from "react-hot-toast";
 import { Pagination } from "@/components/ui";
 import { useAuthStore } from "@/stores/authStore";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 type UserData = {
   id: number;
@@ -125,7 +126,7 @@ export default function AdminUsersPage() {
     },
     onError: (err: any) =>
       toast.error(
-        err?.response?.data?.message || "Lỗi! Email có thể đã tồn tại.",
+        getApiErrorMessage(err, "Lỗi! Email có thể đã tồn tại."),
       ),
   });
 
@@ -149,7 +150,7 @@ export default function AdminUsersPage() {
     },
     onError: (err: any) =>
       toast.error(
-        err?.response?.data?.message || "Lỗi khi cập nhật tài khoản.",
+        getApiErrorMessage(err, "Lỗi khi cập nhật tài khoản."),
       ),
   });
 
@@ -164,7 +165,7 @@ export default function AdminUsersPage() {
       toast.success("Đã xóa tài khoản thành công.");
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message || "Không thể xóa tài khoản."),
+      toast.error(getApiErrorMessage(err, "Không thể xóa tài khoản.")),
   });
 
   const handleOpenEdit = (user: UserData) => {

@@ -23,6 +23,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import axiosClient from "@/lib/api/axiosClient";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { statusLabel } from "@/lib/ui/displayLabels";
 
 interface SmartGeneratedPayload {
   documentSummary?: string;
@@ -396,7 +397,7 @@ export default function AdminAiToolsPage() {
                   : "bg-emerald-500/30 text-emerald-300 border border-emerald-400/30"
               }`}
             >
-              {quotaData?.isNearLimit ? "Cảnh báo 80%" : "🟢 Ổn định"}
+              {quotaData?.isNearLimit ? "Cảnh báo 80%" : "Ổn định"}
             </span>
           </div>
 
@@ -449,7 +450,7 @@ export default function AdminAiToolsPage() {
             bài
           </h2>
           <span className="text-xs font-bold text-slate-400">
-            Lưu bền vững trong PostgreSQL
+            Được lưu lại để tra cứu
           </span>
         </div>
         <div className="mt-3 overflow-x-auto">
@@ -458,9 +459,9 @@ export default function AdminAiToolsPage() {
               <tr>
                 <th className="px-2 py-2">Loại</th>
                 <th className="px-2 py-2">Trạng thái</th>
-                <th className="px-2 py-2">Provider</th>
+                <th className="px-2 py-2">Dịch vụ AI</th>
                 <th className="px-2 py-2">Tạo lúc</th>
-                <th className="px-2 py-2">Resource</th>
+                <th className="px-2 py-2">Nội dung liên quan</th>
               </tr>
             </thead>
             <tbody>
@@ -470,7 +471,7 @@ export default function AdminAiToolsPage() {
                     {job.generationType}
                   </td>
                   <td className="px-2 py-2 font-black text-indigo-700">
-                    {job.status}
+                    {statusLabel(job.status)}
                   </td>
                   <td className="px-2 py-2 text-slate-500">
                     {job.provider || "—"}
@@ -763,7 +764,7 @@ export default function AdminAiToolsPage() {
                 {/* ACTION BUTTON & STATUS */}
                 <div className="flex items-center justify-between pt-4 border-t-2 border-slate-100">
                   <div className="text-xs font-bold text-slate-400">
-                    Cơ chế xử lý tự động (Retry 3x backoff)
+                    Tự động thử lại tối đa 3 lần nếu lỗi
                   </div>
 
                   <button
@@ -1244,9 +1245,9 @@ export default function AdminAiToolsPage() {
                           <p className="text-amber-800 leading-relaxed">
                             Đường dẫn ghi trực tiếp vào cơ sở dữ liệu runtime đã được đóng để bảo vệ tính toàn vẹn Single-Writer của các Studio chuyên biệt.
                             Vui lòng sao chép dữ liệu ứng viên để bàn giao và tạo bài học trong{" "}
-                            <Link href="/admin/courses" className="underline font-bold text-indigo-700 hover:text-indigo-900">Course Studio</Link>,{" "}
-                            <Link href="/admin/vocab" className="underline font-bold text-indigo-700 hover:text-indigo-900">Vocabulary Studio</Link> hoặc{" "}
-                            <Link href="/admin/exams" className="underline font-bold text-indigo-700 hover:text-indigo-900">Exam Studio</Link>.
+                            <Link href="/admin/courses" className="underline font-bold text-indigo-700 hover:text-indigo-900">Studio Khóa học</Link>,{" "}
+                            <Link href="/admin/vocab" className="underline font-bold text-indigo-700 hover:text-indigo-900">Studio Từ vựng</Link> hoặc{" "}
+                            <Link href="/admin/exams" className="underline font-bold text-indigo-700 hover:text-indigo-900">Studio Luyện đề</Link>.
                           </p>
                         </div>
                       </div>

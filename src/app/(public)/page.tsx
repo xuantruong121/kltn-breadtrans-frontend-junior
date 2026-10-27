@@ -233,7 +233,7 @@ export default function PublicLandingPage() {
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-black text-slate-900 dark:text-slate-100 leading-[1.24] sm:leading-[1.18] text-balance">
                 Tự học Tiếng Anh theo lộ trình, chinh phục từng mục tiêu cùng{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 dark:from-amber-400 dark:via-orange-400 dark:to-amber-500">
-                  Gia sư AI thông minh
+                  trợ lý AI
                 </span>
               </h1>
 
