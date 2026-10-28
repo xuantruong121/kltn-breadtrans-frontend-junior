@@ -84,6 +84,8 @@ export interface PracticeWritingDetail {
   wordCount: number | null;
   wordRange: [number, number] | null;
   keywords: Array<{ keyword: string; present: boolean }>;
+  /** B1 picture tasks: the connector found and the sentence count. */
+  linking?: { required: true; found: string | null; sentences: number };
 }
 
 export interface WritingEvaluation extends Partial<PracticeWritingDetail> {
@@ -107,6 +109,7 @@ export function practiceDetailOf(value: Partial<PracticeWritingDetail> | null | 
         wordCount: value.wordCount ?? null,
         wordRange: value.wordRange ?? null,
         keywords: value.keywords ?? [],
+        ...(value.linking ? { linking: value.linking } : {}),
       }
     : null;
 }

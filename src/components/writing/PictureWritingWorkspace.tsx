@@ -222,6 +222,17 @@ export function PictureWritingWorkspace({
                     {detail.keywords.map((k) => `${k.keyword} ${k.present ? "(đã dùng)" : "(chưa dùng)"}`).join(", ")}
                   </p>
                 )}
+                {detail.linking && (
+                  <p className="text-sm text-slate-700 dark:text-slate-300">
+                    Câu nối hai ý:{" "}
+                    {detail.linking.found
+                      ? `có từ nối "${detail.linking.found}"`
+                      : "chưa có từ nối"}
+                    {detail.linking.sentences > 1
+                      ? ` · bài có ${detail.linking.sentences} câu, yêu cầu một câu`
+                      : ""}
+                  </p>
+                )}
                 {detail.corrections.length > 0 && (
                   <div>
                     <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Sửa lỗi</p>
