@@ -222,6 +222,12 @@ export function PictureWritingWorkspace({
                     {detail.keywords.map((k) => `${k.keyword} ${k.present ? "(đã dùng)" : "(chưa dùng)"}`).join(", ")}
                   </p>
                 )}
+                {detail.scoreAdjustment && (
+                  <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200">
+                    Câu trả lời không mô tả nội dung bức tranh nên điểm tối đa là{" "}
+                    {detail.scoreAdjustment.cap}/{result.maxScore}.
+                  </p>
+                )}
                 {detail.linking && (
                   <p className="text-sm text-slate-700 dark:text-slate-300">
                     Câu nối hai ý:{" "}

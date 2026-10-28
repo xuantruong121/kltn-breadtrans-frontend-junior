@@ -86,6 +86,10 @@ export interface PracticeWritingDetail {
   keywords: Array<{ keyword: string; present: boolean }>;
   /** B1 picture tasks: the connector found and the sentence count. */
   linking?: { required: true; found: string | null; sentences: number };
+  /** Picture tasks: the grader's verdict on whether the answer describes the scene. */
+  scene?: { match: "MATCH" | "PARTIAL" | "MISMATCH" | "UNCERTAIN"; evidence: string };
+  /** Set when the server capped the grader's total because the scene did not match. */
+  scoreAdjustment?: { reason: "SCENE_MISMATCH"; providerScore: number; cap: number };
 }
 
 export interface WritingEvaluation extends Partial<PracticeWritingDetail> {
@@ -110,6 +114,8 @@ export function practiceDetailOf(value: Partial<PracticeWritingDetail> | null | 
         wordRange: value.wordRange ?? null,
         keywords: value.keywords ?? [],
         ...(value.linking ? { linking: value.linking } : {}),
+        ...(value.scene ? { scene: value.scene } : {}),
+        ...(value.scoreAdjustment ? { scoreAdjustment: value.scoreAdjustment } : {}),
       }
     : null;
 }
