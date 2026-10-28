@@ -122,17 +122,10 @@ export function PracticeCard({
   return (
     <article className={containerClasses}>
       <div className="space-y-2.5">
-        {/* Status header line: only when locked, completed, or in-progress */}
-        {(isLocked || status === "COMPLETED" || status === "IN_PROGRESS") && (
+        {/* Status header line: only when completed or in progress */}
+        {(status === "COMPLETED" || status === "IN_PROGRESS") && (
           <div className="flex items-center justify-between gap-2">
-            {isLocked ? (
-              <span className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80">
-                <Lock size={10} aria-hidden="true" />
-                {unlockPlan}
-              </span>
-            ) : (
-              <span />
-            )}
+            <span />
 
             {status === "COMPLETED" ? (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
