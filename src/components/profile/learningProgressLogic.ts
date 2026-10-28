@@ -22,6 +22,8 @@ export interface GroupedActivity {
   id: string | number;
   type: string;
   title: string;
+  /** The exercise or topic name as stored when the learner did it, if it is a readable title. */
+  subject?: string;
   detail: string;
   occurredAt: string;
   dateDisplay: string;
@@ -190,6 +192,21 @@ function sanitizeActivityCategory(title: string, type?: string | null): string {
 }
 
 /**
+ * The stored activity title is the exercise name at the time it was done
+ * ("Listening A1 — Essential Everyday English"). Show it when it is a readable
+ * name; technical codes and generic labels fall back to the category alone.
+ */
+function activitySubject(title: string | null | undefined, category: string): string | undefined {
+  const t = (title || "").trim();
+  if (!t || t === category) return undefined;
+  if (/^[A-Z0-9_]+$/.test(t) || /courselessonattempt/i.test(t)) return undefined;
+  if (/^(Học từ vựng|Hoạt động học tập)$/i.test(t)) return undefined;
+  // Old rows may carry internal names ("Entry Diagnostic v2"); never show those.
+  if (/\b[Vv]\d+(\.\d+)?\b|legacy|runtime/i.test(t)) return undefined;
+  return t;
+}
+
+/**
  * Group repetitive activities (e.g. multiple vocabulary words or repeated diagnostics on the same day).
  */
 export function groupRecentActivities(
@@ -255,6 +272,8 @@ export function groupRecentActivities(
       id: current.id,
       type: current.type,
       title: category,
+      // Aggregated rows (several words, several attempts) have no single name.
+      subject: count > 1 ? undefined : activitySubject(current.title, category),
       detail,
       occurredAt: current.occurredAt,
       dateDisplay: formatFriendlyDate(current.occurredAt),
