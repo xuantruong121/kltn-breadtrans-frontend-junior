@@ -1,20 +1,5 @@
 import axiosClient from "../axiosClient";
 
-export interface Class {
-  id: number;
-  name: string;
-  courseId: number;
-  startDate?: string | null;
-  endDate?: string | null;
-  capacity?: number;
-  tuitionFeeVnd?: number;
-  status?: string;
-  studentCount?: number;
-  activeEnrollmentCount?: number;
-  totalEnrollmentCount?: number;
-  hasEnrollments?: boolean;
-}
-
 export type CourseSkill = "LISTENING" | "SPEAKING" | "READING" | "WRITING";
 
 export interface CourseCurriculumActivity {
@@ -112,7 +97,6 @@ export interface Course {
   thumbnail?: string;
   level: string; // e.g., "BEGINNER", "INTERMEDIATE"
   status?: string;
-  classes?: Class[];
   curriculum?: CourseCurriculum;
   progress?: CourseProgress | null;
   canAccess?: boolean;
@@ -169,34 +153,7 @@ export interface Lesson {
   materials?: Material[];
 }
 
-export interface ClassDetail extends Class {
-  lessons: Lesson[];
-  teacher?: {
-    id: number;
-    email: string;
-    profile: {
-      fullName: string;
-    };
-  };
-}
-
-export interface StudentLearningClass extends Class {
-  enrollmentProgress: number;
-  enrollmentStatus: "ACTIVE" | "COMPLETED";
-  course: Pick<
-    Course,
-    "id" | "title" | "description" | "thumbnail" | "thumbnailUrl" | "level"
-  >;
-}
-
 // ================= PUBLIC DISCOVERY (PHASE 3A & 3B) =================
-
-export interface PublicTeacher {
-  id: number | null;
-  fullName: string;
-  avatar: string | null;
-  specialization?: string | null;
-}
 
 export interface PublicCourseCard {
   id: number;
@@ -206,7 +163,6 @@ export interface PublicCourseCard {
   level: string | null;
   status: string;
   createdAt: string;
-  teacher?: PublicTeacher;
   curriculumType?: string;
   canAccess: boolean;
   accessSource: "ADMIN" | "PRO_SUBSCRIPTION" | null;
@@ -214,20 +170,6 @@ export interface PublicCourseCard {
   isSelfPaced: boolean;
   learning?: CourseLearningProfile;
   curriculum?: CourseCurriculum;
-}
-
-export interface PublicClass {
-  id: number;
-  name: string;
-  startDate: string | null;
-  endDate: string | null;
-  capacity: number | null;
-  tuitionFeeVnd: number;
-  currentEnrollmentCount: number;
-  remainingSeats: number;
-  isSoldOut: boolean;
-  status: string;
-  teacher?: PublicTeacher;
 }
 
 export interface PublicLessonOutline {
@@ -246,46 +188,14 @@ export interface PublicCourseDetail {
   level: string | null;
   status: string;
   createdAt: string;
-  teacher?: PublicTeacher;
   lessons: PublicLessonOutline[];
   curriculumType?: string;
-  classes?: PublicClass[];
   curriculum?: CourseCurriculum;
   canAccess: boolean;
   accessSource: "ADMIN" | "PRO_SUBSCRIPTION" | null;
   requiresPro: boolean;
   isSelfPaced: boolean;
   learning?: CourseLearningProfile;
-}
-
-export interface EnrollResponseDto {
-  enrollmentId: number;
-  classId: number;
-  status: "ACTIVE" | "PENDING_PAYMENT";
-  tuitionFeeVnd: number;
-  accessGranted: boolean;
-  message: string;
-  payos?: {
-    intentId: number;
-    type?: "PLAN" | "COURSE";
-    orderCode: number;
-    description: string;
-    paymentLinkId: string | null;
-    checkoutUrl: string | null;
-    qrCode: string | null;
-    bankBin: string | null;
-    bankAccountNumber: string | null;
-    bankAccountName: string | null;
-    status: string;
-    expiresAt: string | null;
-  } | null;
-}
-
-export interface StudentCourseEnrollment {
-  id: number;
-  classId: number;
-  status: "ACTIVE" | "PENDING_PAYMENT" | "COMPLETED" | "DROPPED";
-  joinedAt: string;
 }
 
 export interface CourseV5LessonSummary {
@@ -415,7 +325,6 @@ export const courseService = {
     id: number,
   ): Promise<{
     courseId: number;
-    enrollmentId: number;
     accessSource: string;
     progress: CourseProgress;
   }> => {
@@ -462,14 +371,6 @@ export const courseService = {
     );
   },
 
-  getClassById: async (classId: number): Promise<ClassDetail> => {
-    return await axiosClient.get(`/courses/classes/${classId}`);
-  },
-
-  getMyLearningClasses: async (): Promise<StudentLearningClass[]> => {
-    return await axiosClient.get("/classes");
-  },
-
   // Canonical Public Discovery APIs (Phase 3A)
   getPublicCatalog: async (): Promise<PublicCourseCard[]> => {
     return await axiosClient.get("/public/courses");
@@ -477,16 +378,5 @@ export const courseService = {
 
   getPublicCourseDetail: async (id: number): Promise<PublicCourseDetail> => {
     return await axiosClient.get(`/public/courses/${id}`);
-  },
-
-  // Self-Enrollment APIs (Phase 3B)
-  enrollInClass: async (classId: number): Promise<EnrollResponseDto> => {
-    return await axiosClient.post(`/courses/classes/${classId}/enroll`);
-  },
-
-  getMyCourseEnrollments: async (
-    courseId: number,
-  ): Promise<StudentCourseEnrollment[]> => {
-    return await axiosClient.get(`/courses/${courseId}/my-enrollments`);
   },
 };

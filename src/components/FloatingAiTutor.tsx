@@ -185,12 +185,12 @@ function FloatingAiTutorInner() {
 
   const { socket } = useSocket();
 
-  const isAdminOrTeacher = user?.role === "ADMIN";
+  const isAdmin = user?.role === "ADMIN";
   const isStudent = user?.role === "STUDENT";
   const currentDisplayName = user?.profile?.name || user?.email?.split("@")[0] || "Người dùng";
 
   // ID của học sinh đang trò chuyện
-  const studentThreadId = isAdminOrTeacher
+  const studentThreadId = isAdmin
     ? activeStudentId || ""
     : user?.id
     ? `student_${user.id}`
@@ -222,7 +222,7 @@ function FloatingAiTutorInner() {
 
   // Load student conversation from backend (defaults to latest messages)
   const loadStudentConversation = async () => {
-    if (!user?.id || isAdminOrTeacher) return;
+    if (!user?.id || isAdmin) return;
     setIsFetchingHistory(true);
     try {
       const conv = await supportService.getMyConversation();
@@ -247,7 +247,7 @@ function FloatingAiTutorInner() {
 
   // Load admin conversations list from backend
   const loadAdminConversations = async () => {
-    if (!isAdminOrTeacher) return;
+    if (!isAdmin) return;
     setIsFetchingHistory(true);
     try {
       const res = await supportService.getAdminConversations(1, 50);
@@ -277,7 +277,7 @@ function FloatingAiTutorInner() {
 
   // Load messages for a student conversation (Admin view)
   const loadAdminMessagesForStudent = async (sId: string) => {
-    if (!isAdminOrTeacher || !sId) return;
+    if (!isAdmin || !sId) return;
     const thread = threads[sId];
     let targetConvId = thread?.conversationId;
 
@@ -337,7 +337,7 @@ function FloatingAiTutorInner() {
     }
 
     try {
-      const res = isAdminOrTeacher
+      const res = isAdmin
         ? await supportService.getAdminMessages(currentThread.conversationId, 1, 50, beforeId)
         : await supportService.getMessages(currentThread.conversationId, 1, 50, beforeId);
 
@@ -365,7 +365,7 @@ function FloatingAiTutorInner() {
   useEffect(() => {
     if (!isOpen) return;
     const loadTimer = window.setTimeout(() => {
-      if (isAdminOrTeacher) {
+      if (isAdmin) {
         void loadAdminConversations();
       } else if (user?.id) {
         void loadStudentConversation();
@@ -373,17 +373,17 @@ function FloatingAiTutorInner() {
     }, 0);
     return () => window.clearTimeout(loadTimer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, user?.id, isAdminOrTeacher]);
+  }, [isOpen, user?.id, isAdmin]);
 
   // When admin selects a student to chat
   useEffect(() => {
-    if (!isAdminOrTeacher || !activeStudentId || adminView !== "chat") return;
+    if (!isAdmin || !activeStudentId || adminView !== "chat") return;
     const loadTimer = window.setTimeout(() => {
       void loadAdminMessagesForStudent(activeStudentId);
     }, 0);
     return () => window.clearTimeout(loadTimer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdminOrTeacher, activeStudentId, adminView]);
+  }, [isAdmin, activeStudentId, adminView]);
 
   // Tổng số tin nhắn chưa đọc cho Admin
   const totalUnreadCount = useMemo(() => {
@@ -429,7 +429,7 @@ function FloatingAiTutorInner() {
 
   // Initial scroll to bottom when opening chat or switching thread
   useEffect(() => {
-    if (isOpen && (!isAdminOrTeacher || adminView === "chat")) {
+    if (isOpen && (!isAdmin || adminView === "chat")) {
       const timer = setTimeout(() => {
         scrollToBottom("auto");
         setIsNearBottom(true);
@@ -438,11 +438,11 @@ function FloatingAiTutorInner() {
       }, 60);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, adminView, studentThreadId, isAdminOrTeacher]);
+  }, [isOpen, adminView, studentThreadId, isAdmin]);
 
   // Smart auto-scroll when new messages arrive
   useEffect(() => {
-    if (!isOpen || (isAdminOrTeacher && adminView !== "chat")) return;
+    if (!isOpen || (isAdmin && adminView !== "chat")) return;
 
     const currentLen = currentThread.messages.length;
     const prevLen = prevMessagesLengthRef.current;
@@ -451,8 +451,8 @@ function FloatingAiTutorInner() {
     if (currentLen > prevLen && prevLen > 0) {
       const lastMsg = currentThread.messages[currentLen - 1];
       const isMyMessage =
-        (isAdminOrTeacher && lastMsg?.role === "admin") ||
-        (!isAdminOrTeacher && lastMsg?.role === "user");
+        (isAdmin && lastMsg?.role === "admin") ||
+        (!isAdmin && lastMsg?.role === "user");
 
       if (isMyMessage || isNearBottomRef.current) {
         scrollToBottom("smooth");
@@ -461,7 +461,7 @@ function FloatingAiTutorInner() {
         setNewMessagesCount((prev) => prev + 1);
       }
     }
-  }, [currentThread.messages, isOpen, adminView, isAdminOrTeacher]);
+  }, [currentThread.messages, isOpen, adminView, isAdmin]);
 
   // Close on Escape key (A11y)
   useEffect(() => {
@@ -477,7 +477,7 @@ function FloatingAiTutorInner() {
   if (isHiddenPath) return null;
 
   const handleReload = () => {
-    if (isAdminOrTeacher && activeStudentId) {
+    if (isAdmin && activeStudentId) {
       loadAdminMessagesForStudent(activeStudentId);
     } else {
       loadStudentConversation();
@@ -490,8 +490,8 @@ function FloatingAiTutorInner() {
     const messageText = input.trim();
     setInput("");
 
-    // 1. Nếu là ADMIN / TEACHER đang trả lời trong thread của học sinh:
-    if (isAdminOrTeacher) {
+    // 1. Nếu là ADMIN đang trả lời trong thread của học sinh:
+    if (isAdmin) {
       if (!studentThreadId) return;
       const adminClientMessageId = `adm_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
       const adminMsg = {
@@ -683,7 +683,7 @@ function FloatingAiTutorInner() {
 
     if (convId) {
       try {
-        if (isAdminOrTeacher) {
+        if (isAdmin) {
           await supportService.toggleAdminMode(convId, nextMode);
         } else {
           await supportService.toggleMode(convId, nextMode);
@@ -722,11 +722,11 @@ function FloatingAiTutorInner() {
         className={`fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-3.5 sm:bottom-[calc(4.5rem+env(safe-area-inset-bottom))] sm:right-4 md:bottom-8 md:right-8 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white min-h-[48px] min-w-[48px] p-3.5 sm:p-4 rounded-full shadow-xl hover:shadow-2xl z-[45] transition-all border-2 border-white flex items-center justify-center cursor-pointer ${
           isOpen ? "scale-0 pointer-events-none" : "scale-100"
         }`}
-        title={isAdminOrTeacher ? "Mở Trung Tâm Tin Nhắn Học Viên" : "Mở Trợ Lý Bánh Mì"}
+        title={isAdmin ? "Mở Trung Tâm Tin Nhắn Học Viên" : "Mở Trợ Lý Bánh Mì"}
       >
         <div className="relative">
           <MessageCircle size={24} className="sm:w-7 sm:h-7" />
-          {isAdminOrTeacher ? (
+          {isAdmin ? (
             totalUnreadCount > 0 && (
               <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white animate-pulse">
                 {totalUnreadCount}
@@ -750,13 +750,13 @@ function FloatingAiTutorInner() {
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             role="dialog"
             aria-modal="true"
-            aria-label={isAdminOrTeacher ? "Trung tâm tin nhắn hỗ trợ học viên" : "Cửa sổ hỗ trợ trực tuyến BreadTrans"}
+            aria-label={isAdmin ? "Trung tâm tin nhắn hỗ trợ học viên" : "Cửa sổ hỗ trợ trực tuyến BreadTrans"}
             className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-2 sm:right-4 md:bottom-8 md:right-8 w-[calc(100vw-1rem)] max-w-sm md:w-[420px] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl z-[50] border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col h-[min(78dvh,580px)] max-h-[calc(100dvh-5.5rem)]"
           >
             {/* ======================================================== */}
-            {/* 1. MÀN HÌNH DANH SÁCH HỌC SINH (DÀNH CHO ADMIN/TEACHER) */}
+            {/* 1. MÀN HÌNH DANH SÁCH HỌC SINH (DÀNH CHO ADMIN) */}
             {/* ======================================================== */}
-            {isAdminOrTeacher && adminView === "list" ? (
+            {isAdmin && adminView === "list" ? (
               <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900">
                 {/* Header Inbox */}
                 <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-4 text-white shrink-0 shadow-md">
@@ -873,7 +873,7 @@ function FloatingAiTutorInner() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       {/* Nút quay lại danh sách nếu là Admin */}
-                      {isAdminOrTeacher && (
+                      {isAdmin && (
                         <button
                           onClick={() => setAdminView("list")}
                           className="hover:bg-white/20 p-1.5 rounded-xl transition-colors text-white mr-0.5 cursor-pointer"
@@ -884,11 +884,11 @@ function FloatingAiTutorInner() {
                       )}
 
                       <div className="w-9 h-9 rounded-2xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-xl shadow-inner">
-                        {isAdminOrTeacher ? "🎓" : "🍞"}
+                        {isAdmin ? "🎓" : "🍞"}
                       </div>
                       <div>
                         <h3 className="font-black text-sm leading-tight truncate max-w-[200px]">
-                          {isAdminOrTeacher ? currentThread.studentName : "Trợ Lý Bánh Mì"}
+                          {isAdmin ? currentThread.studentName : "Trợ Lý Bánh Mì"}
                         </h3>
                         <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-100">
                           <span
@@ -923,7 +923,7 @@ function FloatingAiTutorInner() {
                   </div>
 
                   {/* Thanh điều khiển Chế độ dành cho Admin trên từng học sinh */}
-                  {isAdminOrTeacher ? (
+                  {isAdmin ? (
                     <div className="bg-white/15 backdrop-blur-xs rounded-xl p-2 flex items-center justify-between text-xs font-bold mt-1 border border-white/20">
                       <span className="text-[11px]">
                         {currentThread.mode === "AI" ? "Học viên đang nhận phản hồi tự động" : "Bạn đang trao đổi trực tiếp"}
@@ -982,10 +982,10 @@ function FloatingAiTutorInner() {
                       </div>
                       <div className="space-y-1">
                         <h4 className="font-black text-slate-700 dark:text-slate-200 text-sm">
-                          {isAdminOrTeacher ? "Chưa có tin nhắn nào" : "Chào mừng bạn đến với BreadTrans!"}
+                          {isAdmin ? "Chưa có tin nhắn nào" : "Chào mừng bạn đến với BreadTrans!"}
                         </h4>
                         <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
-                          {isAdminOrTeacher
+                          {isAdmin
                             ? `Chưa có lịch sử tin nhắn với học viên ${currentThread.studentName || "này"}.`
                             : "Bạn cần giải đáp thắc mắc về bài học, từ vựng, ngữ pháp hay lộ trình học? Hãy nhập câu hỏi bên dưới để bắt đầu nhé!"}
                         </p>
@@ -1009,7 +1009,7 @@ function FloatingAiTutorInner() {
                       // Nếu người đang xem là Học sinh:
                       //   Tin nhắn của học sinh (user) nằm bên phải (self-end).
                       //   Tin nhắn của AI / Admin nằm bên trái (self-start).
-                      const isRightBubble = isAdminOrTeacher
+                      const isRightBubble = isAdmin
                         ? msg.role === "admin"
                         : msg.role === "user";
 
@@ -1085,7 +1085,7 @@ function FloatingAiTutorInner() {
                 </div>
 
                 {/* Quick Chips (Dành cho học sinh) */}
-                {!isAdminOrTeacher && currentThread.messages.length <= 2 && (
+                {!isAdmin && currentThread.messages.length <= 2 && (
                   <div className="px-4 py-2 bg-slate-100/70 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto text-[11px] shrink-0 no-scrollbar">
                     <span className="text-slate-400 dark:text-slate-500 font-bold shrink-0">Gợi ý:</span>
                     <button
@@ -1133,7 +1133,7 @@ function FloatingAiTutorInner() {
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSend()}
                     placeholder={
-                      isAdminOrTeacher
+                      isAdmin
                         ? currentThread.mode === "HUMAN"
                           ? `Trả lời ${currentThread.studentName}...`
                           : "Chuyển sang hỗ trợ trực tiếp để trò chuyện..."

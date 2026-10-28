@@ -76,7 +76,7 @@ export default function LearnerMessagesPage() {
           Tin nhắn hỗ trợ
         </h1>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-          Trao đổi trực tiếp với đội ngũ cố vấn và giáo viên của BreadTrans.
+          Trao đổi trực tiếp với đội ngũ hỗ trợ của BreadTrans.
         </p>
       </header>
 
