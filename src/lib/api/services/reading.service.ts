@@ -19,6 +19,10 @@ export interface ReadingExercise {
   microSkills: string[];
   isPremiumContent: boolean;
   isLocked: boolean;
+  /** Lowest plan that opens this item: FREE, PLUS or PRO. */
+  requiredPlan?: string;
+  /** Authored CEFR level the required plan is decided from ("B1"). */
+  cefrLevel?: string | null;
   completionStatus: ReadingExerciseCompletionStatus;
   completedQuestionCount: number;
 }

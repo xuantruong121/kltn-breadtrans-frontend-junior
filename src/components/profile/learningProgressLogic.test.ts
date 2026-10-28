@@ -293,3 +293,76 @@ test("getLearnerMilestones extracts real milestones without fake gamification", 
   assert.equal(milestones[1].title, "5 Ngày học liên tiếp");
   assert.equal(milestones[2].title, "2 Lượt thi TOEIC");
 });
+
+test("groupRecentActivities shows the stored exercise name, never an internal label", () => {
+  const grouped = groupRecentActivities([
+    {
+      id: 30,
+      type: "LISTENING_PRACTICE_COMPLETED",
+      title: "Nghe chép A2 — Du lịch và chỉ đường",
+      detail: "18/20 câu đúng",
+      score: 90,
+      durationSec: null,
+      occurredAt: "2026-10-28T08:00:00.000Z",
+    },
+    {
+      id: 31,
+      type: "WRITING_PRACTICE_COMPLETED",
+      title: "Writing A2 — Messages & Simple Emails — Câu 1/5",
+      detail: "9/10 điểm",
+      score: 90,
+      durationSec: null,
+      occurredAt: "2026-10-28T07:00:00.000Z",
+    },
+    {
+      id: 32,
+      type: "DIAGNOSTIC",
+      title: "Entry Diagnostic v2",
+      detail: null,
+      score: 70,
+      durationSec: null,
+      occurredAt: "2026-10-27T07:00:00.000Z",
+    },
+    {
+      id: 33,
+      type: "TOEIC_ATTEMPT",
+      title: "TOEIC_ATTEMPT",
+      detail: null,
+      score: 60,
+      durationSec: null,
+      occurredAt: "2026-10-26T07:00:00.000Z",
+    },
+  ]);
+  assert.equal(grouped[0].title, "Luyện nghe hiểu");
+  assert.equal(grouped[0].subject, "Nghe chép A2 — Du lịch và chỉ đường");
+  assert.equal(grouped[1].subject, "Writing A2 — Messages & Simple Emails — Câu 1/5");
+  assert.equal(grouped[2].subject, undefined);
+  assert.equal(grouped[3].subject, undefined);
+});
+
+test("groupRecentActivities shows the catalog's Vietnamese title for a practice quiz", () => {
+  const grouped = groupRecentActivities([
+    {
+      id: 40,
+      type: "LISTENING_PRACTICE_COMPLETED",
+      title: "Nghe chép A2 — Du lịch và chỉ đường",
+      detail: "18/20 câu đúng",
+      score: 90,
+      durationSec: null,
+      quizId: 24,
+      occurredAt: "2026-10-28T08:00:00.000Z",
+    },
+    {
+      id: 41,
+      type: "WRITING_PRACTICE_COMPLETED",
+      title: "Writing B1 — Professional Email — Câu 2/5",
+      detail: "9/10 điểm",
+      score: 90,
+      durationSec: null,
+      quizId: 4,
+      occurredAt: "2026-10-28T07:00:00.000Z",
+    },
+  ]);
+  assert.equal(grouped[0].subject, "Nghe chép: du lịch và chỉ đường (A2)");
+  assert.equal(grouped[1].subject, "Viết email công việc (B1) · Câu 2/5");
+});

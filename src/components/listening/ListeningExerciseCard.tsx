@@ -15,6 +15,7 @@ import {
   resolveListeningFormatTag,
   resolveListeningPedagogicalDescription,
 } from "./listeningCardLogic";
+import { catalogLevelLabel } from "@/lib/practice/catalogFilters";
 
 export interface ListeningExerciseCardProps {
   quiz: ListeningPracticeCatalogItem;
@@ -89,17 +90,10 @@ export function ListeningExerciseCard({
   return (
     <article className={containerClasses}>
       <div className="space-y-2.5">
-        {/* Optional status banner: only for locked or completed */}
-        {(isLocked || status === "COMPLETED" || status === "IN_PROGRESS") && (
+        {/* Optional status banner: only when completed */}
+        {status === "COMPLETED" && (
           <div className="flex items-center justify-between gap-2">
-            {isLocked ? (
-              <span className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80">
-                <Lock size={10} aria-hidden="true" />
-                PLUS
-              </span>
-            ) : (
-              <span />
-            )}
+            <span />
 
             {status === "COMPLETED" ? (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
@@ -107,10 +101,6 @@ export function ListeningExerciseCard({
                 <span>
                   Đã hoàn thành{quiz.score != null ? ` · ${quiz.score}/100` : ""}
                 </span>
-              </span>
-            ) : status === "IN_PROGRESS" ? (
-              <span className="text-xs font-medium text-violet-700 dark:text-violet-400">
-                Đang luyện tập
               </span>
             ) : null}
           </div>
@@ -145,7 +135,9 @@ export function ListeningExerciseCard({
         <div className="flex flex-wrap items-center justify-between gap-2.5">
           {/* Tertiary inline metadata */}
           <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
-            <span>{cefr.label}</span>
+            <span>
+              {catalogLevelLabel(quiz.cefrLevel ?? quiz.levels?.[0] ?? quiz.title) ?? cefr.label}
+            </span>
             <span>·</span>
             <span>{formatTag}</span>
             {accentText && (

@@ -52,6 +52,7 @@ import {
 import { isSafeCourseReturn, withSafeReturnTo } from "@/lib/course/navigation";
 import { calculateProgressiveDictationFeedback } from "@/components/listening/listeningDictationUtils";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
 
 export type QuizRouteContext = "listening" | "reading" | "exams";
 
@@ -586,7 +587,7 @@ export default function TakeQuizPage(props: {
   return (
     <div className="w-full min-h-dvh flex flex-col bg-slate-50 dark:bg-slate-950 font-sans">
       <PracticeHeader
-        title={quiz.title}
+        title={quizDisplayTitle(quiz.id, quiz.title)}
         category={isReading ? "Đọc hiểu" : skillLabel}
         positionText={`Câu ${currentStep + 1}/${questions.length}`}
         onExit={handleExitRequest}

@@ -105,10 +105,10 @@ export const FlashcardFilterBar: React.FC<FlashcardFilterBarProps> = ({
               className="w-full cursor-pointer appearance-none rounded-xl border border-slate-200 bg-slate-50/70 py-2.5 pl-3.5 pr-8 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:border-amber-400 dark:focus:bg-slate-900"
             >
               <option value="ALL">Tất cả trạng thái</option>
-              <option value="REVIEW_DUE">Cần ôn tập</option>
-              <option value="IN_PROGRESS">Đang học</option>
               <option value="NEW">Chưa học</option>
+              <option value="IN_PROGRESS">Đang học</option>
               <option value="COMPLETED">Đã thuộc</option>
+              <option value="REVIEW_DUE">Cần ôn tập</option>
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 dark:text-slate-500">
               <Filter size={14} aria-hidden="true" />

@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Filter,
   Flame,
   Loader2,
   Mic,
@@ -26,49 +25,35 @@ import { useGamificationStore } from "@/stores/gamificationStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { PremiumContentPaywallModal } from "@/components/subscription/PremiumContentPaywallModal";
 import { PracticeCard, type PracticeExerciseItem } from "@/components/speaking/PracticeCard";
+import { PracticeCatalogFilters } from "@/components/practice/PracticeCatalogFilters";
 import {
-  type DifficultyLevel,
-  matchesDifficulty,
-} from "@/components/speaking/practiceCardLogic";
+  DEFAULT_CATALOG_SORT,
+  matchesDifficultyFilter,
+  matchesStatusFilter,
+  sortByLevel,
+  type CatalogSort,
+  type DifficultyFilter,
+  type LearningStatus,
+  type StatusFilter,
+} from "@/lib/practice/catalogFilters";
 import { presentSpeakingProgress } from "@/lib/speaking/speakingExperienceLogic";
-
-const DIFFICULTY_OPTIONS: Array<{ id: DifficultyLevel; label: string }> = [
-  { id: "ALL", label: "Tất cả" },
-  { id: "BASIC", label: "Cơ bản" },
-  { id: "INTERMEDIATE", label: "Trung cấp" },
-  { id: "ADVANCED", label: "Nâng cao" },
-];
-
-function getDifficultyWeight(difficulty?: string): number {
-  if (!difficulty) return 99;
-  const normalized = difficulty.toLowerCase();
-  if (
-    normalized.includes("cơ bản") ||
-    normalized.includes("beginner") ||
-    normalized.includes("basic")
-  ) {
-    return 1;
-  }
-  if (
-    normalized.includes("trung cấp") ||
-    normalized.includes("intermediate")
-  ) {
-    return 2;
-  }
-  if (
-    normalized.includes("nâng cao") ||
-    normalized.includes("advanced")
-  ) {
-    return 3;
-  }
-  return 99;
-}
+import { unlockPlanFor } from "@/modules/subscription/practicePlan";
+import { speakingSetDisplayTitle } from "@/lib/catalog/displayTitles";
 
 type SpeakingPracticeSetCard = SpeakingExercise & {
   practiceSet: SpeakingPracticeSetSummary;
   averageScore?: number;
   isSpotlight?: boolean;
 };
+
+/** A set's level is its practice set level, the same one access uses. */
+const speakingLevelOf = (set: SpeakingPracticeSetCard) => set.cefrLevel ?? set.title;
+
+/** Completed exercises of a set, from persisted graded submissions. */
+function speakingSetStatus(set: SpeakingPracticeSetCard): LearningStatus {
+  if (set.isCompleted) return "COMPLETED";
+  return set.practiceSet.completedCount > 0 ? "IN_PROGRESS" : "NOT_STARTED";
+}
 
 export default function SpeakingExercisesPage() {
   const router = useRouter();
@@ -77,10 +62,10 @@ export default function SpeakingExercisesPage() {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel>("ALL");
+  const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyFilter>("ALL");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
-  const [sortOrder, setSortOrder] = useState<string>("EASY_TO_HARD");
-  const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+  const [sortOrder, setSortOrder] = useState<CatalogSort>(DEFAULT_CATALOG_SORT);
+  const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("ALL");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
   const [launchingExerciseId, setLaunchingExerciseId] = useState<number | null>(null);
@@ -206,14 +191,15 @@ export default function SpeakingExercisesPage() {
       }
       const avgScore = scoreCount > 0 ? Math.round(scoreSum / scoreCount) : undefined;
 
+      const setTitle = speakingSetDisplayTitle(summary.key, summary.title, first.cefrLevel);
       return {
         ...first,
-        title: summary.title,
+        title: setTitle,
         description: summary.description,
         category: summary.category,
         difficulty: summary.difficultyLabel,
         isCompleted: summary.isCompleted,
-        practiceSet: summary,
+        practiceSet: { ...summary, title: setTitle },
         averageScore: avgScore,
       };
     });
@@ -260,8 +246,8 @@ export default function SpeakingExercisesPage() {
         ex.translation?.toLowerCase().includes(q) ||
         ex.category?.toLowerCase().includes(q);
 
-      const matchDifficulty = matchesDifficulty(
-        ex.difficulty || "",
+      const matchDifficulty = matchesDifficultyFilter(
+        speakingLevelOf(ex),
         selectedDifficulty,
       );
 
@@ -269,37 +255,16 @@ export default function SpeakingExercisesPage() {
         selectedCategory === "ALL" ||
         (ex.category || "").toUpperCase() === selectedCategory.toUpperCase();
 
-      const inProgress = Boolean(
-        ex.practiceSet &&
-          ex.practiceSet.completedCount > 0 &&
-          ex.practiceSet.completedCount < ex.practiceSet.exerciseCount,
+      const matchStatus = matchesStatusFilter(
+        speakingSetStatus(ex),
+        selectedStatus,
       );
-
-      const matchStatus =
-        selectedStatus === "ALL" ||
-        (selectedStatus === "COMPLETED" && Boolean(ex.isCompleted)) ||
-        (selectedStatus === "IN_PROGRESS" && inProgress) ||
-        (selectedStatus === "UNCOMPLETED" && !ex.isCompleted && !inProgress);
 
       return matchSearch && matchDifficulty && matchCategory && matchStatus;
     });
 
-    const sorted = list.sort((a, b) => {
-      if (sortOrder === "EASY_TO_HARD") {
-        const weightA = getDifficultyWeight(a.difficulty);
-        const weightB = getDifficultyWeight(b.difficulty);
-        if (weightA !== weightB) return weightA - weightB;
-        return (a.id || 0) - (b.id || 0);
-      }
-      if (sortOrder === "HARD_TO_EASY") {
-        const weightA = getDifficultyWeight(a.difficulty);
-        const weightB = getDifficultyWeight(b.difficulty);
-        if (weightA !== weightB) return weightB - weightA;
-        return (b.id || 0) - (a.id || 0);
-      }
-      // NEWEST
-      return (b.id || 0) - (a.id || 0);
-    });
+    // Sorted over every set before pagination slices a page.
+    const sorted = sortByLevel(list, sortOrder, speakingLevelOf);
 
     // Tag the first uncompleted or in-progress item as Spotlight
     let spotlightAssigned = false;
@@ -512,95 +477,34 @@ export default function SpeakingExercisesPage() {
           </div>
         </div>
 
-        {/* Row 2: Functional Reactive Difficulty Chips, Status & Sort */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 pt-3">
-          {/* Reactive Difficulty Chips */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1">
-              Độ khó:
-            </span>
-            {DIFFICULTY_OPTIONS.map((lvl) => {
-              const isActive = selectedDifficulty === lvl.id;
-              return (
-                <button
-                  key={lvl.id}
-                  type="button"
-                  aria-pressed={isActive}
-                  onClick={() => {
-                    setSelectedDifficulty(lvl.id);
-                    setCurrentPage(1);
-                  }}
-                  className={`min-h-9 rounded-lg px-3 py-1.5 text-xs transition cursor-pointer ${
-                    isActive
-                      ? "bg-violet-600 text-white font-semibold shadow-sm border border-violet-600"
-                      : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200 dark:border-slate-700 font-medium"
-                  }`}
-                >
-                  {lvl.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Sort, Status & Reset Controls */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-slate-400">
-              <Filter size={13} aria-hidden="true" />
-              Bộ lọc:
-            </span>
-
-            {/* Sắp xếp */}
-            <select
-              aria-label="Sắp xếp bài nói"
-              value={sortOrder}
-              onChange={(e) => {
-                setSortOrder(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="min-h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 transition focus:border-violet-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-hidden cursor-pointer"
-            >
-              <option value="EASY_TO_HARD">Sắp xếp: Dễ → Khó</option>
-              <option value="HARD_TO_EASY">Sắp xếp: Khó → Dễ</option>
-              <option value="NEWEST">Sắp xếp: Mới nhất</option>
-            </select>
-
-            {/* Trạng thái nếu đã đăng nhập */}
-            {user && (
-              <select
-                aria-label="Lọc theo trạng thái"
-                value={selectedStatus}
-                onChange={(e) => {
-                  setSelectedStatus(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="min-h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 transition focus:border-violet-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-hidden cursor-pointer"
-              >
-                <option value="ALL">Tất cả trạng thái</option>
-                <option value="UNCOMPLETED">Chưa làm</option>
-                <option value="IN_PROGRESS">Đang học dở</option>
-                <option value="COMPLETED">Đã hoàn thành</option>
-              </select>
-            )}
-
-            {/* Đặt lại bộ lọc */}
-            <button
-              type="button"
-              onClick={() => {
-                setSearchTerm("");
-                setSelectedDifficulty("ALL");
-                setSelectedCategory("ALL");
-                setSortOrder("EASY_TO_HARD");
-                setSelectedStatus("ALL");
-                setCurrentPage(1);
-              }}
-              aria-label="Đặt lại tất cả bộ lọc về mặc định"
-              className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-600 dark:text-slate-400 transition hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 cursor-pointer"
-            >
-              <RotateCcw size={12} aria-hidden="true" />
-              Đặt lại
-            </button>
-          </div>
-        </div>
+        <PracticeCatalogFilters
+          difficulty={selectedDifficulty}
+          onDifficultyChange={(value) => {
+            setSelectedDifficulty(value);
+            setCurrentPage(1);
+          }}
+          sort={sortOrder}
+          onSortChange={(value) => {
+            setSortOrder(value);
+            setCurrentPage(1);
+          }}
+          status={selectedStatus}
+          onStatusChange={(value) => {
+            setSelectedStatus(value);
+            setCurrentPage(1);
+          }}
+          statusOptions={user ? ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"] : []}
+          resultCount={filteredAndSortedExercises.length}
+          itemNoun="bộ luyện nói"
+          onReset={() => {
+            setSearchTerm("");
+            setSelectedDifficulty("ALL");
+            setSelectedCategory("ALL");
+            setSortOrder(DEFAULT_CATALOG_SORT);
+            setSelectedStatus("ALL");
+            setCurrentPage(1);
+          }}
+        />
       </section>
 
       {/* Catalog Results Grid */}
@@ -721,11 +625,12 @@ export default function SpeakingExercisesPage() {
         onOpenRegister={() => router.push("/register")}
       />
 
-      {/* PLUS Paywall Modal */}
+      {/* Paywall Modal */}
       <PremiumContentPaywallModal
         isOpen={Boolean(paywallExercise)}
         onClose={() => setPaywallExercise(null)}
         skillType="SPEAKING"
+        requiredPlan={unlockPlanFor("SPEAKING", paywallExercise?.requiredPlan)}
         itemTitle={paywallExercise?.title}
       />
     </div>

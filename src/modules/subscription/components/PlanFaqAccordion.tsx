@@ -41,6 +41,12 @@ const FAQS: FaqItem[] = [
       "Bài Nói được chấm tự động về phát âm và độ trôi chảy; bài Viết được chấm tự động theo tiêu chí. Nhận xét do AI tạo, chỉ để tham khảo và có thể chưa phản ánh đầy đủ năng lực của bạn. Cách chấm như nhau ở mọi gói; gói trả phí chỉ mở thêm bài luyện.",
   },
   {
+    id: "plus-vs-pro",
+    question: "Gói Plus và gói Pro khác nhau thế nào?",
+    answer:
+      "Plus mở bài Nghe và Đọc Trung cấp, Nâng cao. Pro gồm toàn bộ Plus, thêm bài Nói và Viết Trung cấp, Nâng cao và mọi khóa học. Bài Cơ bản của bốn kỹ năng, flashcard, từ vựng, ngữ pháp, bài kiểm tra đầu vào và luyện đề TOEIC miễn phí với mọi tài khoản.",
+  },
+  {
     id: "support-channel",
     question: "Nếu gặp sự cố trong quá trình nâng cấp, tôi có thể liên hệ hỗ trợ ở đâu?",
     answer:

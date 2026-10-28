@@ -12,6 +12,7 @@ import { useLearningFocusMode } from "@/contexts/LearningFocusContext";
 import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
 import { PracticeExitConfirmDialog } from "@/components/practice/PracticeExitConfirmDialog";
 import { levelLabel } from "@/lib/ui/displayLabels";
+import { grammarDisplayTitle } from "@/lib/catalog/displayTitles";
 
 export interface GrammarScreenProps {
   activeTopicId?: number | null;
@@ -120,7 +121,11 @@ export const GrammarScreen: React.FC<GrammarScreenProps> = ({
         data-testid="grammar-exercise-shell"
       >
         <PracticeHeader
-          title={detailQuery.data?.title ?? "Bài luyện ngữ pháp"}
+          title={
+            detailQuery.data
+              ? grammarDisplayTitle(detailQuery.data.id, detailQuery.data.title)
+              : "Bài luyện ngữ pháp"
+          }
           category={detailQuery.data?.level}
           activityLabel="Ngữ pháp"
           onExit={handleExitRequest}
@@ -214,7 +219,7 @@ export const GrammarScreen: React.FC<GrammarScreenProps> = ({
               )}
             </div>
             <h2 className="line-clamp-1 text-base font-extrabold text-slate-800 dark:text-slate-100">
-              {topic.title}
+              {grammarDisplayTitle(topic.id, topic.title)}
             </h2>
             <p className="mt-1 line-clamp-2 text-sm leading-5 text-slate-500 dark:text-slate-400">
               {topic.description || "Bài học và câu hỏi thực hành."}

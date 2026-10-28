@@ -52,6 +52,8 @@ export interface LearningActivity {
   durationSec: number | null;
   sourceType?: string | null;
   sourceId?: string | null;
+  /** Practice quiz behind the row (Listening, Reading, Writing), if any. */
+  quizId?: number | null;
   occurredAt: string;
 }
 

@@ -16,6 +16,20 @@ export interface WritingTopic {
   isCompleted?: boolean;
   isPremiumContent?: boolean;
   isLocked?: boolean;
+  /** Lowest plan that opens this item: FREE, PLUS or PRO. */
+  requiredPlan?: string;
+  /** Authored CEFR level the required plan is decided from ("B1", "B2-C1"). */
+  cefrLevel?: string | null;
+  /** Graded tasks out of all tasks: none, some, all. */
+  completionStatus?: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
+  /** "Viết câu theo tranh" exercises: each picture with its two cue words. */
+  pictureTasks?: Array<{
+    questionId: number;
+    position: number;
+    imageUrl: string | null;
+    keywords: string[];
+    isGraded: boolean;
+  }>;
 }
 
 export interface WritingCatalogResponse {
@@ -70,6 +84,12 @@ export interface PracticeWritingDetail {
   wordCount: number | null;
   wordRange: [number, number] | null;
   keywords: Array<{ keyword: string; present: boolean }>;
+  /** B1 picture tasks: the connector found and the sentence count. */
+  linking?: { required: true; found: string | null; sentences: number };
+  /** Picture tasks: the grader's verdict on whether the answer describes the scene. */
+  scene?: { match: "MATCH" | "PARTIAL" | "MISMATCH" | "UNCERTAIN"; evidence: string };
+  /** Set when the server capped the grader's total because the scene did not match. */
+  scoreAdjustment?: { reason: "SCENE_MISMATCH"; providerScore: number; cap: number };
 }
 
 export interface WritingEvaluation extends Partial<PracticeWritingDetail> {
@@ -93,6 +113,9 @@ export function practiceDetailOf(value: Partial<PracticeWritingDetail> | null | 
         wordCount: value.wordCount ?? null,
         wordRange: value.wordRange ?? null,
         keywords: value.keywords ?? [],
+        ...(value.linking ? { linking: value.linking } : {}),
+        ...(value.scene ? { scene: value.scene } : {}),
+        ...(value.scoreAdjustment ? { scoreAdjustment: value.scoreAdjustment } : {}),
       }
     : null;
 }

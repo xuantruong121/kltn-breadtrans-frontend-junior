@@ -38,6 +38,10 @@ import { isPremiumWritingForbiddenError } from "@/modules/subscription/planLogic
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
 import { isSafeCourseReturn, withSafeReturnTo } from "@/lib/course/navigation";
+import { plansHrefFor } from "@/modules/subscription/practicePlan";
+import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
+import { PictureWritingWorkspace } from "@/components/writing/PictureWritingWorkspace";
+import { isPictureQuiz } from "@/lib/writing/pictureWriting";
 
 export default function WritingDetailPage(props: {
   params: Promise<{ id: string }>;
@@ -87,6 +91,8 @@ export default function WritingDetailPage(props: {
   const [content, setContent] = useState("");
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [feedback, setFeedback] = useState<WritingEvaluation | null>(null);
+  // Picture tasks show their result beside the editor instead of a new page.
+  const [pictureResult, setPictureResult] = useState<WritingEvaluation | null>(null);
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
   const draftKey = user?.id
     ? `breadtrans:writing:draft:${user.id}:${topicId}${requestedTaskId ? `:${requestedTaskId}` : ""}`
@@ -157,6 +163,9 @@ export default function WritingDetailPage(props: {
     router.replace(`/writing/${topicId}?${next.toString()}`);
   }, [exercise, requestedTaskId, currentTask, searchParams, router, topicId]);
 
+  const isPictureTask =
+    !inExam && Boolean(exercise && currentTask) && isPictureQuiz(topic ?? {});
+
   const wordCount = countWritingWords(content);
   const charCount = content.length;
   const writingMode = resolveWritingMode(topic ?? {});
@@ -180,14 +189,14 @@ export default function WritingDetailPage(props: {
           </div>
           <div>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
-              PLUS
+              PRO
             </span>
             <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 mt-2">
-              Nội dung dành cho PLUS
+              Nội dung dành cho PRO
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-2">
-              Chủ đề luyện viết này thuộc gói PLUS. Nâng cấp gói để mở khóa toàn
-              bộ bài luyện và nội dung nâng cao.
+              Bài luyện viết từ trình độ Trung cấp trở lên thuộc gói PRO. Gói
+              PLUS không bao gồm phần này.
             </p>
           </div>
           <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
@@ -198,10 +207,10 @@ export default function WritingDetailPage(props: {
               Quay lại danh sách
             </Link>
             <Link
-              href="/plans?highlight=plus"
+              href={plansHrefFor("PRO")}
               className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm shadow-sm transition text-center"
             >
-              Xem gói PLUS
+              Xem gói PRO
             </Link>
           </div>
         </div>
@@ -289,6 +298,12 @@ export default function WritingDetailPage(props: {
         router.push(nextQuiz ? examHref(nextQuiz) : courseReturn);
         return;
       }
+      if (isPictureTask) {
+        setPictureResult(result);
+        await queryClient.invalidateQueries({ queryKey: ["writing-topic", topicId] });
+        toast.success("Đã chấm xong bức tranh này.");
+        return;
+      }
       toast.success("Hệ thống đã hoàn tất đánh giá bài viết!");
       router.push(
         withSafeReturnTo(
@@ -305,7 +320,7 @@ export default function WritingDetailPage(props: {
   return (
     <PracticeShell
       skill="writing"
-      title={topic?.title || "Bài luyện viết"}
+      title={topic?.title ? quizDisplayTitle(topicId, topic.title, topic.cefrLevel) : "Bài luyện viết"}
       stage={feedback ? "FEEDBACK" : "PRACTICE"}
       level={topic?.level}
       mode={writingMode.label}
@@ -313,11 +328,13 @@ export default function WritingDetailPage(props: {
     >
       <div className="w-full min-h-dvh flex flex-col bg-slate-50 dark:bg-slate-950 font-sans">
         <PracticeHeader
-          title={topic?.title || "Luyện viết"}
+          title={topic?.title ? quizDisplayTitle(topicId, topic.title, topic.cefrLevel) : "Luyện viết"}
           category={
             inExam && examQuizIds.length
               ? `Câu ${examQuizIds.indexOf(topicId) + 1}/${examQuizIds.length}`
-              : topic?.taskType || topic?.type || "Writing"
+              : isPictureTask
+                ? "Viết câu theo tranh"
+                : topic?.taskType || topic?.type || "Writing"
           }
           activityLabel={inExam ? "TOEIC Writing" : "Luyện viết"}
           onExit={() => confirmExit(courseReturn)}
@@ -341,339 +358,364 @@ export default function WritingDetailPage(props: {
             />
           )}
           {/* 2. 2-COLUMN MAIN LAYOUT */}
-          <div className="grid grid-cols-12 gap-6 items-start">
-            {/* LEFT COLUMN: PROMPT, EDITOR & FEEDBACK */}
-            <div
-              className={`col-span-12 space-y-6 ${inExam ? "lg:col-span-10 lg:col-start-2" : "lg:col-span-8"}`}
-            >
-              {/* HEADER PROMPT */}
-              <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 rounded-xl border border-rose-200 dark:border-rose-900/50">
-                    <PenTool size={22} />
-                  </div>
-                  <div>
-                    <span className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider">
-                      Chủ Đề Yêu Cầu
-                    </span>
-                    <h2 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">
-                      {topic?.title || "Bài luyện viết"}
-                    </h2>
-                  </div>
-                </div>
-
-                {exercise && exercise.total > 1 && (
-                  <nav aria-label="Các câu trong bài" className="space-y-2">
-                    <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                      Bài gồm {exercise.total} câu · đã chấm {exercise.answered}
-                      /{exercise.total}
-                      {exercise.complete && exercise.percent !== null
-                        ? ` · điểm bài ${exercise.percent}%`
-                        : ""}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {exercise.questions.map((q) => {
-                        const active = q.id === currentTask?.id;
-                        return (
-                          <button
-                            key={q.id}
-                            type="button"
-                            aria-current={active ? "step" : undefined}
-                            onClick={() => {
-                              const next = new URLSearchParams(
-                                searchParams.toString(),
-                              );
-                              next.set("q", String(q.id));
-                              router.replace(
-                                `/writing/${topicId}?${next.toString()}`,
-                              );
-                            }}
-                            className={`inline-flex min-h-10 items-center gap-2 rounded-xl border px-3.5 text-sm font-bold transition-colors ${
-                              active
-                                ? "border-rose-500 bg-rose-600 text-white"
-                                : q.latest
-                                  ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300"
-                                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
-                            }`}
-                          >
-                            <span>Câu {q.position}</span>
-                            {q.latest && (
-                              <span className="tabular-nums opacity-90">
-                                {q.latest.score}/{q.latest.maxScore}
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })}
+          {isPictureTask && exercise && currentTask ? (
+            <PictureWritingWorkspace
+              task={currentTask}
+              tasks={exercise.questions}
+              exerciseLabel={
+                topic?.title ? quizDisplayTitle(topicId, topic.title, topic.cefrLevel) : "Viết câu theo tranh"
+              }
+              content={content}
+              onContentChange={setContent}
+              wordCount={wordCount}
+              isEvaluating={isEvaluating}
+              onEvaluate={handleEvaluate}
+              result={pictureResult}
+              nextTaskId={
+                exercise.questions.find((q) => q.id !== currentTask.id && !q.latest)?.id ?? null
+              }
+              onSelectTask={(questionId) => {
+                setPictureResult(null);
+                const next = new URLSearchParams(searchParams.toString());
+                next.set("q", String(questionId));
+                router.replace(`/writing/${topicId}?${next.toString()}`);
+              }}
+            />
+          ) : (
+            <div className="grid grid-cols-12 gap-6 items-start">
+              {/* LEFT COLUMN: PROMPT, EDITOR & FEEDBACK */}
+              <div
+                className={`col-span-12 space-y-6 ${inExam ? "lg:col-span-10 lg:col-start-2" : "lg:col-span-8"}`}
+              >
+                {/* HEADER PROMPT */}
+                <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 rounded-xl border border-rose-200 dark:border-rose-900/50">
+                      <PenTool size={22} />
                     </div>
-                  </nav>
-                )}
+                    <div>
+                      <span className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider">
+                        Chủ Đề Yêu Cầu
+                      </span>
+                      <h2 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">
+                        {topic?.title || "Bài luyện viết"}
+                      </h2>
+                    </div>
+                  </div>
 
-                <div className="bg-rose-50/60 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/40 p-5 rounded-2xl space-y-2">
-                  <span className="text-xs font-extrabold text-rose-800 dark:text-rose-300 uppercase tracking-wide">
-                    Yêu cầu đề bài (Prompt):
-                  </span>
-                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 leading-relaxed">
-                    {topic?.prompt ||
-                      topic?.description ||
-                      "Đọc kỹ yêu cầu và viết câu trả lời phù hợp với tình huống."}
-                  </p>
+                  {exercise && exercise.total > 1 && (
+                    <nav aria-label="Các câu trong bài" className="space-y-2">
+                      <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                        Bài gồm {exercise.total} câu · đã chấm {exercise.answered}
+                        /{exercise.total}
+                        {exercise.complete && exercise.percent !== null
+                          ? ` · điểm bài ${exercise.percent}%`
+                          : ""}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {exercise.questions.map((q) => {
+                          const active = q.id === currentTask?.id;
+                          return (
+                            <button
+                              key={q.id}
+                              type="button"
+                              aria-current={active ? "step" : undefined}
+                              onClick={() => {
+                                const next = new URLSearchParams(
+                                  searchParams.toString(),
+                                );
+                                next.set("q", String(q.id));
+                                router.replace(
+                                  `/writing/${topicId}?${next.toString()}`,
+                                );
+                              }}
+                              className={`inline-flex min-h-10 items-center gap-2 rounded-xl border px-3.5 text-sm font-bold transition-colors ${
+                                active
+                                  ? "border-rose-500 bg-rose-600 text-white"
+                                  : q.latest
+                                    ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                    : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                              }`}
+                            >
+                              <span>Câu {q.position}</span>
+                              {q.latest && (
+                                <span className="tabular-nums opacity-90">
+                                  {q.latest.score}/{q.latest.maxScore}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </nav>
+                  )}
+
+                  <div className="bg-rose-50/60 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/40 p-5 rounded-2xl space-y-2">
+                    <span className="text-xs font-extrabold text-rose-800 dark:text-rose-300 uppercase tracking-wide">
+                      Yêu cầu đề bài (Prompt):
+                    </span>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 leading-relaxed">
+                      {topic?.prompt ||
+                        topic?.description ||
+                        "Đọc kỹ yêu cầu và viết câu trả lời phù hợp với tình huống."}
+                    </p>
+                  </div>
+
+                  {topic?.keywords && topic.keywords.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                        Từ bắt buộc:
+                      </span>
+                      {topic.keywords.map((keyword) => (
+                        <span
+                          key={keyword}
+                          className="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1 text-sm font-bold text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200"
+                        >
+                          {keyword}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {topicData?.email && (
+                    <div className="rounded-2xl bg-slate-50 p-5 dark:bg-slate-800/60">
+                      <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                        E-mail cần trả lời
+                      </p>
+                      <p className="mt-2 whitespace-pre-line text-base leading-7 text-slate-800 dark:text-slate-100">
+                        {topicData.email}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Contextual prompt image (only displayed when imageUrl is provided) */}
+                  {topic?.imageUrl && !imageLoadFailed && (
+                    <div className="w-full overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2 shadow-2xs">
+                      <img
+                        src={topic.imageUrl}
+                        alt={
+                          topic.title
+                            ? `Hình minh họa cho đề bài: ${topic.title}`
+                            : "Hình minh họa bài viết"
+                        }
+                        loading="eager"
+                        decoding="async"
+                        onError={() => setImageLoadFailed(true)}
+                        className="w-full max-h-[380px] object-contain rounded-xl"
+                      />
+                    </div>
+                  )}
+                  {topic?.imageUrl && imageLoadFailed && (
+                    <div
+                      role="img"
+                      aria-label="Hình minh họa đề bài viết hiện chưa tải được"
+                      className="w-full overflow-hidden rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-850 p-5 text-center"
+                    >
+                      <p className="text-xs font-medium leading-relaxed text-slate-500 dark:text-slate-400">
+                        Hình minh họa hiện chưa tải được. Bạn vẫn có thể tiếp tục
+                        đọc yêu cầu đề bài và hoàn thành bài viết.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
-                {topic?.keywords && topic.keywords.length > 0 && (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                      Từ bắt buộc:
+                {/* ESSAY EDITOR */}
+                <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                      <FileText
+                        size={18}
+                        className="text-blue-600 dark:text-blue-400"
+                      />{" "}
+                      Bài Viết Của Bạn
+                    </h3>
+                    <span
+                      className={`text-xs font-extrabold px-3 py-1 rounded-xl transition-colors ${wordCount >= 50 ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700"}`}
+                    >
+                      {wordCount}
+                      {topic?.wordRange?.[1] ? ` / ${topic.wordRange[1]}` : ""} từ
+                      ({charCount} ký tự)
                     </span>
-                    {topic.keywords.map((keyword) => (
-                      <span
-                        key={keyword}
-                        className="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1 text-sm font-bold text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200"
-                      >
-                        {keyword}
-                      </span>
-                    ))}
                   </div>
-                )}
 
-                {topicData?.email && (
-                  <div className="rounded-2xl bg-slate-50 p-5 dark:bg-slate-800/60">
-                    <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                      E-mail cần trả lời
-                    </p>
-                    <p className="mt-2 whitespace-pre-line text-base leading-7 text-slate-800 dark:text-slate-100">
-                      {topicData.email}
-                    </p>
+                  <textarea
+                    rows={11}
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder={resolveWritingPlaceholder(topic ?? {})}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 font-medium text-sm outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 transition-all leading-relaxed text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                  />
+
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      {topic?.wordRange?.length === 2
+                        ? `Mục tiêu ${topic.wordRange[0]}–${topic.wordRange[1]} từ.`
+                        : "Hãy trả lời đầy đủ yêu cầu và kiểm tra lại bài trước khi gửi."}
+                      {minimumWords !== null && wordCount < minimumWords
+                        ? ` Còn thiếu ${minimumWords - wordCount} từ so với mức khuyến nghị.`
+                        : ""}
+                      {maximumWords !== null && wordCount > maximumWords
+                        ? ` Đang vượt ${wordCount - maximumWords} từ so với mức khuyến nghị.`
+                        : ""}
+                    </span>
+
+                    <button
+                      onClick={handleEvaluate}
+                      disabled={isEvaluating || wordCount === 0}
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-2.5 text-xs font-extrabold text-white shadow-xs transition hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+                    >
+                      {isEvaluating ? (
+                        <>
+                          <Loader2 className="animate-spin" size={16} /> Đang đánh
+                          giá bài viết...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 size={16} /> Gửi đánh giá bài viết
+                        </>
+                      )}
+                    </button>
                   </div>
-                )}
+                </div>
 
-                {/* Contextual prompt image (only displayed when imageUrl is provided) */}
-                {topic?.imageUrl && !imageLoadFailed && (
-                  <div className="w-full overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2 shadow-2xs">
-                    <img
-                      src={topic.imageUrl}
-                      alt={
-                        topic.title
-                          ? `Hình minh họa cho đề bài: ${topic.title}`
-                          : "Hình minh họa bài viết"
-                      }
-                      loading="eager"
-                      decoding="async"
-                      onError={() => setImageLoadFailed(true)}
-                      className="w-full max-h-[380px] object-contain rounded-xl"
+                {/* EVALUATING LOADING SCREEN */}
+                {isEvaluating && (
+                  <div className="py-4">
+                    <PracticeLoadingScreen
+                      skill="writing"
+                      className="max-w-2xl min-h-[260px]"
                     />
                   </div>
                 )}
-                {topic?.imageUrl && imageLoadFailed && (
-                  <div
-                    role="img"
-                    aria-label="Hình minh họa đề bài viết hiện chưa tải được"
-                    className="w-full overflow-hidden rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-850 p-5 text-center"
-                  >
-                    <p className="text-xs font-medium leading-relaxed text-slate-500 dark:text-slate-400">
-                      Hình minh họa hiện chưa tải được. Bạn vẫn có thể tiếp tục
-                      đọc yêu cầu đề bài và hoàn thành bài viết.
-                    </p>
-                  </div>
-                )}
-              </div>
 
-              {/* ESSAY EDITOR */}
-              <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                  <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                    <FileText
-                      size={18}
-                      className="text-blue-600 dark:text-blue-400"
-                    />{" "}
-                    Bài Viết Của Bạn
-                  </h3>
-                  <span
-                    className={`text-xs font-extrabold px-3 py-1 rounded-xl transition-colors ${wordCount >= 50 ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700"}`}
-                  >
-                    {wordCount}
-                    {topic?.wordRange?.[1] ? ` / ${topic.wordRange[1]}` : ""} từ
-                    ({charCount} ký tự)
-                  </span>
-                </div>
-
-                <textarea
-                  rows={11}
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder={resolveWritingPlaceholder(topic ?? {})}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 font-medium text-sm outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 transition-all leading-relaxed text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                />
-
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                    {topic?.wordRange?.length === 2
-                      ? `Mục tiêu ${topic.wordRange[0]}–${topic.wordRange[1]} từ.`
-                      : "Hãy trả lời đầy đủ yêu cầu và kiểm tra lại bài trước khi gửi."}
-                    {minimumWords !== null && wordCount < minimumWords
-                      ? ` Còn thiếu ${minimumWords - wordCount} từ so với mức khuyến nghị.`
-                      : ""}
-                    {maximumWords !== null && wordCount > maximumWords
-                      ? ` Đang vượt ${wordCount - maximumWords} từ so với mức khuyến nghị.`
-                      : ""}
-                  </span>
-
-                  <button
-                    onClick={handleEvaluate}
-                    disabled={isEvaluating || wordCount === 0}
-                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-2.5 text-xs font-extrabold text-white shadow-xs transition hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
-                  >
-                    {isEvaluating ? (
-                      <>
-                        <Loader2 className="animate-spin" size={16} /> Đang đánh
-                        giá bài viết...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 size={16} /> Gửi đánh giá bài viết
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* EVALUATING LOADING SCREEN */}
-              {isEvaluating && (
-                <div className="py-4">
-                  <PracticeLoadingScreen
-                    skill="writing"
-                    className="max-w-2xl min-h-[260px]"
-                  />
-                </div>
-              )}
-
-              {/* FEEDBACK SECTION */}
-              <AnimatePresence>
-                {feedback && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-6"
-                  >
-                    {/* SCORE HEADER */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-xl border border-emerald-200 dark:border-emerald-900/50">
-                          <Award size={24} />
+                {/* FEEDBACK SECTION */}
+                <AnimatePresence>
+                  {feedback && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-6"
+                    >
+                      {/* SCORE HEADER */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-xl border border-emerald-200 dark:border-emerald-900/50">
+                            <Award size={24} />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-extrabold text-slate-900 dark:text-slate-100">
+                              Báo Cáo Đánh Giá
+                            </h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                              Theo các tiêu chí rõ ràng về ý, cấu trúc và cách
+                              dùng từ
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="text-lg font-extrabold text-slate-900 dark:text-slate-100">
-                            Báo Cáo Đánh Giá
-                          </h3>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                            Theo các tiêu chí rõ ràng về ý, cấu trúc và cách
-                            dùng từ
+
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 block">
+                              Mức độ hoàn thành
+                            </span>
+                            <span className="text-xs font-extrabold text-blue-600 dark:text-blue-400">
+                              {feedback.maxScore} điểm tối đa
+                            </span>
+                          </div>
+                          <div className="px-3.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 rounded-xl border border-emerald-200 dark:border-emerald-900/50 font-extrabold text-lg">
+                            {feedback.score} / {feedback.maxScore}
+                          </div>
+                        </div>
+                      </div>
+
+                      {practiceDetailOf(feedback) && (
+                        <PracticeWritingDetail
+                          detail={practiceDetailOf(feedback)!}
+                        />
+                      )}
+
+                      {/* FEEDBACK & NEXT STEPS */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 space-y-2">
+                          <h4 className="text-xs font-bold text-emerald-800 dark:text-emerald-300 uppercase flex items-center gap-1.5">
+                            <CheckCircle2 size={14} /> Nhận xét chung
+                          </h4>
+                          <p className="text-sm font-semibold leading-relaxed text-emerald-900 dark:text-emerald-200">
+                            {feedback.feedback}
+                          </p>
+                          {(feedback.strengths?.length ?? 0) > 0 && (
+                            <ul className="space-y-1 text-sm text-emerald-900 dark:text-emerald-200 list-disc pl-5">
+                              {feedback.strengths!.map((s: string) => (
+                                <li key={s}>{s}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+
+                        <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 space-y-2">
+                          <h4 className="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase flex items-center gap-1.5">
+                            <TrendingUp size={14} /> Gợi ý hoàn thiện
+                          </h4>
+                          <ul className="space-y-1.5 text-xs font-semibold text-amber-900 dark:text-amber-200 list-disc list-inside">
+                            {feedback.suggestions?.map(
+                              (imp: string, i: number) => (
+                                <li key={i}>{imp}</li>
+                              ),
+                            )}
+                          </ul>
+                        </div>
+                      </div>
+
+                      {/* ACTION ROW */}
+                      <div className="p-4 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between flex-wrap gap-3">
+                        <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-bold text-xs">
+                          <span>Đã hoàn thành phiên luyện tập</span>
+                        </div>
+                        <button
+                          onClick={() => setFeedback(null)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer"
+                        >
+                          <RotateCcw size={13} /> Viết lại
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* RIGHT COLUMN: USEFUL PHRASES & RUBRICS (practice only: no coaching during an exam) */}
+              {!inExam && (
+                <div className="col-span-12 lg:col-span-4 space-y-6">
+                  <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
+                    <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-base flex items-center gap-2">
+                      <BookOpen
+                        size={18}
+                        className="text-blue-600 dark:text-blue-400"
+                      />{" "}
+                      Mẫu Câu Hữu Ích
+                    </h3>
+
+                    <div className="space-y-3 text-xs">
+                      {writingMode.guidance.map((item) => (
+                        <div
+                          key={item.title}
+                          className="p-3 bg-slate-50 dark:bg-slate-800/70 rounded-xl border border-slate-100 dark:border-slate-800 space-y-1"
+                        >
+                          <p className="font-bold text-slate-800 dark:text-slate-200">
+                            {item.title}
+                          </p>
+                          <p className="text-slate-600 dark:text-slate-400 italic">
+                            “{item.stem}”
                           </p>
                         </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 block">
-                            Mức độ hoàn thành
-                          </span>
-                          <span className="text-xs font-extrabold text-blue-600 dark:text-blue-400">
-                            {feedback.maxScore} điểm tối đa
-                          </span>
-                        </div>
-                        <div className="px-3.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 rounded-xl border border-emerald-200 dark:border-emerald-900/50 font-extrabold text-lg">
-                          {feedback.score} / {feedback.maxScore}
-                        </div>
-                      </div>
+                      ))}
                     </div>
-
-                    {practiceDetailOf(feedback) && (
-                      <PracticeWritingDetail
-                        detail={practiceDetailOf(feedback)!}
-                      />
-                    )}
-
-                    {/* FEEDBACK & NEXT STEPS */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 space-y-2">
-                        <h4 className="text-xs font-bold text-emerald-800 dark:text-emerald-300 uppercase flex items-center gap-1.5">
-                          <CheckCircle2 size={14} /> Nhận xét chung
-                        </h4>
-                        <p className="text-sm font-semibold leading-relaxed text-emerald-900 dark:text-emerald-200">
-                          {feedback.feedback}
-                        </p>
-                        {(feedback.strengths?.length ?? 0) > 0 && (
-                          <ul className="space-y-1 text-sm text-emerald-900 dark:text-emerald-200 list-disc pl-5">
-                            {feedback.strengths!.map((s: string) => (
-                              <li key={s}>{s}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-
-                      <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 space-y-2">
-                        <h4 className="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase flex items-center gap-1.5">
-                          <TrendingUp size={14} /> Gợi ý hoàn thiện
-                        </h4>
-                        <ul className="space-y-1.5 text-xs font-semibold text-amber-900 dark:text-amber-200 list-disc list-inside">
-                          {feedback.suggestions?.map(
-                            (imp: string, i: number) => (
-                              <li key={i}>{imp}</li>
-                            ),
-                          )}
-                        </ul>
-                      </div>
-                    </div>
-
-                    {/* ACTION ROW */}
-                    <div className="p-4 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between flex-wrap gap-3">
-                      <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-bold text-xs">
-                        <span>Đã hoàn thành phiên luyện tập</span>
-                      </div>
-                      <button
-                        onClick={() => setFeedback(null)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer"
-                      >
-                        <RotateCcw size={13} /> Viết lại
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* RIGHT COLUMN: USEFUL PHRASES & RUBRICS (practice only: no coaching during an exam) */}
-            {!inExam && (
-              <div className="col-span-12 lg:col-span-4 space-y-6">
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
-                  <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-base flex items-center gap-2">
-                    <BookOpen
-                      size={18}
-                      className="text-blue-600 dark:text-blue-400"
-                    />{" "}
-                    Mẫu Câu Hữu Ích
-                  </h3>
-
-                  <div className="space-y-3 text-xs">
-                    {writingMode.guidance.map((item) => (
-                      <div
-                        key={item.title}
-                        className="p-3 bg-slate-50 dark:bg-slate-800/70 rounded-xl border border-slate-100 dark:border-slate-800 space-y-1"
-                      >
-                        <p className="font-bold text-slate-800 dark:text-slate-200">
-                          {item.title}
-                        </p>
-                        <p className="text-slate-600 dark:text-slate-400 italic">
-                          “{item.stem}”
-                        </p>
-                      </div>
-                    ))}
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
+          )}
           {/* Shared Exit Confirmation Modal */}
           <PracticeExitConfirmDialog {...exitDialogProps} />
         </main>

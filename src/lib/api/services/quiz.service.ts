@@ -164,6 +164,8 @@ export interface ListeningPracticeCatalogItem {
   mode: "COMPREHENSION" | "DICTATION" | "DIALOGUE";
   track?: string;
   levels?: string[];
+  /** Authored CEFR level the required plan is decided from ("B1", "B2-C1"). */
+  cefrLevel?: string | null;
   topics?: string[];
   accents?: string[];
   questionCount?: number;

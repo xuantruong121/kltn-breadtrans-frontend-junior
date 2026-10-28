@@ -16,6 +16,7 @@ import {
   resolveReadingFormatTag,
   resolveReadingPedagogicalDescription,
 } from "./readingCardLogic";
+import { catalogLevelLabel } from "@/lib/practice/catalogFilters";
 
 export interface ReadingTopicItem {
   id: number;
@@ -40,6 +41,8 @@ export interface ReadingTopicItem {
   completedCount?: number;
   correctCount?: number;
   level?: string;
+  /** Authored CEFR level from the API ("B1"); absent on grammar topics. */
+  cefrLevel?: string | null;
   isSpotlight?: boolean;
 }
 
@@ -114,26 +117,15 @@ export function ReadingTopicCard({
   return (
     <article className={containerClasses}>
       <div className="space-y-2.5">
-        {/* Status line: only when locked, completed, or in progress */}
-        {(isLocked || status === "COMPLETED" || status === "IN_PROGRESS") && (
+        {/* Status line: only when completed */}
+        {status === "COMPLETED" && (
           <div className="flex items-center justify-between gap-2">
-            {isLocked ? (
-              <span className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80">
-                <Lock size={10} aria-hidden="true" />
-                PLUS
-              </span>
-            ) : (
-              <span />
-            )}
+            <span />
 
             {status === "COMPLETED" ? (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
                 <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
                 <span>Đã hoàn thành</span>
-              </span>
-            ) : status === "IN_PROGRESS" ? (
-              <span className="text-xs font-medium text-violet-700 dark:text-violet-400">
-                Đang luyện tập
               </span>
             ) : null}
           </div>
@@ -175,7 +167,9 @@ export function ReadingTopicCard({
           <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
             <span>{formatTag}</span>
             <span>·</span>
-            <span>{diffConfig.label}</span>
+            <span>
+              {catalogLevelLabel(topic.cefrLevel ?? topic.level ?? topic.title) ?? diffConfig.label}
+            </span>
             <span>·</span>
             <span>{questionCount} câu hỏi</span>
             <span>·</span>

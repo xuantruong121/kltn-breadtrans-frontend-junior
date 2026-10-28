@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, Filter, Loader2, RotateCcw, Search, X } from "lucide-react";
+import { BookOpen, Loader2, RotateCcw, Search, X } from "lucide-react";
 import { readingService } from "@/lib/api/services/reading.service";
 import {
   grammarService,
@@ -16,13 +16,22 @@ import {
   ReadingTopicCard,
   type ReadingTopicItem,
 } from "@/components/reading/ReadingTopicCard";
-import { GrammarTopicCard } from "@/components/reading/GrammarTopicCard";
+import { GrammarCatalog } from "@/components/reading/GrammarCatalog";
 import {
-  type DifficultyLevel,
   type ExerciseCategory,
-  matchesReadingDifficulty,
   summarizeReadingExerciseProgress,
 } from "@/components/reading/readingCardLogic";
+import { PracticeCatalogFilters } from "@/components/practice/PracticeCatalogFilters";
+import {
+  DEFAULT_CATALOG_SORT,
+  matchesDifficultyFilter,
+  matchesStatusFilter,
+  sortByLevel,
+  type CatalogSort,
+  type DifficultyFilter,
+  type StatusFilter,
+} from "@/lib/practice/catalogFilters";
+import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
 import { GrammarScreen } from "@/modules/grammar/screens/GrammarScreen";
 import { isSafeCourseReturn } from "@/lib/course/navigation";
 
@@ -31,16 +40,8 @@ const CATEGORY_OPTIONS: Array<{ id: ExerciseCategory; label: string }> = [
   { id: "GRAMMAR", label: "Ngữ pháp" },
 ];
 
-const DIFFICULTY_OPTIONS: Array<{ id: DifficultyLevel; label: string }> = [
-  { id: "ALL", label: "Tất cả" },
-  { id: "BASIC", label: "Cơ bản" },
-  { id: "INTERMEDIATE", label: "Trung cấp" },
-  { id: "ADVANCED", label: "Nâng cao" },
-];
-
-type UnifiedExerciseItem =
-  | { type: "READING"; data: ReadingTopicItem }
-  | { type: "GRAMMAR"; data: GrammarTopicSummary };
+/** Authoritative level from the API, with the stored level as fallback. */
+const readingLevelOf = (item: ReadingTopicItem) => item.cefrLevel ?? item.level;
 
 function ReadingTopicsContent() {
   const router = useRouter();
@@ -80,9 +81,9 @@ function ReadingTopicsContent() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] =
-    useState<DifficultyLevel>("ALL");
-  const [sortOrder, setSortOrder] = useState<string>("DEFAULT");
-  const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+    useState<DifficultyFilter>("ALL");
+  const [sortOrder, setSortOrder] = useState<CatalogSort>(DEFAULT_CATALOG_SORT);
+  const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("ALL");
   const [authGate, setAuthGate] = useState<{
     open: boolean;
     quizId?: number;
@@ -153,8 +154,9 @@ function ReadingTopicsContent() {
     return readingExercisesData.map((exercise) => ({
       id: exercise.quizId,
       quizId: exercise.quizId,
-      title: exercise.title,
-      name: exercise.title,
+      title: quizDisplayTitle(exercise.quizId, exercise.title, exercise.cefrLevel),
+      name: quizDisplayTitle(exercise.quizId, exercise.title, exercise.cefrLevel),
+      cefrLevel: exercise.cefrLevel,
       description: exercise.description ?? undefined,
       level: exercise.level,
       topicName: exercise.topicName,
@@ -182,137 +184,36 @@ function ReadingTopicsContent() {
   const completedReadingCount = readingProgress.completedExercises;
   const readingCompletionPct = readingProgress.completionPercent;
 
-  // Unified Filtering and Sorting
+  // Reading filters; grammar has its own catalog below.
   const filteredAndSortedItems = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
-    const results: UnifiedExerciseItem[] = [];
-
-    // 1. Reading exercises
-    if (selectedCategory === "ALL" || selectedCategory === "READING") {
-      readingExercises.forEach((exercise) => {
-        const searchable = [
-          exercise.title,
-          exercise.description,
-          exercise.level,
-          exercise.topicName,
-          ...(exercise.microSkills ?? []),
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-        const matchSearch = !q || searchable.includes(q);
-        const status = exercise.completionStatus ?? "NOT_STARTED";
-        const isDone = status === "COMPLETED";
-        const isInProg = status === "IN_PROGRESS";
-        const matchDifficulty = matchesReadingDifficulty(
-          exercise,
-          selectedDifficulty,
-        );
-
-        const matchStatus =
-          selectedStatus === "ALL" ||
-          (selectedStatus === "COMPLETED" && isDone) ||
-          (selectedStatus === "IN_PROGRESS" && isInProg) ||
-          (selectedStatus === "UNCOMPLETED" && !isDone && !isInProg);
-
-        if (matchSearch && matchDifficulty && matchStatus) {
-          results.push({ type: "READING", data: exercise });
-        }
-      });
-    }
-
-    // 2. Grammar Topics
-    if (selectedCategory === "ALL" || selectedCategory === "GRAMMAR") {
-      grammarTopics.forEach((g) => {
-        const title = (g.title || "").toLowerCase();
-        const desc = (g.description || "").toLowerCase();
-        const formula = (g.keyFormula || "").toLowerCase();
-        const matchSearch =
-          !q || title.includes(q) || desc.includes(q) || formula.includes(q);
-
-        const isDone = Boolean(g.isCompleted);
-        const isInProg = !isDone && (g.attemptCount || 0) > 0;
-
-        const matchDifficulty = matchesReadingDifficulty(g, selectedDifficulty);
-
-        const matchStatus =
-          selectedStatus === "ALL" ||
-          (selectedStatus === "COMPLETED" && isDone) ||
-          (selectedStatus === "IN_PROGRESS" && isInProg) ||
-          (selectedStatus === "UNCOMPLETED" && !isDone && !isInProg);
-
-        if (matchSearch && matchDifficulty && matchStatus) {
-          results.push({ type: "GRAMMAR", data: g });
-        }
-      });
-    }
-
-    // Sorting
-    const sorted = results.sort((a, b) => {
-      if (sortOrder === "NAME_ASC") {
-        const nameA =
-          a.type === "READING"
-            ? a.data.name || a.data.title || ""
-            : a.data.title;
-        const nameB =
-          b.type === "READING"
-            ? b.data.name || b.data.title || ""
-            : b.data.title;
-        return nameA.localeCompare(nameB);
-      }
-      if (sortOrder === "PROGRESS_DESC") {
-        const pctA =
-          a.type === "READING"
-            ? (a.data.totalArticles || 0) > 0
-              ? (a.data.completedArticles || 0) / (a.data.totalArticles || 1)
-              : 0
-            : a.data.isCompleted
-              ? 1
-              : 0;
-        const pctB =
-          b.type === "READING"
-            ? (b.data.totalArticles || 0) > 0
-              ? (b.data.completedArticles || 0) / (b.data.totalArticles || 1)
-              : 0
-            : b.data.isCompleted
-              ? 1
-              : 0;
-        return pctB - pctA;
-      }
-      // DEFAULT order: Reading exercises first, then Grammar exercises.
-      if (a.type !== b.type) {
-        return a.type === "READING" ? -1 : 1;
-      }
-      // Grammar topics keep the API's authored order (a replacement topic
-      // takes its original's place); sort is stable, so 0 preserves it.
-      if (a.type === "GRAMMAR") return 0;
-      return (a.data.id || 0) - (b.data.id || 0);
+    const list = readingExercises.filter((exercise) => {
+      const searchable = [
+        exercise.title,
+        exercise.description,
+        exercise.topicName,
+        ...(exercise.microSkills ?? []),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return (
+        (!q || searchable.includes(q)) &&
+        matchesDifficultyFilter(readingLevelOf(exercise), selectedDifficulty) &&
+        matchesStatusFilter(exercise.completionStatus ?? "NOT_STARTED", selectedStatus)
+      );
     });
 
-    // Assign spotlight to first uncompleted reading item
+    // Spotlight the first unfinished exercise in the sorted list.
     let spotlightAssigned = false;
-    return sorted.map((item) => {
-      if (item.type === "READING") {
-        const isDone =
-          (item.data.completedArticles || 0) >=
-            (item.data.totalArticles || 0) &&
-          (item.data.totalArticles || 0) > 0;
-        if (!isDone && !spotlightAssigned) {
-          spotlightAssigned = true;
-          return { ...item, data: { ...item.data, isSpotlight: true } };
-        }
+    return sortByLevel(list, sortOrder, readingLevelOf).map((exercise) => {
+      if (exercise.completionStatus !== "COMPLETED" && !spotlightAssigned) {
+        spotlightAssigned = true;
+        return { ...exercise, isSpotlight: true };
       }
-      return item;
+      return exercise;
     });
-  }, [
-    readingExercises,
-    grammarTopics,
-    selectedCategory,
-    searchTerm,
-    selectedDifficulty,
-    selectedStatus,
-    sortOrder,
-  ]);
+  }, [readingExercises, searchTerm, selectedDifficulty, selectedStatus, sortOrder]);
 
   const handleStartReadingExercise = (exercise: ReadingTopicItem) => {
     if (!user) {
@@ -451,133 +352,58 @@ function ReadingTopicsContent() {
               )}
             </div>
           </div>
-
-          <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-            Hiển thị{" "}
-            <span className="font-bold text-slate-900 dark:text-slate-100">
-              {filteredAndSortedItems.length}
-            </span>{" "}
-            bài luyện tập
-          </div>
         </div>
 
-        {/* Row 2: Category Chips, Difficulty Chips, Status & Sort */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 pt-3">
-          <div className="flex flex-wrap items-center gap-4">
-            {/* Category Chips */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1">
-                Phân loại:
-              </span>
-              {CATEGORY_OPTIONS.map((cat) => {
-                const isActive = selectedCategory === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    aria-pressed={isActive}
-                    onClick={() => handleCategoryChange(cat.id)}
-                    className={`min-h-9 rounded-lg px-3 py-1.5 text-xs transition cursor-pointer ${
-                      isActive
-                        ? "bg-amber-600 text-white font-semibold shadow-sm border border-amber-600"
-                        : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200 dark:border-slate-700 font-medium"
-                    }`}
-                  >
-                    {cat.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Difficulty Chips */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1">
-                Độ khó:
-              </span>
-              {DIFFICULTY_OPTIONS.map((lvl) => {
-                const isActive = selectedDifficulty === lvl.id;
-                return (
-                  <button
-                    key={lvl.id}
-                    type="button"
-                    aria-pressed={isActive}
-                    onClick={() => setSelectedDifficulty(lvl.id)}
-                    className={`min-h-9 rounded-lg px-3 py-1.5 text-xs transition cursor-pointer ${
-                      isActive
-                        ? "bg-violet-600 text-white font-semibold shadow-sm border border-violet-600"
-                        : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200 dark:border-slate-700 font-medium"
-                    }`}
-                  >
-                    {lvl.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Sort, Status & Reset Controls */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-slate-400">
-              <Filter size={13} aria-hidden="true" />
-              Bộ lọc:
-            </span>
-
-            {/* Sắp xếp */}
-            <select
-              aria-label="Sắp xếp bài luyện đọc và ngữ pháp"
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
-              className="min-h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 transition focus:border-violet-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-hidden cursor-pointer"
-            >
-              <option value="DEFAULT">Sắp xếp: Mặc định</option>
-              <option value="NAME_ASC">Sắp xếp: Theo tên (A-Z)</option>
-              <option value="PROGRESS_DESC">Sắp xếp: Tiến độ cao nhất</option>
-            </select>
-
-            {/* Trạng thái nếu đã đăng nhập */}
-            {user && (
-              <select
-                aria-label="Lọc theo trạng thái"
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="min-h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 transition focus:border-violet-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-hidden cursor-pointer"
+        <div
+          className="flex flex-wrap items-center gap-1.5 border-t border-slate-100 dark:border-slate-800 pt-3"
+          role="group"
+          aria-label="Phân loại bài luyện"
+        >
+          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1">
+            Phân loại:
+          </span>
+          {CATEGORY_OPTIONS.map((cat) => {
+            const isActive = selectedCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                aria-pressed={isActive}
+                onClick={() => handleCategoryChange(cat.id)}
+                className={`min-h-9 rounded-lg px-3 py-1.5 text-xs transition cursor-pointer ${
+                  isActive
+                    ? "bg-amber-600 text-white font-semibold shadow-sm border border-amber-600"
+                    : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200 dark:border-slate-700 font-medium"
+                }`}
               >
-                <option value="ALL">Tất cả trạng thái</option>
-                <option value="UNCOMPLETED">Chưa làm</option>
-                <option value="IN_PROGRESS">Đang học dở</option>
-                <option value="COMPLETED">Đã hoàn thành</option>
-              </select>
-            )}
-
-            {/* Đặt lại bộ lọc */}
-            <button
-              type="button"
-              onClick={() => {
-                setSearchTerm("");
-                setSelectedCategory("READING");
-                setSelectedDifficulty("ALL");
-                setSortOrder("DEFAULT");
-                setSelectedStatus("ALL");
-                const params = new URLSearchParams(window.location.search);
-                params.delete("category");
-                params.delete("tab");
-                params.delete("mode");
-                const qs = params.toString();
-                router.replace(qs ? `/reading?${qs}` : "/reading", {
-                  scroll: false,
-                });
-              }}
-              aria-label="Đặt lại tất cả bộ lọc về mặc định"
-              className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-600 dark:text-slate-400 transition hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 cursor-pointer"
-            >
-              <RotateCcw size={12} aria-hidden="true" />
-              Đặt lại
-            </button>
-          </div>
+                {cat.label}
+              </button>
+            );
+          })}
         </div>
+
+        {selectedCategory !== "GRAMMAR" && (
+          <PracticeCatalogFilters
+            difficulty={selectedDifficulty}
+            onDifficultyChange={setSelectedDifficulty}
+            sort={sortOrder}
+            onSortChange={setSortOrder}
+            status={selectedStatus}
+            onStatusChange={setSelectedStatus}
+            statusOptions={user ? ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"] : []}
+            resultCount={filteredAndSortedItems.length}
+            itemNoun="bài đọc"
+            onReset={() => {
+              setSearchTerm("");
+              setSelectedDifficulty("ALL");
+              setSortOrder(DEFAULT_CATALOG_SORT);
+              setSelectedStatus("ALL");
+            }}
+          />
+        )}
       </section>
 
-      {/* Unified Catalog Results Grid */}
+      {/* Catalog results */}
       <section>
         {isLoading ? (
           <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
@@ -607,49 +433,36 @@ function ReadingTopicsContent() {
               Thử lại
             </button>
           </div>
+        ) : selectedCategory === "GRAMMAR" ? (
+          <GrammarCatalog
+            topics={grammarTopics}
+            searchTerm={searchTerm}
+            onStart={handleStartGrammarTopic}
+          />
         ) : filteredAndSortedItems.length > 0 ? (
           <div className="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {filteredAndSortedItems.map((item) => {
-              if (item.type === "READING") {
-                return (
-                  <ReadingTopicCard
-                    key={`reading-${item.data.id}`}
-                    topic={item.data}
-                    isAuthenticated={Boolean(user)}
-                    onOpenAuthGate={() =>
-                      setAuthGate({
-                        open: true,
-                        quizId: item.data.quizId ?? item.data.id,
-                        title: item.data.title,
-                      })
-                    }
-                    onOpenPaywall={(t) => setPaywallExercise(t)}
-                    onStart={handleStartReadingExercise}
-                    statusOverride={
-                      !item.data.isLocked &&
-                      item.data.completionStatus === "IN_PROGRESS"
-                        ? "IN_PROGRESS"
-                        : undefined
-                    }
-                    isSpotlight={item.data.isSpotlight}
-                  />
-                );
-              }
-              return (
-                <GrammarTopicCard
-                  key={`grammar-${item.data.id}`}
-                  topic={item.data}
-                  isAuthenticated={Boolean(user)}
-                  onOpenAuthGate={() =>
-                    setAuthGate({
-                      open: true,
-                      title: item.data.title,
-                    })
-                  }
-                  onStart={handleStartGrammarTopic}
-                />
-              );
-            })}
+            {filteredAndSortedItems.map((exercise) => (
+              <ReadingTopicCard
+                key={`reading-${exercise.id}`}
+                topic={exercise}
+                isAuthenticated={Boolean(user)}
+                onOpenAuthGate={() =>
+                  setAuthGate({
+                    open: true,
+                    quizId: exercise.quizId ?? exercise.id,
+                    title: exercise.title,
+                  })
+                }
+                onOpenPaywall={(t) => setPaywallExercise(t)}
+                onStart={handleStartReadingExercise}
+                statusOverride={
+                  !exercise.isLocked && exercise.completionStatus === "IN_PROGRESS"
+                    ? "IN_PROGRESS"
+                    : undefined
+                }
+                isSpotlight={exercise.isSpotlight}
+              />
+            ))}
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 sm:p-12 text-center">
@@ -659,29 +472,19 @@ function ReadingTopicsContent() {
               aria-hidden="true"
             />
             <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-200">
-              Không tìm thấy bài luyện tập phù hợp
+              Không tìm thấy bài đọc phù hợp
             </h2>
             <p className="mt-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-              Hãy thử chọn phân loại khác, độ khó khác hoặc tìm kiếm với từ khóa
-              khác để khám phá các bài luyện có sẵn.
+              Hãy thử chọn độ khó khác, trạng thái khác hoặc tìm kiếm với từ khóa khác.
             </p>
             <div className="mt-5 flex justify-center">
               <button
                 type="button"
                 onClick={() => {
                   setSearchTerm("");
-                  setSelectedCategory("ALL");
                   setSelectedDifficulty("ALL");
-                  setSortOrder("DEFAULT");
+                  setSortOrder(DEFAULT_CATALOG_SORT);
                   setSelectedStatus("ALL");
-                  const params = new URLSearchParams(window.location.search);
-                  params.delete("category");
-                  params.delete("tab");
-                  params.delete("mode");
-                  const qs = params.toString();
-                  router.replace(qs ? `/reading?${qs}` : "/reading", {
-                    scroll: false,
-                  });
                 }}
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
               >
@@ -707,7 +510,7 @@ function ReadingTopicsContent() {
         onOpenRegister={() => router.push("/register")}
       />
 
-      {/* PLUS Paywall Modal */}
+      {/* Paywall Modal */}
       <PremiumContentPaywallModal
         isOpen={!!paywallExercise}
         onClose={() => setPaywallExercise(null)}

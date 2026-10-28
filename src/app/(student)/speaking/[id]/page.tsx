@@ -67,6 +67,8 @@ import { ReportIssueButton } from "@/components/issue-report";
 import { isPremiumSpeakingForbiddenError } from "@/modules/subscription/planLogic";
 import toast from "react-hot-toast";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { plansHrefFor } from "@/modules/subscription/practicePlan";
+import { speakingSetDisplayTitle } from "@/lib/catalog/displayTitles";
 
 /**
  * Resamples raw audio data to exactly 16,000 Hz using native OfflineAudioContext.
@@ -1800,14 +1802,14 @@ export default function SpeakingExerciseDetailPage() {
           </div>
           <div>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
-              PLUS
+              PRO
             </span>
             <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 mt-2">
-              Nội dung dành cho PLUS
+              Nội dung dành cho PRO
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-2">
-              Bài luyện nói này thuộc gói PLUS. Nâng cấp gói để mở khóa toàn bộ
-              bài luyện và nội dung nâng cao.
+              Bài luyện nói từ trình độ Trung cấp trở lên thuộc gói PRO. Gói PLUS
+              không bao gồm phần này.
             </p>
           </div>
           <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
@@ -1820,10 +1822,10 @@ export default function SpeakingExerciseDetailPage() {
             </button>
             <button
               type="button"
-              onClick={() => router.push("/plans?highlight=plus")}
+              onClick={() => router.push(plansHrefFor("PRO"))}
               className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm shadow-sm transition cursor-pointer"
             >
-              Xem gói PLUS
+              Xem gói PRO
             </button>
           </div>
         </div>
@@ -1857,10 +1859,19 @@ export default function SpeakingExerciseDetailPage() {
     );
   }
 
+  // The set's Vietnamese title, matching its catalog card.
+  const speakingTitle = activePracticeSet
+    ? speakingSetDisplayTitle(
+        activePracticeSet.key,
+        activePracticeSet.title,
+        activeCatalogExercise?.cefrLevel,
+      )
+    : exercise.title;
+
   return (
     <PracticeShell
       skill="speaking"
-      title={activePracticeSet?.title ?? exercise.title}
+      title={speakingTitle}
       stage={phase === "COMPLETED" ? "FEEDBACK" : "PRACTICE"}
       current={currentPracticeSetPosition || undefined}
       total={activePracticeSet?.exerciseCount}
@@ -1870,7 +1881,7 @@ export default function SpeakingExerciseDetailPage() {
     >
       <div className="w-full h-dvh overflow-hidden flex flex-col bg-white dark:bg-slate-950 font-sans">
         <PracticeHeader
-          title={activePracticeSet?.title ?? exercise.title}
+          title={speakingTitle}
           category={exercise.categoryLabel ?? exercise.category}
           difficulty={exercise.difficulty}
           positionText={

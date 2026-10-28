@@ -716,8 +716,8 @@ export function LearningProgressTab() {
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <p className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                      {act.title}
+                    <p className="min-w-0 truncate text-xs font-bold text-slate-900 dark:text-slate-100" title={act.subject ?? act.title}>
+                      {act.subject ?? act.title}
                     </p>
                     {act.count > 1 && (
                       <span className="rounded bg-slate-100 px-1.5 py-0.2 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
@@ -726,7 +726,7 @@ export function LearningProgressTab() {
                     )}
                   </div>
                   <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                    {act.detail}
+                    {act.subject ? `${act.title} · ${act.detail}` : act.detail}
                   </p>
                 </div>
                 <time
