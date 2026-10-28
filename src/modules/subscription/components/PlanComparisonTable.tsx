@@ -16,10 +16,16 @@ interface ComparisonFeature {
 const COMPARISON_FEATURES: ComparisonFeature[] = [
   {
     category: "Luyện 4 kỹ năng",
-    name: "Luyện Nghe, Đọc, Nói, Viết",
-    free: "Bài cấp độ A1–A2",
-    plus: "Thêm bài B1–C1",
-    pro: "Thêm bài B1–C1",
+    name: "Luyện Nghe và Đọc",
+    free: "Cơ bản (A1–A2)",
+    plus: "Thêm Trung cấp, Nâng cao",
+    pro: "Thêm Trung cấp, Nâng cao",
+  },
+  {
+    name: "Luyện Nói và Viết",
+    free: "Cơ bản (A1–A2)",
+    plus: "Cơ bản (A1–A2)",
+    pro: "Thêm Trung cấp, Nâng cao",
   },
   {
     name: "Chấm bài Nói và Viết tự động (AI)",

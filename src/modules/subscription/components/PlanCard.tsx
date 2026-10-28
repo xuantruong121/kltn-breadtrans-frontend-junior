@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Check, Star } from "lucide-react";
+import { Check, Minus, Star } from "lucide-react";
 import type { EffectivePlan, PurchasablePlanVersionInfo } from "../planLogic";
 import {
   getPlanCardCta,
@@ -67,7 +67,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
           </div>
 
           <p className="mt-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed">
-            Học và luyện tập với các nội dung cơ bản của BreadTrans.
+            Bài Cơ bản của bốn kỹ năng, flashcard, từ vựng và ngữ pháp.
           </p>
 
           <div className="mt-6 pb-6 border-b border-slate-100 dark:border-slate-800">
@@ -84,11 +84,11 @@ export const PlanCard: React.FC<PlanCardProps> = ({
           <ul className="mt-6 space-y-3.5 text-sm text-slate-700 dark:text-slate-200">
             <li className="flex items-start gap-3">
               <Check size={18} className="text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
-              <span>Học và luyện tập với nội dung cơ bản của BreadTrans</span>
+              <span>Bài Cơ bản (A1–A2) của Nghe, Đọc, Nói, Viết</span>
             </li>
             <li className="flex items-start gap-3">
               <Check size={18} className="text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
-              <span>Làm quen với các công cụ học tập của BreadTrans</span>
+              <span>Flashcard, từ vựng và ngữ pháp miễn phí</span>
             </li>
             <li className="flex items-start gap-3">
               <Check size={18} className="text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
@@ -146,7 +146,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
           </div>
 
           <p className="mt-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed">
-            Mở khóa kho nội dung luyện tập 4 kỹ năng và từ vựng Premium.
+            Mở bài Nghe và Đọc Trung cấp, Nâng cao.
           </p>
 
           <div className="mt-6 pb-6 border-b border-slate-100 dark:border-slate-800">
@@ -194,19 +194,19 @@ export const PlanCard: React.FC<PlanCardProps> = ({
           <ul className="mt-6 space-y-3.5 text-sm text-slate-700 dark:text-slate-200">
             <li className="flex items-start gap-3 font-semibold text-slate-900 dark:text-slate-100">
               <Check size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
-              <span>Bao gồm toàn bộ quyền lợi cơ bản</span>
+              <span>Toàn bộ quyền lợi gói Free</span>
             </li>
             <li className="flex items-start gap-3 font-bold text-amber-800 dark:text-amber-300">
               <Check size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
-              <span>Mở khóa toàn bộ chủ đề Từ vựng Premium</span>
+              <span>Bài Nghe và Đọc Trung cấp, Nâng cao</span>
             </li>
             <li className="flex items-start gap-3">
               <Check size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
-              <span>Mở khóa kho bài đọc & bài nghe Premium</span>
+              <span>Bài Nói và Viết ở mức Cơ bản (A1–A2)</span>
             </li>
-            <li className="flex items-start gap-3">
-              <Check size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
-              <span>Mở khóa kho bài luyện nói & viết Premium</span>
+            <li className="flex items-start gap-3 text-slate-500 dark:text-slate-400">
+              <Minus size={18} className="text-slate-400 dark:text-slate-500 shrink-0 mt-0.5" aria-hidden="true" />
+              <span>Không gồm Nói, Viết Trung cấp trở lên và khóa học</span>
             </li>
           </ul>
         </div>
@@ -259,7 +259,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
     <div className={`flex flex-col justify-between rounded-2xl border bg-white p-6 lg:p-7 shadow-md transition-all dark:bg-slate-900 ${
       cta.isCurrent
         ? "border-emerald-300 dark:border-emerald-800 ring-2 ring-emerald-500/20"
-        : proPricing.isPurchasable
+        : highlighted || proPricing.isPurchasable
           ? "border-indigo-400 dark:border-indigo-500 ring-2 ring-indigo-400/20"
           : "border-slate-200 dark:border-slate-800"
     }`}>
@@ -276,7 +276,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
         </div>
 
         <p className="mt-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed">
-          Toàn bộ quyền lợi Plus và toàn bộ thư viện khóa học tự học.
+          Toàn bộ quyền lợi Plus, thêm Nói và Viết Trung cấp, Nâng cao và mọi khóa học.
         </p>
 
         <div className="mt-6 pb-6 border-b border-slate-200/80 dark:border-slate-800">
@@ -305,6 +305,10 @@ export const PlanCard: React.FC<PlanCardProps> = ({
           <li className="flex items-start gap-3">
             <Check size={18} className="text-indigo-500 shrink-0 mt-0.5" aria-hidden="true" />
             <span>Toàn bộ quyền lợi gói Plus</span>
+          </li>
+          <li className="flex items-start gap-3">
+            <Check size={18} className="text-indigo-500 shrink-0 mt-0.5" aria-hidden="true" />
+            <span>Bài Nói và Viết Trung cấp, Nâng cao</span>
           </li>
           <li className="flex items-start gap-3">
             <Check size={18} className="text-indigo-500 shrink-0 mt-0.5" aria-hidden="true" />

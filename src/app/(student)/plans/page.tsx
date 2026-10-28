@@ -29,6 +29,7 @@ function PlansPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const highlightPlus = searchParams.get("highlight") === "plus";
+  const highlightPro = searchParams.get("highlight") === "pro";
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
 
@@ -263,6 +264,7 @@ function PlansPageContent() {
           purchasableProVersion={purchasableProVersion}
           onSelectPro={handleInitiateProPurchase}
           isPurchasing={purchaseMutation.isPending}
+          highlighted={highlightPro}
           isLoadingCatalog={isLoadingCatalog}
           isCatalogError={isCatalogError}
           isAuthenticated={!!user}
