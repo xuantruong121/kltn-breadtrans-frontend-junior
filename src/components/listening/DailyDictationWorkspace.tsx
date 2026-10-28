@@ -67,6 +67,7 @@ import {
   ownsListeningPlayback,
   type ListeningPlaybackOwner,
 } from "./listeningPlaybackOwnership";
+import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
 
 export interface DictationAttemptMetrics {
   attemptCount: number;
@@ -1255,7 +1256,7 @@ export function DailyDictationWorkspace({
   return (
     <div className="w-full min-h-dvh flex flex-col bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased">
       <PracticeHeader
-        title={quiz.title}
+        title={quizDisplayTitle(quiz.id, quiz.title)}
         difficulty={reviewOnly ? "ÔN CÂU SAI" : vocabLevel}
         positionText={`Câu ${currentIndex + 1} / ${questions.length}`}
         onExit={() => onExit("/listening")}

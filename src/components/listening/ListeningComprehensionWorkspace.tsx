@@ -57,6 +57,7 @@ import {
   probeOrPrefetchTranscript,
   revealAndFetchTranscript,
 } from "./listeningTranscriptResources";
+import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
 
 interface ListeningComprehensionWorkspaceProps {
   quiz?: Quiz | null;
@@ -1216,7 +1217,7 @@ export function ListeningComprehensionWorkspace({
   return (
     <div className="w-full min-h-dvh flex flex-col bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
       <PracticeHeader
-        title={quiz.title}
+        title={quizDisplayTitle(quiz.id, quiz.title)}
         difficulty={reviewOnly ? "ÔN CÂU SAI" : levelTag}
         positionText={`Câu ${currentIndex + 1} / ${questions.length}`}
         onExit={() => confirmExit(returnTo)}

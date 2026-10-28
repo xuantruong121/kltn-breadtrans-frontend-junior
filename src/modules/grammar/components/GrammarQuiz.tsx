@@ -21,6 +21,7 @@ import {
   isGrammarDirty,
 } from "./grammarNavigationUtils";
 import { levelLabel } from "@/lib/ui/displayLabels";
+import { grammarDisplayTitle } from "@/lib/catalog/displayTitles";
 
 type QuestionResult = GrammarAttemptResult["questionsResult"][number];
 
@@ -268,7 +269,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
                 Chủ đề ngữ pháp
               </p>
               <h2 className="mt-1.5 text-base sm:text-lg font-bold leading-snug text-slate-900 dark:text-slate-100">
-                {topic.title}
+                {grammarDisplayTitle(topic.id, topic.title)}
               </h2>
               <span className="mt-2.5 inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
                 {levelLabel(topic.level)}

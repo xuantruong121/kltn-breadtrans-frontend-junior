@@ -495,7 +495,8 @@ test("Header integration: DailyDictationWorkspace uses standardized PracticeHead
   assert.ok(content.includes("<PracticeHeader"));
 
   // 2. Must wire required props
-  assert.ok(content.includes("title={quiz.title}"));
+  // The header shows the Vietnamese display title of the same quiz.
+  assert.ok(content.includes("title={quizDisplayTitle(quiz.id, quiz.title)}"));
   assert.ok(content.includes("positionText={`Câu ${currentIndex + 1} / ${questions.length}`}"));
   assert.ok(content.includes('onExit={() => onExit("/listening")}'));
   assert.ok(content.includes("bilingualEnabled"));

@@ -39,6 +39,7 @@ import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
 import { isSafeCourseReturn, withSafeReturnTo } from "@/lib/course/navigation";
 import { plansHrefFor } from "@/modules/subscription/practicePlan";
+import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
 
 export default function WritingDetailPage(props: {
   params: Promise<{ id: string }>;
@@ -306,7 +307,7 @@ export default function WritingDetailPage(props: {
   return (
     <PracticeShell
       skill="writing"
-      title={topic?.title || "Bài luyện viết"}
+      title={topic?.title ? quizDisplayTitle(topicId, topic.title, topic.cefrLevel) : "Bài luyện viết"}
       stage={feedback ? "FEEDBACK" : "PRACTICE"}
       level={topic?.level}
       mode={writingMode.label}
@@ -314,7 +315,7 @@ export default function WritingDetailPage(props: {
     >
       <div className="w-full min-h-dvh flex flex-col bg-slate-50 dark:bg-slate-950 font-sans">
         <PracticeHeader
-          title={topic?.title || "Luyện viết"}
+          title={topic?.title ? quizDisplayTitle(topicId, topic.title, topic.cefrLevel) : "Luyện viết"}
           category={
             inExam && examQuizIds.length
               ? `Câu ${examQuizIds.indexOf(topicId) + 1}/${examQuizIds.length}`

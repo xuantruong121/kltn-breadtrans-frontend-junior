@@ -3,6 +3,7 @@ import type {
   SkillProgressSummary,
   UserLearningStats,
 } from "@/lib/api/services/user.service";
+import { quizDisplayTitle } from "../../lib/catalog/displayTitles.ts";
 
 export interface DayActivity {
   dayLabel: string;
@@ -196,14 +197,30 @@ function sanitizeActivityCategory(title: string, type?: string | null): string {
  * ("Listening A1 — Essential Everyday English"). Show it when it is a readable
  * name; technical codes and generic labels fall back to the category alone.
  */
-function activitySubject(title: string | null | undefined, category: string): string | undefined {
-  const t = (title || "").trim();
+function activitySubject(
+  title: string | null | undefined,
+  category: string,
+  quizId?: number | null,
+): string | undefined {
+  const t = practiceTitle((title || "").trim(), quizId);
   if (!t || t === category) return undefined;
   if (/^[A-Z0-9_]+$/.test(t) || /courselessonattempt/i.test(t)) return undefined;
   if (/^(Học từ vựng|Hoạt động học tập)$/i.test(t)) return undefined;
   // Old rows may carry internal names ("Entry Diagnostic v2"); never show those.
   if (/\b[Vv]\d+(\.\d+)?\b|legacy|runtime/i.test(t)) return undefined;
   return t;
+}
+
+/**
+ * The catalog's display title for a practice quiz row, keeping a Writing
+ * task suffix ("— Câu 2/5"). Rows without a quiz keep their stored text.
+ */
+function practiceTitle(stored: string, quizId?: number | null): string {
+  if (quizId == null || !stored) return stored;
+  const task = / — (Câu \d+\/\d+)$/.exec(stored);
+  const base = task ? stored.slice(0, task.index) : stored;
+  const title = quizDisplayTitle(quizId, base);
+  return task ? `${title} · ${task[1]}` : title;
 }
 
 /**
@@ -273,7 +290,7 @@ export function groupRecentActivities(
       type: current.type,
       title: category,
       // Aggregated rows (several words, several attempts) have no single name.
-      subject: count > 1 ? undefined : activitySubject(current.title, category),
+      subject: count > 1 ? undefined : activitySubject(current.title, category, current.quizId),
       detail,
       occurredAt: current.occurredAt,
       dateDisplay: formatFriendlyDate(current.occurredAt),

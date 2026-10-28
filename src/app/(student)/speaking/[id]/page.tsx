@@ -68,6 +68,7 @@ import { isPremiumSpeakingForbiddenError } from "@/modules/subscription/planLogi
 import toast from "react-hot-toast";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { plansHrefFor } from "@/modules/subscription/practicePlan";
+import { speakingSetDisplayTitle } from "@/lib/catalog/displayTitles";
 
 /**
  * Resamples raw audio data to exactly 16,000 Hz using native OfflineAudioContext.
@@ -1858,10 +1859,19 @@ export default function SpeakingExerciseDetailPage() {
     );
   }
 
+  // The set's Vietnamese title, matching its catalog card.
+  const speakingTitle = activePracticeSet
+    ? speakingSetDisplayTitle(
+        activePracticeSet.key,
+        activePracticeSet.title,
+        activeCatalogExercise?.cefrLevel,
+      )
+    : exercise.title;
+
   return (
     <PracticeShell
       skill="speaking"
-      title={activePracticeSet?.title ?? exercise.title}
+      title={speakingTitle}
       stage={phase === "COMPLETED" ? "FEEDBACK" : "PRACTICE"}
       current={currentPracticeSetPosition || undefined}
       total={activePracticeSet?.exerciseCount}
@@ -1871,7 +1881,7 @@ export default function SpeakingExerciseDetailPage() {
     >
       <div className="w-full h-dvh overflow-hidden flex flex-col bg-white dark:bg-slate-950 font-sans">
         <PracticeHeader
-          title={activePracticeSet?.title ?? exercise.title}
+          title={speakingTitle}
           category={exercise.categoryLabel ?? exercise.category}
           difficulty={exercise.difficulty}
           positionText={
