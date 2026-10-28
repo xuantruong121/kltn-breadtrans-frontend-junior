@@ -21,6 +21,7 @@ import {
   DiagnosticResult,
 } from "@/lib/api/services/diagnostic.service";
 import { formatPlacementLevel, formatSkillName } from "@/lib/diagnostic/diagnosticUiLogic";
+import { ObservedResultPanel } from "@/components/diagnostic/ObservedResultPanel";
 import {
   describeForm,
   describeSkillState,
@@ -247,6 +248,12 @@ export function DiagnosticResultTab() {
           </span>
         </div>
 
+        {fourSkill?.observed ? (
+          <>
+            <h2 className="mt-5 text-2xl font-black text-slate-900 dark:text-slate-100">Kết quả đánh giá đầu vào</h2>
+            <ObservedResultPanel observed={fourSkill.observed} compact />
+          </>
+        ) : (
         <div className="mt-5 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <span className="text-sm font-black uppercase tracking-wider text-violet-600 dark:text-violet-400">
@@ -285,9 +292,10 @@ export function DiagnosticResultTab() {
             </span>
           </div>
         </div>
+        )}
 
         {/* Speaking / Writing Evidence Note */}
-        {result.productiveTaskCount ? (
+        {result.productiveTaskCount && !fourSkill?.observed ? (
           <div className="mt-6 rounded-2xl border border-violet-100 bg-violet-50/70 p-4 text-sm leading-6 text-violet-900 dark:border-violet-900/60 dark:bg-violet-950/30 dark:text-violet-200">
             <div className="flex items-center gap-2 font-black text-violet-800 dark:text-violet-300">
               <Mic size={16} /> Bài Nói và Viết

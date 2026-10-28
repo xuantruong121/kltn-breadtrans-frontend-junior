@@ -122,6 +122,7 @@ export function DiagnosticAdvicePanel({ advice }: { advice: DiagnosticAdvice }) 
       <p className="mt-1.5 text-sm leading-6 text-slate-600 dark:text-slate-400">
         Gợi ý dựa trên các câu bạn làm sai và phần chấm theo tiêu chí của chính bài này. Bài kiểm tra ngắn (10 câu mỗi
         kỹ năng Nghe, Đọc; 2 bài mỗi kỹ năng Nói, Viết) nên đây là định hướng luyện tập, không phải xếp trình độ.
+        Nhãn như (A2), (B1) trong tên bài luyện là nhãn của nội dung trong thư viện, không phải trình độ của bạn.
       </p>
 
       {advice.mockGraderEvidence && (
