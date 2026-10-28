@@ -6,6 +6,11 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, ArrowRight, X } from "lucide-react";
 import { useModalAccessibility } from "@/hooks/useModalAccessibility";
+import {
+  plansHrefFor,
+  unlockPlanFor,
+  type PaidPlanCode,
+} from "@/modules/subscription/practicePlan";
 
 const emptySubscribe = () => () => {};
 
@@ -20,6 +25,8 @@ export interface PremiumContentPaywallModalProps {
   isOpen: boolean;
   onClose: () => void;
   skillType?: PremiumSkillType;
+  /** Plan that unlocks the item; defaults to the skill's advanced plan. */
+  requiredPlan?: PaidPlanCode;
   title?: string;
   itemTitle?: string;
   description?: string;
@@ -29,10 +36,14 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
   isOpen,
   onClose,
   skillType,
-  title = "Nội dung dành cho PLUS",
+  requiredPlan,
+  title,
   itemTitle,
-  description = "Nâng cấp PLUS để mở khóa thêm nội dung luyện tập.",
+  description,
 }) => {
+  const plan: PaidPlanCode =
+    requiredPlan ??
+    (skillType && skillType !== "VOCABULARY" ? unlockPlanFor(skillType) : "PLUS");
   const router = useRouter();
   const modalRef = useRef<HTMLDivElement>(null);
   const isReady = useSyncExternalStore(emptySubscribe, () => true, () => false);
@@ -47,7 +58,7 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
 
   const handleNavigateToPlans = () => {
     onClose();
-    router.push("/plans?highlight=plus");
+    router.push(plansHrefFor(plan));
   };
 
   const getSkillLabel = () => {
@@ -105,7 +116,7 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
             </span>
             <div>
               <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
-                Nội dung PLUS
+                Nội dung {plan}
               </span>
             </div>
           </div>
@@ -115,7 +126,7 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
             id="paywall-title"
             className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100"
           >
-            {title}
+            {title ?? `Nội dung dành cho ${plan}`}
           </h2>
 
           {itemTitle && (
@@ -128,7 +139,10 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
             id="paywall-desc"
             className="mt-2.5 text-base leading-relaxed text-slate-600 dark:text-slate-400"
           >
-            {description}
+            {description ??
+              (plan === "PRO"
+                ? "Bài luyện nói và luyện viết từ trình độ Trung cấp trở lên thuộc gói PRO."
+                : "Bài nghe và bài đọc từ trình độ Trung cấp trở lên thuộc gói PLUS.")}
           </p>
 
           {/* Verified Entitlement Highlights */}
@@ -145,20 +159,23 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
                 </div>
               </>
             ) : (
-              <>
-                <div className="flex items-start gap-2">
+              (plan === "PRO"
+                ? [
+                    "Mọi quyền lợi của gói PLUS",
+                    "Bài luyện nói và luyện viết Trung cấp, Nâng cao",
+                    "Toàn bộ khóa học",
+                  ]
+                : [
+                    "Bài nghe và bài đọc Trung cấp, Nâng cao",
+                    "Bài Cơ bản của cả bốn kỹ năng",
+                    "Flashcard, từ vựng và ngữ pháp vẫn miễn phí",
+                  ]
+              ).map((benefit) => (
+                <div key={benefit} className="flex items-start gap-2">
                   <span className="mt-0.5 text-amber-600 dark:text-amber-400 font-bold">•</span>
-                  <span>Mở khóa toàn bộ kho bài đọc và bài nghe Premium</span>
+                  <span>{benefit}</span>
                 </div>
-                <div className="flex items-start gap-2">
-                  <span className="mt-0.5 text-amber-600 dark:text-amber-400 font-bold">•</span>
-                  <span>Mở khóa toàn bộ bài luyện nói và bài viết Premium</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="mt-0.5 text-amber-600 dark:text-amber-400 font-bold">•</span>
-                  <span>Mở khóa toàn bộ chủ đề Từ vựng Premium</span>
-                </div>
-              </>
+              ))
             )}
           </div>
 
@@ -176,7 +193,7 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
               onClick={handleNavigateToPlans}
               className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-5 text-sm font-bold text-white shadow-xs hover:bg-amber-600 transition-colors cursor-pointer"
             >
-              <span>Xem gói PLUS</span>
+              <span>Xem gói {plan}</span>
               <ArrowRight size={14} aria-hidden="true" />
             </button>
           </div>

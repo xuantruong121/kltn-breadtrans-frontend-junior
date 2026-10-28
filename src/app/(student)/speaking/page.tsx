@@ -31,6 +31,7 @@ import {
   matchesDifficulty,
 } from "@/components/speaking/practiceCardLogic";
 import { presentSpeakingProgress } from "@/lib/speaking/speakingExperienceLogic";
+import { unlockPlanFor } from "@/modules/subscription/practicePlan";
 
 const DIFFICULTY_OPTIONS: Array<{ id: DifficultyLevel; label: string }> = [
   { id: "ALL", label: "Tất cả" },
@@ -721,11 +722,12 @@ export default function SpeakingExercisesPage() {
         onOpenRegister={() => router.push("/register")}
       />
 
-      {/* PLUS Paywall Modal */}
+      {/* Paywall Modal */}
       <PremiumContentPaywallModal
         isOpen={Boolean(paywallExercise)}
         onClose={() => setPaywallExercise(null)}
         skillType="SPEAKING"
+        requiredPlan={unlockPlanFor("SPEAKING", paywallExercise?.requiredPlan)}
         itemTitle={paywallExercise?.title}
       />
     </div>

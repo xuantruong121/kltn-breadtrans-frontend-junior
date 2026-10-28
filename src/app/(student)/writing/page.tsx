@@ -29,6 +29,7 @@ import {
   type DifficultyLevel,
   matchesWritingDifficulty,
 } from "@/components/writing/writingCardLogic";
+import { unlockPlanFor } from "@/modules/subscription/practicePlan";
 
 const DIFFICULTY_OPTIONS: Array<{ id: DifficultyLevel; label: string }> = [
   { id: "ALL", label: "Tất cả" },
@@ -481,11 +482,12 @@ export default function WritingTopicsPage() {
         onOpenRegister={() => router.push("/register")}
       />
 
-      {/* PLUS Paywall Modal */}
+      {/* Paywall Modal */}
       <PremiumContentPaywallModal
         isOpen={Boolean(paywallTopic)}
         onClose={() => setPaywallTopic(null)}
         skillType="WRITING"
+        requiredPlan={unlockPlanFor("WRITING", paywallTopic?.requiredPlan)}
         itemTitle={paywallTopic?.topicName || paywallTopic?.title}
       />
     </div>

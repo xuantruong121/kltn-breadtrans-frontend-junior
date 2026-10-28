@@ -20,6 +20,7 @@ import {
   resolvePedagogicalDescription,
   resolveSkillTags,
 } from "./practiceCardLogic";
+import { unlockPlanFor } from "@/modules/subscription/practicePlan";
 
 export type { PracticeCardStatus, PracticeExerciseItem };
 
@@ -116,6 +117,8 @@ export function PracticeCard({
       "relative flex min-h-[220px] flex-col justify-between rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 p-5 opacity-90 shadow-2xs transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-2xs cursor-pointer group",
   }[status];
 
+  const unlockPlan = unlockPlanFor("SPEAKING", exercise.requiredPlan);
+
   return (
     <article className={containerClasses}>
       <div className="space-y-2.5">
@@ -125,7 +128,7 @@ export function PracticeCard({
             {isLocked ? (
               <span className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80">
                 <Lock size={10} aria-hidden="true" />
-                PLUS
+                {unlockPlan}
               </span>
             ) : (
               <span />
@@ -227,7 +230,7 @@ export function PracticeCard({
                 className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-amber-900 dark:text-amber-200 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500"
               >
                 <Lock className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Mở khóa với PLUS</span>
+                <span>Mở khóa với {unlockPlan}</span>
               </button>
             ) : (
               <button

@@ -38,6 +38,7 @@ import { isPremiumWritingForbiddenError } from "@/modules/subscription/planLogic
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
 import { isSafeCourseReturn, withSafeReturnTo } from "@/lib/course/navigation";
+import { plansHrefFor } from "@/modules/subscription/practicePlan";
 
 export default function WritingDetailPage(props: {
   params: Promise<{ id: string }>;
@@ -180,14 +181,14 @@ export default function WritingDetailPage(props: {
           </div>
           <div>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
-              PLUS
+              PRO
             </span>
             <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 mt-2">
-              Nội dung dành cho PLUS
+              Nội dung dành cho PRO
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-2">
-              Chủ đề luyện viết này thuộc gói PLUS. Nâng cấp gói để mở khóa toàn
-              bộ bài luyện và nội dung nâng cao.
+              Bài luyện viết từ trình độ Trung cấp trở lên thuộc gói PRO. Gói
+              PLUS không bao gồm phần này.
             </p>
           </div>
           <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
@@ -198,10 +199,10 @@ export default function WritingDetailPage(props: {
               Quay lại danh sách
             </Link>
             <Link
-              href="/plans?highlight=plus"
+              href={plansHrefFor("PRO")}
               className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm shadow-sm transition text-center"
             >
-              Xem gói PLUS
+              Xem gói PRO
             </Link>
           </div>
         </div>

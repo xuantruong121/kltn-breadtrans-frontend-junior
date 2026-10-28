@@ -28,6 +28,8 @@ export interface SpeakingExercise {
   isCompleted?: boolean;
   isPremiumContent?: boolean;
   isLocked?: boolean;
+  /** Lowest plan that opens this item: FREE, PLUS or PRO. */
+  requiredPlan?: string;
   practiceSet?: SpeakingPracticeSetSummary;
   stimulusId?: number | null;
   stimulus?: {

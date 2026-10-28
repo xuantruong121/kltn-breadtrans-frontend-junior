@@ -16,6 +16,8 @@ export interface WritingTopic {
   isCompleted?: boolean;
   isPremiumContent?: boolean;
   isLocked?: boolean;
+  /** Lowest plan that opens this item: FREE, PLUS or PRO. */
+  requiredPlan?: string;
 }
 
 export interface WritingCatalogResponse {
