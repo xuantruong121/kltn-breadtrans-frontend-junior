@@ -117,8 +117,8 @@ export function ReadingTopicCard({
   return (
     <article className={containerClasses}>
       <div className="space-y-2.5">
-        {/* Status line: only when completed or in progress */}
-        {(status === "COMPLETED" || status === "IN_PROGRESS") && (
+        {/* Status line: only when completed */}
+        {status === "COMPLETED" && (
           <div className="flex items-center justify-between gap-2">
             <span />
 
@@ -126,10 +126,6 @@ export function ReadingTopicCard({
               <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
                 <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
                 <span>Đã hoàn thành</span>
-              </span>
-            ) : status === "IN_PROGRESS" ? (
-              <span className="text-xs font-medium text-violet-700 dark:text-violet-400">
-                Đang luyện tập
               </span>
             ) : null}
           </div>

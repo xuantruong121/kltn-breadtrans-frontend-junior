@@ -123,8 +123,8 @@ export function PracticeCard({
   return (
     <article className={containerClasses}>
       <div className="space-y-2.5">
-        {/* Status header line: only when completed or in progress */}
-        {(status === "COMPLETED" || status === "IN_PROGRESS") && (
+        {/* Status header line: only when completed */}
+        {status === "COMPLETED" && (
           <div className="flex items-center justify-between gap-2">
             <span />
 
@@ -134,10 +134,6 @@ export function PracticeCard({
                 <span>
                   Đã hoàn thành{typeof exercise.averageScore === "number" && exercise.averageScore > 0 ? ` · ${Math.round(exercise.averageScore)}/100` : ""}
                 </span>
-              </span>
-            ) : status === "IN_PROGRESS" ? (
-              <span className="text-xs font-medium text-violet-700 dark:text-violet-400">
-                Đang luyện tập
               </span>
             ) : null}
           </div>

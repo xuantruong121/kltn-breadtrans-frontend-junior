@@ -90,8 +90,8 @@ export function ListeningExerciseCard({
   return (
     <article className={containerClasses}>
       <div className="space-y-2.5">
-        {/* Optional status banner: only when completed or in progress */}
-        {(status === "COMPLETED" || status === "IN_PROGRESS") && (
+        {/* Optional status banner: only when completed */}
+        {status === "COMPLETED" && (
           <div className="flex items-center justify-between gap-2">
             <span />
 
@@ -101,10 +101,6 @@ export function ListeningExerciseCard({
                 <span>
                   Đã hoàn thành{quiz.score != null ? ` · ${quiz.score}/100` : ""}
                 </span>
-              </span>
-            ) : status === "IN_PROGRESS" ? (
-              <span className="text-xs font-medium text-violet-700 dark:text-violet-400">
-                Đang luyện tập
               </span>
             ) : null}
           </div>
