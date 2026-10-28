@@ -36,6 +36,8 @@ import {
 } from "@/lib/practice/catalogFilters";
 import { unlockPlanFor } from "@/modules/subscription/practicePlan";
 import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
+import { PictureWritingCatalog } from "@/components/writing/PictureWritingCatalog";
+import { isPictureQuiz, pictureCards } from "@/lib/writing/pictureWriting";
 
 /** Authoritative level from the API, with the authored tag as fallback. */
 const writingLevelOf = (t: WritingTopicItem) => t.cefrLevel ?? t.title;
@@ -52,6 +54,13 @@ export default function WritingTopicsPage() {
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("ALL");
   const [launchingTopicId, setLaunchingTopicId] = useState<number | null>(null);
   const [paywallTopic, setPaywallTopic] = useState<WritingTopicItem | null>(null);
+  // "Viết câu theo tranh" tab; ?tab=picture opens it directly.
+  const [writingTab, setWritingTab] = useState<"PRACTICE" | "PICTURE">("PRACTICE");
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("tab") === "picture") {
+      setWritingTab("PICTURE");
+    }
+  }, []);
   const [authGate, setAuthGate] = useState<{
     open: boolean;
     topicId?: number;
@@ -117,6 +126,15 @@ export default function WritingTopicsPage() {
     }));
   }, [topicsData]);
 
+  // Picture tasks have their own tab, shown only when such content exists.
+  const practiceTopics = useMemo(() => topics.filter((t) => !isPictureQuiz(t)), [topics]);
+  const pictureQuizzes = useMemo(() => topics.filter(isPictureQuiz), [topics]);
+  const hasPictureWriting = pictureCards(pictureQuizzes).length > 0;
+  const changeTab = (tab: "PRACTICE" | "PICTURE") => {
+    setWritingTab(tab);
+    router.replace(tab === "PICTURE" ? "/writing?tab=picture" : "/writing", { scroll: false });
+  };
+
   // Completed count
   const completedCount = useMemo(() => {
     return topics.filter((t) => Boolean(t.isCompleted)).length;
@@ -125,7 +143,7 @@ export default function WritingTopicsPage() {
   // Filter & Sort
   const filteredAndSortedTopics = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
-    const list = topics.filter((t) => {
+    const list = practiceTopics.filter((t) => {
       const title = `${t.title} ${t.topicName ?? ""}`.toLowerCase();
       const desc = (t.description || "").toLowerCase();
       const matchSearch = !q || title.includes(q) || desc.includes(q);
@@ -153,7 +171,7 @@ export default function WritingTopicsPage() {
       }
       return item;
     });
-  }, [topics, searchTerm, selectedDifficulty, selectedStatus, sortOrder]);
+  }, [practiceTopics, searchTerm, selectedDifficulty, selectedStatus, sortOrder]);
 
   const handleStartTopic = (topic: WritingTopicItem) => {
     if (!user) {
@@ -274,138 +292,176 @@ export default function WritingTopicsPage() {
         </section>
       )}
 
-      {/* Unified Modern Filter Dock */}
-      <section className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xs sm:p-5 space-y-4">
-        {/* Row 1: Search Input (Ctrl+K) */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          <div className="relative flex-1 lg:max-w-md">
-            <Search
-              size={18}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
-              aria-hidden="true"
-            />
-            <input
-              ref={searchInputRef}
-              type="text"
-              placeholder="Tìm kiếm chủ đề luyện viết..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="min-h-11 w-full rounded-xl border border-slate-300/80 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-800/90 pl-10.5 pr-20 text-sm font-medium text-slate-900 dark:text-slate-100 transition-all duration-150 placeholder:text-slate-500 dark:placeholder:text-slate-400 placeholder:font-normal focus:border-violet-600 dark:focus:border-violet-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/20 focus:outline-hidden shadow-2xs"
-            />
-            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-              {searchTerm ? (
+      {hasPictureWriting && (
+        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Loại bài luyện viết">
+          {([
+            ["PRACTICE", "Bài luyện viết"],
+            ["PICTURE", "Viết câu theo tranh"],
+          ] as const).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={writingTab === id}
+              onClick={() => changeTab(id)}
+              className={`min-h-10 rounded-xl px-4 text-sm font-semibold transition-colors cursor-pointer ${
+                writingTab === id
+                  ? "bg-violet-600 text-white"
+                  : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {hasPictureWriting && writingTab === "PICTURE" ? (
+        <PictureWritingCatalog
+          quizzes={pictureQuizzes}
+          isAuthenticated={Boolean(user)}
+          onOpen={(href) => router.push(href)}
+          onLocked={(quiz) => setPaywallTopic(quiz)}
+          onGuest={(quiz) =>
+            setAuthGate({ open: true, topicId: quiz.id, title: quiz.title })
+          }
+        />
+      ) : (
+        <>
+        {/* Unified Modern Filter Dock */}
+        <section className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xs sm:p-5 space-y-4">
+          {/* Row 1: Search Input (Ctrl+K) */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <div className="relative flex-1 lg:max-w-md">
+              <Search
+                size={18}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+                aria-hidden="true"
+              />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Tìm kiếm chủ đề luyện viết..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="min-h-11 w-full rounded-xl border border-slate-300/80 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-800/90 pl-10.5 pr-20 text-sm font-medium text-slate-900 dark:text-slate-100 transition-all duration-150 placeholder:text-slate-500 dark:placeholder:text-slate-400 placeholder:font-normal focus:border-violet-600 dark:focus:border-violet-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/20 focus:outline-hidden shadow-2xs"
+              />
+              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                {searchTerm ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchTerm("");
+                      searchInputRef.current?.focus();
+                    }}
+                    aria-label="Xóa từ khóa tìm kiếm"
+                    className="flex size-6 items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                  >
+                    <X size={13} aria-hidden="true" />
+                  </button>
+                ) : (
+                  <kbd className="hidden sm:inline-block rounded-md border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-0.5 text-[11px] font-mono font-bold text-slate-600 dark:text-slate-400 shadow-2xs">
+                    ⌘K
+                  </kbd>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <PracticeCatalogFilters
+            difficulty={selectedDifficulty}
+            onDifficultyChange={setSelectedDifficulty}
+            sort={sortOrder}
+            onSortChange={setSortOrder}
+            status={selectedStatus}
+            onStatusChange={setSelectedStatus}
+            statusOptions={user ? ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"] : []}
+            resultCount={filteredAndSortedTopics.length}
+            itemNoun="bài luyện viết"
+            onReset={() => {
+              setSearchTerm("");
+              setSelectedDifficulty("ALL");
+              setSortOrder(DEFAULT_CATALOG_SORT);
+              setSelectedStatus("ALL");
+            }}
+          />
+        </section>
+
+        {/* Catalog Results Grid */}
+        <section>
+          {isLoading ? (
+            <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+              <Loader2 size={32} className="animate-spin text-violet-600" aria-hidden="true" />
+              <p className="mt-3 text-xs font-bold text-slate-500 dark:text-slate-400">
+                Đang tải danh sách chủ đề luyện viết...
+              </p>
+            </div>
+          ) : isError ? (
+            <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-rose-200 bg-rose-50/60 p-8 text-center dark:border-rose-900/60 dark:bg-rose-950/20">
+              <p className="text-sm font-bold text-rose-800 dark:text-rose-200">
+                Không thể tải danh sách chủ đề luyện viết.
+              </p>
+              <p className="mt-1 text-xs text-rose-700 dark:text-rose-300">
+                Kiểm tra kết nối mạng rồi thử lại.
+              </p>
+              <button
+                type="button"
+                onClick={() => void refetch()}
+                className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl border border-rose-300 bg-white px-4 text-xs font-bold text-rose-800 hover:bg-rose-100 dark:border-rose-800 dark:bg-slate-900 dark:text-rose-200 dark:hover:bg-rose-950/40"
+              >
+                <RotateCcw size={14} aria-hidden="true" />
+                Thử lại
+              </button>
+            </div>
+          ) : filteredAndSortedTopics.length > 0 ? (
+            <div className="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {filteredAndSortedTopics.map((topic) => (
+                <WritingTopicCard
+                  key={topic.id}
+                  topic={topic}
+                  isAuthenticated={Boolean(user)}
+                  onOpenAuthGate={() =>
+                    setAuthGate({
+                      open: true,
+                      topicId: topic.id,
+                      title: topic.topicName || topic.title,
+                    })
+                  }
+                  onOpenPaywall={(t) => setPaywallTopic(t)}
+                  onStart={handleStartTopic}
+                  isSpotlight={topic.isSpotlight}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 sm:p-12 text-center">
+              <PenTool size={36} className="mx-auto text-slate-400 dark:text-slate-500 mb-3" aria-hidden="true" />
+              <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-200">
+                Không tìm thấy chủ đề luyện viết phù hợp
+              </h2>
+              <p className="mt-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                Hãy thử chọn bộ lọc khác hoặc tìm kiếm với từ khóa khác để khám phá các bài luyện có sẵn.
+              </p>
+              <div className="mt-5 flex justify-center">
                 <button
                   type="button"
                   onClick={() => {
                     setSearchTerm("");
-                    searchInputRef.current?.focus();
+                    setSelectedDifficulty("ALL");
+                    setSortOrder(DEFAULT_CATALOG_SORT);
+                    setSelectedStatus("ALL");
                   }}
-                  aria-label="Xóa từ khóa tìm kiếm"
-                  className="flex size-6 items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
                 >
-                  <X size={13} aria-hidden="true" />
+                  <RotateCcw size={14} aria-hidden="true" />
+                  Xóa bộ lọc
                 </button>
-              ) : (
-                <kbd className="hidden sm:inline-block rounded-md border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-0.5 text-[11px] font-mono font-bold text-slate-600 dark:text-slate-400 shadow-2xs">
-                  ⌘K
-                </kbd>
-              )}
+              </div>
             </div>
-          </div>
-        </div>
-
-        <PracticeCatalogFilters
-          difficulty={selectedDifficulty}
-          onDifficultyChange={setSelectedDifficulty}
-          sort={sortOrder}
-          onSortChange={setSortOrder}
-          status={selectedStatus}
-          onStatusChange={setSelectedStatus}
-          statusOptions={user ? ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"] : []}
-          resultCount={filteredAndSortedTopics.length}
-          itemNoun="bài luyện viết"
-          onReset={() => {
-            setSearchTerm("");
-            setSelectedDifficulty("ALL");
-            setSortOrder(DEFAULT_CATALOG_SORT);
-            setSelectedStatus("ALL");
-          }}
-        />
-      </section>
-
-      {/* Catalog Results Grid */}
-      <section>
-        {isLoading ? (
-          <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-            <Loader2 size={32} className="animate-spin text-violet-600" aria-hidden="true" />
-            <p className="mt-3 text-xs font-bold text-slate-500 dark:text-slate-400">
-              Đang tải danh sách chủ đề luyện viết...
-            </p>
-          </div>
-        ) : isError ? (
-          <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-rose-200 bg-rose-50/60 p-8 text-center dark:border-rose-900/60 dark:bg-rose-950/20">
-            <p className="text-sm font-bold text-rose-800 dark:text-rose-200">
-              Không thể tải danh sách chủ đề luyện viết.
-            </p>
-            <p className="mt-1 text-xs text-rose-700 dark:text-rose-300">
-              Kiểm tra kết nối mạng rồi thử lại.
-            </p>
-            <button
-              type="button"
-              onClick={() => void refetch()}
-              className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl border border-rose-300 bg-white px-4 text-xs font-bold text-rose-800 hover:bg-rose-100 dark:border-rose-800 dark:bg-slate-900 dark:text-rose-200 dark:hover:bg-rose-950/40"
-            >
-              <RotateCcw size={14} aria-hidden="true" />
-              Thử lại
-            </button>
-          </div>
-        ) : filteredAndSortedTopics.length > 0 ? (
-          <div className="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {filteredAndSortedTopics.map((topic) => (
-              <WritingTopicCard
-                key={topic.id}
-                topic={topic}
-                isAuthenticated={Boolean(user)}
-                onOpenAuthGate={() =>
-                  setAuthGate({
-                    open: true,
-                    topicId: topic.id,
-                    title: topic.topicName || topic.title,
-                  })
-                }
-                onOpenPaywall={(t) => setPaywallTopic(t)}
-                onStart={handleStartTopic}
-                isSpotlight={topic.isSpotlight}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 sm:p-12 text-center">
-            <PenTool size={36} className="mx-auto text-slate-400 dark:text-slate-500 mb-3" aria-hidden="true" />
-            <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-200">
-              Không tìm thấy chủ đề luyện viết phù hợp
-            </h2>
-            <p className="mt-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-              Hãy thử chọn bộ lọc khác hoặc tìm kiếm với từ khóa khác để khám phá các bài luyện có sẵn.
-            </p>
-            <div className="mt-5 flex justify-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchTerm("");
-                  setSelectedDifficulty("ALL");
-                  setSortOrder(DEFAULT_CATALOG_SORT);
-                  setSelectedStatus("ALL");
-                }}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
-              >
-                <RotateCcw size={14} aria-hidden="true" />
-                Xóa bộ lọc
-              </button>
-            </div>
-          </div>
-        )}
-      </section>
+          )}
+        </section>
+        </>
+      )}
 
       {/* Guest AuthGateModal */}
       <AuthGateModal

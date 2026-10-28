@@ -22,6 +22,14 @@ export interface WritingTopic {
   cefrLevel?: string | null;
   /** Graded tasks out of all tasks: none, some, all. */
   completionStatus?: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
+  /** "Viết câu theo tranh" exercises: each picture with its two cue words. */
+  pictureTasks?: Array<{
+    questionId: number;
+    position: number;
+    imageUrl: string | null;
+    keywords: string[];
+    isGraded: boolean;
+  }>;
 }
 
 export interface WritingCatalogResponse {
