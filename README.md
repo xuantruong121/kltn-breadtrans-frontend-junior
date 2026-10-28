@@ -19,19 +19,16 @@ Giao diện người dùng hiện đại, sống động cho **Nền tảng Tự
 
 ### 🎓 1. Phân Hệ Học Sinh (`(student)`)
 - **Dashboard Trung Tâm:** Lộ trình học tập, thống kê tiến độ, thanh nhiệm vụ hằng ngày, chuỗi Streak và Bánh Mì tích lũy.
-- **Phòng Học Trực Tuyến Nhúng Web (Daily.co):** Học sinh tham gia lớp học trực tuyến với giáo viên qua video call trực tiếp ngay trong website mà không bị chuyển tab ngoài.
+- **Khóa học tự học (PRO):** Lộ trình bài học, tài liệu và bài tập trong từng bài; tiến độ lưu theo bài tập đã nộp, giữ nguyên khi gói PRO hết hạn và gia hạn. Không có lớp học, giáo viên hay học phí riêng.
 - **Luyện Nói & Chấm Điểm Phát Âm (Azure AI Speech F0):** Thu âm trực quan với đồng hồ đếm ngược giới hạn **45 giây**, phân tích phát âm chi tiết cấp độ âm vị (Phoneme-level), độ lưu loát (Fluency), ngữ điệu (Prosody).
 - **Luyện Viết theo kỹ năng & format chứng chỉ (AI Tutor):** Viết bài trực tiếp trên web, tính năng đếm từ thông minh và AI chấm điểm, phân tích ngữ pháp, gợi ý diễn đạt; hiện có nội dung TOEIC Writing.
 - **Học Từ Vựng & Flashcard 3D:** Hiệu ứng lật thẻ 3D, âm thanh phát âm mẫu chuẩn người bản xứ, chế độ Quiz và Typing ôn luyện.
 - **Đấu Trường 1v1 (Arena):** Ghép cặp ngẫu nhiên và thi đấu trả lời câu hỏi đối kháng thời gian thực qua WebSockets.
 - **Cửa Hàng Vật Phẩm (Market):** Dùng điểm Bánh Mì đổi các vật phẩm thú vị (Khiên đóng băng Streak, ngoại trang).
 
-### 👨‍🏫 2. Phân Hệ Giáo Viên (`(teacher)`)
-- **Quản Lý Lớp Học & Buổi Dạy:** Theo dõi danh sách học viên, tiến độ hoàn thành bài, tạo lịch học trực tuyến với tính năng tự động sinh phòng học Daily.co.
-- **Kho Tài Liệu & Bài Giảng:** Tải lên và phân phối tài liệu học tập (PDF, liên kết bài giảng).
-- **Giao Bài & Chấm Điểm:** Tạo bài tập trắc nghiệm / tự luận và chấm điểm, nhận xét bài làm của học sinh.
+> Vai trò đang hoạt động: **Học viên** và **Quản trị viên**. Phân hệ Giáo viên, lớp học, ghi danh lớp và học phí lớp đã ngừng (CP60.1); xem `Project/CP60_1_LEGACY_CLASS_TEACHER_DECOMMISSION.md`.
 
-### 🛡️ 3. Phân Hệ Quản Trị Viên (`(admin)`)
+### 🛡️ 2. Phân Hệ Quản Trị Viên (`(admin)`)
 - **Analytics Dashboard:** Biểu đồ tương tác thời gian thực (Interactive Animated SVG Bar Chart) theo dõi xu hướng ghi danh, lượt hoạt động và cơ cấu nội dung bài học.
 - **Quản Trị Nội Dung (CMS):** Quản lý ngân hàng Từ vựng, Ngữ pháp, Bài luyện nói, Đề thi Reading/Listening và Quản lý người dùng.
 
@@ -47,7 +44,6 @@ Giao diện người dùng hiện đại, sống động cho **Nền tảng Tự
 | **Server State** | TanStack React Query v5 | Quản lý caching, fetching và refetching dữ liệu API |
 | **Client State** | Zustand v5 | Quản lý trạng thái đăng nhập (`authStore`), bài thi (`toeicStore`) |
 | **Realtime** | Socket.io-Client v4 | Đồng bộ thời gian thực cho Đấu trường 1v1 Arena |
-| **Video Call** | Daily.co Embedded Prebuilt | Phòng học trực tuyến nhúng trực tiếp trong web |
 | **HTTP Client** | Axios (Interceptor) | Gọi REST API kèm tự động xác thực Bearer Token |
 
 ---
@@ -58,13 +54,11 @@ Giao diện người dùng hiện đại, sống động cho **Nền tảng Tự
 src/
 ├── app/
 │   ├── (admin)/             # Phân hệ Quản trị viên (/admin, /admin/vocab, /admin/speaking...)
-│   ├── (student)/           # Phân hệ Học sinh (/dashboard, /learn, /practice, /classes...)
-│   ├── (teacher)/           # Phân hệ Giáo viên (/teacher/classes, /teacher/materials...)
+│   ├── (student)/           # Phân hệ Học viên (/dashboard, /learn, /courses, /my-courses...)
 │   ├── (auth)/              # Luồng Đăng nhập & Đăng ký
 │   ├── arena/               # Đấu trường đối kháng 1v1 Realtime
 │   └── layout.tsx           # Root Layout & Global Providers
 ├── components/
-│   ├── classroom/           # DailyClassroomModal nhúng video call
 │   ├── admin/               # AdminAnalyticsChart, AdminContentBreakdown
 │   ├── ui/                  # Button3D, CardJunior, Badge, Modal...
 │   └── common/              # Header, Sidebar, AudioVisualizer...
