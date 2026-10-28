@@ -169,12 +169,6 @@ export default function AdminCourseEditStudioPage() {
   const isRejected = course?.status === "REJECTED";
   const isDraft = course?.status === "DRAFT";
 
-  const ongoingClassCount = useMemo(() => {
-    return (
-      course?.classes?.filter((c: any) => c.status === "ONGOING")?.length || 0
-    );
-  }, [course]);
-
   // ----------------------------------------------------
   // MUTATIONS
   // ----------------------------------------------------
@@ -601,14 +595,6 @@ export default function AdminCourseEditStudioPage() {
               </div>
             </div>
 
-            {ongoingClassCount > 0 ? (
-              <span
-                className="px-3 py-1.5 bg-slate-100 text-slate-500 rounded-lg text-xs font-medium border border-slate-200 shrink-0 cursor-not-allowed"
-                title="Khóa học đang có lớp diễn ra, không thể chuyển về bản nháp"
-              >
-                Đang có {ongoingClassCount} lớp legacy đang mở (khóa sửa giáo trình)
-              </span>
-            ) : (
               <button
                 onClick={() => setShowRevertConfirmModal(true)}
                 disabled={revertToDraftMutation.isPending}
@@ -617,7 +603,6 @@ export default function AdminCourseEditStudioPage() {
                 <RotateCcw size={13} />
                 Chuyển về Bản nháp
               </button>
-            )}
           </div>
         )}
 

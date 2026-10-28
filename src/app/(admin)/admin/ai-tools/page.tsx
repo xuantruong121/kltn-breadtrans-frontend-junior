@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Cpu,
@@ -79,12 +79,10 @@ export default function AdminAiToolsPage() {
   const [editedFlashcards, setEditedFlashcards] = useState<any[]>([]);
   const [editedAssignmentTitle, setEditedAssignmentTitle] = useState("");
   const [editedAssignmentDesc, setEditedAssignmentDesc] = useState("");
-  const [selectedClassId, setSelectedClassId] = useState<number | "">("");
 
   // Publish Selection
   const [pubQuiz, setPubQuiz] = useState(true);
   const [pubFlashcards, setPubFlashcards] = useState(true);
-  const [pubAssignment, setPubAssignment] = useState(true);
 
   // ================= OLD TABS STATE =================
   const [topic, setTopic] = useState("");
@@ -112,19 +110,6 @@ export default function AdminAiToolsPage() {
     },
     refetchInterval: 15000,
   });
-
-  // 2. Classes Query (For assignment target)
-  const { data: classesData } = useQuery({
-    queryKey: ["all-classes"],
-    queryFn: async () => {
-      const res: any = await axiosClient.get("/admin/classes");
-      return res?.data || res || [];
-    },
-  });
-  const classesList: any[] = useMemo(
-    () => (Array.isArray(classesData) ? classesData : []),
-    [classesData],
-  );
 
   const { data: aiJobsData } = useQuery({
     queryKey: ["admin-ai-generation-jobs"],
@@ -225,9 +210,6 @@ export default function AdminAiToolsPage() {
             `${resultData.assignment?.description || ""}\n\n${resultData.assignment?.instructions || ""}`,
           );
 
-          if (classesList.length > 0) {
-            setSelectedClassId(classesList[0].id);
-          }
 
           toast.success(
             "Đã hoàn thành sinh bộ trắc nghiệm, flashcard và bài tập!",
@@ -243,7 +225,7 @@ export default function AdminAiToolsPage() {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [activeJobId, uploadedFile, classesList, refetchQuota]);
+  }, [activeJobId, uploadedFile, refetchQuota]);
 
   const buildReviewedPayload = () => {
     if (!activeJobId) throw new Error("Không tìm thấy mã tiến trình!");
@@ -254,10 +236,10 @@ export default function AdminAiToolsPage() {
       flashcards: editedFlashcards,
       assignmentTitle: editedAssignmentTitle,
       assignmentDescription: editedAssignmentDesc,
-      targetClassId: selectedClassId ? Number(selectedClassId) : undefined,
       publishQuiz: pubQuiz,
       publishFlashcards: pubFlashcards,
-      publishAssignment: pubAssignment && Boolean(selectedClassId),
+      // Classrooms are retired: an assignment draft is never published to a class.
+      publishAssignment: false,
     };
   };
 
@@ -1148,26 +1130,6 @@ export default function AdminAiToolsPage() {
                       <div className="bg-indigo-50 border border-indigo-200 p-6 rounded-2xl space-y-4">
                         <div>
                           <label className="block text-indigo-900 font-black text-xs uppercase mb-1.5">
-                            Gán vào gói học nào?
-                          </label>
-                          <select
-                            value={selectedClassId}
-                            onChange={(e) =>
-                              setSelectedClassId(Number(e.target.value))
-                            }
-                            className="w-full px-4 py-3 bg-white border border-indigo-200 rounded-lg outline-none focus:border-indigo-500 text-slate-800 font-bold"
-                          >
-                            <option value="">-- Chọn gói học đích --</option>
-                            {classesList.map((c: any) => (
-                              <option key={c.id} value={c.id}>
-                                {c.name} ({c.code || `Gói #${c.id}`})
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="block text-indigo-900 font-black text-xs uppercase mb-1.5">
                             Tiêu Đề Bài Tập Về Nhà
                           </label>
                           <input
@@ -1222,15 +1184,6 @@ export default function AdminAiToolsPage() {
                           Lưu Flashcard ({editedFlashcards.length} từ)
                         </label>
 
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={pubAssignment}
-                            onChange={(e) => setPubAssignment(e.target.checked)}
-                            className="w-5 h-5 rounded accent-indigo-600"
-                          />
-                          Gán bài thực hành cho gói học
-                        </label>
                       </div>
 
                       {/* Single-Writer Architectural Guidance Banner */}
