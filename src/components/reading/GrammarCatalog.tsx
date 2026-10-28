@@ -41,7 +41,11 @@ export function GrammarCatalog({
     return topics.filter((topic) => {
       if (tab !== "ALL" && grammarCategory(topic.id) !== tab) return false;
       if (!q) return true;
-      return [grammarDisplayTitle(topic.id, topic.title), topic.title, topic.description ?? ""]
+      return [
+        grammarDisplayTitle(topic.id, topic.title),
+        topic.title,
+        topic.description ?? "",
+      ]
         .join(" ")
         .toLowerCase()
         .includes(q);
@@ -50,7 +54,12 @@ export function GrammarCatalog({
 
   const sections = useMemo(() => groupGrammarTopics(visible), [visible]);
   const countByTab = useMemo(() => {
-    const counts: Record<Tab, number> = { ALL: topics.length, WORD_CLASS: 0, VERB: 0, OTHER: 0 };
+    const counts: Record<Tab, number> = {
+      ALL: topics.length,
+      WORD_CLASS: 0,
+      VERB: 0,
+      OTHER: 0,
+    };
     for (const topic of topics) counts[grammarCategory(topic.id)] += 1;
     return counts;
   }, [topics]);
@@ -63,7 +72,11 @@ export function GrammarCatalog({
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Phân loại ngữ pháp">
+        <div
+          className="flex flex-wrap items-center gap-1.5"
+          role="group"
+          aria-label="Phân loại ngữ pháp"
+        >
           {(["ALL", ...GRAMMAR_CATEGORY_ORDER] as Tab[]).map((id) => {
             const isActive = tab === id;
             return (
@@ -79,20 +92,32 @@ export function GrammarCatalog({
                 }`}
               >
                 {id === "ALL" ? "Tất cả" : GRAMMAR_CATEGORY_LABEL[id]}{" "}
-                <span className={isActive ? "text-blue-100" : "text-slate-400"}>({countByTab[id]})</span>
+                <span className={isActive ? "text-blue-100" : "text-slate-400"}>
+                  ({countByTab[id]})
+                </span>
               </button>
             );
           })}
         </div>
-        <button
-          type="button"
-          onClick={startRandom}
-          disabled={visible.length === 0}
-          className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
-        >
-          <Shuffle size={16} strokeWidth={2} aria-hidden="true" />
-          Luyện ngẫu nhiên
-        </button>
+        <div className="flex flex-col items-end gap-1">
+          <button
+            type="button"
+            onClick={startRandom}
+            aria-describedby="grammar-random-hint"
+            disabled={visible.length === 0}
+            className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+          >
+            <Shuffle size={16} strokeWidth={2} aria-hidden="true" />
+            Luyện ngẫu nhiên
+          </button>
+          <p
+            id="grammar-random-hint"
+            className="text-xs text-slate-500 dark:text-slate-400"
+          >
+            Mở một chủ đề ngẫu nhiên trong mục đang xem, ưu tiên chủ đề chưa
+            xong.
+          </p>
+        </div>
       </div>
 
       {sections.length === 0 ? (
@@ -101,9 +126,16 @@ export function GrammarCatalog({
         </p>
       ) : (
         sections.map((section) => (
-          <section key={section.category} aria-labelledby={`grammar-${section.category}`} className="space-y-3">
+          <section
+            key={section.category}
+            aria-labelledby={`grammar-${section.category}`}
+            className="space-y-3"
+          >
             <div className="flex items-baseline justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-2">
-              <h2 id={`grammar-${section.category}`} className="text-lg font-bold text-slate-900 dark:text-slate-100">
+              <h2
+                id={`grammar-${section.category}`}
+                className="text-lg font-bold text-slate-900 dark:text-slate-100"
+              >
                 {GRAMMAR_CATEGORY_LABEL[section.category]}
               </h2>
               <span className="text-sm text-slate-500 dark:text-slate-400">
@@ -120,15 +152,25 @@ export function GrammarCatalog({
                     className="flex flex-col justify-between rounded-xl border border-slate-200 dark:border-slate-800 border-t-4 border-t-blue-500 bg-white dark:bg-slate-900 p-4 shadow-sm"
                   >
                     <div>
-                      <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">{title}</h3>
-                      <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400" lang="en">
+                      <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                        {title}
+                      </h3>
+                      <p
+                        className="mt-0.5 text-xs text-slate-500 dark:text-slate-400"
+                        lang="en"
+                      >
                         {topic.title}
                       </p>
                     </div>
                     <div className="mt-4 flex items-center justify-between gap-2">
                       <span className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
                         {status === "COMPLETED" && (
-                          <CheckCircle2 size={14} strokeWidth={2} className="text-emerald-600" aria-hidden="true" />
+                          <CheckCircle2
+                            size={14}
+                            strokeWidth={2}
+                            className="text-emerald-600"
+                            aria-hidden="true"
+                          />
                         )}
                         <span>{STATUS_LABEL[status]}</span>
                         <span aria-hidden="true">·</span>
@@ -141,7 +183,11 @@ export function GrammarCatalog({
                         className="inline-flex min-h-9 items-center gap-1 rounded-lg bg-blue-50 dark:bg-blue-950/40 px-3 text-sm font-semibold text-blue-700 dark:text-blue-300 transition-colors hover:bg-blue-100 dark:hover:bg-blue-900/50 cursor-pointer"
                       >
                         {status === "COMPLETED" ? "Ôn lại" : "Học ngay"}
-                        <ArrowRight size={14} strokeWidth={2} aria-hidden="true" />
+                        <ArrowRight
+                          size={14}
+                          strokeWidth={2}
+                          aria-hidden="true"
+                        />
                       </button>
                     </div>
                   </article>

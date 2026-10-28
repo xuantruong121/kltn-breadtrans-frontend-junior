@@ -79,7 +79,9 @@ const GRAMMAR_TOPICS: Record<number, { title: string; category: GrammarCategory 
   9: { title: "Câu điều kiện", category: "OTHER" },
   10: { title: "Mệnh đề quan hệ", category: "OTHER" },
   11: { title: "Danh động từ và động từ nguyên mẫu", category: "VERB" },
-  12: { title: "Từ nối và liên kết ý", category: "WORD_CLASS" },
+  // Links clauses and sentences (although / however / therefore): clause
+  // level, like conditionals and relative clauses.
+  12: { title: "Từ nối và liên kết ý", category: "OTHER" },
 };
 
 function withLevel(title: string, cefrLevel?: string | null): string {
