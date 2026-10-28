@@ -55,7 +55,7 @@ const OVERVIEW_ITEM: NavItem = {
   icon: LayoutDashboard,
 };
 
-export const NAV_GROUPS: NavCategory[] = [
+const NAV_GROUPS: NavCategory[] = [
   {
     id: "content-group",
     title: "NỘI DUNG HỌC",
