@@ -53,6 +53,9 @@ export interface DiagnosticAdviceResource {
   route: string;
   access: "OPEN" | "LOCKED";
   requirement: string | null;
+  /** Speaking: the practice set key, for the catalog's display title. */
+  setKey?: string | null;
+  cefrLevel?: string | null;
 }
 
 export interface DiagnosticAdviceFinding {

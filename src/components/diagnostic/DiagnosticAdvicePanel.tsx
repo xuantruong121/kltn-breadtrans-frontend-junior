@@ -5,6 +5,7 @@ import type {
   DiagnosticAdviceResource,
   DiagnosticSkillKey,
 } from "@/lib/api/services/diagnostic.service";
+import { quizDisplayTitle, speakingSetDisplayTitle } from "@/lib/catalog/displayTitles";
 
 const SKILL: Record<DiagnosticSkillKey, string> = {
   LISTENING: "Nghe",
@@ -29,6 +30,14 @@ const UNASSESSED: Record<DiagnosticAdvice["unassessed"][number]["reason"], strin
   GRADING_FAILED: "chưa chấm được do lỗi hệ thống chấm, không phải do bài làm. Bạn có thể bấm \"Chấm lại\" ở phần bài làm phía trên.",
 };
 
+/** The same Vietnamese title the catalog shows for this exercise. */
+function adviceTitle(resource: DiagnosticAdviceResource): string {
+  if (resource.kind === "SPEAKING_EXERCISE")
+    return speakingSetDisplayTitle(resource.setKey, resource.title, resource.cefrLevel);
+  if (resource.kind === "COURSE") return resource.title;
+  return quizDisplayTitle(resource.id, resource.title);
+}
+
 function ResourceLink({ resource, note }: { resource: DiagnosticAdviceResource; note?: string }) {
   return (
     // Full page navigation on purpose: in a long browser session, a client-side
@@ -43,7 +52,7 @@ function ResourceLink({ resource, note }: { resource: DiagnosticAdviceResource; 
           {KIND[resource.kind]}
           {note ? ` · ${note}` : ""}
         </span>
-        <span className="block font-bold text-slate-900 dark:text-slate-100">{resource.title}</span>
+        <span className="block font-bold text-slate-900 dark:text-slate-100">{adviceTitle(resource)}</span>
         {resource.access === "LOCKED" && resource.requirement && (
           <span className="mt-0.5 inline-flex items-center gap-1 text-xs font-bold text-amber-700 dark:text-amber-300">
             <Lock size={12} strokeWidth={2.25} aria-hidden="true" />
