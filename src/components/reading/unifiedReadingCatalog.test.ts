@@ -32,8 +32,13 @@ test("Unified Catalog: verifies top-level segmented mode switcher is removed fro
   const categoryMatch = pageContent.match(/CATEGORY_OPTIONS[\s\S]+?\];/);
   assert.ok(categoryMatch);
   assert.equal(categoryMatch[0].includes("Tất cả"), false);
-  // Difficulty options must contain "Tất cả"
-  const difficultyMatch = pageContent.match(/DIFFICULTY_OPTIONS[\s\S]+?\];/);
+  // Difficulty chips come from the shared four-skill filters, with "Tất cả"
+  assert.equal(pageContent.includes("PracticeCatalogFilters"), true);
+  const shared = fs.readFileSync(
+    path.resolve(process.cwd(), "src/lib/practice/catalogFilters.ts"),
+    "utf-8",
+  );
+  const difficultyMatch = shared.match(/DIFFICULTY_FILTERS[\s\S]+?\];/);
   assert.ok(difficultyMatch);
   assert.equal(difficultyMatch[0].includes("Tất cả"), true);
 });

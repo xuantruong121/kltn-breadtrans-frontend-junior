@@ -16,6 +16,7 @@ import {
   resolveReadingFormatTag,
   resolveReadingPedagogicalDescription,
 } from "./readingCardLogic";
+import { catalogLevelLabel } from "@/lib/practice/catalogFilters";
 
 export interface ReadingTopicItem {
   id: number;
@@ -40,6 +41,8 @@ export interface ReadingTopicItem {
   completedCount?: number;
   correctCount?: number;
   level?: string;
+  /** Authored CEFR level from the API ("B1"); absent on grammar topics. */
+  cefrLevel?: string | null;
   isSpotlight?: boolean;
 }
 
@@ -168,7 +171,9 @@ export function ReadingTopicCard({
           <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
             <span>{formatTag}</span>
             <span>·</span>
-            <span>{diffConfig.label}</span>
+            <span>
+              {catalogLevelLabel(topic.cefrLevel ?? topic.level ?? topic.title) ?? diffConfig.label}
+            </span>
             <span>·</span>
             <span>{questionCount} câu hỏi</span>
             <span>·</span>

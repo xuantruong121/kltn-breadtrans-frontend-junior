@@ -15,6 +15,7 @@ import {
   resolveListeningFormatTag,
   resolveListeningPedagogicalDescription,
 } from "./listeningCardLogic";
+import { catalogLevelLabel } from "@/lib/practice/catalogFilters";
 
 export interface ListeningExerciseCardProps {
   quiz: ListeningPracticeCatalogItem;
@@ -138,7 +139,9 @@ export function ListeningExerciseCard({
         <div className="flex flex-wrap items-center justify-between gap-2.5">
           {/* Tertiary inline metadata */}
           <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
-            <span>{cefr.label}</span>
+            <span>
+              {catalogLevelLabel(quiz.cefrLevel ?? quiz.levels?.[0] ?? quiz.title) ?? cefr.label}
+            </span>
             <span>·</span>
             <span>{formatTag}</span>
             {accentText && (

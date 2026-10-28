@@ -30,6 +30,8 @@ export interface SpeakingExercise {
   isLocked?: boolean;
   /** Lowest plan that opens this item: FREE, PLUS or PRO. */
   requiredPlan?: string;
+  /** Authored CEFR level the required plan is decided from ("A2", "B1-B2"). */
+  cefrLevel?: string | null;
   practiceSet?: SpeakingPracticeSetSummary;
   stimulusId?: number | null;
   stimulus?: {

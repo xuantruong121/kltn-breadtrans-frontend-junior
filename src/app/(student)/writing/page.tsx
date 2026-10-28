@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Filter,
   Flame,
   History,
   Loader2,
@@ -25,18 +24,21 @@ import {
   WritingTopicCard,
   type WritingTopicItem,
 } from "@/components/writing/WritingTopicCard";
+import { PracticeCatalogFilters } from "@/components/practice/PracticeCatalogFilters";
 import {
-  type DifficultyLevel,
-  matchesWritingDifficulty,
-} from "@/components/writing/writingCardLogic";
+  DEFAULT_CATALOG_SORT,
+  matchesDifficultyFilter,
+  matchesStatusFilter,
+  sortByLevel,
+  type CatalogSort,
+  type DifficultyFilter,
+  type StatusFilter,
+} from "@/lib/practice/catalogFilters";
 import { unlockPlanFor } from "@/modules/subscription/practicePlan";
+import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
 
-const DIFFICULTY_OPTIONS: Array<{ id: DifficultyLevel; label: string }> = [
-  { id: "ALL", label: "Tất cả" },
-  { id: "BASIC", label: "Cơ bản" },
-  { id: "INTERMEDIATE", label: "Trung cấp" },
-  { id: "ADVANCED", label: "Nâng cao" },
-];
+/** Authoritative level from the API, with the authored tag as fallback. */
+const writingLevelOf = (t: WritingTopicItem) => t.cefrLevel ?? t.title;
 
 export default function WritingTopicsPage() {
   const router = useRouter();
@@ -45,9 +47,9 @@ export default function WritingTopicsPage() {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel>("ALL");
-  const [sortOrder, setSortOrder] = useState<"DEFAULT" | "NAME_ASC">("DEFAULT");
-  const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+  const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyFilter>("ALL");
+  const [sortOrder, setSortOrder] = useState<CatalogSort>(DEFAULT_CATALOG_SORT);
+  const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("ALL");
   const [launchingTopicId, setLaunchingTopicId] = useState<number | null>(null);
   const [paywallTopic, setPaywallTopic] = useState<WritingTopicItem | null>(null);
   const [authGate, setAuthGate] = useState<{
@@ -109,7 +111,10 @@ export default function WritingTopicsPage() {
   });
 
   const topics: WritingTopicItem[] = useMemo(() => {
-    return topicsData?.quizzes ?? [];
+    return (topicsData?.quizzes ?? []).map((topic) => ({
+      ...topic,
+      title: topic.title && quizDisplayTitle(topic.id, topic.title, topic.cefrLevel),
+    }));
   }, [topicsData]);
 
   // Completed count
@@ -121,29 +126,22 @@ export default function WritingTopicsPage() {
   const filteredAndSortedTopics = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
     const list = topics.filter((t) => {
-      const title = (t.topicName || t.title || "").toLowerCase();
+      const title = `${t.title} ${t.topicName ?? ""}`.toLowerCase();
       const desc = (t.description || "").toLowerCase();
       const matchSearch = !q || title.includes(q) || desc.includes(q);
 
-      const matchDifficulty = matchesWritingDifficulty(t.level || "BEGINNER", selectedDifficulty);
+      const matchDifficulty = matchesDifficultyFilter(writingLevelOf(t), selectedDifficulty);
 
-      const isDone = Boolean(t.isCompleted);
-      const matchStatus =
-        selectedStatus === "ALL" ||
-        (selectedStatus === "COMPLETED" && isDone) ||
-        (selectedStatus === "UNCOMPLETED" && !isDone);
+      // Graded tasks out of all tasks, from the API (same rule as completion).
+      const matchStatus = matchesStatusFilter(
+        t.completionStatus ?? (t.isCompleted ? "COMPLETED" : "NOT_STARTED"),
+        selectedStatus,
+      );
 
       return matchSearch && matchDifficulty && matchStatus;
     });
 
-    const sorted = list.sort((a, b) => {
-      if (sortOrder === "NAME_ASC") {
-        const titleA = a.topicName || a.title || "";
-        const titleB = b.topicName || b.title || "";
-        return titleA.localeCompare(titleB);
-      }
-      return (a.id || 0) - (b.id || 0);
-    });
+    const sorted = sortByLevel(list, sortOrder, writingLevelOf);
 
     // Tag the first uncompleted item as Spotlight
     let spotlightAssigned = false;
@@ -314,88 +312,25 @@ export default function WritingTopicsPage() {
               )}
             </div>
           </div>
-
-          <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-            Hiển thị <span className="font-bold text-slate-900 dark:text-slate-100">{filteredAndSortedTopics.length}</span> bài tập viết
-          </div>
         </div>
 
-        {/* Row 2: Difficulty Chips, Status & Sort */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 pt-3">
-          {/* Difficulty Chips */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1">
-              Độ khó:
-            </span>
-            {DIFFICULTY_OPTIONS.map((lvl) => {
-              const isActive = selectedDifficulty === lvl.id;
-              return (
-                <button
-                  key={lvl.id}
-                  type="button"
-                  aria-pressed={isActive}
-                  onClick={() => setSelectedDifficulty(lvl.id)}
-                  className={`min-h-9 rounded-lg px-3 py-1.5 text-xs transition cursor-pointer ${
-                    isActive
-                      ? "bg-violet-600 text-white font-semibold shadow-sm border border-violet-600"
-                      : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200 dark:border-slate-700 font-medium"
-                  }`}
-                >
-                  {lvl.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Sort, Status & Reset Controls */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-slate-400">
-              <Filter size={13} aria-hidden="true" />
-              Bộ lọc:
-            </span>
-
-            {/* Sắp xếp */}
-            <select
-              aria-label="Sắp xếp chủ đề viết"
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value as "DEFAULT" | "NAME_ASC")}
-              className="min-h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 transition focus:border-violet-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-hidden cursor-pointer"
-            >
-              <option value="DEFAULT">Sắp xếp: Mặc định</option>
-              <option value="NAME_ASC">Sắp xếp: Theo tên (A-Z)</option>
-            </select>
-
-            {/* Trạng thái nếu đã đăng nhập */}
-            {user && (
-              <select
-                aria-label="Lọc theo trạng thái"
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="min-h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 transition focus:border-violet-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-hidden cursor-pointer"
-              >
-                <option value="ALL">Tất cả trạng thái</option>
-                <option value="UNCOMPLETED">Chưa làm</option>
-                <option value="COMPLETED">Đã hoàn thành</option>
-              </select>
-            )}
-
-            {/* Đặt lại bộ lọc */}
-            <button
-              type="button"
-              onClick={() => {
-                setSearchTerm("");
-                setSelectedDifficulty("ALL");
-                setSortOrder("DEFAULT");
-                setSelectedStatus("ALL");
-              }}
-              aria-label="Đặt lại tất cả bộ lọc về mặc định"
-              className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-600 dark:text-slate-400 transition hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 cursor-pointer"
-            >
-              <RotateCcw size={12} aria-hidden="true" />
-              Đặt lại
-            </button>
-          </div>
-        </div>
+        <PracticeCatalogFilters
+          difficulty={selectedDifficulty}
+          onDifficultyChange={setSelectedDifficulty}
+          sort={sortOrder}
+          onSortChange={setSortOrder}
+          status={selectedStatus}
+          onStatusChange={setSelectedStatus}
+          statusOptions={user ? ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"] : []}
+          resultCount={filteredAndSortedTopics.length}
+          itemNoun="bài luyện viết"
+          onReset={() => {
+            setSearchTerm("");
+            setSelectedDifficulty("ALL");
+            setSortOrder(DEFAULT_CATALOG_SORT);
+            setSelectedStatus("ALL");
+          }}
+        />
       </section>
 
       {/* Catalog Results Grid */}
@@ -459,7 +394,7 @@ export default function WritingTopicsPage() {
                 onClick={() => {
                   setSearchTerm("");
                   setSelectedDifficulty("ALL");
-                  setSortOrder("DEFAULT");
+                  setSortOrder(DEFAULT_CATALOG_SORT);
                   setSelectedStatus("ALL");
                 }}
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"

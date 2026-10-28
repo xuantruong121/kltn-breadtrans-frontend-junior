@@ -13,9 +13,9 @@ import {
   computeWritingCardStatus,
   resolveWritingFormatTag,
   resolveWritingPedagogicalDescription,
-  WRITING_DIFFICULTY_CONFIG,
 } from "./writingCardLogic";
 import { unlockPlanFor } from "@/modules/subscription/practicePlan";
+import { catalogLevelLabel } from "@/lib/practice/catalogFilters";
 
 export interface WritingTopicItem extends WritingTopic {
   topicName?: string;
@@ -58,14 +58,8 @@ export function WritingTopicCard({
 
   const status = statusOverride || computedStatus;
 
-  const level = (topic.level || "BEGINNER").toUpperCase();
-  const diffConfig =
-    WRITING_DIFFICULTY_CONFIG[level] ||
-    (level.includes("A")
-      ? WRITING_DIFFICULTY_CONFIG.BEGINNER
-      : level.includes("B")
-        ? WRITING_DIFFICULTY_CONFIG.INTERMEDIATE
-        : WRITING_DIFFICULTY_CONFIG.ADVANCED);
+  // The API's authored CEFR level; a missing level is never shown as Cơ bản.
+  const levelLabel = catalogLevelLabel(topic.cefrLevel ?? topic.level ?? topic.title);
 
   const formatTag = resolveWritingFormatTag(topic);
   const pedagogicalDescription = resolveWritingPedagogicalDescription(topic);
@@ -148,8 +142,12 @@ export function WritingTopicCard({
           {/* Metadata */}
           <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
             <span>{formatTag}</span>
-            <span>·</span>
-            <span>{diffConfig.label}</span>
+            {levelLabel && (
+              <>
+                <span>·</span>
+                <span>{levelLabel}</span>
+              </>
+            )}
             <span>·</span>
             <span>~5 phút</span>
           </div>

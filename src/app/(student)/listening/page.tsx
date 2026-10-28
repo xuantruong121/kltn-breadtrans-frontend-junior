@@ -4,7 +4,6 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Filter,
   Flame,
   Headphones,
   Loader2,
@@ -20,50 +19,23 @@ import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { PremiumContentPaywallModal } from "@/components/subscription/PremiumContentPaywallModal";
 import { ListeningExerciseCard } from "@/components/listening/ListeningExerciseCard";
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
+import { PracticeCatalogFilters } from "@/components/practice/PracticeCatalogFilters";
 import {
-  type DifficultyLevel,
-  matchesListeningDifficulty,
-} from "@/components/listening/listeningCardLogic";
-
-const DIFFICULTY_OPTIONS: Array<{ id: DifficultyLevel; label: string }> = [
-  { id: "ALL", label: "Tất cả" },
-  { id: "BASIC", label: "Cơ bản" },
-  { id: "INTERMEDIATE", label: "Trung cấp" },
-  { id: "ADVANCED", label: "Nâng cao" },
-];
-
-function getDifficultyWeight(levels?: string[]): number {
-  if (!levels || levels.length === 0) return 99;
-  const normalized = levels.join(" ").toLowerCase();
-  if (
-    normalized.includes("cơ bản") ||
-    normalized.includes("basic") ||
-    normalized.includes("beginner") ||
-    normalized.includes("a1") ||
-    normalized.includes("a2")
-  ) {
-    return 1;
-  }
-  if (
-    normalized.includes("trung cấp") ||
-    normalized.includes("intermediate") ||
-    normalized.includes("b1") ||
-    normalized.includes("b2")
-  ) {
-    return 2;
-  }
-  if (
-    normalized.includes("nâng cao") ||
-    normalized.includes("advanced") ||
-    normalized.includes("c1") ||
-    normalized.includes("c2")
-  ) {
-    return 3;
-  }
-  return 99;
-}
+  DEFAULT_CATALOG_SORT,
+  matchesDifficultyFilter,
+  matchesStatusFilter,
+  sortByLevel,
+  type CatalogSort,
+  type DifficultyFilter,
+  type StatusFilter,
+} from "@/lib/practice/catalogFilters";
+import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
 
 const EMPTY_QUIZZES: ListeningPracticeCatalogItem[] = [];
+
+/** Authoritative level from the API, with the authored tag as fallback. */
+const listeningLevelOf = (q: ListeningPracticeCatalogItem) =>
+  q.cefrLevel ?? q.levels?.[0] ?? q.title;
 
 type ListeningCatalogCardItem = ListeningPracticeCatalogItem & {
   isSpotlight?: boolean;
@@ -77,9 +49,9 @@ function ListeningCatalogContent() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMode, setSelectedMode] = useState<string>("ALL");
-  const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel>("ALL");
-  const [sortOrder, setSortOrder] = useState<string>("EASY_TO_HARD");
-  const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+  const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyFilter>("ALL");
+  const [sortOrder, setSortOrder] = useState<CatalogSort>(DEFAULT_CATALOG_SORT);
+  const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("ALL");
   const [launchingQuiz, setLaunchingQuiz] = useState<ListeningPracticeCatalogItem | null>(null);
 
   const [authGate, setAuthGate] = useState<{
@@ -133,7 +105,11 @@ function ListeningCatalogContent() {
   });
 
   const quizzes = useMemo(() => {
-    return Array.isArray(quizzesData) ? quizzesData : EMPTY_QUIZZES;
+    if (!Array.isArray(quizzesData)) return EMPTY_QUIZZES;
+    return quizzesData.map((quiz) => ({
+      ...quiz,
+      title: quizDisplayTitle(quiz.id, quiz.title, quiz.cefrLevel),
+    }));
   }, [quizzesData]);
 
   // Tab counts
@@ -178,39 +154,21 @@ function ListeningCatalogContent() {
         (selectedMode === "DICTATION" && qMode === "DICTATION") ||
         (selectedMode === "DIALOGUE" && qMode === "DIALOGUE");
 
-      // Difficulty
-      const qDifficulty =
-        Array.isArray(q.levels) && q.levels.length > 0 ? q.levels[0] : "";
-      const matchDifficulty = matchesListeningDifficulty(
-        qDifficulty,
+      const matchDifficulty = matchesDifficultyFilter(
+        listeningLevelOf(q),
         selectedDifficulty,
       );
 
-      // Status
-      const matchStatus =
-        selectedStatus === "ALL" ||
-        (selectedStatus === "COMPLETED" && Boolean(q.isCompleted)) ||
-        (selectedStatus === "UNCOMPLETED" && !q.isCompleted);
+      // A listening attempt is stored only on submission: done or not yet.
+      const matchStatus = matchesStatusFilter(
+        q.isCompleted ? "COMPLETED" : "NOT_STARTED",
+        selectedStatus,
+      );
 
       return matchSearch && matchMode && matchDifficulty && matchStatus;
     });
 
-    const sorted = list.sort((a, b) => {
-      if (sortOrder === "EASY_TO_HARD") {
-        const weightA = getDifficultyWeight(a.levels);
-        const weightB = getDifficultyWeight(b.levels);
-        if (weightA !== weightB) return weightA - weightB;
-        return (a.id || 0) - (b.id || 0);
-      }
-      if (sortOrder === "HARD_TO_EASY") {
-        const weightA = getDifficultyWeight(a.levels);
-        const weightB = getDifficultyWeight(b.levels);
-        if (weightA !== weightB) return weightB - weightA;
-        return (b.id || 0) - (a.id || 0);
-      }
-      // NEWEST
-      return (b.id || 0) - (a.id || 0);
-    });
+    const sorted = sortByLevel(list, sortOrder, listeningLevelOf);
 
     // Spotlight tag
     let spotlightAssigned = false;
@@ -400,84 +358,24 @@ function ListeningCatalogContent() {
           </div>
         </div>
 
-        {/* Row 2: Difficulty Chips, Status & Sort */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 pt-3">
-          {/* Difficulty Chips */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1">
-              Độ khó:
-            </span>
-            {DIFFICULTY_OPTIONS.map((lvl) => {
-              const isActive = selectedDifficulty === lvl.id;
-              return (
-                <button
-                  key={lvl.id}
-                  type="button"
-                  aria-pressed={isActive}
-                  onClick={() => setSelectedDifficulty(lvl.id)}
-                  className={`min-h-9 rounded-lg px-3 py-1.5 text-xs transition cursor-pointer ${
-                    isActive
-                      ? "bg-violet-600 text-white font-semibold shadow-sm border border-violet-600"
-                      : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200 dark:border-slate-700 font-medium"
-                  }`}
-                >
-                  {lvl.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Sort, Status & Reset Controls */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-slate-400">
-              <Filter size={13} aria-hidden="true" />
-              Bộ lọc:
-            </span>
-
-            {/* Sắp xếp */}
-            <select
-              aria-label="Sắp xếp bài nghe"
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
-              className="min-h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 transition focus:border-violet-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-hidden cursor-pointer"
-            >
-              <option value="EASY_TO_HARD">Sắp xếp: Dễ → Khó</option>
-              <option value="HARD_TO_EASY">Sắp xếp: Khó → Dễ</option>
-              <option value="NEWEST">Sắp xếp: Mới nhất</option>
-            </select>
-
-            {/* Trạng thái nếu đã đăng nhập */}
-            {user && (
-              <select
-                aria-label="Lọc theo trạng thái"
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="min-h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 transition focus:border-violet-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-hidden cursor-pointer"
-              >
-                <option value="ALL">Tất cả trạng thái</option>
-                <option value="UNCOMPLETED">Chưa làm</option>
-                <option value="COMPLETED">Đã hoàn thành</option>
-              </select>
-            )}
-
-            {/* Đặt lại bộ lọc */}
-            <button
-              type="button"
-              onClick={() => {
-                setSearchTerm("");
-                setSelectedMode("ALL");
-                setSelectedDifficulty("ALL");
-                setSortOrder("EASY_TO_HARD");
-                setSelectedStatus("ALL");
-              }}
-              aria-label="Đặt lại tất cả bộ lọc về mặc định"
-              className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-600 dark:text-slate-400 transition hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 cursor-pointer"
-            >
-              <RotateCcw size={12} aria-hidden="true" />
-              Đặt lại
-            </button>
-          </div>
-        </div>
+        <PracticeCatalogFilters
+          difficulty={selectedDifficulty}
+          onDifficultyChange={setSelectedDifficulty}
+          sort={sortOrder}
+          onSortChange={setSortOrder}
+          status={selectedStatus}
+          onStatusChange={setSelectedStatus}
+          statusOptions={user ? ["NOT_STARTED", "COMPLETED"] : []}
+          resultCount={filteredAndSortedQuizzes.length}
+          itemNoun="bài nghe"
+          onReset={() => {
+            setSearchTerm("");
+            setSelectedMode("ALL");
+            setSelectedDifficulty("ALL");
+            setSortOrder(DEFAULT_CATALOG_SORT);
+            setSelectedStatus("ALL");
+          }}
+        />
       </section>
 
       {/* Catalog Results Grid */}
