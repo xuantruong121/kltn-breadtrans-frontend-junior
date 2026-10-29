@@ -10,6 +10,7 @@ import {
   resultPollInterval,
   isResultGrading,
   gradingProgress,
+  summarizeSkillStanding,
   RESULT_POLL_MS,
   RESULT_SUBMIT_GRACE_MS,
 } from "./diagnosticUiLogic.ts";
@@ -162,4 +163,11 @@ test("grading progress counts only submitted tasks and ends when none is pending
   assert.equal(isResultGrading(done), false);
   assert.deepEqual(gradingProgress(done), { done: 3, total: 3 });
   assert.equal(isResultGrading(null), false);
+});
+
+test("skill standing comes from the advice profile on four-skill results", () => {
+  const advice = (p: object) => ({ strengths: [], weaknesses: [], advice: { profile: { assessed: ["LISTENING", "READING", "SPEAKING", "WRITING"], strongest: [], weakest: [], balanced: false, ...p } } });
+  assert.deepEqual(summarizeSkillStanding(advice({ strongest: ["LISTENING"], weakest: ["SPEAKING"] })), { strong: ["LISTENING"], weak: ["SPEAKING"], balanced: false });
+  assert.deepEqual(summarizeSkillStanding(advice({ balanced: true })), { strong: [], weak: [], balanced: true });
+  assert.deepEqual(summarizeSkillStanding({ strengths: ["Reading"], weaknesses: ["Grammar"] }), { strong: ["Reading"], weak: ["Grammar"], balanced: false });
 });

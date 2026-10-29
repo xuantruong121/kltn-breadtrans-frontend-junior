@@ -251,3 +251,31 @@ export function gradingProgress(result: PollableResult): { done: number; total: 
   );
   return { done: submitted.filter((task) => FINISHED_TASK.has(task.status)).length, total: submitted.length };
 }
+
+type SkillSummarySource = {
+  strengths?: string[];
+  weaknesses?: string[];
+  advice?: {
+    profile: { assessed: string[]; strongest: string[]; weakest: string[]; balanced: boolean };
+  } | null;
+};
+
+/**
+ * Strong and weak skills for the profile summary. Four-skill results carry
+ * them in `advice.profile` (the older `strengths`/`weaknesses` lists come back
+ * empty for them); older results keep their own lists.
+ */
+export function summarizeSkillStanding(result: SkillSummarySource): {
+  strong: string[];
+  weak: string[];
+  balanced: boolean;
+} {
+  const profile = result.advice?.profile;
+  if (profile) {
+    if (profile.assessed.length < 2) return { strong: [], weak: [], balanced: false };
+    return profile.balanced
+      ? { strong: [], weak: [], balanced: true }
+      : { strong: profile.strongest, weak: profile.weakest, balanced: false };
+  }
+  return { strong: result.strengths ?? [], weak: result.weaknesses ?? [], balanced: false };
+}
