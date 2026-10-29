@@ -1,5 +1,6 @@
 "use client";
 
+import { classifyPracticeLoadError } from "@/lib/practice/practiceLoadErrorLogic";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -358,8 +359,29 @@ export default function TakeQuizPage(props: {
     );
   }
 
-  if (!quiz)
-    return <div className="text-center p-12">Không tìm thấy bài tập</div>;
+  if (!quiz) {
+    const loadError = classifyPracticeLoadError(quizError);
+    return (
+      <div className="flex flex-col items-center p-12 text-center">
+        <p className="text-base font-bold text-slate-800 dark:text-slate-200">
+          {loadError?.kind === "AUTH"
+            ? "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để mở bài luyện."
+            : loadError?.kind === "FAILED"
+              ? "Chưa tải được bài luyện. Vui lòng tải lại trang."
+              : "Không tìm thấy bài tập"}
+        </p>
+        {loadError?.kind === "AUTH" && (
+          <button
+            type="button"
+            onClick={() => router.push("/login")}
+            className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-amber-500 px-5 text-sm font-extrabold text-white hover:bg-amber-600 cursor-pointer"
+          >
+            Đăng nhập lại
+          </button>
+        )}
+      </div>
+    );
+  }
 
   // Delegate LISTENING_PRACTICE exclusively to ListeningComprehensionWorkspace.
   // The selected exercise opens directly in its usable workspace; no redundant
