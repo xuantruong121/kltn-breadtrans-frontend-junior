@@ -53,6 +53,9 @@ export interface DiagnosticAdviceResource {
   route: string;
   access: "OPEN" | "LOCKED";
   requirement: string | null;
+  /** Speaking: the practice set key, for the catalog's display title. */
+  setKey?: string | null;
+  cefrLevel?: string | null;
 }
 
 export interface DiagnosticAdviceFinding {
@@ -93,7 +96,79 @@ export interface DiagnosticAdvice {
   noWeaknessFound: boolean;
 }
 
-/** FOUR_SKILL_PLACEMENT_V2 only. `overall` is null until all four skills are COMPLETE. */
+export type DiagnosticProductiveTaskStatus =
+  | "NOT_ATTEMPTED"
+  | "SKIPPED"
+  | "SUBMITTED"
+  | "GRADING_PENDING"
+  | "GRADED"
+  | "GRADING_FAILED";
+
+export interface DiagnosticObservedSkill {
+  skill: "LISTENING" | "READING" | "LANGUAGE_USE";
+  correct: number;
+  total: number;
+  score: number | null;
+  weight: number;
+}
+
+export interface DiagnosticObservedProductiveSkill {
+  skill: "SPEAKING" | "WRITING";
+  tasks: Array<{
+    questionId: number;
+    order: 1 | 2;
+    status: DiagnosticProductiveTaskStatus;
+    score: number | null;
+    weight: number;
+  }>;
+  graded: number;
+  total: number;
+  skipped: number;
+  pending: number;
+  failed: number;
+  /** Mean of the graded tasks; null when none is graded. */
+  score: number | null;
+  coverage: "NONE" | "PARTIAL" | "FULL";
+}
+
+/** FOUR_SKILL_OBSERVED_V3: the observed score over the evidence actually graded. */
+export interface DiagnosticObservedResult {
+  policyVersion: "FOUR_SKILL_OBSERVED_V3";
+  rubricWeightingVersion: string;
+  weights: { LISTENING: number; READING: number; SPEAKING_TASK: number; WRITING_TASK: number };
+  listening: DiagnosticObservedSkill;
+  reading: DiagnosticObservedSkill;
+  /** Weight 0: supporting evidence only. */
+  languageUse: DiagnosticObservedSkill;
+  speaking: DiagnosticObservedProductiveSkill;
+  writing: DiagnosticObservedProductiveSkill;
+  objectiveCore: number | null;
+  observed: {
+    score: number | null;
+    numerator: number | null;
+    denominator: number;
+    gradedProductiveTasks: number;
+    withheldReason: null | "OBJECTIVE_INCOMPLETE" | "PRODUCTIVE_PENDING" | "PRODUCTIVE_FAILED";
+  };
+  coverageWeight: number;
+}
+
+export interface DiagnosticBreakdownGroup {
+  key: string;
+  correct: number;
+  total: number;
+}
+
+export type DiagnosticObjectiveBreakdown = Record<
+  "LISTENING" | "READING" | "LANGUAGE_USE",
+  { byDifficulty: DiagnosticBreakdownGroup[]; bySubskill: DiagnosticBreakdownGroup[] }
+>;
+
+/**
+ * FOUR_SKILL_PLACEMENT_V2. Without `observed` (older attempts) `overall` is
+ * null until all four skills are COMPLETE; with it, `overall` is the observed
+ * score.
+ */
 export interface DiagnosticFourSkillResult {
   scoringVersion: "FOUR_SKILL_PLACEMENT_V2";
   state: DiagnosticSkillState;
@@ -101,6 +176,15 @@ export interface DiagnosticFourSkillResult {
   overall: number | null;
   placementBand: null;
   placementBandStatus: string;
+  observed?: DiagnosticObservedResult;
+}
+
+/** Weighting facts of a graded Speaking/Writing task (null for older tasks). */
+export interface DiagnosticTaskWeighting {
+  weightingVersion?: string | null;
+  criterionWeights?: Record<string, number> | null;
+  unavailableCriteria?: string[];
+  limitedEvidence?: boolean;
 }
 
 export interface DiagnosticSkillProfile {
@@ -170,6 +254,8 @@ export interface DiagnosticResult {
     itemsBySkill: Record<string, number>;
   };
   fourSkill?: DiagnosticFourSkillResult | null;
+  /** FOUR_SKILL_OBSERVED_V3 only. */
+  objectiveBreakdown?: DiagnosticObjectiveBreakdown | null;
   advice?: DiagnosticAdvice | null;
   submittedAt?: string;
   completedAt?: string;
@@ -189,7 +275,7 @@ export interface DiagnosticResult {
   }>;
 }
 
-export interface DiagnosticSpeakingResponse {
+export interface DiagnosticSpeakingResponse extends DiagnosticTaskWeighting {
   id: number;
   questionId: number;
   taskKey?: string;
@@ -200,21 +286,23 @@ export interface DiagnosticSpeakingResponse {
   scoreScale?: "PERCENT_0_100";
   failureReason?: string | null;
   rubricVersion?: string | null;
-  criteria?: Record<string, number> | null;
+  /** A null criterion could not be assessed. */
+  criteria?: Record<string, number | null> | null;
   criterionFeedback?: Record<string, string> | null;
   feedback?: string | null;
   suggestions?: string[];
   transcript?: string | null;
 }
 
-export interface DiagnosticWritingFeedback {
+export interface DiagnosticWritingFeedback extends DiagnosticTaskWeighting {
   questionId: number;
   status: "QUEUED" | "GRADING" | "GRADED" | "GRADING_FAILED";
   answer: string;
   /** Task rubric percentage 0-100; null unless GRADED. */
   score: number | null;
   scoreScale?: "PERCENT_0_100";
-  criteria?: Record<string, number> | null;
+  /** A null criterion could not be assessed. */
+  criteria?: Record<string, number | null> | null;
   criterionFeedback?: Record<string, string> | null;
   rubricVersion?: string | null;
   wordCount?: number | null;

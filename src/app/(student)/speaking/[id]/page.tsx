@@ -69,6 +69,11 @@ import toast from "react-hot-toast";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { plansHrefFor } from "@/modules/subscription/practicePlan";
 import { speakingSetDisplayTitle } from "@/lib/catalog/displayTitles";
+import {
+  IS_WORD_REGEX,
+  normalizeWordForMatching,
+  WORD_TOKEN_REGEX,
+} from "@/lib/speaking/speakingWordMatching";
 
 /**
  * Resamples raw audio data to exactly 16,000 Hz using native OfflineAudioContext.
@@ -130,18 +135,6 @@ const TTS_SPEED_OPTIONS = [
   },
   { value: 1.5, label: "1.5x", title: "1.5x - Rất nhanh: Tốc độ nâng cao" },
 ] as const;
-
-export const normalizeWordForMatching = (word: string): string => {
-  if (!word) return "";
-  return word
-    .toLowerCase()
-    .replace(/[’‘ʼ]/g, "'")
-    .replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
-};
-
-export const WORD_TOKEN_REGEX =
-  /[\p{L}\p{N}]+(?:['’‘ʼ\-][\p{L}\p{N}]+)*['’‘ʼ]?|[^\s\p{L}\p{N}]/gu;
-export const IS_WORD_REGEX = /[\p{L}\p{N}]/u;
 
 export default function SpeakingExerciseDetailPage() {
   const { id } = useParams();

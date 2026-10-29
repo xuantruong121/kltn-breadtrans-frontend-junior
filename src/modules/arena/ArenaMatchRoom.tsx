@@ -24,6 +24,7 @@ import {
   MatchResult 
 } from "@/lib/hooks/useArenaSocket";
 import { useAuthStore } from "@/stores/authStore";
+import { AvatarImage } from "@/components/ui/AvatarImage";
 import Confetti from "react-confetti";
 
 interface ArenaMatchRoomProps {
@@ -151,11 +152,12 @@ export default function ArenaMatchRoom({
           {/* My Player Panel */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-2xl bg-sky-100 border-2 sm:border-3 border-sky-400 flex items-center justify-center text-lg sm:text-2xl font-black shadow-inner shrink-0">
-              {myInfo.avatar ? (
-                <img src={myInfo.avatar} alt="" className="w-full h-full object-cover rounded-xl" />
-              ) : (
-                "🧙‍♂️"
-              )}
+              <AvatarImage
+                src={myInfo.avatar}
+                alt=""
+                className="w-full h-full object-cover rounded-xl"
+                fallback="🧙‍♂️"
+              />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1">
@@ -196,11 +198,12 @@ export default function ArenaMatchRoom({
               </p>
             </div>
             <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-2xl bg-rose-100 border-2 sm:border-3 border-rose-400 flex items-center justify-center text-lg sm:text-2xl font-black shadow-inner shrink-0">
-              {opponentInfo.avatar ? (
-                <img src={opponentInfo.avatar} alt="" className="w-full h-full object-cover rounded-xl" />
-              ) : (
-                "🥷"
-              )}
+              <AvatarImage
+                src={opponentInfo.avatar}
+                alt=""
+                className="w-full h-full object-cover rounded-xl"
+                fallback="🥷"
+              />
             </div>
           </div>
         </div>

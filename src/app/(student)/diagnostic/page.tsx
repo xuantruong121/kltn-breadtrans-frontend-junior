@@ -32,6 +32,7 @@ import { useLearningFocusMode } from "@/contexts/LearningFocusContext";
 import { ClozePrompt } from "@/components/diagnostic/ClozePrompt";
 import { DiagnosticQuestionNavigator } from "@/components/diagnostic/DiagnosticQuestionNavigator";
 import { DiagnosticAdvicePanel as AdvicePanel } from "@/components/diagnostic/DiagnosticAdvicePanel";
+import { ObservedResultPanel } from "@/components/diagnostic/ObservedResultPanel";
 import {
   formatPlacementLevel,
   formatSkillName,
@@ -1049,7 +1050,14 @@ function DiagnosticResultView({
           </span>
         </div>
 
-        {fourSkill ? (
+        {fourSkill?.observed ? (
+          <>
+            <h1 className="mt-4 text-3xl font-black text-slate-900 dark:text-slate-100 sm:text-4xl">
+              Kết quả đánh giá đầu vào
+            </h1>
+            <ObservedResultPanel observed={fourSkill.observed} breakdown={result.objectiveBreakdown} />
+          </>
+        ) : fourSkill ? (
           <FourSkillPanel result={fourSkill} />
         ) : (
           <>
@@ -1091,14 +1099,19 @@ function DiagnosticResultView({
                   </div>
                   {item?.status === "GRADED" && (
                     <>
-                      <CriteriaList criteria={item.criteria} feedback={item.criterionFeedback} />
+                      <CriteriaList criteria={item.criteria} feedback={item.criterionFeedback} weights={item.criterionWeights} />
+                      {item.limitedEvidence && (
+                        <p className="mt-2 text-sm leading-6 text-amber-800 dark:text-amber-300">
+                          Bằng chứng hạn chế: một số tiêu chí chưa đánh giá được, nên điểm bài này chỉ tính trên các tiêu chí còn lại.
+                        </p>
+                      )}
                       {item.feedback && <p className="mt-2 leading-6 text-slate-700 dark:text-slate-300">{item.feedback}</p>}
                       {item.suggestions && item.suggestions.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-600 dark:text-slate-400">{item.suggestions.map((suggestion) => <li key={suggestion}>{suggestion}</li>)}</ul>}
                     </>
                   )}
                   {item?.status === "SKIPPED" && (
                     <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
-                      Bạn đã bỏ qua bài này nên bài không được chấm; kỹ năng Nói không có điểm và không bị tính là 0.
+                      Bạn đã bỏ qua bài này nên bài không được chấm. Bài bỏ qua không bị tính 0 và không được tính trọng số.
                     </p>
                   )}
                   {item?.status === "GRADING_FAILED" && (
@@ -1134,7 +1147,7 @@ function DiagnosticResultView({
                     </div>
                     {skipped && (
                       <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
-                        Bạn đã bỏ qua bài này nên bài không được chấm; kỹ năng Viết không có điểm và không bị tính là 0.
+                        Bạn đã bỏ qua bài này nên bài không được chấm. Bài bỏ qua không bị tính 0 và không được tính trọng số.
                       </p>
                     )}
                   </article>
@@ -1148,7 +1161,7 @@ function DiagnosticResultView({
                 {typeof item.wordCount === "number" && (
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{item.wordCount} từ</p>
                 )}
-                {item.status === "GRADED" && <CriteriaList criteria={item.criteria} feedback={item.criterionFeedback} />}
+                {item.status === "GRADED" && <CriteriaList criteria={item.criteria} feedback={item.criterionFeedback} weights={item.criterionWeights} />}
                 {item.feedback && <p className="mt-2 leading-6 text-slate-700 dark:text-slate-300">{item.feedback}</p>}
                 {item.suggestions.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-600 dark:text-slate-400">{item.suggestions.map((suggestion) => <li key={suggestion}>{suggestion}</li>)}</ul>}
                 {item.status === "GRADING_FAILED" && <button type="button" onClick={() => retryWriting.mutate(item.questionId)} disabled={retryWriting.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-violet-300 px-3 text-sm font-bold text-violet-700 transition hover:bg-violet-50 disabled:opacity-50 dark:border-violet-800 dark:text-violet-300"><RotateCcw size={14} /> Chấm lại</button>}
@@ -1526,13 +1539,15 @@ function TaskStatusChip({ status, score }: { status?: string; score: number | nu
   );
 }
 
-// Rubric criteria are scored 0-4 each.
+// Rubric criteria are scored 0-4 each; null means it could not be assessed.
 function CriteriaList({
   criteria,
   feedback,
+  weights,
 }: {
-  criteria?: Record<string, number> | null;
+  criteria?: Record<string, number | null> | null;
   feedback?: Record<string, string> | null;
+  weights?: Record<string, number> | null;
 }) {
   const entries = criteria ? Object.entries(criteria) : [];
   if (!entries.length) return null;
@@ -1541,8 +1556,13 @@ function CriteriaList({
       {entries.map(([key, value]) => (
         <div key={key} className="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-850">
           <dt className="flex items-center justify-between gap-2 text-sm font-black text-slate-700 dark:text-slate-300">
-            <span>{formatCriterionName(key)}</span>
-            <span>{value}/4</span>
+            <span>
+              {formatCriterionName(key)}
+              {weights?.[key] !== undefined && (
+                <span className="font-semibold text-slate-500 dark:text-slate-400"> ({Math.round(weights[key] * 100)}%)</span>
+              )}
+            </span>
+            <span>{value === null ? "Chưa đánh giá" : `${value}/4`}</span>
           </dt>
           {feedback?.[key] && <dd className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">{feedback[key]}</dd>}
         </div>
