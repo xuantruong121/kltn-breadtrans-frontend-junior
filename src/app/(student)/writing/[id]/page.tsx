@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect, use, useRef } from "react";
+import { attemptForSubmission, parsePendingAttempt } from "@/lib/writing/writingAttemptLogic";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -90,6 +91,8 @@ export default function WritingDetailPage(props: {
   const user = useAuthStore((state) => state.user);
   const [content, setContent] = useState("");
   const [isEvaluating, setIsEvaluating] = useState(false);
+  // Blocks a second submit fired before the disabled button re-renders.
+  const submittingRef = useRef(false);
   const [feedback, setFeedback] = useState<WritingEvaluation | null>(null);
   // Picture tasks show their result beside the editor instead of a new page.
   const [pictureResult, setPictureResult] = useState<WritingEvaluation | null>(null);
@@ -278,15 +281,32 @@ export default function WritingDetailPage(props: {
       return;
     }
 
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setIsEvaluating(true);
     setFeedback(null);
 
+    // The same text keeps its attempt id (also across a refresh), so a retry
+    // after a lost response returns the grade already stored on the server.
+    const attemptKey = draftKey ? `${draftKey}:attempt` : null;
+    let stored = null;
     try {
-      const clientAttemptId = crypto.randomUUID();
+      stored = attemptKey ? parsePendingAttempt(sessionStorage.getItem(attemptKey)) : null;
+    } catch {
+      stored = null;
+    }
+    const attempt = attemptForSubmission(stored, content, () => crypto.randomUUID());
+    try {
+      if (attemptKey) sessionStorage.setItem(attemptKey, JSON.stringify(attempt));
+    } catch {
+      // Without storage the retry still works within this page.
+    }
+
+    try {
       const result = await writingService.submit(
         topicId,
-        content.trim(),
-        clientAttemptId,
+        attempt.text,
+        attempt.id,
         examParentContext,
         currentTask?.id,
       );
@@ -304,6 +324,7 @@ export default function WritingDetailPage(props: {
       if (draftKey) {
         try {
           localStorage.removeItem(draftKey);
+          if (attemptKey) sessionStorage.removeItem(attemptKey);
         } catch {
           // Ignore storage cleanup failures.
         }
@@ -357,7 +378,9 @@ export default function WritingDetailPage(props: {
       );
     } catch {
       setIsEvaluating(false);
-      toast.error("Có lỗi xảy ra khi chấm bài. Vui lòng thử lại!");
+      toast.error("Chưa chấm được bài. Bài viết của bạn vẫn còn, hãy thử gửi lại.");
+    } finally {
+      submittingRef.current = false;
     }
   };
 
