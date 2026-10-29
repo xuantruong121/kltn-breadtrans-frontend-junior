@@ -8,6 +8,8 @@ import {
   groupQuestionsBySection,
   formatPlacementLevel,
   resultPollInterval,
+  isResultGrading,
+  gradingProgress,
   RESULT_POLL_MS,
   RESULT_SUBMIT_GRACE_MS,
 } from "./diagnosticUiLogic.ts";
@@ -144,4 +146,20 @@ test("result polling keeps going while grading is pending and briefly after subm
   assert.equal(resultPollInterval({ fourSkill: { state: "PENDING_GRADING" } }, null, now), RESULT_POLL_MS);
   const taskPending = { fourSkill: { state: "COMPLETE", observed: { writing: { tasks: [{ status: "GRADING_PENDING" }] } } } };
   assert.equal(resultPollInterval(taskPending, null, now), RESULT_POLL_MS);
+});
+
+test("grading progress counts only submitted tasks and ends when none is pending", () => {
+  const pending = { fourSkill: { state: "PENDING_GRADING", observed: {
+    speaking: { tasks: [{ status: "GRADED" }, { status: "GRADED" }] },
+    writing: { tasks: [{ status: "GRADING_PENDING" }, { status: "SKIPPED" }] },
+  } } };
+  assert.equal(isResultGrading(pending), true);
+  assert.deepEqual(gradingProgress(pending), { done: 2, total: 3 });
+  const done = { fourSkill: { state: "COMPLETE", observed: {
+    speaking: { tasks: [{ status: "GRADED" }, { status: "GRADING_FAILED" }] },
+    writing: { tasks: [{ status: "GRADED" }, { status: "SKIPPED" }] },
+  } } };
+  assert.equal(isResultGrading(done), false);
+  assert.deepEqual(gradingProgress(done), { done: 3, total: 3 });
+  assert.equal(isResultGrading(null), false);
 });

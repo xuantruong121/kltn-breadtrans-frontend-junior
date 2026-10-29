@@ -224,13 +224,30 @@ export function resultPollInterval(
   nowMs: number,
 ): number | false {
   if (submittedAtMs !== null && nowMs - submittedAtMs < RESULT_SUBMIT_GRACE_MS) return RESULT_POLL_MS;
-  if (!result) return false;
-  if (result.productivePending || result.fourSkill?.state === "PENDING_GRADING") return RESULT_POLL_MS;
-  const tasks = [
-    ...(result.fourSkill?.observed?.speaking?.tasks ?? []),
-    ...(result.fourSkill?.observed?.writing?.tasks ?? []),
+  return isResultGrading(result) ? RESULT_POLL_MS : false;
+}
+
+const PENDING_TASK = new Set(["SUBMITTED", "GRADING_PENDING"]);
+const FINISHED_TASK = new Set(["GRADED", "GRADING_FAILED"]);
+
+function productiveTasks(result: PollableResult) {
+  return [
+    ...(result?.fourSkill?.observed?.speaking?.tasks ?? []),
+    ...(result?.fourSkill?.observed?.writing?.tasks ?? []),
   ];
-  return tasks.some((task) => task.status === "SUBMITTED" || task.status === "GRADING_PENDING")
-    ? RESULT_POLL_MS
-    : false;
+}
+
+/** True while any submitted Speaking/Writing task is still being graded. */
+export function isResultGrading(result: PollableResult): boolean {
+  if (!result) return false;
+  if (result.productivePending || result.fourSkill?.state === "PENDING_GRADING") return true;
+  return productiveTasks(result).some((task) => PENDING_TASK.has(task.status));
+}
+
+/** Submitted Speaking/Writing tasks whose grading has finished, out of those submitted (skips excluded). */
+export function gradingProgress(result: PollableResult): { done: number; total: number } {
+  const submitted = productiveTasks(result).filter(
+    (task) => PENDING_TASK.has(task.status) || FINISHED_TASK.has(task.status),
+  );
+  return { done: submitted.filter((task) => FINISHED_TASK.has(task.status)).length, total: submitted.length };
 }
