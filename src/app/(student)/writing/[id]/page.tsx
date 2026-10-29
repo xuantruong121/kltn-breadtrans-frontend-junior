@@ -442,7 +442,7 @@ export default function WritingDetailPage(props: {
                         Chủ Đề Yêu Cầu
                       </span>
                       <h2 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">
-                        {topic?.title || "Bài luyện viết"}
+                        {topic?.title ? quizDisplayTitle(topicId, topic.title, topic.cefrLevel) : "Bài luyện viết"}
                       </h2>
                     </div>
                   </div>
@@ -495,10 +495,10 @@ export default function WritingDetailPage(props: {
                   )}
 
                   <div className="bg-rose-50/60 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/40 p-5 rounded-2xl space-y-2">
-                    <span className="text-xs font-extrabold text-rose-800 dark:text-rose-300 uppercase tracking-wide">
-                      Yêu cầu đề bài (Prompt):
+                    <span className="text-sm font-extrabold text-rose-800 dark:text-rose-300 uppercase tracking-wide">
+                      Yêu cầu đề bài
                     </span>
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 leading-relaxed">
+                    <p className="text-lg font-semibold text-slate-900 dark:text-slate-100 leading-8">
                       {topic?.prompt ||
                         topic?.description ||
                         "Đọc kỹ yêu cầu và viết câu trả lời phù hợp với tình huống."}
@@ -587,11 +587,11 @@ export default function WritingDetailPage(props: {
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     placeholder={resolveWritingPlaceholder(topic ?? {})}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 font-medium text-sm outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 transition-all leading-relaxed text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 font-medium text-base outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 transition-all leading-relaxed text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
 
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                       {topic?.wordRange?.length === 2
                         ? `Mục tiêu ${topic.wordRange[0]}–${topic.wordRange[1]} từ.`
                         : "Hãy trả lời đầy đủ yêu cầu và kiểm tra lại bài trước khi gửi."}
@@ -739,7 +739,7 @@ export default function WritingDetailPage(props: {
                       Mẫu Câu Hữu Ích
                     </h3>
 
-                    <div className="space-y-3 text-xs">
+                    <div className="space-y-3 text-sm">
                       {writingMode.guidance.map((item) => (
                         <div
                           key={item.title}
@@ -748,7 +748,7 @@ export default function WritingDetailPage(props: {
                           <p className="font-bold text-slate-800 dark:text-slate-200">
                             {item.title}
                           </p>
-                          <p className="text-slate-600 dark:text-slate-400 italic">
+                          <p className="text-base text-slate-700 dark:text-slate-300">
                             “{item.stem}”
                           </p>
                         </div>
