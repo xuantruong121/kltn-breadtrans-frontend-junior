@@ -808,6 +808,9 @@ export default function SpeakingExerciseDetailPage() {
       }
     };
 
+    // The score arrives first; the written feedback is enriched afterwards and
+    // ends COMPLETED or FAILED. Both refetch, so the pending notice never stays
+    // after enrichment has ended (polling is cancelled once the score arrives).
     const handleFeedbackCompleted = async (payload: {
       submissionId: number;
     }) => {
@@ -827,11 +830,13 @@ export default function SpeakingExerciseDetailPage() {
     socket.on("speaking.completed", handleCompleted);
     socket.on("speaking.failed", handleFailed);
     socket.on("speaking.feedback.completed", handleFeedbackCompleted);
+    socket.on("speaking.feedback.failed", handleFeedbackCompleted);
 
     return () => {
       socket.off("speaking.completed", handleCompleted);
       socket.off("speaking.failed", handleFailed);
       socket.off("speaking.feedback.completed", handleFeedbackCompleted);
+      socket.off("speaking.feedback.failed", handleFeedbackCompleted);
     };
   }, [socket, queryClient, exerciseId]);
 

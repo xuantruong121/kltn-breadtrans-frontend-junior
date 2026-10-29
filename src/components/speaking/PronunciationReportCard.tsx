@@ -33,7 +33,9 @@ import {
   StopCircle,
   X,
   Target,
+  MessageSquareText,
 } from "lucide-react";
+import { selectSpeakingFeedback } from "@/lib/speaking/speakingFeedbackLogic";
 
 export interface PronunciationReportCardProps {
   phase: SpeakingAttemptPhase;
@@ -144,6 +146,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
   uploadProgress = 0,
 }) => {
   const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null);
+  const [feedbackExpanded, setFeedbackExpanded] = useState(false);
 
   // Comparative Dual Audio Player State
   const [isComparing, setIsComparing] = useState(false);
@@ -355,6 +358,12 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
   const wordsList: WordAssessmentItem[] = feedback?.words || [];
 
   const accuracyTier = getAccuracyTier(accuracy);
+  const feedbackView = selectSpeakingFeedback({
+    scripted,
+    feedbackStatus: submission?.feedbackStatus,
+    feedback: feedback?.feedback,
+    suggestions: feedback?.suggestions,
+  });
 
   // Selected word diagnostics
   const selectedWordItem =
@@ -912,6 +921,59 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
         )}
       </div>
 
+      {/* 4b. Written feedback: detailed wording when available, then suggestions */}
+      {phase === "COMPLETED" &&
+        !isNoSpeech &&
+        (feedbackView.paragraph ||
+          feedbackView.suggestions.length > 0 ||
+          feedbackView.enrichmentFailed) && (
+          <div className="space-y-3 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-2xs">
+            {feedbackView.paragraph && (
+              <div>
+                <div className="flex items-center gap-2 text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">
+                  <MessageSquareText size={17} className="text-amber-700 dark:text-amber-400" aria-hidden="true" />
+                  <span>{feedbackView.paragraph.title}</span>
+                </div>
+                <p
+                  className={`mt-1.5 text-sm sm:text-base font-medium leading-relaxed text-slate-800 dark:text-slate-200 ${
+                    feedbackView.paragraph.collapsible && !feedbackExpanded ? "line-clamp-4" : ""
+                  }`}
+                >
+                  {feedbackView.paragraph.text}
+                </p>
+                {feedbackView.paragraph.collapsible && (
+                  <button
+                    type="button"
+                    onClick={() => setFeedbackExpanded((open) => !open)}
+                    aria-expanded={feedbackExpanded}
+                    className="mt-1 text-sm font-bold text-amber-800 hover:underline dark:text-amber-300"
+                  >
+                    {feedbackExpanded ? "Thu gọn" : "Xem toàn bộ nhận xét"}
+                  </button>
+                )}
+              </div>
+            )}
+            {feedbackView.enrichmentFailed && !feedbackView.paragraph && (
+              <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                Chưa tạo được nhận xét chi tiết lúc này. Điểm và các chỉ số ở trên vẫn là kết quả chấm chính thức.
+              </p>
+            )}
+            {feedbackView.suggestions.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">
+                  <Activity size={16} className="text-amber-700 dark:text-amber-400" aria-hidden="true" />
+                  <span>Gợi ý cải thiện phát âm</span>
+                </div>
+                <ul className="mt-1.5 space-y-1.5 text-slate-800 dark:text-slate-200 text-sm sm:text-base font-medium pl-5 list-disc leading-relaxed">
+                  {feedbackView.suggestions.map((suggestion) => (
+                    <li key={suggestion}>{suggestion}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+
       {/* 5. BOTTOM DIAGNOSTIC DECK: Word-Level Assessment */}
       {phase === "COMPLETED" && !isNoSpeech ? (
         <div className="space-y-3 rounded-2xl bg-slate-50/80 dark:bg-slate-850 p-4 sm:p-5 border border-slate-200/90 dark:border-slate-800 shadow-xs">
@@ -1026,20 +1088,6 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
             );
           })()}
 
-          {/* Suggestions Accordion if present */}
-          {feedback?.suggestions && feedback.suggestions.length > 0 && (
-            <div className="rounded-2xl bg-amber-50/90 dark:bg-amber-950/40 p-4 border border-amber-200 dark:border-amber-900/60 mt-3">
-              <div className="flex items-center gap-2 text-sm sm:text-base font-black text-amber-950 dark:text-amber-300 uppercase tracking-wider mb-2">
-                <Activity size={16} className="text-amber-700 dark:text-amber-400" />
-                <span>Gợi ý cải thiện phát âm</span>
-              </div>
-              <ul className="space-y-2 text-slate-800 dark:text-slate-200 text-sm sm:text-base font-semibold pl-5 list-disc leading-relaxed">
-                {feedback.suggestions.map((sug, i) => (
-                  <li key={i}>{sug}</li>
-                ))}
-              </ul>
-            </div>
-          )}
         </div>
       ) : scripted ? (
         /* READY / RECORDING Phase: Key words for pronunciation practice */
