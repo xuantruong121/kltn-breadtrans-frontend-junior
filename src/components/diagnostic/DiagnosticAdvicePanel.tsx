@@ -38,6 +38,16 @@ function adviceTitle(resource: DiagnosticAdviceResource): string {
   return quizDisplayTitle(resource.id, resource.title);
 }
 
+/** The first "(A2)"-style content tag shown in a recommended title, if any. */
+function firstLevelTag(advice: DiagnosticAdvice): string | null {
+  for (const item of [...advice.priorities, ...advice.supplemental])
+    for (const resource of item.resources) {
+      const match = /\((?:A1|A2|B1|B2|C1|C2)\)/.exec(adviceTitle(resource));
+      if (match) return match[0];
+    }
+  return null;
+}
+
 function ResourceLink({ resource, note }: { resource: DiagnosticAdviceResource; note?: string }) {
   return (
     // Full page navigation on purpose: in a long browser session, a client-side
@@ -108,6 +118,7 @@ function PriorityCard({ item, label }: { item: DiagnosticAdvicePriority; label: 
 /** D1 result guidance: what went well, what to work on first, and where. */
 export function DiagnosticAdvicePanel({ advice }: { advice: DiagnosticAdvice }) {
   const { profile } = advice;
+  const levelTag = firstLevelTag(advice);
   return (
     <section
       aria-labelledby="diagnostic-advice-title"
@@ -122,7 +133,6 @@ export function DiagnosticAdvicePanel({ advice }: { advice: DiagnosticAdvice }) 
       <p className="mt-1.5 text-base leading-7 text-slate-700 dark:text-slate-300">
         Gợi ý dựa trên các câu bạn làm sai và phần chấm theo tiêu chí của chính bài này. Bài kiểm tra ngắn (10 câu mỗi
         kỹ năng Nghe, Đọc; 2 bài mỗi kỹ năng Nói, Viết) nên đây là định hướng luyện tập, không phải xếp trình độ.
-        Nhãn như (A2), (B1) trong tên bài luyện là nhãn của nội dung trong thư viện, không phải trình độ của bạn.
       </p>
 
       {advice.mockGraderEvidence && (
@@ -173,6 +183,12 @@ export function DiagnosticAdvicePanel({ advice }: { advice: DiagnosticAdvice }) 
             {advice.noWeaknessFound
               ? "Trong phạm vi bài kiểm tra này chưa thấy dạng câu hoặc tiêu chí nào cần ưu tiên. Bạn có thể chọn bài luyện ở mức khó hơn trong từng kỹ năng."
               : "Chưa đủ kỹ năng có điểm để đưa ra ưu tiên."}
+          </p>
+        )}
+        {levelTag && (
+          <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
+            Ký hiệu trong ngoặc ở tên bài luyện, ví dụ {levelTag}, là mức của nội dung bài đó trong thư viện, không phải
+            trình độ của bạn.
           </p>
         )}
       </div>
