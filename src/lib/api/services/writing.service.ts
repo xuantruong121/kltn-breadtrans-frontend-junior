@@ -89,7 +89,7 @@ export interface PracticeWritingDetail {
   /** Picture tasks: the grader's verdict on whether the answer describes the scene. */
   scene?: { match: "MATCH" | "PARTIAL" | "MISMATCH" | "UNCERTAIN"; evidence: string };
   /** Set when the server capped the grader's total because the scene did not match. */
-  scoreAdjustment?: { reason: "SCENE_MISMATCH"; providerScore: number; cap: number };
+  scoreAdjustment?: { reason: "SCENE_MISMATCH" | "OFF_TOPIC" | "TOO_SHORT"; providerScore: number; cap: number };
 }
 
 export interface WritingEvaluation extends Partial<PracticeWritingDetail> {
