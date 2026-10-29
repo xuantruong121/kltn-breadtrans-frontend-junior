@@ -10,6 +10,7 @@ import {
   learnerErrorMessage,
   describeSkillState,
   formatCriterionName,
+  describeCriterionScore,
   parseDraft,
   speakingLimitMs,
   toSubmissionAnswers,
@@ -115,4 +116,10 @@ test("criterion keys and skill states have Vietnamese labels", () => {
   assert.equal(describeSkillState("GRADING_FAILED").tone, "failed");
   assert.equal(describeSkillState("NOT_STARTED").tone, "missing");
   assert.equal(describeSkillState("COMPLETE").tone, "done");
+});
+
+test("criterion scores read as plain words", () => {
+  assert.equal(describeCriterionScore(3), "3/4 · Khá");
+  assert.equal(describeCriterionScore(0), "0/4 · Chưa đạt");
+  assert.equal(describeCriterionScore(null), "Chưa đánh giá");
 });

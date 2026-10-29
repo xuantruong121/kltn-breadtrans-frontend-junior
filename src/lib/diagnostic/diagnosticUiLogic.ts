@@ -195,3 +195,42 @@ export function formatPlacementLevel(level?: string | null): string {
   }
   return trimmed;
 }
+
+/** How often the saved result is re-read while grading may still change it. */
+export const RESULT_POLL_MS = 3000;
+/** A first read right after submit can predate the queued tasks; keep polling this long. */
+export const RESULT_SUBMIT_GRACE_MS = 20_000;
+
+type PollableResult = {
+  productivePending?: boolean;
+  fourSkill?: {
+    state?: string;
+    observed?: {
+      speaking?: { tasks?: Array<{ status: string }> };
+      writing?: { tasks?: Array<{ status: string }> };
+    };
+  } | null;
+} | null | undefined;
+
+/**
+ * Polling interval for the latest Diagnostic result, or false to stop.
+ * Polls while any Speaking/Writing task is still being graded, and for a short
+ * grace window after this learner submitted, so one early read cannot freeze
+ * the page on a stale "not graded" state.
+ */
+export function resultPollInterval(
+  result: PollableResult,
+  submittedAtMs: number | null,
+  nowMs: number,
+): number | false {
+  if (submittedAtMs !== null && nowMs - submittedAtMs < RESULT_SUBMIT_GRACE_MS) return RESULT_POLL_MS;
+  if (!result) return false;
+  if (result.productivePending || result.fourSkill?.state === "PENDING_GRADING") return RESULT_POLL_MS;
+  const tasks = [
+    ...(result.fourSkill?.observed?.speaking?.tasks ?? []),
+    ...(result.fourSkill?.observed?.writing?.tasks ?? []),
+  ];
+  return tasks.some((task) => task.status === "SUBMITTED" || task.status === "GRADING_PENDING")
+    ? RESULT_POLL_MS
+    : false;
+}

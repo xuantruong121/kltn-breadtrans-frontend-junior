@@ -38,6 +38,7 @@ import {
   formatSkillName,
   getUnansweredQuestionIndexes,
   resolveReviewAnswer,
+  resultPollInterval,
 } from "@/lib/diagnostic/diagnosticUiLogic";
 import {
   isValidDiagnosticRecording,
@@ -56,6 +57,7 @@ import {
   WRITING_SKIPPED,
   describeSkillState,
   formatCriterionName,
+  describeCriterionScore,
   isSpeakingTask,
   isWritingTask,
   speakingLimitMs,
@@ -97,6 +99,8 @@ export default function DiagnosticPage() {
     queryFn: diagnosticService.getCurrent,
   });
 
+  // When this learner last submitted; result polling outlives one early read.
+  const submittedAtRef = useRef<number | null>(null);
   const {
     data: latestResult,
     isLoading: isLoadingResult,
@@ -104,9 +108,7 @@ export default function DiagnosticPage() {
     queryKey: ["diagnostic-latest-result"],
     queryFn: diagnosticService.getLatestResult,
     refetchInterval: (query) =>
-      query.state.data?.productivePending || query.state.data?.fourSkill?.state === "PENDING_GRADING"
-        ? 3000
-        : false,
+      resultPollInterval(query.state.data, submittedAtRef.current, Date.now()),
   });
 
   const [started, setStarted] = useState(false);
@@ -239,6 +241,7 @@ export default function DiagnosticPage() {
       }
       setStarted(false);
       setFocusMode(false);
+      submittedAtRef.current = Date.now();
       const currentUserId = useAuthStore.getState().user?.id;
       queryClient.invalidateQueries({
         queryKey: ["user-stats", currentUserId],
@@ -1105,8 +1108,8 @@ function DiagnosticResultView({
                           Bằng chứng hạn chế: một số tiêu chí chưa đánh giá được, nên điểm bài này chỉ tính trên các tiêu chí còn lại.
                         </p>
                       )}
-                      {item.feedback && <p className="mt-2 leading-6 text-slate-700 dark:text-slate-300">{item.feedback}</p>}
-                      {item.suggestions && item.suggestions.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-600 dark:text-slate-400">{item.suggestions.map((suggestion) => <li key={suggestion}>{suggestion}</li>)}</ul>}
+                      {item.feedback && <FeedbackSummary text={item.feedback} />}
+                      {item.suggestions && <SuggestionList items={item.suggestions} />}
                     </>
                   )}
                   {item?.status === "SKIPPED" && (
@@ -1162,8 +1165,8 @@ function DiagnosticResultView({
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{item.wordCount} từ</p>
                 )}
                 {item.status === "GRADED" && <CriteriaList criteria={item.criteria} feedback={item.criterionFeedback} weights={item.criterionWeights} />}
-                {item.feedback && <p className="mt-2 leading-6 text-slate-700 dark:text-slate-300">{item.feedback}</p>}
-                {item.suggestions.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-600 dark:text-slate-400">{item.suggestions.map((suggestion) => <li key={suggestion}>{suggestion}</li>)}</ul>}
+                {item.feedback && <FeedbackSummary text={item.feedback} />}
+                <SuggestionList items={item.suggestions} />
                 {item.status === "GRADING_FAILED" && <button type="button" onClick={() => retryWriting.mutate(item.questionId)} disabled={retryWriting.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-violet-300 px-3 text-sm font-bold text-violet-700 transition hover:bg-violet-50 disabled:opacity-50 dark:border-violet-800 dark:text-violet-300"><RotateCcw size={14} /> Chấm lại</button>}
               </article>
               );
@@ -1540,6 +1543,29 @@ function TaskStatusChip({ status, score }: { status?: string; score: number | nu
 }
 
 // Rubric criteria are scored 0-4 each; null means it could not be assessed.
+function FeedbackSummary({ text }: { text: string }) {
+  return (
+    <div className="mt-4">
+      <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Nhận xét chung</p>
+      <p className="mt-1 text-base leading-7 text-slate-800 dark:text-slate-200">{text}</p>
+    </div>
+  );
+}
+
+function SuggestionList({ items }: { items: string[] }) {
+  if (!items.length) return null;
+  return (
+    <div className="mt-3">
+      <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Nên làm gì để cải thiện</p>
+      <ul className="mt-1 list-disc space-y-1 pl-5 text-base leading-7 text-slate-800 dark:text-slate-200">
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function CriteriaList({
   criteria,
   feedback,
@@ -1552,19 +1578,19 @@ function CriteriaList({
   const entries = criteria ? Object.entries(criteria) : [];
   if (!entries.length) return null;
   return (
-    <dl className="mt-3 grid gap-2 sm:grid-cols-2">
+    <dl className="mt-3 grid gap-3 sm:grid-cols-2">
       {entries.map(([key, value]) => (
-        <div key={key} className="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-850">
-          <dt className="flex items-center justify-between gap-2 text-sm font-black text-slate-700 dark:text-slate-300">
+        <div key={key} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-850">
+          <dt className="flex flex-wrap items-center justify-between gap-2 text-base font-bold text-slate-900 dark:text-slate-100">
             <span>
               {formatCriterionName(key)}
               {weights?.[key] !== undefined && (
-                <span className="font-semibold text-slate-500 dark:text-slate-400"> ({Math.round(weights[key] * 100)}%)</span>
+                <span className="text-sm font-semibold text-slate-600 dark:text-slate-400"> ({Math.round(weights[key] * 100)}%)</span>
               )}
             </span>
-            <span>{value === null ? "Chưa đánh giá" : `${value}/4`}</span>
+            <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{describeCriterionScore(value)}</span>
           </dt>
-          {feedback?.[key] && <dd className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">{feedback[key]}</dd>}
+          {feedback?.[key] && <dd className="mt-2 text-base leading-7 text-slate-800 dark:text-slate-200">{feedback[key]}</dd>}
         </div>
       ))}
     </dl>

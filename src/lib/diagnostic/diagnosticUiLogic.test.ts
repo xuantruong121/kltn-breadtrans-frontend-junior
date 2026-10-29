@@ -7,6 +7,9 @@ import {
   formatSkillName,
   groupQuestionsBySection,
   formatPlacementLevel,
+  resultPollInterval,
+  RESULT_POLL_MS,
+  RESULT_SUBMIT_GRACE_MS,
 } from "./diagnosticUiLogic.ts";
 
 test("diagnostic submit guard identifies the first unanswered question", () => {
@@ -124,4 +127,21 @@ test("formatPlacementLevel still localizes a CEFR band the backend itself report
     formatPlacementLevel("B1 — đang tiến tới B2"),
     "B1 – Đang tiến tới B2",
   );
+});
+
+test("result polling keeps going while grading is pending and briefly after submit", () => {
+  const graded = { productivePending: false, fourSkill: { state: "COMPLETE", observed: { speaking: { tasks: [{ status: "GRADED" }] }, writing: { tasks: [{ status: "GRADED" }, { status: "SKIPPED" }] } } } };
+  const now = 1_000_000;
+  // Settled result, no recent submit: stop.
+  assert.equal(resultPollInterval(graded, null, now), false);
+  assert.equal(resultPollInterval(null, null, now), false);
+  // A stale first read right after submit (Writing row not seen yet) still polls.
+  assert.equal(resultPollInterval(graded, now - 1_000, now), RESULT_POLL_MS);
+  assert.equal(resultPollInterval(null, now - 1_000, now), RESULT_POLL_MS);
+  assert.equal(resultPollInterval(graded, now - RESULT_SUBMIT_GRACE_MS, now), false);
+  // Pending signals.
+  assert.equal(resultPollInterval({ productivePending: true }, null, now), RESULT_POLL_MS);
+  assert.equal(resultPollInterval({ fourSkill: { state: "PENDING_GRADING" } }, null, now), RESULT_POLL_MS);
+  const taskPending = { fourSkill: { state: "COMPLETE", observed: { writing: { tasks: [{ status: "GRADING_PENDING" }] } } } };
+  assert.equal(resultPollInterval(taskPending, null, now), RESULT_POLL_MS);
 });

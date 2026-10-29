@@ -20,7 +20,7 @@ import {
   DiagnosticPracticeRecommendation,
   DiagnosticResult,
 } from "@/lib/api/services/diagnostic.service";
-import { formatPlacementLevel, formatSkillName } from "@/lib/diagnostic/diagnosticUiLogic";
+import { formatPlacementLevel, formatSkillName, resultPollInterval } from "@/lib/diagnostic/diagnosticUiLogic";
 import { ObservedResultPanel } from "@/components/diagnostic/ObservedResultPanel";
 import {
   describeForm,
@@ -50,6 +50,7 @@ export function DiagnosticResultTab() {
     queryKey: ["diagnostic-latest-result"],
     queryFn: diagnosticService.getLatestResult,
     refetchOnMount: "always",
+    refetchInterval: (query) => resultPollInterval(query.state.data, null, Date.now()),
   });
 
   const restart = useMutation({
