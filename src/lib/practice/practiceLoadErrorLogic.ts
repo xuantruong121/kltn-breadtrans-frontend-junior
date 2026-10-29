@@ -11,7 +11,6 @@ export type PracticeLoadError =
   | { kind: "NOT_FOUND" }
   | { kind: "FAILED" };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function classifyPracticeLoadError(err: any): PracticeLoadError | null {
   if (!err) return null;
   const status = err.response?.status ?? err.status;
