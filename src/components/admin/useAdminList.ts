@@ -15,7 +15,7 @@ export function useAdminList<T, F = Record<string, unknown>>({
   url,
   search,
   filters,
-  initialPageSize = 24,
+  initialPageSize = 12,
   enabled = true,
 }: {
   key: string;

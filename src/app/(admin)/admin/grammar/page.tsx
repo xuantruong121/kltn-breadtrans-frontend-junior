@@ -262,6 +262,7 @@ export default function AdminGrammarPage() {
         onPageChange={list.setPage}
         onPageSizeChange={list.setPageSize}
         pageSizeOptions={ADMIN_PAGE_SIZES}
+        alwaysShow
       />
 
       {pendingLifecycle && (

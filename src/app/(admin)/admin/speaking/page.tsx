@@ -632,6 +632,7 @@ export default function AdminSpeakingPage() {
               onPageChange={list.setPage}
               onPageSizeChange={list.setPageSize}
               pageSizeOptions={ADMIN_PAGE_SIZES}
+              alwaysShow
             />
           </div>
         </div>

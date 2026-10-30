@@ -2950,6 +2950,7 @@ export default function AdminExamsPage() {
               onPageChange={examList.setPage}
               onPageSizeChange={examList.setPageSize}
               pageSizeOptions={ADMIN_PAGE_SIZES}
+              alwaysShow
             />
           </div>
         </div>

@@ -18,6 +18,8 @@ export interface PaginationProps {
   pageSizeOptions?: number[];
   className?: string;
   showSummary?: boolean;
+  /** Keep the bar (summary and page-size picker) when everything fits on one page. */
+  alwaysShow?: boolean;
 }
 
 export const Pagination: React.FC<PaginationProps> = ({
@@ -30,8 +32,9 @@ export const Pagination: React.FC<PaginationProps> = ({
   pageSizeOptions = [10, 20, 50],
   className = "",
   showSummary = true,
+  alwaysShow = false,
 }) => {
-  if (totalPages <= 1 && (!totalItems || totalItems <= pageSize)) {
+  if (!alwaysShow && totalPages <= 1 && (!totalItems || totalItems <= pageSize)) {
     return null;
   }
 
