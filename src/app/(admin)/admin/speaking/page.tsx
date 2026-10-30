@@ -176,7 +176,11 @@ export default function AdminSpeakingPage() {
     "ALL" | "DRAFT" | "PUBLISHED"
   >("ALL");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  // 12 divides into the 2, 3 and 4 card rows the grid makes.
+  const [pageSize] = useState(12);
+  const [sortBy, setSortBy] = useState<
+    "UPDATED" | "TITLE" | "LEVEL" | "FEWEST"
+  >("UPDATED");
   const [showCategoryManagement, setShowCategoryManagement] = useState(false);
   const [categorySearch, setCategorySearch] = useState("");
   const [inlineCategoryOpen, setInlineCategoryOpen] = useState(false);
@@ -681,6 +685,28 @@ export default function AdminSpeakingPage() {
       statusFilter === "ALL" || s.publicationStatus === statusFilter;
     return matchesSearch && matchesLevel && matchesCategory && matchesStatus;
   });
+  // Sets arrive newest-updated first; the other orders are local.
+  const levelRank = (level?: string | null) => {
+    const cefr = /([ABC][12])/.exec(String(level ?? "").toUpperCase())?.[1];
+    if (cefr) return ["A1", "A2", "B1", "B2", "C1", "C2"].indexOf(cefr);
+    return { BEGINNER: 0, INTERMEDIATE: 2, ADVANCED: 4 }[String(level)] ?? 9;
+  };
+  if (sortBy === "TITLE")
+    filteredSets.sort((a, b) => a.title.localeCompare(b.title, "vi"));
+  if (sortBy === "LEVEL")
+    filteredSets.sort((a, b) => levelRank(a.level) - levelRank(b.level));
+  if (sortBy === "FEWEST")
+    filteredSets.sort(
+      (a, b) => (a.exercises?.length ?? 0) - (b.exercises?.length ?? 0),
+    );
+  const publishedSetCount = sets.filter(
+    (set) => set.publicationStatus === "PUBLISHED",
+  ).length;
+  const setFiltersActive =
+    searchTerm.trim() !== "" ||
+    levelFilter !== "ALL" ||
+    categoryFilter !== "ALL" ||
+    statusFilter !== "ALL";
   const levelOptions = Array.from(
     new Set(
       sets
@@ -790,102 +816,136 @@ export default function AdminSpeakingPage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-6">
+    <div className="space-y-6 p-6">
       {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
-            <Mic size={14} className="text-slate-700" /> NỘI DUNG HỌC · NÓI
-          </div>
-          <h1 className="mt-1 text-2xl font-bold text-slate-900">
+          <h1 className="text-2xl font-semibold text-slate-950">
             Bộ luyện nói
           </h1>
-          <p className="mt-1 text-xs text-slate-500">
-            Tạo, kiểm tra và xuất bản các bài luyện nói theo đúng trải nghiệm
-            học viên.
+          <p className="mt-1 text-sm tabular-nums text-slate-600">
+            {sets.length} bộ · {publishedSetCount} đã xuất bản ·{" "}
+            {sets.length - publishedSetCount} bản nháp
           </p>
         </div>
 
         <button
           onClick={openCreateSet}
-          className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-xs font-semibold text-white hover:bg-slate-800 transition-colors"
+          className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
         >
-          <Plus size={15} /> Tạo bộ luyện
+          <Plus size={16} /> Tạo bộ luyện
         </button>
       </div>
 
-      {/* FILTER BAR */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
-        <div className="relative flex-1 min-w-60">
+      {/* FILTERS */}
+      <div className="space-y-3">
+        <label className="relative block">
+          <span className="sr-only">Tìm bộ luyện nói</span>
           <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-            size={16}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            size={18}
+            aria-hidden="true"
           />
           <input
             type="text"
-            placeholder="Tìm kiếm bộ luyện nói theo tên, chủ đề..."
+            placeholder="Tìm theo tên, mô tả, phân loại..."
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
               setCurrentPage(1);
             }}
-            className="w-full rounded-lg border border-slate-200 bg-slate-50/50 py-2 pl-9 pr-3 text-xs text-slate-900 outline-none focus:border-slate-400 focus:bg-white"
+            className="min-h-11 w-full rounded-lg border border-slate-200 bg-white py-2 pl-10 pr-3 text-sm text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
           />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-medium text-slate-500">
-            Trình độ:
+        </label>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            Trình độ
+            <select
+              value={levelFilter}
+              onChange={(e) => {
+                setLevelFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+            >
+              <option value="ALL">Tất cả</option>
+              {levelOptions.map((level) => (
+                <option key={level} value={level}>
+                  {levelLabel(level)}
+                </option>
+              ))}
+            </select>
           </label>
-          <select
-            value={levelFilter}
-            onChange={(e) => {
-              setLevelFilter(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 outline-none focus:border-slate-400"
-          >
-            <option value="ALL">Tất cả trình độ</option>
-            {levelOptions.map((level) => (
-              <option key={level} value={level}>
-                {levelLabel(level)}
-              </option>
-            ))}
-          </select>
-          <label className="text-xs font-medium text-slate-500">
-            Phân loại:
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            Phân loại
+            <select
+              value={categoryFilter}
+              onChange={(e) => {
+                setCategoryFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+            >
+              <option value="ALL">Tất cả</option>
+              {categories.map((category) => (
+                <option key={category.code} value={category.code}>
+                  {category.name}
+                  {category.isActive ? "" : " (đã tắt)"}
+                </option>
+              ))}
+            </select>
           </label>
-          <select
-            value={categoryFilter}
-            onChange={(e) => {
-              setCategoryFilter(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 outline-none focus:border-slate-400"
-          >
-            <option value="ALL">Tất cả phân loại</option>
-            {categories.map((category) => (
-              <option key={category.code} value={category.code}>
-                {category.name}
-                {category.isActive ? "" : " (đã tắt)"}
-              </option>
-            ))}
-          </select>
-          <label className="text-xs font-medium text-slate-500">
-            Trạng thái:
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            Trạng thái
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value as typeof statusFilter);
+                setCurrentPage(1);
+              }}
+              className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+            >
+              <option value="ALL">Tất cả</option>
+              <option value="DRAFT">Bản nháp</option>
+              <option value="PUBLISHED">Đã xuất bản</option>
+            </select>
           </label>
-          <select
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value as typeof statusFilter);
-              setCurrentPage(1);
-            }}
-            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 outline-none focus:border-slate-400"
-          >
-            <option value="ALL">Tất cả trạng thái</option>
-            <option value="DRAFT">Bản nháp</option>
-            <option value="PUBLISHED">Đã xuất bản</option>
-          </select>
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            Sắp xếp
+            <select
+              value={sortBy}
+              onChange={(e) => {
+                setSortBy(e.target.value as typeof sortBy);
+                setCurrentPage(1);
+              }}
+              className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+            >
+              <option value="UPDATED">Mới cập nhật trước</option>
+              <option value="LEVEL">Trình độ thấp → cao</option>
+              <option value="TITLE">Tên A → Z</option>
+              <option value="FEWEST">Ít câu luyện trước</option>
+            </select>
+          </label>
+          <div className="ml-auto flex items-center gap-3 text-sm text-slate-600">
+            <span className="tabular-nums">
+              Hiện {filteredSets.length}/{sets.length}
+            </span>
+            {setFiltersActive && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchTerm("");
+                  setLevelFilter("ALL");
+                  setCategoryFilter("ALL");
+                  setStatusFilter("ALL");
+                  setCurrentPage(1);
+                }}
+                className="cursor-pointer font-semibold text-slate-900 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+              >
+                Xóa bộ lọc
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1045,77 +1105,90 @@ export default function AdminSpeakingPage() {
         </div>
       ) : paginatedSets.length > 0 ? (
         <div className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+          {/* Cards fill the canvas in 320px-minimum columns (3 at 1440,
+              4 at 1920) with one 16px gutter. */}
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(320px,100%),1fr))] gap-4">
             {paginatedSets.map((set) => (
               <div
                 key={set.id}
-                className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4 hover:border-slate-300 transition-colors"
+                className="flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-slate-300"
               >
-                <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700">
-                        {levelLabel(set.level)}
-                      </span>
-                      <span className="text-xs font-medium text-slate-500">
-                        {categoryLabel(categories, set.category)}
-                      </span>
-                    </div>
-                    <h2 className="text-base font-bold text-slate-900">
-                      {set.title}
-                    </h2>
-                    <p className="text-xs text-slate-500 line-clamp-2">
-                      {set.description || "Chưa có mô tả cho bộ luyện tập này."}
-                    </p>
-                  </div>
-
+                <div className="flex items-center gap-2">
+                  <span className="flex-none rounded-md bg-blue-50 px-1.5 py-0.5 text-xs font-semibold text-blue-800">
+                    {levelLabel(set.level)}
+                  </span>
+                  <span className="truncate text-xs text-slate-500">
+                    {categoryLabel(categories, set.category)}
+                  </span>
                   <span
-                    className={`rounded px-2 py-0.5 text-xs font-semibold shrink-0 ${
+                    className={`ml-auto flex-none whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-semibold ${
                       set.publicationStatus === "PUBLISHED"
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                        : "bg-amber-50 text-amber-700 border border-amber-200"
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "bg-amber-50 text-amber-800"
                     }`}
                   >
                     {STATUS_LABELS[set.publicationStatus]}
                   </span>
                 </div>
-
-                <div className="flex items-center justify-between text-xs text-slate-500">
-                  <span className="font-semibold text-slate-700">
-                    {set.exercises?.length || 0} câu luyện
-                  </span>
-
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => setActiveSet(set)}
-                      className="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 transition-colors"
-                    >
-                      Mở bộ luyện <ArrowRight size={13} />
-                    </button>
-                    <button
-                      onClick={() => openEditSet(set)}
-                      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
-                    >
-                      <Edit2 size={13} /> Chỉnh sửa
-                    </button>
-                    <button
-                      onClick={() => setPendingLifecycle(set)}
-                      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
-                    >
-                      <Send size={13} />{" "}
-                      {set.publicationStatus === "PUBLISHED"
-                        ? "Chuyển về bản nháp"
-                        : "Xuất bản"}
-                    </button>
-                    <button
-                      onClick={() =>
-                        setPendingDeleteSet({ id: set.id, title: set.title })
-                      }
-                      className="rounded-lg border border-slate-200 p-1.5 text-slate-400 hover:text-rose-600 hover:border-rose-200 transition-colors"
-                      title="Xóa bộ"
-                    >
-                      <Trash2 size={13} />
-                    </button>
+                <h2 className="mt-3 line-clamp-2 font-semibold text-slate-950">
+                  <button
+                    type="button"
+                    onClick={() => setActiveSet(set)}
+                    className="cursor-pointer text-left hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                  >
+                    {set.title}
+                  </button>
+                </h2>
+                <p className="mt-1 line-clamp-2 text-sm text-slate-600">
+                  {set.description || "Chưa có mô tả cho bộ luyện tập này."}
+                </p>
+                <div className="mt-auto pt-4">
+                  <div className="flex items-center gap-2 border-t border-slate-100 pt-3 text-sm text-slate-600">
+                    <span className="tabular-nums">
+                      {set.exercises?.length || 0} câu luyện
+                    </span>
+                    <div className="ml-auto flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => openEditSet(set)}
+                        className="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                        aria-label={`Chỉnh sửa ${set.title}`}
+                        title="Chỉnh sửa"
+                      >
+                        <Edit2 size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPendingLifecycle(set)}
+                        className="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                        aria-label={`${set.publicationStatus === "PUBLISHED" ? "Chuyển về bản nháp" : "Xuất bản"} ${set.title}`}
+                        title={
+                          set.publicationStatus === "PUBLISHED"
+                            ? "Chuyển về bản nháp"
+                            : "Xuất bản"
+                        }
+                      >
+                        <Send size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPendingDeleteSet({ id: set.id, title: set.title })
+                        }
+                        className="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                        aria-label={`Xóa ${set.title}`}
+                        title="Xóa bộ"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSet(set)}
+                        className="inline-flex min-h-9 cursor-pointer items-center gap-1 rounded-lg px-2 font-semibold text-slate-900 transition-colors hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                      >
+                        Mở <ArrowRight size={14} aria-hidden="true" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1135,8 +1208,9 @@ export default function AdminSpeakingPage() {
       ) : (
         <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-500">
           <Layers size={32} className="mx-auto mb-2 text-slate-300" />
-          Chưa có bộ luyện nói nào phù hợp. Hãy nhấn &quot;Tạo bộ luyện nói
-          mới&quot; để bắt đầu.
+          {sets.length
+            ? "Không có bộ luyện nào khớp bộ lọc. Hãy đổi từ khóa hoặc bộ lọc."
+            : "Chưa có bộ luyện nói nào. Nhấn “Tạo bộ luyện” để bắt đầu."}
         </div>
       )}
 

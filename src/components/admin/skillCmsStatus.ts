@@ -83,3 +83,88 @@ export function publishChecklist(input: {
   }
   return items;
 }
+
+/** CEFR tags in the order a learner meets them. */
+export const CMS_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
+
+/** The CEFR tag authored at the head of a title ("Hội thoại C1 — ..."). */
+export function cmsLevelFromTitle(title?: string | null): string | null {
+  const head = (title ?? "").split(" — ")[0].toUpperCase();
+  return /\b([ABC][12])\b/.exec(head)?.[1] ?? null;
+}
+
+export type ListSort = "NEWEST" | "OLDEST" | "TITLE" | "LEVEL" | "FEWEST";
+
+export type ListFilters = {
+  query: string;
+  status: "ALL" | "DRAFT" | "PUBLISHED";
+  level: string;
+  audio: "ALL" | AudioBadge["tone"];
+  sort: ListSort;
+};
+
+type ListItem = {
+  id: number;
+  title?: string | null;
+  description?: string | null;
+  level?: string | null;
+  type?: string | null;
+  publicationStatus?: string | null;
+  _count?: { questions?: number };
+  questions?: unknown[];
+  listeningAudioArtifacts?: Array<{ version: number; status: string }>;
+};
+
+export const contentLevel = (item: ListItem) =>
+  cmsLevelFromTitle(item.title) ?? item.level ?? null;
+
+/** The title as a card shows it: without the "Hội thoại C1 — " head. */
+export const displayTitle = (item: { title?: string | null }) => {
+  const title = String(item.title ?? "");
+  return cmsLevelFromTitle(title) && title.includes(" — ")
+    ? title.split(" — ").slice(1).join(" — ")
+    : title;
+};
+
+const questionCount = (item: ListItem) =>
+  item._count?.questions ?? item.questions?.length ?? 0;
+
+const levelRank = (item: ListItem) => {
+  const index = (CMS_LEVELS as readonly string[]).indexOf(
+    contentLevel(item) ?? "",
+  );
+  return index < 0 ? CMS_LEVELS.length : index;
+};
+
+/** The admin list after search, filters and sort. `extra` adds a page-only filter. */
+export function filterSkillContent<T extends ListItem>(
+  items: T[],
+  filters: ListFilters,
+  extra: (item: T) => boolean = () => true,
+): T[] {
+  const query = filters.query.trim().toLocaleLowerCase("vi");
+  const visible = items.filter((item) => {
+    const searchable = [item.title, item.description, item.level, item.type]
+      .filter(Boolean)
+      .join(" ")
+      .toLocaleLowerCase("vi");
+    return (
+      (!query || searchable.includes(query)) &&
+      (filters.status === "ALL" ||
+        (item.publicationStatus || "DRAFT") === filters.status) &&
+      (filters.level === "ALL" || contentLevel(item) === filters.level) &&
+      (filters.audio === "ALL" ||
+        latestAudioBadge(item.listeningAudioArtifacts?.[0]).tone ===
+          filters.audio) &&
+      extra(item)
+    );
+  });
+  const by: Record<ListSort, (a: T, b: T) => number> = {
+    NEWEST: (a, b) => b.id - a.id,
+    OLDEST: (a, b) => a.id - b.id,
+    TITLE: (a, b) => displayTitle(a).localeCompare(displayTitle(b), "vi"),
+    LEVEL: (a, b) => levelRank(a) - levelRank(b) || b.id - a.id,
+    FEWEST: (a, b) => questionCount(a) - questionCount(b) || b.id - a.id,
+  };
+  return visible.sort(by[filters.sort]);
+}

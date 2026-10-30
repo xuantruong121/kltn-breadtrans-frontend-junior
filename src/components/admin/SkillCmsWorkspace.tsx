@@ -28,7 +28,16 @@ import ImageUploadField from "@/components/admin/ImageUploadField";
 import RequiredMediaNotice from "@/components/admin/RequiredMediaNotice";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
-import { latestAudioBadge, publishChecklist } from "./skillCmsStatus";
+import {
+  CMS_LEVELS,
+  cmsLevelFromTitle,
+  contentLevel,
+  displayTitle,
+  filterSkillContent,
+  latestAudioBadge,
+  publishChecklist,
+  type ListFilters,
+} from "./skillCmsStatus";
 
 type Domain = "listening" | "reading" | "writing";
 type ListeningMode = "COMPREHENSION" | "DICTATION" | "DIALOGUE";
@@ -78,10 +87,19 @@ const CONTENT_LEVEL_OPTIONS = ["A1", "A2", "B1", "B2", "C1"] as const;
 
 /** The CEFR tag authored at the head of a title ("Hội thoại C1 — ..."); quizzes have no level column. */
 function levelFromTitle(title?: string | null): string | null {
-  const head = (title ?? "").split(" — ")[0].toUpperCase();
-  const match = /\b([ABC][12])\b/.exec(head);
-  return match && (CONTENT_LEVEL_OPTIONS as readonly string[]).includes(match[1]) ? match[1] : null;
+  const level = cmsLevelFromTitle(title);
+  return level && (CONTENT_LEVEL_OPTIONS as readonly string[]).includes(level)
+    ? level
+    : null;
 }
+
+const FILTER_SELECT =
+  "min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200";
+const NO_FILTERS: Omit<ListFilters, "query" | "status"> = {
+  level: "ALL",
+  audio: "ALL",
+  sort: "NEWEST",
+};
 
 const LISTENING_MODE_OPTIONS: Array<{
   value: ListeningMode;
@@ -311,6 +329,9 @@ export default function SkillCmsWorkspace({
   >("ALL");
   const [listeningModeFilter, setListeningModeFilter] =
     useState<ListeningModeFilter>("ALL");
+  const [listFilters, setListFilters] =
+    useState<Omit<ListFilters, "query" | "status">>(NO_FILTERS);
+  const [writingTypeFilter, setWritingTypeFilter] = useState("ALL");
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
   const [pendingPublicationStatus, setPendingPublicationStatus] = useState<
     "DRAFT" | "PUBLISHED" | null
@@ -1159,28 +1180,31 @@ export default function SkillCmsWorkspace({
     );
 
   if (mode === "list") {
-    const visibleItems = items.filter((content) => {
-      const query = searchTerm.trim().toLocaleLowerCase("vi");
-      const searchable = [
-        content.title,
-        content.description,
-        content.level,
-        content.type,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLocaleLowerCase("vi");
-      const status = content.publicationStatus || "DRAFT";
-      const matchesListeningMode =
-        domain !== "listening" ||
-        listeningModeFilter === "ALL" ||
-        getListeningMode(content) === listeningModeFilter;
-      return (
-        (!query || searchable.includes(query)) &&
-        (statusFilter === "ALL" || status === statusFilter) &&
-        matchesListeningMode
-      );
-    });
+    const visibleItems = filterSkillContent(
+      items,
+      { ...listFilters, query: searchTerm, status: statusFilter },
+      (content: any) =>
+        (domain !== "listening" ||
+          listeningModeFilter === "ALL" ||
+          getListeningMode(content) === listeningModeFilter) &&
+        (domain !== "writing" ||
+          writingTypeFilter === "ALL" ||
+          content.type === writingTypeFilter),
+    );
+    const filtersActive =
+      searchTerm.trim() !== "" ||
+      statusFilter !== "ALL" ||
+      listeningModeFilter !== "ALL" ||
+      writingTypeFilter !== "ALL" ||
+      listFilters.level !== "ALL" ||
+      listFilters.audio !== "ALL";
+    const levelsPresent = CMS_LEVELS.filter((level) =>
+      items.some((content) => contentLevel(content) === level),
+    );
+    const setFilter = <K extends keyof typeof listFilters>(
+      key: K,
+      value: (typeof listFilters)[K],
+    ) => setListFilters((current) => ({ ...current, [key]: value }));
 
     const publishedCount = items.filter(
       (content) => content.publicationStatus === "PUBLISHED",
@@ -1299,8 +1323,11 @@ export default function SkillCmsWorkspace({
               className="min-h-11 w-full rounded-lg border border-slate-200 bg-white py-2 pl-10 pr-3 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
             />
           </label>
-          <label className="text-sm font-medium text-slate-700">
-            <span className="sr-only">Lọc theo trạng thái</span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            Trạng thái
             <select
               value={statusFilter}
               onChange={(event) =>
@@ -1308,24 +1335,114 @@ export default function SkillCmsWorkspace({
                   event.target.value as "ALL" | "DRAFT" | "PUBLISHED",
                 )
               }
-              className="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200 lg:w-44"
+              className={FILTER_SELECT}
             >
-              <option value="ALL">Tất cả trạng thái</option>
+              <option value="ALL">Tất cả</option>
               <option value="DRAFT">Bản nháp</option>
               <option value="PUBLISHED">Đã xuất bản</option>
             </select>
           </label>
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            Trình độ
+            <select
+              value={listFilters.level}
+              onChange={(event) => setFilter("level", event.target.value)}
+              className={FILTER_SELECT}
+            >
+              <option value="ALL">Tất cả</option>
+              {levelsPresent.map((level) => (
+                <option key={level} value={level}>
+                  {level}
+                </option>
+              ))}
+            </select>
+          </label>
+          {domain === "listening" && (
+            <label className="flex items-center gap-2 text-sm text-slate-600">
+              Audio
+              <select
+                value={listFilters.audio}
+                onChange={(event) =>
+                  setFilter(
+                    "audio",
+                    event.target.value as ListFilters["audio"],
+                  )
+                }
+                className={FILTER_SELECT}
+              >
+                <option value="ALL">Tất cả</option>
+                <option value="ok">Đang dùng</option>
+                <option value="pending">Chờ duyệt / xuất bản</option>
+                <option value="none">Chưa có audio</option>
+                <option value="error">Lỗi</option>
+              </select>
+            </label>
+          )}
+          {domain === "writing" && (
+            <label className="flex items-center gap-2 text-sm text-slate-600">
+              Dạng bài
+              <select
+                value={writingTypeFilter}
+                onChange={(event) => setWritingTypeFilter(event.target.value)}
+                className={FILTER_SELECT}
+              >
+                <option value="ALL">Tất cả</option>
+                <option value="WRITING_EMAIL">
+                  {writingTypeLabel("WRITING_EMAIL")}
+                </option>
+                <option value="WRITING_PICTURE">
+                  {writingTypeLabel("WRITING_PICTURE")}
+                </option>
+              </select>
+            </label>
+          )}
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            Sắp xếp
+            <select
+              value={listFilters.sort}
+              onChange={(event) =>
+                setFilter("sort", event.target.value as ListFilters["sort"])
+              }
+              className={FILTER_SELECT}
+            >
+              <option value="NEWEST">Mới tạo trước</option>
+              <option value="OLDEST">Cũ trước</option>
+              <option value="LEVEL">Trình độ A1 → C2</option>
+              <option value="TITLE">Tên A → Z</option>
+              <option value="FEWEST">Ít câu hỏi trước</option>
+            </select>
+          </label>
+          <div className="ml-auto flex items-center gap-3 text-sm text-slate-600">
+            <span className="tabular-nums">
+              Hiện {visibleItems.length}/{items.length}
+            </span>
+            {filtersActive && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchTerm("");
+                  setStatusFilter("ALL");
+                  setListeningModeFilter("ALL");
+                  setWritingTypeFilter("ALL");
+                  setListFilters((current) => ({
+                    ...NO_FILTERS,
+                    sort: current.sort,
+                  }));
+                }}
+                className="cursor-pointer font-semibold text-slate-900 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+              >
+                Xóa bộ lọc
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-[repeat(auto-fill,minmax(min(320px,100%),1fr))] gap-4">
           {visibleItems.map((content) => {
-            const level = levelFromTitle(content.title) ?? content.level;
+            const level = contentLevel(content);
             // The level and form show as tags, so the title drops its
             // "Hội thoại C1 — " head.
-            const cardTitle =
-              level && String(content.title).includes(" — ")
-                ? String(content.title).split(" — ").slice(1).join(" — ")
-                : content.title;
+            const cardTitle = displayTitle(content);
             const published = content.publicationStatus === "PUBLISHED";
             const audio = latestAudioBadge(content.listeningAudioArtifacts?.[0]);
             return (
