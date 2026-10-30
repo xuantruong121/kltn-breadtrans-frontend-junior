@@ -1,5 +1,6 @@
 "use client";
 
+import { whenCourses } from "@/lib/featureFlags";
 import { Suspense, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
@@ -324,13 +325,13 @@ export function AppHeader() {
       active: isExamRoute(pathname),
       iconColor: "text-orange-500 dark:text-orange-400",
     },
-    {
+    ...whenCourses({
       label: "Khóa học",
       href: "/courses",
       icon: GraduationCap,
       active: isCoursesRoute(pathname),
       iconColor: "text-indigo-500 dark:text-indigo-400",
-    },
+    }),
     {
       label: "Cửa hàng",
       href: "/market",
@@ -365,7 +366,7 @@ export function AppHeader() {
   const mobileSecondaryLinks: HeaderNavLink[] = [
     { label: "Flashcard từ vựng", href: "/flashcard", icon: Layers },
     { label: "Luyện đề", href: "/exams", icon: Target, isExam: true },
-    { label: "Khóa học", href: "/courses", icon: GraduationCap },
+    ...whenCourses<HeaderNavLink>({ label: "Khóa học", href: "/courses", icon: GraduationCap }),
     { label: "Cửa hàng", href: "/market", icon: ShoppingBag },
     { label: "Bảng xếp hạng", href: "/arena", icon: Trophy },
     { label: "FAQ", href: "/help", icon: CircleHelp },

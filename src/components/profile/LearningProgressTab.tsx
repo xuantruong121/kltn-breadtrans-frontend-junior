@@ -1,5 +1,6 @@
 "use client";
 
+import { COURSES_ENABLED } from "@/lib/featureFlags";
 import Link from "next/link";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -122,7 +123,7 @@ export function LearningProgressTab() {
         ),
       );
     },
-    enabled: Boolean(user?.id),
+    enabled: COURSES_ENABLED && Boolean(user?.id),
     staleTime: 60_000,
   });
 
@@ -210,10 +211,10 @@ export function LearningProgressTab() {
       type: "DISCOVERY" as const,
       badge: "Sẵn sàng học tiếp",
       title: "Chọn nội dung để tiếp tục luyện tập",
-      subtitle: "Khám phá các khóa học hoặc chọn một trong bốn kỹ năng bên dưới.",
+      subtitle: "Chọn một trong bốn kỹ năng bên dưới hoặc luyện một đề TOEIC.",
       progress: null,
-      route: "/courses",
-      ctaText: "Khám phá khóa học",
+      route: "/exams",
+      ctaText: "Luyện đề TOEIC",
     };
   }, [dailyPractice, learningCourses]);
 
@@ -491,6 +492,7 @@ export function LearningProgressTab() {
       {/* 5. Course Progress & Weekly Activity (Balanced Split Layout) */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         {/* Course Progress (7 cols) */}
+        {COURSES_ENABLED && (
         <section
           aria-labelledby="course-progress-heading"
           className="lg:col-span-7 flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900"
@@ -586,11 +588,12 @@ export function LearningProgressTab() {
             )}
           </div>
         </section>
+        )}
 
         {/* Weekly Activity (5 cols) */}
         <section
           aria-labelledby="weekly-activity-heading"
-          className="lg:col-span-5 flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900"
+          className={`${COURSES_ENABLED ? "lg:col-span-5" : "lg:col-span-12"} flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900`}
         >
           <div>
             <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">

@@ -1,5 +1,19 @@
 import type { NextConfig } from "next";
 
+// Courses are hidden unless explicitly enabled (see src/lib/featureFlags.ts).
+const COURSES_ENABLED = process.env.NEXT_PUBLIC_COURSES_ENABLED === "true";
+const hiddenCourseRoutes = COURSES_ENABLED
+  ? []
+  : [
+      ...["/courses", "/my-courses", "/learn", "/classes"].flatMap((base) => [
+        { source: base, destination: "/dashboard", permanent: false },
+        { source: `${base}/:path*`, destination: "/dashboard", permanent: false },
+      ]),
+      { source: "/admin/courses", destination: "/admin", permanent: false },
+      { source: "/admin/courses/:path*", destination: "/admin", permanent: false },
+      { source: "/admin/assignments", destination: "/admin", permanent: false },
+    ];
+
 const nextConfig: NextConfig = {
   // A second dev server (the disposable QA harness) needs its own build
   // directory so it never shares .next with the owner's running instance.
@@ -21,9 +35,10 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/course',
-        destination: '/courses',
-        permanent: true,
+        destination: COURSES_ENABLED ? '/courses' : '/dashboard',
+        permanent: false,
       },
+      ...hiddenCourseRoutes,
     ];
   },
 };

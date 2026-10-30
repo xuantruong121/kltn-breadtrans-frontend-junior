@@ -1,3 +1,4 @@
+import { whenCourses } from "../../lib/featureFlags.ts";
 /**
  * Navigation routing helpers
  * Distinguishes between Exam Practice (Luyện đề) and Skill Practice (Luyện tập kỹ năng).
@@ -105,7 +106,7 @@ export const MAIN_NAV_ORDER: NavItemConfig[] = [
   { label: "Viết", href: "/writing" },
   { label: "Flashcard", href: "/flashcard" },
   { label: "Luyện đề", href: "/exams" },
-  { label: "Khóa học", href: "/courses" },
+  ...whenCourses<NavItemConfig>({ label: "Khóa học", href: "/courses" }),
   { label: "Cửa hàng", href: "/market" },
   { label: "More", href: "#more" },
 ];

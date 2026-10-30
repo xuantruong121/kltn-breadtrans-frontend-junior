@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { COURSES_ENABLED } from "@/lib/featureFlags";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -260,7 +261,7 @@ export default function AdminLearnerTrackingPage() {
 
       <SectionCard title="Tổng quan học tập" icon={<Activity size={18} />}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Metric label="Tiến độ khóa học" value={courseProgress === null ? "Chưa có dữ liệu" : `${courseProgress}%`} detail={`${data.overview.completedCourseLessons}/${data.overview.totalCourseLessons} bài học`} />
+          {COURSES_ENABLED && <Metric label="Tiến độ khóa học" value={courseProgress === null ? "Chưa có dữ liệu" : `${courseProgress}%`} detail={`${data.overview.completedCourseLessons}/${data.overview.totalCourseLessons} bài học`} />}
           <Metric label="Hoạt động gần đây" value={data.overview.recentActivityCount} detail="bản ghi server" />
           <Metric label="Từ vựng đã học" value={data.overview.vocabularyStudied} detail={`${data.overview.vocabularyMastered} từ đã thuần thục`} />
           <Metric label="Luyện đề" value={data.overview.examAttempts} detail={`${data.overview.grammarAttempts} lượt ngữ pháp`} />
@@ -275,9 +276,11 @@ export default function AdminLearnerTrackingPage() {
       </div>
 
       <div className="grid gap-5 xl:grid-cols-2">
-        <SectionCard title="Khóa học đang học" icon={<GraduationCap size={18} />}>
-          {data.courses.length ? <div className="space-y-4">{data.courses.map((course: Row) => <CourseRow key={course.id} course={course} />)}</div> : <EmptyState label="Chưa có khóa học hoặc bài học đã ghi nhận" />}
-        </SectionCard>
+        {COURSES_ENABLED && (
+          <SectionCard title="Khóa học đang học" icon={<GraduationCap size={18} />}>
+            {data.courses.length ? <div className="space-y-4">{data.courses.map((course: Row) => <CourseRow key={course.id} course={course} />)}</div> : <EmptyState label="Chưa có khóa học hoặc bài học đã ghi nhận" />}
+          </SectionCard>
+        )}
         <SectionCard title="Từ vựng" icon={<Layers3 size={18} />}>
           <div className="mb-4 grid grid-cols-3 gap-2 text-center"><Metric label="Đã học" value={data.vocabulary.studiedCount} /><Metric label="Thuần thục" value={data.vocabulary.masteredCount} /><Metric label="Đến hạn ôn" value={data.vocabulary.dueCount} /></div>
           {data.vocabulary.recent.length ? <div className="space-y-2">{data.vocabulary.recent.slice(0, 5).map((item: Row) => <ResultRow key={item.id} title={item.word} meta={item.isMastered ? "Đã thuần thục" : `${item.reviewCount} lượt ôn`} date={item.lastReviewedAt} />)}</div> : <EmptyState />}

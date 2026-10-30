@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Mail, GraduationCap, MapPin } from "lucide-react";
 import { BrandLogo } from "@/components/brand";
+import { COURSES_ENABLED } from "@/lib/featureFlags";
 
 export function PublicFooter() {
   return (
@@ -24,11 +25,13 @@ export function PublicFooter() {
                   Trang chủ
                 </Link>
               </li>
+              {COURSES_ENABLED && (
               <li>
                 <Link href="/courses" className="transition-colors hover:text-amber-600 dark:hover:text-amber-400">
                   Danh sách khóa học
                 </Link>
               </li>
+              )}
               <li>
                 <Link href="/exams" className="transition-colors hover:text-amber-600 dark:hover:text-amber-400">
                   Đề thi TOEIC
@@ -51,11 +54,13 @@ export function PublicFooter() {
                   Đăng nhập hệ thống
                 </Link>
               </li>
+              {COURSES_ENABLED && (
               <li>
                 <Link href="/courses" className="transition-colors hover:text-amber-600 dark:hover:text-amber-400">
                   Danh mục khóa học
                 </Link>
               </li>
+              )}
               <li>
                 <Link href="/flashcard" className="transition-colors hover:text-amber-600 dark:hover:text-amber-400">
                   Flashcard từ vựng

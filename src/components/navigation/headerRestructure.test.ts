@@ -1,5 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { COURSES_ENABLED } from "../../lib/featureFlags.ts";
 import {
   MAIN_NAV_ORDER,
   MORE_DROPDOWN_ITEMS,
@@ -24,12 +25,12 @@ describe("Header Navigation Restructure Verification", () => {
       "Viết",
       "Flashcard",
       "Luyện đề",
-      "Khóa học",
+      ...(COURSES_ENABLED ? ["Khóa học"] : []),
       "Cửa hàng",
       "More",
     ];
 
-    assert.equal(MAIN_NAV_ORDER.length, 10);
+    assert.equal(MAIN_NAV_ORDER.length, expectedLabels.length);
     MAIN_NAV_ORDER.forEach((item, index) => {
       assert.equal(item.label, expectedLabels[index]);
     });

@@ -1,3 +1,4 @@
+import { whenCourses } from "../featureFlags.ts";
 export interface AdminAuthoringDestination {
   label: string;
   description: string;
@@ -6,12 +7,12 @@ export interface AdminAuthoringDestination {
 }
 
 export const ADMIN_AI_AUTHORING_DESTINATIONS: AdminAuthoringDestination[] = [
-  {
+  ...whenCourses<AdminAuthoringDestination>({
     label: "Khóa học",
     description: "AI phân loại lộ trình và gợi ý các bài học phù hợp.",
     href: "/admin/courses",
     iconName: "BookOpen",
-  },
+  }),
   {
     label: "Bài nghe",
     description: "AI soạn nguồn nghe cùng câu hỏi nháp để Admin duyệt.",
@@ -77,12 +78,12 @@ export const ADMIN_NAV_GROUPS: AdminNavGroupConfig[] = [
     title: "NỘI DUNG HỌC",
     iconName: "BookMarked",
     items: [
-      {
+      ...whenCourses({
         id: "courses",
         href: "/admin/courses",
         label: "Khóa học",
         iconName: "BookOpen",
-      },
+      }),
       {
         id: "listening",
         href: "/admin/listening",

@@ -1,5 +1,6 @@
 "use client";
 
+import { whenCourses } from "@/lib/featureFlags";
 import React, { useState } from "react";
 import { ChevronDown, Check, Minus } from "lucide-react";
 
@@ -53,13 +54,13 @@ const COMPARISON_FEATURES: ComparisonFeature[] = [
     plus: true,
     pro: true,
   },
-  {
+  ...whenCourses({
     category: "Khóa học",
     name: "Khóa học tự học theo lộ trình",
     free: false,
     plus: false,
     pro: true,
-  },
+  }),
   {
     category: "Khác",
     name: "Đấu trường từ vựng, cửa hàng và thú cưng",

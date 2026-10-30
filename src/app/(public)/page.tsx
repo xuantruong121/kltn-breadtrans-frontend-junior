@@ -798,10 +798,10 @@ export default function PublicLandingPage() {
               )}
 
               <Link
-                href="/courses"
+                href="/exams"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-white/15 hover:bg-white/25 border border-white/30 text-white font-extrabold text-base transition-colors cursor-pointer"
               >
-                <span>Xem danh mục khóa học</span>
+                <span>Xem đề luyện TOEIC</span>
               </Link>
             </div>
 
