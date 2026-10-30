@@ -12,6 +12,8 @@ interface AudioUploadFieldProps {
   onChange: (url: string) => void;
   disabled?: boolean;
   helperText?: string;
+  /** Playable URL when `value` is a stored key, not a URL (signed by the API). */
+  previewUrl?: string;
 }
 
 export default function AudioUploadField({
@@ -20,6 +22,7 @@ export default function AudioUploadField({
   onChange,
   disabled = false,
   helperText = "Hỗ trợ định dạng MP3, WAV, AAC, M4A tối đa 50MB.",
+  previewUrl,
 }: AudioUploadFieldProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -127,7 +130,7 @@ export default function AudioUploadField({
               </div>
             </div>
 
-            <audio controls src={value} className="w-full h-9 rounded" aria-label="Audio player preview">
+            <audio controls src={previewUrl ?? value} className="w-full h-9 rounded" aria-label="Audio player preview">
               Trình duyệt không hỗ trợ thẻ audio.
             </audio>
 

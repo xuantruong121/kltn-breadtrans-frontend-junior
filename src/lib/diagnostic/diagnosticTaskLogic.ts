@@ -97,6 +97,15 @@ export function formatCriterionName(key: string): string {
   return CRITERION_LABELS[key] ?? key;
 }
 
+const CRITERION_SCORE_WORDS = ["Chưa đạt", "Yếu", "Tạm được", "Khá", "Tốt"];
+
+/** A rubric criterion score 0-4 in plain words, e.g. "3/4 · Khá". */
+export function describeCriterionScore(value: number | null): string {
+  if (value === null) return "Chưa đánh giá";
+  const word = CRITERION_SCORE_WORDS[Math.round(value)];
+  return word ? `${value}/4 · ${word}` : `${value}/4`;
+}
+
 export type SkillStateLabel = { label: string; tone: "done" | "pending" | "failed" | "missing" | "skipped" };
 
 export function describeSkillState(

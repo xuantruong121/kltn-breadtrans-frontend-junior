@@ -70,10 +70,16 @@ export function withheldMessage(reason: string | null): string | null {
   }
 }
 
-/** Authored difficulty tiers D1-D4: a design hypothesis, never a level. */
+const DIFFICULTY_LABELS: Record<string, string> = {
+  D1: "Câu dễ",
+  D2: "Câu trung bình",
+  D3: "Câu khó",
+  D4: "Câu rất khó",
+};
+
+/** Authored difficulty tiers D1-D4: how hard the question is, never a learner level. */
 export function formatDifficulty(key: string): string {
-  const match = /^D([1-4])$/.exec(key);
-  return match ? `Độ khó ${match[1]}/4` : "Chưa phân loại độ khó";
+  return DIFFICULTY_LABELS[key] ?? "Chưa phân loại độ khó";
 }
 
 const SUBSKILL_LABELS: Record<string, string> = {

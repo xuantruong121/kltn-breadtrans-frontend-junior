@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect, use, useRef } from "react";
+import { attemptForSubmission, parsePendingAttempt } from "@/lib/writing/writingAttemptLogic";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -34,7 +35,7 @@ import {
 import { PracticeWritingDetail } from "@/components/writing/PracticeWritingDetail";
 import { ToeicWritingExamStrip } from "@/components/toeic/ToeicWritingExamStrip";
 import axiosClient from "@/lib/api/axiosClient";
-import { isPremiumWritingForbiddenError } from "@/modules/subscription/planLogic";
+import { classifyPracticeLoadError } from "@/lib/practice/practiceLoadErrorLogic";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
 import { isSafeCourseReturn, withSafeReturnTo } from "@/lib/course/navigation";
@@ -90,6 +91,8 @@ export default function WritingDetailPage(props: {
   const user = useAuthStore((state) => state.user);
   const [content, setContent] = useState("");
   const [isEvaluating, setIsEvaluating] = useState(false);
+  // Blocks a second submit fired before the disabled button re-renders.
+  const submittingRef = useRef(false);
   const [feedback, setFeedback] = useState<WritingEvaluation | null>(null);
   // Picture tasks show their result beside the editor instead of a new page.
   const [pictureResult, setPictureResult] = useState<WritingEvaluation | null>(null);
@@ -130,6 +133,7 @@ export default function WritingDetailPage(props: {
     data: topicData,
     isLoading,
     error: topicError,
+    refetch: refetchTopic,
   } = useQuery({
     queryKey: ["writing-topic", topicId],
     queryFn: () => writingService.getQuizDetails(topicId, examParentContext),
@@ -180,7 +184,9 @@ export default function WritingDetailPage(props: {
     defaultFallbackUrl: "/writing",
   });
 
-  if (isPremiumWritingForbiddenError(topicError)) {
+  const loadError = classifyPracticeLoadError(topicError);
+  if (loadError?.kind === "LOCKED") {
+    const plan = loadError.requiredPlan;
     return (
       <div className="min-h-dvh flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-6 text-center">
         <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800/80 rounded-2xl p-6 sm:p-8 shadow-lg text-center space-y-4">
@@ -189,14 +195,15 @@ export default function WritingDetailPage(props: {
           </div>
           <div>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
-              PRO
+              {plan}
             </span>
             <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 mt-2">
-              Nội dung dành cho PRO
+              Nội dung dành cho {plan}
             </h2>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-2">
-              Bài luyện viết từ trình độ Trung cấp trở lên thuộc gói PRO. Gói
-              PLUS không bao gồm phần này.
+            <p className="text-sm sm:text-base text-slate-700 dark:text-slate-300 mt-2">
+              {plan === "PRO"
+                ? "Bài luyện này có trong hệ thống, nhưng bài luyện viết từ trình độ Trung cấp (B1) trở lên chỉ mở cho gói PRO. Gói PLUS không bao gồm phần này."
+                : "Bài luyện này có trong hệ thống và mở cho gói PLUS hoặc PRO."}
             </p>
           </div>
           <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
@@ -207,10 +214,10 @@ export default function WritingDetailPage(props: {
               Quay lại danh sách
             </Link>
             <Link
-              href={plansHrefFor("PRO")}
+              href={plansHrefFor(plan)}
               className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm shadow-sm transition text-center"
             >
-              Xem gói PRO
+              Xem gói {plan}
             </Link>
           </div>
         </div>
@@ -226,6 +233,46 @@ export default function WritingDetailPage(props: {
     );
   }
 
+  // Never show the editor without a loaded exercise: say what went wrong.
+  if (loadError || !topicData) {
+    return (
+      <div className="min-h-dvh flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-8 text-center">
+        <p className="text-base font-bold text-slate-800 dark:text-slate-200">
+          {loadError?.kind === "AUTH"
+            ? "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để mở bài luyện."
+            : loadError?.kind === "FAILED"
+              ? "Chưa tải được bài luyện. Vui lòng thử lại."
+              : "Không tìm thấy bài luyện viết."}
+        </p>
+        <div className="mt-4 flex flex-wrap justify-center gap-2.5">
+          <Link
+            href="/writing"
+            className="inline-flex min-h-11 items-center rounded-xl border border-slate-200 px-5 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            Quay lại danh sách
+          </Link>
+          {loadError?.kind === "AUTH" && (
+            <Link
+              href="/login"
+              className="inline-flex min-h-11 items-center rounded-xl bg-amber-500 px-5 text-sm font-extrabold text-white hover:bg-amber-600"
+            >
+              Đăng nhập lại
+            </Link>
+          )}
+          {loadError?.kind === "FAILED" && (
+            <button
+              type="button"
+              onClick={() => void refetchTopic()}
+              className="inline-flex min-h-11 items-center rounded-xl bg-amber-500 px-5 text-sm font-extrabold text-white hover:bg-amber-600 cursor-pointer"
+            >
+              Thử lại
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   const handleEvaluate = async () => {
     if (minimumWords !== null && wordCount < minimumWords) {
       toast.error(
@@ -234,15 +281,32 @@ export default function WritingDetailPage(props: {
       return;
     }
 
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setIsEvaluating(true);
     setFeedback(null);
 
+    // The same text keeps its attempt id (also across a refresh), so a retry
+    // after a lost response returns the grade already stored on the server.
+    const attemptKey = draftKey ? `${draftKey}:attempt` : null;
+    let stored = null;
     try {
-      const clientAttemptId = crypto.randomUUID();
+      stored = attemptKey ? parsePendingAttempt(sessionStorage.getItem(attemptKey)) : null;
+    } catch {
+      stored = null;
+    }
+    const attempt = attemptForSubmission(stored, content, () => crypto.randomUUID());
+    try {
+      if (attemptKey) sessionStorage.setItem(attemptKey, JSON.stringify(attempt));
+    } catch {
+      // Without storage the retry still works within this page.
+    }
+
+    try {
       const result = await writingService.submit(
         topicId,
-        content.trim(),
-        clientAttemptId,
+        attempt.text,
+        attempt.id,
         examParentContext,
         currentTask?.id,
       );
@@ -260,6 +324,7 @@ export default function WritingDetailPage(props: {
       if (draftKey) {
         try {
           localStorage.removeItem(draftKey);
+          if (attemptKey) sessionStorage.removeItem(attemptKey);
         } catch {
           // Ignore storage cleanup failures.
         }
@@ -313,7 +378,9 @@ export default function WritingDetailPage(props: {
       );
     } catch {
       setIsEvaluating(false);
-      toast.error("Có lỗi xảy ra khi chấm bài. Vui lòng thử lại!");
+      toast.error("Chưa chấm được bài. Bài viết của bạn vẫn còn, hãy thử gửi lại.");
+    } finally {
+      submittingRef.current = false;
     }
   };
 
@@ -398,7 +465,7 @@ export default function WritingDetailPage(props: {
                         Chủ Đề Yêu Cầu
                       </span>
                       <h2 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">
-                        {topic?.title || "Bài luyện viết"}
+                        {topic?.title ? quizDisplayTitle(topicId, topic.title, topic.cefrLevel) : "Bài luyện viết"}
                       </h2>
                     </div>
                   </div>
@@ -451,10 +518,10 @@ export default function WritingDetailPage(props: {
                   )}
 
                   <div className="bg-rose-50/60 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/40 p-5 rounded-2xl space-y-2">
-                    <span className="text-xs font-extrabold text-rose-800 dark:text-rose-300 uppercase tracking-wide">
-                      Yêu cầu đề bài (Prompt):
+                    <span className="text-sm font-extrabold text-rose-800 dark:text-rose-300 uppercase tracking-wide">
+                      Yêu cầu đề bài
                     </span>
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 leading-relaxed">
+                    <p className="text-lg font-semibold text-slate-900 dark:text-slate-100 leading-8">
                       {topic?.prompt ||
                         topic?.description ||
                         "Đọc kỹ yêu cầu và viết câu trả lời phù hợp với tình huống."}
@@ -543,11 +610,11 @@ export default function WritingDetailPage(props: {
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     placeholder={resolveWritingPlaceholder(topic ?? {})}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 font-medium text-sm outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 transition-all leading-relaxed text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 font-medium text-base outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 transition-all leading-relaxed text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
 
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                       {topic?.wordRange?.length === 2
                         ? `Mục tiêu ${topic.wordRange[0]}–${topic.wordRange[1]} từ.`
                         : "Hãy trả lời đầy đủ yêu cầu và kiểm tra lại bài trước khi gửi."}
@@ -695,7 +762,7 @@ export default function WritingDetailPage(props: {
                       Mẫu Câu Hữu Ích
                     </h3>
 
-                    <div className="space-y-3 text-xs">
+                    <div className="space-y-3 text-sm">
                       {writingMode.guidance.map((item) => (
                         <div
                           key={item.title}
@@ -704,7 +771,7 @@ export default function WritingDetailPage(props: {
                           <p className="font-bold text-slate-800 dark:text-slate-200">
                             {item.title}
                           </p>
-                          <p className="text-slate-600 dark:text-slate-400 italic">
+                          <p className="text-base text-slate-700 dark:text-slate-300">
                             “{item.stem}”
                           </p>
                         </div>

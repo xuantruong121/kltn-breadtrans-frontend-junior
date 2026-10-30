@@ -20,7 +20,7 @@ import {
   DiagnosticPracticeRecommendation,
   DiagnosticResult,
 } from "@/lib/api/services/diagnostic.service";
-import { formatPlacementLevel, formatSkillName } from "@/lib/diagnostic/diagnosticUiLogic";
+import { formatPlacementLevel, formatSkillName, resultPollInterval, summarizeSkillStanding } from "@/lib/diagnostic/diagnosticUiLogic";
 import { ObservedResultPanel } from "@/components/diagnostic/ObservedResultPanel";
 import {
   describeForm,
@@ -50,6 +50,7 @@ export function DiagnosticResultTab() {
     queryKey: ["diagnostic-latest-result"],
     queryFn: diagnosticService.getLatestResult,
     refetchOnMount: "always",
+    refetchInterval: (query) => resultPollInterval(query.state.data, null, Date.now()),
   });
 
   const restart = useMutation({
@@ -221,6 +222,7 @@ export function DiagnosticResultTab() {
   }
 
   const result: DiagnosticResult = latestResult;
+  const standing = summarizeSkillStanding(result);
   const fourSkill = result.fourSkill ?? null;
   const speakingTaskCount = (assessment?.questions ?? []).filter(isSpeakingTask).length;
   const completedDate = result.completedAt || result.submittedAt;
@@ -349,16 +351,18 @@ export function DiagnosticResultTab() {
           </div>
         )}
 
-        {/* Strengths & Weaknesses */}
+        {/* Strengths & Weaknesses (four-skill results: from the advice profile) */}
         <div className="mt-6 grid gap-4 border-t border-slate-100 pt-6 sm:grid-cols-2 dark:border-slate-800">
           <div>
             <h4 className="text-sm font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
               Điểm mạnh
             </h4>
             <p className="mt-1 text-base font-bold text-slate-800 dark:text-slate-200">
-              {result.strengths && result.strengths.length > 0
-                ? result.strengths.map(formatSkillName).join(", ")
-                : "Chưa ghi nhận kỹ năng nổi trội từ kết quả hiện tại."}
+              {standing.strong.length > 0
+                ? standing.strong.map(formatSkillName).join(", ")
+                : standing.balanced
+                  ? "Các kỹ năng đã chấm khá đồng đều, chưa có kỹ năng nổi trội hẳn."
+                  : "Chưa đủ kỹ năng có điểm để so sánh."}
             </p>
           </div>
           <div>
@@ -366,9 +370,11 @@ export function DiagnosticResultTab() {
               Nên củng cố
             </h4>
             <p className="mt-1 text-base font-bold text-slate-800 dark:text-slate-200">
-              {result.weaknesses && result.weaknesses.length > 0
-                ? result.weaknesses.map(formatSkillName).join(", ")
-                : "Chưa ghi nhận kỹ năng cần ưu tiên cải thiện."}
+              {standing.weak.length > 0
+                ? standing.weak.map(formatSkillName).join(", ")
+                : standing.balanced
+                  ? "Chưa có kỹ năng nào yếu hơn hẳn; xem gợi ý luyện tập ở trang kết quả."
+                  : "Chưa đủ kỹ năng có điểm để so sánh."}
             </p>
           </div>
         </div>

@@ -63,7 +63,9 @@ test("a pending or failed task withholds the score and says why", () => {
 });
 
 test("difficulty tiers are shown as difficulty, never as a level", () => {
-  assert.equal(formatDifficulty("D3"), "Độ khó 3/4");
+  assert.equal(formatDifficulty("D1"), "Câu dễ");
+  assert.equal(formatDifficulty("D3"), "Câu khó");
+  assert.equal(formatDifficulty("D4"), "Câu rất khó");
   assert.equal(formatDifficulty("B1"), "Chưa phân loại độ khó");
   for (const key of ["D1", "D2", "D3", "D4", "UNSPECIFIED"])
     assert.doesNotMatch(formatDifficulty(key), /\b(A1|A2|B1|B2|C1|C2|CEFR)\b/);

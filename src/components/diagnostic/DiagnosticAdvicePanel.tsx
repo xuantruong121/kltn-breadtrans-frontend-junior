@@ -38,6 +38,16 @@ function adviceTitle(resource: DiagnosticAdviceResource): string {
   return quizDisplayTitle(resource.id, resource.title);
 }
 
+/** The first "(A2)"-style content tag shown in a recommended title, if any. */
+function firstLevelTag(advice: DiagnosticAdvice): string | null {
+  for (const item of [...advice.priorities, ...advice.supplemental])
+    for (const resource of item.resources) {
+      const match = /\((?:A1|A2|B1|B2|C1|C2)\)/.exec(adviceTitle(resource));
+      if (match) return match[0];
+    }
+  return null;
+}
+
 function ResourceLink({ resource, note }: { resource: DiagnosticAdviceResource; note?: string }) {
   return (
     // Full page navigation on purpose: in a long browser session, a client-side
@@ -45,16 +55,16 @@ function ResourceLink({ resource, note }: { resource: DiagnosticAdviceResource; 
     // (root cause not identified; a fresh load of the same route works).
     <a
       href={resource.route}
-      className="group flex min-h-11 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm transition-colors hover:border-blue-400 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-500"
+      className="group flex min-h-11 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-base transition-colors hover:border-blue-400 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-500"
     >
       <span className="min-w-0">
-        <span className="block text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <span className="block text-xs font-bold uppercase tracking-wide text-slate-700 dark:text-slate-300">
           {KIND[resource.kind]}
           {note ? ` · ${note}` : ""}
         </span>
         <span className="block font-bold text-slate-900 dark:text-slate-100">{adviceTitle(resource)}</span>
         {resource.access === "LOCKED" && resource.requirement && (
-          <span className="mt-0.5 inline-flex items-center gap-1 text-xs font-bold text-amber-700 dark:text-amber-300">
+          <span className="mt-0.5 inline-flex items-center gap-1 text-sm font-bold text-amber-700 dark:text-amber-300">
             <Lock size={12} strokeWidth={2.25} aria-hidden="true" />
             {resource.requirement}
           </span>
@@ -68,22 +78,22 @@ function ResourceLink({ resource, note }: { resource: DiagnosticAdviceResource; 
 function PriorityCard({ item, label }: { item: DiagnosticAdvicePriority; label: string }) {
   return (
     <li className="rounded-2xl border border-slate-200 p-4 dark:border-slate-700 sm:p-5">
-      <p className="text-xs font-black uppercase tracking-wide text-amber-700 dark:text-amber-300">
+      <p className="text-sm font-black uppercase tracking-wide text-amber-700 dark:text-amber-300">
         {label} · {SKILL[item.skill]}
       </p>
       <h3 className="mt-1 text-base font-black text-slate-900 dark:text-slate-100">{item.area}</h3>
-      <p className="mt-1 text-xs font-bold text-slate-500 dark:text-slate-400">Căn cứ: {item.evidence}</p>
-      <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">{item.why}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-800 dark:text-slate-200">
+      <p className="mt-1 text-sm font-bold text-slate-700 dark:text-slate-300">Căn cứ: {item.evidence}</p>
+      <p className="mt-3 text-base leading-7 text-slate-700 dark:text-slate-300">{item.why}</p>
+      <p className="mt-2 text-base leading-7 text-slate-800 dark:text-slate-200">
         <span className="font-bold">Cách luyện: </span>
         {item.action}
       </p>
       {item.graderFeedback.length > 0 && (
         <div className="mt-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-850">
-          <p className="flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300">
+          <p className="flex items-center gap-1.5 text-sm font-bold text-slate-700 dark:text-slate-300">
             <Quote size={13} strokeWidth={2.25} aria-hidden="true" /> Nhận xét của bộ chấm về bài của bạn
           </p>
-          <ul className="mt-1.5 space-y-1 text-sm leading-6 text-slate-700 dark:text-slate-300">
+          <ul className="mt-1.5 space-y-1 text-base leading-7 text-slate-700 dark:text-slate-300">
             {item.graderFeedback.map((text, i) => (
               <li key={i}>{text}</li>
             ))}
@@ -97,7 +107,7 @@ function PriorityCard({ item, label }: { item: DiagnosticAdvicePriority; label: 
           ))}
         </div>
       ) : (
-        <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+        <p className="mt-3 text-sm text-slate-700 dark:text-slate-300">
           Hiện chưa có bài luyện đang phát hành khớp với mục này.
         </p>
       )}
@@ -108,6 +118,7 @@ function PriorityCard({ item, label }: { item: DiagnosticAdvicePriority; label: 
 /** D1 result guidance: what went well, what to work on first, and where. */
 export function DiagnosticAdvicePanel({ advice }: { advice: DiagnosticAdvice }) {
   const { profile } = advice;
+  const levelTag = firstLevelTag(advice);
   return (
     <section
       aria-labelledby="diagnostic-advice-title"
@@ -119,21 +130,20 @@ export function DiagnosticAdvicePanel({ advice }: { advice: DiagnosticAdvice }) 
           Nên luyện gì tiếp theo
         </h2>
       </div>
-      <p className="mt-1.5 text-sm leading-6 text-slate-600 dark:text-slate-400">
+      <p className="mt-1.5 text-base leading-7 text-slate-700 dark:text-slate-300">
         Gợi ý dựa trên các câu bạn làm sai và phần chấm theo tiêu chí của chính bài này. Bài kiểm tra ngắn (10 câu mỗi
         kỹ năng Nghe, Đọc; 2 bài mỗi kỹ năng Nói, Viết) nên đây là định hướng luyện tập, không phải xếp trình độ.
-        Nhãn như (A2), (B1) trong tên bài luyện là nhãn của nội dung trong thư viện, không phải trình độ của bạn.
       </p>
 
       {advice.mockGraderEvidence && (
-        <p className="mt-4 flex gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs font-bold leading-5 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
+        <p className="mt-4 flex gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-bold leading-6 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
           <CircleAlert size={16} strokeWidth={2.25} className="mt-0.5 shrink-0" aria-hidden="true" />
           Bài Nói/Viết được chấm bằng bộ chấm thử nghiệm của môi trường kiểm thử; nhận xét Nói/Viết không phản ánh năng lực thật.
         </p>
       )}
 
       {profile.assessed.length >= 2 && (
-        <p className="mt-4 text-sm leading-6 text-slate-700 dark:text-slate-300">
+        <p className="mt-4 text-base leading-7 text-slate-700 dark:text-slate-300">
           {profile.balanced
             ? `Các kỹ năng đã chấm khá đồng đều (chênh lệch ${profile.spread} điểm, tương đương tối đa 1 câu trắc nghiệm), nên chưa thể nói kỹ năng nào yếu hơn hẳn.`
             : `Kỹ năng tốt nhất trong bài: ${profile.strongest.map((s) => SKILL[s]).join(", ")}. Kỹ năng nên ưu tiên: ${profile.weakest
@@ -144,16 +154,16 @@ export function DiagnosticAdvicePanel({ advice }: { advice: DiagnosticAdvice }) 
 
       {advice.strengths.length > 0 && (
         <div className="mt-5">
-          <h3 className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+          <h3 className="flex items-center gap-1.5 text-sm font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
             <TrendingUp size={14} strokeWidth={2.25} aria-hidden="true" /> Bạn làm tốt
           </h3>
           <ul className="mt-2 grid gap-2 sm:grid-cols-2">
             {advice.strengths.map((s) => (
-              <li key={s.areaKey} className="rounded-xl bg-emerald-50 px-3.5 py-2.5 text-sm dark:bg-emerald-950/30">
+              <li key={s.areaKey} className="rounded-xl bg-emerald-50 px-3.5 py-2.5 text-base dark:bg-emerald-950/30">
                 <span className="font-bold text-slate-900 dark:text-slate-100">
                   {SKILL[s.skill]} · {s.area}
                 </span>
-                <span className="block text-xs text-slate-600 dark:text-slate-400">{s.evidence}</span>
+                <span className="block text-sm text-slate-700 dark:text-slate-300">{s.evidence}</span>
               </li>
             ))}
           </ul>
@@ -161,7 +171,7 @@ export function DiagnosticAdvicePanel({ advice }: { advice: DiagnosticAdvice }) 
       )}
 
       <div className="mt-6">
-        <h3 className="text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">Ưu tiên cải thiện</h3>
+        <h3 className="text-sm font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">Ưu tiên cải thiện</h3>
         {advice.priorities.length > 0 ? (
           <ol className="mt-2 space-y-3">
             {advice.priorities.map((p) => (
@@ -169,17 +179,23 @@ export function DiagnosticAdvicePanel({ advice }: { advice: DiagnosticAdvice }) 
             ))}
           </ol>
         ) : (
-          <p className="mt-2 text-sm leading-6 text-slate-700 dark:text-slate-300">
+          <p className="mt-2 text-base leading-7 text-slate-700 dark:text-slate-300">
             {advice.noWeaknessFound
               ? "Trong phạm vi bài kiểm tra này chưa thấy dạng câu hoặc tiêu chí nào cần ưu tiên. Bạn có thể chọn bài luyện ở mức khó hơn trong từng kỹ năng."
               : "Chưa đủ kỹ năng có điểm để đưa ra ưu tiên."}
+          </p>
+        )}
+        {levelTag && (
+          <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
+            Ký hiệu trong ngoặc ở tên bài luyện, ví dụ {levelTag}, là mức của nội dung bài đó trong thư viện, không phải
+            trình độ của bạn.
           </p>
         )}
       </div>
 
       {advice.supplemental.length > 0 && (
         <div className="mt-6">
-          <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <h3 className="text-sm font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
             Bổ trợ (không tính vào điểm tổng)
           </h3>
           <ol className="mt-2 space-y-3">
@@ -192,8 +208,8 @@ export function DiagnosticAdvicePanel({ advice }: { advice: DiagnosticAdvice }) 
 
       {advice.unassessed.length > 0 && (
         <div className="mt-6 rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
-          <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Chưa đánh giá được</h3>
-          <ul className="mt-2 space-y-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
+          <h3 className="text-sm font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">Chưa đánh giá được</h3>
+          <ul className="mt-2 space-y-3 text-base leading-7 text-slate-700 dark:text-slate-300">
             {advice.unassessed.map((u) => (
               <li key={u.skill}>
                 <span className="font-bold">{SKILL[u.skill]}: </span>
@@ -209,7 +225,7 @@ export function DiagnosticAdvicePanel({ advice }: { advice: DiagnosticAdvice }) 
         </div>
       )}
 
-      <p className="mt-6 flex items-start gap-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+      <p className="mt-6 flex items-start gap-2 text-sm leading-6 text-slate-700 dark:text-slate-300">
         <BookOpen size={14} strokeWidth={2.25} className="mt-0.5 shrink-0" aria-hidden="true" />
         Xem lại đáp án, giải thích và nhận xét từng bài ở phần bên dưới. Kết quả các bài luyện sau này được lưu trong lịch
         sử học tập để bạn theo dõi tiến bộ.

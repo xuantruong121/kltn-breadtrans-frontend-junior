@@ -72,10 +72,10 @@ export function ObservedResultPanel({
           <p className="mt-1 text-2xl font-black text-slate-900 dark:text-slate-100">
             {observed.objectiveCore !== null ? `${formatNumber(observed.objectiveCore)}/100` : "—"}
           </p>
-          <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">
+          <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-slate-300">
             Chỉ từ câu trắc nghiệm, mỗi kỹ năng 50%. Dùng để so sánh khi bạn bỏ qua Nói hoặc Viết.
           </p>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
             Bằng chứng đã dùng: <span className="font-bold">{formatNumber(observed.coverageWeight * 100)}%</span> trọng số của bài đầy đủ.
           </p>
         </div>
@@ -94,7 +94,7 @@ export function ObservedResultPanel({
             <p className="mt-2 text-3xl font-black text-slate-900 dark:text-slate-100">
               {skill.score !== null ? formatNumber(skill.score) : "—"}
             </p>
-            <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">
+            <p className="mt-0.5 text-sm text-slate-700 dark:text-slate-300">
               {skill.correct}/{skill.total} câu đúng · trọng số 35%
             </p>
           </div>
@@ -113,11 +113,11 @@ export function ObservedResultPanel({
               <p className="mt-2 text-3xl font-black text-slate-900 dark:text-slate-100">
                 {skill.score !== null && skill.pending === 0 && skill.failed === 0 ? formatNumber(skill.score) : "—"}
               </p>
-              <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">
+              <p className="mt-0.5 text-sm text-slate-700 dark:text-slate-300">
                 {skill.graded}/{skill.total} bài đã chấm · 7,5% mỗi bài
               </p>
               {coverage.notice && skill.pending === 0 && skill.failed === 0 && (
-                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{coverage.notice}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-700 dark:text-slate-300">{coverage.notice}</p>
               )}
             </div>
           );
@@ -125,7 +125,7 @@ export function ObservedResultPanel({
       </div>
 
       {observed.languageUse.total > 0 && (
-        <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-400">
+        <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
           Ngữ pháp & Từ vựng: {observed.languageUse.correct}/{observed.languageUse.total} câu đúng. Phần này chỉ dùng
           để gợi ý luyện tập và không tính vào điểm (trọng số 0).
         </p>
@@ -167,12 +167,11 @@ export function ObservedResultPanel({
         </div>
       </details>
 
-      <p className="mt-4 flex gap-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
+      <p className="mt-4 flex gap-2 text-sm leading-6 text-slate-700 dark:text-slate-300">
         <Info size={16} strokeWidth={2.25} aria-hidden="true" className="mt-1 shrink-0" />
         <span>
           Đây là chỉ số luyện tập nội bộ của BreadTrans để gợi ý bài học, không phải điểm thi chính thức, không phải
-          chứng chỉ và không quy đổi sang trình độ CEFR. Độ khó câu hỏi (1–4) là mức thiết kế của câu, không phải trình
-          độ của bạn.
+          chứng chỉ và không quy đổi sang trình độ CEFR. Mức "dễ", "khó" nói về câu hỏi, không phải trình độ của bạn.
         </span>
       </p>
     </div>
@@ -190,8 +189,8 @@ function BreakdownCard({
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
       <h3 className="text-base font-black text-slate-900 dark:text-slate-100">{title}: kết quả theo nhóm câu</h3>
-      <GroupList heading="Theo độ khó thiết kế" groups={data.byDifficulty} format={formatDifficulty} />
-      <GroupList heading="Theo kỹ năng thành phần" groups={data.bySubskill} format={formatSubskill} />
+      <GroupList heading="Theo độ khó của câu hỏi" groups={data.byDifficulty} format={formatDifficulty} />
+      <GroupList heading="Theo dạng câu hỏi" groups={data.bySubskill} format={formatSubskill} />
     </div>
   );
 }
@@ -207,26 +206,26 @@ function GroupList({
 }) {
   if (!groups.length) return null;
   return (
-    <div className="mt-3">
-      <p className="text-sm font-bold text-slate-500 dark:text-slate-400">{heading}</p>
-      <ul className="mt-1.5 space-y-1.5">
+    <div className="mt-4">
+      <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{heading}</p>
+      <ul className="mt-2 space-y-2">
         {groups.map((group) => (
-          <li key={group.key} className="flex items-center gap-3 text-sm">
-            <span className="w-40 shrink-0 text-slate-700 dark:text-slate-300">{format(group.key)}</span>
+          <li key={group.key} className="flex items-center gap-3 text-base">
+            <span className="w-40 shrink-0 text-slate-800 dark:text-slate-200">{format(group.key)}</span>
             <span className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800" aria-hidden="true">
               <span
                 className="block h-full rounded-full bg-blue-600 dark:bg-blue-500"
                 style={{ width: `${group.total ? (group.correct / group.total) * 100 : 0}%` }}
               />
             </span>
-            <span className="w-12 shrink-0 text-right font-bold text-slate-800 dark:text-slate-200">
-              {group.correct}/{group.total}
+            <span className="w-20 shrink-0 text-right text-sm font-bold text-slate-900 dark:text-slate-100">
+              {group.correct}/{group.total} đúng
             </span>
           </li>
         ))}
       </ul>
       {groups.some((group) => group.total < 3) && (
-        <p className="mt-1.5 text-xs leading-5 text-slate-500 dark:text-slate-400">
+        <p className="mt-2 text-sm leading-6 text-slate-700 dark:text-slate-300">
           Nhóm có ít hơn 3 câu chỉ là tín hiệu, chưa đủ để kết luận.
         </p>
       )}

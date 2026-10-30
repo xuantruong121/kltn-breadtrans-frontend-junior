@@ -64,7 +64,7 @@ import {
 } from "@/lib/speaking/speakingExperienceLogic";
 import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
 import { ReportIssueButton } from "@/components/issue-report";
-import { isPremiumSpeakingForbiddenError } from "@/modules/subscription/planLogic";
+import { classifyPracticeLoadError } from "@/lib/practice/practiceLoadErrorLogic";
 import toast from "react-hot-toast";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { plansHrefFor } from "@/modules/subscription/practicePlan";
@@ -325,6 +325,7 @@ export default function SpeakingExerciseDetailPage() {
     data: exercise,
     isLoading,
     error: exerciseError,
+    refetch: refetchExercise,
   } = useQuery({
     queryKey: ["speaking-exercise", exerciseId],
     queryFn: () => speakingService.getExerciseById(exerciseId, examParentContext),
@@ -808,6 +809,9 @@ export default function SpeakingExerciseDetailPage() {
       }
     };
 
+    // The score arrives first; the written feedback is enriched afterwards and
+    // ends COMPLETED or FAILED. Both refetch, so the pending notice never stays
+    // after enrichment has ended (polling is cancelled once the score arrives).
     const handleFeedbackCompleted = async (payload: {
       submissionId: number;
     }) => {
@@ -827,11 +831,13 @@ export default function SpeakingExerciseDetailPage() {
     socket.on("speaking.completed", handleCompleted);
     socket.on("speaking.failed", handleFailed);
     socket.on("speaking.feedback.completed", handleFeedbackCompleted);
+    socket.on("speaking.feedback.failed", handleFeedbackCompleted);
 
     return () => {
       socket.off("speaking.completed", handleCompleted);
       socket.off("speaking.failed", handleFailed);
       socket.off("speaking.feedback.completed", handleFeedbackCompleted);
+      socket.off("speaking.feedback.failed", handleFeedbackCompleted);
     };
   }, [socket, queryClient, exerciseId]);
 
@@ -1786,7 +1792,9 @@ export default function SpeakingExerciseDetailPage() {
     );
   };
 
-  if (isPremiumSpeakingForbiddenError(exerciseError)) {
+  const loadError = classifyPracticeLoadError(exerciseError);
+  if (loadError?.kind === "LOCKED") {
+    const plan = loadError.requiredPlan;
     return (
       <div className="fixed inset-0 z-[45] w-screen h-[100dvh] flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-6 text-center">
         <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800/80 rounded-2xl p-6 sm:p-8 shadow-lg text-center space-y-4">
@@ -1795,14 +1803,15 @@ export default function SpeakingExerciseDetailPage() {
           </div>
           <div>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
-              PRO
+              {plan}
             </span>
             <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 mt-2">
-              Nội dung dành cho PRO
+              Nội dung dành cho {plan}
             </h2>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-2">
-              Bài luyện nói từ trình độ Trung cấp trở lên thuộc gói PRO. Gói PLUS
-              không bao gồm phần này.
+            <p className="text-sm sm:text-base text-slate-700 dark:text-slate-300 mt-2">
+              {plan === "PRO"
+                ? "Bài luyện này có trong hệ thống, nhưng bài luyện nói từ trình độ Trung cấp (B1) trở lên chỉ mở cho gói PRO. Gói PLUS không bao gồm phần này."
+                : "Bài luyện này có trong hệ thống và mở cho gói PLUS hoặc PRO."}
             </p>
           </div>
           <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
@@ -1815,10 +1824,10 @@ export default function SpeakingExerciseDetailPage() {
             </button>
             <button
               type="button"
-              onClick={() => router.push(plansHrefFor("PRO"))}
+              onClick={() => router.push(plansHrefFor(plan))}
               className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm shadow-sm transition cursor-pointer"
             >
-              Xem gói PRO
+              Xem gói {plan}
             </button>
           </div>
         </div>
@@ -1837,17 +1846,41 @@ export default function SpeakingExerciseDetailPage() {
   if (!exercise) {
     return (
       <div className="fixed inset-0 z-[45] w-screen h-[100dvh] flex flex-col items-center justify-center bg-white dark:bg-slate-950 p-8 text-center">
-        <p className="text-base font-bold text-slate-700 dark:text-slate-300">
-          Không tìm thấy bài tập phát âm.
+        <p className="text-base font-bold text-slate-800 dark:text-slate-200">
+          {loadError?.kind === "AUTH"
+            ? "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để mở bài luyện."
+            : loadError?.kind === "FAILED"
+              ? "Chưa tải được bài luyện. Vui lòng thử lại."
+              : "Không tìm thấy bài tập phát âm."}
         </p>
-        <button
-          type="button"
-          onClick={() => confirmExit(courseReturn)}
-          className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-amber-500 px-5 text-sm font-extrabold text-white hover:bg-amber-600 cursor-pointer"
-        >
-          <ArrowLeft size={16} aria-hidden="true" />
-          Quay lại danh sách
-        </button>
+        <div className="mt-4 flex flex-wrap justify-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => confirmExit(courseReturn)}
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 px-5 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
+          >
+            <ArrowLeft size={16} aria-hidden="true" />
+            Quay lại danh sách
+          </button>
+          {loadError?.kind === "AUTH" && (
+            <button
+              type="button"
+              onClick={() => router.push("/login")}
+              className="inline-flex min-h-11 items-center rounded-xl bg-amber-500 px-5 text-sm font-extrabold text-white hover:bg-amber-600 cursor-pointer"
+            >
+              Đăng nhập lại
+            </button>
+          )}
+          {loadError?.kind === "FAILED" && (
+            <button
+              type="button"
+              onClick={() => void refetchExercise()}
+              className="inline-flex min-h-11 items-center rounded-xl bg-amber-500 px-5 text-sm font-extrabold text-white hover:bg-amber-600 cursor-pointer"
+            >
+              Thử lại
+            </button>
+          )}
+        </div>
       </div>
     );
   }

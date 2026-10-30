@@ -195,3 +195,87 @@ export function formatPlacementLevel(level?: string | null): string {
   }
   return trimmed;
 }
+
+/** How often the saved result is re-read while grading may still change it. */
+export const RESULT_POLL_MS = 3000;
+/** A first read right after submit can predate the queued tasks; keep polling this long. */
+export const RESULT_SUBMIT_GRACE_MS = 20_000;
+
+type PollableResult = {
+  productivePending?: boolean;
+  fourSkill?: {
+    state?: string;
+    observed?: {
+      speaking?: { tasks?: Array<{ status: string }> };
+      writing?: { tasks?: Array<{ status: string }> };
+    };
+  } | null;
+} | null | undefined;
+
+/**
+ * Polling interval for the latest Diagnostic result, or false to stop.
+ * Polls while any Speaking/Writing task is still being graded, and for a short
+ * grace window after this learner submitted, so one early read cannot freeze
+ * the page on a stale "not graded" state.
+ */
+export function resultPollInterval(
+  result: PollableResult,
+  submittedAtMs: number | null,
+  nowMs: number,
+): number | false {
+  if (submittedAtMs !== null && nowMs - submittedAtMs < RESULT_SUBMIT_GRACE_MS) return RESULT_POLL_MS;
+  return isResultGrading(result) ? RESULT_POLL_MS : false;
+}
+
+const PENDING_TASK = new Set(["SUBMITTED", "GRADING_PENDING"]);
+const FINISHED_TASK = new Set(["GRADED", "GRADING_FAILED"]);
+
+function productiveTasks(result: PollableResult) {
+  return [
+    ...(result?.fourSkill?.observed?.speaking?.tasks ?? []),
+    ...(result?.fourSkill?.observed?.writing?.tasks ?? []),
+  ];
+}
+
+/** True while any submitted Speaking/Writing task is still being graded. */
+export function isResultGrading(result: PollableResult): boolean {
+  if (!result) return false;
+  if (result.productivePending || result.fourSkill?.state === "PENDING_GRADING") return true;
+  return productiveTasks(result).some((task) => PENDING_TASK.has(task.status));
+}
+
+/** Submitted Speaking/Writing tasks whose grading has finished, out of those submitted (skips excluded). */
+export function gradingProgress(result: PollableResult): { done: number; total: number } {
+  const submitted = productiveTasks(result).filter(
+    (task) => PENDING_TASK.has(task.status) || FINISHED_TASK.has(task.status),
+  );
+  return { done: submitted.filter((task) => FINISHED_TASK.has(task.status)).length, total: submitted.length };
+}
+
+type SkillSummarySource = {
+  strengths?: string[];
+  weaknesses?: string[];
+  advice?: {
+    profile: { assessed: string[]; strongest: string[]; weakest: string[]; balanced: boolean };
+  } | null;
+};
+
+/**
+ * Strong and weak skills for the profile summary. Four-skill results carry
+ * them in `advice.profile` (the older `strengths`/`weaknesses` lists come back
+ * empty for them); older results keep their own lists.
+ */
+export function summarizeSkillStanding(result: SkillSummarySource): {
+  strong: string[];
+  weak: string[];
+  balanced: boolean;
+} {
+  const profile = result.advice?.profile;
+  if (profile) {
+    if (profile.assessed.length < 2) return { strong: [], weak: [], balanced: false };
+    return profile.balanced
+      ? { strong: [], weak: [], balanced: true }
+      : { strong: profile.strongest, weak: profile.weakest, balanced: false };
+  }
+  return { strong: result.strengths ?? [], weak: result.weaknesses ?? [], balanced: false };
+}

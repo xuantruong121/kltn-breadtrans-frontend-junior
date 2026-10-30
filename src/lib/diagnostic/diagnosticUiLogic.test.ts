@@ -7,6 +7,12 @@ import {
   formatSkillName,
   groupQuestionsBySection,
   formatPlacementLevel,
+  resultPollInterval,
+  isResultGrading,
+  gradingProgress,
+  summarizeSkillStanding,
+  RESULT_POLL_MS,
+  RESULT_SUBMIT_GRACE_MS,
 } from "./diagnosticUiLogic.ts";
 
 test("diagnostic submit guard identifies the first unanswered question", () => {
@@ -124,4 +130,44 @@ test("formatPlacementLevel still localizes a CEFR band the backend itself report
     formatPlacementLevel("B1 — đang tiến tới B2"),
     "B1 – Đang tiến tới B2",
   );
+});
+
+test("result polling keeps going while grading is pending and briefly after submit", () => {
+  const graded = { productivePending: false, fourSkill: { state: "COMPLETE", observed: { speaking: { tasks: [{ status: "GRADED" }] }, writing: { tasks: [{ status: "GRADED" }, { status: "SKIPPED" }] } } } };
+  const now = 1_000_000;
+  // Settled result, no recent submit: stop.
+  assert.equal(resultPollInterval(graded, null, now), false);
+  assert.equal(resultPollInterval(null, null, now), false);
+  // A stale first read right after submit (Writing row not seen yet) still polls.
+  assert.equal(resultPollInterval(graded, now - 1_000, now), RESULT_POLL_MS);
+  assert.equal(resultPollInterval(null, now - 1_000, now), RESULT_POLL_MS);
+  assert.equal(resultPollInterval(graded, now - RESULT_SUBMIT_GRACE_MS, now), false);
+  // Pending signals.
+  assert.equal(resultPollInterval({ productivePending: true }, null, now), RESULT_POLL_MS);
+  assert.equal(resultPollInterval({ fourSkill: { state: "PENDING_GRADING" } }, null, now), RESULT_POLL_MS);
+  const taskPending = { fourSkill: { state: "COMPLETE", observed: { writing: { tasks: [{ status: "GRADING_PENDING" }] } } } };
+  assert.equal(resultPollInterval(taskPending, null, now), RESULT_POLL_MS);
+});
+
+test("grading progress counts only submitted tasks and ends when none is pending", () => {
+  const pending = { fourSkill: { state: "PENDING_GRADING", observed: {
+    speaking: { tasks: [{ status: "GRADED" }, { status: "GRADED" }] },
+    writing: { tasks: [{ status: "GRADING_PENDING" }, { status: "SKIPPED" }] },
+  } } };
+  assert.equal(isResultGrading(pending), true);
+  assert.deepEqual(gradingProgress(pending), { done: 2, total: 3 });
+  const done = { fourSkill: { state: "COMPLETE", observed: {
+    speaking: { tasks: [{ status: "GRADED" }, { status: "GRADING_FAILED" }] },
+    writing: { tasks: [{ status: "GRADED" }, { status: "SKIPPED" }] },
+  } } };
+  assert.equal(isResultGrading(done), false);
+  assert.deepEqual(gradingProgress(done), { done: 3, total: 3 });
+  assert.equal(isResultGrading(null), false);
+});
+
+test("skill standing comes from the advice profile on four-skill results", () => {
+  const advice = (p: object) => ({ strengths: [], weaknesses: [], advice: { profile: { assessed: ["LISTENING", "READING", "SPEAKING", "WRITING"], strongest: [], weakest: [], balanced: false, ...p } } });
+  assert.deepEqual(summarizeSkillStanding(advice({ strongest: ["LISTENING"], weakest: ["SPEAKING"] })), { strong: ["LISTENING"], weak: ["SPEAKING"], balanced: false });
+  assert.deepEqual(summarizeSkillStanding(advice({ balanced: true })), { strong: [], weak: [], balanced: true });
+  assert.deepEqual(summarizeSkillStanding({ strengths: ["Reading"], weaknesses: ["Grammar"] }), { strong: ["Reading"], weak: ["Grammar"], balanced: false });
 });
