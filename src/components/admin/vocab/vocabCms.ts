@@ -4,6 +4,9 @@
  */
 import { buildQuizOptions } from "../../../modules/vocab/utils/quizOptions.ts";
 
+/** "10", "9:00", "3.5": flashcards teach words, not numbers. */
+export const isBareNumber = (word: string) => /^\d+([.,:]\d+)*$/.test(word.trim());
+
 export const VOCAB_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
 
 export const POS_OPTIONS = [
@@ -79,6 +82,7 @@ export function parseVocabPaste(
       };
       seen.add(key);
       if (!word || !meaning) row.error = "Thiếu từ hoặc nghĩa";
+      else if (isBareNumber(word)) row.error = "Số không dùng làm từ vựng";
       else if (posLower && !(POS_OPTIONS as readonly string[]).includes(posLower))
         row.error = `Loại từ "${pos}" không có trong danh sách`;
       return row;
@@ -98,29 +102,30 @@ export type ChecklistItem = { label: string; done: boolean };
 
 const filled = (v?: string | null) => String(v ?? "").trim() !== "";
 
+export type DeckStats = {
+  total: number;
+  withIpa: number;
+  withExample: number;
+  distinctMeanings: number;
+};
+
+/** From the server's deck summary, so a large deck needs no full load. */
 export function vocabDeckChecklist(deck: {
   title: string;
-  words: WordLike[];
+  stats: DeckStats;
 }): ChecklistItem[] {
-  const n = deck.words.length;
+  const { total: n, withIpa, withExample, distinctMeanings } = deck.stats;
   const items: ChecklistItem[] = [
     { label: "Có tên bộ từ", done: filled(deck.title) },
     { label: "Có ít nhất 1 từ", done: n > 0 },
   ];
   if (!n) return items;
-  const ipa = deck.words.filter((w) => filled(w.ipaUs)).length;
-  const examples = deck.words.filter((w) => filled(w.exampleEn)).length;
-  const meanings = new Set(deck.words.map((w) => w.meaning.trim())).size;
   items.push(
-    {
-      label: "Mỗi từ có nghĩa tiếng Việt",
-      done: deck.words.every((w) => filled(w.meaning)),
-    },
-    { label: `Phiên âm ${ipa}/${n} từ`, done: ipa === n },
-    { label: `Câu ví dụ ${examples}/${n} từ`, done: examples === n },
+    { label: `Phiên âm ${withIpa}/${n} từ`, done: withIpa === n },
+    { label: `Câu ví dụ ${withExample}/${n} từ`, done: withExample === n },
     {
       label: "Ít nhất 4 nghĩa khác nhau cho bước Trắc nghiệm",
-      done: meanings >= 4,
+      done: distinctMeanings >= 4,
     },
   );
   return items;

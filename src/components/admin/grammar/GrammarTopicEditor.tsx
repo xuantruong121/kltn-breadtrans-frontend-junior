@@ -537,7 +537,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
           )}
         </section>
 
-        <aside className="space-y-6 xl:sticky xl:top-6 xl:col-start-2 xl:row-span-2 xl:row-start-1">
+        <aside className="space-y-6 xl:sticky xl:top-6 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
           <section aria-labelledby="grammar-checklist-heading" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-baseline justify-between gap-3">
               <h2 id="grammar-checklist-heading" className="font-semibold text-slate-950">

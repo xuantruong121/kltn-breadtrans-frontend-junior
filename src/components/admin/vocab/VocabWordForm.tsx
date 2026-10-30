@@ -1,13 +1,20 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Loader2, Volume2 } from "lucide-react";
+import { BookOpenCheck, Loader2, Volume2 } from "lucide-react";
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { playWordAudio } from "@/modules/vocab/utils/audio";
+import { vocabService } from "@/lib/api/services/vocab.service";
 import { BTN_AI, BTN_PRIMARY, BTN_SECONDARY } from "../cmsButtons";
-import { POS_OPTIONS, cefrToCourseLevel } from "./vocabCms";
+import { POS_OPTIONS, cefrToCourseLevel, isBareNumber } from "./vocabCms";
+
+/** IPA symbols that are not on a keyboard, inserted at the cursor. */
+const IPA_SYMBOLS = [
+  "ə", "ɪ", "ʊ", "æ", "ʌ", "ɑ", "ɔ", "ɜ", "ɒ", "eɪ", "aɪ", "ɔɪ", "əʊ", "oʊ", "aʊ",
+  "θ", "ð", "ʃ", "ʒ", "tʃ", "dʒ", "ŋ", "ˈ", "ˌ", "ː",
+];
 
 export type AdminVocabWord = {
   id: number;
@@ -59,14 +66,12 @@ export default function VocabWordForm({
   topicId,
   word,
   level,
-  nextOrder,
   onSaved,
   onCancel,
 }: {
   topicId: number;
   word: AdminVocabWord | null;
   level?: string | null;
-  nextOrder: number;
   onSaved: (keepOpen: boolean) => void;
   onCancel: () => void;
 }) {
@@ -74,13 +79,24 @@ export default function VocabWordForm({
   const [collocations, setCollocations] = useState(word?.collocations ?? null);
   const [saving, setSaving] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
+  const [lookingUp, setLookingUp] = useState(false);
   const firstField = useRef<HTMLInputElement>(null);
+  // The IPA field the symbol row writes into.
+  const ipaTarget = useRef<"ipaUs" | "ipaUk">("ipaUs");
+  const ipaInputs = {
+    ipaUs: useRef<HTMLInputElement>(null),
+    ipaUk: useRef<HTMLInputElement>(null),
+  };
   const set = (key: keyof Form, value: string) =>
     setForm((current) => ({ ...current, [key]: value }));
 
   const save = async (keepOpen: boolean) => {
     if (!form.word.trim() || !form.meaning.trim()) {
       toast.error("Cần nhập từ và nghĩa tiếng Việt.");
+      return;
+    }
+    if (isBareNumber(form.word)) {
+      toast.error("Số không dùng làm từ vựng flashcard.");
       return;
     }
     setSaving(true);
@@ -103,10 +119,8 @@ export default function VocabWordForm({
           payload,
         );
       } else {
-        await axiosClient.post(`/admin/vocab/topics/${topicId}/words`, {
-          ...payload,
-          order: nextOrder,
-        });
+        // The server appends a new word after the last one.
+        await axiosClient.post(`/admin/vocab/topics/${topicId}/words`, payload);
       }
       toast.success(word ? "Đã lưu từ." : `Đã thêm "${payload.word}".`);
       if (keepOpen) {
@@ -153,6 +167,51 @@ export default function VocabWordForm({
     }
   };
 
+  /** Phonetics and pronunciation audio from the learner's dictionary lookup. */
+  const lookupPhonetics = async () => {
+    if (!form.word.trim()) {
+      toast.error("Nhập từ trước.");
+      return;
+    }
+    setLookingUp(true);
+    try {
+      const result = await vocabService.lookupWord(form.word.trim());
+      const entry = result.entries?.[0];
+      const local = result.matches?.[0];
+      const ipaUs = entry?.ipaUs || local?.ipaUs || "";
+      const ipaUk = entry?.ipaUk || local?.ipaUk || "";
+      if (!ipaUs && !ipaUk) {
+        toast.error("Từ điển chưa có phiên âm cho từ này. Thử 'Gợi ý bằng AI'.");
+        return;
+      }
+      setForm((current) => ({
+        ...current,
+        ipaUs: ipaUs || current.ipaUs,
+        ipaUk: ipaUk || current.ipaUk,
+        audioUs: current.audioUs || entry?.audio?.us || "",
+        audioUk: current.audioUk || entry?.audio?.uk || "",
+      }));
+      toast.success("Đã điền phiên âm từ từ điển. Kiểm tra lại trước khi lưu.");
+    } catch (err: any) {
+      toast.error(getApiErrorMessage(err, "Không tra được từ điển lúc này."));
+    } finally {
+      setLookingUp(false);
+    }
+  };
+
+  const insertSymbol = (symbol: string) => {
+    const key = ipaTarget.current;
+    const input = ipaInputs[key].current;
+    const value = form[key];
+    const start = input?.selectionStart ?? value.length;
+    const end = input?.selectionEnd ?? value.length;
+    set(key, value.slice(0, start) + symbol + value.slice(end));
+    requestAnimationFrame(() => {
+      input?.focus();
+      input?.setSelectionRange(start + symbol.length, start + symbol.length);
+    });
+  };
+
   const listen = (accent: "us" | "uk") =>
     void playWordAudio(
       form.word,
@@ -168,7 +227,7 @@ export default function VocabWordForm({
       }}
       className="mt-3 border-t border-slate-100 pt-3"
     >
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_160px_minmax(0,1fr)]">
+      <div className="grid gap-3 md:grid-cols-3">
         <label className="text-sm font-medium text-slate-800">
           Từ
           <input
@@ -201,40 +260,70 @@ export default function VocabWordForm({
             className={FIELD}
           />
         </label>
-        <label className="text-sm font-medium text-slate-800">
-          Phiên âm US
-          <input
-            value={form.ipaUs}
-            onChange={(event) => set("ipaUs", event.target.value)}
-            placeholder="/əˈdʒendə/"
-            className={FIELD}
-          />
-        </label>
-        <label className="text-sm font-medium text-slate-800">
-          Phiên âm UK
-          <input
-            value={form.ipaUk}
-            onChange={(event) => set("ipaUk", event.target.value)}
-            className={FIELD}
-          />
-        </label>
-        <div className="flex items-end gap-2">
+        {(["ipaUs", "ipaUk"] as const).map((key) => {
+          const accent = key === "ipaUs" ? "us" : "uk";
+          return (
+            <div key={key} className="text-sm font-medium text-slate-800">
+              <label htmlFor={`${key}-${word?.id ?? "new"}`}>
+                Phiên âm {accent.toUpperCase()}
+              </label>
+              <div className="mt-1 flex gap-2">
+                <input
+                  id={`${key}-${word?.id ?? "new"}`}
+                  ref={ipaInputs[key]}
+                  value={form[key]}
+                  onFocus={() => (ipaTarget.current = key)}
+                  onChange={(event) => set(key, event.target.value)}
+                  placeholder={key === "ipaUs" ? "/əˈdʒendə/" : "/əˈdʒendə/"}
+                  className={`${FIELD} mt-0 min-w-0 flex-1`}
+                />
+                <button
+                  type="button"
+                  onClick={() => listen(accent)}
+                  disabled={!form.word.trim()}
+                  aria-label={`Nghe giọng ${accent.toUpperCase()}`}
+                  title={`Nghe giọng ${accent.toUpperCase()}`}
+                  className={BTN_SECONDARY}
+                >
+                  <Volume2 size={16} /> {accent.toUpperCase()}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+        <div className="flex items-end">
           <button
             type="button"
-            onClick={() => listen("us")}
-            disabled={!form.word.trim()}
-            className={BTN_SECONDARY}
+            onClick={() => void lookupPhonetics()}
+            disabled={lookingUp || !form.word.trim()}
+            title="Lấy phiên âm US/UK và audio từ từ điển mà học viên dùng khi tra từ."
+            className={`${BTN_SECONDARY} w-full`}
           >
-            <Volume2 size={16} /> Nghe US
+            {lookingUp ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <BookOpenCheck size={16} />
+            )}
+            Lấy phiên âm
           </button>
-          <button
-            type="button"
-            onClick={() => listen("uk")}
-            disabled={!form.word.trim()}
-            className={BTN_SECONDARY}
-          >
-            <Volume2 size={16} /> UK
-          </button>
+        </div>
+        <div className="md:col-span-3">
+          <p className="text-xs text-slate-600">
+            Ký hiệu IPA (chèn vào ô phiên âm đang chọn):
+          </p>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {IPA_SYMBOLS.map((symbol) => (
+              <button
+                key={symbol}
+                type="button"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => insertSymbol(symbol)}
+                className="min-h-8 min-w-8 cursor-pointer rounded-md border border-slate-200 bg-white px-1.5 text-sm text-slate-800 hover:border-slate-400 hover:bg-slate-50"
+              >
+                {symbol}
+              </button>
+            ))}
+          </div>
         </div>
         <label className="text-sm font-medium text-slate-800 md:col-span-3">
           Câu ví dụ (tiếng Anh)

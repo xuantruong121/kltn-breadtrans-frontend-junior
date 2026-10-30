@@ -29,17 +29,19 @@ test("parseVocabPaste flags missing meanings, unknown parts of speech and duplic
   assert.equal(rows[2].duplicate, true);
 });
 
-test("vocabDeckChecklist counts IPA, examples and distinct meanings", () => {
+test("vocabDeckChecklist reads the server counts", () => {
   const items = vocabDeckChecklist({
     title: "Họp",
-    words: [
-      { id: 1, word: "agenda", meaning: "chương trình", ipaUs: "/əˈdʒendə/", exampleEn: "x" },
-      { id: 2, word: "minutes", meaning: "biên bản" },
-    ],
+    stats: { total: 2, withIpa: 1, withExample: 2, distinctMeanings: 2 },
   });
   const done = Object.fromEntries(items.map((i) => [i.label, i.done]));
   assert.equal(done["Phiên âm 1/2 từ"], false);
+  assert.equal(done["Câu ví dụ 2/2 từ"], true);
   assert.equal(done["Ít nhất 4 nghĩa khác nhau cho bước Trắc nghiệm"], false);
+});
+
+test("parseVocabPaste refuses numbers", () => {
+  assert.equal(parseVocabPaste("10 | số mười")[0].error, "Số không dùng làm từ vựng");
 });
 
 test("wordStageReadiness explains each learner step", () => {

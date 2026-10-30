@@ -747,7 +747,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
           )}
         </section>
 
-        <aside className="space-y-6 xl:sticky xl:top-6 xl:col-start-2 xl:row-span-2 xl:row-start-1">
+        <aside className="space-y-6 xl:sticky xl:top-6 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
           <section
             aria-labelledby="speaking-checklist-heading"
             className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
@@ -910,7 +910,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                           {index + 1}
                         </span>
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs text-slate-500">
+                          <p className="text-sm text-slate-600">
                             {taskTypeLabel(exercise.taskType)} ·{" "}
                             {difficultyLabel(exercise.difficulty)}
                           </p>
@@ -920,7 +920,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                           <p className="mt-1 line-clamp-3 text-sm leading-relaxed text-slate-700">
                             {exercise.targetText}
                           </p>
-                          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+                          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
                             {exercise.imageUrl && (
                               <span className="inline-flex items-center gap-1">
                                 <ImageIcon size={14} aria-hidden="true" /> Có

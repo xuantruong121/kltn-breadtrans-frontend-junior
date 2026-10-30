@@ -3,7 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -21,6 +25,7 @@ import {
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { Pagination } from "@/components/ui";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import {
   BTN_AI,
@@ -36,6 +41,7 @@ import {
   cefrToCourseLevel,
   parseVocabPaste,
   vocabDeckChecklist,
+  type DeckStats,
 } from "./vocabCms";
 
 type Deck = {
@@ -46,8 +52,19 @@ type Deck = {
   categoryName: string;
   isPro?: boolean;
   publicationStatus: "DRAFT" | "PUBLISHED";
-  words: AdminVocabWord[];
+  stats: DeckStats & { withAudio: number; sampleMeanings: string[] };
 };
+
+type WordPage = {
+  items: AdminVocabWord[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+const PAGE_SIZE = 20;
+/** The lookup dictionary for Speaking prompts, not a learner deck. */
+const SYSTEM_DICTIONARY = "SYSTEM_DICTIONARY";
 
 type DeckForm = {
   title: string;
@@ -77,10 +94,10 @@ const unwrap = <T,>(value: any): T => (value?.data ?? value) as T;
 
 export default function VocabDeckEditor({ id }: { id?: number }) {
   const { data: deck, isLoading } = useQuery<Deck>({
-    queryKey: ["admin-vocab-topic-detail", id],
+    queryKey: ["admin-vocab-topic-summary", id],
     enabled: Boolean(id),
     queryFn: async () =>
-      unwrap<Deck>(await axiosClient.get(`/admin/vocab/topics/${id}`)),
+      unwrap<Deck>(await axiosClient.get(`/admin/vocab/topics/${id}/summary`)),
   });
   if (id && (isLoading || !deck))
     return (
@@ -113,11 +130,40 @@ function DeckBody({ deck }: { deck: Deck | null }) {
   const [savedForm, setSavedForm] = useState(initial);
   const [form, setForm] = useState(initial);
   const dirty = JSON.stringify(form) !== JSON.stringify(savedForm);
-  const words = useMemo(
-    () => (deck?.words ?? []).slice().sort((a, b) => a.order - b.order || a.id - b.id),
-    [deck],
-  );
   const [query, setQuery] = useState("");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(query.trim());
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query]);
+  const { data: wordPage, isFetching } = useQuery<WordPage>({
+    queryKey: ["admin-vocab-words", deck?.id, page, search],
+    enabled: Boolean(deck),
+    placeholderData: keepPreviousData,
+    queryFn: async () =>
+      unwrap<WordPage>(
+        await axiosClient.get(`/admin/vocab/topics/${deck!.id}/words`, {
+          params: { page, pageSize: PAGE_SIZE, q: search || undefined },
+        }),
+      ),
+  });
+  const words = useMemo(() => wordPage?.items ?? [], [wordPage]);
+  const matched = wordPage?.total ?? 0;
+  const stats = deck?.stats ?? {
+    total: 0,
+    withIpa: 0,
+    withExample: 0,
+    withAudio: 0,
+    distinctMeanings: 0,
+    sampleMeanings: [],
+  };
+  const isSystem = deck?.categoryName === SYSTEM_DICTIONARY;
+  // Every word in the deck, loaded only when a paste needs duplicate checks.
+  const [allWordNames, setAllWordNames] = useState<string[] | null>(null);
   const [editingId, setEditingId] = useState<number | "new" | null>(null);
   const [previewId, setPreviewId] = useState<number | null>(null);
   const [panel, setPanel] = useState<"paste" | "ai" | null>(null);
@@ -141,28 +187,48 @@ function DeckBody({ deck }: { deck: Deck | null }) {
 
   const refresh = () => {
     queryClient.invalidateQueries({
-      queryKey: ["admin-vocab-topic-detail", deck?.id],
+      queryKey: ["admin-vocab-topic-summary", deck?.id],
     });
+    queryClient.invalidateQueries({ queryKey: ["admin-vocab-words", deck?.id] });
     queryClient.invalidateQueries({ queryKey: ["admin-vocab-topics"] });
+    setAllWordNames(null);
   };
 
-  const visible = query.trim()
-    ? words.filter((w) =>
-        `${w.word} ${w.meaning}`
-          .toLocaleLowerCase("vi")
-          .includes(query.trim().toLocaleLowerCase("vi")),
-      )
-    : words;
-  const nextOrder = (words.at(-1)?.order ?? 0) + 1;
-  const pasted = parseVocabPaste(
-    pasteText,
-    words.map((w) => w.word),
-  );
+  const loadAllWordNames = async (): Promise<string[]> => {
+    if (!deck) return [];
+    if (allWordNames) return allWordNames;
+    const names: string[] = [];
+    for (let p = 1; ; p++) {
+      const result = unwrap<WordPage>(
+        await axiosClient.get(`/admin/vocab/topics/${deck.id}/words`, {
+          params: { page: p, pageSize: 100 },
+        }),
+      );
+      names.push(...result.items.map((w) => w.word));
+      if (p * 100 >= result.total) break;
+    }
+    setAllWordNames(names);
+    return names;
+  };
+
+  const pasted = parseVocabPaste(pasteText, allWordNames ?? []);
   const pastedReady = pasted.filter((row) => !row.error && !row.duplicate);
-  const checklist = vocabDeckChecklist({ title: form.title, words });
+  const checklist = vocabDeckChecklist({ title: form.title, stats });
   const doneCount = checklist.filter((item) => item.done).length;
   const previewWord =
     words.find((w) => w.id === previewId) ?? words[0] ?? null;
+  // The quiz step draws distractors from the whole deck; the page plus the
+  // server's sample of meanings stands in for it.
+  const previewPool = [
+    ...words,
+    ...stats.sampleMeanings.map((meaning, i) => ({
+      id: -1 - i,
+      word: "",
+      meaning,
+      order: 0,
+    })),
+  ];
+  const firstIndex = (page - 1) * PAGE_SIZE;
 
   const saveDeck = async () => {
     if (!form.title.trim()) {
@@ -218,7 +284,6 @@ function DeckBody({ deck }: { deck: Deck | null }) {
           ipaUk: row.ipaUk?.trim() || undefined,
           exampleEn: row.exampleEn?.trim() || undefined,
           exampleVi: row.exampleVi?.trim() || undefined,
-          order: nextOrder + index,
         });
         added++;
       }
@@ -251,7 +316,9 @@ function DeckBody({ deck }: { deck: Deck | null }) {
           count: aiCount,
         }),
       );
-      const known = new Set(words.map((w) => w.word.toLowerCase()));
+      const known = new Set(
+        (await loadAllWordNames()).map((w) => w.toLowerCase()),
+      );
       setAiWords(
         (data?.words ?? []).map((w: any) => ({
           word: String(w.word ?? ""),
@@ -271,16 +338,13 @@ function DeckBody({ deck }: { deck: Deck | null }) {
     }
   };
 
-  const move = async (index: number, direction: -1 | 1) => {
+  const move = async (wordId: number, direction: -1 | 1) => {
     if (!deck) return;
-    const ids = words.map((w) => w.id);
-    const target = index + direction;
-    if (target < 0 || target >= ids.length) return;
-    [ids[index], ids[target]] = [ids[target], ids[index]];
     try {
-      await axiosClient.post(`/admin/vocab/topics/${deck.id}/reorder-words`, {
-        wordIds: ids,
-      });
+      await axiosClient.post(
+        `/admin/vocab/topics/${deck.id}/words/${wordId}/move`,
+        { direction },
+      );
       refresh();
     } catch (err: any) {
       toast.error(getApiErrorMessage(err, "Không thể đổi thứ tự."));
@@ -318,9 +382,10 @@ function DeckBody({ deck }: { deck: Deck | null }) {
           </h1>
           <p className="mt-1 text-sm text-slate-600">
             {deck
-              ? `${published ? "Đã xuất bản" : "Bản nháp"} · ${words.length} từ`
-              : "Bộ từ mới, chưa lưu"}{" "}
-            · {doneCount}/{checklist.length} mục sẵn sàng
+              ? isSystem
+                ? `Từ điển hệ thống · ${stats.total} mục`
+                : `${published ? "Đã xuất bản" : "Bản nháp"} · ${stats.total} từ · ${doneCount}/${checklist.length} mục sẵn sàng`
+              : `Bộ từ mới, chưa lưu · ${doneCount}/${checklist.length} mục sẵn sàng`}
             {dirty && " · có thay đổi chưa lưu"}
           </p>
         </div>
@@ -333,7 +398,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
           >
             <Save size={16} /> {deck ? "Lưu" : "Tạo bộ từ"}
           </button>
-          {deck && (
+          {deck && !isSystem && (
             <button
               type="button"
               onClick={() => setConfirmLifecycle(true)}
@@ -347,7 +412,14 @@ function DeckBody({ deck }: { deck: Deck | null }) {
         </div>
       </header>
 
-      {published && (
+      {isSystem && (
+        <p className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+          Đây là từ điển dùng khi học viên bấm tra một từ trong đề luyện Nói,
+          không phải bộ flashcard: học viên không thấy nó trong danh sách bộ từ.
+        </p>
+      )}
+
+      {published && !isSystem && (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           Bộ đang hiển thị cho học viên: sửa từ có hiệu lực ngay. Từ đã có học
           viên học thì không đổi được chữ và nghĩa.
@@ -432,7 +504,8 @@ function DeckBody({ deck }: { deck: Deck | null }) {
           </div>
         </section>
 
-        <aside className="space-y-6 xl:sticky xl:top-6 xl:col-start-2 xl:row-span-2 xl:row-start-1">
+        <aside className="space-y-6 xl:sticky xl:top-6 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
+          {!isSystem && (
           <section
             aria-labelledby="vocab-checklist-heading"
             className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
@@ -462,7 +535,8 @@ function DeckBody({ deck }: { deck: Deck | null }) {
             </ul>
           </section>
 
-          {previewWord && (
+          )}
+          {previewWord && !isSystem && (
             <section
               aria-labelledby="vocab-steps-heading"
               className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
@@ -475,7 +549,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                 để xem.
               </p>
               <div className="mt-3">
-                <VocabStagePreview key={previewWord.id} word={previewWord} words={words} />
+                <VocabStagePreview key={previewWord.id} word={previewWord} words={previewPool} />
               </div>
             </section>
           )}
@@ -485,9 +559,9 @@ function DeckBody({ deck }: { deck: Deck | null }) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-semibold text-slate-950">
               Từ vựng{" "}
-              <span className="font-normal tabular-nums text-slate-500">{words.length}</span>
+              <span className="font-normal tabular-nums text-slate-500">{stats.total}</span>
             </h2>
-            {deck && words.length > 0 && (
+            {deck && stats.total > 0 && (
               <label className="relative w-full max-w-xs">
                 <span className="sr-only">Tìm trong bộ</span>
                 <Search
@@ -513,13 +587,13 @@ function DeckBody({ deck }: { deck: Deck | null }) {
           ) : (
             <>
               <ol className="mt-4 divide-y divide-slate-100 rounded-lg border border-slate-200">
-                {visible.length === 0 && (
+                {words.length === 0 && (
                   <li className="p-5 text-sm text-slate-600">
-                    {words.length ? "Không có từ nào khớp." : "Chưa có từ nào. Thêm bên dưới."}
+                    {search ? "Không có từ nào khớp." : "Chưa có từ nào. Thêm bên dưới."}
                   </li>
                 )}
-                {visible.map((word) => {
-                  const index = words.indexOf(word);
+                {words.map((word, i) => {
+                  const index = firstIndex + i;
                   const editing = editingId === word.id;
                   return (
                     <li
@@ -527,7 +601,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                       className={`px-4 py-3 ${editing ? "bg-blue-50/40" : previewWord?.id === word.id ? "bg-slate-50" : ""}`}
                     >
                       <div className="flex flex-wrap items-start gap-3">
-                        <span className="w-6 flex-none pt-0.5 text-right text-xs tabular-nums text-slate-500">
+                        <span className="w-8 flex-none pt-0.5 text-right text-sm tabular-nums text-slate-500">
                           {index + 1}
                         </span>
                         <button
@@ -536,15 +610,15 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                           className="min-w-0 flex-1 cursor-pointer text-left"
                           title="Xem 4 bước học của từ này"
                         >
-                          <p className="font-semibold text-slate-950">
+                          <p className="text-base font-semibold text-slate-950">
                             {word.word}{" "}
-                            <span className="text-xs font-normal text-slate-500">
+                            <span className="text-sm font-normal text-slate-600">
                               {word.pos} {word.ipaUs && `· ${word.ipaUs}`}
                             </span>
                           </p>
-                          <p className="text-sm text-slate-700">{word.meaning}</p>
+                          <p className="text-sm text-slate-800">{word.meaning}</p>
                           {word.exampleEn && (
-                            <p className="mt-0.5 line-clamp-2 text-sm text-slate-500">
+                            <p className="mt-0.5 line-clamp-2 text-sm text-slate-600">
                               {word.exampleEn}
                             </p>
                           )}
@@ -552,8 +626,8 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                         <div className="flex flex-none items-center gap-1.5">
                           <button
                             type="button"
-                            onClick={() => void move(index, -1)}
-                            disabled={busy || Boolean(query) || index === 0}
+                            onClick={() => void move(word.id, -1)}
+                            disabled={busy || Boolean(search) || index === 0}
                             aria-label={`Đưa "${word.word}" lên trước`}
                             className={ICON_BTN}
                           >
@@ -561,8 +635,8 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                           </button>
                           <button
                             type="button"
-                            onClick={() => void move(index, 1)}
-                            disabled={busy || Boolean(query) || index === words.length - 1}
+                            onClick={() => void move(word.id, 1)}
+                            disabled={busy || Boolean(search) || index === stats.total - 1}
                             aria-label={`Đưa "${word.word}" xuống sau`}
                             className={ICON_BTN}
                           >
@@ -594,7 +668,6 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                           topicId={deck.id}
                           word={word}
                           level={form.level}
-                          nextOrder={nextOrder}
                           onSaved={() => {
                             setEditingId(null);
                             refresh();
@@ -606,6 +679,20 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                   );
                 })}
               </ol>
+
+              {matched > PAGE_SIZE && (
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                  <span className="text-sm tabular-nums text-slate-600">
+                    {firstIndex + 1}–{Math.min(firstIndex + PAGE_SIZE, matched)} / {matched} từ
+                    {isFetching && " · đang tải"}
+                  </span>
+                  <Pagination
+                    currentPage={page}
+                    totalPages={Math.ceil(matched / PAGE_SIZE)}
+                    onPageChange={setPage}
+                  />
+                </div>
+              )}
 
               {progress && (
                 <p className="mt-3 inline-flex items-center gap-2 text-sm tabular-nums text-slate-700">
@@ -621,7 +708,6 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                       topicId={deck.id}
                       word={null}
                       level={form.level}
-                      nextOrder={nextOrder}
                       onSaved={(keepOpen) => {
                         if (!keepOpen) setEditingId(null);
                         refresh();
@@ -763,7 +849,14 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                     <button type="button" onClick={() => setEditingId("new")} className={BTN_SECONDARY}>
                       <Plus size={16} /> Thêm từ
                     </button>
-                    <button type="button" onClick={() => setPanel(panel === "paste" ? null : "paste")} className={BTN_SECONDARY}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPanel(panel === "paste" ? null : "paste");
+                        void loadAllWordNames();
+                      }}
+                      className={BTN_SECONDARY}
+                    >
                       <ClipboardPaste size={16} /> Dán nhiều từ
                     </button>
                     <button type="button" onClick={() => setPanel(panel === "ai" ? null : "ai")} className={BTN_AI}>

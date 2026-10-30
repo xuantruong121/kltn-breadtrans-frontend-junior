@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import type { VocabWord } from "@/lib/api/services/vocab.service";
 import { FlashcardStage } from "@/modules/vocab/components/FlashcardStage";
@@ -23,6 +23,8 @@ type AdminWord = {
   exampleEn?: string | null;
   exampleVi?: string | null;
 };
+
+const STUDY_WIDTH = 560;
 
 const asLearnerWord = (word: AdminWord): VocabWord => ({
   id: word.id,
@@ -63,6 +65,19 @@ export default function VocabStagePreview({
     [word, words],
   );
   const current = stages.find((s) => s.stage === stage)!;
+  // The learner components are laid out for the study room (about 560px
+  // wide); the frame scales them to the rail so buttons never wrap.
+  const frame = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0.6);
+  useEffect(() => {
+    const element = frame.current;
+    if (!element) return;
+    const observer = new ResizeObserver(([entry]) =>
+      setScale(Math.min(1, entry.contentRect.width / STUDY_WIDTH)),
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
   const play = (accent: "us" | "uk" = "us") =>
     void playWordAudio(
       word.word,
@@ -109,9 +124,11 @@ export default function VocabStagePreview({
           <CheckCircle2 size={16} aria-hidden="true" /> Bước này đủ nội dung.
         </p>
       )}
-      {/* The learner components are laid out for the study room; a scaled
-          frame keeps them readable in the 400px rail. */}
-      <div className="mt-3 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 p-3">
+      <div
+        ref={frame}
+        className="mt-3 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 p-3"
+      >
+        <div style={{ width: STUDY_WIDTH, zoom: scale }}>
         {stage === "FLASHCARD" && (
           <FlashcardStage
             word={learner}
@@ -164,6 +181,7 @@ export default function VocabStagePreview({
             onRateSrs={() => undefined}
           />
         )}
+        </div>
       </div>
     </div>
   );
