@@ -34,6 +34,7 @@ import { Pagination } from "@/components/ui";
 import toast from "react-hot-toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import ImageUploadField from "@/components/admin/ImageUploadField";
+import { formAudioPreviewSrc, groupAudioSrc } from "@/lib/toeic/adminGroupAudio";
 import AudioUploadField from "@/components/admin/AudioUploadField";
 import ToeicSpeakingExamComposer from "@/components/admin/ToeicSpeakingExamComposer";
 import {
@@ -89,6 +90,8 @@ interface ExamGroup {
   groupOrder: number;
   imageUrl?: string | null;
   audioUrl?: string | null;
+  /** Signed URL for a migrated (private-bucket) clip; audioUrl then holds its key. */
+  audioPlaybackUrl?: string | null;
   passageText?: string | null;
   transcriptText?: string | null;
   imageBrief?: string | null;
@@ -1584,7 +1587,7 @@ export default function AdminExamsPage() {
                     <div className="rounded-lg bg-white border border-slate-200 p-3">
                       <audio
                         controls
-                        src={group.audioUrl}
+                        src={groupAudioSrc(group) ?? undefined}
                         className="w-full h-8"
                       />
                     </div>
@@ -2049,6 +2052,7 @@ export default function AdminExamsPage() {
                       <AudioUploadField
                         label={`Tệp âm thanh nghe (Part ${groupForm.part}) *`}
                         value={groupForm.audioUrl}
+                        previewUrl={formAudioPreviewSrc(groupForm.audioUrl, editingGroup)}
                         onChange={(url) =>
                           setGroupForm({ ...groupForm, audioUrl: url })
                         }
