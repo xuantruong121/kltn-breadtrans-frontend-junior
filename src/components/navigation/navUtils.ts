@@ -98,8 +98,23 @@ export interface NavItemConfig {
   href: string;
 }
 
-export const MAIN_NAV_ORDER: NavItemConfig[] = [
-  { label: "Home/Logo", href: "/dashboard" },
+/** The desktop header shows at most this many destination buttons. */
+export const MAX_HEADER_NAV_BUTTONS = 8;
+
+/**
+ * Splits the ordered header destinations: the first `max` are buttons, the
+ * rest go into "More". With `max` or fewer there is no More menu at all.
+ */
+export function splitNavOverflow<T>(
+  items: readonly T[],
+  max = MAX_HEADER_NAV_BUTTONS,
+): { visible: T[]; overflow: T[] } {
+  if (items.length <= max) return { visible: [...items], overflow: [] };
+  return { visible: items.slice(0, max), overflow: items.slice(max) };
+}
+
+/** Every desktop header destination, in display order. */
+export const HEADER_NAV_ITEMS: NavItemConfig[] = [
   { label: "Nghe", href: "/listening" },
   { label: "Nói", href: "/speaking" },
   { label: "Đọc", href: "/reading" },
@@ -108,10 +123,16 @@ export const MAIN_NAV_ORDER: NavItemConfig[] = [
   { label: "Luyện đề", href: "/exams" },
   ...whenCourses<NavItemConfig>({ label: "Khóa học", href: "/courses" }),
   { label: "Cửa hàng", href: "/market" },
-  { label: "More", href: "#more" },
-];
-
-export const MORE_DROPDOWN_ITEMS: NavItemConfig[] = [
   { label: "Bảng xếp hạng", href: "/arena" },
   { label: "FAQ", href: "/help" },
 ];
+
+const headerSplit = splitNavOverflow(HEADER_NAV_ITEMS);
+
+export const MAIN_NAV_ORDER: NavItemConfig[] = [
+  { label: "Home/Logo", href: "/dashboard" },
+  ...headerSplit.visible,
+  ...(headerSplit.overflow.length ? [{ label: "More", href: "#more" }] : []),
+];
+
+export const MORE_DROPDOWN_ITEMS: NavItemConfig[] = headerSplit.overflow;

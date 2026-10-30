@@ -4,6 +4,8 @@ import { COURSES_ENABLED } from "../../lib/featureFlags.ts";
 import {
   MAIN_NAV_ORDER,
   MORE_DROPDOWN_ITEMS,
+  MAX_HEADER_NAV_BUTTONS,
+  splitNavOverflow,
   isExamRoute,
   isListeningRoute,
   isSpeakingRoute,
@@ -25,8 +27,8 @@ describe("Header Navigation Restructure Verification", () => {
       "Viết",
       "Flashcard",
       "Luyện đề",
-      ...(COURSES_ENABLED ? ["Khóa học"] : []),
-      "Cửa hàng",
+      ...(COURSES_ENABLED ? ["Khóa học"] : ["Cửa hàng"]),
+      ...(COURSES_ENABLED ? ["Cửa hàng"] : ["Bảng xếp hạng"]),
       "More",
     ];
 
@@ -40,18 +42,29 @@ describe("Header Navigation Restructure Verification", () => {
     const labels = MAIN_NAV_ORDER.map((item) => item.label);
     assert.equal(labels.includes("Ngữ pháp"), false);
     assert.equal(labels.includes("Khóa học của tôi"), false);
-    assert.equal(labels.includes("Bảng xếp hạng"), false);
     assert.equal(labels.includes("Liên hệ"), false);
     assert.equal(labels.includes("Đề xuất"), false);
   });
 
-  it("verifies the More dropdown contains exactly Bảng xếp hạng and FAQ", () => {
-    assert.equal(MORE_DROPDOWN_ITEMS.length, 2);
-    assert.equal(MORE_DROPDOWN_ITEMS[0].label, "Bảng xếp hạng");
-    assert.equal(MORE_DROPDOWN_ITEMS[0].href, "/arena");
+  it("shows at most 8 destination buttons; the rest go into More", () => {
+    const buttons = MAIN_NAV_ORDER.filter(
+      (item) => item.label !== "Home/Logo" && item.label !== "More",
+    );
+    assert.equal(MAX_HEADER_NAV_BUTTONS, 8);
+    assert.equal(buttons.length, 8);
+    assert.deepEqual(
+      MORE_DROPDOWN_ITEMS.map((item) => item.href),
+      COURSES_ENABLED ? ["/arena", "/help"] : ["/help"],
+    );
+  });
 
-    assert.equal(MORE_DROPDOWN_ITEMS[1].label, "FAQ");
-    assert.equal(MORE_DROPDOWN_ITEMS[1].href, "/help");
+  it("splitNavOverflow keeps a short list whole and has no More", () => {
+    const eight = Array.from({ length: 8 }, (_, i) => i);
+    assert.deepEqual(splitNavOverflow(eight), { visible: eight, overflow: [] });
+    assert.deepEqual(splitNavOverflow([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), {
+      visible: [1, 2, 3, 4, 5, 6, 7, 8],
+      overflow: [9, 10],
+    });
   });
 
   it("activates 'Đọc' for both Reading and Grammar routes", () => {
