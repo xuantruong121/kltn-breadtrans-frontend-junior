@@ -1421,8 +1421,9 @@ export default function SkillCmsWorkspace({
               </select>
             </label>
           )}
-          {(domain === "reading" ||
-            (isListening && question.type === "MULTIPLE_CHOICE")) && (
+          {/* Reading only: a Listening question keeps its transcript in
+              transcriptSegments, and this field is not saved for it. */}
+          {domain === "reading" && (
             <div className="md:col-span-2 space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">
@@ -1445,7 +1446,7 @@ export default function SkillCmsWorkspace({
                 onChange={(event) =>
                   setForm({ ...form, passage: event.target.value })
                 }
-                className={`${inputClassName()} min-h-40 font-serif leading-relaxed`}
+                className={`${inputClassName()} min-h-40 leading-relaxed`}
                 placeholder="Nhập hoặc dán nội dung đoạn văn tiếng Anh tại đây..."
               />
             </div>
@@ -2155,7 +2156,7 @@ export default function SkillCmsWorkspace({
                       };
                     })
                   }
-                  className={`${inputClassName()} min-h-32 ${fullDraft.domain === "reading" ? "font-serif leading-relaxed" : "font-mono"}`}
+                  className={`${inputClassName()} min-h-32 ${fullDraft.domain === "reading" ? "leading-relaxed" : "font-mono"}`}
                 />
               </label>
               {fullDraft.sourceQuestion && (
@@ -3088,7 +3089,7 @@ export default function SkillCmsWorkspace({
                       Bản nháp AI
                     </span>
                   </div>
-                  <p className="text-slate-700 font-serif whitespace-pre-line leading-relaxed">
+                  <p className="text-slate-700 whitespace-pre-line leading-relaxed">
                     {passageAiSuggestion.passage}
                   </p>
                   <div className="flex justify-end pt-2 border-t border-slate-200">
