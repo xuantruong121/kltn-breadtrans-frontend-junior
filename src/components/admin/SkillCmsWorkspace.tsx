@@ -2120,7 +2120,7 @@ export default function SkillCmsWorkspace({
               />
             </label>
             <label className="text-sm font-medium">
-              Trình độ tham chiếu / context
+              Trình độ
               <select
                 value={form.level}
                 onChange={(event) =>
@@ -2134,10 +2134,6 @@ export default function SkillCmsWorkspace({
                   </option>
                 ))}
               </select>
-              <span className="mt-1 block text-[11px] font-normal text-slate-500">
-                Dùng để định hướng nội dung AI; runtime vẫn lưu theo contract của
-                từng domain.
-              </span>
             </label>
             <label className="text-sm font-medium md:col-span-2">
               Mô tả
@@ -3965,10 +3961,6 @@ export default function SkillCmsWorkspace({
         </div>
       )}
 
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-        <CheckCircle2 className="mr-2 inline-block" size={16} /> Draft không
-        xuất hiện trên learner API; publish chỉ chạy sau preflight domain.
-      </div>
       <ConfirmDialog
         open={pendingPublicationStatus !== null}
         title={
