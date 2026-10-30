@@ -8,6 +8,7 @@ import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { playWordAudio } from "@/modules/vocab/utils/audio";
 import { vocabService } from "@/lib/api/services/vocab.service";
 import { BTN_AI, BTN_PRIMARY, BTN_SECONDARY } from "../cmsButtons";
+import AudioClipField from "../AudioClipField";
 import { POS_OPTIONS, cefrToCourseLevel, isBareNumber } from "./vocabCms";
 
 /** IPA symbols that are not on a keyboard, inserted at the cursor. */
@@ -341,27 +342,27 @@ export default function VocabWordForm({
             className={FIELD}
           />
         </label>
-        <details className="text-sm md:col-span-3">
+        <details
+          className="text-sm md:col-span-3"
+          open={Boolean(form.audioUs || form.audioUk)}
+        >
           <summary className="cursor-pointer font-semibold text-slate-700 hover:text-slate-900">
-            Audio riêng (tuỳ chọn) — không có thì học viên nghe giọng máy
+            Audio phát âm (tuỳ chọn) · không có thì học viên nghe giọng đọc
+            máy của trình duyệt
           </summary>
-          <div className="mt-2 grid gap-3 md:grid-cols-2">
-            <label className="text-sm font-medium text-slate-800">
-              Link audio US
-              <input
-                value={form.audioUs}
-                onChange={(event) => set("audioUs", event.target.value)}
-                className={FIELD}
-              />
-            </label>
-            <label className="text-sm font-medium text-slate-800">
-              Link audio UK
-              <input
-                value={form.audioUk}
-                onChange={(event) => set("audioUk", event.target.value)}
-                className={FIELD}
-              />
-            </label>
+          <div className="mt-2 grid gap-4 md:grid-cols-2">
+            <AudioClipField
+              label="Giọng US"
+              value={form.audioUs}
+              onChange={(url) => set("audioUs", url)}
+              fileName={`${form.word.trim() || "word"}-us`}
+            />
+            <AudioClipField
+              label="Giọng UK"
+              value={form.audioUk}
+              onChange={(url) => set("audioUk", url)}
+              fileName={`${form.word.trim() || "word"}-uk`}
+            />
           </div>
         </details>
         {collocations && collocations.length > 0 && (
