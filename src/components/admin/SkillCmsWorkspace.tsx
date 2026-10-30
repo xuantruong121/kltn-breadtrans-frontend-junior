@@ -41,7 +41,10 @@ type QuestionDraft = {
   prompt: string;
   options: string;
   correctIndex: string;
+  /** Vietnamese. */
   explanation: string;
+  /** English; listening explanations are stored as { vi, en }. */
+  explanationEn: string;
   questionType: string;
   segments: ListeningSegment[];
   taskType: string;
@@ -157,6 +160,7 @@ const emptyQuestion = (domain: Domain): QuestionDraft => ({
   options: "",
   correctIndex: "",
   explanation: "",
+  explanationEn: "",
   questionType: domain === "reading" ? "MAIN_IDEA" : "",
   segments: [emptySegment()],
   taskType: domain === "writing" ? "EMAIL" : "",
@@ -196,6 +200,10 @@ function questionToDraft(question: any): QuestionDraft {
       typeof content.explanation === "string"
         ? content.explanation
         : String(content.explanation?.vi ?? ""),
+    explanationEn:
+      typeof content.explanation === "object"
+        ? String(content.explanation?.en ?? "")
+        : "",
     questionType: String(content.questionType ?? "MAIN_IDEA"),
     segments: Array.isArray(content.transcriptSegments)
       ? content.transcriptSegments.map((segment: any) => ({
@@ -218,6 +226,26 @@ function questionToDraft(question: any): QuestionDraft {
       ? content.sampleSentences.join("\n")
       : "",
   };
+}
+
+/**
+ * Stored transcript turns, reduced to the fields the CMS accepts. A question
+ * that copies them stays identical to the quiz transcript, so the audio
+ * builder dedupes it into the same recording.
+ */
+function transcriptForSave(segments: unknown): Array<Record<string, string>> {
+  if (!Array.isArray(segments)) return [];
+  return segments.flatMap((segment: any) => {
+    const speaker = String(segment?.speaker ?? "").trim();
+    const text = String(segment?.text ?? "").trim();
+    if (!speaker || !text) return [];
+    const turn: Record<string, string> = { speaker, text };
+    for (const key of ["translation", "voiceKey", "speakerId"]) {
+      const value = String(segment?.[key] ?? "").trim();
+      if (value) turn[key] = value;
+    }
+    return [turn];
+  });
 }
 
 /** Shared button looks: visible hover, press, keyboard focus and disabled states. */
@@ -346,6 +374,7 @@ export default function SkillCmsWorkspace({
         options: string[];
         correctIndex: number;
         explanation: string;
+        explanationEn?: string;
       }>
     >([]);
   const [isWritingAiOpen, setIsWritingAiOpen] = useState(false);
@@ -365,7 +394,7 @@ export default function SkillCmsWorkspace({
   // AI full draft: the listening form to write (was inferred from the
   // question being edited, so it silently produced dictation).
   const [fullDraftMode, setFullDraftMode] = useState<"DIALOGUE" | "DICTATION">(
-    "DIALOGUE",
+    initialListeningMode === "DICTATION" ? "DICTATION" : "DIALOGUE",
   );
   // The "new question" editor is opened on demand; editing happens in place.
   const [isAddingQuestion, setIsAddingQuestion] = useState(false);
@@ -373,11 +402,41 @@ export default function SkillCmsWorkspace({
     QuestionDraft[]
   >([]);
 
-  const questionDraftPayload = (draft: QuestionDraft) => {
+  /**
+   * The transcript a dialogue quiz plays, and its accent. Every MCQ added to
+   * the quiz carries them, as published content does.
+   */
+  const quizListeningContext = () => {
+    if (domain !== "listening" || selectedListeningMode === "DICTATION")
+      return { transcript: [], accent: "US" };
+    const holder = (item?.questions || []).find(
+      (q: any) =>
+        Array.isArray(q.content?.transcriptSegments) &&
+        q.content.transcriptSegments.length > 0,
+    );
+    return {
+      transcript: transcriptForSave(holder?.content?.transcriptSegments),
+      accent: holder?.content?.accent === "UK" ? "UK" : "US",
+    };
+  };
+
+  /** A question in the published shape. */
+  const questionDraftPayload = (
+    draft: QuestionDraft,
+    listening: {
+      transcript: Array<Record<string, string>>;
+      accent: string;
+    } = { transcript: [], accent: "US" },
+  ) => {
+    const explanationVi = draft.explanation.trim();
+    const explanationEn = draft.explanationEn.trim();
     const content: Record<string, unknown> = {
       text: draft.prompt.trim(),
       prompt: draft.prompt.trim(),
-      explanation: draft.explanation.trim() || undefined,
+      explanation:
+        domain === "listening" && explanationEn
+          ? { ...(explanationVi ? { vi: explanationVi } : {}), en: explanationEn }
+          : explanationVi || undefined,
     };
     if (domain === "reading") {
       content.passage = form.passage.trim();
@@ -386,16 +445,16 @@ export default function SkillCmsWorkspace({
     if (domain === "listening") {
       if (draft.type === "DICTATION")
         content.correctAnswer = draft.prompt.trim();
-      if (draft.type === "DIALOGUE") {
-        content.transcriptSegments = draft.segments
-          .filter((segment) => segment.speaker.trim() && segment.text.trim())
-          .map((segment) => ({
-            speaker: segment.speaker.trim(),
-            text: segment.text.trim(),
-            ...(segment.translation.trim()
-              ? { translation: segment.translation.trim() }
-              : {}),
-          }));
+      if (draft.type === "DIALOGUE")
+        content.transcriptSegments = transcriptForSave(draft.segments);
+      if (draft.type === "MULTIPLE_CHOICE" && listening.transcript.length) {
+        content.transcriptSegments = listening.transcript;
+        content.audioText = listening.transcript
+          .map((turn) => turn.text)
+          .join(" ");
+        content.accent = listening.accent;
+        content.level = form.level;
+        content.skill = "LISTENING";
       }
     }
     if (
@@ -527,7 +586,13 @@ export default function SkillCmsWorkspace({
   };
 
   const handleSuggestListeningQuestions = async () => {
-    const sourceText = listeningSourceText();
+    // A dialogue quiz asks about its own transcript, whatever is being edited.
+    const quizTranscript = quizListeningContext().transcript;
+    const sourceText = quizTranscript.length
+      ? quizTranscript
+          .map((turn) => `${turn.speaker}: ${turn.text}`)
+          .join("\n")
+      : listeningSourceText();
     if (!sourceText) {
       toast.error("Vui lòng nhập transcript trước khi tạo câu hỏi.");
       return;
@@ -537,7 +602,7 @@ export default function SkillCmsWorkspace({
       const response: any = await axiosClient.post(
         "/admin/listening/ai/suggest-questions",
         {
-          mode: listeningMode(),
+          mode: quizTranscript.length ? "DIALOGUE" : listeningMode(),
           sourceText,
           level: form.level || "A2",
           count: Number(listeningQuestionsAiCount),
@@ -626,6 +691,7 @@ export default function SkillCmsWorkspace({
               : "",
             correctIndex: String(candidate.correctIndex ?? ""),
             explanation: String(candidate.explanation || ""),
+            explanationEn: String(candidate.explanationEn || ""),
             questionType: String(candidate.questionType || "MAIN_IDEA"),
           }))
         : [];
@@ -728,6 +794,11 @@ export default function SkillCmsWorkspace({
       setContentMetadata(metadata);
       if (domain === "listening") {
         setSelectedListeningMode(normalizeListeningMode(metadata.mode));
+        setFullDraftMode(
+          normalizeListeningMode(metadata.mode) === "DICTATION"
+            ? "DICTATION"
+            : "DIALOGUE",
+        );
         setQuestion((current) => ({
           ...current,
           type:
@@ -772,6 +843,8 @@ export default function SkillCmsWorkspace({
               bilingualContent: {
                 ...contentMetadata,
                 mode: selectedListeningMode,
+                levels: [form.level],
+                accents: contentMetadata.accents ?? ["US"],
               },
             }
           : {}),
@@ -783,16 +856,23 @@ export default function SkillCmsWorkspace({
           )
         : await axiosClient.post(`/admin/skill-content/${domain}`, payload);
       const savedItem = unwrap<any>(saved);
-      if (pendingFullDraftQuestions.length) {
-        await Promise.all(
-          pendingFullDraftQuestions.map((draft) =>
-            axiosClient.post(
-              domain === "listening"
-                ? `/admin/skill-content/listening/${savedItem.id}/questions`
-                : `/admin/skill-content/${domain}/${savedItem.id}/questions`,
-              questionDraftPayload(draft),
-            ),
-          ),
+      // A dialogue draft is not saved as its own question: its turns go onto
+      // every MCQ, as published quizzes store them. Saved one by one so the
+      // questions keep the draft's order.
+      const source = pendingFullDraftQuestions.find(
+        (draft) => draft.type === "DIALOGUE",
+      );
+      const listening = {
+        transcript: source ? transcriptForSave(source.segments) : [],
+        accent: "US",
+      };
+      for (const draft of pendingFullDraftQuestions) {
+        if (draft === source) continue;
+        await axiosClient.post(
+          domain === "listening"
+            ? `/admin/skill-content/listening/${savedItem.id}/questions`
+            : `/admin/skill-content/${domain}/${savedItem.id}/questions`,
+          questionDraftPayload(draft, listening),
         );
       }
       toast.success("Đã lưu bản nháp");
@@ -865,47 +945,15 @@ export default function SkillCmsWorkspace({
           );
         }
       } else {
-        const content: Record<string, unknown> = {
-          text: question.prompt.trim(),
-          prompt: question.prompt.trim(),
-          explanation: question.explanation.trim() || undefined,
-        };
-        if (domain === "reading") {
-          content.passage = form.passage.trim();
-          content.questionType = question.questionType || "MAIN_IDEA";
-        }
-        if (domain === "listening") {
-          if (question.type === "DICTATION")
-            content.correctAnswer = question.prompt.trim();
-          if (question.type === "DIALOGUE") {
-            const segments = question.segments.filter(
-              (segment) => segment.speaker.trim() && segment.text.trim(),
-            );
-            if (segments.length < 2) {
-              toast.error("Dialogue cần ít nhất 2 lượt lời");
-              return;
-            }
-            content.transcriptSegments = segments.map((segment) => ({
-              speaker: segment.speaker.trim(),
-              text: segment.text.trim(),
-              ...(segment.translation.trim()
-                ? { translation: segment.translation.trim() }
-                : {}),
-            }));
-          }
-        }
         if (
-          (domain === "reading" ||
-            (domain === "listening" && question.type === "MULTIPLE_CHOICE")) &&
-          question.options.trim()
+          domain === "listening" &&
+          question.type === "DIALOGUE" &&
+          transcriptForSave(question.segments).length < 2
         ) {
-          content.options = question.options
-            .split("\n")
-            .map((value) => value.trim())
-            .filter(Boolean);
-          content.correctIndex = Number(question.correctIndex);
+          toast.error("Dialogue cần ít nhất 2 lượt lời");
+          return;
         }
-        const payload = { type: question.type, content };
+        const payload = questionDraftPayload(question, quizListeningContext());
         if (question.id) {
           await axiosClient.patch(
             domain === "listening"
@@ -1320,6 +1368,23 @@ export default function SkillCmsWorkspace({
     text: string;
     translation?: string;
   }>;
+  // A full draft replaces the whole quiz, so it is offered only while the
+  // quiz has no questions; after that its form is fixed.
+  const draftLocked =
+    (isListening || domain === "reading") && questions.length > 0;
+  const listeningTypeOptions = (
+    [
+      ["MULTIPLE_CHOICE", "Trắc nghiệm"],
+      ["DICTATION", "Nghe chép"],
+      ["DIALOGUE", "Hội thoại (lời thoại)"],
+    ] as const
+  ).filter(
+    ([value]) =>
+      !draftLocked ||
+      value === question.type ||
+      value ===
+        (selectedListeningMode === "DICTATION" ? "DICTATION" : "MULTIPLE_CHOICE"),
+  );
   /** The artifact that matches the current transcript, if any. */
   const currentArtifact = artifacts.find((artifact) => !artifact.isStale);
 
@@ -1334,7 +1399,7 @@ export default function SkillCmsWorkspace({
               onChange={(event) => {
                 const nextType = event.target.value;
                 setQuestion({ ...question, type: nextType });
-                if (isListening) {
+                if (isListening && !draftLocked) {
                   setSelectedListeningMode(
                     nextType === "DICTATION" || nextType === "DIALOGUE"
                       ? nextType
@@ -1345,11 +1410,11 @@ export default function SkillCmsWorkspace({
               className={inputClassName()}
             >
               {isListening ? (
-                <>
-                  <option value="MULTIPLE_CHOICE">Trắc nghiệm</option>
-                  <option value="DICTATION">Nghe chép</option>
-                  <option value="DIALOGUE">Hội thoại (lời thoại)</option>
-                </>
+                listeningTypeOptions.map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))
               ) : isWriting ? (
                 <option value="WRITING">Writing</option>
               ) : (
@@ -1673,8 +1738,10 @@ export default function SkillCmsWorkspace({
               ))}
             </div>
           )}
-          <label className="text-sm font-medium md:col-span-2">
-            Ghi chú / giải thích
+          <label
+            className={`text-sm font-medium ${isListening ? "" : "md:col-span-2"}`}
+          >
+            {isListening ? "Lời giải (tiếng Việt)" : "Ghi chú / giải thích"}
             <textarea
               value={question.explanation}
               onChange={(event) =>
@@ -1683,6 +1750,18 @@ export default function SkillCmsWorkspace({
               className={`${inputClassName()} min-h-20`}
             />
           </label>
+          {isListening && (
+            <label className="text-sm font-medium">
+              Lời giải (English)
+              <textarea
+                value={question.explanationEn}
+                onChange={(event) =>
+                  setQuestion({ ...question, explanationEn: event.target.value })
+                }
+                className={`${inputClassName()} min-h-20`}
+              />
+            </label>
+          )}
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           <button
@@ -1758,49 +1837,68 @@ export default function SkillCmsWorkspace({
           <h2 className="font-semibold text-slate-950">Thông tin nội dung</h2>
           {(isListening || domain === "reading") && (
             <div className="flex flex-wrap items-center gap-2">
-              {isListening && (
+              {isListening &&
+                (draftLocked ? (
+                  <span className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-600">
+                    Dạng bài
+                    <span className="font-semibold text-slate-900">
+                      {selectedListeningMode === "DICTATION"
+                        ? "Nghe chép"
+                        : "Hội thoại + câu hỏi"}
+                    </span>
+                  </span>
+                ) : (
+                  <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-600">
+                    Dạng bài
+                    <select
+                      aria-label="Dạng bài nghe AI sẽ soạn"
+                      value={fullDraftMode}
+                      onChange={(event) => {
+                        const next =
+                          event.target.value === "DICTATION"
+                            ? "DICTATION"
+                            : "DIALOGUE";
+                        setFullDraftMode(next);
+                        // The quiz is saved in the form chosen here.
+                        setSelectedListeningMode(next);
+                      }}
+                      className="min-h-10 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-900"
+                    >
+                      <option value="DIALOGUE">Hội thoại + câu hỏi</option>
+                      <option value="DICTATION">Nghe chép</option>
+                    </select>
+                  </label>
+                ))}
+              {!draftLocked && (
                 <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-600">
-                  Dạng bài
-                  <select
-                    aria-label="Dạng bài nghe AI sẽ soạn"
-                    value={fullDraftMode}
+                  Số câu hỏi
+                  <input
+                    aria-label={`Số câu trong bản nháp ${meta[domain].label}`}
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={fullDraftCount}
                     onChange={(event) =>
-                      setFullDraftMode(
-                        event.target.value === "DICTATION"
-                          ? "DICTATION"
-                          : "DIALOGUE",
+                      setFullDraftCount(
+                        Math.min(
+                          10,
+                          Math.max(1, Number(event.target.value) || 1),
+                        ),
                       )
                     }
-                    className="min-h-10 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-900"
-                  >
-                    <option value="DIALOGUE">Hội thoại + câu hỏi</option>
-                    <option value="DICTATION">Nghe chép</option>
-                  </select>
+                    className="min-h-10 w-16 rounded-lg border border-slate-300 px-2 text-center text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-400"
+                  />
                 </label>
               )}
-              <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-600">
-                Số câu hỏi
-                <input
-                  aria-label={`Số câu trong bản nháp ${meta[domain].label}`}
-                  type="number"
-                  min={1}
-                  max={10}
-                  value={fullDraftCount}
-                  onChange={(event) =>
-                    setFullDraftCount(
-                      Math.min(
-                        10,
-                        Math.max(1, Number(event.target.value) || 1),
-                      ),
-                    )
-                  }
-                  className="min-h-10 w-16 rounded-lg border border-slate-300 px-2 text-center text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-400"
-                />
-              </label>
               <button
                 type="button"
                 onClick={() => void handleSuggestFullDraft()}
-                title="Dùng Tiêu đề làm chủ đề và Trình độ bên dưới. Bản nháp hiện ra để xem lại trước khi áp dụng."
+                disabled={draftLocked}
+                title={
+                  draftLocked
+                    ? "Bài đã có câu hỏi — dùng ‘Thêm câu hỏi bằng AI’"
+                    : "Dùng Tiêu đề làm chủ đề và Trình độ bên dưới. Bản nháp hiện ra để xem lại trước khi áp dụng."
+                }
                 className={BTN_AI}
               >
                 Soạn cả bài bằng AI
@@ -1808,6 +1906,11 @@ export default function SkillCmsWorkspace({
             </div>
           )}
         </div>
+        {draftLocked && (
+          <p className="mt-2 text-sm text-slate-500">
+            Bài đã có câu hỏi — dùng ‘Thêm câu hỏi bằng AI’ ở mục Câu hỏi.
+          </p>
+        )}
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <label className="text-sm font-medium">
             Tiêu đề
@@ -2243,7 +2346,12 @@ export default function SkillCmsWorkspace({
               type="button"
               disabled={!id}
               onClick={() => {
-                setQuestion(emptyQuestion(domain));
+                setQuestion({
+                  ...emptyQuestion(domain),
+                  ...(isListening && selectedListeningMode !== "DICTATION"
+                    ? { type: "MULTIPLE_CHOICE" }
+                    : {}),
+                });
                 setIsAddingQuestion(true);
               }}
               className={BTN_SECONDARY}
@@ -2507,6 +2615,7 @@ export default function SkillCmsWorkspace({
                     </div>
                     <label className="mt-3 block text-xs font-semibold text-slate-700">
                       Giải thích
+                      {fullDraft.domain === "listening" ? " (tiếng Việt)" : ""}
                       <textarea
                         disabled={candidate.excluded}
                         rows={2}
@@ -2532,6 +2641,35 @@ export default function SkillCmsWorkspace({
                         className={`${inputClassName()} disabled:cursor-not-allowed`}
                       />
                     </label>
+                    {fullDraft.domain === "listening" && (
+                      <label className="mt-3 block text-xs font-semibold text-slate-700">
+                        Giải thích (English)
+                        <textarea
+                          disabled={candidate.excluded}
+                          rows={2}
+                          value={candidate.explanationEn}
+                          onChange={(event) =>
+                            setFullDraft((current) =>
+                              current
+                                ? {
+                                    ...current,
+                                    questions: current.questions.map(
+                                      (item: any, itemIndex) =>
+                                        itemIndex === index
+                                          ? {
+                                              ...item,
+                                              explanationEn: event.target.value,
+                                            }
+                                          : item,
+                                    ),
+                                  }
+                                : current,
+                            )
+                          }
+                          className={`${inputClassName()} disabled:cursor-not-allowed`}
+                        />
+                      </label>
+                    )}
                   </div>
                 ))}
               </div>
@@ -2961,6 +3099,21 @@ export default function SkillCmsWorkspace({
                       aria-label={`Giải thích câu nghe ${index + 1}`}
                       placeholder="Giải thích bằng tiếng Việt"
                     />
+                    <textarea
+                      value={candidate.explanationEn ?? ""}
+                      onChange={(event) =>
+                        setListeningQuestionsAiCandidates((current) =>
+                          current.map((item, itemIndex) =>
+                            itemIndex === index
+                              ? { ...item, explanationEn: event.target.value }
+                              : item,
+                          ),
+                        )
+                      }
+                      className={`${inputClassName()} mt-2 min-h-16`}
+                      aria-label={`English explanation câu nghe ${index + 1}`}
+                      placeholder="Explanation in English"
+                    />
                     <button
                       type="button"
                       onClick={() => {
@@ -2971,7 +3124,9 @@ export default function SkillCmsWorkspace({
                           options: candidate.options.join("\n"),
                           correctIndex: String(candidate.correctIndex),
                           explanation: candidate.explanation,
+                          explanationEn: candidate.explanationEn ?? "",
                         });
+                        setIsAddingQuestion(true);
                         setIsListeningQuestionsAiOpen(false);
                         toast.success(
                           "Đã áp dụng câu hỏi nghe vào biểu mẫu. Bạn có thể chỉnh sửa trước khi thêm.",

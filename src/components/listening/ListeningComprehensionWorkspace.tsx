@@ -1930,6 +1930,14 @@ export function ListeningComprehensionWorkspace({
                         <p className="text-base sm:text-lg font-semibold leading-relaxed text-slate-900 dark:text-slate-100">
                           {parsedExplanation.vi}
                         </p>
+                        {parsedExplanation.en && (
+                          <p
+                            lang="en"
+                            className="text-sm sm:text-base leading-relaxed text-slate-700 dark:text-slate-300"
+                          >
+                            {parsedExplanation.en}
+                          </p>
+                        )}
 
                         {/* Listening Evidence Quotation Block */}
                         {parsedExplanation.evidence && (

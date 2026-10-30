@@ -3,6 +3,8 @@ import type { QuestionExplanation } from "@/lib/api/services/quiz.service";
 export interface ParsedStructuredExplanation {
   type: "structured";
   vi: string;
+  /** The same explanation in English (CMS stores { vi, en }). */
+  en?: string;
   evidence?: string;
   keyPhrase?: string;
   vocabularyNote?: string;
@@ -35,6 +37,8 @@ export function parseQuestionExplanation(
     const obj = explanation as Record<string, unknown>;
     const vi = typeof obj.vi === "string" ? obj.vi.trim() : "";
     if (vi) {
+      const en =
+        typeof obj.en === "string" && obj.en.trim() ? obj.en.trim() : undefined;
       const evidence =
         typeof obj.evidence === "string" && obj.evidence.trim()
           ? obj.evidence.trim()
@@ -51,6 +55,7 @@ export function parseQuestionExplanation(
       return {
         type: "structured",
         vi,
+        en,
         evidence,
         keyPhrase,
         vocabularyNote,
