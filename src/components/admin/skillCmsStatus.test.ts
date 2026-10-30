@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  audioBadgeFor,
   cmsLevelFromTitle,
   filterSkillContent,
   latestAudioBadge,
@@ -89,4 +90,32 @@ test("filterSkillContent: sorts by level, title, question count and age", () => 
   assert.deepEqual(filterSkillContent(items, { ...all, sort: "FEWEST" }).map((i) => i.id), [2, 1, 3]);
   assert.deepEqual(filterSkillContent(items, { ...all, sort: "OLDEST" }).map((i) => i.id), [1, 2, 3]);
   assert.deepEqual(filterSkillContent(items, { ...all, sort: "TITLE" }).map((i) => i.id), [2, 3, 1]);
+});
+
+test("audioBadgeFor: comprehension and dictation count clips per question", () => {
+  assert.deepEqual(
+    audioBadgeFor({ bilingualContent: { mode: "COMPREHENSION" }, questionsWithAudio: 6, _count: { questions: 6 } }),
+    { label: "Audio 6/6 câu", tone: "ok" },
+  );
+  assert.equal(
+    audioBadgeFor({ bilingualContent: { mode: "DICTATION" }, questionsWithAudio: 3, _count: { questions: 20 } }).tone,
+    "pending",
+  );
+  assert.equal(
+    audioBadgeFor({ bilingualContent: { mode: "DIALOGUE" }, listeningAudioArtifacts: [{ version: 1, status: "PUBLISHED" }] }).label,
+    "Audio v1 · đang dùng",
+  );
+});
+
+test("publishChecklist: per-question audio for dictation", () => {
+  const items = publishChecklist({
+    domain: "listening",
+    listeningMode: "DICTATION",
+    title: "Nghe chép A1",
+    questions: [
+      { type: "DICTATION", content: {}, audioAssets: [{ isActive: true }] },
+      { type: "DICTATION", content: {}, audioAssets: [] },
+    ],
+  });
+  assert.deepEqual(items.at(-1), { label: "Audio từng câu 1/2", done: false });
 });

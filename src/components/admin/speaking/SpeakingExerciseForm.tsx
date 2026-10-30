@@ -101,7 +101,16 @@ export default function SpeakingExerciseForm({
           );
     },
     onSuccess: () => {
-      toast.success(exercise ? "Đã lưu câu luyện." : "Đã thêm câu luyện.");
+      const sentenceChanged =
+        exercise?.audioUrl &&
+        exercise.targetText.trim() !== form.targetText.trim();
+      toast.success(
+        sentenceChanged
+          ? "Đã lưu. Câu mẫu đổi nên audio mẫu cũ đã ngừng dùng — hãy tạo lại."
+          : exercise
+            ? "Đã lưu câu luyện."
+            : "Đã thêm câu luyện.",
+      );
       refresh();
       onDone();
     },

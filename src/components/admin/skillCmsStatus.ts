@@ -29,6 +29,34 @@ export function latestAudioBadge(
   return { label: `Audio v${artifact.version} · ${state}`, tone };
 }
 
+/** Comprehension and dictation play one clip per question. */
+export function questionAudioBadge(withAudio: number, total: number): AudioBadge {
+  if (!total || !withAudio) return { label: "Chưa có audio", tone: "none" };
+  return {
+    label: `Audio ${withAudio}/${total} câu`,
+    tone: withAudio === total ? "ok" : "pending",
+  };
+}
+
+const PER_QUESTION_MODES = ["COMPREHENSION", "DICTATION"];
+
+/** The audio badge a list card shows: per-question clips or the shared recording, by mode. */
+export function audioBadgeFor(item: {
+  bilingualContent?: unknown;
+  questionsWithAudio?: number;
+  _count?: { questions?: number };
+  questions?: unknown[];
+  listeningAudioArtifacts?: Array<{ version: number; status: string }>;
+}): AudioBadge {
+  const mode = (item.bilingualContent as { mode?: string } | null)?.mode;
+  if (mode && PER_QUESTION_MODES.includes(mode))
+    return questionAudioBadge(
+      item.questionsWithAudio ?? 0,
+      item._count?.questions ?? item.questions?.length ?? 0,
+    );
+  return latestAudioBadge(item.listeningAudioArtifacts?.[0]);
+}
+
 export type ChecklistItem = { label: string; done: boolean };
 
 /**
@@ -38,8 +66,13 @@ export type ChecklistItem = { label: string; done: boolean };
 export function publishChecklist(input: {
   domain: string;
   title: string;
-  questions: Array<{ type?: string; content?: any }>;
+  questions: Array<{
+    type?: string;
+    content?: any;
+    audioAssets?: Array<{ isActive?: boolean }>;
+  }>;
   audioPublished?: boolean;
+  listeningMode?: string;
 }): ChecklistItem[] {
   const mcqs = input.questions.filter((q) => q.type === "MULTIPLE_CHOICE");
   const items: ChecklistItem[] = [
@@ -75,10 +108,20 @@ export function publishChecklist(input: {
           );
         }),
       },
-      {
-        label: "Audio đã xuất bản cho học viên",
-        done: input.audioPublished === true,
-      },
+      PER_QUESTION_MODES.includes(input.listeningMode ?? "")
+        ? (() => {
+            const withClip = input.questions.filter((q) =>
+              (q.audioAssets ?? []).some((asset) => asset.isActive),
+            ).length;
+            return {
+              label: `Audio từng câu ${withClip}/${input.questions.length}`,
+              done: input.questions.length > 0 && withClip === input.questions.length,
+            };
+          })()
+        : {
+            label: "Audio đã xuất bản cho học viên",
+            done: input.audioPublished === true,
+          },
     );
   }
   return items;
@@ -113,6 +156,8 @@ type ListItem = {
   _count?: { questions?: number };
   questions?: unknown[];
   listeningAudioArtifacts?: Array<{ version: number; status: string }>;
+  bilingualContent?: unknown;
+  questionsWithAudio?: number;
 };
 
 export const contentLevel = (item: ListItem) =>
@@ -154,8 +199,7 @@ export function filterSkillContent<T extends ListItem>(
         (item.publicationStatus || "DRAFT") === filters.status) &&
       (filters.level === "ALL" || contentLevel(item) === filters.level) &&
       (filters.audio === "ALL" ||
-        latestAudioBadge(item.listeningAudioArtifacts?.[0]).tone ===
-          filters.audio) &&
+        audioBadgeFor(item).tone === filters.audio) &&
       extra(item)
     );
   });

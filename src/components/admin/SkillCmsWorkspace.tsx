@@ -37,12 +37,12 @@ import {
   BTN_SUCCESS,
 } from "./cmsButtons";
 import {
+  audioBadgeFor,
   CMS_LEVELS,
   cmsLevelFromTitle,
   contentLevel,
   displayTitle,
   filterSkillContent,
-  latestAudioBadge,
   publishChecklist,
   type ListFilters,
 } from "./skillCmsStatus";
@@ -65,6 +65,8 @@ type QuestionDraft = {
   explanation: string;
   /** English; listening explanations are stored as { vi, en }. */
   explanationEn: string;
+  /** Comprehension: the sentence the learner hears. */
+  audioText: string;
   questionType: string;
   segments: ListeningSegment[];
   taskType: string;
@@ -117,6 +119,16 @@ const LISTENING_MODE_OPTIONS: Array<{
   { value: "DICTATION", label: "Chép chính tả" },
   { value: "DIALOGUE", label: "Hội thoại" },
 ];
+
+/** What a dictation item shows the learner; the sentence itself is the answer. */
+const DICTATION_INSTRUCTION = "Nghe và chép lại câu bạn vừa nghe.";
+
+/** How each listening form is named in the editor. */
+const LISTENING_MODE_LABEL: Record<ListeningMode, string> = {
+  DIALOGUE: "Hội thoại + câu hỏi",
+  COMPREHENSION: "Nghe hiểu (câu ngắn)",
+  DICTATION: "Nghe chép",
+};
 
 function normalizeListeningMode(value: unknown): ListeningMode {
   return value === "DICTATION" || value === "DIALOGUE"
@@ -190,6 +202,7 @@ const emptyQuestion = (domain: Domain): QuestionDraft => ({
   correctIndex: "",
   explanation: "",
   explanationEn: "",
+  audioText: "",
   questionType: domain === "reading" ? "MAIN_IDEA" : "",
   segments: [emptySegment()],
   taskType: domain === "writing" ? "EMAIL" : "",
@@ -216,11 +229,13 @@ function questionToDraft(question: any): QuestionDraft {
     id: question.id,
     type: question.type || "MULTIPLE_CHOICE",
     prompt: String(
-      content.prompt ??
-        content.text ??
-        content.correctAnswer ??
-        content.audioText ??
-        "",
+      question?.type === "DICTATION"
+        ? (content.correctAnswer ?? content.audioText ?? content.text ?? "")
+        : (content.prompt ??
+            content.text ??
+            content.correctAnswer ??
+            content.audioText ??
+            ""),
     ),
     options: Array.isArray(content.options) ? content.options.join("\n") : "",
     correctIndex:
@@ -233,6 +248,7 @@ function questionToDraft(question: any): QuestionDraft {
       typeof content.explanation === "object"
         ? String(content.explanation?.en ?? "")
         : "",
+    audioText: String(content.audioText ?? ""),
     questionType: String(content.questionType ?? "MAIN_IDEA"),
     segments: Array.isArray(content.transcriptSegments)
       ? content.transcriptSegments.map((segment: any) => ({
@@ -429,6 +445,16 @@ export default function SkillCmsWorkspace({
   );
   // The "new question" editor is opened on demand; editing happens in place.
   const [isAddingQuestion, setIsAddingQuestion] = useState(false);
+  const [questionPreview, setQuestionPreview] = useState<{
+    questionId: number;
+    url: string;
+  } | null>(null);
+  const [audioBatch, setAudioBatch] = useState<{
+    done: number;
+    total: number;
+  } | null>(null);
+  const [isBulkOpen, setIsBulkOpen] = useState(false);
+  const [bulkLines, setBulkLines] = useState("");
   const [pendingFullDraftQuestions, setPendingFullDraftQuestions] = useState<
     QuestionDraft[]
   >([]);
@@ -438,7 +464,9 @@ export default function SkillCmsWorkspace({
    * the quiz carries them, as published content does.
    */
   const quizListeningContext = () => {
-    if (domain !== "listening" || selectedListeningMode === "DICTATION")
+    // Only a dialogue quiz shares one conversation; comprehension and
+    // dictation questions each carry their own sentence and clip.
+    if (domain !== "listening" || selectedListeningMode !== "DIALOGUE")
       return { transcript: [], accent: "US" };
     const holder = (item?.questions || []).find(
       (q: any) =>
@@ -474,10 +502,39 @@ export default function SkillCmsWorkspace({
       content.questionType = draft.questionType || "MAIN_IDEA";
     }
     if (domain === "listening") {
-      if (draft.type === "DICTATION")
-        content.correctAnswer = draft.prompt.trim();
+      if (draft.type === "DICTATION") {
+        const sentence = draft.prompt.trim();
+        delete content.prompt;
+        content.text = DICTATION_INSTRUCTION;
+        content.correctAnswer = sentence;
+        content.audioText = sentence;
+        content.level = form.level;
+        content.skill = "LISTENING";
+        // An item read from the stitched recording keeps its one turn in step.
+        const turns = draft.segments.filter((segment) => segment.speaker.trim());
+        if (turns.length === 1)
+          content.transcriptSegments = [
+            {
+              speaker: turns[0].speaker.trim(),
+              text: sentence,
+              ...(turns[0].translation.trim()
+                ? { translation: turns[0].translation.trim() }
+                : {}),
+            },
+          ];
+      }
       if (draft.type === "DIALOGUE")
         content.transcriptSegments = transcriptForSave(draft.segments);
+      if (
+        draft.type === "MULTIPLE_CHOICE" &&
+        !listening.transcript.length &&
+        draft.audioText.trim()
+      ) {
+        content.audioText = draft.audioText.trim();
+        content.level = form.level;
+        content.skill = "LISTENING";
+        if (draft.imageUrl.trim()) content.imageUrl = draft.imageUrl.trim();
+      }
       if (draft.type === "MULTIPLE_CHOICE" && listening.transcript.length) {
         content.transcriptSegments = listening.transcript;
         content.audioText = listening.transcript
@@ -1154,19 +1211,85 @@ export default function SkillCmsWorkspace({
     }
   };
 
-  const generateDialogueAudio = async (questionId: number) => {
-    if (!id) return;
-    setBusy(true);
+  /** Azure reads the question's own sentence; the new clip becomes active. */
+  const generateQuestionAudio = async (questionId: number, quiet = false) => {
+    if (!id) return false;
     try {
       await axiosClient.post(
-        `/admin/skill-content/listening/${id}/questions/${questionId}/audio-assets/generate-dialogue`,
+        `/admin/skill-content/listening/${id}/questions/${questionId}/audio-assets/generate`,
       );
-      toast.success("Đã sinh audio Dialogue");
+      if (!quiet) toast.success("Đã tạo audio cho câu này");
+      return true;
+    } catch (error: any) {
+      toast.error(getApiErrorMessage(error, "Không thể tạo audio câu này"));
+      return false;
+    }
+  };
+
+  const playQuestionAudio = async (questionId: number) => {
+    if (!id) return;
+    try {
+      const response = await axiosClient.get(
+        `/quizzes/${id}/questions/${questionId}/audio`,
+        { responseType: "blob" },
+      );
+      if (questionPreview) URL.revokeObjectURL(questionPreview.url);
+      setQuestionPreview({
+        questionId,
+        url: URL.createObjectURL(response as unknown as Blob),
+      });
+    } catch (error: any) {
+      toast.error(getApiErrorMessage(error, "Không thể phát audio câu này"));
+    }
+  };
+
+  /** One request at a time, so a failure stops cleanly and shows where. */
+  const generateMissingAudio = async (questionIds: number[]) => {
+    setBusy(true);
+    let made = 0;
+    for (const [index, questionId] of questionIds.entries()) {
+      setAudioBatch({ done: index, total: questionIds.length });
+      if (!(await generateQuestionAudio(questionId, true))) break;
+      made++;
+    }
+    setAudioBatch(null);
+    setBusy(false);
+    if (made) toast.success(`Đã tạo audio cho ${made} câu`);
+    await loadItem();
+  };
+
+  /** Dictation: one sentence per line becomes one item, in order. */
+  const addDictationLines = async () => {
+    if (!id) return;
+    const lines = bulkLines
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+    if (!lines.length) return;
+    setBusy(true);
+    try {
+      for (const line of lines) {
+        await axiosClient.post(
+          `/admin/skill-content/listening/${id}/questions`,
+          {
+            type: "DICTATION",
+            content: {
+              text: DICTATION_INSTRUCTION,
+              correctAnswer: line,
+              audioText: line,
+              level: form.level,
+              skill: "LISTENING",
+            },
+          },
+        );
+      }
+      toast.success(`Đã thêm ${lines.length} câu nghe chép`);
+      setBulkLines("");
+      setIsBulkOpen(false);
       await loadItem();
     } catch (error: any) {
-      toast.error(
-        getApiErrorMessage(error, "Không thể sinh audio Dialogue"),
-      );
+      toast.error(getApiErrorMessage(error, "Không thể thêm các câu"));
+      await loadItem();
     } finally {
       setBusy(false);
     }
@@ -1444,7 +1567,7 @@ export default function SkillCmsWorkspace({
             // "Hội thoại C1 — " head.
             const cardTitle = displayTitle(content);
             const published = content.publicationStatus === "PUBLISHED";
-            const audio = latestAudioBadge(content.listeningAudioArtifacts?.[0]);
+            const audio = audioBadgeFor(content);
             return (
               <Link
                 key={content.id}
@@ -1575,7 +1698,17 @@ export default function SkillCmsWorkspace({
     title: form.title,
     questions,
     audioPublished: currentArtifact?.status === "PUBLISHED",
+    listeningMode: selectedListeningMode,
   });
+  // Comprehension and dictation play one clip per question.
+  const perQuestionAudio =
+    isListening && selectedListeningMode !== "DIALOGUE";
+  const questionsWithoutAudio = questions
+    .filter(
+      (q: any) =>
+        !(q.audioAssets ?? []).some((asset: any) => asset.isActive),
+    )
+    .map((q: any) => q.id as number);
 
   // One row per option, A-D at least; blank rows stay so their letters hold.
   const optionRows = question.options.split("\n");
@@ -1639,7 +1772,11 @@ export default function SkillCmsWorkspace({
           <div className="text-sm font-medium">
             <span className="flex items-center justify-between gap-3">
               <span>
-                {isWriting ? "Đề bài / instruction" : "Nội dung / đề bài"}
+                {isWriting
+                  ? "Đề bài / instruction"
+                  : isListening && question.type === "DICTATION"
+                    ? "Câu cần chép (học viên nghe rồi chép câu này)"
+                    : "Nội dung / đề bài"}
               </span>
               {isWriting && (
                 <button
@@ -1785,6 +1922,34 @@ export default function SkillCmsWorkspace({
             </>
           )}
 
+          {isListening &&
+            question.type === "MULTIPLE_CHOICE" &&
+            selectedListeningMode === "COMPREHENSION" && (
+              <>
+                <label className="text-sm font-medium md:col-span-2">
+                  Câu nghe (học viên nghe câu này)
+                  <textarea
+                    value={question.audioText}
+                    onChange={(event) =>
+                      setQuestion({ ...question, audioText: event.target.value })
+                    }
+                    placeholder="Ví dụ: The next bus to the city center leaves in fifteen minutes."
+                    className={`${inputClassName()} min-h-16`}
+                  />
+                  <span className="mt-1 block text-xs font-normal text-slate-500">
+                    Đổi câu nghe thì audio cũ ngừng dùng; tạo lại audio sau khi lưu.
+                  </span>
+                </label>
+                <div className="md:col-span-2">
+                  <ImageUploadField
+                    label="Ảnh minh hoạ (tuỳ chọn)"
+                    value={question.imageUrl}
+                    onChange={(imageUrl) => setQuestion({ ...question, imageUrl })}
+                    helperText="Dùng cho câu hỏi về tranh."
+                  />
+                </div>
+              </>
+            )}
           {(domain === "reading" ||
             (isListening && question.type === "MULTIPLE_CHOICE")) && (
             <>
@@ -2039,9 +2204,7 @@ export default function SkillCmsWorkspace({
                     <span className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-600">
                       Dạng bài
                       <span className="font-semibold text-slate-900">
-                        {selectedListeningMode === "DICTATION"
-                          ? "Nghe chép"
-                          : "Hội thoại + câu hỏi"}
+                        {LISTENING_MODE_LABEL[selectedListeningMode]}
                       </span>
                     </span>
                   ) : (
@@ -2049,20 +2212,26 @@ export default function SkillCmsWorkspace({
                       Dạng bài
                       <select
                         aria-label="Dạng bài nghe AI sẽ soạn"
-                        value={fullDraftMode}
+                        value={selectedListeningMode}
                         onChange={(event) => {
-                          const next =
-                            event.target.value === "DICTATION"
-                              ? "DICTATION"
-                              : "DIALOGUE";
-                          setFullDraftMode(next);
+                          const next = normalizeListeningMode(
+                            event.target.value,
+                          );
                           // The quiz is saved in the form chosen here.
                           setSelectedListeningMode(next);
+                          if (next !== "COMPREHENSION") setFullDraftMode(next);
                         }}
                         className="min-h-10 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-900"
                       >
-                        <option value="DIALOGUE">Hội thoại + câu hỏi</option>
-                        <option value="DICTATION">Nghe chép</option>
+                        <option value="DIALOGUE">
+                          {LISTENING_MODE_LABEL.DIALOGUE}
+                        </option>
+                        <option value="COMPREHENSION">
+                          {LISTENING_MODE_LABEL.COMPREHENSION}
+                        </option>
+                        <option value="DICTATION">
+                          {LISTENING_MODE_LABEL.DICTATION}
+                        </option>
                       </select>
                     </label>
                   ))}
@@ -2090,7 +2259,10 @@ export default function SkillCmsWorkspace({
                 <button
                   type="button"
                   onClick={() => void handleSuggestFullDraft()}
-                  disabled={draftLocked}
+                  disabled={
+                    draftLocked ||
+                    (isListening && selectedListeningMode === "COMPREHENSION")
+                  }
                   title={
                     draftLocked
                       ? "Bài đã có câu hỏi — dùng ‘Thêm câu hỏi bằng AI’"
@@ -2203,7 +2375,7 @@ export default function SkillCmsWorkspace({
         </section>
 
         <aside className="space-y-6 xl:sticky xl:top-6 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
-          {isListening && (
+          {isListening && selectedListeningMode !== "COMPREHENSION" && (
             <section
               aria-labelledby="listening-audio-heading"
               className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
@@ -2264,7 +2436,8 @@ export default function SkillCmsWorkspace({
                 })}
               </ol>
 
-              {listeningTranscript.length > 0 && (
+              {listeningTranscript.length > 0 &&
+              selectedListeningMode === "DIALOGUE" && (
                 <details className="mt-4 rounded-lg border border-slate-200" open>
                   <summary className="cursor-pointer px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50">
                     Lời thoại ({listeningTranscript.length} lượt)
@@ -2443,9 +2616,13 @@ export default function SkillCmsWorkspace({
             <div>
               <h2 className="font-semibold text-slate-950">Câu hỏi</h2>
               <p className="mt-1 text-sm text-slate-600">
-                {isListening && selectedListeningMode !== "DICTATION"
-                  ? "Câu hỏi về đoạn audio phía trên. Bấm Sửa để sửa ngay tại câu."
-                  : "Bấm Sửa để sửa ngay tại câu; câu mới thêm ở cuối danh sách."}
+                {isListening && selectedListeningMode === "DIALOGUE"
+                  ? "Câu hỏi về đoạn hội thoại (audio ở cột bên). Bấm Sửa để sửa ngay tại câu."
+                  : isListening && selectedListeningMode === "COMPREHENSION"
+                    ? "Mỗi câu có câu nghe và audio riêng. Bấm Sửa để sửa ngay tại câu."
+                    : isListening
+                      ? "Mỗi câu là một câu nghe chép có audio riêng."
+                      : "Bấm Sửa để sửa ngay tại câu; câu mới thêm ở cuối danh sách."}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -2462,7 +2639,7 @@ export default function SkillCmsWorkspace({
                   Thêm câu hỏi bằng AI
                 </button>
               )}
-              {isListening && (
+              {isListening && selectedListeningMode !== "DICTATION" && (
                 <button
                   type="button"
                   title="AI đọc lời thoại hiện có và gợi ý thêm câu hỏi trắc nghiệm; bạn chọn câu muốn thêm."
@@ -2537,44 +2714,154 @@ export default function SkillCmsWorkspace({
                   </div>
                 </div>
                 {question.id === current.id && renderQuestionEditor()}
-                {/* Per-question audio belongs to dictation only; a dialogue
-                    plays one continuous recording (Audio bài nghe above). */}
-                {isListening && current.type === "DICTATION" && (
-                  <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
-                    <span className="inline-flex items-center gap-1 text-xs text-slate-500">
-                      <Volume2 size={14} />{" "}
-                      {current.audioAssets?.length
-                        ? `${current.audioAssets.length} bản audio`
-                        : "Chưa có audio câu hỏi"}
-                    </span>
-                    <label className={BTN_SECONDARY}>
-                      <Upload size={16} /> Tải audio câu này
-                      <input
-                        type="file"
-                        accept="audio/*"
-                        className="sr-only"
-                        onChange={(event) =>
-                          void uploadQuestionAudio(
-                            current.id,
-                            event.target.files?.[0],
-                          )
-                        }
-                      />
-                    </label>
-                    {current.type === "DIALOGUE" && (
-                      <button
-                        onClick={() => void generateDialogueAudio(current.id)}
-                        disabled={busy}
-                        className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold"
-                      >
-                        <FileAudio size={14} /> Sinh audio Dialogue
-                      </button>
-                    )}
-                  </div>
-                )}
+                {/* Comprehension and dictation play one clip per question; a
+                    dialogue plays the one recording in the side card. */}
+                {perQuestionAudio &&
+                  (() => {
+                    const active = (current.audioAssets ?? []).find(
+                      (asset: any) => asset.isActive,
+                    );
+                    return (
+                      <div className="mt-3 border-t border-slate-100 pt-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="inline-flex items-center gap-1.5 text-sm text-slate-600">
+                            <span
+                              aria-hidden="true"
+                              className={`size-1.5 rounded-full ${active ? "bg-emerald-500" : "bg-amber-500"}`}
+                            />
+                            {active
+                              ? `Audio v${active.version}`
+                              : "Cần tạo audio"}
+                          </span>
+                          {active && (
+                            <button
+                              type="button"
+                              onClick={() => void playQuestionAudio(current.id)}
+                              className={BTN_SECONDARY}
+                            >
+                              <Volume2 size={16} /> Nghe thử
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={async () => {
+                              setBusy(true);
+                              await generateQuestionAudio(current.id);
+                              setBusy(false);
+                              await loadItem();
+                            }}
+                            title="Azure đọc câu này; bản mới thay bản cũ."
+                            className={BTN_SECONDARY}
+                          >
+                            <FileAudio size={16} />{" "}
+                            {active ? "Tạo lại audio" : "Tạo audio"}
+                          </button>
+                          <label className={`${BTN_SECONDARY} cursor-pointer`}>
+                            <Upload size={16} /> Tải audio lên
+                            <input
+                              type="file"
+                              accept="audio/*"
+                              className="sr-only"
+                              onChange={(event) =>
+                                void uploadQuestionAudio(
+                                  current.id,
+                                  event.target.files?.[0],
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+                        {questionPreview &&
+                          questionPreview.questionId === current.id && (
+                          <audio
+                            controls
+                            autoPlay
+                            src={questionPreview.url}
+                            className="mt-2 w-full"
+                            aria-label={`Audio câu ${index + 1}`}
+                          />
+                        )}
+                      </div>
+                    );
+                  })()}
               </div>
             ))}
           </div>
+
+          {perQuestionAudio && questions.length > 0 && (
+            <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700">
+              <span className="tabular-nums">
+                {questions.length - questionsWithoutAudio.length}/
+                {questions.length} câu có audio
+              </span>
+              {audioBatch ? (
+                <span className="inline-flex items-center gap-2 tabular-nums">
+                  <Loader2 size={14} className="animate-spin" /> Đang tạo{" "}
+                  {audioBatch.done + 1}/{audioBatch.total}
+                </span>
+              ) : (
+                questionsWithoutAudio.length > 0 && (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void generateMissingAudio(questionsWithoutAudio)}
+                    className={BTN_SECONDARY}
+                  >
+                    <FileAudio size={16} /> Tạo audio cho {questionsWithoutAudio.length} câu còn thiếu
+                  </button>
+                )
+              )}
+            </div>
+          )}
+
+          {isListening && selectedListeningMode === "DICTATION" && id && (
+            <div className="mt-4">
+              {isBulkOpen ? (
+                <div className="rounded-lg border border-blue-300 bg-blue-50/30 p-4">
+                  <label className="block text-sm font-semibold text-slate-900">
+                    Thêm nhiều câu nghe chép
+                    <span className="mt-0.5 block text-xs font-normal text-slate-500">
+                      Mỗi dòng một câu tiếng Anh; các câu được thêm theo thứ tự.
+                    </span>
+                    <textarea
+                      value={bulkLines}
+                      onChange={(event) => setBulkLines(event.target.value)}
+                      rows={6}
+                      placeholder={"Can you send me the report by Friday?\nThe meeting has been moved to Tuesday."}
+                      className={`${inputClassName()} mt-2`}
+                    />
+                  </label>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={busy || !bulkLines.trim()}
+                      onClick={() => void addDictationLines()}
+                      className={BTN_PRIMARY}
+                    >
+                      <Plus size={16} /> Thêm{" "}
+                      {bulkLines.split("\n").filter((l) => l.trim()).length} câu
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsBulkOpen(false)}
+                      className={BTN_SECONDARY}
+                    >
+                      Hủy
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsBulkOpen(true)}
+                  className={BTN_SECONDARY}
+                >
+                  <Plus size={16} /> Thêm nhiều câu
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="mt-4 border-t border-slate-100 pt-4">
             {!question.id && isAddingQuestion ? (

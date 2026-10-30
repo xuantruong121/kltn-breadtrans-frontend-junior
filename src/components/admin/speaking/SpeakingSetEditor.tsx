@@ -17,6 +17,7 @@ import {
   Save,
   Send,
   Trash2,
+  Volume2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
@@ -151,6 +152,14 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
   const [inlineCategoryOpen, setInlineCategoryOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [confirmLifecycle, setConfirmLifecycle] = useState(false);
+  const [playing, setPlaying] = useState<{ id: number; url: string } | null>(
+    null,
+  );
+  const [audioBusyId, setAudioBusyId] = useState<number | null>(null);
+  const [audioBatch, setAudioBatch] = useState<{
+    done: number;
+    total: number;
+  } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<{
     id: number;
     title: string;
@@ -258,6 +267,51 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
     },
   });
 
+  /** The learner endpoint returns a public or signed URL, admins included. */
+  const playReference = async (exerciseId: number) => {
+    try {
+      const data = unwrap<{ audioUrl?: string | null }>(
+        await axiosClient.get(`/speaking/exercises/${exerciseId}`),
+      );
+      if (!data?.audioUrl) {
+        toast.error("Câu này chưa có audio mẫu.");
+        return;
+      }
+      setPlaying({ id: exerciseId, url: data.audioUrl });
+    } catch (err: any) {
+      toast.error(getApiErrorMessage(err, "Không thể phát audio mẫu."));
+    }
+  };
+
+  /** Azure reads the sample sentence; the clip replaces the old reference. */
+  const makeReference = async (exerciseId: number, quiet = false) => {
+    setAudioBusyId(exerciseId);
+    try {
+      await axiosClient.post(
+        `/admin/skill-content/speaking/${set!.id}/exercises/${exerciseId}/reference-audio`,
+      );
+      if (!quiet) toast.success("Đã tạo audio mẫu.");
+      return true;
+    } catch (err: any) {
+      toast.error(getApiErrorMessage(err, "Không thể tạo audio mẫu."));
+      return false;
+    } finally {
+      setAudioBusyId(null);
+    }
+  };
+
+  const makeMissingReferences = async (ids: number[]) => {
+    let made = 0;
+    for (const [index, exerciseId] of ids.entries()) {
+      setAudioBatch({ done: index, total: ids.length });
+      if (!(await makeReference(exerciseId, true))) break;
+      made++;
+    }
+    setAudioBatch(null);
+    if (made) toast.success(`Đã tạo audio mẫu cho ${made} câu.`);
+    refresh();
+  };
+
   const move = (index: number, direction: -1 | 1) => {
     const ids = exercises.map((exercise) => exercise.id);
     const target = index + direction;
@@ -347,6 +401,9 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
     describeValidationError(error, exercises),
   );
   const draftLocked = exercises.length > 0 || published;
+  const missingAudio = exercises
+    .filter((exercise) => !exercise.audioUrl)
+    .map((exercise) => exercise.id);
   const busy = saveMutation.isPending || publishMutation.isPending;
 
   return (
@@ -735,6 +792,26 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                 </li>
               ))}
             </ul>
+            {set && missingAudio.length > 0 && !published && (
+              <div className="mt-4 border-t border-slate-100 pt-3">
+                {audioBatch ? (
+                  <p className="inline-flex items-center gap-2 text-sm tabular-nums text-slate-700">
+                    <Loader2 size={14} className="animate-spin" /> Đang tạo
+                    audio mẫu {audioBatch.done + 1}/{audioBatch.total}
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => void makeMissingReferences(missingAudio)}
+                    title="Azure đọc câu mẫu của từng câu chưa có audio, lần lượt."
+                    className={BTN_SECONDARY}
+                  >
+                    <Volume2 size={16} /> Tạo audio mẫu cho{" "}
+                    {missingAudio.length} câu
+                  </button>
+                )}
+              </div>
+            )}
             {serverErrors.length > 0 && (
               <div className="mt-4 border-t border-slate-100 pt-3">
                 <p className="text-sm font-semibold text-rose-700">
@@ -859,13 +936,49 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                             <span className="inline-flex items-center gap-1.5">
                               <span
                                 aria-hidden="true"
-                                className={`size-1.5 rounded-full ${exercise.audioUrl ? "bg-emerald-500" : "bg-slate-300"}`}
+                                className={`size-1.5 rounded-full ${exercise.audioUrl ? "bg-emerald-500" : "bg-amber-500"}`}
                               />
                               {exercise.audioUrl
                                 ? "Có audio mẫu"
-                                : "Chưa có audio mẫu"}
+                                : "Cần tạo audio mẫu"}
                             </span>
+                            {exercise.audioUrl && (
+                              <button
+                                type="button"
+                                onClick={() => void playReference(exercise.id)}
+                                className="inline-flex min-h-8 cursor-pointer items-center gap-1 font-semibold text-slate-700 hover:text-blue-700"
+                              >
+                                <Volume2 size={14} aria-hidden="true" /> Nghe
+                                thử
+                              </button>
+                            )}
+                            {!published && (
+                              <button
+                                type="button"
+                                disabled={audioBusyId === exercise.id || Boolean(audioBatch)}
+                                onClick={async () => {
+                                  if (await makeReference(exercise.id)) refresh();
+                                }}
+                                className="inline-flex min-h-8 cursor-pointer items-center gap-1 font-semibold text-slate-700 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                {audioBusyId === exercise.id && (
+                                  <Loader2 size={14} className="animate-spin" />
+                                )}
+                                {exercise.audioUrl
+                                  ? "Tạo lại audio mẫu"
+                                  : "Tạo audio mẫu"}
+                              </button>
+                            )}
                           </div>
+                          {playing?.id === exercise.id && (
+                            <audio
+                              controls
+                              autoPlay
+                              src={playing.url}
+                              className="mt-2 w-full max-w-md"
+                              aria-label={`Audio mẫu câu ${index + 1}`}
+                            />
+                          )}
                         </div>
                         <div className="flex flex-none items-center gap-1.5">
                           <button
