@@ -70,6 +70,13 @@ const meta: Record<Domain, { label: string; type: string }> = {
 
 const CONTENT_LEVEL_OPTIONS = ["A1", "A2", "B1", "B2", "C1"] as const;
 
+/** The CEFR tag authored at the head of a title ("Hội thoại C1 — ..."); quizzes have no level column. */
+function levelFromTitle(title?: string | null): string | null {
+  const head = (title ?? "").split(" — ")[0].toUpperCase();
+  const match = /\b([ABC][12])\b/.exec(head);
+  return match && (CONTENT_LEVEL_OPTIONS as readonly string[]).includes(match[1]) ? match[1] : null;
+}
+
 const LISTENING_MODE_OPTIONS: Array<{
   value: ListeningMode;
   label: string;
@@ -701,7 +708,7 @@ export default function SkillCmsWorkspace({
       setForm({
         title: data.title || "",
         description: data.description || "",
-        level: data.level || "A2",
+        level: data.level || levelFromTitle(data.title) || "A2",
         timeLimit: String(data.timeLimit ?? 15),
         passage: data.passage || data.theoryContent || "",
         type: data.type || meta[domain].type,
