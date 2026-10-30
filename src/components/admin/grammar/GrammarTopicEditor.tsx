@@ -791,7 +791,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
                               <span className="font-medium text-slate-950">{candidate.question}</span>
                               <span className="mt-1 block text-slate-600">
                                 {candidate.options
-                                  .map((o, i) => `${LETTERS[i]}. ${o}${i === candidate.correctIndex ? " ✓" : ""}`)
+                                  .map((o, i) => `${LETTERS[i]}. ${o}${i === candidate.correctIndex ? " (đúng)" : ""}`)
                                   .join("   ")}
                               </span>
                             </span>
