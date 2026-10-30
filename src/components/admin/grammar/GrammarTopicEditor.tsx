@@ -129,6 +129,9 @@ function TopicBody({ topic }: { topic: Topic | null }) {
   const [busy, setBusy] = useState(false);
   const [previewIndex, setPreviewIndex] = useState(0);
   const [previewPick, setPreviewPick] = useState<number | null>(null);
+  const [previewTab, setPreviewTab] = useState<"theory" | "questions">("theory");
+  // The optional video sits folded unless the topic already has one.
+  const [videoOpen, setVideoOpen] = useState(Boolean(topic?.videoYoutubeId));
   const [confirmLifecycle, setConfirmLifecycle] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Question | null>(null);
   const published = topic?.publicationStatus === "PUBLISHED";
@@ -380,7 +383,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
       {/* Two columns from 1280px: the lesson and its questions on the left; a
           400px rail with the checklist and the learner view (24px gap). */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px] xl:items-start">
-        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm xl:col-start-1">
+        <section className="rounded-xl border border-slate-200 bg-white p-5 xl:col-start-1">
           <h2 className="font-semibold text-slate-950">Bài học</h2>
           <div className="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_180px]">
             <label className="text-sm font-medium text-slate-800">
@@ -406,7 +409,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
                 ))}
               </select>
             </label>
-            <label className="text-sm font-medium text-slate-800">
+            <label className="text-sm font-medium text-slate-800 md:col-span-2">
               Công thức chính
               <input
                 value={form.keyFormula}
@@ -415,8 +418,34 @@ function TopicBody({ topic }: { topic: Topic | null }) {
                 className={FIELD}
               />
             </label>
-            <label className="text-sm font-medium text-slate-800">
-              Video YouTube (link hoặc mã)
+            <label className="text-sm font-medium text-slate-800 md:col-span-2">
+              Lý thuyết
+              {/* Grows with its text (5 lines to about 16), so a short rule
+                  does not sit in a tall empty box. */}
+              <textarea
+                rows={5}
+                value={form.description}
+                onChange={(event) => setForm({ ...form, description: event.target.value })}
+                placeholder={"Cách dùng, dấu hiệu nhận biết, ví dụ.\nMỗi ý một dòng."}
+                className={`${FIELD} field-sizing-content max-h-96 min-h-32 leading-relaxed`}
+              />
+            </label>
+          </div>
+          <details
+            open={videoOpen}
+            onToggle={(event) => setVideoOpen(event.currentTarget.open)}
+            className="mt-4 border-t border-slate-100 pt-4"
+          >
+            <summary className="cursor-pointer text-sm font-medium text-slate-800">
+              Video minh hoạ (tuỳ chọn)
+              {videoId && <span className="font-normal text-slate-600"> · đã gắn</span>}
+            </summary>
+            <p className="mt-2 text-sm text-slate-600">
+              Học viên mở video trong mục &quot;Video minh hoạ&quot; dưới phần lý thuyết. Không có video thì mục
+              này không hiện.
+            </p>
+            <label className="mt-3 block text-sm font-medium text-slate-800">
+              Link YouTube hoặc mã video
               <input
                 value={form.video}
                 onChange={(event) => setForm({ ...form, video: event.target.value })}
@@ -424,48 +453,11 @@ function TopicBody({ topic }: { topic: Topic | null }) {
                 aria-invalid={videoInvalid}
                 className={`${FIELD} ${videoInvalid ? "border-rose-400" : ""}`}
               />
-              {videoInvalid && (
-                <span className="mt-1 block text-sm font-normal text-rose-700">
-                  Không nhận ra link YouTube.
-                </span>
-              )}
             </label>
-            <div className="grid gap-4 md:col-span-2 lg:grid-cols-2">
-              <label className="text-sm font-medium text-slate-800">
-                Lý thuyết
-                <textarea
-                  rows={12}
-                  value={form.description}
-                  onChange={(event) => setForm({ ...form, description: event.target.value })}
-                  placeholder={"Cách dùng, dấu hiệu nhận biết, ví dụ.\nMỗi ý một dòng."}
-                  className={`${FIELD} leading-relaxed`}
-                />
-              </label>
-              <div className="text-sm font-medium text-slate-800">
-                Học viên sẽ thấy
-                <div className="mt-1 min-h-[17rem] space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3 font-normal">
-                  {form.keyFormula && (
-                    <p className="rounded-md border border-slate-200 bg-white px-2 py-1 font-semibold text-slate-900">
-                      {form.keyFormula}
-                    </p>
-                  )}
-                  <p className="whitespace-pre-line leading-relaxed text-slate-700">
-                    {form.description || "Chưa có lý thuyết."}
-                  </p>
-                  {videoId && (
-                    <iframe
-                      src={`https://www.youtube-nocookie.com/embed/${videoId}`}
-                      title="Video minh hoạ"
-                      loading="lazy"
-                      allow="encrypted-media; picture-in-picture"
-                      allowFullScreen
-                      className="aspect-video w-full rounded-md border border-slate-200"
-                    />
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+            {videoInvalid && (
+              <p className="mt-1 text-sm text-rose-700">Không nhận ra link YouTube.</p>
+            )}
+          </details>
           {pendingQuestions.length > 0 && (
             <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50/40 p-3 text-sm text-slate-700">
               {pendingQuestions.length} câu hỏi sẽ được thêm khi bấm {topic ? "Lưu" : "Tạo chủ đề"}.
@@ -474,7 +466,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
         </section>
 
         <aside className="space-y-6 xl:sticky xl:top-6 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
-          <section aria-labelledby="grammar-checklist-heading" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section aria-labelledby="grammar-checklist-heading" className="rounded-xl border border-slate-200 bg-white p-5">
             <div className="flex items-baseline justify-between gap-3">
               <h2 id="grammar-checklist-heading" className="font-semibold text-slate-950">
                 Trước khi xuất bản
@@ -501,83 +493,137 @@ function TopicBody({ topic }: { topic: Topic | null }) {
             </ul>
           </section>
 
-          {previewQuestion && (
-            <section aria-labelledby="grammar-preview-heading" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex items-baseline justify-between gap-3">
-                <h2 id="grammar-preview-heading" className="font-semibold text-slate-950">
-                  Học viên làm bài
-                </h2>
-                <span className="text-sm tabular-nums text-slate-600">
-                  {Math.min(previewIndex, questions.length - 1) + 1}/{questions.length}
-                </span>
+          {/* The one learner preview: the lesson as it reads, or a question as
+              it is answered. Nothing is previewed beside the form fields. */}
+          <section aria-labelledby="grammar-preview-heading" className="rounded-xl border border-slate-200 bg-white p-5">
+            <div className="flex items-center justify-between gap-3">
+              <h2 id="grammar-preview-heading" className="font-semibold text-slate-950">
+                Xem như học viên
+              </h2>
+              <div role="tablist" aria-label="Nội dung xem trước" className="flex rounded-lg bg-slate-100 p-1">
+                {(
+                  [
+                    ["theory", "Lý thuyết"],
+                    ["questions", `Câu hỏi ${questions.length}`],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="tab"
+                    aria-selected={previewTab === value}
+                    onClick={() => setPreviewTab(value)}
+                    className={`min-h-8 cursor-pointer rounded-md px-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-blue-600 ${
+                      previewTab === value ? "bg-white text-slate-950" : "text-slate-600 hover:text-slate-950"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
-              <p className="mt-3 font-semibold text-slate-900">{previewQuestion.question}</p>
-              <ul className="mt-3 space-y-2">
-                {previewQuestion.options.map((option, index) => {
-                  const picked = previewPick === index;
-                  const right = index === previewQuestion.correctIndex;
-                  return (
-                    <li key={index}>
-                      <button
-                        type="button"
-                        onClick={() => setPreviewPick(index)}
-                        className={`w-full cursor-pointer rounded-lg border px-3 py-2 text-left text-sm ${
-                          previewPick === null
-                            ? "border-slate-200 hover:border-slate-300"
-                            : right
-                              ? "border-emerald-400 bg-emerald-50 text-emerald-900"
-                              : picked
-                                ? "border-rose-300 bg-rose-50 text-rose-900"
-                                : "border-slate-200 text-slate-600"
-                        }`}
-                      >
-                        <span className="mr-2 font-semibold">{OPTION_LETTERS[index]}</span>
-                        {option}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-              {previewPick !== null && (pickedNote || previewQuestion.explanation) && (
-                <div className="mt-3 space-y-2 rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
-                  {pickedNote && (
-                    <p>
-                      <span className="font-semibold text-rose-800">Vì sao sai: </span>
-                      {pickedNote}
-                    </p>
+            </div>
+
+            {previewTab === "theory" ? (
+              <div className="mt-4 space-y-3 text-sm">
+                {form.keyFormula.trim() && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                    <p className="text-xs font-semibold text-amber-900">Công thức cốt lõi</p>
+                    <p className="mt-1 font-semibold text-slate-950">{form.keyFormula}</p>
+                  </div>
+                )}
+                <p className="whitespace-pre-line leading-relaxed text-slate-800">
+                  {form.description.trim() || (
+                    <span className="text-slate-600">Chưa có lý thuyết.</span>
                   )}
-                  {previewQuestion.explanation && <p>{previewQuestion.explanation}</p>}
-                </div>
-              )}
-              <div className="mt-3 flex justify-between">
-                <button
-                  type="button"
-                  disabled={previewIndex === 0}
-                  onClick={() => {
-                    setPreviewIndex((i) => Math.max(0, i - 1));
-                    setPreviewPick(null);
-                  }}
-                  className={BTN_SECONDARY}
-                >
-                  Câu trước
-                </button>
-                <button
-                  type="button"
-                  disabled={previewIndex >= questions.length - 1}
-                  onClick={() => {
-                    setPreviewIndex((i) => Math.min(questions.length - 1, i + 1));
-                    setPreviewPick(null);
-                  }}
-                  className={BTN_SECONDARY}
-                >
-                  Câu sau
-                </button>
+                </p>
+                {videoId ? (
+                  <iframe
+                    src={`https://www.youtube-nocookie.com/embed/${videoId}`}
+                    title="Video minh hoạ"
+                    loading="lazy"
+                    allow="encrypted-media; picture-in-picture"
+                    allowFullScreen
+                    className="aspect-video w-full rounded-md border border-slate-200"
+                  />
+                ) : (
+                  <p className="text-slate-600">Không có video minh hoạ.</p>
+                )}
               </div>
-            </section>
-          )}
+            ) : !previewQuestion ? (
+              <p className="mt-4 text-sm text-slate-600">Chưa có câu hỏi.</p>
+            ) : (
+              <div className="mt-4">
+                <p className="text-sm tabular-nums text-slate-600">
+                  Câu {Math.min(previewIndex, questions.length - 1) + 1}/{questions.length}
+                </p>
+                <p className="mt-1 font-semibold text-slate-900">{previewQuestion.question}</p>
+                <ul className="mt-3 space-y-2">
+                  {previewQuestion.options.map((option, index) => {
+                    const picked = previewPick === index;
+                    const right = index === previewQuestion.correctIndex;
+                    return (
+                      <li key={index}>
+                        <button
+                          type="button"
+                          onClick={() => setPreviewPick(index)}
+                          className={`w-full cursor-pointer rounded-lg border px-3 py-2 text-left text-sm ${
+                            previewPick === null
+                              ? "border-slate-200 hover:border-slate-300"
+                              : right
+                                ? "border-emerald-400 bg-emerald-50 text-emerald-900"
+                                : picked
+                                  ? "border-rose-300 bg-rose-50 text-rose-900"
+                                  : "border-slate-200 text-slate-600"
+                          }`}
+                        >
+                          <span className="mr-2 font-semibold">{OPTION_LETTERS[index]}</span>
+                          {option}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                {previewPick !== null && (pickedNote || previewQuestion.explanation) && (
+                  <div className="mt-3 space-y-2 rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
+                    {pickedNote && (
+                      <p>
+                        <span className="font-semibold text-rose-800">Vì sao sai: </span>
+                        {pickedNote}
+                      </p>
+                    )}
+                    {previewQuestion.explanation && <p>{previewQuestion.explanation}</p>}
+                  </div>
+                )}
+                <div className="mt-3 flex justify-between">
+                  <button
+                    type="button"
+                    disabled={previewIndex === 0}
+                    onClick={() => {
+                      setPreviewIndex((i) => Math.max(0, i - 1));
+                      setPreviewPick(null);
+                    }}
+                    className={BTN_SECONDARY}
+                  >
+                    Câu trước
+                  </button>
+                  <button
+                    type="button"
+                    disabled={previewIndex >= questions.length - 1}
+                    onClick={() => {
+                      setPreviewIndex((i) => Math.min(questions.length - 1, i + 1));
+                      setPreviewPick(null);
+                    }}
+                    className={BTN_SECONDARY}
+                  >
+                    Câu sau
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
         </aside>
 
-        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm xl:col-start-1">
+        <section className="rounded-xl border border-slate-200 bg-white p-5 xl:col-start-1">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
             <h2 className="font-semibold text-slate-950">
               Câu hỏi <span className="font-normal tabular-nums text-slate-600">{questions.length}</span>
@@ -608,6 +654,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
                       onClick={() => {
                         setPreviewIndex(index);
                         setPreviewPick(null);
+                        setPreviewTab("questions");
                       }}
                       className="min-w-0 flex-1 cursor-pointer text-left"
                       title="Xem như học viên"
