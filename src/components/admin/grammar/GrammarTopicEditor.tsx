@@ -10,7 +10,10 @@ import {
   ChevronDown,
   ChevronUp,
   Circle,
+  ClipboardPaste,
+  Copy,
   Loader2,
+  Lock,
   Plus,
   Save,
   Send,
@@ -29,19 +32,18 @@ import {
 } from "../cmsButtons";
 import {
   GRAMMAR_LEVELS,
+  OPTION_LETTERS,
   grammarChecklist,
   grammarLevelLabel,
+  publishBlocker,
+  rationaleCount,
   youtubeIdFrom,
+  type GrammarDraft,
 } from "./grammarCms";
+import GrammarQuestionForm from "./GrammarQuestionForm";
+import GrammarPastePanel from "./GrammarPastePanel";
 
-type Question = {
-  id: number;
-  question: string;
-  options: string[];
-  correctIndex: number;
-  explanation?: string | null;
-  order: number;
-};
+type Question = GrammarDraft & { id: number; order: number };
 
 type Topic = {
   id: number;
@@ -52,6 +54,9 @@ type Topic = {
   keyFormula?: string | null;
   publicationStatus: "DRAFT" | "PUBLISHED";
   questions: Question[];
+  /** Attempts by learners; once there is one, graded content is locked. */
+  learnerAttemptCount?: number;
+  locked?: boolean;
 };
 
 type TopicForm = {
@@ -62,20 +67,23 @@ type TopicForm = {
   description: string;
 };
 
-type Candidate = {
-  question: string;
-  options: string[];
-  correctIndex: number;
-  explanation?: string;
-  chosen: boolean;
-};
+type Candidate = GrammarDraft & { chosen: boolean };
 
 const FIELD =
   "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
 const ICON_BTN =
   "inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40";
-const LETTERS = ["A", "B", "C", "D"];
+/** The server's AI limits: more questions for a whole draft than for a top-up. */
+const AI_MAX = { draft: 20, suggest: 5 };
 const unwrap = <T,>(value: any): T => (value?.data ?? value) as T;
+
+const toDto = (draft: GrammarDraft) => ({
+  question: draft.question,
+  options: draft.options,
+  correctIndex: draft.correctIndex,
+  explanation: draft.explanation ?? undefined,
+  optionExplanations: draft.optionExplanations ?? undefined,
+});
 
 export default function GrammarTopicEditor({ id }: { id?: number }) {
   const { data: topic, isLoading } = useQuery<Topic>({
@@ -91,148 +99,6 @@ export default function GrammarTopicEditor({ id }: { id?: number }) {
       </div>
     );
   return <TopicBody key={topic?.id ?? "new"} topic={topic ?? null} />;
-}
-
-/** One question edited in place: four A–D rows with a radio for the answer. */
-function QuestionForm({
-  topicId,
-  question,
-  nextOrder,
-  onDone,
-}: {
-  topicId: number;
-  question: Question | null;
-  nextOrder: number;
-  onDone: (saved: boolean) => void;
-}) {
-  const [text, setText] = useState(question?.question ?? "");
-  const [options, setOptions] = useState<string[]>(() => {
-    const rows = [...(question?.options ?? [])];
-    while (rows.length < 4) rows.push("");
-    return rows.slice(0, 4);
-  });
-  const [correct, setCorrect] = useState<number | null>(
-    question ? question.correctIndex : null,
-  );
-  const [explanation, setExplanation] = useState(question?.explanation ?? "");
-  const [saving, setSaving] = useState(false);
-
-  const save = async () => {
-    if (!text.trim() || options.some((o) => !o.trim())) {
-      toast.error("Cần đề bài và đủ 4 phương án A, B, C, D.");
-      return;
-    }
-    if (correct === null) {
-      toast.error("Chọn đáp án đúng.");
-      return;
-    }
-    setSaving(true);
-    const dto = {
-      question: text.trim(),
-      options: options.map((o) => o.trim()),
-      correctIndex: correct,
-      explanation: explanation.trim() || undefined,
-    };
-    try {
-      if (question)
-        await axiosClient.patch(
-          `/grammar/topics/${topicId}/questions/${question.id}`,
-          dto,
-        );
-      else
-        await axiosClient.post(`/grammar/topics/${topicId}/questions`, {
-          ...dto,
-          order: nextOrder,
-        });
-      toast.success(question ? "Đã lưu câu hỏi." : "Đã thêm câu hỏi.");
-      onDone(true);
-    } catch (err: any) {
-      toast.error(getApiErrorMessage(err, "Không thể lưu câu hỏi."));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <form
-      onSubmit={(event) => {
-        event.preventDefault();
-        void save();
-      }}
-      className="mt-3 space-y-3 border-t border-slate-100 pt-3"
-    >
-      <label className="block text-sm font-medium text-slate-800">
-        Đề bài
-        <textarea
-          rows={2}
-          autoFocus
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          placeholder="Ví dụ: She ___ in Hanoi since 2019."
-          className={FIELD}
-        />
-      </label>
-      <fieldset>
-        <legend className="text-sm font-medium text-slate-800">
-          Phương án và đáp án đúng
-        </legend>
-        <div className="mt-2 grid gap-2 md:grid-cols-2">
-          {options.map((value, index) => (
-            <div
-              key={index}
-              className={`flex items-center gap-2 rounded-lg border px-3 ${
-                correct === index
-                  ? "border-emerald-400 bg-emerald-50/60 ring-1 ring-emerald-200"
-                  : "border-slate-300 bg-white focus-within:border-slate-500"
-              }`}
-            >
-              <label className="flex flex-none cursor-pointer items-center gap-2 py-2">
-                <input
-                  type="radio"
-                  name={`grammar-correct-${question?.id ?? "new"}`}
-                  checked={correct === index}
-                  onChange={() => setCorrect(index)}
-                  aria-label={`Phương án ${LETTERS[index]} là đáp án đúng`}
-                  className="size-4 cursor-pointer accent-emerald-600"
-                />
-                <span className="w-4 text-sm font-semibold text-slate-700">
-                  {LETTERS[index]}
-                </span>
-              </label>
-              <input
-                value={value}
-                onChange={(event) =>
-                  setOptions((rows) =>
-                    rows.map((row, i) => (i === index ? event.target.value : row)),
-                  )
-                }
-                aria-label={`Nội dung phương án ${LETTERS[index]}`}
-                className="min-h-10 min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none"
-              />
-            </div>
-          ))}
-        </div>
-      </fieldset>
-      <label className="block text-sm font-medium text-slate-800">
-        Giải thích (học viên đọc sau khi trả lời)
-        <textarea
-          rows={2}
-          value={explanation}
-          onChange={(event) => setExplanation(event.target.value)}
-          className={FIELD}
-        />
-      </label>
-      <div className="flex flex-wrap gap-2">
-        <button type="submit" disabled={saving} className={BTN_PRIMARY}>
-          {saving && <Loader2 size={14} className="animate-spin" />}
-          {question ? "Lưu câu hỏi" : "Thêm câu hỏi"}
-        </button>
-        <button type="button" onClick={() => onDone(false)} className={BTN_SECONDARY}>
-          Hủy
-        </button>
-      </div>
-    </form>
-  );
 }
 
 function TopicBody({ topic }: { topic: Topic | null }) {
@@ -251,33 +117,42 @@ function TopicBody({ topic }: { topic: Topic | null }) {
   const questions = (topic?.questions ?? [])
     .slice()
     .sort((a, b) => a.order - b.order || a.id - b.id);
+  const locked = Boolean(topic?.locked);
   const [editingId, setEditingId] = useState<number | "new" | null>(null);
-  const [aiOpen, setAiOpen] = useState(false);
+  // A duplicated question opens as a new, unsaved copy.
+  const [copyFrom, setCopyFrom] = useState<GrammarDraft | null>(null);
+  const [panel, setPanel] = useState<"paste" | "ai" | null>(null);
   const [aiCount, setAiCount] = useState(5);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [pendingQuestions, setPendingQuestions] = useState<Candidate[]>([]);
+  const [editingCandidate, setEditingCandidate] = useState<number | null>(null);
+  const [pendingQuestions, setPendingQuestions] = useState<GrammarDraft[]>([]);
   const [busy, setBusy] = useState(false);
-  const [progress, setProgress] = useState<string | null>(null);
   const [previewIndex, setPreviewIndex] = useState(0);
   const [previewPick, setPreviewPick] = useState<number | null>(null);
   const [confirmLifecycle, setConfirmLifecycle] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Question | null>(null);
   const published = topic?.publicationStatus === "PUBLISHED";
-  const nextOrder = (questions.at(-1)?.order ?? 0) + 1;
+  const aiDraftsWholeTopic = !questions.length && !form.description.trim();
+  const aiMax = aiDraftsWholeTopic ? AI_MAX.draft : AI_MAX.suggest;
   const checklist = grammarChecklist({
     title: form.title,
     description: form.description,
     questions,
   });
   const doneCount = checklist.filter((item) => item.done).length;
+  const blocker = published
+    ? null
+    : publishBlocker(checklist, dirty || pendingQuestions.length > 0);
   const previewQuestion = questions[Math.min(previewIndex, questions.length - 1)];
+  const videoId = youtubeIdFrom(form.video);
+  const videoInvalid = Boolean(form.video.trim()) && !videoId;
 
   useEffect(() => {
-    if (!dirty && !pendingQuestions.length) return;
+    if (!dirty && !pendingQuestions.length && editingId === null) return;
     const warn = (event: BeforeUnloadEvent) => event.preventDefault();
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [dirty, pendingQuestions.length]);
+  }, [dirty, pendingQuestions.length, editingId]);
 
   const refresh = () => {
     queryClient.invalidateQueries({
@@ -286,26 +161,54 @@ function TopicBody({ topic }: { topic: Topic | null }) {
     queryClient.invalidateQueries({ queryKey: ["admin-grammar-topics"] });
   };
 
-  /** Sequential, so questions keep the order they were chosen in. */
-  const addQuestions = async (
-    topicId: number,
-    rows: Candidate[],
-    base: number,
-  ) => {
-    let added = 0;
-    for (const [index, row] of rows.entries()) {
-      setProgress(`Đang thêm câu ${index + 1}/${rows.length}`);
-      await axiosClient.post(`/grammar/topics/${topicId}/questions`, {
-        question: row.question.trim(),
-        options: row.options.map((o) => o.trim()),
-        correctIndex: row.correctIndex,
-        explanation: row.explanation?.trim() || undefined,
-        order: base + index,
-      });
-      added++;
+  /** One request: the server adds all of them after the last question, or none. */
+  const addBatch = (topicId: number, drafts: GrammarDraft[]) =>
+    axiosClient.post(`/grammar/topics/${topicId}/questions/bulk`, {
+      questions: drafts.map(toDto),
+    });
+
+  /** New questions go in now, or wait for the topic to be created. */
+  const addQuestions = async (drafts: GrammarDraft[]) => {
+    if (!topic) {
+      setPendingQuestions((current) => [...current, ...drafts]);
+      toast.success(`Giữ ${drafts.length} câu; sẽ thêm khi bấm Tạo chủ đề.`);
+      return true;
     }
-    setProgress(null);
-    return added;
+    try {
+      await addBatch(topic.id, drafts);
+      toast.success(`Đã thêm ${drafts.length} câu hỏi.`);
+      refresh();
+      return true;
+    } catch (err: any) {
+      toast.error(getApiErrorMessage(err, "Không thể thêm câu hỏi."));
+      return false;
+    }
+  };
+
+  const saveQuestion = async (question: Question | null, draft: GrammarDraft) => {
+    if (!topic) return false;
+    try {
+      if (question)
+        await axiosClient.patch(
+          `/grammar/topics/${topic.id}/questions/${question.id}`,
+          // Locked: only the notes and the explanation may change.
+          locked
+            ? {
+                explanation: draft.explanation ?? "",
+                optionExplanations: draft.optionExplanations,
+              }
+            : toDto(draft),
+        );
+      else await addBatch(topic.id, [draft]);
+      toast.success(question ? "Đã lưu câu hỏi." : "Đã thêm câu hỏi.");
+      setEditingId(null);
+      setCopyFrom(null);
+      refresh();
+      return true;
+    } catch (err: any) {
+      toast.error(getApiErrorMessage(err, "Không thể lưu câu hỏi."));
+      return false;
+    }
   };
 
   const saveTopic = async () => {
@@ -313,29 +216,34 @@ function TopicBody({ topic }: { topic: Topic | null }) {
       toast.error("Cần nhập tên chủ đề.");
       return;
     }
+    if (videoInvalid) {
+      toast.error("Link video không phải YouTube. Sửa hoặc xoá trước khi lưu.");
+      return;
+    }
     setBusy(true);
     const dto = {
       title: form.title.trim(),
       level: form.level,
-      videoYoutubeId: youtubeIdFrom(form.video) || undefined,
-      keyFormula: form.keyFormula.trim() || undefined,
-      description: form.description.trim() || undefined,
+      videoYoutubeId: videoId,
+      keyFormula: form.keyFormula.trim(),
+      description: form.description.trim(),
     };
     try {
       if (topic) {
         await axiosClient.patch(`/grammar/topics/${topic.id}`, dto);
-        if (pendingQuestions.length)
-          await addQuestions(topic.id, pendingQuestions, nextOrder);
+        if (pendingQuestions.length) await addBatch(topic.id, pendingQuestions);
         setSavedForm(form);
         setPendingQuestions([]);
         toast.success("Đã lưu chủ đề.");
         refresh();
       } else {
         const created = unwrap<{ id: number }>(
-          await axiosClient.post("/grammar/topics", dto),
+          await axiosClient.post("/grammar/topics", {
+            ...dto,
+            videoYoutubeId: dto.videoYoutubeId || undefined,
+          }),
         );
-        if (pendingQuestions.length)
-          await addQuestions(created.id, pendingQuestions, 1);
+        if (pendingQuestions.length) await addBatch(created.id, pendingQuestions);
         setSavedForm(form);
         setPendingQuestions([]);
         toast.success("Đã tạo chủ đề.");
@@ -343,7 +251,6 @@ function TopicBody({ topic }: { topic: Topic | null }) {
         router.replace(`/admin/grammar/${created.id}`);
       }
     } catch (err: any) {
-      setProgress(null);
       toast.error(getApiErrorMessage(err, "Không thể lưu chủ đề."));
     } finally {
       setBusy(false);
@@ -357,13 +264,14 @@ function TopicBody({ topic }: { topic: Topic | null }) {
       return;
     }
     setBusy(true);
+    const count = Math.min(aiCount, aiMax);
     try {
-      if (!questions.length && !form.description.trim()) {
+      if (aiDraftsWholeTopic) {
         const data = unwrap<any>(
           await axiosClient.post("/admin/grammar/ai/full-draft", {
             topicTitle: form.title.trim(),
             level: form.level,
-            count: aiCount,
+            count,
           }),
         );
         setForm((current) => ({
@@ -371,9 +279,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
           description: current.description || String(data?.description ?? ""),
           keyFormula: current.keyFormula || String(data?.keyFormula ?? ""),
         }));
-        setCandidates(
-          (data?.questions ?? []).map((q: any) => ({ ...q, chosen: true })),
-        );
+        setCandidates((data?.questions ?? []).map((q: GrammarDraft) => ({ ...q, chosen: true })));
         toast.success("AI đã viết lý thuyết và gợi ý câu hỏi. Hãy xem lại.");
       } else {
         const data = unwrap<any>(
@@ -382,13 +288,12 @@ function TopicBody({ topic }: { topic: Topic | null }) {
             level: form.level,
             theory: form.description.trim() || undefined,
             keyFormula: form.keyFormula.trim() || undefined,
-            count: aiCount,
+            count,
           }),
         );
-        setCandidates(
-          (data?.candidates ?? []).map((q: any) => ({ ...q, chosen: true })),
-        );
+        setCandidates((data?.candidates ?? []).map((q: GrammarDraft) => ({ ...q, chosen: true })));
       }
+      setEditingCandidate(null);
     } catch (err: any) {
       toast.error(getApiErrorMessage(err, "Không thể lấy gợi ý AI lúc này."));
     } finally {
@@ -412,13 +317,19 @@ function TopicBody({ topic }: { topic: Topic | null }) {
     }
   };
 
-  const videoId = youtubeIdFrom(form.video);
+  const chosenCount = candidates.filter((c) => c.chosen).length;
+  const pendingLabel = (count: number) =>
+    topic ? `Thêm ${count} câu` : `Giữ ${count} câu để thêm khi tạo chủ đề`;
+  const pickedNote =
+    previewQuestion && previewPick !== null && previewPick !== previewQuestion.correctIndex
+      ? previewQuestion.optionExplanations?.[previewPick]
+      : null;
 
   return (
     <main className="space-y-6 p-6">
       <Link
         href="/admin/grammar"
-        className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900"
+        className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900"
       >
         <ArrowLeft size={16} /> Danh sách
       </Link>
@@ -433,23 +344,38 @@ function TopicBody({ topic }: { topic: Topic | null }) {
             {dirty && " · có thay đổi chưa lưu"}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => void saveTopic()} disabled={busy} className={BTN_SECONDARY}>
-            <Save size={16} /> {topic ? "Lưu" : "Tạo chủ đề"}
-          </button>
-          {topic && (
-            <button
-              type="button"
-              onClick={() => setConfirmLifecycle(true)}
-              disabled={busy}
-              className={BTN_SUCCESS}
-            >
-              <Send size={16} />
-              {published ? "Chuyển về bản nháp" : "Kiểm tra & xuất bản"}
+        <div className="flex flex-col items-end gap-1.5">
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => void saveTopic()} disabled={busy} className={BTN_SECONDARY}>
+              {busy ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}{" "}
+              {topic ? "Lưu" : "Tạo chủ đề"}
             </button>
+            {topic && (
+              <button
+                type="button"
+                onClick={() => setConfirmLifecycle(true)}
+                disabled={busy || Boolean(blocker)}
+                title={blocker ?? undefined}
+                className={BTN_SUCCESS}
+              >
+                <Send size={16} />
+                {published ? "Chuyển về bản nháp" : "Xuất bản"}
+              </button>
+            )}
+          </div>
+          {topic && blocker && (
+            <p className="max-w-md text-right text-sm text-slate-600">{blocker}</p>
           )}
         </div>
       </header>
+
+      {locked && (
+        <p className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <Lock size={16} className="mt-0.5 flex-none" aria-hidden="true" />
+          {topic?.learnerAttemptCount} lượt học viên đã làm chủ đề này. Đề bài, phương án và đáp án đã
+          khoá để kết quả cũ vẫn đúng; vẫn sửa được lý do sai, giải thích và thứ tự câu, và thêm câu mới.
+        </p>
+      )}
 
       {/* Two columns from 1280px: the lesson and its questions on the left; a
           400px rail with the checklist and the learner view (24px gap). */}
@@ -495,11 +421,12 @@ function TopicBody({ topic }: { topic: Topic | null }) {
                 value={form.video}
                 onChange={(event) => setForm({ ...form, video: event.target.value })}
                 placeholder="https://youtu.be/…"
-                className={FIELD}
+                aria-invalid={videoInvalid}
+                className={`${FIELD} ${videoInvalid ? "border-rose-400" : ""}`}
               />
-              {form.video && (
-                <span className="mt-1 block text-xs font-normal text-slate-500">
-                  Mã video: {videoId || "—"}
+              {videoInvalid && (
+                <span className="mt-1 block text-sm font-normal text-rose-700">
+                  Không nhận ra link YouTube.
                 </span>
               )}
             </label>
@@ -516,23 +443,32 @@ function TopicBody({ topic }: { topic: Topic | null }) {
               </label>
               <div className="text-sm font-medium text-slate-800">
                 Học viên sẽ thấy
-                <div className="mt-1 min-h-[17rem] rounded-lg border border-slate-200 bg-slate-50 p-3 font-normal">
+                <div className="mt-1 min-h-[17rem] space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3 font-normal">
                   {form.keyFormula && (
-                    <p className="mb-2 rounded-md border border-slate-200 bg-white px-2 py-1 font-semibold text-slate-900">
+                    <p className="rounded-md border border-slate-200 bg-white px-2 py-1 font-semibold text-slate-900">
                       {form.keyFormula}
                     </p>
                   )}
                   <p className="whitespace-pre-line leading-relaxed text-slate-700">
                     {form.description || "Chưa có lý thuyết."}
                   </p>
+                  {videoId && (
+                    <iframe
+                      src={`https://www.youtube-nocookie.com/embed/${videoId}`}
+                      title="Video minh hoạ"
+                      loading="lazy"
+                      allow="encrypted-media; picture-in-picture"
+                      allowFullScreen
+                      className="aspect-video w-full rounded-md border border-slate-200"
+                    />
+                  )}
                 </div>
               </div>
             </div>
           </div>
           {pendingQuestions.length > 0 && (
             <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50/40 p-3 text-sm text-slate-700">
-              {pendingQuestions.length} câu hỏi từ AI sẽ được thêm khi bấm{" "}
-              {topic ? "Lưu" : "Tạo chủ đề"}.
+              {pendingQuestions.length} câu hỏi sẽ được thêm khi bấm {topic ? "Lưu" : "Tạo chủ đề"}.
             </p>
           )}
         </section>
@@ -543,7 +479,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
               <h2 id="grammar-checklist-heading" className="font-semibold text-slate-950">
                 Trước khi xuất bản
               </h2>
-              <span className="text-sm tabular-nums text-slate-500">
+              <span className="text-sm tabular-nums text-slate-600">
                 {doneCount}/{checklist.length}
               </span>
             </div>
@@ -553,9 +489,12 @@ function TopicBody({ topic }: { topic: Topic | null }) {
                   {entry.done ? (
                     <CheckCircle2 size={16} className="flex-none text-emerald-600" aria-hidden="true" />
                   ) : (
-                    <Circle size={16} className="flex-none text-slate-300" aria-hidden="true" />
+                    <Circle size={16} className="flex-none text-slate-400" aria-hidden="true" />
                   )}
-                  <span className={entry.done ? "text-slate-600" : "font-medium text-slate-900"}>{entry.label}</span>
+                  <span className={entry.done ? "text-slate-600" : "font-medium text-slate-900"}>
+                    {entry.label}
+                    {entry.optional && <span className="font-normal text-slate-600"> (nên có)</span>}
+                  </span>
                   <span className="sr-only">{entry.done ? "(đã xong)" : "(chưa xong)"}</span>
                 </li>
               ))}
@@ -568,7 +507,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
                 <h2 id="grammar-preview-heading" className="font-semibold text-slate-950">
                   Học viên làm bài
                 </h2>
-                <span className="text-sm tabular-nums text-slate-500">
+                <span className="text-sm tabular-nums text-slate-600">
                   {Math.min(previewIndex, questions.length - 1) + 1}/{questions.length}
                 </span>
               </div>
@@ -589,20 +528,26 @@ function TopicBody({ topic }: { topic: Topic | null }) {
                               ? "border-emerald-400 bg-emerald-50 text-emerald-900"
                               : picked
                                 ? "border-rose-300 bg-rose-50 text-rose-900"
-                                : "border-slate-200 text-slate-500"
+                                : "border-slate-200 text-slate-600"
                         }`}
                       >
-                        <span className="mr-2 font-semibold">{LETTERS[index]}</span>
+                        <span className="mr-2 font-semibold">{OPTION_LETTERS[index]}</span>
                         {option}
                       </button>
                     </li>
                   );
                 })}
               </ul>
-              {previewPick !== null && previewQuestion.explanation && (
-                <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
-                  {previewQuestion.explanation}
-                </p>
+              {previewPick !== null && (pickedNote || previewQuestion.explanation) && (
+                <div className="mt-3 space-y-2 rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
+                  {pickedNote && (
+                    <p>
+                      <span className="font-semibold text-rose-800">Vì sao sai: </span>
+                      {pickedNote}
+                    </p>
+                  )}
+                  {previewQuestion.explanation && <p>{previewQuestion.explanation}</p>}
+                </div>
               )}
               <div className="mt-3 flex justify-between">
                 <button
@@ -635,19 +580,20 @@ function TopicBody({ topic }: { topic: Topic | null }) {
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm xl:col-start-1">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
             <h2 className="font-semibold text-slate-950">
-              Câu hỏi <span className="font-normal tabular-nums text-slate-500">{questions.length}</span>
+              Câu hỏi <span className="font-normal tabular-nums text-slate-600">{questions.length}</span>
             </h2>
-            <p className="text-sm text-slate-500">Bấm Sửa để sửa ngay tại câu.</p>
+            <p className="text-sm text-slate-600">Bấm vào câu để xem như học viên.</p>
           </div>
 
           <ol className="mt-4 space-y-3">
             {topic && questions.length === 0 && (
               <li className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
-                Chưa có câu hỏi. Thêm bên dưới hoặc nhờ AI gợi ý.
+                Chưa có câu hỏi. Thêm từng câu, dán nhiều câu một lần, hoặc nhờ AI gợi ý.
               </li>
             )}
             {questions.map((question, index) => {
               const editing = editingId === question.id;
+              const notes = rationaleCount(question);
               return (
                 <li
                   key={question.id}
@@ -668,8 +614,9 @@ function TopicBody({ topic }: { topic: Topic | null }) {
                     >
                       <p className="font-medium text-slate-950">{question.question}</p>
                       <p className="mt-1 text-sm text-slate-600">
-                        Đáp án: {LETTERS[question.correctIndex]} ·{" "}
-                        {question.options[question.correctIndex]}
+                        Đáp án: {OPTION_LETTERS[question.correctIndex]} ·{" "}
+                        {question.options[question.correctIndex]} · Lý do sai {notes}/3
+                        {!question.explanation && " · chưa có giải thích"}
                       </p>
                     </button>
                     <div className="flex flex-none items-center gap-1.5">
@@ -693,31 +640,44 @@ function TopicBody({ topic }: { topic: Topic | null }) {
                       </button>
                       <button
                         type="button"
+                        onClick={() => {
+                          setCopyFrom(question);
+                          setEditingId("new");
+                        }}
+                        aria-label={`Nhân bản câu ${index + 1}`}
+                        title="Nhân bản thành câu mới"
+                        className={ICON_BTN}
+                      >
+                        <Copy size={15} />
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => setEditingId(question.id)}
                         disabled={editing}
                         className={BTN_SECONDARY}
                       >
                         {editing ? "Đang sửa" : "Sửa"}
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setPendingDelete(question)}
-                        aria-label={`Xóa câu ${index + 1}`}
-                        className={BTN_DANGER}
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      {!locked && (
+                        <button
+                          type="button"
+                          onClick={() => setPendingDelete(question)}
+                          aria-label={`Xóa câu ${index + 1}`}
+                          className={BTN_DANGER}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                     </div>
                   </div>
-                  {editing && topic && (
-                    <QuestionForm
-                      topicId={topic.id}
-                      question={question}
-                      nextOrder={nextOrder}
-                      onDone={(saved) => {
-                        setEditingId(null);
-                        if (saved) refresh();
-                      }}
+                  {editing && (
+                    <GrammarQuestionForm
+                      formId={String(question.id)}
+                      initial={question}
+                      locked={locked}
+                      submitLabel="Lưu câu hỏi"
+                      onSubmit={(draft) => saveQuestion(question, draft)}
+                      onCancel={() => setEditingId(null)}
                     />
                   )}
                 </li>
@@ -725,58 +685,78 @@ function TopicBody({ topic }: { topic: Topic | null }) {
             })}
           </ol>
 
-          {progress && (
-            <p className="mt-3 inline-flex items-center gap-2 text-sm tabular-nums text-slate-700">
-              <Loader2 size={14} className="animate-spin" /> {progress}
-            </p>
-          )}
-
           <div className="mt-4 border-t border-slate-100 pt-4">
             {editingId === "new" && topic && (
               <div className="mb-4 rounded-lg border border-blue-300 bg-blue-50/30 p-4">
-                <p className="text-sm font-semibold text-slate-900">Câu hỏi mới</p>
-                <QuestionForm
-                  topicId={topic.id}
-                  question={null}
-                  nextOrder={nextOrder}
-                  onDone={(saved) => {
+                <p className="text-sm font-semibold text-slate-900">
+                  {copyFrom ? "Câu mới (nhân bản)" : "Câu hỏi mới"}
+                </p>
+                <GrammarQuestionForm
+                  key={copyFrom ? `copy-${copyFrom.question}` : "new"}
+                  formId="new"
+                  initial={copyFrom}
+                  submitLabel="Thêm câu hỏi"
+                  onSubmit={(draft) => saveQuestion(null, draft)}
+                  onCancel={() => {
                     setEditingId(null);
-                    if (saved) refresh();
+                    setCopyFrom(null);
                   }}
                 />
               </div>
             )}
 
-            {aiOpen && (
+            {panel === "paste" && (
+              <GrammarPastePanel
+                existingPrompts={[
+                  ...questions.map((q) => q.question),
+                  ...pendingQuestions.map((q) => q.question),
+                ]}
+                addLabel={pendingLabel}
+                onAdd={async (drafts) => {
+                  const added = await addQuestions(drafts);
+                  if (added) setPanel(null);
+                  return added;
+                }}
+                onClose={() => setPanel(null)}
+              />
+            )}
+
+            {panel === "ai" && (
               <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50/40 p-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-sm font-semibold text-slate-900">
-                    {!questions.length && !form.description.trim()
-                      ? "AI viết lý thuyết và câu hỏi"
-                      : "AI gợi ý thêm câu hỏi"}
+                    {aiDraftsWholeTopic ? "AI viết lý thuyết và câu hỏi" : "AI gợi ý thêm câu hỏi"}
                   </p>
-                  <label className="ml-auto flex items-center gap-1.5 text-sm text-slate-600">
-                    Số câu
+                  <label className="ml-auto flex items-center gap-1.5 text-sm text-slate-700">
+                    Số câu (tối đa {aiMax})
                     <input
                       type="number"
                       min={1}
-                      max={20}
-                      value={aiCount}
-                      onChange={(event) => setAiCount(Math.min(20, Math.max(1, Number(event.target.value) || 1)))}
+                      max={aiMax}
+                      value={Math.min(aiCount, aiMax)}
+                      onChange={(event) =>
+                        setAiCount(Math.min(aiMax, Math.max(1, Number(event.target.value) || 1)))
+                      }
                       className="min-h-10 w-16 rounded-lg border border-slate-300 px-2 text-center text-sm"
                     />
                   </label>
                   <button type="button" disabled={busy} onClick={() => void askAi()} className={BTN_AI}>
-                    {busy && !progress && <Loader2 size={14} className="animate-spin" />}
+                    {busy && <Loader2 size={14} className="animate-spin" />}
                     {candidates.length ? "Gợi ý lại" : "Gợi ý"}
+                  </button>
+                  <button type="button" onClick={() => setPanel(null)} className={BTN_SECONDARY}>
+                    Đóng
                   </button>
                 </div>
                 {candidates.length > 0 && (
                   <>
-                    <ul className="mt-3 space-y-2">
+                    <p className="mt-3 text-sm text-slate-700">
+                      Bỏ chọn câu không dùng; bấm Sửa để chỉnh trước khi thêm.
+                    </p>
+                    <ul className="mt-2 space-y-2">
                       {candidates.map((candidate, index) => (
-                        <li key={`${candidate.question}-${index}`} className="rounded-lg border border-slate-200 bg-white p-3 text-sm">
-                          <label className="flex cursor-pointer items-start gap-2">
+                        <li key={index} className="rounded-lg border border-slate-200 bg-white p-3 text-sm">
+                          <div className="flex items-start gap-2">
                             <input
                               type="checkbox"
                               checked={candidate.chosen}
@@ -785,51 +765,75 @@ function TopicBody({ topic }: { topic: Topic | null }) {
                                   rows.map((r, i) => (i === index ? { ...r, chosen: !r.chosen } : r)),
                                 )
                               }
-                              className="mt-0.5 size-4 flex-none"
+                              aria-label={`Chọn gợi ý ${index + 1}`}
+                              className="mt-0.5 size-4 flex-none cursor-pointer"
                             />
-                            <span>
-                              <span className="font-medium text-slate-950">{candidate.question}</span>
-                              <span className="mt-1 block text-slate-600">
-                                {candidate.options
-                                  .map((o, i) => `${LETTERS[i]}. ${o}${i === candidate.correctIndex ? " (đúng)" : ""}`)
-                                  .join("   ")}
-                              </span>
-                            </span>
-                          </label>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-slate-950">{candidate.question}</p>
+                              <p className="mt-1 text-slate-700">
+                                {candidate.options.map((option, i) => (
+                                  <span
+                                    key={i}
+                                    className={`mr-3 ${i === candidate.correctIndex ? "font-semibold text-emerald-700" : ""}`}
+                                  >
+                                    {OPTION_LETTERS[i]}. {option}
+                                  </span>
+                                ))}
+                              </p>
+                              <p className="mt-1 text-xs text-slate-600">
+                                Lý do sai {rationaleCount(candidate)}/3
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setEditingCandidate(editingCandidate === index ? null : index)}
+                              className={BTN_SECONDARY}
+                            >
+                              {editingCandidate === index ? "Đang sửa" : "Sửa"}
+                            </button>
+                          </div>
+                          {editingCandidate === index && (
+                            <GrammarQuestionForm
+                              formId={`ai-${index}`}
+                              initial={candidate}
+                              submitLabel="Giữ chỉnh sửa"
+                              onSubmit={(draft) => {
+                                setCandidates((rows) =>
+                                  rows.map((r, i) => (i === index ? { ...draft, chosen: true } : r)),
+                                );
+                                setEditingCandidate(null);
+                              }}
+                              onCancel={() => setEditingCandidate(null)}
+                            />
+                          )}
                         </li>
                       ))}
                     </ul>
                     <button
                       type="button"
-                      disabled={busy || !candidates.some((c) => c.chosen)}
+                      disabled={busy || !chosenCount}
                       onClick={async () => {
-                        const chosen = candidates.filter((c) => c.chosen);
-                        if (!topic) {
-                          setPendingQuestions(chosen);
-                          setCandidates([]);
-                          setAiOpen(false);
-                          return;
-                        }
                         setBusy(true);
-                        try {
-                          const added = await addQuestions(topic.id, chosen, nextOrder);
-                          toast.success(`Đã thêm ${added} câu hỏi.`);
+                        const added = await addQuestions(
+                          candidates
+                            .filter((c) => c.chosen)
+                            .map((c) => ({
+                              question: c.question,
+                              options: c.options,
+                              correctIndex: c.correctIndex,
+                              explanation: c.explanation,
+                              optionExplanations: c.optionExplanations,
+                            })),
+                        );
+                        setBusy(false);
+                        if (added) {
                           setCandidates([]);
-                          setAiOpen(false);
-                        } catch (err: any) {
-                          setProgress(null);
-                          toast.error(getApiErrorMessage(err, "Không thể thêm câu hỏi."));
-                        } finally {
-                          setBusy(false);
-                          refresh();
+                          setPanel(null);
                         }
                       }}
                       className={`${BTN_PRIMARY} mt-3`}
                     >
-                      <Plus size={16} />{" "}
-                      {topic
-                        ? `Thêm ${candidates.filter((c) => c.chosen).length} câu đã chọn`
-                        : `Giữ ${candidates.filter((c) => c.chosen).length} câu để thêm khi tạo chủ đề`}
+                      <Plus size={16} /> {pendingLabel(chosenCount)} đã chọn
                     </button>
                   </>
                 )}
@@ -838,11 +842,33 @@ function TopicBody({ topic }: { topic: Topic | null }) {
 
             {editingId !== "new" && (
               <div className="flex flex-wrap gap-2">
-                <button type="button" disabled={!topic} onClick={() => setEditingId("new")} className={BTN_SECONDARY}>
+                <button
+                  type="button"
+                  disabled={!topic}
+                  title={topic ? undefined : "Tạo chủ đề trước"}
+                  onClick={() => {
+                    setCopyFrom(null);
+                    setEditingId("new");
+                  }}
+                  className={BTN_SECONDARY}
+                >
                   <Plus size={16} /> Thêm câu hỏi
                 </button>
-                <button type="button" onClick={() => setAiOpen((open) => !open)} className={BTN_AI}>
-                  {!questions.length && !form.description.trim() ? "Soạn bằng AI" : "Thêm câu hỏi bằng AI"}
+                <button
+                  type="button"
+                  onClick={() => setPanel(panel === "paste" ? null : "paste")}
+                  aria-pressed={panel === "paste"}
+                  className={BTN_SECONDARY}
+                >
+                  <ClipboardPaste size={16} /> Dán nhiều câu
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPanel(panel === "ai" ? null : "ai")}
+                  aria-pressed={panel === "ai"}
+                  className={BTN_AI}
+                >
+                  {aiDraftsWholeTopic ? "Soạn bằng AI" : "Thêm câu hỏi bằng AI"}
                 </button>
               </div>
             )}

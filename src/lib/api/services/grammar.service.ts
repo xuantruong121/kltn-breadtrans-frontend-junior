@@ -38,6 +38,8 @@ export interface GrammarAttemptResult {
     correctOption: number;
     isCorrect: boolean;
     explanation: string | null;
+    /** Why each wrong option is wrong, aligned with the options. */
+    optionExplanations?: Array<string | null> | null;
   }>;
 }
 

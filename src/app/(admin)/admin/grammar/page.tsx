@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, Loader2, Plus, Search, Send, Trash2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { ArrowRight, Loader2, Lock, Plus, Search, Send, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -12,6 +12,9 @@ import {
   GRAMMAR_LEVELS,
   grammarLevelLabel,
 } from "@/components/admin/grammar/grammarCms";
+import { Pagination } from "@/components/ui";
+import { useAdminList } from "@/components/admin/useAdminList";
+import { ADMIN_PAGE_SIZES } from "@/components/admin/adminList";
 
 type TopicSummary = {
   id: number;
@@ -20,7 +23,8 @@ type TopicSummary = {
   level?: string | null;
   keyFormula?: string | null;
   totalQuestions?: number;
-  attemptCount?: number;
+  /** Attempts by learners; content is locked once there is one. */
+  learnerAttemptCount?: number;
   publicationStatus: "DRAFT" | "PUBLISHED";
 };
 
@@ -41,41 +45,21 @@ export default function AdminGrammarPage() {
   const [pendingLifecycle, setPendingLifecycle] =
     useState<TopicSummary | null>(null);
 
-  const { data: topics = [], isLoading } = useQuery<TopicSummary[]>({
-    queryKey: ["admin-grammar-topics"],
-    queryFn: async () => {
-      const res: any = await axiosClient.get("/grammar/topics");
-      return (res?.data ?? res) || [];
-    },
+  // One page from the server; search, filters and sort run there too.
+  const list = useAdminList<
+    TopicSummary,
+    { total: number; published: number; locked: number }
+  >({
+    key: "admin-grammar-topics",
+    url: "/admin/grammar/topics",
+    search: query,
+    filters: { level, status, sort },
   });
-  const published = topics.filter(
-    (t) => t.publicationStatus === "PUBLISHED",
-  ).length;
-  const levelRank = (t: TopicSummary) => {
-    const i = GRAMMAR_LEVELS.findIndex((l) => l.value === t.level);
-    return i < 0 ? 99 : i;
-  };
-  const needle = query.trim().toLocaleLowerCase("vi");
-  const visible = topics
-    .filter(
-      (topic) =>
-        (!needle ||
-          `${topic.title} ${topic.description ?? ""} ${topic.keyFormula ?? ""}`
-            .toLocaleLowerCase("vi")
-            .includes(needle)) &&
-        (level === "ALL" || topic.level === level) &&
-        (status === "ALL" || topic.publicationStatus === status),
-    )
-    .sort((a, b) =>
-      sort === "TITLE"
-        ? a.title.localeCompare(b.title, "vi")
-        : sort === "LEVEL"
-          ? levelRank(a) - levelRank(b)
-          : sort === "FEWEST"
-            ? (a.totalQuestions ?? 0) - (b.totalQuestions ?? 0)
-            : b.id - a.id,
-    );
-  const filtersActive = Boolean(needle) || level !== "ALL" || status !== "ALL";
+  const visible = list.items;
+  const isLoading = list.isLoading;
+  const totalTopics = list.facets?.total ?? 0;
+  const published = list.facets?.published ?? 0;
+  const filtersActive = Boolean(query.trim()) || level !== "ALL" || status !== "ALL";
   const refresh = () =>
     queryClient.invalidateQueries({ queryKey: ["admin-grammar-topics"] });
 
@@ -85,8 +69,9 @@ export default function AdminGrammarPage() {
         <div>
           <h1 className="text-2xl font-semibold text-slate-950">Ngữ pháp</h1>
           <p className="mt-1 text-sm tabular-nums text-slate-600">
-            {topics.length} chủ đề · {published} đã xuất bản ·{" "}
-            {topics.length - published} bản nháp
+            {totalTopics} chủ đề · {published} đã xuất bản ·{" "}
+            {totalTopics - published} bản nháp
+            {list.facets?.locked ? ` · ${list.facets.locked} đã có học viên làm` : ""}
           </p>
         </div>
         <Link
@@ -147,7 +132,10 @@ export default function AdminGrammarPage() {
           </label>
           <div className="ml-auto flex items-center gap-3 text-sm text-slate-600">
             <span className="tabular-nums">
-              Hiện {visible.length}/{topics.length}
+              {list.total === totalTopics
+                ? `${list.total} chủ đề`
+                : `Khớp ${list.total}/${totalTopics}`}
+              {list.isFetching && !isLoading ? " · đang tải" : ""}
             </span>
             {filtersActive && (
               <button
@@ -213,9 +201,17 @@ export default function AdminGrammarPage() {
                 )}
                 <div className="mt-auto pt-4">
                   <div className="flex items-center gap-2 border-t border-slate-100 pt-3 text-sm text-slate-600">
-                    <span className="tabular-nums">
+                    <span className="inline-flex items-center gap-1.5 tabular-nums">
                       {topic.totalQuestions ?? 0} câu hỏi
-                      {topic.attemptCount ? ` · ${topic.attemptCount} lượt làm` : ""}
+                      {topic.learnerAttemptCount ? (
+                        <span
+                          className="inline-flex items-center gap-1 text-amber-800"
+                          title="Đã có học viên làm: đề bài, phương án và đáp án đã khoá"
+                        >
+                          · <Lock size={13} aria-hidden="true" />
+                          {topic.learnerAttemptCount} lượt học viên
+                        </span>
+                      ) : null}
                     </span>
                     <div className="ml-auto flex items-center gap-1.5">
                       <button
@@ -250,13 +246,23 @@ export default function AdminGrammarPage() {
           })}
           {!visible.length && (
             <p className="col-span-full rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-600">
-              {topics.length
+              {totalTopics
                 ? "Không có chủ đề nào khớp bộ lọc."
                 : "Chưa có chủ đề nào. Bấm “Tạo chủ đề” để bắt đầu."}
             </p>
           )}
         </div>
       )}
+
+      <Pagination
+        currentPage={list.page}
+        totalPages={list.totalPages}
+        totalItems={list.total}
+        pageSize={list.pageSize}
+        onPageChange={list.setPage}
+        onPageSizeChange={list.setPageSize}
+        pageSizeOptions={ADMIN_PAGE_SIZES}
+      />
 
       {pendingLifecycle && (
         <ConfirmDialog

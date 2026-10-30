@@ -36,7 +36,7 @@ export const GrammarVideoPlayer: React.FC<GrammarVideoPlayerProps> = ({ topic })
     )}
 
     {topic.description && (
-      <p className="text-sm font-medium leading-relaxed text-slate-700 dark:text-slate-300">
+      <p className="whitespace-pre-line text-sm font-medium leading-relaxed text-slate-700 dark:text-slate-300">
         {topic.description}
       </p>
     )}
