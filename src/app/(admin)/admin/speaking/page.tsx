@@ -84,7 +84,9 @@ interface SpeakingCategory {
   _count?: { practiceSets: number; exercises: number };
 }
 
-const LEVELS = ["A1-B1", "A2-B1", "A2-B2", "B1-B2", "B1-C1"];
+// Levels inside one learner-facing group (Cơ bản / Trung cấp / Nâng cao), as the
+// catalog, the plan matrix and the recommender read them.
+const LEVELS = ["A1-A2", "A1", "A2", "B1-B2", "B1", "B2", "C1-C2", "C1", "C2"];
 const EXERCISE_LEVELS = ["BEGINNER", "INTERMEDIATE", "ADVANCED"];
 const TASK_TYPES: Array<{ value: SpeakingTaskType; label: string }> = [
   { value: "READ_ALOUD", label: "Đọc thành tiếng" },
@@ -95,10 +97,18 @@ const TASK_TYPES: Array<{ value: SpeakingTaskType; label: string }> = [
   { value: "PRONUNCIATION_DRILL", label: "Bài luyện phát âm" },
 ];
 const LEVEL_LABELS: Record<string, string> = {
+  "A1-A2": "Cơ bản · A1 – A2",
+  A1: "Cơ bản · A1",
+  A2: "Cơ bản · A2",
+  "B1-B2": "Trung cấp · B1 – B2",
+  B1: "Trung cấp · B1",
+  B2: "Trung cấp · B2",
+  "C1-C2": "Nâng cao · C1 – C2",
+  C1: "Nâng cao · C1",
+  C2: "Nâng cao · C2",
   "A1-B1": "A1 – B1",
   "A2-B1": "A2 – B1",
   "A2-B2": "A2 – B2",
-  "B1-B2": "B1 – B2",
   "B1-C1": "B1 – C1",
 };
 const STATUS_LABELS = { DRAFT: "Bản nháp", PUBLISHED: "Đã xuất bản" } as const;
@@ -193,7 +203,7 @@ export default function AdminSpeakingPage() {
     title: "",
     description: "",
     category: "",
-    level: "A1-B1",
+    level: "A1-A2",
   });
 
   // Exercise Create/Edit Modal
@@ -692,7 +702,7 @@ export default function AdminSpeakingPage() {
       title: "",
       description: "",
       category: defaultPracticeSetCategory,
-      level: "A1-B1",
+      level: "A1-A2",
     });
     setPracticeSetSuggestion(null);
     setSpeakingFullDraft(null);
