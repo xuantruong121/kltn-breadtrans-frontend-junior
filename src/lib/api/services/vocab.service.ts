@@ -4,6 +4,10 @@ import { useAuthStore } from "@/stores/authStore";
 export interface VocabTopic {
   id: number;
   title: string;
+  /** Short line the CMS writes for the deck card. */
+  description?: string | null;
+  /** CEFR tag (A1–C2), when the deck has one. */
+  level?: string | null;
   categoryName: string;
   totalWords: number;
   learnedCount: number;

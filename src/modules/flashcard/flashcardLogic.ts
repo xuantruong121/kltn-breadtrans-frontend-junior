@@ -25,6 +25,8 @@ export interface FlashcardSummaryMetrics {
 export interface FilterOptions {
   searchQuery?: string;
   selectedCategory?: string;
+  /** CEFR level, or "ALL". */
+  selectedLevel?: string;
   statusFilter?: FlashcardStatusFilter;
   sortOption?: FlashcardSortOption;
 }
@@ -174,6 +176,7 @@ export function filterAndSortTopics(topics: VocabTopic[], options: FilterOptions
   const {
     searchQuery = "",
     selectedCategory = "ALL",
+    selectedLevel = "ALL",
     statusFilter = "ALL",
     sortOption = "DEFAULT",
   } = options;
@@ -196,6 +199,10 @@ export function filterAndSortTopics(topics: VocabTopic[], options: FilterOptions
       if (topic.categoryName !== selectedCategory) {
         return false;
       }
+    }
+
+    if (selectedLevel !== "ALL" && topic.level !== selectedLevel) {
+      return false;
     }
 
     // Status filter

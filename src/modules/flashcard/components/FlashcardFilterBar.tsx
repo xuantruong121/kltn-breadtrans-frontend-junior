@@ -11,6 +11,9 @@ export interface FlashcardFilterBarProps {
   categories: string[];
   selectedCategory: string;
   onCategoryChange: (cat: string) => void;
+  levels?: string[];
+  selectedLevel?: string;
+  onLevelChange?: (level: string) => void;
   statusFilter: FlashcardStatusFilter;
   onStatusFilterChange: (status: FlashcardStatusFilter) => void;
   sortOption: FlashcardSortOption;
@@ -26,6 +29,9 @@ export const FlashcardFilterBar: React.FC<FlashcardFilterBarProps> = ({
   categories,
   selectedCategory,
   onCategoryChange,
+  levels = [],
+  selectedLevel = "ALL",
+  onLevelChange,
   statusFilter,
   onStatusFilterChange,
   sortOption,
@@ -92,6 +98,31 @@ export const FlashcardFilterBar: React.FC<FlashcardFilterBarProps> = ({
               <Filter size={14} aria-hidden="true" />
             </div>
           </div>
+
+          {/* Level Filter: only when decks carry a level */}
+          {levels.length > 0 && onLevelChange && (
+            <div className="relative flex-1 sm:flex-initial sm:min-w-[130px]">
+              <label htmlFor="flashcard-level-filter" className="sr-only">
+                Lọc theo trình độ
+              </label>
+              <select
+                id="flashcard-level-filter"
+                value={selectedLevel}
+                onChange={(e) => onLevelChange(e.target.value)}
+                className="w-full cursor-pointer appearance-none rounded-xl border border-slate-200 bg-slate-50/70 py-2.5 pl-3.5 pr-8 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:border-amber-400 dark:focus:bg-slate-900"
+              >
+                <option value="ALL">Mọi trình độ</option>
+                {levels.map((level) => (
+                  <option key={level} value={level}>
+                    {level}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 dark:text-slate-500">
+                <Filter size={14} aria-hidden="true" />
+              </div>
+            </div>
+          )}
 
           {/* Status Filter */}
           <div className="relative flex-1 sm:flex-initial sm:min-w-[140px]">

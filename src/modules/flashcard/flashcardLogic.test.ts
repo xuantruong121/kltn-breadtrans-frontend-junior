@@ -302,3 +302,16 @@ describe("8. Responsive Grid Invariants & Card Width Budget", () => {
   });
 });
 
+
+test("filterAndSortTopics: level filter keeps only decks of that CEFR level", () => {
+  const topics = [
+    { id: 1, title: "A", categoryName: "X", totalWords: 10, learnedCount: 0, needReviewCount: 0, isPro: false, level: "B1" },
+    { id: 2, title: "B", categoryName: "X", totalWords: 10, learnedCount: 0, needReviewCount: 0, isPro: false, level: "A2" },
+    { id: 3, title: "C", categoryName: "X", totalWords: 10, learnedCount: 0, needReviewCount: 0, isPro: false },
+  ];
+  assert.deepEqual(
+    filterAndSortTopics(topics as any, { selectedLevel: "B1" }).map((t) => t.id),
+    [1],
+  );
+  assert.equal(filterAndSortTopics(topics as any, { selectedLevel: "ALL" }).length, 3);
+});
