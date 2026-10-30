@@ -55,7 +55,7 @@ export function PlacementTestBanner({
               <p className="max-w-3xl text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                 Khoảng 30–40 phút cho Nghe, Đọc, Nói và Viết, kèm một phần nhỏ
                 Ngữ pháp &amp; Từ vựng. Bạn nhận điểm tham khảo cho từng kỹ năng,
-                nhận xét bài Nói và Viết, cùng gợi ý bài luyện và khóa học phù hợp.
+                nhận xét bài Nói và Viết, cùng gợi ý bài luyện phù hợp.
               </p>
             </div>
           </div>

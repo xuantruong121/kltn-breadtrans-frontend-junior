@@ -1,5 +1,6 @@
 "use client";
 
+import { COURSES_ENABLED } from "@/lib/featureFlags";
 import React, { useState } from "react";
 import { ChevronDown, HelpCircle } from "lucide-react";
 
@@ -44,7 +45,7 @@ const FAQS: FaqItem[] = [
     id: "plus-vs-pro",
     question: "Gói Plus và gói Pro khác nhau thế nào?",
     answer:
-      "Plus mở bài Nghe và Đọc Trung cấp, Nâng cao. Pro gồm toàn bộ Plus, thêm bài Nói và Viết Trung cấp, Nâng cao và mọi khóa học. Bài Cơ bản của bốn kỹ năng, flashcard, từ vựng, ngữ pháp, bài kiểm tra đầu vào và luyện đề TOEIC miễn phí với mọi tài khoản.",
+      `Plus mở bài Nghe và Đọc Trung cấp, Nâng cao. Pro gồm toàn bộ Plus, thêm bài Nói và Viết Trung cấp, Nâng cao${COURSES_ENABLED ? " và mọi khóa học" : ""}. Bài Cơ bản của bốn kỹ năng, flashcard, từ vựng, ngữ pháp, bài kiểm tra đầu vào và luyện đề TOEIC miễn phí với mọi tài khoản.`,
   },
   {
     id: "support-channel",

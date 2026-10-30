@@ -1,5 +1,6 @@
 "use client";
 
+import { COURSES_ENABLED } from "@/lib/featureFlags";
 import React, { useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -163,7 +164,7 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
                 ? [
                     "Mọi quyền lợi của gói PLUS",
                     "Bài luyện nói và luyện viết Trung cấp, Nâng cao",
-                    "Toàn bộ khóa học",
+                    ...(COURSES_ENABLED ? ["Toàn bộ khóa học"] : []),
                   ]
                 : [
                     "Bài nghe và bài đọc Trung cấp, Nâng cao",

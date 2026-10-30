@@ -66,7 +66,7 @@ const ROADMAP_STEPS = [
 const FAQ_LIST = [
   {
     q: "BreadTrans có miễn phí để bắt đầu không?",
-    a: "Có. Bạn đăng ký bằng email, không cần thẻ ngân hàng, rồi làm bài kiểm tra đầu vào và các bài luyện được đánh dấu miễn phí. Một số bài và khóa học cần gói PLUS hoặc PRO; các bài đó hiển thị nhãn khóa rõ ràng.",
+    a: "Có. Bạn đăng ký bằng email, không cần thẻ ngân hàng, rồi làm bài kiểm tra đầu vào và các bài luyện được đánh dấu miễn phí. Một số bài cần gói PLUS hoặc PRO; các bài đó hiển thị nhãn khóa rõ ràng.",
   },
   {
     q: "Bài Nói được chấm như thế nào?",
@@ -239,7 +239,7 @@ export default function PublicLandingPage() {
 
               {/* Subheadline */}
               <p className="text-slate-600 dark:text-slate-300 text-base sm:text-lg font-semibold leading-relaxed max-w-2xl">
-                Rèn luyện từng kỹ năng Nghe - Nói - Đọc - Viết theo cấp độ và chủ đề, học theo khóa học có lộ trình,
+                Rèn luyện từng kỹ năng Nghe - Nói - Đọc - Viết theo cấp độ và chủ đề,
                 luyện đề theo các format chứng chỉ đang hỗ trợ (trong đó có TOEIC) và duy trì cảm hứng cùng AI, Gamification.
               </p>
 
@@ -447,7 +447,7 @@ export default function PublicLandingPage() {
             Mọi công cụ bạn cần để làm chủ tiếng Anh &amp; mục tiêu chứng chỉ
           </h2>
           <p className="text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl text-pretty">
-            Luyện từng kỹ năng với phản hồi tự động, học theo khóa học, luyện đề theo cấu trúc TOEIC,
+            Luyện từng kỹ năng với phản hồi tự động, luyện đề theo cấu trúc TOEIC,
             và giữ thói quen học bằng Bánh Mì, thú cưng và bảng xếp hạng.
           </p>
         </div>
