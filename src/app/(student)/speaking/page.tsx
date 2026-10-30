@@ -1,5 +1,6 @@
 "use client";
 
+import { RecommendedForYou } from "@/components/learning-path/RecommendedForYou";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -395,6 +396,8 @@ export default function SpeakingExercisesPage() {
       </section>
 
       {/* Unified Modern Filter Dock */}
+      <RecommendedForYou skill="SPEAKING" />
+
       <section className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xs sm:p-5 space-y-4">
         {/* Row 1: Search Input (with Ctrl+K / Cmd+K badge and clear button) & Category Chips */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">

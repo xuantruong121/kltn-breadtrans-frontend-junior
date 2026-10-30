@@ -40,6 +40,7 @@ import {
   type EffectivePlan,
 } from "@/lib/api/services/plan.service";
 import { LevelChoiceCard } from "@/components/dashboard/LevelChoiceCard";
+import { TodayPlanCard } from "@/components/learning-path/TodayPlanCard";
 import { learningPathService } from "@/lib/api/services/learningPath.service";
 import { ONBOARDING_SKIPPED_KEY, shouldOpenOnboarding } from "@/lib/learning-path/onboarding";
 import { useRouter } from "next/navigation";
@@ -1354,6 +1355,7 @@ export default function DashboardPage() {
       {/* 2. PLACEMENT TEST RECOMMENDATION BANNER                                   */}
       {/* ========================================================================= */}
       <LevelChoiceCard profile={learnerProfile} />
+      <TodayPlanCard enabled={enabled && Boolean(learnerProfile?.onboarded)} />
 
       {/* ========================================================================= */}
       {/* 3. DAILY FOCUS BENTO HUB (Nhiệm Vụ 2 Cols + Thú Cưng 1 Col)              */}
