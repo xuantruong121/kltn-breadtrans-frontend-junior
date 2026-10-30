@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
   ChevronDown,
+  Circle,
   FileAudio,
   FilePlus2,
   Loader2,
@@ -26,6 +28,7 @@ import ImageUploadField from "@/components/admin/ImageUploadField";
 import RequiredMediaNotice from "@/components/admin/RequiredMediaNotice";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { latestAudioBadge, publishChecklist } from "./skillCmsStatus";
 
 type Domain = "listening" | "reading" | "writing";
 type ListeningMode = "COMPREHENSION" | "DICTATION" | "DIALOGUE";
@@ -248,12 +251,19 @@ function transcriptForSave(segments: unknown): Array<Record<string, string>> {
   });
 }
 
+const AUDIO_DOT: Record<string, string> = {
+  ok: "bg-emerald-500",
+  pending: "bg-amber-500",
+  error: "bg-rose-500",
+  none: "bg-slate-300",
+};
+
 /** Shared button looks: visible hover, press, keyboard focus and disabled states. */
 const BTN_BASE =
   "inline-flex min-h-10 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-50";
 const BTN_SECONDARY = `${BTN_BASE} border border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50 active:bg-slate-100`;
 const BTN_PRIMARY = `${BTN_BASE} bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800`;
-const BTN_SUCCESS = `${BTN_BASE} bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800`;
+const BTN_SUCCESS = `${BTN_BASE} bg-emerald-700 text-white hover:bg-emerald-800 active:bg-emerald-900`;
 const BTN_DANGER = `${BTN_BASE} border border-rose-200 bg-white text-rose-600 hover:border-rose-300 hover:bg-rose-50 active:bg-rose-100`;
 const BTN_AI = `${BTN_BASE} border border-amber-300 bg-amber-50 text-amber-900 hover:border-amber-400 hover:bg-amber-100 active:bg-amber-200`;
 
@@ -1154,18 +1164,32 @@ export default function SkillCmsWorkspace({
       );
     });
 
+    const publishedCount = items.filter(
+      (content) => content.publicationStatus === "PUBLISHED",
+    ).length;
+    const modeTabs: Array<[ListeningModeFilter, string, number]> = [
+      ["ALL", "Tất cả", items.length],
+      ...LISTENING_MODE_OPTIONS.map(
+        (option): [ListeningModeFilter, string, number] => [
+          option.value,
+          option.label,
+          items.filter((content) => getListeningMode(content) === option.value)
+            .length,
+        ],
+      ),
+    ];
+
+    // Full canvas width. Cards fill the canvas in as many 320px-minimum
+    // columns as fit (1 on a phone, 2 on a tablet, 3 at 1440, 4 at 1920),
+    // with one 16px gutter both ways: n x card + (n - 1) x 16 = canvas.
     return (
-      <main className="mx-auto max-w-6xl space-y-6 p-6">
-        <header className="flex flex-wrap items-center justify-between gap-4">
+      <main className="space-y-6 p-6">
+        <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[.18em] text-slate-500">
-              NỘI DUNG HỌC
-            </p>
-            <h1 className="mt-2 text-3xl font-semibold text-slate-950">
-              {title}
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Tạo, kiểm tra và xuất bản bài luyện cho học viên.
+            <h1 className="text-2xl font-semibold text-slate-950">{title}</h1>
+            <p className="mt-1 text-sm tabular-nums text-slate-600">
+              {items.length} bài · {publishedCount} đã xuất bản ·{" "}
+              {items.length - publishedCount} bản nháp
             </p>
           </div>
           {domain === "listening" ? (
@@ -1175,7 +1199,7 @@ export default function SkillCmsWorkspace({
                 aria-haspopup="menu"
                 aria-expanded={isCreateMenuOpen}
                 onClick={() => setIsCreateMenuOpen((current) => !current)}
-                className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white"
+                className={`${BTN_BASE} bg-slate-950 text-white hover:bg-slate-800 active:bg-slate-700`}
               >
                 <FilePlus2 size={16} /> Thêm bài nghe <ChevronDown size={15} />
               </button>
@@ -1209,13 +1233,40 @@ export default function SkillCmsWorkspace({
             <button
               type="button"
               onClick={() => router.push(`/admin/${domain}/new`)}
-              className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white"
+              className={`${BTN_BASE} bg-slate-950 text-white hover:bg-slate-800 active:bg-slate-700`}
             >
               <FilePlus2 size={16} /> Tạo bản nháp
             </button>
           )}
         </header>
-        <section className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row">
+
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          {domain === "listening" && (
+            <div
+              role="group"
+              aria-label="Lọc loại bài nghe"
+              className="flex flex-wrap gap-1 rounded-lg bg-slate-100 p-1"
+            >
+              {modeTabs.map(([value, label, count]) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={listeningModeFilter === value}
+                  onClick={() => setListeningModeFilter(value)}
+                  className={`min-h-9 cursor-pointer rounded-md px-3 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${
+                    listeningModeFilter === value
+                      ? "bg-white text-slate-950 shadow-sm"
+                      : "text-slate-600 hover:text-slate-950"
+                  }`}
+                >
+                  {label}{" "}
+                  <span className="font-normal tabular-nums text-slate-500">
+                    {count}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
           <label className="relative min-w-0 flex-1">
             <span className="sr-only">Tìm nội dung {meta[domain].label}</span>
             <Search
@@ -1227,7 +1278,7 @@ export default function SkillCmsWorkspace({
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder="Tìm theo tiêu đề, mô tả, trình độ..."
-              className="min-h-11 w-full rounded-lg border border-slate-200 py-2 pl-10 pr-3 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+              className="min-h-11 w-full rounded-lg border border-slate-200 bg-white py-2 pl-10 pr-3 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
             />
           </label>
           <label className="text-sm font-medium text-slate-700">
@@ -1239,62 +1290,40 @@ export default function SkillCmsWorkspace({
                   event.target.value as "ALL" | "DRAFT" | "PUBLISHED",
                 )
               }
-              className="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200 sm:w-44"
+              className="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200 lg:w-44"
             >
               <option value="ALL">Tất cả trạng thái</option>
               <option value="DRAFT">Bản nháp</option>
               <option value="PUBLISHED">Đã xuất bản</option>
             </select>
           </label>
-        </section>
-        {domain === "listening" && (
-          <section
-            aria-label="Lọc loại bài nghe"
-            className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-sm"
-          >
-            <span className="px-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Loại bài
-            </span>
-            <button
-              type="button"
-              onClick={() => setListeningModeFilter("ALL")}
-              className={`rounded-lg px-3 py-2 text-sm font-semibold ${listeningModeFilter === "ALL" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-50"}`}
-            >
-              Tất cả ({items.length})
-            </button>
-            {LISTENING_MODE_OPTIONS.map((option) => {
-              const count = items.filter(
-                (content) => getListeningMode(content) === option.value,
-              ).length;
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setListeningModeFilter(option.value)}
-                  className={`rounded-lg px-3 py-2 text-sm font-semibold ${listeningModeFilter === option.value ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-50"}`}
-                >
-                  {option.label} ({count})
-                </button>
-              );
-            })}
-          </section>
-        )}
-        <div className="grid gap-4 md:grid-cols-2">
-          {visibleItems.map((content) => (
-            <article
-              key={content.id}
-              className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="font-semibold text-slate-950">
-                    {content.title}
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {content.description || "Chưa có mô tả"}
-                  </p>
+        </div>
+
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(320px,100%),1fr))] gap-4">
+          {visibleItems.map((content) => {
+            const level = levelFromTitle(content.title) ?? content.level;
+            // The level and form show as tags, so the title drops its
+            // "Hội thoại C1 — " head.
+            const cardTitle =
+              level && String(content.title).includes(" — ")
+                ? String(content.title).split(" — ").slice(1).join(" — ")
+                : content.title;
+            const published = content.publicationStatus === "PUBLISHED";
+            const audio = latestAudioBadge(content.listeningAudioArtifacts?.[0]);
+            return (
+              <Link
+                key={content.id}
+                href={`/admin/${domain}/${content.id}`}
+                className="group flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+              >
+                <div className="flex items-center gap-2">
+                  {level && (
+                    <span className="flex-none rounded-md bg-blue-50 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-blue-800">
+                      {level}
+                    </span>
+                  )}
                   {domain === "listening" && (
-                    <span className="mt-2 inline-flex rounded-md bg-violet-50 px-2 py-1 text-xs font-semibold text-violet-700">
+                    <span className="truncate text-xs text-slate-500">
                       {
                         LISTENING_MODE_OPTIONS.find(
                           (option) =>
@@ -1303,37 +1332,56 @@ export default function SkillCmsWorkspace({
                       }
                     </span>
                   )}
+                  <span
+                    className={`ml-auto flex-none whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-semibold ${
+                      published
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "bg-amber-50 text-amber-800"
+                    }`}
+                  >
+                    {publicationStatusLabel(content.publicationStatus)}
+                  </span>
                 </div>
-                <span
-                  className={`rounded-md px-2.5 py-1 text-xs font-semibold ${content.publicationStatus === "PUBLISHED" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}
-                >
-                  {publicationStatusLabel(content.publicationStatus)}
-                </span>
-              </div>
-              <div className="mt-5 flex items-center justify-between text-xs text-slate-500">
-                <span>
-                  {content._count?.questions ?? content.questions?.length ?? 0}{" "}
-                  câu hỏi
-                </span>
-                <button
-                  onClick={() => router.push(`/admin/${domain}/${content.id}`)}
-                  className="min-h-10 rounded-lg border border-slate-200 px-3 py-2 font-semibold text-slate-800"
-                >
-                  Mở editor
-                </button>
-              </div>
-            </article>
-          ))}
+                <h2 className="mt-3 line-clamp-2 font-semibold text-slate-950">
+                  {cardTitle}
+                </h2>
+                <p className="mt-1 line-clamp-2 text-sm text-slate-600">
+                  {content.description || "Chưa có mô tả"}
+                </p>
+                <div className="mt-auto pt-4">
+                  <div className="flex items-center gap-3 border-t border-slate-100 pt-3 text-sm text-slate-600">
+                    <span className="flex-none tabular-nums">
+                      {content._count?.questions ??
+                        content.questions?.length ??
+                        0}{" "}
+                      câu hỏi
+                    </span>
+                    {domain === "listening" && (
+                      <span className="inline-flex min-w-0 items-center gap-1.5">
+                        <span
+                          aria-hidden="true"
+                          className={`size-1.5 flex-none rounded-full ${AUDIO_DOT[audio.tone]}`}
+                        />
+                        <span className="truncate">{audio.label}</span>
+                      </span>
+                    )}
+                    <span className="ml-auto inline-flex flex-none items-center gap-1 font-semibold text-slate-900 group-hover:text-blue-700">
+                      Mở <ArrowRight size={14} aria-hidden="true" />
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
           {items.length === 0 && (
-            <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500">
+            <div className="col-span-full rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-600">
               Chưa có nội dung {meta[domain].label}. Hãy tạo bản nháp đầu tiên
               để bắt đầu.
             </div>
           )}
           {items.length > 0 && visibleItems.length === 0 && (
-            <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500">
-              Không tìm thấy nội dung phù hợp. Hãy đổi từ khóa hoặc bộ lọc trạng
-              thái.
+            <div className="col-span-full rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-600">
+              Không tìm thấy nội dung phù hợp. Hãy đổi từ khóa hoặc bộ lọc.
             </div>
           )}
         </div>
@@ -1387,6 +1435,12 @@ export default function SkillCmsWorkspace({
   );
   /** The artifact that matches the current transcript, if any. */
   const currentArtifact = artifacts.find((artifact) => !artifact.isStale);
+  const checklist = publishChecklist({
+    domain,
+    title: form.title,
+    questions,
+    audioPublished: currentArtifact?.status === "PUBLISHED",
+  });
 
   /** The question form, shown inside the card being edited or as "Câu hỏi mới". */
   const renderQuestionEditor = () => (
@@ -1788,7 +1842,7 @@ export default function SkillCmsWorkspace({
   );
 
   return (
-    <main className="mx-auto max-w-6xl space-y-6 p-6">
+    <main className="space-y-6 p-6">
       <button
         onClick={() => router.push(`/admin/${domain}`)}
         className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-500"
@@ -1797,21 +1851,18 @@ export default function SkillCmsWorkspace({
       </button>
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[.18em] text-slate-500">
-            {meta[domain].label}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold text-slate-950">
-            {title}
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Trạng thái: {publicationStatusLabel(item?.publicationStatus)}
+          <h1 className="text-2xl font-semibold text-slate-950">{title}</h1>
+          <p className="mt-1 text-sm text-slate-600">
+            Trạng thái: {publicationStatusLabel(item?.publicationStatus)} ·{" "}
+            {checklist.filter((entry) => entry.done).length}/{checklist.length}{" "}
+            mục sẵn sàng
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => void saveContent()}
             disabled={busy}
-            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold"
+            className={BTN_SECONDARY}
           >
             <Save size={16} /> Lưu
           </button>
@@ -1822,7 +1873,7 @@ export default function SkillCmsWorkspace({
               )
             }
             disabled={busy}
-            className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white"
+            className={BTN_SUCCESS}
           >
             <Send size={16} />{" "}
             {item?.publicationStatus === "PUBLISHED"
@@ -1832,535 +1883,587 @@ export default function SkillCmsWorkspace({
         </div>
       </header>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-semibold text-slate-950">Thông tin nội dung</h2>
-          {(isListening || domain === "reading") && (
-            <div className="flex flex-wrap items-center gap-2">
-              {isListening &&
-                (draftLocked ? (
-                  <span className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-600">
-                    Dạng bài
-                    <span className="font-semibold text-slate-900">
-                      {selectedListeningMode === "DICTATION"
-                        ? "Nghe chép"
-                        : "Hội thoại + câu hỏi"}
+      {/* Two columns from 1280px: the work on the left; the audio and the
+          publish checklist in a 400px rail that stays in view (24px gap). */}
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px] xl:items-start">
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm xl:col-start-1">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-semibold text-slate-950">Thông tin nội dung</h2>
+            {(isListening || domain === "reading") && (
+              <div className="flex flex-wrap items-center gap-2">
+                {isListening &&
+                  (draftLocked ? (
+                    <span className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-600">
+                      Dạng bài
+                      <span className="font-semibold text-slate-900">
+                        {selectedListeningMode === "DICTATION"
+                          ? "Nghe chép"
+                          : "Hội thoại + câu hỏi"}
+                      </span>
                     </span>
-                  </span>
-                ) : (
+                  ) : (
+                    <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-600">
+                      Dạng bài
+                      <select
+                        aria-label="Dạng bài nghe AI sẽ soạn"
+                        value={fullDraftMode}
+                        onChange={(event) => {
+                          const next =
+                            event.target.value === "DICTATION"
+                              ? "DICTATION"
+                              : "DIALOGUE";
+                          setFullDraftMode(next);
+                          // The quiz is saved in the form chosen here.
+                          setSelectedListeningMode(next);
+                        }}
+                        className="min-h-10 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-900"
+                      >
+                        <option value="DIALOGUE">Hội thoại + câu hỏi</option>
+                        <option value="DICTATION">Nghe chép</option>
+                      </select>
+                    </label>
+                  ))}
+                {!draftLocked && (
                   <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-600">
-                    Dạng bài
-                    <select
-                      aria-label="Dạng bài nghe AI sẽ soạn"
-                      value={fullDraftMode}
-                      onChange={(event) => {
-                        const next =
-                          event.target.value === "DICTATION"
-                            ? "DICTATION"
-                            : "DIALOGUE";
-                        setFullDraftMode(next);
-                        // The quiz is saved in the form chosen here.
-                        setSelectedListeningMode(next);
-                      }}
-                      className="min-h-10 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-900"
-                    >
-                      <option value="DIALOGUE">Hội thoại + câu hỏi</option>
-                      <option value="DICTATION">Nghe chép</option>
-                    </select>
+                    Số câu hỏi
+                    <input
+                      aria-label={`Số câu trong bản nháp ${meta[domain].label}`}
+                      type="number"
+                      min={1}
+                      max={10}
+                      value={fullDraftCount}
+                      onChange={(event) =>
+                        setFullDraftCount(
+                          Math.min(
+                            10,
+                            Math.max(1, Number(event.target.value) || 1),
+                          ),
+                        )
+                      }
+                      className="min-h-10 w-16 rounded-lg border border-slate-300 px-2 text-center text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-400"
+                    />
                   </label>
-                ))}
-              {!draftLocked && (
-                <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-600">
-                  Số câu hỏi
-                  <input
-                    aria-label={`Số câu trong bản nháp ${meta[domain].label}`}
-                    type="number"
-                    min={1}
-                    max={10}
-                    value={fullDraftCount}
-                    onChange={(event) =>
-                      setFullDraftCount(
-                        Math.min(
-                          10,
-                          Math.max(1, Number(event.target.value) || 1),
-                        ),
-                      )
-                    }
-                    className="min-h-10 w-16 rounded-lg border border-slate-300 px-2 text-center text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-400"
-                  />
-                </label>
-              )}
-              <button
-                type="button"
-                onClick={() => void handleSuggestFullDraft()}
-                disabled={draftLocked}
-                title={
-                  draftLocked
-                    ? "Bài đã có câu hỏi — dùng ‘Thêm câu hỏi bằng AI’"
-                    : "Dùng Tiêu đề làm chủ đề và Trình độ bên dưới. Bản nháp hiện ra để xem lại trước khi áp dụng."
-                }
-                className={BTN_AI}
-              >
-                Soạn cả bài bằng AI
-              </button>
-            </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => void handleSuggestFullDraft()}
+                  disabled={draftLocked}
+                  title={
+                    draftLocked
+                      ? "Bài đã có câu hỏi — dùng ‘Thêm câu hỏi bằng AI’"
+                      : "Dùng Tiêu đề làm chủ đề và Trình độ bên dưới. Bản nháp hiện ra để xem lại trước khi áp dụng."
+                  }
+                  className={BTN_AI}
+                >
+                  Soạn cả bài bằng AI
+                </button>
+              </div>
+            )}
+          </div>
+          {draftLocked && (
+            <p className="mt-2 text-sm text-slate-500">
+              Bài đã có câu hỏi — dùng ‘Thêm câu hỏi bằng AI’ ở mục Câu hỏi.
+            </p>
           )}
-        </div>
-        {draftLocked && (
-          <p className="mt-2 text-sm text-slate-500">
-            Bài đã có câu hỏi — dùng ‘Thêm câu hỏi bằng AI’ ở mục Câu hỏi.
-          </p>
-        )}
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <label className="text-sm font-medium">
-            Tiêu đề
-            <input
-              value={form.title}
-              onChange={(event) =>
-                setForm({ ...form, title: event.target.value })
-              }
-              className={inputClassName()}
-            />
-          </label>
-          <label className="text-sm font-medium">
-            Trình độ tham chiếu / context
-            <select
-              value={form.level}
-              onChange={(event) =>
-                setForm({ ...form, level: event.target.value })
-              }
-              className={inputClassName()}
-            >
-              {CONTENT_LEVEL_OPTIONS.map((level) => (
-                <option key={level} value={level}>
-                  {level}
-                </option>
-              ))}
-            </select>
-            <span className="mt-1 block text-[11px] font-normal text-slate-500">
-              Dùng để định hướng nội dung AI; runtime vẫn lưu theo contract của
-              từng domain.
-            </span>
-          </label>
-          <label className="text-sm font-medium md:col-span-2">
-            Mô tả
-            <textarea
-              value={form.description}
-              onChange={(event) =>
-                setForm({ ...form, description: event.target.value })
-              }
-              className={`${inputClassName()} min-h-20`}
-            />
-          </label>
-          {isWriting && (
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
             <label className="text-sm font-medium">
-              Dạng bài viết
+              Tiêu đề
+              <input
+                value={form.title}
+                onChange={(event) =>
+                  setForm({ ...form, title: event.target.value })
+                }
+                className={inputClassName()}
+              />
+            </label>
+            <label className="text-sm font-medium">
+              Trình độ tham chiếu / context
               <select
-                value={form.type}
-                onChange={(event) => {
-                  const type = event.target.value;
-                  setForm({ ...form, type });
-                  setQuestion((current) => ({
-                    ...current,
-                    taskType: type === "WRITING_PICTURE" ? "SENTENCE" : "EMAIL",
-                  }));
-                }}
+                value={form.level}
+                onChange={(event) =>
+                  setForm({ ...form, level: event.target.value })
+                }
                 className={inputClassName()}
               >
-                <option value="WRITING_PICTURE">
-                  {writingTypeLabel("WRITING_PICTURE")}
-                </option>
-                <option value="WRITING_EMAIL">
-                  {writingTypeLabel("WRITING_EMAIL")}
-                </option>
+                {CONTENT_LEVEL_OPTIONS.map((level) => (
+                  <option key={level} value={level}>
+                    {level}
+                  </option>
+                ))}
               </select>
+              <span className="mt-1 block text-[11px] font-normal text-slate-500">
+                Dùng để định hướng nội dung AI; runtime vẫn lưu theo contract của
+                từng domain.
+              </span>
             </label>
-          )}
-          {/* Reading only: a Listening question keeps its transcript in
-              transcriptSegments, and this field is not saved for it. */}
-          {domain === "reading" && (
-            <div className="md:col-span-2 space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">
-                  Đoạn đọc (Reading Passage)
-                </label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPassageAiTopic(form.title);
-                    setPassageAiSuggestion(null);
-                    setIsPassageAiOpen(true);
-                  }}
-                  className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white hover:bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 transition-colors"
-                >
-                  AI gợi ý đoạn đọc
-                </button>
-              </div>
+            <label className="text-sm font-medium md:col-span-2">
+              Mô tả
               <textarea
-                value={form.passage}
+                value={form.description}
                 onChange={(event) =>
-                  setForm({ ...form, passage: event.target.value })
+                  setForm({ ...form, description: event.target.value })
                 }
-                className={`${inputClassName()} min-h-40 leading-relaxed`}
-                placeholder="Nhập hoặc dán nội dung đoạn văn tiếng Anh tại đây..."
+                className={`${inputClassName()} min-h-20`}
               />
-            </div>
-          )}
-        </div>
-      </section>
-
-      {isListening && (
-        <section
-          aria-labelledby="listening-audio-heading"
-          className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
-        >
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h2
-                id="listening-audio-heading"
-                className="font-semibold text-slate-950"
-              >
-                Audio bài nghe
-              </h2>
-              <p className="mt-1 max-w-2xl text-sm text-slate-600">
-                {selectedListeningMode === "DICTATION"
-                  ? "Bài nghe chép: mỗi câu có audio riêng ở danh sách câu hỏi; audio dưới đây ghép cả bài."
-                  : "Một đoạn audio liền mạch cho cả bài, tạo từ lời thoại. Học viên nghe rồi trả lời các câu hỏi bên dưới."}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => void audioAction("validate")}
-              disabled={busy || !id}
-              className={BTN_SECONDARY}
-            >
-              <CheckCircle2 size={16} /> Kiểm tra lời thoại
-            </button>
-          </div>
-
-          <ol className="mt-4 grid gap-2 text-sm sm:grid-cols-4">
-            {[
-              "Kiểm tra lời thoại",
-              "Tạo audio",
-              "Nghe & duyệt",
-              "Xuất bản cho học viên",
-            ].map((label, index) => {
-              const step = !currentArtifact
-                ? 1
-                : currentArtifact.status === "PREVIEW_READY"
-                  ? 2
-                  : currentArtifact.status === "APPROVED"
-                    ? 3
-                    : 4;
-              const done = index < step;
-              return (
-                <li
-                  key={label}
-                  className={`rounded-lg border px-3 py-2 ${
-                    done
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                      : index === step
-                        ? "border-blue-300 bg-blue-50 font-semibold text-blue-800"
-                        : "border-slate-200 text-slate-500"
-                  }`}
+            </label>
+            {isWriting && (
+              <label className="text-sm font-medium">
+                Dạng bài viết
+                <select
+                  value={form.type}
+                  onChange={(event) => {
+                    const type = event.target.value;
+                    setForm({ ...form, type });
+                    setQuestion((current) => ({
+                      ...current,
+                      taskType: type === "WRITING_PICTURE" ? "SENTENCE" : "EMAIL",
+                    }));
+                  }}
+                  className={inputClassName()}
                 >
-                  {index + 1}. {label}
-                </li>
-              );
-            })}
-          </ol>
-
-          {listeningTranscript.length > 0 && (
-            <details className="mt-4 rounded-lg border border-slate-200" open>
-              <summary className="cursor-pointer px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50">
-                Lời thoại ({listeningTranscript.length} lượt)
-              </summary>
-              <ol className="space-y-2 border-t border-slate-100 px-4 py-3 text-sm">
-                {listeningTranscript.map((turn, index) => (
-                  <li key={index}>
-                    <span className="font-semibold text-slate-900">
-                      {turn.speaker}:
-                    </span>{" "}
-                    <span className="text-slate-800">{turn.text}</span>
-                    {turn.translation && (
-                      <span className="block text-slate-500">
-                        {turn.translation}
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ol>
-            </details>
-          )}
-
-          <div className="mt-4 rounded-lg border border-slate-200 p-4">
-            {currentArtifact ? (
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-slate-900">
-                    Audio v{currentArtifact.version} ·{" "}
-                    {ARTIFACT_STATUS_LABEL[currentArtifact.status] ??
-                      currentArtifact.status}
-                  </p>
-                  <p className="mt-0.5 text-sm text-slate-600">
-                    {currentArtifact.durationMs
-                      ? `${Math.round(currentArtifact.durationMs / 1000)} giây`
-                      : "Chưa có thời lượng"}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {currentArtifact.r2Key && (
-                    <button
-                      type="button"
-                      onClick={() => void previewArtifact(currentArtifact.id)}
-                      disabled={busy}
-                      className={BTN_SECONDARY}
-                    >
-                      <Volume2 size={16} /> Nghe thử
-                    </button>
-                  )}
-                  {currentArtifact.status === "PREVIEW_READY" && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        void audioAction("approve", currentArtifact.id)
-                      }
-                      disabled={busy}
-                      className={BTN_PRIMARY}
-                    >
-                      <CheckCircle2 size={16} /> Duyệt audio
-                    </button>
-                  )}
-                  {currentArtifact.status === "APPROVED" && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        void audioAction("publish", currentArtifact.id)
-                      }
-                      disabled={busy}
-                      className={BTN_SUCCESS}
-                    >
-                      Xuất bản audio
-                    </button>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm text-slate-600">
-                  {artifacts.length
-                    ? "Lời thoại đã đổi sau lần tạo audio gần nhất. Tạo lại audio để học viên nghe đúng nội dung."
-                    : "Chưa có audio. Kiểm tra lời thoại rồi tạo audio (Azure TTS)."}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => void audioAction("generate-preview")}
-                  disabled={busy || !id}
-                  className={BTN_PRIMARY}
-                >
-                  <FileAudio size={16} /> Tạo audio
-                </button>
-              </div>
+                  <option value="WRITING_PICTURE">
+                    {writingTypeLabel("WRITING_PICTURE")}
+                  </option>
+                  <option value="WRITING_EMAIL">
+                    {writingTypeLabel("WRITING_EMAIL")}
+                  </option>
+                </select>
+              </label>
             )}
-            {previewUrl && (
-              <audio
-                controls
-                autoPlay
-                className="mt-3 w-full"
-                src={previewUrl}
-                aria-label="Nghe thử audio bài nghe"
-              >
-                Nghe thử audio
-              </audio>
-            )}
-          </div>
-
-          {artifacts.length > 1 && (
-            <details className="mt-3 text-sm">
-              <summary className="cursor-pointer text-slate-600 hover:text-slate-900">
-                Lịch sử audio ({artifacts.length} bản)
-              </summary>
-              <ul className="mt-2 space-y-1 text-slate-600">
-                {artifacts.map((artifact) => (
-                  <li key={artifact.id}>
-                    v{artifact.version} ·{" "}
-                    {ARTIFACT_STATUS_LABEL[artifact.status] ?? artifact.status}
-                    {artifact.isStale ? " · cũ" : " · hiện tại"}
-                    {artifact.durationMs
-                      ? ` · ${Math.round(artifact.durationMs / 1000)} giây`
-                      : ""}
-                  </li>
-                ))}
-              </ul>
-            </details>
-          )}
-        </section>
-      )}
-
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h2 className="font-semibold text-slate-950">Câu hỏi</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              {isListening && selectedListeningMode !== "DICTATION"
-                ? "Câu hỏi về đoạn audio phía trên. Bấm Sửa để sửa ngay tại câu."
-                : "Bấm Sửa để sửa ngay tại câu; câu mới thêm ở cuối danh sách."}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
+            {/* Reading only: a Listening question keeps its transcript in
+                transcriptSegments, and this field is not saved for it. */}
             {domain === "reading" && (
-              <button
-                type="button"
-                onClick={() => {
-                  setReadingAiCandidates([]);
-                  setIsQuestionsAiOpen(true);
-                }}
-                title="AI đọc đoạn văn và gợi ý thêm câu hỏi; bạn chọn câu muốn thêm."
-                className={BTN_AI}
-              >
-                Thêm câu hỏi bằng AI
-              </button>
-            )}
-            {isListening && (
-              <button
-                type="button"
-                title="AI đọc lời thoại hiện có và gợi ý thêm câu hỏi trắc nghiệm; bạn chọn câu muốn thêm."
-                onClick={() => {
-                  setListeningQuestionsAiCandidates([]);
-                  setIsListeningQuestionsAiOpen(true);
-                }}
-                className={BTN_AI}
-              >
-                Thêm câu hỏi bằng AI
-              </button>
-            )}
-            <span className="text-sm text-slate-500">
-              {questions.length} câu
-            </span>
-          </div>
-        </div>
-
-        <div className="mt-4 space-y-3">
-          {questions.length === 0 && (
-            <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
-              Chưa có câu hỏi nào. Dùng biểu mẫu bên dưới để thêm câu hỏi đầu
-              tiên cho nội dung{" "}
-              {isListening ? "Listening" : isWriting ? "Writing" : "Reading"}.
-            </div>
-          )}
-          {questions.map((current: any, index: number) => (
-            <div
-              key={current.id}
-              className={`rounded-lg border p-4 transition-colors ${
-                question.id === current.id
-                  ? "border-blue-400 ring-2 ring-blue-100"
-                  : "border-slate-200 hover:border-slate-300"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold text-slate-500">
-                    Câu {index + 1} ·{" "}
-                    {isWriting
-                      ? "Viết"
-                      : isListening
-                        ? (LISTENING_QUESTION_LABEL[current.type] ?? current.type)
-                        : readingQuestionTypeLabel(
-                            current.content?.questionType,
-                          )}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-900">
-                    {questionToDraft(current).prompt || "Chưa có nội dung"}
-                  </p>
-                </div>
-                <div className="flex gap-2">
+              <div className="md:col-span-2 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium">
+                    Đoạn đọc (Reading Passage)
+                  </label>
                   <button
                     type="button"
                     onClick={() => {
-                      setIsAddingQuestion(false);
-                      setQuestion(questionToDraft(current));
+                      setPassageAiTopic(form.title);
+                      setPassageAiSuggestion(null);
+                      setIsPassageAiOpen(true);
                     }}
-                    disabled={question.id === current.id}
-                    className={BTN_SECONDARY}
+                    className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white hover:bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 transition-colors"
                   >
-                    {question.id === current.id ? "Đang sửa" : "Sửa"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPendingDeleteId(current.id)}
-                    className={BTN_DANGER}
-                    aria-label="Xóa câu hỏi"
-                  >
-                    <Trash2 size={14} />
+                    AI gợi ý đoạn đọc
                   </button>
                 </div>
+                <textarea
+                  value={form.passage}
+                  onChange={(event) =>
+                    setForm({ ...form, passage: event.target.value })
+                  }
+                  className={`${inputClassName()} min-h-40 leading-relaxed`}
+                  placeholder="Nhập hoặc dán nội dung đoạn văn tiếng Anh tại đây..."
+                />
               </div>
-              {question.id === current.id && renderQuestionEditor()}
-              {/* Per-question audio belongs to dictation only; a dialogue
-                  plays one continuous recording (Audio bài nghe above). */}
-              {isListening && current.type === "DICTATION" && (
-                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
-                  <span className="inline-flex items-center gap-1 text-xs text-slate-500">
-                    <Volume2 size={14} />{" "}
-                    {current.audioAssets?.length
-                      ? `${current.audioAssets.length} bản audio`
-                      : "Chưa có audio câu hỏi"}
-                  </span>
-                  <label className={BTN_SECONDARY}>
-                    <Upload size={16} /> Tải audio câu này
-                    <input
-                      type="file"
-                      accept="audio/*"
-                      className="sr-only"
-                      onChange={(event) =>
-                        void uploadQuestionAudio(
-                          current.id,
-                          event.target.files?.[0],
-                        )
-                      }
-                    />
-                  </label>
-                  {current.type === "DIALOGUE" && (
-                    <button
-                      onClick={() => void generateDialogueAudio(current.id)}
-                      disabled={busy}
-                      className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold"
-                    >
-                      <FileAudio size={14} /> Sinh audio Dialogue
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+            )}
+          </div>
+        </section>
 
-        <div className="mt-4 border-t border-slate-100 pt-4">
-          {!question.id && isAddingQuestion ? (
-            <div className="rounded-lg border border-blue-300 bg-blue-50/30 p-4">
-              <p className="text-sm font-semibold text-slate-900">Câu hỏi mới</p>
-              {renderQuestionEditor()}
-            </div>
-          ) : (
-            <button
-              type="button"
-              disabled={!id}
-              onClick={() => {
-                setQuestion({
-                  ...emptyQuestion(domain),
-                  ...(isListening && selectedListeningMode !== "DICTATION"
-                    ? { type: "MULTIPLE_CHOICE" }
-                    : {}),
-                });
-                setIsAddingQuestion(true);
-              }}
-              className={BTN_SECONDARY}
+        <aside className="space-y-6 xl:sticky xl:top-6 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
+          {isListening && (
+            <section
+              aria-labelledby="listening-audio-heading"
+              className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
             >
-              <Plus size={16} /> Thêm câu hỏi
-            </button>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2
+                    id="listening-audio-heading"
+                    className="font-semibold text-slate-950"
+                  >
+                    Audio bài nghe
+                  </h2>
+                  <p className="mt-1 max-w-2xl text-sm text-slate-600">
+                    {selectedListeningMode === "DICTATION"
+                      ? "Bài nghe chép: mỗi câu có audio riêng ở danh sách câu hỏi; audio dưới đây ghép cả bài."
+                      : "Một đoạn audio liền mạch cho cả bài, tạo từ lời thoại. Học viên nghe rồi trả lời các câu hỏi bên dưới."}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void audioAction("validate")}
+                  disabled={busy || !id}
+                  className={BTN_SECONDARY}
+                >
+                  <CheckCircle2 size={16} /> Kiểm tra lời thoại
+                </button>
+              </div>
+
+              <ol className="mt-4 grid gap-2 text-sm sm:grid-cols-4 xl:grid-cols-2">
+                {[
+                  "Kiểm tra lời thoại",
+                  "Tạo audio",
+                  "Nghe & duyệt",
+                  "Xuất bản cho học viên",
+                ].map((label, index) => {
+                  const step = !currentArtifact
+                    ? 1
+                    : currentArtifact.status === "PREVIEW_READY"
+                      ? 2
+                      : currentArtifact.status === "APPROVED"
+                        ? 3
+                        : 4;
+                  const done = index < step;
+                  return (
+                    <li
+                      key={label}
+                      className={`rounded-lg border px-3 py-2 ${
+                        done
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                          : index === step
+                            ? "border-blue-300 bg-blue-50 font-semibold text-blue-800"
+                            : "border-slate-200 text-slate-500"
+                      }`}
+                    >
+                      {index + 1}. {label}
+                    </li>
+                  );
+                })}
+              </ol>
+
+              {listeningTranscript.length > 0 && (
+                <details className="mt-4 rounded-lg border border-slate-200" open>
+                  <summary className="cursor-pointer px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50">
+                    Lời thoại ({listeningTranscript.length} lượt)
+                  </summary>
+                  <ol className="space-y-2 border-t border-slate-100 px-4 py-3 text-sm xl:max-h-80 xl:overflow-y-auto">
+                    {listeningTranscript.map((turn, index) => (
+                      <li key={index}>
+                        <span className="font-semibold text-slate-900">
+                          {turn.speaker}:
+                        </span>{" "}
+                        <span className="text-slate-800">{turn.text}</span>
+                        {turn.translation && (
+                          <span className="block text-slate-500">
+                            {turn.translation}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ol>
+                </details>
+              )}
+
+              <div className="mt-4 rounded-lg border border-slate-200 p-4">
+                {currentArtifact ? (
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-slate-900">
+                        Audio v{currentArtifact.version} ·{" "}
+                        {ARTIFACT_STATUS_LABEL[currentArtifact.status] ??
+                          currentArtifact.status}
+                      </p>
+                      <p className="mt-0.5 text-sm text-slate-600">
+                        {currentArtifact.durationMs
+                          ? `${Math.round(currentArtifact.durationMs / 1000)} giây`
+                          : "Chưa có thời lượng"}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {currentArtifact.r2Key && (
+                        <button
+                          type="button"
+                          onClick={() => void previewArtifact(currentArtifact.id)}
+                          disabled={busy}
+                          className={BTN_SECONDARY}
+                        >
+                          <Volume2 size={16} /> Nghe thử
+                        </button>
+                      )}
+                      {currentArtifact.status === "PREVIEW_READY" && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void audioAction("approve", currentArtifact.id)
+                          }
+                          disabled={busy}
+                          className={BTN_PRIMARY}
+                        >
+                          <CheckCircle2 size={16} /> Duyệt audio
+                        </button>
+                      )}
+                      {currentArtifact.status === "APPROVED" && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void audioAction("publish", currentArtifact.id)
+                          }
+                          disabled={busy}
+                          className={BTN_SUCCESS}
+                        >
+                          Xuất bản audio
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm text-slate-600">
+                      {artifacts.length
+                        ? "Lời thoại đã đổi sau lần tạo audio gần nhất. Tạo lại audio để học viên nghe đúng nội dung."
+                        : "Chưa có audio. Kiểm tra lời thoại rồi tạo audio (Azure TTS)."}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => void audioAction("generate-preview")}
+                      disabled={busy || !id}
+                      className={BTN_PRIMARY}
+                    >
+                      <FileAudio size={16} /> Tạo audio
+                    </button>
+                  </div>
+                )}
+                {previewUrl && (
+                  <audio
+                    controls
+                    autoPlay
+                    className="mt-3 w-full"
+                    src={previewUrl}
+                    aria-label="Nghe thử audio bài nghe"
+                  >
+                    Nghe thử audio
+                  </audio>
+                )}
+              </div>
+
+              {artifacts.length > 1 && (
+                <details className="mt-3 text-sm">
+                  <summary className="cursor-pointer text-slate-600 hover:text-slate-900">
+                    Lịch sử audio ({artifacts.length} bản)
+                  </summary>
+                  <ul className="mt-2 space-y-1 text-slate-600">
+                    {artifacts.map((artifact) => (
+                      <li key={artifact.id}>
+                        v{artifact.version} ·{" "}
+                        {ARTIFACT_STATUS_LABEL[artifact.status] ?? artifact.status}
+                        {artifact.isStale ? " · cũ" : " · hiện tại"}
+                        {artifact.durationMs
+                          ? ` · ${Math.round(artifact.durationMs / 1000)} giây`
+                          : ""}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </section>
           )}
-        </div>
-      </section>
+
+          <section
+            aria-labelledby="publish-checklist-heading"
+            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+          >
+            <div className="flex items-baseline justify-between gap-3">
+              <h2
+                id="publish-checklist-heading"
+                className="font-semibold text-slate-950"
+              >
+                Trước khi xuất bản
+              </h2>
+              <span className="text-sm tabular-nums text-slate-500">
+                {checklist.filter((entry) => entry.done).length}/{checklist.length}
+              </span>
+            </div>
+            <ul className="mt-3 space-y-2 text-sm">
+              {checklist.map((entry) => (
+                <li key={entry.label} className="flex items-center gap-2">
+                  {entry.done ? (
+                    <CheckCircle2
+                      size={16}
+                      className="flex-none text-emerald-600"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <Circle
+                      size={16}
+                      className="flex-none text-slate-300"
+                      aria-hidden="true"
+                    />
+                  )}
+                  <span
+                    className={
+                      entry.done ? "text-slate-600" : "font-medium text-slate-900"
+                    }
+                  >
+                    {entry.label}
+                  </span>
+                  <span className="sr-only">
+                    {entry.done ? "(đã xong)" : "(chưa xong)"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </aside>
+
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm xl:col-start-1">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="font-semibold text-slate-950">Câu hỏi</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                {isListening && selectedListeningMode !== "DICTATION"
+                  ? "Câu hỏi về đoạn audio phía trên. Bấm Sửa để sửa ngay tại câu."
+                  : "Bấm Sửa để sửa ngay tại câu; câu mới thêm ở cuối danh sách."}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {domain === "reading" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReadingAiCandidates([]);
+                    setIsQuestionsAiOpen(true);
+                  }}
+                  title="AI đọc đoạn văn và gợi ý thêm câu hỏi; bạn chọn câu muốn thêm."
+                  className={BTN_AI}
+                >
+                  Thêm câu hỏi bằng AI
+                </button>
+              )}
+              {isListening && (
+                <button
+                  type="button"
+                  title="AI đọc lời thoại hiện có và gợi ý thêm câu hỏi trắc nghiệm; bạn chọn câu muốn thêm."
+                  onClick={() => {
+                    setListeningQuestionsAiCandidates([]);
+                    setIsListeningQuestionsAiOpen(true);
+                  }}
+                  className={BTN_AI}
+                >
+                  Thêm câu hỏi bằng AI
+                </button>
+              )}
+              <span className="text-sm text-slate-500">
+                {questions.length} câu
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {questions.length === 0 && (
+              <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
+                Chưa có câu hỏi nào. Dùng biểu mẫu bên dưới để thêm câu hỏi đầu
+                tiên cho nội dung{" "}
+                {isListening ? "Listening" : isWriting ? "Writing" : "Reading"}.
+              </div>
+            )}
+            {questions.map((current: any, index: number) => (
+              <div
+                key={current.id}
+                className={`rounded-lg border p-4 transition-colors ${
+                  question.id === current.id
+                    ? "border-blue-400 ring-2 ring-blue-100"
+                    : "border-slate-200 hover:border-slate-300"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500">
+                      Câu {index + 1} ·{" "}
+                      {isWriting
+                        ? "Viết"
+                        : isListening
+                          ? (LISTENING_QUESTION_LABEL[current.type] ?? current.type)
+                          : readingQuestionTypeLabel(
+                              current.content?.questionType,
+                            )}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-900">
+                      {questionToDraft(current).prompt || "Chưa có nội dung"}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddingQuestion(false);
+                        setQuestion(questionToDraft(current));
+                      }}
+                      disabled={question.id === current.id}
+                      className={BTN_SECONDARY}
+                    >
+                      {question.id === current.id ? "Đang sửa" : "Sửa"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPendingDeleteId(current.id)}
+                      className={BTN_DANGER}
+                      aria-label="Xóa câu hỏi"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+                {question.id === current.id && renderQuestionEditor()}
+                {/* Per-question audio belongs to dictation only; a dialogue
+                    plays one continuous recording (Audio bài nghe above). */}
+                {isListening && current.type === "DICTATION" && (
+                  <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+                    <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+                      <Volume2 size={14} />{" "}
+                      {current.audioAssets?.length
+                        ? `${current.audioAssets.length} bản audio`
+                        : "Chưa có audio câu hỏi"}
+                    </span>
+                    <label className={BTN_SECONDARY}>
+                      <Upload size={16} /> Tải audio câu này
+                      <input
+                        type="file"
+                        accept="audio/*"
+                        className="sr-only"
+                        onChange={(event) =>
+                          void uploadQuestionAudio(
+                            current.id,
+                            event.target.files?.[0],
+                          )
+                        }
+                      />
+                    </label>
+                    {current.type === "DIALOGUE" && (
+                      <button
+                        onClick={() => void generateDialogueAudio(current.id)}
+                        disabled={busy}
+                        className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold"
+                      >
+                        <FileAudio size={14} /> Sinh audio Dialogue
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 border-t border-slate-100 pt-4">
+            {!question.id && isAddingQuestion ? (
+              <div className="rounded-lg border border-blue-300 bg-blue-50/30 p-4">
+                <p className="text-sm font-semibold text-slate-900">Câu hỏi mới</p>
+                {renderQuestionEditor()}
+              </div>
+            ) : (
+              <button
+                type="button"
+                disabled={!id}
+                onClick={() => {
+                  setQuestion({
+                    ...emptyQuestion(domain),
+                    ...(isListening && selectedListeningMode !== "DICTATION"
+                      ? { type: "MULTIPLE_CHOICE" }
+                      : {}),
+                  });
+                  setIsAddingQuestion(true);
+                }}
+                className={BTN_SECONDARY}
+              >
+                <Plus size={16} /> Thêm câu hỏi
+              </button>
+            )}
+          </div>
+        </section>
+      </div>
 
       {/* MODAL: LISTENING CONTENT REVIEW */}
       {fullDraft && (
