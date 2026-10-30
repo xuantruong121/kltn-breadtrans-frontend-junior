@@ -153,6 +153,18 @@ export function groupQuestionsBySection(
  * real CEFR bands, so when the backend itself reports one it is localized
  * rather than rewritten. No CEFR code is ever invented here.
  */
+/**
+ * Dashboard badge for the latest entry diagnostic. A four-skill attempt stores
+ * the marker FOUR_SKILL_PROFILE as its level, which is not a level at all: the
+ * badge then only says the diagnostic was done.
+ */
+export function diagnosticBadgeLabel(level?: string | null): string | null {
+  const trimmed = (level || "").trim();
+  if (!trimmed) return null;
+  if (trimmed === "FOUR_SKILL_PROFILE") return "Đã làm kiểm tra đầu vào";
+  return `Trình độ: ${formatPlacementLevel(trimmed)}`;
+}
+
 export function formatPlacementLevel(level?: string | null): string {
   const trimmed = (level || "").trim();
   if (!trimmed) return "Chưa xác định";

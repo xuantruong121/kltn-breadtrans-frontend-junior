@@ -302,7 +302,7 @@ function ListeningCatalogContent() {
                   <X size={13} aria-hidden="true" />
                 </button>
               ) : (
-                <kbd className="hidden sm:inline-block rounded-md border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-0.5 text-[11px] font-mono font-bold text-slate-600 dark:text-slate-400 shadow-2xs">
+                <kbd className="hidden sm:inline-block rounded-md border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-0.5 text-xs font-mono font-bold text-slate-600 dark:text-slate-400 shadow-2xs">
                   ⌘K
                 </kbd>
               )}
@@ -425,7 +425,7 @@ function ListeningCatalogContent() {
             <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-200">
               Không tìm thấy bài luyện nghe phù hợp
             </h2>
-            <p className="mt-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+            <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
               Hãy thử chọn bộ lọc khác hoặc tìm kiếm với từ khóa khác để khám phá các bài luyện có sẵn.
             </p>
             <div className="mt-5 flex justify-center">
@@ -437,7 +437,7 @@ function ListeningCatalogContent() {
                   setSelectedDifficulty("ALL");
                   setSelectedStatus("ALL");
                 }}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
               >
                 <RotateCcw size={14} aria-hidden="true" />
                 Xóa bộ lọc

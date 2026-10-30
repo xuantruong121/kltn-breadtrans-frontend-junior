@@ -136,7 +136,7 @@ export function ReadingTopicCard({
           <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors line-clamp-1 break-words">
             {topic.name || topic.title || "Chủ đề đọc hiểu"}
           </h3>
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2 min-h-[38px] mt-1.5">
+          <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2 min-h-[38px] mt-1.5">
             {pedagogicalDescription}
           </p>
         </div>
@@ -182,7 +182,7 @@ export function ReadingTopicCard({
               <button
                 type="button"
                 onClick={() => onStart?.(topic)}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-1.5 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500"
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500"
               >
                 <span>Luyện lại</span>
                 <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
@@ -191,7 +191,7 @@ export function ReadingTopicCard({
               <button
                 type="button"
                 onClick={() => onStart?.(topic)}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500"
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 px-3.5 py-1.5 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500"
               >
                 <span>Tiếp tục</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -200,7 +200,7 @@ export function ReadingTopicCard({
               <button
                 type="button"
                 onClick={() => onStart?.(topic)}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-slate-100 hover:bg-violet-600 dark:bg-slate-800 dark:hover:bg-violet-600 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-slate-700 hover:text-white dark:text-slate-200 dark:hover:text-white transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500"
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-slate-100 hover:bg-violet-600 dark:bg-slate-800 dark:hover:bg-violet-600 px-3.5 py-1.5 text-sm font-semibold text-slate-700 hover:text-white dark:text-slate-200 dark:hover:text-white transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500"
               >
                 <span>Bắt đầu</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -210,7 +210,7 @@ export function ReadingTopicCard({
                 type="button"
                 onClick={handleCardClick}
                 aria-label={`Mở khóa chủ đề ${topic.name || topic.title || ""}`}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-amber-900 dark:text-amber-200 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500"
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 px-3.5 py-1.5 text-sm font-semibold text-amber-900 dark:text-amber-200 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500"
               >
                 <Lock className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>Mở khóa với PLUS</span>
@@ -219,7 +219,7 @@ export function ReadingTopicCard({
               <button
                 type="button"
                 onClick={handleCardClick}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500"
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 px-3.5 py-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500"
               >
                 <Lock className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>Đăng nhập để đọc</span>

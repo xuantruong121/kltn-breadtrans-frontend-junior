@@ -33,6 +33,7 @@ import {
   TodayQuestItem,
 } from "@/lib/api/services/gamification.service";
 import { userService, UserProfile, type DailyPracticeResponse } from "@/lib/api/services/user.service";
+import { diagnosticBadgeLabel } from "@/lib/diagnostic/diagnosticUiLogic";
 import {
   planService,
   PLAN_QUERY_KEYS,
@@ -216,6 +217,7 @@ export default function DashboardPage() {
     enabled,
     staleTime: 60_000,
   });
+  const diagnosticBadge = diagnosticBadgeLabel(stats?.latestDiagnostic?.level);
 
   // 3. Today's Dashboard Quests & Activities
   const {
@@ -720,7 +722,7 @@ export default function DashboardPage() {
 
             <div className="space-y-1.5">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[11px] font-black uppercase tracking-wider text-amber-900 dark:text-amber-300 bg-amber-100/90 dark:bg-amber-950/60 px-3 py-0.5 rounded-full border border-amber-300/80 dark:border-amber-800/60 shadow-2xs">
+                <span className="text-xs font-black uppercase tracking-wider text-amber-900 dark:text-amber-300 bg-amber-100/90 dark:bg-amber-950/60 px-3 py-0.5 rounded-full border border-amber-300/80 dark:border-amber-800/60 shadow-2xs">
                   {isStatsLoading ? (
                     <span className="inline-block h-3.5 w-16 rounded bg-slate-200 dark:bg-slate-800 animate-pulse align-middle" />
                   ) : stats?.tier ? (
@@ -729,9 +731,9 @@ export default function DashboardPage() {
                     "Học viên BreadTrans"
                   )}
                 </span>
-                {stats?.latestDiagnostic?.level && (
-                  <span className="text-[11px] font-bold text-indigo-900 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-3 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800/60">
-                    Trình độ: {stats.latestDiagnostic.level}
+                {diagnosticBadge && (
+                  <span className="text-xs font-bold text-indigo-900 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-3 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800/60">
+                    {diagnosticBadge}
                   </span>
                 )}
               </div>
@@ -761,7 +763,7 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 max-w-xl leading-relaxed">
+              <p className="text-sm font-semibold text-slate-600 dark:text-slate-400 max-w-xl leading-relaxed">
                 Luyện Nghe, Nói, Đọc, Viết và theo dõi tiến độ của bạn.
               </p>
             </div>
@@ -773,7 +775,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full sm:w-auto">
               {/* Streak */}
               <div className="rounded-2xl border border-orange-200/90 dark:border-orange-900/50 bg-white/90 dark:bg-slate-900 p-3 sm:p-3.5 text-center shadow-2xs transition-all hover:border-orange-300 dark:hover:border-orange-700">
-                <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 flex items-center justify-center gap-1">
+                <span className="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center justify-center gap-1">
                   <Flame size={14} className="text-orange-500 fill-orange-500" />
                   Chuỗi học
                 </span>
@@ -790,7 +792,7 @@ export default function DashboardPage() {
 
               {/* Weekly EXP */}
               <div className="rounded-2xl border border-emerald-200/90 dark:border-emerald-900/50 bg-white/90 dark:bg-slate-900 p-3 sm:p-3.5 text-center shadow-2xs transition-all hover:border-emerald-300 dark:hover:border-emerald-700">
-                <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 flex items-center justify-center gap-1">
+                <span className="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center justify-center gap-1">
                   <TrendingUp size={14} className="text-emerald-600 dark:text-emerald-400" />
                   Điểm tuần
                 </span>
@@ -811,7 +813,7 @@ export default function DashboardPage() {
                 className="rounded-2xl border border-amber-200/90 dark:border-amber-900/50 bg-white/90 dark:bg-slate-900 p-3 sm:p-3.5 text-center shadow-2xs transition-all hover:border-amber-300 dark:hover:border-amber-700 block group"
                 title="Xem lịch sử và đổi quà Bánh Mì"
               >
-                <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 flex items-center justify-center gap-1 group-hover:text-amber-800 dark:group-hover:text-amber-300 transition-colors">
+                <span className="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center justify-center gap-1 group-hover:text-amber-800 dark:group-hover:text-amber-300 transition-colors">
                   <Gift size={14} className="text-amber-600 dark:text-amber-400" />
                   Bánh mì
                 </span>
@@ -846,7 +848,7 @@ export default function DashboardPage() {
 
             {/* 7-Day Weekly Habit Flame Tracker (Vietnam Day Aligned) */}
             <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/90 dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-xs font-bold self-stretch sm:self-auto justify-between sm:justify-end shadow-2xs">
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold hidden sm:inline">Tuần này:</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-bold hidden sm:inline">Tuần này:</span>
               <div className="flex items-center gap-1.5">
                 {DAY_LABELS.map((day, idx) => {
                   const isPastOrToday = idx <= currentDayOfWeek;
@@ -854,7 +856,7 @@ export default function DashboardPage() {
                   return (
                     <div
                       key={day}
-                      className={`flex flex-col items-center justify-center size-6 sm:size-7 rounded-lg text-[10px] font-black transition-all ${
+                      className={`flex flex-col items-center justify-center size-6 sm:size-7 rounded-lg text-xs font-black transition-all ${
                         isToday
                           ? safeCompleted > 0
                             ? "bg-amber-500 text-white font-black shadow-xs"
@@ -872,7 +874,7 @@ export default function DashboardPage() {
               </div>
               {stats?.streakFreezes ? (
                 <span
-                  className="inline-flex items-center gap-1 text-[11px] text-amber-800 dark:text-amber-300 font-bold ml-1 pl-2.5 border-l border-slate-200 dark:border-slate-700"
+                  className="inline-flex items-center gap-1 text-xs text-amber-800 dark:text-amber-300 font-bold ml-1 pl-2.5 border-l border-slate-200 dark:border-slate-700"
                   title={`Bạn đang có ${stats.streakFreezes} khiên bảo vệ chuỗi`}
                 >
                   <ShieldCheck size={13} className="text-amber-600 dark:text-amber-400" />
@@ -890,7 +892,7 @@ export default function DashboardPage() {
         <div className="relative space-y-4 sm:space-y-5">
           {/* Section Header & Period Filters */}
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
+            <h2 className="text-sm font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
               KẾT QUẢ HỌC TẬP
             </h2>
 
@@ -956,7 +958,7 @@ export default function DashboardPage() {
                 aria-label="Ngày kết thúc tùy chỉnh"
                 className="px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
               />
-              <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400">
+              <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
                 ({customDays} ngày)
               </span>
             </div>
@@ -973,7 +975,7 @@ export default function DashboardPage() {
                 <div className="text-base sm:text-lg lg:text-xl font-black text-slate-900 dark:text-slate-100">
                   {studyDurationText}
                 </div>
-                <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">
+                <div className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-400">
                   Thời gian học
                 </div>
               </div>
@@ -988,7 +990,7 @@ export default function DashboardPage() {
                 <div className="text-base sm:text-lg lg:text-xl font-black text-slate-900 dark:text-slate-100">
                   {questionsPracticedText}
                 </div>
-                <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">
+                <div className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-400">
                   Câu đã luyện
                 </div>
               </div>
@@ -1003,7 +1005,7 @@ export default function DashboardPage() {
                 <div className="text-base sm:text-lg lg:text-xl font-black text-slate-900 dark:text-slate-100">
                   {vocabLearnedText}
                 </div>
-                <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">
+                <div className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-400">
                   Từ vựng đã học
                 </div>
               </div>
@@ -1018,7 +1020,7 @@ export default function DashboardPage() {
                 <div className="text-base sm:text-lg lg:text-xl font-black text-slate-900 dark:text-slate-100">
                   {streakDays} ngày
                 </div>
-                <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">
+                <div className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-400">
                   Chuỗi · dài nhất {longestStreak}
                 </div>
               </div>
@@ -1033,7 +1035,7 @@ export default function DashboardPage() {
                 <div className="text-base sm:text-lg lg:text-xl font-black text-slate-900 dark:text-slate-100">
                   {xpEarnedText}
                 </div>
-                <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">
+                <div className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-400">
                   XP nhận được
                 </div>
               </div>
@@ -1105,7 +1107,7 @@ export default function DashboardPage() {
             >
               {/* Header */}
               <div className="flex items-center justify-between">
-                <h3 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                <h3 className="text-sm font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
                   CHI TIẾT · {activeSkillData.title}
                 </h3>
                 <button
@@ -1121,7 +1123,7 @@ export default function DashboardPage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                 {/* 1. Target */}
                 <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 flex flex-col justify-between">
-                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                     Mục tiêu hôm nay
                   </span>
                   <div>
@@ -1139,14 +1141,14 @@ export default function DashboardPage() {
 
                 {/* 2. Practice Time */}
                 <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 flex flex-col justify-between">
-                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                     Thời gian luyện
                   </span>
                   <div>
                     <div className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 mt-1">
                       {activeSkillData.durationMinutes}m <span className="text-xs font-semibold text-slate-500">hôm nay</span>
                     </div>
-                    <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5">
+                    <div className="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-0.5">
                       {todayFormatted}
                     </div>
                   </div>
@@ -1154,14 +1156,14 @@ export default function DashboardPage() {
 
                 {/* 3. Primary Count */}
                 <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 flex flex-col justify-between">
-                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400 truncate">
                     {activeSkillData.statLabel3}
                   </span>
                   <div>
                     <div className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 mt-1">
                       {activeSkillData.count3} <span className="text-xs font-semibold text-slate-500">hôm nay</span>
                     </div>
-                    <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5">
+                    <div className="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-0.5">
                       {todayFormatted}
                     </div>
                   </div>
@@ -1169,14 +1171,14 @@ export default function DashboardPage() {
 
                 {/* 4. Secondary Count */}
                 <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 flex flex-col justify-between">
-                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400 truncate">
                     {activeSkillData.statLabel4}
                   </span>
                   <div>
                     <div className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 mt-1">
                       {activeSkillData.count4} <span className="text-xs font-semibold text-slate-500">hôm nay</span>
                     </div>
-                    <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5">
+                    <div className="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-0.5">
                       {todayFormatted}
                     </div>
                   </div>
@@ -1184,14 +1186,14 @@ export default function DashboardPage() {
 
                 {/* 5. Practice Days */}
                 <div className="col-span-2 sm:col-span-1 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 flex flex-col justify-between">
-                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                     Ngày có luyện
                   </span>
                   <div>
                     <div className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 mt-1">
                       {activeSkillData.practiceDays}/1 <span className="text-xs font-semibold text-slate-500">ngày</span>
                     </div>
-                    <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5">
+                    <div className="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-0.5">
                       {todayFormatted}
                     </div>
                   </div>
@@ -1201,7 +1203,7 @@ export default function DashboardPage() {
               {/* Parts Table */}
               <div className="border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900/60">
                 {/* Table Header */}
-                <div className="grid grid-cols-12 gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-4 py-2.5 bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-200/80 dark:border-slate-800">
+                <div className="grid grid-cols-12 gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-4 py-2.5 bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-200/80 dark:border-slate-800">
                   <div className="col-span-5 sm:col-span-4">PHẦN</div>
                   <div className="col-span-3 sm:col-span-3">
                     {activeSkillData.actionHeader} · HÔM NAY
@@ -1230,7 +1232,7 @@ export default function DashboardPage() {
                             style={{ width: `${part.ratio}%` }}
                           />
                         </div>
-                        <span className="text-[11px] font-medium text-slate-400 w-6 text-right">
+                        <span className="text-xs font-medium text-slate-400 w-6 text-right">
                           {part.ratio > 0 ? `${part.ratio}%` : "-"}
                         </span>
                       </div>
@@ -1284,7 +1286,7 @@ export default function DashboardPage() {
                   <Crown size={22} className="fill-amber-500 text-amber-500" />
                 </div>
                 <div>
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400">
                     {upgradePrompt.requiredTier === "PLUS" ? "Yêu cầu gói Plus trở lên" : "Yêu cầu gói Pro"}
                   </span>
                   <h3 id="upgrade-modal-title" className="text-base font-black text-slate-900 dark:text-slate-100">
@@ -1293,7 +1295,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                 {upgradePrompt.requiredTier === "PLUS" ? (
                   <>
                     Chế độ xem thống kê theo <strong>{upgradePrompt.periodLabel}</strong> dành riêng cho học viên đăng ký gói <strong>Plus</strong> hoặc <strong>Pro</strong>. Hãy nâng cấp để theo dõi tiến độ học tập tuần và tháng chi tiết.
@@ -1465,14 +1467,14 @@ export default function DashboardPage() {
                         <div className="min-w-0 space-y-0.5">
                           <div className="flex items-center gap-2">
                             <span
-                              className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border ${categoryMeta.badgeClass}`}
+                              className={`text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded-md border ${categoryMeta.badgeClass}`}
                             >
                               {categoryMeta.label}
                             </span>
                           </div>
                           <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">{title}</h3>
                           {description && (
-                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 line-clamp-1">
+                            <p className="text-sm font-medium text-slate-600 dark:text-slate-400 line-clamp-2">
                               {description}
                             </p>
                           )}
@@ -1529,14 +1531,14 @@ export default function DashboardPage() {
                 );
               })
             ) : (
-              <p className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-5 text-center text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400">
+              <p className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-5 text-center text-sm font-semibold text-slate-600 dark:text-slate-400">
                 Chưa có nhiệm vụ nào được thiết lập cho hôm nay.
               </p>
             )}
 
             {/* 100% Completed Celebration State */}
             {allQuestsCompleted && (
-              <div className="flex items-center justify-center gap-2 p-3.5 rounded-2xl bg-emerald-100/90 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-center text-xs sm:text-sm font-black text-emerald-800 dark:text-emerald-200">
+              <div className="flex items-center justify-center gap-2 p-3.5 rounded-2xl bg-emerald-100/90 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-center text-sm font-black text-emerald-800 dark:text-emerald-200">
                 <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <span>Xuất sắc! Bạn đã hoàn thành toàn bộ mục tiêu học tập hôm nay!</span>
               </div>

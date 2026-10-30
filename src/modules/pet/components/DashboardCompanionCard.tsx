@@ -240,7 +240,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
                   {speciesInfo.speciesName || pet.name}
                 </h4>
               </div>
-              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                 {speciesInfo.title || "Bạn đồng hành học tập"}
               </p>
 
@@ -254,7 +254,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
                   }`}
                   aria-hidden="true"
                 />
-                <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   {feedEligibility.allowed
                     ? "Có thể cho ăn"
                     : !feedEligibility.allowed && (pet.satietyState === "FULL" || satiety >= 80)
@@ -269,7 +269,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
           <div className="space-y-2.5 bg-slate-50/50 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
             {/* Health Meter */}
             <div>
-              <div className="flex justify-between text-[11px] font-medium mb-1">
+              <div className="flex justify-between text-xs font-medium mb-1">
                 <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
                   <Heart size={12} className="text-rose-500 fill-rose-500" aria-hidden="true" /> Sức khỏe
                 </span>
@@ -292,7 +292,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
 
             {/* Happiness Meter */}
             <div>
-              <div className="flex justify-between text-[11px] font-medium mb-1">
+              <div className="flex justify-between text-xs font-medium mb-1">
                 <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
                   <Smile size={12} className="text-amber-600 dark:text-amber-400" aria-hidden="true" /> Vui vẻ
                 </span>
@@ -315,7 +315,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
 
             {/* Satiety Meter */}
             <div>
-              <div className="flex justify-between text-[11px] font-medium mb-1">
+              <div className="flex justify-between text-xs font-medium mb-1">
                 <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
                   <Utensils size={12} className="text-orange-500 dark:text-orange-400" aria-hidden="true" /> Độ no
                 </span>
@@ -339,7 +339,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
 
           {/* Passive Buff Note */}
           {speciesInfo.buff && (
-            <div className="px-3 py-2 rounded-xl bg-amber-50/70 dark:bg-amber-950/60 border border-amber-200/60 dark:border-amber-800/80 text-[11px] text-amber-900 dark:text-amber-300">
+            <div className="px-3 py-2 rounded-xl bg-amber-50/70 dark:bg-amber-950/60 border border-amber-200/60 dark:border-amber-800/80 text-xs text-amber-900 dark:text-amber-300">
               <span className="font-bold">Đặc điểm:</span> {speciesInfo.buff}
             </div>
           )}
@@ -351,7 +351,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
               onClick={handleFeedClick}
               disabled={feedMutation.isPending || !feedEligibility.allowed}
               aria-label={`Cho thú cưng ăn, tiêu tốn ${feedCost} Bánh Mì`}
-              className={`w-full inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none ${
+              className={`w-full inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl text-sm font-bold transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none ${
                 feedEligibility.allowed
                   ? "bg-amber-600 hover:bg-amber-700 text-white shadow-xs active:scale-[0.98]"
                   : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-400 border border-slate-200 dark:border-slate-700 cursor-not-allowed"
@@ -372,13 +372,13 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
 
             {/* Satiety or Requirement Message */}
             {!feedEligibility.allowed && (pet.satietyState === "FULL" || satiety >= 80) ? (
-              <p className="text-center text-[11px] font-medium text-slate-500 dark:text-slate-400">{satietyText}</p>
+              <p className="text-center text-xs font-medium text-slate-500 dark:text-slate-400">{satietyText}</p>
             ) : userBalance < feedCost ? (
-              <p className="text-center text-[11px] font-semibold text-rose-600 dark:text-rose-400">
+              <p className="text-center text-xs font-semibold text-rose-600 dark:text-rose-400">
                 Cần {feedCost} Bánh Mì (Hiện có: {userBalance})
               </p>
             ) : (
-              <p className="text-center text-[10px] text-slate-500 dark:text-slate-400">
+              <p className="text-center text-xs text-slate-500 dark:text-slate-400">
                 Tiêu hao {feedCost} Bánh Mì • {satietyText} • EXP hôm nay {pet.dailyRewardedFeedCount ?? 0}/{pet.dailyRewardLimit ?? 3}
               </p>
             )}

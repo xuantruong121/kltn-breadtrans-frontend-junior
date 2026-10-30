@@ -430,7 +430,7 @@ export default function SpeakingExercisesPage() {
                   <X size={13} aria-hidden="true" />
                 </button>
               ) : (
-                <kbd className="hidden sm:inline-block rounded-md border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-0.5 text-[11px] font-mono font-bold text-slate-600 dark:text-slate-400 shadow-2xs">
+                <kbd className="hidden sm:inline-block rounded-md border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-0.5 text-xs font-mono font-bold text-slate-600 dark:text-slate-400 shadow-2xs">
                   ⌘K
                 </kbd>
               )}
@@ -582,7 +582,7 @@ export default function SpeakingExercisesPage() {
                 ? "Không tìm thấy bộ luyện phù hợp với mức độ này."
                 : "Không tìm thấy bài luyện nói phù hợp"}
             </h2>
-            <p className="mt-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+            <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
               {selectedDifficulty !== "ALL"
                 ? "Thử chọn mức độ khác hoặc đặt lại bộ lọc để khám phá các bài luyện có sẵn."
                 : "Hãy thử chọn bộ lọc khác hoặc tìm kiếm với từ khóa khác."}
@@ -597,7 +597,7 @@ export default function SpeakingExercisesPage() {
                   setSelectedStatus("ALL");
                   setCurrentPage(1);
                 }}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
               >
                 <RotateCcw size={14} aria-hidden="true" />
                 Xóa bộ lọc

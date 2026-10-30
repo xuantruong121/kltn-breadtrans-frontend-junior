@@ -1047,7 +1047,7 @@ function DiagnosticResultView({
   const incorrectCount = result.questionsResult.filter((q) => q.isCorrect === false).length;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto w-full max-w-7xl space-y-6 py-4 sm:py-6">
       <button
         type="button"
         onClick={onBack}
@@ -1100,8 +1100,8 @@ function DiagnosticResultView({
 
         {/* Speaking feedback, one card per task */}
         {speakingTaskIds.length > 0 && (
-          <div className="mt-6 space-y-3">
-            <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          <div className="mt-6 grid gap-3 lg:grid-cols-2">
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 lg:col-span-2">
               Bài Nói
             </h3>
             {speakingTaskIds.map((questionId, index) => {
@@ -1145,8 +1145,8 @@ function DiagnosticResultView({
 
         {/* Writing feedback, one card per task */}
         {writingTaskIds.length > 0 && (
-          <div className="mt-6 space-y-3">
-            <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          <div className="mt-6 grid gap-3 lg:grid-cols-2">
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 lg:col-span-2">
               Bài Viết
             </h3>
             {writingTaskIds.map((questionId, index) => {
@@ -1262,7 +1262,7 @@ function DiagnosticResultView({
                 className="group flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-4.5 transition-all hover:border-violet-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-850 dark:hover:border-violet-500"
               >
                 <div>
-                  <span className="inline-block rounded-md bg-violet-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+                  <span className="inline-block rounded-md bg-violet-100 px-2.5 py-0.5 text-xs font-black uppercase tracking-wider text-violet-700 dark:bg-violet-950 dark:text-violet-300">
                     {rec.badge}
                   </span>
                   <h3 className="mt-2 text-base font-black text-slate-900 group-hover:text-violet-600 dark:text-slate-100 dark:group-hover:text-violet-400">
@@ -1312,9 +1312,9 @@ function DiagnosticResultView({
           </div>
         </div>
 
-        <div className="mt-5 space-y-3">
+        <div className="mt-5 grid gap-3 xl:grid-cols-2">
           {filteredReviews.length === 0 ? (
-            <p className="py-6 text-center text-sm font-bold text-slate-400">
+            <p className="py-6 xl:col-span-2 text-center text-sm font-bold text-slate-400">
               Không có câu hỏi nào trong danh mục này.
             </p>
           ) : (
@@ -1344,7 +1344,7 @@ function DiagnosticResultView({
                       <span className="font-extrabold text-slate-800 dark:text-slate-200">
                         Câu {question.order}: {question.question.slice(0, 80)}
                       </span>
-                      <span className="inline-flex shrink-0 items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-black text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                      <span className="inline-flex shrink-0 items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-black text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                         Chấm theo tiêu chí
                       </span>
                     </div>
@@ -1379,7 +1379,7 @@ function DiagnosticResultView({
                       {question?.question ? question.question.slice(0, 80) : ""}
                     </span>
                     <span
-                      className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black ${
+                      className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-black ${
                         item.isCorrect
                           ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
                           : item.isCorrect === false
@@ -1413,7 +1413,7 @@ function DiagnosticResultView({
                   </div>
 
                   {item.explanation && (
-                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-4">
+                    <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
                       {item.explanation}
                     </p>
                   )}

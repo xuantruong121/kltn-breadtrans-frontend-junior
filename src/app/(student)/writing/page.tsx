@@ -265,7 +265,7 @@ export default function WritingTopicsPage() {
                 Lịch sử Writing gần đây
               </h2>
             </div>
-            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
               Kết quả đã lưu
             </span>
           </div>
@@ -283,7 +283,7 @@ export default function WritingTopicsPage() {
                 <p className="line-clamp-1 text-xs font-bold text-slate-800 dark:text-slate-100">
                   {activity.title}
                 </p>
-                <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                   {activity.detail ?? "Đã hoàn thành"} · {activity.score != null ? `${activity.score}%` : "Chưa có điểm"}
                 </p>
               </Link>
@@ -360,7 +360,7 @@ export default function WritingTopicsPage() {
                     <X size={13} aria-hidden="true" />
                   </button>
                 ) : (
-                  <kbd className="hidden sm:inline-block rounded-md border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-0.5 text-[11px] font-mono font-bold text-slate-600 dark:text-slate-400 shadow-2xs">
+                  <kbd className="hidden sm:inline-block rounded-md border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-0.5 text-xs font-mono font-bold text-slate-600 dark:text-slate-400 shadow-2xs">
                     ⌘K
                   </kbd>
                 )}
@@ -439,7 +439,7 @@ export default function WritingTopicsPage() {
               <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-200">
                 Không tìm thấy chủ đề luyện viết phù hợp
               </h2>
-              <p className="mt-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+              <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
                 Hãy thử chọn bộ lọc khác hoặc tìm kiếm với từ khóa khác để khám phá các bài luyện có sẵn.
               </p>
               <div className="mt-5 flex justify-center">
@@ -451,7 +451,7 @@ export default function WritingTopicsPage() {
                     setSortOrder(DEFAULT_CATALOG_SORT);
                     setSelectedStatus("ALL");
                   }}
-                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
                 >
                   <RotateCcw size={14} aria-hidden="true" />
                   Xóa bộ lọc
