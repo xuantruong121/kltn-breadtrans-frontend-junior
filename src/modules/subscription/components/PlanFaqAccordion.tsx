@@ -45,7 +45,7 @@ const FAQS: FaqItem[] = [
     id: "plus-vs-pro",
     question: "Gói Plus và gói Pro khác nhau thế nào?",
     answer:
-      `Plus mở bài Nghe và Đọc Trung cấp, Nâng cao. Pro gồm toàn bộ Plus, thêm bài Nói và Viết Trung cấp, Nâng cao${COURSES_ENABLED ? " và mọi khóa học" : ""}. Bài Cơ bản của bốn kỹ năng, flashcard, từ vựng, ngữ pháp, bài kiểm tra đầu vào và luyện đề TOEIC miễn phí với mọi tài khoản.`,
+      `Nghe và Đọc miễn phí ở mọi mức, trừ Nghe chép từ B1. Plus mở Nói, Viết Trung cấp (B1–B2) và Nghe chép từ B1. Pro gồm toàn bộ Plus, thêm Nói và Viết Nâng cao (C1–C2)${COURSES_ENABLED ? " và mọi khóa học" : ""}. Bài Cơ bản của bốn kỹ năng, flashcard, từ vựng, ngữ pháp, bài kiểm tra đầu vào và luyện đề TOEIC miễn phí với mọi tài khoản.`,
   },
   {
     id: "support-channel",

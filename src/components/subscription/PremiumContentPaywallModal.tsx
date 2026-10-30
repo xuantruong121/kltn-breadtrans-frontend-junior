@@ -142,8 +142,8 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
           >
             {description ??
               (plan === "PRO"
-                ? "Bài luyện nói và luyện viết từ trình độ Trung cấp trở lên thuộc gói PRO."
-                : "Bài nghe và bài đọc từ trình độ Trung cấp trở lên thuộc gói PLUS.")}
+                ? "Bài luyện nói và luyện viết mức Nâng cao (C1–C2) thuộc gói PRO."
+                : "Nói, Viết Trung cấp (B1–B2) và Nghe chép từ B1 thuộc gói PLUS.")}
           </p>
 
           {/* Verified Entitlement Highlights */}
@@ -163,13 +163,13 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
               (plan === "PRO"
                 ? [
                     "Mọi quyền lợi của gói PLUS",
-                    "Bài luyện nói và luyện viết Trung cấp, Nâng cao",
+                    "Bài luyện nói và luyện viết Nâng cao (C1–C2)",
                     ...(COURSES_ENABLED ? ["Toàn bộ khóa học"] : []),
                   ]
                 : [
-                    "Bài nghe và bài đọc Trung cấp, Nâng cao",
-                    "Bài Cơ bản của cả bốn kỹ năng",
-                    "Flashcard, từ vựng và ngữ pháp vẫn miễn phí",
+                    "Bài luyện nói và luyện viết Trung cấp (B1–B2)",
+                    "Nghe chép từ B1 đến C2",
+                    "Nghe, Đọc mọi mức; flashcard, từ vựng, ngữ pháp vẫn miễn phí",
                   ]
               ).map((benefit) => (
                 <div key={benefit} className="flex items-start gap-2">
