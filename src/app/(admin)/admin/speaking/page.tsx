@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { Pagination } from "@/components/ui";
+import { useAdminList } from "@/components/admin/useAdminList";
+import { ADMIN_PAGE_SIZES } from "@/components/admin/adminList";
 import toast from "react-hot-toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
@@ -36,9 +38,6 @@ export default function AdminSpeakingPage() {
   const [statusFilter, setStatusFilter] = useState<
     "ALL" | "DRAFT" | "PUBLISHED"
   >("ALL");
-  const [currentPage, setCurrentPage] = useState(1);
-  // 12 divides into the 2, 3 and 4 card rows the grid makes.
-  const [pageSize] = useState(12);
   const [sortBy, setSortBy] = useState<
     "UPDATED" | "TITLE" | "LEVEL" | "FEWEST"
   >("UPDATED");
@@ -65,13 +64,26 @@ export default function AdminSpeakingPage() {
     useState<SpeakingPracticeSet | null>(null);
 
   // QUERY SPEAKING PRACTICE SETS
-  const { data: sets = [], isLoading } = useQuery<SpeakingPracticeSet[]>({
-    queryKey: ["admin-speaking-sets"],
-    queryFn: async () => {
-      const res: any = await axiosClient.get("/admin/skill-content/speaking");
-      return Array.isArray(res) ? res : res?.data || [];
+  // One page from the server; search, filters and sort run there too.
+  // 12 divides into the 2, 3 and 4 card rows the grid makes.
+  const list = useAdminList<
+    SpeakingPracticeSet,
+    { total: number; published: number; levels: string[] }
+  >({
+    key: "admin-speaking-sets",
+    url: "/admin/skill-content/speaking",
+    search: searchTerm,
+    filters: {
+      level: levelFilter,
+      category: categoryFilter,
+      status: statusFilter,
+      sort: sortBy === "UPDATED" ? "NEWEST" : sortBy,
     },
+    initialPageSize: 12,
   });
+  const isLoading = list.isLoading;
+  // The page resets itself when a filter changes.
+  const setCurrentPage = list.setPage;
 
   const { data: categories = [] } = useQuery<SpeakingCategory[]>({
     queryKey: ["admin-speaking-categories"],
@@ -185,54 +197,15 @@ export default function AdminSpeakingPage() {
     },
   });
 
-  // Filter sets
-  const filteredSets = sets.filter((s) => {
-    const matchesSearch =
-      s.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (s.description || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (s.category || "").toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesLevel = levelFilter === "ALL" || s.level === levelFilter;
-    const matchesCategory =
-      categoryFilter === "ALL" || s.category === categoryFilter;
-    const matchesStatus =
-      statusFilter === "ALL" || s.publicationStatus === statusFilter;
-    return matchesSearch && matchesLevel && matchesCategory && matchesStatus;
-  });
-  // Sets arrive newest-updated first; the other orders are local.
-  const levelRank = (level?: string | null) => {
-    const cefr = /([ABC][12])/.exec(String(level ?? "").toUpperCase())?.[1];
-    if (cefr) return ["A1", "A2", "B1", "B2", "C1", "C2"].indexOf(cefr);
-    return { BEGINNER: 0, INTERMEDIATE: 2, ADVANCED: 4 }[String(level)] ?? 9;
-  };
-  if (sortBy === "TITLE")
-    filteredSets.sort((a, b) => a.title.localeCompare(b.title, "vi"));
-  if (sortBy === "LEVEL")
-    filteredSets.sort((a, b) => levelRank(a.level) - levelRank(b.level));
-  if (sortBy === "FEWEST")
-    filteredSets.sort(
-      (a, b) => (a.exercises?.length ?? 0) - (b.exercises?.length ?? 0),
-    );
-  const publishedSetCount = sets.filter(
-    (set) => set.publicationStatus === "PUBLISHED",
-  ).length;
+  const totalSets = list.facets?.total ?? 0;
+  const publishedSetCount = list.facets?.published ?? 0;
   const setFiltersActive =
     searchTerm.trim() !== "" ||
     levelFilter !== "ALL" ||
     categoryFilter !== "ALL" ||
     statusFilter !== "ALL";
-  const levelOptions = Array.from(
-    new Set(
-      sets
-        .map((set) => set.level)
-        .filter((level): level is string => Boolean(level)),
-    ),
-  ).sort();
-
-  const totalPages = Math.ceil(filteredSets.length / pageSize) || 1;
-  const paginatedSets = filteredSets.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
+  const levelOptions = list.facets?.levels ?? [];
+  const paginatedSets = list.items;
 
   return (
     <div className="space-y-6 p-6">
@@ -243,8 +216,8 @@ export default function AdminSpeakingPage() {
             Bộ luyện nói
           </h1>
           <p className="mt-1 text-sm tabular-nums text-slate-600">
-            {sets.length} bộ · {publishedSetCount} đã xuất bản ·{" "}
-            {sets.length - publishedSetCount} bản nháp
+            {totalSets} bộ · {publishedSetCount} đã xuất bản ·{" "}
+            {totalSets - publishedSetCount} bản nháp
           </p>
         </div>
 
@@ -347,7 +320,10 @@ export default function AdminSpeakingPage() {
           </label>
           <div className="ml-auto flex items-center gap-3 text-sm text-slate-600">
             <span className="tabular-nums">
-              Hiện {filteredSets.length}/{sets.length}
+              {list.total === totalSets
+                ? `${list.total} bộ`
+                : `Khớp ${list.total}/${totalSets}`}
+              {list.isFetching && !isLoading ? " · đang tải" : ""}
             </span>
             {setFiltersActive && (
               <button
@@ -647,20 +623,22 @@ export default function AdminSpeakingPage() {
             ))}
           </div>
 
-          {totalPages > 1 && (
-            <div className="pt-2">
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={(page) => setCurrentPage(page)}
-              />
-            </div>
-          )}
+          <div className="pt-2">
+            <Pagination
+              currentPage={list.page}
+              totalPages={list.totalPages}
+              totalItems={list.total}
+              pageSize={list.pageSize}
+              onPageChange={list.setPage}
+              onPageSizeChange={list.setPageSize}
+              pageSizeOptions={ADMIN_PAGE_SIZES}
+            />
+          </div>
         </div>
       ) : (
         <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-500">
           <Layers size={32} className="mx-auto mb-2 text-slate-300" />
-          {sets.length
+          {totalSets
             ? "Không có bộ luyện nào khớp bộ lọc. Hãy đổi từ khóa hoặc bộ lọc."
             : "Chưa có bộ luyện nói nào. Nhấn “Tạo bộ luyện” để bắt đầu."}
         </div>

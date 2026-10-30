@@ -32,6 +32,8 @@ import {
 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { Pagination } from "@/components/ui";
+import { useAdminList } from "@/components/admin/useAdminList";
+import { ADMIN_PAGE_SIZES } from "@/components/admin/adminList";
 import toast from "react-hot-toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import ImageUploadField from "@/components/admin/ImageUploadField";
@@ -193,9 +195,6 @@ export default function AdminExamsPage() {
   const [selectedExamId, setSelectedExamId] = useState<number | null>(
     Number.isInteger(examIdFromUrl) && examIdFromUrl > 0 ? examIdFromUrl : null,
   );
-  const [currentPage, setCurrentPage] = useState(1);
-  // 12 fills rows of 2, 3 and 4 cards.
-  const [pageSize] = useState(12);
   const [readyFilter, setReadyFilter] = useState<"ALL" | "READY" | "NOT_READY">(
     "ALL",
   );
@@ -314,15 +313,28 @@ export default function AdminExamsPage() {
     }
   };
 
-  // 1. Query all exams
-
-  const { data: exams, isLoading: isExamsLoading } = useQuery<any[]>({
-    queryKey: ["admin-exams"],
-    queryFn: async () => {
-      const res: any = await axiosClient.get("/admin/exams");
-      return Array.isArray(res) ? res : res?.data || [];
+  // 1. One page of exams; search, filters and sort run on the server.
+  // 12 fills rows of 2, 3 and 4 cards.
+  const examList = useAdminList<
+    any,
+    { total: number; published: number; learnerReady: number }
+  >({
+    key: "admin-exams",
+    url: "/admin/exams",
+    search: searchTerm,
+    filters: {
+      status: statusFilter,
+      family: familyFilter,
+      variant: variantFilter,
+      ready: readyFilter,
+      sort: examSort,
     },
+    initialPageSize: 12,
   });
+  const isExamsLoading = examList.isLoading;
+  // The page resets itself when a filter changes.
+  const setCurrentPage = examList.setPage;
+  const totalExams = examList.facets?.total ?? 0;
 
   // 2. Query single exam detail
   const { data: examDetail, isLoading: isDetailLoading } = useQuery<ExamDetail>(
@@ -663,35 +675,13 @@ export default function AdminExamsPage() {
     setIsGroupModalOpen(true);
   };
 
-  const filteredExams = exams?.filter(
-    (e) =>
-      (e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.description?.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (statusFilter === "ALL" || e.publicationStatus === statusFilter) &&
-      (familyFilter === "ALL" || e.familyCode === familyFilter) &&
-      (variantFilter === "ALL" || e.variantCode === variantFilter) &&
-      (readyFilter === "ALL" ||
-        (readyFilter === "READY") === Boolean(e.learnerReady)),
-  );
-  filteredExams?.sort((a, b) =>
-    examSort === "TITLE"
-      ? a.title.localeCompare(b.title, "vi")
-      : examSort === "QUESTIONS"
-        ? (b.totalQuestions ?? 0) - (a.totalQuestions ?? 0)
-        : String(b.updatedAt ?? "").localeCompare(String(a.updatedAt ?? "")) ||
-          b.id - a.id,
-  );
   const examFiltersActive =
     searchTerm.trim() !== "" ||
     statusFilter !== "ALL" ||
     familyFilter !== "ALL" ||
     variantFilter !== "ALL" ||
     readyFilter !== "ALL";
-  const totalPages = Math.ceil((filteredExams?.length || 0) / pageSize);
-  const paginatedExams = filteredExams?.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
+  const paginatedExams = examList.items;
 
   // -------------------------------------------------------------
   // RENDER: Exam Workspace / Editor when an exam is selected
@@ -2661,10 +2651,10 @@ export default function AdminExamsPage() {
         <div>
           <h1 className="text-2xl font-semibold text-slate-950">Kho đề luyện</h1>
           <p className="mt-1 text-sm tabular-nums text-slate-600">
-            {exams?.length ?? 0} đề ·{" "}
-            {exams?.filter((e) => e.publicationStatus === "PUBLISHED").length ?? 0}{" "}
+            {totalExams} đề ·{" "}
+            {examList.facets?.published ?? 0}{" "}
             đã xuất bản ·{" "}
-            {exams?.filter((e) => e.learnerReady).length ?? 0} sẵn sàng cho học viên
+            {examList.facets?.learnerReady ?? 0} sẵn sàng cho học viên
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -2795,7 +2785,10 @@ export default function AdminExamsPage() {
           </label>
           <div className="ml-auto flex items-center gap-3 text-sm text-slate-600">
             <span className="tabular-nums">
-              Hiện {filteredExams?.length ?? 0}/{exams?.length ?? 0}
+              {examList.total === totalExams
+                ? `${examList.total} đề`
+                : `Khớp ${examList.total}/${totalExams}`}
+              {examList.isFetching && !isExamsLoading ? " · đang tải" : ""}
             </span>
             {examFiltersActive && (
               <button
@@ -2948,19 +2941,21 @@ export default function AdminExamsPage() {
             })}
           </div>
 
-          {totalPages > 1 && (
-            <div className="flex justify-center pt-2">
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
-            </div>
-          )}
+          <div className="pt-2">
+            <Pagination
+              currentPage={examList.page}
+              totalPages={examList.totalPages}
+              totalItems={examList.total}
+              pageSize={examList.pageSize}
+              onPageChange={examList.setPage}
+              onPageSizeChange={examList.setPageSize}
+              pageSizeOptions={ADMIN_PAGE_SIZES}
+            />
+          </div>
         </div>
       ) : (
         <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-500">
-          {exams?.length
+          {totalExams
             ? "Không có đề nào khớp bộ lọc."
             : "Chưa có đề nào. Tạo đề thủ công hoặc nhờ AI soạn."}
         </div>

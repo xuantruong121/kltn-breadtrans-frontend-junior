@@ -2,13 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Loader2, Plus, Search, Send, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { VOCAB_LEVELS } from "@/components/admin/vocab/vocabCms";
+import { Pagination } from "@/components/ui";
+import { useAdminList } from "@/components/admin/useAdminList";
+import { ADMIN_PAGE_SIZES } from "@/components/admin/adminList";
 
 type DeckSummary = {
   id: number;
@@ -43,44 +46,23 @@ export default function AdminVocabPage() {
     null,
   );
 
-  const { data: allTopics = [], isLoading } = useQuery<DeckSummary[]>({
-    queryKey: ["admin-vocab-topics"],
-    queryFn: async () => {
-      const res: any = await axiosClient.get("/admin/vocab/topics");
-      return (res?.data ?? res) || [];
-    },
+  // One page from the server; search, filters and sort run there too.
+  const list = useAdminList<
+    DeckSummary,
+    { total: number; published: number; categories: string[] }
+  >({
+    key: "admin-vocab-topics",
+    url: "/admin/vocab/topics",
+    search: query,
+    filters: { category, level, status, sort },
   });
-  // The server leaves out the Speaking lookup dictionary (system data).
-  const decks = allTopics;
-  const categories = [...new Set(decks.map((deck) => deck.categoryName))].sort();
-  const published = decks.filter((d) => d.publicationStatus === "PUBLISHED").length;
-  const levelRank = (d: DeckSummary) => {
-    const i = (VOCAB_LEVELS as readonly string[]).indexOf(d.level ?? "");
-    return i < 0 ? 99 : i;
-  };
-  const needle = query.trim().toLocaleLowerCase("vi");
-  const visible = decks
-    .filter(
-      (deck) =>
-        (!needle ||
-          `${deck.title} ${deck.description ?? ""} ${deck.categoryName}`
-            .toLocaleLowerCase("vi")
-            .includes(needle)) &&
-        (category === "ALL" || deck.categoryName === category) &&
-        (level === "ALL" || (deck.level ?? "") === (level === "NONE" ? "" : level)) &&
-        (status === "ALL" || deck.publicationStatus === status),
-    )
-    .sort((a, b) =>
-      sort === "TITLE"
-        ? a.title.localeCompare(b.title, "vi")
-        : sort === "LEVEL"
-          ? levelRank(a) - levelRank(b)
-          : sort === "FEWEST"
-            ? wordCount(a) - wordCount(b)
-            : b.id - a.id,
-    );
+  const visible = list.items;
+  const isLoading = list.isLoading;
+  const totalDecks = list.facets?.total ?? 0;
+  const published = list.facets?.published ?? 0;
+  const categories = list.facets?.categories ?? [];
   const filtersActive =
-    Boolean(needle) || category !== "ALL" || level !== "ALL" || status !== "ALL";
+    Boolean(query.trim()) || category !== "ALL" || level !== "ALL" || status !== "ALL";
   const refresh = () =>
     queryClient.invalidateQueries({ queryKey: ["admin-vocab-topics"] });
 
@@ -90,7 +72,7 @@ export default function AdminVocabPage() {
         <div>
           <h1 className="text-2xl font-semibold text-slate-950">Từ vựng & Flashcard</h1>
           <p className="mt-1 text-sm tabular-nums text-slate-600">
-            {decks.length} bộ · {published} đã xuất bản · {decks.length - published} bản nháp
+            {totalDecks} bộ · {published} đã xuất bản · {totalDecks - published} bản nháp
           </p>
         </div>
         <Link
@@ -163,7 +145,8 @@ export default function AdminVocabPage() {
           </label>
           <div className="ml-auto flex items-center gap-3 text-sm text-slate-600">
             <span className="tabular-nums">
-              Hiện {visible.length}/{decks.length}
+              {list.total === totalDecks ? `${list.total} bộ` : `Khớp ${list.total}/${totalDecks}`}
+              {list.isFetching && !isLoading ? " · đang tải" : ""}
             </span>
             {filtersActive && (
               <button
@@ -256,11 +239,21 @@ export default function AdminVocabPage() {
           })}
           {!visible.length && (
             <p className="col-span-full rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-600">
-              {decks.length ? "Không có bộ từ nào khớp bộ lọc." : "Chưa có bộ từ nào. Bấm “Tạo bộ từ” để bắt đầu."}
+              {totalDecks ? "Không có bộ từ nào khớp bộ lọc." : "Chưa có bộ từ nào. Bấm “Tạo bộ từ” để bắt đầu."}
             </p>
           )}
         </div>
       )}
+
+      <Pagination
+        currentPage={list.page}
+        totalPages={list.totalPages}
+        totalItems={list.total}
+        pageSize={list.pageSize}
+        onPageChange={list.setPage}
+        onPageSizeChange={list.setPageSize}
+        pageSizeOptions={ADMIN_PAGE_SIZES}
+      />
 
       {pendingLifecycle && (
         <ConfirmDialog

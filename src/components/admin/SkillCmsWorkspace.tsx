@@ -42,10 +42,12 @@ import {
   cmsLevelFromTitle,
   contentLevel,
   displayTitle,
-  filterSkillContent,
   publishChecklist,
   type ListFilters,
 } from "./skillCmsStatus";
+import { Pagination } from "@/components/ui";
+import { useAdminList } from "./useAdminList";
+import { ADMIN_PAGE_SIZES } from "./adminList";
 
 type Domain = "listening" | "reading" | "writing";
 type ListeningMode = "COMPREHENSION" | "DICTATION" | "DIALOGUE";
@@ -332,7 +334,6 @@ export default function SkillCmsWorkspace({
   const params = useParams<{ id?: string }>();
   const id = mode === "edit" ? params?.id : undefined;
   const initialListeningMode = normalizeListeningMode(searchParams.get("mode"));
-  const [items, setItems] = useState<any[]>([]);
   const [item, setItem] = useState<any | null>(null);
   const [artifacts, setArtifacts] = useState<any[]>([]);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -348,6 +349,29 @@ export default function SkillCmsWorkspace({
   const [listFilters, setListFilters] =
     useState<Omit<ListFilters, "query" | "status">>(NO_FILTERS);
   const [writingTypeFilter, setWritingTypeFilter] = useState("ALL");
+  // The list screen loads one page; search, filters and sort run on the server.
+  const list = useAdminList<
+    any,
+    {
+      total: number;
+      published: number;
+      modes: Record<ListeningMode, number>;
+      levels: string[];
+    }
+  >({
+    key: `admin-skill-content-${domain}`,
+    url: `/admin/skill-content/${domain}`,
+    search: searchTerm,
+    filters: {
+      status: statusFilter,
+      level: listFilters.level,
+      audio: listFilters.audio,
+      sort: listFilters.sort,
+      mode: domain === "listening" ? listeningModeFilter : undefined,
+      type: domain === "writing" ? writingTypeFilter : undefined,
+    },
+    enabled: mode === "list",
+  });
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
   const [pendingPublicationStatus, setPendingPublicationStatus] = useState<
     "DRAFT" | "PUBLISHED" | null
@@ -844,21 +868,6 @@ export default function SkillCmsWorkspace({
     [domain, id, mode],
   );
 
-  const loadList = async () => {
-    setLoading(true);
-    try {
-      setItems(
-        unwrap<any[]>(await axiosClient.get(`/admin/skill-content/${domain}`)),
-      );
-    } catch (error: any) {
-      toast.error(
-        getApiErrorMessage(error, "Không thể tải nội dung CMS"),
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const loadItem = async () => {
     if (!id) {
       setLoading(false);
@@ -912,7 +921,7 @@ export default function SkillCmsWorkspace({
   };
 
   useEffect(() => {
-    void (mode === "list" ? loadList() : loadItem());
+    if (mode !== "list") void loadItem();
   }, [domain, mode, id]);
 
   const saveContent = async () => {
@@ -1295,7 +1304,7 @@ export default function SkillCmsWorkspace({
     }
   };
 
-  if (loading)
+  if (mode === "list" ? list.isLoading : loading)
     return (
       <div className="flex min-h-64 items-center justify-center">
         <Loader2 className="animate-spin text-slate-600" />
@@ -1303,17 +1312,8 @@ export default function SkillCmsWorkspace({
     );
 
   if (mode === "list") {
-    const visibleItems = filterSkillContent(
-      items,
-      { ...listFilters, query: searchTerm, status: statusFilter },
-      (content: any) =>
-        (domain !== "listening" ||
-          listeningModeFilter === "ALL" ||
-          getListeningMode(content) === listeningModeFilter) &&
-        (domain !== "writing" ||
-          writingTypeFilter === "ALL" ||
-          content.type === writingTypeFilter),
-    );
+    const visibleItems = list.items;
+    const totalItems = list.facets?.total ?? 0;
     const filtersActive =
       searchTerm.trim() !== "" ||
       statusFilter !== "ALL" ||
@@ -1322,24 +1322,21 @@ export default function SkillCmsWorkspace({
       listFilters.level !== "ALL" ||
       listFilters.audio !== "ALL";
     const levelsPresent = CMS_LEVELS.filter((level) =>
-      items.some((content) => contentLevel(content) === level),
+      (list.facets?.levels ?? []).includes(level),
     );
     const setFilter = <K extends keyof typeof listFilters>(
       key: K,
       value: (typeof listFilters)[K],
     ) => setListFilters((current) => ({ ...current, [key]: value }));
 
-    const publishedCount = items.filter(
-      (content) => content.publicationStatus === "PUBLISHED",
-    ).length;
+    const publishedCount = list.facets?.published ?? 0;
     const modeTabs: Array<[ListeningModeFilter, string, number]> = [
-      ["ALL", "Tất cả", items.length],
+      ["ALL", "Tất cả", totalItems],
       ...LISTENING_MODE_OPTIONS.map(
         (option): [ListeningModeFilter, string, number] => [
           option.value,
           option.label,
-          items.filter((content) => getListeningMode(content) === option.value)
-            .length,
+          list.facets?.modes?.[option.value] ?? 0,
         ],
       ),
     ];
@@ -1353,8 +1350,8 @@ export default function SkillCmsWorkspace({
           <div>
             <h1 className="text-2xl font-semibold text-slate-950">{title}</h1>
             <p className="mt-1 text-sm tabular-nums text-slate-600">
-              {items.length} bài · {publishedCount} đã xuất bản ·{" "}
-              {items.length - publishedCount} bản nháp
+              {totalItems} bài · {publishedCount} đã xuất bản ·{" "}
+              {totalItems - publishedCount} bản nháp
             </p>
           </div>
           {domain === "listening" ? (
@@ -1537,7 +1534,10 @@ export default function SkillCmsWorkspace({
           </label>
           <div className="ml-auto flex items-center gap-3 text-sm text-slate-600">
             <span className="tabular-nums">
-              Hiện {visibleItems.length}/{items.length}
+              {list.total === totalItems
+                ? `${list.total} bài`
+                : `Khớp ${list.total}/${totalItems}`}
+              {list.isFetching ? " · đang tải" : ""}
             </span>
             {filtersActive && (
               <button
@@ -1631,18 +1631,27 @@ export default function SkillCmsWorkspace({
               </Link>
             );
           })}
-          {items.length === 0 && (
+          {totalItems === 0 && (
             <div className="col-span-full rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-600">
               Chưa có nội dung {meta[domain].label}. Hãy tạo bản nháp đầu tiên
               để bắt đầu.
             </div>
           )}
-          {items.length > 0 && visibleItems.length === 0 && (
+          {totalItems > 0 && visibleItems.length === 0 && (
             <div className="col-span-full rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-600">
               Không tìm thấy nội dung phù hợp. Hãy đổi từ khóa hoặc bộ lọc.
             </div>
           )}
         </div>
+        <Pagination
+          currentPage={list.page}
+          totalPages={list.totalPages}
+          totalItems={list.total}
+          pageSize={list.pageSize}
+          onPageChange={list.setPage}
+          onPageSizeChange={list.setPageSize}
+          pageSizeOptions={ADMIN_PAGE_SIZES}
+        />
       </main>
     );
   }
