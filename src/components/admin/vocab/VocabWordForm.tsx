@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { BookOpenCheck, Loader2, Volume2 } from "lucide-react";
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
@@ -9,7 +10,15 @@ import { playWordAudio } from "@/modules/vocab/utils/audio";
 import { vocabService } from "@/lib/api/services/vocab.service";
 import { BTN_AI, BTN_PRIMARY, BTN_SECONDARY } from "../cmsButtons";
 import AudioClipField from "../AudioClipField";
-import { POS_OPTIONS, cefrToCourseLevel, isBareNumber } from "./vocabCms";
+import {
+  DICTIONARY_STATUS,
+  POS_OPTIONS,
+  cefrToCourseLevel,
+  entryToWord,
+  isBareNumber,
+  sharedEntryNote,
+  type DictionaryEntry,
+} from "./vocabCms";
 
 /** IPA symbols that are not on a keyboard, inserted at the cursor. */
 const IPA_SYMBOLS = [
@@ -30,7 +39,11 @@ export type AdminVocabWord = {
   exampleVi?: string | null;
   collocations?: Array<{ phrase: string; meaningVi: string }> | null;
   order: number;
+  /** Decks sharing this word's dictionary entry. */
+  usedInDecks?: number;
 };
+
+export type WordPayload = Record<string, unknown> & { word: string };
 
 type Form = {
   word: string;
@@ -45,7 +58,7 @@ type Form = {
 };
 
 const FIELD =
-  "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
+  "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 disabled:bg-slate-100 disabled:text-slate-600";
 
 const fromWord = (word: AdminVocabWord | null): Form => ({
   word: word?.word ?? "",
@@ -61,23 +74,31 @@ const fromWord = (word: AdminVocabWord | null): Form => ({
 
 /**
  * One word, edited in its row (or as "Từ mới" under the list). Enter saves;
- * a new word can be saved and the form cleared for the next one.
+ * a new word can be saved and the form cleared for the next one. In a deck,
+ * a new word is first looked up in the dictionary store so a known entry is
+ * linked instead of typed again. `save` replaces the deck endpoints (the
+ * dictionary page uses it).
  */
 export default function VocabWordForm({
   topicId,
   word,
   level,
+  save: saveWord,
   onSaved,
   onCancel,
 }: {
-  topicId: number;
+  topicId?: number;
   word: AdminVocabWord | null;
   level?: string | null;
+  save?: (payload: WordPayload, isNew: boolean) => Promise<unknown>;
   onSaved: (keepOpen: boolean) => void;
   onCancel: () => void;
 }) {
   const [form, setForm] = useState<Form>(() => fromWord(word));
   const [collocations, setCollocations] = useState(word?.collocations ?? null);
+  const linkable = !word && topicId !== undefined && !saveWord;
+  const [suggestions, setSuggestions] = useState<DictionaryEntry[]>([]);
+  const [picked, setPicked] = useState<DictionaryEntry | null>(null);
   const [saving, setSaving] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
   const [lookingUp, setLookingUp] = useState(false);
@@ -90,6 +111,45 @@ export default function VocabWordForm({
   };
   const set = (key: keyof Form, value: string) =>
     setForm((current) => ({ ...current, [key]: value }));
+
+  // Store entries matching the word being typed for a deck.
+  const typed = form.word.trim();
+  const searching = linkable && !picked && typed.length >= 2;
+  const shownSuggestions = searching ? suggestions : [];
+  useEffect(() => {
+    if (!searching) return;
+    let live = true;
+    const timer = setTimeout(async () => {
+      try {
+        const res: any = await axiosClient.get("/admin/dictionary", {
+          params: { q: typed, pageSize: 6 },
+        });
+        const items: DictionaryEntry[] = (res?.data ?? res)?.items ?? [];
+        if (live)
+          setSuggestions(items.filter((entry) => entry.status !== "REJECTED"));
+      } catch {
+        if (live) setSuggestions([]);
+      }
+    }, 250);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+  }, [searching, typed]);
+
+  const pick = (entry: DictionaryEntry) => {
+    setPicked(entry);
+    setSuggestions([]);
+    setForm(fromWord(entryToWord(entry)));
+    setCollocations(entry.collocations ?? null);
+  };
+
+  const unpick = () => {
+    setPicked(null);
+    setForm(fromWord(null));
+    setCollocations(null);
+    requestAnimationFrame(() => firstField.current?.focus());
+  };
 
   const save = async (keepOpen: boolean) => {
     if (!form.word.trim() || !form.meaning.trim()) {
@@ -114,17 +174,26 @@ export default function VocabWordForm({
       ...(collocations?.length ? { collocations } : {}),
     };
     try {
-      if (word) {
-        await axiosClient.patch(
-          `/admin/vocab/topics/${topicId}/words/${word.id}`,
-          payload,
-        );
-      } else {
-        // The server appends a new word after the last one.
-        await axiosClient.post(`/admin/vocab/topics/${topicId}/words`, payload);
-      }
-      toast.success(word ? "Đã lưu từ." : `Đã thêm "${payload.word}".`);
+      const response: any = saveWord
+        ? await saveWord(payload, !word)
+        : word
+          ? await axiosClient.patch(
+              `/admin/vocab/topics/${topicId}/words/${word.id}`,
+              payload,
+            )
+          : // The server appends a new word after the last one, linking the
+            // store's entry for the same word and part of speech if one exists.
+            await axiosClient.post(`/admin/vocab/topics/${topicId}/words`, payload);
+      const reused = Boolean((response?.data ?? response)?.reusedEntry);
+      toast.success(
+        word
+          ? "Đã lưu từ."
+          : reused
+            ? `Đã thêm "${payload.word}" từ kho từ điển.`
+            : `Đã thêm "${payload.word}".`,
+      );
       if (keepOpen) {
+        setPicked(null);
         setForm(fromWord(null));
         setCollocations(null);
         firstField.current?.focus();
@@ -228,17 +297,78 @@ export default function VocabWordForm({
       }}
       className="mt-3 border-t border-slate-100 pt-3"
     >
-      <div className="grid gap-3 md:grid-cols-3">
-        <label className="text-sm font-medium text-slate-800">
-          Từ
+      {sharedEntryNote(word?.usedInDecks) && (
+        <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          {sharedEntryNote(word?.usedInDecks)}
+        </p>
+      )}
+      {picked && (
+        <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-slate-800">
+          <p className="min-w-0 flex-1">
+            <span className="font-semibold">{picked.displayWord}</span> ({picked.pos}) đã có
+            trong kho từ điển
+            {picked.usedInDecks ? `, đang dùng ở ${picked.usedInDecks} bộ` : ""}. Lưu sẽ thêm
+            đúng mục này vào bộ; muốn sửa nội dung thì sửa trong{" "}
+            <Link
+              href="/admin/dictionary"
+              className="font-semibold text-blue-700 underline-offset-4 hover:underline"
+            >
+              Kho từ điển
+            </Link>
+            .
+          </p>
+          <button type="button" onClick={unpick} className={BTN_SECONDARY}>
+            Chọn từ khác
+          </button>
+        </div>
+      )}
+      <fieldset disabled={Boolean(picked)} className="grid min-w-0 gap-3 md:grid-cols-3">
+        <div className="relative text-sm font-medium text-slate-800">
+          <label htmlFor={`word-${word?.id ?? "new"}`}>Từ</label>
           <input
+            id={`word-${word?.id ?? "new"}`}
             ref={firstField}
             autoFocus
+            autoComplete="off"
             value={form.word}
             onChange={(event) => set("word", event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setSuggestions([]);
+            }}
             className={FIELD}
           />
-        </label>
+          {shownSuggestions.length > 0 && (
+            <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+              <p className="border-b border-slate-100 px-3 py-1.5 text-xs font-normal text-slate-600">
+                Có sẵn trong kho từ điển: chọn để thêm vào bộ
+              </p>
+              <ul>
+                {shownSuggestions.map((entry) => (
+                  <li key={entry.id}>
+                    <button
+                      type="button"
+                      onClick={() => pick(entry)}
+                      className="flex w-full cursor-pointer items-baseline gap-2 px-3 py-2 text-left hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none"
+                    >
+                      <span className="font-semibold text-slate-950">{entry.displayWord}</span>
+                      <span className="text-xs font-normal text-slate-600">{entry.pos}</span>
+                      <span className="min-w-0 flex-1 truncate font-normal text-slate-700">
+                        {entry.meaningVi}
+                      </span>
+                      {entry.status !== "APPROVED" && (
+                        <span
+                          className={`flex-none rounded-md px-1.5 py-0.5 text-xs font-semibold ${DICTIONARY_STATUS[entry.status].tone}`}
+                        >
+                          {DICTIONARY_STATUS[entry.status].label}
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
         <label className="text-sm font-medium text-slate-800">
           Loại từ
           <select
@@ -246,7 +376,12 @@ export default function VocabWordForm({
             onChange={(event) => set("pos", event.target.value)}
             className={FIELD}
           >
-            {POS_OPTIONS.map((pos) => (
+            {/* A stored part of speech outside the list (e.g. from an
+                external dictionary) stays selectable, so saving keeps it. */}
+            {[
+              ...((POS_OPTIONS as readonly string[]).includes(form.pos) ? [] : [form.pos]),
+              ...POS_OPTIONS,
+            ].map((pos) => (
               <option key={pos} value={pos}>
                 {pos}
               </option>
@@ -371,7 +506,7 @@ export default function VocabWordForm({
             {collocations.map((c) => `${c.phrase} (${c.meaningVi})`).join(" · ")}
           </p>
         )}
-      </div>
+      </fieldset>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <button type="submit" disabled={saving} className={BTN_PRIMARY}>
           {saving && <Loader2 size={14} className="animate-spin" />}
@@ -393,7 +528,7 @@ export default function VocabWordForm({
         <button
           type="button"
           onClick={() => void suggest()}
-          disabled={suggesting}
+          disabled={suggesting || Boolean(picked)}
           title="AI điền nghĩa, phiên âm và câu ví dụ vào các ô còn trống."
           className={`${BTN_AI} ml-auto`}
         >

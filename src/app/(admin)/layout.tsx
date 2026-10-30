@@ -14,6 +14,7 @@ import {
   Coins,
   BookOpen,
   Layers,
+  BookText,
   Mic,
   Menu,
   X,
@@ -97,6 +98,12 @@ const NAV_GROUPS: NavCategory[] = [
         href: "/admin/vocab",
         label: "Từ vựng & Flashcard",
         icon: Layers,
+      },
+      {
+        id: "dictionary",
+        href: "/admin/dictionary",
+        label: "Kho từ điển",
+        icon: BookText,
       },
       {
         id: "grammar",

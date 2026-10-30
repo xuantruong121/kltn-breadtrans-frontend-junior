@@ -181,3 +181,63 @@ export function wordStageReadiness(
     },
   ];
 }
+
+/** A dictionary store entry (F13) as the admin API returns it. */
+export type DictionaryEntry = {
+  id: number;
+  headword: string;
+  displayWord: string;
+  pos: string;
+  ipaUs?: string | null;
+  ipaUk?: string | null;
+  audioUs?: string | null;
+  audioUk?: string | null;
+  meaningVi: string;
+  exampleEn?: string | null;
+  exampleVi?: string | null;
+  collocations?: Array<{ phrase: string; meaningVi: string }> | null;
+  source: "CURATED" | "EXTERNAL" | "AI";
+  status: "APPROVED" | "PENDING_REVIEW" | "REJECTED";
+  usedInDecks?: number;
+};
+
+export const DICTIONARY_STATUS: Record<
+  DictionaryEntry["status"],
+  { label: string; tone: string }
+> = {
+  APPROVED: { label: "Đã duyệt", tone: "bg-emerald-50 text-emerald-700" },
+  PENDING_REVIEW: { label: "Chờ duyệt", tone: "bg-amber-50 text-amber-800" },
+  REJECTED: { label: "Đã loại", tone: "bg-rose-50 text-rose-700" },
+};
+
+export const DICTIONARY_SOURCE: Record<DictionaryEntry["source"], string> = {
+  CURATED: "Biên soạn",
+  EXTERNAL: "Từ điển ngoài",
+  AI: "AI",
+};
+
+/** An entry in the word form's shape, so one form edits decks and the store. */
+export function entryToWord(entry: DictionaryEntry) {
+  return {
+    id: entry.id,
+    word: entry.displayWord,
+    meaning: entry.meaningVi,
+    pos: entry.pos,
+    ipaUs: entry.ipaUs,
+    ipaUk: entry.ipaUk,
+    audioUs: entry.audioUs,
+    audioUk: entry.audioUk,
+    exampleEn: entry.exampleEn,
+    exampleVi: entry.exampleVi,
+    collocations: entry.collocations,
+    order: 0,
+    usedInDecks: entry.usedInDecks,
+  };
+}
+
+/** Warns that an edit reaches every deck (and lookup) sharing the entry. */
+export function sharedEntryNote(usedInDecks?: number) {
+  return usedInDecks && usedInDecks > 1
+    ? `Từ này nằm trong ${usedInDecks} bộ. Sửa ở đây sẽ đổi ở cả ${usedInDecks} bộ và khi học viên tra từ.`
+    : null;
+}

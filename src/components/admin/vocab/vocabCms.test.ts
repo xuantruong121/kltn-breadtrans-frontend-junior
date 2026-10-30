@@ -1,6 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseVocabPaste, vocabDeckChecklist, wordStageReadiness } from "./vocabCms.ts";
+import {
+  entryToWord,
+  parseVocabPaste,
+  sharedEntryNote,
+  vocabDeckChecklist,
+  wordStageReadiness,
+} from "./vocabCms.ts";
 
 test("parseVocabPaste reads spreadsheet rows, pipes, dashes and commas", () => {
   const rows = parseVocabPaste(
@@ -58,4 +64,28 @@ test("wordStageReadiness explains each learner step", () => {
   ]);
   assert.match(stages[2].note ?? "", /cả cụm/);
   assert.match(stages[3].note ?? "", /giọng máy/);
+});
+
+test("sharedEntryNote warns only when another deck shares the entry", () => {
+  assert.equal(sharedEntryNote(undefined), null);
+  assert.equal(sharedEntryNote(1), null);
+  assert.match(sharedEntryNote(3) ?? "", /nằm trong 3 bộ/);
+});
+
+test("entryToWord gives the word form a store entry in its own shape", () => {
+  const word = entryToWord({
+    id: 9,
+    headword: "agenda",
+    displayWord: "Agenda",
+    pos: "noun",
+    meaningVi: "chương trình họp",
+    ipaUs: "/əˈdʒendə/",
+    source: "EXTERNAL",
+    status: "PENDING_REVIEW",
+    usedInDecks: 2,
+  });
+  assert.equal(word.word, "Agenda");
+  assert.equal(word.meaning, "chương trình họp");
+  assert.equal(word.ipaUs, "/əˈdʒendə/");
+  assert.equal(word.usedInDecks, 2);
 });
