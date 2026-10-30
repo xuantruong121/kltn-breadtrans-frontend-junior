@@ -39,7 +39,10 @@ import {
   PLAN_QUERY_KEYS,
   type EffectivePlan,
 } from "@/lib/api/services/plan.service";
-import { PlacementTestBanner } from "@/components/dashboard/PlacementTestBanner";
+import { LevelChoiceCard } from "@/components/dashboard/LevelChoiceCard";
+import { learningPathService } from "@/lib/api/services/learningPath.service";
+import { ONBOARDING_SKIPPED_KEY, shouldOpenOnboarding } from "@/lib/learning-path/onboarding";
+import { useRouter } from "next/navigation";
 import { DashboardCompanionCard } from "@/modules/pet/components/DashboardCompanionCard";
 import {
   canAccessFilterPeriod,
@@ -218,6 +221,24 @@ export default function DashboardPage() {
     staleTime: 60_000,
   });
   const diagnosticBadge = diagnosticBadgeLabel(stats?.latestDiagnostic?.level);
+
+  // Learning profile (F5): onboarding once, then the level card.
+  const router = useRouter();
+  const { data: learnerProfile } = useQuery({
+    queryKey: ["learning-path-profile"],
+    queryFn: learningPathService.getProfile,
+    enabled,
+    staleTime: 60_000,
+  });
+  useEffect(() => {
+    let skipped = false;
+    try {
+      skipped = sessionStorage.getItem(ONBOARDING_SKIPPED_KEY) === "1";
+    } catch {
+      skipped = false;
+    }
+    if (shouldOpenOnboarding(learnerProfile, skipped)) router.replace("/onboarding");
+  }, [learnerProfile, router]);
 
   // 3. Today's Dashboard Quests & Activities
   const {
@@ -1332,9 +1353,7 @@ export default function DashboardPage() {
       {/* ========================================================================= */}
       {/* 2. PLACEMENT TEST RECOMMENDATION BANNER                                   */}
       {/* ========================================================================= */}
-      {!isStatsLoading && !stats?.hasCompletedPlacementTest && (
-        <PlacementTestBanner hasCompleted={false} />
-      )}
+      <LevelChoiceCard profile={learnerProfile} />
 
       {/* ========================================================================= */}
       {/* 3. DAILY FOCUS BENTO HUB (Nhiệm Vụ 2 Cols + Thú Cưng 1 Col)              */}
