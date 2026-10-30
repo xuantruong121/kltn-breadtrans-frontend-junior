@@ -956,6 +956,24 @@ export default function SkillCmsWorkspace({
         }
       } else {
         if (
+          domain === "reading" ||
+          (domain === "listening" && question.type === "MULTIPLE_CHOICE")
+        ) {
+          const filled = question.options.split("\n").map((v) => v.trim());
+          while (filled.length && !filled[filled.length - 1]) filled.pop();
+          if (filled.length < 4 || filled.some((v) => !v)) {
+            toast.error("Điền đủ 4 phương án A, B, C, D");
+            return;
+          }
+          if (
+            question.correctIndex === "" ||
+            Number(question.correctIndex) >= filled.length
+          ) {
+            toast.error("Chọn đáp án đúng");
+            return;
+          }
+        }
+        if (
           domain === "listening" &&
           question.type === "DIALOGUE" &&
           transcriptForSave(question.segments).length < 2
@@ -1442,6 +1460,9 @@ export default function SkillCmsWorkspace({
     audioPublished: currentArtifact?.status === "PUBLISHED",
   });
 
+  // One row per option, A-D at least; blank rows stay so their letters hold.
+  const optionRows = question.options.split("\n");
+  while (optionRows.length < 4) optionRows.push("");
   /** The question form, shown inside the card being edited or as "Câu hỏi mới". */
   const renderQuestionEditor = () => (
       <>
@@ -1650,60 +1671,65 @@ export default function SkillCmsWorkspace({
           {(domain === "reading" ||
             (isListening && question.type === "MULTIPLE_CHOICE")) && (
             <>
-              <label className="text-sm font-medium">
-                Các phương án lựa chọn (mỗi dòng một phương án)
-                <textarea
-                  value={question.options}
-                  onChange={(event) =>
-                    setQuestion({ ...question, options: event.target.value })
-                  }
-                  placeholder="Phương án A&#10;Phương án B&#10;Phương án C&#10;Phương án D"
-                  className={`${inputClassName()} min-h-24`}
-                />
-              </label>
-              <label className="text-sm font-medium">
-                Đáp án đúng
-                <select
-                  value={question.correctIndex || "0"}
-                  onChange={(event) =>
-                    setQuestion({
-                      ...question,
-                      correctIndex: event.target.value,
-                    })
-                  }
-                  className={inputClassName()}
-                >
-                  {(() => {
-                    const opts = question.options
-                      .split("\n")
-                      .map((v) => v.trim())
-                      .filter(Boolean);
-                    if (opts.length > 0) {
-                      return opts.map((opt, idx) => (
-                        <option key={idx} value={String(idx)}>
-                          Phương án {String.fromCharCode(65 + idx)}:{" "}
-                          {opt.slice(0, 45)}
-                          {opt.length > 45 ? "..." : ""}
-                        </option>
-                      ));
-                    }
-                    return [
-                      <option key="0" value="0">
-                        Phương án A
-                      </option>,
-                      <option key="1" value="1">
-                        Phương án B
-                      </option>,
-                      <option key="2" value="2">
-                        Phương án C
-                      </option>,
-                      <option key="3" value="3">
-                        Phương án D
-                      </option>,
-                    ];
-                  })()}
-                </select>
-              </label>
+              <fieldset className="md:col-span-2">
+                <legend className="text-sm font-medium">
+                  Phương án và đáp án đúng
+                </legend>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Điền 4 phương án, bấm nút tròn ở phương án đúng.
+                </p>
+                <div className="mt-2 grid gap-2 md:grid-cols-2">
+                  {optionRows.map((value, index) => {
+                    const letter = String.fromCharCode(65 + index);
+                    const correct = question.correctIndex === String(index);
+                    return (
+                      <div
+                        key={index}
+                        className={`flex items-center gap-2 rounded-lg border px-3 transition-colors ${
+                          correct
+                            ? "border-emerald-400 bg-emerald-50/60 ring-1 ring-emerald-200"
+                            : "border-slate-300 bg-white focus-within:border-slate-500"
+                        }`}
+                      >
+                        <label className="flex flex-none cursor-pointer items-center gap-2 py-2">
+                          <input
+                            type="radio"
+                            name={`correct-${question.id ?? "new"}`}
+                            checked={correct}
+                            onChange={() =>
+                              setQuestion({
+                                ...question,
+                                correctIndex: String(index),
+                              })
+                            }
+                            aria-label={`Phương án ${letter} là đáp án đúng`}
+                            className="size-4 cursor-pointer accent-emerald-600"
+                          />
+                          <span className="w-4 text-sm font-semibold text-slate-700">
+                            {letter}
+                          </span>
+                        </label>
+                        <input
+                          value={value}
+                          onChange={(event) => {
+                            const rows = [...optionRows];
+                            rows[index] = event.target.value;
+                            setQuestion({ ...question, options: rows.join("\n") });
+                          }}
+                          placeholder={`Phương án ${letter}`}
+                          aria-label={`Nội dung phương án ${letter}`}
+                          className="min-h-10 min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none"
+                        />
+                        {correct && (
+                          <span className="flex-none text-xs font-semibold text-emerald-700">
+                            Đúng
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </fieldset>
             </>
           )}
           {isListening && question.type === "DIALOGUE" && (
