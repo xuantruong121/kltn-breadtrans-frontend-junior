@@ -50,13 +50,8 @@ export default function AdminVocabPage() {
       return (res?.data ?? res) || [];
     },
   });
-  // The Speaking lookup dictionary is stored as a topic but is not a deck.
-  const systemDictionaries = allTopics.filter(
-    (deck) => deck.categoryName === "SYSTEM_DICTIONARY",
-  );
-  const decks = allTopics.filter(
-    (deck) => deck.categoryName !== "SYSTEM_DICTIONARY",
-  );
+  // The server leaves out the Speaking lookup dictionary (system data).
+  const decks = allTopics;
   const categories = [...new Set(decks.map((deck) => deck.categoryName))].sort();
   const published = decks.filter((d) => d.publicationStatus === "PUBLISHED").length;
   const levelRank = (d: DeckSummary) => {
@@ -187,25 +182,6 @@ export default function AdminVocabPage() {
           </div>
         </div>
       </div>
-
-      {systemDictionaries.map((dictionary) => (
-        <p
-          key={dictionary.id}
-          className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700"
-        >
-          <span className="font-semibold text-slate-900">{dictionary.title}</span>
-          <span className="tabular-nums">{wordCount(dictionary)} mục</span>
-          <span className="text-slate-600">
-            Từ điển tra từ trong đề luyện Nói, không phải bộ flashcard.
-          </span>
-          <Link
-            href={`/admin/vocab/${dictionary.id}`}
-            className="ml-auto inline-flex items-center gap-1 font-semibold text-slate-900 hover:text-blue-700"
-          >
-            Mở <ArrowRight size={14} aria-hidden="true" />
-          </Link>
-        </p>
-      ))}
 
       {isLoading ? (
         <div className="flex justify-center py-20">
