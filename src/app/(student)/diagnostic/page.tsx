@@ -33,6 +33,7 @@ import { ClozePrompt } from "@/components/diagnostic/ClozePrompt";
 import { DiagnosticQuestionNavigator } from "@/components/diagnostic/DiagnosticQuestionNavigator";
 import { DiagnosticAdvicePanel as AdvicePanel } from "@/components/diagnostic/DiagnosticAdvicePanel";
 import { ObservedResultPanel } from "@/components/diagnostic/ObservedResultPanel";
+import { PracticePlacementPanel } from "@/components/diagnostic/PracticePlacementPanel";
 import {
   formatPlacementLevel,
   formatSkillName,
@@ -1071,9 +1072,13 @@ function DiagnosticResultView({
               Kết quả đánh giá đầu vào
             </h1>
             <ObservedResultPanel observed={fourSkill.observed} breakdown={result.objectiveBreakdown} />
+            {result.practicePlacement && <PracticePlacementPanel placement={result.practicePlacement} />}
           </>
         ) : fourSkill ? (
-          <FourSkillPanel result={fourSkill} />
+          <>
+            <FourSkillPanel result={fourSkill} />
+            {result.practicePlacement && <PracticePlacementPanel placement={result.practicePlacement} />}
+          </>
         ) : (
           <>
             <h1 className="mt-4 text-3xl font-black text-slate-900 dark:text-slate-100 sm:text-4xl">
