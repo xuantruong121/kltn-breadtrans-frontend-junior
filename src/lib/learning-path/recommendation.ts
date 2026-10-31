@@ -14,6 +14,10 @@ export type RecommendationItem = {
   route: string;
   minutes: number;
   status: RecommendationStatus;
+  /** Lowest plan that opens this item. */
+  requiredPlan: "FREE" | "PLUS" | "PRO";
+  /** The plan is missing too: a level lock can hide a plan lock. */
+  planLocked: boolean;
   reasons: string[];
   predictedSuccess: number;
   saved: boolean;
@@ -22,9 +26,9 @@ export type RecommendationItem = {
 export type TodayPlan = { minutesPerDay: number; items: RecommendationItem[] };
 
 /** Short badge for a locked item; null when it is open. */
-export function lockLabel(status: RecommendationStatus): string | null {
+export function lockLabel(status: RecommendationStatus, requiredPlan: string = "PLUS"): string | null {
   if (status === "LOCKED_LEVEL") return "Chưa mở mức";
-  if (status === "LOCKED_PLAN") return "Cần gói PLUS/PRO";
+  if (status === "LOCKED_PLAN") return `Cần gói ${requiredPlan}`;
   return null;
 }
 

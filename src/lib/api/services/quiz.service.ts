@@ -1,3 +1,4 @@
+import type { PracticeLevel } from "@/lib/learning-path/practiceLevel";
 import {
   buildQuestionAudioRequestPath,
   type PublishedListeningAudioIdentity,
@@ -173,7 +174,13 @@ export interface ListeningPracticeCatalogItem {
   isCompleted?: boolean;
   score?: number | null;
   isPremiumContent?: boolean;
+  /** The level this item sits at, as access decides it. */
+  practiceLevel?: PracticeLevel | null;
+  /** The learner's open level is below this item's. */
+  isLevelLocked?: boolean;
   isLocked?: boolean;
+  /** Lowest plan that opens this item: FREE, PLUS or PRO. */
+  requiredPlan?: string;
   _count?: {
     questions: number;
   };

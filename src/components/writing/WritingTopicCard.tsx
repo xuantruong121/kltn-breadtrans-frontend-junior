@@ -16,6 +16,7 @@ import {
 } from "./writingCardLogic";
 import { unlockPlanFor } from "@/modules/subscription/practicePlan";
 import { catalogLevelLabel } from "@/lib/practice/catalogFilters";
+import { LevelLockButton } from "@/components/practice/LevelLockDialog";
 
 export interface WritingTopicItem extends WritingTopic {
   topicName?: string;
@@ -31,6 +32,7 @@ interface WritingTopicCardProps {
   isAuthenticated: boolean;
   onOpenAuthGate: (topic: WritingTopicItem) => void;
   onOpenPaywall?: (topic: WritingTopicItem) => void;
+  onOpenLevelLock?: (topic: WritingTopicItem) => void;
   onStart?: (topic: WritingTopicItem) => void;
   isLaunching?: boolean;
   statusOverride?: WritingCardStatus;
@@ -42,29 +44,37 @@ export function WritingTopicCard({
   isAuthenticated,
   onOpenAuthGate,
   onOpenPaywall,
+  onOpenLevelLock,
   onStart,
   isLaunching = false,
   statusOverride,
   isSpotlight = false,
 }: WritingTopicCardProps) {
   const isLocked = Boolean(topic.isLocked);
+  // A guest is asked to log in first, not told about a level.
+  const levelLocked = isAuthenticated && Boolean(topic.isLevelLocked);
 
   const computedStatus = computeWritingCardStatus({
     isAuthenticated,
     isCompleted: topic.isCompleted,
     isSpotlight,
-    isLocked,
+    isLocked: isLocked || levelLocked,
   });
 
   const status = statusOverride || computedStatus;
 
   // The API's authored CEFR level; a missing level is never shown as Cơ bản.
-  const levelLabel = catalogLevelLabel(topic.cefrLevel ?? topic.level ?? topic.title);
+  const levelLabel = catalogLevelLabel(topic.cefrLevel ?? topic.level ?? topic.title, topic.practiceLevel);
 
   const formatTag = resolveWritingFormatTag(topic);
   const pedagogicalDescription = resolveWritingPedagogicalDescription(topic);
 
   const handleCardClick = (e: React.MouseEvent) => {
+    if (levelLocked) {
+      e.preventDefault();
+      onOpenLevelLock?.(topic);
+      return;
+    }
     if (isLocked) {
       e.preventDefault();
       onOpenPaywall?.(topic);
@@ -180,6 +190,11 @@ export function WritingTopicCard({
                 <span>Bắt đầu</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
+            ) : levelLocked ? (
+              <LevelLockButton
+                onClick={handleCardClick}
+                ariaLabel={`Chưa mở mức của chủ đề ${topic.title || topic.topicName || ""}`}
+              />
             ) : isLocked ? (
               <button
                 type="button"

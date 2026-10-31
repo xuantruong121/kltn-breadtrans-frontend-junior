@@ -21,6 +21,8 @@ import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { PremiumContentPaywallModal } from "@/components/subscription/PremiumContentPaywallModal";
+import { LevelLockDialog } from "@/components/practice/LevelLockDialog";
+import { levelLockOf, type LevelLock } from "@/lib/learning-path/levelLock";
 import {
   WritingTopicCard,
   type WritingTopicItem,
@@ -55,6 +57,7 @@ export default function WritingTopicsPage() {
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("ALL");
   const [launchingTopicId, setLaunchingTopicId] = useState<number | null>(null);
   const [paywallTopic, setPaywallTopic] = useState<WritingTopicItem | null>(null);
+  const [levelLock, setLevelLock] = useState<LevelLock | null>(null);
   // "Viết câu theo tranh" tab; ?tab=picture opens it directly.
   const [writingTab, setWritingTab] = useState<"PRACTICE" | "PICTURE">("PRACTICE");
   useEffect(() => {
@@ -149,7 +152,7 @@ export default function WritingTopicsPage() {
       const desc = (t.description || "").toLowerCase();
       const matchSearch = !q || title.includes(q) || desc.includes(q);
 
-      const matchDifficulty = matchesDifficultyFilter(writingLevelOf(t), selectedDifficulty);
+      const matchDifficulty = matchesDifficultyFilter(writingLevelOf(t), selectedDifficulty, t.practiceLevel);
 
       // Graded tasks out of all tasks, from the API (same rule as completion).
       const matchStatus = matchesStatusFilter(
@@ -166,7 +169,7 @@ export default function WritingTopicsPage() {
     let spotlightAssigned = false;
     return sorted.map((item) => {
       const isDone = Boolean(item.isCompleted);
-      if (!isDone && !spotlightAssigned) {
+      if (!isDone && !item.isLocked && !item.isLevelLocked && !spotlightAssigned) {
         spotlightAssigned = true;
         return { ...item, isSpotlight: true };
       }
@@ -323,6 +326,7 @@ export default function WritingTopicsPage() {
           isAuthenticated={Boolean(user)}
           onOpen={(href) => router.push(href)}
           onLocked={(quiz) => setPaywallTopic(quiz)}
+          onLevelLocked={(quiz) => setLevelLock(levelLockOf("WRITING", quiz))}
           onGuest={(quiz) =>
             setAuthGate({ open: true, topicId: quiz.id, title: quiz.title })
           }
@@ -431,6 +435,7 @@ export default function WritingTopicsPage() {
                     })
                   }
                   onOpenPaywall={(t) => setPaywallTopic(t)}
+                  onOpenLevelLock={(t) => setLevelLock(levelLockOf("WRITING", t))}
                   onStart={handleStartTopic}
                   isSpotlight={topic.isSpotlight}
                 />
@@ -475,6 +480,8 @@ export default function WritingTopicsPage() {
         onOpenLogin={() => router.push("/login")}
         onOpenRegister={() => router.push("/register")}
       />
+
+      <LevelLockDialog lock={levelLock} onClose={() => setLevelLock(null)} />
 
       {/* Paywall Modal */}
       <PremiumContentPaywallModal

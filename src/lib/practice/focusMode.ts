@@ -11,6 +11,7 @@ export type PracticeRouteKind =
   | "VOCAB_ROOM"
   | "TOEIC_ATTEMPT_ROOM"
   | "DIAGNOSTIC_ROOM"
+  | "GATE_ROOM"
   | "GRAMMAR_ROOM"
   | "CATALOG_OR_HUB"
   | "RESULT_OR_REVIEW"
@@ -53,6 +54,9 @@ export function classifyPracticeRoute(pathname: string): PracticeRouteKind {
   }
   if (/^\/writing\/[^/]+(?:\/|$)/.test(pathname)) {
     return "WRITING_ROOM";
+  }
+  if (/^\/gate\/[^/]+(?:\/|$)/.test(pathname)) {
+    return "GATE_ROOM";
   }
   if (/^\/flashcard\/[^/]+(?:\/|$)/.test(pathname)) {
     return "VOCAB_ROOM";
@@ -110,6 +114,7 @@ export function isLearningFocusRoute(pathname: string): boolean {
     (/^\/reading\/[^/]+(?:\/|$)/.test(pathname) && !pathname.startsWith("/reading/mistakes")) ||
     /^\/speaking\/[^/]+(?:\/|$)/.test(pathname) ||
     /^\/writing\/[^/]+(?:\/|$)/.test(pathname) ||
+    /^\/gate\/[^/]+(?:\/|$)/.test(pathname) ||
     /^\/flashcard\/[^/]+(?:\/|$)/.test(pathname) ||
     /^\/toeic\/attempts\/[^/]+(?:\/|$)/.test(pathname) ||
     pathname === "/vocabulary/study" ||
@@ -129,7 +134,8 @@ export function isPracticeRoomPath(pathname: string): boolean {
     kind === "WRITING_ROOM" ||
     kind === "VOCAB_ROOM" ||
     kind === "TOEIC_ATTEMPT_ROOM" ||
-    kind === "DIAGNOSTIC_ROOM"
+    kind === "DIAGNOSTIC_ROOM" ||
+    kind === "GATE_ROOM"
   );
 }
 

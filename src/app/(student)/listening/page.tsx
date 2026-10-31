@@ -19,6 +19,8 @@ import { useGamificationStore } from "@/stores/gamificationStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { PremiumContentPaywallModal } from "@/components/subscription/PremiumContentPaywallModal";
 import { ListeningExerciseCard } from "@/components/listening/ListeningExerciseCard";
+import { LevelLockDialog } from "@/components/practice/LevelLockDialog";
+import { levelLockOf, type LevelLock } from "@/lib/learning-path/levelLock";
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
 import { PracticeCatalogFilters } from "@/components/practice/PracticeCatalogFilters";
 import {
@@ -60,6 +62,7 @@ function ListeningCatalogContent() {
     quiz?: ListeningPracticeCatalogItem;
   }>({ open: false });
   const [paywallQuiz, setPaywallQuiz] = useState<ListeningPracticeCatalogItem | null>(null);
+  const [levelLock, setLevelLock] = useState<LevelLock | null>(null);
 
   // Keyboard shortcut Ctrl+K / Cmd+K to focus search input
   useEffect(() => {
@@ -158,6 +161,7 @@ function ListeningCatalogContent() {
       const matchDifficulty = matchesDifficultyFilter(
         listeningLevelOf(q),
         selectedDifficulty,
+        q.practiceLevel,
       );
 
       // A listening attempt is stored only on submission: done or not yet.
@@ -175,7 +179,7 @@ function ListeningCatalogContent() {
     let spotlightAssigned = false;
     return sorted.map((item): ListeningCatalogCardItem => {
       const isDone = Boolean(item.isCompleted);
-      if (!isDone && !spotlightAssigned) {
+      if (!isDone && !item.isLocked && !item.isLevelLocked && !spotlightAssigned) {
         spotlightAssigned = true;
         return { ...item, isSpotlight: true };
       }
@@ -416,6 +420,7 @@ function ListeningCatalogContent() {
                 isAuthenticated={Boolean(user)}
                 onOpenAuthGate={(q) => setAuthGate({ open: true, quiz: q })}
                 onOpenPaywall={(q) => setPaywallQuiz(q)}
+                onOpenLevelLock={(q) => setLevelLock(levelLockOf("LISTENING", q))}
                 onStart={handleStartQuiz}
                 isLaunching={false}
                 isSpotlight={quiz.isSpotlight}
@@ -459,6 +464,8 @@ function ListeningCatalogContent() {
         onOpenLogin={() => router.push("/login")}
         onOpenRegister={() => router.push("/register")}
       />
+
+      <LevelLockDialog lock={levelLock} onClose={() => setLevelLock(null)} />
 
       {/* PLUS Paywall Modal */}
       <PremiumContentPaywallModal

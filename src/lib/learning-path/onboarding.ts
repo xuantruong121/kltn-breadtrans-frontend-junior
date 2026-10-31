@@ -2,6 +2,7 @@
  * Onboarding (F5): goal, career track, daily time, then level (diagnostic or
  * self-chosen). Option lists and the request body; no React, no I/O.
  */
+import type { LevelProgress } from "./levelLock.ts";
 import type { PracticeLevel, PracticeSkill } from "./practiceLevel.ts";
 
 export type LearningGoal = "GENERAL" | "TOEIC_SCORE" | "WORK_COMMUNICATION" | "STUDY" | "TRAVEL";
@@ -23,7 +24,14 @@ export type LearnerProfile = {
   placementLevel: PracticeLevel | null;
   placementSource: PlacementSource;
   onboarded: boolean;
-  skills: Array<{ skill: PracticeSkill; level: PracticeLevel | null; unlockedLevel: PracticeLevel | null; source: string }>;
+  skills: Array<{
+    skill: PracticeSkill;
+    level: PracticeLevel | null;
+    unlockedLevel: PracticeLevel | null;
+    nextLevel: PracticeLevel | null;
+    progress: LevelProgress;
+    source: string;
+  }>;
 };
 
 export const GOAL_OPTIONS: Array<{ value: LearningGoal; label: string; description: string }> = [

@@ -1,6 +1,8 @@
 "use client";
 
 import { PlanLockedScreen } from "@/components/practice/PlanLockedScreen";
+import { LevelLockedScreen } from "@/components/practice/LevelLockDialog";
+import { dependsOnLevel } from "@/lib/learning-path/levelLock";
 import { classifyPracticeLoadError } from "@/lib/practice/practiceLoadErrorLogic";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -138,6 +140,7 @@ export default function TakeQuizPage(props: {
       queryClient.invalidateQueries({ queryKey: ["user-stats", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["listeningPractices"] });
       queryClient.invalidateQueries({ queryKey: ["listening-practices"] });
+      queryClient.invalidateQueries({ predicate: (q) => dependsOnLevel(q.queryKey) });
 
       // Redirect to analytics page
       const submissionRoute =
@@ -362,6 +365,13 @@ export default function TakeQuizPage(props: {
 
   if (!quiz) {
     const loadError = classifyPracticeLoadError(quizError);
+    if (loadError?.kind === "LEVEL_LOCKED")
+      return (
+        <LevelLockedScreen
+          lock={loadError}
+          backHref={props.routeContext === "reading" ? "/reading" : "/listening"}
+        />
+      );
     if (loadError?.kind === "LOCKED")
       return (
         <PlanLockedScreen

@@ -7,17 +7,24 @@
  * Bands: A1–A2 Cơ bản, B1–B2 Trung cấp, C1–C2 Nâng cao. A range is shown in
  * the band of its highest level (B2–C1 → Nâng cao), so content that reaches
  * B1 is never presented as Cơ bản.
+ *
+ * The API's `practiceLevel` is the level access locks on (its lowest, so an
+ * A2–B1 item opens at Cơ bản). When sent, the label and filter follow it, so
+ * a card never names a level other than the one that opens it.
  */
+import type { PracticeLevel } from "../learning-path/practiceLevel.ts";
+
 export const CEFR_ORDER = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
 export type LevelBand = "BASIC" | "INTERMEDIATE" | "ADVANCED";
-export type DifficultyFilter = "ALL" | LevelBand;
+export type DifficultyFilter = "ALL" | PracticeLevel;
 export type CatalogSort = "EASY_TO_HARD" | "HARD_TO_EASY";
 export type LearningStatus = "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
 export type StatusFilter = "ALL" | LearningStatus;
 
 export const DEFAULT_CATALOG_SORT: CatalogSort = "EASY_TO_HARD";
 
-export const BAND_LABEL: Record<LevelBand, string> = {
+export const BAND_LABEL: Record<PracticeLevel, string> = {
+  STARTER: "Mất gốc",
   BASIC: "Cơ bản",
   INTERMEDIATE: "Trung cấp",
   ADVANCED: "Nâng cao",
@@ -25,6 +32,7 @@ export const BAND_LABEL: Record<LevelBand, string> = {
 
 export const DIFFICULTY_FILTERS: Array<{ id: DifficultyFilter; label: string }> = [
   { id: "ALL", label: "Tất cả" },
+  { id: "STARTER", label: "Mất gốc" },
   { id: "BASIC", label: "Cơ bản" },
   { id: "INTERMEDIATE", label: "Trung cấp" },
   { id: "ADVANCED", label: "Nâng cao" },
@@ -63,14 +71,17 @@ export function levelBand(range: CefrRange): LevelBand {
 }
 
 /** "Trung cấp · B1", "Nâng cao · B2–C1"; null when the level is unknown. */
-export function catalogLevelLabel(value?: string | null): string | null {
+export function catalogLevelLabel(
+  value?: string | null,
+  practiceLevel?: PracticeLevel | null,
+): string | null {
   const range = parseCefrLevel(value);
   if (!range) return null;
   const span =
     range.min === range.max
       ? CEFR_ORDER[range.min]
       : `${CEFR_ORDER[range.min]}–${CEFR_ORDER[range.max]}`;
-  return `${BAND_LABEL[levelBand(range)]} · ${span}`;
+  return `${BAND_LABEL[practiceLevel ?? levelBand(range)]} · ${span}`;
 }
 
 export function catalogLevelBand(value?: string | null): LevelBand | null {
@@ -82,9 +93,10 @@ export function catalogLevelBand(value?: string | null): LevelBand | null {
 export function matchesDifficultyFilter(
   value: string | null | undefined,
   filter: DifficultyFilter,
+  practiceLevel?: PracticeLevel | null,
 ): boolean {
   if (filter === "ALL") return true;
-  return catalogLevelBand(value) === filter;
+  return (practiceLevel ?? catalogLevelBand(value)) === filter;
 }
 
 export function matchesStatusFilter(

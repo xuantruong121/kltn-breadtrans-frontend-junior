@@ -1,12 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Bookmark, BookmarkCheck, Clock, Lock } from "lucide-react";
 
+import { LevelLockButton, LevelLockDialog } from "@/components/practice/LevelLockDialog";
 import { learningPathService } from "@/lib/api/services/learningPath.service";
+import { levelLockOf, type LevelLock } from "@/lib/learning-path/levelLock";
 import { PRACTICE_SKILL_LABEL } from "@/lib/learning-path/practiceLevel";
 import { lockLabel, visibleReasons, type RecommendationItem } from "@/lib/learning-path/recommendation";
+import { plansHrefFor } from "@/modules/subscription/practicePlan";
 
 /** One recommended practice item with its reasons, lock state and save toggle. */
 export function RecommendationItemCard({
@@ -18,6 +22,7 @@ export function RecommendationItemCard({
   invalidateKeys: unknown[][];
 }) {
   const queryClient = useQueryClient();
+  const [levelLock, setLevelLock] = useState<LevelLock | null>(null);
   const toggle = useMutation({
     mutationFn: () =>
       item.saved
@@ -25,7 +30,7 @@ export function RecommendationItemCard({
         : learningPathService.save(item.contentType, item.contentId),
     onSuccess: () => invalidateKeys.forEach((queryKey) => queryClient.invalidateQueries({ queryKey })),
   });
-  const lock = lockLabel(item.status);
+  const lock = lockLabel(item.status, item.requiredPlan);
   const reasons = visibleReasons(item);
 
   return (
@@ -63,11 +68,27 @@ export function RecommendationItemCard({
         <span className="inline-flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
           <Clock size={15} aria-hidden="true" />~{item.minutes} phút
         </span>
-        {lock ? (
-          <span className="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-sm font-semibold text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
+        {item.status === "LOCKED_LEVEL" ? (
+          <LevelLockButton
+            onClick={() =>
+              setLevelLock(
+                levelLockOf(item.skill, {
+                  practiceLevel: item.level,
+                  isLocked: item.planLocked,
+                  requiredPlan: item.requiredPlan,
+                }),
+              )
+            }
+            ariaLabel={`${lock}: ${item.title}`}
+          />
+        ) : lock ? (
+          <Link
+            href={plansHrefFor(item.requiredPlan === "PRO" ? "PRO" : "PLUS")}
+            className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2.5 text-sm font-semibold text-amber-800 hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300"
+          >
             <Lock size={14} aria-hidden="true" />
             {lock}
-          </span>
+          </Link>
         ) : (
           <Link
             href={item.route}
@@ -78,6 +99,7 @@ export function RecommendationItemCard({
           </Link>
         )}
       </div>
+      <LevelLockDialog lock={levelLock} onClose={() => setLevelLock(null)} />
     </article>
   );
 }

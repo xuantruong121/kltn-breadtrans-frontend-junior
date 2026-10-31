@@ -25,6 +25,8 @@ import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { PremiumContentPaywallModal } from "@/components/subscription/PremiumContentPaywallModal";
+import { LevelLockDialog } from "@/components/practice/LevelLockDialog";
+import { levelLockOf, type LevelLock } from "@/lib/learning-path/levelLock";
 import { PracticeCard, type PracticeExerciseItem } from "@/components/speaking/PracticeCard";
 import { PracticeCatalogFilters } from "@/components/practice/PracticeCatalogFilters";
 import {
@@ -78,6 +80,7 @@ export default function SpeakingExercisesPage() {
     practiceSetKey?: string;
   }>({ open: false });
   const [paywallExercise, setPaywallExercise] = useState<PracticeExerciseItem | null>(null);
+  const [levelLock, setLevelLock] = useState<LevelLock | null>(null);
 
   // Keyboard shortcut Ctrl+K / Cmd+K to focus search dock
   useEffect(() => {
@@ -250,6 +253,7 @@ export default function SpeakingExercisesPage() {
       const matchDifficulty = matchesDifficultyFilter(
         speakingLevelOf(ex),
         selectedDifficulty,
+        ex.practiceLevel,
       );
 
       const matchCategory =
@@ -271,7 +275,7 @@ export default function SpeakingExercisesPage() {
     let spotlightAssigned = false;
     return sorted.map((item) => {
       const isDone = Boolean(item.isCompleted);
-      if (!isDone && !spotlightAssigned) {
+      if (!isDone && !item.isLocked && !item.isLevelLocked && !spotlightAssigned) {
         spotlightAssigned = true;
         return { ...item, isSpotlight: true };
       }
@@ -553,6 +557,7 @@ export default function SpeakingExercisesPage() {
                     })
                   }
                   onOpenPaywall={(ex) => setPaywallExercise(ex)}
+                  onOpenLevelLock={(ex) => setLevelLock(levelLockOf("SPEAKING", ex))}
                   onStart={handleStartExercise}
                   isLaunching={Boolean(launchingExerciseId)}
                 />
@@ -627,6 +632,8 @@ export default function SpeakingExercisesPage() {
         onOpenLogin={() => router.push("/login")}
         onOpenRegister={() => router.push("/register")}
       />
+
+      <LevelLockDialog lock={levelLock} onClose={() => setLevelLock(null)} />
 
       {/* Paywall Modal */}
       <PremiumContentPaywallModal

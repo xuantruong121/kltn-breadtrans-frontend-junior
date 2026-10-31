@@ -5,7 +5,8 @@ import { lockLabel, totalMinutes, visibleReasons } from "./recommendation.ts";
 test("lock badges name the reason; open items have none", () => {
   assert.equal(lockLabel("OPEN"), null);
   assert.equal(lockLabel("LOCKED_LEVEL"), "Chưa mở mức");
-  assert.equal(lockLabel("LOCKED_PLAN"), "Cần gói PLUS/PRO");
+  assert.equal(lockLabel("LOCKED_PLAN", "PLUS"), "Cần gói PLUS");
+  assert.equal(lockLabel("LOCKED_PLAN", "PRO"), "Cần gói PRO");
 });
 
 test("reasons drop the lock line and keep at most two", () => {

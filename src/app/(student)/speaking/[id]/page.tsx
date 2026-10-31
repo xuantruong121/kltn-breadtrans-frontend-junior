@@ -67,6 +67,8 @@ import { classifyPracticeLoadError } from "@/lib/practice/practiceLoadErrorLogic
 import toast from "react-hot-toast";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { PlanLockedScreen } from "@/components/practice/PlanLockedScreen";
+import { LevelLockedScreen } from "@/components/practice/LevelLockDialog";
+import { dependsOnLevel } from "@/lib/learning-path/levelLock";
 import { speakingSetDisplayTitle } from "@/lib/catalog/displayTitles";
 import {
   IS_WORD_REGEX,
@@ -762,6 +764,7 @@ export default function SpeakingExerciseDetailPage() {
                 queryKey: ["user-skills-summary", currentUserId],
               });
               queryClient.invalidateQueries({ queryKey: ["myPet"] });
+              queryClient.invalidateQueries({ predicate: (q) => dependsOnLevel(q.queryKey) });
             }
           } else if (sub.status === "FAILED") {
             setPhase("FAILED");
@@ -919,6 +922,7 @@ export default function SpeakingExerciseDetailPage() {
                 queryKey: ["user-skills-summary", currentUserId],
               });
               queryClient.invalidateQueries({ queryKey: ["myPet"] });
+              queryClient.invalidateQueries({ predicate: (q) => dependsOnLevel(q.queryKey) });
             }
             if (
               parentAttemptId &&
@@ -1792,6 +1796,8 @@ export default function SpeakingExerciseDetailPage() {
   };
 
   const loadError = classifyPracticeLoadError(exerciseError);
+  if (loadError?.kind === "LEVEL_LOCKED")
+    return <LevelLockedScreen lock={loadError} backHref={courseReturn} />;
   if (loadError?.kind === "LOCKED")
     return <PlanLockedScreen plan={loadError.requiredPlan} backHref={courseReturn} />;
 

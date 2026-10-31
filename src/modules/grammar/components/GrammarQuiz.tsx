@@ -1,5 +1,6 @@
 "use client";
 
+import { dependsOnLevel } from "@/lib/learning-path/levelLock";
 import React, { useState, useEffect } from "react";
 import {
   CheckCircle2,
@@ -164,6 +165,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
         queryClient.invalidateQueries({ queryKey: ["user-stats", currentUserId] }),
         queryClient.invalidateQueries({ queryKey: ["daily-quests"] }),
         queryClient.invalidateQueries({ queryKey: ["profile"] }),
+        queryClient.invalidateQueries({ predicate: (q) => dependsOnLevel(q.queryKey) }),
       ]);
       toast.success(
         data.rewardBanh || data.rewardXP

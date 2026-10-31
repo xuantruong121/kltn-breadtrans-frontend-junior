@@ -39,6 +39,8 @@ import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
 import { isSafeCourseReturn, withSafeReturnTo } from "@/lib/course/navigation";
 import { PlanLockedScreen } from "@/components/practice/PlanLockedScreen";
+import { LevelLockedScreen } from "@/components/practice/LevelLockDialog";
+import { dependsOnLevel } from "@/lib/learning-path/levelLock";
 import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
 import { PictureWritingWorkspace } from "@/components/writing/PictureWritingWorkspace";
 import { isPictureQuiz } from "@/lib/writing/pictureWriting";
@@ -184,6 +186,8 @@ export default function WritingDetailPage(props: {
   });
 
   const loadError = classifyPracticeLoadError(topicError);
+  if (loadError?.kind === "LEVEL_LOCKED")
+    return <LevelLockedScreen lock={loadError} backHref="/writing" />;
   if (loadError?.kind === "LOCKED")
     return <PlanLockedScreen plan={loadError.requiredPlan} backHref="/writing" />;
 
@@ -295,6 +299,7 @@ export default function WritingDetailPage(props: {
       const currentUserId = user?.id;
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["writing-topics"] }),
+        queryClient.invalidateQueries({ predicate: (q) => dependsOnLevel(q.queryKey) }),
         queryClient.invalidateQueries({
           queryKey: ["user-skills-summary", currentUserId],
         }),

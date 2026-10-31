@@ -13,6 +13,8 @@ import {
 import { useAuthStore } from "@/stores/authStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { PremiumContentPaywallModal } from "@/components/subscription/PremiumContentPaywallModal";
+import { LevelLockDialog } from "@/components/practice/LevelLockDialog";
+import { levelLockOf, type LevelLock } from "@/lib/learning-path/levelLock";
 import {
   ReadingTopicCard,
   type ReadingTopicItem,
@@ -90,6 +92,7 @@ function ReadingTopicsContent() {
     quizId?: number;
     title?: string;
   }>({ open: false });
+  const [levelLock, setLevelLock] = useState<LevelLock | null>(null);
   const [paywallExercise, setPaywallExercise] =
     useState<ReadingTopicItem | null>(null);
 
@@ -169,6 +172,9 @@ function ReadingTopicsContent() {
       microSkills: exercise.microSkills,
       isPremiumContent: exercise.isPremiumContent,
       isLocked: exercise.isLocked,
+      isLevelLocked: exercise.isLevelLocked,
+      practiceLevel: exercise.practiceLevel,
+      requiredPlan: exercise.requiredPlan,
       completionStatus: exercise.completionStatus,
       totalArticles: 1,
       completedArticles: exercise.completionStatus === "COMPLETED" ? 1 : 0,
@@ -200,7 +206,7 @@ function ReadingTopicsContent() {
         .toLowerCase();
       return (
         (!q || searchable.includes(q)) &&
-        matchesDifficultyFilter(readingLevelOf(exercise), selectedDifficulty) &&
+        matchesDifficultyFilter(readingLevelOf(exercise), selectedDifficulty, exercise.practiceLevel) &&
         matchesStatusFilter(exercise.completionStatus ?? "NOT_STARTED", selectedStatus)
       );
     });
@@ -208,7 +214,12 @@ function ReadingTopicsContent() {
     // Spotlight the first unfinished exercise in the sorted list.
     let spotlightAssigned = false;
     return sortByLevel(list, sortOrder, readingLevelOf).map((exercise) => {
-      if (exercise.completionStatus !== "COMPLETED" && !spotlightAssigned) {
+      if (
+        exercise.completionStatus !== "COMPLETED" &&
+        !exercise.isLocked &&
+        !exercise.isLevelLocked &&
+        !spotlightAssigned
+      ) {
         spotlightAssigned = true;
         return { ...exercise, isSpotlight: true };
       }
@@ -457,9 +468,10 @@ function ReadingTopicsContent() {
                   })
                 }
                 onOpenPaywall={(t) => setPaywallExercise(t)}
+                onOpenLevelLock={(t) => setLevelLock(levelLockOf("READING", t))}
                 onStart={handleStartReadingExercise}
                 statusOverride={
-                  !exercise.isLocked && exercise.completionStatus === "IN_PROGRESS"
+                  !exercise.isLocked && !exercise.isLevelLocked && exercise.completionStatus === "IN_PROGRESS"
                     ? "IN_PROGRESS"
                     : undefined
                 }
@@ -512,6 +524,8 @@ function ReadingTopicsContent() {
         onOpenLogin={() => router.push("/login")}
         onOpenRegister={() => router.push("/register")}
       />
+
+      <LevelLockDialog lock={levelLock} onClose={() => setLevelLock(null)} />
 
       {/* Paywall Modal */}
       <PremiumContentPaywallModal

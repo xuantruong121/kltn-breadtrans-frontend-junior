@@ -1,3 +1,4 @@
+import type { PracticeLevel } from "@/lib/learning-path/practiceLevel";
 import axiosClient from "../axiosClient";
 
 export interface SpeakingExercise {
@@ -27,6 +28,10 @@ export interface SpeakingExercise {
   description?: string;
   isCompleted?: boolean;
   isPremiumContent?: boolean;
+  /** The level this item sits at, as access decides it. */
+  practiceLevel?: PracticeLevel | null;
+  /** The learner's open level is below this item's. */
+  isLevelLocked?: boolean;
   isLocked?: boolean;
   /** Lowest plan that opens this item: FREE, PLUS or PRO. */
   requiredPlan?: string;

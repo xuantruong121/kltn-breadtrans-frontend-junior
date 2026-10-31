@@ -22,6 +22,7 @@ import {
 } from "./practiceCardLogic";
 import { unlockPlanFor } from "@/modules/subscription/practicePlan";
 import { catalogLevelLabel } from "@/lib/practice/catalogFilters";
+import { LevelLockButton } from "@/components/practice/LevelLockDialog";
 
 export type { PracticeCardStatus, PracticeExerciseItem };
 
@@ -31,6 +32,7 @@ export interface PracticeCardProps {
   statusOverride?: PracticeCardStatus;
   onOpenAuthGate: (exercise: SpeakingExercise) => void;
   onOpenPaywall?: (exercise: PracticeExerciseItem) => void;
+  onOpenLevelLock?: (exercise: PracticeExerciseItem) => void;
   onStart?: (
     exercise: SpeakingExercise & { practiceSet?: SpeakingPracticeSetSummary },
   ) => void;
@@ -52,11 +54,14 @@ export function PracticeCard({
   statusOverride,
   onOpenAuthGate,
   onOpenPaywall,
+  onOpenLevelLock,
   onStart,
   isLaunching = false,
   description,
 }: PracticeCardProps) {
   const isLocked = Boolean(exercise.isLocked);
+  // A guest is asked to log in first, not told about a level.
+  const levelLocked = isAuthenticated && Boolean(exercise.isLevelLocked);
   const practiceSet = exercise.practiceSet;
 
   const computedStatus = computePracticeCardStatus({
@@ -70,7 +75,7 @@ export function PracticeCard({
         }
       : undefined,
     isSpotlight: exercise.isSpotlight,
-    isLocked,
+    isLocked: isLocked || levelLocked,
   });
 
   const status = statusOverride || computedStatus;
@@ -96,6 +101,11 @@ export function PracticeCard({
   );
 
   const handleCardClick = (e: React.MouseEvent) => {
+    if (levelLocked) {
+      e.preventDefault();
+      onOpenLevelLock?.(exercise);
+      return;
+    }
     if (isLocked) {
       e.preventDefault();
       onOpenPaywall?.(exercise);
@@ -176,7 +186,7 @@ export function PracticeCard({
             <span>{formatTag}</span>
             <span>·</span>
             <span>
-              {catalogLevelLabel(exercise.cefrLevel ?? exercise.title) ?? diffConfig.label}
+              {catalogLevelLabel(exercise.cefrLevel ?? exercise.title, exercise.practiceLevel) ?? diffConfig.label}
             </span>
             <span>·</span>
             <span>~{estimatedMinutes} phút</span>
@@ -214,6 +224,11 @@ export function PracticeCard({
                 <span>Bắt đầu</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
+            ) : levelLocked ? (
+              <LevelLockButton
+                onClick={handleCardClick}
+                ariaLabel={`Chưa mở mức của bài luyện nói ${practiceSet?.title || exercise.title}`}
+              />
             ) : isLocked ? (
               <button
                 type="button"

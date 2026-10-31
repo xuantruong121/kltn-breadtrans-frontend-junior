@@ -17,6 +17,8 @@ import {
   resolveReadingPedagogicalDescription,
 } from "./readingCardLogic";
 import { catalogLevelLabel } from "@/lib/practice/catalogFilters";
+import { LevelLockButton } from "@/components/practice/LevelLockDialog";
+import type { PracticeLevel } from "@/lib/learning-path/practiceLevel";
 
 export interface ReadingTopicItem {
   id: number;
@@ -25,6 +27,9 @@ export interface ReadingTopicItem {
   isPremiumContent?: boolean;
   isLocked?: boolean;
   quizzes?: Array<{ id: number; isLocked?: boolean }>;
+  isLevelLocked?: boolean;
+  practiceLevel?: PracticeLevel | null;
+  requiredPlan?: string;
   quizId?: number;
   name?: string;
   vietnameseName?: string;
@@ -51,6 +56,7 @@ interface ReadingTopicCardProps {
   isAuthenticated: boolean;
   onOpenAuthGate: (topic: ReadingTopicItem) => void;
   onOpenPaywall?: (topic: ReadingTopicItem) => void;
+  onOpenLevelLock?: (topic: ReadingTopicItem) => void;
   onStart?: (topic: ReadingTopicItem) => void;
   statusOverride?: ReadingCardStatus;
   isSpotlight?: boolean;
@@ -61,11 +67,14 @@ export function ReadingTopicCard({
   isAuthenticated,
   onOpenAuthGate,
   onOpenPaywall,
+  onOpenLevelLock,
   onStart,
   statusOverride,
   isSpotlight = false,
 }: ReadingTopicCardProps) {
   const isLocked = isReadingTopicLocked(topic);
+  // A guest is asked to log in first, not told about a level.
+  const levelLocked = isAuthenticated && Boolean(topic.isLevelLocked);
   const total = topic.totalArticles || 1;
   const completed = topic.completedArticles || 0;
   const progressPercent =
@@ -76,7 +85,7 @@ export function ReadingTopicCard({
     totalArticles: total,
     completedArticles: completed,
     isSpotlight,
-    isLocked,
+    isLocked: isLocked || levelLocked,
   });
 
   const status = statusOverride || computedStatus;
@@ -92,6 +101,11 @@ export function ReadingTopicCard({
     : "~15 phút";
 
   const handleCardClick = (e: React.MouseEvent) => {
+    if (levelLocked) {
+      e.preventDefault();
+      onOpenLevelLock?.(topic);
+      return;
+    }
     if (isLocked) {
       e.preventDefault();
       onOpenPaywall?.(topic);
@@ -168,7 +182,7 @@ export function ReadingTopicCard({
             <span>{formatTag}</span>
             <span>·</span>
             <span>
-              {catalogLevelLabel(topic.cefrLevel ?? topic.level ?? topic.title) ?? diffConfig.label}
+              {catalogLevelLabel(topic.cefrLevel ?? topic.level ?? topic.title, topic.practiceLevel) ?? diffConfig.label}
             </span>
             <span>·</span>
             <span>{questionCount} câu hỏi</span>
@@ -205,6 +219,11 @@ export function ReadingTopicCard({
                 <span>Bắt đầu</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
+            ) : levelLocked ? (
+              <LevelLockButton
+                onClick={handleCardClick}
+                ariaLabel={`Chưa mở mức của bài đọc ${topic.name || topic.title || ""}`}
+              />
             ) : isLocked ? (
               <button
                 type="button"

@@ -16,12 +16,14 @@ import {
   resolveListeningPedagogicalDescription,
 } from "./listeningCardLogic";
 import { catalogLevelLabel } from "@/lib/practice/catalogFilters";
+import { LevelLockButton } from "@/components/practice/LevelLockDialog";
 
 export interface ListeningExerciseCardProps {
   quiz: ListeningPracticeCatalogItem;
   isAuthenticated: boolean;
   onOpenAuthGate: (quiz: ListeningPracticeCatalogItem) => void;
   onOpenPaywall?: (quiz: ListeningPracticeCatalogItem) => void;
+  onOpenLevelLock?: (quiz: ListeningPracticeCatalogItem) => void;
   onStart?: (quiz: ListeningPracticeCatalogItem) => void;
   isLaunching?: boolean;
   statusOverride?: ListeningCardStatus;
@@ -33,17 +35,20 @@ export function ListeningExerciseCard({
   isAuthenticated,
   onOpenAuthGate,
   onOpenPaywall,
+  onOpenLevelLock,
   onStart,
   isLaunching = false,
   statusOverride,
   isSpotlight = false,
 }: ListeningExerciseCardProps) {
   const isLocked = Boolean(quiz.isLocked);
+  // A guest is asked to log in first, not told about a level.
+  const levelLocked = isAuthenticated && Boolean(quiz.isLevelLocked);
   const computedStatus = computeListeningCardStatus({
     isAuthenticated,
     isCompleted: quiz.isCompleted,
     isSpotlight,
-    isLocked,
+    isLocked: isLocked || levelLocked,
   });
 
   const status = statusOverride || computedStatus;
@@ -65,6 +70,11 @@ export function ListeningExerciseCard({
       : null;
 
   const handleCardClick = (e: React.MouseEvent) => {
+    if (levelLocked) {
+      e.preventDefault();
+      onOpenLevelLock?.(quiz);
+      return;
+    }
     if (isLocked) {
       e.preventDefault();
       onOpenPaywall?.(quiz);
@@ -136,7 +146,7 @@ export function ListeningExerciseCard({
           {/* Tertiary inline metadata */}
           <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
             <span>
-              {catalogLevelLabel(quiz.cefrLevel ?? quiz.levels?.[0] ?? quiz.title) ?? cefr.label}
+              {catalogLevelLabel(quiz.cefrLevel ?? quiz.levels?.[0] ?? quiz.title, quiz.practiceLevel) ?? cefr.label}
             </span>
             <span>·</span>
             <span>{formatTag}</span>
@@ -182,6 +192,8 @@ export function ListeningExerciseCard({
                 <span>Bắt đầu</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
+            ) : levelLocked ? (
+              <LevelLockButton onClick={handleCardClick} ariaLabel={`Chưa mở mức của bài nghe ${quiz.title}`} />
             ) : isLocked ? (
               <button
                 type="button"
