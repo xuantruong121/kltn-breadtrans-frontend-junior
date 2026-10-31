@@ -1,5 +1,6 @@
 "use client";
 
+import { PlanLockedScreen } from "@/components/practice/PlanLockedScreen";
 import { classifyPracticeLoadError } from "@/lib/practice/practiceLoadErrorLogic";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -361,6 +362,13 @@ export default function TakeQuizPage(props: {
 
   if (!quiz) {
     const loadError = classifyPracticeLoadError(quizError);
+    if (loadError?.kind === "LOCKED")
+      return (
+        <PlanLockedScreen
+          plan={loadError.requiredPlan}
+          backHref={props.routeContext === "reading" ? "/reading" : "/listening"}
+        />
+      );
     return (
       <div className="flex flex-col items-center p-12 text-center">
         <p className="text-base font-bold text-slate-800 dark:text-slate-200">
