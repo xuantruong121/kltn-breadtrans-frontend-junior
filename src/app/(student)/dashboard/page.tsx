@@ -41,6 +41,7 @@ import {
 } from "@/lib/api/services/plan.service";
 import { LevelChoiceCard } from "@/components/dashboard/LevelChoiceCard";
 import { SkillLevelsCard } from "@/components/dashboard/SkillLevelsCard";
+import { StarterRoadmapCard } from "@/components/learning-path/StarterRoadmapCard";
 import { TodayPlanCard } from "@/components/learning-path/TodayPlanCard";
 import { learningPathService } from "@/lib/api/services/learningPath.service";
 import { ONBOARDING_SKIPPED_KEY, shouldOpenOnboarding } from "@/lib/learning-path/onboarding";
@@ -1356,6 +1357,7 @@ export default function DashboardPage() {
       {/* 2. PLACEMENT TEST RECOMMENDATION BANNER                                   */}
       {/* ========================================================================= */}
       <LevelChoiceCard profile={learnerProfile} />
+      <StarterRoadmapCard profile={learnerProfile} />
       <SkillLevelsCard profile={learnerProfile} />
       <TodayPlanCard enabled={enabled && Boolean(learnerProfile?.onboarded)} />
 

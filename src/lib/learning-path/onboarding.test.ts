@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { isStarterLearner } from "./onboarding.ts";
 import { canContinue, needsLevelChoice, profilePayload, shouldOpenOnboarding, type OnboardingAnswers } from "./onboarding.ts";
 
 const empty: OnboardingAnswers = { goal: null, track: null, minutesPerDay: null, targetDate: "", selfLevel: null };
@@ -32,4 +33,13 @@ test("the level card shows only without any placement", () => {
   assert.equal(needsLevelChoice({ placementSource: "SELF" }), false);
   assert.equal(needsLevelChoice({ placementSource: "DIAGNOSTIC" }), false);
   assert.equal(needsLevelChoice(undefined), false);
+});
+
+test("the starter path is for a learner at Mất gốc, chosen or placed", () => {
+  const profile = { selfLevel: null, placementLevel: null };
+  assert.equal(isStarterLearner({ ...profile, placementSource: "SELF", selfLevel: "STARTER" }), true);
+  assert.equal(isStarterLearner({ ...profile, placementSource: "DIAGNOSTIC", placementLevel: "STARTER" }), true);
+  assert.equal(isStarterLearner({ ...profile, placementSource: "SELF", selfLevel: "BASIC" }), false);
+  assert.equal(isStarterLearner({ ...profile, placementSource: "NONE" }), false);
+  assert.equal(isStarterLearner(undefined), false);
 });

@@ -34,6 +34,21 @@ export type LearnerProfile = {
   }>;
 };
 
+export type StarterRoadmap = {
+  steps: Array<{
+    key: string;
+    title: string;
+    why: string;
+    minutes: number;
+    route: string;
+    done: boolean;
+    locked: boolean;
+  }>;
+  done: number;
+  total: number;
+  nextKey: string | null;
+};
+
 export const GOAL_OPTIONS: Array<{ value: LearningGoal; label: string; description: string }> = [
   { value: "TOEIC_SCORE", label: "Đạt điểm TOEIC", description: "Luyện theo cấu trúc đề TOEIC Listening & Reading" },
   { value: "WORK_COMMUNICATION", label: "Giao tiếp công việc", description: "Email, họp, điện thoại, trao đổi với đồng nghiệp" },
@@ -100,6 +115,14 @@ export function shouldOpenOnboarding(profile: Pick<LearnerProfile, "onboarded"> 
 }
 
 /** The dashboard asks for a level only when nothing placed the learner yet. */
+/** Mất gốc, chosen or placed: the starter path is for this learner. */
+export function isStarterLearner(
+  profile: Pick<LearnerProfile, "placementSource" | "selfLevel" | "placementLevel"> | undefined,
+): boolean {
+  if (profile?.placementSource === "SELF") return profile.selfLevel === "STARTER";
+  return profile?.placementSource === "DIAGNOSTIC" && profile.placementLevel === "STARTER";
+}
+
 export function needsLevelChoice(profile: Pick<LearnerProfile, "placementSource"> | undefined) {
   return profile?.placementSource === "NONE";
 }

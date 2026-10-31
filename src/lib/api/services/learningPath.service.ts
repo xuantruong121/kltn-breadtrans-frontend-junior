@@ -1,6 +1,6 @@
 import axiosClient from "../axiosClient";
 import type { GateAttempt, GateResult, GateStatus } from "@/lib/learning-path/levelLock";
-import type { LearnerProfile } from "@/lib/learning-path/onboarding";
+import type { LearnerProfile, StarterRoadmap } from "@/lib/learning-path/onboarding";
 import type { PracticeSkill } from "@/lib/learning-path/practiceLevel";
 import type { LearningContentType, RecommendationItem, TodayPlan } from "@/lib/learning-path/recommendation";
 
@@ -11,6 +11,7 @@ export const learningPathService = {
   getToday: (): Promise<TodayPlan> => axiosClient.get("/learning-path/today"),
   getRecommended: (skill: PracticeSkill): Promise<RecommendationItem[]> =>
     axiosClient.get(`/learning-path/skills/${skill}/recommended`),
+  getRoadmap: (): Promise<StarterRoadmap> => axiosClient.get("/learning-path/roadmap"),
   getGate: (skill: PracticeSkill): Promise<GateStatus> => axiosClient.get(`/learning-path/gates/${skill}`),
   startGate: (skill: PracticeSkill): Promise<GateAttempt> => axiosClient.post(`/learning-path/gates/${skill}/start`),
   submitGate: (attemptId: number, answers: Record<string, string>): Promise<GateResult> =>
