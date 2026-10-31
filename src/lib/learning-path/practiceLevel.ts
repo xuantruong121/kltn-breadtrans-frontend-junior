@@ -28,6 +28,25 @@ export const PRACTICE_SKILL_LABEL: Record<PracticeSkill, string> = {
 
 export const PRACTICE_SKILL_ORDER: PracticeSkill[] = ["LISTENING", "READING", "SPEAKING", "WRITING"];
 
+const LEVEL_ORDER: PracticeLevel[] = ["STARTER", "BASIC", "INTERMEDIATE", "ADVANCED"];
+
+/** Skills placed under the overall level: what the learner should work on first. */
+export function skillsBelowOverall(
+  skills: Partial<Record<PracticeSkill, PracticeLevel | null>>,
+  overall: PracticeLevel | null | undefined,
+): PracticeSkill[] {
+  if (!overall) return [];
+  const rank = LEVEL_ORDER.indexOf(overall);
+  return PRACTICE_SKILL_ORDER.filter((skill) => {
+    const level = skills[skill];
+    return Boolean(level) && LEVEL_ORDER.indexOf(level!) < rank;
+  });
+}
+
+export function prioritySkillsText(skills: PracticeSkill[]): string {
+  return skills.map((skill) => PRACTICE_SKILL_LABEL[skill]).join(", ");
+}
+
 export function practiceLevelLabel(level: PracticeLevel | null | undefined): string {
   return level ? PRACTICE_LEVEL_LABEL[level] : "Chưa xác định";
 }

@@ -3,12 +3,15 @@ import {
   PRACTICE_SKILL_LABEL,
   PRACTICE_SKILL_ORDER,
   practiceLevelLabel,
+  prioritySkillsText,
+  skillsBelowOverall,
   type PracticePlacement,
 } from "@/lib/learning-path/practiceLevel";
 
 /** "Mức luyện tập đề xuất" from the Entry Diagnostic (internal levels, not CEFR). */
 export function PracticePlacementPanel({ placement }: { placement: PracticePlacement }) {
   if (!placement.overall) return null;
+  const priority = skillsBelowOverall(placement.skills, placement.overall);
   return (
     <section
       aria-labelledby="practice-placement-heading"
@@ -31,6 +34,11 @@ export function PracticePlacementPanel({ placement }: { placement: PracticePlace
           </li>
         ))}
       </ul>
+      {priority.length > 0 && (
+        <p className="mt-4 text-base font-semibold text-slate-800 dark:text-slate-200">
+          Cần ưu tiên: {prioritySkillsText(priority)}
+        </p>
+      )}
       <p className="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-400">
         Đây là mức luyện tập nội bộ của BreadTrans, dùng để gợi ý bài tập phù hợp. Đây không phải trình độ CEFR và không
         phải chứng chỉ.

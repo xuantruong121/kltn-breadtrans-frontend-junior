@@ -18,7 +18,7 @@ import {
   profilePayload,
   type OnboardingAnswers,
 } from "@/lib/learning-path/onboarding";
-import { PRACTICE_LEVEL_LABEL } from "@/lib/learning-path/practiceLevel";
+import { PRACTICE_LEVEL_LABEL, prioritySkillsText, skillsBelowOverall } from "@/lib/learning-path/practiceLevel";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 const STEP_TITLE: Record<(typeof ONBOARDING_STEPS)[number], { title: string; hint: string }> = {
@@ -89,6 +89,10 @@ export default function OnboardingPage() {
   // A diagnostic result already set the level; the API refuses a self-chosen one.
   const placed = hasDiagnosticPlacement(profileQuery.data);
   const placedLevel = profileQuery.data?.placementLevel;
+  const prioritySkills = skillsBelowOverall(
+    Object.fromEntries((profileQuery.data?.skills ?? []).map((s) => [s.skill, s.level])),
+    placedLevel,
+  );
 
   const save = useMutation({
     mutationFn: (body: Record<string, unknown>) => learningPathService.updateProfile(body),
@@ -184,6 +188,11 @@ export default function OnboardingPage() {
               <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
                 {placedLevel ? PRACTICE_LEVEL_LABEL[placedLevel] : "Theo kết quả từng kỹ năng"}
               </p>
+              {prioritySkills.length > 0 && (
+                <p className="mt-2 text-base font-semibold text-slate-800 dark:text-slate-200">
+                  Cần ưu tiên: {prioritySkillsText(prioritySkills)}
+                </p>
+              )}
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
                 Mức cao hơn được mở bằng bài kiểm tra mở khóa hoặc tiến độ luyện tập.
               </p>
