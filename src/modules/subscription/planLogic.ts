@@ -308,7 +308,7 @@ export function mapPlanPurchaseErrorMessage(
   }
 
   if (typeof rawMsg === "string" && rawMsg.trim().length > 0) {
-    if (!/prisma|query|sql|stack|exception/i.test(rawMsg)) {
+    if (/[À-ỹĐđ]/.test(rawMsg) && !/prisma|query|sql|stack|exception/i.test(rawMsg)) {
       return rawMsg;
     }
   }

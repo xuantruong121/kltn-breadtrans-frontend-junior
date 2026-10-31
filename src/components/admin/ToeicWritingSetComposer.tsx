@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 type TaskKind = "PICTURE_SENTENCE" | "WRITTEN_REQUEST" | "OPINION_ESSAY";
 type Slot = { order: number; taskKind: TaskKind; label: string };
@@ -155,7 +156,7 @@ export default function ToeicWritingSetComposer() {
       await load();
       setActiveId(created.id);
     } catch (error: any) {
-      toast.error(error?.response?.data?.message ?? "Không thể tạo Set.");
+      toast.error(getApiErrorMessage(error, "Không thể tạo Set."));
     } finally {
       setBusy(false);
     }
@@ -172,7 +173,7 @@ export default function ToeicWritingSetComposer() {
       toast.success("Đã lưu thông tin Set.");
       await load();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message ?? "Không thể lưu Set.");
+      toast.error(getApiErrorMessage(error, "Không thể lưu Set."));
     } finally {
       setBusy(false);
     }
@@ -206,7 +207,7 @@ export default function ToeicWritingSetComposer() {
       });
       await load();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message ?? "Task không tương thích với slot này.");
+      toast.error(getApiErrorMessage(error, "Task không tương thích với slot này."));
     } finally {
       setBusy(false);
     }

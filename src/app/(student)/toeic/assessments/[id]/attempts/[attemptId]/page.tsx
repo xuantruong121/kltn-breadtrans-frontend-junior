@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import axiosClient from "@/lib/api/axiosClient";
 import { toeicService } from "@/lib/api/services/toeic.service";
 import { useCanonicalExamPath } from "@/lib/toeic/useCanonicalExamPath";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 const componentLabels: Record<string, string> = {
   LISTENING_READING: "Listening + Reading",
@@ -87,7 +88,7 @@ export default function ToeicAssessmentAttemptPage({
       }
     },
     onError: (err: any) =>
-      setError(err?.response?.data?.message ?? "Không thể mở component."),
+      setError(getApiErrorMessage(err, "Không thể mở component.")),
   });
   // The back-link goes straight to the canonical product URL instead of the
   // legacy aggregate URL, so normal runtime navigation needs no compatibility

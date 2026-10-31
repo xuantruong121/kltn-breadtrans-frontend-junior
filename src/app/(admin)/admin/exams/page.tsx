@@ -402,17 +402,17 @@ export default function AdminExamsPage() {
       });
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.message;
+      const msg = getApiErrorMessage(err, "Chưa đủ điều kiện xuất bản");
       const issues = err?.response?.data?.issues;
       if (Array.isArray(issues) && issues.length > 0) {
         toast.error(
-          `${msg || "Chưa đủ điều kiện xuất bản"}:\n${issues
+          `${msg}:\n${issues
             .slice(0, 3)
-            .map((i: any) => `• ${i.message}`)
+            .map((i: any) => `• ${i.humanMessage ?? i.message}`)
             .join("\n")}`,
         );
       } else {
-        toast.error(msg || "Không thể xuất bản đề thi");
+        toast.error(getApiErrorMessage(err, "Không thể xuất bản đề thi"));
       }
     },
   });

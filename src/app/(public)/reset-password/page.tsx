@@ -6,6 +6,7 @@ import { ArrowRight, CircleAlert, Eye, EyeOff, KeyRound, Loader2 } from "lucide-
 import { useSearchParams } from "next/navigation";
 import axiosClient from "@/lib/api/axiosClient";
 import { AuthShell } from "@/components/auth/AuthShell";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -41,8 +42,7 @@ function ResetPasswordForm() {
       });
       setCompleted(true);
     } catch (requestError: any) {
-      const message = requestError?.response?.data?.message;
-      setError(Array.isArray(message) ? message.join(". ") : message || "Liên kết đã hết hạn hoặc không hợp lệ.");
+      setError(getApiErrorMessage(requestError, "Liên kết đã hết hạn hoặc không hợp lệ."));
     } finally {
       setIsLoading(false);
     }

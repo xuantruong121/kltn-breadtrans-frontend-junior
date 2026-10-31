@@ -19,6 +19,7 @@ import axiosClient from "@/lib/api/axiosClient";
 import { AuthShell } from "./AuthShell";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import GoogleAccountLinkModal from "@/components/auth/GoogleAccountLinkModal";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 type RegisterStep = "details" | "success";
 type FieldName = "fullName" | "email" | "password" | "confirmPassword";
@@ -31,7 +32,7 @@ interface RegistrationForm {
 }
 
 interface ApiErrorShape {
-  response?: { data?: { message?: string | string[] } };
+  response?: { status?: number };
 }
 
 function getSafeRedirect(raw: string | null) {
@@ -52,17 +53,10 @@ function getErrorMessage(error: unknown) {
   if (typeof error !== "object" || error === null) {
     return "Chưa thể tạo tài khoản. Hãy thử lại sau.";
   }
-  const message = (error as ApiErrorShape).response?.data?.message;
-  const raw = Array.isArray(message) ? message.join(". ") : message;
-  if (!raw) return "Chưa thể tạo tài khoản. Hãy thử lại sau.";
-
-  if (
-    raw.toLowerCase().includes("already") ||
-    raw.toLowerCase().includes("exist")
-  ) {
+  if ((error as ApiErrorShape).response?.status === 409) {
     return "Email này đã được sử dụng. Bạn hãy đăng nhập hoặc dùng email khác.";
   }
-  return raw;
+  return getApiErrorMessage(error, "Chưa thể tạo tài khoản. Hãy thử lại sau.");
 }
 
 export default function RegisterFlow() {

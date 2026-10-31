@@ -57,6 +57,7 @@ import {
   resolveAvatarFrame,
   resolveUserBadge,
 } from "@/lib/avatar/avatarCustomizationLogic";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 export type AccountTabKey =
   | "account-profile"
@@ -271,7 +272,7 @@ export function AccountHub() {
       toast.success("Cập nhật thông tin thành công!");
     } catch (err: any) {
       const errCode = err?.response?.data?.code;
-      const serverMessage = err?.response?.data?.message;
+      const serverMessage = getApiErrorMessage(err, "Không thể cập nhật thông tin. Vui lòng thử lại.");
       if (errCode === "INVALID_VIETNAM_PHONE") {
         setPhoneError("Số điện thoại không hợp lệ. Vui lòng nhập số di động Việt Nam (vd: 0987654321 hoặc +84987654321).");
         document.getElementById("shipping-phone")?.focus();
@@ -286,7 +287,7 @@ export function AccountHub() {
           { duration: 5000 }
         );
       } else {
-        toast.error(serverMessage || "Không thể cập nhật thông tin. Vui lòng thử lại.");
+        toast.error(serverMessage);
       }
     } finally {
       setIsSaving(false);
@@ -404,8 +405,7 @@ export function AccountHub() {
       toast.success("Đổi mật khẩu thành công!");
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
     } catch (err: any) {
-      const msg = err?.response?.data?.message;
-      const formatted = Array.isArray(msg) ? msg.join(". ") : msg || "Không thể đổi mật khẩu. Vui lòng kiểm tra lại.";
+      const formatted = getApiErrorMessage(err, "Không thể đổi mật khẩu. Vui lòng kiểm tra lại.");
       // A wrong current password belongs under its own field, not in a toast.
       // The English text is what backends before the Vietnamese message returned.
       if (/mật khẩu hiện tại không đúng|current password is invalid/i.test(formatted)) {

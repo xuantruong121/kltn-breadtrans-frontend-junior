@@ -25,6 +25,7 @@ import axiosClient from "@/lib/api/axiosClient";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { statusLabel } from "@/lib/ui/displayLabels";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 interface SmartGeneratedPayload {
   documentSummary?: string;
@@ -166,9 +167,7 @@ export default function AdminAiToolsPage() {
     },
     onError: (err: any) => {
       toast.error(
-        err?.response?.data?.message ||
-          err?.message ||
-          "Không thể khởi tạo tiến trình xử lý",
+        getApiErrorMessage(err, "Không thể khởi tạo tiến trình xử lý"),
       );
     },
   });
@@ -267,9 +266,7 @@ export default function AdminAiToolsPage() {
     onSuccess: () => toast.success("Đã lưu bản nháp đã chỉnh sửa."),
     onError: (err: any) =>
       toast.error(
-        err?.response?.data?.message ||
-          err?.message ||
-          "Không thể lưu bản nháp",
+        getApiErrorMessage(err, "Không thể lưu bản nháp"),
       ),
   });
 
@@ -298,9 +295,9 @@ export default function AdminAiToolsPage() {
     onError: (err: any) => {
       setMessage({
         type: "error",
-        text: err?.message || "Có lỗi xảy ra khi sinh đề.",
+        text: getApiErrorMessage(err, "Có lỗi xảy ra khi sinh đề."),
       });
-      toast.error(err?.message || "Lỗi khi sinh câu hỏi TOEIC");
+      toast.error(getApiErrorMessage(err, "Lỗi khi sinh câu hỏi TOEIC"));
     },
   });
 
@@ -332,9 +329,9 @@ export default function AdminAiToolsPage() {
     onError: (err: any) => {
       setMessage({
         type: "error",
-        text: err?.message || "Có lỗi xảy ra khi import đề.",
+        text: getApiErrorMessage(err, "Có lỗi xảy ra khi import đề."),
       });
-      toast.error(err?.message || "Có lỗi xảy ra khi import đề.");
+      toast.error(getApiErrorMessage(err, "Có lỗi xảy ra khi import đề."));
     },
   });
 

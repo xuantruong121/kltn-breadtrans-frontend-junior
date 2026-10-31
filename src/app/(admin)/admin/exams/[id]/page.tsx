@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { adminExamService } from "@/lib/api/services/adminExam.service";
 import { ExamOutline } from "@/components/admin/exam/ExamOutline";
 import { getPublishReadinessUi } from "@/lib/examStudio/readinessUi";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 type Tab = "info" | "structure" | "quality" | "preview";
 
@@ -51,7 +52,7 @@ export default function ExamStudioPage({
           "Đề đã có lượt làm nên nội dung được khóa để bảo toàn kết quả cũ.",
         );
       } else {
-        toast.error(err?.response?.data?.message ?? "Không thể chuyển về bản nháp");
+        toast.error(getApiErrorMessage(err, "Không thể chuyển về bản nháp"));
       }
     },
   });
@@ -63,7 +64,7 @@ export default function ExamStudioPage({
       void queryClient.invalidateQueries({ queryKey: ["admin-exam-studio", examId] });
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Không thể xuất bản đề thi"),
+      toast.error(getApiErrorMessage(err, "Không thể xuất bản đề thi")),
   });
 
   const duplicateMutation = useMutation({
@@ -73,7 +74,7 @@ export default function ExamStudioPage({
       if (result?.id) router.push(`/admin/exams/${result.id}`);
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Không thể tạo phiên bản mới"),
+      toast.error(getApiErrorMessage(err, "Không thể tạo phiên bản mới")),
   });
 
   const issues = useMemo(

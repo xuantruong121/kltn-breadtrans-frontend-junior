@@ -5,14 +5,7 @@ import Link from "next/link";
 import { ArrowRight, CircleAlert, Loader2, Mail } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { AuthShell } from "@/components/auth/AuthShell";
-
-function getErrorMessage(error: unknown) {
-  const message = (error as { response?: { data?: { message?: string | string[] } } })
-    ?.response?.data?.message;
-  return Array.isArray(message)
-    ? message.join(". ")
-    : message || "Chưa thể gửi yêu cầu. Vui lòng thử lại sau.";
-}
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -30,7 +23,7 @@ export default function ForgotPasswordPage() {
       });
       setSubmitted(true);
     } catch (requestError: unknown) {
-      setError(getErrorMessage(requestError));
+      setError(getApiErrorMessage(requestError, "Chưa thể gửi yêu cầu. Vui lòng thử lại sau."));
     } finally {
       setIsLoading(false);
     }

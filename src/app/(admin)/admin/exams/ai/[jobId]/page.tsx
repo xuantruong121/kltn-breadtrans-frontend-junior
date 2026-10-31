@@ -18,6 +18,7 @@ import {
   toggleKey,
   type CandidateFilter as Filter,
 } from "@/lib/examAi/candidateWorkspaceLogic";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 function partLabel(part: number) {
   const listening = [1, 2, 3, 4].includes(part);
@@ -145,7 +146,7 @@ export default function ExamAiCandidateWorkspacePage({
       });
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message ?? "Không thể áp dụng candidate đã chọn",
+        getApiErrorMessage(err, "Không thể áp dụng candidate đã chọn"),
       );
     } finally {
       setApplying(false);
@@ -189,7 +190,7 @@ export default function ExamAiCandidateWorkspacePage({
         queryKey: ["exam-ai-candidate", jobId],
       });
     } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? "Không thể lưu chỉnh sửa");
+      toast.error(getApiErrorMessage(err, "Không thể lưu chỉnh sửa"));
     }
   };
 
@@ -202,7 +203,7 @@ export default function ExamAiCandidateWorkspacePage({
         queryKey: ["exam-ai-candidate", jobId],
       });
     } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? "Không thể tạo lại nhóm");
+      toast.error(getApiErrorMessage(err, "Không thể tạo lại nhóm"));
     } finally {
       setRegenerating(null);
     }
@@ -218,7 +219,7 @@ export default function ExamAiCandidateWorkspacePage({
         queryKey: ["exam-ai-candidate", jobId],
       });
     } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? "Không thể tạo lại Part");
+      toast.error(getApiErrorMessage(err, "Không thể tạo lại Part"));
     } finally {
       setRegenerating(null);
     }
@@ -232,7 +233,7 @@ export default function ExamAiCandidateWorkspacePage({
         queryKey: ["exam-ai-status", jobId],
       });
     } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? "Không thể thử lại");
+      toast.error(getApiErrorMessage(err, "Không thể thử lại"));
     }
   };
 

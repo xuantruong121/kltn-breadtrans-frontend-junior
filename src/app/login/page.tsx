@@ -28,6 +28,7 @@ import GoogleAccountLinkModal from "@/components/auth/GoogleAccountLinkModal";
 import { getDeviceId, persistDeviceId } from "@/lib/auth/deviceId";
 import { normalizeAuthResponse } from "@/lib/auth/authResponse";
 import { hydrateSession } from "@/lib/auth/hydrateSession";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 const emptySubscribe = () => () => {};
 
@@ -123,12 +124,7 @@ function LoginForm() {
       }
     } catch (error: any) {
       console.error("Login failed:", error);
-      const msg = error.response?.data?.message;
-      setErrorMsg(
-        Array.isArray(msg)
-          ? msg.join(". ")
-          : msg || "Email hoặc mật khẩu không chính xác. Vui lòng thử lại.",
-      );
+      setErrorMsg(getApiErrorMessage(error, "Email hoặc mật khẩu không chính xác. Vui lòng thử lại."));
     } finally {
       setIsLoading(false);
     }

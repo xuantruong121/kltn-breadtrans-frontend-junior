@@ -8,6 +8,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQueryClient } from "@tanstack/react-query";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 interface QuickRegisterModalProps {
   isOpen: boolean;
@@ -99,8 +100,7 @@ export function QuickRegisterModal({
       }
       router.push(destination);
     } catch (err: any) {
-      const msg = err.response?.data?.message;
-      setErrorMsg(Array.isArray(msg) ? msg[0] : msg || "Đăng ký không thành công. Email này có thể đã được sử dụng.");
+      setErrorMsg(getApiErrorMessage(err, "Đăng ký không thành công. Email này có thể đã được sử dụng."));
     } finally {
       setIsLoading(false);
     }

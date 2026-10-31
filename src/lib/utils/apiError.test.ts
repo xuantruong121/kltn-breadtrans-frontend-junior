@@ -8,6 +8,35 @@ test("a network failure is not shown as a raw axios message", () => {
   assert.match(msg, /Không thể kết nối/);
 });
 
+test("a validation array keeps only its Vietnamese rules", () => {
+  const msg = getApiErrorMessage({
+    response: {
+      status: 400,
+      data: { message: ["Email không đúng định dạng.", "password should not be empty"] },
+    },
+  });
+  assert.equal(msg, "Email không đúng định dạng.");
+});
+
+test("a validation array with no Vietnamese rule falls back on the status", () => {
+  const msg = getApiErrorMessage({
+    response: { status: 400, data: { message: ["title should not be empty"] } },
+  });
+  assert.match(msg, /chưa hợp lệ/);
+});
+
+test("a nested message object is read", () => {
+  const msg = getApiErrorMessage({
+    response: { status: 401, data: { message: { message: "Mật khẩu không chính xác." } } },
+  });
+  assert.equal(msg, "Mật khẩu không chính xác.");
+});
+
+test("a Vietnamese error raised in the browser is kept, an English one is not", () => {
+  assert.equal(getApiErrorMessage(new Error("JSON đề thi không hợp lệ."), "x"), "JSON đề thi không hợp lệ.");
+  assert.equal(getApiErrorMessage(new Error("Request failed"), "Thử lại."), "Thử lại.");
+});
+
 test("rate limit, plan refusal and server errors map to Vietnamese", () => {
   assert.match(getApiErrorMessage({ response: { status: 429 } }), /quá nhanh/);
   assert.match(getApiErrorMessage({ response: { status: 403 } }), /không có quyền/);

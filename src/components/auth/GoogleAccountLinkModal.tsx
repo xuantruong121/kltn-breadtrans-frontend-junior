@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 import { getDeviceId, persistDeviceId } from "@/lib/auth/deviceId";
 import { normalizeAuthResponse } from "@/lib/auth/authResponse";
 import { hydrateSession } from "@/lib/auth/hydrateSession";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 interface GoogleAccountLinkModalProps {
   isOpen: boolean;
@@ -86,11 +87,7 @@ export default function GoogleAccountLinkModal({
         router.replace(candidate);
       }
     } catch (err: any) {
-      const payload = err.response?.data?.message;
-      const msg =
-        (typeof payload === "object" ? payload?.message : payload) ||
-        "Mật khẩu không chính xác hoặc liên kết thất bại.";
-      setErrorMsg(msg);
+      setErrorMsg(getApiErrorMessage(err, "Mật khẩu không chính xác hoặc liên kết thất bại."));
     } finally {
       setIsLoading(false);
     }

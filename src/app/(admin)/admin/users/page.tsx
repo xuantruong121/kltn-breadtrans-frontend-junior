@@ -326,8 +326,7 @@ export default function AdminUsersPage() {
               Không thể tải danh sách người dùng
             </h3>
             <p className="text-sm text-rose-500">
-              {(error as any)?.response?.data?.message ||
-                "Đã xảy ra lỗi khi kết nối tới máy chủ."}
+              {getApiErrorMessage(error, "Đã xảy ra lỗi khi kết nối tới máy chủ.")}
             </p>
             <button
               type="button"

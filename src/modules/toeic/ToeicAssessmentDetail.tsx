@@ -19,6 +19,7 @@ import {
   resolveAssessmentReadiness,
   type ToeicAssessmentComponentView,
 } from "@/lib/toeic/detailPresentation";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 type AssessmentDetail = {
   id: number;
@@ -56,10 +57,7 @@ export default function ToeicAssessmentDetail({
     onSuccess: (attempt) =>
       router.push(`/toeic/assessments/${id}/attempts/${attempt.id}`),
     onError: (err: unknown) => {
-      const message = (
-        err as { response?: { data?: { message?: string } } } | null
-      )?.response?.data?.message;
-      setError(message ?? "Không thể bắt đầu bài thi.");
+      setError(getApiErrorMessage(err, "Không thể bắt đầu bài thi."));
     },
   });
 
