@@ -2553,7 +2553,9 @@ export default function SkillCmsWorkspace({
                     <p className="text-sm text-slate-600">
                       {artifacts.length
                         ? "Lời thoại đã đổi sau lần tạo audio gần nhất. Tạo lại audio để học viên nghe đúng nội dung."
-                        : "Chưa có audio. Kiểm tra lời thoại rồi tạo audio (Azure TTS)."}
+                        : questions.length > 0 && questionsWithoutAudio.length === 0
+                          ? "Bài đang dùng audio riêng cho từng câu. Chỉ tạo khi muốn thay bằng một bản ghi cho cả bài (Azure TTS)."
+                          : "Chưa có audio. Kiểm tra lời thoại rồi tạo audio (Azure TTS)."}
                     </p>
                     <button
                       type="button"
