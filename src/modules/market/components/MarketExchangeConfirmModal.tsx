@@ -30,22 +30,22 @@ const RARITY_MAP: Record<string, { label: string; badgeClass: string; stageBg: s
   COMMON: {
     label: "Phổ biến",
     badgeClass: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
-    stageBg: "bg-gradient-to-b from-slate-100 to-slate-50 border-slate-200/80 dark:from-slate-800 dark:to-slate-850 dark:border-slate-700",
+    stageBg: "bg-slate-100 dark:bg-slate-800 border-slate-200/80 dark:border-slate-700",
   },
   RARE: {
     label: "Hiếm",
     badgeClass: "bg-sky-50 text-sky-700 border-sky-200 font-bold dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800/60",
-    stageBg: "bg-gradient-to-b from-sky-50 to-white border-sky-200/80 dark:from-sky-950/40 dark:to-slate-850 dark:border-sky-900/60",
+    stageBg: "bg-sky-50 dark:bg-sky-950/40 border-sky-200/80 dark:border-sky-900/60",
   },
   EPIC: {
     label: "Sử thi",
     badgeClass: "bg-purple-50 text-purple-700 border-purple-200 font-bold dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800/60",
-    stageBg: "bg-gradient-to-b from-purple-50 to-white border-purple-200/80 dark:from-purple-950/40 dark:to-slate-850 dark:border-purple-900/60",
+    stageBg: "bg-purple-50 dark:bg-purple-950/40 border-purple-200/80 dark:border-purple-900/60",
   },
   LEGENDARY: {
     label: "Huyền thoại",
     badgeClass: "bg-amber-50 text-amber-800 border-amber-300 font-extrabold shadow-2xs dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-700/60",
-    stageBg: "bg-gradient-to-b from-amber-50 to-white border-amber-300/80 dark:from-amber-950/40 dark:to-slate-850 dark:border-amber-800/60",
+    stageBg: "bg-amber-50 dark:bg-amber-950/40 border-amber-300/80 dark:border-amber-800/60",
   },
 };
 
@@ -192,14 +192,14 @@ export const MarketExchangeConfirmModal: React.FC<MarketExchangeConfirmModalProp
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
-              <span className={`inline-block rounded-md border px-2 py-0.5 text-[10px] font-bold ${rarity.badgeClass}`}>
+              <span className={`inline-block rounded-md border px-2 py-0.5 text-xs font-bold ${rarity.badgeClass}`}>
                 {rarity.label}
               </span>
-              <span className="inline-block rounded-md bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+              <span className="inline-block rounded-md bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 px-2 py-0.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
                 {categoryLabel}
               </span>
               {product.stock > 0 && (
-                <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 ml-auto">
+                <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400 ml-auto">
                   Còn {product.stock}
                 </span>
               )}

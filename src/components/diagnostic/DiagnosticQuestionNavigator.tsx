@@ -80,9 +80,9 @@ export function DiagnosticQuestionNavigator({
                     onClick={() => select(q.index)}
                     aria-label={`Câu ${q.index + 1}${state === "answered" ? ", đã làm" : state === "skipped" ? ", đã bỏ qua" : ", chưa làm"}`}
                     aria-current={isCurrent ? "step" : undefined}
-                    className={`flex h-10 items-center justify-center rounded-lg text-sm font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 ${
+                    className={`flex h-10 items-center justify-center rounded-lg text-sm font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 ${
                       isCurrent
-                        ? "bg-violet-600 text-white"
+                        ? "bg-teal-600 text-white"
                         : state === "answered"
                           ? "bg-emerald-100 text-emerald-900 hover:bg-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-200"
                           : state === "skipped"

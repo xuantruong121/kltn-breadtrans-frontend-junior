@@ -1896,19 +1896,19 @@ export default function SpeakingExerciseDetailPage() {
             <ul className="space-y-2 text-xs font-medium text-slate-600 dark:text-slate-400">
               <li className="flex items-center justify-between">
                 <span>Bắt đầu / Dừng thu âm:</span>
-                <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono text-xs font-bold text-slate-800 dark:text-slate-200">
                   Space
                 </kbd>
               </li>
               <li className="flex items-center justify-between">
                 <span>Phím thu âm phụ:</span>
-                <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono text-xs font-bold text-slate-800 dark:text-slate-200">
                   R
                 </kbd>
               </li>
               <li className="flex items-center justify-between">
                 <span>Quy trình tự động:</span>
-                <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold">
+                <span className="text-xs text-amber-700 dark:text-amber-400 font-bold">
                   Dừng &rarr; Nghe lại rồi gửi
                 </span>
               </li>
@@ -1971,7 +1971,7 @@ export default function SpeakingExerciseDetailPage() {
                 )}
 
               {/* 1. Practice Sentence Canvas (Widened horizontal stretch, compact vertical padding) */}
-              <div className="w-full bg-gradient-to-b from-white to-slate-50/60 dark:from-slate-900 dark:to-slate-850/60 py-4 px-5 sm:py-5 sm:px-8 lg:px-10 rounded-3xl border-2 border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center">
+              <div className="bg-white dark:bg-slate-900 w-full py-4 px-5 sm:py-5 sm:px-8 lg:px-10 rounded-3xl border-2 border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center">
                 {renderInteractiveTargetWords(
                   exercise.targetText || "",
                   undefined,
@@ -2418,7 +2418,7 @@ export default function SpeakingExerciseDetailPage() {
                   )}
 
                 {/* Hero Practice Sentence Canvas with Word-Level Color Grading */}
-                <div className="w-full bg-gradient-to-b from-white to-slate-50/50 p-5 sm:p-6 rounded-3xl border-2 border-slate-200/90 shadow-sm my-2 flex flex-col items-center justify-center">
+                <div className="bg-white w-full p-5 sm:p-6 rounded-3xl border-2 border-slate-200/90 shadow-sm my-2 flex flex-col items-center justify-center">
                   <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black uppercase tracking-wider mb-2.5">
                     <Target size={14} className="text-amber-700" />
                     <span>Nội dung nhiệm vụ {speakingMode.label}</span>
@@ -2588,8 +2588,8 @@ export default function SpeakingExerciseDetailPage() {
               {phase === "COMPLETED" &&
                 previousAttempt &&
                 currentSubmission?.overallScore != null && (
-                  <div className="mt-4 rounded-2xl border border-violet-200 bg-violet-50/70 p-4 dark:border-violet-900/60 dark:bg-violet-950/20">
-                    <p className="text-xs font-black uppercase tracking-wider text-violet-700 dark:text-violet-300">
+                  <div className="mt-4 rounded-2xl border border-teal-200 bg-teal-50/70 p-4 dark:border-teal-900/60 dark:bg-teal-950/20">
+                    <p className="text-xs font-black uppercase tracking-wider text-teal-700 dark:text-teal-300">
                       So sánh lần luyện
                     </p>
                     <div className="mt-2 grid grid-cols-3 items-end gap-2 text-center">
@@ -2605,7 +2605,7 @@ export default function SpeakingExerciseDetailPage() {
                         <p className="text-xs font-semibold text-slate-500">
                           Lần này
                         </p>
-                        <p className="text-xl font-black text-violet-700 dark:text-violet-300">
+                        <p className="text-xl font-black text-teal-700 dark:text-teal-300">
                           {formatSpeakingScore(currentSubmission.overallScore)}
                         </p>
                       </div>
@@ -2774,7 +2774,7 @@ export default function SpeakingExerciseDetailPage() {
                       ? `Chuẩn bị ${prepRemaining}s · Nói ngay`
                       : "Bắt đầu thu âm"}
                 </span>
-                <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-amber-600/60 font-mono text-[10px] text-white">
+                <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-amber-600/60 font-mono text-xs text-white">
                   Space
                 </kbd>
               </button>
@@ -2813,7 +2813,7 @@ export default function SpeakingExerciseDetailPage() {
                 >
                   <StopCircle size={15} aria-hidden="true" />
                   <span>Dừng &amp; chấm điểm</span>
-                  <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-rose-700 font-mono text-[10px] text-white">
+                  <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-rose-700 font-mono text-xs text-white">
                     Space
                   </kbd>
                 </button>

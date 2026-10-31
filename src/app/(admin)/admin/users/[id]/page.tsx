@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { adminSubscriptionService } from "@/lib/api/services/admin-subscription.service";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 type Row = Record<string, any>;
 type Tracking = {
@@ -164,7 +165,7 @@ export default function AdminLearnerTrackingPage() {
       <div className="mx-auto max-w-3xl rounded-2xl border border-rose-200 bg-white p-8 text-center shadow-sm">
         <h1 className="text-xl font-extrabold text-slate-900">Không thể tải hồ sơ học viên</h1>
         <p className="mt-2 text-sm text-rose-600">
-          {(error as any)?.response?.data?.message || "Học viên không tồn tại hoặc dữ liệu tạm thời chưa sẵn sàng."}
+          {getApiErrorMessage(error, "Học viên không tồn tại hoặc dữ liệu tạm thời chưa sẵn sàng.")}
         </p>
         <button
           type="button"

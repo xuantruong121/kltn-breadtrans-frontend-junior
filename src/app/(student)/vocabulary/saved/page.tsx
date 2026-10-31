@@ -23,7 +23,7 @@ export default function SavedVocabularyPage() {
   );
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
+    <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
       <BackButton href="/flashcard" label="Quay lại Flashcard & Từ vựng" />
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
@@ -45,7 +45,7 @@ export default function SavedVocabularyPage() {
         ) : filtered.length === 0 ? (
           <p className="py-12 text-center text-sm text-slate-500 dark:text-slate-400">Chưa có từ nào phù hợp.</p>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filtered.map((word: VocabWord & { id: number }) => (
               <article key={word.id} className="rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-slate-850/60 p-4">
                 <div className="flex items-start justify-between gap-3">

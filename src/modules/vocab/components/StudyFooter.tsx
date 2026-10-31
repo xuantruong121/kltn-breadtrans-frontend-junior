@@ -42,8 +42,8 @@ export const StudyFooter: React.FC<StudyFooterProps> = ({
           </div>
 
           <div className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-purple-500" />
-            <span className="text-purple-600 dark:text-purple-400">{learnedCount} Đã học</span>
+            <span className="size-2 rounded-full bg-teal-500" />
+            <span className="text-teal-600 dark:text-teal-400">{learnedCount} Đã học</span>
           </div>
 
           <div className="flex items-center gap-1.5">

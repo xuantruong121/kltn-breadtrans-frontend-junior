@@ -429,7 +429,7 @@ export default function AdminCoursesPage() {
               </span>
               &rdquo;.
             </p>
-            <div className="p-3 bg-rose-50/60 border border-rose-200 rounded-lg text-[11px] text-rose-700 mb-6">
+            <div className="p-3 bg-rose-50/60 border border-rose-200 rounded-lg text-xs text-rose-700 mb-6">
               Hành động này có thể xóa liên hoàn:
               <ul className="list-disc list-inside mt-1 space-y-0.5">
                 <li>Toàn bộ bài học và video đính kèm</li>

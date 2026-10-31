@@ -123,6 +123,11 @@ export function isStarterLearner(
   return profile?.placementSource === "DIAGNOSTIC" && profile.placementLevel === "STARTER";
 }
 
+/** A diagnostic result sets the level, so onboarding must not offer a self-chosen one. */
+export function hasDiagnosticPlacement(profile: Pick<LearnerProfile, "placementSource"> | undefined) {
+  return profile?.placementSource === "DIAGNOSTIC";
+}
+
 export function needsLevelChoice(profile: Pick<LearnerProfile, "placementSource"> | undefined) {
   return profile?.placementSource === "NONE";
 }

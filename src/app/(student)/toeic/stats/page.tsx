@@ -63,7 +63,7 @@ function TrendChart({ trend, legend }: { trend: ToeicLrSkillStats["trend"]; lege
       {[0, 20, 40, 60, 80, 100].map((v) => (
         <g key={v}>
           <line x1={pad.l} x2={W - pad.r} y1={y(v)} y2={y(v)} className="stroke-slate-200 dark:stroke-slate-700" />
-          <text x={pad.l - 8} y={y(v) + 4} textAnchor="end" className="fill-slate-500 text-[11px]">
+          <text x={pad.l - 8} y={y(v) + 4} textAnchor="end" className="fill-slate-500 text-xs">
             {v}
           </text>
         </g>
@@ -72,10 +72,10 @@ function TrendChart({ trend, legend }: { trend: ToeicLrSkillStats["trend"]; lege
       {points.map((p, i) => (
         <g key={p.attemptId}>
           <circle cx={x(i)} cy={y(p.accuracy!)} r={4} className="fill-rose-500" />
-          <text x={x(i)} y={y(p.accuracy!) + 16} textAnchor="middle" className="fill-rose-600 text-[11px]">
+          <text x={x(i)} y={y(p.accuracy!) + 16} textAnchor="middle" className="fill-rose-600 text-xs">
             {p.accuracy!.toFixed(2)}%
           </text>
-          <text x={x(i)} y={H - 8} textAnchor="middle" className="fill-slate-500 text-[11px]">
+          <text x={x(i)} y={H - 8} textAnchor="middle" className="fill-slate-500 text-xs">
             {p.submittedAt.slice(0, 10)}
           </text>
         </g>
@@ -476,7 +476,7 @@ export default function ToeicStatsPage() {
   return (
     <div className="w-full">
       <div className="border-b border-slate-200 bg-blue-50/60 dark:border-slate-800 dark:bg-slate-900">
-        <div className="mx-auto w-full max-w-6xl px-4 pt-8 sm:px-6">
+        <div className="mx-auto w-full max-w-7xl px-4 pt-8 sm:px-6">
           <h1 className="flex items-center gap-3 text-3xl font-extrabold text-slate-900 sm:text-4xl dark:text-white">
             <BarChart3 size={30} aria-hidden="true" /> Thống kê kết quả luyện thi
           </h1>
@@ -496,7 +496,7 @@ export default function ToeicStatsPage() {
           </div>
         </div>
       </div>
-      <div className="mx-auto w-full max-w-6xl px-4 py-7 sm:px-6">
+      <div className="mx-auto w-full max-w-7xl px-4 py-7 sm:px-6">
         {cert === "TOEIC" ? (
           <>
             <ToeicTab />

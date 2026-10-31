@@ -319,8 +319,8 @@ export default function MediaSearchPanel({
 
       {generated?.candidate &&
         (generated.reason === "SUCCESS" || generated.reason === "VISION_UNAVAILABLE") && (
-          <div className="rounded-lg border border-violet-200 bg-violet-50/40 p-3 space-y-2">
-            <p className="text-xs font-semibold text-violet-800">Ảnh do AI tạo</p>
+          <div className="rounded-lg border border-teal-200 bg-teal-50/40 p-3 space-y-2">
+            <p className="text-xs font-semibold text-teal-800">Ảnh do AI tạo</p>
             <img
               src={generated.candidate.previewUrl}
               alt="Ảnh do AI tạo"

@@ -183,13 +183,13 @@ const CERTIFICATES: CertificateMeta[] = [
     ],
     roadmapDate: "Dự kiến: Quý 4/2026",
     theme: {
-      tabActiveBg: "bg-purple-600 text-white",
-      badgeBg: "bg-purple-50 dark:bg-purple-950/60",
-      badgeText: "text-purple-700 dark:text-purple-300",
-      badgeBorder: "border-purple-200 dark:border-purple-800/60",
-      tagBg: "bg-purple-50 dark:bg-purple-950/60",
-      tagText: "text-purple-800 dark:text-purple-300",
-      accentBorder: "hover:border-purple-400 dark:hover:border-purple-600",
+      tabActiveBg: "bg-teal-600 text-white",
+      badgeBg: "bg-teal-50 dark:bg-teal-950/60",
+      badgeText: "text-teal-700 dark:text-teal-300",
+      badgeBorder: "border-teal-200 dark:border-teal-800/60",
+      tagBg: "bg-teal-50 dark:bg-teal-950/60",
+      tagText: "text-teal-800 dark:text-teal-300",
+      accentBorder: "hover:border-teal-400 dark:hover:border-teal-600",
     },
   },
   {
@@ -222,13 +222,13 @@ const CERTIFICATES: CertificateMeta[] = [
     ],
     roadmapDate: "Dự kiến: Quý 1/2027",
     theme: {
-      tabActiveBg: "bg-indigo-600 text-white",
-      badgeBg: "bg-indigo-50 dark:bg-indigo-950/60",
-      badgeText: "text-indigo-700 dark:text-indigo-300",
-      badgeBorder: "border-indigo-200 dark:border-indigo-800/60",
-      tagBg: "bg-indigo-50 dark:bg-indigo-950/60",
-      tagText: "text-indigo-800 dark:text-indigo-300",
-      accentBorder: "hover:border-indigo-400 dark:hover:border-indigo-600",
+      tabActiveBg: "bg-blue-600 text-white",
+      badgeBg: "bg-blue-50 dark:bg-blue-950/60",
+      badgeText: "text-blue-700 dark:text-blue-300",
+      badgeBorder: "border-blue-200 dark:border-blue-800/60",
+      tagBg: "bg-blue-50 dark:bg-blue-950/60",
+      tagText: "text-blue-800 dark:text-blue-300",
+      accentBorder: "hover:border-blue-400 dark:hover:border-blue-600",
     },
   },
   {
@@ -401,7 +401,7 @@ export default function ExamPracticeHubPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto pb-20 px-4 sm:px-6">
+    <div className="max-w-7xl mx-auto pb-20 px-4 sm:px-6">
       {/* Toast Notification */}
       <AnimatePresence>
         {toastMessage && (
@@ -435,7 +435,7 @@ export default function ExamPracticeHubPage() {
       {/* Page introduction: factual, content-first, not a marketing hero. */}
       <section className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800">
         <div className="max-w-2xl">
-          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+          <p className="mb-1.5 text-sm font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
             Khảo thí & Luyện đề
           </p>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-950 dark:text-white">
@@ -504,7 +504,7 @@ export default function ExamPracticeHubPage() {
                 <span>{cert.name}</span>
                 {isActive ? (
                   <span
-                    className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                    className={`text-xs font-medium px-1.5 py-0.5 rounded ${
                       isSelected
                         ? "bg-white/20 text-white dark:bg-slate-950/20 dark:text-slate-950"
                         : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
@@ -514,7 +514,7 @@ export default function ExamPracticeHubPage() {
                   </span>
                 ) : (
                   <span
-                    className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                    className={`text-xs font-medium px-1.5 py-0.5 rounded ${
                       isSelected
                         ? "bg-white/20 text-white dark:bg-slate-950/20 dark:text-slate-950"
                         : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500"
@@ -743,13 +743,13 @@ export default function ExamPracticeHubPage() {
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-16 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
                 <Loader2 className="animate-spin text-amber-600 dark:text-amber-400 mb-3" size={28} />
-                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
                   Đang tải danh sách đề thi...
                 </p>
               </div>
             ) : filteredQuizzes.length > 0 ? (
               <div className="space-y-6">
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {paginatedQuizzes.map((quiz: any, index: number) => {
                     const isCompleted = quiz.isCompleted;
                     const questionCount =
@@ -808,7 +808,7 @@ export default function ExamPracticeHubPage() {
                             <span
                               className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-md border ${
                                 isFourSkill
-                                  ? "bg-purple-50 dark:bg-purple-950/50 text-purple-800 dark:text-purple-300 border-purple-200/80 dark:border-purple-800/60"
+                                  ? "bg-teal-50 dark:bg-teal-950/50 text-teal-800 dark:text-teal-300 border-teal-200/80 dark:border-teal-800/60"
                                   : isSpeakingWriting
                                     ? "bg-blue-50 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 border-blue-200/80 dark:border-blue-800/60"
                                     : "bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border-amber-200/70 dark:border-amber-800/60"
@@ -840,7 +840,7 @@ export default function ExamPracticeHubPage() {
                           <h3 className="text-base font-bold text-slate-950 dark:text-slate-100 group-hover:text-amber-800 dark:group-hover:text-amber-400 transition-colors line-clamp-2 leading-snug">
                             {quiz.title}
                           </h3>
-                          <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2">
+                          <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2">
                             {cardDescription}
                           </p>
 
@@ -849,7 +849,7 @@ export default function ExamPracticeHubPage() {
                             {skillLabels.map((skill) => (
                               <span
                                 key={skill}
-                                className="inline-flex items-center text-[11px] font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded"
+                                className="inline-flex items-center text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded"
                               >
                                 {skill}
                               </span>
@@ -901,7 +901,7 @@ export default function ExamPracticeHubPage() {
                     ? "Không tìm thấy đề thi phù hợp"
                     : "Chưa có đề thi nào trong danh mục này"}
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+                <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
                   {searchQuery
                     ? "Hãy thử tìm kiếm với từ khóa khác hoặc bỏ chọn bộ lọc."
                     : "Các bộ đề thi mới sẽ sớm được cập nhật trên hệ thống."}
@@ -919,7 +919,7 @@ export default function ExamPracticeHubPage() {
                     <Compass size={17} className="text-slate-700 dark:text-slate-300" />
                     <span>Định dạng chứng chỉ đang phát triển</span>
                   </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                     Kế hoạch mở rộng ngân hàng câu hỏi mô phỏng cho các chứng chỉ quốc tế tiếp theo.
                   </p>
                 </div>
@@ -937,10 +937,10 @@ export default function ExamPracticeHubPage() {
                       >
                         <div className="space-y-2">
                           <div className="flex items-center justify-between gap-2">
-                            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                               {cert.code}
                             </span>
-                            <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
                               {cert.roadmapDate}
                             </span>
                           </div>
@@ -949,7 +949,7 @@ export default function ExamPracticeHubPage() {
                             <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 leading-snug">
                               {cert.name}
                             </h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">
                               {cert.description}
                             </p>
                           </div>
@@ -959,13 +959,13 @@ export default function ExamPracticeHubPage() {
                             {cert.skills.slice(0, 3).map((s, idx) => (
                               <span
                                 key={idx}
-                                className="text-[10px] font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded"
+                                className="text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded"
                               >
                                 {s.label.split(" (")[0]}
                               </span>
                             ))}
                             {cert.skills.length > 3 && (
-                              <span className="text-[10px] font-medium text-slate-400 bg-slate-50 dark:bg-slate-800/60 px-1.5 py-0.5 rounded">
+                              <span className="text-xs font-medium text-slate-400 bg-slate-50 dark:bg-slate-800/60 px-1.5 py-0.5 rounded">
                                 +{cert.skills.length - 3}
                               </span>
                             )}
@@ -986,7 +986,7 @@ export default function ExamPracticeHubPage() {
                           <button
                             type="button"
                             onClick={() => handleNotifyMe(cert.id, cert.name)}
-                            className={`text-[11px] font-medium px-2.5 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
+                            className={`text-xs font-medium px-2.5 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
                               isRegistered
                                 ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50"
                                 : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
@@ -1020,7 +1020,7 @@ export default function ExamPracticeHubPage() {
         isOpen={authGate.open}
         onClose={() => setAuthGate({ open: false })}
         targetLabel={
-          authGate.title ? `đề thi "${authGate.title}"` : "đề thi này"
+          authGate.title ? `đề thi"${authGate.title}"` : "đề thi này"
         }
         targetRoute={authGate.destination || "/exams"}
         onOpenLogin={() => router.push("/login")}

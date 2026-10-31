@@ -13,7 +13,7 @@ import {
 } from "@/lib/practice/catalogFilters";
 
 const SELECT_CLASS =
-  "min-h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 transition focus:border-violet-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-hidden cursor-pointer";
+  "min-h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 transition focus:border-teal-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-hidden cursor-pointer";
 
 /**
  * Difficulty chips, sort, learning status and reset, shared by the
@@ -61,7 +61,7 @@ export function PracticeCatalogFilters({
               onClick={() => onDifficultyChange(option.id)}
               className={`min-h-9 rounded-lg px-3 py-1.5 text-xs transition cursor-pointer ${
                 isActive
-                  ? "bg-violet-600 text-white font-semibold shadow-sm border border-violet-600"
+                  ? "bg-teal-600 text-white font-semibold shadow-sm border border-teal-600"
                   : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200 dark:border-slate-700 font-medium"
               }`}
             >

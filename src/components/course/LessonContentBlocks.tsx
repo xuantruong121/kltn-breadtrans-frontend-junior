@@ -18,7 +18,7 @@ export function LessonExampleCard({
   example: ExampleLike;
 }) {
   return (
-    <article className="relative overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50/90 to-white p-5 text-base shadow-xs dark:border-blue-900/60 dark:from-blue-950/40 dark:to-slate-900">
+    <article className="bg-blue-50/90 dark:bg-blue-950/40 relative overflow-hidden rounded-2xl border border-blue-100 p-5 text-base shadow-xs dark:border-blue-900/60">
       <span className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-300">
         Ví dụ {String(index + 1).padStart(2, "0")}
       </span>

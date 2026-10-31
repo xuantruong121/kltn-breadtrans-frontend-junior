@@ -12,6 +12,7 @@ import {
   SuggestionStatus,
   suggestionService,
 } from "@/lib/api/services/suggestion.service";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 const categoryOptions: Array<{ value: SuggestionCategory; label: string }> = [
   { value: "FEATURE", label: "Tính năng" },
@@ -24,12 +25,6 @@ const categoryOptions: Array<{ value: SuggestionCategory; label: string }> = [
 const statusLabels: Record<SuggestionStatus, string> = {
   PENDING: "Đã nhận", REVIEWING: "Đang xem xét", RESPONDED: "Đã phản hồi", RESOLVED: "Đã hoàn tất", REJECTED: "Chưa áp dụng",
 };
-
-function toUserMessage(error: unknown, fallback: string) {
-  const response = error as { response?: { data?: { message?: string | string[] } } };
-  const message = response.response?.data?.message;
-  return Array.isArray(message) ? message[0] : message || fallback;
-}
 
 function isHttpUrl(value: string) {
   try {
@@ -67,7 +62,7 @@ export function SuggestionModal({ isOpen, onClose }: { isOpen: boolean; onClose:
       setContent(""); setAttachments([]); setLinkValue(""); setShowLinkInput(false); setTab("mine");
       queryClient.invalidateQueries({ queryKey: ["suggestions", "mine"] });
     },
-    onError: (error) => toast.error(toUserMessage(error, "Không thể gửi đề xuất lúc này.")),
+    onError: (error) => toast.error(getApiErrorMessage(error, "Không thể gửi đề xuất lúc này.")),
   });
 
   if (!isOpen || typeof document === "undefined") return null;
@@ -94,7 +89,7 @@ export function SuggestionModal({ isOpen, onClose }: { isOpen: boolean; onClose:
       const attachment = await suggestionService.uploadAttachment(file);
       setAttachments((current) => [...current, attachment]);
     }
-    catch (error) { toast.error(toUserMessage(error, "Không thể tải tệp lên.")); }
+    catch (error) { toast.error(getApiErrorMessage(error, "Không thể tải tệp lên.")); }
     finally { setUploading(false); }
   };
 

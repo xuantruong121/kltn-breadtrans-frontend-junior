@@ -215,7 +215,7 @@ function ListeningCatalogContent() {
       <section className="relative overflow-hidden rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 px-5 py-4 sm:px-6 sm:py-5 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6">
           <div className="min-w-0 flex-1 space-y-2.5">
-            <div className="inline-flex items-center gap-2 rounded-full border border-violet-200 dark:border-violet-800/60 bg-violet-50/80 dark:bg-violet-950/40 px-3 py-1 text-xs font-bold text-violet-700 dark:text-violet-300">
+            <div className="inline-flex items-center gap-2 rounded-full border border-teal-200 dark:border-teal-800/60 bg-teal-50/80 dark:bg-teal-950/40 px-3 py-1 text-xs font-bold text-teal-700 dark:text-teal-300">
               <Headphones size={14} aria-hidden="true" />
               <span>Phòng Luyện Nghe & Phân Tích Âm Thanh</span>
             </div>
@@ -298,7 +298,7 @@ function ListeningCatalogContent() {
               placeholder="Tìm kiếm bài nghe theo tiêu đề, chủ đề..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="min-h-11 w-full rounded-xl border border-slate-300/80 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-800/90 pl-10.5 pr-20 text-sm font-medium text-slate-900 dark:text-slate-100 transition-all duration-150 placeholder:text-slate-500 dark:placeholder:text-slate-400 placeholder:font-normal focus:border-violet-600 dark:focus:border-violet-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/20 focus:outline-hidden shadow-2xs"
+              className="min-h-11 w-full rounded-xl border border-slate-300/80 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-800/90 pl-10.5 pr-20 text-sm font-medium text-slate-900 dark:text-slate-100 transition-all duration-150 placeholder:text-slate-500 dark:placeholder:text-slate-400 placeholder:font-normal focus:border-teal-600 dark:focus:border-teal-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-teal-500/20 focus:outline-hidden shadow-2xs"
             />
             <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
               {searchTerm ? (
@@ -328,7 +328,7 @@ function ListeningCatalogContent() {
               onClick={() => setSelectedMode("ALL")}
               className={`min-h-9 rounded-xl px-3 text-xs font-black transition whitespace-nowrap cursor-pointer ${
                 selectedMode === "ALL"
-                  ? "bg-violet-600 text-white shadow-2xs"
+                  ? "bg-teal-600 text-white shadow-2xs"
                   : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100"
               }`}
             >
@@ -339,7 +339,7 @@ function ListeningCatalogContent() {
               onClick={() => setSelectedMode("COMPREHENSION")}
               className={`min-h-9 rounded-xl px-3 text-xs font-black transition whitespace-nowrap cursor-pointer ${
                 selectedMode === "COMPREHENSION"
-                  ? "bg-violet-600 text-white shadow-2xs"
+                  ? "bg-teal-600 text-white shadow-2xs"
                   : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100"
               }`}
             >
@@ -350,7 +350,7 @@ function ListeningCatalogContent() {
               onClick={() => setSelectedMode("DICTATION")}
               className={`min-h-9 rounded-xl px-3 text-xs font-black transition whitespace-nowrap cursor-pointer ${
                 selectedMode === "DICTATION"
-                  ? "bg-violet-600 text-white shadow-2xs"
+                  ? "bg-teal-600 text-white shadow-2xs"
                   : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100"
               }`}
             >
@@ -361,7 +361,7 @@ function ListeningCatalogContent() {
               onClick={() => setSelectedMode("DIALOGUE")}
               className={`min-h-9 rounded-xl px-3 text-xs font-black transition whitespace-nowrap cursor-pointer ${
                 selectedMode === "DIALOGUE"
-                  ? "bg-violet-600 text-white shadow-2xs"
+                  ? "bg-teal-600 text-white shadow-2xs"
                   : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100"
               }`}
             >
@@ -394,7 +394,7 @@ function ListeningCatalogContent() {
       <section>
         {isLoading ? (
           <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-            <Loader2 size={32} className="animate-spin text-violet-600" aria-hidden="true" />
+            <Loader2 size={32} className="animate-spin text-teal-600" aria-hidden="true" />
             <p className="mt-3 text-xs font-bold text-slate-500 dark:text-slate-400">
               Đang tải danh sách bài luyện nghe...
             </p>
@@ -453,7 +453,7 @@ function ListeningCatalogContent() {
                   setSelectedDifficulty("ALL");
                   setSelectedStatus("ALL");
                 }}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
               >
                 <RotateCcw size={14} aria-hidden="true" />
                 Xóa bộ lọc
@@ -467,7 +467,7 @@ function ListeningCatalogContent() {
       <AuthGateModal
         isOpen={authGate.open}
         onClose={() => setAuthGate({ open: false })}
-        targetLabel={authGate.quiz?.title ? `bài nghe "${authGate.quiz.title}"` : "bài luyện nghe này"}
+        targetLabel={authGate.quiz?.title ? `bài nghe"${authGate.quiz.title}"` : "bài luyện nghe này"}
         targetRoute={authGate.quiz ? `/listening/${authGate.quiz.id}` : "/listening"}
         onOpenLogin={() => router.push("/login")}
         onOpenRegister={() => router.push("/register")}
@@ -491,7 +491,7 @@ export default function ListeningPracticePage() {
     <Suspense
       fallback={
         <div className="flex min-h-72 items-center justify-center">
-          <Loader2 size={32} className="animate-spin text-violet-600" aria-label="Đang tải trang luyện nghe" />
+          <Loader2 size={32} className="animate-spin text-teal-600" aria-label="Đang tải trang luyện nghe" />
         </div>
       }
     >

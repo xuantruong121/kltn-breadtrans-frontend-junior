@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { adminExamService } from "@/lib/api/services/adminExam.service";
 import { ExamOutline } from "@/components/admin/exam/ExamOutline";
 import { getPublishReadinessUi } from "@/lib/examStudio/readinessUi";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 type Tab = "info" | "structure" | "quality" | "preview";
 
@@ -51,7 +52,7 @@ export default function ExamStudioPage({
           "Đề đã có lượt làm nên nội dung được khóa để bảo toàn kết quả cũ.",
         );
       } else {
-        toast.error(err?.response?.data?.message ?? "Không thể chuyển về bản nháp");
+        toast.error(getApiErrorMessage(err, "Không thể chuyển về bản nháp"));
       }
     },
   });
@@ -63,7 +64,7 @@ export default function ExamStudioPage({
       void queryClient.invalidateQueries({ queryKey: ["admin-exam-studio", examId] });
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Không thể xuất bản đề thi"),
+      toast.error(getApiErrorMessage(err, "Không thể xuất bản đề thi")),
   });
 
   const duplicateMutation = useMutation({
@@ -73,7 +74,7 @@ export default function ExamStudioPage({
       if (result?.id) router.push(`/admin/exams/${result.id}`);
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Không thể tạo phiên bản mới"),
+      toast.error(getApiErrorMessage(err, "Không thể tạo phiên bản mới")),
   });
 
   const issues = useMemo(
@@ -117,7 +118,7 @@ export default function ExamStudioPage({
             {exam.title}
           </h1>
           <span
-            className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${isPublished ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300" : "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"}`}
+            className={`rounded-full border px-2 py-0.5 text-xs font-medium ${isPublished ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300" : "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"}`}
           >
             {isPublished ? "Đã xuất bản" : "Bản nháp"}
           </span>
@@ -175,7 +176,7 @@ export default function ExamStudioPage({
                 {publishReadiness.label}
               </button>
               {!publishReadiness.canPublish && (
-                <p className="max-w-[240px] text-right text-[11px] leading-4 text-slate-500 dark:text-slate-400">
+                <p className="max-w-[240px] text-right text-xs leading-4 text-slate-500 dark:text-slate-400">
                   {publishReadiness.helpText}
                 </p>
               )}

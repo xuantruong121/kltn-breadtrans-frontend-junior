@@ -337,7 +337,7 @@ export const MarketScreen: React.FC = () => {
         {/* User Balance or Guest Prompt */}
         {!isGuest ? (
           <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 px-4 py-3 shrink-0">
-            <span className="text-[11px] text-slate-400">Số dư Bánh Mì</span>
+            <span className="text-xs text-slate-400">Số dư Bánh Mì</span>
             <p className="flex items-center gap-1.5 text-2xl font-semibold text-slate-900 dark:text-slate-100 leading-tight">
               {(balanceData?.totalBanh || 0).toLocaleString("vi-VN")}
               <Wheat size={18} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
@@ -347,7 +347,7 @@ export const MarketScreen: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 px-4 py-3 shrink-0">
             <div>
               <span className="text-xs font-medium text-slate-700 dark:text-slate-200">Bạn đang duyệt ở chế độ khách</span>
-              <p className="text-[11px] text-slate-400">Đăng nhập để tích lũy Bánh Mì và nhận quà.</p>
+              <p className="text-xs text-slate-400">Đăng nhập để tích lũy Bánh Mì và nhận quà.</p>
             </div>
             <Link
               href="/login?redirect=/market"
@@ -599,7 +599,7 @@ export const MarketScreen: React.FC = () => {
 
                     <div className="flex items-center justify-between sm:justify-end gap-4">
                       <div className="text-left sm:text-right">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
                           Chi phí
                         </span>
                         <span className="text-sm font-bold text-amber-900 dark:text-amber-400">

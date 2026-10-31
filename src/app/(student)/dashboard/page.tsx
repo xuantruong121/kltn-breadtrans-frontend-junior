@@ -156,18 +156,18 @@ function getQuestCategoryMeta(type?: string) {
     case "COMPLETE_QUIZ":
       return {
         label: "Bài kiểm tra",
-        badgeClass: "bg-indigo-100 dark:bg-indigo-950/70 text-indigo-900 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800",
-        btnClass: "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/20",
-        progressFill: "bg-indigo-500",
+        badgeClass: "bg-blue-100 dark:bg-blue-950/70 text-blue-900 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+        btnClass: "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20",
+        progressFill: "bg-blue-500",
         icon: CheckCircle2,
       };
     case "DO_SPEAKING":
     case "PRACTICE_SPEAKING":
       return {
         label: "Luyện nói",
-        badgeClass: "bg-violet-100 dark:bg-violet-950/70 text-violet-900 dark:text-violet-300 border-violet-200 dark:border-violet-800",
-        btnClass: "bg-violet-600 hover:bg-violet-700 text-white shadow-violet-600/20",
-        progressFill: "bg-violet-500",
+        badgeClass: "bg-teal-100 dark:bg-teal-950/70 text-teal-900 dark:text-teal-300 border-teal-200 dark:border-teal-800",
+        btnClass: "bg-teal-600 hover:bg-teal-700 text-white shadow-teal-600/20",
+        progressFill: "bg-teal-500",
         icon: Mic,
       };
     default:
@@ -709,7 +709,7 @@ export default function DashboardPage() {
       {/* ========================================================================= */}
       <section
         aria-label="Tổng quan học tập sinh viên"
-        className="relative overflow-hidden rounded-3xl border border-amber-200/90 dark:border-amber-900/50 bg-gradient-to-br from-white via-amber-50/40 to-orange-50/20 dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 p-6 sm:p-8 shadow-xs text-slate-800 dark:text-slate-200"
+        className="bg-white dark:bg-slate-900 relative overflow-hidden rounded-3xl border border-amber-200/90 dark:border-amber-900/50 p-6 sm:p-8 shadow-xs text-slate-800 dark:text-slate-200"
       >
         {/* Subtle decorative warmth */}
         <div
@@ -756,7 +756,7 @@ export default function DashboardPage() {
                   )}
                 </span>
                 {diagnosticBadge && (
-                  <span className="text-xs font-bold text-indigo-900 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-3 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800/60">
+                  <span className="text-xs font-bold text-blue-900 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-3 py-0.5 rounded-full border border-blue-200 dark:border-blue-800/60">
                     {diagnosticBadge}
                   </span>
                 )}
@@ -1392,7 +1392,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Daily Progress Energy Bar */}
-          <div className="space-y-1.5 bg-gradient-to-r from-slate-50 via-emerald-50/25 to-teal-50/20 dark:from-slate-900 dark:via-emerald-950/20 dark:to-slate-950 p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800">
+          <div className="bg-slate-50 dark:bg-slate-900 space-y-1.5 p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800">
             <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
               <span className="flex items-center gap-1.5">
                 <Zap size={15} className="text-emerald-600 fill-emerald-600 dark:text-emerald-400 dark:fill-emerald-400" />
@@ -1411,7 +1411,7 @@ export default function DashboardPage() {
               aria-label="Tiến độ năng lượng nhiệm vụ ngày"
             >
               <div
-                className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 transition-all duration-300"
+                className="bg-emerald-500 h-full rounded-full transition-all duration-300"
                 style={{ width: `${derivedDailyPercent}%` }}
               />
             </div>

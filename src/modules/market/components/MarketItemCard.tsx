@@ -90,14 +90,14 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({
         <div className="flex items-center justify-between gap-2 mb-3">
           <span
             className={clsx(
-              "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
+              "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold",
               rarity.badgeClass
             )}
           >
             <span className={clsx("h-1.5 w-1.5 rounded-full", rarity.rarityDot)} />
             {rarity.label}
           </span>
-          <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">
+          <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
             {categoryLabel}
           </span>
         </div>
@@ -119,19 +119,18 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({
             loading="lazy"
           />
 
-          {/* Physical Delivery Pill */}
-          {(product.fulfillmentType === "PHYSICAL" ||
-            product.requiresShippingAddress ||
-            product.category === "PHYSICAL") && (
-            <span className="absolute top-2.5 right-2.5 inline-flex items-center gap-1 rounded-md border border-slate-200/80 bg-white/95 dark:border-slate-700 dark:bg-slate-900/95 px-2 py-0.5 text-[10px] font-semibold text-slate-700 dark:text-slate-300 shadow-2xs backdrop-blur-xs">
+          {/* Delivery pill: the header already says "Quà hiện vật" for that category. */}
+          {product.category !== "PHYSICAL" &&
+            (product.fulfillmentType === "PHYSICAL" || product.requiresShippingAddress) && (
+            <span className="absolute top-2.5 right-2.5 inline-flex items-center gap-1 rounded-md border border-slate-200/80 bg-white/95 dark:border-slate-700 dark:bg-slate-900/95 px-2 py-0.5 text-xs font-semibold text-slate-700 dark:text-slate-300 shadow-2xs backdrop-blur-xs">
               <Truck size={12} className="text-slate-600 dark:text-slate-400" />
-              <span>Quà vật lý</span>
+              <span>Giao tận nhà</span>
             </span>
           )}
 
           {/* Limited Stock Notice */}
           {!isOutOfStock && product.stock <= 10 && (
-            <span className="absolute top-2.5 left-2.5 inline-flex items-center rounded-md border border-rose-200 bg-rose-50/95 dark:border-rose-900/60 dark:bg-rose-950/80 px-2 py-0.5 text-[10px] font-semibold text-rose-700 dark:text-rose-300 shadow-2xs">
+            <span className="absolute top-2.5 left-2.5 inline-flex items-center rounded-md border border-rose-200 bg-rose-50/95 dark:border-rose-900/60 dark:bg-rose-950/80 px-2 py-0.5 text-xs font-semibold text-rose-700 dark:text-rose-300 shadow-2xs">
               Còn {product.stock}
             </span>
           )}
@@ -150,7 +149,7 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({
         <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 line-clamp-1 mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
           {product.name}
         </h3>
-        <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2 min-h-[34px] mb-3">
+        <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2 min-h-[34px] mb-3">
           {product.description || "Vật phẩm phần thưởng được quản lý bởi hệ thống học tập BreadTrans."}
         </p>
       </div>
@@ -159,7 +158,7 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({
       <div className="pt-3.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-3">
         {/* Price */}
         <div className="flex flex-col">
-          <span className="text-[10px] uppercase tracking-wider font-medium text-slate-400 dark:text-slate-500">Giá</span>
+          <span className="text-xs uppercase tracking-wider font-medium text-slate-400 dark:text-slate-500">Giá</span>
           <span className="flex items-center gap-1 text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 leading-none">
             {product.price.toLocaleString("vi-VN")}
             <Wheat size={15} className="text-amber-500 dark:text-amber-400" aria-hidden="true" />

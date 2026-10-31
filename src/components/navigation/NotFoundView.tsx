@@ -248,7 +248,7 @@ export function NotFoundView() {
 
           {/* Right Column: Custom BreadTrans 404 Visual */}
           <div className="lg:col-span-5 flex justify-center lg:justify-end">
-            <div className="relative w-full max-w-sm sm:max-w-md p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-amber-50/70 via-white to-amber-100/40 dark:from-slate-900/90 dark:via-slate-900/60 dark:to-slate-950 border border-amber-200/70 dark:border-slate-800 shadow-sm flex flex-col items-center">
+            <div className="bg-amber-50/70 dark:bg-slate-900/90 relative w-full max-w-sm sm:max-w-md p-6 sm:p-8 rounded-3xl border border-amber-200/70 dark:border-slate-800 shadow-sm flex flex-col items-center">
               {/* Soft Ambient Warm Backdrop */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-amber-400/15 dark:bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
 
@@ -375,7 +375,7 @@ export function NotFoundView() {
                       >
                         <Icon className="w-5 h-5" />
                       </div>
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
                         {destination.badge}
                       </span>
                     </div>

@@ -614,7 +614,7 @@ export default function AdminDashboardPage() {
                           <p className="text-xs leading-5 text-slate-800 dark:text-slate-200 line-clamp-2">
                             {activity.message}
                           </p>
-                          <div className="mt-1 flex items-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-500">
+                          <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
                             <Clock size={12} />
                             <time dateTime={activity.createdAt}>{timeAgo(activity.createdAt)}</time>
                           </div>
@@ -663,7 +663,7 @@ export default function AdminDashboardPage() {
                             <span className="block text-xs font-semibold text-slate-900 dark:text-slate-100">
                               {action.label}
                             </span>
-                            <span className="block text-[11px] text-slate-500 dark:text-slate-400">
+                            <span className="block text-xs text-slate-500 dark:text-slate-400">
                               {action.detail}
                             </span>
                           </div>

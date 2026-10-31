@@ -6,7 +6,6 @@ import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
-  Bot,
   Loader2,
   MessageSquare,
   Search,
@@ -247,7 +246,7 @@ function AdminMessagesContent() {
           {/* Student Search Direct Matches */}
           {debouncedSearch.length >= 2 && learnerResultsQuery.data?.data?.length ? (
             <div className="shrink-0 max-h-48 overflow-y-auto border-b border-slate-200 p-2 dark:border-slate-800">
-              <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Học viên
               </p>
               {learnerResultsQuery.data.data.map((learner) => (
@@ -266,7 +265,7 @@ function AdminMessagesContent() {
                     <span className="block truncate text-xs font-semibold text-slate-900 dark:text-white">
                       {learner.name}
                     </span>
-                    <span className="block truncate text-[11px] text-slate-500">
+                    <span className="block truncate text-xs text-slate-500">
                       {learner.email}
                     </span>
                   </span>
@@ -313,7 +312,7 @@ function AdminMessagesContent() {
                       >
                         {conversation.studentName}
                       </span>
-                      <span className="shrink-0 text-[11px] text-slate-400">
+                      <span className="shrink-0 text-xs text-slate-400">
                         {formatListPreviewTime(conversation.lastMessageTime)}
                       </span>
                     </span>
@@ -430,7 +429,7 @@ function AdminMessagesContent() {
                         {showDateDivider && (
                           <div className="flex items-center justify-center my-3.5 select-none">
                             <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1" />
-                            <span className="mx-3 px-3 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-[11px] font-semibold text-slate-600 dark:text-slate-300 border border-slate-300/60 dark:border-slate-700/80 shadow-2xs">
+                            <span className="mx-3 px-3 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300 border border-slate-300/60 dark:border-slate-700/80 shadow-2xs">
                               {formatDateDivider(message.createdAt)}
                             </span>
                             <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1" />
@@ -442,7 +441,7 @@ function AdminMessagesContent() {
                           <div className="flex justify-center my-2">
                             <div className="max-w-md rounded-full bg-slate-100 dark:bg-slate-800/80 px-3.5 py-1 text-center text-xs text-slate-500 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/60">
                               <span>{message.content}</span>
-                              <span className="ml-2 text-[10px] text-slate-400">
+                              <span className="ml-2 text-xs text-slate-400">
                                 ({formatMessageTimestamp(message.createdAt)})
                               </span>
                             </div>
@@ -454,7 +453,7 @@ function AdminMessagesContent() {
                               {/* Header Meta: Name, Role Badge, Full Timestamp */}
                               <div className="flex items-center gap-1.5 mb-1 px-1 text-xs">
                                 <span
-                                  className="text-[11px] font-medium text-slate-400"
+                                  className="text-xs font-medium text-slate-400"
                                   title={formatMessageFullTooltip(message.createdAt)}
                                 >
                                   {formatMessageTimestamp(message.createdAt)}
@@ -462,7 +461,7 @@ function AdminMessagesContent() {
                                 <span className="font-semibold text-slate-900 dark:text-slate-100">
                                   {message.senderName || "Quản trị viên"}
                                 </span>
-                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800">
+                                <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800">
                                   Admin
                                 </span>
                               </div>
@@ -488,23 +487,23 @@ function AdminMessagesContent() {
                           /* AI Assistant Message (Left-aligned) */
                           <div className="flex justify-start items-end gap-2 my-2.5 group">
                             <span
-                              className="size-8 grid shrink-0 place-items-center rounded-full bg-purple-600 text-white font-bold text-xs select-none shadow-2xs mb-0.5"
+                              className="size-8 grid shrink-0 place-items-center rounded-full bg-teal-600 text-white font-bold text-xs select-none shadow-2xs mb-0.5"
                               title="Trợ lý học tập AI"
                             >
-                              <Bot size={15} />
+                              <MessageSquare size={15} strokeWidth={1.75} aria-hidden="true" />
                             </span>
 
                             <div className="flex flex-col items-start max-w-[85%] sm:max-w-[75%] lg:max-w-[70%] xl:max-w-[640px]">
                               {/* Header Meta: Name, Role Badge, Full Timestamp */}
                               <div className="flex items-center gap-1.5 mb-1 px-1 text-xs">
-                                <span className="font-semibold text-purple-900 dark:text-purple-200">
+                                <span className="font-semibold text-teal-900 dark:text-teal-200">
                                   Trợ lý AI
                                 </span>
-                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800">
+                                <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-950/60 dark:text-teal-300 dark:border-teal-800">
                                   AI Hỗ trợ
                                 </span>
                                 <span
-                                  className="text-[11px] font-medium text-slate-400"
+                                  className="text-xs font-medium text-slate-400"
                                   title={formatMessageFullTooltip(message.createdAt)}
                                 >
                                   {formatMessageTimestamp(message.createdAt)}
@@ -512,7 +511,7 @@ function AdminMessagesContent() {
                               </div>
 
                               {/* Message Bubble with Markdown Content */}
-                              <div className="w-full rounded-2xl rounded-bl-xs px-4 py-3 text-sm leading-relaxed border border-purple-200/90 bg-purple-50/50 text-slate-800 shadow-2xs dark:border-purple-800/80 dark:bg-purple-950/30 dark:text-slate-100">
+                              <div className="w-full rounded-2xl rounded-bl-xs px-4 py-3 text-sm leading-relaxed border border-teal-200/90 bg-teal-50/50 text-slate-800 shadow-2xs dark:border-teal-800/80 dark:bg-teal-950/30 dark:text-slate-100">
                                 <ChatMessageContent
                                   content={message.content}
                                   isInverse={false}
@@ -541,11 +540,11 @@ function AdminMessagesContent() {
                                     message.senderName ||
                                     "Học viên"}
                                 </span>
-                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800">
+                                <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800">
                                   Học viên
                                 </span>
                                 <span
-                                  className="text-[11px] font-medium text-slate-400"
+                                  className="text-xs font-medium text-slate-400"
                                   title={formatMessageFullTooltip(message.createdAt)}
                                 >
                                   {formatMessageTimestamp(message.createdAt)}

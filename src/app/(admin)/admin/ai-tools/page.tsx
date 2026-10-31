@@ -25,6 +25,7 @@ import axiosClient from "@/lib/api/axiosClient";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { statusLabel } from "@/lib/ui/displayLabels";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 interface SmartGeneratedPayload {
   documentSummary?: string;
@@ -166,9 +167,7 @@ export default function AdminAiToolsPage() {
     },
     onError: (err: any) => {
       toast.error(
-        err?.response?.data?.message ||
-          err?.message ||
-          "Không thể khởi tạo tiến trình xử lý",
+        getApiErrorMessage(err, "Không thể khởi tạo tiến trình xử lý"),
       );
     },
   });
@@ -267,9 +266,7 @@ export default function AdminAiToolsPage() {
     onSuccess: () => toast.success("Đã lưu bản nháp đã chỉnh sửa."),
     onError: (err: any) =>
       toast.error(
-        err?.response?.data?.message ||
-          err?.message ||
-          "Không thể lưu bản nháp",
+        getApiErrorMessage(err, "Không thể lưu bản nháp"),
       ),
   });
 
@@ -298,9 +295,9 @@ export default function AdminAiToolsPage() {
     onError: (err: any) => {
       setMessage({
         type: "error",
-        text: err?.message || "Có lỗi xảy ra khi sinh đề.",
+        text: getApiErrorMessage(err, "Có lỗi xảy ra khi sinh đề."),
       });
-      toast.error(err?.message || "Lỗi khi sinh câu hỏi TOEIC");
+      toast.error(getApiErrorMessage(err, "Lỗi khi sinh câu hỏi TOEIC"));
     },
   });
 
@@ -332,9 +329,9 @@ export default function AdminAiToolsPage() {
     onError: (err: any) => {
       setMessage({
         type: "error",
-        text: err?.message || "Có lỗi xảy ra khi import đề.",
+        text: getApiErrorMessage(err, "Có lỗi xảy ra khi import đề."),
       });
-      toast.error(err?.message || "Có lỗi xảy ra khi import đề.");
+      toast.error(getApiErrorMessage(err, "Có lỗi xảy ra khi import đề."));
     },
   });
 
@@ -374,7 +371,7 @@ export default function AdminAiToolsPage() {
               hàng ngày (RPD)
             </span>
             <span
-              className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
+              className={`px-2.5 py-0.5 rounded-full text-xs font-black uppercase ${
                 quotaData?.isNearLimit
                   ? "bg-rose-500/80 text-white"
                   : "bg-emerald-500/30 text-emerald-300 border border-emerald-400/30"
@@ -401,7 +398,7 @@ export default function AdminAiToolsPage() {
                     ? "bg-rose-500"
                     : (quotaData?.percentage || 0) > 50
                       ? "bg-amber-400"
-                      : "bg-linear-to-r from-emerald-400 to-indigo-400"
+                      : "bg-emerald-400"
                 }`}
                 style={{
                   width: `${Math.min(100, quotaData?.percentage || 0)}%`,
@@ -410,7 +407,7 @@ export default function AdminAiToolsPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-[11px] font-bold text-indigo-300">
+          <div className="flex items-center justify-between text-xs font-bold text-indigo-300">
             <span>
               Tiến trình xử lý:{" "}
               {quotaData?.modelName ? "Tự động phân tích" : "Sẵn sàng"}
@@ -595,7 +592,7 @@ export default function AdminAiToolsPage() {
           {activeTab === "smart" && (
             <div className="space-y-8">
               {/* UPLOAD & CONFIG CARD */}
-              <div className="bg-white p-8 rounded-[2.5rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] space-y-6">
+              <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm space-y-6">
                 <div className="flex items-center justify-between border-b-2 border-slate-100 pb-4">
                   <div>
                     <h2 className="text-2xl font-black text-slate-800">
@@ -634,7 +631,7 @@ export default function AdminAiToolsPage() {
 
                 {/* FILE DROPZONE OR TEXTAREA */}
                 {inputMode === "file" ? (
-                  <div className="border-3 border-dashed border-indigo-200 bg-indigo-50/40 hover:bg-indigo-50/70 transition-colors p-8 rounded-3xl text-center relative group">
+                  <div className="border-3 border-dashed border-indigo-200 bg-indigo-50/40 hover:bg-indigo-50/70 transition-colors p-8 rounded-xl text-center relative group">
                     <input
                       type="file"
                       accept=".pdf,.docx,.doc,text/plain"
@@ -644,7 +641,7 @@ export default function AdminAiToolsPage() {
                       className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
                     />
                     <div className="flex flex-col items-center justify-center space-y-3">
-                      <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-3xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                      <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
                         <UploadCloud size={32} />
                       </div>
                       {uploadedFile ? (
@@ -731,7 +728,7 @@ export default function AdminAiToolsPage() {
                       <div className="text-slate-800 font-black text-xs uppercase">
                         Sinh Bài Tập Về Nhà
                       </div>
-                      <div className="text-slate-400 font-bold text-[11px]">
+                      <div className="text-slate-400 font-bold text-xs">
                         Kèm theo bài luận ngắn
                       </div>
                     </div>
@@ -835,7 +832,7 @@ export default function AdminAiToolsPage() {
                             : "text-slate-500"
                         }`}
                       >
-                        <FileText size={16} /> ❓ Trắc Nghiệm (
+                        <FileText size={16} /> Trắc Nghiệm (
                         {editedQuestions.length})
                       </button>
                       <button
@@ -857,7 +854,7 @@ export default function AdminAiToolsPage() {
                             : "text-slate-500"
                         }`}
                       >
-                        <BookOpen size={16} /> 📝 Bài Tập
+                        <BookOpen size={16} /> Bài Tập
                       </button>
                     </div>
                   </div>
@@ -866,7 +863,7 @@ export default function AdminAiToolsPage() {
                   {smartResult.documentSummary && (
                     <div className="bg-indigo-50/60 border border-indigo-100 p-4 rounded-2xl text-xs font-bold text-indigo-900">
                       <span className="font-black text-indigo-700 uppercase mr-1">
-                        💡 Tóm tắt tài liệu:
+                        Tóm tắt tài liệu:
                       </span>
                       {smartResult.documentSummary}
                     </div>
@@ -967,7 +964,7 @@ export default function AdminAiToolsPage() {
                                       className="w-full bg-transparent outline-none font-bold text-xs text-slate-800"
                                     />
                                     {isCorrect && (
-                                      <span className="text-[10px] font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md shrink-0">
+                                      <span className="text-xs font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md shrink-0">
                                         Đáp án đúng
                                       </span>
                                     )}
@@ -1022,7 +1019,7 @@ export default function AdminAiToolsPage() {
                             className="bg-slate-50 border border-slate-200 p-5 rounded-2xl space-y-3 relative font-bold text-xs"
                           >
                             <div className="flex items-center justify-between">
-                              <span className="bg-indigo-100 text-indigo-700 px-2.5 py-0.5 rounded-lg font-black text-[11px]">
+                              <span className="bg-indigo-100 text-indigo-700 px-2.5 py-0.5 rounded-lg font-black text-xs">
                                 #{fIdx + 1}
                               </span>
                               <button
@@ -1041,7 +1038,7 @@ export default function AdminAiToolsPage() {
 
                             <div className="grid grid-cols-3 gap-2">
                               <div className="col-span-2">
-                                <label className="block text-slate-400 text-[10px] mb-0.5">
+                                <label className="block text-slate-400 text-xs mb-0.5">
                                   Từ vựng (Term)
                                 </label>
                                 <input
@@ -1056,7 +1053,7 @@ export default function AdminAiToolsPage() {
                                 />
                               </div>
                               <div>
-                                <label className="block text-slate-400 text-[10px] mb-0.5">
+                                <label className="block text-slate-400 text-xs mb-0.5">
                                   Loại từ (POS)
                                 </label>
                                 <input
@@ -1073,7 +1070,7 @@ export default function AdminAiToolsPage() {
                             </div>
 
                             <div>
-                              <label className="block text-slate-400 text-[10px] mb-0.5">
+                              <label className="block text-slate-400 text-xs mb-0.5">
                                 Phiên âm IPA
                               </label>
                               <input
@@ -1089,7 +1086,7 @@ export default function AdminAiToolsPage() {
                             </div>
 
                             <div>
-                              <label className="block text-slate-400 text-[10px] mb-0.5">
+                              <label className="block text-slate-400 text-xs mb-0.5">
                                 Nghĩa tiếng Việt
                               </label>
                               <input
@@ -1105,7 +1102,7 @@ export default function AdminAiToolsPage() {
                             </div>
 
                             <div>
-                              <label className="block text-slate-400 text-[10px] mb-0.5">
+                              <label className="block text-slate-400 text-xs mb-0.5">
                                 Ví dụ minh họa
                               </label>
                               <input
@@ -1391,7 +1388,7 @@ export default function AdminAiToolsPage() {
                         </div>
                         {q.explanation && (
                           <div className="text-amber-800 bg-amber-50 p-2 rounded-lg">
-                            💡 {q.explanation}
+                            {q.explanation}
                           </div>
                         )}
                       </div>

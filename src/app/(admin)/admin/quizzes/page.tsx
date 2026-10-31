@@ -311,7 +311,7 @@ export default function AdminQuizzesPage() {
 
         <button
           onClick={handleOpenCreate}
-          className="px-6 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black flex items-center gap-2 shadow-[0_6px_0_0_#047857] active:translate-y-1 active:shadow-none transition-all cursor-pointer"
+          className="px-6 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black flex items-center gap-2 shadow-sm active:translate-y-1 active:shadow-none transition-all cursor-pointer"
         >
           <Plus size={20} /> Tạo đề thi mới
         </button>
@@ -350,7 +350,7 @@ export default function AdminQuizzesPage() {
       </div>
 
       {/* FILTER & SEARCH */}
-      <div className="bg-white rounded-[2.5rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] overflow-hidden p-6 md:p-8 space-y-6">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden p-6 md:p-8 space-y-6">
         <div className="flex flex-col md:flex-row items-center gap-4">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
@@ -515,7 +515,7 @@ export default function AdminQuizzesPage() {
             </div>
           </div>
         ) : (
-          <div className="text-center py-16 text-slate-400 font-bold border-2 border-dashed border-slate-200 rounded-3xl">
+          <div className="text-center py-16 text-slate-400 font-bold border-2 border-dashed border-slate-200 rounded-xl">
             <FileQuestion size={48} className="mx-auto text-slate-300 mb-3" />
             <p className="text-slate-600 font-black text-lg">Không tìm thấy đề thi nào</p>
             <p className="text-sm text-slate-400 mt-1">Hãy thử tìm kiếm với từ khóa khác hoặc bấm nút "Tạo đề thi mới".</p>
@@ -531,7 +531,7 @@ export default function AdminQuizzesPage() {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white rounded-[2.5rem] border-4 border-slate-200 shadow-2xl p-6 md:p-8 max-w-lg w-full space-y-6"
+              className="bg-white rounded-xl border border-slate-200 shadow-2xl p-6 md:p-8 max-w-lg w-full space-y-6"
             >
               <div className="flex items-center justify-between border-b-2 border-slate-100 pb-4">
                 <h3 className="text-2xl font-black text-slate-800 flex items-center gap-2">
@@ -640,9 +640,9 @@ export default function AdminQuizzesPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-[2.5rem] border-4 border-rose-200 shadow-2xl p-6 md:p-8 max-w-md w-full space-y-5 text-center"
+              className="bg-white rounded-xl border border-rose-200 shadow-2xl p-6 md:p-8 max-w-md w-full space-y-5 text-center"
             >
-              <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-3xl flex items-center justify-center mx-auto">
+              <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center mx-auto">
                 <AlertTriangle size={32} />
               </div>
 
@@ -724,8 +724,8 @@ export default function AdminQuizzesPage() {
                         <div className="min-w-0">
                           <span className="font-black text-slate-800">v{artifact.version} · {artifact.isStale ? "STALE" : artifact.status}</span>
                           <span className="ml-2 text-slate-500">{artifact.durationMs ? `${Math.round(artifact.durationMs / 1000)}s` : "Chưa có thời lượng"}</span>
-                          <p className="truncate text-[11px] text-slate-500">Hash: {artifact.synthesisHash?.slice(0, 16) || "—"} · {artifact.r2Key || "Chưa có R2 object"}</p>
-                          {artifact.isStale && <p className="mt-1 text-[11px] font-bold text-amber-700">Nội dung đã đổi; cần tạo và duyệt bản audio mới.</p>}
+                          <p className="truncate text-xs text-slate-500">Hash: {artifact.synthesisHash?.slice(0, 16) || "—"} · {artifact.r2Key || "Chưa có R2 object"}</p>
+                          {artifact.isStale && <p className="mt-1 text-xs font-bold text-amber-700">Nội dung đã đổi; cần tạo và duyệt bản audio mới.</p>}
                         </div>
                         <div className="flex shrink-0 gap-2">
                           {artifact.status === "PREVIEW_READY" && <button type="button" onClick={() => listeningAudioAction.mutate({ action: "approve", artifactId: artifact.id })} disabled={listeningAudioAction.isPending} className="min-h-9 rounded-lg border border-emerald-300 px-2.5 font-black text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">Duyệt</button>}
@@ -763,7 +763,7 @@ export default function AdminQuizzesPage() {
                                           audio.currentTime = turn.startMs / 1000;
                                           void audio.play();
                                         }}
-                                        className="flex min-h-8 w-full items-center justify-between rounded px-2 text-left text-[11px] text-slate-700 hover:bg-white"
+                                        className="flex min-h-8 w-full items-center justify-between rounded px-2 text-left text-xs text-slate-700 hover:bg-white"
                                       >
                                         <span className="font-semibold">{turn.turnId}</span>
                                         <span>{turn.startMs}–{turn.endMs} ms</span>
@@ -837,7 +837,7 @@ export default function AdminQuizzesPage() {
                                 <p className="text-xs font-black text-sky-900">
                                   Hội thoại {content.transcriptSegments.length} lượt lời
                                 </p>
-                                <p className="mt-1 text-[11px] text-sky-800">
+                                <p className="mt-1 text-xs text-sky-800">
                                   {Array.from(new Set(content.transcriptSegments.map((segment: any) => segment.speaker).filter(Boolean))).join(" · ")}
                                 </p>
                               </div>
@@ -939,7 +939,7 @@ export default function AdminQuizzesPage() {
                                   }`}
                                 >
                                   <span
-                                    className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black ${
+                                    className={`w-5 h-5 rounded-md flex items-center justify-center text-xs font-black ${
                                       isCorrect ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-500"
                                     }`}
                                   >
@@ -962,7 +962,7 @@ export default function AdminQuizzesPage() {
                         {/* Explanation / Translation */}
                         {formatQuestionExplanation(content.explanation || content.translate) && (
                           <div className="bg-amber-50/60 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 font-medium">
-                            <span className="font-black text-amber-800">💡 Giải thích: </span>
+                            <span className="font-black text-amber-800">Giải thích: </span>
                             {formatQuestionExplanation(content.explanation || content.translate)}
                           </div>
                         )}
@@ -1176,7 +1176,7 @@ function QuickAddQuestionForm({
           <div className="flex items-center justify-between gap-2">
             <div>
               <label className="block text-slate-700">Các lượt lời trong hội thoại</label>
-              <p className="mt-0.5 text-[11px] font-normal text-slate-500">Nhập lời thoại tiếng Anh; bản dịch chỉ dùng để hiển thị transcript song ngữ.</p>
+              <p className="mt-0.5 text-xs font-normal text-slate-500">Nhập lời thoại tiếng Anh; bản dịch chỉ dùng để hiển thị transcript song ngữ.</p>
             </div>
             <button
               type="button"

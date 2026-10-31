@@ -102,7 +102,7 @@ export default function NotificationsPage() {
   const emptyLabel = filter === "unread" ? "Bạn không có thông báo mới." : filter === "read" ? "Chưa có thông báo đã đọc." : "Chưa có thông báo nào.";
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:py-12">
+    <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:py-12">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">Trung tâm cá nhân</p>

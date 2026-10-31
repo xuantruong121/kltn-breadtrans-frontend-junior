@@ -40,6 +40,8 @@ import {
   Moon,
   Mail,
   MessageSquare,
+  Croissant,
+  Zap,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
@@ -311,7 +313,7 @@ export function AppHeader() {
       href: "/writing",
       icon: PenTool,
       active: isWritingRoute(pathname),
-      iconColor: "text-violet-500 dark:text-violet-400",
+      iconColor: "text-teal-500 dark:text-teal-400",
     },
     {
       label: "Flashcard",
@@ -332,14 +334,14 @@ export function AppHeader() {
       href: "/courses",
       icon: GraduationCap,
       active: isCoursesRoute(pathname),
-      iconColor: "text-indigo-500 dark:text-indigo-400",
+      iconColor: "text-blue-500 dark:text-blue-400",
     }),
     {
       label: "Cửa hàng",
       href: "/market",
       icon: ShoppingBag,
       active: isMarketRoute(pathname),
-      iconColor: "text-pink-500 dark:text-pink-400",
+      iconColor: "text-rose-500 dark:text-rose-400",
     },
     {
       label: "Bảng xếp hạng",
@@ -553,7 +555,7 @@ export function AppHeader() {
                           {user?.profile?.fullName || user?.email}
                         </p>
                         {user?.profile?.fullName && user?.email && (
-                          <p className="text-[11px] font-medium text-slate-400 truncate mt-0.5">{user.email}</p>
+                          <p className="text-xs font-medium text-slate-400 truncate mt-0.5">{user.email}</p>
                         )}
                       </div>
                     </div>
@@ -563,7 +565,7 @@ export function AppHeader() {
                       <div className="flex items-center gap-1.5" title={`Chuỗi học tập liên tục: ${streak || 1} ngày`}>
                         <Flame size={15} className="fill-orange-500 text-orange-500 shrink-0" />
                         <span className="font-extrabold text-orange-600 dark:text-orange-400">{streak || 1}</span>
-                        <span className="text-slate-500 dark:text-slate-400 text-[11px] font-medium">ngày</span>
+                        <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">ngày</span>
                       </div>
 
                       <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
@@ -574,15 +576,15 @@ export function AppHeader() {
                         title={`Số dư bánh mì: ${breads || 0}`}
                         className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
                       >
-                        <span className="text-sm leading-none" role="img" aria-label="Bánh Mì">🥖</span>
+                        <Croissant size={15} strokeWidth={2} className="text-amber-600" aria-label="Bánh Mì" />
                         <span className="font-extrabold text-amber-600 dark:text-amber-400">{breads || 0}</span>
-                        <span className="text-slate-500 dark:text-slate-400 text-[11px] font-medium">bánh</span>
+                        <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">bánh</span>
                       </Link>
 
                       <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
 
                       <div className="flex items-center gap-1.5" title={`Cấp độ ${level || 1} (${exp || 0} EXP)`}>
-                        <span className="text-sm leading-none">⚡</span>
+                        <Zap size={15} strokeWidth={2} className="text-orange-500" aria-hidden="true" />
                         <span className="font-extrabold text-sky-600 dark:text-sky-400">Lv.{level || 1}</span>
                       </div>
                     </div>
@@ -599,7 +601,7 @@ export function AppHeader() {
                           <Bell size={16} className="text-slate-500 dark:text-slate-400 shrink-0" />
                           <span>Thông báo</span>
                           {unreadCount > 0 && (
-                            <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[9px] font-black text-white leading-none">
+                            <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-xs font-black text-white leading-none">
                               {unreadCount > 99 ? "99+" : unreadCount}
                             </span>
                           )}
@@ -620,13 +622,13 @@ export function AppHeader() {
                             </div>
                           ) : recentNotifications.length === 0 ? (
                             <div className="p-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-center">
-                              <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                                 Chưa có thông báo mới
                               </p>
                               <Link
                                 href="/notifications"
                                 onClick={closeMenus}
-                                className="mt-1 inline-block text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline"
+                                className="mt-1 inline-block text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline"
                               >
                                 Xem lịch sử thông báo
                               </Link>
@@ -664,10 +666,10 @@ export function AppHeader() {
                                             <span className="size-1.5 rounded-full bg-amber-500 shrink-0" />
                                           )}
                                         </div>
-                                        <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5 leading-relaxed">
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5 leading-relaxed">
                                           {item.body}
                                         </p>
-                                        <div className="mt-1 flex items-center justify-between text-[10px] text-slate-400">
+                                        <div className="mt-1 flex items-center justify-between text-xs text-slate-400">
                                           <span className="flex items-center gap-1">
                                             <Clock size={10} />
                                             {formatRelativeTime(item.createdAt)}
@@ -685,7 +687,7 @@ export function AppHeader() {
                               })}
 
                               {/* Footer Actions */}
-                              <div className="flex items-center justify-between px-1 pt-1 text-[11px]">
+                              <div className="flex items-center justify-between px-1 pt-1 text-xs">
                                 <Link
                                   href="/notifications"
                                   onClick={closeMenus}
@@ -752,7 +754,7 @@ export function AppHeader() {
                     >
                       <MessageSquare size={16} className="text-slate-500 dark:text-slate-400 shrink-0" />
                       <span className="flex-1">Tin nhắn</span>
-                      {messageUnreadCount > 0 && <span className="min-w-5 rounded-full bg-amber-500 px-1.5 py-0.5 text-center text-[9px] font-black leading-none text-white" aria-label={`${messageUnreadCount > 99 ? "99+" : messageUnreadCount} tin nhắn chưa đọc`}>{messageUnreadCount > 99 ? "99+" : messageUnreadCount}</span>}
+                      {messageUnreadCount > 0 && <span className="min-w-5 rounded-full bg-amber-500 px-1.5 py-0.5 text-center text-xs font-black leading-none text-white" aria-label={`${messageUnreadCount > 99 ? "99+" : messageUnreadCount} tin nhắn chưa đọc`}>{messageUnreadCount > 99 ? "99+" : messageUnreadCount}</span>}
                     </Link>
 
                     <Link
@@ -960,7 +962,7 @@ export function AppHeader() {
                       />
                       <div className="min-w-0">
                         <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">{user?.profile?.fullName || user?.email}</p>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
@@ -987,7 +989,7 @@ export function AppHeader() {
 
                 {/* Primary Navigation Links */}
                 <nav className="space-y-1" aria-label="Điều hướng chính">
-                  <p className="px-3 pb-1 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                  <p className="px-3 pb-1 text-xs font-extrabold uppercase tracking-wider text-slate-400">
                     Trang học tập
                   </p>
 
@@ -1034,9 +1036,9 @@ export function AppHeader() {
                         <Link
                           href="/speaking"
                           onClick={closeMenus}
-                          className="flex items-center gap-2 p-2.5 rounded-xl bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200/60 dark:border-purple-800/60 text-xs font-bold text-purple-900 dark:text-purple-300 hover:bg-purple-100/70 dark:hover:bg-purple-900/60 transition-colors"
+                          className="flex items-center gap-2 p-2.5 rounded-xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200/60 dark:border-teal-800/60 text-xs font-bold text-teal-900 dark:text-teal-300 hover:bg-teal-100/70 dark:hover:bg-teal-900/60 transition-colors"
                         >
-                          <Mic size={16} className="text-purple-600 dark:text-purple-400 shrink-0" aria-hidden="true" />
+                          <Mic size={16} className="text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
                           <span>Luyện Nói</span>
                         </Link>
                         <Link
@@ -1082,7 +1084,7 @@ export function AppHeader() {
                   {/* Learning Tools */}
                   {isStudent && (
                     <div className="pt-2">
-                      <p className="px-3 pb-2 text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                      <p className="px-3 pb-2 text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                         Tiện ích học tập
                       </p>
                       <div className="space-y-1">

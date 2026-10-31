@@ -162,7 +162,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
       <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-2">
           <Heart size={16} className="text-rose-500 fill-rose-500" aria-hidden="true" />
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
             Thú Cưng Đồng Hành
           </h3>
         </div>
@@ -191,7 +191,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
         /* Error State */
         <div className="rounded-xl border border-rose-200 dark:border-rose-800/60 bg-rose-50/70 dark:bg-rose-950/30 p-4 text-center space-y-2.5">
           <AlertCircle size={20} className="mx-auto text-rose-500" aria-hidden="true" />
-          <p className="text-xs font-bold text-rose-900 dark:text-rose-300">Không thể tải thông tin thú cưng</p>
+          <p className="text-sm font-bold text-rose-900 dark:text-rose-300">Không thể tải thông tin thú cưng</p>
           <button
             type="button"
             onClick={() => refetchPet()}
@@ -209,7 +209,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
           </div>
           <div>
             <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Chưa có thú cưng đồng hành</h4>
-            <p className="mt-1 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
               Chọn một người bạn đồng hành 2D để rèn luyện tiếng Anh mỗi ngày và nhận buff học tập.
             </p>
           </div>
@@ -240,7 +240,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
                   {speciesInfo.speciesName || pet.name}
                 </h4>
               </div>
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                 {speciesInfo.title || "Bạn đồng hành học tập"}
               </p>
 
@@ -372,13 +372,13 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
 
             {/* Satiety or Requirement Message */}
             {!feedEligibility.allowed && (pet.satietyState === "FULL" || satiety >= 80) ? (
-              <p className="text-center text-xs font-medium text-slate-500 dark:text-slate-400">{satietyText}</p>
+              <p className="text-center text-sm font-medium text-slate-500 dark:text-slate-400">{satietyText}</p>
             ) : userBalance < feedCost ? (
-              <p className="text-center text-xs font-semibold text-rose-600 dark:text-rose-400">
+              <p className="text-center text-sm font-semibold text-rose-600 dark:text-rose-400">
                 Cần {feedCost} Bánh Mì (Hiện có: {userBalance})
               </p>
             ) : (
-              <p className="text-center text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-center text-sm text-slate-500 dark:text-slate-400">
                 Tiêu hao {feedCost} Bánh Mì • {satietyText} • EXP hôm nay {pet.dailyRewardedFeedCount ?? 0}/{pet.dailyRewardLimit ?? 3}
               </p>
             )}

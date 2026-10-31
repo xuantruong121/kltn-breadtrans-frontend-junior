@@ -208,7 +208,7 @@ export default function PublicLandingPage() {
       {/* ========================================================================= */}
       {/* 1. DYNAMIC ASYMMETRIC HERO SECTION (Anti-Center Bias, High Energy)       */}
       {/* ========================================================================= */}
-      <section className="relative overflow-hidden pt-6 sm:pt-10 pb-16 lg:pb-24 border-b border-amber-100/60 dark:border-slate-800/60 bg-gradient-to-b from-amber-50/70 via-[#fdfbf7] to-[#fbfaf8] dark:from-slate-900/90 dark:via-slate-900 dark:to-background">
+      <section className="bg-amber-50/70 dark:bg-slate-900/90 relative overflow-hidden pt-6 sm:pt-10 pb-16 lg:pb-24 border-b border-amber-100/60 dark:border-slate-800/60 via-[#fdfbf7] to-[#fbfaf8] dark:to-background">
         {/* Subtle Ambient Decorative Glows */}
         <div
           className="pointer-events-none absolute -left-20 top-0 size-96 rounded-full bg-amber-200/30 blur-3xl"
@@ -232,7 +232,7 @@ export default function PublicLandingPage() {
               {/* Main Headline */}
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-black text-slate-900 dark:text-slate-100 leading-[1.24] sm:leading-[1.18] text-balance">
                 Tự học Tiếng Anh theo lộ trình, chinh phục từng mục tiêu cùng{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 dark:from-amber-400 dark:via-orange-400 dark:to-amber-500">
+                <span className=" text-amber-600 dark:text-amber-400">
                   trợ lý AI
                 </span>
               </h1>
@@ -296,7 +296,7 @@ export default function PublicLandingPage() {
               <div className="relative mx-auto max-w-md lg:max-w-none">
                 {/* Decorative Background Offset */}
                 <div
-                  className="absolute inset-0 bg-gradient-to-tr from-amber-300 to-orange-400 rounded-3xl rotate-2 scale-[1.02] opacity-30 dark:opacity-15 blur-xs"
+                  className="bg-amber-300 absolute inset-0 rounded-3xl rotate-2 scale-[1.02] opacity-30 dark:opacity-15 blur-xs"
                   aria-hidden="true"
                 />
 
@@ -313,7 +313,7 @@ export default function PublicLandingPage() {
                         BreadTrans AI Tutor
                       </span>
                     </div>
-                    <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+                    <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                       Ví dụ minh họa
                     </span>
                   </div>
@@ -372,7 +372,7 @@ export default function PublicLandingPage() {
 
                   {/* Phoneme Breakdown Chips */}
                   <div className="space-y-1.5">
-                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                       Kết quả chấm từng từ (minh họa):
                     </span>
                     <div className="flex flex-wrap gap-1.5 text-xs font-bold">
@@ -394,11 +394,11 @@ export default function PublicLandingPage() {
                   {/* Interactive Result Badges Footer */}
                   <div className="pt-2 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-2 text-center">
                     <div className="p-2 rounded-xl bg-amber-50/50 dark:bg-slate-800/60 border border-amber-200/60 dark:border-slate-700/60">
-                      <span className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Phát âm</span>
+                      <span className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Phát âm</span>
                       <strong className="text-base font-black text-emerald-700 dark:text-emerald-400">98%</strong>
                     </div>
                     <div className="p-2 rounded-xl bg-amber-50/50 dark:bg-slate-800/60 border border-amber-200/60 dark:border-slate-700/60">
-                      <span className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Trôi chảy</span>
+                      <span className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Trôi chảy</span>
                       <strong className="text-base font-black text-amber-700 dark:text-amber-400">95 / 100</strong>
                     </div>
                   </div>
@@ -454,13 +454,13 @@ export default function PublicLandingPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Card 1: AI Speaking & Pronunciation Lab (Spans 2 cols) */}
-          <div className="md:col-span-2 bg-gradient-to-br from-violet-50/50 via-white to-amber-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-slate-850 border border-violet-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-soft hover:border-violet-300 dark:hover:border-slate-700 transition-colors">
+          <div className="bg-teal-50/50 dark:bg-slate-900 md:col-span-2 border border-teal-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-soft hover:border-teal-300 dark:hover:border-slate-700 transition-colors">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="size-14 rounded-2xl bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 flex items-center justify-center border border-violet-200 dark:border-violet-900/60">
+                <div className="size-14 rounded-2xl bg-teal-100 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 flex items-center justify-center border border-teal-200 dark:border-teal-900/60">
                   <Mic size={28} aria-hidden="true" />
                 </div>
-                <span className="px-3 py-1 rounded-full bg-violet-100 dark:bg-violet-950/50 text-violet-800 dark:text-violet-300 border border-violet-200 dark:border-violet-900/60 text-xs font-black">
+                <span className="px-3 py-1 rounded-full bg-teal-100 dark:bg-teal-950/50 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-900/60 text-xs font-black">
                   Đánh giá phát âm tự động
                 </span>
               </div>
@@ -477,15 +477,15 @@ export default function PublicLandingPage() {
               {/* Visual Feature Pill list */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                 <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 shadow-2xs">
-                  <span className="text-xs font-extrabold text-violet-800 dark:text-violet-300 block">Chấm từng từ</span>
+                  <span className="text-xs font-extrabold text-teal-800 dark:text-teal-300 block">Chấm từng từ</span>
                   <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Điểm chính xác cho mỗi từ trong câu</span>
                 </div>
                 <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 shadow-2xs">
-                  <span className="text-xs font-extrabold text-violet-800 dark:text-violet-300 block">Lưu lịch sử</span>
+                  <span className="text-xs font-extrabold text-teal-800 dark:text-teal-300 block">Lưu lịch sử</span>
                   <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Xem lại các lần nói trước của bạn</span>
                 </div>
                 <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 shadow-2xs">
-                  <span className="text-xs font-extrabold text-violet-800 dark:text-violet-300 block">Nghe mẫu</span>
+                  <span className="text-xs font-extrabold text-teal-800 dark:text-teal-300 block">Nghe mẫu</span>
                   <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Tốc độ 0.75×, 0.9×, 1×, giọng US hoặc UK</span>
                 </div>
               </div>
@@ -495,7 +495,7 @@ export default function PublicLandingPage() {
               <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Bài luyện theo chủ đề và cấp độ</span>
               <button
                 onClick={() => handleProtectedAction("phòng luyện nói", "/speaking")}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-extrabold text-xs transition-colors shadow-2xs cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-extrabold text-xs transition-colors shadow-2xs cursor-pointer"
                 type="button"
               >
                 <span>Thử luyện nói ngay</span>
@@ -505,7 +505,7 @@ export default function PublicLandingPage() {
           </div>
 
           {/* Card 2: Certificate-format exam arena (1 Col) */}
-          <div className="bg-gradient-to-br from-blue-50/50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-850 border border-blue-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-soft hover:border-blue-300 dark:hover:border-slate-700 transition-colors">
+          <div className="bg-blue-50/50 dark:bg-slate-900 border border-blue-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-soft hover:border-blue-300 dark:hover:border-slate-700 transition-colors">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="size-14 rounded-2xl bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 flex items-center justify-center border border-blue-200 dark:border-blue-900/60">
@@ -550,7 +550,7 @@ export default function PublicLandingPage() {
           </div>
 
           {/* Card 3: Spaced Repetition Flashcards & Grammar (1 Col) */}
-          <div className="bg-gradient-to-br from-emerald-50/50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-850 border border-emerald-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-soft hover:border-emerald-300 dark:hover:border-slate-700 transition-colors">
+          <div className="bg-emerald-50/50 dark:bg-slate-900 border border-emerald-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-soft hover:border-emerald-300 dark:hover:border-slate-700 transition-colors">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="size-14 rounded-2xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 flex items-center justify-center border border-emerald-200 dark:border-emerald-900/60">
@@ -595,7 +595,7 @@ export default function PublicLandingPage() {
           </div>
 
           {/* Card 4: Gamification & Pet Companion (Spans 2 cols) */}
-          <div className="md:col-span-2 bg-gradient-to-br from-amber-50/60 via-white to-orange-50/40 dark:from-slate-900 dark:via-slate-900 dark:to-slate-850 border border-amber-200/90 dark:border-slate-800 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-soft hover:border-amber-300 dark:hover:border-slate-700 transition-colors">
+          <div className="bg-amber-50/60 dark:bg-slate-900 md:col-span-2 border border-amber-200/90 dark:border-slate-800 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-soft hover:border-amber-300 dark:hover:border-slate-700 transition-colors">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="size-14 rounded-2xl bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 flex items-center justify-center border border-amber-200 dark:border-amber-900/60 text-2xl font-black">
@@ -684,7 +684,7 @@ export default function PublicLandingPage() {
                     <span className="text-2xl sm:text-3xl font-black text-amber-600/30 dark:text-amber-500/30 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
                       {step.step}
                     </span>
-                    <span className="text-[11px] font-black px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/60">
+                    <span className="text-xs font-black px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/60">
                       {step.badge}
                     </span>
                   </div>
@@ -755,7 +755,7 @@ export default function PublicLandingPage() {
       {/* 10. HIGH-CONVERTING BOTTOM CTA BANNER                                     */}
       {/* ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-        <div className="bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 rounded-3xl p-8 sm:p-12 text-center text-white shadow-card space-y-6 relative overflow-hidden">
+        <div className="bg-amber-600 rounded-3xl p-8 sm:p-12 text-center text-white shadow-card space-y-6 relative overflow-hidden">
           <div
             className="pointer-events-none absolute -left-10 -top-10 size-60 rounded-full bg-white/10 blur-2xl"
             aria-hidden="true"

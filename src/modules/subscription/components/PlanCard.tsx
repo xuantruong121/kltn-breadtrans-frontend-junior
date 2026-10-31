@@ -265,7 +265,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
       cta.isCurrent
         ? "border-emerald-300 dark:border-emerald-800 ring-2 ring-emerald-500/20"
         : highlighted || proPricing.isPurchasable
-          ? "border-indigo-400 dark:border-indigo-500 ring-2 ring-indigo-400/20"
+          ? "border-blue-400 dark:border-blue-500 ring-2 ring-blue-400/20"
           : "border-slate-200 dark:border-slate-800"
     }`}>
       <div>
@@ -292,7 +292,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
             </div>
           ) : proPricing.isPurchasable ? (
             <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl sm:text-4xl font-black tracking-tight text-indigo-600 dark:text-indigo-400">
+              <span className="text-3xl sm:text-4xl font-black tracking-tight text-blue-600 dark:text-blue-400">
                 {proPricing.priceText}
               </span>
               <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
@@ -308,21 +308,21 @@ export const PlanCard: React.FC<PlanCardProps> = ({
 
         <ul className="mt-6 space-y-3.5 text-sm text-slate-500 dark:text-slate-400">
           <li className="flex items-start gap-3">
-            <Check size={18} className="text-indigo-500 shrink-0 mt-0.5" aria-hidden="true" />
+            <Check size={18} className="text-blue-500 shrink-0 mt-0.5" aria-hidden="true" />
             <span>Toàn bộ quyền lợi gói Plus</span>
           </li>
           <li className="flex items-start gap-3">
-            <Check size={18} className="text-indigo-500 shrink-0 mt-0.5" aria-hidden="true" />
+            <Check size={18} className="text-blue-500 shrink-0 mt-0.5" aria-hidden="true" />
             <span>Nói và Viết ở mọi mức, gồm Nâng cao (C1–C2)</span>
           </li>
           {COURSES_ENABLED && (
             <>
               <li className="flex items-start gap-3">
-                <Check size={18} className="text-indigo-500 shrink-0 mt-0.5" aria-hidden="true" />
+                <Check size={18} className="text-blue-500 shrink-0 mt-0.5" aria-hidden="true" />
                 <span>Mở khóa toàn bộ khóa học</span>
               </li>
               <li className="flex items-start gap-3">
-                <Check size={18} className="text-indigo-500 shrink-0 mt-0.5" aria-hidden="true" />
+                <Check size={18} className="text-blue-500 shrink-0 mt-0.5" aria-hidden="true" />
                 <span>Lộ trình học tuần tự, tiếp tục từ bài đang học</span>
               </li>
             </>
@@ -335,7 +335,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
           type="button"
           onClick={onSelectPro}
           disabled={cta.disabled || isPurchasing || isCatalogError || !proPricing.isPurchasable}
-          className="w-full min-h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] px-4 text-sm sm:text-base font-extrabold text-white shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full min-h-12 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] px-4 text-sm sm:text-base font-extrabold text-white shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isPurchasing ? "Đang xử lý..." : cta.label}
         </button>

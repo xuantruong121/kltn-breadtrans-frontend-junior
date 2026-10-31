@@ -148,7 +148,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
           >
             <Backpack size={16} className={activeTab === "inventory" ? "text-amber-500" : ""} />
             Túi Đồ & Trang Bị
-            <span className="text-[10px] font-black bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-full">
+            <span className="text-xs font-black bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-full">
               {myUnlockedList.length}
             </span>
           </button>
@@ -206,7 +206,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                   <button
                     type="button"
                     onClick={() => setActiveTab("inventory")}
-                    className="w-full py-2.5 px-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-2xl font-black text-xs flex items-center justify-center gap-2 shadow-md shadow-amber-500/20 transition-all cursor-pointer"
+                    className="bg-amber-500 hover:bg-amber-600 w-full py-2.5 px-4 text-white rounded-2xl font-black text-xs flex items-center justify-center gap-2 shadow-md shadow-amber-500/20 transition-all cursor-pointer"
                   >
                     <ShoppingBag size={15} /> Quản Lý Túi Đồ ({myUnlockedList.length} món)
                   </button>
@@ -314,7 +314,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                     <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100">
                       {formData.fullName || "Học viên BreadTrans"}
                     </h2>
-                    <span className="text-[11px] font-black uppercase tracking-wider bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 px-2.5 py-0.5 rounded-md">
+                    <span className="text-xs font-black uppercase tracking-wider bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 px-2.5 py-0.5 rounded-md">
                       {user?.role === "STUDENT" ? "Học Sinh" : user?.role || "Thành viên"}
                     </span>
                   </div>
@@ -328,8 +328,8 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                       <Crown size={14} className="text-amber-600 dark:text-amber-400" />
                       {activeFrameItem ? activeFrameItem.name : "Chưa đeo Khung Avatar"}
                     </span>
-                    <span className="text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1.5 bg-indigo-50 text-indigo-800 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-900/60">
-                      <Medal size={14} className="text-indigo-600 dark:text-indigo-400" />
+                    <span className="text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1.5 bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900/60">
+                      <Medal size={14} className="text-blue-600 dark:text-blue-400" />
                       {activeBadgeItem ? activeBadgeItem.name : "Chưa đeo Huy Hiệu"}
                     </span>
                   </div>
@@ -339,7 +339,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
               <div className="shrink-0">
                 <Link
                   href="/market"
-                  className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs rounded-xl shadow-md shadow-amber-500/20 flex items-center gap-2 transition-all cursor-pointer"
+                  className="bg-amber-500 hover:bg-amber-600 px-4 py-2.5 text-white font-black text-xs rounded-xl shadow-md shadow-amber-500/20 flex items-center gap-2 transition-all cursor-pointer"
                 >
                   <ShoppingBag size={16} /> Đến Cửa Hàng Bánh Mì
                 </Link>
@@ -369,18 +369,18 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                       : "bg-amber-50 text-amber-800 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-900/50"
                   }`}
                 >
-                  👑 Khung Avatar ({framesCount})
+                  Khung Avatar ({framesCount})
                 </button>
                 <button
                   type="button"
                   onClick={() => setInventoryCategory("badge")}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
                     inventoryCategory === "badge"
-                      ? "bg-indigo-600 text-white shadow-xs"
-                      : "bg-indigo-50 text-indigo-800 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "bg-blue-50 text-blue-800 hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50"
                   }`}
                 >
-                  🏅 Huy Hiệu ({badgesCount})
+                  Huy Hiệu ({badgesCount})
                 </button>
                 <button
                   type="button"
@@ -391,7 +391,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                       : "bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
                   }`}
                 >
-                  ⚡ Vật Phẩm ({boostsCount})
+                  Vật Phẩm ({boostsCount})
                 </button>
               </div>
 
@@ -404,7 +404,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
             {filteredInventory.length === 0 ? (
               <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-4">
                 <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-full flex items-center justify-center mx-auto text-2xl">
-                  🎒
+                  <Backpack size={40} strokeWidth={1.75} aria-hidden="true" />
                 </div>
                 <div className="space-y-1">
                   <h3 className="font-black text-slate-700 dark:text-slate-300 text-base">
@@ -437,12 +437,12 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                       key={item.id}
                       className={`bg-white dark:bg-slate-900 rounded-3xl border p-5 flex flex-col justify-between transition-all relative overflow-hidden shadow-xs hover:shadow-md ${
                         isEquipped
-                          ? "border-amber-400 bg-gradient-to-b from-amber-50/50 to-white dark:from-amber-950/30 dark:to-slate-900 ring-2 ring-amber-300 dark:ring-amber-700/60"
+                          ? "bg-amber-50/50 dark:bg-amber-950/30 border-amber-400 ring-2 ring-amber-300 dark:ring-amber-700/60"
                           : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                       }`}
                     >
                       {isEquipped && (
-                        <div className="absolute top-0 right-0 bg-amber-500 text-white text-[10px] font-black uppercase px-3 py-1 rounded-bl-2xl flex items-center gap-1 shadow-xs">
+                        <div className="absolute top-0 right-0 bg-amber-500 text-white text-xs font-black uppercase px-3 py-1 rounded-bl-2xl flex items-center gap-1 shadow-xs">
                           <CheckCircle2 size={11} /> Đang Đeo
                         </div>
                       )}
@@ -458,11 +458,11 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                           </div>
                           <div>
                             <span
-                              className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${
+                              className={`text-xs font-black uppercase px-2 py-0.5 rounded-md ${
                                 isFrame
                                   ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
                                   : isBadge
-                                  ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300"
+                                  ? "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300"
                                   : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
                               }`}
                             >

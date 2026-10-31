@@ -6,6 +6,7 @@ import { ArrowRight, CircleAlert, Eye, EyeOff, KeyRound, Loader2, ShieldCheck } 
 import axiosClient from "@/lib/api/axiosClient";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { useAuthStore } from "@/stores/authStore";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 type PasswordFieldProps = {
   id: string;
@@ -72,8 +73,7 @@ export default function ChangePasswordPage() {
       });
       router.replace(user?.role === "ADMIN" ? "/admin" : "/dashboard");
     } catch (requestError: any) {
-      const message = requestError?.response?.data?.message;
-      setError(Array.isArray(message) ? message.join(". ") : message || "Không thể đổi mật khẩu. Vui lòng thử lại.");
+      setError(getApiErrorMessage(requestError, "Không thể đổi mật khẩu. Vui lòng thử lại."));
     } finally {
       setIsLoading(false);
     }

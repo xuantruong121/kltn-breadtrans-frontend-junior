@@ -70,7 +70,7 @@ export default function LearnerMessagesPage() {
   const messages = messagesQuery.data?.data ?? [];
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <header className="border-b border-slate-200 pb-5 dark:border-slate-800">
         <h1 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">
           Tin nhắn hỗ trợ
@@ -89,11 +89,11 @@ export default function LearnerMessagesPage() {
           <div>
             <h2 className="text-sm font-semibold text-slate-950 dark:text-white flex items-center gap-1.5">
               <span>Đội ngũ hỗ trợ BreadTrans</span>
-              <span className="inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800">
+              <span className="inline-flex items-center text-xs font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800">
                 Trực tuyến
               </span>
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Mọi thắc mắc về bài học, đề thi và kỹ thuật sẽ được giải đáp tại đây.
             </p>
           </div>
@@ -110,7 +110,7 @@ export default function LearnerMessagesPage() {
               <p className="font-semibold text-slate-700 dark:text-slate-300">
                 Chưa có tin nhắn nào.
               </p>
-              <p className="text-xs text-slate-400">
+              <p className="text-sm text-slate-400">
                 Hãy đặt câu hỏi bên dưới để bắt đầu trao đổi với ban quản trị.
               </p>
             </div>
@@ -131,7 +131,7 @@ export default function LearnerMessagesPage() {
                   {showDateDivider && (
                     <div className="flex items-center justify-center my-3.5 select-none">
                       <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1" />
-                      <span className="mx-3 px-3 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-[11px] font-semibold text-slate-600 dark:text-slate-300 border border-slate-300/60 dark:border-slate-700/80 shadow-2xs">
+                      <span className="mx-3 px-3 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300 border border-slate-300/60 dark:border-slate-700/80 shadow-2xs">
                         {formatDateDivider(message.createdAt)}
                       </span>
                       <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1" />
@@ -142,7 +142,7 @@ export default function LearnerMessagesPage() {
                     <div className="flex justify-center my-2">
                       <div className="max-w-md rounded-full bg-slate-100 dark:bg-slate-800/80 px-3.5 py-1 text-center text-xs text-slate-500 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/60">
                         <span>{message.content}</span>
-                        <span className="ml-2 text-[10px] text-slate-400">
+                        <span className="ml-2 text-xs text-slate-400">
                           ({formatMessageTimestamp(message.createdAt)})
                         </span>
                       </div>
@@ -154,7 +154,7 @@ export default function LearnerMessagesPage() {
                         {/* Header: Name, Role Badge, Full Timestamp */}
                         <div className="flex items-center gap-1.5 mb-1 px-1 text-xs">
                           <span
-                            className="text-[11px] font-medium text-slate-400"
+                            className="text-xs font-medium text-slate-400"
                             title={formatMessageFullTooltip(message.createdAt)}
                           >
                             {formatMessageTimestamp(message.createdAt)}
@@ -162,7 +162,7 @@ export default function LearnerMessagesPage() {
                           <span className="font-semibold text-slate-900 dark:text-slate-100">
                             Bạn
                           </span>
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800">
+                          <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800">
                             Học viên
                           </span>
                         </div>
@@ -195,11 +195,11 @@ export default function LearnerMessagesPage() {
                           <span className="font-semibold text-slate-900 dark:text-slate-100">
                             {message.senderName || "Đội ngũ BreadTrans"}
                           </span>
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800">
+                          <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800">
                             Quản trị viên
                           </span>
                           <span
-                            className="text-[11px] font-medium text-slate-400"
+                            className="text-xs font-medium text-slate-400"
                             title={formatMessageFullTooltip(message.createdAt)}
                           >
                             {formatMessageTimestamp(message.createdAt)}

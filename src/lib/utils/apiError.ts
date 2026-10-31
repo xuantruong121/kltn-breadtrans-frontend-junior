@@ -1,3 +1,5 @@
+const VIETNAMESE_LETTER = /[À-ỹĐđ]/;
+
 /**
  * Helper to map backend error responses to user-friendly Vietnamese messages.
  * Prevents raw exceptions or technical errors from being displayed directly to users.
@@ -12,13 +14,21 @@ export function getApiErrorMessage(
   if (!response && (err.code === "ERR_NETWORK" || err.message === "Network Error")) {
     return "Không thể kết nối tới máy chủ. Vui lòng kiểm tra mạng và thử lại.";
   }
+  // An error raised in the browser with a Vietnamese text is already readable.
+  if (!response && typeof err.message === "string" && VIETNAMESE_LETTER.test(err.message)) {
+    return err.message;
+  }
   const rawMessage = response?.data?.message;
 
   let message = "";
   if (Array.isArray(rawMessage)) {
-    message = rawMessage.join(". ");
+    // Validation returns one entry per rule; a rule without its own Vietnamese
+    // text must not surface next to the ones that have it.
+    message = rawMessage.filter((item) => VIETNAMESE_LETTER.test(String(item))).join(". ");
   } else if (typeof rawMessage === "string") {
     message = rawMessage;
+  } else if (typeof rawMessage?.message === "string") {
+    message = rawMessage.message;
   }
 
   const lowerMsg = message.toLowerCase();
@@ -50,7 +60,7 @@ export function getApiErrorMessage(
     if (technicalLeak) return defaultMessage;
     // A message with no Vietnamese letter is an internal English message from
     // the API ("Quiz not found"); show the status-based Vietnamese text instead.
-    if (/[À-ỹĐđ]/.test(message)) return message;
+    if (VIETNAMESE_LETTER.test(message)) return message;
   }
 
   // HTTP status fallback mapping

@@ -159,7 +159,7 @@ export function BrandIcon({
 
   return (
     <div
-      className={`relative shrink-0 flex items-center justify-center bg-gradient-to-br from-amber-50/90 via-white to-amber-100/60 border border-amber-200/80 shadow-xs shadow-amber-900/5 ${containerSizeClass} ${roundedClass} ${containerClassName}`}
+      className={`bg-amber-50/90 relative shrink-0 flex items-center justify-center border border-amber-200/80 shadow-xs shadow-amber-900/5 ${containerSizeClass} ${roundedClass} ${containerClassName}`}
     >
       {svgContent}
     </div>

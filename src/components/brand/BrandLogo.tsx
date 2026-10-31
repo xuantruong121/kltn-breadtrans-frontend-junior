@@ -84,14 +84,14 @@ export function BrandLogo({
     sm: {
       gap: "gap-2",
       wordmark: "text-lg",
-      subtitle: "text-[10px]",
-      badge: "text-[9px] px-1 py-0.2",
+      subtitle: "text-xs",
+      badge: "text-xs px-1 py-0.2",
     },
     md: {
       gap: "gap-2 sm:gap-2.5",
       wordmark: "text-lg sm:text-xl",
       subtitle: "text-xs",
-      badge: "text-[10px] px-1.5 py-0.5",
+      badge: "text-xs px-1.5 py-0.5",
     },
     lg: {
       gap: "gap-3",
@@ -148,7 +148,7 @@ export function BrandLogo({
 
             {/* Admin CMS Badge */}
             {variant === "admin" && (
-              <span className="hidden sm:inline-flex rounded-md bg-blue-50 border border-blue-200/80 px-1.5 py-0.5 text-[10px] font-black tracking-wide text-blue-700 uppercase shrink-0">
+              <span className="hidden sm:inline-flex rounded-md bg-blue-50 border border-blue-200/80 px-1.5 py-0.5 text-xs font-black tracking-wide text-blue-700 uppercase shrink-0">
                 CMS
               </span>
             )}

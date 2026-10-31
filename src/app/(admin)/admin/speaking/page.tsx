@@ -502,16 +502,16 @@ export default function AdminSpeakingPage() {
                             <span className="font-semibold text-slate-800">
                               {category.name}
                             </span>
-                            <code className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">
+                            <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
                               {category.code}
                             </code>
                             <span
-                              className={`rounded px-1.5 py-0.5 text-[11px] ${category.isActive ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}
+                              className={`rounded px-1.5 py-0.5 text-xs ${category.isActive ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}
                             >
                               {category.isActive ? "Đang dùng" : "Đã tắt"}
                             </span>
                           </div>
-                          <p className="mt-1 text-[11px] text-slate-500">
+                          <p className="mt-1 text-xs text-slate-500">
                             {category._count?.practiceSets || 0} bộ ·{" "}
                             {category._count?.exercises || 0} câu ·{" "}
                             {category.allowPracticeSet ? "Bộ luyện" : ""}

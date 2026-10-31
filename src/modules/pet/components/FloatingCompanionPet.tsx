@@ -260,11 +260,11 @@ const FloatingCompanionPetInner: React.FC = () => {
                   <h3 id="floating-pet-dialog-title" className="text-sm font-bold text-slate-900 dark:text-slate-100">
                     {petName}
                   </h3>
-                  <span className="text-[10px] font-bold text-amber-900 dark:text-amber-300 bg-amber-100/80 dark:bg-amber-950/50 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800/80">
+                  <span className="text-xs font-bold text-amber-900 dark:text-amber-300 bg-amber-100/80 dark:bg-amber-950/50 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800/80">
                     Cấp {level}
                   </span>
                 </div>
-                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                   {speciesInfo.title}
                 </p>
               </div>
@@ -284,7 +284,7 @@ const FloatingCompanionPetInner: React.FC = () => {
           <div className="space-y-3 bg-slate-50/70 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200/60 dark:border-slate-700/60 mb-3.5">
             {/* Level EXP */}
             <div>
-              <div className="flex justify-between text-[11px] font-medium mb-1">
+              <div className="flex justify-between text-xs font-medium mb-1">
                 <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
                   <TrendingUp size={12} className="text-amber-600 dark:text-amber-400" aria-hidden="true" /> Tiến trình cấp
                 </span>
@@ -307,7 +307,7 @@ const FloatingCompanionPetInner: React.FC = () => {
 
             {/* Health */}
             <div>
-              <div className="flex justify-between text-[11px] font-medium mb-1">
+              <div className="flex justify-between text-xs font-medium mb-1">
                 <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
                   <Heart size={12} className="text-rose-500 fill-rose-500" aria-hidden="true" /> Sức khỏe
                 </span>
@@ -330,7 +330,7 @@ const FloatingCompanionPetInner: React.FC = () => {
 
             {/* Happiness */}
             <div>
-              <div className="flex justify-between text-[11px] font-medium mb-1">
+              <div className="flex justify-between text-xs font-medium mb-1">
                 <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
                   <Smile size={12} className="text-amber-600 dark:text-amber-400" aria-hidden="true" /> Vui vẻ
                 </span>
@@ -353,7 +353,7 @@ const FloatingCompanionPetInner: React.FC = () => {
 
             {/* Satiety */}
             <div>
-              <div className="flex justify-between text-[11px] font-medium mb-1">
+              <div className="flex justify-between text-xs font-medium mb-1">
                 <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
                   <Utensils size={12} className="text-orange-500 dark:text-orange-400" aria-hidden="true" /> Độ no
                 </span>
@@ -384,10 +384,10 @@ const FloatingCompanionPetInner: React.FC = () => {
           {/* Daily Quest Recommendation Card */}
           {recommendation && (
             <div className="p-3 rounded-xl bg-card dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 mb-3.5 shadow-2xs">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400 block mb-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400 block mb-1">
                 Nhiệm vụ hôm nay
               </span>
-              <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 line-clamp-2">
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 line-clamp-2">
                 {recommendation.title}: {recommendation.description}
               </p>
               <Link
@@ -444,13 +444,13 @@ const FloatingCompanionPetInner: React.FC = () => {
             </button>
 
             {!feedEligibility.allowed && (pet?.satietyState === "FULL" || satiety >= 80) ? (
-              <p className="text-center text-[11px] font-medium text-slate-500 dark:text-slate-400">{satietyText}</p>
+              <p className="text-center text-sm font-medium text-slate-500 dark:text-slate-400">{satietyText}</p>
             ) : balance < feedCost ? (
-              <p className="text-center text-[11px] font-semibold text-rose-600 dark:text-rose-400">
+              <p className="text-center text-sm font-semibold text-rose-600 dark:text-rose-400">
                 Cần {feedCost} Bánh Mì (Số dư: {balance})
               </p>
             ) : (
-              <p className="text-center text-[10px] text-slate-500 dark:text-slate-400">
+              <p className="text-center text-sm text-slate-500 dark:text-slate-400">
                 Tiêu hao {feedCost} Bánh Mì • {satietyText} • EXP hôm nay {pet?.dailyRewardedFeedCount ?? 0}/{pet?.dailyRewardLimit ?? 3}
               </p>
             )}

@@ -119,7 +119,7 @@ export function PracticeCard({
 
   const containerClasses = {
     IN_PROGRESS:
-      "relative flex min-h-[220px] flex-col justify-between rounded-xl border border-violet-300 dark:border-violet-700/60 bg-white dark:bg-slate-900 p-5 shadow-2xs transition-all duration-200 hover:border-violet-400 dark:hover:border-violet-600 hover:shadow-xs cursor-pointer group",
+      "relative flex min-h-[220px] flex-col justify-between rounded-xl border border-teal-300 dark:border-teal-700/60 bg-white dark:bg-slate-900 p-5 shadow-2xs transition-all duration-200 hover:border-teal-400 dark:hover:border-teal-600 hover:shadow-xs cursor-pointer group",
     COMPLETED:
       "relative flex min-h-[220px] flex-col justify-between rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs cursor-pointer group",
     NOT_STARTED:
@@ -151,7 +151,7 @@ export function PracticeCard({
 
         {/* Title & Pedagogical Description */}
         <div>
-          <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors line-clamp-1 break-words">
+          <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors line-clamp-1 break-words">
             {practiceSet?.title || exercise.title}
           </h3>
           <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2 min-h-[38px] mt-1.5">
@@ -164,13 +164,13 @@ export function PracticeCard({
           <div className="space-y-1 pt-1">
             <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
               <span>{completedExercises}/{totalExercises} câu</span>
-              <span className="font-semibold text-violet-600 dark:text-violet-400">
+              <span className="font-semibold text-teal-600 dark:text-teal-400">
                 {progressPercent}%
               </span>
             </div>
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
               <div
-                className="h-full rounded-full bg-violet-600 transition-all duration-300"
+                className="h-full rounded-full bg-teal-600 transition-all duration-300"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -199,7 +199,7 @@ export function PracticeCard({
                 type="button"
                 onClick={() => onStart?.(exercise)}
                 disabled={isLaunching}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer disabled:opacity-60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500"
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer disabled:opacity-60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-500"
               >
                 <span>Luyện lại</span>
                 <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
@@ -209,7 +209,7 @@ export function PracticeCard({
                 type="button"
                 onClick={() => onStart?.(exercise)}
                 disabled={isLaunching}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 px-3.5 py-1.5 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer disabled:opacity-60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500"
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 px-3.5 py-1.5 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer disabled:opacity-60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-500"
               >
                 <span>Tiếp tục</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -219,7 +219,7 @@ export function PracticeCard({
                 type="button"
                 onClick={() => onStart?.(exercise)}
                 disabled={isLaunching}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-slate-100 hover:bg-violet-600 dark:bg-slate-800 dark:hover:bg-violet-600 px-3.5 py-1.5 text-sm font-semibold text-slate-700 hover:text-white dark:text-slate-200 dark:hover:text-white transition-colors cursor-pointer disabled:opacity-60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500"
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-slate-100 hover:bg-teal-600 dark:bg-slate-800 dark:hover:bg-teal-600 px-3.5 py-1.5 text-sm font-semibold text-slate-700 hover:text-white dark:text-slate-200 dark:hover:text-white transition-colors cursor-pointer disabled:opacity-60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-500"
               >
                 <span>Bắt đầu</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -243,7 +243,7 @@ export function PracticeCard({
               <button
                 type="button"
                 onClick={handleCardClick}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 px-3.5 py-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-500"
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 px-3.5 py-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-500"
               >
                 <Lock className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>Đăng nhập để luyện</span>

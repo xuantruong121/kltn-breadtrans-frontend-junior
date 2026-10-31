@@ -207,7 +207,7 @@ export const GrammarScreen: React.FC<GrammarScreenProps> = ({
             className="min-h-36 rounded-3xl border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700 cursor-pointer"
           >
             <div className="mb-2 flex items-center justify-between gap-2">
-              <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:text-slate-300">
+              <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-bold text-slate-600 dark:text-slate-300">
                 {levelLabel(topic.level)}
               </span>
               {topic.isCompleted && (

@@ -195,7 +195,7 @@ export default function AdminUsersPage() {
 
   const roleBadge = (role: string) => {
     const map: Record<string, string> = {
-      ADMIN: "bg-purple-100 text-purple-800 border-purple-300",
+      ADMIN: "bg-teal-100 text-teal-800 border-teal-300",
       STUDENT: "bg-emerald-100 text-emerald-800 border-emerald-300",
     };
     const labels: Record<string, string> = {
@@ -269,14 +269,14 @@ export default function AdminUsersPage() {
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3.5 rounded-2xl font-black flex items-center gap-2 shadow-[0_6px_0_0_#1d4ed8] active:translate-y-1 active:shadow-none transition-all cursor-pointer text-sm"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3.5 rounded-2xl font-black flex items-center gap-2 shadow-sm active:translate-y-1 active:shadow-none transition-all cursor-pointer text-sm"
         >
           <UserPlus size={18} /> Thêm người dùng mới
         </button>
       </div>
 
       {/* FILTER BAR */}
-      <div className="bg-white p-5 rounded-[2rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] flex flex-col md:flex-row gap-4 items-center justify-between">
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="flex-1 w-full relative">
           <Search
             className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
@@ -314,7 +314,7 @@ export default function AdminUsersPage() {
       </div>
 
       {/* USERS TABLE */}
-      <div className="bg-white rounded-[2.5rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center p-16">
             <Loader2 className="animate-spin text-blue-600" size={48} />
@@ -326,8 +326,7 @@ export default function AdminUsersPage() {
               Không thể tải danh sách người dùng
             </h3>
             <p className="text-sm text-rose-500">
-              {(error as any)?.response?.data?.message ||
-                "Đã xảy ra lỗi khi kết nối tới máy chủ."}
+              {getApiErrorMessage(error, "Đã xảy ra lỗi khi kết nối tới máy chủ.")}
             </p>
             <button
               type="button"
@@ -492,7 +491,7 @@ export default function AdminUsersPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-[2.5rem] border-4 border-slate-200 shadow-2xl w-full max-w-md p-6 md:p-8 space-y-5"
+              className="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-md p-6 md:p-8 space-y-5"
             >
               <div className="flex items-center justify-between border-b-2 border-slate-100 pb-3">
                 <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">
@@ -639,7 +638,7 @@ export default function AdminUsersPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-[2.5rem] border-4 border-slate-200 shadow-2xl w-full max-w-md p-6 md:p-8 space-y-5"
+              className="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-md p-6 md:p-8 space-y-5"
             >
               <div className="flex items-center justify-between border-b-2 border-slate-100 pb-3">
                 <div>
@@ -792,9 +791,9 @@ export default function AdminUsersPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-[2.5rem] border-4 border-rose-200 shadow-2xl p-6 md:p-8 max-w-md w-full space-y-5 text-center"
+              className="bg-white rounded-xl border border-rose-200 shadow-2xl p-6 md:p-8 max-w-md w-full space-y-5 text-center"
             >
-              <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-3xl flex items-center justify-center mx-auto">
+              <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center mx-auto">
                 <AlertTriangle size={32} />
               </div>
 

@@ -218,7 +218,7 @@ function AdminRewardCreateEditModalInner({
                 placeholder="Tự sinh nếu để trống (vd: gau-bong-banh-mi)"
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono text-slate-700 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-colors"
               />
-              <p className="text-[11px] text-slate-400 mt-1">
+              <p className="text-xs text-slate-400 mt-1">
                 Để trống để hệ thống tự động sinh slug tiếng Việt chuẩn.
               </p>
             </div>
@@ -402,7 +402,7 @@ function AdminRewardCreateEditModalInner({
                     />
                   </label>
                 </div>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-xs text-slate-400">
                   Tải ảnh lên hoặc dán đường dẫn ảnh.
                 </p>
               </div>

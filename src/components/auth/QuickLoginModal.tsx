@@ -11,6 +11,7 @@ import {
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQueryClient } from "@tanstack/react-query";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 interface QuickLoginModalProps {
   isOpen: boolean;
@@ -86,8 +87,7 @@ export function QuickLoginModal({
       }
       router.push(destination);
     } catch (err: any) {
-      const msg = err.response?.data?.message;
-      setErrorMsg(Array.isArray(msg) ? msg[0] : msg || "Email hoặc mật khẩu không chính xác.");
+      setErrorMsg(getApiErrorMessage(err, "Email hoặc mật khẩu không chính xác."));
     } finally {
       setIsLoading(false);
     }
@@ -179,7 +179,7 @@ export function QuickLoginModal({
                   onClose();
                   router.push("/forgot-password");
                 }}
-                className="text-[11px] font-bold text-amber-700 dark:text-amber-400 hover:underline"
+                className="text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline"
               >
                 Quên mật khẩu?
               </button>

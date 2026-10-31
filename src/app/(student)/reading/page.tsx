@@ -282,7 +282,7 @@ function ReadingTopicsContent() {
       <section className="relative overflow-hidden rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 px-5 py-4 sm:px-6 sm:py-5 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6">
           <div className="min-w-0 flex-1 space-y-2.5">
-            <div className="inline-flex items-center gap-2 rounded-full border border-violet-200 dark:border-violet-800/60 bg-violet-50/80 dark:bg-violet-950/40 px-3 py-1 text-xs font-bold text-violet-700 dark:text-violet-300">
+            <div className="inline-flex items-center gap-2 rounded-full border border-teal-200 dark:border-teal-800/60 bg-teal-50/80 dark:bg-teal-950/40 px-3 py-1 text-xs font-bold text-teal-700 dark:text-teal-300">
               <BookOpen size={14} aria-hidden="true" />
               <span>Trung tâm luyện Đọc hiểu & Ngữ pháp</span>
             </div>
@@ -349,7 +349,7 @@ function ReadingTopicsContent() {
               placeholder="Tìm kiếm chủ đề đọc hiểu, ngữ pháp..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="min-h-11 w-full rounded-xl border border-slate-300/80 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-800/90 pl-10.5 pr-20 text-sm font-medium text-slate-900 dark:text-slate-100 transition-all duration-150 placeholder:text-slate-500 dark:placeholder:text-slate-400 placeholder:font-normal focus:border-violet-600 dark:focus:border-violet-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/20 focus:outline-hidden shadow-2xs"
+              className="min-h-11 w-full rounded-xl border border-slate-300/80 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-800/90 pl-10.5 pr-20 text-sm font-medium text-slate-900 dark:text-slate-100 transition-all duration-150 placeholder:text-slate-500 dark:placeholder:text-slate-400 placeholder:font-normal focus:border-teal-600 dark:focus:border-teal-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-teal-500/20 focus:outline-hidden shadow-2xs"
             />
             <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
               {searchTerm ? (
@@ -428,7 +428,7 @@ function ReadingTopicsContent() {
           <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
             <Loader2
               size={32}
-              className="animate-spin text-violet-600"
+              className="animate-spin text-teal-600"
               aria-hidden="true"
             />
             <p className="mt-3 text-xs font-bold text-slate-500 dark:text-slate-400">
@@ -509,7 +509,7 @@ function ReadingTopicsContent() {
                   setSortOrder(DEFAULT_CATALOG_SORT);
                   setSelectedStatus("ALL");
                 }}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
               >
                 <RotateCcw size={14} aria-hidden="true" />
                 Xóa bộ lọc
@@ -524,7 +524,7 @@ function ReadingTopicsContent() {
         isOpen={authGate.open}
         onClose={() => setAuthGate({ open: false })}
         targetLabel={
-          authGate.title ? `bài luyện "${authGate.title}"` : "bài luyện tập này"
+          authGate.title ? `bài luyện"${authGate.title}"` : "bài luyện tập này"
         }
         targetRoute={
           authGate.quizId ? `/reading/${authGate.quizId}` : "/reading"

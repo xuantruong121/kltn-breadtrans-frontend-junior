@@ -474,7 +474,7 @@ export default function AdminPlanPurchasesPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[900px] text-left text-sm">
                     <thead>
-                      <tr className="border-b border-slate-200 bg-slate-100/75 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
+                      <tr className="border-b border-slate-200 bg-slate-100/75 text-slate-700 font-bold uppercase tracking-wider text-xs">
                         <th className="px-5 py-3">Học viên</th>
                         <th className="px-5 py-3">Gói</th>
                         <th className="px-5 py-3">Trạng thái</th>
@@ -683,7 +683,7 @@ export default function AdminPlanPurchasesPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[850px] text-left text-sm">
                     <thead>
-                      <tr className="border-b border-slate-200 bg-slate-100/75 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
+                      <tr className="border-b border-slate-200 bg-slate-100/75 text-slate-700 font-bold uppercase tracking-wider text-xs">
                         <th className="px-5 py-3">Học viên</th>
                         <th className="px-5 py-3">Gói</th>
                         <th className="px-5 py-3">Mã giao dịch</th>

@@ -41,7 +41,7 @@ export default function ToeicReviewPage({
   // A group (passage, picture, audio) is shown once, before its first question.
   const seenGroups = new Set<number>();
   return (
-    <main className="mx-auto max-w-4xl px-4 pb-20 pt-8 sm:px-6">
+    <main className="mx-auto max-w-7xl px-4 pb-20 pt-8 sm:px-6">
       <Link href={`/toeic/results/${attemptId}`} className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-900 dark:text-slate-300">
         <ArrowLeft size={16} aria-hidden="true" /> Kết quả
       </Link>
@@ -65,7 +65,7 @@ export default function ToeicReviewPage({
           <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
             Part {p.part} <span className="text-base font-semibold text-slate-600 dark:text-slate-400">· {PART_TITLES[p.part]}</span>
           </h2>
-          <div className="mt-3 space-y-4">
+          <div className="mt-3 grid items-start gap-4 xl:grid-cols-2">
             {p.questions.map((q) => {
               const firstOfGroup = !seenGroups.has(q.groupId);
               seenGroups.add(q.groupId);

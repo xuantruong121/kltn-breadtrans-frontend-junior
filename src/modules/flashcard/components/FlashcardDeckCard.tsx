@@ -30,7 +30,7 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
       data-status={status}
       className={`group relative flex flex-col justify-between rounded-2xl border bg-white dark:bg-slate-900 p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-blue-300/80 dark:hover:border-blue-800/80 ${
         status === "REVIEW_DUE"
-          ? "border-amber-300/80 dark:border-amber-800/80 bg-gradient-to-b from-amber-50/20 to-transparent"
+          ? "bg-amber-50/20 border-amber-300/80 dark:border-amber-800/80"
           : status === "COMPLETED"
             ? "border-emerald-200/80 dark:border-emerald-900/60 hover:border-emerald-400"
             : "border-slate-200/80 dark:border-slate-800"
@@ -39,18 +39,18 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
       {/* ── Top Row: Category Badge & Status Pill ───────────────────── */}
       <div>
         <div className="flex items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/60 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900/50">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-semibold bg-blue-50 text-blue-700 border border-blue-200/60 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900/50">
             <BookOpen size={13} className="text-blue-600 dark:text-blue-400 shrink-0" aria-hidden="true" />
             <span className="truncate max-w-[140px] sm:max-w-[170px]">{topic.categoryName || "Từ vựng"}</span>
           </span>
           {isLocked ? (
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-300/80 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-300/80 bg-amber-50 px-2.5 py-0.5 text-sm font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
               <Lock size={12} aria-hidden="true" />
               <span>Premium</span>
             </span>
           ) : (
             <span
-              className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold border ${
+              className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold border ${
                 badge.variant === "due"
                   ? "border-amber-200/80 bg-amber-50 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300"
                   : badge.variant === "completed"
@@ -71,7 +71,7 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
         {/* ── Deck Title ──────────────────────────────────────────────── */}
         <h2 className="mt-3 line-clamp-2 min-h-[2.75rem] text-[17px] font-bold leading-snug text-slate-900 transition-colors group-hover:text-blue-600 dark:text-slate-100 dark:group-hover:text-blue-400 tracking-tight">
           {topic.level && (
-            <span className="mr-1.5 inline-block rounded-md bg-slate-100 px-1.5 py-0.5 align-middle text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+            <span className="mr-1.5 inline-block rounded-md bg-slate-100 px-1.5 py-0.5 align-middle text-sm font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
               {topic.level}
             </span>
           )}
@@ -89,11 +89,11 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
             Số lượng: <strong className="font-semibold text-slate-900 dark:text-slate-100">{topic.totalWords}</strong> từ
           </span>
           {topic.needReviewCount > 0 ? (
-            <span className="inline-flex items-center gap-1 font-semibold text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300 px-2 py-0.5 rounded-md text-[11px] border border-amber-200/70">
+            <span className="inline-flex items-center gap-1 font-semibold text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300 px-2 py-0.5 rounded-md text-sm border border-amber-200/70">
               {topic.needReviewCount} từ cần ôn
             </span>
           ) : (
-            <span className="text-[11px] text-slate-400">Sẵn sàng ôn luyện</span>
+            <span className="text-sm text-slate-400">Sẵn sàng ôn luyện</span>
           )}
         </div>
       </div>
@@ -123,7 +123,7 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
               status === "COMPLETED"
                 ? "bg-emerald-500"
                 : progress.percentage > 0
-                ? "bg-gradient-to-r from-blue-500 to-indigo-600"
+                ? "bg-blue-500"
                 : "bg-slate-200 dark:bg-slate-700"
             }`}
             style={{ width: `${Math.max(progress.displayPercent, progress.percentage > 0 ? 5 : 0)}%` }}

@@ -75,7 +75,7 @@ export function DiagnosticResultTab() {
   if (isLoading) {
     return (
       <div className="flex min-h-64 items-center justify-center">
-        <Loader2 className="animate-spin text-violet-600" size={32} />
+        <Loader2 className="animate-spin text-teal-600" size={32} />
       </div>
     );
   }
@@ -90,7 +90,7 @@ export function DiagnosticResultTab() {
     return (
       <div className="space-y-6">
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-8">
-          <div className="flex size-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+          <div className="flex size-12 items-center justify-center rounded-2xl bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300">
             <Target size={24} />
           </div>
           <h2 className="mt-4 text-2xl font-black text-slate-900 dark:text-slate-100">
@@ -126,7 +126,7 @@ export function DiagnosticResultTab() {
           <div className="mt-8">
             <Link
               href="/diagnostic"
-              className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-violet-600 px-6 text-sm font-extrabold text-white transition hover:bg-violet-700"
+              className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-teal-600 px-6 text-sm font-extrabold text-white transition hover:bg-teal-700"
             >
               Làm bài đánh giá đầu vào <ArrowRight size={17} />
             </Link>
@@ -194,7 +194,7 @@ export function DiagnosticResultTab() {
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <Link
                 href="/diagnostic"
-                className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-violet-600 px-6 text-sm font-extrabold text-white transition-colors hover:bg-violet-700"
+                className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-teal-600 px-6 text-sm font-extrabold text-white transition-colors hover:bg-teal-700"
               >
                 Tiếp tục làm bài <ArrowRight size={16} aria-hidden="true" />
               </Link>
@@ -216,7 +216,7 @@ export function DiagnosticResultTab() {
   if (!latestResult) {
     return (
       <div className="flex min-h-64 items-center justify-center">
-        <Loader2 className="animate-spin text-violet-600" size={32} />
+        <Loader2 className="animate-spin text-teal-600" size={32} />
       </div>
     );
   }
@@ -258,7 +258,7 @@ export function DiagnosticResultTab() {
         ) : (
         <div className="mt-5 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <span className="text-sm font-black uppercase tracking-wider text-violet-600 dark:text-violet-400">
+            <span className="text-sm font-black uppercase tracking-wider text-teal-600 dark:text-teal-400">
               {fourSkill ? "Kết quả theo bốn kỹ năng" : "Mức năng lực tham khảo"}
             </span>
             <h2 className="mt-1 text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100">
@@ -298,8 +298,8 @@ export function DiagnosticResultTab() {
 
         {/* Speaking / Writing Evidence Note */}
         {result.productiveTaskCount && !fourSkill?.observed ? (
-          <div className="mt-6 rounded-2xl border border-violet-100 bg-violet-50/70 p-4 text-sm leading-6 text-violet-900 dark:border-violet-900/60 dark:bg-violet-950/30 dark:text-violet-200">
-            <div className="flex items-center gap-2 font-black text-violet-800 dark:text-violet-300">
+          <div className="mt-6 rounded-2xl border border-teal-100 bg-teal-50/70 p-4 text-sm leading-6 text-teal-900 dark:border-teal-900/60 dark:bg-teal-950/30 dark:text-teal-200">
+            <div className="flex items-center gap-2 font-black text-teal-800 dark:text-teal-300">
               <Mic size={16} /> Bài Nói và Viết
             </div>
             <div className="mt-1.5 space-y-1">
@@ -384,7 +384,7 @@ export function DiagnosticResultTab() {
       {practiceItems.length > 0 && (
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-8">
           <div className="flex items-center gap-2">
-            <BookOpen size={20} className="text-violet-600 dark:text-violet-400" />
+            <BookOpen size={20} className="text-teal-600 dark:text-teal-400" />
             <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">
               Bài luyện đề xuất
             </h3>
@@ -398,20 +398,20 @@ export function DiagnosticResultTab() {
               <Link
                 key={rec.id}
                 href={rec.route}
-                className="group flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-4 transition-all hover:border-violet-500 hover:shadow-sm dark:border-slate-800 dark:bg-slate-850 dark:hover:border-violet-500"
+                className="group flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-4 transition-all hover:border-teal-500 hover:shadow-sm dark:border-slate-800 dark:bg-slate-850 dark:hover:border-teal-500"
               >
                 <div>
-                  <span className="inline-block rounded-md bg-violet-100 px-2 py-0.5 text-xs font-black uppercase tracking-wider text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+                  <span className="inline-block rounded-md bg-teal-100 px-2 py-0.5 text-xs font-black uppercase tracking-wider text-teal-700 dark:bg-teal-950 dark:text-teal-300">
                     {rec.badge}
                   </span>
-                  <h4 className="mt-2 text-base font-black text-slate-900 group-hover:text-violet-600 dark:text-slate-100 dark:group-hover:text-violet-400">
+                  <h4 className="mt-2 text-base font-black text-slate-900 group-hover:text-teal-600 dark:text-slate-100 dark:group-hover:text-teal-400">
                     {rec.title}
                   </h4>
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-6">
                     {rec.description}
                   </p>
                 </div>
-                <div className="mt-4 flex items-center gap-1 text-sm font-bold text-violet-600 dark:text-violet-400">
+                <div className="mt-4 flex items-center gap-1 text-sm font-bold text-teal-600 dark:text-teal-400">
                   <span>Luyện tập ngay</span>
                   <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
                 </div>
@@ -428,7 +428,7 @@ export function DiagnosticResultTab() {
         </span>
         <Link
           href="/diagnostic"
-          className="inline-flex items-center gap-1.5 text-sm font-extrabold text-violet-600 hover:underline dark:text-violet-400"
+          className="inline-flex items-center gap-1.5 text-sm font-extrabold text-teal-600 hover:underline dark:text-teal-400"
         >
           <span>Xem lại toàn bộ bài làm</span>
           <ExternalLink size={13} />

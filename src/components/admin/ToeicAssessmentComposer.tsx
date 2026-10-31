@@ -122,7 +122,7 @@ export default function ToeicAssessmentComposer() {
       selectAssessment(created as Assessment);
       toast.success("Đã tạo draft composition.");
     } catch (error: any) {
-      toast.error(error?.response?.data?.message ?? "Không tạo được draft.");
+      toast.error(getApiErrorMessage(error, "Không tạo được draft."));
     } finally {
       setBusy(false);
     }
@@ -170,7 +170,7 @@ export default function ToeicAssessmentComposer() {
       toast.success("Đã lưu composition draft.");
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message ?? "Không lưu được composition.",
+        getApiErrorMessage(error, "Không lưu được composition."),
       );
     } finally {
       setBusy(false);

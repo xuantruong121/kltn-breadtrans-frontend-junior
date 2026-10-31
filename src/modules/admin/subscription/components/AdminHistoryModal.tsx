@@ -78,7 +78,7 @@ export function AdminHistoryModal({
         );
       case "ADMIN_EXTENDED":
         return (
-          <div className="p-2 bg-purple-100 text-purple-700 rounded-full">
+          <div className="p-2 bg-teal-100 text-teal-700 rounded-full">
             <CalendarPlus size={16} />
           </div>
         );
@@ -188,7 +188,7 @@ export function AdminHistoryModal({
                     )}
 
                     {event.newEndsAt && (
-                      <div className="text-[11px] text-slate-500 flex items-center gap-2">
+                      <div className="text-xs text-slate-500 flex items-center gap-2">
                         {event.previousEndsAt && (
                           <span>Từ {formatDate(event.previousEndsAt)}</span>
                         )}

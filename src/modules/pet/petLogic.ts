@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from "../../lib/utils/apiError.ts";
 /**
  * Deterministic domain logic for the BreadTrans 2D companion pet system.
  * Authoritative feeding checks, satiety formatting, and visual state mapping.
@@ -173,10 +174,10 @@ export function handleFeedFailure(
   error: any,
   currentBalance: number,
 ): { balance: number; errorMessage: string } {
-  const backendMessage =
-    error?.response?.data?.message ||
-    error?.message ||
-    "Không thể cho thú cưng ăn lúc này. Vui lòng kiểm tra lại kết nối.";
+  const backendMessage = getApiErrorMessage(
+    error,
+    "Không thể cho thú cưng ăn lúc này. Vui lòng kiểm tra lại kết nối.",
+  );
 
   return {
     balance: currentBalance, // Zero local deduction on failure

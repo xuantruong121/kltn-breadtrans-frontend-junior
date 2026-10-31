@@ -113,7 +113,7 @@ export default function AdminPracticePage() {
       </div>
 
       {/* TOPICS CONTAINER */}
-      <div className="bg-white rounded-[2rem] border-4 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] p-6 space-y-6">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-6">
         {/* SEARCH BAR */}
         <div className="relative">
           <Search
@@ -166,10 +166,10 @@ export default function AdminPracticePage() {
                   </p>
 
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase bg-blue-100 text-blue-700 border border-blue-200">
+                    <span className="px-2 py-0.5 rounded-lg text-xs font-black uppercase bg-blue-100 text-blue-700 border border-blue-200">
                       {topic.category}
                     </span>
-                    <span className="text-[11px] font-bold text-slate-400">
+                    <span className="text-xs font-bold text-slate-400">
                       Thứ tự: {topic.order || 1} • {topic._count?.quizzes || 0}{" "}
                       bài tập
                     </span>
@@ -189,7 +189,7 @@ export default function AdminPracticePage() {
       {/* CREATE TOPIC MODAL */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white max-w-md w-full rounded-[2.5rem] border-4 border-slate-200 shadow-[0_12px_0_0_#cbd5e1] p-6 space-y-4">
+          <div className="bg-white max-w-md w-full rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h2 className="text-xl font-black text-slate-800">
                 Tạo Chủ Đề Luyện Tập Mới

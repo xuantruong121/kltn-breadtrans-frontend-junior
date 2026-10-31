@@ -95,7 +95,7 @@ export default function AdminAnalyticsChart({ data, range }: AdminAnalyticsChart
             <h2 id="analytics-chart-heading" className="text-base font-bold text-slate-950">
               Xu hướng vận hành hệ thống
             </h2>
-            <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+            <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
               <BarChart3 size={13} aria-hidden="true" />
               {rangeLabel}
             </span>
@@ -200,7 +200,7 @@ export default function AdminAnalyticsChart({ data, range }: AdminAnalyticsChart
                       style={{ height: `${height}%` }}
                     />
                   </button>
-                  <span className={`mt-2.5 min-h-4 text-[11px] font-medium font-mono ${showTick ? "text-slate-500" : "text-transparent"}`} aria-hidden={!showTick}>
+                  <span className={`mt-2.5 min-h-4 text-xs font-medium font-mono ${showTick ? "text-slate-500" : "text-transparent"}`} aria-hidden={!showTick}>
                     {item.month}
                   </span>
                 </div>

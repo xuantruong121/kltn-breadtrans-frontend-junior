@@ -211,11 +211,11 @@ export const SpeakingStage: React.FC<SpeakingStageProps> = ({
               >
                 <div className="flex items-center gap-1">
                   <span className="text-xs font-extrabold">{opt.label}</span>
-                  <kbd className="text-[9px] font-mono opacity-80 border border-current/30 px-1 rounded">
+                  <kbd className="text-xs font-mono opacity-80 border border-current/30 px-1 rounded">
                     {opt.keyNumber}
                   </kbd>
                 </div>
-                <span className="text-[10px] font-medium opacity-85 mt-0.5">
+                <span className="text-xs font-medium opacity-85 mt-0.5">
                   Ôn lại: {opt.intervalText}
                 </span>
               </button>

@@ -722,7 +722,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
                   return (
                     <div
                       key={`${entry.partOfSpeech || "pos"}-${idx}`}
-                      className="rounded-2xl border border-amber-200/90 dark:border-amber-900/50 bg-gradient-to-br from-amber-50/80 via-orange-50/25 to-white dark:from-slate-850 dark:via-slate-900 dark:to-slate-900 p-4 sm:p-5 shadow-2xs space-y-3"
+                      className="bg-amber-50/80 dark:bg-slate-850 rounded-2xl border border-amber-200/90 dark:border-amber-900/50 p-4 sm:p-5 shadow-2xs space-y-3"
                     >
                       {/* POS Header & Variant Audio (if different) */}
                       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -734,7 +734,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
                           </span>
 
                           {isVariant && (
-                            <span className="inline-flex items-center rounded-md border border-amber-300/70 dark:border-amber-700/60 bg-amber-100/90 dark:bg-amber-950/60 px-2 py-0.5 text-[11px] sm:text-xs font-bold text-amber-900 dark:text-amber-200 shadow-2xs">
+                            <span className="inline-flex items-center rounded-md border border-amber-300/70 dark:border-amber-700/60 bg-amber-100/90 dark:bg-amber-950/60 px-2 py-0.5 text-xs font-bold text-amber-900 dark:text-amber-200 shadow-2xs">
                               Dạng biến thể
                             </span>
                           )}
@@ -774,7 +774,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
                       {/* Example Sentence */}
                       {entry.examples?.[0] && (
                         <div className="rounded-xl border border-slate-200/70 dark:border-slate-800 bg-white/90 dark:bg-slate-800/80 p-3.5 sm:p-4 text-sm sm:text-base space-y-1.5">
-                          <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
+                          <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
                             Ví dụ trong câu
                           </span>
                           <p className="font-medium text-slate-800 dark:text-slate-200 italic leading-relaxed text-sm sm:text-base">
@@ -841,7 +841,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
                 <section className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                   {allSynonyms.length > 0 && (
                     <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 p-3.5">
-                      <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1">
                         Từ đồng nghĩa
                       </span>
                       <p className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
@@ -851,7 +851,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
                   )}
                   {allAntonyms.length > 0 && (
                     <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 p-3.5">
-                      <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1">
                         Từ trái nghĩa
                       </span>
                       <p className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
@@ -878,7 +878,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
                 onPracticeWord(canonicalWord);
                 onClose();
               }}
-              className="min-h-12 w-full rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-sm sm:text-base shadow-xs shadow-amber-600/20 active:scale-[0.99] flex items-center justify-center gap-2.5 cursor-pointer transition-all"
+              className="bg-amber-500 hover:bg-amber-600 min-h-12 w-full rounded-2xl text-white font-bold text-sm sm:text-base shadow-xs shadow-amber-600/20 active:scale-[0.99] flex items-center justify-center gap-2.5 cursor-pointer transition-all"
             >
               <Volume2 size={18} />
               <span>Luyện phát âm từ này</span>

@@ -185,19 +185,19 @@ export const PracticeHeader: React.FC<PracticeHeaderProps> = ({
           </span>
 
           {difficulty && (
-            <span className="shrink-0 rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider hidden sm:inline-block">
+            <span className="shrink-0 rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-xs font-bold text-amber-400 uppercase tracking-wider hidden sm:inline-block">
               {levelLabel(difficulty)}
             </span>
           )}
 
           {displayPosition && (
-            <span className="shrink-0 rounded bg-amber-500/15 border border-amber-400/30 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+            <span className="shrink-0 rounded bg-amber-500/15 border border-amber-400/30 px-2 py-0.5 text-xs font-bold text-amber-300">
               {displayPosition}
             </span>
           )}
 
           {displayCategory && (
-            <span className="hidden md:inline-block shrink-0 rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-[10px] font-bold text-slate-300 uppercase tracking-wider truncate max-w-[160px]">
+            <span className="hidden md:inline-block shrink-0 rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-xs font-bold text-slate-300 uppercase tracking-wider truncate max-w-[160px]">
               {displayCategory}
             </span>
           )}

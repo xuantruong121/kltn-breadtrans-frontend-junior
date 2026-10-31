@@ -331,7 +331,7 @@ export default function AdminCostsPage() {
                       </p>
                     </div>
                   </div>
-                  <span className="shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">
+                  <span className="shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
                     1.500 req/ngày (Free)
                   </span>
                 </div>
@@ -346,7 +346,7 @@ export default function AdminCostsPage() {
                       ${services.gemini.costUsd.toFixed(4)} USD
                     </span>
                   </div>
-                  <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500">
+                  <div className="mt-1 flex items-center justify-between text-xs text-slate-500">
                     <span>Quy đổi VND:</span>
                     <span className="font-medium text-slate-700 font-mono">
                       ≈ {services.gemini.costVnd.toLocaleString("vi-VN")} đ
@@ -357,7 +357,7 @@ export default function AdminCostsPage() {
                 {/* 2x2 Metric Grid */}
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Tổng Request
                     </p>
                     <p className="mt-1 font-mono text-lg font-bold text-slate-900 tabular-nums">
@@ -365,7 +365,7 @@ export default function AdminCostsPage() {
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Redis Cache
                     </p>
                     <p className="mt-1 font-mono text-lg font-bold text-slate-900 tabular-nums">
@@ -374,7 +374,7 @@ export default function AdminCostsPage() {
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Input Tokens
                     </p>
                     <p className="mt-1 font-mono text-base font-bold text-slate-900 tabular-nums">
@@ -382,7 +382,7 @@ export default function AdminCostsPage() {
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Output Tokens
                     </p>
                     <p className="mt-1 font-mono text-base font-bold text-slate-900 tabular-nums">
@@ -419,7 +419,7 @@ export default function AdminCostsPage() {
                       </p>
                     </div>
                   </div>
-                  <span className="shrink-0 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700">
+                  <span className="shrink-0 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
                     5 giờ + 0,5 triệu ký tự/tháng (Free)
                   </span>
                 </div>
@@ -444,7 +444,7 @@ export default function AdminCostsPage() {
                       }}
                     />
                   </div>
-                  <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500">
+                  <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
                     <span>Còn lại trong hạn mức:</span>
                     <span className="font-semibold text-emerald-700">
                       {Math.max(0, services.azureSpeech.freeQuotaMinutes - services.azureSpeech.audioMinutesThisMonth).toLocaleString("vi-VN")} phút miễn phí
@@ -474,7 +474,7 @@ export default function AdminCostsPage() {
                 {/* 2x2 Metric Grid */}
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Bài nộp Nói tháng này
                     </p>
                     <p className="mt-1 font-mono text-lg font-bold text-slate-900 tabular-nums">
@@ -482,7 +482,7 @@ export default function AdminCostsPage() {
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Tổng bài nộp Nói
                     </p>
                     <p className="mt-1 font-mono text-lg font-bold text-slate-900 tabular-nums">
@@ -490,7 +490,7 @@ export default function AdminCostsPage() {
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Thời lượng chấm
                     </p>
                     <p className="mt-1 font-mono text-base font-bold text-slate-900 tabular-nums">
@@ -499,7 +499,7 @@ export default function AdminCostsPage() {
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Chi phí phát sinh
                     </p>
                     <p className="mt-1 font-mono text-base font-bold text-emerald-700 tabular-nums">
@@ -537,7 +537,7 @@ export default function AdminCostsPage() {
                       </p>
                     </div>
                   </div>
-                  <span className="shrink-0 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
+                  <span className="shrink-0 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
                     10 GB lưu trữ (Free)
                   </span>
                 </div>
@@ -562,7 +562,7 @@ export default function AdminCostsPage() {
                       }}
                     />
                   </div>
-                  <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500">
+                  <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
                     <span>Dung lượng còn trống:</span>
                     <span className="font-semibold text-emerald-700">
                       {(services.cloudflareR2.freeQuotaGb - services.cloudflareR2.usedStorageGb).toFixed(2)} GB miễn phí
@@ -573,7 +573,7 @@ export default function AdminCostsPage() {
                 {/* 2x2 Metric Grid */}
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Ghi âm học viên
                     </p>
                     <p className="mt-1 font-mono text-lg font-bold text-slate-900 tabular-nums">
@@ -581,7 +581,7 @@ export default function AdminCostsPage() {
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Đã dọn dẹp (TTL 90d)
                     </p>
                     <p className="mt-1 font-mono text-lg font-bold text-slate-900 tabular-nums">
@@ -589,7 +589,7 @@ export default function AdminCostsPage() {
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Tổng file đang lưu
                     </p>
                     <p className="mt-1 font-mono text-base font-bold text-slate-900 tabular-nums">
@@ -598,7 +598,7 @@ export default function AdminCostsPage() {
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Phí Egress (Tải ra)
                     </p>
                     <p className="mt-1 font-mono text-base font-bold text-emerald-700 tabular-nums">
@@ -678,7 +678,7 @@ export default function AdminCostsPage() {
                 Mô hình tài chính điện toán đám mây theo 4 mốc tăng trưởng người dùng (tính toán bảo vệ đồ án KLTN & triển khai thực tế).
               </p>
             </div>
-            <span className="self-start sm:self-auto rounded-md bg-slate-200/70 px-2.5 py-1 text-[11px] font-semibold text-slate-700 font-mono">
+            <span className="self-start sm:self-auto rounded-md bg-slate-200/70 px-2.5 py-1 text-xs font-semibold text-slate-700 font-mono">
               Tỷ giá quy đổi: 25.400 đ / USD
             </span>
           </div>
@@ -687,12 +687,12 @@ export default function AdminCostsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-100/75 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
+              <tr className="border-b border-slate-200 bg-slate-100/75 text-slate-700 font-bold uppercase tracking-wider text-xs">
                 <th className="px-5 py-3.5">Thành phần</th>
                 <th className="px-4 py-3.5 bg-blue-50/50 text-blue-950 border-x border-blue-200/60">
                   <div className="flex items-center gap-1.5">
                     <span>MVP (100–500 HS)</span>
-                    <span className="rounded bg-blue-600 px-1.5 py-0.2 text-[9px] font-bold text-white uppercase tracking-tight">
+                    <span className="rounded bg-blue-600 px-1.5 py-0.2 text-xs font-bold text-white uppercase tracking-tight">
                       Hiện tại
                     </span>
                   </div>

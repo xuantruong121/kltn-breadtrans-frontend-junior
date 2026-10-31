@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { X, User, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
+import { X, User, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, Croissant, } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQueryClient } from "@tanstack/react-query";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 interface QuickRegisterModalProps {
   isOpen: boolean;
@@ -99,8 +100,7 @@ export function QuickRegisterModal({
       }
       router.push(destination);
     } catch (err: any) {
-      const msg = err.response?.data?.message;
-      setErrorMsg(Array.isArray(msg) ? msg[0] : msg || "Đăng ký không thành công. Email này có thể đã được sử dụng.");
+      setErrorMsg(getApiErrorMessage(err, "Đăng ký không thành công. Email này có thể đã được sử dụng."));
     } finally {
       setIsLoading(false);
     }
@@ -122,7 +122,7 @@ export function QuickRegisterModal({
 
         <div className="text-center mb-5">
           <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 flex items-center justify-center text-amber-700 dark:text-amber-400 mx-auto mb-3 shadow-xs">
-            <span className="text-2xl" role="img" aria-label="Bánh Mì">🍞</span>
+            <Croissant size={24} strokeWidth={2} className="text-amber-600" aria-label="Bánh Mì" />
           </div>
           <h3 className="text-xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
             Tạo tài khoản BreadTrans

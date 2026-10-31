@@ -6,7 +6,12 @@ import { ArrowRight, ClipboardCheck, Compass } from "lucide-react";
 
 import { learningPathService } from "@/lib/api/services/learningPath.service";
 import { LEVEL_OPTIONS, needsLevelChoice, type LearnerProfile } from "@/lib/learning-path/onboarding";
-import { practiceLevelLabel, type PracticeLevel } from "@/lib/learning-path/practiceLevel";
+import {
+  practiceLevelLabel,
+  prioritySkillsText,
+  skillsBelowOverall,
+  type PracticeLevel,
+} from "@/lib/learning-path/practiceLevel";
 
 /**
  * Dashboard level card (F5.3): without any placement the learner takes the
@@ -23,6 +28,10 @@ export function LevelChoiceCard({ profile }: { profile: LearnerProfile | undefin
 
   if (!needsLevelChoice(profile)) {
     const level = profile.placementSource === "DIAGNOSTIC" ? profile.placementLevel : profile.selfLevel;
+    const priority =
+      profile.placementSource === "DIAGNOSTIC"
+        ? skillsBelowOverall(Object.fromEntries(profile.skills.map((s) => [s.skill, s.level])), level)
+        : [];
     return (
       <section
         aria-label="Mức luyện tập"
@@ -33,6 +42,11 @@ export function LevelChoiceCard({ profile }: { profile: LearnerProfile | undefin
           Mức luyện tập {profile.placementSource === "DIAGNOSTIC" ? "đề xuất" : "bạn chọn"}:
           <strong className="text-blue-800 dark:text-blue-200">{practiceLevelLabel(level)}</strong>
         </p>
+        {priority.length > 0 && (
+          <p className="text-base font-semibold text-slate-700 dark:text-slate-300">
+            Cần ưu tiên: {prioritySkillsText(priority)}
+          </p>
+        )}
         {profile.placementSource === "SELF" && (
           <Link
             href="/diagnostic"

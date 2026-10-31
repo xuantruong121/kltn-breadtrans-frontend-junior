@@ -142,7 +142,7 @@ export const WordListDrawer: React.FC<WordListDrawerProps> = ({
                                 {w.word}
                               </span>
                               {w.pos && (
-                                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">
+                                <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold">
                                   ({w.pos})
                                 </span>
                               )}
@@ -169,17 +169,17 @@ export const WordListDrawer: React.FC<WordListDrawerProps> = ({
 
                           {/* Status Pill */}
                           {isMastered ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 px-2 py-0.5 rounded-md">
+                            <span className="inline-flex items-center gap-1 text-xs font-extrabold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 px-2 py-0.5 rounded-md">
                               <Check size={11} />
                               Thuộc
                             </span>
                           ) : isReview ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-950/50 border border-orange-200 dark:border-orange-800/60 px-2 py-0.5 rounded-md">
+                            <span className="inline-flex items-center gap-1 text-xs font-extrabold text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-950/50 border border-orange-200 dark:border-orange-800/60 px-2 py-0.5 rounded-md">
                               <Clock size={11} />
                               Ôn tập
                             </span>
                           ) : (
-                            <span className="text-[10px] font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/50 border border-sky-200 dark:border-sky-800/60 px-2 py-0.5 rounded-md">
+                            <span className="text-xs font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/50 border border-sky-200 dark:border-sky-800/60 px-2 py-0.5 rounded-md">
                               Mới
                             </span>
                           )}

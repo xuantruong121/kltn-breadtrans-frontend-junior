@@ -45,10 +45,6 @@ export function AuthShell({
 
       {/* Main Authentication Canvas */}
       <main className="w-full flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-12 relative overflow-hidden">
-        {/* Subtle Ambient Background Accents */}
-        <div className="absolute -top-24 -left-20 w-80 h-80 rounded-full bg-amber-200/30 dark:bg-amber-500/10 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -right-20 w-96 h-96 rounded-full bg-orange-200/20 dark:bg-orange-500/10 blur-3xl pointer-events-none" />
-
         <div className={`w-full ${contentClassName} mx-auto my-4 z-10`}>
           {children}
         </div>

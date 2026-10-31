@@ -16,6 +16,7 @@ import {
   Inbox,
   ArrowDown,
   Loader2,
+  Croissant,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { aiService } from "@/lib/api/services/ai.service";
@@ -629,7 +630,7 @@ function FloatingAiTutorInner() {
         id: aiClientMessageId,
         clientMessageId: aiClientMessageId,
         role: "assistant" as const,
-        senderName: "Trợ Lý Bánh Mì 🍞",
+        senderName: "Trợ Lý Bánh Mì",
         content: res.answer || "Bánh Mì đã nhận được câu hỏi rồi nhé!",
         timestamp: Date.now(),
         pending: false,
@@ -647,7 +648,7 @@ function FloatingAiTutorInner() {
             id: persistedAi.id,
             clientMessageId: aiClientMessageId,
             role: "assistant",
-            senderName: "Trợ Lý Bánh Mì 🍞",
+            senderName: "Trợ Lý Bánh Mì",
             content: persistedAi.content,
             timestamp: new Date(persistedAi.createdAt).getTime(),
             pending: false,
@@ -669,8 +670,8 @@ function FloatingAiTutorInner() {
       console.error(error);
       addMessageToThread(studentThreadId, studentMetadata, {
         role: "assistant",
-        senderName: "Trợ Lý Bánh Mì 🍞",
-        content: "Bánh Mì đang gặp chút trục trặc nhỏ. Bạn thử hỏi lại câu khác nhé! 🍞",
+        senderName: "Trợ Lý Bánh Mì",
+        content: "Bánh Mì đang gặp chút trục trặc nhỏ. Bạn thử hỏi lại câu khác nhé!",
       });
     } finally {
       setIsLoading(false);
@@ -719,7 +720,7 @@ function FloatingAiTutorInner() {
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.92 }}
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-3.5 sm:bottom-[calc(4.5rem+env(safe-area-inset-bottom))] sm:right-4 md:bottom-8 md:right-8 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white min-h-[48px] min-w-[48px] p-3.5 sm:p-4 rounded-full shadow-xl hover:shadow-2xl z-[45] transition-all border-2 border-white flex items-center justify-center cursor-pointer ${
+        className={`bg-amber-500 fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-3.5 sm:bottom-[calc(4.5rem+env(safe-area-inset-bottom))] sm:right-4 md:bottom-8 md:right-8 text-white min-h-[48px] min-w-[48px] p-3.5 sm:p-4 rounded-full shadow-xl hover:shadow-2xl z-[45] transition-all border-2 border-white flex items-center justify-center cursor-pointer ${
           isOpen ? "scale-0 pointer-events-none" : "scale-100"
         }`}
         title={isAdmin ? "Mở Trung Tâm Tin Nhắn Học Viên" : "Mở Trợ Lý Bánh Mì"}
@@ -759,15 +760,15 @@ function FloatingAiTutorInner() {
             {isAdmin && adminView === "list" ? (
               <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900">
                 {/* Header Inbox */}
-                <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-4 text-white shrink-0 shadow-md">
+                <div className="bg-orange-500 p-4 text-white shrink-0 shadow-md">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5 font-black text-base">
                       <div className="w-9 h-9 rounded-2xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-xl shadow-inner">
-                        💬
+                        <MessageCircle size={18} strokeWidth={2} aria-hidden="true" />
                       </div>
                       <div>
                         <h3 className="leading-tight">Hộp Thư Học Viên</h3>
-                        <p className="text-[11px] font-bold text-amber-100">
+                        <p className="text-xs font-bold text-amber-100">
                           {filteredThreads.length} cuộc trò chuyện • {totalUnreadCount} tin chưa đọc
                         </p>
                       </div>
@@ -808,7 +809,7 @@ function FloatingAiTutorInner() {
                           className="bg-white dark:bg-slate-800 hover:bg-orange-50/60 dark:hover:bg-slate-750 p-3 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-orange-300 dark:hover:border-orange-400 transition-all cursor-pointer shadow-2xs flex items-start gap-3 relative group"
                         >
                           {/* Avatar */}
-                          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-600 text-white font-black flex items-center justify-center shrink-0 shadow-xs">
+                          <div className="bg-blue-500 w-10 h-10 rounded-2xl text-white font-black flex items-center justify-center shrink-0 shadow-xs">
                             {thread.studentName.charAt(0).toUpperCase()}
                           </div>
 
@@ -818,7 +819,7 @@ function FloatingAiTutorInner() {
                               <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-xs truncate">
                                 {thread.studentName}
                               </h4>
-                              <span className="text-[10px] font-bold text-slate-400 shrink-0">
+                              <span className="text-xs font-bold text-slate-400 shrink-0">
                                 {new Date(thread.lastMessageTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </span>
                             </div>
@@ -829,7 +830,7 @@ function FloatingAiTutorInner() {
 
                             <div className="flex items-center gap-1.5 mt-1.5">
                               <span
-                                className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${
+                                className={`text-xs font-black px-2 py-0.5 rounded-full border ${
                                   isHumanMode
                                     ? "bg-blue-100 text-blue-800 border-blue-200"
                                     : "bg-emerald-100 text-emerald-800 border-emerald-200"
@@ -839,7 +840,7 @@ function FloatingAiTutorInner() {
                               </span>
 
                               {thread.studentEmail && (
-                                <span className="text-[10px] font-bold text-slate-400 truncate">
+                                <span className="text-xs font-bold text-slate-400 truncate">
                                   {thread.studentEmail}
                                 </span>
                               )}
@@ -848,7 +849,7 @@ function FloatingAiTutorInner() {
 
                           {/* Unread Badge */}
                           {thread.unreadForAdmin > 0 && (
-                            <span className="bg-rose-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full shrink-0 shadow-2xs">
+                            <span className="bg-rose-500 text-white text-xs font-black px-1.5 py-0.5 rounded-full shrink-0 shadow-2xs">
                               {thread.unreadForAdmin}
                             </span>
                           )}
@@ -869,7 +870,7 @@ function FloatingAiTutorInner() {
               /* ======================================================== */
               <div className="relative flex flex-col h-full min-h-0">
                 {/* Header Chat */}
-                <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-4 text-white flex flex-col gap-2 shrink-0 shadow-md">
+                <div className="bg-orange-500 p-4 text-white flex flex-col gap-2 shrink-0 shadow-md">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       {/* Nút quay lại danh sách nếu là Admin */}
@@ -884,13 +885,13 @@ function FloatingAiTutorInner() {
                       )}
 
                       <div className="w-9 h-9 rounded-2xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-xl shadow-inner">
-                        {isAdmin ? "🎓" : "🍞"}
+                        {isAdmin ? <GraduationCap size={18} strokeWidth={2} aria-hidden="true" /> : <Croissant size={18} strokeWidth={2} aria-hidden="true" />}
                       </div>
                       <div>
                         <h3 className="font-black text-sm leading-tight truncate max-w-[200px]">
                           {isAdmin ? currentThread.studentName : "Trợ Lý Bánh Mì"}
                         </h3>
-                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-100">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-amber-100">
                           <span
                             className={`w-2 h-2 rounded-full ${
                               currentThread.mode === "AI" ? "bg-emerald-400 animate-ping" : "bg-blue-300"
@@ -925,12 +926,12 @@ function FloatingAiTutorInner() {
                   {/* Thanh điều khiển Chế độ dành cho Admin trên từng học sinh */}
                   {isAdmin ? (
                     <div className="bg-white/15 backdrop-blur-xs rounded-xl p-2 flex items-center justify-between text-xs font-bold mt-1 border border-white/20">
-                      <span className="text-[11px]">
+                      <span className="text-xs">
                         {currentThread.mode === "AI" ? "Học viên đang nhận phản hồi tự động" : "Bạn đang trao đổi trực tiếp"}
                       </span>
                       <button
                         onClick={handleToggleMode}
-                        className={`px-3 py-1 rounded-lg font-black text-[11px] flex items-center gap-1 transition-all cursor-pointer shadow-sm ${
+                        className={`px-3 py-1 rounded-lg font-black text-xs flex items-center gap-1 transition-all cursor-pointer shadow-sm ${
                           currentThread.mode === "AI"
                             ? "bg-amber-100 text-amber-900 hover:bg-white"
                             : "bg-emerald-400 text-emerald-950 hover:bg-emerald-300"
@@ -941,7 +942,7 @@ function FloatingAiTutorInner() {
                     </div>
                   ) : (
                     currentThread.mode === "HUMAN" && (
-                      <div className="bg-blue-600/40 border border-blue-300/40 rounded-xl px-2.5 py-1 text-[11px] font-bold text-blue-100 flex items-center gap-1.5">
+                      <div className="bg-blue-600/40 border border-blue-300/40 rounded-xl px-2.5 py-1 text-xs font-bold text-blue-100 flex items-center gap-1.5">
                         <UserCheck size={14} /> Quản Trị Viên đang trực tiếp hỗ trợ bạn.
                       </div>
                     )
@@ -978,7 +979,7 @@ function FloatingAiTutorInner() {
                   {currentThread.messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center my-auto py-12 text-center text-slate-400 space-y-3">
                       <div className="w-14 h-14 rounded-3xl bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center text-3xl shadow-inner">
-                        🍞
+                        <Croissant size={18} strokeWidth={2} aria-hidden="true" />
                       </div>
                       <div className="space-y-1">
                         <h4 className="font-black text-slate-700 dark:text-slate-200 text-sm">
@@ -1043,7 +1044,7 @@ function FloatingAiTutorInner() {
                           {/* Message Bubble */}
                           <div className="flex flex-col gap-1 max-w-full">
                             {msg.senderName && !isRightBubble && (
-                              <span className="text-[11px] font-black text-slate-500 ml-1">
+                              <span className="text-xs font-black text-slate-500 ml-1">
                                 {msg.senderName}
                               </span>
                             )}
@@ -1051,8 +1052,8 @@ function FloatingAiTutorInner() {
                               className={`p-3.5 rounded-2xl break-words shadow-2xs ${
                                 isRightBubble
                                   ? isStudentMsg
-                                    ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-tr-xs shadow-md border border-blue-400"
-                                    : "bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-tr-xs shadow-md border border-emerald-500"
+                                    ? "bg-blue-500 text-white rounded-tr-xs shadow-md border border-blue-400"
+                                    : "bg-emerald-600 text-white rounded-tr-xs shadow-md border border-emerald-500"
                                   : isAdminMsg
                                   ? "bg-emerald-50/95 dark:bg-emerald-950/60 border-2 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200 rounded-tl-xs shadow-xs"
                                   : "bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-tl-xs shadow-xs"
@@ -1086,7 +1087,7 @@ function FloatingAiTutorInner() {
 
                 {/* Quick Chips (Dành cho học sinh) */}
                 {!isAdmin && currentThread.messages.length <= 2 && (
-                  <div className="px-4 py-2 bg-slate-100/70 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto text-[11px] shrink-0 no-scrollbar">
+                  <div className="px-4 py-2 bg-slate-100/70 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto text-xs shrink-0 no-scrollbar">
                     <span className="text-slate-400 dark:text-slate-500 font-bold shrink-0">Gợi ý:</span>
                     <button
                       onClick={() => handleQuickQuestion("Giải thích thì hiện tại đơn")}
@@ -1146,7 +1147,7 @@ function FloatingAiTutorInner() {
                   <button
                     onClick={handleSend}
                     disabled={!input.trim() || isLoading}
-                    className="bg-gradient-to-r from-orange-500 to-amber-500 text-white p-3 rounded-2xl hover:brightness-110 disabled:opacity-40 transition-all shadow-sm cursor-pointer shrink-0"
+                    className="bg-orange-500 text-white p-3 rounded-2xl hover:brightness-110 disabled:opacity-40 transition-all shadow-sm cursor-pointer shrink-0"
                     title="Gửi tin nhắn"
                   >
                     <Send size={18} />

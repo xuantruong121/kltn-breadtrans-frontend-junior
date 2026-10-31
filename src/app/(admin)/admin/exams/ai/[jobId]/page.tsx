@@ -18,6 +18,7 @@ import {
   toggleKey,
   type CandidateFilter as Filter,
 } from "@/lib/examAi/candidateWorkspaceLogic";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 function partLabel(part: number) {
   const listening = [1, 2, 3, 4].includes(part);
@@ -145,7 +146,7 @@ export default function ExamAiCandidateWorkspacePage({
       });
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message ?? "Không thể áp dụng candidate đã chọn",
+        getApiErrorMessage(err, "Không thể áp dụng candidate đã chọn"),
       );
     } finally {
       setApplying(false);
@@ -189,7 +190,7 @@ export default function ExamAiCandidateWorkspacePage({
         queryKey: ["exam-ai-candidate", jobId],
       });
     } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? "Không thể lưu chỉnh sửa");
+      toast.error(getApiErrorMessage(err, "Không thể lưu chỉnh sửa"));
     }
   };
 
@@ -202,7 +203,7 @@ export default function ExamAiCandidateWorkspacePage({
         queryKey: ["exam-ai-candidate", jobId],
       });
     } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? "Không thể tạo lại nhóm");
+      toast.error(getApiErrorMessage(err, "Không thể tạo lại nhóm"));
     } finally {
       setRegenerating(null);
     }
@@ -218,7 +219,7 @@ export default function ExamAiCandidateWorkspacePage({
         queryKey: ["exam-ai-candidate", jobId],
       });
     } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? "Không thể tạo lại Part");
+      toast.error(getApiErrorMessage(err, "Không thể tạo lại Part"));
     } finally {
       setRegenerating(null);
     }
@@ -232,7 +233,7 @@ export default function ExamAiCandidateWorkspacePage({
         queryKey: ["exam-ai-status", jobId],
       });
     } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? "Không thể thử lại");
+      toast.error(getApiErrorMessage(err, "Không thể thử lại"));
     }
   };
 
@@ -447,7 +448,7 @@ export default function ExamAiCandidateWorkspacePage({
                           </label>
                           <div className="flex items-center gap-2">
                             <span
-                              className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${toneClass[state.tone]}`}
+                              className={`rounded-full border px-2 py-0.5 text-xs font-medium ${toneClass[state.tone]}`}
                             >
                               {state.label}
                             </span>
@@ -483,7 +484,7 @@ export default function ExamAiCandidateWorkspacePage({
                             {group.issues.map((issue) => (
                               <li
                                 key={issue}
-                                className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                                className="rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
                               >
                                 {issue}
                               </li>
@@ -677,7 +678,7 @@ export default function ExamAiCandidateWorkspacePage({
                             Task {task.taskNumber}: {task.title ?? "(chưa có tiêu đề)"}
                           </p>
                           <span
-                            className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${toneClass[state.tone]}`}
+                            className={`rounded-full border px-2 py-0.5 text-xs font-medium ${toneClass[state.tone]}`}
                           >
                             {state.label}
                           </span>
@@ -692,7 +693,7 @@ export default function ExamAiCandidateWorkspacePage({
                             {task.issues.map((issue) => (
                               <li
                                 key={issue}
-                                className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                                className="rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
                               >
                                 {issue}
                               </li>
