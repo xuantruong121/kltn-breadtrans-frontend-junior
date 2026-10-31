@@ -274,7 +274,8 @@ export default function TakeQuizPage(props: {
   const { confirmExit, exitDialogProps } = usePracticeExitGuard({
     shouldConfirmExit,
     defaultFallbackUrl: backHref,
-    enabled: !isListening && hasMounted && !!user,
+    // Nothing to lose before the exercise loads, and a lock screen's links must work.
+    enabled: !isListening && hasMounted && !!user && Boolean(quiz),
   });
   const handleExitRequest = (event?: MouseEvent) => {
     event?.preventDefault();

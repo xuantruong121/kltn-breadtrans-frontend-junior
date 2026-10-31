@@ -483,7 +483,8 @@ export default function SpeakingExerciseDetailPage() {
   const { confirmExit, exitDialogProps } = usePracticeExitGuard({
     shouldConfirmExit,
     defaultFallbackUrl: "/speaking",
-    enabled: !!exerciseId,
+    // Nothing to lose before the exercise loads, and a lock screen's links must work.
+    enabled: !!exerciseId && Boolean(exercise),
     onConfirmExit: () => {
       releaseMediaStream();
     },
