@@ -119,13 +119,12 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({
             loading="lazy"
           />
 
-          {/* Physical Delivery Pill */}
-          {(product.fulfillmentType === "PHYSICAL" ||
-            product.requiresShippingAddress ||
-            product.category === "PHYSICAL") && (
+          {/* Delivery pill: the header already says "Quà hiện vật" for that category. */}
+          {product.category !== "PHYSICAL" &&
+            (product.fulfillmentType === "PHYSICAL" || product.requiresShippingAddress) && (
             <span className="absolute top-2.5 right-2.5 inline-flex items-center gap-1 rounded-md border border-slate-200/80 bg-white/95 dark:border-slate-700 dark:bg-slate-900/95 px-2 py-0.5 text-xs font-semibold text-slate-700 dark:text-slate-300 shadow-2xs backdrop-blur-xs">
               <Truck size={12} className="text-slate-600 dark:text-slate-400" />
-              <span>Quà vật lý</span>
+              <span>Giao tận nhà</span>
             </span>
           )}
 
