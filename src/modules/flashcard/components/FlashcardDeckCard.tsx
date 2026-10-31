@@ -30,7 +30,7 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
       data-status={status}
       className={`group relative flex flex-col justify-between rounded-2xl border bg-white dark:bg-slate-900 p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-blue-300/80 dark:hover:border-blue-800/80 ${
         status === "REVIEW_DUE"
-          ? "border-amber-300/80 dark:border-amber-800/80 bg-gradient-to-b from-amber-50/20 to-transparent"
+          ? "bg-amber-50/20 border-amber-300/80 dark:border-amber-800/80"
           : status === "COMPLETED"
             ? "border-emerald-200/80 dark:border-emerald-900/60 hover:border-emerald-400"
             : "border-slate-200/80 dark:border-slate-800"
@@ -123,7 +123,7 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
               status === "COMPLETED"
                 ? "bg-emerald-500"
                 : progress.percentage > 0
-                ? "bg-gradient-to-r from-blue-500 to-indigo-600"
+                ? "bg-blue-500"
                 : "bg-slate-200 dark:bg-slate-700"
             }`}
             style={{ width: `${Math.max(progress.displayPercent, progress.percentage > 0 ? 5 : 0)}%` }}

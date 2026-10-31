@@ -16,6 +16,7 @@ import {
   Inbox,
   ArrowDown,
   Loader2,
+  Croissant,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { aiService } from "@/lib/api/services/ai.service";
@@ -629,7 +630,7 @@ function FloatingAiTutorInner() {
         id: aiClientMessageId,
         clientMessageId: aiClientMessageId,
         role: "assistant" as const,
-        senderName: "Trợ Lý Bánh Mì 🍞",
+        senderName: "Trợ Lý Bánh Mì",
         content: res.answer || "Bánh Mì đã nhận được câu hỏi rồi nhé!",
         timestamp: Date.now(),
         pending: false,
@@ -647,7 +648,7 @@ function FloatingAiTutorInner() {
             id: persistedAi.id,
             clientMessageId: aiClientMessageId,
             role: "assistant",
-            senderName: "Trợ Lý Bánh Mì 🍞",
+            senderName: "Trợ Lý Bánh Mì",
             content: persistedAi.content,
             timestamp: new Date(persistedAi.createdAt).getTime(),
             pending: false,
@@ -669,8 +670,8 @@ function FloatingAiTutorInner() {
       console.error(error);
       addMessageToThread(studentThreadId, studentMetadata, {
         role: "assistant",
-        senderName: "Trợ Lý Bánh Mì 🍞",
-        content: "Bánh Mì đang gặp chút trục trặc nhỏ. Bạn thử hỏi lại câu khác nhé! 🍞",
+        senderName: "Trợ Lý Bánh Mì",
+        content: "Bánh Mì đang gặp chút trục trặc nhỏ. Bạn thử hỏi lại câu khác nhé!",
       });
     } finally {
       setIsLoading(false);
@@ -719,7 +720,7 @@ function FloatingAiTutorInner() {
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.92 }}
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-3.5 sm:bottom-[calc(4.5rem+env(safe-area-inset-bottom))] sm:right-4 md:bottom-8 md:right-8 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white min-h-[48px] min-w-[48px] p-3.5 sm:p-4 rounded-full shadow-xl hover:shadow-2xl z-[45] transition-all border-2 border-white flex items-center justify-center cursor-pointer ${
+        className={`bg-amber-500 fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-3.5 sm:bottom-[calc(4.5rem+env(safe-area-inset-bottom))] sm:right-4 md:bottom-8 md:right-8 text-white min-h-[48px] min-w-[48px] p-3.5 sm:p-4 rounded-full shadow-xl hover:shadow-2xl z-[45] transition-all border-2 border-white flex items-center justify-center cursor-pointer ${
           isOpen ? "scale-0 pointer-events-none" : "scale-100"
         }`}
         title={isAdmin ? "Mở Trung Tâm Tin Nhắn Học Viên" : "Mở Trợ Lý Bánh Mì"}
@@ -759,11 +760,11 @@ function FloatingAiTutorInner() {
             {isAdmin && adminView === "list" ? (
               <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900">
                 {/* Header Inbox */}
-                <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-4 text-white shrink-0 shadow-md">
+                <div className="bg-orange-500 p-4 text-white shrink-0 shadow-md">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5 font-black text-base">
                       <div className="w-9 h-9 rounded-2xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-xl shadow-inner">
-                        💬
+                        <MessageCircle size={18} strokeWidth={2} aria-hidden="true" />
                       </div>
                       <div>
                         <h3 className="leading-tight">Hộp Thư Học Viên</h3>
@@ -808,7 +809,7 @@ function FloatingAiTutorInner() {
                           className="bg-white dark:bg-slate-800 hover:bg-orange-50/60 dark:hover:bg-slate-750 p-3 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-orange-300 dark:hover:border-orange-400 transition-all cursor-pointer shadow-2xs flex items-start gap-3 relative group"
                         >
                           {/* Avatar */}
-                          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-600 text-white font-black flex items-center justify-center shrink-0 shadow-xs">
+                          <div className="bg-blue-500 w-10 h-10 rounded-2xl text-white font-black flex items-center justify-center shrink-0 shadow-xs">
                             {thread.studentName.charAt(0).toUpperCase()}
                           </div>
 
@@ -869,7 +870,7 @@ function FloatingAiTutorInner() {
               /* ======================================================== */
               <div className="relative flex flex-col h-full min-h-0">
                 {/* Header Chat */}
-                <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-4 text-white flex flex-col gap-2 shrink-0 shadow-md">
+                <div className="bg-orange-500 p-4 text-white flex flex-col gap-2 shrink-0 shadow-md">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       {/* Nút quay lại danh sách nếu là Admin */}
@@ -884,7 +885,7 @@ function FloatingAiTutorInner() {
                       )}
 
                       <div className="w-9 h-9 rounded-2xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-xl shadow-inner">
-                        {isAdmin ? "🎓" : "🍞"}
+                        {isAdmin ? <GraduationCap size={18} strokeWidth={2} aria-hidden="true" /> : <Croissant size={18} strokeWidth={2} aria-hidden="true" />}
                       </div>
                       <div>
                         <h3 className="font-black text-sm leading-tight truncate max-w-[200px]">
@@ -978,7 +979,7 @@ function FloatingAiTutorInner() {
                   {currentThread.messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center my-auto py-12 text-center text-slate-400 space-y-3">
                       <div className="w-14 h-14 rounded-3xl bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center text-3xl shadow-inner">
-                        🍞
+                        <Croissant size={18} strokeWidth={2} aria-hidden="true" />
                       </div>
                       <div className="space-y-1">
                         <h4 className="font-black text-slate-700 dark:text-slate-200 text-sm">
@@ -1051,8 +1052,8 @@ function FloatingAiTutorInner() {
                               className={`p-3.5 rounded-2xl break-words shadow-2xs ${
                                 isRightBubble
                                   ? isStudentMsg
-                                    ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-tr-xs shadow-md border border-blue-400"
-                                    : "bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-tr-xs shadow-md border border-emerald-500"
+                                    ? "bg-blue-500 text-white rounded-tr-xs shadow-md border border-blue-400"
+                                    : "bg-emerald-600 text-white rounded-tr-xs shadow-md border border-emerald-500"
                                   : isAdminMsg
                                   ? "bg-emerald-50/95 dark:bg-emerald-950/60 border-2 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200 rounded-tl-xs shadow-xs"
                                   : "bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-tl-xs shadow-xs"
@@ -1146,7 +1147,7 @@ function FloatingAiTutorInner() {
                   <button
                     onClick={handleSend}
                     disabled={!input.trim() || isLoading}
-                    className="bg-gradient-to-r from-orange-500 to-amber-500 text-white p-3 rounded-2xl hover:brightness-110 disabled:opacity-40 transition-all shadow-sm cursor-pointer shrink-0"
+                    className="bg-orange-500 text-white p-3 rounded-2xl hover:brightness-110 disabled:opacity-40 transition-all shadow-sm cursor-pointer shrink-0"
                     title="Gửi tin nhắn"
                   >
                     <Send size={18} />

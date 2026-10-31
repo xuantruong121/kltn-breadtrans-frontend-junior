@@ -628,7 +628,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
               <span className="text-2xl sm:text-3xl font-black leading-none tracking-tight">
                 {isNoSpeech ? "—" : displayScore.toFixed(1)}
               </span>
-              <span className="text-xs sm:text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mt-0.5">
+              <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mt-0.5">
                 Điểm / 10
               </span>
             </div>
@@ -897,7 +897,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
 
         {/* Row B: Dedicated Rhythm Guidance Card (Full width, clear legible typography) */}
         {scripted && (
-        <div className="rounded-2xl border border-amber-200/90 dark:border-amber-900/60 bg-gradient-to-r from-amber-50/90 via-amber-50/60 to-orange-50/40 dark:from-amber-950/40 dark:via-amber-950/20 dark:to-orange-950/30 p-4 sm:p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 shadow-xs">
+        <div className="bg-amber-50/90 dark:bg-amber-950/40 rounded-2xl border border-amber-200/90 dark:border-amber-900/60 p-4 sm:p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 shadow-xs">
           <div className="flex items-start sm:items-center gap-3.5 min-w-0">
             <div className="size-11 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
               <BookOpen size={20} />
@@ -1027,7 +1027,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
                   >
                     <span>{item.word}</span>
                     {Number.isFinite(item.accuracyScore) && (
-                      <span className="text-xs sm:text-xs font-mono font-black opacity-90">
+                      <span className="text-xs font-mono font-black opacity-90">
                         {item.accuracyScore}%
                       </span>
                     )}

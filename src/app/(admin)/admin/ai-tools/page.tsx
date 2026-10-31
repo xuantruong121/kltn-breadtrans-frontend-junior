@@ -398,7 +398,7 @@ export default function AdminAiToolsPage() {
                     ? "bg-rose-500"
                     : (quotaData?.percentage || 0) > 50
                       ? "bg-amber-400"
-                      : "bg-linear-to-r from-emerald-400 to-indigo-400"
+                      : "bg-emerald-400"
                 }`}
                 style={{
                   width: `${Math.min(100, quotaData?.percentage || 0)}%`,

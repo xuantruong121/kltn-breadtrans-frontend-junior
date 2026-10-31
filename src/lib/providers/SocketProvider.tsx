@@ -144,7 +144,7 @@ export default function SocketProvider({ children }: { children: React.ReactNode
         queryClient.invalidateQueries({ queryKey: ["user-profile", user.id] });
 
         if (data.status === "approved") {
-          toast.success(`🎁 Đơn đổi quà #${data.orderId} đã được DUYỆT bởi ${data.reviewerName || "Ban Quản Trị"}!`, {
+          toast.success(`Đơn đổi quà #${data.orderId} đã được DUYỆT bởi ${data.reviewerName || "Ban Quản Trị"}!`, {
             duration: 5000,
           });
         } else {

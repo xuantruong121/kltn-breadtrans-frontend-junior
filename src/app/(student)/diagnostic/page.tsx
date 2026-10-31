@@ -498,7 +498,7 @@ export default function DiagnosticPage() {
   if (isLoadingAssessment || isLoadingResult) {
     return (
       <div className="flex min-h-80 items-center justify-center">
-        <Loader2 className="animate-spin text-violet-600" size={34} />
+        <Loader2 className="animate-spin text-teal-600" size={34} />
       </div>
     );
   }
@@ -533,13 +533,13 @@ export default function DiagnosticPage() {
         <button
           type="button"
           onClick={goBack}
-          className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-violet-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+          className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-teal-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
         >
           <ArrowLeft size={18} strokeWidth={2.25} aria-hidden="true" />
           <span>Quay lại</span>
         </button>
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-10">
-          <div className="flex size-14 items-center justify-center rounded-2xl bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+          <div className="flex size-14 items-center justify-center rounded-2xl bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300">
             <Target size={28} />
           </div>
 
@@ -582,7 +582,7 @@ export default function DiagnosticPage() {
             <button
               type="button"
               onClick={handleStart}
-              className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-violet-600 px-7 text-sm font-extrabold text-white transition hover:bg-violet-700"
+              className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-teal-600 px-7 text-sm font-extrabold text-white transition hover:bg-teal-700"
             >
               <span>{isResuming ? "Tiếp tục bài đánh giá" : "Bắt đầu làm bài"}</span>
               <ArrowRight size={18} />
@@ -680,8 +680,8 @@ export default function DiagnosticPage() {
 
             {/* LISTENING AUDIO PLAYER */}
             {isListening && (
-              <div className="mb-8 rounded-2xl border border-violet-200 bg-violet-50/70 p-5 dark:border-violet-900 dark:bg-violet-950/30 sm:p-6">
-                <p className="text-sm font-extrabold text-violet-900 dark:text-violet-100">
+              <div className="mb-8 rounded-2xl border border-teal-200 bg-teal-50/70 p-5 dark:border-teal-900 dark:bg-teal-950/30 sm:p-6">
+                <p className="text-sm font-extrabold text-teal-900 dark:text-teal-100">
                   Nghe đoạn âm thanh dưới đây rồi chọn câu trả lời đúng nhất:
                 </p>
                 {!listeningNotReady && current.audioUrl ? (
@@ -702,7 +702,7 @@ export default function DiagnosticPage() {
 
             {/* QUESTION STEM WITH VISUAL SOLID BLANK FOR CLOZE */}
             <h2 className="text-xl font-black leading-snug text-slate-900 dark:text-slate-100 sm:text-2xl">
-              <span className="mr-2.5 text-violet-600 dark:text-violet-400 font-extrabold">
+              <span className="mr-2.5 text-teal-600 dark:text-teal-400 font-extrabold">
                 {step + 1}.
               </span>
               <ClozePrompt prompt={current.question} />
@@ -761,7 +761,7 @@ export default function DiagnosticPage() {
                     disabled={speakingBusy || skipping}
                     aria-pressed={recording}
                     className={`inline-flex min-h-12 items-center gap-2 rounded-xl px-6 text-sm font-extrabold text-white transition-colors disabled:opacity-60 ${
-                      recording ? "bg-rose-600 hover:bg-rose-700" : "bg-violet-600 hover:bg-violet-700"
+                      recording ? "bg-rose-600 hover:bg-rose-700" : "bg-teal-600 hover:bg-teal-700"
                     }`}
                   >
                     {speakingBusy ? (
@@ -804,7 +804,7 @@ export default function DiagnosticPage() {
                     [current.id]: event.target.value,
                   }))
                 }
-                className="mt-8 min-h-36 w-full rounded-2xl border-2 border-slate-200 bg-white p-4 text-base leading-6 text-slate-800 outline-none focus:border-violet-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                className="mt-8 min-h-36 w-full rounded-2xl border-2 border-slate-200 bg-white p-4 text-base leading-6 text-slate-800 outline-none focus:border-teal-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                 placeholder="Nhập câu trả lời của bạn..."
                 aria-label="Câu trả lời tự luận"
                 aria-describedby={guidance ? "writing-guidance" : undefined}
@@ -860,15 +860,15 @@ export default function DiagnosticPage() {
                       aria-pressed={isSelected}
                       className={`group flex min-h-14 items-center rounded-2xl border-2 px-5 py-3.5 text-left transition-all ${
                         isSelected
-                          ? "border-violet-600 bg-violet-50/80 text-violet-950 shadow-xs dark:border-violet-500 dark:bg-violet-950/50 dark:text-violet-100"
-                          : "border-slate-200/90 bg-white text-slate-700 hover:border-violet-300 hover:bg-slate-50/50 dark:border-slate-800 dark:bg-slate-850 dark:text-slate-200 dark:hover:border-slate-700"
+                          ? "border-teal-600 bg-teal-50/80 text-teal-950 shadow-xs dark:border-teal-500 dark:bg-teal-950/50 dark:text-teal-100"
+                          : "border-slate-200/90 bg-white text-slate-700 hover:border-teal-300 hover:bg-slate-50/50 dark:border-slate-800 dark:bg-slate-850 dark:text-slate-200 dark:hover:border-slate-700"
                       }`}
                     >
                       <span
                         className={`mr-3.5 flex size-8 shrink-0 items-center justify-center rounded-xl text-xs font-black transition-colors ${
                           isSelected
-                            ? "bg-violet-600 text-white"
-                            : "bg-slate-100 text-slate-600 group-hover:bg-violet-100 group-hover:text-violet-700 dark:bg-slate-800 dark:text-slate-400"
+                            ? "bg-teal-600 text-white"
+                            : "bg-slate-100 text-slate-600 group-hover:bg-teal-100 group-hover:text-teal-700 dark:bg-slate-800 dark:text-slate-400"
                         }`}
                       >
                         {String.fromCharCode(65 + index)}
@@ -923,7 +923,7 @@ export default function DiagnosticPage() {
                     setStep((value) => value + 1);
                   }
                 }}
-                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-violet-600 px-6 text-sm font-extrabold text-white transition hover:bg-violet-700 disabled:opacity-40"
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-teal-600 px-6 text-sm font-extrabold text-white transition hover:bg-teal-700 disabled:opacity-40"
               >
                 {submit.isPending ? (
                   <>
@@ -1052,7 +1052,7 @@ function DiagnosticResultView({
       <button
         type="button"
         onClick={onBack}
-        className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-base font-bold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-violet-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+        className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-base font-bold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-teal-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
       >
         <ArrowLeft size={18} strokeWidth={2.25} aria-hidden="true" />
         <span>Quay lại</span>
@@ -1139,7 +1139,7 @@ function DiagnosticResultView({
                       <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
                         Bản ghi của bạn vẫn được lưu nhưng chưa chấm được. Kỹ năng Nói chưa có điểm cho tới khi chấm lại thành công.
                       </p>
-                      <button type="button" onClick={() => retrySpeaking.mutate(questionId)} disabled={retrySpeaking.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-violet-300 px-3 text-sm font-bold text-violet-700 transition hover:bg-violet-50 disabled:opacity-50 dark:border-violet-800 dark:text-violet-300"><RotateCcw size={14} /> Chấm lại</button>
+                      <button type="button" onClick={() => retrySpeaking.mutate(questionId)} disabled={retrySpeaking.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-teal-300 px-3 text-sm font-bold text-teal-700 transition hover:bg-teal-50 disabled:opacity-50 dark:border-teal-800 dark:text-teal-300"><RotateCcw size={14} /> Chấm lại</button>
                     </>
                   )}
                 </article>
@@ -1184,7 +1184,7 @@ function DiagnosticResultView({
                 {item.status === "GRADED" && <CriteriaList criteria={item.criteria} feedback={item.criterionFeedback} weights={item.criterionWeights} />}
                 {item.feedback && <FeedbackSummary text={item.feedback} />}
                 <SuggestionList items={item.suggestions} />
-                {item.status === "GRADING_FAILED" && <button type="button" onClick={() => retryWriting.mutate(item.questionId)} disabled={retryWriting.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-violet-300 px-3 text-sm font-bold text-violet-700 transition hover:bg-violet-50 disabled:opacity-50 dark:border-violet-800 dark:text-violet-300"><RotateCcw size={14} /> Chấm lại</button>}
+                {item.status === "GRADING_FAILED" && <button type="button" onClick={() => retryWriting.mutate(item.questionId)} disabled={retryWriting.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-teal-300 px-3 text-sm font-bold text-teal-700 transition hover:bg-teal-50 disabled:opacity-50 dark:border-teal-800 dark:text-teal-300"><RotateCcw size={14} /> Chấm lại</button>}
               </article>
               );
             })}
@@ -1250,7 +1250,7 @@ function DiagnosticResultView({
       {practiceItems.length > 0 && (
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-9">
           <div className="flex items-center gap-2">
-            <BookOpen size={20} className="text-violet-600 dark:text-violet-400" />
+            <BookOpen size={20} className="text-teal-600 dark:text-teal-400" />
             <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
               Bài luyện đề xuất
             </h2>
@@ -1264,20 +1264,20 @@ function DiagnosticResultView({
               <Link
                 key={rec.id}
                 href={rec.route}
-                className="group flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-4.5 transition-all hover:border-violet-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-850 dark:hover:border-violet-500"
+                className="group flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-4.5 transition-all hover:border-teal-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-850 dark:hover:border-teal-500"
               >
                 <div>
-                  <span className="inline-block rounded-md bg-violet-100 px-2.5 py-0.5 text-xs font-black uppercase tracking-wider text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+                  <span className="inline-block rounded-md bg-teal-100 px-2.5 py-0.5 text-xs font-black uppercase tracking-wider text-teal-700 dark:bg-teal-950 dark:text-teal-300">
                     {rec.badge}
                   </span>
-                  <h3 className="mt-2 text-base font-black text-slate-900 group-hover:text-violet-600 dark:text-slate-100 dark:group-hover:text-violet-400">
+                  <h3 className="mt-2 text-base font-black text-slate-900 group-hover:text-teal-600 dark:text-slate-100 dark:group-hover:text-teal-400">
                     {rec.title}
                   </h3>
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-6">
                     {rec.description}
                   </p>
                 </div>
-                <div className="mt-4 flex items-center gap-1 text-sm font-extrabold text-violet-600 dark:text-violet-400">
+                <div className="mt-4 flex items-center gap-1 text-sm font-extrabold text-teal-600 dark:text-teal-400">
                   <span>Luyện tập ngay</span>
                   <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
                 </div>
@@ -1307,7 +1307,7 @@ function DiagnosticResultView({
                 onClick={() => setReviewFilter(f.id)}
                 className={`rounded-xl px-3 py-1.5 text-sm font-bold transition-all ${
                   reviewFilter === f.id
-                    ? "bg-violet-600 text-white"
+                    ? "bg-teal-600 text-white"
                     : "border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                 }`}
               >
@@ -1450,7 +1450,7 @@ function DiagnosticResultView({
           </Link>
           <Link
             href="/dashboard"
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-extrabold text-white hover:bg-violet-700"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-teal-600 px-5 text-sm font-extrabold text-white hover:bg-teal-700"
           >
             <span>Về Bảng điều khiển</span>
             <ArrowRight size={15} />

@@ -25,7 +25,7 @@ const SKILL_META: Record<
 > = {
   LISTENING: { label: "Nghe", Icon: Headphones, tone: "text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800" },
   READING: { label: "Đọc", Icon: BookOpen, tone: "text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800" },
-  SPEAKING: { label: "Nói", Icon: Mic, tone: "text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/50 border-violet-200 dark:border-violet-800" },
+  SPEAKING: { label: "Nói", Icon: Mic, tone: "text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/50 border-teal-200 dark:border-teal-800" },
   WRITING: { label: "Viết", Icon: PenTool, tone: "text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/50 border-rose-200 dark:border-rose-800" },
 };
 

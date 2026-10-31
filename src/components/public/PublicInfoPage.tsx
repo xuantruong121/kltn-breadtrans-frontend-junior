@@ -25,7 +25,7 @@ export function PublicInfoPage({
   cta,
 }: PublicInfoPageProps) {
   return (
-    <section className="bg-[radial-gradient(circle_at_top,_#fff7ed_0,_#fbfaf8_38rem)] dark:bg-[radial-gradient(circle_at_top,_#1e1b18_0,_#0b1120_38rem)] py-12 sm:py-16">
+    <section className="bg-amber-50/40 dark:bg-slate-950 py-12 sm:py-16">
       <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 lg:px-8">
         <Link
           href="/"

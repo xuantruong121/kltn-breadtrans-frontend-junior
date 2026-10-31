@@ -206,7 +206,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                   <button
                     type="button"
                     onClick={() => setActiveTab("inventory")}
-                    className="w-full py-2.5 px-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-2xl font-black text-xs flex items-center justify-center gap-2 shadow-md shadow-amber-500/20 transition-all cursor-pointer"
+                    className="bg-amber-500 hover:bg-amber-600 w-full py-2.5 px-4 text-white rounded-2xl font-black text-xs flex items-center justify-center gap-2 shadow-md shadow-amber-500/20 transition-all cursor-pointer"
                   >
                     <ShoppingBag size={15} /> Quản Lý Túi Đồ ({myUnlockedList.length} món)
                   </button>
@@ -339,7 +339,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
               <div className="shrink-0">
                 <Link
                   href="/market"
-                  className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs rounded-xl shadow-md shadow-amber-500/20 flex items-center gap-2 transition-all cursor-pointer"
+                  className="bg-amber-500 hover:bg-amber-600 px-4 py-2.5 text-white font-black text-xs rounded-xl shadow-md shadow-amber-500/20 flex items-center gap-2 transition-all cursor-pointer"
                 >
                   <ShoppingBag size={16} /> Đến Cửa Hàng Bánh Mì
                 </Link>
@@ -369,7 +369,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                       : "bg-amber-50 text-amber-800 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-900/50"
                   }`}
                 >
-                  👑 Khung Avatar ({framesCount})
+                  Khung Avatar ({framesCount})
                 </button>
                 <button
                   type="button"
@@ -380,7 +380,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                       : "bg-indigo-50 text-indigo-800 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
                   }`}
                 >
-                  🏅 Huy Hiệu ({badgesCount})
+                  Huy Hiệu ({badgesCount})
                 </button>
                 <button
                   type="button"
@@ -391,7 +391,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                       : "bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
                   }`}
                 >
-                  ⚡ Vật Phẩm ({boostsCount})
+                  Vật Phẩm ({boostsCount})
                 </button>
               </div>
 
@@ -404,7 +404,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
             {filteredInventory.length === 0 ? (
               <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-4">
                 <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-full flex items-center justify-center mx-auto text-2xl">
-                  🎒
+                  <Backpack size={40} strokeWidth={1.75} aria-hidden="true" />
                 </div>
                 <div className="space-y-1">
                   <h3 className="font-black text-slate-700 dark:text-slate-300 text-base">
@@ -437,7 +437,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                       key={item.id}
                       className={`bg-white dark:bg-slate-900 rounded-3xl border p-5 flex flex-col justify-between transition-all relative overflow-hidden shadow-xs hover:shadow-md ${
                         isEquipped
-                          ? "border-amber-400 bg-gradient-to-b from-amber-50/50 to-white dark:from-amber-950/30 dark:to-slate-900 ring-2 ring-amber-300 dark:ring-amber-700/60"
+                          ? "bg-amber-50/50 dark:bg-amber-950/30 border-amber-400 ring-2 ring-amber-300 dark:ring-amber-700/60"
                           : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                       }`}
                     >

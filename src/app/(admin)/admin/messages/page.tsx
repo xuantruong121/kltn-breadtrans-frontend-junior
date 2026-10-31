@@ -488,7 +488,7 @@ function AdminMessagesContent() {
                           /* AI Assistant Message (Left-aligned) */
                           <div className="flex justify-start items-end gap-2 my-2.5 group">
                             <span
-                              className="size-8 grid shrink-0 place-items-center rounded-full bg-purple-600 text-white font-bold text-xs select-none shadow-2xs mb-0.5"
+                              className="size-8 grid shrink-0 place-items-center rounded-full bg-teal-600 text-white font-bold text-xs select-none shadow-2xs mb-0.5"
                               title="Trợ lý học tập AI"
                             >
                               <Bot size={15} />
@@ -497,10 +497,10 @@ function AdminMessagesContent() {
                             <div className="flex flex-col items-start max-w-[85%] sm:max-w-[75%] lg:max-w-[70%] xl:max-w-[640px]">
                               {/* Header Meta: Name, Role Badge, Full Timestamp */}
                               <div className="flex items-center gap-1.5 mb-1 px-1 text-xs">
-                                <span className="font-semibold text-purple-900 dark:text-purple-200">
+                                <span className="font-semibold text-teal-900 dark:text-teal-200">
                                   Trợ lý AI
                                 </span>
-                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800">
+                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-950/60 dark:text-teal-300 dark:border-teal-800">
                                   AI Hỗ trợ
                                 </span>
                                 <span
@@ -512,7 +512,7 @@ function AdminMessagesContent() {
                               </div>
 
                               {/* Message Bubble with Markdown Content */}
-                              <div className="w-full rounded-2xl rounded-bl-xs px-4 py-3 text-sm leading-relaxed border border-purple-200/90 bg-purple-50/50 text-slate-800 shadow-2xs dark:border-purple-800/80 dark:bg-purple-950/30 dark:text-slate-100">
+                              <div className="w-full rounded-2xl rounded-bl-xs px-4 py-3 text-sm leading-relaxed border border-teal-200/90 bg-teal-50/50 text-slate-800 shadow-2xs dark:border-teal-800/80 dark:bg-teal-950/30 dark:text-slate-100">
                                 <ChatMessageContent
                                   content={message.content}
                                   isInverse={false}

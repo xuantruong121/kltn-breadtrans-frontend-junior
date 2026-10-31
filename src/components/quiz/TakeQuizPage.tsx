@@ -1051,7 +1051,7 @@ export default function TakeQuizPage(props: {
                     />
                   </div>
                 ) : currentQuestion.content?.audioText ? (
-                  <div className="mb-8 flex flex-col items-center gap-4 bg-gradient-to-b from-sky-50/60 to-slate-50 dark:from-sky-950/40 dark:to-slate-850 p-8 rounded-2xl border border-sky-100 dark:border-sky-900/50 relative overflow-hidden">
+                  <div className="bg-sky-50/60 dark:bg-sky-950/40 mb-8 flex flex-col items-center gap-4 p-8 rounded-2xl border border-sky-100 dark:border-sky-900/50 relative overflow-hidden">
                     <button
                       onClick={() =>
                         playAudio(
@@ -1062,7 +1062,7 @@ export default function TakeQuizPage(props: {
                       className={`flex items-center justify-center w-24 h-24 rounded-full transition-all shadow-md active:scale-95 border-4 cursor-pointer ${
                         isPlaying
                           ? "bg-rose-500 text-white border-rose-600 animate-pulse shadow-rose-500/30"
-                          : "bg-gradient-to-br from-sky-400 to-blue-600 text-white border-sky-300 hover:scale-105 shadow-sky-500/30"
+                          : "bg-sky-400 text-white border-sky-300 hover:scale-105 shadow-sky-500/30"
                       }`}
                       title="Nghe phát âm"
                     >
@@ -1286,7 +1286,7 @@ export default function TakeQuizPage(props: {
                         ) : (
                           <div className="text-lg font-medium leading-relaxed">
                             <span className="text-emerald-600 dark:text-emerald-400 block mb-2 text-sm font-black uppercase">
-                              🎉 Hoàn hảo! Bạn chép đúng 100%:
+                              Hoàn hảo! Bạn chép đúng 100%:
                             </span>
                             <span className="text-slate-800 dark:text-slate-100 font-bold block mb-1 break-words">
                               {currentQuestion.content?.correctAnswer}

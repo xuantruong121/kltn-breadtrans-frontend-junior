@@ -1279,7 +1279,7 @@ export default function V5LessonEditorPage() {
                     />
                     Áp dụng {label}
                   </label>
-                  <p className="mb-2 text-xs font-bold uppercase tracking-wide text-violet-700">
+                  <p className="mb-2 text-xs font-bold uppercase tracking-wide text-teal-700">
                     {label}
                   </p>
                   <input
@@ -1975,7 +1975,7 @@ export default function V5LessonEditorPage() {
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
               <div>
-                <span className="rounded bg-violet-50 px-2 py-0.5 text-xs font-bold text-violet-700 border border-violet-200">
+                <span className="rounded bg-teal-50 px-2 py-0.5 text-xs font-bold text-teal-700 border border-teal-200">
                   KIỂM TRA CUỐI BÀI · BẮT BUỘC ĐỂ XUẤT BẢN
                 </span>
                 <h3 className="mt-1 text-base font-bold text-slate-900">

@@ -158,7 +158,7 @@ function LoginForm() {
       )}
 
       {/* Authentication Card */}
-      <div className="relative mx-auto w-full max-w-[480px] overflow-hidden rounded-3xl border border-orange-100/90 bg-[radial-gradient(120%_80%_at_50%_0%,rgba(255,237,213,0.55)_0%,rgba(255,255,255,1)_55%)] p-8 shadow-[0_20px_50px_-12px_rgba(15,23,42,0.08),0_0_0_1px_rgba(251,146,60,0.08)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900 sm:p-10">
+      <div className="relative mx-auto w-full max-w-[480px] overflow-hidden rounded-3xl border border-orange-100/90 bg-white p-8 shadow-[0_20px_50px_-12px_rgba(15,23,42,0.08),0_0_0_1px_rgba(251,146,60,0.08)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900 sm:p-10">
         {/* Header Info */}
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-[30px]">
@@ -205,11 +205,11 @@ function LoginForm() {
         </div>
 
         <div className="my-6 flex items-center gap-3" aria-hidden="true">
-          <span className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent dark:via-slate-700" />
+          <span className="bg-slate-200 dark:bg-slate-700 h-px flex-1" />
           <span className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
             hoặc
           </span>
-          <span className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent dark:via-slate-700" />
+          <span className="bg-slate-200 dark:bg-slate-700 h-px flex-1" />
         </div>
 
         <button

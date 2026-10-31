@@ -195,7 +195,7 @@ export default function AdminUsersPage() {
 
   const roleBadge = (role: string) => {
     const map: Record<string, string> = {
-      ADMIN: "bg-purple-100 text-purple-800 border-purple-300",
+      ADMIN: "bg-teal-100 text-teal-800 border-teal-300",
       STUDENT: "bg-emerald-100 text-emerald-800 border-emerald-300",
     };
     const labels: Record<string, string> = {

@@ -1224,7 +1224,7 @@ export default function AdminExamsPage() {
                                     visionMutation.mutate(group.id)
                                   }
                                   disabled={visionMutation.isPending}
-                                  className="inline-flex items-center gap-1 rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700 transition-colors hover:border-violet-300 hover:bg-violet-100 disabled:opacity-50"
+                                  className="inline-flex items-center gap-1 rounded-lg border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-700 transition-colors hover:border-teal-300 hover:bg-teal-100 disabled:opacity-50"
                                 >
                                   <RefreshCw
                                     size={12}

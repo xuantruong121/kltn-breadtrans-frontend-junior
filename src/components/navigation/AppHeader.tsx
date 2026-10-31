@@ -40,6 +40,8 @@ import {
   Moon,
   Mail,
   MessageSquare,
+  Croissant,
+  Zap,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
@@ -311,7 +313,7 @@ export function AppHeader() {
       href: "/writing",
       icon: PenTool,
       active: isWritingRoute(pathname),
-      iconColor: "text-violet-500 dark:text-violet-400",
+      iconColor: "text-teal-500 dark:text-teal-400",
     },
     {
       label: "Flashcard",
@@ -339,7 +341,7 @@ export function AppHeader() {
       href: "/market",
       icon: ShoppingBag,
       active: isMarketRoute(pathname),
-      iconColor: "text-pink-500 dark:text-pink-400",
+      iconColor: "text-rose-500 dark:text-rose-400",
     },
     {
       label: "Bảng xếp hạng",
@@ -574,7 +576,7 @@ export function AppHeader() {
                         title={`Số dư bánh mì: ${breads || 0}`}
                         className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
                       >
-                        <span className="text-sm leading-none" role="img" aria-label="Bánh Mì">🥖</span>
+                        <Croissant size={15} strokeWidth={2} className="text-amber-600" aria-label="Bánh Mì" />
                         <span className="font-extrabold text-amber-600 dark:text-amber-400">{breads || 0}</span>
                         <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">bánh</span>
                       </Link>
@@ -582,7 +584,7 @@ export function AppHeader() {
                       <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
 
                       <div className="flex items-center gap-1.5" title={`Cấp độ ${level || 1} (${exp || 0} EXP)`}>
-                        <span className="text-sm leading-none">⚡</span>
+                        <Zap size={15} strokeWidth={2} className="text-orange-500" aria-hidden="true" />
                         <span className="font-extrabold text-sky-600 dark:text-sky-400">Lv.{level || 1}</span>
                       </div>
                     </div>
@@ -1034,9 +1036,9 @@ export function AppHeader() {
                         <Link
                           href="/speaking"
                           onClick={closeMenus}
-                          className="flex items-center gap-2 p-2.5 rounded-xl bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200/60 dark:border-purple-800/60 text-xs font-bold text-purple-900 dark:text-purple-300 hover:bg-purple-100/70 dark:hover:bg-purple-900/60 transition-colors"
+                          className="flex items-center gap-2 p-2.5 rounded-xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200/60 dark:border-teal-800/60 text-xs font-bold text-teal-900 dark:text-teal-300 hover:bg-teal-100/70 dark:hover:bg-teal-900/60 transition-colors"
                         >
-                          <Mic size={16} className="text-purple-600 dark:text-purple-400 shrink-0" aria-hidden="true" />
+                          <Mic size={16} className="text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
                           <span>Luyện Nói</span>
                         </Link>
                         <Link

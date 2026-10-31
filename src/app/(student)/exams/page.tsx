@@ -183,13 +183,13 @@ const CERTIFICATES: CertificateMeta[] = [
     ],
     roadmapDate: "Dự kiến: Quý 4/2026",
     theme: {
-      tabActiveBg: "bg-purple-600 text-white",
-      badgeBg: "bg-purple-50 dark:bg-purple-950/60",
-      badgeText: "text-purple-700 dark:text-purple-300",
-      badgeBorder: "border-purple-200 dark:border-purple-800/60",
-      tagBg: "bg-purple-50 dark:bg-purple-950/60",
-      tagText: "text-purple-800 dark:text-purple-300",
-      accentBorder: "hover:border-purple-400 dark:hover:border-purple-600",
+      tabActiveBg: "bg-teal-600 text-white",
+      badgeBg: "bg-teal-50 dark:bg-teal-950/60",
+      badgeText: "text-teal-700 dark:text-teal-300",
+      badgeBorder: "border-teal-200 dark:border-teal-800/60",
+      tagBg: "bg-teal-50 dark:bg-teal-950/60",
+      tagText: "text-teal-800 dark:text-teal-300",
+      accentBorder: "hover:border-teal-400 dark:hover:border-teal-600",
     },
   },
   {
@@ -808,7 +808,7 @@ export default function ExamPracticeHubPage() {
                             <span
                               className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-md border ${
                                 isFourSkill
-                                  ? "bg-purple-50 dark:bg-purple-950/50 text-purple-800 dark:text-purple-300 border-purple-200/80 dark:border-purple-800/60"
+                                  ? "bg-teal-50 dark:bg-teal-950/50 text-teal-800 dark:text-teal-300 border-teal-200/80 dark:border-teal-800/60"
                                   : isSpeakingWriting
                                     ? "bg-blue-50 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 border-blue-200/80 dark:border-blue-800/60"
                                     : "bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border-amber-200/70 dark:border-amber-800/60"
@@ -1020,7 +1020,7 @@ export default function ExamPracticeHubPage() {
         isOpen={authGate.open}
         onClose={() => setAuthGate({ open: false })}
         targetLabel={
-          authGate.title ? `đề thi "${authGate.title}"` : "đề thi này"
+          authGate.title ? `đề thi"${authGate.title}"` : "đề thi này"
         }
         targetRoute={authGate.destination || "/exams"}
         onOpenLogin={() => router.push("/login")}

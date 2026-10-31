@@ -12,7 +12,8 @@ import {
   Clock, 
   BookOpen, 
   Loader2,
-  Award
+  Award,
+  Clapperboard,
 } from "lucide-react";
 import { learnService } from "@/lib/api/services/learn.service";
 import { ContentTopic } from "../types";
@@ -110,7 +111,7 @@ export default function LearnScreen() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-3xl">🎬</span>
+            <Clapperboard size={28} strokeWidth={2} aria-hidden="true" />
             <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100">Học Qua Phim & Âm Nhạc</h1>
           </div>
           <p className="font-bold text-slate-400 dark:text-slate-400 text-sm">
@@ -205,7 +206,7 @@ export default function LearnScreen() {
                         </h3>
                       </div>
                       <span className="text-xs font-black text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-900/50">
-                        +5 🍞 / câu đúng
+                        +5 Bánh Mì / câu đúng
                       </span>
                     </div>
 
@@ -258,7 +259,7 @@ export default function LearnScreen() {
 
                             {isSubmitted && serverResult?.explanation && (
                               <div className="bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-900/50 rounded-xl p-3 text-xs font-bold text-sky-800 dark:text-sky-300">
-                                💡 Giải thích: {serverResult.explanation}
+                                Giải thích: {serverResult.explanation}
                               </div>
                             )}
                           </div>

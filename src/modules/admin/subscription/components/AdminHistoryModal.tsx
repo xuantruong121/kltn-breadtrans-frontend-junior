@@ -78,7 +78,7 @@ export function AdminHistoryModal({
         );
       case "ADMIN_EXTENDED":
         return (
-          <div className="p-2 bg-purple-100 text-purple-700 rounded-full">
+          <div className="p-2 bg-teal-100 text-teal-700 rounded-full">
             <CalendarPlus size={16} />
           </div>
         );

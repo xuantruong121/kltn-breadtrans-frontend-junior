@@ -26,7 +26,7 @@ export function PlacementTestBanner({
           transition: { duration: 0.3 },
         }}
         aria-label="Kiểm tra năng lực đầu vào"
-        className="relative overflow-hidden rounded-3xl border border-blue-200/80 dark:border-blue-900/60 bg-gradient-to-r from-blue-50/90 via-indigo-50/50 to-white dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 p-6 sm:p-7 shadow-xs"
+        className="bg-blue-50/90 dark:bg-slate-900 relative overflow-hidden rounded-3xl border border-blue-200/80 dark:border-blue-900/60 p-6 sm:p-7 shadow-xs"
       >
         {/* Subtle decorative blurred orb */}
         <div
@@ -37,7 +37,7 @@ export function PlacementTestBanner({
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-start gap-4 sm:gap-5">
             {/* Visual Icon Anchor */}
-            <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-600/20">
+            <div className="bg-blue-600 flex size-14 shrink-0 items-center justify-center rounded-2xl text-white shadow-md shadow-blue-600/20">
               <Target size={28} strokeWidth={2.2} aria-hidden="true" />
             </div>
 
@@ -64,7 +64,7 @@ export function PlacementTestBanner({
           <div className="flex items-center lg:self-center shrink-0">
             <Link
               href="/diagnostic"
-              className="inline-flex min-h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3.5 text-sm font-black text-white shadow-md shadow-blue-600/20 transition-all hover:from-blue-700 hover:to-indigo-700 hover:scale-[1.02] active:scale-95"
+              className="bg-blue-600 hover:bg-blue-700 inline-flex min-h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-black text-white shadow-md shadow-blue-600/20 transition-all hover:scale-[1.02] active:scale-95"
             >
               <span>Làm bài đánh giá</span>
               <ArrowRight size={17} aria-hidden="true" />

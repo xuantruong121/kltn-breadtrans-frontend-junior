@@ -50,9 +50,9 @@ const SKILL_THEME: Record<
   },
   SPEAKING: {
     icon: Mic,
-    accentText: "text-purple-600 dark:text-purple-400",
-    accentBg: "bg-purple-50 dark:bg-purple-950/40 border-purple-100 dark:border-purple-900/60",
-    progressBar: "bg-purple-600 dark:bg-purple-500",
+    accentText: "text-teal-600 dark:text-teal-400",
+    accentBg: "bg-teal-50 dark:bg-teal-950/40 border-teal-100 dark:border-teal-900/60",
+    progressBar: "bg-teal-600 dark:bg-teal-500",
   },
   READING: {
     icon: BookOpen,
@@ -320,7 +320,7 @@ export function LearningProgressTab() {
         <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
             <span>Học gần nhất</span>
-            <Clock className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+            <Clock className="h-4 w-4 text-teal-600 dark:text-teal-400" />
           </div>
           <p className="mt-2 text-xl font-bold text-slate-900 dark:text-white">
             {latestDateDisplay}
@@ -333,7 +333,7 @@ export function LearningProgressTab() {
 
       {/* 3. Continue Learning — High Priority */}
       <section aria-labelledby="continue-learning-title">
-        <div className="rounded-xl border border-blue-200/90 bg-gradient-to-r from-blue-50/70 via-white to-slate-50/60 p-5 shadow-xs dark:border-blue-900/60 dark:from-blue-950/30 dark:via-slate-900 dark:to-slate-900">
+        <div className="bg-blue-50/70 dark:bg-blue-950/30 rounded-xl border border-blue-200/90 p-5 shadow-xs dark:border-blue-900/60">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1.5 min-w-0 flex-1">
               <div className="flex items-center gap-2">

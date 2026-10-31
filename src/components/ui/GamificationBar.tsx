@@ -2,7 +2,7 @@
 
 import React, { useEffect, useSyncExternalStore } from "react";
 import { motion } from "framer-motion";
-import { Flame } from "lucide-react";
+import { Flame, PawPrint, Croissant, } from "lucide-react";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useQuery } from "@tanstack/react-query";
@@ -52,17 +52,17 @@ export const GamificationBar: React.FC = () => {
     <div className="flex items-center gap-1.5 sm:gap-3">
       {/* Player Account Level & EXP */}
       <div 
-        className="flex items-center gap-1.5 sm:gap-2 bg-purple-100/80 border-2 border-purple-300 px-2 sm:px-3 py-1 sm:py-1.5 rounded-2xl shadow-sm cursor-default"
+        className="flex items-center gap-1.5 sm:gap-2 bg-teal-100/80 border-2 border-teal-300 px-2 sm:px-3 py-1 sm:py-1.5 rounded-2xl shadow-sm cursor-default"
         title={`Cấp Độ Học Viên: Cấp ${level} (${currentLevelExp}/500 XP tích lũy)`}
       >
-        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-purple-500 text-white flex items-center justify-center font-black text-[11px] sm:text-xs shadow-inner">
+        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-teal-500 text-white flex items-center justify-center font-black text-[11px] sm:text-xs shadow-inner">
           {level}
         </div>
         <div className="hidden sm:flex flex-col">
-          <span className="text-xs font-extrabold text-purple-700 uppercase tracking-wider">Cấp Độ</span>
-          <div className="w-16 h-2 bg-purple-200 rounded-full overflow-hidden">
+          <span className="text-xs font-extrabold text-teal-700 uppercase tracking-wider">Cấp Độ</span>
+          <div className="w-16 h-2 bg-teal-200 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-purple-500 rounded-full transition-all duration-500" 
+              className="h-full bg-teal-500 rounded-full transition-all duration-500" 
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -95,7 +95,7 @@ export const GamificationBar: React.FC = () => {
           className="flex items-center gap-1 sm:gap-1.5 bg-emerald-100/90 border-2 border-emerald-300 hover:border-emerald-400 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-2xl shadow-sm cursor-pointer transition-all"
           title="Thú cưng đồng hành"
         >
-          <span className="text-base leading-none">🐾</span>
+          <PawPrint size={16} strokeWidth={2} className="text-emerald-700" aria-hidden="true" />
           <span className="hidden sm:inline text-xs font-extrabold text-emerald-700 uppercase">Pet</span>
         </motion.div>
       </Link>
@@ -107,7 +107,7 @@ export const GamificationBar: React.FC = () => {
           whileTap={{ scale: 0.95 }}
           className="flex items-center gap-1.5 sm:gap-2 bg-amber-100/90 border-2 border-amber-300 hover:border-amber-400 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-2xl shadow-sm cursor-pointer transition-all"
         >
-          <span className="text-base sm:text-lg leading-none">🍞</span>
+          <Croissant size={18} strokeWidth={2} className="text-amber-700" aria-hidden="true" />
           <span className="font-black text-amber-800 text-xs sm:text-sm">{breads}</span>
           <span className="hidden sm:inline text-xs font-extrabold text-amber-600 uppercase bg-amber-200/80 px-1.5 py-0.5 rounded-md">Shop</span>
         </motion.div>

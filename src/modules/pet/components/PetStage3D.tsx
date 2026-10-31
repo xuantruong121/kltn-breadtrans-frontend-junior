@@ -391,7 +391,7 @@ export const PetStage3D: React.FC<PetStage3DProps> = ({
                   {currentStage.name}
                 </span>
                 <span className="text-xs font-extrabold text-slate-400">
-                  👉 Nhấp để vuốt ve & xoa đầu thú cưng!
+                  Nhấp để vuốt ve & xoa đầu thú cưng!
                 </span>
               </div>
             </div>
@@ -505,7 +505,7 @@ export const PetStage3D: React.FC<PetStage3DProps> = ({
                 disabled={isFeeding || !canFeed}
                 className="w-full font-black text-sm sm:text-base py-3 flex items-center justify-center gap-2 cursor-pointer shadow-md"
               >
-                <span>🍞 Cho thú cưng ăn (10 Bánh Mì)</span>
+                <span>Cho thú cưng ăn (10 Bánh Mì)</span>
               </Button3D>
               {!canFeed && (
                 <p className="text-center text-xs font-bold text-rose-500 mt-1.5">

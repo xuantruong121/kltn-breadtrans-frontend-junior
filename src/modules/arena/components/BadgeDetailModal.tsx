@@ -140,7 +140,7 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
               <span>Phần thưởng danh dự:</span>
               <div className="flex items-center gap-3">
                 <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-semibold">
-                  🍞 +{badge.rewardBreads}
+                  +{badge.rewardBreads} Bánh Mì
                 </span>
                 <span className="flex items-center gap-1 text-slate-800 dark:text-slate-200 font-semibold">
                   +{badge.rewardExp} EXP
