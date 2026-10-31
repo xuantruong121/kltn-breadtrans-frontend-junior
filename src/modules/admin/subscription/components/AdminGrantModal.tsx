@@ -197,7 +197,7 @@ export function AdminGrantModal({
                               <p className="text-xs text-slate-400 font-mono">{learner.email}</p>
                             </div>
                             {hasActive ? (
-                              <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                              <span className="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
                                 Đang có gói
                               </span>
                             ) : (

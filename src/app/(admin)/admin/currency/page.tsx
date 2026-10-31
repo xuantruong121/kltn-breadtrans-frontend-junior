@@ -257,7 +257,7 @@ function LedgerTab() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-100/75 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
+                <tr className="border-b border-slate-200 bg-slate-100/75 text-slate-700 font-bold uppercase tracking-wider text-xs">
                   <th className="py-3 px-5">Học viên</th>
                   <th className="py-3 px-5 text-right">Số dư hiện tại</th>
                   <th className="py-3 px-5">Trạng thái đối soát</th>
@@ -438,7 +438,7 @@ function LedgerTable({
     <div className="overflow-x-auto rounded-lg border border-slate-200/80">
       <table className="w-full text-left text-sm">
         <thead>
-          <tr className="border-b border-slate-200 bg-slate-100/75 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
+          <tr className="border-b border-slate-200 bg-slate-100/75 text-slate-700 font-bold uppercase tracking-wider text-xs">
             <th className="py-3 px-4">Thời gian</th>
             {showUser && <th className="py-3 px-4">Học viên</th>}
             <th className="py-3 px-4 text-right">Biến động</th>
@@ -695,7 +695,7 @@ function AdjustTab({ onAdjusted }: { onAdjusted: () => void }) {
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
                       <thead>
-                        <tr className="border-b border-slate-200 bg-slate-100/75 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
+                        <tr className="border-b border-slate-200 bg-slate-100/75 text-slate-700 font-bold uppercase tracking-wider text-xs">
                           <th className="py-3 px-5">Họ và tên</th>
                           <th className="py-3 px-5">Email</th>
                           <th className="py-3 px-5 text-right">

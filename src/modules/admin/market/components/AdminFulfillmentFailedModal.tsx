@@ -100,7 +100,7 @@ export default function AdminFulfillmentFailedModal({
               placeholder="Ví dụ: Bưu tá không liên lạc được với người nhận sau 3 lần, bưu phẩm bị thất lạc, nhà cung cấp ngừng cung ứng voucher..."
               className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-colors"
             />
-            <p className="text-[11px] text-slate-400 mt-1">
+            <p className="text-xs text-slate-400 mt-1">
               Lý do được lưu vết kiểm toán và hiển thị công khai cho học viên.
             </p>
           </div>

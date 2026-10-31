@@ -4022,7 +4022,7 @@ export default function SkillCmsWorkspace({
                     <span className="font-bold text-slate-800">
                       {passageAiSuggestion.title}
                     </span>
-                    <span className="text-[10px] text-slate-500 font-medium">
+                    <span className="text-xs text-slate-500 font-medium">
                       Bản nháp AI
                     </span>
                   </div>
@@ -4156,7 +4156,7 @@ export default function SkillCmsWorkspace({
                             prev.filter((_, i) => i !== idx),
                           )
                         }
-                        className="text-slate-400 hover:text-rose-600 text-[11px]"
+                        className="text-slate-400 hover:text-rose-600 text-xs"
                       >
                         Bỏ qua
                       </button>
@@ -4199,7 +4199,7 @@ export default function SkillCmsWorkspace({
                                   ),
                                 );
                               }}
-                              className={`h-5 w-5 rounded text-[11px] font-bold flex items-center justify-center ${
+                              className={`h-5 w-5 rounded text-xs font-bold flex items-center justify-center ${
                                 isCorrect
                                   ? "bg-emerald-600 text-white"
                                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -4229,7 +4229,7 @@ export default function SkillCmsWorkspace({
                               className="flex-1 bg-transparent text-xs text-slate-800 outline-none"
                             />
                             {isCorrect ? (
-                              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded">
+                              <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded">
                                 Đúng
                               </span>
                             ) : null}
@@ -4238,7 +4238,7 @@ export default function SkillCmsWorkspace({
                       })}
                     </div>
                     <div>
-                      <label className="block text-[10px] font-semibold text-slate-500 mb-0.5">
+                      <label className="block text-xs font-semibold text-slate-500 mb-0.5">
                         Giải thích:
                       </label>
                       <input

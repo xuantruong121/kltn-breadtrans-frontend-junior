@@ -1207,7 +1207,7 @@ export default function V5LessonEditorPage() {
                     aria-label={`Tên section AI ${index + 1}`}
                   />
                   {section.sectionId && (
-                    <span className="shrink-0 rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700">
+                    <span className="shrink-0 rounded-full bg-sky-50 px-2 py-0.5 text-xs font-semibold text-sky-700">
                       Cập nhật mục hiện có
                     </span>
                   )}
@@ -1955,7 +1955,7 @@ export default function V5LessonEditorPage() {
                       </div>
 
                       {q.explanation && (
-                        <p className="text-[11px] text-slate-500 italic bg-white p-2 rounded border border-slate-100">
+                        <p className="text-xs text-slate-500 italic bg-white p-2 rounded border border-slate-100">
                           Giải thích: {q.explanation}
                         </p>
                       )}
@@ -2096,7 +2096,7 @@ export default function V5LessonEditorPage() {
                       </div>
 
                       {q.explanation && (
-                        <p className="text-[11px] text-slate-500 italic bg-white p-2 rounded border border-slate-100">
+                        <p className="text-xs text-slate-500 italic bg-white p-2 rounded border border-slate-100">
                           Giải thích: {q.explanation}
                         </p>
                       )}

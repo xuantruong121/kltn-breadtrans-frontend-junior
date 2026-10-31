@@ -764,7 +764,7 @@ export default function AdminExamsPage() {
                       <CheckCircle2 size={15} /> {publishReadiness.label}
                     </button>
                     {!publishReadiness.canPublish && (
-                      <p className="max-w-[260px] text-right text-[11px] leading-4 text-slate-500">
+                      <p className="max-w-[260px] text-right text-xs leading-4 text-slate-500">
                         {publishReadiness.helpText}
                       </p>
                     )}
@@ -913,7 +913,7 @@ export default function AdminExamsPage() {
                       <CheckCircle2 size={15} /> {publishReadiness.label}
                     </button>
                     {!publishReadiness.canPublish && (
-                      <p className="max-w-[260px] text-right text-[11px] leading-4 text-slate-500">
+                      <p className="max-w-[260px] text-right text-xs leading-4 text-slate-500">
                         {publishReadiness.helpText}
                       </p>
                     )}
@@ -944,11 +944,11 @@ export default function AdminExamsPage() {
           >
             <span>Kiểm tra tiền xuất bản</span>
             {issues.length > 0 ? (
-              <span className="rounded-full bg-rose-500 px-1.5 py-0.2 text-[11px] font-bold text-white">
+              <span className="rounded-full bg-rose-500 px-1.5 py-0.2 text-xs font-bold text-white">
                 {issues.length}
               </span>
             ) : (
-              <span className="rounded-full bg-emerald-500 px-1.5 py-0.2 text-[11px] font-bold text-white">
+              <span className="rounded-full bg-emerald-500 px-1.5 py-0.2 text-xs font-bold text-white">
                 OK
               </span>
             )}
@@ -1362,7 +1362,7 @@ export default function AdminExamsPage() {
                               </div>
 
                               {q.explanation && (
-                                <p className="text-[11px] text-slate-500 italic bg-white p-2 rounded border border-slate-100">
+                                <p className="text-xs text-slate-500 italic bg-white p-2 rounded border border-slate-100">
                                   Giải thích: {q.explanation}
                                 </p>
                               )}
@@ -1415,7 +1415,7 @@ export default function AdminExamsPage() {
               {/* STATS BREAKDOWN */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
                 <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase">
+                  <span className="text-xs font-bold text-slate-500 uppercase">
                     Tổng số câu hỏi
                   </span>
                   <p className="text-xl font-bold text-slate-900 mt-1">
@@ -1423,7 +1423,7 @@ export default function AdminExamsPage() {
                   </p>
                 </div>
                 <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase">
+                  <span className="text-xs font-bold text-slate-500 uppercase">
                     Số nhóm bài
                   </span>
                   <p className="text-xl font-bold text-slate-900 mt-1">
@@ -1431,7 +1431,7 @@ export default function AdminExamsPage() {
                   </p>
                 </div>
                 <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase">
+                  <span className="text-xs font-bold text-slate-500 uppercase">
                     Phần Listening
                   </span>
                   <p className="text-xl font-bold text-slate-900 mt-1">
@@ -1444,7 +1444,7 @@ export default function AdminExamsPage() {
                   </p>
                 </div>
                 <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase">
+                  <span className="text-xs font-bold text-slate-500 uppercase">
                     Phần Reading
                   </span>
                   <p className="text-xl font-bold text-slate-900 mt-1">
@@ -2433,7 +2433,7 @@ export default function AdminExamsPage() {
                               prev.filter((_, i) => i !== idx),
                             );
                           }}
-                          className="text-slate-400 hover:text-rose-600 text-[11px]"
+                          className="text-slate-400 hover:text-rose-600 text-xs"
                         >
                           Bỏ qua
                         </button>
@@ -2476,7 +2476,7 @@ export default function AdminExamsPage() {
                                     ),
                                   );
                                 }}
-                                className={`h-5 w-5 rounded text-[11px] font-bold flex items-center justify-center ${
+                                className={`h-5 w-5 rounded text-xs font-bold flex items-center justify-center ${
                                   isCorrect
                                     ? "bg-emerald-600 text-white"
                                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -2506,7 +2506,7 @@ export default function AdminExamsPage() {
                                 className="flex-1 bg-transparent text-xs text-slate-800 outline-none"
                               />
                               {isCorrect ? (
-                                <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded">
+                                <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded">
                                   Đúng
                                 </span>
                               ) : null}
@@ -2515,7 +2515,7 @@ export default function AdminExamsPage() {
                         })}
                       </div>
                       <div>
-                        <label className="block text-[10px] font-semibold text-slate-500 mb-0.5">
+                        <label className="block text-xs font-semibold text-slate-500 mb-0.5">
                           Giải thích:
                         </label>
                         <input

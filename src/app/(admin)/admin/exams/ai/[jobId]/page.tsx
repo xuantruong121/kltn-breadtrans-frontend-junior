@@ -448,7 +448,7 @@ export default function ExamAiCandidateWorkspacePage({
                           </label>
                           <div className="flex items-center gap-2">
                             <span
-                              className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${toneClass[state.tone]}`}
+                              className={`rounded-full border px-2 py-0.5 text-xs font-medium ${toneClass[state.tone]}`}
                             >
                               {state.label}
                             </span>
@@ -484,7 +484,7 @@ export default function ExamAiCandidateWorkspacePage({
                             {group.issues.map((issue) => (
                               <li
                                 key={issue}
-                                className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                                className="rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
                               >
                                 {issue}
                               </li>
@@ -678,7 +678,7 @@ export default function ExamAiCandidateWorkspacePage({
                             Task {task.taskNumber}: {task.title ?? "(chưa có tiêu đề)"}
                           </p>
                           <span
-                            className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${toneClass[state.tone]}`}
+                            className={`rounded-full border px-2 py-0.5 text-xs font-medium ${toneClass[state.tone]}`}
                           >
                             {state.label}
                           </span>
@@ -693,7 +693,7 @@ export default function ExamAiCandidateWorkspacePage({
                             {task.issues.map((issue) => (
                               <li
                                 key={issue}
-                                className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                                className="rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
                               >
                                 {issue}
                               </li>

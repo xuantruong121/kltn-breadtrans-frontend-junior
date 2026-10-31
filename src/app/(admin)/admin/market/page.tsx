@@ -310,7 +310,7 @@ export default function AdminMarketPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead>
-                    <tr className="border-b border-slate-200 bg-slate-100/75 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
+                    <tr className="border-b border-slate-200 bg-slate-100/75 text-slate-700 font-bold uppercase tracking-wider text-xs">
                       <th className="py-3 px-5">Quà tặng</th>
                       <th className="py-3 px-4">Loại giao</th>
                       <th className="py-3 px-4">Độ hiếm</th>
@@ -461,7 +461,7 @@ export default function AdminMarketPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead>
-                    <tr className="border-b border-slate-200 bg-slate-100/75 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
+                    <tr className="border-b border-slate-200 bg-slate-100/75 text-slate-700 font-bold uppercase tracking-wider text-xs">
                       <th className="py-3 px-5">Mã đơn</th>
                       <th className="py-3 px-4">Học viên</th>
                       <th className="py-3 px-4">Vật phẩm đổi & Địa chỉ giao</th>

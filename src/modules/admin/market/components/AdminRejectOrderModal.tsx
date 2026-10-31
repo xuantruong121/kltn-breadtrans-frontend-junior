@@ -99,7 +99,7 @@ export default function AdminRejectOrderModal({
               placeholder="Ví dụ: Hết quà tại kho, thông tin nhận quà không chính xác, đổi nhầm món quà..."
               className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-colors"
             />
-            <p className="text-[11px] text-slate-400 mt-1">
+            <p className="text-xs text-slate-400 mt-1">
               Lý do này sẽ được lưu vào lịch sử kiểm toán và gửi thông báo tới học viên.
             </p>
           </div>

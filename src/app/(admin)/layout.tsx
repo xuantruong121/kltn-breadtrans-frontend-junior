@@ -336,7 +336,7 @@ export default function AdminLayout({
                           : "text-slate-400 shrink-0"
                       }
                     />
-                    <span className="uppercase tracking-normal text-[11px] font-bold text-left leading-tight break-words flex-1">
+                    <span className="uppercase tracking-normal text-xs font-bold text-left leading-tight break-words flex-1">
                       {group.title}
                     </span>
                     {isGroupActive && (
@@ -393,7 +393,7 @@ export default function AdminLayout({
                               </span>
                               {item.id === "messages" && unreadMessageCount > 0 && (
                                 <span
-                                  className="min-w-5 rounded-full bg-blue-600 px-1.5 py-0.5 text-center text-[10px] font-bold leading-none text-white"
+                                  className="min-w-5 rounded-full bg-blue-600 px-1.5 py-0.5 text-center text-xs font-bold leading-none text-white"
                                   role="status"
                                   aria-label={`${unreadMessageCount > 99 ? "99+" : unreadMessageCount} tin nhắn chưa đọc`}
                                 >
@@ -492,7 +492,7 @@ export default function AdminLayout({
               </span>
             </div>
           </div>
-          <span className="rounded border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-black uppercase text-junior-blue">
+          <span className="rounded border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-black uppercase text-junior-blue">
             Admin
           </span>
         </header>

@@ -517,7 +517,7 @@ export default function AdminCourseEditStudioPage() {
                   Course metadata / Legacy editor
                 </span>
                 <span
-                  className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${
+                  className={`px-2 py-0.5 rounded text-xs font-semibold border ${
                     isDraft
                       ? "bg-slate-100 text-slate-700 border-slate-200"
                       : isPendingReview
@@ -743,7 +743,7 @@ export default function AdminCourseEditStudioPage() {
                         <div className="font-semibold text-slate-900 mb-0.5">
                           {opt.label}
                         </div>
-                        <div className="text-[11px] text-slate-500">
+                        <div className="text-xs text-slate-500">
                           Mã hệ thống: {opt.value}
                         </div>
                       </button>
@@ -801,7 +801,7 @@ export default function AdminCourseEditStudioPage() {
                       placeholder="https://images.unsplash.com/... hoặc link ảnh hợp lệ"
                       className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-blue-500 focus:bg-white transition-all"
                     />
-                    <p className="text-[11px] text-slate-400 mt-1">
+                    <p className="text-xs text-slate-400 mt-1">
                       Khuyến nghị tỷ lệ 16:9, dung lượng nhẹ, độ phân giải tối
                       thiểu 800x450px.
                     </p>
@@ -1020,7 +1020,7 @@ export default function AdminCourseEditStudioPage() {
                                 className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs"
                               >
                                 <div className="flex items-center gap-2 min-w-0 pr-2">
-                                  <span className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-bold text-[10px]">
+                                  <span className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-bold text-xs">
                                     {mat.fileType || "FILE"}
                                   </span>
                                   <a

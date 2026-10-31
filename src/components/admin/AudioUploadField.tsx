@@ -92,7 +92,7 @@ export default function AudioUploadField({
           <button
             type="button"
             onClick={() => setShowTechnicalUrl(!showTechnicalUrl)}
-            className="inline-flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-600 transition-colors"
+            className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 transition-colors"
           >
             Thông tin kỹ thuật {showTechnicalUrl ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
           </button>
@@ -135,7 +135,7 @@ export default function AudioUploadField({
             </audio>
 
             {showTechnicalUrl && (
-              <p className="text-[11px] font-mono text-slate-500 break-all bg-white p-2 rounded border border-slate-200">
+              <p className="text-xs font-mono text-slate-500 break-all bg-white p-2 rounded border border-slate-200">
                 {value}
               </p>
             )}
@@ -148,7 +148,7 @@ export default function AudioUploadField({
               </div>
               <div>
                 <p className="text-xs font-medium text-slate-700">Chưa có tệp âm thanh</p>
-                <p className="text-[11px] text-slate-400">{helperText}</p>
+                <p className="text-xs text-slate-400">{helperText}</p>
               </div>
             </div>
 
