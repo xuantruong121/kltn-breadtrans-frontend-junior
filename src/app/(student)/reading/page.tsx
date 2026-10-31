@@ -13,6 +13,7 @@ import {
 import { useAuthStore } from "@/stores/authStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { PremiumContentPaywallModal } from "@/components/subscription/PremiumContentPaywallModal";
+import { CatalogPagination, useCatalogPage } from "@/components/practice/CatalogPagination";
 import { LevelLockDialog } from "@/components/practice/LevelLockDialog";
 import { levelLockOf, type LevelLock } from "@/lib/learning-path/levelLock";
 import {
@@ -226,6 +227,10 @@ function ReadingTopicsContent() {
       return exercise;
     });
   }, [readingExercises, searchTerm, selectedDifficulty, selectedStatus, sortOrder]);
+  const paging = useCatalogPage(
+    filteredAndSortedItems,
+    [searchTerm, selectedDifficulty, selectedStatus, sortOrder].join("|"),
+  );
 
   const handleStartReadingExercise = (exercise: ReadingTopicItem) => {
     if (!user) {
@@ -454,8 +459,9 @@ function ReadingTopicsContent() {
             onStart={handleStartGrammarTopic}
           />
         ) : filteredAndSortedItems.length > 0 ? (
+          <div className="space-y-6">
           <div className="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {filteredAndSortedItems.map((exercise) => (
+            {paging.items.map((exercise) => (
               <ReadingTopicCard
                 key={`reading-${exercise.id}`}
                 topic={exercise}
@@ -478,6 +484,8 @@ function ReadingTopicsContent() {
                 isSpotlight={exercise.isSpotlight}
               />
             ))}
+          </div>
+          <CatalogPagination paging={paging} />
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 sm:p-12 text-center">

@@ -19,6 +19,7 @@ import {
   type SpeakingSubmissionSummary,
 } from "@/lib/api/services/speaking.service";
 import { Pagination } from "@/components/ui";
+import { CATALOG_PAGE_SIZES } from "@/lib/practice/catalogPage";
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
 import { userService, type UserSkillsSummaryResponse } from "@/lib/api/services/user.service";
 import { useAuthStore } from "@/stores/authStore";
@@ -564,22 +565,21 @@ export default function SpeakingExercisesPage() {
               ))}
             </div>
 
-            {/* Pagination if more than 1 page */}
-            {totalPages > 1 && (
-              <div className="pt-2">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  totalItems={filteredAndSortedExercises.length}
-                  pageSize={pageSize}
-                  onPageChange={setCurrentPage}
-                  onPageSizeChange={(size) => {
-                    setPageSize(size);
-                    setCurrentPage(1);
-                  }}
-                />
-              </div>
-            )}
+            <div className="pt-2">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filteredAndSortedExercises.length}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setCurrentPage(1);
+                }}
+                pageSizeOptions={CATALOG_PAGE_SIZES}
+                alwaysShow
+              />
+            </div>
           </div>
         ) : (
           /* Graceful Informative Empty State with Reset Filter Action */

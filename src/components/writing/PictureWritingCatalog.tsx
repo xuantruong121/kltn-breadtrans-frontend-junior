@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { ArrowRight, CheckCircle2, Lock } from "lucide-react";
 
 import { PracticeCatalogFilters } from "@/components/practice/PracticeCatalogFilters";
+import { CatalogPagination, useCatalogPage } from "@/components/practice/CatalogPagination";
 import {
   catalogLevelLabel,
   DEFAULT_CATALOG_SORT,
@@ -59,6 +60,7 @@ export function PictureWritingCatalog({
       ),
     [cards, difficulty, status, pair, sort],
   );
+  const paging = useCatalogPage(visible, [difficulty, status, pair, sort].join("|"));
 
   return (
     <div className="space-y-5">
@@ -107,8 +109,9 @@ export function PictureWritingCatalog({
           Không có tranh phù hợp với bộ lọc này.
         </p>
       ) : (
+        <div className="space-y-6">
         <div className="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-          {visible.map(({ key, quiz, task, href }) => {
+          {paging.items.map(({ key, quiz, task, href }) => {
             const locked = Boolean(quiz.isLocked);
             const levelLocked = isAuthenticated && Boolean(quiz.isLevelLocked);
             const plan = unlockPlanFor("WRITING", quiz.requiredPlan);
@@ -176,6 +179,8 @@ export function PictureWritingCatalog({
               </article>
             );
           })}
+        </div>
+        <CatalogPagination paging={paging} />
         </div>
       )}
     </div>
