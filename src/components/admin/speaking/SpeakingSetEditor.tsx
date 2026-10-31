@@ -29,6 +29,7 @@ import {
   BTN_SECONDARY,
   BTN_SUCCESS,
 } from "../cmsButtons";
+import { TrackTagField } from "../TrackTagField";
 import SpeakingExerciseForm from "./SpeakingExerciseForm";
 import {
   EXERCISE_LEVELS,
@@ -748,6 +749,15 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
         </section>
 
         <aside className="space-y-6 xl:sticky xl:top-6 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
+          {set && (
+            <TrackTagField
+              domain="speaking"
+              id={set.id}
+              tracks={set.tracks ?? []}
+              listKey="admin-speaking-sets"
+            />
+          )}
+
           <section
             aria-labelledby="speaking-checklist-heading"
             className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"

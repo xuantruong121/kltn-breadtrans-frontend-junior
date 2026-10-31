@@ -35,6 +35,7 @@ export type SpeakingStimulus = {
 };
 
 export interface SpeakingPracticeSet {
+  tracks?: string[];
   id: string;
   title: string;
   description?: string | null;

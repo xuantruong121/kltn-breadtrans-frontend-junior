@@ -49,12 +49,33 @@ export function audioBadgeFor(item: {
   listeningAudioArtifacts?: Array<{ version: number; status: string }>;
 }): AudioBadge {
   const mode = (item.bilingualContent as { mode?: string } | null)?.mode;
-  if (mode && PER_QUESTION_MODES.includes(mode))
+  const clips = item.questionsWithAudio ?? 0;
+  const latest = item.listeningAudioArtifacts?.[0];
+  // A dialogue may play a clip on each question instead of one recording.
+  if ((mode && PER_QUESTION_MODES.includes(mode)) || (!latest && clips > 0))
     return questionAudioBadge(
-      item.questionsWithAudio ?? 0,
+      clips,
       item._count?.questions ?? item.questions?.length ?? 0,
     );
-  return latestAudioBadge(item.listeningAudioArtifacts?.[0]);
+  return latestAudioBadge(latest);
+}
+
+/** Career tracks, as the recommender reads them. */
+export const CONTENT_TRACKS = [
+  { value: "GENERAL", label: "Tổng quát" },
+  { value: "IT_SOFTWARE", label: "Công nghệ thông tin" },
+  { value: "OFFICE_BUSINESS", label: "Văn phòng – Kinh doanh" },
+  { value: "SALES_CUSTOMER_SERVICE", label: "Bán hàng – CSKH" },
+  { value: "HOSPITALITY_TOURISM", label: "Nhà hàng – Khách sạn – Du lịch" },
+  { value: "STUDENT_ACADEMIC", label: "Sinh viên – Học thuật" },
+];
+
+/** A list card's track line. */
+export function trackNames(tracks?: string[]): string {
+  const names = CONTENT_TRACKS.filter((t) => tracks?.includes(t.value)).map(
+    (t) => t.label,
+  );
+  return names.length ? names.join(", ") : "Chưa gắn ngành";
 }
 
 export type ChecklistItem = { label: string; done: boolean };
@@ -75,6 +96,11 @@ export function publishChecklist(input: {
   listeningMode?: string;
 }): ChecklistItem[] {
   const mcqs = input.questions.filter((q) => q.type === "MULTIPLE_CHOICE");
+  const withClip = input.questions.filter((q) =>
+    (q.audioAssets ?? []).some((asset) => asset.isActive),
+  ).length;
+  const everyClip =
+    input.questions.length > 0 && withClip === input.questions.length;
   const items: ChecklistItem[] = [
     { label: "Có tiêu đề", done: input.title.trim().length > 0 },
     { label: "Có ít nhất 1 câu hỏi", done: input.questions.length > 0 },
@@ -109,18 +135,14 @@ export function publishChecklist(input: {
         }),
       },
       PER_QUESTION_MODES.includes(input.listeningMode ?? "")
-        ? (() => {
-            const withClip = input.questions.filter((q) =>
-              (q.audioAssets ?? []).some((asset) => asset.isActive),
-            ).length;
-            return {
-              label: `Audio từng câu ${withClip}/${input.questions.length}`,
-              done: input.questions.length > 0 && withClip === input.questions.length,
-            };
-          })()
+        ? {
+            label: `Audio từng câu ${withClip}/${input.questions.length}`,
+            done: everyClip,
+          }
         : {
             label: "Audio đã xuất bản cho học viên",
-            done: input.audioPublished === true,
+            // Same rule as the server: one recording, or a clip per question.
+            done: input.audioPublished === true || everyClip,
           },
     );
   }

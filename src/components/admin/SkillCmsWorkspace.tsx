@@ -43,8 +43,11 @@ import {
   contentLevel,
   displayTitle,
   publishChecklist,
+  trackNames,
+  CONTENT_TRACKS,
   type ListFilters,
 } from "./skillCmsStatus";
+import { TrackTagField } from "./TrackTagField";
 import { Pagination } from "@/components/ui";
 import { useAdminList } from "./useAdminList";
 import { ADMIN_PAGE_SIZES } from "./adminList";
@@ -349,6 +352,7 @@ export default function SkillCmsWorkspace({
   const [listFilters, setListFilters] =
     useState<Omit<ListFilters, "query" | "status">>(NO_FILTERS);
   const [writingTypeFilter, setWritingTypeFilter] = useState("ALL");
+  const [trackFilter, setTrackFilter] = useState("ALL");
   // The list screen loads one page; search, filters and sort run on the server.
   const list = useAdminList<
     any,
@@ -369,6 +373,7 @@ export default function SkillCmsWorkspace({
       sort: listFilters.sort,
       mode: domain === "listening" ? listeningModeFilter : undefined,
       type: domain === "writing" ? writingTypeFilter : undefined,
+      track: trackFilter,
     },
     enabled: mode === "list",
   });
@@ -1319,6 +1324,7 @@ export default function SkillCmsWorkspace({
       statusFilter !== "ALL" ||
       listeningModeFilter !== "ALL" ||
       writingTypeFilter !== "ALL" ||
+      trackFilter !== "ALL" ||
       listFilters.level !== "ALL" ||
       listFilters.audio !== "ALL";
     const levelsPresent = CMS_LEVELS.filter((level) =>
@@ -1477,6 +1483,22 @@ export default function SkillCmsWorkspace({
               ))}
             </select>
           </label>
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            Ngành
+            <select
+              value={trackFilter}
+              onChange={(event) => setTrackFilter(event.target.value)}
+              className={FILTER_SELECT}
+            >
+              <option value="ALL">Tất cả</option>
+              <option value="UNTAGGED">Chưa gắn ngành</option>
+              {CONTENT_TRACKS.map((track) => (
+                <option key={track.value} value={track.value}>
+                  {track.label}
+                </option>
+              ))}
+            </select>
+          </label>
           {domain === "listening" && (
             <label className="flex items-center gap-2 text-sm text-slate-600">
               Audio
@@ -1547,6 +1569,7 @@ export default function SkillCmsWorkspace({
                   setStatusFilter("ALL");
                   setListeningModeFilter("ALL");
                   setWritingTypeFilter("ALL");
+                  setTrackFilter("ALL");
                   setListFilters((current) => ({
                     ...NO_FILTERS,
                     sort: current.sort,
@@ -1605,6 +1628,9 @@ export default function SkillCmsWorkspace({
                 </h2>
                 <p className="mt-1 line-clamp-2 text-sm text-slate-600">
                   {content.description || "Chưa có mô tả"}
+                </p>
+                <p className="mt-2 truncate text-xs text-slate-500">
+                  {trackNames(content.tracks)}
                 </p>
                 <div className="mt-auto pt-4">
                   <div className="flex items-center gap-3 border-t border-slate-100 pt-3 text-sm text-slate-600">
@@ -2572,6 +2598,15 @@ export default function SkillCmsWorkspace({
                 </details>
               )}
             </section>
+          )}
+
+          {item?.id && (
+            <TrackTagField
+              domain={domain}
+              id={item.id}
+              tracks={item.tracks ?? []}
+              listKey={`admin-skill-content-${domain}`}
+            />
           )}
 
           <section

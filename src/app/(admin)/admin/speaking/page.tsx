@@ -15,6 +15,7 @@ import {
 import axiosClient from "@/lib/api/axiosClient";
 import { Pagination } from "@/components/ui";
 import { useAdminList } from "@/components/admin/useAdminList";
+import { CONTENT_TRACKS, trackNames } from "@/components/admin/skillCmsStatus";
 import { ADMIN_PAGE_SIZES } from "@/components/admin/adminList";
 import toast from "react-hot-toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -35,6 +36,7 @@ export default function AdminSpeakingPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [levelFilter, setLevelFilter] = useState<string>("ALL");
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
+  const [trackFilter, setTrackFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<
     "ALL" | "DRAFT" | "PUBLISHED"
   >("ALL");
@@ -76,6 +78,7 @@ export default function AdminSpeakingPage() {
     filters: {
       level: levelFilter,
       category: categoryFilter,
+      track: trackFilter,
       status: statusFilter,
       sort: sortBy === "UPDATED" ? "NEWEST" : sortBy,
     },
@@ -203,6 +206,7 @@ export default function AdminSpeakingPage() {
     searchTerm.trim() !== "" ||
     levelFilter !== "ALL" ||
     categoryFilter !== "ALL" ||
+    trackFilter !== "ALL" ||
     statusFilter !== "ALL";
   const levelOptions = list.facets?.levels ?? [];
   const paginatedSets = list.items;
@@ -288,6 +292,25 @@ export default function AdminSpeakingPage() {
             </select>
           </label>
           <label className="flex items-center gap-2 text-sm text-slate-600">
+            Ngành
+            <select
+              value={trackFilter}
+              onChange={(e) => {
+                setTrackFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+            >
+              <option value="ALL">Tất cả</option>
+              <option value="UNTAGGED">Chưa gắn ngành</option>
+              {CONTENT_TRACKS.map((track) => (
+                <option key={track.value} value={track.value}>
+                  {track.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center gap-2 text-sm text-slate-600">
             Trạng thái
             <select
               value={statusFilter}
@@ -332,6 +355,7 @@ export default function AdminSpeakingPage() {
                   setSearchTerm("");
                   setLevelFilter("ALL");
                   setCategoryFilter("ALL");
+                  setTrackFilter("ALL");
                   setStatusFilter("ALL");
                   setCurrentPage(1);
                 }}
@@ -570,6 +594,9 @@ export default function AdminSpeakingPage() {
                 </h2>
                 <p className="mt-1 line-clamp-2 text-sm text-slate-600">
                   {set.description || "Chưa có mô tả cho bộ luyện tập này."}
+                </p>
+                <p className="mt-2 truncate text-xs text-slate-500">
+                  {trackNames(set.tracks)}
                 </p>
                 <div className="mt-auto pt-4">
                   <div className="flex items-center gap-2 border-t border-slate-100 pt-3 text-sm text-slate-600">

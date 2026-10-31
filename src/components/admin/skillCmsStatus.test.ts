@@ -6,6 +6,7 @@ import {
   filterSkillContent,
   latestAudioBadge,
   publishChecklist,
+  trackNames,
 } from "./skillCmsStatus.ts";
 
 test("latestAudioBadge: no recording reads as none", () => {
@@ -38,6 +39,42 @@ test("publishChecklist: a complete listening quiz passes every item", () => {
   });
   assert.equal(items.length, 5);
   assert.ok(items.every((item) => item.done));
+});
+
+test("a dialogue with a clip on every question has its audio", () => {
+  const content = {
+    options: ["a", "b"],
+    correctIndex: 0,
+    explanation: { vi: "x", en: "y" },
+  };
+  const questions = [1, 2].map(() => ({
+    type: "MULTIPLE_CHOICE",
+    content,
+    audioAssets: [{ isActive: true }],
+  }));
+  const dialogue = { domain: "listening", title: "T", listeningMode: "DIALOGUE" };
+  assert.ok(publishChecklist({ ...dialogue, questions }).every((i) => i.done));
+  assert.equal(
+    publishChecklist({
+      ...dialogue,
+      questions: [questions[0], { ...questions[1], audioAssets: [] }],
+    }).at(-1)?.done,
+    false,
+  );
+  assert.deepEqual(
+    audioBadgeFor({
+      bilingualContent: { mode: "DIALOGUE" },
+      questionsWithAudio: 2,
+      _count: { questions: 2 },
+    }),
+    { label: "Audio 2/2 câu", tone: "ok" },
+  );
+});
+
+test("track names read in full, and say when none is set", () => {
+  assert.equal(trackNames(["IT_SOFTWARE"]), "Công nghệ thông tin");
+  assert.equal(trackNames([]), "Chưa gắn ngành");
+  assert.equal(trackNames(undefined), "Chưa gắn ngành");
 });
 
 test("publishChecklist: flags a missing English explanation, a bad key and unpublished audio", () => {
