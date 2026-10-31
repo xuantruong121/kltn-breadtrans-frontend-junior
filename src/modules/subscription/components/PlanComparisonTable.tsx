@@ -145,7 +145,7 @@ export function PlanComparisonTable() {
                     scope="col"
                     className="p-4 sm:p-5 font-black text-slate-700 dark:text-slate-200 w-[24%] text-center bg-slate-100/60 dark:bg-slate-800/40"
                   >
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300 mb-1 shrink-0 whitespace-nowrap">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 mb-1 shrink-0 whitespace-nowrap">
                       Đầy đủ quyền lợi
                     </span>
                     <div className="text-sm font-black">BreadTrans PRO</div>
@@ -207,13 +207,13 @@ export function PlanComparisonTable() {
                       <td className="p-4 sm:p-5 text-center font-bold text-slate-700 dark:text-slate-300 bg-slate-50/40 dark:bg-slate-850/20">
                         {typeof feature.pro === "boolean" ? (
                           feature.pro ? (
-                            <Check size={18} className="inline text-indigo-500 dark:text-indigo-400" aria-label="Có" />
+                            <Check size={18} className="inline text-blue-500 dark:text-blue-400" aria-label="Có" />
                           ) : (
                             <Minus size={18} className="inline text-slate-300 dark:text-slate-600" aria-label="Không" />
                           )
                         ) : (
                           <span className="flex items-center justify-center gap-1.5">
-                            <Check size={15} className="text-indigo-600 dark:text-indigo-400 shrink-0" aria-hidden="true" />
+                            <Check size={15} className="text-blue-600 dark:text-blue-400 shrink-0" aria-hidden="true" />
                             <span>{feature.pro}</span>
                           </span>
                         )}

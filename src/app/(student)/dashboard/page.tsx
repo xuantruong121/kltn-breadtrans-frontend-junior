@@ -156,9 +156,9 @@ function getQuestCategoryMeta(type?: string) {
     case "COMPLETE_QUIZ":
       return {
         label: "Bài kiểm tra",
-        badgeClass: "bg-indigo-100 dark:bg-indigo-950/70 text-indigo-900 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800",
-        btnClass: "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/20",
-        progressFill: "bg-indigo-500",
+        badgeClass: "bg-blue-100 dark:bg-blue-950/70 text-blue-900 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+        btnClass: "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20",
+        progressFill: "bg-blue-500",
         icon: CheckCircle2,
       };
     case "DO_SPEAKING":
@@ -756,7 +756,7 @@ export default function DashboardPage() {
                   )}
                 </span>
                 {diagnosticBadge && (
-                  <span className="text-xs font-bold text-indigo-900 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-3 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800/60">
+                  <span className="text-xs font-bold text-blue-900 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-3 py-0.5 rounded-full border border-blue-200 dark:border-blue-800/60">
                     {diagnosticBadge}
                   </span>
                 )}

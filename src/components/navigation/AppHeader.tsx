@@ -334,7 +334,7 @@ export function AppHeader() {
       href: "/courses",
       icon: GraduationCap,
       active: isCoursesRoute(pathname),
-      iconColor: "text-indigo-500 dark:text-indigo-400",
+      iconColor: "text-blue-500 dark:text-blue-400",
     }),
     {
       label: "Cửa hàng",

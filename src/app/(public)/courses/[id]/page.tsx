@@ -45,7 +45,7 @@ function getActivityIcon(skill: string | null) {
       );
     case "WRITING":
       return (
-        <PenTool size={18} className="text-indigo-600 dark:text-indigo-400" />
+        <PenTool size={18} className="text-blue-600 dark:text-blue-400" />
       );
     default:
       return (

@@ -135,11 +135,11 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
               <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
                 {currentSpecies.speciesName || pet?.name}
               </h2>
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                 {currentSpecies.title}
               </p>
               {currentSpecies.quote && (
-                <p className="text-xs text-amber-900/80 dark:text-amber-200/90 italic mt-2 bg-amber-50/80 dark:bg-amber-950/50 px-3 py-1.5 rounded-xl border border-amber-200/60 dark:border-amber-800/60 leading-relaxed font-normal">
+                <p className="text-sm text-amber-900/80 dark:text-amber-200/90 italic mt-2 bg-amber-50/80 dark:bg-amber-950/50 px-3 py-1.5 rounded-xl border border-amber-200/60 dark:border-amber-800/60 leading-relaxed font-normal">
                   &ldquo;{currentSpecies.quote}&rdquo;
                 </p>
               )}
@@ -180,7 +180,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
               <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
                 Chỉ Số Nuôi Dưỡng
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                 Duy trì sức khỏe và độ vui vẻ để giữ trọn hiệu ứng bổ trợ học tập
               </p>
             </div>
@@ -209,7 +209,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                     style={{ width: `${health}%` }}
                   />
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-300 leading-relaxed">
+                <p className="text-sm text-slate-500 dark:text-slate-300 leading-relaxed">
                   {health >= 70
                     ? "Thú cưng tràn đầy năng lượng sẵn sàng học tập."
                     : "Sức khỏe đang thấp; hãy duy trì việc học và theo dõi trạng thái thú cưng."}
@@ -238,7 +238,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                     style={{ width: `${happiness}%` }}
                   />
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-300 leading-relaxed">
+                <p className="text-sm text-slate-500 dark:text-slate-300 leading-relaxed">
                   {happiness >= 70
                     ? "Tâm trạng rất phấn khởi, sẵn sàng đồng hành cùng bạn."
                     : "Tâm trạng đang thấp; hãy quay lại tương tác cùng thú cưng sau."}
@@ -266,7 +266,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                     style={{ width: `${satiety}%` }}
                   />
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-300 leading-relaxed">
+                <p className="text-sm text-slate-500 dark:text-slate-300 leading-relaxed">
                   {satiety >= 80
                     ? "Thú cưng đã no căng, chưa cần nạp thêm năng lượng."
                     : satiety >= 50
@@ -284,7 +284,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                 <ShieldCheck size={16} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
                 <span>Đặc điểm thú cưng: {currentSpecies.buff}</span>
               </div>
-              <p className="text-xs text-amber-800 dark:text-amber-300/90 leading-relaxed">
+              <p className="text-sm text-amber-800 dark:text-amber-300/90 leading-relaxed">
                 {currentSpecies.buffDetail}
               </p>
             </div>
@@ -325,13 +325,13 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
 
             {/* Satiety or balance status */}
             {!feedEligibility.allowed && (pet?.satietyState === "FULL" || satiety >= 80) ? (
-              <p className="text-center text-xs font-medium text-slate-500 dark:text-slate-400">{satietyText}</p>
+              <p className="text-center text-sm font-medium text-slate-500 dark:text-slate-400">{satietyText}</p>
             ) : banhRan < feedCost ? (
-              <p className="text-center text-xs font-semibold text-rose-600 dark:text-rose-400">
+              <p className="text-center text-sm font-semibold text-rose-600 dark:text-rose-400">
                 Bạn cần {feedCost} Bánh Mì (Số dư hiện tại: {banhRan})
               </p>
             ) : (
-              <p className="text-center text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-center text-sm text-slate-500 dark:text-slate-400">
                 {satietyText} • Lượt nhận EXP hôm nay: {pet?.dailyRewardedFeedCount ?? 0}/{pet?.dailyRewardLimit ?? 3}
               </p>
             )}

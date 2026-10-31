@@ -73,7 +73,7 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
               >
                 Chọn Thú Cưng Đồng Hành
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-sm text-slate-500 mt-0.5">
                 Mỗi loài thú cưng sở hữu cấp độ độc lập và hiệu ứng bổ trợ học tập riêng biệt
               </p>
             </div>
@@ -152,7 +152,7 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
                     </div>
 
                     {/* Lore description */}
-                    <p className="text-xs text-slate-600 mb-2.5 leading-relaxed line-clamp-2">
+                    <p className="text-sm text-slate-600 mb-2.5 leading-relaxed line-clamp-2">
                       {species.lore}
                     </p>
 
@@ -162,7 +162,7 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
                         <Zap size={13} className="text-amber-600 fill-amber-600 shrink-0" aria-hidden="true" />
                         <span>Đặc điểm: {species.buff}</span>
                       </div>
-                      <p className="text-xs text-slate-600 mt-0.5 leading-snug">
+                      <p className="text-sm text-slate-600 mt-0.5 leading-snug">
                         {species.buffDetail}
                       </p>
                     </div>
@@ -209,7 +209,7 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
 
           {/* Footer Note */}
           <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl text-center">
-            <p className="text-xs font-medium text-slate-600">
+            <p className="text-sm font-medium text-slate-600">
               Cấp độ và kinh nghiệm được lưu trữ độc lập cho từng loài thú cưng trên tài khoản của bạn.
             </p>
           </div>

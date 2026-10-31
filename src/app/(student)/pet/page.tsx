@@ -256,7 +256,7 @@ export default function PetPage() {
 
             {/* Lore & Quote Card */}
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-3">
-              <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-400">
+              <div className="flex items-center gap-2 text-blue-700 dark:text-blue-400">
                 <Award size={18} aria-hidden="true" />
                 <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">Truyền Thuyết Loài</h3>
               </div>

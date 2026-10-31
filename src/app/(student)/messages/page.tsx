@@ -93,7 +93,7 @@ export default function LearnerMessagesPage() {
                 Trực tuyến
               </span>
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Mọi thắc mắc về bài học, đề thi và kỹ thuật sẽ được giải đáp tại đây.
             </p>
           </div>
@@ -110,7 +110,7 @@ export default function LearnerMessagesPage() {
               <p className="font-semibold text-slate-700 dark:text-slate-300">
                 Chưa có tin nhắn nào.
               </p>
-              <p className="text-xs text-slate-400">
+              <p className="text-sm text-slate-400">
                 Hãy đặt câu hỏi bên dưới để bắt đầu trao đổi với ban quản trị.
               </p>
             </div>

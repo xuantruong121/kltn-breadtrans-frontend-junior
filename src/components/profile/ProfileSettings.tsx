@@ -328,8 +328,8 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                       <Crown size={14} className="text-amber-600 dark:text-amber-400" />
                       {activeFrameItem ? activeFrameItem.name : "Chưa đeo Khung Avatar"}
                     </span>
-                    <span className="text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1.5 bg-indigo-50 text-indigo-800 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-900/60">
-                      <Medal size={14} className="text-indigo-600 dark:text-indigo-400" />
+                    <span className="text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1.5 bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900/60">
+                      <Medal size={14} className="text-blue-600 dark:text-blue-400" />
                       {activeBadgeItem ? activeBadgeItem.name : "Chưa đeo Huy Hiệu"}
                     </span>
                   </div>
@@ -376,8 +376,8 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                   onClick={() => setInventoryCategory("badge")}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
                     inventoryCategory === "badge"
-                      ? "bg-indigo-600 text-white shadow-xs"
-                      : "bg-indigo-50 text-indigo-800 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "bg-blue-50 text-blue-800 hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50"
                   }`}
                 >
                   Huy Hiệu ({badgesCount})
@@ -462,7 +462,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                                 isFrame
                                   ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
                                   : isBadge
-                                  ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300"
+                                  ? "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300"
                                   : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
                               }`}
                             >

@@ -264,7 +264,7 @@ const FloatingCompanionPetInner: React.FC = () => {
                     Cấp {level}
                   </span>
                 </div>
-                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                   {speciesInfo.title}
                 </p>
               </div>
@@ -387,7 +387,7 @@ const FloatingCompanionPetInner: React.FC = () => {
               <span className="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400 block mb-1">
                 Nhiệm vụ hôm nay
               </span>
-              <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 line-clamp-2">
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 line-clamp-2">
                 {recommendation.title}: {recommendation.description}
               </p>
               <Link
@@ -444,13 +444,13 @@ const FloatingCompanionPetInner: React.FC = () => {
             </button>
 
             {!feedEligibility.allowed && (pet?.satietyState === "FULL" || satiety >= 80) ? (
-              <p className="text-center text-xs font-medium text-slate-500 dark:text-slate-400">{satietyText}</p>
+              <p className="text-center text-sm font-medium text-slate-500 dark:text-slate-400">{satietyText}</p>
             ) : balance < feedCost ? (
-              <p className="text-center text-xs font-semibold text-rose-600 dark:text-rose-400">
+              <p className="text-center text-sm font-semibold text-rose-600 dark:text-rose-400">
                 Cần {feedCost} Bánh Mì (Số dư: {balance})
               </p>
             ) : (
-              <p className="text-center text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-center text-sm text-slate-500 dark:text-slate-400">
                 Tiêu hao {feedCost} Bánh Mì • {satietyText} • EXP hôm nay {pet?.dailyRewardedFeedCount ?? 0}/{pet?.dailyRewardLimit ?? 3}
               </p>
             )}

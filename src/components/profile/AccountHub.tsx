@@ -533,7 +533,7 @@ export function AccountHub() {
                 <h1 id="heading-plan" className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
                   Gói của tôi
                 </h1>
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
                   Gói đang dùng, ngày mua, ngày hết hạn và lịch sử thanh toán
                 </p>
               </div>
@@ -627,7 +627,7 @@ export function AccountHub() {
                     </button>
                   </div>
                 ) : !purchases || purchases.length === 0 ? (
-                  <p className="text-xs sm:text-sm text-slate-400 dark:text-slate-500 py-2">
+                  <p className="text-sm sm:text-sm text-slate-400 dark:text-slate-500 py-2">
                     Chưa có giao dịch nào.
                   </p>
                 ) : (
@@ -636,10 +636,10 @@ export function AccountHub() {
                       <div className="space-y-3" aria-labelledby="active-payment-heading">
                         <div className="flex items-center justify-between gap-3">
                           <div>
-                            <h3 id="active-payment-heading" className="text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                            <h3 id="active-payment-heading" className="text-sm font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">
                               Thanh toán đang xử lý
                             </h3>
-                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                               Bạn có thể tiếp tục phiên hiện tại; hệ thống chỉ giữ một mã đang hoạt động.
                             </p>
                           </div>
@@ -654,10 +654,10 @@ export function AccountHub() {
                                     <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{purchase.planDisplayName}</span>
                                     <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-bold ${statusInfo.badgeClass}`}>{statusInfo.label}</span>
                                   </div>
-                                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                                  <p className="text-sm text-slate-600 dark:text-slate-400">
                                     Mã chuyển khoản: <span className="font-mono font-bold text-amber-800 dark:text-amber-300">{purchase.payment?.transferCode || purchase.bankInstructions?.transferCode}</span>
                                   </p>
-                                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{formatVnd(purchase.amountVnd)}</p>
+                                  <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{formatVnd(purchase.amountVnd)}</p>
                                 </div>
                                 <button
                                   type="button"
@@ -677,8 +677,8 @@ export function AccountHub() {
                     {reviewPurchases.length > 0 && (
                       <div className="space-y-3" aria-labelledby="review-payment-heading">
                         <div>
-                          <h3 id="review-payment-heading" className="text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">Thanh toán cần kiểm tra</h3>
-                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Bạn không cần chuyển khoản lại cho các giao dịch này.</p>
+                          <h3 id="review-payment-heading" className="text-sm font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">Thanh toán cần kiểm tra</h3>
+                          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Bạn không cần chuyển khoản lại cho các giao dịch này.</p>
                         </div>
                         {reviewPurchases.map((purchase) => (
                           <button
@@ -699,7 +699,7 @@ export function AccountHub() {
 
                     {successfulPurchases.length > 0 && (
                       <div className="space-y-3" aria-labelledby="payment-history-heading">
-                        <h3 id="payment-history-heading" className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Lịch sử đã thanh toán</h3>
+                        <h3 id="payment-history-heading" className="text-sm font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Lịch sử đã thanh toán</h3>
                     {successfulPurchases.map((purchase) => {
                       const paymentStatus = purchase.payment?.status || purchase.status;
                       const statusInfo = getPaymentStatusBadgeInfo(paymentStatus);
@@ -725,10 +725,10 @@ export function AccountHub() {
                                 ({purchase.durationDays} ngày)
                               </span>
                             </div>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
                               Thời gian tạo: {dateStr}
                             </p>
-                            <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
                               Mã chuyển khoản:{" "}
                               <span className="font-mono font-bold text-amber-700 dark:text-amber-400">
                                 {purchase.payment?.transferCode || purchase.bankInstructions?.transferCode}
@@ -764,7 +764,7 @@ export function AccountHub() {
                     )}
 
                     {activePurchases.length === 0 && reviewPurchases.length === 0 && successfulPurchases.length === 0 && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400">Chưa có giao dịch cần hiển thị.</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Chưa có giao dịch cần hiển thị.</p>
                     )}
                   </div>
                 )}
@@ -779,7 +779,7 @@ export function AccountHub() {
                 <h1 id="heading-profile" className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
                   Thông tin cá nhân
                 </h1>
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
                   Chỉnh sửa tên hiển thị và ảnh đại diện
                 </p>
               </div>
@@ -796,7 +796,7 @@ export function AccountHub() {
                     />
                   </div>
 
-                  <label className="inline-flex min-h-10 items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-750 transition-colors cursor-pointer">
+                  <label className="inline-flex min-h-10 items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-750 transition-colors cursor-pointer">
                     <Camera size={14} />
                     <span>Đổi ảnh</span>
                     <input
@@ -810,7 +810,7 @@ export function AccountHub() {
 
                 <form onSubmit={handleProfileSubmit} className="space-y-4 max-w-xl">
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
+                    <label className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-1.5">
                       Tên hiển thị
                     </label>
                     <input
@@ -823,7 +823,7 @@ export function AccountHub() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
+                    <label className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-1.5">
                       Email
                     </label>
                     <input
@@ -838,10 +838,10 @@ export function AccountHub() {
                   <div className="pt-4 border-t border-slate-200/80 dark:border-slate-800 space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                       <div>
-                        <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                        <h3 className="text-sm font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
                           Thông tin liên hệ / Nhận quà
                         </h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                           Thông tin này chỉ được dùng để xử lý gửi quà vật lý khi đổi thưởng.
                         </p>
                       </div>
@@ -854,7 +854,7 @@ export function AccountHub() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
+                        <label className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-1.5">
                           Tên người nhận
                         </label>
                         <input
@@ -869,7 +869,7 @@ export function AccountHub() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
+                        <label className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-1.5">
                           Số điện thoại nhận quà
                         </label>
                         <input
@@ -886,7 +886,7 @@ export function AccountHub() {
                           placeholder="Ví dụ: 0912 345 678"
                         />
                         {phoneError && (
-                          <p id="shipping-phone-error" className="mt-1.5 flex items-start gap-1.5 text-xs font-bold text-rose-600 dark:text-rose-400">
+                          <p id="shipping-phone-error" className="mt-1.5 flex items-start gap-1.5 text-sm font-bold text-rose-600 dark:text-rose-400">
                             <AlertCircle size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
                             {phoneError}
                           </p>
@@ -896,7 +896,7 @@ export function AccountHub() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
+                        <label className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-1.5">
                           Tỉnh/Thành phố
                         </label>
                         <AddressCombobox
@@ -918,7 +918,7 @@ export function AccountHub() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
+                        <label className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-1.5">
                           Phường / Xã / Đặc khu
                         </label>
                         <AddressCombobox
@@ -946,7 +946,7 @@ export function AccountHub() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
+                      <label className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-1.5">
                         Địa chỉ chi tiết
                       </label>
                       <input
@@ -985,7 +985,7 @@ export function AccountHub() {
                 <h1 id="heading-password" className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
                   Đổi mật khẩu
                 </h1>
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
                   Cập nhật mật khẩu để nâng cao tính bảo mật cho tài khoản của bạn
                 </p>
               </div>
@@ -1000,7 +1000,7 @@ export function AccountHub() {
 
                 <form onSubmit={handlePasswordSubmit} noValidate className="space-y-4">
                   <div>
-                    <label htmlFor="account-currentPassword" className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
+                    <label htmlFor="account-currentPassword" className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-1.5">
                       Mật khẩu hiện tại
                     </label>
                     <div className="relative">
@@ -1025,7 +1025,7 @@ export function AccountHub() {
                       </button>
                     </div>
                     {passwordFieldErrors.currentPassword && (
-                      <p id="account-currentPassword-error" className="mt-1.5 flex items-center gap-1.5 text-xs font-bold text-rose-600 dark:text-rose-400">
+                      <p id="account-currentPassword-error" className="mt-1.5 flex items-center gap-1.5 text-sm font-bold text-rose-600 dark:text-rose-400">
                         <AlertCircle size={14} className="shrink-0" aria-hidden="true" />
                         {passwordFieldErrors.currentPassword}
                       </p>
@@ -1033,7 +1033,7 @@ export function AccountHub() {
                   </div>
 
                   <div>
-                    <label htmlFor="account-newPassword" className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
+                    <label htmlFor="account-newPassword" className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-1.5">
                       Mật khẩu mới
                     </label>
                     <div className="relative">
@@ -1059,7 +1059,7 @@ export function AccountHub() {
                       </button>
                     </div>
                     {passwordFieldErrors.newPassword && (
-                      <p id="account-newPassword-error" className="mt-1.5 flex items-center gap-1.5 text-xs font-bold text-rose-600 dark:text-rose-400">
+                      <p id="account-newPassword-error" className="mt-1.5 flex items-center gap-1.5 text-sm font-bold text-rose-600 dark:text-rose-400">
                         <AlertCircle size={14} className="shrink-0" aria-hidden="true" />
                         {passwordFieldErrors.newPassword}
                       </p>
@@ -1067,7 +1067,7 @@ export function AccountHub() {
                   </div>
 
                   <div>
-                    <label htmlFor="account-confirmPassword" className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
+                    <label htmlFor="account-confirmPassword" className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-1.5">
                       Xác nhận mật khẩu mới
                     </label>
                     <div className="relative">
@@ -1092,7 +1092,7 @@ export function AccountHub() {
                       </button>
                     </div>
                     {passwordFieldErrors.confirmPassword && (
-                      <p id="account-confirmPassword-error" className="mt-1.5 flex items-center gap-1.5 text-xs font-bold text-rose-600 dark:text-rose-400">
+                      <p id="account-confirmPassword-error" className="mt-1.5 flex items-center gap-1.5 text-sm font-bold text-rose-600 dark:text-rose-400">
                         <AlertCircle size={14} className="shrink-0" aria-hidden="true" />
                         {passwordFieldErrors.confirmPassword}
                       </p>
@@ -1121,7 +1121,7 @@ export function AccountHub() {
                 <h1 id="heading-device" className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
                   Thiết bị
                 </h1>
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
                   Danh sách thiết bị và phiên đăng nhập đang hoạt động
                 </p>
               </div>
@@ -1141,14 +1141,14 @@ export function AccountHub() {
                           Đang hoạt động
                         </span>
                       </div>
-                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                      <p className="text-sm text-slate-400 dark:text-slate-500 mt-0.5">
                         Phiên duyệt web · Truy cập lần cuối: Vừa xong
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <p className="text-xs text-slate-400 dark:text-slate-500">
+                <p className="text-sm text-slate-400 dark:text-slate-500">
                   Nếu bạn nhận thấy bất kỳ hoạt động đăng nhập bất thường nào, hãy đổi mật khẩu hoặc đăng xuất ngay lập tức để bảo vệ tài khoản.
                 </p>
               </div>
@@ -1162,7 +1162,7 @@ export function AccountHub() {
                 <h1 id="heading-inventory" className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
                   Túi Đồ &amp; Ngoại Trang
                 </h1>
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
                   Xem và trang bị các khung avatar, huy hiệu mở khóa từ Cửa hàng Bánh Mì
                 </p>
               </div>
@@ -1182,7 +1182,7 @@ export function AccountHub() {
                     <h2 className="text-xl font-black text-slate-900 dark:text-slate-100">
                       {formData.fullName || "Học viên BreadTrans"}
                     </h2>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+                    <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">
                       Trang bị đang đeo sẽ hiển thị đồng bộ trong lớp học và bài thi.
                     </p>
                     <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
@@ -1198,8 +1198,8 @@ export function AccountHub() {
                       )}
 
                       {activeBadgeConfig ? (
-                        <span className="text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1.5 bg-indigo-50 text-indigo-800 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-900/60">
-                          <Medal size={14} className="text-indigo-600 dark:text-indigo-400" />
+                        <span className="text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1.5 bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900/60">
+                          <Medal size={14} className="text-blue-600 dark:text-blue-400" />
                           {activeBadgeConfig.name}
                         </span>
                       ) : (
@@ -1249,8 +1249,8 @@ export function AccountHub() {
                   onClick={() => setInventoryCategory("badge")}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     inventoryCategory === "badge"
-                      ? "bg-indigo-600 text-white"
-                      : "bg-indigo-50 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300"
+                      ? "bg-blue-600 text-white"
+                      : "bg-blue-50 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300"
                   }`}
                 >
                   Huy Hiệu
@@ -1260,7 +1260,7 @@ export function AccountHub() {
               {/* Items Grid */}
               {filteredInventory.length === 0 ? (
                 <div className="bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-8 text-center">
-                  <p className="text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400">
+                  <p className="text-sm sm:text-sm font-bold text-slate-500 dark:text-slate-400">
                     Chưa có vật phẩm nào trong mục này.
                   </p>
                   <Link
@@ -1306,7 +1306,7 @@ export function AccountHub() {
                               </span>
                             </div>
                           </div>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                          <p className="text-sm text-slate-500 dark:text-slate-400">
                             {item.description}
                           </p>
                         </div>
