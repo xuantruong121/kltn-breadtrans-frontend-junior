@@ -7,7 +7,7 @@ import { BTN_PRIMARY, BTN_SECONDARY } from "../cmsButtons";
 import { OPTION_LETTERS, questionProblems, type GrammarDraft } from "./grammarCms";
 
 const FIELD =
-  "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 disabled:bg-slate-100 disabled:text-slate-600";
+  "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 disabled:bg-slate-100 disabled:text-slate-600";
 
 const four = (rows?: Array<string | null> | null) => {
   const out = [...(rows ?? [])].map((row) => row ?? "");

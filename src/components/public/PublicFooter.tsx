@@ -11,7 +11,7 @@ export function PublicFooter() {
           {/* Brand Col */}
           <div className="md:col-span-1 space-y-4">
             <BrandLogo href="/" variant="compact" size="lg" />
-            <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+            <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
               Nền tảng tự học tiếng Anh 4 kỹ năng: thẻ ghi nhớ, ngữ pháp, luyện phát âm và luyện viết có chấm tự động.
             </p>
           </div>
@@ -77,7 +77,7 @@ export function PublicFooter() {
           {/* Contact */}
           <div className="space-y-3">
             <h4 className="mb-4 text-base font-bold text-slate-900 dark:text-slate-100">Thông tin dự án</h4>
-            <div className="flex items-start gap-3 text-sm text-slate-500 dark:text-slate-400 font-medium">
+            <div className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-400 font-medium">
               <GraduationCap size={16} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <span>Đồ án Khóa luận Tốt nghiệp Kỹ thuật Phần mềm — Nhóm 139</span>
             </div>
@@ -92,7 +92,7 @@ export function PublicFooter() {
           </div>
         </div>
 
-        <div className="border-t border-slate-200 dark:border-slate-800 pt-8 text-center text-xs font-semibold text-slate-400 dark:text-slate-500">
+        <div className="border-t border-slate-200 dark:border-slate-800 pt-8 text-center text-xs font-semibold text-slate-600 dark:text-slate-400">
           <div className="mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
             <Link href="/terms" className="hover:text-amber-700 dark:hover:text-amber-400">Điều khoản</Link>
             <Link href="/privacy" className="hover:text-amber-700 dark:hover:text-amber-400">Chính sách bảo mật</Link>

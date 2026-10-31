@@ -61,7 +61,7 @@ type SetForm = {
 };
 
 const FIELD =
-  "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed disabled:bg-slate-50";
+  "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed disabled:bg-slate-50";
 const ICON_BTN =
   "inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-40";
 const taskTypeLabel = (value?: string | null) =>
@@ -411,7 +411,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
     <main className="space-y-6 p-6">
       <Link
         href="/admin/speaking"
-        className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900"
+        className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400"
       >
         <ArrowLeft size={16} /> Danh sách
       </Link>
@@ -524,7 +524,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
             </div>
           </div>
           {exercises.length > 0 && !published && (
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               Bộ đã có câu luyện — dùng ‘Thêm câu luyện bằng AI’ ở mục Câu
               luyện.
             </p>
@@ -541,7 +541,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
               <p className="mt-1 text-sm text-slate-700">
                 {setSuggestion.description}
               </p>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
                 {levelLabel(setSuggestion.level)} ·{" "}
                 {categoryLabel(categories, setSuggestion.category)}
               </p>
@@ -700,7 +700,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                       className="mt-1 size-4 flex-none"
                     />
                     <div className="min-w-0">
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
                         {taskTypeLabel(candidate.taskType)} ·{" "}
                         {difficultyLabel(candidate.difficulty)}
                       </p>
@@ -769,7 +769,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
               >
                 Trước khi xuất bản
               </h2>
-              <span className="text-sm tabular-nums text-slate-500">
+              <span className="text-sm tabular-nums text-slate-600 dark:text-slate-400">
                 {doneCount}/{checklist.length}
               </span>
             </div>
@@ -873,11 +873,11 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
           <div className="flex flex-wrap items-baseline justify-between gap-3">
             <h2 className="font-semibold text-slate-950">
               Câu luyện{" "}
-              <span className="font-normal tabular-nums text-slate-500">
+              <span className="font-medium tabular-nums text-slate-600 dark:text-slate-400">
                 {exercises.length}
               </span>
             </h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
               Học viên làm lần lượt theo thứ tự này. Bấm Sửa để sửa ngay tại câu.
             </p>
           </div>

@@ -94,7 +94,7 @@ export function GrammarCatalog({
                 }`}
               >
                 {id === "ALL" ? "Tất cả" : GRAMMAR_CATEGORY_LABEL[id]}{" "}
-                <span className={isActive ? "text-blue-100" : "text-slate-400"}>
+                <span className={isActive ? "text-blue-100" : "text-slate-600 dark:text-slate-400"}>
                   ({countByTab[id]})
                 </span>
               </button>
@@ -114,7 +114,7 @@ export function GrammarCatalog({
           </button>
           <p
             id="grammar-random-hint"
-            className="text-xs text-slate-500 dark:text-slate-400"
+            className="text-xs text-slate-600 dark:text-slate-400"
           >
             Mở một chủ đề ngẫu nhiên trong mục đang xem, ưu tiên chủ đề chưa
             xong.
@@ -123,7 +123,7 @@ export function GrammarCatalog({
       </div>
 
       {sections.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-8 text-center text-sm text-slate-500 dark:text-slate-400">
+        <p className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-8 text-center text-sm text-slate-600 dark:text-slate-400">
           Không có chủ đề ngữ pháp phù hợp với từ khóa này.
         </p>
       ) : (
@@ -140,7 +140,7 @@ export function GrammarCatalog({
               >
                 {GRAMMAR_CATEGORY_LABEL[section.category]}
               </h2>
-              <span className="text-sm text-slate-500 dark:text-slate-400">
+              <span className="text-sm text-slate-600 dark:text-slate-400">
                 {section.topics.length} chủ đề · {section.questionCount} câu hỏi
               </span>
             </div>
@@ -158,7 +158,7 @@ export function GrammarCatalog({
                         {title}
                       </h3>
                       <p
-                        className="mt-0.5 text-xs text-slate-500 dark:text-slate-400"
+                        className="mt-0.5 text-xs text-slate-600 dark:text-slate-400"
                         lang="en"
                       >
                         {topic.title}
@@ -170,7 +170,7 @@ export function GrammarCatalog({
                           <CheckCircle2
                             size={14}
                             strokeWidth={2}
-                            className="text-emerald-600"
+                            className="text-emerald-700 dark:text-emerald-400"
                             aria-hidden="true"
                           />
                         )}

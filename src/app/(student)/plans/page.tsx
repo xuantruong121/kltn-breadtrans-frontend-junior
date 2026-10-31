@@ -189,7 +189,7 @@ function PlansPageContent() {
           {/* Current Plan Status Box for logged-in students */}
           {user && !isLoadingPlan && (
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 text-left shrink-0 sm:min-w-[220px]">
-              <span className="text-xs font-medium text-slate-400 dark:text-slate-500 block">
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-400 block">
                 Gói hiện tại của bạn:
               </span>
               <div className="flex items-center gap-2 mt-1">
@@ -296,7 +296,7 @@ export default function PlansPage() {
       fallback={
         <div className="flex flex-col justify-center items-center h-96 gap-3">
           <Loader2 className="animate-spin text-amber-500" size={40} />
-          <span className="text-xs font-bold text-slate-400">Đang tải thông tin gói học...</span>
+          <span className="text-xs font-bold text-slate-500">Đang tải thông tin gói học...</span>
         </div>
       }
     >

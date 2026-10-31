@@ -51,12 +51,12 @@ export function ObservedResultPanel({
     <div className="mt-4">
       <div className="grid gap-4 sm:grid-cols-[1.4fr_1fr]">
         <div>
-          <p className="text-sm font-bold text-slate-500 dark:text-slate-400">Điểm quan sát</p>
+          <p className="text-sm font-bold text-slate-600 dark:text-slate-400">Điểm quan sát</p>
           <p className="mt-1 text-4xl font-black text-slate-900 dark:text-slate-100 sm:text-5xl">
             {score !== null ? (
               <>
                 {formatNumber(score)}
-                <span className="text-2xl font-extrabold text-slate-500 dark:text-slate-400">/100</span>
+                <span className="text-2xl font-extrabold text-slate-600 dark:text-slate-400">/100</span>
               </>
             ) : (
               <span className="text-2xl">Chưa có điểm tổng</span>
@@ -68,7 +68,7 @@ export function ObservedResultPanel({
           </p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-850">
-          <p className="text-sm font-bold text-slate-500 dark:text-slate-400">Điểm cốt lõi khách quan (Nghe + Đọc)</p>
+          <p className="text-sm font-bold text-slate-600 dark:text-slate-400">Điểm cốt lõi khách quan (Nghe + Đọc)</p>
           <p className="mt-1 text-2xl font-black text-slate-900 dark:text-slate-100">
             {observed.objectiveCore !== null ? `${formatNumber(observed.objectiveCore)}/100` : "—"}
           </p>
@@ -81,7 +81,7 @@ export function ObservedResultPanel({
         </div>
       </div>
 
-      <h2 className="mt-7 text-sm font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+      <h2 className="mt-7 text-sm font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">
         Hồ sơ bốn kỹ năng
       </h2>
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -153,8 +153,8 @@ export function ObservedResultPanel({
           <dl className="mt-3 divide-y divide-slate-100 dark:divide-slate-800">
             {explanation.lines.map((line) => (
               <div key={line.label} className="flex flex-wrap justify-between gap-x-4 py-1.5">
-                <dt className={line.counted ? "font-semibold" : "text-slate-500 dark:text-slate-400"}>{line.label}</dt>
-                <dd className={line.counted ? "font-bold" : "text-slate-500 dark:text-slate-400"}>{line.value}</dd>
+                <dt className={line.counted ? "font-semibold" : "text-slate-600 dark:text-slate-400"}>{line.label}</dt>
+                <dd className={line.counted ? "font-bold" : "text-slate-600 dark:text-slate-400"}>{line.value}</dd>
               </div>
             ))}
           </dl>

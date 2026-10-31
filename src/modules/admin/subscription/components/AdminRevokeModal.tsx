@@ -67,7 +67,7 @@ export function AdminRevokeModal({
             </div>
             <div>
               <h2 className="text-lg font-bold text-slate-900">Thu hồi quyền gói</h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Ngừng quyền truy cập tính năng nâng cấp (Plus/Pro) của học viên.
               </p>
             </div>
@@ -75,7 +75,7 @@ export function AdminRevokeModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 p-1 rounded-md"
+            className="text-slate-600 hover:text-slate-600 p-1 rounded-md dark:text-slate-400"
           >
             <X size={18} />
           </button>
@@ -101,11 +101,11 @@ export function AdminRevokeModal({
 
           {/* Target Learner Details */}
           <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1">
-            <p className="text-slate-500">Học viên bị thu hồi:</p>
+            <p className="text-slate-600 dark:text-slate-400">Học viên bị thu hồi:</p>
             <p className="font-semibold text-slate-800 text-sm">
               {subscription.userFullName || "Học viên"}
             </p>
-            <p className="text-slate-500 font-mono">{subscription.userEmail}</p>
+            <p className="text-slate-600 font-mono dark:text-slate-400">{subscription.userEmail}</p>
             <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-slate-600">
               <span>Gói đang thu hồi:</span>
               <span className="font-semibold text-slate-800">{subscription.planDisplayName}</span>
@@ -115,7 +115,7 @@ export function AdminRevokeModal({
           {/* Reason Input */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Lý do thu hồi (Bắt buộc kiểm toán) <span className="text-rose-500">*</span>
+              Lý do thu hồi (Bắt buộc kiểm toán) <span className="text-rose-700 dark:text-rose-400">*</span>
             </label>
             <textarea
               required

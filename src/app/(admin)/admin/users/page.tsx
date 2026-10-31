@@ -216,7 +216,7 @@ export default function AdminUsersPage() {
   const getActivityBadge = (lastActivityAt: string | null) => {
     if (!lastActivityAt) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 dark:text-slate-400">
           <span className="w-2 h-2 rounded-full bg-slate-400"></span>
           Chưa đăng nhập
         </span>
@@ -263,7 +263,7 @@ export default function AdminUsersPage() {
           <h1 className="text-4xl font-black text-slate-800 tracking-tight">
             Người dùng
           </h1>
-          <p className="text-slate-400 font-bold text-sm mt-1">
+          <p className="text-slate-600 font-bold text-sm mt-1 dark:text-slate-400">
             Danh sách tài khoản học viên và quản trị viên trong hệ thống
           </p>
         </div>
@@ -279,7 +279,7 @@ export default function AdminUsersPage() {
       <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="flex-1 w-full relative">
           <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
             size={18}
           />
           <input
@@ -320,12 +320,12 @@ export default function AdminUsersPage() {
             <Loader2 className="animate-spin text-blue-600" size={48} />
           </div>
         ) : isError ? (
-          <div className="p-16 text-center text-slate-400 space-y-3">
+          <div className="p-16 text-center text-slate-500 space-y-3">
             <AlertTriangle size={40} className="text-rose-500 mx-auto" />
             <h3 className="text-lg font-black text-slate-700">
               Không thể tải danh sách người dùng
             </h3>
-            <p className="text-sm text-rose-500">
+            <p className="text-sm text-rose-700 dark:text-rose-400">
               {getApiErrorMessage(error, "Đã xảy ra lỗi khi kết nối tới máy chủ.")}
             </p>
             <button
@@ -340,7 +340,7 @@ export default function AdminUsersPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 text-slate-400 text-xs uppercase font-black tracking-wider border-b-2 border-slate-100">
+                <tr className="bg-slate-50 text-slate-600 text-xs uppercase font-black tracking-wider border-b-2 border-slate-100 dark:text-slate-400">
                   <th className="py-4 px-6">Người dùng</th>
                   <th className="py-4 px-6">Vai trò</th>
                   <th className="py-4 px-6">Bánh Mì / Chuỗi</th>
@@ -380,7 +380,7 @@ export default function AdminUsersPage() {
                           >
                             {user.profile?.fullName || "—"}
                           </Link>
-                          <p className="text-xs text-slate-400 font-medium flex items-center gap-1">
+                          <p className="text-sm text-slate-600 font-medium flex items-center gap-1 dark:text-slate-400">
                             <Mail size={12} /> {user.email}
                           </p>
                         </div>
@@ -398,22 +398,22 @@ export default function AdminUsersPage() {
                           </span>
                         </div>
                       ) : (
-                        <span className="text-slate-400 text-xs">—</span>
+                        <span className="text-slate-600 text-xs dark:text-slate-400">—</span>
                       )}
                     </td>
                     <td className="py-4 px-6 text-sm text-slate-600">
                       {user.profile?.phone ? (
                         <span className="flex items-center gap-1">
-                          <Phone size={13} className="text-slate-400" />{" "}
+                          <Phone size={13} className="text-slate-500" />{" "}
                           {user.profile.phone}
                         </span>
                       ) : (
                         <span className="text-slate-300">—</span>
                       )}
                     </td>
-                    <td className="py-4 px-6 text-xs text-slate-500 font-medium">
+                    <td className="py-4 px-6 text-xs text-slate-600 font-medium dark:text-slate-400">
                       <span className="flex items-center gap-1">
-                        <Calendar size={13} className="text-slate-400" />{" "}
+                        <Calendar size={13} className="text-slate-500" />{" "}
                         {new Date(user.createdAt).toLocaleDateString("vi-VN")}
                       </span>
                     </td>
@@ -444,7 +444,7 @@ export default function AdminUsersPage() {
                           type="button"
                           onClick={() => setDeleteTarget(user)}
                           title="Xóa tài khoản"
-                          className="p-2 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-all border border-rose-200 cursor-pointer"
+                          className="p-2 text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-xl transition-all border border-rose-200 cursor-pointer dark:text-rose-400"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -471,7 +471,7 @@ export default function AdminUsersPage() {
             </div>
           </div>
         ) : (
-          <div className="p-16 text-center text-slate-400">
+          <div className="p-16 text-center text-slate-600 dark:text-slate-400">
             <BookOpen size={40} className="text-slate-300 mx-auto mb-3" />
             <h3 className="text-lg font-black text-slate-700">
               Không tìm thấy người dùng
@@ -500,7 +500,7 @@ export default function AdminUsersPage() {
                 </h2>
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className="p-1.5 text-slate-400 hover:text-slate-600 rounded-xl"
+                  className="p-1.5 text-slate-600 hover:text-slate-600 rounded-xl dark:text-slate-400"
                 >
                   <X size={20} />
                 </button>
@@ -509,7 +509,7 @@ export default function AdminUsersPage() {
               <div className="space-y-4 text-xs font-bold">
                 <div>
                   <label className="block text-slate-600 mb-1">
-                    Họ và tên <span className="text-rose-500">*</span>
+                    Họ và tên <span className="text-rose-700 dark:text-rose-400">*</span>
                   </label>
                   <input
                     type="text"
@@ -523,7 +523,7 @@ export default function AdminUsersPage() {
                 </div>
                 <div>
                   <label className="block text-slate-600 mb-1">
-                    Email <span className="text-rose-500">*</span>
+                    Email <span className="text-rose-700 dark:text-rose-400">*</span>
                   </label>
                   <input
                     type="email"
@@ -537,7 +537,7 @@ export default function AdminUsersPage() {
                 </div>
                 <div>
                   <label className="block text-slate-600 mb-1">
-                    Mật khẩu ban đầu <span className="text-rose-500">*</span>
+                    Mật khẩu ban đầu <span className="text-rose-700 dark:text-rose-400">*</span>
                   </label>{" "}
                   <div className="relative">
                     <input
@@ -559,7 +559,7 @@ export default function AdminUsersPage() {
                         showCreatePassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"
                       }
                       aria-pressed={showCreatePassword}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400"
                     >
                       {showCreatePassword ? (
                         <EyeOff size={18} />
@@ -603,7 +603,7 @@ export default function AdminUsersPage() {
               <div className="flex gap-3 pt-4 border-t-2 border-slate-100">
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className="flex-1 py-2.5 rounded-xl font-black text-slate-500 hover:bg-slate-100 text-sm"
+                  className="flex-1 py-2.5 rounded-xl font-black text-slate-600 hover:bg-slate-100 text-sm dark:text-slate-400"
                 >
                   Hủy
                 </button>
@@ -642,7 +642,7 @@ export default function AdminUsersPage() {
             >
               <div className="flex items-center justify-between border-b-2 border-slate-100 pb-3">
                 <div>
-                  <span className="text-xs font-mono font-black text-slate-400">
+                  <span className="text-xs font-mono font-black text-slate-600 dark:text-slate-400">
                     ID #{editingUser.id}
                   </span>
                   <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2 mt-0.5">
@@ -651,7 +651,7 @@ export default function AdminUsersPage() {
                 </div>
                 <button
                   onClick={() => setEditingUser(null)}
-                  className="p-1.5 text-slate-400 hover:text-slate-600 rounded-xl"
+                  className="p-1.5 text-slate-600 hover:text-slate-600 rounded-xl dark:text-slate-400"
                 >
                   <X size={20} />
                 </button>
@@ -666,12 +666,12 @@ export default function AdminUsersPage() {
                     type="email"
                     disabled
                     value={editingUser.email}
-                    className="w-full bg-slate-100 border-2 border-slate-200 rounded-xl px-4 py-2.5 text-slate-500 font-mono"
+                    className="w-full bg-slate-100 border-2 border-slate-200 rounded-xl px-4 py-2.5 text-slate-600 font-mono dark:text-slate-400"
                   />
                 </div>
                 <div>
                   <label className="block text-slate-600 mb-1">
-                    Họ và tên <span className="text-rose-500">*</span>
+                    Họ và tên <span className="text-rose-700 dark:text-rose-400">*</span>
                   </label>
                   <input
                     type="text"
@@ -699,7 +699,7 @@ export default function AdminUsersPage() {
                   <label className="block text-slate-600 mb-1">
                     Vai trò
                     {currentUser?.id === editingUser.id && (
-                      <span className="text-xs text-amber-600 font-normal ml-2">
+                      <span className="text-xs text-amber-700 font-medium ml-2 dark:text-amber-400">
                         (Không thể hạ quyền tài khoản của chính bạn)
                       </span>
                     )}
@@ -722,7 +722,7 @@ export default function AdminUsersPage() {
                   </label>
                   <div className="relative">
                     <Lock
-                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
                       size={16}
                     />{" "}
                     <input
@@ -741,7 +741,7 @@ export default function AdminUsersPage() {
                         showEditPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"
                       }
                       aria-pressed={showEditPassword}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400"
                     >
                       {showEditPassword ? (
                         <EyeOff size={18} />
@@ -756,7 +756,7 @@ export default function AdminUsersPage() {
               <div className="flex gap-3 pt-4 border-t-2 border-slate-100">
                 <button
                   onClick={() => setEditingUser(null)}
-                  className="flex-1 py-2.5 rounded-xl font-black text-slate-500 hover:bg-slate-100 text-sm"
+                  className="flex-1 py-2.5 rounded-xl font-black text-slate-600 hover:bg-slate-100 text-sm dark:text-slate-400"
                 >
                   Hủy
                 </button>
@@ -793,7 +793,7 @@ export default function AdminUsersPage() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-white rounded-xl border border-rose-200 shadow-2xl p-6 md:p-8 max-w-md w-full space-y-5 text-center"
             >
-              <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center mx-auto">
+              <div className="w-16 h-16 bg-rose-100 text-rose-700 rounded-xl flex items-center justify-center mx-auto dark:text-rose-400">
                 <AlertTriangle size={32} />
               </div>
 
@@ -801,9 +801,9 @@ export default function AdminUsersPage() {
                 <h3 className="text-2xl font-black text-slate-800">
                   Xóa Tài Khoản?
                 </h3>
-                <p className="text-slate-500 text-sm font-bold mt-2">
+                <p className="text-slate-600 text-sm font-bold mt-2 dark:text-slate-400">
                   Bạn có chắc chắn muốn xóa tài khoản{" "}
-                  <span className="text-rose-600 font-black">
+                  <span className="text-rose-700 font-black dark:text-rose-400">
                     "{deleteTarget.profile?.fullName || deleteTarget.email}"
                   </span>{" "}
                   ({deleteTarget.email})? Toàn bộ tiến trình và dữ liệu sẽ bị
@@ -815,7 +815,7 @@ export default function AdminUsersPage() {
                 <button
                   type="button"
                   onClick={() => setDeleteTarget(null)}
-                  className="px-5 py-2.5 rounded-xl font-black text-slate-500 hover:bg-slate-100 text-sm"
+                  className="px-5 py-2.5 rounded-xl font-black text-slate-600 hover:bg-slate-100 text-sm dark:text-slate-400"
                 >
                   Không, giữ lại
                 </button>

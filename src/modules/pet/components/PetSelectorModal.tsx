@@ -73,7 +73,7 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
               >
                 Chọn Thú Cưng Đồng Hành
               </h2>
-              <p className="text-sm text-slate-500 mt-0.5">
+              <p className="text-sm text-slate-600 mt-0.5 dark:text-slate-400">
                 Mỗi loài thú cưng sở hữu cấp độ độc lập và hiệu ứng bổ trợ học tập riêng biệt
               </p>
             </div>
@@ -83,7 +83,7 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
               onClick={onClose}
               disabled={isUpdating}
               aria-label="Đóng cửa sổ chọn thú cưng"
-              className="w-10 h-10 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
+              className="w-10 h-10 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none dark:text-slate-400"
             >
               <X size={18} aria-hidden="true" />
             </button>
@@ -135,7 +135,7 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
                           <h3 className="font-bold text-slate-900 text-sm sm:text-base leading-tight mt-1">
                             {species.speciesName}
                           </h3>
-                          <span className="text-xs font-medium text-slate-500">
+                          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
                             {speciesStageName}
                           </span>
                         </div>
@@ -168,7 +168,7 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
                     </div>
 
                     {/* Quote Bubble */}
-                    <div className="text-xs text-slate-500 italic mb-4 line-clamp-1">
+                    <div className="text-xs text-slate-600 italic mb-4 line-clamp-1 dark:text-slate-400">
                       &ldquo;{species.quote}&rdquo;
                     </div>
                   </div>

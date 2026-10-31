@@ -117,7 +117,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
             Hồ Sơ & Trang Bị Cá Nhân
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-0.5">
+          <p className="text-slate-600 dark:text-slate-400 text-sm font-medium mt-0.5">
             Quản lý thông tin tài khoản, danh hiệu và trang bị ngoại trang của bạn
           </p>
         </div>
@@ -130,7 +130,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
               activeTab === "profile"
                 ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm border border-slate-200/80 dark:border-slate-700"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
             <User size={16} className={activeTab === "profile" ? "text-blue-500" : ""} />
@@ -143,7 +143,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
               activeTab === "inventory"
                 ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm border border-slate-200/80 dark:border-slate-700"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
             <Backpack size={16} className={activeTab === "inventory" ? "text-amber-500" : ""} />
@@ -182,7 +182,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                   {formData.fullName || "Tên của bạn"}
                 </h2>
 
-                <p className="text-slate-400 dark:text-slate-500 text-xs font-black mt-0.5 uppercase tracking-wider">
+                <p className="text-slate-600 dark:text-slate-400 text-xs font-black mt-0.5 uppercase tracking-wider">
                   {user?.role === "STUDENT" ? "Học Sinh" : user?.role || "Thành viên"}
                 </p>
 
@@ -196,7 +196,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                     <span>{activeBadgeConfig.name}</span>
                   </div>
                 ) : (
-                  <div className="mt-3 px-3 py-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-slate-400 dark:text-slate-500 text-xs font-medium">
+                  <div className="mt-3 px-3 py-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-slate-600 dark:text-slate-400 text-xs font-medium">
                     Chưa đeo danh hiệu nào
                   </div>
                 )}
@@ -221,7 +221,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                   <h3 className="font-extrabold text-base text-slate-800 dark:text-slate-100 flex items-center gap-2">
                     <User size={18} className="text-blue-500" /> Thông tin tài khoản
                   </h3>
-                  <span className="text-xs font-bold text-slate-400 dark:text-slate-500">
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                     Email: <strong className="text-slate-600 dark:text-slate-300">{user?.email}</strong>
                   </span>
                 </div>
@@ -314,12 +314,12 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                     <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100">
                       {formData.fullName || "Học viên BreadTrans"}
                     </h2>
-                    <span className="text-xs font-black uppercase tracking-wider bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 px-2.5 py-0.5 rounded-md">
+                    <span className="text-xs font-black uppercase tracking-wider bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 px-2.5 py-0.5 rounded-md">
                       {user?.role === "STUDENT" ? "Học Sinh" : user?.role || "Thành viên"}
                     </span>
                   </div>
 
-                  <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
                     Xem trước diện mạo nhân vật và tùy chỉnh trang bị đang hiển thị trong lớp học.
                   </p>
 
@@ -387,7 +387,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                   onClick={() => setInventoryCategory("boost")}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
                     inventoryCategory === "boost"
-                      ? "bg-emerald-600 text-white shadow-xs"
+                      ? "bg-emerald-700 text-white shadow-xs"
                       : "bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
                   }`}
                 >
@@ -395,7 +395,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                 </button>
               </div>
 
-              <span className="text-xs font-bold text-slate-400 dark:text-slate-500">
+              <span className="text-xs font-bold text-slate-600 dark:text-slate-400">
                 Hiển thị {filteredInventory.length} vật phẩm
               </span>
             </div>
@@ -403,14 +403,14 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
             {/* 3. Lưới Hiển Thị Vật Phẩm Rộng Rãi (Spacious Items Grid) */}
             {filteredInventory.length === 0 ? (
               <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-4">
-                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-full flex items-center justify-center mx-auto text-2xl">
+                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 text-slate-600 rounded-full flex items-center justify-center mx-auto text-2xl dark:text-slate-400">
                   <Backpack size={40} strokeWidth={1.75} aria-hidden="true" />
                 </div>
                 <div className="space-y-1">
                   <h3 className="font-black text-slate-700 dark:text-slate-300 text-base">
                     Không tìm thấy vật phẩm nào trong mục này
                   </h3>
-                  <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">
+                  <p className="text-slate-600 dark:text-slate-400 text-xs font-medium">
                     Hãy tham gia làm bài tập hoặc tích lũy Bánh Mì để mở khóa thêm vật phẩm nhé!
                   </p>
                 </div>
@@ -474,7 +474,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                           </div>
                         </div>
 
-                        <p className="text-slate-500 dark:text-slate-400 text-xs font-medium leading-relaxed">
+                        <p className="text-slate-600 dark:text-slate-400 text-xs font-medium leading-relaxed">
                           {item.description}
                         </p>
                       </div>

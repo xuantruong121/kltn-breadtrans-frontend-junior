@@ -126,7 +126,7 @@ export default function ToeicAssessmentDetail({
           {!readiness.ready && (
             <div className="rounded-lg border border-rose-200 bg-rose-50 dark:border-rose-900/50 dark:bg-rose-950/30 p-3 text-sm text-rose-800 dark:text-rose-200 font-medium">
               <p>Đề thi này chưa đủ điều kiện để bắt đầu.</p>
-              <ul className="mt-1 list-disc space-y-0.5 pl-4 font-normal">
+              <ul className="mt-1 list-disc space-y-0.5 pl-4 font-medium">
                 {readiness.reasons.map((reason) => (
                   <li key={reason}>{reason}</li>
                 ))}

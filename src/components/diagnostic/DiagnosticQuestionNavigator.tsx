@@ -64,7 +64,7 @@ export function DiagnosticQuestionNavigator({
           <div key={group.key}>
             <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
               {GROUP_TITLES[group.key] ?? group.title}
-              <span className="font-medium text-slate-500 dark:text-slate-400">
+              <span className="font-medium text-slate-600 dark:text-slate-400">
                 {" "}
                 · câu {first}–{last}
               </span>
@@ -82,7 +82,7 @@ export function DiagnosticQuestionNavigator({
                     aria-current={isCurrent ? "step" : undefined}
                     className={`flex h-10 items-center justify-center rounded-lg text-sm font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 ${
                       isCurrent
-                        ? "bg-teal-600 text-white"
+                        ? "bg-teal-700 text-white"
                         : state === "answered"
                           ? "bg-emerald-100 text-emerald-900 hover:bg-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-200"
                           : state === "skipped"
@@ -163,7 +163,7 @@ export function DiagnosticQuestionNavigator({
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-400"
                 aria-label="Đóng danh sách câu hỏi"
               >
                 <X size={20} />

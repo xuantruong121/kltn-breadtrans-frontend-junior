@@ -264,7 +264,7 @@ const FloatingCompanionPetInner: React.FC = () => {
                     Cấp {level}
                   </span>
                 </div>
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mt-0.5">
                   {speciesInfo.title}
                 </p>
               </div>
@@ -274,7 +274,7 @@ const FloatingCompanionPetInner: React.FC = () => {
               type="button"
               onClick={() => setIsExpanded(false)}
               aria-label="Đóng bảng thông tin thú cưng"
-              className="size-8 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-center transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
+              className="size-8 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-center transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
             >
               <X size={16} aria-hidden="true" />
             </button>
@@ -427,7 +427,7 @@ const FloatingCompanionPetInner: React.FC = () => {
               className={`w-full min-h-[44px] px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none ${
                 feedEligibility.allowed
                   ? "bg-amber-600 hover:bg-amber-700 active:scale-[0.98] text-white shadow-xs"
-                  : "bg-slate-100 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700/60 cursor-not-allowed"
+                  : "bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700/60 cursor-not-allowed"
               }`}
             >
               {feedMutation.isPending ? (
@@ -444,13 +444,13 @@ const FloatingCompanionPetInner: React.FC = () => {
             </button>
 
             {!feedEligibility.allowed && (pet?.satietyState === "FULL" || satiety >= 80) ? (
-              <p className="text-center text-sm font-medium text-slate-500 dark:text-slate-400">{satietyText}</p>
+              <p className="text-center text-sm font-medium text-slate-600 dark:text-slate-400">{satietyText}</p>
             ) : balance < feedCost ? (
-              <p className="text-center text-sm font-semibold text-rose-600 dark:text-rose-400">
+              <p className="text-center text-sm font-semibold text-rose-700 dark:text-rose-400">
                 Cần {feedCost} Bánh Mì (Số dư: {balance})
               </p>
             ) : (
-              <p className="text-center text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-center text-sm text-slate-600 dark:text-slate-400">
                 Tiêu hao {feedCost} Bánh Mì • {satietyText} • EXP hôm nay {pet?.dailyRewardedFeedCount ?? 0}/{pet?.dailyRewardLimit ?? 3}
               </p>
             )}

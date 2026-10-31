@@ -204,7 +204,7 @@ export default function ArenaPage() {
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
               Bảng vinh danh & Thành tích
             </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
               Xếp hạng học viên chăm chỉ và bộ sưu tập huy hiệu tích lũy
             </p>
           </div>
@@ -247,7 +247,7 @@ export default function ArenaPage() {
               <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
                 Bảng xếp hạng tuần này
               </h2>
-              <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+              <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">
                 {entries.length} học viên
               </span>
             </div>
@@ -317,7 +317,7 @@ export default function ArenaPage() {
                               3
                             </span>
                           ) : (
-                            <span className="text-slate-400 dark:text-slate-500 text-xs">#{rank}</span>
+                            <span className="text-slate-600 dark:text-slate-400 text-xs">#{rank}</span>
                           )}
                         </div>
 
@@ -343,7 +343,7 @@ export default function ArenaPage() {
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">
+                          <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
                             Hạng: {item.tier || "Đồng"}
                           </p>
                         </div>
@@ -354,7 +354,7 @@ export default function ArenaPage() {
                         <div className="font-extrabold text-sm text-slate-900 dark:text-slate-100">
                           {(item.weeklyExp || item.totalPoints || 0).toLocaleString("vi-VN")}
                         </div>
-                        <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold block uppercase tracking-wider">
+                        <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold block uppercase tracking-wider">
                           EXP
                         </span>
                       </div>
@@ -364,9 +364,9 @@ export default function ArenaPage() {
               </div>
             ) : (
               <div className="text-center py-12 space-y-2">
-                <Trophy size={32} className="mx-auto text-slate-300 dark:text-slate-600" />
+                <Trophy size={32} className="mx-auto text-slate-300 dark:text-slate-400" />
                 <p className="text-sm font-bold text-slate-600 dark:text-slate-300">Chưa có dữ liệu cho hạng này</p>
-                <p className="text-sm text-slate-400 dark:text-slate-500">Hãy tham gia luyện tập để ghi tên mình lên bảng vàng nhé!</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Hãy tham gia luyện tập để ghi tên mình lên bảng vàng nhé!</p>
               </div>
             )}
           </div>

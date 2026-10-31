@@ -77,13 +77,13 @@ export default function IssueReportsPage() {
     <main className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 md:px-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-bold uppercase tracking-wider text-rose-600">
+          <p className="text-sm font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400">
             Vận hành
           </p>
           <h1 className="mt-1 text-3xl font-bold text-slate-900">
             Báo cáo lỗi
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             Tiếp nhận và xử lý phản hồi từ học viên.
           </p>
         </div>
@@ -98,7 +98,7 @@ export default function IssueReportsPage() {
         <label className="relative min-w-[260px] flex-1">
           <span className="sr-only">Tìm báo cáo</span>
           <Search
-            className="absolute left-3 top-3.5 text-slate-400"
+            className="absolute left-3 top-3.5 text-slate-500"
             size={18}
           />
           <input
@@ -138,7 +138,7 @@ export default function IssueReportsPage() {
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-600 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-3">Mã</th>
                 <th className="px-4 py-3">Khu vực</th>
@@ -153,7 +153,7 @@ export default function IssueReportsPage() {
                 <tr>
                   <td
                     colSpan={6}
-                    className="px-4 py-12 text-center text-slate-500"
+                    className="px-4 py-12 text-center text-slate-600 dark:text-slate-400"
                   >
                     <Loader2 className="mx-auto animate-spin" />
                   </td>
@@ -162,7 +162,7 @@ export default function IssueReportsPage() {
                 <tr>
                   <td
                     colSpan={6}
-                    className="px-4 py-12 text-center text-slate-500"
+                    className="px-4 py-12 text-center text-slate-600 dark:text-slate-400"
                   >
                     Chưa có báo lỗi phù hợp.
                   </td>
@@ -184,7 +184,7 @@ export default function IssueReportsPage() {
                         {statusLabels[item.status]}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-slate-500">
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
                       {new Date(item.createdAt).toLocaleString("vi-VN")}
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -211,7 +211,7 @@ export default function IssueReportsPage() {
           aria-label="Phân trang báo cáo lỗi"
           className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3"
         >
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             Trang {query.data?.page ?? page} / {query.data?.totalPages ?? 1}
             {typeof query.data?.total === "number" && (
               <> · {query.data.total} báo cáo</>
@@ -259,7 +259,7 @@ export default function IssueReportsPage() {
           >
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-rose-600">
+                <p className="text-sm font-bold uppercase tracking-wide text-rose-700 dark:text-rose-400">
                   {selected.reportCode}
                 </p>
                 <h2
@@ -280,11 +280,11 @@ export default function IssueReportsPage() {
             </div>
             <dl className="mt-5 grid gap-3 rounded-xl bg-slate-50 p-4 text-sm">
               <div>
-                <dt className="font-semibold text-slate-500">Phân loại</dt>
+                <dt className="font-semibold text-slate-600 dark:text-slate-400">Phân loại</dt>
                 <dd className="text-slate-900">{selected.category}</dd>
               </div>
               <div>
-                <dt className="font-semibold text-slate-500">Mức độ</dt>
+                <dt className="font-semibold text-slate-600 dark:text-slate-400">Mức độ</dt>
                 <dd className="text-slate-900">
                   {selected.impact === "BLOCKING"
                     ? "Không thể tiếp tục"
@@ -292,13 +292,13 @@ export default function IssueReportsPage() {
                 </dd>
               </div>
               <div>
-                <dt className="font-semibold text-slate-500">Mô tả</dt>
+                <dt className="font-semibold text-slate-600 dark:text-slate-400">Mô tả</dt>
                 <dd className="whitespace-pre-wrap text-slate-900">
                   {selected.description}
                 </dd>
               </div>
               <div>
-                <dt className="font-semibold text-slate-500">Người gửi</dt>
+                <dt className="font-semibold text-slate-600 dark:text-slate-400">Người gửi</dt>
                 <dd className="text-slate-900">
                   {selected.reporter?.profile?.fullName ??
                     selected.reporter?.email ??
@@ -341,7 +341,7 @@ export default function IssueReportsPage() {
                     resolutionNote,
                   })
                 }
-                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-600 px-4 font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-700 px-4 font-bold text-white hover:bg-emerald-800 disabled:opacity-50"
               >
                 <CheckCircle2 size={17} />
                 Đã xử lý

@@ -142,7 +142,7 @@ export default function RegisterFlow() {
             <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
               Đăng ký BreadTrans
             </h1>
-            <p className="mt-1.5 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+            <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
               Tạo tài khoản để bắt đầu lộ trình tự học tiếng Anh của bạn.
             </p>
           </div>
@@ -163,7 +163,7 @@ export default function RegisterFlow() {
                 type="button"
                 onClick={() => setError("")}
                 aria-label="Đóng thông báo lỗi"
-                className="rounded-lg p-1 text-rose-600 transition-colors hover:bg-rose-100 hover:text-rose-800 dark:text-rose-400 dark:hover:bg-rose-900/40 dark:hover:text-rose-200"
+                className="rounded-lg p-1 text-rose-700 transition-colors hover:bg-rose-100 hover:text-rose-800 dark:text-rose-400 dark:hover:bg-rose-900/40 dark:hover:text-rose-200"
               >
                 <X size={16} />
               </button>
@@ -176,11 +176,11 @@ export default function RegisterFlow() {
                 className="block text-sm font-bold text-slate-700 dark:text-slate-300"
                 htmlFor="register-full-name"
               >
-                Họ và tên <span className="text-rose-500">*</span>
+                Họ và tên <span className="text-rose-700 dark:text-rose-400">*</span>
               </label>
               <div className="relative">
                 <User
-                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
                   size={18}
                 />
                 <input
@@ -198,7 +198,7 @@ export default function RegisterFlow() {
                 />
               </div>
               {fieldErrors.fullName && (
-                <p className="text-xs font-medium text-rose-600 dark:text-rose-400">
+                <p className="text-xs font-medium text-rose-700 dark:text-rose-400">
                   {fieldErrors.fullName}
                 </p>
               )}
@@ -209,11 +209,11 @@ export default function RegisterFlow() {
                 className="block text-sm font-bold text-slate-700 dark:text-slate-300"
                 htmlFor="register-email"
               >
-                Địa chỉ Email <span className="text-rose-500">*</span>
+                Địa chỉ Email <span className="text-rose-700 dark:text-rose-400">*</span>
               </label>
               <div className="relative">
                 <Mail
-                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
                   size={18}
                 />
                 <input
@@ -230,11 +230,11 @@ export default function RegisterFlow() {
                 />
               </div>
               {fieldErrors.email ? (
-                <p className="text-xs font-medium text-rose-600 dark:text-rose-400">
+                <p className="text-xs font-medium text-rose-700 dark:text-rose-400">
                   {fieldErrors.email}
                 </p>
               ) : (
-                <p className="text-xs leading-relaxed text-slate-400 dark:text-slate-500">
+                <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-400">
                   Nên dùng Gmail bạn đang sử dụng để sau này dễ xác nhận khi cần
                   đổi mật khẩu.
                 </p>
@@ -248,11 +248,11 @@ export default function RegisterFlow() {
                   htmlFor={`register-${field}`}
                 >
                   {field === "password" ? "Mật khẩu" : "Nhập lại mật khẩu"}{" "}
-                  <span className="text-rose-500">*</span>
+                  <span className="text-rose-700 dark:text-rose-400">*</span>
                 </label>
                 <div className="relative">
                   <KeyRound
-                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
                     size={18}
                   />
                   <input
@@ -284,7 +284,7 @@ export default function RegisterFlow() {
                   <button
                     type="button"
                     onClick={() => setShowPassword((current) => !current)}
-                    className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 items-center justify-center text-slate-400 transition-colors hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+                    className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 items-center justify-center text-slate-600 transition-colors hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
                     aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -292,11 +292,11 @@ export default function RegisterFlow() {
                 </div>
                 {fieldErrors[field] ||
                 (field === "confirmPassword" && passwordMismatch) ? (
-                  <p className="text-xs font-medium text-rose-600 dark:text-rose-400">
+                  <p className="text-xs font-medium text-rose-700 dark:text-rose-400">
                     {fieldErrors[field] || "Mật khẩu nhập lại chưa trùng khớp."}
                   </p>
                 ) : field === "password" ? (
-                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
                     Mật khẩu gồm ít nhất 6 ký tự.
                   </p>
                 ) : null}
@@ -324,7 +324,7 @@ export default function RegisterFlow() {
 
           <div className="relative my-6 flex items-center justify-center">
             <div className="h-px w-full bg-slate-200 dark:bg-slate-800" />
-            <span className="absolute bg-white px-3 text-xs font-bold uppercase tracking-wider text-slate-400 dark:bg-slate-900 dark:text-slate-500">
+            <span className="absolute bg-white px-3 text-xs font-bold uppercase tracking-wider text-slate-600 dark:bg-slate-900 dark:text-slate-400">
               Hoặc tiếp tục với
             </span>
           </div>
@@ -351,13 +351,13 @@ export default function RegisterFlow() {
         </div>
       ) : (
         <div className="rounded-3xl border border-amber-100 bg-white p-6 text-center shadow-xl dark:border-slate-800 dark:bg-slate-900 sm:p-10">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-100 text-emerald-600 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-400">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-100 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-400">
             <CheckCircle2 size={32} />
           </div>
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
             Tạo tài khoản thành công!
           </h1>
-          <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-slate-600 dark:text-slate-400">
             Tài khoản của bạn đã sẵn sàng. Đăng nhập để bắt đầu học tiếng Anh
             theo lộ trình.
           </p>

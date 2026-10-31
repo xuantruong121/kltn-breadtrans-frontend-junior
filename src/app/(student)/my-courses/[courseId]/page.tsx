@@ -40,7 +40,7 @@ export default function CourseDetailPage(props: {
     <div className="w-full space-y-8 px-4 sm:px-6 lg:px-8 xl:px-10 py-6 sm:py-8">
       <Link
         href="/courses"
-        className="inline-flex items-center gap-2 text-base font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
+        className="inline-flex items-center gap-2 text-base font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
       >
         <ArrowLeft size={18} /> Danh mục khóa học
       </Link>
@@ -120,7 +120,7 @@ export default function CourseDetailPage(props: {
           >
             <div>
               <div className="flex items-start justify-between gap-3">
-                <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-400">
+                <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                   Bài {lesson.order}
                 </span>
                 <span
@@ -140,7 +140,7 @@ export default function CourseDetailPage(props: {
                 {lesson.summary}
               </p>
             </div>
-            <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-800 text-sm sm:text-base text-slate-500 dark:text-slate-400">
+            <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-800 text-sm sm:text-base text-slate-600 dark:text-slate-400">
               <span className="inline-flex items-center gap-2 font-medium">
                 <BookOpen size={16} /> {lesson.exerciseCount} bài tập ·{" "}
                 {lesson.estimatedMinutes} phút

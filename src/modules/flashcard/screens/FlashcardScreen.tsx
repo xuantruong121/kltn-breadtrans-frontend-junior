@@ -103,7 +103,7 @@ export const FlashcardScreen: React.FC = () => {
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
             Flashcard & từ vựng
           </h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             Học từ mới, ôn đúng lúc và theo dõi tiến độ từng bộ từ.
           </p>
         </div>
@@ -178,21 +178,21 @@ export const FlashcardScreen: React.FC = () => {
         </div>
       ) : topics.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white p-10 text-center dark:border-slate-800 dark:bg-slate-900">
-          <Library className="mx-auto size-9 text-slate-400 dark:text-slate-500" aria-hidden="true" />
+          <Library className="mx-auto size-9 text-slate-500 dark:text-slate-400" aria-hidden="true" />
           <p className="mt-3 font-bold text-slate-700 dark:text-slate-300">
             Chưa có bộ từ vựng nào
           </p>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             Nội dung sẽ xuất hiện khi quản trị viên thêm bộ từ vào hệ thống.
           </p>
         </div>
       ) : displayedTopics.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white p-10 text-center dark:border-slate-800 dark:bg-slate-900">
-          <Library className="mx-auto size-9 text-slate-400 dark:text-slate-500" aria-hidden="true" />
+          <Library className="mx-auto size-9 text-slate-500 dark:text-slate-400" aria-hidden="true" />
           <p className="mt-3 font-bold text-slate-800 dark:text-slate-200">
             Không tìm thấy bộ từ phù hợp
           </p>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             Thử thay đổi từ khóa tìm kiếm hoặc điều chỉnh lại bộ lọc trạng thái.
           </p>
           <button

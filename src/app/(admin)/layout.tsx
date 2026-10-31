@@ -265,7 +265,7 @@ export default function AdminLayout({
           />
           <button
             onClick={() => setIsMobileNavOpen(false)}
-            className="cursor-pointer p-1 text-slate-500 hover:text-slate-900 lg:hidden"
+            className="cursor-pointer p-1 text-slate-600 hover:text-slate-900 lg:hidden dark:text-slate-400"
             aria-label="Đóng thanh điều hướng"
           >
             <X size={20} />
@@ -289,7 +289,7 @@ export default function AdminLayout({
           >
             <OVERVIEW_ITEM.icon
               size={18}
-              className={isOverviewActive ? "text-white" : "text-slate-500"}
+              className={isOverviewActive ? "text-white" : "text-slate-600 dark:text-slate-400"}
             />
             <span className="leading-snug text-left break-words">
               {OVERVIEW_ITEM.label}
@@ -333,7 +333,7 @@ export default function AdminLayout({
                       className={
                         isGroupActive
                           ? "text-blue-600 shrink-0"
-                          : "text-slate-400 shrink-0"
+                          : "text-slate-600 shrink-0 dark:text-slate-400"
                       }
                     />
                     <span className="uppercase tracking-normal text-xs font-bold text-left leading-tight break-words flex-1">
@@ -385,7 +385,7 @@ export default function AdminLayout({
                                 className={
                                   isActive
                                     ? "text-white shrink-0"
-                                    : "text-slate-400 shrink-0"
+                                    : "text-slate-600 shrink-0 dark:text-slate-400"
                                 }
                               />
                               <span className="leading-snug text-left break-words flex-1">
@@ -415,7 +415,7 @@ export default function AdminLayout({
       <div className="border-t border-slate-200 p-4 shrink-0">
         <div
           title={user?.email}
-          className="mb-3 truncate px-2 text-xs font-bold text-slate-500"
+          className="mb-3 truncate px-2 text-xs font-bold text-slate-600 dark:text-slate-400"
         >
           {user?.email}
         </div>

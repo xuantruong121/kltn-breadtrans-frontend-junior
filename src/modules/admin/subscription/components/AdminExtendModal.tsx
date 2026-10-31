@@ -90,7 +90,7 @@ export function AdminExtendModal({
             </div>
             <div>
               <h2 className="text-lg font-bold text-slate-900">Gia hạn gói học viên</h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Bảo toàn số ngày còn lại của học viên và cộng dồn thời hạn mới.
               </p>
             </div>
@@ -98,7 +98,7 @@ export function AdminExtendModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 p-1 rounded-md"
+            className="text-slate-600 hover:text-slate-600 p-1 rounded-md dark:text-slate-400"
           >
             <X size={18} />
           </button>
@@ -113,13 +113,13 @@ export function AdminExtendModal({
         >
           {/* Learner Info */}
           <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-            <p className="text-xs text-slate-500">Học viên nhận gia hạn:</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Học viên nhận gia hạn:</p>
             <p className="font-semibold text-slate-800 mt-0.5">
               {subscription.userFullName || "Học viên"}
             </p>
-            <p className="text-xs text-slate-500 font-mono">{subscription.userEmail}</p>
+            <p className="text-sm text-slate-600 font-mono dark:text-slate-400">{subscription.userEmail}</p>
             <div className="mt-2 pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs">
-              <span className="text-slate-500">Gói hiện tại:</span>
+              <span className="text-slate-600 dark:text-slate-400">Gói hiện tại:</span>
               <span className="font-medium text-slate-800">{subscription.planDisplayName}</span>
             </div>
           </div>
@@ -127,7 +127,7 @@ export function AdminExtendModal({
           {/* Extension Presets */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Thời gian gia hạn thêm <span className="text-rose-500">*</span>
+              Thời gian gia hạn thêm <span className="text-rose-700 dark:text-rose-400">*</span>
             </label>
             <div className="grid grid-cols-3 gap-2 mb-2">
               {[30, 60, 90].map((days) => (
@@ -140,7 +140,7 @@ export function AdminExtendModal({
                   }}
                   className={`py-2 text-xs font-semibold rounded-lg border transition-colors ${
                     !isCustom && extensionDays === days
-                      ? "bg-emerald-600 text-white border-emerald-600 shadow-2xs"
+                      ? "bg-emerald-700 text-white border-emerald-600 shadow-2xs"
                       : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
                   }`}
                 >
@@ -154,7 +154,7 @@ export function AdminExtendModal({
                 onClick={() => setIsCustom(true)}
                 className={`py-1.5 px-3 text-xs font-semibold rounded-lg border transition-colors ${
                   isCustom
-                    ? "bg-emerald-600 text-white border-emerald-600"
+                    ? "bg-emerald-700 text-white border-emerald-600"
                     : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
                 }`}
               >
@@ -195,7 +195,7 @@ export function AdminExtendModal({
           {/* Reason */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Lý do gia hạn (Bắt buộc kiểm toán) <span className="text-rose-500">*</span>
+              Lý do gia hạn (Bắt buộc kiểm toán) <span className="text-rose-700 dark:text-rose-400">*</span>
             </label>
             <textarea
               required
@@ -220,7 +220,7 @@ export function AdminExtendModal({
             <button
               type="submit"
               disabled={extendMutation.isPending || !reason.trim() || effectiveDays <= 0}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {extendMutation.isPending ? (
                 <>

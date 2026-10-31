@@ -73,7 +73,7 @@ export default function ExamLearnerPreviewPage({
   if (isLoading || !data) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <Loader2 className="animate-spin text-slate-400" size={28} />
+        <Loader2 className="animate-spin text-slate-500" size={28} />
       </div>
     );
   }
@@ -140,7 +140,7 @@ export default function ExamLearnerPreviewPage({
 
         {taskPreview.length > 0 && (
           <div className="mt-6 space-y-3">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
               Speaking / Writing
             </h2>
             {taskPreview.map((task) => (

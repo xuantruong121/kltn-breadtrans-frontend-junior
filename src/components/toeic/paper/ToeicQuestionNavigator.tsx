@@ -76,7 +76,7 @@ export const ToeicQuestionNavigator = memo(function ToeicQuestionNavigator({
           Lưu bài làm
         </button>
       </div>
-      <p role="status" className={`mt-1 text-xs ${saveError ? "font-semibold text-rose-600 dark:text-rose-400" : "text-slate-500 dark:text-slate-400"}`}>
+      <p role="status" className={`mt-1 text-xs ${saveError ? "font-semibold text-rose-700 dark:text-rose-400" : "text-slate-600 dark:text-slate-400"}`}>
         {saveStatus}
       </p>
       <p className="mt-2 text-xs italic leading-5 text-amber-700 dark:text-amber-300">

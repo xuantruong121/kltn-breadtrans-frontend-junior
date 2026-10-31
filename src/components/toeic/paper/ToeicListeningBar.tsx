@@ -77,7 +77,7 @@ export function ToeicListeningBar({
       {(error || blocked || note) && (
         <p className="order-last w-full text-xs font-semibold">
           {error ? (
-            <span className="text-rose-600 dark:text-rose-400">
+            <span className="text-rose-700 dark:text-rose-400">
               {error}{" "}
               <button type="button" onClick={onRetry} className="underline">
                 Thử lại
@@ -86,7 +86,7 @@ export function ToeicListeningBar({
           ) : blocked ? (
             <span className="text-slate-600 dark:text-slate-300">Trình duyệt chặn tự phát. Bấm nút phát để nghe.</span>
           ) : (
-            <span className="text-slate-500 dark:text-slate-400">{note}</span>
+            <span className="text-slate-600 dark:text-slate-400">{note}</span>
           )}
         </p>
       )}

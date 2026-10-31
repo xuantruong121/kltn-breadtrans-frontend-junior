@@ -49,7 +49,7 @@ const RECOVERY_DESTINATIONS: RecoveryDestination[] = [
     href: "/listening",
     icon: Headphones,
     iconBg: "bg-amber-50 dark:bg-amber-950/50",
-    iconColor: "text-amber-600 dark:text-amber-400",
+    iconColor: "text-amber-700 dark:text-amber-400",
   },
   {
     title: "Flashcard từ vựng",
@@ -58,7 +58,7 @@ const RECOVERY_DESTINATIONS: RecoveryDestination[] = [
     href: "/flashcard",
     icon: Layers,
     iconBg: "bg-emerald-50 dark:bg-emerald-950/50",
-    iconColor: "text-emerald-600 dark:text-emerald-400",
+    iconColor: "text-emerald-700 dark:text-emerald-400",
   },
   {
     title: "Đấu trường xếp hạng",
@@ -67,7 +67,7 @@ const RECOVERY_DESTINATIONS: RecoveryDestination[] = [
     href: "/arena",
     icon: Trophy,
     iconBg: "bg-orange-50 dark:bg-orange-950/50",
-    iconColor: "text-orange-600 dark:text-orange-400",
+    iconColor: "text-orange-700 dark:text-orange-400",
   },
 ];
 
@@ -172,7 +172,7 @@ export function NotFoundView() {
             {/* 2. Headline */}
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.15]">
               Ổ bánh mì này đã{" "}
-              <span className="text-amber-600 dark:text-amber-500 underline decoration-amber-400/60 dark:decoration-amber-500/50 decoration-wavy decoration-2 underline-offset-4">
+              <span className="text-amber-700 dark:text-amber-500 underline decoration-amber-400/60 dark:decoration-amber-500/50 decoration-wavy decoration-2 underline-offset-4">
                 bay đi mất
               </span>{" "}
               rồi!
@@ -209,7 +209,7 @@ export function NotFoundView() {
                 <label htmlFor="not-found-search-input" className="sr-only">
                   Tìm kiếm trên BreadTrans
                 </label>
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-600 dark:text-slate-400">
                   <Search className="w-4 h-4" />
                 </div>
                 <input
@@ -230,7 +230,7 @@ export function NotFoundView() {
 
               {/* Quick Jump Tags */}
               <div className="flex flex-wrap items-center gap-1.5 mt-3">
-                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 mr-1">
+                <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 mr-1">
                   Gợi ý:
                 </span>
                 {SUGGESTED_QUICK_CHIPS.map((chip) => (
@@ -258,7 +258,7 @@ export function NotFoundView() {
                 className="relative z-10 flex items-center justify-center gap-2 sm:gap-3 py-4"
               >
                 {/* Digit "4" */}
-                <span className="font-black text-6xl sm:text-7xl md:text-8xl text-amber-600 dark:text-amber-500 tracking-tighter select-none">
+                <span className="font-black text-6xl sm:text-7xl md:text-8xl text-amber-700 dark:text-amber-500 tracking-tighter select-none">
                   4
                 </span>
 
@@ -326,7 +326,7 @@ export function NotFoundView() {
                 </div>
 
                 {/* Digit "4" */}
-                <span className="font-black text-6xl sm:text-7xl md:text-8xl text-amber-600 dark:text-amber-500 tracking-tighter select-none">
+                <span className="font-black text-6xl sm:text-7xl md:text-8xl text-amber-700 dark:text-amber-500 tracking-tighter select-none">
                   4
                 </span>
               </motion.div>
@@ -353,7 +353,7 @@ export function NotFoundView() {
               <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">
                 Các điểm đến phổ biến
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
                 Chọn một khu vực học tập để tiếp tục hành trình nâng cao phản xạ tiếng Anh của bạn.
               </p>
             </div>
@@ -383,12 +383,12 @@ export function NotFoundView() {
                     <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
                       {destination.title}
                     </h3>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    <p className="mt-1 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                       {destination.description}
                     </p>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-xs font-bold text-amber-600 dark:text-amber-400">
+                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-xs font-bold text-amber-700 dark:text-amber-400">
                     <span>Khám phá ngay</span>
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </div>

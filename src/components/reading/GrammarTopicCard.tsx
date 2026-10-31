@@ -72,7 +72,7 @@ export function GrammarTopicCard({
       <div className="mt-4 border-t border-slate-100 dark:border-slate-800/80 pt-3">
         <div className="flex items-center justify-between gap-3">
           {/* Metadata */}
-          <div className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">
+          <div className="text-xs text-slate-600 dark:text-slate-400 font-medium truncate">
             <span>Ngữ pháp</span>
             <span className="mx-1.5">·</span>
             <span>{diffConfig.label}</span>

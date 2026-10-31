@@ -318,7 +318,7 @@ export default function TakeQuizPage(props: {
     return (
       <div className="min-h-dvh flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-6 text-center">
         <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800/80 rounded-2xl p-6 sm:p-8 shadow-lg text-center space-y-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 flex items-center justify-center mx-auto text-amber-600 dark:text-amber-400">
+          <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 flex items-center justify-center mx-auto text-amber-700 dark:text-amber-400">
             <Lock className="w-6 h-6" aria-hidden="true" />
           </div>
           <div>
@@ -328,7 +328,7 @@ export default function TakeQuizPage(props: {
             <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 mt-2">
               Nội dung dành cho PLUS
             </h2>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-2">
+            <p className="text-sm sm:text-sm text-slate-600 dark:text-slate-400 mt-2">
               {`Nội dung ${skillLabel} này thuộc gói PLUS. Nâng cấp gói để mở khóa toàn bộ bài luyện và nội dung nâng cao.`}
             </p>
           </div>
@@ -684,7 +684,7 @@ export default function TakeQuizPage(props: {
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
                   mobileTab === "passage"
                     ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs font-black"
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
                 }`}
               >
                 <FileText size={15} />
@@ -696,7 +696,7 @@ export default function TakeQuizPage(props: {
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
                   mobileTab === "questions"
                     ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs font-black"
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
                 }`}
               >
                 <CheckCircle2 size={15} />
@@ -734,7 +734,7 @@ export default function TakeQuizPage(props: {
                         <h2 className="text-xs font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
                           Đoạn văn bài đọc
                         </h2>
-                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           Đối chiếu nội dung để chọn đáp án chính xác
                         </span>
                       </div>
@@ -773,7 +773,7 @@ export default function TakeQuizPage(props: {
                         onClick={() => setPassageFontSize("base")}
                         className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer ${
                           passageFontSize === "base"
-                            ? "bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-2xs font-black"
+                            ? "bg-white dark:bg-slate-700 text-amber-700 dark:text-amber-400 shadow-2xs font-black"
                             : "hover:text-slate-900 dark:hover:text-slate-100"
                         }`}
                         title="Cỡ chữ vừa"
@@ -785,7 +785,7 @@ export default function TakeQuizPage(props: {
                         onClick={() => setPassageFontSize("lg")}
                         className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer text-sm ${
                           passageFontSize === "lg"
-                            ? "bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-2xs font-black"
+                            ? "bg-white dark:bg-slate-700 text-amber-700 dark:text-amber-400 shadow-2xs font-black"
                             : "hover:text-slate-900 dark:hover:text-slate-100"
                         }`}
                         title="Cỡ chữ lớn"
@@ -797,7 +797,7 @@ export default function TakeQuizPage(props: {
                         onClick={() => setPassageFontSize("xl")}
                         className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer text-base ${
                           passageFontSize === "xl"
-                            ? "bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-2xs font-black"
+                            ? "bg-white dark:bg-slate-700 text-amber-700 dark:text-amber-400 shadow-2xs font-black"
                             : "hover:text-slate-900 dark:hover:text-slate-100"
                         }`}
                         title="Cỡ chữ rất lớn"
@@ -848,7 +848,7 @@ export default function TakeQuizPage(props: {
                     </div>
                     {showReadingTranslation && readingTranslation && (
                       <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 text-sm leading-relaxed text-emerald-950 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100">
-                        <p className="mb-1 text-xs font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                        <p className="mb-1 text-sm font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
                           Bản dịch hỗ trợ
                         </p>
                         <p className="whitespace-pre-line">
@@ -883,16 +883,16 @@ export default function TakeQuizPage(props: {
                   <div className="space-y-2.5 pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                        <span className="text-xs font-black text-amber-700 dark:text-amber-400 uppercase tracking-wider">
                           {sectionLabel ||
                             `Câu ${currentStep + 1} / ${questions.length}`}
                         </span>
-                        <span className="text-xs font-bold text-slate-400 dark:text-slate-500">
+                        <span className="text-xs font-bold text-slate-600 dark:text-slate-400">
                           • {Object.keys(answers).length}/{questions.length} đã
                           làm
                         </span>
                       </div>
-                      <span className="text-xs font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                      <span className="text-xs font-extrabold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                         Chọn 1 đáp án
                       </span>
                     </div>
@@ -1019,7 +1019,7 @@ export default function TakeQuizPage(props: {
                           )}
                         </motion.button>
                       ) : (
-                        <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 italic pr-1">
+                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 italic pr-1">
                           Chọn 1 đáp án để tiếp tục
                         </span>
                       )}
@@ -1078,7 +1078,7 @@ export default function TakeQuizPage(props: {
                     </button>
 
                     <div className="flex items-center gap-2 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 shadow-xs">
-                      <span className="text-xs font-bold text-slate-400 dark:text-slate-500 px-1">
+                      <span className="text-xs font-bold text-slate-600 dark:text-slate-400 px-1">
                         Tốc độ:
                       </span>
                       {[0.8, 1, 1.2].map((rate) => (
@@ -1096,7 +1096,7 @@ export default function TakeQuizPage(props: {
                           className={`px-3 py-1 rounded-full font-black text-xs transition-colors cursor-pointer ${
                             playbackRate === rate
                               ? "bg-sky-600 text-white shadow-xs"
-                              : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+                              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
                           }`}
                         >
                           {rate}x
@@ -1215,7 +1215,7 @@ export default function TakeQuizPage(props: {
                       <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700">
                         {!dictationResults[currentQuestion.id].isCorrect ? (
                           <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-rose-200 dark:border-rose-900/50 shadow-2xs">
-                            <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-bold mb-3 text-base">
+                            <div className="flex items-center gap-2 text-rose-700 dark:text-rose-400 font-bold mb-3 text-base">
                               <span>Có chỗ chưa chính xác, hãy thử lại!</span>
                             </div>
                             {(() => {
@@ -1238,7 +1238,7 @@ export default function TakeQuizPage(props: {
                                     data-testid="dictation-progressive-sentence"
                                   >
                                     {feedback.verifiedPrefix && (
-                                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                                      <span className="text-emerald-700 dark:text-emerald-400 font-bold">
                                         {feedback.verifiedPrefix}
                                       </span>
                                     )}
@@ -1254,7 +1254,7 @@ export default function TakeQuizPage(props: {
                                     )}
                                     {feedback.remainingMasks && feedback.remainingMasks.length > 0 && (
                                       <span
-                                        className="font-mono tracking-wider text-slate-400 dark:text-slate-500 font-medium"
+                                        className="font-mono tracking-wider text-slate-600 dark:text-slate-400 font-medium"
                                         data-testid="dictation-remaining-masks"
                                       >
                                         {" " + feedback.remainingMasks.join(" ")}
@@ -1285,14 +1285,14 @@ export default function TakeQuizPage(props: {
                           </div>
                         ) : (
                           <div className="text-lg font-medium leading-relaxed">
-                            <span className="text-emerald-600 dark:text-emerald-400 block mb-2 text-sm font-black uppercase">
+                            <span className="text-emerald-700 dark:text-emerald-400 block mb-2 text-sm font-black uppercase">
                               Hoàn hảo! Bạn chép đúng 100%:
                             </span>
                             <span className="text-slate-800 dark:text-slate-100 font-bold block mb-1 break-words">
                               {currentQuestion.content?.correctAnswer}
                             </span>
                             {currentQuestion.content?.translation && (
-                              <span className="text-slate-500 dark:text-slate-400 block text-sm italic break-words">
+                              <span className="text-slate-600 dark:text-slate-400 block text-sm italic break-words">
                                 {currentQuestion.content.translation}
                               </span>
                             )}
@@ -1386,7 +1386,7 @@ export default function TakeQuizPage(props: {
                   <h3 className="font-extrabold text-slate-800 dark:text-slate-100 text-base">
                     Danh Sách Câu Hỏi
                   </h3>
-                  <span className="text-xs font-bold text-slate-400 dark:text-slate-500">
+                  <span className="text-xs font-bold text-slate-600 dark:text-slate-400">
                     {Object.keys(answers).length}/{questions.length} Đã làm
                   </span>
                 </div>
@@ -1442,7 +1442,7 @@ export default function TakeQuizPage(props: {
                         ? "Mẹo Đọc Hiểu Hiệu Quả"
                         : "Phím Tắt & Mẹo Làm Bài"}
                     </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
                       Chiến thuật nâng cao tốc độ & độ chính xác
                     </p>
                   </div>
@@ -1450,7 +1450,7 @@ export default function TakeQuizPage(props: {
                 <button
                   type="button"
                   onClick={() => setShowTipsModal(false)}
-                  className="size-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                  className="size-8 rounded-full flex items-center justify-center text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer dark:text-slate-400"
                   aria-label="Đóng cửa sổ mẹo"
                 >
                   <X size={18} />
@@ -1468,7 +1468,7 @@ export default function TakeQuizPage(props: {
                         <strong className="block text-xs font-black text-amber-950 dark:text-amber-200 mb-0.5">
                           Đọc câu hỏi trước khi đọc đoạn văn
                         </strong>
-                        <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 leading-relaxed">
                           Giúp bạn nắm rõ mục tiêu thông tin cần quét
                           (skimming/scanning), tránh đọc lan man mất thời gian.
                         </p>
@@ -1476,14 +1476,14 @@ export default function TakeQuizPage(props: {
                     </div>
 
                     <div className="p-3.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/50 flex items-start gap-3">
-                      <span className="size-6 rounded-full bg-emerald-600 text-white font-black text-xs flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="size-6 rounded-full bg-emerald-700 text-white font-black text-xs flex items-center justify-center shrink-0 mt-0.5">
                         2
                       </span>
                       <div>
                         <strong className="block text-xs font-black text-emerald-950 dark:text-emerald-200 mb-0.5">
                           Khoanh vùng từ khóa (Keywords & Paraphrasing)
                         </strong>
-                        <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 leading-relaxed">
                           Chú ý các từ đồng nghĩa và cách diễn đạt tương đương
                           trong bài đọc thay vì chỉ tìm chính xác chữ cái trong
                           câu hỏi.
@@ -1499,7 +1499,7 @@ export default function TakeQuizPage(props: {
                         <strong className="block text-xs font-black text-sky-950 dark:text-sky-200 mb-0.5">
                           Phương pháp loại trừ đáp án
                         </strong>
-                        <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 leading-relaxed">
                           Loại bỏ ngay các phương án mâu thuẫn trực tiếp với bài
                           đọc, thông tin không được đề cập (Not Given) hoặc mang
                           tính quy chụp tuyệt đối (always, never).

@@ -1693,7 +1693,7 @@ export default function SpeakingExerciseDetailPage() {
               <span
                 key={index}
                 className={`font-black select-none -ml-1 mr-1.5 self-center ${
-                  isStage1Mode ? "text-slate-400" : "text-slate-500"
+                  isStage1Mode ? "text-slate-600 dark:text-slate-400" : "text-slate-600 dark:text-slate-400"
                 }`}
               >
                 {token}
@@ -1922,7 +1922,7 @@ export default function SpeakingExerciseDetailPage() {
         {/* 2. Main Workspace: Dynamic Two-Stage Morphing Architecture */}
         {isStage1 ? (
           /* STAGE 1: FOCUSED RECORDING MODE (Single Centered Stage, Zero Gutters) */
-          <main className="flex-1 w-full flex flex-col justify-between overflow-y-auto bg-slate-50/40 p-3 sm:p-4 lg:p-5 min-h-0">
+          <main className="flex-1 w-full flex flex-col justify-between overflow-y-auto bg-slate-50/40 dark:bg-transparent p-3 sm:p-4 lg:p-5 min-h-0">
             <div className="max-w-5xl xl:max-w-6xl mx-auto w-full flex-1 flex flex-col items-center justify-center gap-3 sm:gap-4 my-auto">
               {/* Focal mode badge */}
               <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-amber-100/90 text-amber-900 text-xs font-black uppercase tracking-wider shadow-2xs">
@@ -1961,7 +1961,7 @@ export default function SpeakingExerciseDetailPage() {
                     aria-label="Thông tin dùng chung cho nhiệm vụ"
                     className="w-full max-w-2xl rounded-2xl border border-blue-200 bg-blue-50/80 px-4 py-3 text-left shadow-xs dark:border-blue-900/70 dark:bg-blue-950/30"
                   >
-                    <p className="text-xs font-black uppercase tracking-wider text-blue-800 dark:text-blue-200">
+                    <p className="text-sm font-black uppercase tracking-wider text-blue-800 dark:text-blue-200">
                       {exercise.stimulus.title || "Thông tin dùng chung"}
                     </p>
                     <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-slate-700 dark:text-slate-200">
@@ -1991,7 +1991,7 @@ export default function SpeakingExerciseDetailPage() {
                     </div>
                   )}
 
-                <p className="mt-2.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-bold flex items-center justify-center gap-2">
+                <p className="mt-2.5 text-sm sm:text-sm text-slate-600 dark:text-slate-400 font-bold flex items-center justify-center gap-2">
                   <BookOpen
                     size={14}
                     className="text-amber-600 dark:text-amber-400"
@@ -2194,7 +2194,7 @@ export default function SpeakingExerciseDetailPage() {
                   </button>
                   <div className="text-center space-y-0.5">
                     <p
-                      className={`text-xs font-bold ${micStatus === "READY" ? "text-emerald-700 dark:text-emerald-300" : micStatus === "MISSING" || micStatus === "DENIED" ? "text-rose-700 dark:text-rose-300" : "text-slate-500 dark:text-slate-400"}`}
+                      className={`text-xs font-bold ${micStatus === "READY" ? "text-emerald-700 dark:text-emerald-300" : micStatus === "MISSING" || micStatus === "DENIED" ? "text-rose-700 dark:text-rose-300" : "text-slate-600 dark:text-slate-400"}`}
                     >
                       {micStatus === "READY"
                         ? "Micro sẵn sàng"
@@ -2211,7 +2211,7 @@ export default function SpeakingExerciseDetailPage() {
                       </kbd>{" "}
                       để nói
                     </p>
-                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-semibold">
+                    <p className="text-sm sm:text-sm text-slate-600 dark:text-slate-400 font-semibold">
                       Thời gian trả lời tối đa {responseSeconds} giây. Bấm dừng là bài được chấm ngay.
                     </p>
                   </div>
@@ -2239,12 +2239,12 @@ export default function SpeakingExerciseDetailPage() {
                     <button
                       type="button"
                       onClick={() => void submitPreparedRecording()}
-                      className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-black text-white hover:bg-emerald-700"
+                      className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-black text-white hover:bg-emerald-800"
                     >
                       <Mic size={15} aria-hidden="true" /> Gửi đánh giá
                     </button>
                   </div>
-                  <p className="mt-2 text-center text-xs font-semibold text-emerald-800/80 dark:text-emerald-200/80">
+                  <p className="mt-2 text-center text-sm font-semibold text-emerald-800/80 dark:text-emerald-200/80">
                     Bạn vẫn có thể thu lại trước khi gửi.
                   </p>
                 </div>
@@ -2254,7 +2254,7 @@ export default function SpeakingExerciseDetailPage() {
                   <div className="flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-900 text-white font-mono font-bold text-xs sm:text-sm shadow-xs">
                     <span className="size-2 rounded-full bg-rose-500 animate-ping" />
                     <span>{formatSpeakingTime(recordingSeconds)}</span>
-                    <span className="text-slate-400">/ 00:45</span>
+                    <span className="text-slate-600 dark:text-slate-400">/ 00:45</span>
                   </div>
 
                   {/* Live audio visualizer canvas */}
@@ -2293,7 +2293,7 @@ export default function SpeakingExerciseDetailPage() {
                     </button>
                   </div>
 
-                  <p className="font-bold text-xs sm:text-sm text-rose-600 text-center">
+                  <p className="font-bold text-sm sm:text-sm text-rose-700 text-center dark:text-rose-400">
                     Đang thu âm... Bấm nút đỏ hoặc nhấn [Space] để dừng và chấm
                     điểm
                   </p>
@@ -2330,7 +2330,7 @@ export default function SpeakingExerciseDetailPage() {
                       <p className="font-black text-sm text-slate-900 dark:text-slate-100">
                         1. Độ chính xác
                       </p>
-                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1 leading-relaxed">
+                      <p className="text-sm sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1 leading-relaxed">
                         Đọc rõ từng từ, đặc biệt là âm cuối (ending sounds).
                       </p>
                     </div>
@@ -2338,7 +2338,7 @@ export default function SpeakingExerciseDetailPage() {
                       <p className="font-black text-sm text-slate-900 dark:text-slate-100">
                         2. Độ lưu loát
                       </p>
-                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1 leading-relaxed">
+                      <p className="text-sm sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1 leading-relaxed">
                         Giữ nhịp điệu tự nhiên, không ngập ngừng quá lâu.
                       </p>
                     </div>
@@ -2346,12 +2346,12 @@ export default function SpeakingExerciseDetailPage() {
                       <p className="font-black text-sm text-slate-900 dark:text-slate-100">
                         3. Độ toàn vẹn
                       </p>
-                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1 leading-relaxed">
+                      <p className="text-sm sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1 leading-relaxed">
                         Không bỏ sót từ ngữ nào trong câu văn mẫu.
                       </p>
                     </div>
                   </div>
-                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-semibold italic text-center pt-1">
+                  <p className="text-sm sm:text-sm text-slate-600 dark:text-slate-400 font-semibold italic text-center pt-1">
                     Mẹo: Giữ khoảng cách micro 10-15cm và tránh đọc trong phòng
                     có tiếng vang.
                   </p>
@@ -2375,7 +2375,7 @@ export default function SpeakingExerciseDetailPage() {
                           ? "Kết quả đánh giá phát âm từng từ:"
                           : "Đọc to câu văn bên dưới với phát âm rõ ràng và tự nhiên:"}
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
                       {["READ_ALOUD", "PRONUNCIATION_DRILL"].includes(String(exercise.taskType ?? "READ_ALOUD"))
                         ? "Màu sắc thể hiện mức độ chính xác của từng từ bạn đã phát âm"
                         : "Bài được chấm trên chính câu trả lời bạn nói, không so với câu hỏi"}
@@ -2408,7 +2408,7 @@ export default function SpeakingExerciseDetailPage() {
                       aria-label="Thông tin dùng chung cho nhiệm vụ"
                       className="my-2 rounded-2xl border border-blue-200 bg-blue-50/80 px-4 py-3 text-left shadow-xs dark:border-blue-900/70 dark:bg-blue-950/30"
                     >
-                      <p className="text-xs font-black uppercase tracking-wider text-blue-800 dark:text-blue-200">
+                      <p className="text-sm font-black uppercase tracking-wider text-blue-800 dark:text-blue-200">
                         {exercise.stimulus.title || "Thông tin dùng chung"}
                       </p>
                       <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-slate-700 dark:text-slate-200">
@@ -2513,7 +2513,7 @@ export default function SpeakingExerciseDetailPage() {
                     />
                     <span>Tiêu chuẩn đánh giá phát âm &amp; Mẹo thu âm</span>
                   </span>
-                  <span className="flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <span className="flex items-center gap-1 text-xs font-bold text-slate-600 dark:text-slate-400">
                     {showTipsDrawer ? "Thu gọn" : "Xem hướng dẫn"}
                     <ChevronDown
                       size={14}
@@ -2531,7 +2531,7 @@ export default function SpeakingExerciseDetailPage() {
                         <p className="font-black text-sm text-slate-900 dark:text-slate-100">
                           1. Độ chính xác
                         </p>
-                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1 leading-relaxed">
+                        <p className="text-sm sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1 leading-relaxed">
                           Đọc rõ từng từ, đặc biệt là âm cuối (ending sounds).
                         </p>
                       </div>
@@ -2539,7 +2539,7 @@ export default function SpeakingExerciseDetailPage() {
                         <p className="font-black text-sm text-slate-900 dark:text-slate-100">
                           2. Độ lưu loát
                         </p>
-                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1 leading-relaxed">
+                        <p className="text-sm sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1 leading-relaxed">
                           Giữ nhịp điệu tự nhiên, không ngập ngừng quá lâu.
                         </p>
                       </div>
@@ -2547,7 +2547,7 @@ export default function SpeakingExerciseDetailPage() {
                         <p className="font-black text-sm text-slate-900 dark:text-slate-100">
                           3. Độ toàn vẹn
                         </p>
-                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1 leading-relaxed">
+                        <p className="text-sm sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1 leading-relaxed">
                           Không bỏ sót từ ngữ nào trong câu văn mẫu.
                         </p>
                       </div>
@@ -2589,12 +2589,12 @@ export default function SpeakingExerciseDetailPage() {
                 previousAttempt &&
                 currentSubmission?.overallScore != null && (
                   <div className="mt-4 rounded-2xl border border-teal-200 bg-teal-50/70 p-4 dark:border-teal-900/60 dark:bg-teal-950/20">
-                    <p className="text-xs font-black uppercase tracking-wider text-teal-700 dark:text-teal-300">
+                    <p className="text-sm font-black uppercase tracking-wider text-teal-700 dark:text-teal-300">
                       So sánh lần luyện
                     </p>
                     <div className="mt-2 grid grid-cols-3 items-end gap-2 text-center">
                       <div>
-                        <p className="text-xs font-semibold text-slate-500">
+                        <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
                           Lần trước
                         </p>
                         <p className="text-xl font-black text-slate-700 dark:text-slate-200">
@@ -2602,7 +2602,7 @@ export default function SpeakingExerciseDetailPage() {
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs font-semibold text-slate-500">
+                        <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
                           Lần này
                         </p>
                         <p className="text-xl font-black text-teal-700 dark:text-teal-300">
@@ -2610,11 +2610,11 @@ export default function SpeakingExerciseDetailPage() {
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs font-semibold text-slate-500">
+                        <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
                           Thay đổi
                         </p>
                         <p
-                          className={`text-xl font-black ${(scoreDelta(currentSubmission.overallScore, previousAttempt.overallScore) ?? 0) >= 0 ? "text-emerald-600" : "text-rose-600"}`}
+                          className={`text-xl font-black ${(scoreDelta(currentSubmission.overallScore, previousAttempt.overallScore) ?? 0) >= 0 ? "text-emerald-700" : "text-rose-700"} dark:text-emerald-400`}
                         >
                           {(scoreDelta(
                             currentSubmission.overallScore,
@@ -2694,7 +2694,7 @@ export default function SpeakingExerciseDetailPage() {
               <Star
                 size={15}
                 className={
-                  isSaved ? "fill-amber-500 text-amber-500" : "text-amber-500"
+                  isSaved ? "fill-amber-500 text-amber-700 dark:text-amber-400" : "text-amber-700 dark:text-amber-400"
                 }
               />
               <span className="hidden sm:inline">
@@ -2728,7 +2728,7 @@ export default function SpeakingExerciseDetailPage() {
                   router.push(`/speaking/${previousExerciseId}${query}`);
                 }}
                 disabled={phase === "RECORDING" || isAnalyzing}
-                className="px-3.5 py-1.5 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 cursor-pointer transition-colors text-xs sm:text-sm inline-flex items-center gap-1 disabled:cursor-not-allowed disabled:opacity-50"
+                className="px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors text-xs sm:text-sm inline-flex items-center gap-1 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <ArrowLeft size={14} aria-hidden="true" /> Câu trước
               </button>
@@ -2736,7 +2736,7 @@ export default function SpeakingExerciseDetailPage() {
             <button
               type="button"
               onClick={() => confirmExit(courseReturn)}
-              className="px-3.5 py-1.5 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 cursor-pointer transition-colors text-xs sm:text-sm"
+              className="px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors text-xs sm:text-sm"
             >
               {examReturn ? "← Về bài thi" : "← Danh sách bài"}
             </button>
@@ -2790,7 +2790,7 @@ export default function SpeakingExerciseDetailPage() {
                 <button
                   type="button"
                   onClick={() => void submitPreparedRecording()}
-                  className="px-4 sm:px-5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-xs transition-all cursor-pointer inline-flex items-center gap-1.5 text-xs sm:text-sm"
+                  className="px-4 sm:px-5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold shadow-xs transition-all cursor-pointer inline-flex items-center gap-1.5 text-xs sm:text-sm"
                 >
                   <Mic size={15} aria-hidden="true" /> Gửi đánh giá
                 </button>
@@ -2832,7 +2832,7 @@ export default function SpeakingExerciseDetailPage() {
                 <button
                   type="button"
                   onClick={handleNextExercise}
-                  className="px-4 sm:px-5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1.5 text-xs sm:text-sm"
+                  className="px-4 sm:px-5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1.5 text-xs sm:text-sm"
                 >
                   <span>
                     {isNextAvailable
@@ -2887,7 +2887,7 @@ export default function SpeakingExerciseDetailPage() {
                 <button
                   type="button"
                   onClick={() => setShowNotesModal(false)}
-                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg cursor-pointer"
+                  className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg cursor-pointer dark:text-slate-400"
                 >
                   <X size={16} />
                 </button>
@@ -2899,7 +2899,7 @@ export default function SpeakingExerciseDetailPage() {
                 rows={6}
                 className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
               />
-              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
                 Ghi chú được lưu tự động trên thiết bị này.
               </p>
               <div className="mt-4 flex justify-end">

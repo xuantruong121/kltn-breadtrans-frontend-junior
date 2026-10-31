@@ -138,7 +138,7 @@ export default function AdminCoursesPage() {
           <h1 className="text-3xl font-bold text-slate-800">
             Quản lý Khóa học
           </h1>
-          <p className="text-slate-500 mt-1">
+          <p className="text-slate-600 mt-1 dark:text-slate-400">
             Tạo, thẩm định và quản lý nội dung khóa học tự học.
           </p>
         </div>
@@ -179,7 +179,7 @@ export default function AdminCoursesPage() {
         {/* Search */}
         <div className="relative w-full md:w-80">
           <Search
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
             size={16}
           />
           <input
@@ -263,7 +263,7 @@ export default function AdminCoursesPage() {
                                 {statusConfig.label}
                               </span>
                             </div>
-                            <p className="text-slate-400 text-xs line-clamp-1">
+                            <p className="text-slate-600 text-sm line-clamp-1 dark:text-slate-400">
                               {course.description || "Chưa có mô tả"}
                             </p>
                           </div>
@@ -280,7 +280,7 @@ export default function AdminCoursesPage() {
 
                             <button
                               onClick={() => setCourseToDelete(course)}
-                              className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
+                              className="p-1.5 text-slate-600 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors dark:text-slate-400"
                               title="Xóa khóa học"
                             >
                               <Trash2 size={16} />
@@ -288,7 +288,7 @@ export default function AdminCoursesPage() {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-4 mt-3 text-xs text-slate-500 flex-wrap">
+                        <div className="flex items-center gap-4 mt-3 text-xs text-slate-600 flex-wrap dark:text-slate-400">
                           <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-600">
                             {levelLabel(course.level)}
                           </span>
@@ -301,7 +301,7 @@ export default function AdminCoursesPage() {
               })}
             </>
           ) : (
-            <div className="text-center py-12 bg-white rounded-2xl border border-slate-100 text-slate-400">
+            <div className="text-center py-12 bg-white rounded-2xl border border-slate-100 text-slate-600 dark:text-slate-400">
               Không tìm thấy khóa học nào.
             </div>
           )}
@@ -332,7 +332,7 @@ export default function AdminCoursesPage() {
               </h2>
               <button
                 onClick={() => setShowCreateCourse(false)}
-                className="text-slate-400 hover:text-slate-700"
+                className="text-slate-600 hover:text-slate-700 dark:text-slate-400"
               >
                 <X size={22} />
               </button>
@@ -416,13 +416,13 @@ export default function AdminCoursesPage() {
       {courseToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
           <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
-            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mb-4">
+            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center mb-4 dark:text-rose-400">
               <AlertTriangle size={22} />
             </div>
             <h3 className="font-bold text-slate-900 text-base mb-1">
               Xác nhận xóa khóa học?
             </h3>
-            <p className="text-xs text-slate-500 leading-relaxed mb-4">
+            <p className="text-sm text-slate-600 leading-relaxed mb-4 dark:text-slate-400">
               Bạn đang thực hiện xóa khóa học &ldquo;
               <span className="font-semibold text-slate-800">
                 {courseToDelete.title}

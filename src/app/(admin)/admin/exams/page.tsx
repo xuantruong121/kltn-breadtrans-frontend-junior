@@ -730,14 +730,14 @@ export default function AdminExamsPage() {
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-5">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[.16em] text-slate-500">
+                <p className="text-sm font-bold uppercase tracking-[.16em] text-slate-600 dark:text-slate-400">
                   {examDetail.familyCode} ·{" "}
                   {examVariantLabel(examDetail.variantCode)}
                 </p>
                 <h1 className="mt-2 text-2xl font-bold text-slate-950">
                   {examDetail.title}
                 </h1>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                   {examDetail.description || "Chưa có mô tả."}
                 </p>
               </div>
@@ -759,12 +759,12 @@ export default function AdminExamsPage() {
                       onClick={() => publishExamMutation.mutate(examDetail.id)}
                       disabled={publishExamMutation.isPending || !publishReadiness.canPublish}
                       title={publishReadiness.helpText}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none"
                     >
                       <CheckCircle2 size={15} /> {publishReadiness.label}
                     </button>
                     {!publishReadiness.canPublish && (
-                      <p className="max-w-[260px] text-right text-xs leading-4 text-slate-500">
+                      <p className="max-w-[260px] text-right text-sm leading-4 text-slate-500">
                         {publishReadiness.helpText}
                       </p>
                     )}
@@ -785,7 +785,7 @@ export default function AdminExamsPage() {
                     {section.count}/{section.expected}
                   </p>
                   <p
-                    className={`mt-1 text-xs font-semibold ${section.ready ? "text-emerald-600" : "text-amber-600"}`}
+                    className={`mt-1 text-xs font-semibold ${section.ready ? "text-emerald-700" : "text-amber-700"} dark:text-emerald-400`}
                   >
                     {section.ready ? "Sẵn sàng" : "Chưa đủ điều kiện"}
                   </p>
@@ -877,7 +877,7 @@ export default function AdminExamsPage() {
                   {examDetail.description}
                 </p>
               )}
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-sm text-slate-600 mt-0.5 dark:text-slate-400">
                 Thời lượng: {Math.round(examDetail.durationSeconds / 60)} phút ·{" "}
                 {groups.length} nhóm · {allQuestions.length} câu hỏi ·{" "}
                 {examDetail.attemptsCount || 0} lượt làm bài
@@ -908,12 +908,12 @@ export default function AdminExamsPage() {
                       onClick={() => publishExamMutation.mutate(examDetail.id)}
                       disabled={publishExamMutation.isPending || !publishReadiness.canPublish}
                       title={publishReadiness.helpText}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none"
                     >
                       <CheckCircle2 size={15} /> {publishReadiness.label}
                     </button>
                     {!publishReadiness.canPublish && (
-                      <p className="max-w-[260px] text-right text-xs leading-4 text-slate-500">
+                      <p className="max-w-[260px] text-right text-sm leading-4 text-slate-500">
                         {publishReadiness.helpText}
                       </p>
                     )}
@@ -1037,7 +1037,7 @@ export default function AdminExamsPage() {
 
             {/* GROUPS LIST */}
             {visibleGroups.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-500">
+              <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-600 dark:text-slate-400">
                 Chưa có nhóm câu hỏi nào trong phần này. Hãy nhấn &quot;Thêm
                 nhóm câu hỏi (Group)&quot; để bắt đầu.
               </div>
@@ -1063,52 +1063,52 @@ export default function AdminExamsPage() {
                             <span className="text-sm font-bold text-slate-800">
                               {partInfo?.label}
                             </span>
-                            <span className="text-xs text-slate-500">
+                            <span className="text-xs text-slate-600 dark:text-slate-400">
                               · Thứ tự #{group.groupOrder}
                             </span>
                           </div>
 
                           {/* MEDIA BADGES */}
-                          <div className="flex items-center gap-3 pt-0.5 text-xs text-slate-500">
+                          <div className="flex items-center gap-3 pt-0.5 text-xs text-slate-600 dark:text-slate-400">
                             {group.audioUrl ? (
-                              <span className="inline-flex items-center gap-1 text-emerald-600 font-medium">
+                              <span className="inline-flex items-center gap-1 text-emerald-700 font-medium dark:text-emerald-400">
                                 <Volume2 size={13} /> Có audio stimulus
                               </span>
                             ) : group.part <= 4 ? (
-                              <span className="inline-flex items-center gap-1 text-rose-500 font-medium">
+                              <span className="inline-flex items-center gap-1 text-rose-700 font-medium dark:text-rose-400">
                                 <AlertTriangle size={13} /> Thiếu audio Part 1-4
                               </span>
                             ) : null}
 
                             {group.mediaMetadata?.audio?.stale && (
-                              <span className="inline-flex items-center gap-1 text-amber-600 font-medium">
+                              <span className="inline-flex items-center gap-1 text-amber-700 font-medium dark:text-amber-400">
                                 <AlertTriangle size={13} /> Audio cần tạo lại
                               </span>
                             )}
 
                             {group.imageUrl ? (
-                              <span className="inline-flex items-center gap-1 text-emerald-600 font-medium">
+                              <span className="inline-flex items-center gap-1 text-emerald-700 font-medium dark:text-emerald-400">
                                 <ImageIcon size={13} /> Có hình ảnh minh họa
                               </span>
                             ) : group.part === 1 ? (
-                              <span className="inline-flex items-center gap-1 text-rose-500 font-medium">
+                              <span className="inline-flex items-center gap-1 text-rose-700 font-medium dark:text-rose-400">
                                 <AlertTriangle size={13} /> Thiếu ảnh Part 1
                               </span>
                             ) : null}
 
                             {group.mediaMetadata?.image?.stale && (
-                              <span className="inline-flex items-center gap-1 text-amber-600 font-medium">
+                              <span className="inline-flex items-center gap-1 text-amber-700 font-medium dark:text-amber-400">
                                 <AlertTriangle size={13} /> Ảnh cần tạo lại
                               </span>
                             )}
 
                             {group.passageText ? (
-                              <span className="inline-flex items-center gap-1 text-emerald-600 font-medium">
+                              <span className="inline-flex items-center gap-1 text-emerald-700 font-medium dark:text-emerald-400">
                                 <FileText size={13} /> Có đoạn văn (
                                 {group.passageText.length} ký tự)
                               </span>
                             ) : group.part >= 6 ? (
-                              <span className="inline-flex items-center gap-1 text-rose-500 font-medium">
+                              <span className="inline-flex items-center gap-1 text-rose-700 font-medium dark:text-rose-400">
                                 <AlertTriangle size={13} /> Thiếu đoạn văn Part
                                 6-7
                               </span>
@@ -1265,7 +1265,7 @@ export default function AdminExamsPage() {
                                 part: group.part,
                               })
                             }
-                            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white hover:border-rose-200 hover:bg-rose-50 px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:text-rose-600 transition-colors"
+                            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white hover:border-rose-200 hover:bg-rose-50 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:text-rose-600 transition-colors dark:text-slate-400"
                             title="Xóa nhóm câu hỏi"
                           >
                             <Trash2 size={13} /> Xóa nhóm
@@ -1325,7 +1325,7 @@ export default function AdminExamsPage() {
                                         questionNumber: q.questionNumber,
                                       })
                                     }
-                                    className="rounded border border-slate-200 bg-white p-1 text-slate-400 hover:text-rose-600 hover:border-rose-200 transition-colors"
+                                    className="rounded border border-slate-200 bg-white p-1 text-slate-600 hover:text-rose-600 hover:border-rose-200 transition-colors dark:text-slate-400"
                                     title="Xóa câu hỏi"
                                   >
                                     <Trash2 size={13} />
@@ -1362,7 +1362,7 @@ export default function AdminExamsPage() {
                               </div>
 
                               {q.explanation && (
-                                <p className="text-xs text-slate-500 italic bg-white p-2 rounded border border-slate-100">
+                                <p className="text-sm text-slate-600 italic bg-white p-2 rounded border border-slate-100 dark:text-slate-400">
                                   Giải thích: {q.explanation}
                                 </p>
                               )}
@@ -1370,7 +1370,7 @@ export default function AdminExamsPage() {
                           ))}
                         </div>
                       ) : (
-                        <p className="text-xs text-slate-400 italic py-2">
+                        <p className="text-sm text-slate-600 italic py-2 dark:text-slate-400">
                           Nhóm này chưa có câu hỏi nào. Hãy nhấn &quot;+ Thêm
                           câu hỏi&quot; để bổ sung câu hỏi vào nhóm.
                         </p>
@@ -1392,7 +1392,7 @@ export default function AdminExamsPage() {
                   <h2 className="text-lg font-bold text-slate-900">
                     Báo cáo kiểm tra chất lượng đề thi
                   </h2>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
                     Hệ thống tự động kiểm tra tính toàn vẹn của âm thanh, hình
                     ảnh, đoạn văn và bộ đáp án.
                   </p>
@@ -1415,7 +1415,7 @@ export default function AdminExamsPage() {
               {/* STATS BREAKDOWN */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
                 <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
-                  <span className="text-xs font-bold text-slate-500 uppercase">
+                  <span className="text-xs font-bold text-slate-600 uppercase dark:text-slate-400">
                     Tổng số câu hỏi
                   </span>
                   <p className="text-xl font-bold text-slate-900 mt-1">
@@ -1423,7 +1423,7 @@ export default function AdminExamsPage() {
                   </p>
                 </div>
                 <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
-                  <span className="text-xs font-bold text-slate-500 uppercase">
+                  <span className="text-xs font-bold text-slate-600 uppercase dark:text-slate-400">
                     Số nhóm bài
                   </span>
                   <p className="text-xl font-bold text-slate-900 mt-1">
@@ -1431,7 +1431,7 @@ export default function AdminExamsPage() {
                   </p>
                 </div>
                 <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
-                  <span className="text-xs font-bold text-slate-500 uppercase">
+                  <span className="text-xs font-bold text-slate-600 uppercase dark:text-slate-400">
                     Phần Listening
                   </span>
                   <p className="text-xl font-bold text-slate-900 mt-1">
@@ -1444,7 +1444,7 @@ export default function AdminExamsPage() {
                   </p>
                 </div>
                 <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
-                  <span className="text-xs font-bold text-slate-500 uppercase">
+                  <span className="text-xs font-bold text-slate-600 uppercase dark:text-slate-400">
                     Phần Reading
                   </span>
                   <p className="text-xl font-bold text-slate-900 mt-1">
@@ -1522,7 +1522,7 @@ export default function AdminExamsPage() {
                 <h2 className="text-2xl font-bold text-slate-900 mt-2">
                   {examDetail.title}
                 </h2>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-sm text-slate-600 mt-1 dark:text-slate-400">
                   Xem nhanh dành cho quản trị viên · Có thể dùng các thao tác
                   khắc phục media bên dưới · Thời lượng:{" "}
                   {Math.round(examDetail.durationSeconds / 60)} phút
@@ -1544,7 +1544,7 @@ export default function AdminExamsPage() {
                     <span className="font-bold text-sm text-slate-900">
                       Part {group.part} · Nhóm #{idx + 1}
                     </span>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-slate-600 dark:text-slate-400">
                       {group.questions?.length || 0} câu hỏi
                     </span>
                   </div>
@@ -1568,12 +1568,12 @@ export default function AdminExamsPage() {
                         <p className="text-sm font-semibold">
                           Chưa có hình ảnh
                         </p>
-                        <p className="mt-1 text-xs leading-5 text-amber-800">
+                        <p className="mt-1 text-sm leading-5 text-amber-800">
                           Nội dung đã được tạo thành công. Ảnh chưa được tạo hoặc
                           tìm thấy. Bạn có thể bổ sung ảnh trước khi xuất bản.
                         </p>
                         {group.imageBrief && (
-                          <p className="mt-2 rounded-md bg-white/70 p-2 text-left text-xs text-slate-600">
+                          <p className="mt-2 rounded-md bg-white/70 p-2 text-left text-sm text-slate-600">
                             <span className="font-semibold">Image brief:</span>{" "}
                             {group.imageBrief}
                           </p>
@@ -1645,7 +1645,7 @@ export default function AdminExamsPage() {
                         key={q.id}
                         className="space-y-2 bg-white p-4 rounded-lg border border-slate-200"
                       >
-                        <p className="font-bold text-xs text-slate-900">
+                        <p className="font-bold text-sm text-slate-900">
                           Câu {q.questionNumber}. {q.text}
                         </p>
                         <div className="space-y-1.5 pl-2">
@@ -1821,13 +1821,13 @@ export default function AdminExamsPage() {
             <div className="w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl max-h-[92vh] overflow-y-auto">
               <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+                  <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
                     Tìm ảnh · Part 1
                   </p>
                   <h3 className="mt-1 text-lg font-bold text-slate-900">
                     Tìm ảnh cho nhóm #{imageSearchGroup.groupOrder}
                   </h3>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                     Ảnh chỉ được lưu chính thức sau khi chọn, tải về server và
                     upload vào R2.
                   </p>
@@ -1835,7 +1835,7 @@ export default function AdminExamsPage() {
                 <button
                   type="button"
                   onClick={() => setIsImageSearchOpen(false)}
-                  className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                  className="rounded-lg p-1 text-slate-600 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400"
                 >
                   <X size={18} />
                 </button>
@@ -1885,7 +1885,7 @@ export default function AdminExamsPage() {
                 )}
                 {!imageSearchMutation.isPending &&
                   imageSearchCandidates.length === 0 && (
-                    <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+                    <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-600 dark:text-slate-400">
                       Nhập từ khóa rồi chọn “Tìm ảnh”. Hệ thống sẽ thử nguồn
                       miễn phí dự phòng trước khi bạn cần tải ảnh thủ công.
                     </p>
@@ -1905,7 +1905,7 @@ export default function AdminExamsPage() {
                         />
                       </div>
                       <div className="space-y-2 p-3">
-                        <div className="flex items-center justify-between gap-2 text-xs text-slate-500">
+                        <div className="flex items-center justify-between gap-2 text-xs text-slate-600 dark:text-slate-400">
                           <span className="truncate">
                             {candidate.provider || "Nguồn mở"} ·{" "}
                             {candidate.author}
@@ -1914,7 +1914,7 @@ export default function AdminExamsPage() {
                             {candidate.width}×{candidate.height}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-sm text-slate-600 dark:text-slate-400">
                           Giấy phép: {candidate.license || "Cần Admin rà soát"}
                           {candidate.licenseVersion
                             ? ` ${candidate.licenseVersion}`
@@ -1947,7 +1947,7 @@ export default function AdminExamsPage() {
                             </p>
                           </div>
                         ) : (
-                          <p className="text-xs text-slate-500">
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
                             Chưa có phân tích tự động; Admin vẫn có thể xem và
                             chọn ảnh.
                           </p>
@@ -1981,7 +1981,7 @@ export default function AdminExamsPage() {
               </div>
 
               <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4">
-                <p className="text-xs text-slate-500">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
                   Nguồn/contributor được lưu trong metadata để Admin rà soát
                   trước khi xuất bản.
                 </p>
@@ -2012,7 +2012,7 @@ export default function AdminExamsPage() {
                 </h3>
                 <button
                   onClick={() => setIsGroupModalOpen(false)}
-                  className="rounded-lg p-1 text-slate-400 hover:text-slate-700"
+                  className="rounded-lg p-1 text-slate-600 hover:text-slate-700 dark:text-slate-400"
                 >
                   <X size={18} />
                 </button>
@@ -2189,7 +2189,7 @@ export default function AdminExamsPage() {
                 </h3>
                 <button
                   onClick={() => setIsQuestionModalOpen(false)}
-                  className="rounded-lg p-1 text-slate-400 hover:text-slate-700"
+                  className="rounded-lg p-1 text-slate-600 hover:text-slate-700 dark:text-slate-400"
                 >
                   <X size={18} />
                 </button>
@@ -2260,10 +2260,10 @@ export default function AdminExamsPage() {
                             correctIndex: idx,
                           })
                         }
-                        className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                        className="h-4 w-4 text-emerald-700 focus:ring-emerald-500 cursor-pointer dark:text-emerald-400"
                         title="Đánh dấu đáp án đúng"
                       />
-                      <span className="w-5 text-xs font-bold text-slate-500">
+                      <span className="w-5 text-xs font-bold text-slate-600 dark:text-slate-400">
                         ({String.fromCharCode(65 + idx)})
                       </span>
                       <input
@@ -2337,14 +2337,14 @@ export default function AdminExamsPage() {
                   <h3 className="font-bold text-slate-900">
                     AI gợi ý câu hỏi TOEIC Part 5
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-sm text-slate-600 mt-0.5 dark:text-slate-400">
                     Nhóm #{aiPart5TargetGroup.groupOrder} • Hoàn thành câu
                     (Incomplete Sentences)
                   </p>
                 </div>
                 <button
                   onClick={() => setIsAiPart5ModalOpen(false)}
-                  className="rounded-lg p-1 text-slate-400 hover:text-slate-700"
+                  className="rounded-lg p-1 text-slate-600 hover:text-slate-700 dark:text-slate-400"
                 >
                   <X size={18} />
                 </button>
@@ -2412,7 +2412,7 @@ export default function AdminExamsPage() {
 
               <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 text-xs">
                 {aiPart5Candidates.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center text-slate-400">
+                  <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center text-slate-600 dark:text-slate-400">
                     Nhấn "AI gợi ý câu hỏi nháp" để AI đề xuất các câu hỏi luyện
                     tập format TOEIC Part 5 với chỗ trống và 4 phương án.
                   </div>
@@ -2433,7 +2433,7 @@ export default function AdminExamsPage() {
                               prev.filter((_, i) => i !== idx),
                             );
                           }}
-                          className="text-slate-400 hover:text-rose-600 text-xs"
+                          className="text-slate-600 hover:text-rose-600 text-xs dark:text-slate-400"
                         >
                           Bỏ qua
                         </button>
@@ -2478,7 +2478,7 @@ export default function AdminExamsPage() {
                                 }}
                                 className={`h-5 w-5 rounded text-xs font-bold flex items-center justify-center ${
                                   isCorrect
-                                    ? "bg-emerald-600 text-white"
+                                    ? "bg-emerald-700 text-white"
                                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                                 }`}
                                 title="Đặt làm đáp án đúng"
@@ -2515,7 +2515,7 @@ export default function AdminExamsPage() {
                         })}
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-slate-500 mb-0.5">
+                        <label className="block text-xs font-semibold text-slate-600 mb-0.5 dark:text-slate-400">
                           Giải thích:
                         </label>
                         <input
@@ -2689,7 +2689,7 @@ export default function AdminExamsPage() {
         <label className="relative block">
           <span className="sr-only">Tìm đề</span>
           <Search
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
             size={18}
             aria-hidden="true"
           />
@@ -2891,7 +2891,7 @@ export default function AdminExamsPage() {
                           />
                           {part.label}
                           {part.issueCount > 0 && (
-                            <span className="text-slate-500">
+                            <span className="text-slate-600 dark:text-slate-400">
                               ({part.issueCount})
                             </span>
                           )}
@@ -2907,7 +2907,7 @@ export default function AdminExamsPage() {
                         {exam.learnerReady ? "Sẵn sàng" : "Chưa sẵn sàng"}
                       </span>
                       {exam.updatedAt && (
-                        <span className="text-xs tabular-nums text-slate-500">
+                        <span className="text-xs tabular-nums text-slate-600 dark:text-slate-400">
                           · sửa {new Date(exam.updatedAt).toLocaleDateString("vi-VN")}
                         </span>
                       )}
@@ -2922,7 +2922,7 @@ export default function AdminExamsPage() {
                           }
                           aria-label={`Xóa ${exam.title}`}
                           title="Xóa đề thi"
-                          className="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+                          className="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400"
                         >
                           <Trash2 size={15} />
                         </button>
@@ -2955,7 +2955,7 @@ export default function AdminExamsPage() {
           </div>
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-500">
+        <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-600 dark:text-slate-400">
           {totalExams
             ? "Không có đề nào khớp bộ lọc."
             : "Chưa có đề nào. Tạo đề thủ công hoặc nhờ AI soạn."}
@@ -2969,13 +2969,13 @@ export default function AdminExamsPage() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <h3 className="font-bold text-slate-900">Tạo đề</h3>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                   Hệ thống tự chọn cấu trúc phù hợp theo kỳ thi và loại đề.
                 </p>
               </div>
               <button
                 onClick={() => setIsExamModalOpen(false)}
-                className="rounded-lg p-1 text-slate-400 hover:text-slate-700"
+                className="rounded-lg p-1 text-slate-600 hover:text-slate-700 dark:text-slate-400"
               >
                 <X size={18} />
               </button>

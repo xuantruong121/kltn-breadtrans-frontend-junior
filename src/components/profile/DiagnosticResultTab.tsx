@@ -102,13 +102,13 @@ export function DiagnosticResultTab() {
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
             <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-850">
-              <span className="text-xs font-bold text-slate-500">Thành phần</span>
+              <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Thành phần</span>
               <p className="mt-1 text-sm font-extrabold text-slate-800 dark:text-slate-200">
                 {form.parts.map((part) => `${part.label} ${part.count}`).join(" · ") || "—"}
               </p>
             </div>
             <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-850">
-              <span className="text-xs font-bold text-slate-500">Cấu trúc</span>
+              <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Cấu trúc</span>
               <p className="mt-1 font-extrabold text-slate-800 dark:text-slate-200">
                 {practiceCount
                   ? `${form.objective} câu trắc nghiệm + ${practiceCount} bài thực hành`
@@ -116,7 +116,7 @@ export function DiagnosticResultTab() {
               </p>
             </div>
             <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-850">
-              <span className="text-xs font-bold text-slate-500">Mục đích</span>
+              <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Mục đích</span>
               <p className="mt-1 font-extrabold text-slate-800 dark:text-slate-200">
                 Gợi ý bài học cá nhân hóa
               </p>
@@ -126,7 +126,7 @@ export function DiagnosticResultTab() {
           <div className="mt-8">
             <Link
               href="/diagnostic"
-              className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-teal-600 px-6 text-sm font-extrabold text-white transition hover:bg-teal-700"
+              className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-teal-700 px-6 text-sm font-extrabold text-white transition hover:bg-teal-800"
             >
               Làm bài đánh giá đầu vào <ArrowRight size={17} />
             </Link>
@@ -194,7 +194,7 @@ export function DiagnosticResultTab() {
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <Link
                 href="/diagnostic"
-                className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-teal-600 px-6 text-sm font-extrabold text-white transition-colors hover:bg-teal-700"
+                className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-teal-700 px-6 text-sm font-extrabold text-white transition-colors hover:bg-teal-800"
               >
                 Tiếp tục làm bài <ArrowRight size={16} aria-hidden="true" />
               </Link>
@@ -245,7 +245,7 @@ export function DiagnosticResultTab() {
           <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-sm font-black text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
             <CheckCircle2 size={14} /> Đã hoàn thành đánh giá
           </span>
-          <span className="inline-flex items-center gap-1.5 text-sm font-bold text-slate-400">
+          <span className="inline-flex items-center gap-1.5 text-sm font-bold text-slate-500">
             <Calendar size={13} /> {formattedDate}
           </span>
         </div>
@@ -258,7 +258,7 @@ export function DiagnosticResultTab() {
         ) : (
         <div className="mt-5 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <span className="text-sm font-black uppercase tracking-wider text-teal-600 dark:text-teal-400">
+            <span className="text-sm font-black uppercase tracking-wider text-teal-700 dark:text-teal-400">
               {fourSkill ? "Kết quả theo bốn kỹ năng" : "Mức năng lực tham khảo"}
             </span>
             <h2 className="mt-1 text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100">
@@ -279,17 +279,17 @@ export function DiagnosticResultTab() {
                   .join(" · ")}
               </p>
             )}
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 max-w-xl">
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 max-w-xl">
               Đây là ước lượng nội bộ để gợi ý bài luyện phù hợp, không phải chứng chỉ CEFR và không khóa nội dung học tập.
             </p>
           </div>
 
           <div className="flex flex-col items-start sm:items-end rounded-2xl bg-slate-50 p-4 dark:bg-slate-850">
-            <span className="text-sm font-bold text-slate-500">Phần trắc nghiệm</span>
+            <span className="text-sm font-bold text-slate-600 dark:text-slate-400">Phần trắc nghiệm</span>
             <span className="mt-0.5 text-2xl font-black text-slate-900 dark:text-slate-100">
               {result.correctCount} / {result.totalCount} câu đúng
             </span>
-            <span className="text-sm font-extrabold text-emerald-600">
+            <span className="text-sm font-extrabold text-emerald-700 dark:text-emerald-400">
               {result.percentage}% độ chính xác
             </span>
           </div>
@@ -328,7 +328,7 @@ export function DiagnosticResultTab() {
         {/* Skill Profiles Breakdown */}
         {!fourSkill && result.skillProfiles && result.skillProfiles.length > 0 && (
           <div className="mt-6">
-            <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Kết quả theo kỹ năng
             </h3>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -354,7 +354,7 @@ export function DiagnosticResultTab() {
         {/* Strengths & Weaknesses (four-skill results: from the advice profile) */}
         <div className="mt-6 grid gap-4 border-t border-slate-100 pt-6 sm:grid-cols-2 dark:border-slate-800">
           <div>
-            <h4 className="text-sm font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            <h4 className="text-sm font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
               Điểm mạnh
             </h4>
             <p className="mt-1 text-base font-bold text-slate-800 dark:text-slate-200">
@@ -366,7 +366,7 @@ export function DiagnosticResultTab() {
             </p>
           </div>
           <div>
-            <h4 className="text-sm font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
+            <h4 className="text-sm font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">
               Nên củng cố
             </h4>
             <p className="mt-1 text-base font-bold text-slate-800 dark:text-slate-200">
@@ -389,7 +389,7 @@ export function DiagnosticResultTab() {
               Bài luyện đề xuất
             </h3>
           </div>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             Được gợi ý riêng theo kết quả phân tích điểm mạnh và điểm cần củng cố của bạn.
           </p>
 
@@ -407,11 +407,11 @@ export function DiagnosticResultTab() {
                   <h4 className="mt-2 text-base font-black text-slate-900 group-hover:text-teal-600 dark:text-slate-100 dark:group-hover:text-teal-400">
                     {rec.title}
                   </h4>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-6">
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 line-clamp-2 leading-6">
                     {rec.description}
                   </p>
                 </div>
-                <div className="mt-4 flex items-center gap-1 text-sm font-bold text-teal-600 dark:text-teal-400">
+                <div className="mt-4 flex items-center gap-1 text-sm font-bold text-teal-700 dark:text-teal-400">
                   <span>Luyện tập ngay</span>
                   <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
                 </div>
@@ -428,7 +428,7 @@ export function DiagnosticResultTab() {
         </span>
         <Link
           href="/diagnostic"
-          className="inline-flex items-center gap-1.5 text-sm font-extrabold text-teal-600 hover:underline dark:text-teal-400"
+          className="inline-flex items-center gap-1.5 text-sm font-extrabold text-teal-700 hover:underline dark:text-teal-400"
         >
           <span>Xem lại toàn bộ bài làm</span>
           <ExternalLink size={13} />

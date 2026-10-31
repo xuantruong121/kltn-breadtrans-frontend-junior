@@ -84,7 +84,7 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
         )}
 
         {/* ── Deck Metadata ────────────────────────────────────────────── */}
-        <div className="mt-2.5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <div className="mt-2.5 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
           <span className="font-medium text-slate-600 dark:text-slate-400">
             Số lượng: <strong className="font-semibold text-slate-900 dark:text-slate-100">{topic.totalWords}</strong> từ
           </span>
@@ -93,7 +93,7 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
               {topic.needReviewCount} từ cần ôn
             </span>
           ) : (
-            <span className="text-sm text-slate-400">Sẵn sàng ôn luyện</span>
+            <span className="text-sm text-slate-600 dark:text-slate-400">Sẵn sàng ôn luyện</span>
           )}
         </div>
       </div>
@@ -101,11 +101,11 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
       {/* ── Bottom Section: Progress & CTA ──────────────────────────── */}
       <div className="mt-4 pt-3.5 border-t border-slate-100 dark:border-slate-800/80">
         <div className="mb-2 flex items-center justify-between text-xs">
-          <span className="font-medium text-slate-500 dark:text-slate-400">
+          <span className="font-medium text-slate-600 dark:text-slate-400">
             Tiến độ đã thuộc
           </span>
           <span className="font-bold text-slate-800 dark:text-slate-200">
-            {progress.progressText} <span className="font-normal text-slate-400">({progress.percentage}%)</span>
+            {progress.progressText} <span className="font-medium text-slate-600 dark:text-slate-400">({progress.percentage}%)</span>
           </span>
         </div>
 

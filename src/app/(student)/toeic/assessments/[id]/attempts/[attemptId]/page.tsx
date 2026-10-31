@@ -102,7 +102,7 @@ export default function ToeicAssessmentAttemptPage({
   }, [data?.status, client, id]);
   if (isLoading)
     return (
-      <main className="mx-auto max-w-4xl p-8 text-sm text-slate-500">
+      <main className="mx-auto max-w-4xl p-8 text-sm text-slate-600 dark:text-slate-400">
         Đang khôi phục tiến độ…
       </main>
     );
@@ -123,14 +123,14 @@ export default function ToeicAssessmentAttemptPage({
     <main className="mx-auto max-w-4xl space-y-6 px-5 py-10">
       <Link
         href={canonicalDetailPath ?? `/toeic/assessments/${id}`}
-        className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900"
+        className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400"
       >
         <ArrowLeft size={16} /> Chi tiết bài thi
       </Link>
       <section className="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-600">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-700 dark:text-orange-400">
               TIẾN ĐỘ BÀI THI
             </p>
             <h1 className="mt-2 text-3xl font-bold text-slate-900">
@@ -165,10 +165,10 @@ export default function ToeicAssessmentAttemptPage({
                   <p className="font-semibold text-slate-900">
                     {component.order}. {componentLabels[component.kind] ?? "Phần thi"}
                   </p>
-                  <p className="mt-1 text-xs font-medium text-slate-500">
+                  <p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-400">
                     {componentDetails[component.kind] ?? "Theo cấu trúc bài thi"}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
                     {done
                       ? "Phần này đã hoàn thành"
                       : component.status === "IN_PROGRESS"

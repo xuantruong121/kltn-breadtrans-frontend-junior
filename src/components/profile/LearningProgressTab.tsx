@@ -50,19 +50,19 @@ const SKILL_THEME: Record<
   },
   SPEAKING: {
     icon: Mic,
-    accentText: "text-teal-600 dark:text-teal-400",
+    accentText: "text-teal-700 dark:text-teal-400",
     accentBg: "bg-teal-50 dark:bg-teal-950/40 border-teal-100 dark:border-teal-900/60",
     progressBar: "bg-teal-600 dark:bg-teal-500",
   },
   READING: {
     icon: BookOpen,
-    accentText: "text-emerald-600 dark:text-emerald-400",
+    accentText: "text-emerald-700 dark:text-emerald-400",
     accentBg: "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-100 dark:border-emerald-900/60",
     progressBar: "bg-emerald-600 dark:bg-emerald-500",
   },
   WRITING: {
     icon: PenTool,
-    accentText: "text-rose-600 dark:text-rose-400",
+    accentText: "text-rose-700 dark:text-rose-400",
     accentBg: "bg-rose-50 dark:bg-rose-950/40 border-rose-100 dark:border-rose-900/60",
     progressBar: "bg-rose-600 dark:bg-rose-500",
   },
@@ -263,7 +263,7 @@ export function LearningProgressTab() {
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               Tiến độ học tập
             </h1>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
               Theo dõi quá trình học và tiếp tục từ nơi bạn đã dừng lại.
             </p>
           </div>
@@ -279,53 +279,53 @@ export function LearningProgressTab() {
       {/* 2. Overview Summary Strip */}
       <section aria-label="Tổng quan tiến độ" className="grid grid-cols-2 gap-3.5 sm:grid-cols-4">
         <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400">
             <span>Bài luyện đã hoàn thành</span>
             <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
           </div>
           <p className="mt-2 font-mono text-2xl font-bold text-slate-900 tabular-nums dark:text-white">
             {completedTotal}
           </p>
-          <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-400">
             Tổng bài luyện thuộc bốn kỹ năng
           </p>
         </div>
 
         <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400">
             <span>Chuỗi học</span>
             <Flame className="h-4 w-4 text-amber-500" />
           </div>
           <p className="mt-2 font-mono text-2xl font-bold text-slate-900 tabular-nums dark:text-white">
-            {streak} <span className="text-xs font-normal text-slate-500">ngày</span>
+            {streak} <span className="text-xs font-medium text-slate-500">ngày</span>
           </p>
-          <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-400">
             {streak > 0 ? "Duy trì đều đặn" : "Bắt đầu bài học hôm nay"}
           </p>
         </div>
 
         <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400">
             <span>Từ đã ghi nhớ</span>
             <Award className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </div>
           <p className="mt-2 font-mono text-2xl font-bold text-slate-900 tabular-nums dark:text-white">
             {masteredVocab}
           </p>
-          <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-400">
             Từ vựng qua bài ôn SRS
           </p>
         </div>
 
         <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400">
             <span>Học gần nhất</span>
             <Clock className="h-4 w-4 text-teal-600 dark:text-teal-400" />
           </div>
           <p className="mt-2 text-xl font-bold text-slate-900 dark:text-white">
             {latestDateDisplay}
           </p>
-          <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-400">
             Thời điểm tương tác cuối
           </p>
         </div>
@@ -340,7 +340,7 @@ export function LearningProgressTab() {
                 <span className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-100/70 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-blue-700 dark:border-blue-800 dark:bg-blue-900/60 dark:text-blue-300">
                   {resumableItem.badge}
                 </span>
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
                   Gợi ý tiếp theo
                 </span>
               </div>
@@ -388,7 +388,7 @@ export function LearningProgressTab() {
             <h2 id="skills-heading" className="text-base font-bold text-slate-900 dark:text-slate-100">
               Bốn kỹ năng cốt lõi
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-slate-600 dark:text-slate-400">
               Tổng hợp tiến độ và đánh giá năng lực thực tế qua các bài luyện.
             </p>
           </div>
@@ -418,7 +418,7 @@ export function LearningProgressTab() {
                         <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
                           {skill.title}
                         </h3>
-                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           {skill.categoryLabel}
                         </p>
                       </div>
@@ -436,7 +436,7 @@ export function LearningProgressTab() {
                       <p className="font-mono text-2xl font-bold tracking-tight text-slate-950 tabular-nums dark:text-white">
                         {metrics.primaryValue}
                       </p>
-                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                      <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
                         {metrics.primarySub}
                       </p>
                     </div>
@@ -461,8 +461,8 @@ export function LearningProgressTab() {
                   <div className="mt-3 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
                     <span className="font-medium">{metrics.scoreText}</span>
                     {skill.trend && skill.trend !== "INSUFFICIENT_DATA" && (
-                      <span className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                        <TrendingUp className="h-3 w-3 text-slate-400" />
+                      <span className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
+                        <TrendingUp className="h-3 w-3 text-slate-500" />
                         {skill.trend === "IMPROVING"
                           ? "Chiều hướng tăng"
                           : skill.trend === "DECLINING"
@@ -506,7 +506,7 @@ export function LearningProgressTab() {
                 >
                   Tiến độ khóa học
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-600 dark:text-slate-400">
                   Tiến độ bài học thực tế trong các khóa học bạn có quyền truy cập.
                 </p>
               </div>
@@ -539,7 +539,7 @@ export function LearningProgressTab() {
                             </span>
                           )}
                         </div>
-                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
+                        <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400 line-clamp-1">
                           {item.progress.completedLessons}/{item.progress.totalLessons} bài học đã hoàn thành
                         </p>
                       </div>
@@ -552,7 +552,7 @@ export function LearningProgressTab() {
                     </div>
 
                     <div className="mt-2.5">
-                      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+                      <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 mb-1">
                         <span>Hoàn thành</span>
                         <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
                           {item.progress.percentage}%
@@ -571,11 +571,11 @@ export function LearningProgressTab() {
               </div>
             ) : (
               <div className="mt-4 flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 p-6 text-center dark:border-slate-700">
-                <BookOpen className="h-8 w-8 text-slate-400" />
+                <BookOpen className="h-8 w-8 text-slate-500" />
                 <p className="mt-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
                   Bạn chưa có khóa học nào để theo dõi
                 </p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-sm">
+                <p className="mt-1 text-xs text-slate-600 dark:text-slate-400 max-w-sm">
                   Khám phá danh mục khóa học để bắt đầu một lộ trình học có cấu trúc.
                 </p>
                 <Link
@@ -604,7 +604,7 @@ export function LearningProgressTab() {
                 >
                   Hoạt động học tập
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-600 dark:text-slate-400">
                   Tất cả hoạt động học tập được ghi nhận trong 7 ngày gần nhất.
                 </p>
               </div>
@@ -639,7 +639,7 @@ export function LearningProgressTab() {
                     className={`text-xs font-semibold ${
                       day.isActive
                         ? "text-slate-900 dark:text-slate-100 font-bold"
-                        : "text-slate-400 dark:text-slate-500"
+                        : "text-slate-600 dark:text-slate-400"
                     }`}
                   >
                     {day.dayLabel}
@@ -649,7 +649,7 @@ export function LearningProgressTab() {
             </div>
           </div>
 
-          <p className="mt-4 text-xs font-medium text-slate-500 dark:text-slate-400 text-center border-t border-slate-100 pt-3 dark:border-slate-800">
+          <p className="mt-4 text-xs font-medium text-slate-600 dark:text-slate-400 text-center border-t border-slate-100 pt-3 dark:border-slate-800">
             {weeklyActivity.totalActivitiesThisWeek > 0
               ? `${weeklyActivity.totalActivitiesThisWeek} hoạt động trong tuần`
               : "Chưa có hoạt động học tập nào trong tuần này"}
@@ -672,14 +672,14 @@ export function LearningProgressTab() {
                 key={m.id}
                 className="flex items-start gap-3 rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900"
               >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
                   <CheckCircle2 className="h-4 w-4" />
                 </div>
                 <div>
                   <p className="text-xs font-bold text-slate-900 dark:text-slate-100">
                     {m.title}
                   </p>
-                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
                     {m.description}
                   </p>
                 </div>
@@ -704,7 +704,7 @@ export function LearningProgressTab() {
               Hoạt động gần đây
             </h2>
           </div>
-          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
             {groupedActivities.length} mốc hoạt động
           </span>
         </div>
@@ -728,12 +728,12 @@ export function LearningProgressTab() {
                       </span>
                     )}
                   </div>
-                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
                     {act.subject ? `${act.title} · ${act.detail}` : act.detail}
                   </p>
                 </div>
                 <time
-                  className="shrink-0 text-xs font-medium text-slate-400 dark:text-slate-500 font-mono"
+                  className="shrink-0 text-xs font-medium text-slate-600 dark:text-slate-400 font-mono"
                   dateTime={act.occurredAt}
                 >
                   {act.dateDisplay}
@@ -742,7 +742,7 @@ export function LearningProgressTab() {
             ))}
           </div>
         ) : (
-          <div className="mt-4 flex items-center gap-3 rounded-lg border border-dashed border-slate-200 p-4 text-xs font-medium text-slate-500 dark:border-slate-700 dark:text-slate-400">
+          <div className="mt-4 flex items-center gap-3 rounded-lg border border-dashed border-slate-200 p-4 text-xs font-medium text-slate-600 dark:border-slate-700 dark:text-slate-400">
             <Clock className="h-4 w-4" />
             <span>Hoạt động học tập của bạn sẽ xuất hiện tại đây sau khi hoàn thành bài luyện.</span>
           </div>

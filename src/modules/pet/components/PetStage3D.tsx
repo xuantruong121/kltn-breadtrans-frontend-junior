@@ -390,7 +390,7 @@ export const PetStage3D: React.FC<PetStage3DProps> = ({
                 <span className="bg-gradient-to-r from-slate-800 to-slate-900 text-white text-xs font-black px-3.5 py-1 rounded-full shadow-md border border-slate-700/60">
                   {currentStage.name}
                 </span>
-                <span className="text-xs font-extrabold text-slate-400">
+                <span className="text-xs font-extrabold text-slate-600 dark:text-slate-400">
                   Nhấp để vuốt ve & xoa đầu thú cưng!
                 </span>
               </div>
@@ -428,7 +428,7 @@ export const PetStage3D: React.FC<PetStage3DProps> = ({
 
             {/* EXP Progress Bar */}
             <div>
-              <div className="flex justify-between text-xs font-bold text-slate-500 mb-1">
+              <div className="flex justify-between text-xs font-bold text-slate-600 mb-1 dark:text-slate-400">
                 <span>Tiến trình cấp {petLevel}</span>
                 <span className="font-extrabold text-purple-600">
                   {currentLevelExp} / 1000 XP ({Math.round(progressPercent)}%)

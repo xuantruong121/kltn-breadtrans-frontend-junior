@@ -189,7 +189,7 @@ function ExerciseCard({
     <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 dark:border-slate-800 dark:bg-slate-900 shadow-xs">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-blue-600">
+          <p className="text-sm sm:text-sm font-bold uppercase tracking-wider text-blue-600">
             Bài tập {exercise.order}
           </p>
           <h3 className="mt-1.5 text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
@@ -483,7 +483,7 @@ export default function CourseLessonPage(props: {
   }, [data]);
   if (isLoading)
     return (
-      <div className="flex min-h-[60vh] items-center justify-center text-sm text-slate-500">
+      <div className="flex min-h-[60vh] items-center justify-center text-sm text-slate-600 dark:text-slate-400">
         Đang tải bài học...
       </div>
     );
@@ -523,7 +523,7 @@ export default function CourseLessonPage(props: {
       <div className="flex items-center justify-between">
         <Link
           href={`/my-courses/${courseId}`}
-          className="inline-flex items-center gap-2 text-base font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
+          className="inline-flex items-center gap-2 text-base font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
         >
           <ArrowLeft size={18} /> {course.title}
         </Link>
@@ -545,7 +545,7 @@ export default function CourseLessonPage(props: {
       >
         <article className="min-w-0 space-y-8">
           <header className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 lg:p-10 dark:border-slate-800 dark:bg-slate-900 shadow-xs">
-            <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-blue-600">
+            <p className="text-sm sm:text-sm font-bold uppercase tracking-[0.18em] text-blue-600">
               Bài {lesson.order} · {lesson.estimatedMinutes} phút
             </p>
             <h1 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15]">
@@ -556,7 +556,7 @@ export default function CourseLessonPage(props: {
             </p>
             {listValue(lesson.learningObjectives).length > 0 && (
               <div className="mt-6">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 dark:text-slate-500">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400">
                   <Target size={13} /> Mục tiêu
                 </div>
                 <p className="mt-1 text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
@@ -568,7 +568,7 @@ export default function CourseLessonPage(props: {
                       key={item}
                       className="flex items-start gap-2.5 text-base sm:text-lg text-slate-700 dark:text-slate-200 leading-relaxed"
                     >
-                      <span className="text-emerald-500 font-bold shrink-0">
+                      <span className="text-emerald-700 font-bold shrink-0 dark:text-emerald-400">
                         ✓
                       </span>
                       <span>{item}</span>
@@ -845,12 +845,12 @@ export default function CourseLessonPage(props: {
                             {item.term ?? "Từ vựng"}
                           </p>
                           {item.ipa && (
-                            <span className="font-mono text-sm text-slate-500 dark:text-slate-400">
+                            <span className="font-mono text-sm text-slate-600 dark:text-slate-400">
                               {item.ipa}
                             </span>
                           )}
                           {item.partOfSpeech && (
-                            <span className="text-sm italic text-slate-500 dark:text-slate-400">
+                            <span className="text-sm italic text-slate-600 dark:text-slate-400">
                               ({item.partOfSpeech})
                             </span>
                           )}
@@ -871,7 +871,7 @@ export default function CourseLessonPage(props: {
                           </p>
                         )}
                         {item.note && (
-                          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                             {item.note}
                           </p>
                         )}
@@ -927,7 +927,7 @@ export default function CourseLessonPage(props: {
         </article>
         <aside className="sticky top-24 hidden rounded-3xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 shadow-xs lg:block">
           <div className="mb-4 flex items-center justify-between">
-            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               {collapsed ? "" : "Danh sách bài học"}
             </span>
             <button

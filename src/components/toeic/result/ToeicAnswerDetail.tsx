@@ -139,7 +139,7 @@ export function ToeicAnswerBody({
         <div className="max-h-72 space-y-3 overflow-y-auto rounded-xl border border-slate-200 p-3 dark:border-slate-700">
           {splitPassageDocuments(question.passageText).map((doc, i) => (
             <div key={i}>
-              {doc.heading && <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{doc.heading}</p>}
+              {doc.heading && <p className="text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400">{doc.heading}</p>}
               <p className="whitespace-pre-line text-[15px] leading-relaxed text-slate-800 dark:text-slate-200">{doc.body}</p>
             </div>
           ))}

@@ -183,7 +183,7 @@ const CERTIFICATES: CertificateMeta[] = [
     ],
     roadmapDate: "Dự kiến: Quý 4/2026",
     theme: {
-      tabActiveBg: "bg-teal-600 text-white",
+      tabActiveBg: "bg-teal-700 text-white",
       badgeBg: "bg-teal-50 dark:bg-teal-950/60",
       badgeText: "text-teal-700 dark:text-teal-300",
       badgeBorder: "border-teal-200 dark:border-teal-800/60",
@@ -261,7 +261,7 @@ const CERTIFICATES: CertificateMeta[] = [
     ],
     roadmapDate: "Dự kiến: Quý 1/2027",
     theme: {
-      tabActiveBg: "bg-teal-600 text-white",
+      tabActiveBg: "bg-teal-700 text-white",
       badgeBg: "bg-teal-50 dark:bg-teal-950/60",
       badgeText: "text-teal-700 dark:text-teal-300",
       badgeBorder: "border-teal-200 dark:border-teal-800/60",
@@ -423,12 +423,12 @@ export default function ExamPracticeHubPage() {
 
       {/* Top Breadcrumb */}
       <div className="mb-4 pt-2 flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-semibold">
+        <div className="flex items-center gap-1.5 text-xs text-slate-600 font-semibold dark:text-slate-400">
           <Link href="/dashboard" className="hover:text-amber-800 transition-colors">
             Trang chủ học viên
           </Link>
           <ChevronRight size={13} />
-          <span className="text-slate-600 font-bold">Luyện đề thi chứng chỉ</span>
+          <span className="text-slate-600 dark:text-slate-300 font-bold">Luyện đề thi chứng chỉ</span>
         </div>
       </div>
 
@@ -455,7 +455,7 @@ export default function ExamPracticeHubPage() {
 
       {/* Certificate Selector Navigation (Interactive Tab Bar) */}
       <div className="mb-8 space-y-2.5">
-        <div className="flex items-center justify-between gap-4 text-xs font-semibold text-slate-500 dark:text-slate-400">
+        <div className="flex items-center justify-between gap-4 text-xs font-semibold text-slate-600 dark:text-slate-400">
           <span className="uppercase tracking-wider">Định dạng chứng chỉ</span>
           <span>
             {selectedCert === "ALL"
@@ -517,7 +517,7 @@ export default function ExamPracticeHubPage() {
                     className={`text-xs font-medium px-1.5 py-0.5 rounded ${
                       isSelected
                         ? "bg-white/20 text-white dark:bg-slate-950/20 dark:text-slate-950"
-                        : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500"
+                        : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
                     }`}
                   >
                     Dự kiến
@@ -553,7 +553,7 @@ export default function ExamPracticeHubPage() {
                   <span className="text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-md">
                     {selectedCertMeta.targetLevel}
                   </span>
-                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                  <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
                     Lộ trình: {selectedCertMeta.roadmapDate}
                   </span>
                 </div>
@@ -618,7 +618,7 @@ export default function ExamPracticeHubPage() {
                       key={idx}
                       className="flex items-center gap-2.5 text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 px-3 py-2 rounded-md border border-slate-200/60 dark:border-slate-800"
                     >
-                      <skill.icon size={14} className="text-slate-400 shrink-0" />
+                      <skill.icon size={14} className="text-slate-600 shrink-0 dark:text-slate-400" />
                       <span>{skill.label}</span>
                     </div>
                   ))}
@@ -704,7 +704,7 @@ export default function ExamPracticeHubPage() {
               <div className="relative mt-3 w-full shrink-0 sm:mt-0 sm:w-72">
                 <Search
                   size={16}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
                 />
                 <input
                   type="text"
@@ -733,7 +733,7 @@ export default function ExamPracticeHubPage() {
                         : "Đề thi TOEIC 4 kỹ năng"}
                 </span>
               </span>
-              <span className="hidden items-center gap-1.5 text-xs text-slate-500 sm:inline-flex dark:text-slate-400">
+              <span className="hidden items-center gap-1.5 text-xs text-slate-600 sm:inline-flex dark:text-slate-400">
                 <Clock size={13} />
                 <span>Bấm giờ tự động theo thời gian thực tế</span>
               </span>
@@ -830,7 +830,7 @@ export default function ExamPracticeHubPage() {
                                 <span>Đã hoàn thành</span>
                               </span>
                             ) : (
-                              <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
                                 Chưa làm
                               </span>
                             )}
@@ -840,7 +840,7 @@ export default function ExamPracticeHubPage() {
                           <h3 className="text-base font-bold text-slate-950 dark:text-slate-100 group-hover:text-amber-800 dark:group-hover:text-amber-400 transition-colors line-clamp-2 leading-snug">
                             {quiz.title}
                           </h3>
-                          <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2">
+                          <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400 line-clamp-2">
                             {cardDescription}
                           </p>
 
@@ -858,9 +858,9 @@ export default function ExamPracticeHubPage() {
                         </div>
 
                         {/* Bottom Row: Metadata & Button */}
-                        <div className="mt-5 pt-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
+                        <div className="mt-5 pt-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
                           <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                            <Clock size={13} className="text-slate-400" />
+                            <Clock size={13} className="text-slate-500" />
                             <span>{detailsLabel}</span>
                           </span>
 
@@ -901,7 +901,7 @@ export default function ExamPracticeHubPage() {
                     ? "Không tìm thấy đề thi phù hợp"
                     : "Chưa có đề thi nào trong danh mục này"}
                 </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+                <p className="text-sm text-slate-600 dark:text-slate-400 max-w-sm mx-auto">
                   {searchQuery
                     ? "Hãy thử tìm kiếm với từ khóa khác hoặc bỏ chọn bộ lọc."
                     : "Các bộ đề thi mới sẽ sớm được cập nhật trên hệ thống."}
@@ -937,10 +937,10 @@ export default function ExamPracticeHubPage() {
                       >
                         <div className="space-y-2">
                           <div className="flex items-center justify-between gap-2">
-                            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
                               {cert.code}
                             </span>
-                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+                            <span className="text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
                               {cert.roadmapDate}
                             </span>
                           </div>
@@ -949,7 +949,7 @@ export default function ExamPracticeHubPage() {
                             <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 leading-snug">
                               {cert.name}
                             </h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">
                               {cert.description}
                             </p>
                           </div>
@@ -965,7 +965,7 @@ export default function ExamPracticeHubPage() {
                               </span>
                             ))}
                             {cert.skills.length > 3 && (
-                              <span className="text-xs font-medium text-slate-400 bg-slate-50 dark:bg-slate-800/60 px-1.5 py-0.5 rounded">
+                              <span className="text-xs font-medium text-slate-600 bg-slate-50 dark:bg-slate-800/60 px-1.5 py-0.5 rounded dark:text-slate-400">
                                 +{cert.skills.length - 3}
                               </span>
                             )}

@@ -29,7 +29,7 @@ export const StudyFooter: React.FC<StudyFooterProps> = ({
     <footer className="w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800 py-3.5 px-4 sticky bottom-0 z-20">
       <div className="max-w-5xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-center sm:text-left">
         {/* Stage Counter Centered in muted text */}
-        <div className="text-xs font-bold text-slate-500 dark:text-slate-400">
+        <div className="text-xs font-bold text-slate-600 dark:text-slate-400">
           Chế độ {currentStageInfo.step}/4:{" "}
           <span className="text-slate-800 dark:text-slate-100 font-extrabold">{currentStageInfo.title}</span>
         </div>
@@ -38,17 +38,17 @@ export const StudyFooter: React.FC<StudyFooterProps> = ({
         <div className="flex items-center justify-center sm:justify-end gap-5 text-xs font-bold">
           <div className="flex items-center gap-1.5">
             <span className="size-2 rounded-full bg-sky-500" />
-            <span className="text-sky-600 dark:text-sky-400">{newCount} Từ mới</span>
+            <span className="text-sky-700 dark:text-sky-400">{newCount} Từ mới</span>
           </div>
 
           <div className="flex items-center gap-1.5">
             <span className="size-2 rounded-full bg-teal-500" />
-            <span className="text-teal-600 dark:text-teal-400">{learnedCount} Đã học</span>
+            <span className="text-teal-700 dark:text-teal-400">{learnedCount} Đã học</span>
           </div>
 
           <div className="flex items-center gap-1.5">
             <span className="size-2 rounded-full bg-orange-500" />
-            <span className="text-orange-500 dark:text-orange-400">{reviewCount} Ôn tập</span>
+            <span className="text-orange-700 dark:text-orange-400">{reviewCount} Ôn tập</span>
           </div>
         </div>
       </div>

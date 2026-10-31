@@ -142,7 +142,7 @@ export default function PetPage() {
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
               Thú Cưng Đồng Hành
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
               Chăm sóc thú cưng mỗi ngày để kích hoạt các hiệu ứng bổ trợ học tập
             </p>
           </div>
@@ -188,7 +188,7 @@ export default function PetPage() {
           <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
             Không thể tải thông tin thú cưng
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+          <p className="text-xs text-slate-600 dark:text-slate-400 max-w-md mx-auto">
             Đã có lỗi xảy ra khi kết nối tới máy chủ. Vui lòng kiểm tra lại đường truyền và thử lại.
           </p>
           <button
@@ -210,7 +210,7 @@ export default function PetPage() {
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
               Bạn chưa có thú cưng đồng hành
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
               Hãy chọn một người bạn 2D đồng hành để hỗ trợ quá trình học tập, tăng điểm kinh nghiệm và nhận các hiệu ứng bổ trợ thú vị.
             </p>
           </div>
@@ -248,7 +248,7 @@ export default function PetPage() {
                 <span className="font-bold text-amber-900 dark:text-amber-200 text-sm block">
                   {currentSpecies.buff}
                 </span>
-                <p className="text-xs text-amber-900/90 dark:text-amber-100/90 leading-relaxed font-normal">
+                <p className="text-xs text-amber-900/90 dark:text-amber-100/90 leading-relaxed font-medium">
                   {currentSpecies.buffDetail}
                 </p>
               </div>
@@ -260,7 +260,7 @@ export default function PetPage() {
                 <Award size={18} aria-hidden="true" />
                 <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">Truyền Thuyết Loài</h3>
               </div>
-              <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-normal">
+              <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-medium">
                 {currentSpecies.lore}
               </p>
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-xs italic leading-relaxed">
@@ -274,21 +274,21 @@ export default function PetPage() {
                 <Heart size={18} aria-hidden="true" />
                 <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">Quy Tắc Nuôi Dưỡng</h3>
               </div>
-              <ul className="text-xs text-slate-700 dark:text-slate-200 space-y-2.5 leading-relaxed font-normal">
+              <ul className="text-xs text-slate-700 dark:text-slate-200 space-y-2.5 leading-relaxed font-medium">
                 <li className="flex items-start gap-2">
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold select-none" aria-hidden="true">•</span>
+                  <span className="text-emerald-700 dark:text-emerald-400 font-bold select-none" aria-hidden="true">•</span>
                   <span>
                     Chi phí thay đổi theo lượt ăn trong ngày ({feedCost} Bánh Mì). Ba lượt đầu có thể nhận EXP; các lượt sau áp dụng hiệu quả giảm dần.
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold select-none" aria-hidden="true">•</span>
+                  <span className="text-emerald-700 dark:text-emerald-400 font-bold select-none" aria-hidden="true">•</span>
                   <span>
                     Pet chuyển từ đói sang no theo trạng thái thực tế; không có cooldown 24 giờ cố định.
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold select-none" aria-hidden="true">•</span>
+                  <span className="text-emerald-700 dark:text-emerald-400 font-bold select-none" aria-hidden="true">•</span>
                   <span>
                     Hoàn thành bài tập và luyện nghe nói hàng ngày để tích lũy thêm nhiều Bánh Mì.
                   </span>

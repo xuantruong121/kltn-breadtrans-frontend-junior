@@ -75,7 +75,7 @@ export function PracticeLoadingScreen({
       </h2>
 
       {/* Contextual secondary text by skill */}
-      <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400 sm:text-sm">
+      <p className="mt-1 text-xs font-semibold text-slate-600 dark:text-slate-400 sm:text-sm">
         {resolvedSecondaryText}
       </p>
 

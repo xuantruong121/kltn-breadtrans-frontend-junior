@@ -106,7 +106,7 @@ export const GrammarScreen: React.FC<GrammarScreenProps> = ({
         <h1 className="text-2xl font-black text-slate-800 dark:text-slate-100">
           Chưa có chủ đề ngữ pháp
         </h1>
-        <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
+        <p className="mt-2 text-sm font-medium text-slate-600 dark:text-slate-400">
           Nội dung sẽ xuất hiện khi quản trị viên thêm chủ đề vào hệ thống.
         </p>
       </div>
@@ -155,13 +155,13 @@ export const GrammarScreen: React.FC<GrammarScreenProps> = ({
                 className="text-slate-300 dark:text-slate-700"
                 aria-hidden="true"
               />
-              <p className="font-bold text-slate-500 dark:text-slate-400">
+              <p className="font-bold text-slate-600 dark:text-slate-400">
                 Không thể tải chi tiết bài học.
               </p>
               <button
                 type="button"
                 onClick={handleExitExercise}
-                className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 transition-colors cursor-pointer"
+                className="rounded-xl bg-emerald-700 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-800 transition-colors cursor-pointer"
               >
                 Quay lại danh mục
               </button>
@@ -188,7 +188,7 @@ export const GrammarScreen: React.FC<GrammarScreenProps> = ({
             Ngữ pháp tiếng Anh
           </h1>
         </div>
-        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
           Chọn một chủ đề, xem kiến thức trọng tâm và làm bài để lưu tiến độ thật của bạn.
         </p>
       </header>
@@ -221,10 +221,10 @@ export const GrammarScreen: React.FC<GrammarScreenProps> = ({
             <h2 className="line-clamp-1 text-base font-extrabold text-slate-800 dark:text-slate-100">
               {grammarDisplayTitle(topic.id, topic.title)}
             </h2>
-            <p className="mt-1 line-clamp-2 text-sm leading-5 text-slate-500 dark:text-slate-400">
+            <p className="mt-1 line-clamp-2 text-sm leading-5 text-slate-600 dark:text-slate-400">
               {topic.description || "Bài học và câu hỏi thực hành."}
             </p>
-            <div className="mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-3 text-xs font-bold text-slate-500 dark:text-slate-400">
+            <div className="mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-3 text-xs font-bold text-slate-600 dark:text-slate-400">
               <span>{topic.totalQuestions} câu hỏi</span>
               <span className="text-emerald-700 dark:text-emerald-400">
                 {topic.isCompleted

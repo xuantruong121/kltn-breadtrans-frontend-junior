@@ -26,7 +26,7 @@ export const CompletionCelebration: React.FC<CompletionCelebrationProps> = ({
       className="w-full max-w-xl mx-auto bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 sm:p-10 shadow-sm text-center space-y-6"
     >
       {/* Icon Badge */}
-      <div className="size-18 bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 rounded-3xl flex items-center justify-center mx-auto border border-sky-200/80 dark:border-sky-800/60 shadow-2xs">
+      <div className="size-18 bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-400 rounded-3xl flex items-center justify-center mx-auto border border-sky-200/80 dark:border-sky-800/60 shadow-2xs">
         <Trophy size={36} />
       </div>
 
@@ -35,7 +35,7 @@ export const CompletionCelebration: React.FC<CompletionCelebrationProps> = ({
         <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
           Hoàn Thành Lượt Học!
         </h2>
-        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+        <p className="text-sm font-medium text-slate-600 dark:text-slate-400 max-w-md mx-auto">
           Tuyệt vời! Bạn đã vượt qua tất cả các bước trong bài học từ vựng hôm nay.
         </p>
       </div>
@@ -43,7 +43,7 @@ export const CompletionCelebration: React.FC<CompletionCelebrationProps> = ({
       {/* KPI Stats Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
         <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 p-4 rounded-2xl text-center">
-          <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Tổng từ</p>
+          <p className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Tổng từ</p>
           <p className="text-2xl font-black text-slate-800 dark:text-slate-100 mt-1">{totalWordsCount}</p>
         </div>
 

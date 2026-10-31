@@ -97,7 +97,7 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({
             <span className={clsx("h-1.5 w-1.5 rounded-full", rarity.rarityDot)} />
             {rarity.label}
           </span>
-          <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
             {categoryLabel}
           </span>
         </div>
@@ -149,7 +149,7 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({
         <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 line-clamp-1 mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
           {product.name}
         </h3>
-        <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2 min-h-[34px] mb-3">
+        <p className="text-base leading-relaxed text-slate-700 dark:text-slate-300 line-clamp-2 min-h-12 mb-3">
           {product.description || "Vật phẩm phần thưởng được quản lý bởi hệ thống học tập BreadTrans."}
         </p>
       </div>
@@ -158,7 +158,7 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({
       <div className="pt-3.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-3">
         {/* Price */}
         <div className="flex flex-col">
-          <span className="text-xs uppercase tracking-wider font-medium text-slate-400 dark:text-slate-500">Giá</span>
+          <span className="text-xs uppercase tracking-wider font-medium text-slate-600 dark:text-slate-400">Giá</span>
           <span className="flex items-center gap-1 text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 leading-none">
             {product.price.toLocaleString("vi-VN")}
             <Wheat size={15} className="text-amber-500 dark:text-amber-400" aria-hidden="true" />
@@ -192,11 +192,11 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({
             onClick={() => onRedeem(product)}
             disabled={!isGuest && (isOutOfStock || !canAfford)}
             className={clsx(
-              "inline-flex h-10 items-center justify-center rounded-xl px-4 text-xs font-semibold transition",
+              "inline-flex h-10 items-center justify-center rounded-xl px-4 text-sm font-semibold transition",
               isGuest
                 ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-500/25 active:scale-[0.98] cursor-pointer"
                 : isOutOfStock || !canAfford
-                ? "bg-slate-100 text-slate-400 border border-slate-200/70 dark:bg-slate-800/40 dark:text-slate-500 dark:border-slate-800 cursor-not-allowed shadow-none"
+                ? "bg-slate-100 text-slate-600 border border-slate-200/70 dark:bg-slate-800/40 dark:text-slate-400 dark:border-slate-800 cursor-not-allowed shadow-none"
                 : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-500/25 active:scale-[0.98] cursor-pointer"
             )}
           >

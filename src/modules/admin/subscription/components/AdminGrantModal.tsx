@@ -116,7 +116,7 @@ export function AdminGrantModal({
             </div>
             <div>
               <h2 className="text-lg font-bold text-slate-900">Tặng gói cho học viên</h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Cấp quyền trực tiếp mà không qua cổng thanh toán.
               </p>
             </div>
@@ -124,7 +124,7 @@ export function AdminGrantModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 p-1 rounded-md cursor-pointer"
+            className="text-slate-600 hover:text-slate-600 p-1 rounded-md cursor-pointer dark:text-slate-400"
           >
             <X size={18} />
           </button>
@@ -140,7 +140,7 @@ export function AdminGrantModal({
           {/* Section 1: Learner Selection */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Học viên nhận gói <span className="text-rose-500">*</span>
+              Học viên nhận gói <span className="text-rose-700 dark:text-rose-400">*</span>
             </label>
             {activeStudent ? (
               <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl">
@@ -148,7 +148,7 @@ export function AdminGrantModal({
                   <p className="font-semibold text-slate-800">
                     {activeStudent.fullName || "Chưa đặt tên"}
                   </p>
-                  <p className="text-xs text-slate-500 font-mono">{activeStudent.email}</p>
+                  <p className="text-sm text-slate-600 font-mono dark:text-slate-400">{activeStudent.email}</p>
                 </div>
                 {!preselectedLearner && (
                   <button
@@ -166,7 +166,7 @@ export function AdminGrantModal({
             ) : (
               <div className="space-y-2">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 size-4" />
                   <input
                     type="text"
                     value={studentSearch}
@@ -175,7 +175,7 @@ export function AdminGrantModal({
                     className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                   {searchingLearners && (
-                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin size-4 text-slate-400" />
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin size-4 text-slate-500" />
                   )}
                 </div>
 
@@ -194,7 +194,7 @@ export function AdminGrantModal({
                               <p className="font-medium text-slate-800">
                                 {learner.fullName || "Chưa đặt tên"}
                               </p>
-                              <p className="text-xs text-slate-400 font-mono">{learner.email}</p>
+                              <p className="text-sm text-slate-600 font-mono dark:text-slate-400">{learner.email}</p>
                             </div>
                             {hasActive ? (
                               <span className="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
@@ -216,10 +216,10 @@ export function AdminGrantModal({
           {/* Section 2: Plan Selection */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Gói nâng cấp <span className="text-rose-500">*</span>
+              Gói nâng cấp <span className="text-rose-700 dark:text-rose-400">*</span>
             </label>
             {loadingPlans ? (
-              <div className="flex items-center gap-2 text-slate-400 py-2">
+              <div className="flex items-center gap-2 text-slate-600 py-2 dark:text-slate-400">
                 <Loader2 size={16} className="animate-spin" /> Đang tải danh sách gói...
               </div>
             ) : (
@@ -240,7 +240,7 @@ export function AdminGrantModal({
           {/* Section 3: Duration Presets */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Thời hạn cấp quyền <span className="text-rose-500">*</span>
+              Thời hạn cấp quyền <span className="text-rose-700 dark:text-rose-400">*</span>
             </label>
             <div className="grid grid-cols-4 gap-2 mb-2">
               {[7, 30, 90, 180].map((days) => (
@@ -287,7 +287,7 @@ export function AdminGrantModal({
           {/* Section 4: Reason (Audit requirement) */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Lý do tặng gói (Bắt buộc kiểm toán) <span className="text-rose-500">*</span>
+              Lý do tặng gói (Bắt buộc kiểm toán) <span className="text-rose-700 dark:text-rose-400">*</span>
             </label>
             <textarea
               required

@@ -93,7 +93,7 @@ export function PlanComparisonTable() {
           <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2">
             <span>So sánh chi tiết 3 gói dịch vụ</span>
           </h2>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
             Quyền lợi của từng gói
           </p>
         </div>
@@ -125,7 +125,7 @@ export function PlanComparisonTable() {
                   </th>
                   <th scope="col" className="p-4 sm:p-5 font-black text-slate-700 dark:text-slate-300 w-[24%] text-center">
                     <div className="text-sm font-black">BreadTrans Free</div>
-                    <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 block mt-0.5">
+                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mt-0.5">
                       0 ₫ / vĩnh viễn
                     </span>
                   </th>
@@ -137,7 +137,7 @@ export function PlanComparisonTable() {
                       Đề xuất
                     </span>
                     <div className="text-sm font-black">BreadTrans PLUS</div>
-                    <span className="text-xs font-bold text-amber-700/90 dark:text-amber-400 block mt-0.5">
+                    <span className="text-xs font-bold text-amber-700 dark:text-amber-400 block mt-0.5">
                       69.000 ₫ / 30 ngày
                     </span>
                   </th>
@@ -149,7 +149,7 @@ export function PlanComparisonTable() {
                       Đầy đủ quyền lợi
                     </span>
                     <div className="text-sm font-black">BreadTrans PRO</div>
-                    <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 block mt-0.5">
+                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mt-0.5">
                       149.000 ₫ / 30 ngày
                     </span>
                   </th>
@@ -162,7 +162,7 @@ export function PlanComparisonTable() {
                       <tr className="bg-slate-50/50 dark:bg-slate-850/40">
                         <td
                           colSpan={4}
-                          className="px-4 sm:px-5 py-2.5 text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500"
+                          className="px-4 sm:px-5 py-2.5 text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-400"
                         >
                           {feature.category}
                         </td>
@@ -180,7 +180,7 @@ export function PlanComparisonTable() {
                           feature.free ? (
                             <Check size={18} className="inline text-emerald-500" aria-label="Có" />
                           ) : (
-                            <Minus size={18} className="inline text-slate-300 dark:text-slate-600" aria-label="Không" />
+                            <Minus size={18} className="inline text-slate-300 dark:text-slate-400" aria-label="Không" />
                           )
                         ) : (
                           feature.free
@@ -193,7 +193,7 @@ export function PlanComparisonTable() {
                           feature.plus ? (
                             <Check size={18} className="inline text-amber-600 dark:text-amber-400" aria-label="Có" />
                           ) : (
-                            <Minus size={18} className="inline text-slate-300 dark:text-slate-600" aria-label="Không" />
+                            <Minus size={18} className="inline text-slate-300 dark:text-slate-400" aria-label="Không" />
                           )
                         ) : (
                           <span className="flex items-center justify-center gap-1.5">
@@ -209,7 +209,7 @@ export function PlanComparisonTable() {
                           feature.pro ? (
                             <Check size={18} className="inline text-blue-500 dark:text-blue-400" aria-label="Có" />
                           ) : (
-                            <Minus size={18} className="inline text-slate-300 dark:text-slate-600" aria-label="Không" />
+                            <Minus size={18} className="inline text-slate-300 dark:text-slate-400" aria-label="Không" />
                           )
                         ) : (
                           <span className="flex items-center justify-center gap-1.5">

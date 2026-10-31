@@ -193,7 +193,7 @@ export default function AdminDictionaryPage() {
           <Search
             size={18}
             aria-hidden="true"
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
           />
           <input
             value={query}
@@ -261,7 +261,7 @@ export default function AdminDictionaryPage() {
 
       {isLoading ? (
         <div className="flex justify-center py-20">
-          <Loader2 className="animate-spin text-slate-400" size={32} />
+          <Loader2 className="animate-spin text-slate-500" size={32} />
         </div>
       ) : (
         <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -289,7 +289,7 @@ export default function AdminDictionaryPage() {
                       <div className="min-w-0">
                         <p className="flex flex-wrap items-baseline gap-x-2 text-base font-semibold text-slate-950">
                           {entry.displayWord}
-                          <span className="text-sm font-normal text-slate-600">{entry.pos}</span>
+                          <span className="text-sm font-medium text-slate-600">{entry.pos}</span>
                           {(entry.audioUs || entry.audioUk) && (
                             <Volume2 size={14} aria-label="Có audio" className="self-center text-slate-500" />
                           )}

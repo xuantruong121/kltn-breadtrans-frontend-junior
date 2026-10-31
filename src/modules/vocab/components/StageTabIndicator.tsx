@@ -45,7 +45,7 @@ export const StageTabIndicator: React.FC<StageTabIndicatorProps> = ({
             }`}
             aria-current={isActive ? "step" : undefined}
           >
-            <Icon size={16} className={isActive ? "text-white" : "text-slate-400 dark:text-slate-500"} />
+            <Icon size={16} className={isActive ? "text-white" : "text-slate-600 dark:text-slate-400"} />
             <span>{stage.label}</span>
           </button>
         );

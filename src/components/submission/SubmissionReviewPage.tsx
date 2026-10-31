@@ -94,7 +94,7 @@ export default function SubmissionAnalyticsPage(props: {
             <h1 className="text-xl font-black text-slate-800 dark:text-slate-100 line-clamp-1">
               {analytics.quizTitle}
             </h1>
-            <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
+            <p className="text-sm font-bold text-slate-600 dark:text-slate-400">
               {exercise && exercise.total > 1
                 ? `Câu ${exercise.position}/${exercise.total} · Kết quả đã lưu`
                 : "Kết quả Writing đã lưu"}
@@ -105,12 +105,12 @@ export default function SubmissionAnalyticsPage(props: {
         <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">
+              <p className="text-xs font-black uppercase tracking-wide text-slate-600 dark:text-slate-400">
                 Điểm đánh giá
               </p>
-              <p className="text-4xl font-black text-emerald-600 dark:text-emerald-400">
+              <p className="text-4xl font-black text-emerald-700 dark:text-emerald-400">
                 {writingFeedback?.score ?? analytics.overallScore ?? "—"}
-                <span className="text-lg text-slate-400">
+                <span className="text-lg text-slate-600 dark:text-slate-400">
                   {writingFeedback ? ` / ${writingFeedback.maxScore}` : ""}
                 </span>
               </p>
@@ -157,7 +157,7 @@ export default function SubmissionAnalyticsPage(props: {
           )}
 
           <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 p-4">
-            <p className="text-xs font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            <p className="text-xs font-black uppercase tracking-wide text-slate-600 dark:text-slate-400">
               Bài đã nộp
             </p>
             <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-200">
@@ -263,7 +263,7 @@ export default function SubmissionAnalyticsPage(props: {
             <h1 className="text-xl font-black text-slate-800 dark:text-slate-100 line-clamp-1">
               {analytics.quizTitle}
             </h1>
-            <p className="text-xs font-bold text-slate-400 dark:text-slate-500">
+            <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
               Báo cáo kết quả & phân tích chi tiết đáp án
             </p>
           </div>
@@ -318,17 +318,17 @@ export default function SubmissionAnalyticsPage(props: {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                           <div className="p-3 bg-white dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <span className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase block mb-1">
+                            <span className="text-xs font-black text-slate-600 dark:text-slate-400 uppercase block mb-1">
                               Bạn đã trả lời:
                             </span>
                             <span
-                              className={`font-bold text-sm break-words block ${isCorrect ? "text-emerald-700 dark:text-emerald-300" : "text-rose-600 dark:text-rose-400 line-through"}`}
+                              className={`font-bold text-sm break-words block ${isCorrect ? "text-emerald-700 dark:text-emerald-300" : "text-rose-700 dark:text-rose-400 line-through"}`}
                             >
                               {formatReadingValue(result?.answer)}
                             </span>
                           </div>
                           <div className="p-3 bg-white dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <span className="text-xs font-black text-sky-600 dark:text-sky-400 uppercase block mb-1">
+                            <span className="text-xs font-black text-sky-700 dark:text-sky-400 uppercase block mb-1">
                               Đáp án chuẩn:
                             </span>
                             <span className="font-bold text-sm text-sky-800 dark:text-sky-200 break-words block">
@@ -337,7 +337,7 @@ export default function SubmissionAnalyticsPage(props: {
                                 : "Đáp án chuẩn chưa khả dụng"}
                             </span>
                             {q.content?.translation && (
-                              <span className="block mt-1.5 text-xs text-slate-500 dark:text-slate-400 italic break-words">
+                              <span className="block mt-1.5 text-xs text-slate-600 dark:text-slate-400 italic break-words">
                                 Dịch: {q.content.translation}
                               </span>
                             )}
@@ -380,7 +380,7 @@ export default function SubmissionAnalyticsPage(props: {
               <Trophy size={130} />
             </div>
 
-            <div className="w-16 h-16 bg-amber-100 dark:bg-amber-950/60 text-amber-500 dark:text-amber-400 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+            <div className="w-16 h-16 bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
               <Trophy size={32} />
             </div>
 
@@ -388,7 +388,7 @@ export default function SubmissionAnalyticsPage(props: {
               <h2 className="text-xl font-black text-slate-800 dark:text-slate-100">
                 Tổng Điểm Của Bạn
               </h2>
-              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-0.5">
                 {analytics.totalQuestions > 0 &&
                 analytics.totalCorrect === analytics.totalQuestions
                   ? "Bạn trả lời đúng tất cả các câu"
@@ -402,7 +402,7 @@ export default function SubmissionAnalyticsPage(props: {
                   className="text-sky-600 dark:text-sky-400 mb-1"
                   size={24}
                 />
-                <span className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">
+                <span className="text-xs font-black text-slate-600 dark:text-slate-400 uppercase">
                   Câu đúng
                 </span>
                 <span className="text-2xl font-black text-sky-700 dark:text-sky-300">
@@ -418,10 +418,10 @@ export default function SubmissionAnalyticsPage(props: {
                   className="text-emerald-500 dark:text-emerald-400 mb-1"
                   size={24}
                 />
-                <span className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">
+                <span className="text-xs font-black text-slate-600 dark:text-slate-400 uppercase">
                   Chính xác
                 </span>
-                <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                <span className="text-2xl font-black text-emerald-700 dark:text-emerald-400">
                   {analytics.overallAccuracyPercent}%
                 </span>
               </div>
@@ -429,7 +429,7 @@ export default function SubmissionAnalyticsPage(props: {
 
             {isReadingResult && analytics.categoriesBreakdown.length > 0 && (
               <div className="pt-3 text-left">
-                <p className="text-xs font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                <p className="text-xs font-black uppercase tracking-wide text-slate-600 dark:text-slate-400">
                   Kỹ năng con
                 </p>
                 <div className="mt-2 space-y-2">

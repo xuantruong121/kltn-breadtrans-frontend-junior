@@ -53,7 +53,7 @@ export function PracticeWritingDetail({ detail }: { detail: Detail }) {
                   <span className="rounded bg-rose-100 px-1 text-rose-800 line-through decoration-rose-500 dark:bg-rose-950/50 dark:text-rose-300">
                     {c.original}
                   </span>
-                  <span className="mx-2 text-slate-400" aria-hidden="true">
+                  <span className="mx-2 text-slate-600 dark:text-slate-400" aria-hidden="true">
                     →
                   </span>
                   <span className="sr-only">sửa thành</span>

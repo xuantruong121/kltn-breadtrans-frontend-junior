@@ -37,7 +37,7 @@ export const StudyTopHeader: React.FC<StudyTopHeaderProps> = ({
           <div className="flex items-center gap-1.5 xs:gap-2">
             <div className="text-xs font-bold text-slate-300 bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-lg whitespace-nowrap">
               <span className="text-sky-400 font-black">{learnedCount}</span>
-              <span className="text-slate-500">/{totalWordsCount} từ</span>
+              <span className="text-slate-300">/{totalWordsCount} từ</span>
             </div>
           </div>
         }
@@ -49,7 +49,7 @@ export const StudyTopHeader: React.FC<StudyTopHeaderProps> = ({
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 border border-slate-700 transition-colors cursor-pointer"
               title="Xem danh sách từ"
             >
-              <Eye size={14} className="text-slate-400" aria-hidden="true" />
+              <Eye size={14} className="text-slate-500" aria-hidden="true" />
               <span className="hidden sm:inline">Xem từ</span>
             </button>
 
@@ -60,7 +60,7 @@ export const StudyTopHeader: React.FC<StudyTopHeaderProps> = ({
                 className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 border border-slate-700 transition-colors cursor-pointer"
                 title="Chơi trò chơi ôn tập"
               >
-                <Gamepad2 size={14} className="text-slate-400" aria-hidden="true" />
+                <Gamepad2 size={14} className="text-slate-500" aria-hidden="true" />
                 <span className="hidden sm:inline">Chơi</span>
               </button>
             )}

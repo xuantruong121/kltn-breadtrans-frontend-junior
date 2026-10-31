@@ -134,12 +134,12 @@ export default function ArenaMatchRoom({
                 <h4 className="font-black text-base">
                   Đối thủ ({opponentDisconnected.disconnectedUserName}) đang mất kết nối!
                 </h4>
-                <p className="text-xs font-bold text-amber-100">
+                <p className="text-sm font-bold text-amber-100">
                   Hệ thống đang chờ đối thủ kết nối lại. Nếu quá thời gian, bạn sẽ tự động được xử thắng.
                 </p>
               </div>
             </div>
-            <div className="px-4 py-2 bg-white text-amber-600 rounded-xl font-black text-lg shrink-0 shadow-xs flex items-center gap-1.5">
+            <div className="px-4 py-2 bg-white text-amber-700 rounded-xl font-black text-lg shrink-0 shadow-xs flex items-center gap-1.5 dark:text-amber-400">
               <Clock size={18} /> {disconnectTimer}s
             </div>
           </motion.div>
@@ -164,8 +164,8 @@ export default function ArenaMatchRoom({
                 <span className="font-black text-slate-800 dark:text-slate-100 text-xs sm:text-lg truncate max-w-[70px] sm:max-w-[130px]">{myInfo.userName}</span>
                 <span className="text-xs bg-sky-500 text-white font-extrabold px-1.5 py-0.2 rounded shrink-0">BẠN</span>
               </div>
-              <p className="font-black text-sky-600 text-base sm:text-2xl tracking-tight">
-                {myProgress?.score || 0} <span className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">Điểm</span>
+              <p className="font-black text-sky-700 text-base sm:text-2xl tracking-tight dark:text-sky-400">
+                {myProgress?.score || 0} <span className="text-xs text-slate-600 dark:text-slate-400 font-bold uppercase">Điểm</span>
               </p>
             </div>
           </div>
@@ -178,8 +178,8 @@ export default function ArenaMatchRoom({
             <div
               className={`flex items-center gap-1 mt-1 sm:mt-2 text-xs font-black px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border transition-colors ${
                 timeLeft <= 3
-                  ? "bg-rose-50 border-rose-300 text-rose-600 animate-bounce"
-                  : "bg-amber-50 border-amber-200 text-amber-600"
+                  ? "bg-rose-50 border-rose-300 text-rose-700 animate-bounce dark:text-rose-400"
+                  : "bg-amber-50 border-amber-200 text-amber-700 dark:text-amber-400"
               }`}
             >
               <Clock size={12} /> {timeLeft}s
@@ -193,8 +193,8 @@ export default function ArenaMatchRoom({
                 <span className="text-xs bg-rose-100 text-rose-700 font-extrabold px-1.5 py-0.2 rounded shrink-0">ĐỐI THỦ</span>
                 <span className="font-black text-slate-800 dark:text-slate-100 text-xs sm:text-lg truncate max-w-[70px] sm:max-w-[130px]">{opponentInfo.userName}</span>
               </div>
-              <p className="font-black text-rose-500 text-base sm:text-2xl tracking-tight">
-                {opponentProgress?.score || 0} <span className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">Điểm</span>
+              <p className="font-black text-rose-700 text-base sm:text-2xl tracking-tight dark:text-rose-400">
+                {opponentProgress?.score || 0} <span className="text-xs text-slate-600 dark:text-slate-400 font-bold uppercase">Điểm</span>
               </p>
             </div>
             <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-2xl bg-rose-100 border-2 sm:border-3 border-rose-400 flex items-center justify-center text-lg sm:text-2xl font-black shadow-inner shrink-0">
@@ -210,7 +210,7 @@ export default function ArenaMatchRoom({
 
         {/* Live Race Progress Bar */}
         <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t-2 border-slate-100 dark:border-slate-800">
-          <div className="flex justify-between text-xs font-black text-slate-400 dark:text-slate-500 mb-1.5">
+          <div className="flex justify-between text-xs font-black text-slate-600 dark:text-slate-400 mb-1.5">
             <span>Bạn: {myProgress?.answered || 0}/{totalRounds}</span>
             <span className="bg-amber-100 text-amber-800 px-2 sm:px-2.5 py-0.5 rounded-full font-extrabold border border-amber-200 text-xs">
               Cược: {matchData.stake} <Wheat size={12} className="inline -mt-0.5" aria-label="Bánh Mì" />
@@ -247,7 +247,7 @@ export default function ArenaMatchRoom({
               <Flame size={14} /> Hiệp {roundIdx + 1} / {totalRounds}
             </span>
             {currentQ.ipa && (
-              <span className="text-slate-400 dark:text-slate-500 font-bold text-sm tracking-wider bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-xl">
+              <span className="text-slate-500 dark:text-slate-400 font-bold text-sm tracking-wider bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-xl">
                 /{currentQ.ipa}/
               </span>
             )}
@@ -330,7 +330,7 @@ export default function ArenaMatchRoom({
                   <span className="text-xs font-bold text-indigo-500">Chuẩn bị hiệp tiếp theo...</span>
                 </div>
                 {roundResult.explanation && (
-                  <p className="text-xs font-bold text-slate-600 dark:text-slate-300 leading-relaxed">
+                  <p className="text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed">
                     <b>Giải thích:</b> {roundResult.explanation}
                   </p>
                 )}
@@ -347,7 +347,7 @@ export default function ArenaMatchRoom({
             <Swords size={30} strokeWidth={2.25} className="text-amber-700" aria-hidden="true" />
           </div>
           <h3 className="text-2xl font-black text-slate-800 dark:text-slate-100">Trận Đấu Đang Khởi Động</h3>
-          <p className="text-sm font-bold text-slate-400 dark:text-slate-500">
+          <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
             Hệ thống đang chuẩn bị câu hỏi và đồng bộ đồng hồ thi đấu với đối thủ...
           </p>
         </div>
@@ -378,7 +378,7 @@ export default function ArenaMatchRoom({
                 <h2 className="text-3xl font-black text-slate-800 dark:text-slate-100">
                   {isMeWinner ? "CHIẾN THẮNG!" : isDraw ? "HÒA NHAU!" : "THUA CUỘC!"}
                 </h2>
-                <p className="font-bold text-slate-400 dark:text-slate-500 text-sm mt-1">
+                <p className="font-bold text-slate-600 dark:text-slate-400 text-sm mt-1">
                   {isMeWinner
                     ? matchResult.isForfeit
                       ? `Đối thủ đã bỏ cuộc sau 15s mất mạng. Bạn giành chiến thắng!`
@@ -391,15 +391,15 @@ export default function ArenaMatchRoom({
 
               <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 flex items-center justify-around">
                 <div>
-                  <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Điểm của bạn</span>
-                  <p className="text-2xl font-black text-sky-600">
+                  <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Điểm của bạn</span>
+                  <p className="text-2xl font-black text-sky-700 dark:text-sky-400">
                     {isPlayer1 ? matchResult.p1.score : matchResult.p2.score}
                   </p>
                 </div>
                 <div className="h-10 w-0.5 bg-amber-200" />
                 <div>
-                  <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Bánh Mì</span>
-                  <p className="text-2xl font-black text-amber-600">
+                  <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Bánh Mì</span>
+                  <p className="text-2xl font-black text-amber-700 dark:text-amber-400">
                     <span className="inline-flex items-center gap-1">
                       {isMeWinner ? `+${matchResult.reward}` : isDraw ? `Hoàn cược` : `-${matchData.stake}`}
                       {!isDraw && <Wheat size={20} strokeWidth={2.25} aria-label="Bánh Mì" />}

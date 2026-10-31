@@ -93,7 +93,7 @@ export default function ToeicExamDetailShell({
             <div className="flex flex-wrap items-center justify-between gap-3">
               <Link
                 href={backHref}
-                className="inline-flex items-center gap-1.5 text-sm sm:text-base font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm sm:text-base font-semibold text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
               >
                 <ArrowLeft size={16} /> {backLabel}
               </Link>
@@ -118,7 +118,7 @@ export default function ToeicExamDetailShell({
                   {structureHeading}
                 </h2>
                 {structureSubtitle && (
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
                     {structureSubtitle}
                   </p>
                 )}
@@ -147,7 +147,7 @@ export default function ToeicExamDetailShell({
                       </h3>
                     )}
                     {section.measure && (
-                      <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                      <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
                         {section.measure}
                       </span>
                     )}
@@ -162,7 +162,7 @@ export default function ToeicExamDetailShell({
                       <span className="font-medium text-slate-800 dark:text-slate-200">
                         {item.label}
                         {item.meta && (
-                          <span className="mt-0.5 block text-sm font-normal text-slate-500 dark:text-slate-400">
+                          <span className="mt-0.5 block text-sm font-medium text-slate-600 dark:text-slate-400">
                             {item.meta}
                           </span>
                         )}
@@ -203,7 +203,7 @@ export default function ToeicExamDetailShell({
                       key={row.label}
                       className="flex items-start justify-between py-2.5"
                     >
-                      <dt className="text-slate-500 dark:text-slate-400">
+                      <dt className="text-slate-600 dark:text-slate-400">
                         {row.label}
                       </dt>
                       <dd
@@ -242,7 +242,7 @@ export default function ToeicExamDetailShell({
             {ctaError && (
               <p
                 role="alert"
-                className="text-center text-sm font-semibold text-rose-600 dark:text-rose-400"
+                className="text-center text-sm font-semibold text-rose-700 dark:text-rose-400"
               >
                 {ctaError}
               </p>

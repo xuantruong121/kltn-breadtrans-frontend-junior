@@ -303,7 +303,7 @@ export default function AdminQuizzesPage() {
           </div>
           <div>
             <h1 className="text-4xl font-black text-slate-800 tracking-tight">Quản lý Đề thi</h1>
-            <p className="text-slate-400 font-bold text-sm mt-1">
+            <p className="text-slate-600 font-bold text-sm mt-1 dark:text-slate-400">
               Quản lý các đề thi TOEIC, Luyện Nghe, Đọc Song Ngữ và Đề kiểm tra
             </p>
           </div>
@@ -311,7 +311,7 @@ export default function AdminQuizzesPage() {
 
         <button
           onClick={handleOpenCreate}
-          className="px-6 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black flex items-center gap-2 shadow-sm active:translate-y-1 active:shadow-none transition-all cursor-pointer"
+          className="px-6 py-3.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl font-black flex items-center gap-2 shadow-sm active:translate-y-1 active:shadow-none transition-all cursor-pointer"
         >
           <Plus size={20} /> Tạo đề thi mới
         </button>
@@ -326,7 +326,7 @@ export default function AdminQuizzesPage() {
             ["Lượt nộp bài", listeningAnalytics.totals.submissions],
           ].map(([label, value]) => (
             <div key={String(label)} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{label}</p>
+              <p className="text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400">{label}</p>
               <p className="mt-1 text-2xl font-black text-slate-800">{value}</p>
             </div>
           ))}
@@ -353,7 +353,7 @@ export default function AdminQuizzesPage() {
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden p-6 md:p-8 space-y-6">
         <div className="flex flex-col md:flex-row items-center gap-4">
           <div className="relative flex-1 w-full">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
             <input
               type="text"
               value={searchTerm}
@@ -370,7 +370,7 @@ export default function AdminQuizzesPage() {
                   setSearchTerm("");
                   setCurrentPage(1);
                 }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600 dark:text-slate-400"
               >
                 <X size={16} />
               </button>
@@ -402,7 +402,7 @@ export default function AdminQuizzesPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b-2 border-slate-100 bg-slate-50 text-slate-400 text-xs uppercase font-black tracking-wider">
+                <tr className="border-b-2 border-slate-100 bg-slate-50 text-slate-600 text-xs uppercase font-black tracking-wider dark:text-slate-400">
                   <th className="py-4 px-6 rounded-l-2xl">Mã Đề</th>
                   <th className="py-4 px-6">Tên Đề Thi</th>
                   <th className="py-4 px-6">Thể Loại</th>
@@ -419,12 +419,12 @@ export default function AdminQuizzesPage() {
 
                   return (
                     <tr key={quiz.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-4 px-6 font-mono text-slate-400 font-black">#{quiz.id}</td>
+                      <td className="py-4 px-6 font-mono text-slate-600 font-black dark:text-slate-400">#{quiz.id}</td>
                       <td className="py-4 px-6">
                         <div>
                           <span className="font-black text-slate-800 text-base block">{quiz.title}</span>
                           {quiz.description && (
-                            <span className="text-xs font-medium text-slate-400 line-clamp-1">
+                            <span className="text-xs font-medium text-slate-600 line-clamp-1 dark:text-slate-400">
                               {quiz.description}
                             </span>
                           )}
@@ -469,7 +469,7 @@ export default function AdminQuizzesPage() {
                           <button
                             onClick={() => setSelectedQuizForQuestions(quiz)}
                             title="Xem & Quản lý danh sách câu hỏi"
-                            className="p-2.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-all font-black text-xs flex items-center gap-1 border border-emerald-200 cursor-pointer"
+                            className="p-2.5 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-all font-black text-xs flex items-center gap-1 border border-emerald-200 cursor-pointer dark:text-emerald-400"
                           >
                             <Eye size={16} /> Câu hỏi
                           </button>
@@ -487,7 +487,7 @@ export default function AdminQuizzesPage() {
                           <button
                             onClick={() => setDeleteQuizTarget(quiz)}
                             title="Xóa đề thi"
-                            className="p-2.5 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-all border border-rose-200 cursor-pointer"
+                            className="p-2.5 text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-xl transition-all border border-rose-200 cursor-pointer dark:text-rose-400"
                           >
                             <Trash2 size={16} />
                           </button>
@@ -515,10 +515,10 @@ export default function AdminQuizzesPage() {
             </div>
           </div>
         ) : (
-          <div className="text-center py-16 text-slate-400 font-bold border-2 border-dashed border-slate-200 rounded-xl">
+          <div className="text-center py-16 text-slate-600 font-bold border-2 border-dashed border-slate-200 rounded-xl dark:text-slate-400">
             <FileQuestion size={48} className="mx-auto text-slate-300 mb-3" />
             <p className="text-slate-600 font-black text-lg">Không tìm thấy đề thi nào</p>
-            <p className="text-sm text-slate-400 mt-1">Hãy thử tìm kiếm với từ khóa khác hoặc bấm nút "Tạo đề thi mới".</p>
+            <p className="text-sm text-slate-500 mt-1">Hãy thử tìm kiếm với từ khóa khác hoặc bấm nút "Tạo đề thi mới".</p>
           </div>
         )}
       </div>
@@ -540,7 +540,7 @@ export default function AdminQuizzesPage() {
                 </h3>
                 <button
                   onClick={() => setIsQuizModalOpen(false)}
-                  className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100"
+                  className="p-2 text-slate-600 hover:text-slate-600 rounded-xl hover:bg-slate-100 dark:text-slate-400"
                 >
                   <X size={20} />
                 </button>
@@ -558,7 +558,7 @@ export default function AdminQuizzesPage() {
                 className="space-y-4 font-bold text-sm"
               >
                 <div>
-                  <label className="block text-slate-600 mb-1.5">Tên đề thi <span className="text-rose-500">*</span></label>
+                  <label className="block text-slate-600 mb-1.5">Tên đề thi <span className="text-rose-700 dark:text-rose-400">*</span></label>
                   <input
                     type="text"
                     required
@@ -613,7 +613,7 @@ export default function AdminQuizzesPage() {
                   <button
                     type="button"
                     onClick={() => setIsQuizModalOpen(false)}
-                    className="px-5 py-2.5 rounded-xl text-slate-500 font-black hover:bg-slate-100"
+                    className="px-5 py-2.5 rounded-xl text-slate-600 font-black hover:bg-slate-100 dark:text-slate-400"
                   >
                     Hủy bỏ
                   </button>
@@ -642,15 +642,15 @@ export default function AdminQuizzesPage() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-white rounded-xl border border-rose-200 shadow-2xl p-6 md:p-8 max-w-md w-full space-y-5 text-center"
             >
-              <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center mx-auto">
+              <div className="w-16 h-16 bg-rose-100 text-rose-700 rounded-xl flex items-center justify-center mx-auto dark:text-rose-400">
                 <AlertTriangle size={32} />
               </div>
 
               <div>
                 <h3 className="text-2xl font-black text-slate-800">Xóa Đề Thi?</h3>
-                <p className="text-slate-500 text-sm font-bold mt-2">
+                <p className="text-slate-600 text-sm font-bold mt-2 dark:text-slate-400">
                   Bạn có chắc chắn muốn xóa đề thi{" "}
-                  <span className="text-rose-600 font-black">"{deleteQuizTarget.title}"</span> (#
+                  <span className="text-rose-700 font-black dark:text-rose-400">"{deleteQuizTarget.title}"</span> (#
                   {deleteQuizTarget.id})? Toàn bộ câu hỏi và lịch sử làm bài của học sinh liên quan sẽ bị xóa vĩnh viễn.
                 </p>
               </div>
@@ -659,7 +659,7 @@ export default function AdminQuizzesPage() {
                 <button
                   type="button"
                   onClick={() => setDeleteQuizTarget(null)}
-                  className="px-5 py-2.5 rounded-xl font-black text-slate-500 hover:bg-slate-100"
+                  className="px-5 py-2.5 rounded-xl font-black text-slate-600 hover:bg-slate-100 dark:text-slate-400"
                 >
                   Không, giữ lại
                 </button>
@@ -691,7 +691,7 @@ export default function AdminQuizzesPage() {
               {/* HEADER */}
               <div className="flex items-center justify-between border-b-2 border-slate-100 pb-4 shrink-0">
                 <div>
-                  <span className="text-xs font-black uppercase text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+                  <span className="text-xs font-black uppercase text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200 dark:text-emerald-400">
                     Đề thi #{selectedQuizForQuestions.id} - {quizTypeLabel(selectedQuizForQuestions.type)}
                   </span>
                   <h3 className="text-2xl font-black text-slate-800 mt-1">
@@ -700,7 +700,7 @@ export default function AdminQuizzesPage() {
                 </div>
                 <button
                   onClick={() => setSelectedQuizForQuestions(null)}
-                  className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 cursor-pointer"
+                  className="p-2 text-slate-600 hover:text-slate-600 rounded-xl hover:bg-slate-100 cursor-pointer dark:text-slate-400"
                 >
                   <X size={24} />
                 </button>
@@ -711,7 +711,7 @@ export default function AdminQuizzesPage() {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <h4 className="text-sm font-black text-slate-800">Audio production toàn bài</h4>
-                      <p className="mt-1 text-xs text-slate-600">Tạo bản nghe thử, kiểm tra mốc thời gian rồi duyệt và phát hành. Học viên chỉ nghe bản đã phát hành.</p>
+                      <p className="mt-1 text-sm text-slate-600">Tạo bản nghe thử, kiểm tra mốc thời gian rồi duyệt và phát hành. Học viên chỉ nghe bản đã phát hành.</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <button type="button" onClick={() => listeningAudioAction.mutate({ action: "validate" })} disabled={listeningAudioAction.isPending} className="min-h-10 rounded-lg border border-sky-300 bg-white px-3 text-xs font-black text-sky-700 hover:bg-sky-100 disabled:opacity-50">Kiểm tra nội dung</button>
@@ -723,13 +723,13 @@ export default function AdminQuizzesPage() {
                       <div key={artifact.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white bg-white px-3 py-2 text-xs">
                         <div className="min-w-0">
                           <span className="font-black text-slate-800">v{artifact.version} · {artifact.isStale ? "STALE" : artifact.status}</span>
-                          <span className="ml-2 text-slate-500">{artifact.durationMs ? `${Math.round(artifact.durationMs / 1000)}s` : "Chưa có thời lượng"}</span>
-                          <p className="truncate text-xs text-slate-500">Hash: {artifact.synthesisHash?.slice(0, 16) || "—"} · {artifact.r2Key || "Chưa có R2 object"}</p>
-                          {artifact.isStale && <p className="mt-1 text-xs font-bold text-amber-700">Nội dung đã đổi; cần tạo và duyệt bản audio mới.</p>}
+                          <span className="ml-2 text-slate-600 dark:text-slate-400">{artifact.durationMs ? `${Math.round(artifact.durationMs / 1000)}s` : "Chưa có thời lượng"}</span>
+                          <p className="truncate text-sm text-slate-600 dark:text-slate-400">Hash: {artifact.synthesisHash?.slice(0, 16) || "—"} · {artifact.r2Key || "Chưa có R2 object"}</p>
+                          {artifact.isStale && <p className="mt-1 text-sm font-bold text-amber-700">Nội dung đã đổi; cần tạo và duyệt bản audio mới.</p>}
                         </div>
                         <div className="flex shrink-0 gap-2">
                           {artifact.status === "PREVIEW_READY" && <button type="button" onClick={() => listeningAudioAction.mutate({ action: "approve", artifactId: artifact.id })} disabled={listeningAudioAction.isPending} className="min-h-9 rounded-lg border border-emerald-300 px-2.5 font-black text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">Duyệt</button>}
-                          {artifact.status === "APPROVED" && <button type="button" onClick={() => listeningAudioAction.mutate({ action: "publish", artifactId: artifact.id })} disabled={listeningAudioAction.isPending} className="min-h-9 rounded-lg bg-emerald-600 px-2.5 font-black text-white hover:bg-emerald-700 disabled:opacity-50">Phát hành</button>}
+                          {artifact.status === "APPROVED" && <button type="button" onClick={() => listeningAudioAction.mutate({ action: "publish", artifactId: artifact.id })} disabled={listeningAudioAction.isPending} className="min-h-9 rounded-lg bg-emerald-700 px-2.5 font-black text-white hover:bg-emerald-800 disabled:opacity-50">Phát hành</button>}
                           {artifact.r2Url && <a href={artifact.r2Url} target="_blank" rel="noreferrer" className="inline-flex min-h-9 items-center rounded-lg border border-slate-200 px-2.5 font-black text-slate-600 hover:bg-slate-50">Mở audio</a>}
                         </div>
                         {artifact.r2Url && (
@@ -776,7 +776,7 @@ export default function AdminQuizzesPage() {
                           </div>
                         )}
                       </div>
-                    )) : <p className="text-xs text-slate-500">Chưa có bản audio. Hãy kiểm tra nội dung trước khi tạo bản nghe thử.</p>}
+                    )) : <p className="text-sm text-slate-600 dark:text-slate-400">Chưa có bản audio. Hãy kiểm tra nội dung trước khi tạo bản nghe thử.</p>}
                   </div>
                 </section>
               )}
@@ -816,7 +816,7 @@ export default function AdminQuizzesPage() {
                           <button
                             onClick={() => deleteQuestionMutation.mutate(q.id)}
                             title="Xóa câu hỏi này"
-                            className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                            className="p-2 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all dark:text-slate-400"
                           >
                             <Trash2 size={16} />
                           </button>
@@ -834,10 +834,10 @@ export default function AdminQuizzesPage() {
                           <div className="rounded-xl border border-sky-200 bg-sky-50/70 p-3">
                             <div className="flex flex-wrap items-center justify-between gap-2">
                               <div>
-                                <p className="text-xs font-black text-sky-900">
+                                <p className="text-sm font-black text-sky-900">
                                   Hội thoại {content.transcriptSegments.length} lượt lời
                                 </p>
-                                <p className="mt-1 text-xs text-sky-800">
+                                <p className="mt-1 text-sm text-sky-800">
                                   {Array.from(new Set(content.transcriptSegments.map((segment: any) => segment.speaker).filter(Boolean))).join(" · ")}
                                 </p>
                               </div>
@@ -857,7 +857,7 @@ export default function AdminQuizzesPage() {
                                   <span className="font-black text-sky-800">{segment.speaker}:</span> {segment.text}
                                 </p>
                               ))}
-                              {content.transcriptSegments.length > 3 && <p className="text-slate-500">… và {content.transcriptSegments.length - 3} lượt lời khác</p>}
+                              {content.transcriptSegments.length > 3 && <p className="text-slate-600 dark:text-slate-400">… và {content.transcriptSegments.length - 3} lượt lời khác</p>}
                             </div>
                           </div>
                         )}
@@ -879,7 +879,7 @@ export default function AdminQuizzesPage() {
                             />
                           </label>
                           {q.audioAssets?.[0] && (
-                            <span className="text-xs text-slate-500">
+                            <span className="text-xs text-slate-600 dark:text-slate-400">
                               Phiên bản v{q.audioAssets[0].version} đang hoạt động
                             </span>
                           )}
@@ -900,7 +900,7 @@ export default function AdminQuizzesPage() {
                             </button>
                           </div>
                           {q.diagnosticClips?.length > 0 && (
-                            <p className="mt-1 text-xs text-slate-600">Đã gắn {q.diagnosticClips.length} clip</p>
+                            <p className="mt-1 text-sm text-slate-600">Đã gắn {q.diagnosticClips.length} clip</p>
                           )}
                           {diagnosticClipQuestionId === q.id && (
                             <form
@@ -940,7 +940,7 @@ export default function AdminQuizzesPage() {
                                 >
                                   <span
                                     className={`w-5 h-5 rounded-md flex items-center justify-center text-xs font-black ${
-                                      isCorrect ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-500"
+                                      isCorrect ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-600 dark:text-slate-400"
                                     }`}
                                   >
                                     {String.fromCharCode(65 + optIdx)}
@@ -954,7 +954,7 @@ export default function AdminQuizzesPage() {
                         )}
 
                         {readingAnswer && !readingAnswer.available && (
-                          <p className="text-xs font-black text-rose-600">
+                          <p className="text-sm font-black text-rose-700 dark:text-rose-400">
                             Đáp án chưa hợp lệ: {readingAnswer.reason}
                           </p>
                         )}
@@ -970,7 +970,7 @@ export default function AdminQuizzesPage() {
                     );
                   })
                 ) : (
-                  <div className="text-center py-12 text-slate-400 font-bold border-2 border-dashed border-slate-200 rounded-2xl">
+                  <div className="text-center py-12 text-slate-600 font-bold border-2 border-dashed border-slate-200 rounded-2xl dark:text-slate-400">
                     Đề thi này chưa có câu hỏi nào. Bạn có thể thêm câu hỏi nhanh ở form bên dưới.
                   </div>
                 )}
@@ -1124,7 +1124,7 @@ function QuickAddQuestionForm({
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="w-full py-3 bg-slate-50 hover:bg-emerald-50 text-emerald-600 hover:text-emerald-700 font-black rounded-2xl border-2 border-dashed border-emerald-300 flex items-center justify-center gap-2 transition-all cursor-pointer text-sm"
+        className="w-full py-3 bg-slate-50 hover:bg-emerald-50 text-emerald-700 hover:text-emerald-700 font-black rounded-2xl border-2 border-dashed border-emerald-300 flex items-center justify-center gap-2 transition-all cursor-pointer text-sm dark:text-emerald-400"
       >
         <Plus size={18} /> Thêm câu hỏi mới vào đề
       </button>
@@ -1135,7 +1135,7 @@ function QuickAddQuestionForm({
     <form onSubmit={handleSubmit} className="bg-slate-50 border-2 border-emerald-200 rounded-2xl p-4 space-y-3 text-xs font-bold">
       <div className="flex items-center justify-between">
         <h4 className="font-black text-slate-800 text-sm text-emerald-700">Thêm câu hỏi mới</h4>
-        <button type="button" onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-slate-600">
+        <button type="button" onClick={() => setIsOpen(false)} className="text-slate-600 hover:text-slate-600 dark:text-slate-400">
           <X size={16} />
         </button>
       </div>
@@ -1166,7 +1166,7 @@ function QuickAddQuestionForm({
 
       {quizType === "LISTENING_PRACTICE" && practiceKind !== "DIALOGUE" && (
         <div>
-          <label className="block text-slate-600 mb-1">Nội dung audio / đáp án nghe chép <span className="text-rose-500">*</span></label>
+          <label className="block text-slate-600 mb-1">Nội dung audio / đáp án nghe chép <span className="text-rose-700 dark:text-rose-400">*</span></label>
           <textarea value={audioText} onChange={(e) => setAudioText(e.target.value)} rows={2} placeholder="Văn bản dùng để phát TTS hoặc đáp án chuẩn..." className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-800" />
         </div>
       )}
@@ -1176,7 +1176,7 @@ function QuickAddQuestionForm({
           <div className="flex items-center justify-between gap-2">
             <div>
               <label className="block text-slate-700">Các lượt lời trong hội thoại</label>
-              <p className="mt-0.5 text-xs font-normal text-slate-500">Nhập lời thoại tiếng Anh; bản dịch chỉ dùng để hiển thị transcript song ngữ.</p>
+              <p className="mt-0.5 text-sm font-medium text-slate-600 dark:text-slate-400">Nhập lời thoại tiếng Anh; bản dịch chỉ dùng để hiển thị transcript song ngữ.</p>
             </div>
             <button
               type="button"
@@ -1214,7 +1214,7 @@ function QuickAddQuestionForm({
                 disabled={dialogueSegments.length <= 2}
                 onClick={() => setDialogueSegments((segments) => segments.filter((_, itemIndex) => itemIndex !== index))}
                 aria-label={`Xóa lượt lời ${index + 1}`}
-                className="min-h-10 rounded-lg px-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-30"
+                className="min-h-10 rounded-lg px-2 text-slate-500 hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-30"
               >
                 <Trash2 size={14} />
               </button>
@@ -1226,7 +1226,7 @@ function QuickAddQuestionForm({
       {quizType === "BILINGUAL_READING" && (
         <div className="space-y-2 rounded-xl border border-emerald-200 bg-emerald-50/60 p-3">
           <label className="block text-slate-600">
-            Đoạn đọc <span className="text-rose-500">*</span>
+            Đoạn đọc <span className="text-rose-700 dark:text-rose-400">*</span>
             <textarea
               required
               value={passage}
@@ -1237,7 +1237,7 @@ function QuickAddQuestionForm({
             />
           </label>
           <label className="block text-slate-600">
-            Kỹ năng đọc (micro-skill) <span className="text-rose-500">*</span>
+            Kỹ năng đọc (micro-skill) <span className="text-rose-700 dark:text-rose-400">*</span>
             <select
               value={microSkill}
               onChange={(e) => setMicroSkill(e.target.value as typeof microSkill)}
@@ -1252,7 +1252,7 @@ function QuickAddQuestionForm({
       )}
 
       <div>
-        <label className="block text-slate-600 mb-1">Nội dung câu hỏi <span className="text-rose-500">*</span></label>
+        <label className="block text-slate-600 mb-1">Nội dung câu hỏi <span className="text-rose-700 dark:text-rose-400">*</span></label>
         <input
           type="text"
           required
@@ -1265,7 +1265,7 @@ function QuickAddQuestionForm({
 
       {practiceKind === "MULTIPLE_CHOICE" && <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="block text-slate-600 mb-1">Đáp án A <span className="text-rose-500">*</span></label>
+          <label className="block text-slate-600 mb-1">Đáp án A <span className="text-rose-700 dark:text-rose-400">*</span></label>
           <input
             type="text"
             required
@@ -1276,7 +1276,7 @@ function QuickAddQuestionForm({
           />
         </div>
         <div>
-          <label className="block text-slate-600 mb-1">Đáp án B <span className="text-rose-500">*</span></label>
+          <label className="block text-slate-600 mb-1">Đáp án B <span className="text-rose-700 dark:text-rose-400">*</span></label>
           <input
             type="text"
             required
@@ -1310,7 +1310,7 @@ function QuickAddQuestionForm({
 
       {practiceKind === "MULTIPLE_CHOICE" && <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="block text-slate-600 mb-1">Đáp án đúng <span className="text-rose-500">*</span></label>
+          <label className="block text-slate-600 mb-1">Đáp án đúng <span className="text-rose-700 dark:text-rose-400">*</span></label>
           <select
             value={correctKey}
             onChange={(e) => setCorrectKey(e.target.value as any)}
@@ -1338,7 +1338,7 @@ function QuickAddQuestionForm({
         <button
           type="button"
           onClick={() => setIsOpen(false)}
-          className="px-4 py-2 text-slate-500 hover:bg-slate-200 rounded-xl"
+          className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-xl dark:text-slate-400"
         >
           Đóng
         </button>

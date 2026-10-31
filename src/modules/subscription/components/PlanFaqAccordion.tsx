@@ -75,7 +75,7 @@ export function PlanFaqAccordion() {
         <h2 id="faq-heading" className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
           Các thắc mắc thường gặp
         </h2>
-        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
           Giải đáp nhanh các câu hỏi phổ biến về gói học và quyền lợi học viên tại BreadTrans
         </p>
       </div>
@@ -104,7 +104,7 @@ export function PlanFaqAccordion() {
                 </div>
                 <ChevronDown
                   size={18}
-                  className={`text-slate-400 dark:text-slate-500 shrink-0 transition-transform duration-200 ${
+                  className={`text-slate-400 dark:text-slate-400 shrink-0 transition-transform duration-200 ${
                     isOpen ? "rotate-180" : ""
                   }`}
                   aria-hidden="true"

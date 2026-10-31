@@ -63,14 +63,14 @@ export default function AdminFulfillmentFailedModal({
               <h2 className="text-base font-bold text-slate-800">
                 Đánh dấu Giao thất bại #{order.id}
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Học viên: {order.studentName || order.user?.profile?.fullName || order.user?.email}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+            className="p-1.5 text-slate-600 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer dark:text-slate-400"
           >
             <X size={18} />
           </button>
@@ -90,7 +90,7 @@ export default function AdminFulfillmentFailedModal({
 
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-              Lý do giao/thực hiện thất bại <span className="text-rose-500">*</span>
+              Lý do giao/thực hiện thất bại <span className="text-rose-700 dark:text-rose-400">*</span>
             </label>
             <textarea
               required
@@ -100,7 +100,7 @@ export default function AdminFulfillmentFailedModal({
               placeholder="Ví dụ: Bưu tá không liên lạc được với người nhận sau 3 lần, bưu phẩm bị thất lạc, nhà cung cấp ngừng cung ứng voucher..."
               className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-colors"
             />
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-sm text-slate-600 mt-1 dark:text-slate-400">
               Lý do được lưu vết kiểm toán và hiển thị công khai cho học viên.
             </p>
           </div>

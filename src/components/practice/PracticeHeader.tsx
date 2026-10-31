@@ -277,7 +277,7 @@ export const PracticeHeader: React.FC<PracticeHeaderProps> = ({
                     type="button"
                     onClick={() => setShowShortcutsPopover(false)}
                     aria-label="Đóng bảng phím tắt"
-                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded-md cursor-pointer"
+                    className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded-md cursor-pointer dark:text-slate-400"
                   >
                     <X size={14} aria-hidden="true" />
                   </button>

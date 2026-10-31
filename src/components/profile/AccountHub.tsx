@@ -474,8 +474,8 @@ export function AccountHub() {
       <div className="flex flex-col md:flex-row gap-6 lg:gap-10 items-start">
         {/* ── Left Sidebar ──────────────────────────────────────── */}
         <aside className="w-full md:w-64 lg:w-72 shrink-0 md:border-r border-slate-200/80 dark:border-slate-800 md:pr-6">
-          <div className="px-3 pb-2.5 text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-            <Settings size={13} className="text-slate-400 dark:text-slate-500" aria-hidden="true" />
+          <div className="px-3 pb-2.5 text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+            <Settings size={13} className="text-slate-500 dark:text-slate-400" aria-hidden="true" />
             <span>Tài khoản</span>
           </div>
 
@@ -500,7 +500,7 @@ export function AccountHub() {
                   <IconComp
                     size={18}
                     className={`shrink-0 ${
-                      isActive ? "text-blue-600 dark:text-blue-400" : "text-slate-400 dark:text-slate-500"
+                      isActive ? "text-blue-600 dark:text-blue-400" : "text-slate-600 dark:text-slate-400"
                     }`}
                     aria-hidden="true"
                   />
@@ -514,7 +514,7 @@ export function AccountHub() {
             <button
               type="button"
               onClick={handleLogout}
-              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors text-left cursor-pointer whitespace-nowrap"
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors text-left cursor-pointer whitespace-nowrap"
             >
               <LogOut size={18} className="shrink-0" aria-hidden="true" />
               <span>Đăng xuất</span>
@@ -533,7 +533,7 @@ export function AccountHub() {
                 <h1 id="heading-plan" className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
                   Gói của tôi
                 </h1>
-                <p className="text-sm sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
                   Gói đang dùng, ngày mua, ngày hết hạn và lịch sử thanh toán
                 </p>
               </div>
@@ -558,7 +558,7 @@ export function AccountHub() {
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50/70 dark:bg-slate-850/60 rounded-2xl p-4 border border-slate-100 dark:border-slate-800">
                   <div>
-                    <span className="block text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wider">
+                    <span className="block text-xs font-bold text-slate-600 dark:text-slate-400 tracking-wider">
                       NGÀY MUA
                     </span>
                     <span className="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 mt-1">
@@ -566,7 +566,7 @@ export function AccountHub() {
                     </span>
                   </div>
                   <div>
-                    <span className="block text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wider">
+                    <span className="block text-xs font-bold text-slate-600 dark:text-slate-400 tracking-wider">
                       NGÀY HẾT HẠN
                     </span>
                     <span className="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 mt-1">
@@ -574,7 +574,7 @@ export function AccountHub() {
                     </span>
                   </div>
                   <div>
-                    <span className="block text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wider">
+                    <span className="block text-xs font-bold text-slate-600 dark:text-slate-400 tracking-wider">
                       CÒN LẠI
                     </span>
                     <span className="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 mt-1">
@@ -582,7 +582,7 @@ export function AccountHub() {
                     </span>
                   </div>
                   <div>
-                    <span className="block text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wider">
+                    <span className="block text-xs font-bold text-slate-600 dark:text-slate-400 tracking-wider">
                       NGUỒN
                     </span>
                     <span className="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 mt-1">
@@ -627,7 +627,7 @@ export function AccountHub() {
                     </button>
                   </div>
                 ) : !purchases || purchases.length === 0 ? (
-                  <p className="text-sm sm:text-sm text-slate-400 dark:text-slate-500 py-2">
+                  <p className="text-sm sm:text-sm text-slate-600 dark:text-slate-400 py-2">
                     Chưa có giao dịch nào.
                   </p>
                 ) : (
@@ -639,7 +639,7 @@ export function AccountHub() {
                             <h3 id="active-payment-heading" className="text-sm font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">
                               Thanh toán đang xử lý
                             </h3>
-                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                               Bạn có thể tiếp tục phiên hiện tại; hệ thống chỉ giữ một mã đang hoạt động.
                             </p>
                           </div>
@@ -678,7 +678,7 @@ export function AccountHub() {
                       <div className="space-y-3" aria-labelledby="review-payment-heading">
                         <div>
                           <h3 id="review-payment-heading" className="text-sm font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">Thanh toán cần kiểm tra</h3>
-                          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Bạn không cần chuyển khoản lại cho các giao dịch này.</p>
+                          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Bạn không cần chuyển khoản lại cho các giao dịch này.</p>
                         </div>
                         {reviewPurchases.map((purchase) => (
                           <button
@@ -689,7 +689,7 @@ export function AccountHub() {
                           >
                             <span>
                               <span className="block text-sm font-bold text-slate-900 dark:text-slate-100">{purchase.planDisplayName}</span>
-                              <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">Mã {purchase.payment?.transferCode || purchase.bankInstructions?.transferCode}</span>
+                              <span className="mt-1 block text-xs text-slate-600 dark:text-slate-400">Mã {purchase.payment?.transferCode || purchase.bankInstructions?.transferCode}</span>
                             </span>
                             <span className="text-xs font-bold text-amber-700 dark:text-amber-400">Xem chi tiết <ChevronRight size={14} className="inline" /></span>
                           </button>
@@ -699,7 +699,7 @@ export function AccountHub() {
 
                     {successfulPurchases.length > 0 && (
                       <div className="space-y-3" aria-labelledby="payment-history-heading">
-                        <h3 id="payment-history-heading" className="text-sm font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Lịch sử đã thanh toán</h3>
+                        <h3 id="payment-history-heading" className="text-sm font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">Lịch sử đã thanh toán</h3>
                     {successfulPurchases.map((purchase) => {
                       const paymentStatus = purchase.payment?.status || purchase.status;
                       const statusInfo = getPaymentStatusBadgeInfo(paymentStatus);
@@ -721,11 +721,11 @@ export function AccountHub() {
                               <span className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100">
                                 {purchase.planDisplayName}
                               </span>
-                              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
                                 ({purchase.durationDays} ngày)
                               </span>
                             </div>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                            <p className="text-sm text-slate-600 dark:text-slate-400">
                               Thời gian tạo: {dateStr}
                             </p>
                             <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -764,7 +764,7 @@ export function AccountHub() {
                     )}
 
                     {activePurchases.length === 0 && reviewPurchases.length === 0 && successfulPurchases.length === 0 && (
-                      <p className="text-sm text-slate-500 dark:text-slate-400">Chưa có giao dịch cần hiển thị.</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">Chưa có giao dịch cần hiển thị.</p>
                     )}
                   </div>
                 )}
@@ -779,7 +779,7 @@ export function AccountHub() {
                 <h1 id="heading-profile" className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
                   Thông tin cá nhân
                 </h1>
-                <p className="text-sm sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
                   Chỉnh sửa tên hiển thị và ảnh đại diện
                 </p>
               </div>
@@ -830,7 +830,7 @@ export function AccountHub() {
                       type="email"
                       value={user?.email || ""}
                       disabled
-                      className="w-full border border-slate-200 dark:border-slate-700 bg-slate-100/70 dark:bg-slate-800/40 text-slate-400 dark:text-slate-500 rounded-xl px-4 py-2.5 text-sm font-semibold cursor-not-allowed"
+                      className="w-full border border-slate-200 dark:border-slate-700 bg-slate-100/70 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 rounded-xl px-4 py-2.5 text-sm font-semibold cursor-not-allowed"
                     />
                   </div>
 
@@ -841,7 +841,7 @@ export function AccountHub() {
                         <h3 className="text-sm font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
                           Thông tin liên hệ / Nhận quà
                         </h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
                           Thông tin này chỉ được dùng để xử lý gửi quà vật lý khi đổi thưởng.
                         </p>
                       </div>
@@ -886,7 +886,7 @@ export function AccountHub() {
                           placeholder="Ví dụ: 0912 345 678"
                         />
                         {phoneError && (
-                          <p id="shipping-phone-error" className="mt-1.5 flex items-start gap-1.5 text-sm font-bold text-rose-600 dark:text-rose-400">
+                          <p id="shipping-phone-error" className="mt-1.5 flex items-start gap-1.5 text-sm font-bold text-rose-700 dark:text-rose-400">
                             <AlertCircle size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
                             {phoneError}
                           </p>
@@ -985,7 +985,7 @@ export function AccountHub() {
                 <h1 id="heading-password" className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
                   Đổi mật khẩu
                 </h1>
-                <p className="text-sm sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
                   Cập nhật mật khẩu để nâng cao tính bảo mật cho tài khoản của bạn
                 </p>
               </div>
@@ -1018,14 +1018,14 @@ export function AccountHub() {
                       <button
                         type="button"
                         onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer dark:text-slate-400"
                         aria-label={showCurrentPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                       >
                         {showCurrentPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                       </button>
                     </div>
                     {passwordFieldErrors.currentPassword && (
-                      <p id="account-currentPassword-error" className="mt-1.5 flex items-center gap-1.5 text-sm font-bold text-rose-600 dark:text-rose-400">
+                      <p id="account-currentPassword-error" className="mt-1.5 flex items-center gap-1.5 text-sm font-bold text-rose-700 dark:text-rose-400">
                         <AlertCircle size={14} className="shrink-0" aria-hidden="true" />
                         {passwordFieldErrors.currentPassword}
                       </p>
@@ -1052,14 +1052,14 @@ export function AccountHub() {
                       <button
                         type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer dark:text-slate-400"
                         aria-label={showNewPassword ? "Ẩn mật khẩu mới" : "Hiện mật khẩu mới"}
                       >
                         {showNewPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                       </button>
                     </div>
                     {passwordFieldErrors.newPassword && (
-                      <p id="account-newPassword-error" className="mt-1.5 flex items-center gap-1.5 text-sm font-bold text-rose-600 dark:text-rose-400">
+                      <p id="account-newPassword-error" className="mt-1.5 flex items-center gap-1.5 text-sm font-bold text-rose-700 dark:text-rose-400">
                         <AlertCircle size={14} className="shrink-0" aria-hidden="true" />
                         {passwordFieldErrors.newPassword}
                       </p>
@@ -1085,14 +1085,14 @@ export function AccountHub() {
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer dark:text-slate-400"
                         aria-label={showConfirmPassword ? "Ẩn xác nhận mật khẩu" : "Hiện xác nhận mật khẩu"}
                       >
                         {showConfirmPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                       </button>
                     </div>
                     {passwordFieldErrors.confirmPassword && (
-                      <p id="account-confirmPassword-error" className="mt-1.5 flex items-center gap-1.5 text-sm font-bold text-rose-600 dark:text-rose-400">
+                      <p id="account-confirmPassword-error" className="mt-1.5 flex items-center gap-1.5 text-sm font-bold text-rose-700 dark:text-rose-400">
                         <AlertCircle size={14} className="shrink-0" aria-hidden="true" />
                         {passwordFieldErrors.confirmPassword}
                       </p>
@@ -1121,7 +1121,7 @@ export function AccountHub() {
                 <h1 id="heading-device" className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
                   Thiết bị
                 </h1>
-                <p className="text-sm sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
                   Danh sách thiết bị và phiên đăng nhập đang hoạt động
                 </p>
               </div>
@@ -1141,14 +1141,14 @@ export function AccountHub() {
                           Đang hoạt động
                         </span>
                       </div>
-                      <p className="text-sm text-slate-400 dark:text-slate-500 mt-0.5">
+                      <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
                         Phiên duyệt web · Truy cập lần cuối: Vừa xong
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <p className="text-sm text-slate-400 dark:text-slate-500">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
                   Nếu bạn nhận thấy bất kỳ hoạt động đăng nhập bất thường nào, hãy đổi mật khẩu hoặc đăng xuất ngay lập tức để bảo vệ tài khoản.
                 </p>
               </div>
@@ -1162,7 +1162,7 @@ export function AccountHub() {
                 <h1 id="heading-inventory" className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
                   Túi Đồ &amp; Ngoại Trang
                 </h1>
-                <p className="text-sm sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
                   Xem và trang bị các khung avatar, huy hiệu mở khóa từ Cửa hàng Bánh Mì
                 </p>
               </div>
@@ -1182,7 +1182,7 @@ export function AccountHub() {
                     <h2 className="text-xl font-black text-slate-900 dark:text-slate-100">
                       {formData.fullName || "Học viên BreadTrans"}
                     </h2>
-                    <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">
+                    <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
                       Trang bị đang đeo sẽ hiển thị đồng bộ trong lớp học và bài thi.
                     </p>
                     <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
@@ -1192,7 +1192,7 @@ export function AccountHub() {
                           {activeFrameConfig.name}
                         </span>
                       ) : (
-                        <span className="text-xs px-3 py-1 rounded-full font-medium bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                        <span className="text-xs px-3 py-1 rounded-full font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                           Chưa đeo khung avatar
                         </span>
                       )}
@@ -1203,7 +1203,7 @@ export function AccountHub() {
                           {activeBadgeConfig.name}
                         </span>
                       ) : (
-                        <span className="text-xs px-3 py-1 rounded-full font-medium bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                        <span className="text-xs px-3 py-1 rounded-full font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                           Chưa đeo huy hiệu
                         </span>
                       )}
@@ -1260,12 +1260,12 @@ export function AccountHub() {
               {/* Items Grid */}
               {filteredInventory.length === 0 ? (
                 <div className="bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-8 text-center">
-                  <p className="text-sm sm:text-sm font-bold text-slate-500 dark:text-slate-400">
+                  <p className="text-sm sm:text-sm font-bold text-slate-600 dark:text-slate-400">
                     Chưa có vật phẩm nào trong mục này.
                   </p>
                   <Link
                     href="/market"
-                    className="inline-block mt-3 text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline"
+                    className="inline-block mt-3 text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline"
                   >
                     Đến Cửa Hàng Bánh Mì để mở khóa &rarr;
                   </Link>
@@ -1301,12 +1301,12 @@ export function AccountHub() {
                               <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">
                                 {item.name}
                               </h3>
-                              <span className="text-xs uppercase font-bold text-slate-400">
+                              <span className="text-xs uppercase font-bold text-slate-600 dark:text-slate-400">
                                 {item.category}
                               </span>
                             </div>
                           </div>
-                          <p className="text-sm text-slate-500 dark:text-slate-400">
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
                             {item.description}
                           </p>
                         </div>

@@ -51,7 +51,7 @@ export const FlashcardFilterBar: React.FC<FlashcardFilterBarProps> = ({
           <label htmlFor="flashcard-search" className="sr-only">
             Tìm bộ từ vựng
           </label>
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 dark:text-slate-500">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-600 dark:text-slate-400">
             <Search size={18} aria-hidden="true" />
           </div>
           <input
@@ -67,7 +67,7 @@ export const FlashcardFilterBar: React.FC<FlashcardFilterBarProps> = ({
               type="button"
               onClick={() => onSearchChange("")}
               aria-label="Xóa nội dung tìm kiếm"
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
             >
               <X size={16} />
             </button>
@@ -94,7 +94,7 @@ export const FlashcardFilterBar: React.FC<FlashcardFilterBarProps> = ({
                 </option>
               ))}
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 dark:text-slate-500">
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-600 dark:text-slate-400">
               <Filter size={14} aria-hidden="true" />
             </div>
           </div>
@@ -118,7 +118,7 @@ export const FlashcardFilterBar: React.FC<FlashcardFilterBarProps> = ({
                   </option>
                 ))}
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 dark:text-slate-500">
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-600 dark:text-slate-400">
                 <Filter size={14} aria-hidden="true" />
               </div>
             </div>
@@ -141,7 +141,7 @@ export const FlashcardFilterBar: React.FC<FlashcardFilterBarProps> = ({
               <option value="COMPLETED">Đã thuộc</option>
               <option value="REVIEW_DUE">Cần ôn tập</option>
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 dark:text-slate-500">
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-600 dark:text-slate-400">
               <Filter size={14} aria-hidden="true" />
             </div>
           </div>
@@ -162,7 +162,7 @@ export const FlashcardFilterBar: React.FC<FlashcardFilterBarProps> = ({
               <option value="PROGRESS">Tiến độ đã thuộc cao nhất</option>
               <option value="NAME_AZ">Tên A – Z</option>
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 dark:text-slate-500">
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-600 dark:text-slate-400">
               <ArrowUpDown size={14} aria-hidden="true" />
             </div>
           </div>
@@ -183,7 +183,7 @@ export const FlashcardFilterBar: React.FC<FlashcardFilterBarProps> = ({
 
       {/* Active filter count indicator */}
       {hasActiveFilters && (
-        <div className="text-xs text-slate-500 dark:text-slate-400">
+        <div className="text-xs text-slate-600 dark:text-slate-400">
           Hiển thị <span className="font-bold text-slate-800 dark:text-slate-200">{totalFiltered}</span> bộ từ phù hợp
         </div>
       )}

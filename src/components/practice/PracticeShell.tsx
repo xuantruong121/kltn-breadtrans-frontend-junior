@@ -88,7 +88,7 @@ export function PracticeShell({
             </button>
           )}
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">
               <span>{SKILL_LABEL[skill]}</span>
               <span aria-hidden="true">·</span>
               <span className="text-sky-700 dark:text-sky-300">{STAGE_LABEL[stage]}</span>
@@ -100,7 +100,7 @@ export function PracticeShell({
         </div>
         {hasProgress && (
           <div className="min-w-[150px] sm:min-w-[190px]" aria-label={`Tiến độ câu ${current} trên ${total}`}>
-            <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-400">
               <span>Câu {current}/{total}</span>
               <span>{Math.round(progress)}%</span>
             </div>
@@ -150,7 +150,7 @@ export function PracticeCompletionSummary({
       {(onRetry || onNext) && (
         <div className="mt-3 flex flex-wrap gap-2">
           {onRetry && <button type="button" onClick={onRetry} className="min-h-10 rounded-xl border border-emerald-300 px-3 text-xs font-bold text-emerald-900 hover:bg-emerald-100 dark:border-emerald-800 dark:text-emerald-200 dark:hover:bg-emerald-900/40">Luyện lại</button>}
-          {onNext && <button type="button" onClick={onNext} className="min-h-10 rounded-xl bg-emerald-600 px-3 text-xs font-bold text-white hover:bg-emerald-700">Bài tiếp theo</button>}
+          {onNext && <button type="button" onClick={onNext} className="min-h-10 rounded-xl bg-emerald-700 px-3 text-xs font-bold text-white hover:bg-emerald-800">Bài tiếp theo</button>}
         </div>
       )}
     </div>

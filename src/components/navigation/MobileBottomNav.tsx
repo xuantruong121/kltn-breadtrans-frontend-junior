@@ -33,7 +33,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
         className={`flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 transition-colors ${
           isHome
             ? "text-amber-700 dark:text-amber-400 font-bold"
-            : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+            : "text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
         }`}
       >
         <Home size={20} className={isHome ? "stroke-[2.5]" : "stroke-2"} />
@@ -48,7 +48,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
           className={`flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 transition-colors cursor-pointer ${
             isSkills
               ? "text-amber-700 dark:text-amber-400 font-bold"
-              : "text-slate-500 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400"
+              : "text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400"
           }`}
         >
           <Compass size={20} className={isSkills ? "stroke-[2.5]" : "stroke-2"} />
@@ -60,7 +60,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
           className={`flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 transition-colors ${
             isSkills
               ? "text-amber-700 dark:text-amber-400 font-bold"
-              : "text-slate-500 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400"
+              : "text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400"
           }`}
         >
           <Compass size={20} className={isSkills ? "stroke-[2.5]" : "stroke-2"} />
@@ -74,7 +74,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
         className={`flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 transition-colors ${
           isToeic
             ? "text-amber-700 dark:text-amber-400 font-bold"
-            : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+            : "text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
         }`}
       >
         <Target size={20} className={isToeic ? "stroke-[2.5]" : "stroke-2"} />
@@ -88,7 +88,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
         className={`flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 transition-colors ${
           isCourses
             ? "text-amber-700 dark:text-amber-400 font-bold"
-            : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+            : "text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
         }`}
       >
         <BookOpen size={20} className={isCourses ? "stroke-[2.5]" : "stroke-2"} />
@@ -103,7 +103,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
           className={`flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 transition-colors ${
             isProfile
               ? "text-amber-700 dark:text-amber-400 font-bold"
-              : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
           }`}
         >
           <User size={20} className={isProfile ? "stroke-[2.5]" : "stroke-2"} />
@@ -113,7 +113,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
         <button
           type="button"
           onClick={onOpenAccount}
-          className="flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 text-slate-500 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors cursor-pointer"
+          className="flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors cursor-pointer"
         >
           <User size={20} className="stroke-2" />
           <span className="text-xs font-semibold">Tài khoản</span>
@@ -121,7 +121,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
       ) : (
         <Link
           href="/login"
-          className="flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 text-slate-500 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
+          className="flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
         >
           <User size={20} className="stroke-2" />
           <span className="text-xs font-semibold">Tài khoản</span>

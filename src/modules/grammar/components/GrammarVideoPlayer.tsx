@@ -62,7 +62,7 @@ export const GrammarVideoPlayer: React.FC<GrammarVideoPlayerProps> = ({ topic })
       </details>
     ) : (
       <p
-        className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 dark:text-slate-500"
+        className="flex items-center gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400"
         data-testid="grammar-no-video"
       >
         <PlayCircle size={14} aria-hidden="true" />

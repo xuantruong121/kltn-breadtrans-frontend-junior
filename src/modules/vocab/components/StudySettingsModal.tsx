@@ -42,18 +42,18 @@ export const StudySettingsModal: React.FC<StudySettingsModalProps> = ({
           {/* Header */}
           <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-2">
-              <div className="p-2 bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 rounded-xl border border-sky-200/80 dark:border-sky-800/60">
+              <div className="p-2 bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-400 rounded-xl border border-sky-200/80 dark:border-sky-800/60">
                 <SlidersHorizontal size={18} />
               </div>
               <div>
                 <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100">Cài đặt phòng học từ vựng</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Tùy biến âm thanh và trải nghiệm học</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Tùy biến âm thanh và trải nghiệm học</p>
               </div>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="p-2 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+              className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
               aria-label="Đóng cài đặt"
             >
               <X size={18} />
@@ -65,12 +65,12 @@ export const StudySettingsModal: React.FC<StudySettingsModalProps> = ({
             {/* 1. Tự động phát âm */}
             <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-slate-700">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-white dark:bg-slate-800 rounded-xl text-sky-600 dark:text-sky-400 border border-slate-200 dark:border-slate-700">
+                <div className="p-2 bg-white dark:bg-slate-800 rounded-xl text-sky-700 dark:text-sky-400 border border-slate-200 dark:border-slate-700">
                   <Play size={16} />
                 </div>
                 <div>
                   <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Tự động phát âm</span>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Tự động đọc từ khi chuyển sang từ mới</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Tự động đọc từ khi chuyển sang từ mới</p>
                 </div>
               </div>
               <button
@@ -93,12 +93,12 @@ export const StudySettingsModal: React.FC<StudySettingsModalProps> = ({
             {/* 2. Âm thanh hiệu ứng */}
             <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-slate-700">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-white dark:bg-slate-800 rounded-xl text-emerald-600 dark:text-emerald-400 border border-slate-200 dark:border-slate-700">
+                <div className="p-2 bg-white dark:bg-slate-800 rounded-xl text-emerald-700 dark:text-emerald-400 border border-slate-200 dark:border-slate-700">
                   <Volume2 size={16} />
                 </div>
                 <div>
                   <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Âm thanh phản hồi</span>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Hiệu ứng chuông khi đúng, sai, lật thẻ</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Hiệu ứng chuông khi đúng, sai, lật thẻ</p>
                 </div>
               </div>
               <button
@@ -125,7 +125,7 @@ export const StudySettingsModal: React.FC<StudySettingsModalProps> = ({
                   <Gauge size={15} className="text-slate-500 dark:text-slate-400" />
                   <span>Tốc độ đọc phát âm</span>
                 </div>
-                <span className="text-xs font-extrabold text-sky-600 dark:text-sky-400">{settings.speechRate}x</span>
+                <span className="text-xs font-extrabold text-sky-700 dark:text-sky-400">{settings.speechRate}x</span>
               </div>
               <div className="grid grid-cols-3 gap-2 pt-1">
                 {[0.75, 1.0, 1.25].map((rate) => (
@@ -149,7 +149,7 @@ export const StudySettingsModal: React.FC<StudySettingsModalProps> = ({
             <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-slate-700">
               <div>
                 <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Giọng đọc ưu tiên</span>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Lựa chọn phát âm mặc định</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Lựa chọn phát âm mặc định</p>
               </div>
               <div className="inline-flex rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-0.5">
                 <button

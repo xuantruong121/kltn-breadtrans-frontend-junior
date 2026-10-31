@@ -349,14 +349,14 @@ export default function AdminAiToolsPage() {
             <Cpu size={32} />
           </div>
           <div>
-            <div className="inline-flex items-center gap-2 bg-indigo-500/20 text-indigo-200 px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider mb-2 border border-indigo-400/20">
+            <div className="inline-flex items-center gap-2 bg-indigo-500/20 text-indigo-100 px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider mb-2 border border-indigo-400/20">
               <Cpu size={14} className="text-indigo-300" /> Hệ thống tạo nội
               dung tự động
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
               Bộ Công Cụ Tạo Nội Dung
             </h1>
-            <p className="text-indigo-200/80 font-medium text-sm mt-1">
+            <p className="text-indigo-100/80 font-medium text-sm mt-1">
               Tự động hóa soạn câu hỏi trắc nghiệm, flashcard và bài tập từ tài
               liệu PDF/Word
             </p>
@@ -366,7 +366,7 @@ export default function AdminAiToolsPage() {
         {/* REDIS QUOTA TRACKER */}
         <div className="bg-white/10 backdrop-blur-md p-5 rounded-2xl border border-white/15 min-w-[280px] space-y-3">
           <div className="flex items-center justify-between text-xs font-black">
-            <span className="flex items-center gap-1.5 text-indigo-200">
+            <span className="flex items-center gap-1.5 text-indigo-100">
               <Activity size={14} className="text-emerald-400" /> Hạn mức xử lý
               hàng ngày (RPD)
             </span>
@@ -429,13 +429,13 @@ export default function AdminAiToolsPage() {
             <History size={17} className="text-indigo-600" /> Lịch sử AI soạn
             bài
           </h2>
-          <span className="text-xs font-bold text-slate-400">
+          <span className="text-xs font-bold text-slate-500">
             Được lưu lại để tra cứu
           </span>
         </div>
         <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-xs">
-            <thead className="border-b border-slate-100 text-slate-400">
+            <thead className="border-b border-slate-100 text-slate-600 dark:text-slate-400">
               <tr>
                 <th className="px-2 py-2">Loại</th>
                 <th className="px-2 py-2">Trạng thái</th>
@@ -453,15 +453,15 @@ export default function AdminAiToolsPage() {
                   <td className="px-2 py-2 font-black text-indigo-700">
                     {statusLabel(job.status)}
                   </td>
-                  <td className="px-2 py-2 text-slate-500">
+                  <td className="px-2 py-2 text-slate-600 dark:text-slate-400">
                     {job.provider || "—"}
                   </td>
-                  <td className="px-2 py-2 text-slate-500">
+                  <td className="px-2 py-2 text-slate-600 dark:text-slate-400">
                     {job.createdAt
                       ? new Date(job.createdAt).toLocaleString("vi-VN")
                       : "—"}
                   </td>
-                  <td className="px-2 py-2 text-slate-500">
+                  <td className="px-2 py-2 text-slate-600 dark:text-slate-400">
                     {job.publishedResources ? "Đã liên kết" : "Chưa xuất bản"}
                   </td>
                 </tr>
@@ -470,7 +470,7 @@ export default function AdminAiToolsPage() {
                 <tr>
                   <td
                     colSpan={5}
-                    className="px-2 py-4 text-center font-semibold text-slate-400"
+                    className="px-2 py-4 text-center font-semibold text-slate-600 dark:text-slate-400"
                   >
                     Chưa có job AI nào.
                   </td>
@@ -503,7 +503,7 @@ export default function AdminAiToolsPage() {
                 Trích xuất từ tài liệu
               </div>
               <div
-                className={`text-xs font-semibold mt-0.5 ${activeTab === "smart" ? "text-indigo-200" : "text-slate-400"}`}
+                className={`text-xs font-semibold mt-0.5 ${activeTab === "smart" ? "text-indigo-100" : "text-slate-600"} dark:text-slate-400`}
               >
                 Từ PDF/DOCX &rarr; Quiz + Flashcard
               </div>
@@ -528,7 +528,7 @@ export default function AdminAiToolsPage() {
                 Sinh Luyện Nghe TTS
               </div>
               <div
-                className={`text-xs font-semibold mt-0.5 ${activeTab === "dictation" ? "text-indigo-200" : "text-slate-400"}`}
+                className={`text-xs font-semibold mt-0.5 ${activeTab === "dictation" ? "text-indigo-100" : "text-slate-600"} dark:text-slate-400`}
               >
                 Chép chính tả & tệp âm thanh
               </div>
@@ -553,7 +553,7 @@ export default function AdminAiToolsPage() {
                 Sinh Câu Hỏi TOEIC
               </div>
               <div
-                className={`text-xs font-semibold mt-0.5 ${activeTab === "toeic" ? "text-indigo-200" : "text-slate-400"}`}
+                className={`text-xs font-semibold mt-0.5 ${activeTab === "toeic" ? "text-indigo-100" : "text-slate-600"} dark:text-slate-400`}
               >
                 Part 5 & Part 6 ngữ pháp
               </div>
@@ -578,7 +578,7 @@ export default function AdminAiToolsPage() {
                 Import Đề ETS
               </div>
               <div
-                className={`text-xs font-semibold mt-0.5 ${activeTab === "import" ? "text-indigo-200" : "text-slate-400"}`}
+                className={`text-xs font-semibold mt-0.5 ${activeTab === "import" ? "text-indigo-100" : "text-slate-600"} dark:text-slate-400`}
               >
                 Bóc tách đề thi PDF nguyên bản
               </div>
@@ -598,7 +598,7 @@ export default function AdminAiToolsPage() {
                     <h2 className="text-2xl font-black text-slate-800">
                       Tải Lên Tài Liệu Giáo Trình
                     </h2>
-                    <p className="text-slate-400 font-bold text-xs mt-1">
+                    <p className="text-slate-600 font-bold text-xs mt-1 dark:text-slate-400">
                       Hỗ trợ file PDF (slide bài giảng, bài đọc), file Word
                       .DOCX hoặc dán văn bản trực tiếp
                     </p>
@@ -611,7 +611,7 @@ export default function AdminAiToolsPage() {
                       className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer ${
                         inputMode === "file"
                           ? "bg-white text-indigo-600 shadow-sm"
-                          : "text-slate-500"
+                          : "text-slate-600 dark:text-slate-400"
                       }`}
                     >
                       <FileUp size={16} /> File PDF / Word
@@ -621,7 +621,7 @@ export default function AdminAiToolsPage() {
                       className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer ${
                         inputMode === "text"
                           ? "bg-white text-indigo-600 shadow-sm"
-                          : "text-slate-500"
+                          : "text-slate-600 dark:text-slate-400"
                       }`}
                     >
                       <Type size={16} /> Nhập Văn Bản
@@ -649,7 +649,7 @@ export default function AdminAiToolsPage() {
                           <p className="text-base font-black text-slate-800">
                             {uploadedFile.name}
                           </p>
-                          <p className="text-xs font-bold text-slate-400">
+                          <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
                             {(uploadedFile.size / 1024).toFixed(1)} KB — Bấm để
                             chọn file khác
                           </p>
@@ -659,7 +659,7 @@ export default function AdminAiToolsPage() {
                           <p className="text-base font-black text-slate-700">
                             Kéo thả file vào đây hoặc bấm để duyệt
                           </p>
-                          <p className="text-xs font-bold text-slate-400">
+                          <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
                             Định dạng hỗ trợ: PDF, DOCX (Tối đa 25MB)
                           </p>
                         </div>
@@ -675,7 +675,7 @@ export default function AdminAiToolsPage() {
                       rows={6}
                       className="w-full p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl outline-none focus:border-indigo-500 focus:bg-white text-slate-800 font-bold text-sm"
                     />
-                    <div className="text-right text-xs font-bold text-slate-400">
+                    <div className="text-right text-xs font-bold text-slate-600 dark:text-slate-400">
                       Độ dài: {rawText.length} ký tự
                     </div>
                   </div>
@@ -728,7 +728,7 @@ export default function AdminAiToolsPage() {
                       <div className="text-slate-800 font-black text-xs uppercase">
                         Sinh Bài Tập Về Nhà
                       </div>
-                      <div className="text-slate-400 font-bold text-xs">
+                      <div className="text-slate-600 font-bold text-xs dark:text-slate-400">
                         Kèm theo bài luận ngắn
                       </div>
                     </div>
@@ -743,7 +743,7 @@ export default function AdminAiToolsPage() {
 
                 {/* ACTION BUTTON & STATUS */}
                 <div className="flex items-center justify-between pt-4 border-t-2 border-slate-100">
-                  <div className="text-xs font-bold text-slate-400">
+                  <div className="text-xs font-bold text-slate-600 dark:text-slate-400">
                     Tự động thử lại tối đa 3 lần nếu lỗi
                   </div>
 
@@ -829,7 +829,7 @@ export default function AdminAiToolsPage() {
                         className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer ${
                           reviewTab === "quiz"
                             ? "bg-white text-indigo-600 shadow-sm"
-                            : "text-slate-500"
+                            : "text-slate-600 dark:text-slate-400"
                         }`}
                       >
                         <FileText size={16} /> Trắc Nghiệm (
@@ -840,7 +840,7 @@ export default function AdminAiToolsPage() {
                         className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer ${
                           reviewTab === "flashcard"
                             ? "bg-white text-indigo-600 shadow-sm"
-                            : "text-slate-500"
+                            : "text-slate-600 dark:text-slate-400"
                         }`}
                       >
                         <Layers size={16} /> Flashcard (
@@ -851,7 +851,7 @@ export default function AdminAiToolsPage() {
                         className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer ${
                           reviewTab === "assignment"
                             ? "bg-white text-indigo-600 shadow-sm"
-                            : "text-slate-500"
+                            : "text-slate-600 dark:text-slate-400"
                         }`}
                       >
                         <BookOpen size={16} /> Bài Tập
@@ -902,7 +902,7 @@ export default function AdminAiToolsPage() {
                                     ),
                                   )
                                 }
-                                className="text-rose-500 hover:bg-rose-50 p-2 rounded-xl transition-colors cursor-pointer text-xs font-bold flex items-center gap-1"
+                                className="text-rose-700 hover:bg-rose-50 p-2 rounded-xl transition-colors cursor-pointer text-xs font-bold flex items-center gap-1 dark:text-rose-400"
                               >
                                 <Trash2 size={16} /> Xóa câu này
                               </button>
@@ -910,7 +910,7 @@ export default function AdminAiToolsPage() {
 
                             {/* Question text edit */}
                             <div>
-                              <label className="block text-slate-500 font-bold text-xs mb-1">
+                              <label className="block text-slate-600 font-bold text-xs mb-1 dark:text-slate-400">
                                 Nội dung câu hỏi
                               </label>
                               <input
@@ -949,7 +949,7 @@ export default function AdminAiToolsPage() {
                                       }}
                                       className="w-4 h-4 accent-emerald-600 cursor-pointer"
                                     />
-                                    <span className="font-black text-xs text-slate-500 w-5">
+                                    <span className="font-black text-xs text-slate-600 w-5 dark:text-slate-400">
                                       {String.fromCharCode(65 + oIdx)}.
                                     </span>
                                     <input
@@ -975,7 +975,7 @@ export default function AdminAiToolsPage() {
 
                             {/* Explanation edit */}
                             <div>
-                              <label className="block text-slate-500 font-bold text-xs mb-1">
+                              <label className="block text-slate-600 font-bold text-xs mb-1 dark:text-slate-400">
                                 Giải thích đáp án
                               </label>
                               <input
@@ -1030,7 +1030,7 @@ export default function AdminAiToolsPage() {
                                     ),
                                   )
                                 }
-                                className="text-rose-500 hover:bg-rose-50 p-1.5 rounded-lg transition-colors cursor-pointer"
+                                className="text-rose-700 hover:bg-rose-50 p-1.5 rounded-lg transition-colors cursor-pointer dark:text-rose-400"
                               >
                                 <Trash2 size={14} />
                               </button>
@@ -1038,7 +1038,7 @@ export default function AdminAiToolsPage() {
 
                             <div className="grid grid-cols-3 gap-2">
                               <div className="col-span-2">
-                                <label className="block text-slate-400 text-xs mb-0.5">
+                                <label className="block text-slate-600 text-xs mb-0.5 dark:text-slate-400">
                                   Từ vựng (Term)
                                 </label>
                                 <input
@@ -1053,7 +1053,7 @@ export default function AdminAiToolsPage() {
                                 />
                               </div>
                               <div>
-                                <label className="block text-slate-400 text-xs mb-0.5">
+                                <label className="block text-slate-600 text-xs mb-0.5 dark:text-slate-400">
                                   Loại từ (POS)
                                 </label>
                                 <input
@@ -1070,7 +1070,7 @@ export default function AdminAiToolsPage() {
                             </div>
 
                             <div>
-                              <label className="block text-slate-400 text-xs mb-0.5">
+                              <label className="block text-slate-600 text-xs mb-0.5 dark:text-slate-400">
                                 Phiên âm IPA
                               </label>
                               <input
@@ -1086,7 +1086,7 @@ export default function AdminAiToolsPage() {
                             </div>
 
                             <div>
-                              <label className="block text-slate-400 text-xs mb-0.5">
+                              <label className="block text-slate-600 text-xs mb-0.5 dark:text-slate-400">
                                 Nghĩa tiếng Việt
                               </label>
                               <input
@@ -1102,7 +1102,7 @@ export default function AdminAiToolsPage() {
                             </div>
 
                             <div>
-                              <label className="block text-slate-400 text-xs mb-0.5">
+                              <label className="block text-slate-600 text-xs mb-0.5 dark:text-slate-400">
                                 Ví dụ minh họa
                               </label>
                               <input
@@ -1236,7 +1236,7 @@ export default function AdminAiToolsPage() {
                         <span
                           aria-disabled="true"
                           title="Đường dẫn xuất bản cũ đã đóng (410 Gone) để bảo vệ Single-Writer"
-                          className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-slate-200 bg-slate-100 px-5 py-3 text-sm font-black text-slate-400"
+                          className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-slate-200 bg-slate-100 px-5 py-3 text-sm font-black text-slate-500"
                         >
                           <Save size={18} aria-hidden="true" />
                           Xuất bản trực tiếp đã đóng
@@ -1255,7 +1255,7 @@ export default function AdminAiToolsPage() {
               <h2 className="text-2xl font-black text-slate-800 mb-1">
                 Sinh bài Luyện Nghe (Nghe Chép Chính Tả)
               </h2>
-              <p className="text-slate-400 font-bold text-xs mb-6">
+              <p className="text-slate-600 font-bold text-xs mb-6 dark:text-slate-400">
                 Luồng tạo Dictation trực tiếp đã được đóng để tránh xuất bản nội
                 dung AI chưa qua kiểm duyệt.
               </p>
@@ -1285,7 +1285,7 @@ export default function AdminAiToolsPage() {
               <h2 className="text-2xl font-black text-slate-800 mb-1">
                 Sinh Câu Hỏi TOEIC Reading
               </h2>
-              <p className="text-slate-400 font-bold text-xs mb-6">
+              <p className="text-slate-600 font-bold text-xs mb-6 dark:text-slate-400">
                 Hệ thống sẽ tạo bộ câu hỏi trắc nghiệm kèm 4 đáp án A, B, C, D
                 và lời giải thích ngữ pháp chi tiết theo chủ đề bạn chỉ định.
               </p>
@@ -1294,7 +1294,7 @@ export default function AdminAiToolsPage() {
                 <div>
                   <label className="block text-slate-600 mb-1.5">
                     Chủ đề từ vựng / ngữ cảnh (Topic){" "}
-                    <span className="text-rose-500">*</span>
+                    <span className="text-rose-700 dark:text-rose-400">*</span>
                   </label>
                   <input
                     type="text"
@@ -1405,7 +1405,7 @@ export default function AdminAiToolsPage() {
               <h2 className="text-2xl font-black text-slate-800 mb-1">
                 Trích xuất Đề thi ETS (PDF + Audio)
               </h2>
-              <p className="text-slate-400 font-bold text-xs mb-6">
+              <p className="text-slate-600 font-bold text-xs mb-6 dark:text-slate-400">
                 Tải lên file PDF đề thi ETS và file Audio đính kèm. Hệ thống sẽ
                 tự động bóc tách câu hỏi và lưu vào hệ thống.
               </p>
@@ -1417,20 +1417,20 @@ export default function AdminAiToolsPage() {
                     className="text-indigo-400 mx-auto mb-2"
                   />
                   <label className="block text-sm font-black text-slate-700 mb-2">
-                    File PDF Đề thi <span className="text-rose-500">*</span>
+                    File PDF Đề thi <span className="text-rose-700 dark:text-rose-400">*</span>
                   </label>
                   <input
                     type="file"
                     accept=".pdf,image/*"
                     onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
-                    className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 mx-auto cursor-pointer"
+                    className="block w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 mx-auto cursor-pointer dark:text-slate-400"
                   />
                 </div>
 
                 <div className="border-2 border-dashed border-slate-200 bg-slate-50 p-6 rounded-2xl text-center">
                   <Headphones
                     size={40}
-                    className="text-slate-400 mx-auto mb-2"
+                    className="text-slate-500 mx-auto mb-2"
                   />
                   <label className="block text-sm font-black text-slate-700 mb-2">
                     File Audio Nghe (Tùy chọn)
@@ -1439,7 +1439,7 @@ export default function AdminAiToolsPage() {
                     type="file"
                     accept="audio/*"
                     onChange={(e) => setAudioFile(e.target.files?.[0] || null)}
-                    className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300 mx-auto cursor-pointer"
+                    className="block w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300 mx-auto cursor-pointer dark:text-slate-400"
                   />
                 </div>
               </div>
@@ -1452,7 +1452,7 @@ export default function AdminAiToolsPage() {
                   {message.quizId && (
                     <Link
                       href="/admin/exams"
-                      className="px-3 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-black"
+                      className="px-3 py-1.5 bg-emerald-700 text-white rounded-xl text-xs font-black"
                     >
                       Xem Trong Exam Studio{" "}
                       <ArrowRight size={12} className="inline ml-1" />

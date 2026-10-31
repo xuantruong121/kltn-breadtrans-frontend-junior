@@ -301,7 +301,7 @@ function ReadingTopicsContent() {
           {/* Reading Comprehension Progress Card */}
           <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 p-4 sm:p-4.5 shadow-2xs lg:w-72 shrink-0 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">
                 Tiến độ Đọc hiểu
               </span>
               <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 text-xs font-black text-emerald-700 dark:text-emerald-300">
@@ -314,7 +314,7 @@ function ReadingTopicsContent() {
                 <span className="text-xl font-black text-slate-900 dark:text-slate-100">
                   {completedReadingCount}/{readingExercises.length}
                 </span>
-                <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                <span className="text-xs font-bold text-slate-600 dark:text-slate-400">
                   bài đọc hoàn thành
                 </span>
               </div>
@@ -360,7 +360,7 @@ function ReadingTopicsContent() {
                     searchInputRef.current?.focus();
                   }}
                   aria-label="Xóa từ khóa tìm kiếm"
-                  className="flex size-6 items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                  className="flex size-6 items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer dark:text-slate-400"
                 >
                   <X size={13} aria-hidden="true" />
                 </button>
@@ -378,7 +378,7 @@ function ReadingTopicsContent() {
           role="group"
           aria-label="Phân loại bài luyện"
         >
-          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1">
+          <span className="text-xs font-bold text-slate-600 dark:text-slate-400 mr-1">
             Phân loại:
           </span>
           {CATEGORY_OPTIONS.map((cat) => {
@@ -431,7 +431,7 @@ function ReadingTopicsContent() {
               className="animate-spin text-teal-600"
               aria-hidden="true"
             />
-            <p className="mt-3 text-xs font-bold text-slate-500 dark:text-slate-400">
+            <p className="mt-3 text-xs font-bold text-slate-600 dark:text-slate-400">
               Đang tải danh sách bài luyện tập...
             </p>
           </div>
@@ -491,13 +491,13 @@ function ReadingTopicsContent() {
           <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 sm:p-12 text-center">
             <BookOpen
               size={36}
-              className="mx-auto text-slate-400 dark:text-slate-500 mb-3"
+              className="mx-auto text-slate-500 dark:text-slate-400 mb-3"
               aria-hidden="true"
             />
             <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-200">
               Không tìm thấy bài đọc phù hợp
             </h2>
-            <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+            <p className="mt-1.5 text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto">
               Hãy thử chọn độ khó khác, trạng thái khác hoặc tìm kiếm với từ khóa khác.
             </p>
             <div className="mt-5 flex justify-center">
@@ -509,7 +509,7 @@ function ReadingTopicsContent() {
                   setSortOrder(DEFAULT_CATALOG_SORT);
                   setSelectedStatus("ALL");
                 }}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-teal-700 hover:bg-teal-800 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
               >
                 <RotateCcw size={14} aria-hidden="true" />
                 Xóa bộ lọc

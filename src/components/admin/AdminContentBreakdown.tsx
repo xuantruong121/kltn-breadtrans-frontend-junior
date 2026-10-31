@@ -30,11 +30,11 @@ export default function AdminContentBreakdown({ data }: AdminContentBreakdownPro
           <h2 id="content-breakdown-heading" className="text-base font-bold text-slate-950 dark:text-slate-100">
             Nội dung học tập
           </h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             Tổng quan số lượng tài nguyên học thuật đang vận hành trên hệ thống.
           </p>
         </div>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-slate-600 dark:text-slate-400">
           Tổng số:{" "}
           <span className="font-mono font-bold tabular-nums text-slate-950 dark:text-slate-100">
             {total.toLocaleString("vi-VN")}
@@ -78,12 +78,12 @@ export default function AdminContentBreakdown({ data }: AdminContentBreakdownPro
                 {cat.label}
               </dt>
               <dd className="flex items-center gap-3 text-sm">
-                <span className="font-mono text-xs text-slate-400 dark:text-slate-500 tabular-nums">
+                <span className="font-mono text-xs text-slate-600 dark:text-slate-400 tabular-nums">
                   {pct}%
                 </span>
                 <span className="font-mono font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
                   {cat.count.toLocaleString("vi-VN")}{" "}
-                  <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+                  <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
                     {cat.unit}
                   </span>
                 </span>

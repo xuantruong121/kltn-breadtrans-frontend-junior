@@ -113,24 +113,24 @@ export default function ImageUploadField({
                   type="button"
                   disabled={disabled || uploading}
                   onClick={handleRemove}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50 transition-colors disabled:opacity-50 dark:text-rose-400"
                 >
                   <Trash2 size={13} />
                   Xóa ảnh
                 </button>
               </div>
-              <p className="text-xs text-slate-500">{helperText}</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400">{helperText}</p>
             </div>
           </div>
         ) : (
           <div className={`flex flex-col items-center justify-center text-center ${compact ? "py-4" : "py-6"}`}>
-            <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-400">
+            <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-600 dark:text-slate-400">
               <ImageIcon size={20} />
             </div>
             <p className="text-sm font-medium text-slate-700">
               Chưa có ảnh bìa
             </p>
-            <p className="mt-1 text-xs text-slate-500 mb-3">{helperText}</p>
+            <p className="mt-1 text-xs text-slate-600 mb-3 dark:text-slate-400">{helperText}</p>
             <button
               type="button"
               disabled={disabled || uploading}

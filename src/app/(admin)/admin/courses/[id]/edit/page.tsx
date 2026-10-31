@@ -479,13 +479,13 @@ export default function AdminCourseEditStudioPage() {
   if (isError || !course) {
     return (
       <div className="max-w-md mx-auto my-16 p-8 bg-white rounded-2xl border border-slate-200 text-center shadow-xs">
-        <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mx-auto mb-4">
+        <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-700 flex items-center justify-center mx-auto mb-4 dark:text-rose-400">
           <XCircle size={24} />
         </div>
         <h3 className="text-lg font-bold text-slate-800 mb-2">
           Không tìm thấy khóa học
         </h3>
-        <p className="text-slate-500 text-sm mb-6">
+        <p className="text-slate-600 text-sm mb-6 dark:text-slate-400">
           Khóa học không tồn tại hoặc bạn không có quyền truy cập.
         </p>
         <Link
@@ -506,14 +506,14 @@ export default function AdminCourseEditStudioPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={handleBackNavigation}
-              className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+              className="p-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer dark:text-slate-400"
               title="Quay lại danh sách khóa học"
             >
               <ArrowLeft size={18} />
             </button>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider dark:text-slate-400">
                   Course metadata / Legacy editor
                 </span>
                 <span
@@ -572,7 +572,7 @@ export default function AdminCourseEditStudioPage() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6">
         <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950">
           <p className="text-sm font-semibold">Trình chỉnh sửa legacy</p>
-          <p className="mt-1 text-xs leading-relaxed text-amber-800">
+          <p className="mt-1 text-sm leading-relaxed text-amber-800">
             Màn hình này chỉ duy trì chỉnh sửa dữ liệu Lesson/Material cũ để hỗ trợ
             tương thích. Nội dung học viên hiện tại được đọc từ CourseLesson V5;
             thay đổi ở đây không phải là trình soạn thảo V5 chính thức.
@@ -588,7 +588,7 @@ export default function AdminCourseEditStudioPage() {
               />
               <div className="text-sm">
                 <h4 className="font-semibold mb-0.5">Khóa học đã xuất bản</h4>
-                <p className="text-emerald-700 text-xs leading-relaxed max-w-2xl">
+                <p className="text-emerald-700 text-sm leading-relaxed max-w-2xl">
                   Khóa học hiện đang hiển thị công khai trên danh mục. Bạn có thể
                   cập nhật thông tin hoặc chuyển về Bản nháp bất cứ khi nào.
                 </p>
@@ -614,7 +614,7 @@ export default function AdminCourseEditStudioPage() {
                 <h4 className="font-semibold mb-0.5">
                   Khóa học ở trạng thái lịch sử ({course.status})
                 </h4>
-                <p className="text-amber-700 text-xs leading-relaxed">
+                <p className="text-amber-700 text-sm leading-relaxed">
                   Bạn có thể xuất bản trực tiếp khóa học này hoặc chuyển về Bản
                   nháp để biên soạn lại.
                 </p>
@@ -633,7 +633,7 @@ export default function AdminCourseEditStudioPage() {
               <button
                 onClick={() => setShowPublishConfirmModal(true)}
                 disabled={publishCourseMutation.isPending}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-colors shadow-xs shrink-0 cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-semibold transition-colors shadow-xs shrink-0 cursor-pointer"
               >
                 <CheckCircle2 size={13} />
                 Xuất bản ngay
@@ -663,7 +663,7 @@ export default function AdminCourseEditStudioPage() {
                       ? "bg-slate-900 text-white shadow-xs"
                       : isCompleted
                         ? "text-slate-700 hover:bg-slate-100"
-                        : "text-slate-400 hover:bg-slate-50"
+                        : "text-slate-600 hover:bg-slate-50 dark:text-slate-400"
                   }`}
                 >
                   <Icon size={16} />
@@ -682,7 +682,7 @@ export default function AdminCourseEditStudioPage() {
               <h2 className="text-lg font-bold text-slate-900">
                 Thông tin cơ bản của khóa học
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-sm text-slate-600 mt-1 dark:text-slate-400">
                 Thiết lập các thuộc tính nhận diện và phân loại trình độ học thuật
                 cho khóa học.
               </p>
@@ -692,7 +692,7 @@ export default function AdminCourseEditStudioPage() {
               {/* Title */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Tiêu đề khóa học <span className="text-rose-500">*</span>
+                  Tiêu đề khóa học <span className="text-rose-700 dark:text-rose-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -712,7 +712,7 @@ export default function AdminCourseEditStudioPage() {
                   }`}
                 />
                 {formErrors.title && (
-                  <p className="text-xs text-rose-500 mt-1 font-medium">
+                  <p className="text-sm text-rose-700 mt-1 font-medium dark:text-rose-400">
                     {formErrors.title}
                   </p>
                 )}
@@ -721,7 +721,7 @@ export default function AdminCourseEditStudioPage() {
               {/* Level */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Trình độ học thuật <span className="text-rose-500">*</span>
+                  Trình độ học thuật <span className="text-rose-700 dark:text-rose-400">*</span>
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {LEVEL_OPTIONS.map((opt) => {
@@ -743,7 +743,7 @@ export default function AdminCourseEditStudioPage() {
                         <div className="font-semibold text-slate-900 mb-0.5">
                           {opt.label}
                         </div>
-                        <div className="text-xs text-slate-500">
+                        <div className="text-xs text-slate-600 dark:text-slate-400">
                           Mã hệ thống: {opt.value}
                         </div>
                       </button>
@@ -755,7 +755,7 @@ export default function AdminCourseEditStudioPage() {
               {/* Description */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Mô tả khóa học <span className="text-rose-500">*</span>
+                  Mô tả khóa học <span className="text-rose-700 dark:text-rose-400">*</span>
                 </label>
                 <textarea
                   rows={4}
@@ -775,7 +775,7 @@ export default function AdminCourseEditStudioPage() {
                   }`}
                 />
                 {formErrors.description && (
-                  <p className="text-xs text-rose-500 mt-1 font-medium">
+                  <p className="text-sm text-rose-700 mt-1 font-medium dark:text-rose-400">
                     {formErrors.description}
                   </p>
                 )}
@@ -801,7 +801,7 @@ export default function AdminCourseEditStudioPage() {
                       placeholder="https://images.unsplash.com/... hoặc link ảnh hợp lệ"
                       className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-blue-500 focus:bg-white transition-all"
                     />
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-sm text-slate-600 mt-1 dark:text-slate-400">
                       Khuyến nghị tỷ lệ 16:9, dung lượng nhẹ, độ phân giải tối
                       thiểu 800x450px.
                     </p>
@@ -866,7 +866,7 @@ export default function AdminCourseEditStudioPage() {
                 <h2 className="text-lg font-bold text-slate-900">
                   Cấu trúc giáo trình học thuật
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-sm text-slate-600 mt-0.5 dark:text-slate-400">
                   Xây dựng danh sách bài giảng, video hướng dẫn và tài liệu học
                   tập đính kèm.
                 </p>
@@ -910,7 +910,7 @@ export default function AdminCourseEditStudioPage() {
                               {lesson.title}
                             </h3>
                             {lesson.description && (
-                              <p className="text-slate-500 text-xs mt-0.5 leading-relaxed">
+                              <p className="text-slate-600 text-sm mt-0.5 leading-relaxed dark:text-slate-400">
                                 {lesson.description}
                               </p>
                             )}
@@ -922,7 +922,7 @@ export default function AdminCourseEditStudioPage() {
                           <button
                             disabled={idx === 0}
                             onClick={() => handleMoveLesson(idx, "UP")}
-                            className="p-1.5 text-slate-400 hover:text-slate-700 rounded hover:bg-slate-100 transition-colors disabled:opacity-30 cursor-pointer"
+                            className="p-1.5 text-slate-500 hover:text-slate-700 rounded hover:bg-slate-100 transition-colors disabled:opacity-30 cursor-pointer"
                             title="Di chuyển lên"
                           >
                             <ChevronUp size={15} />
@@ -930,7 +930,7 @@ export default function AdminCourseEditStudioPage() {
                           <button
                             disabled={idx === (course.lessons?.length || 1) - 1}
                             onClick={() => handleMoveLesson(idx, "DOWN")}
-                            className="p-1.5 text-slate-400 hover:text-slate-700 rounded hover:bg-slate-100 transition-colors disabled:opacity-30 cursor-pointer"
+                            className="p-1.5 text-slate-500 hover:text-slate-700 rounded hover:bg-slate-100 transition-colors disabled:opacity-30 cursor-pointer"
                             title="Di chuyển xuống"
                           >
                             <ChevronDown size={15} />
@@ -946,7 +946,7 @@ export default function AdminCourseEditStudioPage() {
                                 videoUrl: lesson.videoUrl || "",
                               })
                             }
-                            className="p-1.5 text-slate-500 hover:text-slate-900 rounded hover:bg-slate-100 transition-colors ml-1 cursor-pointer"
+                            className="p-1.5 text-slate-600 hover:text-slate-900 rounded hover:bg-slate-100 transition-colors ml-1 cursor-pointer dark:text-slate-400"
                             title="Chỉnh sửa bài học"
                           >
                             <Edit size={14} />
@@ -960,7 +960,7 @@ export default function AdminCourseEditStudioPage() {
                                 name: lesson.title,
                               })
                             }
-                            className="p-1.5 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50 transition-colors cursor-pointer"
+                            className="p-1.5 text-slate-600 hover:text-rose-600 rounded hover:bg-rose-50 transition-colors cursor-pointer dark:text-slate-400"
                             title="Xóa bài học"
                           >
                             <Trash2 size={14} />
@@ -970,7 +970,7 @@ export default function AdminCourseEditStudioPage() {
 
                       {/* Video URL */}
                       <div className="mt-3 flex items-center gap-2 text-xs">
-                        <Video size={14} className="text-slate-400 shrink-0" />
+                        <Video size={14} className="text-slate-500 shrink-0" />
                         {lesson.videoUrl ? (
                           <a
                             href={lesson.videoUrl}
@@ -981,7 +981,7 @@ export default function AdminCourseEditStudioPage() {
                             {lesson.videoUrl}
                           </a>
                         ) : (
-                          <span className="text-slate-400 italic">
+                          <span className="text-slate-600 italic dark:text-slate-400">
                             Chưa gắn video bài giảng
                           </span>
                         )}
@@ -991,7 +991,7 @@ export default function AdminCourseEditStudioPage() {
                       <div className="mt-4 pt-3 border-t border-slate-100">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                            <FileText size={13} className="text-slate-400" />
+                            <FileText size={13} className="text-slate-500" />
                             Tài liệu đính kèm ({lesson.materials?.length || 0})
                           </span>
 
@@ -1046,7 +1046,7 @@ export default function AdminCourseEditStudioPage() {
                                         fileType: mat.fileType || "PDF",
                                       })
                                     }
-                                    className="p-1 text-slate-400 hover:text-slate-700 rounded cursor-pointer"
+                                    className="p-1 text-slate-600 hover:text-slate-700 rounded cursor-pointer dark:text-slate-400"
                                     title="Sửa tài liệu"
                                   >
                                     <Edit size={12} />
@@ -1060,7 +1060,7 @@ export default function AdminCourseEditStudioPage() {
                                         name: mat.title,
                                       })
                                     }
-                                    className="p-1 text-slate-400 hover:text-rose-600 rounded cursor-pointer"
+                                    className="p-1 text-slate-600 hover:text-rose-600 rounded cursor-pointer dark:text-slate-400"
                                     title="Xóa tài liệu"
                                   >
                                     <Trash2 size={12} />
@@ -1070,7 +1070,7 @@ export default function AdminCourseEditStudioPage() {
                             ))}
                           </div>
                         ) : (
-                          <div className="p-3 text-center bg-slate-50/50 rounded-lg text-slate-400 text-xs">
+                          <div className="p-3 text-center bg-slate-50/50 rounded-lg text-slate-600 text-xs dark:text-slate-400">
                             Chưa có tài liệu đính kèm cho bài học này.
                           </div>
                         )}
@@ -1085,7 +1085,7 @@ export default function AdminCourseEditStudioPage() {
                 <h3 className="font-bold text-slate-800 text-base mb-1">
                   Chưa có bài học nào trong giáo trình
                 </h3>
-                <p className="text-xs text-slate-500 max-w-md mx-auto mb-5">
+                <p className="text-sm text-slate-600 max-w-md mx-auto mb-5 dark:text-slate-400">
                   Hãy bắt đầu xây dựng giáo trình bằng cách thêm các bài giảng đầu
                   tiên kèm bài giảng video hoặc tài liệu PDF/DOCX.
                 </p>
@@ -1133,7 +1133,7 @@ export default function AdminCourseEditStudioPage() {
                 <h2 className="text-lg font-bold text-slate-900">
                   Kiểm tra & Xuất bản khóa học
                 </h2>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-sm text-slate-600 mt-1 dark:text-slate-400">
                   Rà soát tổng quan các tiêu chuẩn chất lượng học thuật trước khi
                   quyết định xuất bản công khai.
                 </p>
@@ -1142,31 +1142,31 @@ export default function AdminCourseEditStudioPage() {
               {/* Summary Overview Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-                  <div className="text-xs text-slate-400 font-medium mb-1">
+                  <div className="text-xs text-slate-600 font-medium mb-1 dark:text-slate-400">
                     Trình độ & Phân loại
                   </div>
                   <div className="text-base font-bold text-slate-900">
                     {course.level || "Chưa gắn"}
                   </div>
-                  <div className="text-xs text-slate-500 mt-0.5">
+                  <div className="text-xs text-slate-600 mt-0.5 dark:text-slate-400">
                     Trạng thái: {course.status}
                   </div>
                 </div>
 
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-                  <div className="text-xs text-slate-400 font-medium mb-1">
+                  <div className="text-xs text-slate-600 font-medium mb-1 dark:text-slate-400">
                     Tổng số bài học
                   </div>
                   <div className="text-base font-bold text-slate-900">
                     {course.lessons?.length || 0} Bài học
                   </div>
-                  <div className="text-xs text-slate-500 mt-0.5">
+                  <div className="text-xs text-slate-600 mt-0.5 dark:text-slate-400">
                     Thứ tự chuẩn hóa
                   </div>
                 </div>
 
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-                  <div className="text-xs text-slate-400 font-medium mb-1">
+                  <div className="text-xs text-slate-600 font-medium mb-1 dark:text-slate-400">
                     Tài liệu học tập
                   </div>
                   <div className="text-base font-bold text-slate-900">
@@ -1176,7 +1176,7 @@ export default function AdminCourseEditStudioPage() {
                     ) || 0}{" "}
                     Tài liệu
                   </div>
-                  <div className="text-xs text-slate-500 mt-0.5">
+                  <div className="text-xs text-slate-600 mt-0.5 dark:text-slate-400">
                     Đính kèm bài giảng
                   </div>
                 </div>
@@ -1193,11 +1193,11 @@ export default function AdminCourseEditStudioPage() {
                       Tiêu đề khóa học hợp lệ (tối thiểu 5 ký tự)
                     </span>
                     {checklist.hasTitle ? (
-                      <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold">
+                      <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold dark:text-emerald-400">
                         <Check size={14} /> Hợp lệ
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-rose-500 font-semibold">
+                      <span className="inline-flex items-center gap-1 text-rose-700 font-semibold dark:text-rose-400">
                         <X size={14} /> Chưa đạt
                       </span>
                     )}
@@ -1208,11 +1208,11 @@ export default function AdminCourseEditStudioPage() {
                       Mô tả khóa học đầy đủ
                     </span>
                     {checklist.hasDesc ? (
-                      <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold">
+                      <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold dark:text-emerald-400">
                         <Check size={14} /> Hợp lệ
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-rose-500 font-semibold">
+                      <span className="inline-flex items-center gap-1 text-rose-700 font-semibold dark:text-rose-400">
                         <X size={14} /> Chưa đạt
                       </span>
                     )}
@@ -1223,12 +1223,12 @@ export default function AdminCourseEditStudioPage() {
                       Giáo trình có ít nhất 1 bài học
                     </span>
                     {checklist.hasLessons ? (
-                      <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold">
+                      <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold dark:text-emerald-400">
                         <Check size={14} /> Đạt ({course.lessons?.length || 0}{" "}
                         bài học)
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-rose-500 font-semibold">
+                      <span className="inline-flex items-center gap-1 text-rose-700 font-semibold dark:text-rose-400">
                         <X size={14} /> Cần bổ sung
                       </span>
                     )}
@@ -1239,11 +1239,11 @@ export default function AdminCourseEditStudioPage() {
                       Các bài học có video hoặc tài liệu học tập
                     </span>
                     {checklist.lessonsHaveContent ? (
-                      <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold">
+                      <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold dark:text-emerald-400">
                         <Check size={14} /> Đã có tài liệu
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-amber-600 font-semibold">
+                      <span className="inline-flex items-center gap-1 text-amber-700 font-semibold dark:text-amber-400">
                         <AlertTriangle size={14} /> Khuyến nghị bổ sung thêm
                       </span>
                     )}
@@ -1282,7 +1282,7 @@ export default function AdminCourseEditStudioPage() {
                         !checklist.canPublish || publishCourseMutation.isPending
                       }
                       onClick={() => setShowPublishConfirmModal(true)}
-                      className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
+                      className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
                     >
                       {publishCourseMutation.isPending ? (
                         <Loader2 size={14} className="animate-spin" />
@@ -1313,7 +1313,7 @@ export default function AdminCourseEditStudioPage() {
                 onClick={() =>
                   setLessonModal((prev) => ({ ...prev, isOpen: false }))
                 }
-                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg cursor-pointer"
+                className="p-1 text-slate-600 hover:text-slate-700 rounded-lg cursor-pointer dark:text-slate-400"
               >
                 <X size={18} />
               </button>
@@ -1347,7 +1347,7 @@ export default function AdminCourseEditStudioPage() {
             >
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Tiêu đề bài học <span className="text-rose-500">*</span>
+                  Tiêu đề bài học <span className="text-rose-700 dark:text-rose-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -1440,7 +1440,7 @@ export default function AdminCourseEditStudioPage() {
                 onClick={() =>
                   setMaterialModal((prev) => ({ ...prev, isOpen: false }))
                 }
-                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg cursor-pointer"
+                className="p-1 text-slate-600 hover:text-slate-700 rounded-lg cursor-pointer dark:text-slate-400"
               >
                 <X size={18} />
               </button>
@@ -1486,7 +1486,7 @@ export default function AdminCourseEditStudioPage() {
             >
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Tên tài liệu <span className="text-rose-500">*</span>
+                  Tên tài liệu <span className="text-rose-700 dark:text-rose-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -1527,7 +1527,7 @@ export default function AdminCourseEditStudioPage() {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Đường dẫn tài liệu (File URL) <span className="text-rose-500">*</span>
+                  Đường dẫn tài liệu (File URL) <span className="text-rose-700 dark:text-rose-400">*</span>
                 </label>
                 <input
                   type="url"
@@ -1580,13 +1580,13 @@ export default function AdminCourseEditStudioPage() {
       {deleteConfirm.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
           <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
-            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mb-4">
+            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center mb-4 dark:text-rose-400">
               <AlertTriangle size={22} />
             </div>
             <h3 className="font-bold text-slate-900 text-base mb-1">
               Xác nhận xóa {deleteConfirm.type === "LESSON" ? "bài học" : "tài liệu"}?
             </h3>
-            <p className="text-xs text-slate-500 leading-relaxed mb-6">
+            <p className="text-sm text-slate-600 leading-relaxed mb-6 dark:text-slate-400">
               Bạn có chắc chắn muốn xóa &ldquo;
               <span className="font-semibold text-slate-800">
                 {deleteConfirm.name}
@@ -1634,13 +1634,13 @@ export default function AdminCourseEditStudioPage() {
       {showExitConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
           <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center mb-4 dark:text-amber-400">
               <AlertCircle size={22} />
             </div>
             <h3 className="font-bold text-slate-900 text-base mb-1">
               Bạn có thay đổi chưa lưu
             </h3>
-            <p className="text-xs text-slate-500 leading-relaxed mb-6">
+            <p className="text-sm text-slate-600 leading-relaxed mb-6 dark:text-slate-400">
               Bạn đang có những chỉnh sửa chưa được lưu vào hệ thống. Nếu rời đi
               bây giờ, những thay đổi này sẽ bị mất.
             </p>
@@ -1672,13 +1672,13 @@ export default function AdminCourseEditStudioPage() {
       {showRevertConfirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
           <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center mb-4 dark:text-amber-400">
               <RotateCcw size={22} />
             </div>
             <h3 className="font-bold text-slate-900 text-base mb-1">
               Chuyển khóa học về Bản nháp?
             </h3>
-            <p className="text-xs text-slate-600 leading-relaxed mb-4">
+            <p className="text-sm text-slate-600 leading-relaxed mb-4">
               Bạn đang chuyển khóa học về trạng thái Bản nháp (DRAFT).
             </p>
             <div className="flex items-center justify-end gap-3">
@@ -1711,13 +1711,13 @@ export default function AdminCourseEditStudioPage() {
       {showPublishConfirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
           <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center mb-4 dark:text-emerald-400">
               <CheckCircle2 size={22} />
             </div>
             <h3 className="font-bold text-slate-900 text-base mb-1">
               Xuất bản khóa học?
             </h3>
-            <p className="text-xs text-slate-600 leading-relaxed mb-4">
+            <p className="text-sm text-slate-600 leading-relaxed mb-4">
               Khóa học sẽ chuyển sang trạng thái PUBLISHED và hiển thị công khai
               trên danh mục khóa học cho học viên.
             </p>
@@ -1733,7 +1733,7 @@ export default function AdminCourseEditStudioPage() {
                 type="button"
                 disabled={publishCourseMutation.isPending}
                 onClick={() => publishCourseMutation.mutate()}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs disabled:opacity-50 inline-flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-semibold shadow-xs disabled:opacity-50 inline-flex items-center gap-1.5 cursor-pointer"
               >
                 {publishCourseMutation.isPending && (
                   <Loader2 size={13} className="animate-spin" />

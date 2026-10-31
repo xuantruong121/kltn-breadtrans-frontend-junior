@@ -8,7 +8,7 @@ export default function GoogleAuthErrorPage() {
   return (
     <AuthShell>
       <section className="rounded-2xl border border-rose-200 bg-card p-7 text-center shadow-card dark:border-rose-900/70 dark:bg-slate-900 sm:p-10">
-        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-300">
+        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300">
           <CircleAlert size={30} aria-hidden="true" />
         </div>
         <p className="mt-5 text-xs font-extrabold uppercase tracking-[0.16em] text-rose-600">Không thể xác thực</p>

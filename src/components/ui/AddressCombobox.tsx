@@ -207,7 +207,7 @@ export function AddressCombobox({
             className="absolute inset-0 pointer-events-none flex items-center px-4 py-2.5 text-sm font-semibold overflow-hidden whitespace-pre select-none"
           >
             <span className="opacity-0">{inputText}</span>
-            <span className="text-slate-400 dark:text-slate-500">
+            <span className="text-slate-600 dark:text-slate-400">
               {ghostSuffix}
             </span>
           </div>
@@ -232,14 +232,14 @@ export function AddressCombobox({
         {/* Action icons (clear button + toggle chevron) */}
         <div className="absolute right-3 flex items-center gap-1.5 pointer-events-auto">
           {isLoading ? (
-            <Loader2 className="w-4 h-4 text-slate-400 animate-spin" />
+            <Loader2 className="w-4 h-4 text-slate-500 animate-spin" />
           ) : (
             <>
               {value && !disabled && (
                 <button
                   type="button"
                   onClick={handleClear}
-                  className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-md hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors"
+                  className="p-1 text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 rounded-md hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors dark:text-slate-400"
                   title="Xóa lựa chọn"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -255,7 +255,7 @@ export function AddressCombobox({
                     if (!isOpen) inputRef.current?.focus();
                   }
                 }}
-                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-md transition-colors"
+                className="p-1 text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 rounded-md transition-colors dark:text-slate-400"
               >
                 <ChevronDown
                   className={`w-4 h-4 transition-transform duration-200 ${
@@ -277,7 +277,7 @@ export function AddressCombobox({
             className="overflow-y-auto max-h-60 py-1 divide-y divide-slate-100/50 dark:divide-slate-800/50 text-sm"
           >
             {filteredItems.length === 0 ? (
-              <li className="px-4 py-3 text-xs text-slate-400 dark:text-slate-500 text-center select-none font-medium">
+              <li className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400 text-center select-none font-medium">
                 Không tìm thấy địa chỉ phù hợp
               </li>
             ) : (

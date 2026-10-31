@@ -8,7 +8,7 @@ export default function HubPage() {
       fallback={
         <div className="flex flex-col justify-center items-center h-96 gap-3">
           <Loader2 className="animate-spin text-amber-500" size={40} />
-          <span className="text-xs font-bold text-slate-400">Đang tải thông tin tài khoản...</span>
+          <span className="text-xs font-bold text-slate-500">Đang tải thông tin tài khoản...</span>
         </div>
       }
     >

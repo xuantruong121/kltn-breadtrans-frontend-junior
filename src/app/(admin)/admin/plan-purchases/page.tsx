@@ -327,7 +327,7 @@ export default function AdminPlanPurchasesPage() {
       >
         <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs transition hover:border-slate-300">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Quyền gói hoạt động
             </span>
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100">
@@ -342,14 +342,14 @@ export default function AdminPlanPurchasesPage() {
               Học viên có gói
             </span>
           </div>
-          <p className="mt-2 text-xs font-medium text-slate-600">
+          <p className="mt-2 text-sm font-medium text-slate-600">
             Tài khoản hiện đang có quyền học bài giảng và tính năng Plus/Pro.
           </p>
         </div>
 
         <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs transition hover:border-slate-300">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Giao dịch cần đối soát
             </span>
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-700 border border-amber-100">
@@ -364,14 +364,14 @@ export default function AdminPlanPurchasesPage() {
               Chờ xác nhận
             </span>
           </div>
-          <p className="mt-2 text-xs font-medium text-slate-600">
+          <p className="mt-2 text-sm font-medium text-slate-600">
             Giao dịch học viên đã chuyển khoản hoặc cần rà soát thanh toán.
           </p>
         </div>
 
         <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs transition hover:border-slate-300">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Tổng lượt giao dịch
             </span>
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-700 border border-blue-100">
@@ -386,7 +386,7 @@ export default function AdminPlanPurchasesPage() {
               Đã ghi nhận
             </span>
           </div>
-          <p className="mt-2 text-xs font-medium text-slate-600">
+          <p className="mt-2 text-sm font-medium text-slate-600">
             Toàn bộ lịch sử yêu cầu mua gói trên hệ thống BreadTrans.
           </p>
         </div>
@@ -400,7 +400,7 @@ export default function AdminPlanPurchasesPage() {
           className={`-mb-px border-b-2 px-1 py-3 text-sm font-bold transition-all cursor-pointer ${
             mainTab === "ENTITLEMENTS"
               ? "border-slate-900 text-slate-950"
-              : "border-transparent text-slate-500 hover:text-slate-800"
+              : "border-transparent text-slate-600 hover:text-slate-800 dark:text-slate-400"
           }`}
         >
           Quyền học viên
@@ -411,7 +411,7 @@ export default function AdminPlanPurchasesPage() {
           className={`-mb-px border-b-2 px-1 py-3 text-sm font-bold transition-all cursor-pointer ${
             mainTab === "TRANSACTIONS"
               ? "border-slate-900 text-slate-950"
-              : "border-transparent text-slate-500 hover:text-slate-800"
+              : "border-transparent text-slate-600 hover:text-slate-800 dark:text-slate-400"
           }`}
         >
           Giao dịch mua gói
@@ -462,7 +462,7 @@ export default function AdminPlanPurchasesPage() {
           <section className="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-xs">
             {subscriptionsQuery.isLoading ? (
               <div className="flex justify-center py-20">
-                <Loader2 className="animate-spin text-slate-400 size-6" />
+                <Loader2 className="animate-spin text-slate-500 size-6" />
               </div>
             ) : subscriptionsQuery.isError ? (
               <div className="p-8 text-center text-rose-700">
@@ -497,7 +497,7 @@ export default function AdminPlanPurchasesPage() {
                               <div className="font-bold text-slate-950">
                                 {item.userFullName || "Chưa đặt tên"}
                               </div>
-                              <div className="text-xs text-slate-500 font-mono">
+                              <div className="text-xs text-slate-600 font-mono dark:text-slate-400">
                                 {item.userEmail}
                               </div>
                             </td>
@@ -515,7 +515,7 @@ export default function AdminPlanPurchasesPage() {
                             {/* Validity */}
                             <td className="px-5 py-3.5 text-xs text-slate-600 whitespace-nowrap font-mono">
                               <div>{dateOnly(item.startsAt)}</div>
-                              <div className="text-slate-500">
+                              <div className="text-slate-600 dark:text-slate-400">
                                 đến {dateOnly(item.endsAt)}
                               </div>
                             </td>
@@ -527,11 +527,11 @@ export default function AdminPlanPurchasesPage() {
                                   Còn {item.remainingDays} ngày
                                 </span>
                               ) : item.status === "REVOKED" ? (
-                                <span className="text-slate-500 font-medium">
+                                <span className="text-slate-600 font-medium dark:text-slate-400">
                                   Đã thu hồi
                                 </span>
                               ) : (
-                                <span className="text-slate-500 font-medium">
+                                <span className="text-slate-600 font-medium dark:text-slate-400">
                                   Đã hết hạn
                                 </span>
                               )}
@@ -577,7 +577,7 @@ export default function AdminPlanPurchasesPage() {
                                     <button
                                       type="button"
                                       onClick={() => setRevokeTarget(item)}
-                                      className="text-rose-600 hover:text-rose-700 transition active:scale-[0.98] cursor-pointer"
+                                      className="text-rose-700 hover:text-rose-700 transition active:scale-[0.98] cursor-pointer dark:text-rose-400"
                                       title="Thu hồi quyền gói"
                                     >
                                       Thu hồi
@@ -610,7 +610,7 @@ export default function AdminPlanPurchasesPage() {
                 </div>
 
                 {entitlementRows.length === 0 && (
-                  <div className="py-14 text-center text-sm font-medium text-slate-500">
+                  <div className="py-14 text-center text-sm font-medium text-slate-600 dark:text-slate-400">
                     Không có quyền học viên nào phù hợp bộ lọc.
                   </div>
                 )}
@@ -671,7 +671,7 @@ export default function AdminPlanPurchasesPage() {
           <section className="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-xs">
             {purchasesQuery.isLoading ? (
               <div className="flex justify-center py-20">
-                <Loader2 className="animate-spin text-slate-400 size-6" />
+                <Loader2 className="animate-spin text-slate-500 size-6" />
               </div>
             ) : purchasesQuery.isError ? (
               <div className="p-8 text-center text-rose-700">
@@ -706,7 +706,7 @@ export default function AdminPlanPurchasesPage() {
                             <div className="font-semibold text-slate-800">
                               {item.planDisplayName}
                             </div>
-                            <div className="text-xs text-slate-500 font-mono">
+                            <div className="text-xs text-slate-600 font-mono dark:text-slate-400">
                               {item.durationDays} ngày
                             </div>
                           </td>
@@ -737,7 +737,7 @@ export default function AdminPlanPurchasesPage() {
                   </table>
                 </div>
                 {purchaseRows.length === 0 && (
-                  <div className="py-14 text-center text-sm font-medium text-slate-500">
+                  <div className="py-14 text-center text-sm font-medium text-slate-600 dark:text-slate-400">
                     Không có giao dịch phù hợp.
                   </div>
                 )}
@@ -765,14 +765,14 @@ export default function AdminPlanPurchasesPage() {
                 <h2 className="text-lg font-bold text-slate-900">
                   Chi tiết giao dịch gói
                 </h2>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                   Thông tin đối soát và quyền truy cập đã kích hoạt.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedPurchaseId(null)}
-                className="text-sm text-slate-500 hover:text-slate-800"
+                className="text-sm text-slate-600 hover:text-slate-800 dark:text-slate-400"
               >
                 Đóng
               </button>
@@ -784,36 +784,36 @@ export default function AdminPlanPurchasesPage() {
                 <div className="mt-6 space-y-4 text-sm">
                   <div className="grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-4">
                     <div>
-                      <p className="text-xs text-slate-500">Học viên</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">Học viên</p>
                       <p className="font-medium">
                         {selectedPurchase.userEmail}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500">Trạng thái</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">Trạng thái</p>
                       <TransactionStatusBadge item={selectedPurchase} />
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500">Gói</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">Gói</p>
                       <p className="font-medium">
                         {selectedPurchase.planDisplayName} ·{" "}
                         {selectedPurchase.durationDays} ngày
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500">Giá trị</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">Giá trị</p>
                       <p className="font-medium">
                         {money(selectedPurchase.amountVnd)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500">Mã chuyển khoản</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">Mã chuyển khoản</p>
                       <p className="font-mono">
                         {selectedPurchase.payment.transferCode}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500">Hoàn tất</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">Hoàn tất</p>
                       <p>{dateTime(selectedPurchase.completedAt)}</p>
                     </div>
                   </div>
@@ -822,7 +822,7 @@ export default function AdminPlanPurchasesPage() {
                       Lý do từ chối: {selectedPurchase.payment.rejectionReason}
                     </div>
                   )}
-                  <p className="text-xs text-slate-500">
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
                     Nguồn xác nhận:{" "}
                     {selectedPurchase.confirmedById
                       ? "Quản trị viên"
@@ -847,7 +847,7 @@ export default function AdminPlanPurchasesPage() {
                         onClick={() =>
                           confirmPurchaseMutation.mutate(selectedPurchase.id)
                         }
-                        className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60 cursor-pointer"
+                        className="inline-flex items-center gap-1 rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-60 cursor-pointer"
                       >
                         <CheckCircle2 size={16} /> Xác nhận & kích hoạt
                       </button>
@@ -876,7 +876,7 @@ export default function AdminPlanPurchasesPage() {
             className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
           >
             <h2 className="text-lg font-bold">Từ chối giao dịch</h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
               Lý do sẽ được lưu cùng giao dịch của {rejectingPurchase.userEmail}
               .
             </p>

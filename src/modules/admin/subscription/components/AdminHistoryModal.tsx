@@ -108,7 +108,7 @@ export function AdminHistoryModal({
             </div>
             <div>
               <h2 className="text-lg font-bold text-slate-900">Lịch sử kiểm toán gói học viên</h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Toàn bộ các mốc thay đổi trạng thái của gói học viên.
               </p>
             </div>
@@ -116,7 +116,7 @@ export function AdminHistoryModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 p-1 rounded-md cursor-pointer"
+            className="text-slate-600 hover:text-slate-600 p-1 rounded-md cursor-pointer dark:text-slate-400"
           >
             <X size={18} />
           </button>
@@ -128,11 +128,11 @@ export function AdminHistoryModal({
             <p className="font-semibold text-slate-800 text-sm">
               {subscription.userFullName || "Học viên"}
             </p>
-            <p className="text-slate-500 font-mono">{subscription.userEmail}</p>
+            <p className="text-slate-600 font-mono dark:text-slate-400">{subscription.userEmail}</p>
           </div>
           <div className="text-right">
             <span className="font-semibold text-slate-800">{subscription.planDisplayName}</span>
-            <p className="text-slate-500">
+            <p className="text-slate-600 dark:text-slate-400">
               Hiệu lực: {formatDate(subscription.startsAt)} → {formatDate(subscription.endsAt)}
             </p>
           </div>
@@ -141,16 +141,16 @@ export function AdminHistoryModal({
         {/* Timeline Content */}
         <div className="mt-4 flex-1 overflow-y-auto pr-1">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+            <div className="flex flex-col items-center justify-center py-12 text-slate-600 dark:text-slate-400">
               <Loader2 size={28} className="animate-spin mb-2 text-blue-600" />
-              <p className="text-xs">Đang tải lịch sử kiểm toán...</p>
+              <p className="text-sm">Đang tải lịch sử kiểm toán...</p>
             </div>
           ) : isError ? (
             <div className="p-6 text-center text-rose-700 bg-rose-50 rounded-xl text-xs">
               Không thể tải lịch sử kiểm toán của quyền này.
             </div>
           ) : events.length === 0 ? (
-            <div className="py-12 text-center text-slate-400 text-xs">
+            <div className="py-12 text-center text-slate-600 text-xs dark:text-slate-400">
               Chưa có sự kiện kiểm toán nào được ghi nhận.
             </div>
           ) : (
@@ -165,30 +165,30 @@ export function AdminHistoryModal({
                       <span className="font-bold text-slate-900 text-sm">
                         {event.typeLabel}
                       </span>
-                      <span className="text-slate-400 font-mono">
+                      <span className="text-slate-600 font-mono dark:text-slate-400">
                         {formatDateTime(event.createdAt)}
                       </span>
                     </div>
 
                     <div className="flex items-center gap-1.5 text-slate-600">
-                      <User size={13} className="text-slate-400 shrink-0" />
+                      <User size={13} className="text-slate-500 shrink-0" />
                       <span>
                         Thực hiện bởi: <strong className="text-slate-800">{event.actorName}</strong>
                         {event.actorEmail && (
-                          <span className="text-slate-400 font-mono ml-1">({event.actorEmail})</span>
+                          <span className="text-slate-600 font-mono ml-1 dark:text-slate-400">({event.actorEmail})</span>
                         )}
                       </span>
                     </div>
 
                     {event.reason && (
                       <div className="p-2.5 bg-slate-50 rounded-lg text-slate-700 border border-slate-100">
-                        <span className="font-semibold text-slate-500 block mb-0.5">Lý do:</span>
+                        <span className="font-semibold text-slate-600 block mb-0.5 dark:text-slate-400">Lý do:</span>
                         <p className="whitespace-pre-wrap">{event.reason}</p>
                       </div>
                     )}
 
                     {event.newEndsAt && (
-                      <div className="text-xs text-slate-500 flex items-center gap-2">
+                      <div className="text-xs text-slate-600 flex items-center gap-2 dark:text-slate-400">
                         {event.previousEndsAt && (
                           <span>Từ {formatDate(event.previousEndsAt)}</span>
                         )}

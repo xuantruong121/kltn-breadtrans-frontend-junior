@@ -248,7 +248,7 @@ export function ListeningAudioPlayer({
       {/* A quiet header keeps attention on the transcript below. */}
       <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2 dark:border-slate-800">
         <div className="flex items-center gap-2.5">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
             <Volume2 size={16} aria-hidden="true" />
           </div>
           <span className="text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">
@@ -265,11 +265,11 @@ export function ListeningAudioPlayer({
 
       {error ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center dark:border-slate-800 dark:bg-slate-800/60">
-          <VolumeX size={32} className="text-slate-400 dark:text-slate-500" aria-hidden="true" />
+          <VolumeX size={32} className="text-slate-500 dark:text-slate-400" aria-hidden="true" />
           <p className="mt-2 text-sm font-bold text-slate-700 dark:text-slate-200">
             Không thể tải audio cho câu hỏi này
           </p>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
             Vui lòng kiểm tra kết nối mạng hoặc thử tải lại.
           </p>
           <button
@@ -333,7 +333,7 @@ export function ListeningAudioPlayer({
           {/* Timeline & Scrubber */}
           <div className="space-y-1.5">
             <div className="flex items-center gap-3">
-              <span className="w-10 text-xs font-bold font-mono text-slate-500 dark:text-slate-400">
+              <span className="w-10 text-xs font-bold font-mono text-slate-600 dark:text-slate-400">
                 {formatTime(currentTime)}
               </span>
               <input
@@ -347,7 +347,7 @@ export function ListeningAudioPlayer({
                 aria-label="Thanh thời gian âm thanh"
                 className="h-2 flex-1 cursor-pointer appearance-none rounded-full bg-slate-200 dark:bg-slate-700 accent-amber-500 focus:outline-hidden"
               />
-              <span className="w-10 text-right text-xs font-bold font-mono text-slate-500 dark:text-slate-400">
+              <span className="w-10 text-right text-xs font-bold font-mono text-slate-600 dark:text-slate-400">
                 {formatTime(duration)}
               </span>
             </div>

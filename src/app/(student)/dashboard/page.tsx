@@ -166,7 +166,7 @@ function getQuestCategoryMeta(type?: string) {
       return {
         label: "Luyện nói",
         badgeClass: "bg-teal-100 dark:bg-teal-950/70 text-teal-900 dark:text-teal-300 border-teal-200 dark:border-teal-800",
-        btnClass: "bg-teal-600 hover:bg-teal-700 text-white shadow-teal-600/20",
+        btnClass: "bg-teal-700 hover:bg-teal-800 text-white shadow-teal-600/20",
         progressFill: "bg-teal-500",
         icon: Mic,
       };
@@ -174,7 +174,7 @@ function getQuestCategoryMeta(type?: string) {
       return {
         label: "Bài học",
         badgeClass: "bg-emerald-100 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
-        btnClass: "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20",
+        btnClass: "bg-emerald-700 hover:bg-emerald-800 text-white shadow-emerald-600/20",
         progressFill: "bg-emerald-500",
         icon: CheckCircle2,
       };
@@ -774,7 +774,7 @@ export default function DashboardPage() {
 
               {isProfileError && (
                 <div className="flex items-center gap-2 pt-0.5">
-                  <span className="text-xs font-semibold text-rose-600 dark:text-rose-400">
+                  <span className="text-xs font-semibold text-rose-700 dark:text-rose-400">
                     Không thể đồng bộ hồ sơ máy chủ.
                   </span>
                   <button
@@ -806,9 +806,9 @@ export default function DashboardPage() {
                 {isStatsLoading ? (
                   <span className="inline-block h-6 w-14 rounded bg-slate-200 dark:bg-slate-800 animate-pulse mt-1" />
                 ) : isStatsError ? (
-                  <span className="text-xs font-bold text-slate-400 mt-1 block">Không khả dụng</span>
+                  <span className="text-xs font-bold text-slate-600 mt-1 block dark:text-slate-400">Không khả dụng</span>
                 ) : (
-                  <strong className="mt-1 block text-lg sm:text-xl font-black text-orange-600 dark:text-orange-400">
+                  <strong className="mt-1 block text-lg sm:text-xl font-black text-orange-700 dark:text-orange-400">
                     {stats?.streakCount ?? 0} ngày
                   </strong>
                 )}
@@ -823,7 +823,7 @@ export default function DashboardPage() {
                 {isStatsLoading ? (
                   <span className="inline-block h-6 w-14 rounded bg-slate-200 dark:bg-slate-800 animate-pulse mt-1" />
                 ) : isStatsError ? (
-                  <span className="text-xs font-bold text-slate-400 mt-1 block">Không khả dụng</span>
+                  <span className="text-xs font-bold text-slate-600 mt-1 block dark:text-slate-400">Không khả dụng</span>
                 ) : (
                   <strong className="mt-1 block text-lg sm:text-xl font-black text-emerald-700 dark:text-emerald-400">
                     {stats?.weeklyExp ?? 0} EXP
@@ -844,7 +844,7 @@ export default function DashboardPage() {
                 {isStatsLoading ? (
                   <span className="inline-block h-6 w-14 rounded bg-slate-200 dark:bg-slate-800 animate-pulse mt-1" />
                 ) : isStatsError ? (
-                  <span className="text-xs font-bold text-slate-400 mt-1 block">Không khả dụng</span>
+                  <span className="text-xs font-bold text-slate-600 mt-1 block dark:text-slate-400">Không khả dụng</span>
                 ) : (
                   <strong className="mt-1 block text-lg sm:text-xl font-black text-amber-700 dark:text-amber-400">
                     {stats?.totalBanhRan ?? 0}
@@ -872,7 +872,7 @@ export default function DashboardPage() {
 
             {/* 7-Day Weekly Habit Flame Tracker (Vietnam Day Aligned) */}
             <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/90 dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-xs font-bold self-stretch sm:self-auto justify-between sm:justify-end shadow-2xs">
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-bold hidden sm:inline">Tuần này:</span>
+              <span className="text-xs text-slate-600 dark:text-slate-400 font-bold hidden sm:inline">Tuần này:</span>
               <div className="flex items-center gap-1.5">
                 {DAY_LABELS.map((day, idx) => {
                   const isPastOrToday = idx <= currentDayOfWeek;
@@ -887,7 +887,7 @@ export default function DashboardPage() {
                             : "ring-2 ring-amber-400 bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-black"
                           : isPastOrToday
                             ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-bold"
-                            : "bg-slate-50 dark:bg-slate-900/60 text-slate-400 dark:text-slate-500 border border-slate-100 dark:border-slate-800 font-medium"
+                            : "bg-slate-50 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 border border-slate-100 dark:border-slate-800 font-medium"
                       }`}
                       title={isToday ? "Hôm nay (Giờ Việt Nam)" : `Thứ ${day}`}
                     >
@@ -945,8 +945,8 @@ export default function DashboardPage() {
                       <span
                         className={`inline-flex items-center ${
                           requiresUpgrade
-                            ? "text-amber-500 dark:text-amber-400"
-                            : "text-amber-600 dark:text-amber-400"
+                            ? "text-amber-700 dark:text-amber-400"
+                            : "text-amber-700 dark:text-amber-400"
                         }`}
                         title={
                           period.requiredTier === "PLUS"
@@ -966,7 +966,7 @@ export default function DashboardPage() {
           {/* Custom Date Range Picker when Custom mode is selected */}
           {filterPeriod === "custom" && (
             <div className="flex flex-wrap items-center gap-2 text-xs font-semibold p-2.5 rounded-xl bg-slate-50/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
-              <span className="text-slate-500 dark:text-slate-400">Khoảng thời gian:</span>
+              <span className="text-slate-600 dark:text-slate-400">Khoảng thời gian:</span>
               <input
                 type="date"
                 value={customStartDate}
@@ -974,7 +974,7 @@ export default function DashboardPage() {
                 aria-label="Ngày bắt đầu tùy chỉnh"
                 className="px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
               />
-              <span className="text-slate-400">đến</span>
+              <span className="text-slate-600 dark:text-slate-400">đến</span>
               <input
                 type="date"
                 value={customEndDate}
@@ -1037,7 +1037,7 @@ export default function DashboardPage() {
 
             {/* 4. Streak */}
             <div className="flex items-center gap-3 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-3 sm:p-3.5 shadow-2xs">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400">
                 <Flame size={20} className="fill-amber-500 text-amber-500" aria-hidden="true" />
               </div>
               <div className="min-w-0">
@@ -1093,7 +1093,7 @@ export default function DashboardPage() {
                         className={
                           isActive
                             ? "text-blue-600 dark:text-blue-400 shrink-0"
-                            : "text-slate-500 dark:text-slate-400 shrink-0"
+                            : "text-slate-600 dark:text-slate-400 shrink-0"
                         }
                         aria-hidden="true"
                       />
@@ -1106,7 +1106,7 @@ export default function DashboardPage() {
                       className={
                         isActive
                           ? "text-blue-600 dark:text-blue-400 shrink-0"
-                          : "text-slate-400 group-hover:translate-y-0.5 transition-transform shrink-0"
+                          : "text-slate-600 group-hover:translate-y-0.5 transition-transform shrink-0 dark:text-slate-400"
                       }
                       aria-hidden="true"
                     />
@@ -1137,7 +1137,7 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => setActiveDetailKey(null)}
-                  className="text-xs font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition cursor-pointer"
+                  className="text-xs font-bold text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 transition cursor-pointer dark:text-slate-400"
                 >
                   Đóng
                 </button>
@@ -1147,7 +1147,7 @@ export default function DashboardPage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                 {/* 1. Target */}
                 <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 flex flex-col justify-between">
-                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <span className="text-xs font-bold text-slate-600 dark:text-slate-400">
                     Mục tiêu hôm nay
                   </span>
                   <div>
@@ -1165,14 +1165,14 @@ export default function DashboardPage() {
 
                 {/* 2. Practice Time */}
                 <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 flex flex-col justify-between">
-                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <span className="text-xs font-bold text-slate-600 dark:text-slate-400">
                     Thời gian luyện
                   </span>
                   <div>
                     <div className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 mt-1">
-                      {activeSkillData.durationMinutes}m <span className="text-xs font-semibold text-slate-500">hôm nay</span>
+                      {activeSkillData.durationMinutes}m <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">hôm nay</span>
                     </div>
-                    <div className="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-0.5">
+                    <div className="text-xs font-semibold text-slate-600 dark:text-slate-400 mt-0.5">
                       {todayFormatted}
                     </div>
                   </div>
@@ -1180,14 +1180,14 @@ export default function DashboardPage() {
 
                 {/* 3. Primary Count */}
                 <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 flex flex-col justify-between">
-                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400 truncate">
+                  <span className="text-xs font-bold text-slate-600 dark:text-slate-400 truncate">
                     {activeSkillData.statLabel3}
                   </span>
                   <div>
                     <div className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 mt-1">
-                      {activeSkillData.count3} <span className="text-xs font-semibold text-slate-500">hôm nay</span>
+                      {activeSkillData.count3} <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">hôm nay</span>
                     </div>
-                    <div className="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-0.5">
+                    <div className="text-xs font-semibold text-slate-600 dark:text-slate-400 mt-0.5">
                       {todayFormatted}
                     </div>
                   </div>
@@ -1195,14 +1195,14 @@ export default function DashboardPage() {
 
                 {/* 4. Secondary Count */}
                 <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 flex flex-col justify-between">
-                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400 truncate">
+                  <span className="text-xs font-bold text-slate-600 dark:text-slate-400 truncate">
                     {activeSkillData.statLabel4}
                   </span>
                   <div>
                     <div className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 mt-1">
-                      {activeSkillData.count4} <span className="text-xs font-semibold text-slate-500">hôm nay</span>
+                      {activeSkillData.count4} <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">hôm nay</span>
                     </div>
-                    <div className="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-0.5">
+                    <div className="text-xs font-semibold text-slate-600 dark:text-slate-400 mt-0.5">
                       {todayFormatted}
                     </div>
                   </div>
@@ -1210,14 +1210,14 @@ export default function DashboardPage() {
 
                 {/* 5. Practice Days */}
                 <div className="col-span-2 sm:col-span-1 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 flex flex-col justify-between">
-                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <span className="text-xs font-bold text-slate-600 dark:text-slate-400">
                     Ngày có luyện
                   </span>
                   <div>
                     <div className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 mt-1">
-                      {activeSkillData.practiceDays}/1 <span className="text-xs font-semibold text-slate-500">ngày</span>
+                      {activeSkillData.practiceDays}/1 <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">ngày</span>
                     </div>
-                    <div className="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-0.5">
+                    <div className="text-xs font-semibold text-slate-600 dark:text-slate-400 mt-0.5">
                       {todayFormatted}
                     </div>
                   </div>
@@ -1227,7 +1227,7 @@ export default function DashboardPage() {
               {/* Parts Table */}
               <div className="border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900/60">
                 {/* Table Header */}
-                <div className="grid grid-cols-12 gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-4 py-2.5 bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-200/80 dark:border-slate-800">
+                <div className="grid grid-cols-12 gap-2 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 px-4 py-2.5 bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-200/80 dark:border-slate-800">
                   <div className="col-span-5 sm:col-span-4">PHẦN</div>
                   <div className="col-span-3 sm:col-span-3">
                     {activeSkillData.actionHeader} · HÔM NAY
@@ -1256,7 +1256,7 @@ export default function DashboardPage() {
                             style={{ width: `${part.ratio}%` }}
                           />
                         </div>
-                        <span className="text-xs font-medium text-slate-400 w-6 text-right">
+                        <span className="text-xs font-medium text-slate-600 w-6 text-right dark:text-slate-400">
                           {part.ratio > 0 ? `${part.ratio}%` : "-"}
                         </span>
                       </div>
@@ -1295,31 +1295,31 @@ export default function DashboardPage() {
             aria-labelledby="upgrade-modal-title"
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200"
           >
-            <div className="relative w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xl space-y-4">
+            <div className="relative w-full max-w-lg rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xl space-y-4">
               <button
                 type="button"
                 onClick={() => setUpgradePrompt(null)}
-                className="absolute top-4 right-4 p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                className="absolute top-4 right-4 p-1 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer dark:text-slate-400"
                 aria-label="Đóng thông báo"
               >
                 <X size={18} />
               </button>
 
               <div className="flex items-center gap-3">
-                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
+                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400">
                   <Crown size={22} className="fill-amber-500 text-amber-500" />
                 </div>
                 <div>
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                  <span className="text-sm font-extrabold uppercase tracking-wider text-amber-700 dark:text-amber-400">
                     {upgradePrompt.requiredTier === "PLUS" ? "Yêu cầu gói Plus trở lên" : "Yêu cầu gói Pro"}
                   </span>
-                  <h3 id="upgrade-modal-title" className="text-base font-black text-slate-900 dark:text-slate-100">
+                  <h3 id="upgrade-modal-title" className="text-xl font-black text-slate-900 dark:text-slate-100">
                     Mở khóa bộ lọc {upgradePrompt.periodLabel}
                   </h3>
                 </div>
               </div>
 
-              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              <p className="text-base text-slate-700 dark:text-slate-300 leading-relaxed">
                 {upgradePrompt.requiredTier === "PLUS" ? (
                   <>
                     Chế độ xem thống kê theo <strong>{upgradePrompt.periodLabel}</strong> dành riêng cho học viên đăng ký gói <strong>Plus</strong> hoặc <strong>Pro</strong>. Hãy nâng cấp để theo dõi tiến độ học tập tuần và tháng chi tiết.
@@ -1335,14 +1335,14 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => setUpgradePrompt(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                  className="min-h-11 px-4 py-2 rounded-xl text-base font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
                 >
                   Để sau
                 </button>
                 <Link
                   href="/plans"
                   onClick={() => setUpgradePrompt(null)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black text-white bg-amber-500 hover:bg-amber-600 transition shadow-xs cursor-pointer"
+                  className="inline-flex min-h-11 items-center gap-1.5 px-4 py-2 rounded-xl text-base font-black text-white bg-amber-500 hover:bg-amber-600 transition shadow-xs cursor-pointer"
                 >
                   <span>Xem các gói học</span>
                   <ArrowRight size={14} />
@@ -1441,7 +1441,7 @@ export default function DashboardPage() {
                 <AlertCircle size={24} className="mx-auto text-rose-500" aria-hidden="true" />
                 <div>
                   <p className="text-sm font-bold text-rose-900 dark:text-rose-300">Không thể tải hoạt động hôm nay</p>
-                  <p className="mt-0.5 text-xs text-rose-700 dark:text-rose-400">Đã xảy ra lỗi khi đồng bộ dữ liệu từ máy chủ.</p>
+                  <p className="mt-0.5 text-sm text-rose-700 dark:text-rose-400">Đã xảy ra lỗi khi đồng bộ dữ liệu từ máy chủ.</p>
                 </div>
                 <button
                   type="button"
@@ -1530,7 +1530,7 @@ export default function DashboardPage() {
 
                     {/* Progress indicator */}
                     <div className="mt-3 space-y-1">
-                      <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                      <div className="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-400">
                         <span>
                           Tiến độ: <strong className="text-slate-800 dark:text-slate-200">{progressText}</strong>
                         </span>

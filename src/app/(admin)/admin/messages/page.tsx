@@ -211,7 +211,7 @@ function AdminMessagesContent() {
               <Search
                 size={15}
                 aria-hidden="true"
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500"
               />
               <input
                 value={search}
@@ -246,7 +246,7 @@ function AdminMessagesContent() {
           {/* Student Search Direct Matches */}
           {debouncedSearch.length >= 2 && learnerResultsQuery.data?.data?.length ? (
             <div className="shrink-0 max-h-48 overflow-y-auto border-b border-slate-200 p-2 dark:border-slate-800">
-              <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
                 Học viên
               </p>
               {learnerResultsQuery.data.data.map((learner) => (
@@ -265,7 +265,7 @@ function AdminMessagesContent() {
                     <span className="block truncate text-xs font-semibold text-slate-900 dark:text-white">
                       {learner.name}
                     </span>
-                    <span className="block truncate text-xs text-slate-500">
+                    <span className="block truncate text-xs text-slate-600 dark:text-slate-400">
                       {learner.email}
                     </span>
                   </span>
@@ -278,7 +278,7 @@ function AdminMessagesContent() {
           <div className="min-h-0 flex-1 overflow-y-auto p-2 space-y-1">
             {conversationsQuery.isLoading ? (
               <div className="flex justify-center py-10">
-                <Loader2 className="animate-spin text-slate-400" size={22} />
+                <Loader2 className="animate-spin text-slate-500" size={22} />
               </div>
             ) : rows.length === 0 ? (
               <p className="px-3 py-8 text-center text-xs sm:text-sm text-slate-500">
@@ -312,12 +312,12 @@ function AdminMessagesContent() {
                       >
                         {conversation.studentName}
                       </span>
-                      <span className="shrink-0 text-xs text-slate-400">
+                      <span className="shrink-0 text-xs text-slate-600 dark:text-slate-400">
                         {formatListPreviewTime(conversation.lastMessageTime)}
                       </span>
                     </span>
                     <span className="mt-0.5 flex items-center justify-between gap-2">
-                      <span className="truncate text-xs text-slate-500 dark:text-slate-400">
+                      <span className="truncate text-xs text-slate-600 dark:text-slate-400">
                         {conversation.lastMessage?.content || "Chưa có tin nhắn"}
                       </span>
                       {conversation.unreadCount > 0 && (
@@ -349,13 +349,13 @@ function AdminMessagesContent() {
               <div className="max-w-xs space-y-2">
                 <MessageSquare
                   aria-hidden="true"
-                  className="mx-auto text-slate-300 dark:text-slate-600"
+                  className="mx-auto text-slate-300 dark:text-slate-400"
                   size={32}
                 />
                 <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
                   Chọn một cuộc trò chuyện
                 </h2>
-                <p className="text-xs sm:text-sm text-slate-500">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                   Tìm học viên ở cột bên trái để bắt đầu hỗ trợ.
                 </p>
               </div>
@@ -368,7 +368,7 @@ function AdminMessagesContent() {
                   <button
                     type="button"
                     onClick={() => setSelectedId(null)}
-                    className="grid size-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 lg:hidden cursor-pointer shrink-0"
+                    className="grid size-9 place-items-center rounded-lg text-slate-600 hover:bg-slate-100 lg:hidden cursor-pointer shrink-0 dark:text-slate-400"
                     aria-label="Quay lại danh sách tin nhắn"
                   >
                     <ArrowLeft size={18} />
@@ -382,7 +382,7 @@ function AdminMessagesContent() {
                     <h2 className="truncate text-sm font-semibold text-slate-950 dark:text-white">
                       {selectedConversation?.studentName || "Học viên"}
                     </h2>
-                    <p className="truncate text-xs text-slate-500">
+                    <p className="truncate text-xs text-slate-600 dark:text-slate-400">
                       {selectedConversation?.studentEmail}
                     </p>
                   </div>
@@ -405,7 +405,7 @@ function AdminMessagesContent() {
               >
                 {messagesQuery.isLoading ? (
                   <div className="flex justify-center pt-8">
-                    <Loader2 className="animate-spin text-slate-400" size={22} />
+                    <Loader2 className="animate-spin text-slate-500" size={22} />
                   </div>
                 ) : messages.length === 0 ? (
                   <p className="pt-8 text-center text-xs sm:text-sm text-slate-500">
@@ -439,9 +439,9 @@ function AdminMessagesContent() {
                         {/* System Message */}
                         {isSystem ? (
                           <div className="flex justify-center my-2">
-                            <div className="max-w-md rounded-full bg-slate-100 dark:bg-slate-800/80 px-3.5 py-1 text-center text-xs text-slate-500 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/60">
+                            <div className="max-w-md rounded-full bg-slate-100 dark:bg-slate-800/80 px-3.5 py-1 text-center text-xs text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/60">
                               <span>{message.content}</span>
-                              <span className="ml-2 text-xs text-slate-400">
+                              <span className="ml-2 text-xs text-slate-600 dark:text-slate-400">
                                 ({formatMessageTimestamp(message.createdAt)})
                               </span>
                             </div>
@@ -453,7 +453,7 @@ function AdminMessagesContent() {
                               {/* Header Meta: Name, Role Badge, Full Timestamp */}
                               <div className="flex items-center gap-1.5 mb-1 px-1 text-xs">
                                 <span
-                                  className="text-xs font-medium text-slate-400"
+                                  className="text-xs font-medium text-slate-600 dark:text-slate-400"
                                   title={formatMessageFullTooltip(message.createdAt)}
                                 >
                                   {formatMessageTimestamp(message.createdAt)}
@@ -487,7 +487,7 @@ function AdminMessagesContent() {
                           /* AI Assistant Message (Left-aligned) */
                           <div className="flex justify-start items-end gap-2 my-2.5 group">
                             <span
-                              className="size-8 grid shrink-0 place-items-center rounded-full bg-teal-600 text-white font-bold text-xs select-none shadow-2xs mb-0.5"
+                              className="size-8 grid shrink-0 place-items-center rounded-full bg-teal-700 text-white font-bold text-xs select-none shadow-2xs mb-0.5"
                               title="Trợ lý học tập AI"
                             >
                               <MessageSquare size={15} strokeWidth={1.75} aria-hidden="true" />
@@ -503,7 +503,7 @@ function AdminMessagesContent() {
                                   AI Hỗ trợ
                                 </span>
                                 <span
-                                  className="text-xs font-medium text-slate-400"
+                                  className="text-xs font-medium text-slate-600 dark:text-slate-400"
                                   title={formatMessageFullTooltip(message.createdAt)}
                                 >
                                   {formatMessageTimestamp(message.createdAt)}
@@ -544,7 +544,7 @@ function AdminMessagesContent() {
                                   Học viên
                                 </span>
                                 <span
-                                  className="text-xs font-medium text-slate-400"
+                                  className="text-xs font-medium text-slate-600 dark:text-slate-400"
                                   title={formatMessageFullTooltip(message.createdAt)}
                                 >
                                   {formatMessageTimestamp(message.createdAt)}
@@ -621,7 +621,7 @@ export default function AdminMessagesPage() {
     <Suspense
       fallback={
         <div className="flex h-[400px] items-center justify-center">
-          <Loader2 className="animate-spin text-slate-400" size={28} />
+          <Loader2 className="animate-spin text-slate-500" size={28} />
         </div>
       }
     >

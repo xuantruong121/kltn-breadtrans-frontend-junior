@@ -238,7 +238,7 @@ export default function AdminSpeakingPage() {
         <label className="relative block">
           <span className="sr-only">Tìm bộ luyện nói</span>
           <Search
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
             size={18}
             aria-hidden="true"
           />
@@ -375,7 +375,7 @@ export default function AdminSpeakingPage() {
           className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold text-slate-800"
         >
           <span>Quản lý phân loại Speaking</span>
-          <span className="text-xs font-normal text-slate-500">
+          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
             {categories.length} phân loại ·{" "}
             {showCategoryManagement ? "Thu gọn" : "Mở rộng"}
           </span>
@@ -506,12 +506,12 @@ export default function AdminSpeakingPage() {
                               {category.code}
                             </code>
                             <span
-                              className={`rounded px-1.5 py-0.5 text-xs ${category.isActive ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}
+                              className={`rounded px-1.5 py-0.5 text-xs ${category.isActive ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"} dark:text-slate-400`}
                             >
                               {category.isActive ? "Đang dùng" : "Đã tắt"}
                             </span>
                           </div>
-                          <p className="mt-1 text-xs text-slate-500">
+                          <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
                             {category._count?.practiceSets || 0} bộ ·{" "}
                             {category._count?.exercises || 0} câu ·{" "}
                             {category.allowPracticeSet ? "Bộ luyện" : ""}
@@ -555,7 +555,7 @@ export default function AdminSpeakingPage() {
       {/* PRACTICE SETS LIST */}
       {isLoading ? (
         <div className="flex justify-center py-20">
-          <Loader2 className="animate-spin text-slate-400" size={32} />
+          <Loader2 className="animate-spin text-slate-500" size={32} />
         </div>
       ) : paginatedSets.length > 0 ? (
         <div className="space-y-4">
@@ -571,7 +571,7 @@ export default function AdminSpeakingPage() {
                   <span className="flex-none rounded-md bg-blue-50 px-1.5 py-0.5 text-xs font-semibold text-blue-800">
                     {levelLabel(set.level)}
                   </span>
-                  <span className="truncate text-xs text-slate-500">
+                  <span className="truncate text-xs text-slate-600 dark:text-slate-400">
                     {categoryLabel(categories, set.category)}
                   </span>
                   <span
@@ -595,7 +595,7 @@ export default function AdminSpeakingPage() {
                 <p className="mt-1 line-clamp-2 text-sm text-slate-600">
                   {set.description || "Chưa có mô tả cho bộ luyện tập này."}
                 </p>
-                <p className="mt-2 truncate text-xs text-slate-500">
+                <p className="mt-2 truncate text-xs text-slate-600 dark:text-slate-400">
                   {trackNames(set.tracks)}
                 </p>
                 <div className="mt-auto pt-4">
@@ -631,7 +631,7 @@ export default function AdminSpeakingPage() {
                         onClick={() =>
                           setPendingDeleteSet({ id: set.id, title: set.title })
                         }
-                        className="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                        className="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:text-slate-400"
                         aria-label={`Xóa ${set.title}`}
                         title="Xóa bộ"
                       >
@@ -664,7 +664,7 @@ export default function AdminSpeakingPage() {
           </div>
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-500">
+        <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-600 dark:text-slate-400">
           <Layers size={32} className="mx-auto mb-2 text-slate-300" />
           {totalSets
             ? "Không có bộ luyện nào khớp bộ lọc. Hãy đổi từ khóa hoặc bộ lọc."

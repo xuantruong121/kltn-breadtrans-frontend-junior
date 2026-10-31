@@ -47,7 +47,7 @@ export const TypingStage: React.FC<TypingStageProps> = ({
 
         {/* Large Vietnamese definition */}
         <div className="py-3">
-          <p className="text-xs sm:text-sm text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1.5">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider mb-1.5">
             Nghĩa tiếng Việt
           </p>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
@@ -132,7 +132,7 @@ export const TypingStage: React.FC<TypingStageProps> = ({
             <span>Kiểm tra</span>
             <ArrowRight size={18} />
           </button>
-          <span className="text-xs sm:text-sm text-slate-400 dark:text-slate-500 font-medium">Enter để kiểm tra</span>
+          <span className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">Enter để kiểm tra</span>
         </div>
       </div>
     </div>

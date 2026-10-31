@@ -31,7 +31,7 @@ export const PlanPurchaseHistory: React.FC = () => {
             <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
               Lịch sử giao dịch mua gói
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-slate-600 dark:text-slate-400">
               Quản lý và tra cứu các giao dịch đăng ký gói của bạn
             </p>
           </div>
@@ -62,12 +62,12 @@ export const PlanPurchaseHistory: React.FC = () => {
         </div>
       ) : !purchases || purchases.length === 0 ? (
         <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-3 rounded-2xl border border-dashed border-slate-200 bg-white/70 px-6 py-4 text-center sm:text-left dark:border-slate-800 dark:bg-slate-900/60">
-          <CreditCard className="size-6 text-slate-400 dark:text-slate-500 shrink-0" aria-hidden="true" />
+          <CreditCard className="size-6 text-slate-500 dark:text-slate-400 shrink-0" aria-hidden="true" />
           <div>
             <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
               Bạn chưa có lịch sử giao dịch mua gói
             </p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
               Các giao dịch nâng cấp gói Plus khi phát sinh sẽ được hiển thị và cập nhật tự động tại đây.
             </p>
           </div>
@@ -95,11 +95,11 @@ export const PlanPurchaseHistory: React.FC = () => {
                     <span className="font-bold text-base text-slate-900 dark:text-slate-100">
                       {purchase.planDisplayName}
                     </span>
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
                       ({purchase.durationDays} ngày)
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
                     Thời gian tạo: {dateStr}
                   </p>
                   <p className="text-xs font-medium text-slate-700 dark:text-slate-300">

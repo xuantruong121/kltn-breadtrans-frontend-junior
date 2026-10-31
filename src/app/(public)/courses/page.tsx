@@ -36,7 +36,7 @@ function CourseCard({ course }: { course: PublicCourseCard }) {
             onError={() => setMediaSrc(null)}
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-slate-400 dark:text-slate-500">
+          <div className="flex h-full items-center justify-center text-slate-600 dark:text-slate-400">
             <BookOpen size={42} aria-hidden="true" />
             <span className="sr-only">{media.alt}</span>
           </div>
@@ -72,7 +72,7 @@ function CourseCard({ course }: { course: PublicCourseCard }) {
                 <span className="block truncate text-sm font-bold text-slate-800 dark:text-slate-200">
                   Tự học theo tiến độ
                 </span>
-                <span className="block truncate text-xs font-medium text-slate-400 dark:text-slate-500">
+                <span className="block truncate text-xs font-medium text-slate-600 dark:text-slate-400">
                   Tự học theo lộ trình
                 </span>
               </div>
@@ -161,7 +161,7 @@ export default function PublicCoursesPage() {
         {/* Search */}
         <div className="relative w-full md:w-96">
           <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
             size={20}
           />
           <input
@@ -175,7 +175,7 @@ export default function PublicCoursesPage() {
 
         {/* Level Pills */}
         <div className="flex items-center gap-2.5 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-          <span className="text-xs sm:text-sm font-bold text-slate-400 dark:text-slate-500 mr-1 hidden sm:inline">
+          <span className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-400 mr-1 hidden sm:inline">
             Trình độ:
           </span>
           {levelOptions.map((opt) => {
@@ -243,13 +243,13 @@ export default function PublicCoursesPage() {
       ) : (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-10 text-center space-y-4 max-w-lg mx-auto">
           <BookOpen
-            className="mx-auto text-slate-300 dark:text-slate-600"
+            className="mx-auto text-slate-300 dark:text-slate-400"
             size={48}
           />
           <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
             {error ? "Không thể tải danh sách khóa học" : "Không tìm thấy khóa học phù hợp"}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+          <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
             {error
               ? "Hệ thống gặp sự cố kết nối. Vui lòng bấm nút bên dưới để tải lại."
               : "Hãy thử tìm kiếm với từ khóa khác hoặc bấm tải lại để làm mới danh sách khóa học."}

@@ -129,9 +129,9 @@ export function ListeningExerciseCard({
         {/* Subtle in-progress bar */}
         {status === "IN_PROGRESS" && (
           <div className="space-y-1 pt-1">
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
               <span>Tiến độ</span>
-              <span className="font-semibold text-teal-600 dark:text-teal-400">50%</span>
+              <span className="font-semibold text-teal-700 dark:text-teal-400">50%</span>
             </div>
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
               <div className="h-full rounded-full bg-teal-600 w-1/2 transition-all duration-300" />
@@ -144,7 +144,7 @@ export function ListeningExerciseCard({
       <div className="mt-4 border-t border-slate-100 dark:border-slate-800/80 pt-3">
         <div className="flex flex-wrap items-center justify-between gap-2.5">
           {/* Tertiary inline metadata */}
-          <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+          <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-medium">
             <span>
               {catalogLevelLabel(quiz.cefrLevel ?? quiz.levels?.[0] ?? quiz.title, quiz.practiceLevel) ?? cefr.label}
             </span>
@@ -177,7 +177,7 @@ export function ListeningExerciseCard({
                 type="button"
                 onClick={() => onStart?.(quiz)}
                 disabled={isLaunching}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 px-3.5 py-1.5 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer disabled:opacity-60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-500"
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-teal-700 hover:bg-teal-800 px-3.5 py-1.5 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer disabled:opacity-60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-500"
               >
                 <span>Tiếp tục</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
