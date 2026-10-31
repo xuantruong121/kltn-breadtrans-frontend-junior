@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { CatalogPagination, useCatalogPage } from "@/components/practice/CatalogPagination";
 import { ArrowRight, CheckCircle2, Shuffle } from "lucide-react";
 
 import type { GrammarTopicSummary } from "@/lib/api/services/grammar.service";
@@ -52,7 +53,8 @@ export function GrammarCatalog({
     });
   }, [topics, tab, searchTerm]);
 
-  const sections = useMemo(() => groupGrammarTopics(visible), [visible]);
+  const paging = useCatalogPage(visible, `${tab}|${searchTerm}`);
+  const sections = useMemo(() => groupGrammarTopics(paging.items), [paging.items]);
   const countByTab = useMemo(() => {
     const counts: Record<Tab, number> = {
       ALL: topics.length,
@@ -197,6 +199,7 @@ export function GrammarCatalog({
           </section>
         ))
       )}
+      {sections.length > 0 && <CatalogPagination paging={paging} />}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { dependsOnLevel } from "@/lib/learning-path/levelLock";
 import React, { useState, useEffect } from "react";
 import {
   CheckCircle2,
@@ -111,6 +112,20 @@ const FeedbackPanel: React.FC<{ qr: QuestionResult }> = ({ qr }) => (
       </div>
     )}
 
+    {/* Why the option the learner picked is wrong, when the author wrote it */}
+    {!qr.isCorrect &&
+      qr.selectedOption !== undefined &&
+      qr.optionExplanations?.[qr.selectedOption] && (
+        <div className="rounded-2xl border border-rose-200 bg-white p-4 sm:p-5 dark:border-rose-900/60 dark:bg-slate-900/40">
+          <p className="mb-1 text-xs font-bold uppercase tracking-wider text-rose-800 dark:text-rose-300">
+            Vì sao {String.fromCharCode(65 + qr.selectedOption)} sai
+          </p>
+          <p className="text-sm font-medium leading-relaxed text-slate-800 dark:text-slate-200">
+            {qr.optionExplanations[qr.selectedOption]}
+          </p>
+        </div>
+      )}
+
     {/* Explanation (only when present in real data) */}
     {qr.explanation && (
       <div className="rounded-2xl border border-sky-200 bg-sky-50/70 p-4 sm:p-5 dark:border-sky-900/60 dark:bg-sky-950/40">
@@ -150,6 +165,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
         queryClient.invalidateQueries({ queryKey: ["user-stats", currentUserId] }),
         queryClient.invalidateQueries({ queryKey: ["daily-quests"] }),
         queryClient.invalidateQueries({ queryKey: ["profile"] }),
+        queryClient.invalidateQueries({ predicate: (q) => dependsOnLevel(q.queryKey) }),
       ]);
       toast.success(
         data.rewardBanh || data.rewardXP

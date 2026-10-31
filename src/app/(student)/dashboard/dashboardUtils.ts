@@ -1,3 +1,5 @@
+import { COURSES_ENABLED } from "../../../lib/featureFlags.ts";
+
 export const ALLOWED_INTERNAL_ROUTE_PREFIXES = [
   "/flashcard",
   "/exams",
@@ -6,12 +8,11 @@ export const ALLOWED_INTERNAL_ROUTE_PREFIXES = [
   "/speaking",
   "/reading",
   "/writing",
-  "/my-courses",
-  "/courses",
+  ...(COURSES_ENABLED ? ["/my-courses", "/courses"] : []),
   "/arena",
   "/grammar",
   "/vocabulary",
-  "/classes",
+  ...(COURSES_ENABLED ? ["/classes"] : []),
 ];
 
 export function isSafeInternalRoute(url?: string): boolean {
@@ -39,7 +40,9 @@ export function getTypeSpecificQuestFallback(type?: string): { actionLabel: stri
     case "PRACTICE_SPEAKING":
       return { actionLabel: "Luyện nói", actionUrl: "/speaking" };
     case "COMPLETE_LESSON":
-      return { actionLabel: "Mở bài học", actionUrl: "/courses" };
+      return COURSES_ENABLED
+        ? { actionLabel: "Mở bài học", actionUrl: "/courses" }
+        : { actionLabel: "Luyện kỹ năng", actionUrl: "/listening" };
     default:
       return { actionLabel: "Khám phá bài học", actionUrl: "/dashboard" };
   }

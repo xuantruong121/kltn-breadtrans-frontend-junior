@@ -7,17 +7,9 @@ import toast from "react-hot-toast";
 import { VocabWord, vocabService } from "@/lib/api/services/vocab.service";
 import { QueueItem, StudyMode, QuizOption, SrsRating, StudySettings } from "../types/study";
 import { playWordAudio, playChime, stopCurrentAudio } from "../utils/audio";
+import { buildQuizOptions } from "../utils/quizOptions";
 
-function shuffleArray<T>(arr: T[]): T[] {
-  const result = [...arr];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const temp = result[i]!;
-    result[i] = result[j]!;
-    result[j] = temp;
-  }
-  return result;
-}
+
 
 interface UseVocabStudyEngineProps {
   topicId: number;
@@ -156,51 +148,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
   // Generate 4 Multiple Choice Options for Mode 2 (uniformly distributed across keys 1, 2, 3, 4)
   const quizOptions = useMemo<QuizOption[]>(() => {
     if (!currentWord) return [];
-
-    const correctMeaning = currentWord.meaning.trim();
-    const otherWords = initialWords.filter(
-      (w) => w.id !== currentWord.id && w.meaning.trim() !== correctMeaning
-    );
-
-    const shuffledOthers = shuffleArray(otherWords);
-    const distractorMeanings: string[] = [];
-    for (const w of shuffledOthers) {
-      const cleanM = w.meaning.trim();
-      if (!distractorMeanings.includes(cleanM)) {
-        distractorMeanings.push(cleanM);
-      }
-      if (distractorMeanings.length === 3) break;
-    }
-
-    // Generic fallbacks if fewer than 3 unique other words exist
-    const fallbackMeanings = [
-      "đồng ý, tán thành",
-      "thực hiện, tiến hành",
-      "thông báo, tuyên bố",
-      "sắp xếp, lên kế hoạch",
-      "phát triển, mở rộng",
-      "hoàn thành, kết thúc",
-    ];
-    for (const fb of fallbackMeanings) {
-      if (distractorMeanings.length >= 3) break;
-      if (fb !== correctMeaning && !distractorMeanings.includes(fb)) {
-        distractorMeanings.push(fb);
-      }
-    }
-
-    const allUnshuffled = [
-      { text: correctMeaning, isCorrect: true },
-      ...distractorMeanings.map((m) => ({ text: m, isCorrect: false })),
-    ];
-    const allOptions = shuffleArray(allUnshuffled);
-
-    const keys: ("1" | "2" | "3" | "4")[] = ["1", "2", "3", "4"];
-    return allOptions.map((opt, idx) => ({
-      id: `${currentWord.id}-${idx}`,
-      key: keys[idx]!,
-      text: opt.text,
-      isCorrect: opt.isCorrect,
-    }));
+    return buildQuizOptions(currentWord, initialWords).options;
   }, [currentWord, initialWords]);
 
   // -------------------------------------------------------------

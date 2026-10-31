@@ -1,5 +1,6 @@
 "use client";
 
+import { RecommendedForYou } from "@/components/learning-path/RecommendedForYou";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -18,6 +19,9 @@ import { useGamificationStore } from "@/stores/gamificationStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { PremiumContentPaywallModal } from "@/components/subscription/PremiumContentPaywallModal";
 import { ListeningExerciseCard } from "@/components/listening/ListeningExerciseCard";
+import { CatalogPagination, useCatalogPage } from "@/components/practice/CatalogPagination";
+import { LevelLockDialog } from "@/components/practice/LevelLockDialog";
+import { levelLockOf, type LevelLock } from "@/lib/learning-path/levelLock";
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
 import { PracticeCatalogFilters } from "@/components/practice/PracticeCatalogFilters";
 import {
@@ -59,6 +63,7 @@ function ListeningCatalogContent() {
     quiz?: ListeningPracticeCatalogItem;
   }>({ open: false });
   const [paywallQuiz, setPaywallQuiz] = useState<ListeningPracticeCatalogItem | null>(null);
+  const [levelLock, setLevelLock] = useState<LevelLock | null>(null);
 
   // Keyboard shortcut Ctrl+K / Cmd+K to focus search input
   useEffect(() => {
@@ -157,6 +162,7 @@ function ListeningCatalogContent() {
       const matchDifficulty = matchesDifficultyFilter(
         listeningLevelOf(q),
         selectedDifficulty,
+        q.practiceLevel,
       );
 
       // A listening attempt is stored only on submission: done or not yet.
@@ -174,13 +180,17 @@ function ListeningCatalogContent() {
     let spotlightAssigned = false;
     return sorted.map((item): ListeningCatalogCardItem => {
       const isDone = Boolean(item.isCompleted);
-      if (!isDone && !spotlightAssigned) {
+      if (!isDone && !item.isLocked && !item.isLevelLocked && !spotlightAssigned) {
         spotlightAssigned = true;
         return { ...item, isSpotlight: true };
       }
       return { ...item, isSpotlight: false };
     });
   }, [quizzes, searchTerm, selectedMode, selectedDifficulty, selectedStatus, sortOrder]);
+  const paging = useCatalogPage(
+    filteredAndSortedQuizzes,
+    [searchTerm, selectedMode, selectedDifficulty, selectedStatus, sortOrder].join("|"),
+  );
 
   if (launchingQuiz) {
     return (
@@ -270,6 +280,8 @@ function ListeningCatalogContent() {
       </section>
 
       {/* Unified Modern Filter Dock */}
+      <RecommendedForYou skill="LISTENING" />
+
       <section className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xs sm:p-5 space-y-4">
         {/* Row 1: Search Input (Ctrl+K) & Category Mode Chips */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
@@ -302,7 +314,7 @@ function ListeningCatalogContent() {
                   <X size={13} aria-hidden="true" />
                 </button>
               ) : (
-                <kbd className="hidden sm:inline-block rounded-md border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-0.5 text-[11px] font-mono font-bold text-slate-600 dark:text-slate-400 shadow-2xs">
+                <kbd className="hidden sm:inline-block rounded-md border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-0.5 text-xs font-mono font-bold text-slate-600 dark:text-slate-400 shadow-2xs">
                   ⌘K
                 </kbd>
               )}
@@ -405,19 +417,23 @@ function ListeningCatalogContent() {
             </button>
           </div>
         ) : filteredAndSortedQuizzes.length > 0 ? (
+          <div className="space-y-6">
           <div className="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {filteredAndSortedQuizzes.map((quiz) => (
+            {paging.items.map((quiz) => (
               <ListeningExerciseCard
                 key={quiz.id}
                 quiz={quiz}
                 isAuthenticated={Boolean(user)}
                 onOpenAuthGate={(q) => setAuthGate({ open: true, quiz: q })}
                 onOpenPaywall={(q) => setPaywallQuiz(q)}
+                onOpenLevelLock={(q) => setLevelLock(levelLockOf("LISTENING", q))}
                 onStart={handleStartQuiz}
                 isLaunching={false}
                 isSpotlight={quiz.isSpotlight}
               />
             ))}
+          </div>
+          <CatalogPagination paging={paging} />
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 sm:p-12 text-center">
@@ -425,7 +441,7 @@ function ListeningCatalogContent() {
             <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-200">
               Không tìm thấy bài luyện nghe phù hợp
             </h2>
-            <p className="mt-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+            <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
               Hãy thử chọn bộ lọc khác hoặc tìm kiếm với từ khóa khác để khám phá các bài luyện có sẵn.
             </p>
             <div className="mt-5 flex justify-center">
@@ -437,7 +453,7 @@ function ListeningCatalogContent() {
                   setSelectedDifficulty("ALL");
                   setSelectedStatus("ALL");
                 }}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
               >
                 <RotateCcw size={14} aria-hidden="true" />
                 Xóa bộ lọc
@@ -456,6 +472,8 @@ function ListeningCatalogContent() {
         onOpenLogin={() => router.push("/login")}
         onOpenRegister={() => router.push("/register")}
       />
+
+      <LevelLockDialog lock={levelLock} onClose={() => setLevelLock(null)} />
 
       {/* PLUS Paywall Modal */}
       <PremiumContentPaywallModal

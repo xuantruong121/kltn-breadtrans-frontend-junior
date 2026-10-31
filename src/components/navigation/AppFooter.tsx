@@ -1,3 +1,4 @@
+import { COURSES_ENABLED } from "@/lib/featureFlags";
 import Link from "next/link";
 import { Mail, GraduationCap, MapPin } from "lucide-react";
 import { BrandLogo } from "@/components/brand";
@@ -24,11 +25,13 @@ export function AppFooter() {
                   Trang chủ
                 </Link>
               </li>
+              {COURSES_ENABLED && (
               <li>
                 <Link href="/courses" className="transition-colors hover:text-amber-700 dark:hover:text-amber-400">
                   Khóa học
                 </Link>
               </li>
+              )}
               <li>
                 <Link href="/exams" className="transition-colors hover:text-amber-700 dark:hover:text-amber-400">
                   Luyện đề thi TOEIC

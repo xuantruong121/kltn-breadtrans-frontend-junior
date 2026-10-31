@@ -20,6 +20,7 @@ type PictureQuizLike = {
   taskType?: string | null;
   cefrLevel?: string | null;
   isLocked?: boolean;
+  isLevelLocked?: boolean;
   requiredPlan?: string;
   pictureTasks?: PictureTaskSummary[];
 };

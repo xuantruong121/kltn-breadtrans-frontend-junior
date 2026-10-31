@@ -74,3 +74,23 @@ test("Whitespace handling: trims strings properly", () => {
     assert.equal(parsed.vocabularyNote, "open at = mở cửa");
   }
 });
+
+test("Bilingual explanation: keeps the English line beside the Vietnamese one", () => {
+  const parsed = parseQuestionExplanation({
+    vi: "Cô ấy nói sẽ gửi báo cáo vào thứ Sáu.",
+    en: "She says she will send the report on Friday.",
+    evidence: "I'll send it over on Friday.",
+  });
+  assert.ok(parsed);
+  assert.equal(parsed.type, "structured");
+  if (parsed.type === "structured") {
+    assert.equal(parsed.vi, "Cô ấy nói sẽ gửi báo cáo vào thứ Sáu.");
+    assert.equal(parsed.en, "She says she will send the report on Friday.");
+  }
+});
+
+test("Structured explanation without en leaves en undefined", () => {
+  const parsed = parseQuestionExplanation({ vi: "Đáp án nằm ở câu cuối.", en: "  " });
+  assert.ok(parsed && parsed.type === "structured");
+  if (parsed.type === "structured") assert.equal(parsed.en, undefined);
+});

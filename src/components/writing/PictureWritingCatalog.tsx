@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { ArrowRight, CheckCircle2, Lock } from "lucide-react";
 
 import { PracticeCatalogFilters } from "@/components/practice/PracticeCatalogFilters";
+import { CatalogPagination, useCatalogPage } from "@/components/practice/CatalogPagination";
 import {
   catalogLevelLabel,
   DEFAULT_CATALOG_SORT,
@@ -14,6 +15,7 @@ import {
   type DifficultyFilter,
   type StatusFilter,
 } from "@/lib/practice/catalogFilters";
+import { LevelLockButton } from "@/components/practice/LevelLockDialog";
 import { unlockPlanFor } from "@/modules/subscription/practicePlan";
 import { cueWordPairs, pictureCards } from "@/lib/writing/pictureWriting";
 import type { WritingTopicItem } from "@/components/writing/WritingTopicCard";
@@ -27,12 +29,14 @@ export function PictureWritingCatalog({
   isAuthenticated,
   onOpen,
   onLocked,
+  onLevelLocked,
   onGuest,
 }: {
   quizzes: WritingTopicItem[];
   isAuthenticated: boolean;
   onOpen: (href: string) => void;
   onLocked: (quiz: WritingTopicItem) => void;
+  onLevelLocked: (quiz: WritingTopicItem) => void;
   onGuest: (quiz: WritingTopicItem) => void;
 }) {
   const [difficulty, setDifficulty] = useState<DifficultyFilter>("ALL");
@@ -47,7 +51,7 @@ export function PictureWritingCatalog({
       sortByLevel(
         cards.filter(
           (card) =>
-            matchesDifficultyFilter(card.quiz.cefrLevel ?? card.quiz.title, difficulty) &&
+            matchesDifficultyFilter(card.quiz.cefrLevel ?? card.quiz.title, difficulty, card.quiz.practiceLevel) &&
             matchesStatusFilter(card.task.isGraded ? "COMPLETED" : "NOT_STARTED", status) &&
             (pair === "ALL" || card.pair === pair),
         ),
@@ -56,6 +60,7 @@ export function PictureWritingCatalog({
       ),
     [cards, difficulty, status, pair, sort],
   );
+  const paging = useCatalogPage(visible, [difficulty, status, pair, sort].join("|"));
 
   return (
     <div className="space-y-5">
@@ -104,11 +109,13 @@ export function PictureWritingCatalog({
           Không có tranh phù hợp với bộ lọc này.
         </p>
       ) : (
+        <div className="space-y-6">
         <div className="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-          {visible.map(({ key, quiz, task, href }) => {
+          {paging.items.map(({ key, quiz, task, href }) => {
             const locked = Boolean(quiz.isLocked);
+            const levelLocked = isAuthenticated && Boolean(quiz.isLevelLocked);
             const plan = unlockPlanFor("WRITING", quiz.requiredPlan);
-            const level = catalogLevelLabel(quiz.cefrLevel ?? quiz.title);
+            const level = catalogLevelLabel(quiz.cefrLevel ?? quiz.title, quiz.practiceLevel);
             return (
               <article
                 key={key}
@@ -141,7 +148,12 @@ export function PictureWritingCatalog({
                       {level}
                       {task.isGraded ? " · Đã chấm" : ""}
                     </span>
-                    {locked ? (
+                    {levelLocked ? (
+                      <LevelLockButton
+                        onClick={() => onLevelLocked(quiz)}
+                        ariaLabel={`Chưa mở mức của tranh với từ ${task.keywords.join(", ")}`}
+                      />
+                    ) : locked ? (
                       <button
                         type="button"
                         onClick={() => onLocked(quiz)}
@@ -167,6 +179,8 @@ export function PictureWritingCatalog({
               </article>
             );
           })}
+        </div>
+        <CatalogPagination paging={paging} />
         </div>
       )}
     </div>

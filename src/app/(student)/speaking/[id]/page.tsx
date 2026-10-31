@@ -12,7 +12,6 @@ import {
   Gauge,
   HelpCircle,
   Loader2,
-  Lock,
   Mic,
   RotateCcw,
   Square,
@@ -67,7 +66,9 @@ import { ReportIssueButton } from "@/components/issue-report";
 import { classifyPracticeLoadError } from "@/lib/practice/practiceLoadErrorLogic";
 import toast from "react-hot-toast";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
-import { plansHrefFor } from "@/modules/subscription/practicePlan";
+import { PlanLockedScreen } from "@/components/practice/PlanLockedScreen";
+import { LevelLockedScreen } from "@/components/practice/LevelLockDialog";
+import { dependsOnLevel } from "@/lib/learning-path/levelLock";
 import { speakingSetDisplayTitle } from "@/lib/catalog/displayTitles";
 import {
   IS_WORD_REGEX,
@@ -482,7 +483,8 @@ export default function SpeakingExerciseDetailPage() {
   const { confirmExit, exitDialogProps } = usePracticeExitGuard({
     shouldConfirmExit,
     defaultFallbackUrl: "/speaking",
-    enabled: !!exerciseId,
+    // Nothing to lose before the exercise loads, and a lock screen's links must work.
+    enabled: !!exerciseId && Boolean(exercise),
     onConfirmExit: () => {
       releaseMediaStream();
     },
@@ -763,6 +765,7 @@ export default function SpeakingExerciseDetailPage() {
                 queryKey: ["user-skills-summary", currentUserId],
               });
               queryClient.invalidateQueries({ queryKey: ["myPet"] });
+              queryClient.invalidateQueries({ predicate: (q) => dependsOnLevel(q.queryKey) });
             }
           } else if (sub.status === "FAILED") {
             setPhase("FAILED");
@@ -920,6 +923,7 @@ export default function SpeakingExerciseDetailPage() {
                 queryKey: ["user-skills-summary", currentUserId],
               });
               queryClient.invalidateQueries({ queryKey: ["myPet"] });
+              queryClient.invalidateQueries({ predicate: (q) => dependsOnLevel(q.queryKey) });
             }
             if (
               parentAttemptId &&
@@ -1793,47 +1797,10 @@ export default function SpeakingExerciseDetailPage() {
   };
 
   const loadError = classifyPracticeLoadError(exerciseError);
-  if (loadError?.kind === "LOCKED") {
-    const plan = loadError.requiredPlan;
-    return (
-      <div className="fixed inset-0 z-[45] w-screen h-[100dvh] flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-6 text-center">
-        <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800/80 rounded-2xl p-6 sm:p-8 shadow-lg text-center space-y-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 flex items-center justify-center mx-auto text-amber-600 dark:text-amber-400">
-            <Lock className="w-6 h-6" aria-hidden="true" />
-          </div>
-          <div>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
-              {plan}
-            </span>
-            <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 mt-2">
-              Nội dung dành cho {plan}
-            </h2>
-            <p className="text-sm sm:text-base text-slate-700 dark:text-slate-300 mt-2">
-              {plan === "PRO"
-                ? "Bài luyện này có trong hệ thống, nhưng bài luyện nói từ trình độ Trung cấp (B1) trở lên chỉ mở cho gói PRO. Gói PLUS không bao gồm phần này."
-                : "Bài luyện này có trong hệ thống và mở cho gói PLUS hoặc PRO."}
-            </p>
-          </div>
-          <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
-            <button
-              type="button"
-              onClick={() => router.push(courseReturn)}
-              className="w-full py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-semibold transition cursor-pointer"
-            >
-              Quay lại danh sách
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push(plansHrefFor(plan))}
-              className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm shadow-sm transition cursor-pointer"
-            >
-              Xem gói {plan}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loadError?.kind === "LEVEL_LOCKED")
+    return <LevelLockedScreen lock={loadError} backHref={courseReturn} />;
+  if (loadError?.kind === "LOCKED")
+    return <PlanLockedScreen plan={loadError.requiredPlan} backHref={courseReturn} />;
 
   if (isLoading || !minLaunchReady) {
     return (

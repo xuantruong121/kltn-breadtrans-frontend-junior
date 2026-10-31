@@ -1,5 +1,6 @@
 "use client";
 
+import { RecommendedForYou } from "@/components/learning-path/RecommendedForYou";
 import { useState, useMemo, useRef, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -12,6 +13,9 @@ import {
 import { useAuthStore } from "@/stores/authStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { PremiumContentPaywallModal } from "@/components/subscription/PremiumContentPaywallModal";
+import { CatalogPagination, useCatalogPage } from "@/components/practice/CatalogPagination";
+import { LevelLockDialog } from "@/components/practice/LevelLockDialog";
+import { levelLockOf, type LevelLock } from "@/lib/learning-path/levelLock";
 import {
   ReadingTopicCard,
   type ReadingTopicItem,
@@ -89,6 +93,7 @@ function ReadingTopicsContent() {
     quizId?: number;
     title?: string;
   }>({ open: false });
+  const [levelLock, setLevelLock] = useState<LevelLock | null>(null);
   const [paywallExercise, setPaywallExercise] =
     useState<ReadingTopicItem | null>(null);
 
@@ -168,6 +173,9 @@ function ReadingTopicsContent() {
       microSkills: exercise.microSkills,
       isPremiumContent: exercise.isPremiumContent,
       isLocked: exercise.isLocked,
+      isLevelLocked: exercise.isLevelLocked,
+      practiceLevel: exercise.practiceLevel,
+      requiredPlan: exercise.requiredPlan,
       completionStatus: exercise.completionStatus,
       totalArticles: 1,
       completedArticles: exercise.completionStatus === "COMPLETED" ? 1 : 0,
@@ -199,7 +207,7 @@ function ReadingTopicsContent() {
         .toLowerCase();
       return (
         (!q || searchable.includes(q)) &&
-        matchesDifficultyFilter(readingLevelOf(exercise), selectedDifficulty) &&
+        matchesDifficultyFilter(readingLevelOf(exercise), selectedDifficulty, exercise.practiceLevel) &&
         matchesStatusFilter(exercise.completionStatus ?? "NOT_STARTED", selectedStatus)
       );
     });
@@ -207,13 +215,22 @@ function ReadingTopicsContent() {
     // Spotlight the first unfinished exercise in the sorted list.
     let spotlightAssigned = false;
     return sortByLevel(list, sortOrder, readingLevelOf).map((exercise) => {
-      if (exercise.completionStatus !== "COMPLETED" && !spotlightAssigned) {
+      if (
+        exercise.completionStatus !== "COMPLETED" &&
+        !exercise.isLocked &&
+        !exercise.isLevelLocked &&
+        !spotlightAssigned
+      ) {
         spotlightAssigned = true;
         return { ...exercise, isSpotlight: true };
       }
       return exercise;
     });
   }, [readingExercises, searchTerm, selectedDifficulty, selectedStatus, sortOrder]);
+  const paging = useCatalogPage(
+    filteredAndSortedItems,
+    [searchTerm, selectedDifficulty, selectedStatus, sortOrder].join("|"),
+  );
 
   const handleStartReadingExercise = (exercise: ReadingTopicItem) => {
     if (!user) {
@@ -315,6 +332,8 @@ function ReadingTopicsContent() {
       </section>
 
       {/* Unified Modern Filter Dock */}
+      <RecommendedForYou skill="READING" />
+
       <section className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xs sm:p-5 space-y-4">
         {/* Row 1: Search Input (Ctrl+K) */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
@@ -346,7 +365,7 @@ function ReadingTopicsContent() {
                   <X size={13} aria-hidden="true" />
                 </button>
               ) : (
-                <kbd className="hidden sm:inline-block rounded-md border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-0.5 text-[11px] font-mono font-bold text-slate-600 dark:text-slate-400 shadow-2xs">
+                <kbd className="hidden sm:inline-block rounded-md border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-0.5 text-xs font-mono font-bold text-slate-600 dark:text-slate-400 shadow-2xs">
                   ⌘K
                 </kbd>
               )}
@@ -440,8 +459,9 @@ function ReadingTopicsContent() {
             onStart={handleStartGrammarTopic}
           />
         ) : filteredAndSortedItems.length > 0 ? (
+          <div className="space-y-6">
           <div className="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {filteredAndSortedItems.map((exercise) => (
+            {paging.items.map((exercise) => (
               <ReadingTopicCard
                 key={`reading-${exercise.id}`}
                 topic={exercise}
@@ -454,15 +474,18 @@ function ReadingTopicsContent() {
                   })
                 }
                 onOpenPaywall={(t) => setPaywallExercise(t)}
+                onOpenLevelLock={(t) => setLevelLock(levelLockOf("READING", t))}
                 onStart={handleStartReadingExercise}
                 statusOverride={
-                  !exercise.isLocked && exercise.completionStatus === "IN_PROGRESS"
+                  !exercise.isLocked && !exercise.isLevelLocked && exercise.completionStatus === "IN_PROGRESS"
                     ? "IN_PROGRESS"
                     : undefined
                 }
                 isSpotlight={exercise.isSpotlight}
               />
             ))}
+          </div>
+          <CatalogPagination paging={paging} />
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 sm:p-12 text-center">
@@ -474,7 +497,7 @@ function ReadingTopicsContent() {
             <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-200">
               Không tìm thấy bài đọc phù hợp
             </h2>
-            <p className="mt-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+            <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
               Hãy thử chọn độ khó khác, trạng thái khác hoặc tìm kiếm với từ khóa khác.
             </p>
             <div className="mt-5 flex justify-center">
@@ -486,7 +509,7 @@ function ReadingTopicsContent() {
                   setSortOrder(DEFAULT_CATALOG_SORT);
                   setSelectedStatus("ALL");
                 }}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
               >
                 <RotateCcw size={14} aria-hidden="true" />
                 Xóa bộ lọc
@@ -509,6 +532,8 @@ function ReadingTopicsContent() {
         onOpenLogin={() => router.push("/login")}
         onOpenRegister={() => router.push("/register")}
       />
+
+      <LevelLockDialog lock={levelLock} onClose={() => setLevelLock(null)} />
 
       {/* Paywall Modal */}
       <PremiumContentPaywallModal

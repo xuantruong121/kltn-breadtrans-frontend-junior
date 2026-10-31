@@ -1,3 +1,4 @@
+import type { PracticePlacement } from "@/lib/learning-path/practiceLevel";
 import axiosClient from "../axiosClient";
 
 export interface DiagnosticQuestion {
@@ -254,6 +255,8 @@ export interface DiagnosticResult {
     itemsBySkill: Record<string, number>;
   };
   fourSkill?: DiagnosticFourSkillResult | null;
+  /** Internal practice levels from a four-skill attempt (not CEFR). */
+  practicePlacement?: PracticePlacement | null;
   /** FOUR_SKILL_OBSERVED_V3 only. */
   objectiveBreakdown?: DiagnosticObjectiveBreakdown | null;
   advice?: DiagnosticAdvice | null;

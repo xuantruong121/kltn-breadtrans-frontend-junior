@@ -5,6 +5,7 @@ import {
   grammarCategory,
   grammarDisplayTitle,
   quizDisplayTitle,
+  recommendationDisplayTitle,
   speakingSetDisplayTitle,
 } from "./displayTitles.ts";
 
@@ -42,4 +43,32 @@ test("grammar topics carry a Vietnamese title and a category; 13/14 are tenses",
   assert.equal(grammarCategory(9), "OTHER");
   assert.equal(grammarCategory(1234), "OTHER");
   assert.equal(grammarDisplayTitle(1234, "New topic"), "New topic");
+});
+
+test("every practice quiz published in F8 has a Vietnamese title", () => {
+  for (let id = 47; id <= 82; id += 1) {
+    const stored = `Reading A1 — English title ${id}`;
+    assert.notEqual(quizDisplayTitle(id, stored, "A1"), stored);
+  }
+});
+
+test("a recommendation reads the same title as its catalog", () => {
+  const base = { title: "Reading A1 — Store Refund Policy", route: "/reading/60" };
+  assert.equal(
+    recommendationDisplayTitle({ ...base, contentType: "QUIZ", contentId: 60 }),
+    "Chính sách hoàn tiền của cửa hàng (A1)",
+  );
+  assert.equal(
+    recommendationDisplayTitle({
+      contentType: "SPEAKING_SET",
+      contentId: 172,
+      title: "A Visit to the Doctor",
+      route: "/speaking/172?set=speaking-722e96f8-3df7-469e-9d4c-f67084411620",
+    }),
+    "Đi khám bác sĩ",
+  );
+  assert.equal(
+    recommendationDisplayTitle({ contentType: "CONTENT_TOPIC", contentId: 1, title: "X", route: "/x" }),
+    "X",
+  );
 });

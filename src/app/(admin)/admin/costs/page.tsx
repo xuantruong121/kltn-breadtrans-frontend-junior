@@ -49,6 +49,9 @@ type SystemCostsResponse = {
       audioMinutesThisMonth: number;
       freeQuotaMinutes: number;
       usedPercent: number;
+      ttsCharactersThisMonth: number;
+      freeTtsCharacters: number;
+      ttsUsedPercent: number;
       costUsd: number;
       costVnd: number;
       withinFreeTier: boolean;
@@ -60,6 +63,9 @@ type SystemCostsResponse = {
       totalMaterials: number;
       usedStorageMb: number;
       usedStorageGb: number;
+      fileCount: number;
+      /** False when a bucket could not be read: the total is too low. */
+      storageComplete: boolean;
       freeQuotaGb: number;
       usedPercent: number;
       egressCostUsd: number;
@@ -186,6 +192,9 @@ export default function AdminCostsPage() {
 
   const services = data.services;
   const hasCostEstimate = summary.status !== "UNAVAILABLE";
+  const withinFreeTier =
+    (services?.azureSpeech?.withinFreeTier ?? true) &&
+    (services?.cloudflareR2?.withinFreeTier ?? true);
 
   return (
     <main className="mx-auto w-full max-w-[1500px] space-y-6 pb-12">
@@ -222,7 +231,7 @@ export default function AdminCostsPage() {
         <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs transition hover:border-slate-300">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Chi phí tháng này
+              Chi phí Gemini đã đo
             </span>
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
               <DollarSign className="h-4 w-4" />
@@ -233,12 +242,12 @@ export default function AdminCostsPage() {
               {hasCostEstimate ? `$${summary.totalCostUsd.toFixed(2)}` : "$0.00"}
             </span>
             <span className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700 border border-blue-200/50">
-              Pay-as-you-go
+              Ước tính
             </span>
           </div>
           <p className="mt-2 text-xs font-medium text-slate-600">
             {hasCostEstimate
-              ? `≈ ${summary.totalCostVnd.toLocaleString("vi-VN")} đ · Gemini AI (tính theo token thực)`
+              ? `≈ ${summary.totalCostVnd.toLocaleString("vi-VN")} đ · Cộng dồn theo token từ khi bật đo, không riêng tháng này`
               : "Chưa phát sinh chi phí ngoài Free Tier"}
           </p>
         </div>
@@ -254,15 +263,18 @@ export default function AdminCostsPage() {
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-bold tracking-tight text-emerald-700 font-mono tabular-nums">
-              100% Free
-            </span>
-            <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200/50">
-              Tối ưu chi phí
+            <span
+              className={`text-3xl font-bold tracking-tight font-mono tabular-nums ${
+                withinFreeTier ? "text-emerald-700" : "text-amber-700"
+              }`}
+            >
+              {withinFreeTier ? "Trong hạn mức" : "Vượt hạn mức"}
             </span>
           </div>
           <p className="mt-2 text-xs font-medium text-slate-600">
-            Azure Speech & Cloudflare R2 vận hành hoàn toàn trong gói miễn phí hàng tháng.
+            {withinFreeTier
+              ? "Azure Speech và Cloudflare R2 đang trong hạn mức miễn phí tháng này."
+              : "Azure Speech hoặc Cloudflare R2 đã dùng hết hạn mức miễn phí tháng này."}
           </p>
         </div>
 
@@ -403,12 +415,12 @@ export default function AdminCostsPage() {
                         Azure AI Speech
                       </h3>
                       <p className="text-xs font-medium text-slate-500">
-                        Pronunciation Assessment
+                        Chấm phát âm và giọng đọc (TTS)
                       </p>
                     </div>
                   </div>
                   <span className="shrink-0 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700">
-                    5 giờ audio/tháng (Free)
+                    5 giờ + 0,5 triệu ký tự/tháng (Free)
                   </span>
                 </div>
 
@@ -416,7 +428,7 @@ export default function AdminCostsPage() {
                 <div className="mt-4 rounded-lg border border-slate-200/70 bg-slate-50/80 p-3.5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-semibold text-slate-700">
-                      Hạn mức sử dụng tháng:
+                      Chấm phát âm tháng này:
                     </span>
                     <span className="font-mono font-bold text-slate-950 tabular-nums">
                       {services.azureSpeech.audioMinutesThisMonth} / {services.azureSpeech.freeQuotaMinutes} phút ({services.azureSpeech.usedPercent}%)
@@ -435,8 +447,27 @@ export default function AdminCostsPage() {
                   <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500">
                     <span>Còn lại trong hạn mức:</span>
                     <span className="font-semibold text-emerald-700">
-                      {Math.max(0, services.azureSpeech.freeQuotaMinutes - services.azureSpeech.audioMinutesThisMonth)} phút miễn phí
+                      {Math.max(0, services.azureSpeech.freeQuotaMinutes - services.azureSpeech.audioMinutesThisMonth).toLocaleString("vi-VN")} phút miễn phí
                     </span>
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between text-xs">
+                    <span className="font-semibold text-slate-700">
+                      Giọng đọc (TTS) tháng này:
+                    </span>
+                    <span className="font-mono font-bold text-slate-950 tabular-nums">
+                      {services.azureSpeech.ttsCharactersThisMonth.toLocaleString("vi-VN")} / {services.azureSpeech.freeTtsCharacters.toLocaleString("vi-VN")} ký tự ({services.azureSpeech.ttsUsedPercent}%)
+                    </span>
+                  </div>
+                  <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        services.azureSpeech.ttsUsedPercent > 80 ? "bg-amber-500" : "bg-blue-600"
+                      }`}
+                      style={{
+                        width: `${Math.max(services.azureSpeech.ttsCharactersThisMonth > 0 ? 3 : 0, services.azureSpeech.ttsUsedPercent)}%`,
+                      }}
+                    />
                   </div>
                 </div>
 
@@ -444,7 +475,7 @@ export default function AdminCostsPage() {
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                      Lượt chấm tháng này
+                      Bài nộp Nói tháng này
                     </p>
                     <p className="mt-1 font-mono text-lg font-bold text-slate-900 tabular-nums">
                       {services.azureSpeech.submissionsThisMonth}
@@ -452,7 +483,7 @@ export default function AdminCostsPage() {
                   </div>
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                      Tổng lượt tích lũy
+                      Tổng bài nộp Nói
                     </p>
                     <p className="mt-1 font-mono text-lg font-bold text-slate-900 tabular-nums">
                       {services.azureSpeech.totalSubmissions}
@@ -482,7 +513,7 @@ export default function AdminCostsPage() {
               {/* Footer status */}
               <div className="mt-4 flex items-center gap-1.5 border-t border-slate-100 pt-3 text-xs text-slate-600">
                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                <span>Mỗi bài tập nói tiêu thụ trung bình 15–30 giây audio Azure.</span>
+                <span>Phút chấm gồm bài luyện Nói và bài đầu vào. Ký tự TTS gồm audio Nghe và giọng đọc mẫu.</span>
               </div>
             </div>
           )}
@@ -543,7 +574,7 @@ export default function AdminCostsPage() {
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                      Audio Đang Lưu
+                      Ghi âm học viên
                     </p>
                     <p className="mt-1 font-mono text-lg font-bold text-slate-900 tabular-nums">
                       {services.cloudflareR2.activeAudioFiles}
@@ -559,10 +590,10 @@ export default function AdminCostsPage() {
                   </div>
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                      Tài liệu hệ thống
+                      Tổng file đang lưu
                     </p>
                     <p className="mt-1 font-mono text-base font-bold text-slate-900 tabular-nums">
-                      {services.cloudflareR2.totalMaterials}{" "}
+                      {services.cloudflareR2.fileCount.toLocaleString("vi-VN")}{" "}
                       <span className="text-xs font-normal text-slate-500">file</span>
                     </p>
                   </div>
@@ -580,8 +611,16 @@ export default function AdminCostsPage() {
 
               {/* Footer status */}
               <div className="mt-4 flex items-center gap-1.5 border-t border-slate-100 pt-3 text-xs text-slate-600">
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                <span>Không mất phí tải ra (Egress $0). Tự động dọn file audio cũ sau 90 ngày.</span>
+                {services.cloudflareR2.storageComplete ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                ) : (
+                  <AlertCircle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                )}
+                <span>
+                  {services.cloudflareR2.storageComplete
+                    ? "Tính cả bucket công khai, riêng tư và sao lưu; đo lại mỗi 10 phút."
+                    : "Chưa đọc được đủ các bucket, dung lượng thật có thể cao hơn."}
+                </span>
               </div>
             </div>
           )}
@@ -676,7 +715,7 @@ export default function AdminCostsPage() {
               <tr className="hover:bg-slate-50/60 transition">
                 <td className="px-5 py-3.5 font-bold text-slate-900">Azure AI Speech</td>
                 <td className="px-4 py-3.5 bg-blue-50/30 font-semibold text-emerald-700 border-x border-blue-200/40">
-                  $0 (Free Tier 5 giờ audio)
+                  $0 (Free Tier 5 giờ, 0,5 triệu ký tự)
                 </td>
                 <td className="px-4 py-3.5 font-mono text-slate-800">$20–60 (~500K–1,5M đ)</td>
                 <td className="px-4 py-3.5 font-mono text-slate-800">$150–450 (~3,7M–11,2M đ)</td>

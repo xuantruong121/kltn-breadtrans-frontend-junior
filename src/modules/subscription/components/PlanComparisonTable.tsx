@@ -1,5 +1,6 @@
 "use client";
 
+import { whenCourses } from "@/lib/featureFlags";
 import React, { useState } from "react";
 import { ChevronDown, Check, Minus } from "lucide-react";
 
@@ -17,15 +18,21 @@ const COMPARISON_FEATURES: ComparisonFeature[] = [
   {
     category: "Luyện 4 kỹ năng",
     name: "Luyện Nghe và Đọc",
+    free: "Mọi mức",
+    plus: "Mọi mức",
+    pro: "Mọi mức",
+  },
+  {
+    name: "Nghe chép",
     free: "Cơ bản (A1–A2)",
-    plus: "Thêm Trung cấp, Nâng cao",
-    pro: "Thêm Trung cấp, Nâng cao",
+    plus: "Mọi mức (thêm B1–C2)",
+    pro: "Mọi mức (thêm B1–C2)",
   },
   {
     name: "Luyện Nói và Viết",
     free: "Cơ bản (A1–A2)",
-    plus: "Cơ bản (A1–A2)",
-    pro: "Thêm Trung cấp, Nâng cao",
+    plus: "Thêm Trung cấp (B1–B2)",
+    pro: "Mọi mức, gồm Nâng cao (C1–C2)",
   },
   {
     name: "Chấm bài Nói và Viết tự động (AI)",
@@ -53,13 +60,13 @@ const COMPARISON_FEATURES: ComparisonFeature[] = [
     plus: true,
     pro: true,
   },
-  {
+  ...whenCourses({
     category: "Khóa học",
     name: "Khóa học tự học theo lộ trình",
     free: false,
     plus: false,
     pro: true,
-  },
+  }),
   {
     category: "Khác",
     name: "Đấu trường từ vựng, cửa hàng và thú cưng",

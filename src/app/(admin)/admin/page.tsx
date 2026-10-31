@@ -1,5 +1,6 @@
 "use client";
 
+import { COURSES_ENABLED, whenCourses } from "@/lib/featureFlags";
 import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
@@ -100,12 +101,12 @@ const RANGE_OPTIONS: { value: DashboardRange; label: string }[] = [
 ];
 
 const QUICK_ACTIONS: QuickActionItem[] = [
-  {
+  ...whenCourses<QuickActionItem>({
     label: "Course Studio",
     detail: "Biên soạn khóa học & bài học",
     href: "/admin/courses",
     icon: BookOpen,
-  },
+  }),
   {
     label: "Exam CMS",
     detail: "Quản lý đề luyện thi TOEIC",
@@ -211,14 +212,14 @@ export default function AdminDashboardPage() {
       badgeColor: "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700",
       actionLabel: "Đọc góp ý",
     },
-    {
+    ...whenCourses({
       count: data?.stats.pendingCourses ?? 0,
       label: "khóa học đang ở trạng thái bản nháp",
       href: "/admin/courses",
       icon: BookOpen,
       badgeColor: "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700",
       actionLabel: "Biên tập",
-    },
+    }),
   ];
 
   const attentionItems = rawAttentionItems.filter((item) => item.count > 0);
@@ -405,6 +406,8 @@ export default function AdminDashboardPage() {
               </div>
             </Link>
 
+            {COURSES_ENABLED && (
+              <>
             {/* PILLAR 3: KHO NỘI DUNG */}
             <Link
               href="/admin/courses"
@@ -438,6 +441,8 @@ export default function AdminDashboardPage() {
                 </span>
               </div>
             </Link>
+              </>
+            )}
 
             {/* PILLAR 4: KINH TẾ BÁNH MÌ & CỬA HÀNG */}
             <Link

@@ -14,7 +14,7 @@ const FAQS = [
   ],
   [
     "Tiến độ học được lưu như thế nào?",
-    "Khi đã đăng nhập, hệ thống lưu tiến độ khóa học, lượt luyện tập và kết quả theo tài khoản. Bạn có thể quay lại tiếp tục ở các khu vực học tương ứng.",
+    "Khi đã đăng nhập, hệ thống lưu tiến độ học, lượt luyện tập và kết quả theo tài khoản. Bạn có thể quay lại tiếp tục ở các khu vực học tương ứng.",
   ],
   [
     "Tôi có thể làm lại bài luyện không?",

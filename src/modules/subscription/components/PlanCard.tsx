@@ -1,5 +1,6 @@
 "use client";
 
+import { COURSES_ENABLED } from "@/lib/featureFlags";
 import React from "react";
 import { Check, Minus, Star } from "lucide-react";
 import type { EffectivePlan, PurchasablePlanVersionInfo } from "../planLogic";
@@ -84,7 +85,11 @@ export const PlanCard: React.FC<PlanCardProps> = ({
           <ul className="mt-6 space-y-3.5 text-sm text-slate-700 dark:text-slate-200">
             <li className="flex items-start gap-3">
               <Check size={18} className="text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
-              <span>Bài Cơ bản (A1–A2) của Nghe, Đọc, Nói, Viết</span>
+              <span>Nghe và Đọc ở mọi mức (trừ Nghe chép từ B1)</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <Check size={18} className="text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
+              <span>Nói và Viết mức Cơ bản (A1–A2)</span>
             </li>
             <li className="flex items-start gap-3">
               <Check size={18} className="text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
@@ -146,7 +151,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
           </div>
 
           <p className="mt-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed">
-            Mở bài Nghe và Đọc Trung cấp, Nâng cao.
+            Mở Nói, Viết Trung cấp và Nghe chép từ B1.
           </p>
 
           <div className="mt-6 pb-6 border-b border-slate-100 dark:border-slate-800">
@@ -198,15 +203,15 @@ export const PlanCard: React.FC<PlanCardProps> = ({
             </li>
             <li className="flex items-start gap-3 font-bold text-amber-800 dark:text-amber-300">
               <Check size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
-              <span>Bài Nghe và Đọc Trung cấp, Nâng cao</span>
+              <span>Nói và Viết Trung cấp (B1–B2)</span>
             </li>
             <li className="flex items-start gap-3">
               <Check size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
-              <span>Bài Nói và Viết ở mức Cơ bản (A1–A2)</span>
+              <span>Nghe chép từ B1 đến C2</span>
             </li>
             <li className="flex items-start gap-3 text-slate-500 dark:text-slate-400">
               <Minus size={18} className="text-slate-400 dark:text-slate-500 shrink-0 mt-0.5" aria-hidden="true" />
-              <span>Không gồm Nói, Viết Trung cấp trở lên và khóa học</span>
+              <span>Không gồm Nói, Viết Nâng cao (C1–C2){COURSES_ENABLED ? " và khóa học" : ""}</span>
             </li>
           </ul>
         </div>
@@ -276,7 +281,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
         </div>
 
         <p className="mt-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed">
-          Toàn bộ quyền lợi Plus, thêm Nói và Viết Trung cấp, Nâng cao và mọi khóa học.
+          Toàn bộ quyền lợi Plus, thêm Nói và Viết Nâng cao{COURSES_ENABLED ? " và mọi khóa học" : ""}.
         </p>
 
         <div className="mt-6 pb-6 border-b border-slate-200/80 dark:border-slate-800">
@@ -308,16 +313,20 @@ export const PlanCard: React.FC<PlanCardProps> = ({
           </li>
           <li className="flex items-start gap-3">
             <Check size={18} className="text-indigo-500 shrink-0 mt-0.5" aria-hidden="true" />
-            <span>Bài Nói và Viết Trung cấp, Nâng cao</span>
+            <span>Nói và Viết ở mọi mức, gồm Nâng cao (C1–C2)</span>
           </li>
-          <li className="flex items-start gap-3">
-            <Check size={18} className="text-indigo-500 shrink-0 mt-0.5" aria-hidden="true" />
-            <span>Mở khóa toàn bộ khóa học</span>
-          </li>
-          <li className="flex items-start gap-3">
-            <Check size={18} className="text-indigo-500 shrink-0 mt-0.5" aria-hidden="true" />
-            <span>Lộ trình học tuần tự, tiếp tục từ bài đang học</span>
-          </li>
+          {COURSES_ENABLED && (
+            <>
+              <li className="flex items-start gap-3">
+                <Check size={18} className="text-indigo-500 shrink-0 mt-0.5" aria-hidden="true" />
+                <span>Mở khóa toàn bộ khóa học</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Check size={18} className="text-indigo-500 shrink-0 mt-0.5" aria-hidden="true" />
+                <span>Lộ trình học tuần tự, tiếp tục từ bài đang học</span>
+              </li>
+            </>
+          )}
         </ul>
       </div>
 

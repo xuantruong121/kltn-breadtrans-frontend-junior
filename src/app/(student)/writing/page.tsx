@@ -1,5 +1,6 @@
 "use client";
 
+import { RecommendedForYou } from "@/components/learning-path/RecommendedForYou";
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -20,6 +21,9 @@ import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { PremiumContentPaywallModal } from "@/components/subscription/PremiumContentPaywallModal";
+import { CatalogPagination, useCatalogPage } from "@/components/practice/CatalogPagination";
+import { LevelLockDialog } from "@/components/practice/LevelLockDialog";
+import { levelLockOf, type LevelLock } from "@/lib/learning-path/levelLock";
 import {
   WritingTopicCard,
   type WritingTopicItem,
@@ -54,6 +58,7 @@ export default function WritingTopicsPage() {
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("ALL");
   const [launchingTopicId, setLaunchingTopicId] = useState<number | null>(null);
   const [paywallTopic, setPaywallTopic] = useState<WritingTopicItem | null>(null);
+  const [levelLock, setLevelLock] = useState<LevelLock | null>(null);
   // "Viết câu theo tranh" tab; ?tab=picture opens it directly.
   const [writingTab, setWritingTab] = useState<"PRACTICE" | "PICTURE">("PRACTICE");
   useEffect(() => {
@@ -148,7 +153,7 @@ export default function WritingTopicsPage() {
       const desc = (t.description || "").toLowerCase();
       const matchSearch = !q || title.includes(q) || desc.includes(q);
 
-      const matchDifficulty = matchesDifficultyFilter(writingLevelOf(t), selectedDifficulty);
+      const matchDifficulty = matchesDifficultyFilter(writingLevelOf(t), selectedDifficulty, t.practiceLevel);
 
       // Graded tasks out of all tasks, from the API (same rule as completion).
       const matchStatus = matchesStatusFilter(
@@ -165,13 +170,17 @@ export default function WritingTopicsPage() {
     let spotlightAssigned = false;
     return sorted.map((item) => {
       const isDone = Boolean(item.isCompleted);
-      if (!isDone && !spotlightAssigned) {
+      if (!isDone && !item.isLocked && !item.isLevelLocked && !spotlightAssigned) {
         spotlightAssigned = true;
         return { ...item, isSpotlight: true };
       }
       return item;
     });
   }, [practiceTopics, searchTerm, selectedDifficulty, selectedStatus, sortOrder]);
+  const paging = useCatalogPage(
+    filteredAndSortedTopics,
+    [searchTerm, selectedDifficulty, selectedStatus, sortOrder].join("|"),
+  );
 
   const handleStartTopic = (topic: WritingTopicItem) => {
     if (!user) {
@@ -265,7 +274,7 @@ export default function WritingTopicsPage() {
                 Lịch sử Writing gần đây
               </h2>
             </div>
-            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
               Kết quả đã lưu
             </span>
           </div>
@@ -283,7 +292,7 @@ export default function WritingTopicsPage() {
                 <p className="line-clamp-1 text-xs font-bold text-slate-800 dark:text-slate-100">
                   {activity.title}
                 </p>
-                <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                   {activity.detail ?? "Đã hoàn thành"} · {activity.score != null ? `${activity.score}%` : "Chưa có điểm"}
                 </p>
               </Link>
@@ -322,6 +331,7 @@ export default function WritingTopicsPage() {
           isAuthenticated={Boolean(user)}
           onOpen={(href) => router.push(href)}
           onLocked={(quiz) => setPaywallTopic(quiz)}
+          onLevelLocked={(quiz) => setLevelLock(levelLockOf("WRITING", quiz))}
           onGuest={(quiz) =>
             setAuthGate({ open: true, topicId: quiz.id, title: quiz.title })
           }
@@ -329,7 +339,9 @@ export default function WritingTopicsPage() {
       ) : (
         <>
         {/* Unified Modern Filter Dock */}
-        <section className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xs sm:p-5 space-y-4">
+        <RecommendedForYou skill="WRITING" />
+
+      <section className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xs sm:p-5 space-y-4">
           {/* Row 1: Search Input (Ctrl+K) */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
             <div className="relative flex-1 lg:max-w-md">
@@ -360,7 +372,7 @@ export default function WritingTopicsPage() {
                     <X size={13} aria-hidden="true" />
                   </button>
                 ) : (
-                  <kbd className="hidden sm:inline-block rounded-md border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-0.5 text-[11px] font-mono font-bold text-slate-600 dark:text-slate-400 shadow-2xs">
+                  <kbd className="hidden sm:inline-block rounded-md border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-0.5 text-xs font-mono font-bold text-slate-600 dark:text-slate-400 shadow-2xs">
                     ⌘K
                   </kbd>
                 )}
@@ -414,8 +426,9 @@ export default function WritingTopicsPage() {
               </button>
             </div>
           ) : filteredAndSortedTopics.length > 0 ? (
+            <div className="space-y-6">
             <div className="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-              {filteredAndSortedTopics.map((topic) => (
+              {paging.items.map((topic) => (
                 <WritingTopicCard
                   key={topic.id}
                   topic={topic}
@@ -428,10 +441,13 @@ export default function WritingTopicsPage() {
                     })
                   }
                   onOpenPaywall={(t) => setPaywallTopic(t)}
+                  onOpenLevelLock={(t) => setLevelLock(levelLockOf("WRITING", t))}
                   onStart={handleStartTopic}
                   isSpotlight={topic.isSpotlight}
                 />
               ))}
+            </div>
+            <CatalogPagination paging={paging} />
             </div>
           ) : (
             <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 sm:p-12 text-center">
@@ -439,7 +455,7 @@ export default function WritingTopicsPage() {
               <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-200">
                 Không tìm thấy chủ đề luyện viết phù hợp
               </h2>
-              <p className="mt-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+              <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
                 Hãy thử chọn bộ lọc khác hoặc tìm kiếm với từ khóa khác để khám phá các bài luyện có sẵn.
               </p>
               <div className="mt-5 flex justify-center">
@@ -451,7 +467,7 @@ export default function WritingTopicsPage() {
                     setSortOrder(DEFAULT_CATALOG_SORT);
                     setSelectedStatus("ALL");
                   }}
-                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
                 >
                   <RotateCcw size={14} aria-hidden="true" />
                   Xóa bộ lọc
@@ -472,6 +488,8 @@ export default function WritingTopicsPage() {
         onOpenLogin={() => router.push("/login")}
         onOpenRegister={() => router.push("/register")}
       />
+
+      <LevelLockDialog lock={levelLock} onClose={() => setLevelLock(null)} />
 
       {/* Paywall Modal */}
       <PremiumContentPaywallModal

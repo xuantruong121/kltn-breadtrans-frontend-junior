@@ -48,6 +48,15 @@ test("Dễ → Khó orders A1 → C2 across the whole list, stable within a leve
   assert.equal(items[0].id, 19);
 });
 
+test("the server's practice level decides the label and the filter", () => {
+  assert.equal(catalogLevelLabel("A2-B1", "BASIC"), "Cơ bản · A2–B1");
+  assert.equal(catalogLevelLabel("A1", "STARTER"), "Mất gốc · A1");
+  assert.equal(matchesDifficultyFilter("A2-B1", "BASIC", "BASIC"), true);
+  assert.equal(matchesDifficultyFilter("A2-B1", "INTERMEDIATE", "BASIC"), false);
+  assert.equal(matchesDifficultyFilter("A1", "STARTER", "STARTER"), true);
+  assert.equal(matchesDifficultyFilter("A2-B1", "INTERMEDIATE"), true);
+});
+
 test("the default sort is Dễ → Khó", () => {
   assert.equal(parseCatalogSort(null), "EASY_TO_HARD");
   assert.equal(parseCatalogSort("NAME_ASC"), "EASY_TO_HARD");

@@ -1,3 +1,4 @@
+import type { PracticeLevel } from "@/lib/learning-path/practiceLevel";
 import axiosClient from "../axiosClient";
 
 export type ReadingExerciseCompletionStatus =
@@ -18,6 +19,10 @@ export interface ReadingExercise {
   topicVietnameseName?: string | null;
   microSkills: string[];
   isPremiumContent: boolean;
+  /** The level this item sits at, as access decides it. */
+  practiceLevel?: PracticeLevel | null;
+  /** The learner's open level is below this item's. */
+  isLevelLocked?: boolean;
   isLocked: boolean;
   /** Lowest plan that opens this item: FREE, PLUS or PRO. */
   requiredPlan?: string;

@@ -70,8 +70,18 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
 
         {/* ── Deck Title ──────────────────────────────────────────────── */}
         <h2 className="mt-3 line-clamp-2 min-h-[2.75rem] text-[17px] font-bold leading-snug text-slate-900 transition-colors group-hover:text-blue-600 dark:text-slate-100 dark:group-hover:text-blue-400 tracking-tight">
+          {topic.level && (
+            <span className="mr-1.5 inline-block rounded-md bg-slate-100 px-1.5 py-0.5 align-middle text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+              {topic.level}
+            </span>
+          )}
           {topic.title}
         </h2>
+        {topic.description && (
+          <p className="mt-1 line-clamp-2 text-sm text-slate-600 dark:text-slate-400">
+            {topic.description}
+          </p>
+        )}
 
         {/* ── Deck Metadata ────────────────────────────────────────────── */}
         <div className="mt-2.5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">

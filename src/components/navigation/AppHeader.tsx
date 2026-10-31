@@ -1,5 +1,6 @@
 "use client";
 
+import { whenCourses } from "@/lib/featureFlags";
 import { Suspense, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
@@ -62,7 +63,7 @@ import {
   isFlashcardRoute,
   isCoursesRoute,
   isMarketRoute,
-  isMoreRoute,
+  splitNavOverflow,
 } from "./navUtils";
 import { ThemeToggle } from "./ThemeToggle";
 import { SuggestionModal } from "@/components/suggestion/SuggestionModal";
@@ -280,8 +281,10 @@ export function AppHeader() {
   // 7. Luyện đề (Exam Practice: TOEIC & Certificate test hub)
   // 8. Khóa học (unified Course Hub)
   // 9. Cửa hàng
-  // 10. ... More (Dropdown containing general navigation only)
-  const desktopNavLinks = [
+  // 10. Bảng xếp hạng
+  // 11. FAQ
+  // At most MAX_HEADER_NAV_BUTTONS are buttons; the rest go into More.
+  const headerNavLinks = [
     {
       label: "Nghe",
       href: "/listening",
@@ -324,13 +327,13 @@ export function AppHeader() {
       active: isExamRoute(pathname),
       iconColor: "text-orange-500 dark:text-orange-400",
     },
-    {
+    ...whenCourses({
       label: "Khóa học",
       href: "/courses",
       icon: GraduationCap,
       active: isCoursesRoute(pathname),
       iconColor: "text-indigo-500 dark:text-indigo-400",
-    },
+    }),
     {
       label: "Cửa hàng",
       href: "/market",
@@ -338,15 +341,11 @@ export function AppHeader() {
       active: isMarketRoute(pathname),
       iconColor: "text-pink-500 dark:text-pink-400",
     },
-  ];
-
-  // Contact and suggestions are account actions in the user dropdown.
-  // The compact More menu contains only general navigation destinations.
-  const moreDropdownItems = [
     {
       label: "Bảng xếp hạng",
       href: "/arena",
       icon: Trophy,
+      active: isActivePath(pathname, "/arena"),
       iconColor: "text-amber-500 dark:text-amber-400",
       description: "Bảng vàng thi đua tuần & tích lũy EXP",
     },
@@ -354,18 +353,21 @@ export function AppHeader() {
       label: "FAQ",
       href: "/help",
       icon: CircleHelp,
+      active: isActivePath(pathname, "/help"),
       iconColor: "text-sky-500 dark:text-sky-400",
       description: "Giải đáp các câu hỏi thường gặp",
     },
   ];
-
-  const isMoreActive = isMoreRoute(pathname);
+  // Contact and suggestions are account actions in the user dropdown.
+  const { visible: desktopNavLinks, overflow: moreDropdownItems } =
+    splitNavOverflow(headerNavLinks);
+  const isMoreActive = moreDropdownItems.some((item) => item.active);
 
   // Mobile drawer links
   const mobileSecondaryLinks: HeaderNavLink[] = [
     { label: "Flashcard từ vựng", href: "/flashcard", icon: Layers },
     { label: "Luyện đề", href: "/exams", icon: Target, isExam: true },
-    { label: "Khóa học", href: "/courses", icon: GraduationCap },
+    ...whenCourses<HeaderNavLink>({ label: "Khóa học", href: "/courses", icon: GraduationCap }),
     { label: "Cửa hàng", href: "/market", icon: ShoppingBag },
     { label: "Bảng xếp hạng", href: "/arena", icon: Trophy },
     { label: "FAQ", href: "/help", icon: CircleHelp },
@@ -412,7 +414,8 @@ export function AppHeader() {
             </Link>
           ))}
 
-          {/* 10. ... More Dropdown */}
+          {/* More: only when there are more than MAX_HEADER_NAV_BUTTONS destinations */}
+          {moreDropdownItems.length > 0 && (
           <div
             ref={moreRef}
             className="relative flex shrink-0 group"
@@ -494,6 +497,7 @@ export function AppHeader() {
               </div>
             </div>
           </div>
+          )}
         </nav>
 
         {/* Right Header Utilities */}

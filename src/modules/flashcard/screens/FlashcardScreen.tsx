@@ -54,6 +54,7 @@ export const FlashcardScreen: React.FC = () => {
   // Filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
+  const [selectedLevel, setSelectedLevel] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState<FlashcardStatusFilter>("ALL");
   const [sortOption, setSortOption] = useState<FlashcardSortOption>("DEFAULT");
 
@@ -62,26 +63,34 @@ export const FlashcardScreen: React.FC = () => {
 
   // Unique categories derived dynamically from actual dataset
   const uniqueCategories = useMemo(() => extractUniqueCategories(topics), [topics]);
+  const uniqueLevels = useMemo(
+    () =>
+      [...new Set(topics.map((topic) => topic.level).filter(Boolean) as string[])].sort(),
+    [topics],
+  );
 
   // Filtered and sorted topics
   const displayedTopics = useMemo(() => {
     return filterAndSortTopics(topics, {
       searchQuery,
       selectedCategory,
+      selectedLevel,
       statusFilter,
       sortOption,
     });
-  }, [topics, searchQuery, selectedCategory, statusFilter, sortOption]);
+  }, [topics, searchQuery, selectedCategory, selectedLevel, statusFilter, sortOption]);
 
   const hasActiveFilters =
     searchQuery.trim().length > 0 ||
     selectedCategory !== "ALL" ||
+    selectedLevel !== "ALL" ||
     statusFilter !== "ALL" ||
     sortOption !== "DEFAULT";
 
   const handleResetFilters = () => {
     setSearchQuery("");
     setSelectedCategory("ALL");
+    setSelectedLevel("ALL");
     setStatusFilter("ALL");
     setSortOption("DEFAULT");
   };
@@ -124,6 +133,9 @@ export const FlashcardScreen: React.FC = () => {
           categories={uniqueCategories}
           selectedCategory={selectedCategory}
           onCategoryChange={setSelectedCategory}
+          levels={uniqueLevels}
+          selectedLevel={selectedLevel}
+          onLevelChange={setSelectedLevel}
           statusFilter={statusFilter}
           onStatusFilterChange={setStatusFilter}
           sortOption={sortOption}

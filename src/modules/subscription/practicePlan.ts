@@ -1,8 +1,10 @@
 /**
- * Plan that unlocks a locked practice item, mirroring the backend matrix
- * (practice-level.ts): Listening/Reading B1+ need PLUS, Speaking/Writing B1+
- * need PRO. The API sends `requiredPlan` on each item; the skill rule is only
- * the fallback for an older response without it.
+ * Plan that unlocks a locked practice item. The backend matrix
+ * (practice-level.ts, owner 2026-10-30) decides it and the API sends
+ * `requiredPlan` on each item: Listening/Reading free except dictation B1+
+ * (PLUS); Speaking/Writing B1-B2 PLUS, C1-C2 PRO. The skill rule below is
+ * only the fallback for an older response without it: the highest plan the
+ * skill can need, so a fallback never under-states the price.
  */
 export type PracticeSkillType = "LISTENING" | "READING" | "SPEAKING" | "WRITING";
 export type PaidPlanCode = "PLUS" | "PRO";

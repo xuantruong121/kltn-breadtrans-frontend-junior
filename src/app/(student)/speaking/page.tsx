@@ -1,5 +1,6 @@
 "use client";
 
+import { RecommendedForYou } from "@/components/learning-path/RecommendedForYou";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -18,12 +19,15 @@ import {
   type SpeakingSubmissionSummary,
 } from "@/lib/api/services/speaking.service";
 import { Pagination } from "@/components/ui";
+import { CATALOG_PAGE_SIZES } from "@/lib/practice/catalogPage";
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
 import { userService, type UserSkillsSummaryResponse } from "@/lib/api/services/user.service";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { PremiumContentPaywallModal } from "@/components/subscription/PremiumContentPaywallModal";
+import { LevelLockDialog } from "@/components/practice/LevelLockDialog";
+import { levelLockOf, type LevelLock } from "@/lib/learning-path/levelLock";
 import { PracticeCard, type PracticeExerciseItem } from "@/components/speaking/PracticeCard";
 import { PracticeCatalogFilters } from "@/components/practice/PracticeCatalogFilters";
 import {
@@ -77,6 +81,7 @@ export default function SpeakingExercisesPage() {
     practiceSetKey?: string;
   }>({ open: false });
   const [paywallExercise, setPaywallExercise] = useState<PracticeExerciseItem | null>(null);
+  const [levelLock, setLevelLock] = useState<LevelLock | null>(null);
 
   // Keyboard shortcut Ctrl+K / Cmd+K to focus search dock
   useEffect(() => {
@@ -249,6 +254,7 @@ export default function SpeakingExercisesPage() {
       const matchDifficulty = matchesDifficultyFilter(
         speakingLevelOf(ex),
         selectedDifficulty,
+        ex.practiceLevel,
       );
 
       const matchCategory =
@@ -270,7 +276,7 @@ export default function SpeakingExercisesPage() {
     let spotlightAssigned = false;
     return sorted.map((item) => {
       const isDone = Boolean(item.isCompleted);
-      if (!isDone && !spotlightAssigned) {
+      if (!isDone && !item.isLocked && !item.isLevelLocked && !spotlightAssigned) {
         spotlightAssigned = true;
         return { ...item, isSpotlight: true };
       }
@@ -395,6 +401,8 @@ export default function SpeakingExercisesPage() {
       </section>
 
       {/* Unified Modern Filter Dock */}
+      <RecommendedForYou skill="SPEAKING" />
+
       <section className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xs sm:p-5 space-y-4">
         {/* Row 1: Search Input (with Ctrl+K / Cmd+K badge and clear button) & Category Chips */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
@@ -430,7 +438,7 @@ export default function SpeakingExercisesPage() {
                   <X size={13} aria-hidden="true" />
                 </button>
               ) : (
-                <kbd className="hidden sm:inline-block rounded-md border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-0.5 text-[11px] font-mono font-bold text-slate-600 dark:text-slate-400 shadow-2xs">
+                <kbd className="hidden sm:inline-block rounded-md border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-0.5 text-xs font-mono font-bold text-slate-600 dark:text-slate-400 shadow-2xs">
                   ⌘K
                 </kbd>
               )}
@@ -550,28 +558,28 @@ export default function SpeakingExercisesPage() {
                     })
                   }
                   onOpenPaywall={(ex) => setPaywallExercise(ex)}
+                  onOpenLevelLock={(ex) => setLevelLock(levelLockOf("SPEAKING", ex))}
                   onStart={handleStartExercise}
                   isLaunching={Boolean(launchingExerciseId)}
                 />
               ))}
             </div>
 
-            {/* Pagination if more than 1 page */}
-            {totalPages > 1 && (
-              <div className="pt-2">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  totalItems={filteredAndSortedExercises.length}
-                  pageSize={pageSize}
-                  onPageChange={setCurrentPage}
-                  onPageSizeChange={(size) => {
-                    setPageSize(size);
-                    setCurrentPage(1);
-                  }}
-                />
-              </div>
-            )}
+            <div className="pt-2">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filteredAndSortedExercises.length}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setCurrentPage(1);
+                }}
+                pageSizeOptions={CATALOG_PAGE_SIZES}
+                alwaysShow
+              />
+            </div>
           </div>
         ) : (
           /* Graceful Informative Empty State with Reset Filter Action */
@@ -582,7 +590,7 @@ export default function SpeakingExercisesPage() {
                 ? "Không tìm thấy bộ luyện phù hợp với mức độ này."
                 : "Không tìm thấy bài luyện nói phù hợp"}
             </h2>
-            <p className="mt-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+            <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
               {selectedDifficulty !== "ALL"
                 ? "Thử chọn mức độ khác hoặc đặt lại bộ lọc để khám phá các bài luyện có sẵn."
                 : "Hãy thử chọn bộ lọc khác hoặc tìm kiếm với từ khóa khác."}
@@ -597,7 +605,7 @@ export default function SpeakingExercisesPage() {
                   setSelectedStatus("ALL");
                   setCurrentPage(1);
                 }}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
               >
                 <RotateCcw size={14} aria-hidden="true" />
                 Xóa bộ lọc
@@ -624,6 +632,8 @@ export default function SpeakingExercisesPage() {
         onOpenLogin={() => router.push("/login")}
         onOpenRegister={() => router.push("/register")}
       />
+
+      <LevelLockDialog lock={levelLock} onClose={() => setLevelLock(null)} />
 
       {/* Paywall Modal */}
       <PremiumContentPaywallModal

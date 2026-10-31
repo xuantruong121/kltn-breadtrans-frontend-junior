@@ -1164,7 +1164,9 @@ function FloatingAiTutorInner() {
 export default function FloatingAiTutor() {
   const pathname = usePathname();
   const isDiagnosticView =
-    pathname === "/diagnostic" || pathname.startsWith("/diagnostic/");
+    pathname === "/diagnostic" ||
+    pathname.startsWith("/diagnostic/") ||
+    pathname.startsWith("/gate/");
   if (isDiagnosticView) return null;
 
   return <FloatingAiTutorInner />;

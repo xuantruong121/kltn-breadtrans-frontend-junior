@@ -1,5 +1,8 @@
 "use client";
 
+import { PlanLockedScreen } from "@/components/practice/PlanLockedScreen";
+import { LevelLockedScreen } from "@/components/practice/LevelLockDialog";
+import { dependsOnLevel } from "@/lib/learning-path/levelLock";
 import { classifyPracticeLoadError } from "@/lib/practice/practiceLoadErrorLogic";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -137,6 +140,7 @@ export default function TakeQuizPage(props: {
       queryClient.invalidateQueries({ queryKey: ["user-stats", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["listeningPractices"] });
       queryClient.invalidateQueries({ queryKey: ["listening-practices"] });
+      queryClient.invalidateQueries({ predicate: (q) => dependsOnLevel(q.queryKey) });
 
       // Redirect to analytics page
       const submissionRoute =
@@ -270,7 +274,8 @@ export default function TakeQuizPage(props: {
   const { confirmExit, exitDialogProps } = usePracticeExitGuard({
     shouldConfirmExit,
     defaultFallbackUrl: backHref,
-    enabled: !isListening && hasMounted && !!user,
+    // Nothing to lose before the exercise loads, and a lock screen's links must work.
+    enabled: !isListening && hasMounted && !!user && Boolean(quiz),
   });
   const handleExitRequest = (event?: MouseEvent) => {
     event?.preventDefault();
@@ -361,6 +366,20 @@ export default function TakeQuizPage(props: {
 
   if (!quiz) {
     const loadError = classifyPracticeLoadError(quizError);
+    if (loadError?.kind === "LEVEL_LOCKED")
+      return (
+        <LevelLockedScreen
+          lock={loadError}
+          backHref={props.routeContext === "reading" ? "/reading" : "/listening"}
+        />
+      );
+    if (loadError?.kind === "LOCKED")
+      return (
+        <PlanLockedScreen
+          plan={loadError.requiredPlan}
+          backHref={props.routeContext === "reading" ? "/reading" : "/listening"}
+        />
+      );
     return (
       <div className="flex flex-col items-center p-12 text-center">
         <p className="text-base font-bold text-slate-800 dark:text-slate-200">

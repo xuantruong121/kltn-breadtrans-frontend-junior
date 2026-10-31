@@ -15,7 +15,7 @@ const quicksand = Quicksand({
 export const metadata: Metadata = {
   title: "BreadTrans - Tự học tiếng Anh theo lộ trình",
   description:
-    "Nền tảng tự học tiếng Anh theo kỹ năng, cấp độ và chủ đề; luyện đề theo nhiều dạng chứng chỉ và học theo khóa học có lộ trình sẵn.",
+    "Nền tảng tự học tiếng Anh theo kỹ năng, cấp độ và chủ đề; luyện đề theo nhiều dạng chứng chỉ.",
 };
 
 export const viewport: Viewport = {

@@ -1,5 +1,6 @@
 "use client";
 
+import { COURSES_ENABLED } from "@/lib/featureFlags";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Compass, BookOpen, Target, User } from "lucide-react";
@@ -80,7 +81,8 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
         <span className="text-[11px]">Luyện đề</span>
       </Link>
 
-      {/* 4. Khóa học */}
+      {/* 4. Khóa học (hidden unless COURSES_ENABLED) */}
+      {COURSES_ENABLED && (
       <Link
         href="/courses"
         className={`flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 transition-colors ${
@@ -92,6 +94,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
         <BookOpen size={20} className={isCourses ? "stroke-[2.5]" : "stroke-2"} />
         <span className="text-[11px]">Khóa học</span>
       </Link>
+      )}
 
       {/* 5. Tài khoản / Đăng nhập */}
       {user ? (
