@@ -99,8 +99,8 @@ export function formatRetryAt(iso: string): string {
 
 export function gateClosedMessage(reason: GateClosedReason | null): string {
   if (reason === "TOP_LEVEL") return "Bạn đã mở mức cao nhất của kỹ năng này.";
-  if (reason === "PROGRESS_ONLY") return "Kỹ năng này mở mức bằng tiến độ luyện tập, không có bài mở khoá.";
-  return "Mức này chưa đủ câu hỏi cho bài mở khoá. Bạn vẫn mở được bằng tiến độ luyện tập.";
+  if (reason === "PROGRESS_ONLY") return "Kỹ năng này mở mức bằng tiến độ luyện tập, không có bài mở khóa.";
+  return "Mức này chưa đủ câu hỏi cho bài mở khóa. Bạn vẫn mở được bằng tiến độ luyện tập.";
 }
 
 export const unansweredCount = (questions: GateQuestion[], answers: Record<string, string>) =>

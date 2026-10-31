@@ -7,6 +7,7 @@ import { ArrowRight, Bookmark, BookmarkCheck, Clock, Lock } from "lucide-react";
 
 import { LevelLockButton, LevelLockDialog } from "@/components/practice/LevelLockDialog";
 import { learningPathService } from "@/lib/api/services/learningPath.service";
+import { recommendationDisplayTitle } from "@/lib/catalog/displayTitles";
 import { levelLockOf, type LevelLock } from "@/lib/learning-path/levelLock";
 import { PRACTICE_SKILL_LABEL } from "@/lib/learning-path/practiceLevel";
 import { lockLabel, visibleReasons, type RecommendationItem } from "@/lib/learning-path/recommendation";
@@ -32,6 +33,7 @@ export function RecommendationItemCard({
   });
   const lock = lockLabel(item.status, item.requiredPlan);
   const reasons = visibleReasons(item);
+  const title = recommendationDisplayTitle(item);
 
   return (
     <article className="flex h-full flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
@@ -55,7 +57,7 @@ export function RecommendationItemCard({
             )}
           </button>
         </div>
-        <h3 className="mt-1 text-base font-bold leading-snug text-slate-900 dark:text-slate-100">{item.title}</h3>
+        <h3 className="mt-1 text-base font-bold leading-snug text-slate-900 dark:text-slate-100">{title}</h3>
         {reasons.length > 0 && (
           <ul className="mt-2 space-y-0.5 text-sm text-slate-600 dark:text-slate-400">
             {reasons.map((r) => (
@@ -79,7 +81,7 @@ export function RecommendationItemCard({
                 }),
               )
             }
-            ariaLabel={`${lock}: ${item.title}`}
+            ariaLabel={`${lock}: ${title}`}
           />
         ) : lock ? (
           <Link

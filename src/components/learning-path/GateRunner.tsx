@@ -165,7 +165,7 @@ function ResultView({ skill, result }: { skill: GateSkill; result: GateResult })
         </>
       )}
       <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
-        Bài mở khoá không hiện đáp án để câu hỏi còn dùng được cho lần sau.
+        Bài mở khóa không hiện đáp án để câu hỏi còn dùng được cho lần sau.
       </p>
       <Link href={catalogHref(skill)} className={`${PRIMARY} mt-5`}>
         {result.passed ? `Luyện bài mức ${result.levelLabel}` : "Về bài luyện"}
@@ -229,7 +229,7 @@ export function GateRunner({ skill }: { skill: GateSkill }) {
       <div className="px-4 py-4 sm:px-6">
         <PracticeShell
           skill={shellSkill}
-          title={`Bài mở khoá mức ${attempt.levelLabel}`}
+          title={`Bài mở khóa mức ${attempt.levelLabel}`}
           stage="PRACTICE"
           current={index + 1}
           total={attempt.questions.length}
@@ -293,12 +293,12 @@ export function GateRunner({ skill }: { skill: GateSkill }) {
         {isLoading ? (
           <p className="flex items-center gap-2 text-base text-slate-700 dark:text-slate-300" role="status">
             <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-            Đang tải bài mở khoá
+            Đang tải bài mở khóa
           </p>
         ) : isError || !status ? (
           <>
             <p className="text-base font-semibold text-slate-900 dark:text-slate-100" role="alert">
-              Chưa tải được bài mở khoá.
+              Chưa tải được bài mở khóa.
             </p>
             <button type="button" className={`${SECONDARY} mt-4`} onClick={() => void refetch()}>
               <RotateCcw className="size-4" aria-hidden="true" />
@@ -309,8 +309,8 @@ export function GateRunner({ skill }: { skill: GateSkill }) {
           <>
             <h1 className="text-xl font-bold text-slate-900 sm:text-2xl dark:text-slate-100">
               {status.available
-                ? `Bài mở khoá mức ${status.targetLabel}`
-                : `Không có bài mở khoá cho kỹ năng ${skillLabel}`}
+                ? `Bài mở khóa mức ${status.targetLabel}`
+                : `Không có bài mở khóa cho kỹ năng ${skillLabel}`}
             </h1>
             {status.available ? (
               <>
@@ -332,7 +332,7 @@ export function GateRunner({ skill }: { skill: GateSkill }) {
             )}
             {start.isError && (
               <p className="mt-3 text-sm font-semibold text-rose-700 dark:text-rose-400" role="alert">
-                Chưa bắt đầu được bài mở khoá. Vui lòng thử lại.
+                Chưa bắt đầu được bài mở khóa. Vui lòng thử lại.
               </p>
             )}
             <div className="mt-5 flex flex-col-reverse gap-2.5 sm:flex-row">

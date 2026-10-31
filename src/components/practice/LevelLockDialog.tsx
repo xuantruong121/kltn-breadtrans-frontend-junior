@@ -87,12 +87,12 @@ function LevelLockBody({ lock, secondary, titleId }: { lock: LevelLock; secondar
           </dd>
         </div>
         <div className="py-3">
-          <dt className="font-semibold text-slate-900 dark:text-slate-100">Bài mở khoá</dt>
+          <dt className="font-semibold text-slate-900 dark:text-slate-100">Bài mở khóa</dt>
           <dd className="mt-0.5 text-slate-600 dark:text-slate-400">
             {gateFailed
-              ? "Chưa tải được thông tin bài mở khoá."
+              ? "Chưa tải được thông tin bài mở khóa."
               : !gate
-                ? "Đang kiểm tra bài mở khoá."
+                ? "Đang kiểm tra bài mở khóa."
                 : !gate.available
                   ? gateClosedMessage(gate.reason)
                   : gate.retryAt && !gate.openAttemptId
@@ -120,7 +120,7 @@ function LevelLockBody({ lock, secondary, titleId }: { lock: LevelLock; secondar
             href={gateHref(lock.skill)}
             className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white transition hover:bg-blue-700"
           >
-            {gate?.openAttemptId ? "Làm tiếp bài mở khoá" : "Làm bài mở khoá"}
+            {gate?.openAttemptId ? "Làm tiếp bài mở khóa" : "Làm bài mở khóa"}
             <ArrowRight className="size-4" aria-hidden="true" />
           </Link>
         )}

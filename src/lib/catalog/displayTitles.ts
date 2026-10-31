@@ -41,6 +41,45 @@ const QUIZ_TITLES: Record<number, string> = {
   17: "Viết tin nhắn và email ngắn",
   18: "Viết thư giao tiếp công việc",
   19: "Viết bài lập luận và đề xuất giải pháp",
+  // Listening — dialogue drafts published 2026-10-31
+  47: "Hội thoại: họp nhanh nhóm phần mềm",
+  48: "Hội thoại: đặt mua văn phòng phẩm",
+  49: "Hội thoại: giải thích chính sách hoàn tiền",
+  50: "Hội thoại: đặt tour tham quan thành phố",
+  51: "Hội thoại: mượn sách ở thư viện trường",
+  52: "Hội thoại: mua sắm ở siêu thị",
+  53: "Hội thoại: cài đặt laptop mới",
+  54: "Hội thoại: chào đón đồng nghiệp mới",
+  55: "Hội thoại: chọn laptop phù hợp",
+  56: "Hội thoại: gọi món ở nhà hàng",
+  57: "Hội thoại: tham gia nhóm học nâng cao",
+  58: "Hội thoại: đi khám bác sĩ chuyên khoa",
+  // Reading
+  59: "Đặt mua văn phòng phẩm",
+  60: "Chính sách hoàn tiền của cửa hàng",
+  61: "Đặt tour tham quan thành phố",
+  62: "Mượn sách ở thư viện trường",
+  63: "Mua sắm ở siêu thị",
+  64: "Cài đặt laptop làm việc mới",
+  65: "Chào đón đồng nghiệp mới",
+  66: "Chọn máy ảnh phù hợp",
+  67: "Gọi món ở nhà hàng",
+  68: "Tham gia nhóm học",
+  69: "Buổi khám bệnh thời hiện đại",
+  70: "Họp nhanh Agile hằng ngày",
+  // Writing
+  71: "Đặt tour tham quan thành phố",
+  72: "Xin gia hạn sách thư viện",
+  73: "Nhắn tin khi đi siêu thị",
+  74: "Nhờ cài đặt laptop ở công ty",
+  75: "Chào mừng đồng nghiệp mới",
+  76: "Tư vấn sản phẩm cho khách hàng",
+  77: "Đặt đồ ăn ở nhà hàng",
+  78: "Xin tham gia nhóm học",
+  79: "Quan điểm về khám bệnh trực tuyến",
+  80: "Quan điểm về họp nhanh hằng ngày",
+  81: "Đề xuất đặt mua văn phòng phẩm",
+  82: "Đề xuất sửa chính sách hoàn tiền",
 };
 
 /** Speaking practice sets, by their stable set key. */
@@ -54,6 +93,18 @@ const SPEAKING_SET_TITLES: Record<string, string> = {
   "practice-opinion-b1-b2": "Trình bày quan điểm",
   "practice-opinion-c1": "Bảo vệ quan điểm về vấn đề xã hội",
   "practice-pronunciation-b1": "Nền tảng phát âm",
+  "speaking-ef26e3ce-b162-4087-9911-4db95657fe28": "Giải thích chính sách hoàn tiền",
+  "speaking-aa8ab0a3-3329-438c-aed0-8acf45ee2cc4": "Đặt tour tham quan thành phố",
+  "speaking-d611b13e-8c4d-4bca-85f7-8072b5378b49": "Mượn sách ở thư viện trường",
+  "speaking-4ff951dc-c58c-4f8a-957b-8c1af450d96b": "Mua sắm ở siêu thị",
+  "speaking-472353d0-6498-4434-a745-60e672bc06b9": "Cài đặt laptop ở công ty",
+  "speaking-e28bbe61-796f-447a-89f6-cc55b9820336": "Chào đón đồng nghiệp mới",
+  "speaking-e18cd96f-79e3-4f12-b8ec-75ef1969fc93": "Tư vấn sản phẩm cho khách hàng",
+  "speaking-2fb80c15-47b0-493c-92e3-d24945ddf624": "Gọi món ở nhà hàng",
+  "speaking-b92c14ac-cbea-48ac-9fc0-fd5b2f900de6": "Tham gia nhóm học",
+  "speaking-722e96f8-3df7-469e-9d4c-f67084411620": "Đi khám bác sĩ",
+  "speaking-6acce615-1011-4788-a689-6b477cd773ca": "Họp nhanh nhóm phần mềm",
+  "speaking-bfc65dc4-53b5-4225-92b0-97120bd434ce": "Quản lý mua văn phòng phẩm",
 };
 
 export type GrammarCategory = "WORD_CLASS" | "VERB" | "OTHER";
@@ -115,6 +166,21 @@ export function speakingSetDisplayTitle(
 ): string {
   const title = key ? SPEAKING_SET_TITLES[key] : undefined;
   return title ? withLevel(title, cefrLevel) : storedTitle;
+}
+
+/** A recommendation names a speaking set only through the `set` in its route. */
+export function recommendationDisplayTitle(item: {
+  contentType: string;
+  contentId: number;
+  title: string;
+  route: string;
+}): string {
+  if (item.contentType === "QUIZ") return quizDisplayTitle(item.contentId, item.title);
+  if (item.contentType === "SPEAKING_SET") {
+    const key = new URLSearchParams(item.route.split("?")[1] ?? "").get("set");
+    return speakingSetDisplayTitle(key, item.title);
+  }
+  return item.title;
 }
 
 export function grammarDisplayTitle(id: number, storedTitle: string): string {
