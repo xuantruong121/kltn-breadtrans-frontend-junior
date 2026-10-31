@@ -553,7 +553,7 @@ export function AppHeader() {
                           {user?.profile?.fullName || user?.email}
                         </p>
                         {user?.profile?.fullName && user?.email && (
-                          <p className="text-[11px] font-medium text-slate-400 truncate mt-0.5">{user.email}</p>
+                          <p className="text-xs font-medium text-slate-400 truncate mt-0.5">{user.email}</p>
                         )}
                       </div>
                     </div>
@@ -563,7 +563,7 @@ export function AppHeader() {
                       <div className="flex items-center gap-1.5" title={`Chuỗi học tập liên tục: ${streak || 1} ngày`}>
                         <Flame size={15} className="fill-orange-500 text-orange-500 shrink-0" />
                         <span className="font-extrabold text-orange-600 dark:text-orange-400">{streak || 1}</span>
-                        <span className="text-slate-500 dark:text-slate-400 text-[11px] font-medium">ngày</span>
+                        <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">ngày</span>
                       </div>
 
                       <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
@@ -576,7 +576,7 @@ export function AppHeader() {
                       >
                         <span className="text-sm leading-none" role="img" aria-label="Bánh Mì">🥖</span>
                         <span className="font-extrabold text-amber-600 dark:text-amber-400">{breads || 0}</span>
-                        <span className="text-slate-500 dark:text-slate-400 text-[11px] font-medium">bánh</span>
+                        <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">bánh</span>
                       </Link>
 
                       <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
@@ -599,7 +599,7 @@ export function AppHeader() {
                           <Bell size={16} className="text-slate-500 dark:text-slate-400 shrink-0" />
                           <span>Thông báo</span>
                           {unreadCount > 0 && (
-                            <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[9px] font-black text-white leading-none">
+                            <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-xs font-black text-white leading-none">
                               {unreadCount > 99 ? "99+" : unreadCount}
                             </span>
                           )}
@@ -620,13 +620,13 @@ export function AppHeader() {
                             </div>
                           ) : recentNotifications.length === 0 ? (
                             <div className="p-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-center">
-                              <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                                 Chưa có thông báo mới
                               </p>
                               <Link
                                 href="/notifications"
                                 onClick={closeMenus}
-                                className="mt-1 inline-block text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline"
+                                className="mt-1 inline-block text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline"
                               >
                                 Xem lịch sử thông báo
                               </Link>
@@ -664,10 +664,10 @@ export function AppHeader() {
                                             <span className="size-1.5 rounded-full bg-amber-500 shrink-0" />
                                           )}
                                         </div>
-                                        <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5 leading-relaxed">
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5 leading-relaxed">
                                           {item.body}
                                         </p>
-                                        <div className="mt-1 flex items-center justify-between text-[10px] text-slate-400">
+                                        <div className="mt-1 flex items-center justify-between text-xs text-slate-400">
                                           <span className="flex items-center gap-1">
                                             <Clock size={10} />
                                             {formatRelativeTime(item.createdAt)}
@@ -685,7 +685,7 @@ export function AppHeader() {
                               })}
 
                               {/* Footer Actions */}
-                              <div className="flex items-center justify-between px-1 pt-1 text-[11px]">
+                              <div className="flex items-center justify-between px-1 pt-1 text-xs">
                                 <Link
                                   href="/notifications"
                                   onClick={closeMenus}
@@ -752,7 +752,7 @@ export function AppHeader() {
                     >
                       <MessageSquare size={16} className="text-slate-500 dark:text-slate-400 shrink-0" />
                       <span className="flex-1">Tin nhắn</span>
-                      {messageUnreadCount > 0 && <span className="min-w-5 rounded-full bg-amber-500 px-1.5 py-0.5 text-center text-[9px] font-black leading-none text-white" aria-label={`${messageUnreadCount > 99 ? "99+" : messageUnreadCount} tin nhắn chưa đọc`}>{messageUnreadCount > 99 ? "99+" : messageUnreadCount}</span>}
+                      {messageUnreadCount > 0 && <span className="min-w-5 rounded-full bg-amber-500 px-1.5 py-0.5 text-center text-xs font-black leading-none text-white" aria-label={`${messageUnreadCount > 99 ? "99+" : messageUnreadCount} tin nhắn chưa đọc`}>{messageUnreadCount > 99 ? "99+" : messageUnreadCount}</span>}
                     </Link>
 
                     <Link
@@ -960,7 +960,7 @@ export function AppHeader() {
                       />
                       <div className="min-w-0">
                         <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">{user?.profile?.fullName || user?.email}</p>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
@@ -987,7 +987,7 @@ export function AppHeader() {
 
                 {/* Primary Navigation Links */}
                 <nav className="space-y-1" aria-label="Điều hướng chính">
-                  <p className="px-3 pb-1 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                  <p className="px-3 pb-1 text-xs font-extrabold uppercase tracking-wider text-slate-400">
                     Trang học tập
                   </p>
 
@@ -1082,7 +1082,7 @@ export function AppHeader() {
                   {/* Learning Tools */}
                   {isStudent && (
                     <div className="pt-2">
-                      <p className="px-3 pb-2 text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                      <p className="px-3 pb-2 text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                         Tiện ích học tập
                       </p>
                       <div className="space-y-1">

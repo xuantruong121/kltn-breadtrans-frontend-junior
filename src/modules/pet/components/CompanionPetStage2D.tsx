@@ -99,11 +99,11 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
           <div className="w-full flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <span
-                className={`text-[11px] font-bold uppercase px-3 py-1 rounded-full border ${currentSpecies.elementColor}`}
+                className={`text-xs font-bold uppercase px-3 py-1 rounded-full border ${currentSpecies.elementColor}`}
               >
                 {currentSpecies.element}
               </span>
-              <span className="text-[11px] font-bold text-amber-900 dark:text-amber-300 bg-amber-100/90 dark:bg-amber-950/60 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-800">
+              <span className="text-xs font-bold text-amber-900 dark:text-amber-300 bg-amber-100/90 dark:bg-amber-950/60 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-800">
                 Cấp {level}
               </span>
             </div>
@@ -209,7 +209,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                     style={{ width: `${health}%` }}
                   />
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-300 leading-relaxed">
+                <p className="text-xs text-slate-500 dark:text-slate-300 leading-relaxed">
                   {health >= 70
                     ? "Thú cưng tràn đầy năng lượng sẵn sàng học tập."
                     : "Sức khỏe đang thấp; hãy duy trì việc học và theo dõi trạng thái thú cưng."}
@@ -238,7 +238,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                     style={{ width: `${happiness}%` }}
                   />
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-300 leading-relaxed">
+                <p className="text-xs text-slate-500 dark:text-slate-300 leading-relaxed">
                   {happiness >= 70
                     ? "Tâm trạng rất phấn khởi, sẵn sàng đồng hành cùng bạn."
                     : "Tâm trạng đang thấp; hãy quay lại tương tác cùng thú cưng sau."}
@@ -266,7 +266,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                     style={{ width: `${satiety}%` }}
                   />
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-300 leading-relaxed">
+                <p className="text-xs text-slate-500 dark:text-slate-300 leading-relaxed">
                   {satiety >= 80
                     ? "Thú cưng đã no căng, chưa cần nạp thêm năng lượng."
                     : satiety >= 50
@@ -331,7 +331,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                 Bạn cần {feedCost} Bánh Mì (Số dư hiện tại: {banhRan})
               </p>
             ) : (
-              <p className="text-center text-[11px] text-slate-500 dark:text-slate-400">
+              <p className="text-center text-xs text-slate-500 dark:text-slate-400">
                 {satietyText} • Lượt nhận EXP hôm nay: {pet?.dailyRewardedFeedCount ?? 0}/{pet?.dailyRewardLimit ?? 3}
               </p>
             )}

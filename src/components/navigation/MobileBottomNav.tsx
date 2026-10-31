@@ -37,7 +37,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
         }`}
       >
         <Home size={20} className={isHome ? "stroke-[2.5]" : "stroke-2"} />
-        <span className="text-[11px]">Trang chủ</span>
+        <span className="text-xs">Trang chủ</span>
       </Link>
 
       {/* 2. Trung tâm kỹ năng */}
@@ -52,7 +52,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
           }`}
         >
           <Compass size={20} className={isSkills ? "stroke-[2.5]" : "stroke-2"} />
-          <span className="text-[11px] font-semibold">Kỹ năng</span>
+          <span className="text-xs font-semibold">Kỹ năng</span>
         </button>
       ) : (
         <Link
@@ -64,7 +64,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
           }`}
         >
           <Compass size={20} className={isSkills ? "stroke-[2.5]" : "stroke-2"} />
-          <span className="text-[11px] font-semibold">Kỹ năng</span>
+          <span className="text-xs font-semibold">Kỹ năng</span>
         </Link>
       )}
 
@@ -78,7 +78,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
         }`}
       >
         <Target size={20} className={isToeic ? "stroke-[2.5]" : "stroke-2"} />
-        <span className="text-[11px]">Luyện đề</span>
+        <span className="text-xs">Luyện đề</span>
       </Link>
 
       {/* 4. Khóa học (hidden unless COURSES_ENABLED) */}
@@ -92,7 +92,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
         }`}
       >
         <BookOpen size={20} className={isCourses ? "stroke-[2.5]" : "stroke-2"} />
-        <span className="text-[11px]">Khóa học</span>
+        <span className="text-xs">Khóa học</span>
       </Link>
       )}
 
@@ -107,7 +107,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
           }`}
         >
           <User size={20} className={isProfile ? "stroke-[2.5]" : "stroke-2"} />
-          <span className="text-[11px]">Hồ sơ</span>
+          <span className="text-xs">Hồ sơ</span>
         </Link>
       ) : onOpenAccount ? (
         <button
@@ -116,7 +116,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
           className="flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 text-slate-500 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors cursor-pointer"
         >
           <User size={20} className="stroke-2" />
-          <span className="text-[11px] font-semibold">Tài khoản</span>
+          <span className="text-xs font-semibold">Tài khoản</span>
         </button>
       ) : (
         <Link
@@ -124,7 +124,7 @@ export function MobileBottomNav({ onOpenSkills, onOpenAccount }: MobileBottomNav
           className="flex min-h-[44px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1 text-slate-500 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
         >
           <User size={20} className="stroke-2" />
-          <span className="text-[11px] font-semibold">Tài khoản</span>
+          <span className="text-xs font-semibold">Tài khoản</span>
         </Link>
       )}
     </nav>

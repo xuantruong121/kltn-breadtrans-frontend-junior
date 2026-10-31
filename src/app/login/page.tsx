@@ -206,7 +206,7 @@ function LoginForm() {
 
         <div className="my-6 flex items-center gap-3" aria-hidden="true">
           <span className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent dark:via-slate-700" />
-          <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+          <span className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
             hoặc
           </span>
           <span className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent dark:via-slate-700" />

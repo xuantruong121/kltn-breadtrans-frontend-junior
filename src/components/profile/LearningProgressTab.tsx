@@ -286,7 +286,7 @@ export function LearningProgressTab() {
           <p className="mt-2 font-mono text-2xl font-bold text-slate-900 tabular-nums dark:text-white">
             {completedTotal}
           </p>
-          <p className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
             Tổng bài luyện thuộc bốn kỹ năng
           </p>
         </div>
@@ -299,7 +299,7 @@ export function LearningProgressTab() {
           <p className="mt-2 font-mono text-2xl font-bold text-slate-900 tabular-nums dark:text-white">
             {streak} <span className="text-xs font-normal text-slate-500">ngày</span>
           </p>
-          <p className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
             {streak > 0 ? "Duy trì đều đặn" : "Bắt đầu bài học hôm nay"}
           </p>
         </div>
@@ -312,7 +312,7 @@ export function LearningProgressTab() {
           <p className="mt-2 font-mono text-2xl font-bold text-slate-900 tabular-nums dark:text-white">
             {masteredVocab}
           </p>
-          <p className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
             Từ vựng qua bài ôn SRS
           </p>
         </div>
@@ -325,7 +325,7 @@ export function LearningProgressTab() {
           <p className="mt-2 text-xl font-bold text-slate-900 dark:text-white">
             {latestDateDisplay}
           </p>
-          <p className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
             Thời điểm tương tác cuối
           </p>
         </div>
@@ -337,7 +337,7 @@ export function LearningProgressTab() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1.5 min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-100/70 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-blue-700 dark:border-blue-800 dark:bg-blue-900/60 dark:text-blue-300">
+                <span className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-100/70 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-blue-700 dark:border-blue-800 dark:bg-blue-900/60 dark:text-blue-300">
                   {resumableItem.badge}
                 </span>
                 <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
@@ -424,7 +424,7 @@ export function LearningProgressTab() {
                       </div>
                     </div>
                     <span
-                      className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${STATUS_BADGE_STYLE[metrics.statusColor]}`}
+                      className={`shrink-0 rounded-full border px-2 py-0.5 text-xs font-semibold ${STATUS_BADGE_STYLE[metrics.statusColor]}`}
                     >
                       {metrics.statusLabel}
                     </span>
@@ -461,7 +461,7 @@ export function LearningProgressTab() {
                   <div className="mt-3 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
                     <span className="font-medium">{metrics.scoreText}</span>
                     {skill.trend && skill.trend !== "INSUFFICIENT_DATA" && (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+                      <span className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                         <TrendingUp className="h-3 w-3 text-slate-400" />
                         {skill.trend === "IMPROVING"
                           ? "Chiều hướng tăng"
@@ -534,7 +534,7 @@ export function LearningProgressTab() {
                             {item.course.title}
                           </h3>
                           {item.course.level && (
-                            <span className="rounded bg-slate-100 px-1.5 py-0.2 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                            <span className="rounded bg-slate-100 px-1.5 py-0.2 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                           {levelLabel(item.course.level)}
                             </span>
                           )}
@@ -636,7 +636,7 @@ export function LearningProgressTab() {
                     </div>
                   </div>
                   <span
-                    className={`text-[11px] font-semibold ${
+                    className={`text-xs font-semibold ${
                       day.isActive
                         ? "text-slate-900 dark:text-slate-100 font-bold"
                         : "text-slate-400 dark:text-slate-500"
@@ -649,7 +649,7 @@ export function LearningProgressTab() {
             </div>
           </div>
 
-          <p className="mt-4 text-[11px] font-medium text-slate-500 dark:text-slate-400 text-center border-t border-slate-100 pt-3 dark:border-slate-800">
+          <p className="mt-4 text-xs font-medium text-slate-500 dark:text-slate-400 text-center border-t border-slate-100 pt-3 dark:border-slate-800">
             {weeklyActivity.totalActivitiesThisWeek > 0
               ? `${weeklyActivity.totalActivitiesThisWeek} hoạt động trong tuần`
               : "Chưa có hoạt động học tập nào trong tuần này"}
@@ -679,7 +679,7 @@ export function LearningProgressTab() {
                   <p className="text-xs font-bold text-slate-900 dark:text-slate-100">
                     {m.title}
                   </p>
-                  <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                     {m.description}
                   </p>
                 </div>
@@ -723,7 +723,7 @@ export function LearningProgressTab() {
                       {act.subject ?? act.title}
                     </p>
                     {act.count > 1 && (
-                      <span className="rounded bg-slate-100 px-1.5 py-0.2 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                      <span className="rounded bg-slate-100 px-1.5 py-0.2 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                         x{act.count}
                       </span>
                     )}
@@ -733,7 +733,7 @@ export function LearningProgressTab() {
                   </p>
                 </div>
                 <time
-                  className="shrink-0 text-[11px] font-medium text-slate-400 dark:text-slate-500 font-mono"
+                  className="shrink-0 text-xs font-medium text-slate-400 dark:text-slate-500 font-mono"
                   dateTime={act.occurredAt}
                 >
                   {act.dateDisplay}

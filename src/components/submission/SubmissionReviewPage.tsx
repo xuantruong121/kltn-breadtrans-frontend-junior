@@ -318,7 +318,7 @@ export default function SubmissionAnalyticsPage(props: {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                           <div className="p-3 bg-white dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase block mb-1">
+                            <span className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase block mb-1">
                               Bạn đã trả lời:
                             </span>
                             <span
@@ -328,7 +328,7 @@ export default function SubmissionAnalyticsPage(props: {
                             </span>
                           </div>
                           <div className="p-3 bg-white dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <span className="text-[10px] font-black text-sky-600 dark:text-sky-400 uppercase block mb-1">
+                            <span className="text-xs font-black text-sky-600 dark:text-sky-400 uppercase block mb-1">
                               Đáp án chuẩn:
                             </span>
                             <span className="font-bold text-sm text-sky-800 dark:text-sky-200 break-words block">
@@ -344,7 +344,7 @@ export default function SubmissionAnalyticsPage(props: {
                             {isReadingResult &&
                               (q.content?.questionType ||
                                 q.content?.microSkill) && (
-                                <span className="mt-2 inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-black text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                <span className="mt-2 inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-black text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                                   Kỹ năng:{" "}
                                   {readingSubskillLabel(
                                     q.content.questionType ||
@@ -402,7 +402,7 @@ export default function SubmissionAnalyticsPage(props: {
                   className="text-sky-600 dark:text-sky-400 mb-1"
                   size={24}
                 />
-                <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase">
+                <span className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">
                   Câu đúng
                 </span>
                 <span className="text-2xl font-black text-sky-700 dark:text-sky-300">
@@ -418,7 +418,7 @@ export default function SubmissionAnalyticsPage(props: {
                   className="text-emerald-500 dark:text-emerald-400 mb-1"
                   size={24}
                 />
-                <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase">
+                <span className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase">
                   Chính xác
                 </span>
                 <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
@@ -429,7 +429,7 @@ export default function SubmissionAnalyticsPage(props: {
 
             {isReadingResult && analytics.categoriesBreakdown.length > 0 && (
               <div className="pt-3 text-left">
-                <p className="text-[10px] font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                <p className="text-xs font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">
                   Kỹ năng con
                 </p>
                 <div className="mt-2 space-y-2">

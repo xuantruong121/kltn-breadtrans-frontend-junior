@@ -511,7 +511,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
             </div>
           </div>
           <div className="text-center space-y-1">
-            <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-100 border border-amber-200 text-amber-900 text-[11px] font-black uppercase tracking-wider">
+            <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-100 border border-amber-200 text-amber-900 text-xs font-black uppercase tracking-wider">
               <Activity size={12} className="animate-pulse" />
               <span>
                 {phase === "REQUESTING_UPLOAD"
@@ -565,7 +565,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
             <AlertTriangle className="size-6 text-amber-600 shrink-0" />
             <div>
               <p className="text-xs font-bold text-slate-900">Âm thanh chưa đạt chuẩn</p>
-              <p className="text-[11px] text-slate-600">{qualityWarning || "Vui lòng nói to rõ và thu lại."}</p>
+              <p className="text-xs text-slate-600">{qualityWarning || "Vui lòng nói to rõ và thu lại."}</p>
             </div>
           </div>
           <button
@@ -585,7 +585,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
             <AlertTriangle className="size-6 text-rose-600 shrink-0" />
             <div>
               <p className="text-xs font-bold text-rose-900">Đánh giá chưa thành công</p>
-              <p className="text-[11px] text-rose-700">Có lỗi khi chấm bài. Bạn có thể thử lại với bản ghi này.</p>
+              <p className="text-xs text-rose-700">Có lỗi khi chấm bài. Bạn có thể thử lại với bản ghi này.</p>
             </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
@@ -628,7 +628,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
               <span className="text-2xl sm:text-3xl font-black leading-none tracking-tight">
                 {isNoSpeech ? "—" : displayScore.toFixed(1)}
               </span>
-              <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mt-0.5">
+              <span className="text-xs sm:text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mt-0.5">
                 Điểm / 10
               </span>
             </div>
@@ -735,7 +735,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
               <div className="flex items-center gap-2 font-black text-slate-900 dark:text-slate-100 truncate text-xs sm:text-sm">
                 <Volume2 size={16} className="text-blue-600 dark:text-blue-400 shrink-0" />
                 <span className="truncate">Audio mẫu</span>
-                <span className="text-[11px] px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 font-extrabold uppercase">
+                <span className="text-xs px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 font-extrabold uppercase">
                   {ttsAccent}
                 </span>
               </div>
@@ -787,7 +787,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
               <div className="flex items-center gap-2 font-black text-slate-900 dark:text-slate-100 truncate text-xs sm:text-sm">
                 <Mic size={16} className="text-amber-700 dark:text-amber-400 shrink-0" />
                 <span className="truncate">Bản ghi của bạn</span>
-                <span className="text-[11px] px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 font-extrabold uppercase">
+                <span className="text-xs px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 font-extrabold uppercase">
                   {activeLearnerSrc ? "Ghi âm" : "Chờ thu"}
                 </span>
               </div>
@@ -907,7 +907,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
                 <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-950 dark:text-amber-300">
                   Gợi ý về nhịp điệu &amp; ngữ điệu
                 </span>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-200/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-300">
+                <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-amber-200/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-300">
                   Hướng dẫn phát âm tự nhiên
                 </span>
               </div>
@@ -1027,7 +1027,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
                   >
                     <span>{item.word}</span>
                     {Number.isFinite(item.accuracyScore) && (
-                      <span className="text-[11px] sm:text-xs font-mono font-black opacity-90">
+                      <span className="text-xs sm:text-xs font-mono font-black opacity-90">
                         {item.accuracyScore}%
                       </span>
                     )}
@@ -1097,7 +1097,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
               <Target size={13} className="text-amber-600 dark:text-amber-400" />
               <span>Trọng tâm phát âm trong câu này</span>
             </span>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400">Nhấp để nghe âm mẫu</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Nhấp để nghe âm mẫu</span>
           </div>
 
           <div className="flex flex-wrap gap-1.5">

@@ -125,7 +125,7 @@ export default function ArenaPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-12">
+    <div className="max-w-7xl mx-auto space-y-8 pb-12">
       {/* 1V1 REAL-TIME MATCHMAKING BANNER */}
       <div className="relative overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-xs">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -204,7 +204,7 @@ export default function ArenaPage() {
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
               Bảng vinh danh & Thành tích
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
               Xếp hạng học viên chăm chỉ và bộ sưu tập huy hiệu tích lũy
             </p>
           </div>
@@ -338,12 +338,12 @@ export default function ArenaPage() {
                               {item.displayName || "Học viên"}
                             </h3>
                             {isMe && (
-                              <span className="text-[10px] font-extrabold bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 px-1.5 py-0.2 rounded shrink-0">
+                              <span className="text-xs font-extrabold bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 px-1.5 py-0.2 rounded shrink-0">
                                 BẠN
                               </span>
                             )}
                           </div>
-                          <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                          <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">
                             Hạng: {item.tier || "Đồng"}
                           </p>
                         </div>
@@ -354,7 +354,7 @@ export default function ArenaPage() {
                         <div className="font-extrabold text-sm text-slate-900 dark:text-slate-100">
                           {(item.weeklyExp || item.totalPoints || 0).toLocaleString("vi-VN")}
                         </div>
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold block uppercase tracking-wider">
+                        <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold block uppercase tracking-wider">
                           EXP
                         </span>
                       </div>
@@ -366,7 +366,7 @@ export default function ArenaPage() {
               <div className="text-center py-12 space-y-2">
                 <Trophy size={32} className="mx-auto text-slate-300 dark:text-slate-600" />
                 <p className="text-sm font-bold text-slate-600 dark:text-slate-300">Chưa có dữ liệu cho hạng này</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500">Hãy tham gia luyện tập để ghi tên mình lên bảng vàng nhé!</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500">Hãy tham gia luyện tập để ghi tên mình lên bảng vàng nhé!</p>
               </div>
             )}
           </div>

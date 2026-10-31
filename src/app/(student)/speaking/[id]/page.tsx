@@ -1896,19 +1896,19 @@ export default function SpeakingExerciseDetailPage() {
             <ul className="space-y-2 text-xs font-medium text-slate-600 dark:text-slate-400">
               <li className="flex items-center justify-between">
                 <span>Bắt đầu / Dừng thu âm:</span>
-                <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono text-xs font-bold text-slate-800 dark:text-slate-200">
                   Space
                 </kbd>
               </li>
               <li className="flex items-center justify-between">
                 <span>Phím thu âm phụ:</span>
-                <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono text-xs font-bold text-slate-800 dark:text-slate-200">
                   R
                 </kbd>
               </li>
               <li className="flex items-center justify-between">
                 <span>Quy trình tự động:</span>
-                <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold">
+                <span className="text-xs text-amber-700 dark:text-amber-400 font-bold">
                   Dừng &rarr; Nghe lại rồi gửi
                 </span>
               </li>
@@ -2774,7 +2774,7 @@ export default function SpeakingExerciseDetailPage() {
                       ? `Chuẩn bị ${prepRemaining}s · Nói ngay`
                       : "Bắt đầu thu âm"}
                 </span>
-                <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-amber-600/60 font-mono text-[10px] text-white">
+                <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-amber-600/60 font-mono text-xs text-white">
                   Space
                 </kbd>
               </button>
@@ -2813,7 +2813,7 @@ export default function SpeakingExerciseDetailPage() {
                 >
                   <StopCircle size={15} aria-hidden="true" />
                   <span>Dừng &amp; chấm điểm</span>
-                  <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-rose-700 font-mono text-[10px] text-white">
+                  <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-rose-700 font-mono text-xs text-white">
                     Space
                   </kbd>
                 </button>

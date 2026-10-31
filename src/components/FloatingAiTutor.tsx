@@ -767,7 +767,7 @@ function FloatingAiTutorInner() {
                       </div>
                       <div>
                         <h3 className="leading-tight">Hộp Thư Học Viên</h3>
-                        <p className="text-[11px] font-bold text-amber-100">
+                        <p className="text-xs font-bold text-amber-100">
                           {filteredThreads.length} cuộc trò chuyện • {totalUnreadCount} tin chưa đọc
                         </p>
                       </div>
@@ -818,7 +818,7 @@ function FloatingAiTutorInner() {
                               <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-xs truncate">
                                 {thread.studentName}
                               </h4>
-                              <span className="text-[10px] font-bold text-slate-400 shrink-0">
+                              <span className="text-xs font-bold text-slate-400 shrink-0">
                                 {new Date(thread.lastMessageTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </span>
                             </div>
@@ -829,7 +829,7 @@ function FloatingAiTutorInner() {
 
                             <div className="flex items-center gap-1.5 mt-1.5">
                               <span
-                                className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${
+                                className={`text-xs font-black px-2 py-0.5 rounded-full border ${
                                   isHumanMode
                                     ? "bg-blue-100 text-blue-800 border-blue-200"
                                     : "bg-emerald-100 text-emerald-800 border-emerald-200"
@@ -839,7 +839,7 @@ function FloatingAiTutorInner() {
                               </span>
 
                               {thread.studentEmail && (
-                                <span className="text-[10px] font-bold text-slate-400 truncate">
+                                <span className="text-xs font-bold text-slate-400 truncate">
                                   {thread.studentEmail}
                                 </span>
                               )}
@@ -848,7 +848,7 @@ function FloatingAiTutorInner() {
 
                           {/* Unread Badge */}
                           {thread.unreadForAdmin > 0 && (
-                            <span className="bg-rose-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full shrink-0 shadow-2xs">
+                            <span className="bg-rose-500 text-white text-xs font-black px-1.5 py-0.5 rounded-full shrink-0 shadow-2xs">
                               {thread.unreadForAdmin}
                             </span>
                           )}
@@ -890,7 +890,7 @@ function FloatingAiTutorInner() {
                         <h3 className="font-black text-sm leading-tight truncate max-w-[200px]">
                           {isAdmin ? currentThread.studentName : "Trợ Lý Bánh Mì"}
                         </h3>
-                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-100">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-amber-100">
                           <span
                             className={`w-2 h-2 rounded-full ${
                               currentThread.mode === "AI" ? "bg-emerald-400 animate-ping" : "bg-blue-300"
@@ -925,12 +925,12 @@ function FloatingAiTutorInner() {
                   {/* Thanh điều khiển Chế độ dành cho Admin trên từng học sinh */}
                   {isAdmin ? (
                     <div className="bg-white/15 backdrop-blur-xs rounded-xl p-2 flex items-center justify-between text-xs font-bold mt-1 border border-white/20">
-                      <span className="text-[11px]">
+                      <span className="text-xs">
                         {currentThread.mode === "AI" ? "Học viên đang nhận phản hồi tự động" : "Bạn đang trao đổi trực tiếp"}
                       </span>
                       <button
                         onClick={handleToggleMode}
-                        className={`px-3 py-1 rounded-lg font-black text-[11px] flex items-center gap-1 transition-all cursor-pointer shadow-sm ${
+                        className={`px-3 py-1 rounded-lg font-black text-xs flex items-center gap-1 transition-all cursor-pointer shadow-sm ${
                           currentThread.mode === "AI"
                             ? "bg-amber-100 text-amber-900 hover:bg-white"
                             : "bg-emerald-400 text-emerald-950 hover:bg-emerald-300"
@@ -941,7 +941,7 @@ function FloatingAiTutorInner() {
                     </div>
                   ) : (
                     currentThread.mode === "HUMAN" && (
-                      <div className="bg-blue-600/40 border border-blue-300/40 rounded-xl px-2.5 py-1 text-[11px] font-bold text-blue-100 flex items-center gap-1.5">
+                      <div className="bg-blue-600/40 border border-blue-300/40 rounded-xl px-2.5 py-1 text-xs font-bold text-blue-100 flex items-center gap-1.5">
                         <UserCheck size={14} /> Quản Trị Viên đang trực tiếp hỗ trợ bạn.
                       </div>
                     )
@@ -1043,7 +1043,7 @@ function FloatingAiTutorInner() {
                           {/* Message Bubble */}
                           <div className="flex flex-col gap-1 max-w-full">
                             {msg.senderName && !isRightBubble && (
-                              <span className="text-[11px] font-black text-slate-500 ml-1">
+                              <span className="text-xs font-black text-slate-500 ml-1">
                                 {msg.senderName}
                               </span>
                             )}
@@ -1086,7 +1086,7 @@ function FloatingAiTutorInner() {
 
                 {/* Quick Chips (Dành cho học sinh) */}
                 {!isAdmin && currentThread.messages.length <= 2 && (
-                  <div className="px-4 py-2 bg-slate-100/70 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto text-[11px] shrink-0 no-scrollbar">
+                  <div className="px-4 py-2 bg-slate-100/70 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto text-xs shrink-0 no-scrollbar">
                     <span className="text-slate-400 dark:text-slate-500 font-bold shrink-0">Gợi ý:</span>
                     <button
                       onClick={() => handleQuickQuestion("Giải thích thì hiện tại đơn")}

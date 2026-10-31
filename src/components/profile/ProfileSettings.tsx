@@ -148,7 +148,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
           >
             <Backpack size={16} className={activeTab === "inventory" ? "text-amber-500" : ""} />
             Túi Đồ & Trang Bị
-            <span className="text-[10px] font-black bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-full">
+            <span className="text-xs font-black bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-full">
               {myUnlockedList.length}
             </span>
           </button>
@@ -314,7 +314,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                     <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100">
                       {formData.fullName || "Học viên BreadTrans"}
                     </h2>
-                    <span className="text-[11px] font-black uppercase tracking-wider bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 px-2.5 py-0.5 rounded-md">
+                    <span className="text-xs font-black uppercase tracking-wider bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 px-2.5 py-0.5 rounded-md">
                       {user?.role === "STUDENT" ? "Học Sinh" : user?.role || "Thành viên"}
                     </span>
                   </div>
@@ -442,7 +442,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                       }`}
                     >
                       {isEquipped && (
-                        <div className="absolute top-0 right-0 bg-amber-500 text-white text-[10px] font-black uppercase px-3 py-1 rounded-bl-2xl flex items-center gap-1 shadow-xs">
+                        <div className="absolute top-0 right-0 bg-amber-500 text-white text-xs font-black uppercase px-3 py-1 rounded-bl-2xl flex items-center gap-1 shadow-xs">
                           <CheckCircle2 size={11} /> Đang Đeo
                         </div>
                       )}
@@ -458,7 +458,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                           </div>
                           <div>
                             <span
-                              className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${
+                              className={`text-xs font-black uppercase px-2 py-0.5 rounded-md ${
                                 isFrame
                                   ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
                                   : isBadge

@@ -375,7 +375,7 @@ export function NotFoundView() {
                       >
                         <Icon className="w-5 h-5" />
                       </div>
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
                         {destination.badge}
                       </span>
                     </div>

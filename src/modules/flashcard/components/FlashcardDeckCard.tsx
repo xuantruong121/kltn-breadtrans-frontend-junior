@@ -44,13 +44,13 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
             <span className="truncate max-w-[140px] sm:max-w-[170px]">{topic.categoryName || "Từ vựng"}</span>
           </span>
           {isLocked ? (
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-300/80 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-300/80 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
               <Lock size={12} aria-hidden="true" />
               <span>Premium</span>
             </span>
           ) : (
             <span
-              className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold border ${
+              className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold border ${
                 badge.variant === "due"
                   ? "border-amber-200/80 bg-amber-50 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300"
                   : badge.variant === "completed"
@@ -89,11 +89,11 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
             Số lượng: <strong className="font-semibold text-slate-900 dark:text-slate-100">{topic.totalWords}</strong> từ
           </span>
           {topic.needReviewCount > 0 ? (
-            <span className="inline-flex items-center gap-1 font-semibold text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300 px-2 py-0.5 rounded-md text-[11px] border border-amber-200/70">
+            <span className="inline-flex items-center gap-1 font-semibold text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300 px-2 py-0.5 rounded-md text-xs border border-amber-200/70">
               {topic.needReviewCount} từ cần ôn
             </span>
           ) : (
-            <span className="text-[11px] text-slate-400">Sẵn sàng ôn luyện</span>
+            <span className="text-xs text-slate-400">Sẵn sàng ôn luyện</span>
           )}
         </div>
       </div>

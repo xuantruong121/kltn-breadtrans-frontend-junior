@@ -124,18 +124,18 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
                         <div>
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span
-                              className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${species.elementColor}`}
+                              className={`text-xs font-bold uppercase px-2 py-0.5 rounded-full border ${species.elementColor}`}
                             >
                               {species.element}
                             </span>
-                            <span className="text-[10px] font-bold text-amber-900 bg-amber-100/80 px-2 py-0.5 rounded-full border border-amber-200">
+                            <span className="text-xs font-bold text-amber-900 bg-amber-100/80 px-2 py-0.5 rounded-full border border-amber-200">
                               Cấp {speciesLevel}
                             </span>
                           </div>
                           <h3 className="font-bold text-slate-900 text-sm sm:text-base leading-tight mt-1">
                             {species.speciesName}
                           </h3>
-                          <span className="text-[11px] font-medium text-slate-500">
+                          <span className="text-xs font-medium text-slate-500">
                             {speciesStageName}
                           </span>
                         </div>
@@ -162,13 +162,13 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
                         <Zap size={13} className="text-amber-600 fill-amber-600 shrink-0" aria-hidden="true" />
                         <span>Đặc điểm: {species.buff}</span>
                       </div>
-                      <p className="text-[11px] text-slate-600 mt-0.5 leading-snug">
+                      <p className="text-xs text-slate-600 mt-0.5 leading-snug">
                         {species.buffDetail}
                       </p>
                     </div>
 
                     {/* Quote Bubble */}
-                    <div className="text-[11px] text-slate-500 italic mb-4 line-clamp-1">
+                    <div className="text-xs text-slate-500 italic mb-4 line-clamp-1">
                       &ldquo;{species.quote}&rdquo;
                     </div>
                   </div>

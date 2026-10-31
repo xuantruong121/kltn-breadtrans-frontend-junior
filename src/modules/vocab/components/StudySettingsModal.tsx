@@ -184,7 +184,7 @@ export const StudySettingsModal: React.FC<StudySettingsModalProps> = ({
               <Keyboard size={14} className="text-slate-500 dark:text-slate-400" />
               <span>Phím tắt thao tác nhanh:</span>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-[11px] font-medium text-slate-600 dark:text-slate-400">
+            <div className="grid grid-cols-2 gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
               <div className="flex items-center gap-1.5">
                 <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-mono">Space</kbd>
                 <span>Lật thẻ / Thu âm</span>

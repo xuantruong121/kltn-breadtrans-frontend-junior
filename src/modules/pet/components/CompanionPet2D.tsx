@@ -69,7 +69,7 @@ export const CompanionPet2D: React.FC<CompanionPet2DProps> = ({
 
       {showStateBadge && (
         <span
-          className={`mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] border ${stateInfo.badgeClass}`}
+          className={`mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs border ${stateInfo.badgeClass}`}
         >
           {stateInfo.text}
         </span>

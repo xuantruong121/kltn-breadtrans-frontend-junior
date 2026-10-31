@@ -76,7 +76,7 @@ export function StatusBadge({ status, size = "md", className = "" }: StatusBadge
 
   const sizeClasses =
     size === "sm"
-      ? "px-2 py-0.5 text-[11px] font-bold"
+      ? "px-2 py-0.5 text-xs font-bold"
       : "px-2.5 py-1 text-xs font-bold";
 
   return (

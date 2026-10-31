@@ -1244,7 +1244,7 @@ export function ListeningComprehensionWorkspace({
                 <span className="font-semibold text-xs tracking-tight">
                   {shortcut.label}
                 </span>
-                <kbd className="inline-flex items-center justify-center min-w-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100/90 dark:bg-slate-800/90 px-2 py-1 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200 shadow-2xs">
+                <kbd className="inline-flex items-center justify-center min-w-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100/90 dark:bg-slate-800/90 px-2 py-1 font-mono text-xs font-bold text-slate-800 dark:text-slate-200 shadow-2xs">
                   {shortcut.keyDisplay}
                 </kbd>
               </div>
@@ -1506,7 +1506,7 @@ export function ListeningComprehensionWorkspace({
                 <span>{isDialogue ? "Transcript song ngữ" : "Bản ghi âm & Lời thoại (Transcript)"}</span>
               </span>
               {isDialogue || isChecked ? (
-                <span className="flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                <span className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400">
                   {transcriptOpen ? "Thu gọn" : "Xem nội dung"}
                   <ChevronDown
                     size={14}
@@ -1516,7 +1516,7 @@ export function ListeningComprehensionWorkspace({
                   />
                 </span>
               ) : (
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 italic">
+                <span className="text-xs text-slate-400 dark:text-slate-500 italic">
                   (Mở khoá sau khi kiểm tra đáp án)
                 </span>
               )}
@@ -1589,7 +1589,7 @@ export function ListeningComprehensionWorkspace({
 
               {isChecked && (
                 <span
-                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-extrabold ${
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-extrabold ${
                     currentCheck?.isCorrect
                       ? "border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300"
                       : "border border-rose-200 dark:border-rose-800/80 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300"
@@ -1919,7 +1919,7 @@ export function ListeningComprehensionWorkspace({
                     className="mt-6 rounded-2xl border border-emerald-200/90 dark:border-emerald-800/60 bg-emerald-50/70 dark:bg-emerald-950/30 p-4 sm:p-5 text-emerald-950 dark:text-emerald-200 animate-in fade-in duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500"
                   >
                     <div className="flex items-center gap-2 mb-3">
-                      <span className="rounded-md bg-emerald-200/80 dark:bg-emerald-900/60 px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wider text-emerald-900 dark:text-emerald-200">
+                      <span className="rounded-md bg-emerald-200/80 dark:bg-emerald-900/60 px-2.5 py-1 text-xs font-extrabold uppercase tracking-wider text-emerald-900 dark:text-emerald-200">
                         GIẢI THÍCH ĐÁP ÁN
                       </span>
                     </div>

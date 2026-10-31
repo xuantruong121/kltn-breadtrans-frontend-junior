@@ -284,7 +284,7 @@ export default function PublicCourseDetailPage() {
             {/* Quick Metrics Bar */}
             <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-0 border-t border-slate-100 pt-5 dark:border-slate-800">
               <div className="border-r border-slate-100 pr-3 dark:border-slate-800">
-                <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Quy mô
                 </span>
                 <span className="mt-1 block text-base sm:text-lg font-bold text-slate-900 dark:text-white">
@@ -292,7 +292,7 @@ export default function PublicCourseDetailPage() {
                 </span>
               </div>
               <div className="border-r border-slate-100 px-3 dark:border-slate-800">
-                <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Hoạt động
                 </span>
                 <span className="mt-1 block text-base sm:text-lg font-bold text-slate-900 dark:text-white">
@@ -300,7 +300,7 @@ export default function PublicCourseDetailPage() {
                 </span>
               </div>
               <div className="col-span-2 mt-3 border-t border-slate-100 pt-3 sm:col-span-1 sm:mt-0 sm:border-t-0 sm:pl-3 sm:pt-0 dark:border-slate-800">
-                <span className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Hình thức
                 </span>
                 <span className="mt-1 block text-base sm:text-lg font-bold text-slate-900 dark:text-white">

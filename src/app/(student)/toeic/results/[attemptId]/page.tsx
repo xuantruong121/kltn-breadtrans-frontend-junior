@@ -46,7 +46,7 @@ export default function ToeicResultPage({
   const secondary =
     "inline-flex min-h-11 items-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800";
   return (
-    <main className="mx-auto max-w-6xl px-4 pb-20 pt-8 sm:px-6">
+    <main className="mx-auto max-w-7xl px-4 pb-20 pt-8 sm:px-6">
       <ToeicLrResult
         attemptId={attemptId}
         extraActions={

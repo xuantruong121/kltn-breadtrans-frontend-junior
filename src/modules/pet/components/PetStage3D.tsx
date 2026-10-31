@@ -390,7 +390,7 @@ export const PetStage3D: React.FC<PetStage3DProps> = ({
                 <span className="bg-gradient-to-r from-slate-800 to-slate-900 text-white text-xs font-black px-3.5 py-1 rounded-full shadow-md border border-slate-700/60">
                   {currentStage.name}
                 </span>
-                <span className="text-[10px] font-extrabold text-slate-400">
+                <span className="text-xs font-extrabold text-slate-400">
                   👉 Nhấp để vuốt ve & xoa đầu thú cưng!
                 </span>
               </div>
@@ -404,7 +404,7 @@ export const PetStage3D: React.FC<PetStage3DProps> = ({
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span
-                    className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${activeSpecies.elementColor}`}
+                    className={`text-xs font-black uppercase px-2.5 py-0.5 rounded-full border ${activeSpecies.elementColor}`}
                   >
                     {activeSpecies.element}
                   </span>
@@ -490,7 +490,7 @@ export const PetStage3D: React.FC<PetStage3DProps> = ({
                 <h4 className="text-xs font-black text-amber-900 leading-tight">
                         Đặc điểm thú cưng: {activeSpecies.buff}
                 </h4>
-                <p className="text-[11px] font-medium text-amber-800/80 mt-0.5 leading-snug">
+                <p className="text-xs font-medium text-amber-800/80 mt-0.5 leading-snug">
                   {activeSpecies.buffDetail}
                 </p>
               </div>

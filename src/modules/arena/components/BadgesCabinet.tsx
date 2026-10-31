@@ -204,7 +204,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
               <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 leading-tight">
                 Tủ Huy Hiệu Của Tôi
               </h2>
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
                 Bảng vàng vinh danh & thành tích học tập
               </p>
             </div>
@@ -218,7 +218,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
               <BadgeCheck size={15} className="text-emerald-600 dark:text-emerald-400" />
               <span>Đã mở khóa: <strong className="text-slate-900 dark:text-slate-100 font-bold">{unlockedBadgesCount}/{ALL_BADGES.length}</strong> huy hiệu</span>
             </span>
-            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
+            <span className="text-xs font-bold text-slate-600 dark:text-slate-400">
               {progressTotalPercent}%
             </span>
           </div>
@@ -318,7 +318,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
                   </h4>
 
                   {/* Description */}
-                  <p className="text-[11px] font-normal text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed mb-2.5">
+                  <p className="text-sm font-normal text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed mb-2.5">
                     {badge.description}
                   </p>
                 </div>
@@ -326,12 +326,12 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
                 {/* Bottom Progress Bar / Status Pill */}
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                   {hasUnlocked ? (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-900/60">
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-900/60">
                       <CheckCircle2 size={11} /> Đã Mở Khóa
                     </span>
                   ) : (
                     <div>
-                      <div className="flex justify-between text-[10px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                      <div className="flex justify-between text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
                         <span>{badge.currentValue || 0}/{badge.targetValue} {badge.unit}</span>
                         <span>{progress}%</span>
                       </div>
@@ -351,7 +351,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
 
         {/* Footer Note */}
         <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-center">
-          <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
             Nhấp vào huy hiệu để xem chi tiết và kích hoạt lên hồ sơ học tập.
           </p>
         </div>

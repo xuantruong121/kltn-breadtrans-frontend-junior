@@ -125,7 +125,7 @@ export function PlanComparisonTable() {
                   </th>
                   <th scope="col" className="p-4 sm:p-5 font-black text-slate-700 dark:text-slate-300 w-[24%] text-center">
                     <div className="text-sm font-black">BreadTrans Free</div>
-                    <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 block mt-0.5">
+                    <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 block mt-0.5">
                       0 ₫ / vĩnh viễn
                     </span>
                   </th>
@@ -133,11 +133,11 @@ export function PlanComparisonTable() {
                     scope="col"
                     className="p-4 sm:p-5 font-black text-amber-800 dark:text-amber-300 w-[24%] text-center bg-amber-50/60 dark:bg-amber-950/30 border-x border-amber-200/60 dark:border-amber-900/40 relative"
                   >
-                    <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500 text-white mb-1 shadow-2xs">
+                    <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-amber-500 text-white mb-1 shadow-2xs">
                       Đề xuất
                     </span>
                     <div className="text-sm font-black">BreadTrans PLUS</div>
-                    <span className="text-[11px] font-bold text-amber-700/90 dark:text-amber-400 block mt-0.5">
+                    <span className="text-xs font-bold text-amber-700/90 dark:text-amber-400 block mt-0.5">
                       69.000 ₫ / 30 ngày
                     </span>
                   </th>
@@ -145,11 +145,11 @@ export function PlanComparisonTable() {
                     scope="col"
                     className="p-4 sm:p-5 font-black text-slate-700 dark:text-slate-200 w-[24%] text-center bg-slate-100/60 dark:bg-slate-800/40"
                   >
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300 mb-1 shrink-0 whitespace-nowrap">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300 mb-1 shrink-0 whitespace-nowrap">
                       Đầy đủ quyền lợi
                     </span>
                     <div className="text-sm font-black">BreadTrans PRO</div>
-                    <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 block mt-0.5">
+                    <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 block mt-0.5">
                       149.000 ₫ / 30 ngày
                     </span>
                   </th>
@@ -162,7 +162,7 @@ export function PlanComparisonTable() {
                       <tr className="bg-slate-50/50 dark:bg-slate-850/40">
                         <td
                           colSpan={4}
-                          className="px-4 sm:px-5 py-2.5 text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500"
+                          className="px-4 sm:px-5 py-2.5 text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500"
                         >
                           {feature.category}
                         </td>

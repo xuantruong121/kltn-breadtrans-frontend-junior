@@ -644,7 +644,7 @@ export default function TakeQuizPage(props: {
                 }}
               />
             </div>
-            <span className="text-[11px] font-bold text-sky-300">
+            <span className="text-xs font-bold text-sky-300">
               {currentStep + 1}/{questions.length}
             </span>
           </div>
@@ -734,7 +734,7 @@ export default function TakeQuizPage(props: {
                         <h2 className="text-xs font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
                           Đoạn văn bài đọc
                         </h2>
-                        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                           Đối chiếu nội dung để chọn đáp án chính xác
                         </span>
                       </div>
@@ -848,7 +848,7 @@ export default function TakeQuizPage(props: {
                     </div>
                     {showReadingTranslation && readingTranslation && (
                       <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 text-sm leading-relaxed text-emerald-950 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100">
-                        <p className="mb-1 text-[10px] font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                        <p className="mb-1 text-xs font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
                           Bản dịch hỗ trợ
                         </p>
                         <p className="whitespace-pre-line">
@@ -887,12 +887,12 @@ export default function TakeQuizPage(props: {
                           {sectionLabel ||
                             `Câu ${currentStep + 1} / ${questions.length}`}
                         </span>
-                        <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500">
+                        <span className="text-xs font-bold text-slate-400 dark:text-slate-500">
                           • {Object.keys(answers).length}/{questions.length} đã
                           làm
                         </span>
                       </div>
-                      <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                      <span className="text-xs font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                         Chọn 1 đáp án
                       </span>
                     </div>
@@ -1019,7 +1019,7 @@ export default function TakeQuizPage(props: {
                           )}
                         </motion.button>
                       ) : (
-                        <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 italic pr-1">
+                        <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 italic pr-1">
                           Chọn 1 đáp án để tiếp tục
                         </span>
                       )}
@@ -1272,7 +1272,7 @@ export default function TakeQuizPage(props: {
                                   {hint && (
                                     <div className="mt-3 rounded-xl border border-blue-200/90 bg-blue-50/80 p-3 text-xs font-medium text-blue-950 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200">
                                       <div className="flex items-start gap-2">
-                                        <span className="font-extrabold uppercase tracking-wider text-[11px] px-1.5 py-0.5 rounded bg-blue-200/80 text-blue-900 dark:bg-blue-900/80 dark:text-blue-200 shrink-0">
+                                        <span className="font-extrabold uppercase tracking-wider text-xs px-1.5 py-0.5 rounded bg-blue-200/80 text-blue-900 dark:bg-blue-900/80 dark:text-blue-200 shrink-0">
                                           Gợi ý
                                         </span>
                                         <span>{hint}</span>

@@ -327,12 +327,12 @@ export default function LearnScreen() {
                             {topic.title}
                           </h4>
                         </div>
-                        <div className="flex items-center justify-between text-[11px] font-bold">
+                        <div className="flex items-center justify-between text-xs font-bold">
                           <span className="text-slate-400 dark:text-slate-500">
                             {levelLabel(topic.materialLinks?.level) || "Cơ bản"} • {topic.exercises?.length || 0} bài tập
                           </span>
                           {isDone && (
-                            <span className="text-emerald-700 dark:text-emerald-300 font-extrabold text-[10px] bg-emerald-100 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+                            <span className="text-emerald-700 dark:text-emerald-300 font-extrabold text-xs bg-emerald-100 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
                               Đã xong ({topicProg.correctCount}/{topic.exercises?.length || 0})
                             </span>
                           )}

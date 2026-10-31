@@ -116,7 +116,7 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
               <Lock size={22} aria-hidden="true" />
             </span>
             <div>
-              <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
+              <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
                 Nội dung {plan}
               </span>
             </div>

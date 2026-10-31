@@ -179,7 +179,7 @@ export function QuickLoginModal({
                   onClose();
                   router.push("/forgot-password");
                 }}
-                className="text-[11px] font-bold text-amber-700 dark:text-amber-400 hover:underline"
+                className="text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline"
               >
                 Quên mật khẩu?
               </button>

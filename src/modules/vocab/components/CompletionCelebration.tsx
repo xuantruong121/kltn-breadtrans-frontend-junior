@@ -43,17 +43,17 @@ export const CompletionCelebration: React.FC<CompletionCelebrationProps> = ({
       {/* KPI Stats Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
         <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 p-4 rounded-2xl text-center">
-          <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Tổng từ</p>
+          <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Tổng từ</p>
           <p className="text-2xl font-black text-slate-800 dark:text-slate-100 mt-1">{totalWordsCount}</p>
         </div>
 
         <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 p-4 rounded-2xl text-center">
-          <p className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Đã thuộc</p>
+          <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Đã thuộc</p>
           <p className="text-2xl font-black text-emerald-800 dark:text-emerald-300 mt-1">{learnedCount}</p>
         </div>
 
         <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/60 p-4 rounded-2xl text-center col-span-2 sm:col-span-1">
-          <p className="text-[11px] font-bold text-orange-700 dark:text-orange-400 uppercase tracking-wider">Cần ôn lại</p>
+          <p className="text-xs font-bold text-orange-700 dark:text-orange-400 uppercase tracking-wider">Cần ôn lại</p>
           <p className="text-2xl font-black text-orange-800 dark:text-orange-300 mt-1">{reviewCount}</p>
         </div>
       </div>

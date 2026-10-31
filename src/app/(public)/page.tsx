@@ -313,7 +313,7 @@ export default function PublicLandingPage() {
                         BreadTrans AI Tutor
                       </span>
                     </div>
-                    <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+                    <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                       Ví dụ minh họa
                     </span>
                   </div>
@@ -372,7 +372,7 @@ export default function PublicLandingPage() {
 
                   {/* Phoneme Breakdown Chips */}
                   <div className="space-y-1.5">
-                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                       Kết quả chấm từng từ (minh họa):
                     </span>
                     <div className="flex flex-wrap gap-1.5 text-xs font-bold">
@@ -394,11 +394,11 @@ export default function PublicLandingPage() {
                   {/* Interactive Result Badges Footer */}
                   <div className="pt-2 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-2 text-center">
                     <div className="p-2 rounded-xl bg-amber-50/50 dark:bg-slate-800/60 border border-amber-200/60 dark:border-slate-700/60">
-                      <span className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Phát âm</span>
+                      <span className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Phát âm</span>
                       <strong className="text-base font-black text-emerald-700 dark:text-emerald-400">98%</strong>
                     </div>
                     <div className="p-2 rounded-xl bg-amber-50/50 dark:bg-slate-800/60 border border-amber-200/60 dark:border-slate-700/60">
-                      <span className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Trôi chảy</span>
+                      <span className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Trôi chảy</span>
                       <strong className="text-base font-black text-amber-700 dark:text-amber-400">95 / 100</strong>
                     </div>
                   </div>
@@ -684,7 +684,7 @@ export default function PublicLandingPage() {
                     <span className="text-2xl sm:text-3xl font-black text-amber-600/30 dark:text-amber-500/30 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
                       {step.step}
                     </span>
-                    <span className="text-[11px] font-black px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/60">
+                    <span className="text-xs font-black px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/60">
                       {step.badge}
                     </span>
                   </div>

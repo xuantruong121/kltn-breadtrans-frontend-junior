@@ -649,7 +649,7 @@ export default function WritingDetailPage(props: {
 
                         <div className="flex items-center gap-3">
                           <div className="text-right">
-                            <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 block">
+                            <span className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500 block">
                               Mức độ hoàn thành
                             </span>
                             <span className="text-xs font-extrabold text-blue-600 dark:text-blue-400">

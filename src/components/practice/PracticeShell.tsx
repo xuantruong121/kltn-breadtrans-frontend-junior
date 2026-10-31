@@ -88,7 +88,7 @@ export function PracticeShell({
             </button>
           )}
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2 text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
               <span>{SKILL_LABEL[skill]}</span>
               <span aria-hidden="true">·</span>
               <span className="text-sky-700 dark:text-sky-300">{STAGE_LABEL[stage]}</span>
@@ -100,7 +100,7 @@ export function PracticeShell({
         </div>
         {hasProgress && (
           <div className="min-w-[150px] sm:min-w-[190px]" aria-label={`Tiến độ câu ${current} trên ${total}`}>
-            <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
               <span>Câu {current}/{total}</span>
               <span>{Math.round(progress)}%</span>
             </div>

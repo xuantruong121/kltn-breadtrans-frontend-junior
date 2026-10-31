@@ -42,10 +42,10 @@ function CourseCard({ course }: { course: PublicCourseCard }) {
           </div>
         )}
         <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-slate-950/70 to-transparent px-5 pb-4 pt-12">
-          <span className="rounded-full border border-white/40 bg-white/90 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-slate-800">
+          <span className="rounded-full border border-white/40 bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-800">
             {levelLabel(course.level) || "Cơ bản"}
           </span>
-          <span className="rounded-full border border-white/30 bg-slate-950/65 px-3 py-1 text-[11px] font-semibold text-white">
+          <span className="rounded-full border border-white/30 bg-slate-950/65 px-3 py-1 text-xs font-semibold text-white">
             {course.canAccess ? "Được truy cập" : "Gói PRO"}
           </span>
         </div>

@@ -87,7 +87,7 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
               <Icon size={44} strokeWidth={1.75} />
 
               {/* Status Badge */}
-              <div className="absolute -bottom-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-white shadow-xs flex items-center gap-1 bg-slate-800 dark:bg-slate-700">
+              <div className="absolute -bottom-2.5 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider text-white shadow-xs flex items-center gap-1 bg-slate-800 dark:bg-slate-700">
                 {hasUnlocked ? (
                   <>
                     <CheckCircle2 size={11} className="text-emerald-400" /> ĐÃ MỞ KHÓA
@@ -103,7 +103,7 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
 
           {/* Title & Category */}
           <div className="mb-4">
-            <span className="text-[10px] font-semibold uppercase px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+            <span className="text-xs font-semibold uppercase px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
               {badge.category}
             </span>
             <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-2 mb-1">
@@ -150,7 +150,7 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
 
             {/* Date if unlocked */}
             {hasUnlocked && unlockedAt && (
-              <div className="flex items-center gap-1 text-[11px] font-medium text-slate-400 dark:text-slate-500 mt-2">
+              <div className="flex items-center gap-1 text-xs font-medium text-slate-400 dark:text-slate-500 mt-2">
                 <Calendar size={12} />
                 <span>
                   Đạt được ngày {new Date(unlockedAt).toLocaleDateString("vi-VN")}

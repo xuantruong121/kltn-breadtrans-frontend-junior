@@ -90,7 +90,7 @@ export function DailyPracticeCard({
             return (
               <div key={`${item.skill}-${item.exerciseId}`} className={`flex min-h-36 flex-col justify-between rounded-2xl border p-4 ${item.isCompleted ? "border-emerald-200 bg-emerald-50/70 dark:border-emerald-900/60 dark:bg-emerald-950/30" : "border-slate-200 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-950/40"}`}>
                 <div>
-                  <div className="flex items-center justify-between gap-2"><span className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-[11px] font-black ${meta.tone}`}><Icon size={13} aria-hidden="true" /> {meta.label}</span>{item.isCompleted ? <CheckCircle2 size={17} className="text-emerald-600 dark:text-emerald-400" aria-label="Hoàn thành" /> : item.isLocked ? <LockKeyhole size={16} className="text-amber-600 dark:text-amber-400" aria-label="Đang khóa" /> : null}</div>
+                  <div className="flex items-center justify-between gap-2"><span className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs font-black ${meta.tone}`}><Icon size={13} aria-hidden="true" /> {meta.label}</span>{item.isCompleted ? <CheckCircle2 size={17} className="text-emerald-600 dark:text-emerald-400" aria-label="Hoàn thành" /> : item.isLocked ? <LockKeyhole size={16} className="text-amber-600 dark:text-amber-400" aria-label="Đang khóa" /> : null}</div>
                   <h3 className="mt-3 line-clamp-2 text-sm font-black text-slate-900 dark:text-slate-100">{item.title}</h3>
                   <p className="mt-1 line-clamp-2 text-xs font-semibold text-slate-500 dark:text-slate-400">{item.reasonLabel}</p>
                 </div>

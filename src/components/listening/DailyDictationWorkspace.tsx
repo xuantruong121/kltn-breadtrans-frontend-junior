@@ -1283,7 +1283,7 @@ export function DailyDictationWorkspace({
                 <span className="font-semibold text-xs tracking-tight">
                   {shortcut.label}
                 </span>
-                <kbd className="inline-flex items-center justify-center min-w-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100/90 dark:bg-slate-800/90 px-2 py-1 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200 shadow-2xs">
+                <kbd className="inline-flex items-center justify-center min-w-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100/90 dark:bg-slate-800/90 px-2 py-1 font-mono text-xs font-bold text-slate-800 dark:text-slate-200 shadow-2xs">
                   {shortcut.keyDisplay}
                 </kbd>
               </div>
@@ -1880,7 +1880,7 @@ export function DailyDictationWorkspace({
                           {relativeHint && (
                             <div className="mt-2.5 rounded-xl border border-blue-200/90 bg-blue-50/80 p-2.5 sm:p-3 text-xs sm:text-sm font-medium text-blue-950 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200">
                               <div className="flex items-start gap-2">
-                                <span className="font-extrabold uppercase tracking-wider text-[11px] px-1.5 py-0.5 rounded bg-blue-200/80 text-blue-900 dark:bg-blue-900/80 dark:text-blue-200 shrink-0 mt-0.5">
+                                <span className="font-extrabold uppercase tracking-wider text-xs px-1.5 py-0.5 rounded bg-blue-200/80 text-blue-900 dark:bg-blue-900/80 dark:text-blue-200 shrink-0 mt-0.5">
                                   Gợi ý
                                 </span>
                                 <span>{relativeHint}</span>

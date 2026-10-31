@@ -192,14 +192,14 @@ export const MarketExchangeConfirmModal: React.FC<MarketExchangeConfirmModalProp
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
-              <span className={`inline-block rounded-md border px-2 py-0.5 text-[10px] font-bold ${rarity.badgeClass}`}>
+              <span className={`inline-block rounded-md border px-2 py-0.5 text-xs font-bold ${rarity.badgeClass}`}>
                 {rarity.label}
               </span>
-              <span className="inline-block rounded-md bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+              <span className="inline-block rounded-md bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 px-2 py-0.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
                 {categoryLabel}
               </span>
               {product.stock > 0 && (
-                <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 ml-auto">
+                <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400 ml-auto">
                   Còn {product.stock}
                 </span>
               )}

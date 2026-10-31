@@ -245,7 +245,7 @@ export const ShippingCompletionModal: React.FC<ShippingCompletionModalProps> = (
             />
           </div>
 
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             * Thông tin này chỉ được dùng để xử lý gửi quà vật lý. BreadTrans bảo mật thông tin liên hệ của bạn.
           </p>
 

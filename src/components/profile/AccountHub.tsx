@@ -474,7 +474,7 @@ export function AccountHub() {
       <div className="flex flex-col md:flex-row gap-6 lg:gap-10 items-start">
         {/* ── Left Sidebar ──────────────────────────────────────── */}
         <aside className="w-full md:w-64 lg:w-72 shrink-0 md:border-r border-slate-200/80 dark:border-slate-800 md:pr-6">
-          <div className="px-3 pb-2.5 text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+          <div className="px-3 pb-2.5 text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
             <Settings size={13} className="text-slate-400 dark:text-slate-500" aria-hidden="true" />
             <span>Tài khoản</span>
           </div>
@@ -558,7 +558,7 @@ export function AccountHub() {
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50/70 dark:bg-slate-850/60 rounded-2xl p-4 border border-slate-100 dark:border-slate-800">
                   <div>
-                    <span className="block text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider">
+                    <span className="block text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wider">
                       NGÀY MUA
                     </span>
                     <span className="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 mt-1">
@@ -566,7 +566,7 @@ export function AccountHub() {
                     </span>
                   </div>
                   <div>
-                    <span className="block text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider">
+                    <span className="block text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wider">
                       NGÀY HẾT HẠN
                     </span>
                     <span className="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 mt-1">
@@ -574,7 +574,7 @@ export function AccountHub() {
                     </span>
                   </div>
                   <div>
-                    <span className="block text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider">
+                    <span className="block text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wider">
                       CÒN LẠI
                     </span>
                     <span className="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 mt-1">
@@ -582,7 +582,7 @@ export function AccountHub() {
                     </span>
                   </div>
                   <div>
-                    <span className="block text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider">
+                    <span className="block text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wider">
                       NGUỒN
                     </span>
                     <span className="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 mt-1">
@@ -652,7 +652,7 @@ export function AccountHub() {
                                 <div className="space-y-1">
                                   <div className="flex flex-wrap items-center gap-2">
                                     <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{purchase.planDisplayName}</span>
-                                    <span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-bold ${statusInfo.badgeClass}`}>{statusInfo.label}</span>
+                                    <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-bold ${statusInfo.badgeClass}`}>{statusInfo.label}</span>
                                   </div>
                                   <p className="text-xs text-slate-600 dark:text-slate-400">
                                     Mã chuyển khoản: <span className="font-mono font-bold text-amber-800 dark:text-amber-300">{purchase.payment?.transferCode || purchase.bankInstructions?.transferCode}</span>
@@ -1137,7 +1137,7 @@ export function AccountHub() {
                         <span className="font-bold text-sm text-slate-900 dark:text-slate-100">
                           Trình duyệt Web hiện tại
                         </span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-black bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                           Đang hoạt động
                         </span>
                       </div>
@@ -1301,7 +1301,7 @@ export function AccountHub() {
                               <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">
                                 {item.name}
                               </h3>
-                              <span className="text-[10px] uppercase font-bold text-slate-400">
+                              <span className="text-xs uppercase font-bold text-slate-400">
                                 {item.category}
                               </span>
                             </div>
