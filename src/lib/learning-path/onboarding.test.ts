@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { isStarterLearner } from "./onboarding.ts";
-import { canContinue, needsLevelChoice, profilePayload, shouldOpenOnboarding, type OnboardingAnswers } from "./onboarding.ts";
+import { canContinue, hasDiagnosticPlacement, needsLevelChoice, profilePayload, shouldOpenOnboarding, type OnboardingAnswers } from "./onboarding.ts";
 
 const empty: OnboardingAnswers = { goal: null, track: null, minutesPerDay: null, targetDate: "", selfLevel: null };
 
@@ -26,6 +26,13 @@ test("onboarding opens once per session for a learner who has not done it", () =
   assert.equal(shouldOpenOnboarding({ onboarded: false }, false), true);
   assert.equal(shouldOpenOnboarding({ onboarded: false }, true), false);
   assert.equal(shouldOpenOnboarding({ onboarded: true }, false), false);
+});
+
+test("a diagnostic result takes the level choice out of onboarding", () => {
+  assert.equal(hasDiagnosticPlacement({ placementSource: "DIAGNOSTIC" }), true);
+  assert.equal(hasDiagnosticPlacement({ placementSource: "SELF" }), false);
+  assert.equal(hasDiagnosticPlacement({ placementSource: "NONE" }), false);
+  assert.equal(hasDiagnosticPlacement(undefined), false);
 });
 
 test("the level card shows only without any placement", () => {

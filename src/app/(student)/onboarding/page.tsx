@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Check, ClipboardCheck, SlidersHorizontal } from "lucide-react";
 
 import { learningPathService } from "@/lib/api/services/learningPath.service";
@@ -14,9 +14,12 @@ import {
   ONBOARDING_STEPS,
   TRACK_OPTIONS,
   canContinue,
+  hasDiagnosticPlacement,
   profilePayload,
   type OnboardingAnswers,
 } from "@/lib/learning-path/onboarding";
+import { PRACTICE_LEVEL_LABEL } from "@/lib/learning-path/practiceLevel";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 const STEP_TITLE: Record<(typeof ONBOARDING_STEPS)[number], { title: string; hint: string }> = {
   goal: { title: "Bạn học tiếng Anh để làm gì?", hint: "Mục tiêu giúp chọn dạng bài phù hợp." },
@@ -79,6 +82,13 @@ export default function OnboardingPage() {
   const step = ONBOARDING_STEPS[stepIndex];
   const isLast = stepIndex === ONBOARDING_STEPS.length - 1;
   const set = (patch: Partial<OnboardingAnswers>) => setAnswers((prev) => ({ ...prev, ...patch }));
+  const profileQuery = useQuery({
+    queryKey: ["learning-path-profile"],
+    queryFn: () => learningPathService.getProfile(),
+  });
+  // A diagnostic result already set the level; the API refuses a self-chosen one.
+  const placed = hasDiagnosticPlacement(profileQuery.data);
+  const placedLevel = profileQuery.data?.placementLevel;
 
   const save = useMutation({
     mutationFn: (body: Record<string, unknown>) => learningPathService.updateProfile(body),
@@ -88,9 +98,9 @@ export default function OnboardingPage() {
   });
 
   const finish = async () => {
-    const chooseSelf = levelPath === "SELF" && answers.selfLevel;
+    const chooseSelf = !placed && levelPath === "SELF" && answers.selfLevel;
     await save.mutateAsync(profilePayload({ ...answers, selfLevel: chooseSelf ? answers.selfLevel : null }));
-    router.push(chooseSelf ? "/dashboard" : "/diagnostic");
+    router.push(placed || chooseSelf ? "/dashboard" : "/diagnostic");
   };
 
   const skip = async () => {
@@ -103,7 +113,13 @@ export default function OnboardingPage() {
     router.push("/dashboard");
   };
 
-  const finishDisabled = save.isPending || (isLast && levelPath === "SELF" && !answers.selfLevel);
+  const finishDisabled =
+    save.isPending ||
+    (isLast && profileQuery.isLoading) ||
+    (isLast && !placed && levelPath === "SELF" && !answers.selfLevel);
+  const headline = step === "level" && placed
+    ? { title: "Mức luyện tập của bạn", hint: "Đã xác định từ bài kiểm tra đầu vào." }
+    : STEP_TITLE[step];
 
   return (
     <div className="mx-auto w-full max-w-3xl py-4 sm:py-8">
@@ -126,8 +142,8 @@ export default function OnboardingPage() {
       </div>
 
       <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-8">
-        <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 sm:text-3xl">{STEP_TITLE[step].title}</h1>
-        <p className="mt-2 text-base text-slate-600 dark:text-slate-400">{STEP_TITLE[step].hint}</p>
+        <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 sm:text-3xl">{headline.title}</h1>
+        <p className="mt-2 text-base text-slate-600 dark:text-slate-400">{headline.hint}</p>
 
         <div className="mt-6" role="radiogroup" aria-label={STEP_TITLE[step].title}>
           {step === "goal" && (
@@ -162,7 +178,18 @@ export default function OnboardingPage() {
               </label>
             </>
           )}
-          {step === "level" && (
+          {step === "level" && placed && (
+            <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5 dark:border-blue-900 dark:bg-blue-950/40">
+              <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">Mức luyện tập đề xuất</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
+                {placedLevel ? PRACTICE_LEVEL_LABEL[placedLevel] : "Theo kết quả từng kỹ năng"}
+              </p>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                Mức cao hơn được mở bằng bài kiểm tra mở khóa hoặc tiến độ luyện tập.
+              </p>
+            </div>
+          )}
+          {step === "level" && !placed && (
             <>
               <div className="grid gap-3 sm:grid-cols-2">
                 <button
@@ -213,7 +240,7 @@ export default function OnboardingPage() {
 
         {save.isError && (
           <p className="mt-5 text-sm font-semibold text-rose-700 dark:text-rose-400" role="alert">
-            Chưa lưu được lựa chọn. Vui lòng thử lại.
+            {getApiErrorMessage(save.error, "Chưa lưu được lựa chọn. Vui lòng thử lại.")}
           </p>
         )}
 
@@ -233,7 +260,7 @@ export default function OnboardingPage() {
             disabled={isLast ? finishDisabled : !canContinue(step, answers)}
             className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-600 px-5 text-base font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isLast ? (levelPath === "TEST" ? "Lưu và làm bài kiểm tra" : "Lưu và bắt đầu") : "Tiếp tục"}
+            {isLast ? (!placed && levelPath === "TEST" ? "Lưu và làm bài kiểm tra" : "Lưu và bắt đầu") : "Tiếp tục"}
             <ArrowRight size={18} aria-hidden="true" />
           </button>
         </div>
