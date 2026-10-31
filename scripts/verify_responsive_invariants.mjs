@@ -83,7 +83,7 @@ assertInvariant(
 
 assertInvariant(
   "BrandLogo: Admin CMS tag is hidden on mobile (< 640px, hidden sm:inline-flex)",
-  brandLogoCode.includes("hidden sm:inline-flex rounded-md bg-blue-50 border border-blue-200/80 px-1.5 py-0.5 text-[10px]"),
+  brandLogoCode.includes("hidden sm:inline-flex rounded-md bg-blue-50 border border-blue-200/80 px-1.5 py-0.5 text-xs"),
   "Admin CMS badge hidden on < sm:."
 );
 
