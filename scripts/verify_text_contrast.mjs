@@ -69,7 +69,8 @@ const probe = () => {
     if (box.width <= 0 || box.height <= 0) continue;
     let opacity = 1;
     for (let node = el; node; node = node.parentElement) opacity *= Number(getComputedStyle(node).opacity);
-    if (opacity === 0) continue;
+    // The Google button overlay is opacity 0.001 by design: nobody sees that text.
+    if (opacity < 0.05) continue;
     const bg = backdrop(el);
     if (!bg) {
       unknown += text.length;

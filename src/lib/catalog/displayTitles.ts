@@ -107,21 +107,22 @@ const SPEAKING_SET_TITLES: Record<string, string> = {
   "speaking-bfc65dc4-53b5-4225-92b0-97120bd434ce": "Quản lý mua văn phòng phẩm",
 };
 
-export type GrammarCategory = "WORD_CLASS" | "VERB" | "OTHER";
+export type GrammarCategory = "TENSE" | "WORD_CLASS" | "VERB" | "OTHER";
 
 export const GRAMMAR_CATEGORY_LABEL: Record<GrammarCategory, string> = {
+  TENSE: "12 thì",
   WORD_CLASS: "Từ loại",
   VERB: "Động từ",
   OTHER: "Ngữ pháp khác",
 };
 
-export const GRAMMAR_CATEGORY_ORDER: GrammarCategory[] = ["WORD_CLASS", "VERB", "OTHER"];
+export const GRAMMAR_CATEGORY_ORDER: GrammarCategory[] = ["TENSE", "WORD_CLASS", "VERB", "OTHER"];
 
 /** Grammar topics: Vietnamese title and the part of grammar it teaches. */
 const GRAMMAR_TOPICS: Record<number, { title: string; category: GrammarCategory }> = {
-  13: { title: "Thì hiện tại đơn và trạng từ tần suất", category: "VERB" },
-  14: { title: "Thì quá khứ đơn và trạng từ thời gian", category: "VERB" },
-  3: { title: "Thì hiện tại hoàn thành", category: "VERB" },
+  13: { title: "Thì hiện tại đơn và trạng từ tần suất", category: "TENSE" },
+  14: { title: "Thì quá khứ đơn và trạng từ thời gian", category: "TENSE" },
+  3: { title: "Thì hiện tại hoàn thành", category: "TENSE" },
   4: { title: "Các cách diễn đạt tương lai", category: "VERB" },
   5: { title: "Các loại từ trong câu", category: "WORD_CLASS" },
   6: { title: "Động từ khuyết thiếu và lời đề nghị lịch sự", category: "VERB" },
@@ -133,6 +134,19 @@ const GRAMMAR_TOPICS: Record<number, { title: string; category: GrammarCategory 
   // Links clauses and sentences (although / however / therefore): clause
   // level, like conditionals and relative clauses.
   12: { title: "Từ nối và liên kết ý", category: "OTHER" },
+};
+
+/** The F23A tenses, by stored title: their ids differ between databases. */
+const TENSE_TITLES: Record<string, string> = {
+  "Present Continuous": "Thì hiện tại tiếp diễn",
+  "Present Perfect Continuous": "Thì hiện tại hoàn thành tiếp diễn",
+  "Past Continuous": "Thì quá khứ tiếp diễn",
+  "Past Perfect": "Thì quá khứ hoàn thành",
+  "Past Perfect Continuous": "Thì quá khứ hoàn thành tiếp diễn",
+  "Future Simple": "Thì tương lai đơn",
+  "Future Continuous": "Thì tương lai tiếp diễn",
+  "Future Perfect": "Thì tương lai hoàn thành",
+  "Future Perfect Continuous": "Thì tương lai hoàn thành tiếp diễn",
 };
 
 function withLevel(title: string, cefrLevel?: string | null): string {
@@ -184,10 +198,11 @@ export function recommendationDisplayTitle(item: {
 }
 
 export function grammarDisplayTitle(id: number, storedTitle: string): string {
-  return GRAMMAR_TOPICS[id]?.title ?? storedTitle;
+  return GRAMMAR_TOPICS[id]?.title ?? TENSE_TITLES[storedTitle] ?? storedTitle;
 }
 
 /** Topics without an entry are grouped under "Ngữ pháp khác". */
-export function grammarCategory(id: number): GrammarCategory {
+export function grammarCategory(id: number, storedTitle?: string): GrammarCategory {
+  if (storedTitle && TENSE_TITLES[storedTitle]) return "TENSE";
   return GRAMMAR_TOPICS[id]?.category ?? "OTHER";
 }

@@ -37,12 +37,19 @@ test("Speaking sets are keyed by set key", () => {
 
 test("grammar topics carry a Vietnamese title and a category; 13/14 are tenses", () => {
   assert.equal(grammarDisplayTitle(13, "Present Simple"), "Thì hiện tại đơn và trạng từ tần suất");
-  assert.equal(grammarCategory(13), "VERB");
-  assert.equal(grammarCategory(14), "VERB");
+  assert.equal(grammarCategory(13), "TENSE");
+  assert.equal(grammarCategory(14), "TENSE");
+  assert.equal(grammarCategory(4), "VERB");
   assert.equal(grammarCategory(5), "WORD_CLASS");
   assert.equal(grammarCategory(9), "OTHER");
   assert.equal(grammarCategory(1234), "OTHER");
   assert.equal(grammarDisplayTitle(1234, "New topic"), "New topic");
+});
+
+test("tenses added later are found by title, whatever their id", () => {
+  assert.equal(grammarDisplayTitle(1234, "Past Perfect"), "Thì quá khứ hoàn thành");
+  assert.equal(grammarCategory(1234, "Past Perfect"), "TENSE");
+  assert.equal(grammarCategory(1234, "Some other topic"), "OTHER");
 });
 
 test("every practice quiz published in F8 has a Vietnamese title", () => {

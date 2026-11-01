@@ -6,6 +6,8 @@ import type {
   DiagnosticSkillKey,
 } from "@/lib/api/services/diagnostic.service";
 import { quizDisplayTitle, speakingSetDisplayTitle } from "@/lib/catalog/displayTitles";
+import { FoundationSuggestions } from "./FoundationSuggestions";
+import { SkillSuggestions } from "./SkillSuggestions";
 
 const SKILL: Record<DiagnosticSkillKey, string> = {
   LISTENING: "Nghe",
@@ -110,6 +112,11 @@ function PriorityCard({ item, label }: { item: DiagnosticAdvicePriority; label: 
         <p className="mt-3 text-sm text-slate-700 dark:text-slate-300">
           Hiện chưa có bài luyện đang phát hành khớp với mục này.
         </p>
+      )}
+      {item.skill === "LANGUAGE_USE" ? (
+        <FoundationSuggestions />
+      ) : (
+        <SkillSuggestions skill={item.skill} excludedRoutes={item.resources.map((r) => r.route)} />
       )}
     </li>
   );

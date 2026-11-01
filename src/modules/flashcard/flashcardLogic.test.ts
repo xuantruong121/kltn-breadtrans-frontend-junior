@@ -14,8 +14,18 @@ import {
   computeFlashcardSummary,
   extractUniqueCategories,
   filterAndSortTopics,
+  deckLevelLabel,
 } from "./flashcardLogic.ts";
 import type { VocabTopic } from "../../lib/api/services/vocab.service.ts";
+
+test("deckLevelLabel: learners never see a CEFR tag", () => {
+  assert.equal(deckLevelLabel("A1"), "Mất gốc");
+  assert.equal(deckLevelLabel("A2"), "Cơ bản");
+  assert.equal(deckLevelLabel("B1"), "Trung cấp");
+  assert.equal(deckLevelLabel("B2"), "Nâng cao");
+  assert.equal(deckLevelLabel("C1"), "");
+  assert.equal(deckLevelLabel(null), "");
+});
 
 // ─── Test Fixtures ────────────────────────────────────────────────────────────
 

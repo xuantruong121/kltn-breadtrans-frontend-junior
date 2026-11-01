@@ -15,7 +15,7 @@
  * the old one-pass rules (`section` set) keep their server-enforced locks.
  */
 import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, ArrowUp, ListOrdered, Loader2, Maximize2, X } from "lucide-react";
+import { AlertTriangle, ArrowUp, Clock3, ListOrdered, Loader2, Maximize2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -613,6 +613,15 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
           exitLabel="Thoát"
           additionalActions={
             <>
+              {/* The sidebar shows the time from lg up; below that it sits in a closed drawer. */}
+              <div
+                role="timer"
+                aria-label="Thời gian còn lại"
+                className="flex items-center gap-1 sm:gap-1.5 rounded-xl border border-slate-700 bg-slate-800/90 px-2 sm:px-3 py-1 text-xs font-bold tabular-nums text-white lg:hidden"
+              >
+                <Clock3 size={14} className="text-amber-400" aria-hidden="true" />
+                {formatMinutes(remaining)}
+              </div>
               <button
                 type="button"
                 onClick={() => setShowDrawer(true)}

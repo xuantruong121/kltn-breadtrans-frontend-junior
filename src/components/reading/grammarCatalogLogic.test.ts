@@ -18,17 +18,18 @@ const topic = (id: number, over: Partial<{ isCompleted: boolean; attemptCount: n
 // The 12 published topics in the API's authored order (13/14 first).
 const published = [13, 14, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((id) => topic(id));
 
-test("sections count real topics and questions; 13/14 lead the verb section", () => {
+test("sections count real topics and questions; 13/14 lead the tense section", () => {
   const sections = groupGrammarTopics(published);
   assert.deepEqual(
     sections.map((s) => [s.category, s.topics.length, s.questionCount]),
     [
+      ["TENSE", 3, 15],
       ["WORD_CLASS", 2, 10],
-      ["VERB", 7, 35],
+      ["VERB", 4, 20],
       ["OTHER", 3, 15],
     ],
   );
-  assert.deepEqual(sections[1].topics.slice(0, 2).map((t) => t.id), [13, 14]);
+  assert.deepEqual(sections[0].topics.slice(0, 2).map((t) => t.id), [13, 14]);
   assert.equal(sections.reduce((n, s) => n + s.topics.length, 0), 12);
 });
 

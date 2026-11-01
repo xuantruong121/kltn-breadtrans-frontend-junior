@@ -11,6 +11,7 @@ import {
   FlashcardDeckStatus,
 } from "../flashcardLogic";
 import { isVocabTopicLocked } from "@/modules/subscription/planLogic";
+import { deckLevelLabel } from "../flashcardLogic";
 
 export interface FlashcardDeckCardProps {
   topic: VocabTopic;
@@ -70,9 +71,9 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
 
         {/* ── Deck Title ──────────────────────────────────────────────── */}
         <h2 className="mt-3 line-clamp-2 min-h-[2.75rem] text-[17px] font-bold leading-snug text-slate-900 transition-colors group-hover:text-blue-600 dark:text-slate-100 dark:group-hover:text-blue-400 tracking-tight">
-          {topic.level && (
+          {deckLevelLabel(topic.level) && (
             <span className="mr-1.5 inline-block rounded-md bg-slate-100 px-1.5 py-0.5 align-middle text-sm font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-              {topic.level}
+              {deckLevelLabel(topic.level)}
             </span>
           )}
           {topic.title}
