@@ -98,7 +98,7 @@ const meta: Record<Domain, { label: string; type: string }> = {
   writing: { label: "Viết", type: "WRITING_EMAIL" },
 };
 
-const CONTENT_LEVEL_OPTIONS = ["A1", "A2", "B1", "B2", "C1"] as const;
+const CONTENT_LEVEL_OPTIONS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
 
 /** The CEFR tag authored at the head of a title ("Hội thoại C1 — ..."); quizzes have no level column. */
 function levelFromTitle(title?: string | null): string | null {
