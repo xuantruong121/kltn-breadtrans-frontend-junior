@@ -54,6 +54,7 @@ export interface IssueReportItem {
   questionId?: number | null;
   context?: Record<string, unknown> | null;
   resolutionNote?: string | null;
+  adminHref?: string | null;
   createdAt: string;
   updatedAt: string;
   reporter?: {
