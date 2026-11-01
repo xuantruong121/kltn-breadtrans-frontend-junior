@@ -2201,6 +2201,12 @@ export default function SkillCmsWorkspace({
             {checklist.filter((entry) => entry.done).length}/{checklist.length}{" "}
             mục sẵn sàng
           </p>
+          {Number(item?._count?.submissions) > 0 && (
+            <p className="mt-1 text-sm text-amber-700">
+              Bài đã có lượt làm: sửa được nội dung và đáp án, điểm cũ giữ
+              nguyên; không thêm, xoá câu hoặc lựa chọn.
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
           <button
