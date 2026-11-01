@@ -177,7 +177,6 @@ const CERTIFICATES: CertificateMeta[] = [
     ],
     expectedFeatures: [
       "Mô phỏng 100% giao diện thi trên máy tính của các trường đại học",
-      "Quy đổi điểm thi tự động ra các bậc B1, B2, C1",
       "Bộ câu hỏi mẫu bám sát ngân hàng đề khảo thí quốc gia",
       "Hệ thống ghi âm phòng thi Speaking đạt chuẩn",
     ],
@@ -217,8 +216,7 @@ const CERTIFICATES: CertificateMeta[] = [
     ],
     expectedFeatures: [
       "Cấu trúc đề thi mới nhất rút ngắn thời gian làm bài",
-      "Công cụ chấm điểm mô phỏng thuật toán SpeechRater & e-rater",
-      "Ngân hàng đề thi thử tổng hợp từ các kì thi chính thức",
+      "Đề luyện tập do BreadTrans biên soạn",
     ],
     roadmapDate: "Dự kiến: Quý 1/2027",
     theme: {
@@ -236,7 +234,7 @@ const CERTIFICATES: CertificateMeta[] = [
     code: "Cambridge",
     name: "Cambridge FCE / CAE",
     fullName: "Cambridge English Qualifications (B2 First / C1 Advanced)",
-    shortTag: "CEFR B2 • C1",
+    shortTag: "FCE • CAE",
     status: "COMING_SOON",
     badgeText: "Đang biên soạn",
     targetLevel: "B2 First & C1 Advanced",
@@ -256,8 +254,7 @@ const CERTIFICATES: CertificateMeta[] = [
     ],
     expectedFeatures: [
       "Dạng bài Use of English kinh điển độc quyền",
-      "Thang điểm Cambridge English Scale chuẩn hóa",
-      "Bài giải thích chuyên sâu ngữ pháp CEFR",
+      "Bài giải thích chuyên sâu về ngữ pháp",
     ],
     roadmapDate: "Dự kiến: Quý 1/2027",
     theme: {
