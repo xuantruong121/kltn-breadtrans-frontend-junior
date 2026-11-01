@@ -2,7 +2,7 @@ import axiosClient from "../axiosClient";
 import type { GateAttempt, GateResult, GateStatus } from "@/lib/learning-path/levelLock";
 import type { LearnerProfile, StarterRoadmap } from "@/lib/learning-path/onboarding";
 import type { PracticeSkill } from "@/lib/learning-path/practiceLevel";
-import type { LearningContentType, RecommendationItem, TodayPlan, WeekPlan } from "@/lib/learning-path/recommendation";
+import type { LearningContentType, ProgressRow, RecommendationItem, TodayPlan, WeekPlan } from "@/lib/learning-path/recommendation";
 
 export const learningPathService = {
   getProfile: (): Promise<LearnerProfile> => axiosClient.get("/learning-path/profile"),
@@ -10,6 +10,7 @@ export const learningPathService = {
     axiosClient.put("/learning-path/profile", body),
   getToday: (): Promise<TodayPlan> => axiosClient.get("/learning-path/today"),
   getWeek: (): Promise<WeekPlan> => axiosClient.get("/learning-path/week"),
+  getProgress: (): Promise<ProgressRow[]> => axiosClient.get("/learning-path/progress"),
   getRecommended: (skill: PracticeSkill): Promise<RecommendationItem[]> =>
     axiosClient.get(`/learning-path/skills/${skill}/recommended`),
   getRoadmap: (): Promise<StarterRoadmap> => axiosClient.get("/learning-path/roadmap"),

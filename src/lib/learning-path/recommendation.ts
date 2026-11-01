@@ -54,8 +54,26 @@ export type WeekPlan = {
   };
 };
 
+export type ProgressRow = {
+  skill: PracticeSkill;
+  attempts: number;
+  average: number | null;
+  trend: number | null;
+  startLevel: PracticeLevel | null;
+  currentLevel: PracticeLevel;
+  levelsGained: number;
+};
+
+/** One short line for a skill; a trend is shown only with enough attempts. */
+export function progressLine(row: ProgressRow): string {
+  if (row.attempts === 0) return "Chưa có bài nào";
+  const base = `${row.attempts} bài, trung bình ${row.average}%`;
+  if (row.trend === null || row.trend === 0) return base;
+  return `${base}, ${row.trend > 0 ? "tăng" : "giảm"} ${Math.abs(row.trend)} điểm gần đây`;
+}
+
 export type FoundationItem = {
-  kind: "VOCAB_REVIEW" | "GRAMMAR" | "VOCAB_DECK";
+  kind: "VOCAB_REVIEW" | "READING_REVIEW" | "GRAMMAR" | "VOCAB_DECK";
   id: number | null;
   title: string;
   route: string;

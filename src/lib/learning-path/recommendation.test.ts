@@ -5,6 +5,7 @@ import {
   filterBySkill,
   lockLabel,
   otherSuggestions,
+  progressLine,
   skillsWithItems,
   totalMinutes,
   visibleReasons,
@@ -62,4 +63,12 @@ test("the estimate says it is an estimate and what a late target needs", () => {
   assert.match(estimateText({ ...base, onTrack: false, minutesNeeded: 20 }, date), /khoảng 20 phút mỗi ngày/);
   assert.match(estimateText({ ...base, onTrack: false }, date), /đã qua/);
   assert.match(estimateText({ ...base, items: 0 }, date), /đủ số bài/);
+});
+
+test("a progress line shows a trend only when there is one", () => {
+  const row = { skill: "READING" as const, attempts: 6, average: 72, trend: 8, startLevel: null, currentLevel: "BASIC" as const, levelsGained: 0 };
+  assert.equal(progressLine(row), "6 bài, trung bình 72%, tăng 8 điểm gần đây");
+  assert.equal(progressLine({ ...row, trend: -5 }), "6 bài, trung bình 72%, giảm 5 điểm gần đây");
+  assert.equal(progressLine({ ...row, trend: null }), "6 bài, trung bình 72%");
+  assert.equal(progressLine({ ...row, attempts: 0, average: null }), "Chưa có bài nào");
 });

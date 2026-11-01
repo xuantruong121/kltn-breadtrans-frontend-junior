@@ -42,6 +42,7 @@ import {
 import { LevelChoiceCard } from "@/components/dashboard/LevelChoiceCard";
 import { SkillLevelsCard } from "@/components/dashboard/SkillLevelsCard";
 import { StarterRoadmapCard } from "@/components/learning-path/StarterRoadmapCard";
+import { ProgressCard } from "@/components/learning-path/ProgressCard";
 import { TodayPlanCard } from "@/components/learning-path/TodayPlanCard";
 import { WeekPlanCard } from "@/components/learning-path/WeekPlanCard";
 import { learningPathService } from "@/lib/api/services/learningPath.service";
@@ -1360,6 +1361,7 @@ export default function DashboardPage() {
       <StarterRoadmapCard profile={learnerProfile} />
       <SkillLevelsCard profile={learnerProfile} />
       <WeekPlanCard enabled={enabled && Boolean(learnerProfile?.onboarded)} />
+      <ProgressCard enabled={enabled && Boolean(learnerProfile?.onboarded)} />
       <TodayPlanCard enabled={enabled && Boolean(learnerProfile?.onboarded)} />
 
       {/* ========================================================================= */}

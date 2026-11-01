@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, BookOpenText, Clock, Layers, RefreshCw } from "lucide-react";
+import { ArrowRight, BookOpen, BookOpenText, Clock, Layers, RefreshCw } from "lucide-react";
 
 import { grammarDisplayTitle } from "@/lib/catalog/displayTitles";
 import type { FoundationItem } from "@/lib/learning-path/recommendation";
 
 const KIND = {
   VOCAB_REVIEW: { label: "Ôn từ vựng", Icon: RefreshCw },
+  READING_REVIEW: { label: "Ôn bài Đọc", Icon: BookOpen },
   GRAMMAR: { label: "Ngữ pháp", Icon: BookOpenText },
   VOCAB_DECK: { label: "Từ vựng", Icon: Layers },
 };
