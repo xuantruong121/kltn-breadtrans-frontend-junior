@@ -27,7 +27,7 @@ export function LessonExampleCard({
       </p>
       {example.translation && (
         <div className="mt-4 border-t border-blue-100 pt-3 dark:border-blue-900/60">
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
             Nghĩa tiếng Việt
           </p>
           <p className="mt-1 leading-relaxed text-slate-700 dark:text-slate-200">
@@ -80,7 +80,7 @@ export function LessonAudioExamplesBlock({
                 {item.term}
               </p>
               {item.ipa && (
-                <span className="font-mono text-sm text-slate-500 dark:text-slate-400">
+                <span className="font-mono text-sm text-slate-600 dark:text-slate-400">
                   {item.ipa}
                 </span>
               )}
@@ -91,7 +91,7 @@ export function LessonAudioExamplesBlock({
               </p>
             )}
             {item.accent && (
-              <p className="mt-1 text-xs text-slate-400">{item.accent}</p>
+              <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{item.accent}</p>
             )}
             {item.audioUrl && (
               <audio

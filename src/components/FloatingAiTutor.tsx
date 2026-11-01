@@ -819,12 +819,12 @@ function FloatingAiTutorInner() {
                               <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-xs truncate">
                                 {thread.studentName}
                               </h4>
-                              <span className="text-xs font-bold text-slate-400 shrink-0">
+                              <span className="text-xs font-bold text-slate-600 shrink-0 dark:text-slate-400">
                                 {new Date(thread.lastMessageTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </span>
                             </div>
 
-                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                            <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 truncate mt-0.5">
                               {lastMsg ? lastMsg.content : "Chưa có tin nhắn"}
                             </p>
 
@@ -840,7 +840,7 @@ function FloatingAiTutorInner() {
                               </span>
 
                               {thread.studentEmail && (
-                                <span className="text-xs font-bold text-slate-400 truncate">
+                                <span className="text-xs font-bold text-slate-600 truncate dark:text-slate-400">
                                   {thread.studentEmail}
                                 </span>
                               )}
@@ -857,7 +857,7 @@ function FloatingAiTutorInner() {
                       );
                     })
                   ) : (
-                    <div className="text-center py-16 text-slate-400 space-y-2">
+                    <div className="text-center py-16 text-slate-600 space-y-2 dark:text-slate-400">
                       <Inbox size={32} className="mx-auto text-slate-300" />
                       <p className="text-xs font-bold">Không tìm thấy học sinh nào.</p>
                     </div>
@@ -977,7 +977,7 @@ function FloatingAiTutorInner() {
                   )}
 
                   {currentThread.messages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center my-auto py-12 text-center text-slate-400 space-y-3">
+                    <div className="flex flex-col items-center justify-center my-auto py-12 text-center text-slate-600 space-y-3 dark:text-slate-400">
                       <div className="w-14 h-14 rounded-3xl bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center text-3xl shadow-inner">
                         <Croissant size={18} strokeWidth={2} aria-hidden="true" />
                       </div>
@@ -985,7 +985,7 @@ function FloatingAiTutorInner() {
                         <h4 className="font-black text-slate-700 dark:text-slate-200 text-sm">
                           {isAdmin ? "Chưa có tin nhắn nào" : "Chào mừng bạn đến với BreadTrans!"}
                         </h4>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
+                        <p className="text-xs text-slate-600 dark:text-slate-400 max-w-xs leading-relaxed">
                           {isAdmin
                             ? `Chưa có lịch sử tin nhắn với học viên ${currentThread.studentName || "này"}.`
                             : "Bạn cần giải đáp thắc mắc về bài học, từ vựng, ngữ pháp hay lộ trình học? Hãy nhập câu hỏi bên dưới để bắt đầu nhé!"}
@@ -1028,7 +1028,7 @@ function FloatingAiTutorInner() {
                               isStudentMsg
                                 ? "bg-blue-500 text-white"
                                 : isAdminMsg
-                                ? "bg-emerald-600 text-white"
+                                ? "bg-emerald-700 text-white"
                                 : "bg-orange-500 text-white"
                             }`}
                           >
@@ -1044,7 +1044,7 @@ function FloatingAiTutorInner() {
                           {/* Message Bubble */}
                           <div className="flex flex-col gap-1 max-w-full">
                             {msg.senderName && !isRightBubble && (
-                              <span className="text-xs font-black text-slate-500 ml-1">
+                              <span className="text-xs font-black text-slate-600 ml-1 dark:text-slate-400">
                                 {msg.senderName}
                               </span>
                             )}
@@ -1053,7 +1053,7 @@ function FloatingAiTutorInner() {
                                 isRightBubble
                                   ? isStudentMsg
                                     ? "bg-blue-500 text-white rounded-tr-xs shadow-md border border-blue-400"
-                                    : "bg-emerald-600 text-white rounded-tr-xs shadow-md border border-emerald-500"
+                                    : "bg-emerald-700 text-white rounded-tr-xs shadow-md border border-emerald-500"
                                   : isAdminMsg
                                   ? "bg-emerald-50/95 dark:bg-emerald-950/60 border-2 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200 rounded-tl-xs shadow-xs"
                                   : "bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-tl-xs shadow-xs"
@@ -1073,7 +1073,7 @@ function FloatingAiTutorInner() {
                       <div className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center shrink-0 mt-1">
                         <Headphones size={14} />
                       </div>
-                      <div className="p-3 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl rounded-tl-xs text-slate-400 flex items-center gap-1.5 shadow-2xs">
+                      <div className="p-3 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl rounded-tl-xs text-slate-500 flex items-center gap-1.5 shadow-2xs">
                         <span className="text-xs font-bold text-slate-500 dark:text-slate-300 mr-1">Bánh Mì đang soạn câu trả lời</span>
                         <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-bounce" />
                         <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
@@ -1088,7 +1088,7 @@ function FloatingAiTutorInner() {
                 {/* Quick Chips (Dành cho học sinh) */}
                 {!isAdmin && currentThread.messages.length <= 2 && (
                   <div className="px-4 py-2 bg-slate-100/70 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto text-xs shrink-0 no-scrollbar">
-                    <span className="text-slate-400 dark:text-slate-500 font-bold shrink-0">Gợi ý:</span>
+                    <span className="text-slate-600 dark:text-slate-400 font-bold shrink-0">Gợi ý:</span>
                     <button
                       onClick={() => handleQuickQuestion("Giải thích thì hiện tại đơn")}
                       className="px-2.5 py-1 bg-white dark:bg-slate-800 hover:bg-orange-50 dark:hover:bg-slate-700 hover:text-orange-600 dark:hover:text-orange-300 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg font-bold shrink-0 transition-colors cursor-pointer"

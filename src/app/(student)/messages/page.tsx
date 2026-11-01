@@ -93,7 +93,7 @@ export default function LearnerMessagesPage() {
                 Trực tuyến
               </span>
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
               Mọi thắc mắc về bài học, đề thi và kỹ thuật sẽ được giải đáp tại đây.
             </p>
           </div>
@@ -103,14 +103,14 @@ export default function LearnerMessagesPage() {
         <div className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-slate-50/70 p-4 dark:bg-slate-950/40">
           {messagesQuery.isLoading || conversationQuery.isLoading ? (
             <div className="flex justify-center pt-10">
-              <Loader2 className="animate-spin text-slate-400" size={24} />
+              <Loader2 className="animate-spin text-slate-500" size={24} />
             </div>
           ) : messages.length === 0 ? (
             <div className="pt-12 text-center text-sm text-slate-500 space-y-1">
               <p className="font-semibold text-slate-700 dark:text-slate-300">
                 Chưa có tin nhắn nào.
               </p>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Hãy đặt câu hỏi bên dưới để bắt đầu trao đổi với ban quản trị.
               </p>
             </div>
@@ -140,9 +140,9 @@ export default function LearnerMessagesPage() {
 
                   {isSystem ? (
                     <div className="flex justify-center my-2">
-                      <div className="max-w-md rounded-full bg-slate-100 dark:bg-slate-800/80 px-3.5 py-1 text-center text-xs text-slate-500 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/60">
+                      <div className="max-w-md rounded-full bg-slate-100 dark:bg-slate-800/80 px-3.5 py-1 text-center text-xs text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/60">
                         <span>{message.content}</span>
-                        <span className="ml-2 text-xs text-slate-400">
+                        <span className="ml-2 text-xs text-slate-600 dark:text-slate-400">
                           ({formatMessageTimestamp(message.createdAt)})
                         </span>
                       </div>
@@ -154,7 +154,7 @@ export default function LearnerMessagesPage() {
                         {/* Header: Name, Role Badge, Full Timestamp */}
                         <div className="flex items-center gap-1.5 mb-1 px-1 text-xs">
                           <span
-                            className="text-xs font-medium text-slate-400"
+                            className="text-xs font-medium text-slate-600 dark:text-slate-400"
                             title={formatMessageFullTooltip(message.createdAt)}
                           >
                             {formatMessageTimestamp(message.createdAt)}
@@ -199,7 +199,7 @@ export default function LearnerMessagesPage() {
                             Quản trị viên
                           </span>
                           <span
-                            className="text-xs font-medium text-slate-400"
+                            className="text-xs font-medium text-slate-600 dark:text-slate-400"
                             title={formatMessageFullTooltip(message.createdAt)}
                           >
                             {formatMessageTimestamp(message.createdAt)}

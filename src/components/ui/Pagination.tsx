@@ -81,14 +81,14 @@ export const Pagination: React.FC<PaginationProps> = ({
     >
       {/* Left: Summary info & Page size selector */}
       {showSummary && totalItems !== undefined ? (
-        <div className="flex items-center gap-3 text-xs font-semibold text-slate-500 dark:text-slate-400">
+        <div className="flex items-center gap-3 text-xs font-semibold text-slate-600 dark:text-slate-400">
           <span>
             Hiển thị <strong className="text-slate-800 dark:text-slate-200 font-black">{startItem} - {endItem}</strong> trên <strong className="text-slate-800 dark:text-slate-200 font-black">{totalItems}</strong> mục
           </span>
 
           {onPageSizeChange && (
             <div className="hidden sm:flex items-center gap-1.5 pl-3 border-l border-slate-200 dark:border-slate-700">
-              <span className="text-xs text-slate-400 dark:text-slate-500">Xem:</span>
+              <span className="text-xs text-slate-600 dark:text-slate-400">Xem:</span>
               <select
                 value={pageSize}
                 onChange={(e) => onPageSizeChange(Number(e.target.value))}
@@ -140,7 +140,7 @@ export const Pagination: React.FC<PaginationProps> = ({
               return (
                 <span
                   key={`ellipsis-${idx}`}
-                  className="w-8 h-9 flex items-center justify-center text-slate-400 dark:text-slate-500 font-bold select-none"
+                  className="w-8 h-9 flex items-center justify-center text-slate-600 dark:text-slate-400 font-bold select-none"
                 >
                   ...
                 </span>

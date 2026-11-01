@@ -70,7 +70,7 @@ type TopicForm = {
 type Candidate = GrammarDraft & { chosen: boolean };
 
 const FIELD =
-  "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
+  "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
 const ICON_BTN =
   "inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40";
 /** The server's AI limits: more questions for a whole draft than for a top-up. */
@@ -438,7 +438,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
           >
             <summary className="cursor-pointer text-sm font-medium text-slate-800">
               Video minh hoạ (tuỳ chọn)
-              {videoId && <span className="font-normal text-slate-600"> · đã gắn</span>}
+              {videoId && <span className="font-medium text-slate-600"> · đã gắn</span>}
             </summary>
             <p className="mt-2 text-sm text-slate-600">
               Học viên mở video trong mục &quot;Video minh hoạ&quot; dưới phần lý thuyết. Không có video thì mục
@@ -481,11 +481,11 @@ function TopicBody({ topic }: { topic: Topic | null }) {
                   {entry.done ? (
                     <CheckCircle2 size={16} className="flex-none text-emerald-600" aria-hidden="true" />
                   ) : (
-                    <Circle size={16} className="flex-none text-slate-400" aria-hidden="true" />
+                    <Circle size={16} className="flex-none text-slate-500" aria-hidden="true" />
                   )}
                   <span className={entry.done ? "text-slate-600" : "font-medium text-slate-900"}>
                     {entry.label}
-                    {entry.optional && <span className="font-normal text-slate-600"> (nên có)</span>}
+                    {entry.optional && <span className="font-medium text-slate-600"> (nên có)</span>}
                   </span>
                   <span className="sr-only">{entry.done ? "(đã xong)" : "(chưa xong)"}</span>
                 </li>
@@ -626,7 +626,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
         <section className="rounded-xl border border-slate-200 bg-white p-5 xl:col-start-1">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
             <h2 className="font-semibold text-slate-950">
-              Câu hỏi <span className="font-normal tabular-nums text-slate-600">{questions.length}</span>
+              Câu hỏi <span className="font-medium tabular-nums text-slate-600">{questions.length}</span>
             </h2>
             <p className="text-sm text-slate-600">Bấm vào câu để xem như học viên.</p>
           </div>

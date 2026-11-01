@@ -237,7 +237,7 @@ export function CourseAiWorkspaceDialog({
       >
         <header className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4 sm:px-6">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <p className="text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
               Trợ lý biên soạn
             </p>
             <h2
@@ -255,14 +255,14 @@ export function CourseAiWorkspaceDialog({
             type="button"
             onClick={onClose}
             aria-label="Đóng hỗ trợ hoàn thiện khóa học"
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+            className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400"
           >
             <X size={18} />
           </button>
         </header>
         <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-6">
           {loading || !workspace ? (
-            <div className="flex min-h-48 items-center justify-center text-sm text-slate-500">
+            <div className="flex min-h-48 items-center justify-center text-sm text-slate-600 dark:text-slate-400">
               <Loader2 className="mr-2 animate-spin" size={18} />
               Đang phân tích khóa học…
             </div>
@@ -270,19 +270,19 @@ export function CourseAiWorkspaceDialog({
             <>
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-xs text-slate-500">Bài học</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Bài học</p>
                   <p className="mt-1 text-xl font-bold text-slate-900">
                     {workspace.audit.lessons.length}
                   </p>
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-xs text-slate-500">Cần xử lý</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Cần xử lý</p>
                   <p className="mt-1 text-xl font-bold text-slate-900">
                     {workspace.audit.summary.needsAttention}
                   </p>
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-xs text-slate-500">Đề xuất tùy chọn</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Đề xuất tùy chọn</p>
                   <p className="mt-1 text-xl font-bold text-slate-900">
                     {workspace.audit.summary.optional}
                   </p>
@@ -326,7 +326,7 @@ export function CourseAiWorkspaceDialog({
                                   className="mt-1 h-4 w-4 accent-slate-900"
                                 />
                               ) : (
-                                <span className="mt-0.5 text-emerald-600">
+                                <span className="mt-0.5 text-emerald-700 dark:text-emerald-400">
                                   {task.status === "FAILED" ? (
                                     <CircleAlert
                                       size={17}
@@ -341,13 +341,13 @@ export function CourseAiWorkspaceDialog({
                                 <p className="font-semibold text-slate-900">
                                   {task.label}
                                   {task.target.lessonTitle ? (
-                                    <span className="font-normal text-slate-500">
+                                    <span className="font-medium text-slate-600 dark:text-slate-400">
                                       {" "}
                                       · {task.target.lessonTitle}
                                     </span>
                                   ) : null}
                                 </p>
-                                <p className="mt-0.5 text-xs text-slate-500">
+                                <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">
                                   {task.status === "PLANNED"
                                     ? "Chưa chạy"
                                     : task.status === "CANDIDATE_READY"
@@ -425,7 +425,7 @@ export function CourseAiWorkspaceDialog({
           )}
         </div>
         <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-5 py-4 sm:px-6">
-          <p className="text-xs text-slate-500">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             {selected.length} tác vụ đã chọn · kết quả luôn cần bạn xem và xác
             nhận.
           </p>

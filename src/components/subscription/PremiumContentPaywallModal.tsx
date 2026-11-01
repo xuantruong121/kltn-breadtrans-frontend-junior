@@ -105,7 +105,7 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
             type="button"
             onClick={onClose}
             aria-label="Đóng cửa sổ"
-            className="absolute right-4 top-4 rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors cursor-pointer"
+            className="absolute right-4 top-4 rounded-xl p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors cursor-pointer dark:text-slate-400"
           >
             <X size={18} />
           </button>
@@ -151,11 +151,11 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
             {skillType === "VOCABULARY" ? (
               <>
                 <div className="flex items-start gap-2">
-                  <span className="mt-0.5 text-amber-600 dark:text-amber-400 font-bold">•</span>
+                  <span className="mt-0.5 text-amber-700 dark:text-amber-400 font-bold">•</span>
                   <span>Toàn quyền học và ôn tập bộ từ vựng chuyên sâu</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="mt-0.5 text-amber-600 dark:text-amber-400 font-bold">•</span>
+                  <span className="mt-0.5 text-amber-700 dark:text-amber-400 font-bold">•</span>
                   <span>Bài tập và thẻ ôn tập cho các chủ đề từ vựng Premium</span>
                 </div>
               </>
@@ -173,7 +173,7 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
                   ]
               ).map((benefit) => (
                 <div key={benefit} className="flex items-start gap-2">
-                  <span className="mt-0.5 text-amber-600 dark:text-amber-400 font-bold">•</span>
+                  <span className="mt-0.5 text-amber-700 dark:text-amber-400 font-bold">•</span>
                   <span>{benefit}</span>
                 </div>
               ))

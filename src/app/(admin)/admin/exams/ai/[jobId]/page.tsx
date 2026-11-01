@@ -240,7 +240,7 @@ export default function ExamAiCandidateWorkspacePage({
   if (statusQuery.isLoading || candidateQuery.isLoading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <Loader2 className="animate-spin text-slate-400" size={28} />
+        <Loader2 className="animate-spin text-slate-500" size={28} />
       </div>
     );
   }
@@ -256,7 +256,7 @@ export default function ExamAiCandidateWorkspacePage({
       <button
         type="button"
         onClick={() => router.push("/admin/exams")}
-        className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
       >
         <ArrowLeft size={15} /> Quay lại danh sách đề thi
       </button>
@@ -264,7 +264,7 @@ export default function ExamAiCandidateWorkspacePage({
       <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
         Duyệt bản nháp đề thi tự động
       </h1>
-      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+      <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
         Bản nháp câu hỏi được tổng hợp theo cấu trúc đề thi. Rà soát, đối chiếu
         và chọn các nhóm câu hỏi hợp lệ trước khi áp dụng vào đề thi.
       </p>
@@ -317,7 +317,7 @@ export default function ExamAiCandidateWorkspacePage({
           {/* Summary banner */}
           <div className="mt-6 grid grid-cols-2 gap-3 rounded-lg border border-slate-200 bg-white p-4 text-sm sm:grid-cols-4 dark:border-slate-800 dark:bg-slate-900">
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Tổng nội dung
               </p>
               <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -325,31 +325,31 @@ export default function ExamAiCandidateWorkspacePage({
               </p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Cần kiểm tra
               </p>
-              <p className="text-lg font-semibold text-amber-600 dark:text-amber-400">
+              <p className="text-lg font-semibold text-amber-700 dark:text-amber-400">
                 {candidate.flaggedCount}
               </p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Chưa hoàn tất
               </p>
-              <p className="text-lg font-semibold text-amber-600 dark:text-amber-400">
+              <p className="text-lg font-semibold text-amber-700 dark:text-amber-400">
                 {failedUnits.length}
               </p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Đã áp dụng
               </p>
-              <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
+              <p className="text-lg font-semibold text-emerald-700 dark:text-emerald-400">
                 {candidate.appliedCandidateKeys.length}
               </p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Đã chọn
               </p>
               <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -365,7 +365,7 @@ export default function ExamAiCandidateWorkspacePage({
                 key={f}
                 type="button"
                 onClick={() => setFilter(f)}
-                className={`border-b-2 px-1 pb-2 text-sm font-medium ${filter === f ? "border-slate-900 text-slate-900 dark:border-slate-100 dark:text-slate-100" : "border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400"}`}
+                className={`border-b-2 px-1 pb-2 text-sm font-medium ${filter === f ? "border-slate-900 text-slate-900 dark:border-slate-100 dark:text-slate-100" : "border-transparent text-slate-600 hover:text-slate-800 dark:text-slate-400"}`}
               >
                 {f === "FLAGGED" ? "Cần kiểm tra" : "Tất cả"}
               </button>
@@ -403,7 +403,7 @@ export default function ExamAiCandidateWorkspacePage({
             return (
               <section key={part} className="mt-6">
                 <div className="mb-2 flex items-center justify-between">
-                  <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
                     {partLabel(part)}
                   </h2>
                   <div className="flex gap-3">
@@ -420,7 +420,7 @@ export default function ExamAiCandidateWorkspacePage({
                     <button
                       type="button"
                       onClick={() => selectPart(part)}
-                      className="text-xs font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+                      className="text-xs font-medium text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
                     >
                       Chọn cả Part
                     </button>
@@ -471,7 +471,7 @@ export default function ExamAiCandidateWorkspacePage({
                                       ? setEditingKey(null)
                                       : startEdit(group)
                                   }
-                                  className="text-xs font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+                                  className="text-xs font-medium text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
                                 >
                                   {isEditing ? "Đóng" : "Chỉnh sửa"}
                                 </button>
@@ -496,7 +496,7 @@ export default function ExamAiCandidateWorkspacePage({
                           <div className="mt-3 space-y-2">
                             {group.transcript !== null && (
                               <div>
-                                <label className="text-xs text-slate-500 dark:text-slate-400">
+                                <label className="text-xs text-slate-600 dark:text-slate-400">
                                   Transcript
                                 </label>
                                 <textarea
@@ -514,7 +514,7 @@ export default function ExamAiCandidateWorkspacePage({
                             )}
                             {group.passageText !== null && (
                               <div>
-                                <label className="text-xs text-slate-500 dark:text-slate-400">
+                                <label className="text-xs text-slate-600 dark:text-slate-400">
                                   Đoạn văn
                                 </label>
                                 <textarea
@@ -539,7 +539,7 @@ export default function ExamAiCandidateWorkspacePage({
                                     key={qIndex}
                                     className="rounded-md border border-slate-200 p-3 dark:border-slate-700"
                                   >
-                                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                                    <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
                                       Câu {q.questionNumber}
                                     </p>
                                     <input
@@ -625,7 +625,7 @@ export default function ExamAiCandidateWorkspacePage({
                                 >
                                   Câu {q.questionNumber}: {q.text ?? "(Part 1/2 — chỉ nghe)"}
                                   {q.issues.length > 0 && (
-                                    <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
+                                    <span className="ml-2 text-xs text-amber-700 dark:text-amber-400">
                                       {q.issues.join(", ")}
                                     </span>
                                   )}
@@ -651,11 +651,11 @@ export default function ExamAiCandidateWorkspacePage({
             return (
               <section key={skill} className="mt-6">
                 <div className="mb-2 flex items-center justify-between">
-                  <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
                     {skill === "speaking" ? "Speaking" : "Writing"}
                   </h2>
                   {!tasks.every((t) => t.applied) && (
-                    <label className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <label className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
                       <input
                         type="checkbox"
                         checked={selected.has(blockKey)}
@@ -710,7 +710,7 @@ export default function ExamAiCandidateWorkspacePage({
 
           {/* Apply CTA */}
           <div className="sticky bottom-4 mt-8 flex items-center justify-between rounded-lg border border-slate-200 bg-white/95 p-4 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-slate-600 dark:text-slate-400">
               Nội dung chỉ được áp dụng vào bản nháp, chưa được xuất bản.
             </p>
             <button

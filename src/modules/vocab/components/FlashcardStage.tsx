@@ -51,12 +51,12 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
           <div className="absolute inset-0 w-full h-full [backface-visibility:hidden] rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-9 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
             {/* Top Toolbar */}
             <div className="flex items-center justify-between">
-              <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40 border border-sky-200/80 dark:border-sky-800/60 px-3.5 py-1.5 rounded-full">
+              <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-sky-700 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40 border border-sky-200/80 dark:border-sky-800/60 px-3.5 py-1.5 rounded-full">
                 Flashcard
               </span>
 
               <div
-                className="flex items-center gap-2 text-slate-400 dark:text-slate-500"
+                className="flex items-center gap-2 text-slate-600 dark:text-slate-400"
                 onClick={(e) => e.stopPropagation()}
               >
                 {onOpenSettings && (
@@ -122,8 +122,8 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
             </div>
 
             {/* Bottom Hint */}
-            <div className="flex items-center justify-center gap-2 text-sm text-slate-400 dark:text-slate-500 font-semibold pt-3 border-t border-slate-100 dark:border-slate-800">
-              <RotateCw size={15} className="text-slate-400 dark:text-slate-500" />
+            <div className="flex items-center justify-center gap-2 text-sm text-slate-600 dark:text-slate-400 font-semibold pt-3 border-t border-slate-100 dark:border-slate-800">
+              <RotateCw size={15} className="text-slate-500 dark:text-slate-400" />
               <span>Nhấn để xem nghĩa (hoặc Space)</span>
             </div>
           </div>
@@ -188,7 +188,7 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
                         event.stopPropagation();
                         onPlayAudio("us", word.exampleEn);
                       }}
-                      className="p-1.5 text-slate-400 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 rounded-lg hover:bg-white dark:hover:bg-slate-700 transition-colors shrink-0 cursor-pointer"
+                      className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 rounded-lg hover:bg-white dark:hover:bg-slate-700 transition-colors shrink-0 cursor-pointer"
                       title="Nghe câu ví dụ"
                       aria-label="Nghe câu ví dụ"
                     >
@@ -197,7 +197,7 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
                   )}
                 </div>
                 {word.exampleVi && (
-                  <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
+                  <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
                     {word.exampleVi}
                   </p>
                 )}
@@ -230,7 +230,7 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
                       aria-label={`Nghe cụm từ ${collocation.phrase}`}
                     >
                       <span>{collocation.phrase}</span>
-                      <span className="text-amber-700/90 dark:text-amber-400 border-l border-amber-300/80 dark:border-amber-800/60 pl-2 font-normal text-xs sm:text-sm">
+                      <span className="text-amber-700 dark:text-amber-400 border-l border-amber-300/80 dark:border-amber-800/60 pl-2 font-medium text-xs sm:text-sm">
                         {collocation.meaningVi}
                       </span>
                       <Volume2
@@ -244,8 +244,8 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
             )}
 
             {/* Card Footer: Flip back hint */}
-            <div className="flex items-center justify-center gap-2 text-sm text-slate-400 dark:text-slate-500 font-semibold pt-3 border-t border-slate-100 dark:border-slate-800 shrink-0">
-              <RotateCw size={15} className="text-slate-400 dark:text-slate-500" />
+            <div className="flex items-center justify-center gap-2 text-sm text-slate-600 dark:text-slate-400 font-semibold pt-3 border-t border-slate-100 dark:border-slate-800 shrink-0">
+              <RotateCw size={15} className="text-slate-500 dark:text-slate-400" />
               <span>Nhấn để quay lại từ vựng (Space)</span>
             </div>
           </div>
@@ -272,17 +272,17 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
           <button
             type="button"
             onClick={onEscalate}
-            className="flex-1 inline-flex min-h-[52px] sm:min-h-[56px] items-center justify-center gap-2.5 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white font-black text-base sm:text-lg transition-all active:scale-98 shadow-sm focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none cursor-pointer"
+            className="flex-1 inline-flex min-h-[52px] sm:min-h-[56px] items-center justify-center gap-2.5 rounded-2xl bg-sky-700 hover:bg-sky-800 text-white font-black text-base sm:text-lg transition-all active:scale-98 shadow-sm focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none cursor-pointer"
           >
             <span>Chưa nhớ</span>
-            <kbd className="hidden sm:inline text-xs font-mono font-bold bg-sky-600 text-white px-2 py-0.5 rounded-md ml-1.5">
+            <kbd className="hidden sm:inline text-xs font-mono font-bold bg-sky-700 text-white px-2 py-0.5 rounded-md ml-1.5">
               Enter
             </kbd>
           </button>
         </div>
 
         {/* Subtext Hint */}
-        <p className="text-sm text-slate-500 dark:text-slate-400 text-center font-medium">
+        <p className="text-sm text-slate-600 dark:text-slate-400 text-center font-medium">
           Bấm &ldquo;Chưa nhớ&rdquo; để qua chế độ học tiếp theo
         </p>
       </div>

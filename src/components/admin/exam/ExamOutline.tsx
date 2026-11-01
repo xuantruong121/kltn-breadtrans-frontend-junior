@@ -10,7 +10,7 @@ import {
 const stateIcon: Record<string, ReactElement> = {
   READY: <CheckCircle2 size={14} className="text-emerald-600" />,
   WARNING: <AlertTriangle size={14} className="text-amber-600" />,
-  INCOMPLETE: <Circle size={14} className="text-slate-400" />,
+  INCOMPLETE: <Circle size={14} className="text-slate-500" />,
 };
 
 /** Real Part-level navigation + content counts + readiness, no decoration. */
@@ -30,7 +30,7 @@ export function ExamOutline({
 
   const renderGroup = (label: string, items: typeof rows) => (
     <div>
-      <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+      <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
         {label}
       </p>
       <div className="space-y-1">

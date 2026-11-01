@@ -143,19 +143,19 @@ export default function NewExamPage() {
       </button>
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <div className="border-b border-slate-100 pb-6">
-          <p className="text-xs font-bold uppercase tracking-[.16em] text-slate-500">
+          <p className="text-xs font-bold uppercase tracking-[.16em] text-slate-600 dark:text-slate-400">
             NỘI DUNG HỌC · LUYỆN ĐỀ
           </p>
           <h1 className="mt-2 text-2xl font-bold text-slate-950">
             {authoringMode === "AI" ? "AI tạo đề luyện" : "Tạo bản nháp đề"}
           </h1>
-          <p className="mt-2 text-sm leading-6 text-slate-500">
+          <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
             Chọn kỳ thi và loại đề. Hệ thống sẽ dùng cấu trúc phù hợp; Admin
             không cần nhập mã kỹ thuật.
           </p>
         </div>
         <div className="mt-6 grid grid-cols-2 rounded-xl bg-slate-100 p-1 text-sm font-semibold">
-          <button type="button" onClick={() => setAuthoringMode("MANUAL")} className={`rounded-lg px-3 py-2 transition ${authoringMode === "MANUAL" ? "bg-white text-slate-950 shadow-sm" : "text-slate-500"}`}>Tạo thủ công</button>
+          <button type="button" onClick={() => setAuthoringMode("MANUAL")} className={`rounded-lg px-3 py-2 transition ${authoringMode === "MANUAL" ? "bg-white text-slate-950 shadow-sm" : "text-slate-600"} dark:text-slate-400`}>Tạo thủ công</button>
           <button type="button" onClick={() => setAuthoringMode("AI")} className={`inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 transition ${authoringMode === "AI" ? "bg-slate-950 text-white shadow-sm" : "text-slate-500"}`}><FileStack size={15} /> AI tạo đề</button>
         </div>
         <form onSubmit={submit} className="mt-6 space-y-6">
@@ -175,7 +175,7 @@ export default function NewExamPage() {
                 VSTEP · Coming Soon
               </option>
             </select>
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">
               IELTS và các kỳ thi khác sẽ hiển thị Coming soon cho tới khi có
               backend authoring tương ứng.
             </p>
@@ -207,7 +207,7 @@ export default function NewExamPage() {
                         {variant.label}
                       </span>
                       <span
-                        className={`mt-1 block text-xs ${selected ? "text-slate-300" : "text-slate-500"}`}
+                        className={`mt-1 block text-xs ${selected ? "text-slate-300" : "text-slate-600"} dark:text-slate-400`}
                       >
                         {variant.detail}
                       </span>
@@ -226,19 +226,19 @@ export default function NewExamPage() {
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="text-sm font-semibold text-slate-800">Chế độ tạo
-                  <select value={generationMode} onChange={(event) => setGenerationMode(event.target.value as "FULL_EXAM" | "PART")} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 font-normal outline-none focus:border-slate-500">
+                  <select value={generationMode} onChange={(event) => setGenerationMode(event.target.value as "FULL_EXAM" | "PART")} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 font-medium outline-none focus:border-slate-500">
                     <option value="FULL_EXAM">Đề hoàn chỉnh (200 câu)</option>
                     <option value="PART" disabled={variantCode !== "TOEIC_LR"}>Sinh riêng một Part (L&R)</option>
                   </select>
                 </label>
                 {generationMode === "PART" && <label className="text-sm font-semibold text-slate-800">Part
-                  <select value={part} onChange={(event) => setPart(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 font-normal outline-none focus:border-slate-500">{[1,2,3,4,5,6,7].map((value) => <option key={value} value={value}>Part {value}</option>)}</select>
+                  <select value={part} onChange={(event) => setPart(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 font-medium outline-none focus:border-slate-500">{[1,2,3,4,5,6,7].map((value) => <option key={value} value={value}>Part {value}</option>)}</select>
                 </label>}
                 <label className="text-sm font-semibold text-slate-800">Độ khó mục tiêu
-                  <select value={difficulty} onChange={(event) => setDifficulty(event.target.value as typeof difficulty)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 font-normal outline-none focus:border-slate-500"><option value="easy">Cơ bản</option><option value="medium">Cân bằng</option><option value="hard">Nâng cao</option></select>
+                  <select value={difficulty} onChange={(event) => setDifficulty(event.target.value as typeof difficulty)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 font-medium outline-none focus:border-slate-500"><option value="easy">Cơ bản</option><option value="medium">Cân bằng</option><option value="hard">Nâng cao</option></select>
                 </label>
-                <label className="text-sm font-semibold text-slate-800">Chủ đề ưu tiên <span className="font-normal text-slate-400">(không bắt buộc)</span>
-                  <input value={topic} onChange={(event) => setTopic(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 font-normal outline-none focus:border-slate-500" placeholder="Ví dụ: workplace communication" />
+                <label className="text-sm font-semibold text-slate-800">Chủ đề ưu tiên <span className="font-medium text-slate-600 dark:text-slate-400">(không bắt buộc)</span>
+                  <input value={topic} onChange={(event) => setTopic(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 font-medium outline-none focus:border-slate-500" placeholder="Ví dụ: workplace communication" />
                 </label>
               </div>
               <p className="rounded-xl border border-amber-200 bg-white/80 p-3 text-xs leading-5 text-slate-600">Lưu ý: Đây là đề luyện tập tham khảo mô phỏng cấu trúc TOEIC, không phải đề thi chính thức do ETS phát hành.</p>
@@ -251,7 +251,7 @@ export default function NewExamPage() {
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal outline-none focus:border-slate-500"
+                className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-medium outline-none focus:border-slate-500"
                 placeholder="Ví dụ: TOEIC Practice Set 01"
               />
             </label>
@@ -260,7 +260,7 @@ export default function NewExamPage() {
               <input
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal outline-none focus:border-slate-500"
+                className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-medium outline-none focus:border-slate-500"
                 placeholder="Mục tiêu hoặc phạm vi đề"
               />
             </label>

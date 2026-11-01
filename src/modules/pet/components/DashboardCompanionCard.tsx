@@ -240,7 +240,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
                   {speciesInfo.speciesName || pet.name}
                 </h4>
               </div>
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mt-0.5">
                 {speciesInfo.title || "Bạn đồng hành học tập"}
               </p>
 
@@ -354,7 +354,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
               className={`w-full inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl text-sm font-bold transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none ${
                 feedEligibility.allowed
                   ? "bg-amber-600 hover:bg-amber-700 text-white shadow-xs active:scale-[0.98]"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-400 border border-slate-200 dark:border-slate-700 cursor-not-allowed"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 cursor-not-allowed"
               }`}
             >
               {feedMutation.isPending ? (
@@ -372,13 +372,13 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
 
             {/* Satiety or Requirement Message */}
             {!feedEligibility.allowed && (pet.satietyState === "FULL" || satiety >= 80) ? (
-              <p className="text-center text-sm font-medium text-slate-500 dark:text-slate-400">{satietyText}</p>
+              <p className="text-center text-sm font-medium text-slate-600 dark:text-slate-400">{satietyText}</p>
             ) : userBalance < feedCost ? (
-              <p className="text-center text-sm font-semibold text-rose-600 dark:text-rose-400">
+              <p className="text-center text-sm font-semibold text-rose-700 dark:text-rose-400">
                 Cần {feedCost} Bánh Mì (Hiện có: {userBalance})
               </p>
             ) : (
-              <p className="text-center text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-center text-sm text-slate-600 dark:text-slate-400">
                 Tiêu hao {feedCost} Bánh Mì • {satietyText} • EXP hôm nay {pet.dailyRewardedFeedCount ?? 0}/{pet.dailyRewardLimit ?? 3}
               </p>
             )}

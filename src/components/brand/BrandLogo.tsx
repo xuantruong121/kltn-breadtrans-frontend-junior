@@ -168,10 +168,10 @@ export function BrandLogo({
             <span
               className={`font-medium tracking-normal mt-0.5 truncate ${sizeStyles.subtitle} ${
                 isDark
-                  ? "text-slate-400"
+                  ? "text-slate-600 dark:text-slate-400"
                   : variant === "admin"
-                    ? "text-slate-500"
-                    : "text-slate-500 dark:text-slate-400"
+                    ? "text-slate-600 dark:text-slate-400"
+                    : "text-slate-600 dark:text-slate-400"
               }`}
             >
               {subtitle || "Nền tảng Tự học Tiếng Anh theo Lộ trình"}

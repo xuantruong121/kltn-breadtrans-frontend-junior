@@ -35,7 +35,7 @@ export default function VocabPracticePage() {
     return (
       <div className="flex flex-col justify-center items-center h-96 gap-3">
         <Loader2 className="animate-spin text-sky-500" size={40} />
-        <span className="text-xs font-bold text-slate-400">Đang chuẩn bị phòng học từ vựng...</span>
+        <span className="text-xs font-bold text-slate-500">Đang chuẩn bị phòng học từ vựng...</span>
       </div>
     );
   }
@@ -83,7 +83,7 @@ export default function VocabPracticePage() {
         <h2 className="text-lg font-extrabold text-slate-800 dark:text-slate-100">
           Yêu cầu đăng nhập
         </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+        <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
           Vui lòng đăng nhập để tiếp tục học từ vựng và lưu tiến độ cá nhân.
         </p>
         <div className="flex justify-center gap-3 pt-2">
@@ -107,7 +107,7 @@ export default function VocabPracticePage() {
         <h2 className="text-lg font-extrabold text-slate-800 dark:text-slate-100">
           Không thể tải bài học
         </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+        <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
           Đã xảy ra sự cố khi tải bài học từ vựng. Vui lòng thử lại sau.
         </p>
         <div className="flex justify-center pt-2">
@@ -121,7 +121,7 @@ export default function VocabPracticePage() {
     return (
       <div className="max-w-md mx-auto text-center mt-20 space-y-4 bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <h2 className="text-lg font-extrabold text-slate-800 dark:text-slate-100">Chưa có từ vựng</h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Chủ đề này hiện tại chưa có từ vựng nào để học.</p>
+        <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">Chủ đề này hiện tại chưa có từ vựng nào để học.</p>
         <div className="flex justify-center pt-2">
           <BackButton href="/flashcard" label="Quay lại danh mục" />
         </div>

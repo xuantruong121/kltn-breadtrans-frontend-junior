@@ -103,7 +103,7 @@ const FeedbackPanel: React.FC<{ qr: QuestionResult }> = ({ qr }) => (
     {/* Wrong selection: show the correct answer */}
     {!qr.isCorrect && (
       <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5 dark:border-slate-700 dark:bg-slate-800/60">
-        <p className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <p className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
           Đáp án đúng
         </p>
         <p className="text-base font-bold text-slate-900 dark:text-slate-100">
@@ -185,7 +185,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
   if (!questions.length) {
     return (
       <div className="flex flex-1 items-center justify-center p-8 text-center">
-        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
           Chủ đề này chưa có câu hỏi. Hãy quay lại sau khi nội dung được bổ sung.
         </p>
       </div>
@@ -222,7 +222,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
         return "border-emerald-500 bg-emerald-50/80 text-emerald-900 dark:border-emerald-500 dark:bg-emerald-950/50 dark:text-emerald-200 ring-2 ring-emerald-500/40";
       if (isWrong)
         return "border-rose-500 bg-rose-50/80 text-rose-900 dark:border-rose-500 dark:bg-rose-950/50 dark:text-rose-200 ring-2 ring-rose-500/40";
-      return "border-slate-200/70 bg-white/50 text-slate-400 dark:border-slate-800 dark:bg-slate-900/30 dark:text-slate-600 opacity-60";
+      return "border-slate-200/70 bg-white/50 text-slate-600 dark:border-slate-800 dark:bg-slate-900/30 dark:text-slate-400 opacity-60";
     }
 
     if (isSelected) {
@@ -281,7 +281,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
           <div className="p-6 space-y-6">
             {/* Topic info */}
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                 Chủ đề ngữ pháp
               </p>
               <h2 className="mt-1.5 text-base sm:text-lg font-bold leading-snug text-slate-900 dark:text-slate-100">
@@ -294,7 +294,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
 
             {/* Progress */}
             <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 p-4">
-              <div className="mb-2.5 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <div className="mb-2.5 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                 <span>Tiến độ thực hành</span>
                 <span>
                   {result
@@ -319,7 +319,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
 
             {/* Question list */}
             <div>
-              <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                 Danh sách câu hỏi ({questions.length})
               </p>
               <nav aria-label="Danh sách câu hỏi">
@@ -390,7 +390,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <span
-                  className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                  className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400"
                   aria-label={`Câu hỏi ${currentIndex + 1} trên ${questions.length}`}
                 >
                   Câu {currentIndex + 1} / {questions.length}
@@ -401,7 +401,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
                   </span>
                 )}
               </div>
-              <span className="text-xs text-slate-400 dark:text-slate-500">
+              <span className="text-xs text-slate-600 dark:text-slate-400">
                 {result ? "Chế độ xem lại bài làm" : "Chọn 1 đáp án chính xác nhất"}
               </span>
             </div>
@@ -546,7 +546,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
                 ? `Nộp bài (cần trả lời thêm ${questions.length - answeredCount} câu)`
                 : "Nộp bài và xem kết quả"
             }
-            className="flex cursor-pointer items-center gap-2 rounded-xl sm:rounded-2xl bg-emerald-600 px-6 py-2.5 sm:px-7 sm:py-3 text-sm sm:text-base font-bold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 shadow-xs"
+            className="flex cursor-pointer items-center gap-2 rounded-xl sm:rounded-2xl bg-emerald-700 px-6 py-2.5 sm:px-7 sm:py-3 text-sm sm:text-base font-bold text-white transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 shadow-xs"
             data-testid="grammar-submit-btn"
           >
             {submitAttempt.isPending ? "Đang chấm…" : "Nộp bài"}

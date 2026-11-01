@@ -115,7 +115,7 @@ export function QuickRegisterModal({
           type="button"
           onClick={onClose}
           aria-label="Đóng"
-          className="absolute top-5 right-5 flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+          className="absolute top-5 right-5 flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
         >
           <X size={18} />
         </button>
@@ -128,11 +128,11 @@ export function QuickRegisterModal({
             Tạo tài khoản BreadTrans
           </h3>
           {targetLabel ? (
-            <p className="mt-1 text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 py-1 px-3 rounded-full inline-block">
+            <p className="mt-1 text-sm font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 py-1 px-3 rounded-full inline-block">
               Tạo tài khoản để: {targetLabel}
             </p>
           ) : (
-            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-sm font-semibold text-slate-600 dark:text-slate-400 mt-1">
               Nhận ngay +30 Bánh Mì tân thủ và trải nghiệm lộ trình tự học
             </p>
           )}
@@ -156,7 +156,7 @@ export function QuickRegisterModal({
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-slate-200 dark:border-slate-800" />
           </div>
-          <span className="relative bg-white dark:bg-slate-900 px-3 text-xs font-bold text-slate-400 dark:text-slate-500">
+          <span className="relative bg-white dark:bg-slate-900 px-3 text-xs font-bold text-slate-600 dark:text-slate-400">
             Hoặc điền thông tin
           </span>
         </div>
@@ -164,10 +164,10 @@ export function QuickRegisterModal({
         <form onSubmit={handleRegister} className="space-y-3">
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Họ và tên <span className="text-rose-500">*</span>
+              Họ và tên <span className="text-rose-700 dark:text-rose-400">*</span>
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 dark:text-slate-500">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-600 dark:text-slate-400">
                 <User size={16} />
               </span>
               <input
@@ -183,10 +183,10 @@ export function QuickRegisterModal({
 
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Email đăng ký <span className="text-rose-500">*</span>
+              Email đăng ký <span className="text-rose-700 dark:text-rose-400">*</span>
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 dark:text-slate-500">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-600 dark:text-slate-400">
                 <Mail size={16} />
               </span>
               <input
@@ -202,10 +202,10 @@ export function QuickRegisterModal({
 
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Mật khẩu <span className="text-rose-500">*</span>
+              Mật khẩu <span className="text-rose-700 dark:text-rose-400">*</span>
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 dark:text-slate-500">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-600 dark:text-slate-400">
                 <Lock size={16} />
               </span>
               <input
@@ -219,7 +219,7 @@ export function QuickRegisterModal({
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 dark:text-slate-400"
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -228,10 +228,10 @@ export function QuickRegisterModal({
 
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Xác nhận mật khẩu <span className="text-rose-500">*</span>
+              Xác nhận mật khẩu <span className="text-rose-700 dark:text-rose-400">*</span>
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 dark:text-slate-500">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-600 dark:text-slate-400">
                 <Lock size={16} />
               </span>
               <input
@@ -264,7 +264,7 @@ export function QuickRegisterModal({
           </button>
         </form>
 
-        <div className="mt-5 text-center text-xs font-semibold text-slate-500 dark:text-slate-400">
+        <div className="mt-5 text-center text-xs font-semibold text-slate-600 dark:text-slate-400">
           Đã có tài khoản?{" "}
           <button
             type="button"

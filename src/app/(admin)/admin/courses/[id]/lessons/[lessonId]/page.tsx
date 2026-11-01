@@ -854,7 +854,7 @@ export default function V5LessonEditorPage() {
 
   if (!lesson) {
     return (
-      <main className="mx-auto max-w-5xl p-8 text-center text-slate-500">
+      <main className="mx-auto max-w-5xl p-8 text-center text-slate-600 dark:text-slate-400">
         Không tìm thấy bài học.
       </main>
     );
@@ -877,7 +877,7 @@ export default function V5LessonEditorPage() {
           <div>
             <Link
               href={`/admin/courses/${courseId}/curriculum`}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-800 transition-colors dark:text-slate-400"
             >
               <ArrowLeft size={14} /> Trở về:{" "}
               {courseTitle || "Chương trình học"}
@@ -896,7 +896,7 @@ export default function V5LessonEditorPage() {
                 {lesson.status === "PUBLISHED" ? "Đã xuất bản" : "Bản nháp"}
               </span>
             </div>
-            <p className="mt-1 flex items-center gap-2 text-xs text-slate-500">
+            <p className="mt-1 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
               <span>
                 {lesson.sections?.length || 0} mục nội dung ·{" "}
                 {lesson.exercises?.length || 0} bài luyện tập
@@ -936,7 +936,7 @@ export default function V5LessonEditorPage() {
                   role="menu"
                   className="absolute right-0 top-[calc(100%+0.5rem)] z-30 w-72 rounded-xl border border-slate-200 bg-white p-2 shadow-lg"
                 >
-                  <p className="px-2 py-2 text-xs leading-relaxed text-slate-500">
+                  <p className="px-2 py-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
                     {lesson.sections?.length && guidedPractice && finalCheck
                       ? "Bài học đã có nội dung và bài tập. Chỉ tạo đề xuất mới khi bạn muốn bổ sung một phần cụ thể."
                       : "AI tạo đề xuất để bạn xem lại trước khi áp dụng vào bản nháp."}
@@ -1036,7 +1036,7 @@ export default function V5LessonEditorPage() {
               <button
                 onClick={() => setIsPublishConfirmOpen(true)}
                 disabled={busy || courseStatus === "PUBLISHED"}
-                className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 transition-colors disabled:opacity-50"
               >
                 <Check size={15} /> Xuất bản bài học
               </button>
@@ -1092,7 +1092,7 @@ export default function V5LessonEditorPage() {
         >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-bold text-amber-800">
+              <p className="text-sm font-bold text-amber-800">
                 Đề xuất AI · chưa áp dụng
               </p>
               <h2 className="mt-1 text-base font-bold text-slate-900">
@@ -1124,7 +1124,7 @@ export default function V5LessonEditorPage() {
           {Array.isArray(aiCandidate.warnings) &&
             aiCandidate.warnings.length > 0 && (
               <div className="mt-4 rounded-xl border border-amber-300 bg-white p-3">
-                <p className="text-xs font-bold text-amber-800">
+                <p className="text-sm font-bold text-amber-800">
                   Ghi chú rà soát (không chặn việc áp dụng)
                 </p>
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
@@ -1154,7 +1154,7 @@ export default function V5LessonEditorPage() {
                   if (!Array.isArray(items) || !items.length) return null;
                   return (
                     <div key={key}>
-                      <p className="text-xs font-semibold text-slate-500">
+                      <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
                         {label}
                       </p>
                       <ul className="mt-1 list-disc space-y-0.5 pl-4">
@@ -1279,7 +1279,7 @@ export default function V5LessonEditorPage() {
                     />
                     Áp dụng {label}
                   </label>
-                  <p className="mb-2 text-xs font-bold uppercase tracking-wide text-teal-700">
+                  <p className="mb-2 text-sm font-bold uppercase tracking-wide text-teal-700">
                     {label}
                   </p>
                   <input
@@ -1386,7 +1386,7 @@ export default function V5LessonEditorPage() {
                     <h3 className="text-sm font-bold text-slate-900">
                       Ảnh đại diện bài học
                     </h3>
-                    <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                    <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
                       Tùy chọn. Dùng khi bài học cần một hình minh họa chung. Hỗ
                       trợ PNG, JPG và WEBP.
                     </p>
@@ -1426,14 +1426,14 @@ export default function V5LessonEditorPage() {
                           className="aspect-video w-full object-cover"
                         />
                         <figcaption className="flex items-center justify-between gap-2 p-2">
-                          <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+                          <span className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
                             <ImageIcon size={13} /> Hình minh họa
                           </span>
                           <button
                             type="button"
                             onClick={() => void removeLessonMedia(media.id)}
                             disabled={busy || isReadOnly}
-                            className="text-xs font-semibold text-rose-600 hover:text-rose-700 disabled:opacity-50"
+                            className="text-xs font-semibold text-rose-700 hover:text-rose-700 disabled:opacity-50 dark:text-rose-400"
                           >
                             Xóa
                           </button>
@@ -1442,7 +1442,7 @@ export default function V5LessonEditorPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="mt-4 text-xs text-slate-500">
+                  <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">
                     Chưa có hình minh họa. Đây là phần tùy chọn.
                   </p>
                 )}
@@ -1464,7 +1464,7 @@ export default function V5LessonEditorPage() {
                   <h2 className="text-base font-bold text-slate-900">
                     Nội dung bài học
                   </h2>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
                     Soạn nội dung theo đúng thứ tự học viên sẽ trải nghiệm.
                   </p>
                 </div>
@@ -1592,7 +1592,7 @@ export default function V5LessonEditorPage() {
                                     heading: s.heading,
                                   })
                                 }
-                                className="rounded border border-slate-200 p-1 text-slate-400 hover:text-rose-600 hover:border-rose-200"
+                                className="rounded border border-slate-200 p-1 text-slate-600 hover:text-rose-600 hover:border-rose-200 dark:text-slate-400"
                               >
                                 <Trash2 size={13} />
                               </button>
@@ -1627,7 +1627,7 @@ export default function V5LessonEditorPage() {
                                       return next;
                                     })
                                   }
-                                  className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700"
+                                  className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-700 dark:text-slate-400"
                                   aria-expanded={!isCollapsed}
                                 >
                                   <ChevronDown
@@ -1655,7 +1655,7 @@ export default function V5LessonEditorPage() {
                             return (
                               <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3">
                                 <div className="flex flex-wrap items-center justify-between gap-2">
-                                  <p className="text-xs font-bold text-amber-800">
+                                  <p className="text-sm font-bold text-amber-800">
                                     Đề xuất AI ·{" "}
                                     {
                                       SECTION_AI_ACTIONS.find(
@@ -1701,7 +1701,7 @@ export default function V5LessonEditorPage() {
                         <button
                           type="button"
                           onClick={() => openAddSection(idx + 1)}
-                          className="flex w-full items-center gap-2 py-1 text-xs font-semibold text-slate-500 before:h-px before:flex-1 before:bg-slate-200 after:h-px after:flex-1 after:bg-slate-200 hover:text-slate-800"
+                          className="flex w-full items-center gap-2 py-1 text-xs font-semibold text-slate-600 before:h-px before:flex-1 before:bg-slate-200 after:h-px after:flex-1 after:bg-slate-200 hover:text-slate-800 dark:text-slate-400"
                           aria-label={`Thêm nội dung sau ${s.heading}`}
                         >
                           <Plus size={14} /> Thêm nội dung
@@ -1710,7 +1710,7 @@ export default function V5LessonEditorPage() {
                     );
                   })
                 ) : (
-                  <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500">
+                  <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-600 dark:text-slate-400">
                     <FileText
                       size={28}
                       className="mx-auto mb-2 text-slate-300"
@@ -1745,7 +1745,7 @@ export default function V5LessonEditorPage() {
                         <h3 className="text-sm font-bold text-slate-900">
                           {title}
                         </h3>
-                        <p className="mt-1 text-xs text-slate-600">
+                        <p className="mt-1 text-sm text-slate-600">
                           {description}
                         </p>
                       </div>
@@ -1778,7 +1778,7 @@ export default function V5LessonEditorPage() {
                   href="#lesson-media"
                   className="block rounded-md px-2 py-1.5 hover:bg-slate-100"
                 >
-                  <span className="mr-1 text-slate-400">○</span>Ảnh minh họa
+                  <span className="mr-1 text-slate-600 dark:text-slate-400">○</span>Ảnh minh họa
                 </a>
                 {lesson.sections.map((section: any, index: number) => (
                   <a
@@ -1820,7 +1820,7 @@ export default function V5LessonEditorPage() {
             <h2 className="text-base font-bold text-slate-900">
               Bài luyện tập
             </h2>
-            <p className="text-xs text-slate-500">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
               Cấu trúc chuẩn của một bài học V5 gồm &quot;Luyện tập có hướng
               dẫn&quot; (Guided Practice) và &quot;Kiểm tra cuối bài&quot;
               (Final Check).
@@ -1839,7 +1839,7 @@ export default function V5LessonEditorPage() {
                     ? guidedPractice.title
                     : "Luyện tập có hướng dẫn"}
                 </h3>
-                <p className="mt-0.5 text-xs text-slate-500">
+                <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">
                   {guidedPractice
                     ? guidedPractice.prompt
                     : "Chưa khởi tạo bài luyện tập có hướng dẫn cho bài học này."}
@@ -1861,7 +1861,7 @@ export default function V5LessonEditorPage() {
                         title: guidedPractice.title,
                       })
                     }
-                    className="rounded-lg border border-slate-200 p-1.5 text-slate-400 hover:text-rose-600 hover:border-rose-200"
+                    className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:text-rose-600 hover:border-rose-200 dark:text-slate-400"
                     title="Xóa bài tập"
                   >
                     <Trash2 size={13} />
@@ -1915,7 +1915,7 @@ export default function V5LessonEditorPage() {
                                 prompt: q.prompt,
                               })
                             }
-                            className="rounded border border-slate-200 bg-white p-1 text-slate-400 hover:text-rose-600 hover:border-rose-200"
+                            className="rounded border border-slate-200 bg-white p-1 text-slate-600 hover:text-rose-600 hover:border-rose-200 dark:text-slate-400"
                           >
                             <Trash2 size={12} />
                           </button>
@@ -1955,14 +1955,14 @@ export default function V5LessonEditorPage() {
                       </div>
 
                       {q.explanation && (
-                        <p className="text-xs text-slate-500 italic bg-white p-2 rounded border border-slate-100">
+                        <p className="text-sm text-slate-600 italic bg-white p-2 rounded border border-slate-100 dark:text-slate-400">
                           Giải thích: {q.explanation}
                         </p>
                       )}
                     </div>
                   ))
                 ) : (
-                  <p className="py-4 text-center text-xs text-slate-400 italic">
+                  <p className="py-4 text-center text-sm text-slate-600 italic dark:text-slate-400">
                     Chưa có câu hỏi nào trong bài luyện tập này. Nhấn &quot;+
                     Thêm câu hỏi&quot; để soạn.
                   </p>
@@ -1981,7 +1981,7 @@ export default function V5LessonEditorPage() {
                 <h3 className="mt-1 text-base font-bold text-slate-900">
                   {finalCheck ? finalCheck.title : "Kiểm tra cuối bài"}
                 </h3>
-                <p className="mt-0.5 text-xs text-slate-500">
+                <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">
                   {finalCheck
                     ? finalCheck.prompt
                     : "Chưa khởi tạo Final Check cho bài học này."}
@@ -2003,7 +2003,7 @@ export default function V5LessonEditorPage() {
                         title: finalCheck.title,
                       })
                     }
-                    className="rounded-lg border border-slate-200 p-1.5 text-slate-400 hover:text-rose-600 hover:border-rose-200"
+                    className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:text-rose-600 hover:border-rose-200 dark:text-slate-400"
                     title="Xóa bài tập"
                   >
                     <Trash2 size={13} />
@@ -2056,7 +2056,7 @@ export default function V5LessonEditorPage() {
                                 prompt: q.prompt,
                               })
                             }
-                            className="rounded border border-slate-200 bg-white p-1 text-slate-400 hover:text-rose-600 hover:border-rose-200"
+                            className="rounded border border-slate-200 bg-white p-1 text-slate-600 hover:text-rose-600 hover:border-rose-200 dark:text-slate-400"
                           >
                             <Trash2 size={12} />
                           </button>
@@ -2096,14 +2096,14 @@ export default function V5LessonEditorPage() {
                       </div>
 
                       {q.explanation && (
-                        <p className="text-xs text-slate-500 italic bg-white p-2 rounded border border-slate-100">
+                        <p className="text-sm text-slate-600 italic bg-white p-2 rounded border border-slate-100 dark:text-slate-400">
                           Giải thích: {q.explanation}
                         </p>
                       )}
                     </div>
                   ))
                 ) : (
-                  <p className="py-4 text-center text-xs text-slate-400 italic">
+                  <p className="py-4 text-center text-sm text-slate-600 italic dark:text-slate-400">
                     Chưa có câu hỏi nào trong Final Check. Nhấn &quot;+ Thêm câu
                     hỏi&quot; để soạn.
                   </p>
@@ -2191,7 +2191,7 @@ export default function V5LessonEditorPage() {
                 <span className="font-semibold text-slate-900">
                   Bài học này cần Kiểm tra cuối bài
                 </span>
-                <span className="mt-0.5 block text-xs text-slate-500">
+                <span className="mt-0.5 block text-xs text-slate-600 dark:text-slate-400">
                   Bỏ chọn nếu đây là bài học luyện tập không cần bài Kiểm tra
                   cuối bài để xuất bản.
                 </span>
@@ -2216,7 +2216,7 @@ export default function V5LessonEditorPage() {
       {activeTab === "preview" && (
         <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-6">
           <div className="border-b border-slate-100 pb-4">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider dark:text-slate-400">
               Xem trước giao diện học viên
             </span>
             <h2 className="mt-1 text-2xl font-bold text-slate-900">
@@ -2242,7 +2242,7 @@ export default function V5LessonEditorPage() {
                 </div>
               ))
             ) : (
-              <p className="text-xs text-slate-400 italic">
+              <p className="text-sm text-slate-600 italic dark:text-slate-400">
                 Chưa có nội dung lý thuyết.
               </p>
             )}
@@ -2261,14 +2261,14 @@ export default function V5LessonEditorPage() {
                   <h4 className="text-sm font-bold text-slate-900">
                     {ex.title}
                   </h4>
-                  <p className="text-xs text-slate-600">{ex.prompt}</p>
-                  <p className="text-xs text-slate-500 font-medium">
+                  <p className="text-sm text-slate-600">{ex.prompt}</p>
+                  <p className="text-sm text-slate-600 font-medium dark:text-slate-400">
                     Tổng số câu hỏi: {ex.questions?.length || 0} câu
                   </p>
                 </div>
               ))
             ) : (
-              <p className="text-xs text-slate-400 italic">
+              <p className="text-sm text-slate-600 italic dark:text-slate-400">
                 Chưa có bài tập thực hành.
               </p>
             )}
@@ -2302,7 +2302,7 @@ export default function V5LessonEditorPage() {
           >
             <div className="flex items-center justify-between gap-3 border-b border-slate-100 p-5 sm:p-6">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <p className="text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
                   {sectionTypeLabel(sectionForm.type)}
                 </p>
                 <h3
@@ -2318,7 +2318,7 @@ export default function V5LessonEditorPage() {
               <button
                 type="button"
                 onClick={requestCloseSectionModal}
-                className="shrink-0 text-slate-400 hover:text-slate-600"
+                className="shrink-0 text-slate-600 hover:text-slate-600 dark:text-slate-400"
                 aria-label="Đóng trình chỉnh sửa"
               >
                 <X size={18} />
@@ -2332,7 +2332,7 @@ export default function V5LessonEditorPage() {
                 className={`rounded-t-lg px-3 py-2 text-xs font-semibold transition-colors ${
                   sectionEditorTab === "edit"
                     ? "border-b-2 border-slate-900 text-slate-900"
-                    : "text-slate-500 hover:text-slate-700"
+                    : "text-slate-600 hover:text-slate-700 dark:text-slate-400"
                 }`}
               >
                 Soạn thảo
@@ -2343,7 +2343,7 @@ export default function V5LessonEditorPage() {
                 className={`rounded-t-lg px-3 py-2 text-xs font-semibold transition-colors ${
                   sectionEditorTab === "preview"
                     ? "border-b-2 border-slate-900 text-slate-900"
-                    : "text-slate-500 hover:text-slate-700"
+                    : "text-slate-600 hover:text-slate-700 dark:text-slate-400"
                 }`}
               >
                 Xem trước
@@ -2412,7 +2412,7 @@ export default function V5LessonEditorPage() {
                     <label className="text-xs font-semibold text-slate-700">
                       Nội dung chính *
                     </label>
-                    <p className="mt-0.5 text-xs text-slate-400">
+                    <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">
                       Để trống một dòng giữa hai đoạn để tách thành nhiều đoạn
                       văn.
                     </p>
@@ -2447,7 +2447,7 @@ export default function V5LessonEditorPage() {
                       </button>
                     </div>
                     {sectionForm.bullets.length === 0 ? (
-                      <p className="rounded-lg border border-dashed border-slate-200 px-3 py-2.5 text-xs text-slate-400">
+                      <p className="rounded-lg border border-dashed border-slate-200 px-3 py-2.5 text-sm text-slate-600 dark:text-slate-400">
                         Chưa có ý chính.
                       </p>
                     ) : (
@@ -2519,7 +2519,7 @@ export default function V5LessonEditorPage() {
                                 })
                               }
                               aria-label={`Xóa ý ${index + 1}`}
-                              className="rounded-lg border border-slate-200 px-2 text-slate-500 hover:border-rose-200 hover:text-rose-600"
+                              className="rounded-lg border border-slate-200 px-2 text-slate-600 hover:border-rose-200 hover:text-rose-600 dark:text-slate-400"
                             >
                               <X size={15} />
                             </button>
@@ -2550,7 +2550,7 @@ export default function V5LessonEditorPage() {
                       </button>
                     </div>
                     {sectionForm.examples.length === 0 ? (
-                      <p className="rounded-lg border border-dashed border-slate-200 px-3 py-2.5 text-xs text-slate-400">
+                      <p className="rounded-lg border border-dashed border-slate-200 px-3 py-2.5 text-sm text-slate-600 dark:text-slate-400">
                         Chưa có ví dụ minh họa.
                       </p>
                     ) : (
@@ -2613,7 +2613,7 @@ export default function V5LessonEditorPage() {
                                     })
                                   }
                                   aria-label={`Xóa ví dụ ${index + 1}`}
-                                  className="text-slate-400 hover:text-rose-600"
+                                  className="text-slate-600 hover:text-rose-600 dark:text-slate-400"
                                 >
                                   <X size={15} />
                                 </button>
@@ -2716,7 +2716,7 @@ export default function V5LessonEditorPage() {
                       </button>
                     </div>
                     {sectionForm.audioExamples.length === 0 ? (
-                      <p className="rounded-lg border border-dashed border-slate-200 px-3 py-2.5 text-xs text-slate-400">
+                      <p className="rounded-lg border border-dashed border-slate-200 px-3 py-2.5 text-sm text-slate-600 dark:text-slate-400">
                         Chưa có audio mẫu.
                       </p>
                     ) : (
@@ -2782,7 +2782,7 @@ export default function V5LessonEditorPage() {
                                     })
                                   }
                                   aria-label={`Xóa audio ${index + 1}`}
-                                  className="text-slate-400 hover:text-rose-600"
+                                  className="text-slate-600 hover:text-rose-600 dark:text-slate-400"
                                 >
                                   <X size={15} />
                                 </button>
@@ -2961,7 +2961,7 @@ export default function V5LessonEditorPage() {
               <button
                 type="button"
                 onClick={() => setIsQuestionModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-600 hover:text-slate-600 dark:text-slate-400"
               >
                 <X size={18} />
               </button>

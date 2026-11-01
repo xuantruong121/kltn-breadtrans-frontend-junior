@@ -137,7 +137,7 @@ export const ShippingCompletionModal: React.FC<ShippingCompletionModalProps> = (
               >
                 Hoàn thiện thông tin nhận quà
               </h2>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                 Vui lòng bổ sung tên người nhận, số điện thoại và địa chỉ giao hàng trước khi đổi quà vật lý.
               </p>
             </div>
@@ -147,7 +147,7 @@ export const ShippingCompletionModal: React.FC<ShippingCompletionModalProps> = (
             onClick={onClose}
             disabled={isSaving}
             aria-label="Đóng"
-            className="grid min-h-10 min-w-10 place-items-center rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-500 dark:hover:text-slate-200 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
+            className="grid min-h-10 min-w-10 place-items-center rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
           >
             <X size={20} />
           </button>
@@ -157,7 +157,7 @@ export const ShippingCompletionModal: React.FC<ShippingCompletionModalProps> = (
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-              Tên người nhận <span className="text-rose-500">*</span>
+              Tên người nhận <span className="text-rose-700 dark:text-rose-400">*</span>
             </label>
             <input
               type="text"
@@ -170,7 +170,7 @@ export const ShippingCompletionModal: React.FC<ShippingCompletionModalProps> = (
 
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-              Số điện thoại <span className="text-rose-500">*</span>
+              Số điện thoại <span className="text-rose-700 dark:text-rose-400">*</span>
             </label>
             <input
               type="tel"
@@ -184,7 +184,7 @@ export const ShippingCompletionModal: React.FC<ShippingCompletionModalProps> = (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                Tỉnh/Thành phố <span className="text-rose-500">*</span>
+                Tỉnh/Thành phố <span className="text-rose-700 dark:text-rose-400">*</span>
               </label>
               <AddressCombobox
                 id="modal-shipping-province-select"
@@ -206,7 +206,7 @@ export const ShippingCompletionModal: React.FC<ShippingCompletionModalProps> = (
 
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                Phường / Xã / Đặc khu <span className="text-rose-500">*</span>
+                Phường / Xã / Đặc khu <span className="text-rose-700 dark:text-rose-400">*</span>
               </label>
               <AddressCombobox
                 id="modal-shipping-ward-select"
@@ -234,7 +234,7 @@ export const ShippingCompletionModal: React.FC<ShippingCompletionModalProps> = (
 
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-              Địa chỉ chi tiết <span className="text-rose-500">*</span>
+              Địa chỉ chi tiết <span className="text-rose-700 dark:text-rose-400">*</span>
             </label>
             <input
               type="text"
@@ -245,7 +245,7 @@ export const ShippingCompletionModal: React.FC<ShippingCompletionModalProps> = (
             />
           </div>
 
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             * Thông tin này chỉ được dùng để xử lý gửi quà vật lý. BreadTrans bảo mật thông tin liên hệ của bạn.
           </p>
 

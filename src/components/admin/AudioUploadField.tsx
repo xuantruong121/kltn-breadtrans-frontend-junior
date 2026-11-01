@@ -92,7 +92,7 @@ export default function AudioUploadField({
           <button
             type="button"
             onClick={() => setShowTechnicalUrl(!showTechnicalUrl)}
-            className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 transition-colors"
+            className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-slate-600 transition-colors dark:text-slate-400"
           >
             Thông tin kỹ thuật {showTechnicalUrl ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
           </button>
@@ -121,7 +121,7 @@ export default function AudioUploadField({
                   type="button"
                   disabled={disabled || uploading}
                   onClick={handleRemove}
-                  className="inline-flex items-center gap-1 rounded-md border border-rose-200 bg-white px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-50"
+                  className="inline-flex items-center gap-1 rounded-md border border-rose-200 bg-white px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50 transition-colors disabled:opacity-50 dark:text-rose-400"
                   title="Gỡ bỏ âm thanh"
                 >
                   <Trash2 size={12} />
@@ -135,7 +135,7 @@ export default function AudioUploadField({
             </audio>
 
             {showTechnicalUrl && (
-              <p className="text-xs font-mono text-slate-500 break-all bg-white p-2 rounded border border-slate-200">
+              <p className="text-xs font-mono text-slate-600 break-all bg-white p-2 rounded border border-slate-200 dark:text-slate-400">
                 {value}
               </p>
             )}
@@ -143,12 +143,12 @@ export default function AudioUploadField({
         ) : (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 py-1">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 dark:text-slate-400">
                 <Volume2 size={18} />
               </div>
               <div>
                 <p className="text-xs font-medium text-slate-700">Chưa có tệp âm thanh</p>
-                <p className="text-xs text-slate-400">{helperText}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">{helperText}</p>
               </div>
             </div>
 

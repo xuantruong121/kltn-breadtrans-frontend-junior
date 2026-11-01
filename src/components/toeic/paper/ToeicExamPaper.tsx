@@ -32,7 +32,7 @@ function Passage({ text }: { text: string }) {
     <div className="space-y-3">
       {splitPassageDocuments(text).map((doc, index) => (
         <div key={index} className="rounded-md border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/60">
-          {doc.heading && <p className="mb-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{doc.heading}</p>}
+          {doc.heading && <p className="mb-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">{doc.heading}</p>}
           <p className="whitespace-pre-line text-[15px] leading-7 text-slate-800 dark:text-slate-100">{doc.body}</p>
         </div>
       ))}
@@ -75,7 +75,7 @@ const Group = memo(function Group({
   return (
     <section data-group-id={group.id} className="border-b border-slate-100 py-3 last:border-b-0 dark:border-slate-800">
       {(group.part === 3 || group.part === 4) && numbers.length > 1 && (
-        <p className="mb-1 text-sm font-semibold text-slate-500 dark:text-slate-400">
+        <p className="mb-1 text-sm font-semibold text-slate-600 dark:text-slate-400">
           Câu {numbers[0]}–{numbers[numbers.length - 1]}
         </p>
       )}

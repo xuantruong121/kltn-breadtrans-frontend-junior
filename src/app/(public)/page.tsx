@@ -232,7 +232,7 @@ export default function PublicLandingPage() {
               {/* Main Headline */}
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-black text-slate-900 dark:text-slate-100 leading-[1.24] sm:leading-[1.18] text-balance">
                 Tự học Tiếng Anh theo lộ trình, chinh phục từng mục tiêu cùng{" "}
-                <span className=" text-amber-600 dark:text-amber-400">
+                <span className=" text-amber-700 dark:text-amber-400">
                   trợ lý AI
                 </span>
               </h1>
@@ -280,7 +280,7 @@ export default function PublicLandingPage() {
                 <div className="pt-0.5">
                   <button
                     onClick={() => openDirectLogin("bài học", "/dashboard")}
-                    className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-amber-800 dark:hover:text-amber-300 transition-colors underline underline-offset-4 cursor-pointer"
+                    className="text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-amber-800 dark:hover:text-amber-300 transition-colors underline underline-offset-4 cursor-pointer"
                     type="button"
                   >
                     Đã có tài khoản học viên? Đăng nhập ngay →
@@ -320,14 +320,14 @@ export default function PublicLandingPage() {
 
                   {/* Practice Prompt Preview */}
                   <div className="space-y-2">
-                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide">
                       Câu luyện nói thực chiến:
                     </span>
                     <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-slate-800/60 border border-amber-200/80 dark:border-slate-700">
                       <p className="text-base font-bold text-slate-900 dark:text-slate-100 leading-snug">
                         &ldquo;Could you please send me the financial report by tomorrow?&rdquo;
                       </p>
-                      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1 italic">
+                      <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 mt-1 italic">
                         (Bạn có thể gửi cho tôi bản báo cáo tài chính trước ngày mai không?)
                       </p>
                     </div>
@@ -372,7 +372,7 @@ export default function PublicLandingPage() {
 
                   {/* Phoneme Breakdown Chips */}
                   <div className="space-y-1.5">
-                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide">
                       Kết quả chấm từng từ (minh họa):
                     </span>
                     <div className="flex flex-wrap gap-1.5 text-xs font-bold">
@@ -394,11 +394,11 @@ export default function PublicLandingPage() {
                   {/* Interactive Result Badges Footer */}
                   <div className="pt-2 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-2 text-center">
                     <div className="p-2 rounded-xl bg-amber-50/50 dark:bg-slate-800/60 border border-amber-200/60 dark:border-slate-700/60">
-                      <span className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Phát âm</span>
+                      <span className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Phát âm</span>
                       <strong className="text-base font-black text-emerald-700 dark:text-emerald-400">98%</strong>
                     </div>
                     <div className="p-2 rounded-xl bg-amber-50/50 dark:bg-slate-800/60 border border-amber-200/60 dark:border-slate-700/60">
-                      <span className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Trôi chảy</span>
+                      <span className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Trôi chảy</span>
                       <strong className="text-base font-black text-amber-700 dark:text-amber-400">95 / 100</strong>
                     </div>
                   </div>
@@ -409,11 +409,11 @@ export default function PublicLandingPage() {
                   className="hidden sm:flex absolute -top-4 -left-2 sm:-left-4 bg-white dark:bg-slate-850 border border-amber-200/90 dark:border-slate-700 rounded-2xl px-3.5 py-2 shadow-soft items-center gap-2 z-20 transition-transform hover:scale-105"
                   aria-hidden="true"
                 >
-                  <div className="size-6 rounded-lg bg-orange-100 dark:bg-orange-950/50 flex items-center justify-center text-orange-600 dark:text-orange-400 shrink-0">
+                  <div className="size-6 rounded-lg bg-orange-100 dark:bg-orange-950/50 flex items-center justify-center text-orange-700 dark:text-orange-400 shrink-0">
                     <Flame size={14} className="fill-orange-500" />
                   </div>
                   <p className="text-xs font-black text-slate-800 dark:text-slate-100">
-                    Chuỗi <span className="text-orange-600 dark:text-orange-400 font-extrabold">14 ngày</span>
+                    Chuỗi <span className="text-orange-700 dark:text-orange-400 font-extrabold">14 ngày</span>
                   </p>
                 </div>
 
@@ -478,24 +478,24 @@ export default function PublicLandingPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                 <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 shadow-2xs">
                   <span className="text-xs font-extrabold text-teal-800 dark:text-teal-300 block">Chấm từng từ</span>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Điểm chính xác cho mỗi từ trong câu</span>
+                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Điểm chính xác cho mỗi từ trong câu</span>
                 </div>
                 <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 shadow-2xs">
                   <span className="text-xs font-extrabold text-teal-800 dark:text-teal-300 block">Lưu lịch sử</span>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Xem lại các lần nói trước của bạn</span>
+                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Xem lại các lần nói trước của bạn</span>
                 </div>
                 <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 shadow-2xs">
                   <span className="text-xs font-extrabold text-teal-800 dark:text-teal-300 block">Nghe mẫu</span>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Tốc độ 0.75×, 0.9×, 1×, giọng US hoặc UK</span>
+                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Tốc độ 0.75×, 0.9×, 1×, giọng US hoặc UK</span>
                 </div>
               </div>
             </div>
 
             <div className="pt-6 mt-6 border-t border-slate-200/70 dark:border-slate-800 flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Bài luyện theo chủ đề và cấp độ</span>
+              <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Bài luyện theo chủ đề và cấp độ</span>
               <button
                 onClick={() => handleProtectedAction("phòng luyện nói", "/speaking")}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-extrabold text-xs transition-colors shadow-2xs cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-extrabold text-xs transition-colors shadow-2xs cursor-pointer"
                 type="button"
               >
                 <span>Thử luyện nói ngay</span>
@@ -537,7 +537,7 @@ export default function PublicLandingPage() {
             </div>
 
             <div className="pt-5 mt-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Có giải thích từng câu</span>
+              <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Có giải thích từng câu</span>
               <button
                 onClick={() => handleProtectedAction("phòng thi theo format chứng chỉ", "/exams")}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs transition-colors shadow-2xs cursor-pointer"
@@ -582,10 +582,10 @@ export default function PublicLandingPage() {
             </div>
 
             <div className="pt-5 mt-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Đã thuộc &amp; Yêu thích</span>
+              <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Đã thuộc &amp; Yêu thích</span>
               <button
                 onClick={() => handleProtectedAction("kho từ vựng flashcard", "/flashcard")}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs transition-colors shadow-2xs cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs transition-colors shadow-2xs cursor-pointer"
                 type="button"
               >
                 <span>Học từ vựng</span>
@@ -641,7 +641,7 @@ export default function PublicLandingPage() {
             </div>
 
             <div className="pt-6 mt-6 border-t border-slate-200/70 dark:border-slate-800 flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Bảng xếp hạng cập nhật theo tuần</span>
+              <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Bảng xếp hạng cập nhật theo tuần</span>
               <button
                 onClick={() => handleProtectedAction("đấu trường và cửa hàng", "/arena")}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs transition-colors shadow-2xs cursor-pointer"
@@ -735,8 +735,8 @@ export default function PublicLandingPage() {
                   <span className="pr-4">{faq.q}</span>
                   <ChevronDown
                     size={18}
-                    className={`shrink-0 transition-transform duration-200 text-slate-400 dark:text-slate-500 ${
-                      isOpen ? "rotate-180 text-amber-600 dark:text-amber-400" : ""
+                    className={`shrink-0 transition-transform duration-200 text-slate-400 dark:text-slate-400 ${
+                      isOpen ? "rotate-180 text-amber-700 dark:text-amber-400" : ""
                     }`}
                   />
                 </button>
@@ -766,13 +766,13 @@ export default function PublicLandingPage() {
           />
 
           <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center text-center gap-3.5 sm:gap-4.5">
-            <span className="inline-flex items-center text-xs font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full bg-white/20 border border-white/30 text-amber-100">
+            <span className="inline-flex items-center text-xs font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full bg-white/20 border border-white/30 text-white">
               Khởi Đầu Vững Chắc Cùng BreadTrans
             </span>
             <h2 className="text-2xl sm:text-4xl font-black text-white leading-snug sm:leading-[1.36] text-balance">
               Bắt đầu luyện tiếng Anh với BreadTrans
             </h2>
-            <p className="text-amber-100 text-sm sm:text-base font-semibold max-w-2xl mx-auto leading-relaxed text-pretty">
+            <p className="text-white text-sm sm:text-base font-semibold max-w-2xl mx-auto leading-relaxed text-pretty">
               Đăng ký tài khoản miễn phí, làm bài kiểm tra đầu vào và nhận gợi ý bài luyện
               cho những kỹ năng bạn cần cải thiện.
             </p>
@@ -805,7 +805,7 @@ export default function PublicLandingPage() {
               </Link>
             </div>
 
-            <p className="text-xs font-bold text-amber-200/90 pt-2">
+            <p className="text-xs font-bold text-white pt-2">
               Đăng ký miễn phí • Không cần thẻ ngân hàng
             </p>
           </div>

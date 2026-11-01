@@ -757,7 +757,7 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
           <button type="button" className="flex-1" onClick={() => setShowDrawer(false)} aria-label="Đóng bảng câu hỏi" />
           <div role="dialog" aria-modal="true" aria-label="Bảng câu hỏi" className="h-[80dvh] w-full rounded-t-2xl bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] dark:bg-slate-900">
             <div className="mb-2 flex justify-end">
-              <button type="button" onClick={() => setShowDrawer(false)} aria-label="Đóng" className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
+              <button type="button" onClick={() => setShowDrawer(false)} aria-label="Đóng" className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-400">
                 <X size={20} />
               </button>
             </div>
@@ -820,15 +820,15 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
             <div className="mt-4 grid grid-cols-3 gap-2 text-center">
               <div className="rounded-md bg-blue-50 p-3 text-blue-800 dark:bg-blue-950/40 dark:text-blue-200">
                 <p className="text-2xl font-bold">{answeredCount}</p>
-                <p className="text-xs font-semibold">Đã trả lời</p>
+                <p className="text-sm font-semibold">Đã trả lời</p>
               </div>
               <div className="rounded-md bg-slate-100 p-3 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
                 <p className="text-2xl font-bold">{total - answeredCount}</p>
-                <p className="text-xs font-semibold">Chưa trả lời</p>
+                <p className="text-sm font-semibold">Chưa trả lời</p>
               </div>
               <div className="rounded-md bg-amber-50 p-3 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
                 <p className="text-2xl font-bold">{marked.size}</p>
-                <p className="text-xs font-semibold">Đánh dấu review</p>
+                <p className="text-sm font-semibold">Đánh dấu review</p>
               </div>
             </div>
             {submit.isError && (

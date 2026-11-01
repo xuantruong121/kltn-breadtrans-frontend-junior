@@ -1428,7 +1428,7 @@ export default function SkillCmsWorkspace({
                   }`}
                 >
                   {label}{" "}
-                  <span className="font-normal tabular-nums text-slate-500">
+                  <span className="font-medium tabular-nums text-slate-600 dark:text-slate-400">
                     {count}
                   </span>
                 </button>
@@ -1438,7 +1438,7 @@ export default function SkillCmsWorkspace({
           <label className="relative min-w-0 flex-1">
             <span className="sr-only">Tìm nội dung {meta[domain].label}</span>
             <Search
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
               size={18}
               aria-hidden="true"
             />
@@ -1604,7 +1604,7 @@ export default function SkillCmsWorkspace({
                     </span>
                   )}
                   {domain === "listening" && (
-                    <span className="truncate text-xs text-slate-500">
+                    <span className="truncate text-xs text-slate-600 dark:text-slate-400">
                       {
                         LISTENING_MODE_OPTIONS.find(
                           (option) =>
@@ -1629,7 +1629,7 @@ export default function SkillCmsWorkspace({
                 <p className="mt-1 line-clamp-2 text-sm text-slate-600">
                   {content.description || "Chưa có mô tả"}
                 </p>
-                <p className="mt-2 truncate text-xs text-slate-500">
+                <p className="mt-2 truncate text-sm text-slate-600 dark:text-slate-400">
                   {trackNames(content.tracks)}
                 </p>
                 <div className="mt-auto pt-4">
@@ -1972,7 +1972,7 @@ export default function SkillCmsWorkspace({
                     placeholder="Ví dụ: The next bus to the city center leaves in fifteen minutes."
                     className={`${inputClassName()} min-h-16`}
                   />
-                  <span className="mt-1 block text-xs font-normal text-slate-500">
+                  <span className="mt-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
                     Đổi câu nghe thì audio cũ ngừng dùng; tạo lại audio sau khi lưu.
                   </span>
                 </label>
@@ -1993,7 +1993,7 @@ export default function SkillCmsWorkspace({
                 <legend className="text-sm font-medium">
                   Phương án và đáp án đúng
                 </legend>
-                <p className="mt-0.5 text-xs text-slate-500">
+                <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">
                   Điền 4 phương án, bấm nút tròn ở phương án đúng.
                 </p>
                 <div className="mt-2 grid gap-2 md:grid-cols-2">
@@ -2127,7 +2127,7 @@ export default function SkillCmsWorkspace({
                         ),
                       })
                     }
-                    className="min-h-10 self-end rounded-lg border border-rose-200 px-3 text-rose-600"
+                    className="min-h-10 self-end rounded-lg border border-rose-200 px-3 text-rose-700 dark:text-rose-400"
                     aria-label="Xóa lượt lời"
                   >
                     <Trash2 size={14} />
@@ -2189,7 +2189,7 @@ export default function SkillCmsWorkspace({
     <main className="space-y-6 p-6">
       <button
         onClick={() => router.push(`/admin/${domain}`)}
-        className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-500"
+        className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-400"
       >
         <ArrowLeft size={16} /> Danh sách
       </button>
@@ -2312,7 +2312,7 @@ export default function SkillCmsWorkspace({
             )}
           </div>
           {draftLocked && (
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               Bài đã có câu hỏi — dùng ‘Thêm câu hỏi bằng AI’ ở mục Câu hỏi.
             </p>
           )}
@@ -2463,7 +2463,7 @@ export default function SkillCmsWorkspace({
                           ? "border-emerald-200 bg-emerald-50 text-emerald-800"
                           : index === step
                             ? "border-blue-300 bg-blue-50 font-semibold text-blue-800"
-                            : "border-slate-200 text-slate-500"
+                            : "border-slate-200 text-slate-600 dark:text-slate-400"
                       }`}
                     >
                       {index + 1}. {label}
@@ -2486,7 +2486,7 @@ export default function SkillCmsWorkspace({
                         </span>{" "}
                         <span className="text-slate-800">{turn.text}</span>
                         {turn.translation && (
-                          <span className="block text-slate-500">
+                          <span className="block text-slate-600 dark:text-slate-400">
                             {turn.translation}
                           </span>
                         )}
@@ -2622,7 +2622,7 @@ export default function SkillCmsWorkspace({
               >
                 Trước khi xuất bản
               </h2>
-              <span className="text-sm tabular-nums text-slate-500">
+              <span className="text-sm tabular-nums text-slate-600 dark:text-slate-400">
                 {checklist.filter((entry) => entry.done).length}/{checklist.length}
               </span>
             </div>
@@ -2699,7 +2699,7 @@ export default function SkillCmsWorkspace({
                   Thêm câu hỏi bằng AI
                 </button>
               )}
-              <span className="text-sm text-slate-500">
+              <span className="text-sm text-slate-600 dark:text-slate-400">
                 {questions.length} câu
               </span>
             </div>
@@ -2724,7 +2724,7 @@ export default function SkillCmsWorkspace({
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs font-semibold text-slate-500">
+                    <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
                       Câu {index + 1} ·{" "}
                       {isWriting
                         ? "Viết"
@@ -2868,7 +2868,7 @@ export default function SkillCmsWorkspace({
                 <div className="rounded-lg border border-blue-300 bg-blue-50/30 p-4">
                   <label className="block text-sm font-semibold text-slate-900">
                     Thêm nhiều câu nghe chép
-                    <span className="mt-0.5 block text-xs font-normal text-slate-500">
+                    <span className="mt-0.5 block text-xs font-medium text-slate-600 dark:text-slate-400">
                       Mỗi dòng một câu tiếng Anh; các câu được thêm theo thứ tự.
                     </span>
                     <textarea
@@ -2956,7 +2956,7 @@ export default function SkillCmsWorkspace({
                   Xem lại bản nháp{" "}
                   {fullDraft.domain === "reading" ? "Reading" : "Listening"}
                 </h3>
-                <p className="mt-1 text-xs leading-5 text-slate-500">
+                <p className="mt-1 text-sm leading-5 text-slate-600 dark:text-slate-400">
                   Xem lại, sửa hoặc bỏ bớt câu đề xuất trước khi áp dụng. Chưa ghi
                   database; CMS Save vẫn bắt buộc.
                 </p>
@@ -2965,7 +2965,7 @@ export default function SkillCmsWorkspace({
                 type="button"
                 aria-label="Đóng xem lại bản nháp"
                 onClick={() => setFullDraft(null)}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                className="rounded-lg p-1 text-slate-600 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:text-slate-400"
               >
                 <X size={18} />
               </button>
@@ -3050,7 +3050,7 @@ export default function SkillCmsWorkspace({
                 />
               </label>
               {fullDraft.sourceQuestion && (
-                <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">
+                <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm leading-5 text-amber-900">
                   Full draft sẽ lưu transcript nguồn thành một câu{" "}
                   {fullDraft.sourceQuestion.type}; các câu hỏi bên dưới được lưu
                   thành candidate riêng. Không tạo audio.
@@ -3067,7 +3067,7 @@ export default function SkillCmsWorkspace({
                     }
                     )
                   </h4>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                     Có thể chỉnh sửa hoặc khôi phục candidate đã loại.
                   </p>
                 </div>
@@ -3099,7 +3099,7 @@ export default function SkillCmsWorkspace({
                               : current,
                           )
                         }
-                        className="text-xs font-semibold text-slate-500 underline-offset-2 hover:text-slate-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                        className="text-xs font-semibold text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:text-slate-400"
                       >
                         {candidate.excluded ? "Khôi phục" : "Loại candidate"}
                       </button>
@@ -3316,7 +3316,7 @@ export default function SkillCmsWorkspace({
           <div className="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-2xl border border-amber-100 bg-white p-6 shadow-2xl">
             <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[.14em] text-amber-700">
+                <p className="text-sm font-semibold uppercase tracking-[.14em] text-amber-700">
                   Gợi ý biên soạn
                 </p>
                 <h3
@@ -3325,7 +3325,7 @@ export default function SkillCmsWorkspace({
                 >
                   AI gợi ý nội dung nghe
                 </h3>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                   Transcript chỉ được đưa vào form hiện tại; audio artifact vẫn
                   do quy trình Production audio xử lý.
                 </p>
@@ -3333,7 +3333,7 @@ export default function SkillCmsWorkspace({
               <button
                 type="button"
                 onClick={() => setIsListeningContentAiOpen(false)}
-                className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:text-slate-400"
                 aria-label="Đóng gợi ý nội dung nghe"
               >
                 <X size={18} />
@@ -3341,7 +3341,7 @@ export default function SkillCmsWorkspace({
             </div>
             <div className="mt-4 flex-1 overflow-y-auto">
               {!listeningContentAiSuggestion ? (
-                <div className="rounded-xl border border-dashed border-slate-200 p-10 text-center text-sm text-slate-500">
+                <div className="rounded-xl border border-dashed border-slate-200 p-10 text-center text-sm text-slate-600 dark:text-slate-400">
                   Nhấn “Tạo gợi ý” để tạo transcript theo loại {listeningMode()}
                   .
                 </div>
@@ -3512,7 +3512,7 @@ export default function SkillCmsWorkspace({
           <div className="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
             <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[.14em] text-slate-500">
+                <p className="text-sm font-semibold uppercase tracking-[.14em] text-slate-600 dark:text-slate-400">
                   Review trước khi lưu
                 </p>
                 <h3
@@ -3521,7 +3521,7 @@ export default function SkillCmsWorkspace({
                 >
                   AI gợi ý câu hỏi nghe nháp
                 </h3>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                   Câu hỏi được tạo từ transcript hiện tại, không tự thêm vào
                   database.
                 </p>
@@ -3529,7 +3529,7 @@ export default function SkillCmsWorkspace({
               <button
                 type="button"
                 onClick={() => setIsListeningQuestionsAiOpen(false)}
-                className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:text-slate-400"
                 aria-label="Đóng tạo câu hỏi nghe"
               >
                 <X size={18} />
@@ -3571,7 +3571,7 @@ export default function SkillCmsWorkspace({
             </div>
             <div className="mt-4 flex-1 space-y-3 overflow-y-auto pr-1">
               {listeningQuestionsAiCandidates.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-200 p-10 text-center text-sm text-slate-500">
+                <div className="rounded-xl border border-dashed border-slate-200 p-10 text-center text-sm text-slate-600 dark:text-slate-400">
                   Nhập transcript ở form trước, sau đó nhấn “AI gợi ý câu hỏi
                   nháp”.
                 </div>
@@ -3582,7 +3582,7 @@ export default function SkillCmsWorkspace({
                     className="rounded-xl border border-slate-200 bg-slate-50/70 p-4"
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <span className="text-xs font-semibold text-slate-500">
+                      <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
                         Câu {index + 1}
                       </span>
                       <button
@@ -3594,7 +3594,7 @@ export default function SkillCmsWorkspace({
                             ),
                           )
                         }
-                        className="text-xs font-semibold text-slate-400 transition-colors hover:text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-300"
+                        className="text-xs font-semibold text-slate-600 transition-colors hover:text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-300 dark:text-slate-400"
                       >
                         Bỏ qua
                       </button>
@@ -3630,7 +3630,7 @@ export default function SkillCmsWorkspace({
                                 ),
                               )
                             }
-                            className={`my-2 h-7 w-7 shrink-0 rounded-md text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-300 ${candidate.correctIndex === optionIndex ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+                            className={`my-2 h-7 w-7 shrink-0 rounded-md text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-300 ${candidate.correctIndex === optionIndex ? "bg-emerald-700 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
                             aria-label={`Chọn phương án ${optionIndex + 1} là đáp án đúng`}
                           >
                             {String.fromCharCode(65 + optionIndex)}
@@ -3740,7 +3740,7 @@ export default function SkillCmsWorkspace({
           <div className="flex max-h-[90vh] w-full max-w-xl flex-col rounded-2xl border border-amber-100 bg-white p-6 shadow-2xl">
             <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[.14em] text-amber-700">
+                <p className="text-sm font-semibold uppercase tracking-[.14em] text-amber-700">
                   Gợi ý biên soạn
                 </p>
                 <h3
@@ -3749,7 +3749,7 @@ export default function SkillCmsWorkspace({
                 >
                   AI gợi ý đề bài Writing
                 </h3>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                   Chỉ sinh nội dung chữ; ảnh của Picture Task vẫn do bạn
                   chọn/tải lên.
                 </p>
@@ -3757,7 +3757,7 @@ export default function SkillCmsWorkspace({
               <button
                 type="button"
                 onClick={() => setIsWritingAiOpen(false)}
-                className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:text-slate-400"
                 aria-label="Đóng gợi ý Writing"
               >
                 <X size={18} />
@@ -3765,7 +3765,7 @@ export default function SkillCmsWorkspace({
             </div>
             <div className="mt-4 flex-1 space-y-3 overflow-y-auto">
               {!writingAiSuggestion ? (
-                <div className="rounded-xl border border-dashed border-slate-200 p-10 text-center text-sm text-slate-500">
+                <div className="rounded-xl border border-dashed border-slate-200 p-10 text-center text-sm text-slate-600 dark:text-slate-400">
                   Nhấn “Tạo gợi ý” để tạo đề bài theo task family hiện tại.
                 </div>
               ) : (
@@ -3965,7 +3965,7 @@ export default function SkillCmsWorkspace({
                 >
                   AI gợi ý đoạn đọc
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-sm text-slate-600 mt-0.5 dark:text-slate-400">
                   Tạo đoạn đọc nháp dựa trên chủ đề và trình độ; chỉ áp dụng vào
                   form, chưa lưu hay xuất bản.
                 </p>
@@ -3973,7 +3973,7 @@ export default function SkillCmsWorkspace({
               <button
                 type="button"
                 onClick={() => setIsPassageAiOpen(false)}
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:text-slate-400"
                 aria-label="Đóng gợi ý đoạn đọc"
               >
                 <X size={18} />
@@ -3994,7 +3994,7 @@ export default function SkillCmsWorkspace({
                 />
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-500">
+                <span className="text-slate-600 dark:text-slate-400">
                   Trình độ:{" "}
                   <span className="font-semibold text-slate-700">
                     {form.level || "A2"}
@@ -4022,7 +4022,7 @@ export default function SkillCmsWorkspace({
                     <span className="font-bold text-slate-800">
                       {passageAiSuggestion.title}
                     </span>
-                    <span className="text-xs text-slate-500 font-medium">
+                    <span className="text-xs text-slate-600 font-medium dark:text-slate-400">
                       Bản nháp AI
                     </span>
                   </div>
@@ -4084,7 +4084,7 @@ export default function SkillCmsWorkspace({
                 >
                   AI gợi ý câu hỏi đọc hiểu
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-sm text-slate-600 mt-0.5 dark:text-slate-400">
                   Sinh câu hỏi từ đoạn đọc hiện có trong form; kết quả chỉ là
                   bản nháp cho đến khi bạn áp dụng và lưu.
                 </p>
@@ -4092,7 +4092,7 @@ export default function SkillCmsWorkspace({
               <button
                 type="button"
                 onClick={() => setIsQuestionsAiOpen(false)}
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:text-slate-400"
                 aria-label="Đóng gợi ý câu hỏi đọc hiểu"
               >
                 <X size={18} />
@@ -4131,7 +4131,7 @@ export default function SkillCmsWorkspace({
 
             <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 text-xs">
               {readingAiCandidates.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center text-slate-400">
+                <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center text-slate-600 dark:text-slate-400">
                   Nhấn "AI gợi ý câu hỏi nháp" để AI đọc đoạn văn hiện tại và
                   sinh các câu hỏi trắc nghiệm A/B/C/D kèm giải thích.
                 </div>
@@ -4156,7 +4156,7 @@ export default function SkillCmsWorkspace({
                             prev.filter((_, i) => i !== idx),
                           )
                         }
-                        className="text-slate-400 hover:text-rose-600 text-xs"
+                        className="text-slate-600 hover:text-rose-600 text-xs dark:text-slate-400"
                       >
                         Bỏ qua
                       </button>
@@ -4201,7 +4201,7 @@ export default function SkillCmsWorkspace({
                               }}
                               className={`h-5 w-5 rounded text-xs font-bold flex items-center justify-center ${
                                 isCorrect
-                                  ? "bg-emerald-600 text-white"
+                                  ? "bg-emerald-700 text-white"
                                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                               }`}
                               title="Đặt làm đáp án đúng"
@@ -4238,7 +4238,7 @@ export default function SkillCmsWorkspace({
                       })}
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-500 mb-0.5">
+                      <label className="block text-xs font-semibold text-slate-600 mb-0.5 dark:text-slate-400">
                         Giải thích:
                       </label>
                       <input

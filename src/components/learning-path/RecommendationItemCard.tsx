@@ -67,7 +67,7 @@ export function RecommendationItemCard({
         )}
       </div>
       <div className="mt-4 flex items-center justify-between gap-2">
-        <span className="inline-flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
+        <span className="inline-flex items-center gap-1 text-sm text-slate-600 dark:text-slate-400">
           <Clock size={15} aria-hidden="true" />~{item.minutes} phút
         </span>
         {item.status === "LOCKED_LEVEL" ? (

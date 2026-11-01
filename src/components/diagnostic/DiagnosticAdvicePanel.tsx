@@ -70,7 +70,7 @@ function ResourceLink({ resource, note }: { resource: DiagnosticAdviceResource; 
           </span>
         )}
       </span>
-      <ArrowRight size={16} strokeWidth={2.25} className="shrink-0 text-slate-400 group-hover:text-blue-600" aria-hidden="true" />
+      <ArrowRight size={16} strokeWidth={2.25} className="shrink-0 text-slate-500 group-hover:text-blue-600" aria-hidden="true" />
     </a>
   );
 }

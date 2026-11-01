@@ -164,7 +164,7 @@ function LoginForm() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-[30px]">
             Chào mừng trở lại
           </h1>
-          <p className="mt-2 text-[15px] text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-[15px] text-slate-600 dark:text-slate-400">
             Đăng nhập nhanh bằng Google để tiếp tục học.
           </p>
         </div>
@@ -186,7 +186,7 @@ function LoginForm() {
               type="button"
               onClick={() => setErrorMsg("")}
               aria-label="Đóng thông báo lỗi"
-              className="text-rose-600 hover:text-rose-800 p-1 rounded-lg hover:bg-rose-100 dark:text-rose-300 dark:hover:bg-rose-900/50 transition-colors cursor-pointer"
+              className="text-rose-700 hover:text-rose-800 p-1 rounded-lg hover:bg-rose-100 dark:text-rose-300 dark:hover:bg-rose-900/50 transition-colors cursor-pointer"
             >
               <X size={16} />
             </button>
@@ -206,7 +206,7 @@ function LoginForm() {
 
         <div className="my-6 flex items-center gap-3" aria-hidden="true">
           <span className="bg-slate-200 dark:bg-slate-700 h-px flex-1" />
-          <span className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+          <span className="text-xs font-medium uppercase tracking-[0.14em] text-slate-600 dark:text-slate-400">
             hoặc
           </span>
           <span className="bg-slate-200 dark:bg-slate-700 h-px flex-1" />
@@ -219,7 +219,7 @@ function LoginForm() {
           onClick={() => setShowEmailLogin((current) => !current)}
           className="group flex w-full flex-col items-center rounded-2xl px-3 py-3.5 text-center transition-all duration-200 hover:-translate-y-0.5 hover:bg-orange-50/70 hover:shadow-[0_8px_20px_-12px_rgba(234,88,12,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 active:translate-y-0 active:scale-[0.99] dark:hover:bg-slate-800/60"
         >
-          <span className="mb-0.5 block text-[13px] text-slate-400 dark:text-slate-500">
+          <span className="mb-0.5 block text-[13px] text-slate-600 dark:text-slate-400">
             Đã có tài khoản email?
           </span>
           <span className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 transition-colors group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white sm:text-[14px]">
@@ -243,10 +243,10 @@ function LoginForm() {
               className="block text-sm font-bold text-slate-700 dark:text-slate-300"
               htmlFor="emailInput"
             >
-              Địa chỉ Email <span className="text-rose-500">*</span>
+              Địa chỉ Email <span className="text-rose-700 dark:text-rose-400">*</span>
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 dark:text-slate-500">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-600 dark:text-slate-400">
                 <Mail size={18} />
               </span>
               <input
@@ -269,10 +269,10 @@ function LoginForm() {
               className="block text-sm font-bold text-slate-700 dark:text-slate-300"
               htmlFor="passwordInput"
             >
-              Mật khẩu <span className="text-rose-500">*</span>
+              Mật khẩu <span className="text-rose-700 dark:text-rose-400">*</span>
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 dark:text-slate-500">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-600 dark:text-slate-400">
                 <KeyRound size={18} />
               </span>
               <input
@@ -290,7 +290,7 @@ function LoginForm() {
                 type="button"
                 id="togglePassBtn"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 items-center justify-center text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors cursor-pointer"
+                className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 items-center justify-center text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 transition-colors cursor-pointer"
                 title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                 aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
               >
@@ -308,7 +308,7 @@ function LoginForm() {
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                className="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-amber-700 focus:ring-amber-500 cursor-pointer dark:text-amber-400"
               />
               <span>Ghi nhớ đăng nhập</span>
             </label>
@@ -344,11 +344,11 @@ function LoginForm() {
         )}
 
         {/* Footer Card Direction */}
-        <div className="mt-7 flex flex-wrap items-center justify-center gap-1.5 border-t border-slate-100 pt-6 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+        <div className="mt-7 flex flex-wrap items-center justify-center gap-1.5 border-t border-slate-100 pt-6 text-center text-sm text-slate-600 dark:border-slate-800 dark:text-slate-400">
           <span>Chưa có tài khoản BreadTrans?</span>
           <Link
             href={registerHref}
-            className="group inline-flex items-center gap-1 font-semibold text-orange-600 transition-colors hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300"
+            className="group inline-flex items-center gap-1 font-semibold text-orange-700 transition-colors hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300"
           >
             Đăng ký ngay miễn phí
             <ArrowRight

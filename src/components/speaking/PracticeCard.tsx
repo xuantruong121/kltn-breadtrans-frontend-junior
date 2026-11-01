@@ -162,9 +162,9 @@ export function PracticeCard({
         {/* Subtle In-progress bar */}
         {status === "IN_PROGRESS" && (
           <div className="space-y-1 pt-1">
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
               <span>{completedExercises}/{totalExercises} câu</span>
-              <span className="font-semibold text-teal-600 dark:text-teal-400">
+              <span className="font-semibold text-teal-700 dark:text-teal-400">
                 {progressPercent}%
               </span>
             </div>
@@ -182,7 +182,7 @@ export function PracticeCard({
       <div className="mt-4 border-t border-slate-100 dark:border-slate-800/80 pt-3">
         <div className="flex flex-wrap items-center justify-between gap-2.5">
           {/* Metadata */}
-          <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+          <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-medium">
             <span>{formatTag}</span>
             <span>·</span>
             <span>
@@ -209,7 +209,7 @@ export function PracticeCard({
                 type="button"
                 onClick={() => onStart?.(exercise)}
                 disabled={isLaunching}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 px-3.5 py-1.5 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer disabled:opacity-60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-500"
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-teal-700 hover:bg-teal-800 px-3.5 py-1.5 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer disabled:opacity-60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-500"
               >
                 <span>Tiếp tục</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />

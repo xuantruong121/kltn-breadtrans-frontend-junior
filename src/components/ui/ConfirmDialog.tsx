@@ -73,7 +73,7 @@ export function ConfirmDialog({
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400">
               <AlertTriangle size={20} />
             </span>
             <div>

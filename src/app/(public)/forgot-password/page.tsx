@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
             Quên mật khẩu?
           </h1>
-          <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
             Nhập email đã đăng ký. Nếu tài khoản tồn tại, bạn sẽ nhận được liên kết đặt lại mật khẩu.
           </p>
         </div>
@@ -56,10 +56,10 @@ export default function ForgotPasswordPage() {
 
             <div className="space-y-1.5">
               <label htmlFor="forgot-email" className="block text-sm font-bold text-slate-700 dark:text-slate-300">
-                Địa chỉ Email <span className="text-rose-500">*</span>
+                Địa chỉ Email <span className="text-rose-700 dark:text-rose-400">*</span>
               </label>
               <div className="relative">
-                <Mail size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                <Mail size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" aria-hidden="true" />
                 <input
                   id="forgot-email"
                   type="email"

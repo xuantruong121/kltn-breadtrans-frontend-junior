@@ -1331,7 +1331,7 @@ export function ListeningComprehensionWorkspace({
                     Full transcript
                   </button>
                 </div>
-                <span className="shrink-0 text-xs font-bold text-slate-500 dark:text-slate-400">
+                <span className="shrink-0 text-xs font-bold text-slate-600 dark:text-slate-400">
                   {currentIndex + 1} / {questions.length}
                 </span>
               </div>
@@ -1364,7 +1364,7 @@ export function ListeningComprehensionWorkspace({
                   <AlertCircle size={16} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
                   <div>
                     <h2 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">Đoạn nghe cần luyện thêm</h2>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">Nghe lại từng đoạn ngắn do người biên soạn đánh dấu.</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Nghe lại từng đoạn ngắn do người biên soạn đánh dấu.</p>
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -1452,7 +1452,7 @@ export function ListeningComprehensionWorkspace({
                 aria-label={imageAlt || "Hình minh họa ngữ cảnh bài nghe"}
                 className="w-full max-w-4xl xl:max-w-5xl mx-auto my-3.5 flex items-center justify-center overflow-hidden rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 p-6 text-center min-h-[140px]"
               >
-                <p className="max-w-sm text-sm font-medium leading-relaxed text-slate-500 dark:text-slate-400">
+                <p className="max-w-sm text-sm font-medium leading-relaxed text-slate-600 dark:text-slate-400">
                   Hình minh họa hiện chưa tải được. Bạn vẫn có thể tiếp tục nghe
                   và trả lời câu hỏi.
                 </p>
@@ -1465,7 +1465,7 @@ export function ListeningComprehensionWorkspace({
                 className="my-4 flex min-h-[220px] flex-1 items-center justify-center rounded-2xl border border-sky-100 dark:border-sky-950 bg-sky-50/60 dark:bg-sky-950/20 px-6 py-10 text-center shadow-xs sm:min-h-[280px]"
               >
                 <div className="max-w-md">
-                  <div className="mx-auto flex size-14 items-center justify-center rounded-2xl border border-sky-200 dark:border-sky-800 bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-xs">
+                  <div className="mx-auto flex size-14 items-center justify-center rounded-2xl border border-sky-200 dark:border-sky-800 bg-white dark:bg-slate-900 text-sky-700 dark:text-sky-400 shadow-xs">
                     <Volume2 size={24} aria-hidden="true" />
                   </div>
                   <h2 className="mt-4 text-lg font-extrabold text-slate-900 dark:text-slate-100 sm:text-xl">
@@ -1495,18 +1495,18 @@ export function ListeningComprehensionWorkspace({
               className={`w-full flex items-center justify-between text-xs font-bold transition ${
                 isDialogue || isChecked
                   ? "text-slate-800 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white cursor-pointer"
-                  : "text-slate-400 dark:text-slate-500 cursor-not-allowed opacity-75"
+                  : "text-slate-500 dark:text-slate-400 cursor-not-allowed opacity-75"
               }`}
             >
               <span className="flex items-center gap-2">
                 <FileText
                   size={15}
-                  className={isDialogue || isChecked ? "text-sky-600 dark:text-sky-400" : "text-slate-400 dark:text-slate-500"}
+                  className={isDialogue || isChecked ? "text-sky-600 dark:text-sky-400" : "text-slate-500 dark:text-slate-400"}
                 />
                 <span>{isDialogue ? "Transcript song ngữ" : "Bản ghi âm & Lời thoại (Transcript)"}</span>
               </span>
               {isDialogue || isChecked ? (
-                <span className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+                <span className="flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-400">
                   {transcriptOpen ? "Thu gọn" : "Xem nội dung"}
                   <ChevronDown
                     size={14}
@@ -1516,7 +1516,7 @@ export function ListeningComprehensionWorkspace({
                   />
                 </span>
               ) : (
-                <span className="text-xs text-slate-400 dark:text-slate-500 italic">
+                <span className="text-xs text-slate-600 dark:text-slate-400 italic">
                   (Mở khoá sau khi kiểm tra đáp án)
                 </span>
               )}
@@ -1543,7 +1543,7 @@ export function ListeningComprehensionWorkspace({
                 ) : (
                   <div className="space-y-3">
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
+                      <p className="text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
                         <Volume2 size={13} className="text-sky-600 dark:text-sky-400" aria-hidden="true" />
                         Lời thoại tiếng Anh (Transcript):
                       </p>
@@ -1552,7 +1552,7 @@ export function ListeningComprehensionWorkspace({
                           &ldquo;{audioTranscriptText}&rdquo;
                         </blockquote>
                       ) : (
-                        <p className="italic text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700">
+                        <p className="italic text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700">
                           Chưa có bản ghi âm bằng văn bản cho câu hỏi này.
                         </p>
                       )}
@@ -1583,7 +1583,7 @@ export function ListeningComprehensionWorkspace({
           <div className="flex flex-col">
             {/* Question Header */}
             <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3 mb-4 shrink-0">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                 Câu hỏi {currentIndex + 1} · Độ khó: {level || "Cơ bản"}
               </span>
 
@@ -1646,7 +1646,7 @@ export function ListeningComprehensionWorkspace({
                       aria-describedby={`dictation-help-${currentQuestion.id}`}
                       className="min-h-52 w-full resize-y rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 text-base leading-relaxed text-slate-900 dark:text-slate-100 outline-none transition placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-sky-500 focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 disabled:cursor-default disabled:bg-slate-50 dark:disabled:bg-slate-950/50"
                     />
-                    <p id={`dictation-help-${currentQuestion.id}`} className="text-xs leading-5 text-slate-500 dark:text-slate-400">
+                    <p id={`dictation-help-${currentQuestion.id}`} className="text-sm leading-5 text-slate-600 dark:text-slate-400">
                       Nghe lại nếu cần, sau đó nhập đúng những gì bạn nghe được bằng tiếng Anh.
                     </p>
                     {!isAnswerLocked && (
@@ -1666,7 +1666,7 @@ export function ListeningComprehensionWorkspace({
                     )}
                     {isChecked && (
                       <div className={`rounded-2xl border p-4 ${currentCheck?.isCorrect ? "border-emerald-200 dark:border-emerald-800/80 bg-emerald-50 dark:bg-emerald-950/30" : "border-rose-200 dark:border-rose-800/80 bg-rose-50 dark:bg-rose-950/30"}`}>
-                        <p className="text-xs font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                        <p className="text-sm font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-300">
                           {currentCheck?.isCorrect ? "Chính xác" : "Chưa chính xác — đối chiếu từng từ"}
                         </p>
                         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs font-semibold text-slate-600 dark:text-slate-400">
@@ -1750,7 +1750,7 @@ export function ListeningComprehensionWorkspace({
                               type="checkbox"
                               checked={showAnswerImmediately}
                               onChange={(event) => setShowAnswerImmediately(event.target.checked)}
-                              className="size-4 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sky-600 focus:ring-sky-500"
+                              className="size-4 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sky-700 focus:ring-sky-500 dark:text-sky-400"
                             />
                             Hiện gợi ý đáp án ngay
                           </label>
@@ -1764,7 +1764,7 @@ export function ListeningComprehensionWorkspace({
                                   [currentQuestion.id]: event.target.checked,
                                 }));
                               }}
-                              className="size-4 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sky-600 focus:ring-sky-500"
+                              className="size-4 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sky-700 focus:ring-sky-500 dark:text-sky-400"
                             />
                             Xem phần còn thiếu
                           </label>
@@ -1811,33 +1811,33 @@ export function ListeningComprehensionWorkspace({
                       "border-2 border-slate-200 dark:border-slate-800 hover:border-sky-400 dark:hover:border-sky-500 hover:bg-sky-50/40 dark:hover:bg-sky-950/30 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200";
                     let keyStyles = "text-slate-700 dark:text-slate-300 font-bold";
                     let radioClass =
-                      "text-sky-600 dark:text-sky-400 border-slate-300 dark:border-slate-700 focus:ring-sky-500";
+                      "text-sky-700 dark:text-sky-400 border-slate-300 dark:border-slate-700 focus:ring-sky-500";
 
                     if (isChecked) {
                       if (isSelected && currentCheck?.isCorrect) {
                         cardStyles =
                           "border-2 border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-200 shadow-xs";
                         keyStyles = "text-emerald-900 dark:text-emerald-300 font-extrabold";
-                        radioClass = "text-emerald-600 dark:text-emerald-400 border-emerald-500";
+                        radioClass = "text-emerald-700 dark:text-emerald-400 border-emerald-500";
                       } else if (isSelected && !currentCheck?.isCorrect) {
                         cardStyles =
                           "border-2 border-rose-500 bg-rose-50/70 dark:bg-rose-950/40 text-rose-950 dark:text-rose-200 shadow-xs";
                         keyStyles = "text-rose-900 dark:text-rose-300 font-extrabold";
-                        radioClass = "text-rose-600 dark:text-rose-400 border-rose-500";
+                        radioClass = "text-rose-700 dark:text-rose-400 border-rose-500";
                       } else if (isCorrectAnswer && !currentCheck?.isCorrect) {
                         cardStyles =
                           "border-2 border-emerald-500 dark:border-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200";
                         keyStyles = "text-emerald-800 dark:text-emerald-300 font-extrabold";
-                        radioClass = "text-emerald-500 border-emerald-500";
+                        radioClass = "text-emerald-700 border-emerald-500 dark:text-emerald-400";
                       } else {
                         cardStyles =
-                          "border-2 border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 opacity-75";
+                          "border-2 border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/50 text-slate-600 dark:text-slate-400 opacity-75";
                       }
                     } else if (isSelected || (isChecking && isSelected)) {
                       cardStyles =
                         "border-2 border-sky-500 bg-sky-50/60 dark:bg-sky-950/40 text-slate-900 dark:text-slate-100 shadow-xs";
                       keyStyles = "text-sky-700 dark:text-sky-400 font-extrabold";
-                      radioClass = "text-sky-600 border-sky-500";
+                      radioClass = "text-sky-700 border-sky-500 dark:text-sky-400";
                     }
 
                     return (
@@ -1945,7 +1945,7 @@ export function ListeningComprehensionWorkspace({
                             <span className="font-bold text-emerald-950 dark:text-emerald-300 block mb-1">
                               Chi tiết nghe được:
                             </span>
-                            <blockquote className="italic text-slate-700 dark:text-slate-300 font-normal">
+                            <blockquote className="italic text-slate-700 dark:text-slate-300 font-medium">
                               &ldquo;{parsedExplanation.evidence}&rdquo;
                             </blockquote>
                           </div>
@@ -2076,7 +2076,7 @@ export function ListeningComprehensionWorkspace({
             <Star
               size={15}
               className={
-                isSaved ? "fill-amber-500 text-amber-500" : "text-amber-500"
+                isSaved ? "fill-amber-500 text-amber-700 dark:text-amber-400" : "text-amber-700 dark:text-amber-400"
               }
             />
             <span className="hidden sm:inline">
@@ -2136,7 +2136,7 @@ export function ListeningComprehensionWorkspace({
                 <button
                   type="button"
                   onClick={() => setShowMatrixPopover(false)}
-                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded-md cursor-pointer"
+                  className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded-md cursor-pointer dark:text-slate-400"
                 >
                   <X size={14} />
                 </button>
@@ -2187,7 +2187,7 @@ export function ListeningComprehensionWorkspace({
               <div
                 role="status"
                 aria-live="polite"
-                className="inline-flex min-h-11 items-center gap-2 px-3 text-sm font-semibold text-slate-500 dark:text-slate-400"
+                className="inline-flex min-h-11 items-center gap-2 px-3 text-sm font-semibold text-slate-600 dark:text-slate-400"
               >
                 {isChecking ? (
                   <>
@@ -2222,7 +2222,7 @@ export function ListeningComprehensionWorkspace({
               type="button"
               onClick={handleFinalSubmit}
               disabled={isSubmitting || submitMutation.isPending}
-              className="px-5 sm:px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm transition-all active:scale-95 disabled:opacity-60 cursor-pointer inline-flex items-center gap-2 text-sm"
+              className="px-5 sm:px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold shadow-sm transition-all active:scale-95 disabled:opacity-60 cursor-pointer inline-flex items-center gap-2 text-sm"
             >
               {reviewOnly ? (
                 <>
@@ -2272,7 +2272,7 @@ export function ListeningComprehensionWorkspace({
               <button
                 type="button"
                 onClick={() => setShowNotesModal(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg cursor-pointer"
+                className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg cursor-pointer dark:text-slate-400"
               >
                 <X size={16} />
               </button>
@@ -2284,7 +2284,7 @@ export function ListeningComprehensionWorkspace({
               rows={6}
               className="w-full rounded-xl border border-slate-200 dark:border-slate-800 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
-            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               Ghi chú được lưu tự động trên thiết bị này.
             </p>
             <div className="mt-4 flex justify-end">

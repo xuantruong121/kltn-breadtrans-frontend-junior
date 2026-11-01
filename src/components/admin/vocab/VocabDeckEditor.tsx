@@ -86,7 +86,7 @@ type DraftWord = {
 };
 
 const FIELD =
-  "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
+  "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
 const ICON_BTN =
   "inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-40";
 
@@ -371,7 +371,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
     <main className="space-y-6 p-6">
       <Link
         href="/admin/vocab"
-        className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900"
+        className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400"
       >
         <ArrowLeft size={16} /> Danh sách
       </Link>
@@ -514,7 +514,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
               <h2 id="vocab-checklist-heading" className="font-semibold text-slate-950">
                 Trước khi xuất bản
               </h2>
-              <span className="text-sm tabular-nums text-slate-500">
+              <span className="text-sm tabular-nums text-slate-600 dark:text-slate-400">
                 {doneCount}/{checklist.length}
               </span>
             </div>
@@ -559,7 +559,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-semibold text-slate-950">
               Từ vựng{" "}
-              <span className="font-normal tabular-nums text-slate-500">{stats.total}</span>
+              <span className="font-medium tabular-nums text-slate-600 dark:text-slate-400">{stats.total}</span>
             </h2>
             {deck && stats.total > 0 && (
               <label className="relative w-full max-w-xs">
@@ -567,7 +567,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                 <Search
                   size={16}
                   aria-hidden="true"
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
                 />
                 <input
                   value={query}
@@ -601,7 +601,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                       className={`px-4 py-3 ${editing ? "bg-blue-50/40" : previewWord?.id === word.id ? "bg-slate-50" : ""}`}
                     >
                       <div className="flex flex-wrap items-start gap-3">
-                        <span className="w-8 flex-none pt-0.5 text-right text-sm tabular-nums text-slate-500">
+                        <span className="w-8 flex-none pt-0.5 text-right text-sm tabular-nums text-slate-600 dark:text-slate-400">
                           {index + 1}
                         </span>
                         <button
@@ -612,7 +612,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                         >
                           <p className="text-base font-semibold text-slate-950">
                             {word.word}{" "}
-                            <span className="text-sm font-normal text-slate-600">
+                            <span className="text-sm font-medium text-slate-600">
                               {word.pos} {word.ipaUs && `· ${word.ipaUs}`}
                             </span>
                           </p>
@@ -721,7 +721,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                   <div className="mb-4 rounded-lg border border-blue-300 bg-blue-50/30 p-4">
                     <label className="block text-sm font-semibold text-slate-900">
                       Dán nhiều từ
-                      <span className="mt-0.5 block text-xs font-normal text-slate-600">
+                      <span className="mt-0.5 block text-xs font-medium text-slate-600">
                         Mỗi dòng một từ: <code>từ | nghĩa | loại từ | câu ví dụ | dịch</code>.
                         Dán thẳng từ Excel/Google Sheets cũng được (cột cách nhau bằng
                         Tab). Chỉ có từ và nghĩa thì viết <code>agenda - chương trình họp</code>.
@@ -738,12 +738,12 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                       <ul className="mt-3 max-h-64 space-y-1 overflow-y-auto text-sm">
                         {pasted.map((row) => (
                           <li key={row.line} className="flex flex-wrap items-baseline gap-2">
-                            <span className="w-6 text-right text-xs tabular-nums text-slate-500">
+                            <span className="w-6 text-right text-xs tabular-nums text-slate-600 dark:text-slate-400">
                               {row.line}
                             </span>
                             <span className="font-semibold text-slate-900">{row.word || "—"}</span>
                             <span className="text-slate-700">{row.meaning || "—"}</span>
-                            <span className="text-xs text-slate-500">{row.pos}</span>
+                            <span className="text-xs text-slate-600 dark:text-slate-400">{row.pos}</span>
                             {row.error ? (
                               <span className="text-rose-700">{row.error}</span>
                             ) : row.duplicate ? (
@@ -816,7 +816,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                                 />
                                 <span className="font-semibold text-slate-900">{row.word}</span>
                                 <span className="text-slate-700">{row.meaning}</span>
-                                <span className="text-xs text-slate-500">{row.pos}</span>
+                                <span className="text-xs text-slate-600 dark:text-slate-400">{row.pos}</span>
                               </label>
                             </li>
                           ))}

@@ -83,7 +83,7 @@ export default function AdminCurrencyPage() {
     <div className="max-w-7xl mx-auto space-y-6 pb-16">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-950">Sổ Bánh Mì</h1>
-        <p className="mt-1 text-sm font-medium text-slate-500">
+        <p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-400">
           Số dư, lịch sử giao dịch và đối soát kinh tế học tập Bánh Mì của học viên
         </p>
       </div>
@@ -101,7 +101,7 @@ export default function AdminCurrencyPage() {
             className={`-mb-px border-b-2 px-1 py-3 text-sm font-semibold transition-colors cursor-pointer ${
               activeTab === tab.id
                 ? "border-slate-900 text-slate-950"
-                : "border-transparent text-slate-500 hover:text-slate-800"
+                : "border-transparent text-slate-600 hover:text-slate-800 dark:text-slate-400"
             }`}
           >
             {tab.label}
@@ -186,7 +186,7 @@ function LedgerTab() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs transition hover:border-slate-300">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Tổng đang lưu hành
             </span>
             <Coins className="size-4 text-amber-500" />
@@ -194,14 +194,14 @@ function LedgerTab() {
           <div className="mt-2 text-3xl font-bold tracking-tight text-slate-950 font-mono tabular-nums">
             {isSummaryLoading ? "…" : (summary?.totalCurrentBalance ?? 0).toLocaleString("vi-VN")}
           </div>
-          <div className="mt-1 text-xs font-medium text-slate-500">
+          <div className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-400">
             Số dư Bánh Mì khả dụng trong ví học viên
           </div>
         </div>
 
         <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs transition hover:border-slate-300">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Tổng đã phát hành
             </span>
             <TrendingUp className="size-4 text-emerald-500" />
@@ -209,22 +209,22 @@ function LedgerTab() {
           <div className="mt-2 text-3xl font-bold tracking-tight text-slate-950 font-mono tabular-nums">
             {isSummaryLoading ? "…" : (summary?.totalIssued ?? 0).toLocaleString("vi-VN")}
           </div>
-          <div className="mt-1 text-xs font-medium text-slate-500">
+          <div className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-400">
             Thưởng qua bài học, từ vựng và nhiệm vụ
           </div>
         </div>
 
         <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs transition hover:border-slate-300">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Tổng đã sử dụng
             </span>
-            <ShoppingBag className="size-4 text-slate-400" />
+            <ShoppingBag className="size-4 text-slate-500" />
           </div>
           <div className="mt-2 text-3xl font-bold tracking-tight text-slate-950 font-mono tabular-nums">
             {isSummaryLoading ? "…" : (summary?.totalSpent ?? 0).toLocaleString("vi-VN")}
           </div>
-          <div className="mt-1 text-xs font-medium text-slate-500">
+          <div className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-400">
             Quy đổi vật phẩm & quà tặng trong hệ thống
           </div>
         </div>
@@ -237,7 +237,7 @@ function LedgerTab() {
             <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
               Học viên & Đối soát số dư
             </h2>
-            <p className="text-xs font-medium text-slate-500">
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
               Kiểm tra tính toàn vẹn giữa ví học viên và sổ cái giao dịch
             </p>
           </div>
@@ -247,7 +247,7 @@ function LedgerTab() {
         </div>
         {isReconciliationLoading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="animate-spin text-slate-400" size={24} />
+            <Loader2 className="animate-spin text-slate-500" size={24} />
           </div>
         ) : rows.length === 0 ? (
           <div className="py-12 text-center text-sm font-medium text-slate-500">
@@ -401,7 +401,7 @@ function LedgerTab() {
         <div className="p-4 sm:p-5">
           {isLedgerLoading ? (
             <div className="flex justify-center py-12">
-              <Loader2 className="animate-spin text-slate-400" size={24} />
+              <Loader2 className="animate-spin text-slate-500" size={24} />
             </div>
           ) : entries.length === 0 ? (
             <div className="py-12 text-center text-sm font-medium text-slate-500">
@@ -490,7 +490,7 @@ function UserLedgerHistory({ userId }: { userId: number }) {
   if (isLoading) {
     return (
       <div className="flex justify-center py-6">
-        <Loader2 className="animate-spin text-slate-400" size={20} />
+        <Loader2 className="animate-spin text-slate-500" size={20} />
       </div>
     );
   }
@@ -498,7 +498,7 @@ function UserLedgerHistory({ userId }: { userId: number }) {
   const entries: LedgerEntry[] = data?.transactions || [];
   if (entries.length === 0) {
     return (
-      <p className="py-4 text-center text-xs text-slate-400">
+      <p className="py-4 text-center text-xs text-slate-600 dark:text-slate-400">
         Học viên này chưa có giao dịch Bánh Mì nào.
       </p>
     );
@@ -578,7 +578,7 @@ function AdjustTab({ onAdjusted }: { onAdjusted: () => void }) {
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
             Điều chỉnh Bánh Mì
           </h2>
-          <p className="mt-0.5 text-xs font-medium text-slate-500">
+          <p className="mt-0.5 text-xs font-medium text-slate-600 dark:text-slate-400">
             Cộng hoặc trừ số dư Bánh Mì có ghi sổ giao dịch
           </p>
         </div>
@@ -679,7 +679,7 @@ function AdjustTab({ onAdjusted }: { onAdjusted: () => void }) {
 
         {isUsersLoading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="animate-spin text-slate-400" size={28} />
+            <Loader2 className="animate-spin text-slate-500" size={28} />
           </div>
         ) : users && users.length > 0 ? (
           <div>
@@ -710,7 +710,7 @@ function AdjustTab({ onAdjusted }: { onAdjusted: () => void }) {
                             <td className="py-3.5 px-5 font-bold text-slate-950">
                               {u.profile?.fullName || "Chưa đặt tên"}
                             </td>
-                            <td className="py-3.5 px-5 text-xs font-mono text-slate-500">
+                            <td className="py-3.5 px-5 text-xs font-mono text-slate-600 dark:text-slate-400">
                               {u.email}
                             </td>
                             <td className="py-3.5 px-5 text-right font-mono font-bold tabular-nums text-amber-700">
@@ -748,7 +748,7 @@ function AdjustTab({ onAdjusted }: { onAdjusted: () => void }) {
             })()}
           </div>
         ) : (
-          <div className="py-12 text-center text-sm font-medium text-slate-500">
+          <div className="py-12 text-center text-sm font-medium text-slate-600 dark:text-slate-400">
             Chưa có học viên nào trong hệ thống.
           </div>
         )}

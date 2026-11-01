@@ -11,7 +11,7 @@ import { useCanonicalExamPath } from "@/lib/toeic/useCanonicalExamPath";
 import { StatusBadge, ToeicAnswerDialog, type GroupAudio } from "./ToeicAnswerDetail";
 
 const MARKER_TONE: Record<ToeicReviewQuestion["status"], string> = {
-  CORRECT: "bg-emerald-600 text-white hover:bg-emerald-700",
+  CORRECT: "bg-emerald-700 text-white hover:bg-emerald-800",
   INCORRECT: "bg-rose-600 text-white hover:bg-rose-700",
   SKIPPED: "bg-slate-200 text-slate-800 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100",
 };
@@ -190,10 +190,10 @@ function LrResultView({
       <section aria-label="Tổng quan kết quả" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Metric icon={Target} label="Kết quả làm bài" value={`${tally.correct}/${tally.total}`} tone="text-blue-600" />
         <Metric icon={Target} label="Độ chính xác" value={formatAccuracy(tally.accuracy)} tone="text-blue-600" />
-        <Metric icon={Clock3} label="Thời gian hoàn thành" value={formatDuration(review.durationSeconds) ?? "—"} tone="text-slate-500" />
-        <Metric icon={CircleSlash2} label="Bỏ qua" value={String(tally.skipped)} tone="text-slate-500" />
-        <Metric icon={CheckCircle2} label="Trả lời đúng" value={String(tally.correct)} tone="text-emerald-600" />
-        <Metric icon={CircleX} label="Trả lời sai" value={String(tally.incorrect)} tone="text-rose-600" />
+        <Metric icon={Clock3} label="Thời gian hoàn thành" value={formatDuration(review.durationSeconds) ?? "—"} tone="text-slate-600 dark:text-slate-400" />
+        <Metric icon={CircleSlash2} label="Bỏ qua" value={String(tally.skipped)} tone="text-slate-600 dark:text-slate-400" />
+        <Metric icon={CheckCircle2} label="Trả lời đúng" value={String(tally.correct)} tone="text-emerald-700 dark:text-emerald-400" />
+        <Metric icon={CircleX} label="Trả lời sai" value={String(tally.incorrect)} tone="text-rose-700 dark:text-rose-400" />
         {showScore && !section && (
           <div className="col-span-2 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
             <p className="text-sm text-slate-600 dark:text-slate-400">Điểm luyện L&amp;R (BreadTrans)</p>
@@ -234,7 +234,7 @@ function LrResultView({
           {tableParts.map((p) => (
             <li key={p.part} className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
               <p className="font-semibold text-slate-900 dark:text-slate-100">
-                Part {p.part} <span className="text-xs font-normal text-slate-600 dark:text-slate-400">· {PART_TITLES[p.part]}</span>
+                Part {p.part} <span className="text-xs font-medium text-slate-600 dark:text-slate-400">· {PART_TITLES[p.part]}</span>
               </p>
               <p className="mt-1 text-sm tabular-nums text-slate-700 dark:text-slate-300">
                 Đúng <span className="font-semibold text-emerald-700 dark:text-emerald-300">{p.correct}</span> · Sai{" "}
@@ -311,7 +311,7 @@ function LrResultView({
                     </span>
                     <span className="min-w-0 flex-1 text-slate-800 dark:text-slate-200">
                       Bạn chọn: <strong className={q.status === "INCORRECT" ? "text-rose-700 dark:text-rose-300" : ""}>{letter(q.selectedIndex)}</strong>
-                      <span className="mx-1.5 text-slate-400">·</span>
+                      <span className="mx-1.5 text-slate-600 dark:text-slate-400">·</span>
                       Đáp án: <strong className="text-emerald-700 dark:text-emerald-300">{letter(q.correctIndex)}</strong>
                     </span>
                     <StatusBadge status={q.status} />

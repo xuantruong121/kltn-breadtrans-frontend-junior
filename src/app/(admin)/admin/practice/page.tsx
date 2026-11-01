@@ -98,7 +98,7 @@ export default function AdminPracticePage() {
             <h1 className="text-3xl font-black text-slate-800">
               Quản Lý Chủ Đề Luyện Tập
             </h1>
-            <p className="text-slate-400 font-bold text-sm">
+            <p className="text-slate-600 font-bold text-sm dark:text-slate-400">
               Quản lý các bài đọc hiểu song ngữ và đề luyện tập chuyên đề
             </p>
           </div>
@@ -117,7 +117,7 @@ export default function AdminPracticePage() {
         {/* SEARCH BAR */}
         <div className="relative">
           <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
             size={20}
           />
           <input
@@ -154,14 +154,14 @@ export default function AdminPracticePage() {
                       onClick={() =>
                         setPendingDelete({ id: topic.id, name: topic.name })
                       }
-                      className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg transition-colors cursor-pointer shrink-0"
+                      className="text-slate-600 hover:text-rose-500 p-1.5 rounded-lg transition-colors cursor-pointer shrink-0 dark:text-slate-400"
                       title="Xóa chủ đề"
                     >
                       <Trash2 size={16} />
                     </button>
                   </div>
 
-                  <p className="text-xs font-bold text-slate-400 truncate mb-2">
+                  <p className="text-sm font-bold text-slate-600 truncate mb-2 dark:text-slate-400">
                     {topic.vietnameseName}
                   </p>
 
@@ -169,7 +169,7 @@ export default function AdminPracticePage() {
                     <span className="px-2 py-0.5 rounded-lg text-xs font-black uppercase bg-blue-100 text-blue-700 border border-blue-200">
                       {topic.category}
                     </span>
-                    <span className="text-xs font-bold text-slate-400">
+                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400">
                       Thứ tự: {topic.order || 1} • {topic._count?.quizzes || 0}{" "}
                       bài tập
                     </span>
@@ -179,7 +179,7 @@ export default function AdminPracticePage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-16 text-slate-400 font-bold">
+          <div className="text-center py-16 text-slate-600 font-bold dark:text-slate-400">
             Chưa có chủ đề luyện tập nào. Hãy bấm &quot;Tạo Chủ Đề Mới&quot; để
             thêm!
           </div>
@@ -196,7 +196,7 @@ export default function AdminPracticePage() {
               </h2>
               <button
                 onClick={() => setIsCreateModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-600 hover:text-slate-600 dark:text-slate-400"
               >
                 <X size={20} />
               </button>
@@ -204,7 +204,7 @@ export default function AdminPracticePage() {
 
             <form onSubmit={handleCreateTopic} className="space-y-4">
               <div>
-                <label className="text-xs font-black text-slate-500 uppercase mb-1 block">
+                <label className="text-xs font-black text-slate-600 uppercase mb-1 block dark:text-slate-400">
                   Tên tiếng Anh (Name)
                 </label>
                 <input
@@ -217,7 +217,7 @@ export default function AdminPracticePage() {
               </div>
 
               <div>
-                <label className="text-xs font-black text-slate-500 uppercase mb-1 block">
+                <label className="text-xs font-black text-slate-600 uppercase mb-1 block dark:text-slate-400">
                   Tên tiếng Việt
                 </label>
                 <input
@@ -231,7 +231,7 @@ export default function AdminPracticePage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-black text-slate-500 uppercase mb-1 block">
+                  <label className="text-xs font-black text-slate-600 uppercase mb-1 block dark:text-slate-400">
                     Danh mục
                   </label>
                   <select
@@ -253,7 +253,7 @@ export default function AdminPracticePage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-black text-slate-500 uppercase mb-1 block">
+                  <label className="text-xs font-black text-slate-600 uppercase mb-1 block dark:text-slate-400">
                     Mã biểu tượng
                   </label>
                   <input
@@ -267,7 +267,7 @@ export default function AdminPracticePage() {
               </div>
 
               <div>
-                <label className="text-xs font-black text-slate-500 uppercase mb-1 block">
+                <label className="text-xs font-black text-slate-600 uppercase mb-1 block dark:text-slate-400">
                   Thứ tự hiển thị (Order)
                 </label>
                 <input
@@ -282,7 +282,7 @@ export default function AdminPracticePage() {
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="px-4 py-2 text-slate-500 font-bold text-sm"
+                  className="px-4 py-2 text-slate-600 font-bold text-sm dark:text-slate-400"
                 >
                   Hủy
                 </button>

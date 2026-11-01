@@ -235,7 +235,7 @@ export default function AdminDashboardPage() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-slate-100">
             Tổng quan vận hành
           </h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             Theo dõi dữ liệu thực tế hệ thống, tình hình tài chính và xử lý các tác vụ tồn đọng.
           </p>
         </div>
@@ -341,7 +341,7 @@ export default function AdminDashboardPage() {
             >
               <div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                     Học viên hệ thống
                   </span>
                   <div className="flex size-8 items-center justify-center rounded-lg border border-blue-100 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
@@ -352,10 +352,10 @@ export default function AdminDashboardPage() {
                   <span className="font-mono text-3xl font-bold tracking-tight tabular-nums text-slate-950 dark:text-slate-100">
                     {data.stats.totalStudents.toLocaleString("vi-VN")}
                   </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">tài khoản</span>
+                  <span className="text-xs text-slate-600 dark:text-slate-400">tài khoản</span>
                 </div>
               </div>
-              <div className="mt-4 border-t border-slate-100 dark:border-slate-800/80 pt-3 text-xs text-slate-500 dark:text-slate-400">
+              <div className="mt-4 border-t border-slate-100 dark:border-slate-800/80 pt-3 text-xs text-slate-600 dark:text-slate-400">
                 <span className="font-medium text-slate-700 dark:text-slate-300">
                   {data.stats.activeStudents.toLocaleString("vi-VN")}
                 </span>{" "}
@@ -374,10 +374,10 @@ export default function AdminDashboardPage() {
             >
               <div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                     Doanh thu gói học
                   </span>
-                  <div className="flex size-8 items-center justify-center rounded-lg border border-emerald-100 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
+                  <div className="flex size-8 items-center justify-center rounded-lg border border-emerald-100 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400">
                     <CreditCard size={16} />
                   </div>
                 </div>
@@ -387,7 +387,7 @@ export default function AdminDashboardPage() {
                   </span>
                 </div>
               </div>
-              <div className="mt-4 border-t border-slate-100 dark:border-slate-800/80 pt-3 text-xs text-slate-500 dark:text-slate-400">
+              <div className="mt-4 border-t border-slate-100 dark:border-slate-800/80 pt-3 text-xs text-slate-600 dark:text-slate-400">
                 <span className="font-medium text-slate-700 dark:text-slate-300">
                   {(data.finance?.activeSubscriptionsCount ?? 0).toLocaleString("vi-VN")}
                 </span>{" "}
@@ -395,7 +395,7 @@ export default function AdminDashboardPage() {
                 <span
                   className={
                     data.stats.pendingPayments > 0
-                      ? "font-semibold text-amber-600 dark:text-amber-400"
+                      ? "font-semibold text-amber-700 dark:text-amber-400"
                       : "text-slate-600 dark:text-slate-400"
                   }
                 >
@@ -415,7 +415,7 @@ export default function AdminDashboardPage() {
             >
               <div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                     Khóa học xuất bản
                   </span>
                   <div className="flex size-8 items-center justify-center rounded-lg border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
@@ -426,10 +426,10 @@ export default function AdminDashboardPage() {
                   <span className="font-mono text-3xl font-bold tracking-tight tabular-nums text-slate-950 dark:text-slate-100">
                     {data.stats.totalCourses.toLocaleString("vi-VN")}
                   </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">khóa học</span>
+                  <span className="text-xs text-slate-600 dark:text-slate-400">khóa học</span>
                 </div>
               </div>
-              <div className="mt-4 border-t border-slate-100 dark:border-slate-800/80 pt-3 text-xs text-slate-500 dark:text-slate-400">
+              <div className="mt-4 border-t border-slate-100 dark:border-slate-800/80 pt-3 text-xs text-slate-600 dark:text-slate-400">
                 <span className="font-medium text-slate-700 dark:text-slate-300">
                   {totalContentItems.toLocaleString("vi-VN")}
                 </span>{" "}
@@ -451,10 +451,10 @@ export default function AdminDashboardPage() {
             >
               <div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                     Bánh Mì lưu hành
                   </span>
-                  <div className="flex size-8 items-center justify-center rounded-lg border border-amber-100 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
+                  <div className="flex size-8 items-center justify-center rounded-lg border border-amber-100 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400">
                     <ShoppingBag size={16} />
                   </div>
                 </div>
@@ -462,10 +462,10 @@ export default function AdminDashboardPage() {
                   <span className="font-mono text-3xl font-bold tracking-tight tabular-nums text-slate-950 dark:text-slate-100">
                     {(data.gamification?.totalBreads ?? 0).toLocaleString("vi-VN")}
                   </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">bánh</span>
+                  <span className="text-xs text-slate-600 dark:text-slate-400">bánh</span>
                 </div>
               </div>
-              <div className="mt-4 border-t border-slate-100 dark:border-slate-800/80 pt-3 text-xs text-slate-500 dark:text-slate-400">
+              <div className="mt-4 border-t border-slate-100 dark:border-slate-800/80 pt-3 text-xs text-slate-600 dark:text-slate-400">
                 <span className="font-medium text-slate-700 dark:text-slate-300">
                   {(data.gamification?.totalOrders ?? 0).toLocaleString("vi-VN")}
                 </span>{" "}
@@ -473,7 +473,7 @@ export default function AdminDashboardPage() {
                 <span
                   className={
                     (data.gamification?.pendingOrders ?? 0) > 0
-                      ? "font-semibold text-amber-600 dark:text-amber-400"
+                      ? "font-semibold text-amber-700 dark:text-amber-400"
                       : "text-slate-600 dark:text-slate-400"
                   }
                 >
@@ -500,7 +500,7 @@ export default function AdminDashboardPage() {
                 >
                   Cần xử lý
                 </h2>
-                <span className="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline">
+                <span className="text-xs text-slate-600 dark:text-slate-400 hidden sm:inline">
                   — Danh sách tác vụ ưu tiên theo nghiệp vụ
                 </span>
               </div>
@@ -590,11 +590,11 @@ export default function AdminDashboardPage() {
                     >
                       Hoạt động gần đây
                     </h2>
-                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                    <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
                       Lượt cấp quyền và ghi danh khóa học mới
                     </p>
                   </div>
-                  <span className="font-mono text-xs font-semibold text-slate-500 dark:text-slate-400 tabular-nums">
+                  <span className="font-mono text-xs font-semibold text-slate-600 dark:text-slate-400 tabular-nums">
                     {data.recentActivity.length} sự kiện
                   </span>
                 </header>
@@ -614,7 +614,7 @@ export default function AdminDashboardPage() {
                           <p className="text-xs leading-5 text-slate-800 dark:text-slate-200 line-clamp-2">
                             {activity.message}
                           </p>
-                          <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+                          <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
                             <Clock size={12} />
                             <time dateTime={activity.createdAt}>{timeAgo(activity.createdAt)}</time>
                           </div>
@@ -623,7 +623,7 @@ export default function AdminDashboardPage() {
                     ))}
                   </ol>
                 ) : (
-                  <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400">
+                  <div className="py-8 text-center text-xs text-slate-600 dark:text-slate-400">
                     Chưa có lượt cấp quyền truy cập trong kỳ này.
                   </div>
                 )}
@@ -641,7 +641,7 @@ export default function AdminDashboardPage() {
                   >
                     Lối tắt tác vụ
                   </h2>
-                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
                     Các phân hệ quản trị vận hành thường dùng
                   </p>
                 </div>
@@ -663,14 +663,14 @@ export default function AdminDashboardPage() {
                             <span className="block text-xs font-semibold text-slate-900 dark:text-slate-100">
                               {action.label}
                             </span>
-                            <span className="block text-xs text-slate-500 dark:text-slate-400">
+                            <span className="block text-xs text-slate-600 dark:text-slate-400">
                               {action.detail}
                             </span>
                           </div>
                         </div>
                         <ArrowUpRight
                           size={14}
-                          className="shrink-0 text-slate-400 transition group-hover:text-slate-700 dark:group-hover:text-slate-200"
+                          className="shrink-0 text-slate-500 transition group-hover:text-slate-700 dark:group-hover:text-slate-200"
                           aria-hidden="true"
                         />
                       </Link>

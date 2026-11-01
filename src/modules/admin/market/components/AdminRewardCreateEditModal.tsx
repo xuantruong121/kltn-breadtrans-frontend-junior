@@ -167,14 +167,14 @@ function AdminRewardCreateEditModalInner({
         {/* MODAL HEADER */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/60">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-rose-50 text-rose-600 rounded-xl">
+            <div className="p-2 bg-rose-50 text-rose-700 rounded-xl dark:text-rose-400">
               <Package size={20} />
             </div>
             <div>
               <h2 className="text-lg font-bold text-slate-800">
                 {isEditing ? "Chỉnh sửa thông tin quà tặng" : "Thêm quà tặng mới"}
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 {isEditing
                   ? `Cập nhật quà tặng #${product?.id} trong Cửa Hàng Bánh Mì`
                   : "Tạo vật phẩm đổi thưởng mới cho học viên"}
@@ -183,7 +183,7 @@ function AdminRewardCreateEditModalInner({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+            className="p-1.5 text-slate-600 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer dark:text-slate-400"
           >
             <X size={18} />
           </button>
@@ -195,7 +195,7 @@ function AdminRewardCreateEditModalInner({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Tên quà tặng <span className="text-rose-500">*</span>
+                Tên quà tặng <span className="text-rose-700 dark:text-rose-400">*</span>
               </label>
               <input
                 type="text"
@@ -218,7 +218,7 @@ function AdminRewardCreateEditModalInner({
                 placeholder="Tự sinh nếu để trống (vd: gau-bong-banh-mi)"
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono text-slate-700 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-colors"
               />
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-sm text-slate-600 mt-1 dark:text-slate-400">
                 Để trống để hệ thống tự động sinh slug tiếng Việt chuẩn.
               </p>
             </div>
@@ -281,7 +281,7 @@ function AdminRewardCreateEditModalInner({
 
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Giá Bánh Mì <span className="text-rose-500">*</span>
+                Giá Bánh Mì <span className="text-rose-700 dark:text-rose-400">*</span>
               </label>
               <input
                 type="number"
@@ -291,7 +291,7 @@ function AdminRewardCreateEditModalInner({
                 onChange={(e) =>
                   setFormData({ ...formData, price: Math.max(1, parseInt(e.target.value, 10) || 1) })
                 }
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-amber-600 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-colors"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-amber-700 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-colors dark:text-amber-400"
               />
             </div>
           </div>
@@ -300,7 +300,7 @@ function AdminRewardCreateEditModalInner({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Số lượng tồn kho <span className="text-rose-500">*</span>
+                Số lượng tồn kho <span className="text-rose-700 dark:text-rose-400">*</span>
               </label>
               <input
                 type="number"
@@ -338,7 +338,7 @@ function AdminRewardCreateEditModalInner({
                   type="checkbox"
                   checked={formData.isActive}
                   onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  className="rounded text-rose-600 focus:ring-rose-500 h-4 w-4"
+                  className="rounded text-rose-700 focus:ring-rose-500 h-4 w-4 dark:text-rose-400"
                 />
                 <span className="text-sm font-bold text-slate-700">
                   {formData.isActive ? "Đang hiển thị" : "Đang ẩn (Tạm khóa)"}
@@ -402,7 +402,7 @@ function AdminRewardCreateEditModalInner({
                     />
                   </label>
                 </div>
-                <p className="text-xs text-slate-400">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
                   Tải ảnh lên hoặc dán đường dẫn ảnh.
                 </p>
               </div>

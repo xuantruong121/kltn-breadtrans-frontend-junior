@@ -70,7 +70,7 @@ export function PictureWritingWorkspace({
           <div
             role="img"
             aria-label="Tranh chưa tải được"
-            className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800"
+            className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
           >
             <ImageOff size={22} strokeWidth={2} aria-hidden="true" />
             Tranh chưa tải được. Hãy tải lại trang.
@@ -158,7 +158,7 @@ export function PictureWritingWorkspace({
               <span
                 id="picture-word-count"
                 aria-live="polite"
-                className={`text-sm font-semibold tabular-nums ${tooLong ? "text-rose-600" : "text-slate-600 dark:text-slate-400"}`}
+                className={`text-sm font-semibold tabular-nums ${tooLong ? "text-rose-700" : "text-slate-600 dark:text-slate-400"}`}
               >
                 {wordCount}/{PICTURE_MAX_WORDS} từ
                 {tooLong ? ` · vượt ${wordCount - PICTURE_MAX_WORDS} từ` : ""}
@@ -245,7 +245,7 @@ export function PictureWritingWorkspace({
                     <ul className="mt-1 space-y-1.5 text-sm">
                       {detail.corrections.map((c) => (
                         <li key={`${c.original}-${c.corrected}`} className="text-slate-700 dark:text-slate-300">
-                          <span className="line-through text-rose-600" lang="en">{c.original}</span>{" "}
+                          <span className="line-through text-rose-700 dark:text-rose-400" lang="en">{c.original}</span>{" "}
                           <ArrowRight size={12} className="inline" aria-hidden="true" />{" "}
                           <span className="font-semibold text-emerald-700" lang="en">{c.corrected}</span>
                           <span className="block text-slate-500 dark:text-slate-400">{c.explanation}</span>

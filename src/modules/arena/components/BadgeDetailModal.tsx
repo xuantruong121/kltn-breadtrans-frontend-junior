@@ -70,7 +70,7 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors cursor-pointer z-10"
+            className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 flex items-center justify-center transition-colors cursor-pointer z-10"
           >
             <X size={16} />
           </button>
@@ -81,7 +81,7 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
               className={`w-24 h-24 rounded-2xl border-2 flex items-center justify-center relative shadow-xs ${
                 hasUnlocked
                   ? `${badge.bgColor} ${badge.borderColor} ${badge.color} dark:bg-opacity-20`
-                  : "bg-slate-100 border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-slate-400 dark:text-slate-500 grayscale"
+                  : "bg-slate-100 border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-slate-600 dark:text-slate-400 grayscale"
               }`}
             >
               <Icon size={44} strokeWidth={1.75} />
@@ -109,7 +109,7 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
             <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-2 mb-1">
               {badge.name}
             </h3>
-            <p className="text-xs sm:text-sm font-normal text-slate-500 dark:text-slate-400 px-2 leading-relaxed">
+            <p className="text-sm sm:text-sm font-medium text-slate-600 dark:text-slate-400 px-2 leading-relaxed">
               {badge.description}
             </p>
           </div>
@@ -118,7 +118,7 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
           <div className="bg-slate-50 dark:bg-slate-850/70 rounded-xl p-4 border border-slate-200 dark:border-slate-800 mb-5 text-left">
             <div className="flex justify-between items-center text-xs font-semibold mb-1.5">
               <span className="text-slate-600 dark:text-slate-400">Tiến trình thử thách:</span>
-              <span className={hasUnlocked ? "text-emerald-600 dark:text-emerald-400" : "text-indigo-600 dark:text-indigo-400"}>
+              <span className={hasUnlocked ? "text-emerald-700 dark:text-emerald-400" : "text-indigo-600 dark:text-indigo-400"}>
                 {hasUnlocked
                   ? "Hoàn thành 100%"
                   : `${badge.currentValue || 0} / ${badge.targetValue} ${badge.unit} (${progressPercent}%)`}
@@ -139,7 +139,7 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
             <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-600 dark:text-slate-400">
               <span>Phần thưởng danh dự:</span>
               <div className="flex items-center gap-3">
-                <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-semibold">
+                <span className="flex items-center gap-1 text-amber-700 dark:text-amber-400 font-semibold">
                   +{badge.rewardBreads} Bánh Mì
                 </span>
                 <span className="flex items-center gap-1 text-slate-800 dark:text-slate-200 font-semibold">
@@ -150,7 +150,7 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
 
             {/* Date if unlocked */}
             {hasUnlocked && unlockedAt && (
-              <div className="flex items-center gap-1 text-xs font-medium text-slate-400 dark:text-slate-500 mt-2">
+              <div className="flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-400 mt-2">
                 <Calendar size={12} />
                 <span>
                   Đạt được ngày {new Date(unlockedAt).toLocaleDateString("vi-VN")}
@@ -168,7 +168,7 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
                 className={`w-full font-semibold text-sm py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-xs ${
                   isEquipped
                     ? "bg-amber-600 hover:bg-amber-700 text-white"
-                    : "bg-emerald-600 hover:bg-emerald-700 text-white"
+                    : "bg-emerald-700 hover:bg-emerald-800 text-white"
                 }`}
               >
                 <BadgeCheck size={16} />
@@ -178,7 +178,7 @@ export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
               <button
                 type="button"
                 disabled
-                className="w-full font-medium text-sm py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-700"
+                className="w-full font-medium text-sm py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed border border-slate-200 dark:border-slate-700"
               >
                 <Lock size={15} /> Chưa đủ điều kiện mở khóa
               </button>

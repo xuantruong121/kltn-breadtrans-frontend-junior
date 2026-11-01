@@ -376,7 +376,7 @@ export default function WritingDetailPage(props: {
           statusContent={
             <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-slate-300 bg-slate-800 border border-slate-700 px-3 py-1 rounded-lg">
               <span>{wordCount} từ</span>
-              <span className="text-slate-500">·</span>
+              <span className="text-slate-600 dark:text-slate-400">·</span>
               <span>{charCount} ký tự</span>
             </div>
           }
@@ -424,11 +424,11 @@ export default function WritingDetailPage(props: {
                 {/* HEADER PROMPT */}
                 <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 rounded-xl border border-rose-200 dark:border-rose-900/50">
+                    <div className="p-2.5 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 rounded-xl border border-rose-200 dark:border-rose-900/50">
                       <PenTool size={22} />
                     </div>
                     <div>
-                      <span className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider">
+                      <span className="text-xs font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider">
                         Chủ Đề Yêu Cầu
                       </span>
                       <h2 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">
@@ -545,7 +545,7 @@ export default function WritingDetailPage(props: {
                       aria-label="Hình minh họa đề bài viết hiện chưa tải được"
                       className="w-full overflow-hidden rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-850 p-5 text-center"
                     >
-                      <p className="text-xs font-medium leading-relaxed text-slate-500 dark:text-slate-400">
+                      <p className="text-xs font-medium leading-relaxed text-slate-600 dark:text-slate-400">
                         Hình minh họa hiện chưa tải được. Bạn vẫn có thể tiếp tục
                         đọc yêu cầu đề bài và hoàn thành bài viết.
                       </p>
@@ -633,14 +633,14 @@ export default function WritingDetailPage(props: {
                       {/* SCORE HEADER */}
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
                         <div className="flex items-center gap-3">
-                          <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-xl border border-emerald-200 dark:border-emerald-900/50">
+                          <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 rounded-xl border border-emerald-200 dark:border-emerald-900/50">
                             <Award size={24} />
                           </div>
                           <div>
                             <h3 className="text-lg font-extrabold text-slate-900 dark:text-slate-100">
                               Báo Cáo Đánh Giá
                             </h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                            <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
                               Theo các tiêu chí rõ ràng về ý, cấu trúc và cách
                               dùng từ
                             </p>
@@ -649,7 +649,7 @@ export default function WritingDetailPage(props: {
 
                         <div className="flex items-center gap-3">
                           <div className="text-right">
-                            <span className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500 block">
+                            <span className="text-xs font-bold uppercase text-slate-600 dark:text-slate-400 block">
                               Mức độ hoàn thành
                             </span>
                             <span className="text-xs font-extrabold text-blue-600 dark:text-blue-400">

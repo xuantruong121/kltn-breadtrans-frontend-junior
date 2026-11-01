@@ -582,7 +582,7 @@ export default function DiagnosticPage() {
             <button
               type="button"
               onClick={handleStart}
-              className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-teal-600 px-7 text-sm font-extrabold text-white transition hover:bg-teal-700"
+              className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-teal-700 px-7 text-sm font-extrabold text-white transition hover:bg-teal-800"
             >
               <span>{isResuming ? "Tiếp tục bài đánh giá" : "Bắt đầu làm bài"}</span>
               <ArrowRight size={18} />
@@ -659,7 +659,7 @@ export default function DiagnosticPage() {
             {/* READING PASSAGE UI HIERARCHY */}
             {isReading && passageBody && (
               <article className="mb-8 rounded-2xl bg-slate-50 px-5 py-5 dark:bg-slate-850 sm:px-7 sm:py-6" aria-label="Đoạn đọc">
-                <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
+                <p className="text-sm font-bold text-slate-600 dark:text-slate-400">
                   {passageTitle || "Đoạn đọc"}
                 </p>
                 <div className="mt-3 max-w-[68ch] whitespace-pre-line text-[17px] leading-8 text-slate-800 dark:text-slate-200">
@@ -693,7 +693,7 @@ export default function DiagnosticPage() {
                     aria-label="Âm thanh bài nghe"
                   />
                 ) : (
-                  <p className="mt-2 text-sm font-bold text-rose-600" role="status">
+                  <p className="mt-2 text-sm font-bold text-rose-700 dark:text-rose-400" role="status">
                     Âm thanh của câu này chưa được phát hành nên chưa thể trả lời. Vui lòng quay lại sau.
                   </p>
                 )}
@@ -702,7 +702,7 @@ export default function DiagnosticPage() {
 
             {/* QUESTION STEM WITH VISUAL SOLID BLANK FOR CLOZE */}
             <h2 className="text-xl font-black leading-snug text-slate-900 dark:text-slate-100 sm:text-2xl">
-              <span className="mr-2.5 text-teal-600 dark:text-teal-400 font-extrabold">
+              <span className="mr-2.5 text-teal-700 dark:text-teal-400 font-extrabold">
                 {step + 1}.
               </span>
               <ClozePrompt prompt={current.question} />
@@ -835,7 +835,7 @@ export default function DiagnosticPage() {
                     guidance.tone === "within"
                       ? "text-emerald-700 dark:text-emerald-300"
                       : guidance.tone === "neutral"
-                        ? "text-slate-500 dark:text-slate-400"
+                        ? "text-slate-600 dark:text-slate-400"
                         : "text-amber-700 dark:text-amber-300"
                   }`}
                 >
@@ -867,7 +867,7 @@ export default function DiagnosticPage() {
                       <span
                         className={`mr-3.5 flex size-8 shrink-0 items-center justify-center rounded-xl text-xs font-black transition-colors ${
                           isSelected
-                            ? "bg-teal-600 text-white"
+                            ? "bg-teal-700 text-white"
                             : "bg-slate-100 text-slate-600 group-hover:bg-teal-100 group-hover:text-teal-700 dark:bg-slate-800 dark:text-slate-400"
                         }`}
                       >
@@ -923,7 +923,7 @@ export default function DiagnosticPage() {
                     setStep((value) => value + 1);
                   }
                 }}
-                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-teal-600 px-6 text-sm font-extrabold text-white transition hover:bg-teal-700 disabled:opacity-40"
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-teal-700 px-6 text-sm font-extrabold text-white transition hover:bg-teal-800 disabled:opacity-40"
               >
                 {submit.isPending ? (
                   <>
@@ -945,7 +945,7 @@ export default function DiagnosticPage() {
             </div>
 
             {submit.isError && (
-              <p className="mt-4 text-sm font-bold text-rose-600" role="alert">
+              <p className="mt-4 text-sm font-bold text-rose-700 dark:text-rose-400" role="alert">
                 Không thể lưu kết quả. Vui lòng thử lại.
               </p>
             )}
@@ -1088,12 +1088,12 @@ function DiagnosticResultView({
             <div className="mt-3 rounded-2xl border border-slate-100 bg-slate-50 p-4.5 dark:border-slate-800 dark:bg-slate-850">
               <p className="text-base font-extrabold text-slate-800 dark:text-slate-200">
                 Phần trắc nghiệm khách quan:{" "}
-                <span className="text-emerald-600 dark:text-emerald-400">
+                <span className="text-emerald-700 dark:text-emerald-400">
                   {result.correctCount}/{result.totalCount} câu đúng
                 </span>{" "}
                 ({result.percentage}%)
               </p>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 leading-6">
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 leading-6">
                 Mức tham khảo được tính từ {result.totalCount} câu trắc nghiệm khách quan.
                 {speakingTaskIds.length + writingTaskIds.length > 0
                   ? " Các bài Nói và Viết được nhận xét riêng để gợi ý luyện tập; chúng không thay đổi mức này."
@@ -1106,7 +1106,7 @@ function DiagnosticResultView({
         {/* Speaking feedback, one card per task */}
         {speakingTaskIds.length > 0 && (
           <div className="mt-6 grid gap-3 lg:grid-cols-2">
-            <h3 className="text-sm font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 lg:col-span-2">
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 lg:col-span-2">
               Bài Nói
             </h3>
             {speakingTaskIds.map((questionId, index) => {
@@ -1151,7 +1151,7 @@ function DiagnosticResultView({
         {/* Writing feedback, one card per task */}
         {writingTaskIds.length > 0 && (
           <div className="mt-6 grid gap-3 lg:grid-cols-2">
-            <h3 className="text-sm font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 lg:col-span-2">
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 lg:col-span-2">
               Bài Viết
             </h3>
             {writingTaskIds.map((questionId, index) => {
@@ -1179,7 +1179,7 @@ function DiagnosticResultView({
                   <TaskStatusChip status={item.status} score={item.score} />
                 </div>
                 {typeof item.wordCount === "number" && (
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{item.wordCount} từ</p>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{item.wordCount} từ</p>
                 )}
                 {item.status === "GRADED" && <CriteriaList criteria={item.criteria} feedback={item.criterionFeedback} weights={item.criterionWeights} />}
                 {item.feedback && <FeedbackSummary text={item.feedback} />}
@@ -1194,7 +1194,7 @@ function DiagnosticResultView({
         {/* Skill Profiles Breakdown */}
         {!fourSkill && result.skillProfiles && result.skillProfiles.length > 0 && (
           <div className="mt-7">
-            <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Kết quả theo kỹ năng
             </h3>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -1221,7 +1221,7 @@ function DiagnosticResultView({
         {!result.advice && (
         <div className="mt-7 grid gap-4 border-t border-slate-100 pt-6 sm:grid-cols-2 dark:border-slate-800">
           <div>
-            <h3 className="text-sm font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            <h3 className="text-sm font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
               Điểm mạnh
             </h3>
             <p className="mt-1 text-base font-bold text-slate-800 dark:text-slate-200">
@@ -1231,7 +1231,7 @@ function DiagnosticResultView({
             </p>
           </div>
           <div>
-            <h3 className="text-sm font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
+            <h3 className="text-sm font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">
               Nên củng cố
             </h3>
             <p className="mt-1 text-base font-bold text-slate-800 dark:text-slate-200">
@@ -1255,7 +1255,7 @@ function DiagnosticResultView({
               Bài luyện đề xuất
             </h2>
           </div>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             Dựa trên phân tích kết quả bài kiểm tra, hệ thống gợi ý các lộ trình luyện tập mục tiêu cho bạn:
           </p>
 
@@ -1273,11 +1273,11 @@ function DiagnosticResultView({
                   <h3 className="mt-2 text-base font-black text-slate-900 group-hover:text-teal-600 dark:text-slate-100 dark:group-hover:text-teal-400">
                     {rec.title}
                   </h3>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-6">
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 line-clamp-2 leading-6">
                     {rec.description}
                   </p>
                 </div>
-                <div className="mt-4 flex items-center gap-1 text-sm font-extrabold text-teal-600 dark:text-teal-400">
+                <div className="mt-4 flex items-center gap-1 text-sm font-extrabold text-teal-700 dark:text-teal-400">
                   <span>Luyện tập ngay</span>
                   <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
                 </div>
@@ -1307,7 +1307,7 @@ function DiagnosticResultView({
                 onClick={() => setReviewFilter(f.id)}
                 className={`rounded-xl px-3 py-1.5 text-sm font-bold transition-all ${
                   reviewFilter === f.id
-                    ? "bg-teal-600 text-white"
+                    ? "bg-teal-700 text-white"
                     : "border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                 }`}
               >
@@ -1319,7 +1319,7 @@ function DiagnosticResultView({
 
         <div className="mt-5 grid gap-3 xl:grid-cols-2">
           {filteredReviews.length === 0 ? (
-            <p className="py-6 xl:col-span-2 text-center text-sm font-bold text-slate-400">
+            <p className="py-6 xl:col-span-2 text-center text-sm font-bold text-slate-600 dark:text-slate-400">
               Không có câu hỏi nào trong danh mục này.
             </p>
           ) : (
@@ -1435,7 +1435,7 @@ function DiagnosticResultView({
           <h3 className="text-base font-black text-slate-900 dark:text-slate-100">
             Kết quả đã được lưu vĩnh viễn vào hồ sơ
           </h3>
-          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">
             Bạn có thể xem lại kết quả này bất kỳ lúc nào tại mục Tài khoản.
           </p>
         </div>
@@ -1450,7 +1450,7 @@ function DiagnosticResultView({
           </Link>
           <Link
             href="/dashboard"
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-teal-600 px-5 text-sm font-extrabold text-white hover:bg-teal-700"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-teal-700 px-5 text-sm font-extrabold text-white hover:bg-teal-800"
           >
             <span>Về Bảng điều khiển</span>
             <ArrowRight size={15} />
@@ -1512,18 +1512,18 @@ function FourSkillPanel({ result }: { result: DiagnosticFourSkillResult }) {
                 {skill?.score !== null && skill?.score !== undefined ? `${skill.score}/100` : "—"}
               </p>
               {skill && (key === "LISTENING" || key === "READING") && skill.itemsTotal > 0 && (
-                <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{skill.itemsScored}/{skill.itemsTotal} câu đúng</p>
+                <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">{skill.itemsScored}/{skill.itemsTotal} câu đúng</p>
               )}
             </div>
           );
         })}
       </div>
       {languageUse && languageUse.itemsTotal > 0 && (
-        <p className="mt-3 text-sm leading-6 text-slate-500 dark:text-slate-400">
+        <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-400">
           {FOUR_SKILL_LABELS.LANGUAGE_USE}: {languageUse.itemsScored}/{languageUse.itemsTotal} câu đúng. Phần này chỉ dùng để gợi ý luyện tập, không tính vào điểm tổng.
         </p>
       )}
-      <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+      <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
         Đây là chỉ số luyện tập nội bộ của BreadTrans, không phải điểm thi hay chứng chỉ chính thức.
       </p>
     </div>

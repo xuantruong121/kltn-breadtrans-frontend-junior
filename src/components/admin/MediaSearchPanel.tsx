@@ -256,7 +256,7 @@ export default function MediaSearchPanel({
             alt="Ảnh đề xuất"
             className="h-32 w-full rounded-md border border-slate-200 object-cover sm:w-56"
           />
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-600 dark:text-slate-400">
             Nguồn: {PROVIDER_LABEL[result.candidate.provider] || result.candidate.provider}
             {" · "}
             {result.vision?.status === "PASS" && "Đánh giá phù hợp: đạt"}
@@ -284,7 +284,7 @@ export default function MediaSearchPanel({
             <button
               type="button"
               onClick={() => setResult(null)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-50"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:text-slate-400"
             >
               Đóng
             </button>
@@ -332,7 +332,7 @@ export default function MediaSearchPanel({
               </p>
             )}
             {generated.vision?.status === "LOW_CONFIDENCE" && (
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Đánh giá phù hợp: cần bạn xem kỹ trước khi dùng
               </p>
             )}
@@ -359,7 +359,7 @@ export default function MediaSearchPanel({
               <button
                 type="button"
                 onClick={() => setGenerated(null)}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-50"
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:text-slate-400"
               >
                 Hủy
               </button>

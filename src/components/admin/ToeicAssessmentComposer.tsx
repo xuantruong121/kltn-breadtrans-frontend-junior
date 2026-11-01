@@ -200,13 +200,13 @@ export default function ToeicAssessmentComposer() {
     <main className="mx-auto max-w-7xl space-y-6 p-6 text-slate-900">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-600">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-700 dark:text-orange-400">
             Luyện đề / TOEIC
           </p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight">
             Cấu trúc đề TOEIC
           </h1>
-          <p className="mt-2 max-w-2xl text-sm text-slate-500">
+          <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-400">
             Thiết lập các phần của đề TOEIC. Nội dung từng kỹ năng vẫn được
             soạn ở trang quản lý của từng kỹ năng.
           </p>
@@ -223,7 +223,7 @@ export default function ToeicAssessmentComposer() {
 
       <section className="grid gap-5 lg:grid-cols-[280px_1fr]">
         <aside className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-          <h2 className="px-3 py-2 text-sm font-semibold text-slate-500">
+          <h2 className="px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400">
             Các đề TOEIC
           </h2>
           <div className="space-y-1">
@@ -237,13 +237,13 @@ export default function ToeicAssessmentComposer() {
                 <span className="block text-sm font-semibold">
                   {item.title}
                 </span>
-                <span className="mt-1 block text-xs text-slate-500">
+                <span className="mt-1 block text-xs text-slate-600 dark:text-slate-400">
                   {({ TOEIC_LR: "TOEIC Listening & Reading", TOEIC_SW: "TOEIC Speaking & Writing", TOEIC_4_SKILLS: "TOEIC 4 kỹ năng" } as Record<string, string>)[item.productFamily] ?? item.productFamily} · {item.publicationStatus === "PUBLISHED" ? "Đã xuất bản" : "Bản nháp"}
                 </span>
               </button>
             ))}
             {!assessments.length && (
-              <p className="px-3 py-6 text-sm text-slate-400">
+              <p className="px-3 py-6 text-sm text-slate-600 dark:text-slate-400">
                 Chưa có đề TOEIC nào.
               </p>
             )}
@@ -275,7 +275,7 @@ export default function ToeicAssessmentComposer() {
               <input
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-medium outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
                 placeholder="VD: TOEIC 4 kỹ năng — Đề luyện tập 01"
               />
             </label>
@@ -284,7 +284,7 @@ export default function ToeicAssessmentComposer() {
               <select
                 value={family}
                 onChange={(event) => setFamily(event.target.value as Family)}
-                className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-medium outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
               >
                 {Object.entries(familyLabels).map(([value, label]) => (
                   <option key={value} value={value}>
@@ -299,7 +299,7 @@ export default function ToeicAssessmentComposer() {
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              className="mt-2 min-h-24 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+              className="mt-2 min-h-24 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-medium outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
             />
           </label>
 
@@ -344,7 +344,7 @@ export default function ToeicAssessmentComposer() {
             </div>
           )}
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-5">
-            <div className="flex items-center gap-2 text-xs text-slate-500">
+            <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
               <CheckCircle2 size={15} className="text-emerald-600" /> Nội dung
               từng kỹ năng được soạn ở trang quản lý của kỹ năng đó
             </div>
@@ -373,7 +373,7 @@ export default function ToeicAssessmentComposer() {
               </button>
             </div>
           </div>
-          <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-500">
+          <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-600 dark:text-slate-400">
             <Link
               href="/admin/exams"
               className="inline-flex items-center gap-1 hover:text-slate-900"
@@ -427,7 +427,7 @@ function SourceSelect({
             ? onChangeString?.(event.target.value)
             : onChange(event.target.value)
         }
-        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 font-normal outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 font-medium outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
       >
         <option value="">{empty}</option>
         {sources.map((source) => (

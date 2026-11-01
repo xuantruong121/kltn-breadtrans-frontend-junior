@@ -243,9 +243,9 @@ export default function ToeicWritingSetComposer() {
     <main className="mx-auto max-w-6xl space-y-6 p-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Luyện đề / TOEIC</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-600 dark:text-slate-400">Luyện đề / TOEIC</p>
           <h1 className="mt-2 text-2xl font-bold text-slate-950">Writing · 8 câu</h1>
-          <p className="mt-1 text-sm text-slate-500">Biên tập cấu trúc Writing gồm 5 câu theo tranh, 2 yêu cầu viết và 1 bài luận.</p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Biên tập cấu trúc Writing gồm 5 câu theo tranh, 2 yêu cầu viết và 1 bài luận.</p>
         </div>
         <button type="button" onClick={createSet} disabled={busy} className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50">
           <Plus size={16} /> Tạo nội dung Writing nháp
@@ -256,11 +256,11 @@ export default function ToeicWritingSetComposer() {
         <aside className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <h2 className="text-sm font-semibold text-slate-900">Các bộ Writing</h2>
           <div className="mt-3 space-y-2">
-            {sets.length === 0 && <p className="text-sm text-slate-500">Chưa có bộ đề nào.</p>}
+            {sets.length === 0 && <p className="text-sm text-slate-600 dark:text-slate-400">Chưa có bộ đề nào.</p>}
             {sets.map((set) => (
               <button key={set.id} type="button" onClick={() => chooseSet(set.id)} className={`w-full rounded-xl border px-3 py-2 text-left text-sm ${set.id === activeId ? "border-blue-300 bg-blue-50 text-blue-900" : "border-slate-200 hover:bg-slate-50"}`}>
                 <span className="block truncate font-medium">{set.title}</span>
-                <span className="mt-1 block text-xs text-slate-500">{set.publicationStatus === "PUBLISHED" ? "Published" : "Draft"}</span>
+                <span className="mt-1 block text-xs text-slate-600 dark:text-slate-400">{set.publicationStatus === "PUBLISHED" ? "Published" : "Draft"}</span>
               </button>
             ))}
           </div>
@@ -268,7 +268,7 @@ export default function ToeicWritingSetComposer() {
 
         <section className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           {!activeSet ? (
-            <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500">Tạo một bộ đề để bắt đầu.</div>
+            <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-600 dark:text-slate-400">Tạo một bộ đề để bắt đầu.</div>
           ) : (
             <>
               <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
@@ -279,7 +279,7 @@ export default function ToeicWritingSetComposer() {
 
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3 text-sm">
                 <span className="font-semibold text-slate-800">Đã sẵn sàng {readySlotCount}/8 câu</span>
-                <div className="flex items-center gap-2"><span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold">{activeSet.publicationStatus === "PUBLISHED" ? "Đã xuất bản" : "Bản nháp"}</span><button type="button" onClick={publish} disabled={busy || activeSet.publicationStatus === "PUBLISHED"} className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"><Send size={15} /> Xuất bản</button></div>
+                <div className="flex items-center gap-2"><span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold">{activeSet.publicationStatus === "PUBLISHED" ? "Đã xuất bản" : "Bản nháp"}</span><button type="button" onClick={publish} disabled={busy || activeSet.publicationStatus === "PUBLISHED"} className="inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50"><Send size={15} /> Xuất bản</button></div>
               </div>
 
               <div className="space-y-3">
@@ -296,7 +296,7 @@ export default function ToeicWritingSetComposer() {
                 })}
               </div>
               {!activeSet.structure.valid && activeSet.structure.issues.length > 0 && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><p className="font-semibold">Chưa sẵn sàng xuất bản</p><ul className="mt-2 list-disc space-y-1 pl-5">{activeSet.structure.issues.map((issue) => <li key={issue}>{issue}</li>)}</ul></div>}
-              <p className="text-xs text-slate-500">Cần bài mới? Tạo tại <Link href="/admin/writing/new" className="font-semibold text-blue-700 hover:underline">Quản lý bài viết</Link>, rồi chọn bài đó cho câu tương ứng.</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Cần bài mới? Tạo tại <Link href="/admin/writing/new" className="font-semibold text-blue-700 hover:underline">Quản lý bài viết</Link>, rồi chọn bài đó cho câu tương ứng.</p>
             </>
           )}
         </section>

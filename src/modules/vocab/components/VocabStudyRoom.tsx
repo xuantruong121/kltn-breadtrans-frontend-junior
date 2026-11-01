@@ -217,7 +217,7 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
                 )}
               </motion.div>
             ) : (
-              <div className="text-center py-16 text-slate-400 dark:text-slate-500 text-sm font-semibold">
+              <div className="text-center py-16 text-slate-600 dark:text-slate-400 text-sm font-semibold">
                 Không tìm thấy từ vựng trong chủ đề
               </div>
             )}

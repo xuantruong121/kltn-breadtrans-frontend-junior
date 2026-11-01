@@ -60,7 +60,7 @@ export default function HelpPage() {
     <main className="min-h-[calc(100dvh-5rem)] bg-slate-50 px-4 py-10 sm:px-6 sm:py-14">
       <section className="mx-auto max-w-3xl">
         <header className="border-b border-slate-200 pb-7 sm:pb-8">
-          <p className="text-sm font-semibold text-slate-500">
+          <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
             Trung tâm trợ giúp
           </p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
@@ -75,7 +75,7 @@ export default function HelpPage() {
         <label className="relative mt-7 block">
           <span className="sr-only">Tìm câu hỏi</span>
           <Search
-            className="pointer-events-none absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-slate-500"
             aria-hidden="true"
           />
           <input

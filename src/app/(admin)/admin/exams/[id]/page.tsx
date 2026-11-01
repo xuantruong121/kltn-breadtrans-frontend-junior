@@ -89,7 +89,7 @@ export default function ExamStudioPage({
   if (isLoading || !exam) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <Loader2 className="animate-spin text-slate-400" size={28} />
+        <Loader2 className="animate-spin text-slate-500" size={28} />
       </div>
     );
   }
@@ -107,7 +107,7 @@ export default function ExamStudioPage({
       <button
         type="button"
         onClick={() => router.push("/admin/exams")}
-        className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
       >
         <ArrowLeft size={15} /> Quay lại danh sách đề thi
       </button>
@@ -151,7 +151,7 @@ export default function ExamStudioPage({
           </button>
           {isPublished ? (
             hasAttempts ? (
-              <span className="text-xs text-slate-500 dark:text-slate-400">
+              <span className="text-xs text-slate-600 dark:text-slate-400">
                 Đề đã có lượt làm · nội dung bị khóa
               </span>
             ) : (
@@ -176,7 +176,7 @@ export default function ExamStudioPage({
                 {publishReadiness.label}
               </button>
               {!publishReadiness.canPublish && (
-                <p className="max-w-[240px] text-right text-xs leading-4 text-slate-500 dark:text-slate-400">
+                <p className="max-w-[240px] text-right text-xs leading-4 text-slate-600 dark:text-slate-400">
                   {publishReadiness.helpText}
                 </p>
               )}
@@ -198,7 +198,7 @@ export default function ExamStudioPage({
             key={key}
             type="button"
             onClick={() => setTab(key)}
-            className={`border-b-2 px-1 pb-2 text-sm font-medium ${tab === key ? "border-slate-900 text-slate-900 dark:border-slate-100 dark:text-slate-100" : "border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400"}`}
+            className={`border-b-2 px-1 pb-2 text-sm font-medium ${tab === key ? "border-slate-900 text-slate-900 dark:border-slate-100 dark:text-slate-100" : "border-transparent text-slate-600 hover:text-slate-800 dark:text-slate-400"}`}
           >
             {label}
           </button>
@@ -243,7 +243,7 @@ export default function ExamStudioPage({
                   Part {selectedPart} ·{" "}
                   {exam.groups.filter((g) => g.part === selectedPart).length} nhóm câu.
                 </p>
-                <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+                <p className="mt-3 text-xs text-slate-600 dark:text-slate-400">
                   Soạn/sửa nội dung Part này trong trình soạn hiện có — Outline chỉ
                   điều hướng và cho biết tình trạng.
                 </p>
@@ -287,7 +287,7 @@ export default function ExamStudioPage({
                 {row.label}
               </span>
               <span
-                className={`text-xs font-medium ${row.state === "READY" ? "text-emerald-600" : row.state === "WARNING" ? "text-amber-600" : "text-slate-500"}`}
+                className={`text-xs font-medium ${row.state === "READY" ? "text-emerald-700" : row.state === "WARNING" ? "text-amber-700" : "text-slate-600"} dark:text-slate-400`}
               >
                 {row.state === "READY"
                   ? "Sẵn sàng"
@@ -330,7 +330,7 @@ export default function ExamStudioPage({
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
+      <p className="text-xs text-slate-600 dark:text-slate-400">{label}</p>
       <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{value}</p>
     </div>
   );

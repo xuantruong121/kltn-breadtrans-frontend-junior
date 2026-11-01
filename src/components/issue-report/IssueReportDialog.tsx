@@ -121,7 +121,7 @@ export function IssueReportDialog({
       >
         <div className="flex items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
           <div className="flex gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400">
               <AlertTriangle size={20} />
             </span>
             <div>
@@ -131,7 +131,7 @@ export function IssueReportDialog({
               >
                 {title}
               </h2>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                 Thông tin này sẽ được gửi đến đội ngũ BreadTrans.
               </p>
             </div>
@@ -139,7 +139,7 @@ export function IssueReportDialog({
           <button
             type="button"
             onClick={onClose}
-            className="grid min-h-11 min-w-11 place-items-center rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+            className="grid min-h-11 min-w-11 place-items-center rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
             aria-label="Đóng cửa sổ báo lỗi"
           >
             <X size={20} />
@@ -234,7 +234,7 @@ export function IssueReportDialog({
               />
               <div
                 id="issue-description-help"
-                className="mt-1 flex justify-between text-xs text-slate-500 dark:text-slate-400"
+                className="mt-1 flex justify-between text-xs text-slate-600 dark:text-slate-400"
               >
                 <span>Không cần dùng thuật ngữ kỹ thuật.</span>
                 <span>{description.length}/1500</span>

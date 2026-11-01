@@ -242,7 +242,7 @@ export default function WritingTopicsPage() {
           {/* Global Completion Progress Card */}
           <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 p-4 sm:p-4.5 shadow-2xs lg:w-72 shrink-0 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">
                 Tiến độ luyện viết
               </span>
               {progressPercent !== null && <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 text-xs font-black text-emerald-700 dark:text-emerald-300">{progressPercent}% hoàn thành</span>}
@@ -253,13 +253,13 @@ export default function WritingTopicsPage() {
                 <span className="text-xl font-black text-slate-900 dark:text-slate-100">
                   {progressTotal === null ? `${progressCompleted} bài` : `${progressCompleted}/${progressTotal}`}
                 </span>
-                <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                <span className="text-xs font-bold text-slate-600 dark:text-slate-400">
                   chủ đề hoàn thành
                 </span>
               </div>
 
               {/* Progress Bar */}
-              {progressPercent !== null ? <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700"><div className="h-full rounded-full bg-emerald-500 transition-all duration-500" style={{ width: `${progressPercent}%` }} /></div> : <p className="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400">Chưa có tổng danh mục hợp lệ để tính phần trăm.</p>}
+              {progressPercent !== null ? <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700"><div className="h-full rounded-full bg-emerald-500 transition-all duration-500" style={{ width: `${progressPercent}%` }} /></div> : <p className="mt-2 text-xs font-semibold text-slate-600 dark:text-slate-400">Chưa có tổng danh mục hợp lệ để tính phần trăm.</p>}
             </div>
           </div>
         </div>
@@ -274,7 +274,7 @@ export default function WritingTopicsPage() {
                 Lịch sử Writing gần đây
               </h2>
             </div>
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
               Kết quả đã lưu
             </span>
           </div>
@@ -292,7 +292,7 @@ export default function WritingTopicsPage() {
                 <p className="line-clamp-1 text-xs font-bold text-slate-800 dark:text-slate-100">
                   {activity.title}
                 </p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
                   {activity.detail ?? "Đã hoàn thành"} · {activity.score != null ? `${activity.score}%` : "Chưa có điểm"}
                 </p>
               </Link>
@@ -315,7 +315,7 @@ export default function WritingTopicsPage() {
               onClick={() => changeTab(id)}
               className={`min-h-10 rounded-xl px-4 text-sm font-semibold transition-colors cursor-pointer ${
                 writingTab === id
-                  ? "bg-teal-600 text-white"
+                  ? "bg-teal-700 text-white"
                   : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700"
               }`}
             >
@@ -367,7 +367,7 @@ export default function WritingTopicsPage() {
                       searchInputRef.current?.focus();
                     }}
                     aria-label="Xóa từ khóa tìm kiếm"
-                    className="flex size-6 items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                    className="flex size-6 items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer dark:text-slate-400"
                   >
                     <X size={13} aria-hidden="true" />
                   </button>
@@ -451,11 +451,11 @@ export default function WritingTopicsPage() {
             </div>
           ) : (
             <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 sm:p-12 text-center">
-              <PenTool size={36} className="mx-auto text-slate-400 dark:text-slate-500 mb-3" aria-hidden="true" />
+              <PenTool size={36} className="mx-auto text-slate-500 dark:text-slate-400 mb-3" aria-hidden="true" />
               <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-200">
                 Không tìm thấy chủ đề luyện viết phù hợp
               </h2>
-              <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+              <p className="mt-1.5 text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto">
                 Hãy thử chọn bộ lọc khác hoặc tìm kiếm với từ khóa khác để khám phá các bài luyện có sẵn.
               </p>
               <div className="mt-5 flex justify-center">
@@ -467,7 +467,7 @@ export default function WritingTopicsPage() {
                     setSortOrder(DEFAULT_CATALOG_SORT);
                     setSelectedStatus("ALL");
                   }}
-                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-teal-700 hover:bg-teal-800 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
                 >
                   <RotateCcw size={14} aria-hidden="true" />
                   Xóa bộ lọc

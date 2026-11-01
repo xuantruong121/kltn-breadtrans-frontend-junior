@@ -199,7 +199,7 @@ export function ChatMessageContent({
               className={`shrink-0 select-none text-xs leading-5 ${
                 isInverse
                   ? "text-slate-300"
-                  : "text-slate-400 dark:text-slate-500"
+                  : "text-slate-600 dark:text-slate-400"
               }`}
             >
               •

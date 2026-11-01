@@ -89,7 +89,7 @@ export default function AdminVocabPage() {
           <Search
             size={18}
             aria-hidden="true"
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
           />
           <input
             value={query}
@@ -168,7 +168,7 @@ export default function AdminVocabPage() {
 
       {isLoading ? (
         <div className="flex justify-center py-20">
-          <Loader2 className="animate-spin text-slate-400" size={32} />
+          <Loader2 className="animate-spin text-slate-500" size={32} />
         </div>
       ) : (
         // Cards fill the canvas in 320px-minimum columns with one 16px gutter.
@@ -186,7 +186,7 @@ export default function AdminVocabPage() {
                       {deck.level}
                     </span>
                   )}
-                  <span className="truncate text-xs text-slate-500">{deck.categoryName}</span>
+                  <span className="truncate text-xs text-slate-600 dark:text-slate-400">{deck.categoryName}</span>
                   <span
                     className={`ml-auto flex-none whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-semibold ${
                       isPublished ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800"
@@ -221,7 +221,7 @@ export default function AdminVocabPage() {
                         onClick={() => setPendingDelete(deck)}
                         aria-label={`Xóa ${deck.title}`}
                         title="Xóa bộ từ"
-                        className="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+                        className="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400"
                       >
                         <Trash2 size={15} />
                       </button>

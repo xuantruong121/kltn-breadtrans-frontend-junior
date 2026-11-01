@@ -79,7 +79,7 @@ export const SpeakingStage: React.FC<SpeakingStageProps> = ({
           Phát âm từ này
         </span>
 
-        <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
+        <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider">
           {word.meaning}
         </p>
 
@@ -100,7 +100,7 @@ export const SpeakingStage: React.FC<SpeakingStageProps> = ({
         </div>
 
         {word.ipaUs && (
-          <p className="text-base sm:text-lg font-bold text-slate-500 dark:text-slate-400 font-mono">
+          <p className="text-base sm:text-lg font-bold text-slate-600 dark:text-slate-400 font-mono">
             /{word.ipaUs.replace(/^\/|\/$/g, "")}/
           </p>
         )}
@@ -142,7 +142,7 @@ export const SpeakingStage: React.FC<SpeakingStageProps> = ({
           <button
             type="button"
             onClick={onSkipSpeaking || onSkip}
-            className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
+            className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
           >
             <FastForward size={13} />
             <span>Bỏ qua phần phát âm</span>
@@ -197,7 +197,7 @@ export const SpeakingStage: React.FC<SpeakingStageProps> = ({
       {/* SRS Rating Buttons (Shown post-evaluation OR when learner clicked skip speaking) */}
       {canRateSrs && (
         <div className="w-full space-y-2 animate-fadeIn">
-          <p className="text-xs font-bold text-slate-500 dark:text-slate-400 text-center uppercase tracking-wider">
+          <p className="text-xs font-bold text-slate-600 dark:text-slate-400 text-center uppercase tracking-wider">
             Đánh giá mức độ ghi nhớ (Spaced Repetition SRS):
           </p>
 

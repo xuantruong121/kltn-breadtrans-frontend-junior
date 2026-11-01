@@ -48,7 +48,7 @@ export function PracticeCatalogFilters({
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 pt-3">
       <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Lọc theo độ khó">
-        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1">
+        <span className="text-xs font-bold text-slate-600 dark:text-slate-400 mr-1">
           Độ khó:
         </span>
         {DIFFICULTY_FILTERS.map((option) => {
@@ -61,7 +61,7 @@ export function PracticeCatalogFilters({
               onClick={() => onDifficultyChange(option.id)}
               className={`min-h-9 rounded-lg px-3 py-1.5 text-xs transition cursor-pointer ${
                 isActive
-                  ? "bg-teal-600 text-white font-semibold shadow-sm border border-teal-600"
+                  ? "bg-teal-700 text-white font-semibold shadow-sm border border-teal-600"
                   : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200 dark:border-slate-700 font-medium"
               }`}
             >
@@ -80,7 +80,7 @@ export function PracticeCatalogFilters({
           <span className="font-bold text-slate-900 dark:text-slate-100">{resultCount}</span>{" "}
           {itemNoun}
         </span>
-        <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-slate-400">
+        <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-600 dark:text-slate-400">
           <Filter size={13} aria-hidden="true" />
           Bộ lọc:
         </span>

@@ -39,7 +39,7 @@ export function ThemeToggle({
         className={`w-full flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors cursor-pointer hover:bg-amber-50 dark:hover:bg-slate-800 hover:border-amber-300 dark:hover:border-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${className}`}
       >
         <div className="flex items-center gap-2.5">
-          <div className="size-8 rounded-xl bg-white dark:bg-slate-700 flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-2xs">
+          <div className="size-8 rounded-xl bg-white dark:bg-slate-700 flex items-center justify-center text-amber-700 dark:text-amber-400 shadow-2xs">
             {isDark ? <Sun size={17} /> : <Moon size={17} />}
           </div>
           <span>Giao diện: {isDark ? "Chế độ tối" : "Chế độ sáng"}</span>

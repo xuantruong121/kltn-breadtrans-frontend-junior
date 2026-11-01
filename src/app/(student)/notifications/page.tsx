@@ -105,9 +105,9 @@ export default function NotificationsPage() {
     <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:py-12">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">Trung tâm cá nhân</p>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-700 dark:text-amber-400">Trung tâm cá nhân</p>
           <h1 className="mt-2 text-2xl font-black text-slate-950 dark:text-slate-50 sm:text-3xl">Thông báo</h1>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Theo dõi nhắc nhở học tập và mở nhanh nội dung liên quan.</p>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Theo dõi nhắc nhở học tập và mở nhanh nội dung liên quan.</p>
         </div>
         <button type="button" onClick={() => markAll.mutate()} disabled={markAll.isPending} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm hover:border-amber-300 hover:text-amber-700 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-amber-700 dark:hover:text-amber-300">
           {markAll.isPending ? <Loader2 size={16} className="animate-spin" /> : <CheckCheck size={16} />} Đánh dấu tất cả đã đọc
@@ -116,7 +116,7 @@ export default function NotificationsPage() {
 
       <div className="mb-4 flex w-full gap-1 overflow-x-auto rounded-2xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-900/70" role="tablist" aria-label="Bộ lọc thông báo">
         {([["all", "Tất cả"], ["unread", "Chưa đọc"], ["read", "Đã đọc"]] as const).map(([value, label]) => (
-          <button key={value} type="button" role="tab" aria-selected={filter === value} onClick={() => changeFilter(value)} className={`min-h-10 flex-1 whitespace-nowrap rounded-xl px-4 text-sm font-bold transition-colors ${filter === value ? "bg-white text-amber-700 shadow-sm dark:bg-slate-800 dark:text-amber-300" : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"}`}>
+          <button key={value} type="button" role="tab" aria-selected={filter === value} onClick={() => changeFilter(value)} className={`min-h-10 flex-1 whitespace-nowrap rounded-xl px-4 text-sm font-bold transition-colors ${filter === value ? "bg-white text-amber-700 shadow-sm dark:bg-slate-800 dark:text-amber-300" : "text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"}`}>
             {label}
           </button>
         ))}
@@ -136,18 +136,18 @@ export default function NotificationsPage() {
               const label = getNotificationActionLabel(item);
               return (
                 <article key={item.id} className={`flex gap-3 p-4 transition-colors sm:gap-4 sm:p-5 ${item.isRead ? "bg-white dark:bg-slate-900" : "bg-amber-50/50 dark:bg-amber-950/20"}`}>
-                  <span className={`mt-0.5 grid size-10 shrink-0 place-items-center rounded-xl ${item.isRead ? "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400" : "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"}`}>{notificationIcon(item)}</span>
+                  <span className={`mt-0.5 grid size-10 shrink-0 place-items-center rounded-xl ${item.isRead ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400" : "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"}`}>{notificationIcon(item)}</span>
                   <button type="button" onClick={() => openItem(item)} className="min-w-0 flex-1 text-left cursor-pointer">
                     <div className="flex items-start justify-between gap-3">
                       <h2 className={`text-sm leading-5 ${item.isRead ? "font-semibold text-slate-700 dark:text-slate-300" : "font-black text-slate-950 dark:text-slate-50"}`}>{item.title}</h2>
                       {!item.isRead && <span className="mt-1 size-2 shrink-0 rounded-full bg-amber-500" aria-label="Chưa đọc" />}
                     </div>
                     <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">{item.body}</p>
-                    <span className="mt-2 inline-flex items-center gap-1 text-xs text-slate-400"><Clock size={13} /> {formatNotificationTime(item.createdAt)}</span>
+                    <span className="mt-2 inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400"><Clock size={13} /> {formatNotificationTime(item.createdAt)}</span>
                   </button>
                   <div className="flex shrink-0 flex-col items-end gap-2">
                     {target && label && <button type="button" onClick={() => openItem(item)} className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2.5 text-xs font-extrabold text-amber-700 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-950/50">{label}<ExternalLink size={13} /></button>}
-                    <button type="button" aria-label={`Xóa thông báo ${item.title}`} onClick={() => setDeleteTarget(item)} className="grid min-h-10 min-w-10 place-items-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"><Trash2 size={16} /></button>
+                    <button type="button" aria-label={`Xóa thông báo ${item.title}`} onClick={() => setDeleteTarget(item)} className="grid min-h-10 min-w-10 place-items-center rounded-lg text-slate-500 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"><Trash2 size={16} /></button>
                   </div>
                 </article>
               );

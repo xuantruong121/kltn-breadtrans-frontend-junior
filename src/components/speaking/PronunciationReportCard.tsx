@@ -452,7 +452,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
           <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-900 text-white font-mono font-bold text-xs shadow-xs">
             <span className="size-2 rounded-full bg-rose-500 animate-ping" />
             <span>{formatSpeakingTime(recordingSeconds)}</span>
-            <span className="text-slate-400">/ 00:45</span>
+            <span className="text-slate-600 dark:text-slate-400">/ 00:45</span>
           </div>
 
           {/* Live Audio Visualizer Canvas */}
@@ -490,7 +490,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
             )}
           </div>
 
-          <p className="font-bold text-xs text-rose-600 text-center">
+          <p className="font-bold text-xs text-rose-700 text-center dark:text-rose-400">
             Đang thu âm {scripted ? "giọng đọc" : "câu trả lời"}... Bấm nút đỏ hoặc phím [Space] để dừng &amp; chấm điểm tức thì
           </p>
         </div>
@@ -628,7 +628,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
               <span className="text-2xl sm:text-3xl font-black leading-none tracking-tight">
                 {isNoSpeech ? "—" : displayScore.toFixed(1)}
               </span>
-              <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mt-0.5">
+              <span className="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 mt-0.5">
                 Điểm / 10
               </span>
             </div>
@@ -838,7 +838,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
               {phase === "COMPLETED" && !isNoSpeech && Number.isFinite(accuracy) ? (
                 <CircularGauge value={accuracy!} colorClass={accuracyTier.ring} size={68} />
               ) : (
-                <div className="flex size-17 items-center justify-center rounded-full border-2 border-dashed border-slate-300 dark:border-slate-700 text-sm font-black text-slate-400">
+                <div className="flex size-17 items-center justify-center rounded-full border-2 border-dashed border-slate-300 dark:border-slate-700 text-sm font-black text-slate-600 dark:text-slate-400">
                   &ge; 80%
                 </div>
               )}
@@ -859,7 +859,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
               {phase === "COMPLETED" && !isNoSpeech && Number.isFinite(fluency) ? (
                 <CircularGauge value={fluency!} colorClass="text-blue-500" size={68} />
               ) : (
-                <div className="flex size-17 items-center justify-center rounded-full border-2 border-dashed border-slate-300 dark:border-slate-700 text-sm font-black text-slate-400">
+                <div className="flex size-17 items-center justify-center rounded-full border-2 border-dashed border-slate-300 dark:border-slate-700 text-sm font-black text-slate-600 dark:text-slate-400">
                   Tự nhiên
                 </div>
               )}
@@ -879,9 +879,9 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
             </span>
             <div className="my-2.5">
               {phase === "COMPLETED" && !isNoSpeech && Number.isFinite(completeness) ? (
-                <CircularGauge value={completeness!} colorClass="text-amber-500" size={68} />
+                <CircularGauge value={completeness!} colorClass="text-amber-700 dark:text-amber-400" size={68} />
               ) : (
-                <div className="flex size-17 items-center justify-center rounded-full border-2 border-dashed border-slate-300 dark:border-slate-700 text-sm font-black text-slate-400">
+                <div className="flex size-17 items-center justify-center rounded-full border-2 border-dashed border-slate-300 dark:border-slate-700 text-sm font-black text-slate-600 dark:text-slate-400">
                   100%
                 </div>
               )}
@@ -1036,7 +1036,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
               })}
             </div>
           ) : (
-            <p className="text-sm text-slate-500 italic">Chưa có dữ liệu từ ngữ.</p>
+            <p className="text-sm text-slate-600 italic dark:text-slate-400">Chưa có dữ liệu từ ngữ.</p>
           )}
 
           {/* Word Inspector Card (Activated when learner clicks any word token) */}

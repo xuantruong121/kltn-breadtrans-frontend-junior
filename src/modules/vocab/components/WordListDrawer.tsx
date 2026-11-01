@@ -67,14 +67,14 @@ export const WordListDrawer: React.FC<WordListDrawerProps> = ({
                   <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-base">
                     Danh sách từ vựng ({words.length})
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
                     Chọn một từ để học hoặc nghe phát âm
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="p-2 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  className="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   aria-label="Đóng danh sách từ"
                 >
                   <X size={20} />
@@ -86,7 +86,7 @@ export const WordListDrawer: React.FC<WordListDrawerProps> = ({
                 <div className="relative">
                   <Search
                     size={16}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
                   />
                   <input
                     type="text"
@@ -99,7 +99,7 @@ export const WordListDrawer: React.FC<WordListDrawerProps> = ({
                     <button
                       type="button"
                       onClick={() => setSearchQuery("")}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 dark:text-slate-400"
                     >
                       <X size={14} />
                     </button>
@@ -110,7 +110,7 @@ export const WordListDrawer: React.FC<WordListDrawerProps> = ({
               {/* Word List Scrollable */}
               <div className="flex-1 overflow-y-auto p-3 space-y-2">
                 {filteredWords.length === 0 ? (
-                  <div className="text-center py-12 text-slate-400 dark:text-slate-500 text-xs">
+                  <div className="text-center py-12 text-slate-600 dark:text-slate-400 text-xs">
                     Không tìm thấy từ vựng phù hợp
                   </div>
                 ) : (
@@ -142,12 +142,12 @@ export const WordListDrawer: React.FC<WordListDrawerProps> = ({
                                 {w.word}
                               </span>
                               {w.pos && (
-                                <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold">
+                                <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">
                                   ({w.pos})
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate mt-0.5">
+                            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium truncate mt-0.5">
                               {w.meaning}
                             </p>
                           </div>
@@ -161,7 +161,7 @@ export const WordListDrawer: React.FC<WordListDrawerProps> = ({
                               e.stopPropagation();
                               onPlayAudio(w.word, w.audioUs, "us");
                             }}
-                            className="p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/50 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/50 transition-colors"
                             title="Nghe phát âm"
                           >
                             <Volume2 size={15} />
@@ -191,7 +191,7 @@ export const WordListDrawer: React.FC<WordListDrawerProps> = ({
               </div>
 
               {/* Drawer Footer */}
-              <div className="p-3.5 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
+              <div className="p-3.5 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
                 <span>
                   Đã thuộc: <strong className="text-emerald-700 dark:text-emerald-400">{masteredIds.size}</strong> /{" "}
                   {words.length}
@@ -199,7 +199,7 @@ export const WordListDrawer: React.FC<WordListDrawerProps> = ({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="font-bold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer"
+                  className="font-bold text-sky-700 dark:text-sky-400 hover:underline cursor-pointer"
                 >
                   Đóng
                 </button>

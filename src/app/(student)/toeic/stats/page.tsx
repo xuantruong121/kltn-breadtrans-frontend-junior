@@ -35,7 +35,7 @@ type Attempt = ToeicLrStats["attempts"][number];
 function Card({ label, children, icon }: { label: string; children: React.ReactNode; icon?: React.ReactNode }) {
   return (
     <div className="flex flex-col items-center rounded-xl border border-slate-200 bg-white px-3 py-4 text-center shadow-xs dark:border-slate-800 dark:bg-slate-900">
-      {icon && <div className="mb-1.5 text-slate-500 dark:text-slate-400">{icon}</div>}
+      {icon && <div className="mb-1.5 text-slate-600 dark:text-slate-400">{icon}</div>}
       <p className="text-sm font-medium text-slate-600 dark:text-slate-300">{label}</p>
       <div className="mt-1">{children}</div>
     </div>
@@ -44,11 +44,11 @@ function Card({ label, children, icon }: { label: string; children: React.ReactN
 const Big = ({ children }: { children: React.ReactNode }) => (
   <p className="text-2xl font-black tabular-nums text-slate-900 dark:text-white">{children}</p>
 );
-const Unit = ({ children }: { children: React.ReactNode }) => <p className="text-sm text-slate-500 dark:text-slate-400">{children}</p>;
+const Unit = ({ children }: { children: React.ReactNode }) => <p className="text-sm text-slate-600 dark:text-slate-400">{children}</p>;
 
 function TrendChart({ trend, legend }: { trend: ToeicLrSkillStats["trend"]; legend: string }) {
   const points = trend.filter((t) => t.accuracy !== null);
-  if (points.length === 0) return <p className="py-10 text-center text-sm text-slate-500">Chưa có dữ liệu để vẽ biểu đồ.</p>;
+  if (points.length === 0) return <p className="py-10 text-center text-sm text-slate-600 dark:text-slate-400">Chưa có dữ liệu để vẽ biểu đồ.</p>;
   const W = 900;
   const H = 280;
   const pad = { l: 40, r: 20, t: 34, b: 30 };
@@ -103,7 +103,7 @@ function AttemptTable({ rows }: { rows: Attempt[] }) {
               <td className="py-2.5 pr-4 tabular-nums">{fmtDate(a.submittedAt)}</td>
               <td className="py-2.5 pr-4">
                 {a.examTitle}{" "}
-                <span className={`ml-1 rounded px-1.5 py-0.5 text-xs font-bold text-white ${a.inAssessment ? "bg-sky-600" : a.mode === "FULL_TEST" ? "bg-emerald-600" : "bg-slate-500"}`}>
+                <span className={`ml-1 rounded px-1.5 py-0.5 text-xs font-bold text-white ${a.inAssessment ? "bg-sky-600" : a.mode === "FULL_TEST" ? "bg-emerald-700" : "bg-slate-500"}`}>
                   {a.inAssessment ? "4 kỹ năng" : a.mode === "FULL_TEST" ? "Full test" : a.parts?.length ? `Part ${a.parts.join(", ")}` : "Luyện tập"}
                 </span>
               </td>
@@ -133,7 +133,7 @@ function AllAttemptsDialog({ rows, title, onClose }: { rows: Attempt[]; title: s
       <div role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()} className="max-h-[85dvh] w-full max-w-4xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-slate-900">
         <div className="mb-3 flex items-start justify-between gap-3 border-b border-slate-200 pb-3 dark:border-slate-700">
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{title}</h2>
-          <button type="button" onClick={onClose} aria-label="Đóng" className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
+          <button type="button" onClick={onClose} aria-label="Đóng" className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-400">
             <X size={20} />
           </button>
         </div>
@@ -211,7 +211,7 @@ function GoalEditor({ goal, field }: { goal: ToeicLrStats["goal"]; field: "examD
           <X size={16} />
         </button>
       </span>
-      {save.isError && <p className="text-xs font-semibold text-rose-600">{getApiErrorMessage(save.error, "Không lưu được.")}</p>}
+      {save.isError && <p className="text-sm font-semibold text-rose-700 dark:text-rose-400">{getApiErrorMessage(save.error, "Không lưu được.")}</p>}
     </form>
   );
 }
@@ -295,7 +295,7 @@ function ToeicTab() {
 
   return (
     <div className="space-y-7">
-      <p className="text-base italic text-rose-600 dark:text-rose-400">
+      <p className="text-base italic text-rose-700 dark:text-rose-400">
         Chú ý: Mặc định trang thống kê hiển thị các bài làm trong khoảng 30 ngày gần nhất (tính từ bài nộp cuối). Để xem kết quả trong khoảng thời gian khác, chọn ở ô bên dưới.
       </p>
       <div>
@@ -439,7 +439,7 @@ function ToeicTab() {
                       </tbody>
                     </table>
                   </div>
-                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Dạng câu hỏi được phân loại tự động theo nội dung câu hỏi, không phải nhãn do người soạn đề gán. Câu mà quy tắc không nhận ra chắc chắn được xếp vào "Chưa phân loại".</p>
+                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Dạng câu hỏi được phân loại tự động theo nội dung câu hỏi, không phải nhãn do người soạn đề gán. Câu mà quy tắc không nhận ra chắc chắn được xếp vào "Chưa phân loại".</p>
                 </section>
               )}
 
@@ -500,7 +500,7 @@ export default function ToeicStatsPage() {
         {cert === "TOEIC" ? (
           <>
             <ToeicTab />
-            <p className="mt-8 text-sm text-slate-500 dark:text-slate-400">Điểm là điểm quy đổi luyện tập của BreadTrans, không phải điểm thi chính thức của ETS.</p>
+            <p className="mt-8 text-sm text-slate-600 dark:text-slate-400">Điểm là điểm quy đổi luyện tập của BreadTrans, không phải điểm thi chính thức của ETS.</p>
           </>
         ) : (
           <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center dark:border-slate-700">

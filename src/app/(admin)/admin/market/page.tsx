@@ -134,7 +134,7 @@ export default function AdminMarketPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-950">Cửa hàng đổi quà</h1>
-          <p className="mt-1 text-sm font-medium text-slate-500">
+          <p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-400">
             Quản lý danh mục quà tặng đổi bằng Bánh Mì và phê duyệt yêu cầu đổi quà của học viên
           </p>
         </div>
@@ -157,22 +157,22 @@ export default function AdminMarketPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs transition hover:border-slate-300">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Danh mục quà tặng
             </span>
-            <Package className="size-4 text-slate-400" />
+            <Package className="size-4 text-slate-500" />
           </div>
           <div className="mt-2 text-3xl font-bold tracking-tight text-slate-950 font-mono tabular-nums">
             {activeProductsCount}
           </div>
-          <div className="mt-1 text-xs font-medium text-slate-500">
+          <div className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-400">
             Đang hiển thị trên tổng số <span className="font-bold text-slate-800 font-mono">{products.length}</span> vật phẩm
           </div>
         </div>
 
         <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs transition hover:border-slate-300">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Chờ phê duyệt
             </span>
             <Clock className="size-4 text-amber-500" />
@@ -180,23 +180,23 @@ export default function AdminMarketPage() {
           <div className="mt-2 text-3xl font-bold tracking-tight text-amber-600 font-mono tabular-nums">
             {pendingOrdersCount}
           </div>
-          <div className="mt-1 text-xs font-medium text-slate-500">
+          <div className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-400">
             Yêu cầu đổi quà đang chờ quản trị viên xử lý
           </div>
         </div>
 
         <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs transition hover:border-slate-300">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Tổng lượt đổi quà
             </span>
-            <ShoppingBag className="size-4 text-slate-400" />
+            <ShoppingBag className="size-4 text-slate-500" />
           </div>
           <div className="mt-2 text-3xl font-bold tracking-tight text-slate-950 font-mono tabular-nums">
             {orders.length}
           </div>
-          <div className="mt-1 text-xs font-medium text-slate-500">
-            <span className="font-bold text-emerald-600 font-mono">{completedOrdersCount}</span> yêu cầu đã duyệt thành công
+          <div className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-400">
+            <span className="font-bold text-emerald-700 font-mono dark:text-emerald-400">{completedOrdersCount}</span> yêu cầu đã duyệt thành công
           </div>
         </div>
       </div>
@@ -208,7 +208,7 @@ export default function AdminMarketPage() {
           className={`-mb-px flex items-center gap-2 border-b-2 px-1 py-3 text-sm font-semibold transition-colors cursor-pointer ${
             activeTab === "catalog"
               ? "border-slate-900 text-slate-950"
-              : "border-transparent text-slate-500 hover:text-slate-800"
+              : "border-transparent text-slate-600 hover:text-slate-800 dark:text-slate-400"
           }`}
         >
           <span>Danh mục quà</span>
@@ -228,7 +228,7 @@ export default function AdminMarketPage() {
           className={`-mb-px flex items-center gap-2 border-b-2 px-1 py-3 text-sm font-semibold transition-colors cursor-pointer ${
             activeTab === "orders"
               ? "border-slate-900 text-slate-950"
-              : "border-transparent text-slate-500 hover:text-slate-800"
+              : "border-transparent text-slate-600 hover:text-slate-800 dark:text-slate-400"
           }`}
         >
           <span>Yêu cầu đổi quà</span>
@@ -304,7 +304,7 @@ export default function AdminMarketPage() {
           <div className="rounded-xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
             {isLoadingProducts ? (
               <div className="flex justify-center py-16">
-                <Loader2 className="animate-spin text-slate-400" size={28} />
+                <Loader2 className="animate-spin text-slate-500" size={28} />
               </div>
             ) : products.length > 0 ? (
               <div className="overflow-x-auto">
@@ -326,7 +326,7 @@ export default function AdminMarketPage() {
                       <tr key={p.id} className="hover:bg-slate-50/70 transition">
                         <td className="py-3.5 px-5">
                           <div className="font-bold text-slate-950">{p.name}</div>
-                          <div className="text-xs text-slate-500 font-mono">{p.slug}</div>
+                          <div className="text-xs text-slate-600 font-mono dark:text-slate-400">{p.slug}</div>
                         </td>
 
                         <td className="py-3.5 px-4">
@@ -350,7 +350,7 @@ export default function AdminMarketPage() {
 
                         <td className="py-3.5 px-4 text-right tabular-nums text-sm font-mono">
                           {p.stock === 0 ? (
-                            <span className="text-rose-600 font-bold">Hết hàng</span>
+                            <span className="text-rose-700 font-bold dark:text-rose-400">Hết hàng</span>
                           ) : (
                             <span className="text-slate-800 font-semibold">{p.stock}</span>
                           )}
@@ -379,7 +379,7 @@ export default function AdminMarketPage() {
                                 setEditingProduct(p);
                                 setIsProductModalOpen(true);
                               }}
-                              className="p-1.5 text-slate-500 hover:text-slate-900 rounded-lg transition active:scale-[0.98] cursor-pointer"
+                              className="p-1.5 text-slate-600 hover:text-slate-900 rounded-lg transition active:scale-[0.98] cursor-pointer dark:text-slate-400"
                               title="Chỉnh sửa quà tặng"
                             >
                               <Edit size={15} />
@@ -388,7 +388,7 @@ export default function AdminMarketPage() {
                             <button
                               disabled={toggleProductActiveMutation.isPending}
                               onClick={() => handleToggleProductActive(p)}
-                              className="p-1.5 text-slate-500 hover:text-slate-900 rounded-lg transition active:scale-[0.98] cursor-pointer"
+                              className="p-1.5 text-slate-600 hover:text-slate-900 rounded-lg transition active:scale-[0.98] cursor-pointer dark:text-slate-400"
                               title={p.isActive ? "Ngừng hiển thị" : "Kích hoạt hiển thị"}
                             >
                               {p.isActive ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -401,7 +401,7 @@ export default function AdminMarketPage() {
                 </table>
               </div>
             ) : (
-              <div className="py-16 text-center text-sm font-medium text-slate-500">
+              <div className="py-16 text-center text-sm font-medium text-slate-600 dark:text-slate-400">
                 Không tìm thấy quà tặng nào phù hợp với bộ lọc hiện tại.
               </div>
             )}
@@ -455,7 +455,7 @@ export default function AdminMarketPage() {
           <div className="rounded-xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
             {isLoadingOrders ? (
               <div className="flex justify-center py-16">
-                <Loader2 className="animate-spin text-slate-400" size={28} />
+                <Loader2 className="animate-spin text-slate-500" size={28} />
               </div>
             ) : orders.length > 0 ? (
               <div className="overflow-x-auto">
@@ -494,7 +494,7 @@ export default function AdminMarketPage() {
                                 ord.user?.profile?.fullName ||
                                 "Học viên"}
                             </div>
-                            <div className="text-xs text-slate-500 font-mono">{ord.user?.email}</div>
+                            <div className="text-xs text-slate-600 font-mono dark:text-slate-400">{ord.user?.email}</div>
                           </td>
 
                           <td className="py-3.5 px-4 max-w-xs text-slate-700">
@@ -507,14 +507,14 @@ export default function AdminMarketPage() {
                                     {physical.recipientName} ({physical.phone})
                                   </span>
                                 </div>
-                                <div className="text-slate-600 leading-relaxed font-normal">
+                                <div className="text-slate-600 leading-relaxed font-medium">
                                   {physical.formattedAddress}
                                 </div>
                               </div>
                             )}
                           </td>
 
-                          <td className="py-3.5 px-4 text-right tabular-nums font-mono font-bold text-rose-600">
+                          <td className="py-3.5 px-4 text-right tabular-nums font-mono font-bold text-rose-700 dark:text-rose-400">
                             -{ord.totalBanh}
                           </td>
 
@@ -556,11 +556,11 @@ export default function AdminMarketPage() {
                             {ord.reviewedBy ? (
                               <div className="space-y-0.5">
                                 <div className="flex items-center gap-1 font-semibold text-slate-800">
-                                  <User size={12} className="text-slate-400" />
+                                  <User size={12} className="text-slate-500" />
                                   <span>{ord.reviewedBy}</span>
                                 </div>
                                 {ord.reason && (
-                                  <div className="text-rose-600 font-medium">"{ord.reason}"</div>
+                                  <div className="text-rose-700 font-medium dark:text-rose-400">"{ord.reason}"</div>
                                 )}
                               </div>
                             ) : (
@@ -610,7 +610,7 @@ export default function AdminMarketPage() {
                 </table>
               </div>
             ) : (
-              <div className="py-16 text-center text-sm font-medium text-slate-500">
+              <div className="py-16 text-center text-sm font-medium text-slate-600 dark:text-slate-400">
                 Không có yêu cầu đổi quà nào phù hợp với bộ lọc hiện tại.
               </div>
             )}

@@ -76,7 +76,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
               <span className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-slate-100">
                 0 ₫
               </span>
-              <span className="text-sm font-semibold text-slate-400 dark:text-slate-500">
+              <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
                 / vĩnh viễn
               </span>
             </div>
@@ -165,16 +165,16 @@ export const PlanCard: React.FC<PlanCardProps> = ({
                 <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-rose-700 dark:text-rose-300">
                   Chưa tải được
                 </span>
-                <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
+                <p className="text-xs text-rose-700 dark:text-rose-400 mt-1">
                   Hãy thử lại để xem thông tin mở bán.
                 </p>
               </div>
             ) : plusPricing.isPurchasable ? (
               <div className="flex items-baseline gap-1.5">
-                <span className="text-3xl sm:text-4xl font-black tracking-tight text-amber-600 dark:text-amber-400">
+                <span className="text-3xl sm:text-4xl font-black tracking-tight text-amber-700 dark:text-amber-400">
                   {plusPricing.priceText}
                 </span>
-                <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
                   {plusPricing.durationText}
                 </span>
               </div>
@@ -183,7 +183,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
                 <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-700 dark:text-slate-300">
                   {plusPricing.priceText}
                 </span>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                   Giá chính thức sẽ được kích hoạt khi mở bán
                 </p>
               </div>
@@ -210,7 +210,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
               <span>Nghe chép từ B1 đến C2</span>
             </li>
             <li className="flex items-start gap-3 text-slate-500 dark:text-slate-400">
-              <Minus size={18} className="text-slate-400 dark:text-slate-500 shrink-0 mt-0.5" aria-hidden="true" />
+              <Minus size={18} className="text-slate-500 dark:text-slate-400 shrink-0 mt-0.5" aria-hidden="true" />
               <span>Không gồm Nói, Viết Nâng cao (C1–C2){COURSES_ENABLED ? " và khóa học" : ""}</span>
             </li>
           </ul>
@@ -248,7 +248,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
             <button
               type="button"
               disabled
-              className="w-full min-h-12 rounded-xl border border-slate-200 bg-slate-100 px-4 text-sm font-bold text-slate-400 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-500 cursor-not-allowed"
+              className="w-full min-h-12 rounded-xl border border-slate-200 bg-slate-100 px-4 text-sm font-bold text-slate-500 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-400 cursor-not-allowed"
             >
               {cta.label}
             </button>
@@ -295,18 +295,18 @@ export const PlanCard: React.FC<PlanCardProps> = ({
               <span className="text-3xl sm:text-4xl font-black tracking-tight text-blue-600 dark:text-blue-400">
                 {proPricing.priceText}
               </span>
-              <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+              <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
                 {proPricing.durationText}
               </span>
             </div>
           ) : (
-            <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-500 dark:text-slate-400">
+            <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-600 dark:text-slate-400">
               {proPricing.priceText}
             </span>
           )}
         </div>
 
-        <ul className="mt-6 space-y-3.5 text-sm text-slate-500 dark:text-slate-400">
+        <ul className="mt-6 space-y-3.5 text-sm text-slate-600 dark:text-slate-400">
           <li className="flex items-start gap-3">
             <Check size={18} className="text-blue-500 shrink-0 mt-0.5" aria-hidden="true" />
             <span>Toàn bộ quyền lợi gói Plus</span>

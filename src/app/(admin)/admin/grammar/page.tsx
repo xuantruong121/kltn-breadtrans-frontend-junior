@@ -88,7 +88,7 @@ export default function AdminGrammarPage() {
           <Search
             size={18}
             aria-hidden="true"
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
           />
           <input
             value={query}
@@ -156,7 +156,7 @@ export default function AdminGrammarPage() {
 
       {isLoading ? (
         <div className="flex justify-center py-20">
-          <Loader2 className="animate-spin text-slate-400" size={32} />
+          <Loader2 className="animate-spin text-slate-500" size={32} />
         </div>
       ) : (
         // Cards fill the canvas in 320px-minimum columns with one 16px gutter.
@@ -175,7 +175,7 @@ export default function AdminGrammarPage() {
                     </span>
                   )}
                   {topic.keyFormula && (
-                    <span className="truncate text-xs text-slate-500">
+                    <span className="truncate text-xs text-slate-600 dark:text-slate-400">
                       {topic.keyFormula}
                     </span>
                   )}
@@ -228,7 +228,7 @@ export default function AdminGrammarPage() {
                         onClick={() => setPendingDelete(topic)}
                         aria-label={`Xóa ${topic.title}`}
                         title="Xóa chủ đề"
-                        className="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+                        className="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400"
                       >
                         <Trash2 size={15} />
                       </button>

@@ -34,7 +34,7 @@ export const QuizStage: React.FC<QuizStageProps> = ({
             <HelpCircle size={15} />
             Trắc nghiệm ý nghĩa
           </span>
-          <span className="text-xs sm:text-sm text-slate-400 dark:text-slate-500 font-medium">Bấm 1, 2, 3, hoặc 4</span>
+          <span className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">Bấm 1, 2, 3, hoặc 4</span>
         </div>
 
         {/* Target Word */}
@@ -87,7 +87,7 @@ export const QuizStage: React.FC<QuizStageProps> = ({
               styleClass =
                 "bg-rose-50 dark:bg-rose-950/40 border-rose-500 text-rose-950 dark:text-rose-200 font-bold shadow-xs";
             } else {
-              styleClass = "bg-slate-50/60 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-400 opacity-60";
+              styleClass = "bg-slate-50/60 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-600 opacity-60 dark:text-slate-400";
             }
           }
 

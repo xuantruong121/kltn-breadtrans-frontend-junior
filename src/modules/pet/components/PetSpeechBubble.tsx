@@ -40,7 +40,7 @@ export function PetSpeechBubble({
               type="button"
               onClick={onDismiss}
               aria-label="Đóng hội thoại"
-              className="size-7 -mr-1 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
+              className="size-7 -mr-1 rounded-full flex items-center justify-center text-slate-600 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
             >
               <X size={16} aria-hidden="true" />
             </button>

@@ -64,7 +64,7 @@ const score = (value: number | null | undefined) =>
 
 function EmptyState({ label = "Chưa có hoạt động học tập" }: { label?: string }) {
   return (
-    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-6 text-center text-sm text-slate-500">
+    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-6 text-center text-sm text-slate-600 dark:text-slate-400">
       {label}
     </div>
   );
@@ -111,7 +111,7 @@ function SkillCard({
       <div className="mb-4 flex items-end justify-between gap-3">
         <div>
           <p className="text-2xl font-black text-slate-900">{data.attemptCount ?? 0}</p>
-          <p className="text-xs font-semibold text-slate-500">lượt ghi nhận</p>
+          <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">lượt ghi nhận</p>
         </div>
         {data.completedCount !== undefined ? (
           <p className="text-right text-xs font-semibold text-emerald-700">
@@ -164,7 +164,7 @@ export default function AdminLearnerTrackingPage() {
     return (
       <div className="mx-auto max-w-3xl rounded-2xl border border-rose-200 bg-white p-8 text-center shadow-sm">
         <h1 className="text-xl font-extrabold text-slate-900">Không thể tải hồ sơ học viên</h1>
-        <p className="mt-2 text-sm text-rose-600">
+        <p className="mt-2 text-sm text-rose-700 dark:text-rose-400">
           {getApiErrorMessage(error, "Học viên không tồn tại hoặc dữ liệu tạm thời chưa sẵn sàng.")}
         </p>
         <button
@@ -188,13 +188,13 @@ export default function AdminLearnerTrackingPage() {
         <div>
           <Link
             href="/admin/users"
-            className="mb-3 inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="mb-3 inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-slate-400"
           >
             <ArrowLeft size={16} /> Quay lại danh sách người dùng
           </Link>
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">Hồ sơ học viên</p>
           <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-900">{fullName}</h1>
-          <p className="mt-1 text-sm text-slate-500">Tổng quan học tập từ dữ liệu server hiện có</p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Tổng quan học tập từ dữ liệu server hiện có</p>
         </div>
         <button
           type="button"
@@ -215,10 +215,10 @@ export default function AdminLearnerTrackingPage() {
           )}
         </div>
         <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
-          <div><p className="text-xs font-semibold text-slate-500">Email</p><p className="mt-1 break-all font-bold text-slate-900">{learner.email}</p></div>
-          <div><p className="text-xs font-semibold text-slate-500">Vai trò</p><p className="mt-1 font-bold text-slate-900">{learner.role === "STUDENT" ? "Học viên" : learner.role}</p></div>
-          <div><p className="text-xs font-semibold text-slate-500">Ngày tham gia</p><p className="mt-1 font-bold text-slate-900">{dateOnly(learner.createdAt)}</p></div>
-          <div><p className="text-xs font-semibold text-slate-500">Đăng nhập gần nhất</p><p className="mt-1 font-bold text-slate-900">{dateTime(learner.lastLoginAt)}</p></div>
+          <div><p className="text-xs font-semibold text-slate-600 dark:text-slate-400">Email</p><p className="mt-1 break-all font-bold text-slate-900">{learner.email}</p></div>
+          <div><p className="text-xs font-semibold text-slate-600 dark:text-slate-400">Vai trò</p><p className="mt-1 font-bold text-slate-900">{learner.role === "STUDENT" ? "Học viên" : learner.role}</p></div>
+          <div><p className="text-xs font-semibold text-slate-600 dark:text-slate-400">Ngày tham gia</p><p className="mt-1 font-bold text-slate-900">{dateOnly(learner.createdAt)}</p></div>
+          <div><p className="text-xs font-semibold text-slate-600 dark:text-slate-400">Đăng nhập gần nhất</p><p className="mt-1 font-bold text-slate-900">{dateTime(learner.lastLoginAt)}</p></div>
         </div>
       </section>
 
@@ -226,7 +226,7 @@ export default function AdminLearnerTrackingPage() {
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className={`p-2.5 rounded-xl ${activeSub ? "bg-blue-50 text-blue-600" : "bg-slate-100 text-slate-500"}`}>
+            <div className={`p-2.5 rounded-xl ${activeSub ? "bg-blue-50 text-blue-600" : "bg-slate-100 text-slate-600"} dark:text-slate-400`}>
               <ShieldCheck size={22} />
             </div>
             <div>
@@ -244,7 +244,7 @@ export default function AdminLearnerTrackingPage() {
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-600 mt-0.5 dark:text-slate-400">
                 {activeSub
                   ? `Hiệu lực: ${dateOnly(activeSub.startsAt)} → ${dateOnly(activeSub.endsAt)} · Nguồn: ${activeSub.sourceLabel}`
                   : "Học viên chưa được cấp quyền hoặc chưa đăng ký gói nâng cấp."}
@@ -308,18 +308,18 @@ export default function AdminLearnerTrackingPage() {
 }
 
 function Metric({ label, value, detail }: { label: string; value: React.ReactNode; detail?: React.ReactNode }) {
-  return <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3"><p className="text-xs font-semibold text-slate-500">{label}</p><p className="mt-1 break-words text-lg font-black text-slate-900">{value}</p>{detail ? <p className="mt-0.5 text-xs text-slate-500">{detail}</p> : null}</div>;
+  return <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3"><p className="text-xs font-semibold text-slate-600 dark:text-slate-400">{label}</p><p className="mt-1 break-words text-lg font-black text-slate-900">{value}</p>{detail ? <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">{detail}</p> : null}</div>;
 }
 
 function ResultRow({ title, meta, date, detail }: { title: string; meta: string; date: string | null; detail?: string | null }) {
-  return <div className="rounded-lg border border-slate-100 bg-slate-50/70 px-3 py-2.5"><div className="flex items-start justify-between gap-3"><p className="min-w-0 truncate text-sm font-bold text-slate-800">{title}</p><span className="shrink-0 text-xs text-slate-500">{dateOnly(date)}</span></div><p className="mt-1 text-xs font-semibold text-slate-600">{meta}</p>{detail ? <p className="mt-1 line-clamp-2 text-xs text-slate-500">{detail}</p> : null}</div>;
+  return <div className="rounded-lg border border-slate-100 bg-slate-50/70 px-3 py-2.5"><div className="flex items-start justify-between gap-3"><p className="min-w-0 truncate text-sm font-bold text-slate-800">{title}</p><span className="shrink-0 text-xs text-slate-600 dark:text-slate-400">{dateOnly(date)}</span></div><p className="mt-1 text-xs font-semibold text-slate-600">{meta}</p>{detail ? <p className="mt-1 line-clamp-2 text-xs text-slate-600 dark:text-slate-400">{detail}</p> : null}</div>;
 }
 
 function SpeakingRow({ item }: { item: Row }) {
-  return <div className="rounded-lg border border-slate-100 bg-slate-50/70 px-3 py-2.5"><div className="flex items-start justify-between gap-3"><p className="min-w-0 truncate text-sm font-bold text-slate-800">{item.exerciseTitle}</p><span className="shrink-0 text-xs text-slate-500">{dateOnly(item.submittedAt)}</span></div><p className="mt-1 text-xs font-semibold text-slate-600">{item.status} · Overall {score(item.overallScore)}</p><p className="mt-1 text-xs text-slate-500">Accuracy {score(item.accuracy)} · Fluency {score(item.fluency)} · Completeness {score(item.completeness)} · PronScore {score(item.pronScore)}</p></div>;
+  return <div className="rounded-lg border border-slate-100 bg-slate-50/70 px-3 py-2.5"><div className="flex items-start justify-between gap-3"><p className="min-w-0 truncate text-sm font-bold text-slate-800">{item.exerciseTitle}</p><span className="shrink-0 text-xs text-slate-600 dark:text-slate-400">{dateOnly(item.submittedAt)}</span></div><p className="mt-1 text-xs font-semibold text-slate-600">{item.status} · Overall {score(item.overallScore)}</p><p className="mt-1 text-xs text-slate-600 dark:text-slate-400">Accuracy {score(item.accuracy)} · Fluency {score(item.fluency)} · Completeness {score(item.completeness)} · PronScore {score(item.pronScore)}</p></div>;
 }
 
 function CourseRow({ course }: { course: Row }) {
   const hasLessons = course.totalLessons > 0;
-  return <div><div className="flex items-center justify-between gap-3"><div><p className="font-bold text-slate-900">{course.title}</p><p className="text-xs text-slate-500">{course.level || "Chưa xác định cấp độ"}</p></div><span className="text-sm font-black text-blue-700">{hasLessons ? `${course.progressPercent}%` : "Chưa có dữ liệu"}</span></div>{hasLessons ? <><div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-600" style={{ width: `${course.progressPercent ?? 0}%` }} /></div><p className="mt-1 text-xs text-slate-500">{course.completedLessons}/{course.totalLessons} bài học hoàn thành</p></> : <p className="mt-2 text-xs text-slate-500">Chưa có bài học đã xuất bản</p>}</div>;
+  return <div><div className="flex items-center justify-between gap-3"><div><p className="font-bold text-slate-900">{course.title}</p><p className="text-xs text-slate-600 dark:text-slate-400">{course.level || "Chưa xác định cấp độ"}</p></div><span className="text-sm font-black text-blue-700">{hasLessons ? `${course.progressPercent}%` : "Chưa có dữ liệu"}</span></div>{hasLessons ? <><div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-600" style={{ width: `${course.progressPercent ?? 0}%` }} /></div><p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{course.completedLessons}/{course.totalLessons} bài học hoàn thành</p></> : <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">Chưa có bài học đã xuất bản</p>}</div>;
 }

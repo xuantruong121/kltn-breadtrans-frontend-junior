@@ -54,7 +54,7 @@ function ResetPasswordForm() {
         <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
           Đặt lại mật khẩu
         </h1>
-        <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+        <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
           Tạo mật khẩu mới để tiếp tục sử dụng tài khoản BreadTrans.
         </p>
       </div>
@@ -79,10 +79,10 @@ function ResetPasswordForm() {
           {(["password", "confirmPassword"] as const).map((field) => (
             <div key={field} className="space-y-1.5">
               <label htmlFor={`reset-${field}`} className="block text-sm font-bold text-slate-700 dark:text-slate-300">
-                {field === "password" ? "Mật khẩu mới" : "Nhập lại mật khẩu"} <span className="text-rose-500">*</span>
+                {field === "password" ? "Mật khẩu mới" : "Nhập lại mật khẩu"} <span className="text-rose-700 dark:text-rose-400">*</span>
               </label>
               <div className="relative">
-                <KeyRound size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                <KeyRound size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" aria-hidden="true" />
                 <input
                   id={`reset-${field}`}
                   type={showPassword ? "text" : "password"}
@@ -94,13 +94,13 @@ function ResetPasswordForm() {
                   placeholder="Tối thiểu 8 ký tự"
                   className="w-full rounded-xl border border-slate-200 bg-slate-50/70 py-3 pl-10 pr-11 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-800"
                 />
-                <button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"} className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+                <button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"} className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 items-center justify-center text-slate-600 hover:text-slate-700 dark:hover:text-slate-200 dark:text-slate-400">
                   {showPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
                 </button>
               </div>
             </div>
           ))}
-          <p className="text-xs leading-5 text-slate-400 dark:text-slate-500">Mật khẩu mới phải có ít nhất 8 ký tự.</p>
+          <p className="text-xs leading-5 text-slate-600 dark:text-slate-400">Mật khẩu mới phải có ít nhất 8 ký tự.</p>
           <button type="submit" disabled={isLoading} className="btn-tactile-primary flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 text-sm font-bold text-white shadow-md transition-all hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60 sm:text-base">
             {isLoading ? <Loader2 size={18} className="animate-spin" aria-hidden="true" /> : <ArrowRight size={18} aria-hidden="true" />}
             {isLoading ? "Đang cập nhật..." : "Đặt lại mật khẩu"}
@@ -114,7 +114,7 @@ function ResetPasswordForm() {
 export default function ResetPasswordPage() {
   return (
     <AuthShell>
-      <Suspense fallback={<div className="rounded-3xl bg-white p-10 text-center text-sm text-slate-500 shadow-xl">Đang tải biểu mẫu...</div>}>
+      <Suspense fallback={<div className="rounded-3xl bg-white p-10 text-center text-sm text-slate-600 shadow-xl dark:text-slate-400">Đang tải biểu mẫu...</div>}>
         <ResetPasswordForm />
       </Suspense>
     </AuthShell>

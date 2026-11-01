@@ -183,7 +183,7 @@ export default function PublicCourseDetailPage() {
     <div className="w-full space-y-6 sm:space-y-8 px-4 sm:px-6 lg:px-8 xl:px-10 py-6 sm:py-8 lg:py-10">
       <Link
         href="/courses"
-        className="inline-flex items-center gap-2 text-base font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
+        className="inline-flex items-center gap-2 text-base font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
       >
         <ArrowLeft size={18} />
         Tất cả khóa học
@@ -284,7 +284,7 @@ export default function PublicCourseDetailPage() {
             {/* Quick Metrics Bar */}
             <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-0 border-t border-slate-100 pt-5 dark:border-slate-800">
               <div className="border-r border-slate-100 pr-3 dark:border-slate-800">
-                <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <span className="block text-xs font-semibold text-slate-600 uppercase tracking-wider dark:text-slate-400">
                   Quy mô
                 </span>
                 <span className="mt-1 block text-base sm:text-lg font-bold text-slate-900 dark:text-white">
@@ -292,7 +292,7 @@ export default function PublicCourseDetailPage() {
                 </span>
               </div>
               <div className="border-r border-slate-100 px-3 dark:border-slate-800">
-                <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <span className="block text-xs font-semibold text-slate-600 uppercase tracking-wider dark:text-slate-400">
                   Hoạt động
                 </span>
                 <span className="mt-1 block text-base sm:text-lg font-bold text-slate-900 dark:text-white">
@@ -300,7 +300,7 @@ export default function PublicCourseDetailPage() {
                 </span>
               </div>
               <div className="col-span-2 mt-3 border-t border-slate-100 pt-3 sm:col-span-1 sm:mt-0 sm:border-t-0 sm:pl-3 sm:pt-0 dark:border-slate-800">
-                <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <span className="block text-xs font-semibold text-slate-600 uppercase tracking-wider dark:text-slate-400">
                   Hình thức
                 </span>
                 <span className="mt-1 block text-base sm:text-lg font-bold text-slate-900 dark:text-white">
@@ -367,7 +367,7 @@ export default function PublicCourseDetailPage() {
                 <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                   Lộ trình học
                 </h2>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 font-medium">
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 font-medium">
                   {displayLessons.length} bài học · {activityCount} hoạt động
                 </p>
               </div>
@@ -397,7 +397,7 @@ export default function PublicCourseDetailPage() {
                         {lesson.title}
                       </h3>
                       {lesson.description && (
-                        <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                        <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
                           {lesson.description}
                         </p>
                       )}
@@ -419,7 +419,7 @@ export default function PublicCourseDetailPage() {
                               <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
                                 {activity.title}
                               </p>
-                              <p className="text-xs sm:text-sm text-slate-500">
+                              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                                 {activity.skill || "Bài học"}
                                 {activity.required
                                   ? " · Bắt buộc"
@@ -430,7 +430,7 @@ export default function PublicCourseDetailPage() {
                           {!course.canAccess && (
                             <LockKeyhole
                               size={16}
-                              className="text-slate-400 shrink-0"
+                              className="text-slate-500 shrink-0"
                             />
                           )}
                         </div>
@@ -447,7 +447,7 @@ export default function PublicCourseDetailPage() {
               </p>
             )}
             {course.canAccess && (
-              <p className="mt-5 flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 border-t border-slate-100 pt-4 dark:border-slate-800">
+              <p className="mt-5 flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-t border-slate-100 pt-4 dark:border-slate-800">
                 <CheckCircle2 size={17} className="text-emerald-500 shrink-0" />
                 Bắt đầu khóa học để truy cập bài học và làm bài tập.
               </p>

@@ -158,7 +158,7 @@ export const MarketExchangeConfirmModal: React.FC<MarketExchangeConfirmModalProp
               </h2>
               <p
                 id="market-exchange-modal-desc"
-                className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400"
+                className="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-400"
               >
                 {isPhysical
                   ? "Vui lòng kiểm tra kỹ người nhận và địa chỉ giao quà vật lý trước khi xác nhận đổi quà."
@@ -171,7 +171,7 @@ export const MarketExchangeConfirmModal: React.FC<MarketExchangeConfirmModalProp
             onClick={onCancel}
             disabled={isPending}
             aria-label="Đóng hộp thoại"
-            className="grid min-h-11 min-w-11 place-items-center rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-500 dark:hover:text-slate-200 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
+            className="grid min-h-11 min-w-11 place-items-center rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
           >
             <X size={20} />
           </button>
@@ -208,7 +208,7 @@ export const MarketExchangeConfirmModal: React.FC<MarketExchangeConfirmModalProp
               {product.name}
             </h3>
             {product.description && (
-              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+              <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
                 {product.description}
               </p>
             )}
@@ -236,20 +236,20 @@ export const MarketExchangeConfirmModal: React.FC<MarketExchangeConfirmModalProp
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-700 dark:text-slate-300">
               <div>
-                <span className="text-slate-500 dark:text-slate-400">Người nhận:</span>{" "}
+                <span className="text-slate-600 dark:text-slate-400">Người nhận:</span>{" "}
                 <span className="font-bold text-slate-900 dark:text-slate-100">
                   {shippingProfile?.recipientName || "Chưa có"}
                 </span>
               </div>
               <div>
-                <span className="text-slate-500 dark:text-slate-400">Số điện thoại:</span>{" "}
+                <span className="text-slate-600 dark:text-slate-400">Số điện thoại:</span>{" "}
                 <span className="font-bold text-slate-900 dark:text-slate-100">
                   {shippingProfile?.phoneDisplay || shippingProfile?.phone || "Chưa có"}
                 </span>
               </div>
             </div>
             <div className="text-slate-700 dark:text-slate-300 pt-1">
-              <span className="text-slate-500 dark:text-slate-400">Địa chỉ:</span>{" "}
+              <span className="text-slate-600 dark:text-slate-400">Địa chỉ:</span>{" "}
               <span className="font-bold text-slate-900 dark:text-slate-100">
                 {shippingProfile?.formattedAddress ||
                   [

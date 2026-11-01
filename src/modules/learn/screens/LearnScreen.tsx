@@ -114,7 +114,7 @@ export default function LearnScreen() {
             <Clapperboard size={28} strokeWidth={2} aria-hidden="true" />
             <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100">Học Qua Phim & Âm Nhạc</h1>
           </div>
-          <p className="font-bold text-slate-400 dark:text-slate-400 text-sm">
+          <p className="font-bold text-slate-500 dark:text-slate-400 text-sm">
             Luyện phản xạ nghe hiểu tự nhiên và mở rộng vốn từ qua các trích đoạn video thú vị
           </p>
         </div>
@@ -129,7 +129,7 @@ export default function LearnScreen() {
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-sm transition-all cursor-pointer ${
               activeTab === "movie"
                 ? "bg-rose-500 text-white shadow-xs"
-                : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
             }`}
           >
             <Film size={18} /> Phim Hoạt Hình & Sitcom
@@ -142,7 +142,7 @@ export default function LearnScreen() {
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-sm transition-all cursor-pointer ${
               activeTab === "music"
                 ? "bg-amber-500 text-white shadow-xs"
-                : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
             }`}
           >
             <Music size={18} /> Bài Hát Tiếng Anh
@@ -178,7 +178,7 @@ export default function LearnScreen() {
                         {levelLabel(currentTopic.materialLinks?.level) || "Cơ bản"}
                       </span>
                       {currentTopic.materialLinks?.duration && (
-                        <span className="flex items-center gap-1 text-slate-400 dark:text-slate-500 text-xs font-bold">
+                        <span className="flex items-center gap-1 text-slate-600 dark:text-slate-400 text-xs font-bold">
                           <Clock size={14} /> {currentTopic.materialLinks.duration}
                         </span>
                       )}
@@ -189,7 +189,7 @@ export default function LearnScreen() {
                       )}
                     </div>
                     <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100">{currentTopic.title}</h2>
-                    <p className="text-sm font-bold text-slate-500 dark:text-slate-400 leading-relaxed">
+                    <p className="text-sm font-bold text-slate-600 dark:text-slate-400 leading-relaxed">
                       {currentTopic.materialLinks?.description || "Xem trích đoạn video và hoàn thành câu hỏi ôn tập bên dưới."}
                     </p>
                   </div>
@@ -205,7 +205,7 @@ export default function LearnScreen() {
                           Câu Hỏi Luyện Tập ({currentTopic.exercises.length} câu)
                         </h3>
                       </div>
-                      <span className="text-xs font-black text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-900/50">
+                      <span className="text-xs font-black text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-900/50">
                         +5 Bánh Mì / câu đúng
                       </span>
                     </div>
@@ -219,7 +219,7 @@ export default function LearnScreen() {
                         return (
                           <div key={ex.id} className="space-y-3">
                             <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-base">
-                              <span className="text-sky-500 dark:text-sky-400 font-black mr-2">Câu {exIdx + 1}:</span>
+                              <span className="text-sky-700 dark:text-sky-400 font-black mr-2">Câu {exIdx + 1}:</span>
                               {ex.question}
                             </h4>
 
@@ -282,7 +282,7 @@ export default function LearnScreen() {
                 )}
               </>
             ) : (
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center text-slate-400 dark:text-slate-500 font-bold">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center text-slate-600 dark:text-slate-400 font-bold">
                 Chưa có bài học nào trong danh mục này.
               </div>
             )}
@@ -329,7 +329,7 @@ export default function LearnScreen() {
                           </h4>
                         </div>
                         <div className="flex items-center justify-between text-xs font-bold">
-                          <span className="text-slate-400 dark:text-slate-500">
+                          <span className="text-slate-600 dark:text-slate-400">
                             {levelLabel(topic.materialLinks?.level) || "Cơ bản"} • {topic.exercises?.length || 0} bài tập
                           </span>
                           {isDone && (

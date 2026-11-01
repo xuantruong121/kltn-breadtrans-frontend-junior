@@ -25,7 +25,7 @@ import {
 } from "./speakingCmsShared";
 
 const FIELD =
-  "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
+  "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
 
 /**
  * One Speaking exercise, edited in place inside its row of the set editor
@@ -225,7 +225,7 @@ export default function SpeakingExerciseForm({
                 className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
                     {TASK_TYPES.find((t) => t.value === candidate.taskType)
                       ?.label ?? candidate.taskType}{" "}
                     · {difficultyLabel(candidate.difficulty)}
@@ -319,7 +319,7 @@ export default function SpeakingExerciseForm({
             placeholder="Ví dụ: Hello, my name is Alex and I am a software engineer."
             className={`${FIELD} leading-relaxed`}
           />
-          <span className="mt-1 block text-xs font-normal text-slate-500">
+          <span className="mt-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
             Học viên nói câu này; hệ thống chấm phát âm, độ trôi chảy và độ đầy
             đủ.
           </span>
@@ -363,7 +363,7 @@ export default function SpeakingExerciseForm({
                   ))}
               </select>
             </label>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-600 dark:text-slate-400">
               Các câu hỏi về cùng một bảng thông tin chọn cùng một mục.
             </p>
             <details className="text-sm">
@@ -421,12 +421,12 @@ export default function SpeakingExerciseForm({
               ))}
             </select>
           ) : (
-            <p className="mt-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-normal text-slate-700">
+            <p className="mt-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-medium text-slate-700">
               {categoryLabel(categories, setCategory)}
-              <span className="text-slate-500"> · theo bộ luyện</span>
+              <span className="text-slate-600 dark:text-slate-400"> · theo bộ luyện</span>
             </p>
           )}
-          <label className="mt-2 flex items-center gap-2 font-normal text-slate-600">
+          <label className="mt-2 flex items-center gap-2 font-medium text-slate-600">
             <input
               type="checkbox"
               checked={form.categoryOverride}

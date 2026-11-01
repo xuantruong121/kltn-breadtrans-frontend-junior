@@ -67,7 +67,7 @@ export function PictureWritingCatalog({
       <section className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xs sm:p-5 space-y-3">
         {pairs.length > 1 && (
           <div className="flex flex-wrap items-center gap-2">
-            <label htmlFor="picture-pair" className="text-xs font-bold text-slate-500 dark:text-slate-400">
+            <label htmlFor="picture-pair" className="text-xs font-bold text-slate-600 dark:text-slate-400">
               Cặp từ gợi ý:
             </label>
             <select
@@ -105,7 +105,7 @@ export function PictureWritingCatalog({
       </section>
 
       {visible.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center text-sm text-slate-500 dark:text-slate-400">
+        <p className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center text-sm text-slate-600 dark:text-slate-400">
           Không có tranh phù hợp với bộ lọc này.
         </p>
       ) : (
@@ -141,7 +141,7 @@ export function PictureWritingCatalog({
                     ))}
                   </div>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    <span className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
                       {task.isGraded && (
                         <CheckCircle2 size={14} strokeWidth={2} className="text-emerald-600" aria-hidden="true" />
                       )}

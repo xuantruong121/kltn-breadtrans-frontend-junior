@@ -329,7 +329,7 @@ export const MarketScreen: React.FC = () => {
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
             Cửa hàng Bánh Mì
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+          <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
             Hoàn thành bài tập và đề thi TOEIC để nhận Bánh Mì, rồi đổi lấy vật phẩm hỗ trợ học tập hoặc quà gửi tận nhà.
           </p>
         </div>
@@ -337,7 +337,7 @@ export const MarketScreen: React.FC = () => {
         {/* User Balance or Guest Prompt */}
         {!isGuest ? (
           <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 px-4 py-3 shrink-0">
-            <span className="text-xs text-slate-400">Số dư Bánh Mì</span>
+            <span className="text-xs text-slate-600 dark:text-slate-400">Số dư Bánh Mì</span>
             <p className="flex items-center gap-1.5 text-2xl font-semibold text-slate-900 dark:text-slate-100 leading-tight">
               {(balanceData?.totalBanh || 0).toLocaleString("vi-VN")}
               <Wheat size={18} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
@@ -347,7 +347,7 @@ export const MarketScreen: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 px-4 py-3 shrink-0">
             <div>
               <span className="text-xs font-medium text-slate-700 dark:text-slate-200">Bạn đang duyệt ở chế độ khách</span>
-              <p className="text-xs text-slate-400">Đăng nhập để tích lũy Bánh Mì và nhận quà.</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Đăng nhập để tích lũy Bánh Mì và nhận quà.</p>
             </div>
             <Link
               href="/login?redirect=/market"
@@ -438,7 +438,7 @@ export const MarketScreen: React.FC = () => {
 
             {/* Search Input */}
             <div className="relative w-full md:w-64">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
               <input
                 type="text"
                 value={searchQuery}
@@ -450,7 +450,7 @@ export const MarketScreen: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 dark:text-slate-400"
                 >
                   <X size={14} />
                 </button>
@@ -500,9 +500,9 @@ export const MarketScreen: React.FC = () => {
           ) : filteredProducts.length === 0 ? (
             /* Empty State */
             <div className="rounded-lg border border-dashed border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-12 text-center space-y-3">
-              <ShoppingBag size={36} className="mx-auto text-slate-300 dark:text-slate-600" />
+              <ShoppingBag size={36} className="mx-auto text-slate-300 dark:text-slate-400" />
               <h3 className="text-base font-bold text-slate-700 dark:text-slate-200">Không tìm thấy vật phẩm</h3>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
                 {searchQuery
                   ? `Không có kết quả nào khớp với từ khóa "${searchQuery}". Hãy thử tìm kiếm bằng từ khác.`
                   : "Hiện chưa có vật phẩm nào trong danh mục này."}
@@ -555,20 +555,20 @@ export const MarketScreen: React.FC = () => {
         <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-5">
           <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Lịch sử đổi quà của bạn</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
               Theo dõi trạng thái các phần quà hiện vật và voucher từ quản trị viên.
             </p>
           </div>
 
           {isOrdersLoading ? (
-            <div className="py-12 text-center text-xs font-semibold text-slate-400">
+            <div className="py-12 text-center text-xs font-semibold text-slate-600 dark:text-slate-400">
               Đang tải danh sách đơn đổi quà...
             </div>
           ) : myOrders.length === 0 ? (
             <div className="py-12 text-center space-y-2">
-              <PackageCheck size={36} className="mx-auto text-slate-300 dark:text-slate-600" />
+              <PackageCheck size={36} className="mx-auto text-slate-300 dark:text-slate-400" />
               <p className="text-sm font-bold text-slate-600 dark:text-slate-300">Bạn chưa có đơn đổi quà nào</p>
-              <p className="text-xs text-slate-400">Hãy tích lũy Bánh Mì để nhận những phần quà ý nghĩa nhé.</p>
+              <p className="text-xs text-slate-500">Hãy tích lũy Bánh Mì để nhận những phần quà ý nghĩa nhé.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -589,17 +589,17 @@ export const MarketScreen: React.FC = () => {
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-slate-400">#{order.id}</span>
+                        <span className="font-mono text-xs font-bold text-slate-600 dark:text-slate-400">#{order.id}</span>
                         <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">{itemsText}</h4>
                       </div>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
                         Thời gian: {new Date(order.createdAt).toLocaleString("vi-VN")}
                       </p>
                     </div>
 
                     <div className="flex items-center justify-between sm:justify-end gap-4">
                       <div className="text-left sm:text-right">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-600 block dark:text-slate-400">
                           Chi phí
                         </span>
                         <span className="text-sm font-bold text-amber-900 dark:text-amber-400">

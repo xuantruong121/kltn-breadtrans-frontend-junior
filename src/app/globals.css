@@ -127,7 +127,7 @@
     --popover: #ffffff;
     --popover-foreground: #172033;
     --muted: #f1f5f9;
-    --muted-foreground: #64748b;
+    --muted-foreground: #475569;
     --border: #e2e8f0;
     --input: #ffffff;
     --input-border: #cbd5e1;
@@ -202,7 +202,7 @@
     --popover: #ffffff;
     --popover-foreground: #172033;
     --muted: #f1f5f9;
-    --muted-foreground: #64748b;
+    --muted-foreground: #475569;
     --border: #e2e8f0;
     --input: #ffffff;
     --input-border: #cbd5e1;
@@ -257,6 +257,7 @@
 html, body {
   color: var(--foreground);
   font-family: var(--font-sans);
+  font-weight: 500;
   scroll-behavior: smooth;
   background-color: var(--background);
   min-height: 100dvh;

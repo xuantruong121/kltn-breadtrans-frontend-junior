@@ -43,7 +43,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
       category: "Kinh Nghiệm",
       description: "Đạt 100 điểm kinh nghiệm tích lũy đầu tiên",
       icon: Shield,
-      color: "text-amber-600",
+      color: "text-amber-700 dark:text-amber-400",
       bgColor: "bg-amber-100",
       borderColor: "border-amber-400",
       shadowColor: "shadow-xs",
@@ -60,7 +60,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
       category: "Kiên Trì",
       description: "Duy trì chuỗi ngày học liên tục không gián đoạn",
       icon: Flame,
-      color: "text-orange-600",
+      color: "text-orange-700 dark:text-orange-400",
       bgColor: "bg-orange-100",
       borderColor: "border-orange-400",
       shadowColor: "shadow-xs",
@@ -111,7 +111,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
       category: "Kiểm Tra",
       description: "Đạt điểm 10 tối đa trong 3 bài kiểm tra trắc nghiệm",
       icon: Star,
-      color: "text-sky-600",
+      color: "text-sky-700 dark:text-sky-400",
       bgColor: "bg-sky-100",
       borderColor: "border-sky-400",
       shadowColor: "shadow-xs",
@@ -128,7 +128,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
       category: "Đấu Trường",
       description: "Giành chiến thắng 3 trận so tài 1v1 trong Đấu Trường",
       icon: Swords,
-      color: "text-rose-600",
+      color: "text-rose-700 dark:text-rose-400",
       bgColor: "bg-rose-100",
       borderColor: "border-rose-400",
       shadowColor: "shadow-xs",
@@ -145,7 +145,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
       category: "Luyện phát âm",
       description: "Đạt điểm phát âm 90+ trong 5 câu luyện phát âm",
       icon: Mic,
-      color: "text-emerald-600",
+      color: "text-emerald-700 dark:text-emerald-400",
       bgColor: "bg-emerald-100",
       borderColor: "border-emerald-400",
       shadowColor: "shadow-xs",
@@ -204,7 +204,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
               <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 leading-tight">
                 Tủ Huy Hiệu Của Tôi
               </h2>
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
                 Bảng vàng vinh danh & thành tích học tập
               </p>
             </div>
@@ -246,7 +246,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
             onClick={() => setFilterTab("unlocked")}
             className={`flex-1 py-1.5 rounded-lg transition-colors cursor-pointer text-center text-xs font-semibold ${
               filterTab === "unlocked"
-                ? "bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs"
+                ? "bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-xs"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
             }`}
           >
@@ -283,7 +283,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
                 className={`relative flex flex-col justify-between p-3.5 rounded-xl border transition-all cursor-pointer text-center select-none ${
                   hasUnlocked
                     ? "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs"
-                    : "bg-slate-50/70 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 opacity-80 hover:opacity-100"
+                    : "bg-slate-50/70 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 opacity-90 hover:opacity-100"
                 }`}
               >
                 <div>
@@ -293,7 +293,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
                       className={`w-11 h-11 rounded-xl flex items-center justify-center transition-colors ${
                         hasUnlocked
                           ? `${badge.bgColor} ${badge.color} border border-slate-200/80 dark:border-slate-700/80 dark:bg-opacity-20`
-                          : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 border border-slate-200 dark:border-slate-700 grayscale"
+                          : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700 grayscale"
                       }`}
                     >
                       <Icon size={22} strokeWidth={1.8} />
@@ -318,7 +318,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
                   </h4>
 
                   {/* Description */}
-                  <p className="text-sm font-normal text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed mb-2.5">
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed mb-2.5">
                     {badge.description}
                   </p>
                 </div>
@@ -331,7 +331,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
                     </span>
                   ) : (
                     <div>
-                      <div className="flex justify-between text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                      <div className="flex justify-between text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
                         <span>{badge.currentValue || 0}/{badge.targetValue} {badge.unit}</span>
                         <span>{progress}%</span>
                       </div>
@@ -351,7 +351,7 @@ export const BadgesCabinet: React.FC<BadgesCabinetProps> = ({
 
         {/* Footer Note */}
         <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-center">
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
             Nhấp vào huy hiệu để xem chi tiết và kích hoạt lên hồ sơ học tập.
           </p>
         </div>

@@ -24,7 +24,7 @@ export default function ReadingMistakesPage() {
     <div className="mx-auto max-w-7xl space-y-6 pb-20">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <Link href="/hub?tab=learning-progress" className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-300">
+          <Link href="/hub?tab=learning-progress" className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-300">
             <ArrowLeft size={14} /> Quay lại tiến độ học tập
           </Link>
           <h1 className="mt-3 text-2xl font-black text-slate-900 dark:text-slate-100">Lỗi cần xem lại</h1>
@@ -40,7 +40,7 @@ export default function ReadingMistakesPage() {
         {data.mistakes.bySubskill.map((item) => (
           <div key={item.subskill} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
             <p className="text-xs font-black text-slate-800 dark:text-slate-100">{readingSubskillLabel(item.subskill)}</p>
-            <p className="mt-1 text-2xl font-black text-rose-600 dark:text-rose-300">{item.count}</p>
+            <p className="mt-1 text-2xl font-black text-rose-700 dark:text-rose-300">{item.count}</p>
           </div>
         ))}
       </div>
@@ -57,10 +57,10 @@ export default function ReadingMistakesPage() {
             <article key={`${mistake.date}-${mistake.subskill}-${index}`} className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="rounded-full bg-rose-50 dark:bg-rose-950/40 px-2.5 py-1 text-xs font-black text-rose-700 dark:text-rose-300">{readingSubskillLabel(mistake.subskill)}</span>
-                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">{new Date(mistake.date).toLocaleDateString("vi-VN")}</span>
+                <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">{new Date(mistake.date).toLocaleDateString("vi-VN")}</span>
               </div>
               <h2 className="mt-3 text-base font-black text-slate-900 dark:text-slate-100">{mistake.question}</h2>
-              <div className="mt-2 flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500 dark:text-slate-400">
+              <div className="mt-2 flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-600 dark:text-slate-400">
                 <span>{mistake.source}</span>
                 {mistake.quizId ? (
                   <Link
