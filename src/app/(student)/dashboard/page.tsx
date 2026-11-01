@@ -763,13 +763,12 @@ export default function DashboardPage() {
               </div>
 
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-slate-100">
-                {greetingGreeting},{" "}
+                {greetingGreeting},
                 {isProfileLoading && !studentName ? (
-                  <span className="inline-block h-8 w-36 rounded bg-slate-200 dark:bg-slate-800 animate-pulse align-middle" />
+                  <span className="mt-1 block h-8 w-36 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
                 ) : (
-                  <span className="text-amber-800 dark:text-amber-400">{studentName || "Học viên"}</span>
+                  <span className="block text-amber-800 dark:text-amber-400">{studentName || "Học viên"}!</span>
                 )}
-                !
               </h1>
 
               {isProfileError && (
