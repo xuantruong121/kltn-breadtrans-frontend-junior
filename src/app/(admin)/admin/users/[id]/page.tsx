@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { COURSES_ENABLED } from "@/lib/featureFlags";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -29,7 +28,6 @@ type Row = Record<string, any>;
 type Tracking = {
   learner: Row;
   overview: Row;
-  courses: Row[];
   skills: {
     listening: Row;
     speaking: Row;
@@ -180,7 +178,6 @@ export default function AdminLearnerTrackingPage() {
 
   const learner = data.learner;
   const fullName = learner.profile?.fullName || learner.email;
-  const courseProgress = data.overview.courseProgressPercent;
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-20">
@@ -262,7 +259,6 @@ export default function AdminLearnerTrackingPage() {
 
       <SectionCard title="Tổng quan học tập" icon={<Activity size={18} />}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {COURSES_ENABLED && <Metric label="Tiến độ khóa học" value={courseProgress === null ? "Chưa có dữ liệu" : `${courseProgress}%`} detail={`${data.overview.completedCourseLessons}/${data.overview.totalCourseLessons} bài học`} />}
           <Metric label="Hoạt động gần đây" value={data.overview.recentActivityCount} detail="bản ghi server" />
           <Metric label="Từ vựng đã học" value={data.overview.vocabularyStudied} detail={`${data.overview.vocabularyMastered} từ đã thuần thục`} />
           <Metric label="Luyện đề" value={data.overview.examAttempts} detail={`${data.overview.grammarAttempts} lượt ngữ pháp`} />
@@ -277,11 +273,6 @@ export default function AdminLearnerTrackingPage() {
       </div>
 
       <div className="grid gap-5 xl:grid-cols-2">
-        {COURSES_ENABLED && (
-          <SectionCard title="Khóa học đang học" icon={<GraduationCap size={18} />}>
-            {data.courses.length ? <div className="space-y-4">{data.courses.map((course: Row) => <CourseRow key={course.id} course={course} />)}</div> : <EmptyState label="Chưa có khóa học hoặc bài học đã ghi nhận" />}
-          </SectionCard>
-        )}
         <SectionCard title="Từ vựng" icon={<Layers3 size={18} />}>
           <div className="mb-4 grid grid-cols-3 gap-2 text-center"><Metric label="Đã học" value={data.vocabulary.studiedCount} /><Metric label="Thuần thục" value={data.vocabulary.masteredCount} /><Metric label="Đến hạn ôn" value={data.vocabulary.dueCount} /></div>
           {data.vocabulary.recent.length ? <div className="space-y-2">{data.vocabulary.recent.slice(0, 5).map((item: Row) => <ResultRow key={item.id} title={item.word} meta={item.isMastered ? "Đã thuần thục" : `${item.reviewCount} lượt ôn`} date={item.lastReviewedAt} />)}</div> : <EmptyState />}
@@ -319,7 +310,3 @@ function SpeakingRow({ item }: { item: Row }) {
   return <div className="rounded-lg border border-slate-100 bg-slate-50/70 px-3 py-2.5"><div className="flex items-start justify-between gap-3"><p className="min-w-0 truncate text-sm font-bold text-slate-800">{item.exerciseTitle}</p><span className="shrink-0 text-xs text-slate-600 dark:text-slate-400">{dateOnly(item.submittedAt)}</span></div><p className="mt-1 text-xs font-semibold text-slate-600">{item.status} · Overall {score(item.overallScore)}</p><p className="mt-1 text-xs text-slate-600 dark:text-slate-400">Accuracy {score(item.accuracy)} · Fluency {score(item.fluency)} · Completeness {score(item.completeness)} · PronScore {score(item.pronScore)}</p></div>;
 }
 
-function CourseRow({ course }: { course: Row }) {
-  const hasLessons = course.totalLessons > 0;
-  return <div><div className="flex items-center justify-between gap-3"><div><p className="font-bold text-slate-900">{course.title}</p><p className="text-xs text-slate-600 dark:text-slate-400">{course.level || "Chưa xác định cấp độ"}</p></div><span className="text-sm font-black text-blue-700">{hasLessons ? `${course.progressPercent}%` : "Chưa có dữ liệu"}</span></div>{hasLessons ? <><div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-600" style={{ width: `${course.progressPercent ?? 0}%` }} /></div><p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{course.completedLessons}/{course.totalLessons} bài học hoàn thành</p></> : <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">Chưa có bài học đã xuất bản</p>}</div>;
-}

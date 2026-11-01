@@ -3,7 +3,6 @@
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand";
-import { whenCourses } from "@/lib/featureFlags";
 import {
   LayoutDashboard,
   Users,
@@ -63,12 +62,6 @@ const NAV_GROUPS: NavCategory[] = [
     title: "NỘI DUNG HỌC",
     icon: BookMarked,
     items: [
-      ...whenCourses({
-        id: "courses",
-        href: "/admin/courses",
-        label: "Khóa học",
-        icon: BookOpen,
-      }),
       {
         id: "listening",
         href: "/admin/listening",

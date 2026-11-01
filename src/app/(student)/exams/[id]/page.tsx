@@ -15,7 +15,6 @@ import { Loader2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { examService } from "@/lib/api/services/exam.service";
-import { isSafeCourseReturn } from "@/lib/course/navigation";
 import { resolveExamRuntimeBinding } from "@/lib/toeic/canonicalExamRoute";
 import ToeicLrExamDetail from "@/modules/toeic/ToeicLrExamDetail";
 import ToeicAssessmentDetail from "@/modules/toeic/ToeicAssessmentDetail";
@@ -28,9 +27,6 @@ export default function CanonicalExamDetailPage({
   const { id: rawId } = use(params);
   const examId = Number(rawId);
   const searchParams = useSearchParams();
-  const returnTo = searchParams.get("returnTo");
-  const safeReturnTo =
-    returnTo && isSafeCourseReturn(returnTo) ? returnTo : null;
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["exam-product", examId],
@@ -57,7 +53,6 @@ export default function CanonicalExamDetailPage({
     <ToeicLrExamDetail
       examSetId={binding.examSetId}
       canonicalExamId={examId}
-      safeReturnTo={safeReturnTo}
     />
   ) : (
     <ToeicAssessmentDetail assessmentId={binding.assessmentId} />

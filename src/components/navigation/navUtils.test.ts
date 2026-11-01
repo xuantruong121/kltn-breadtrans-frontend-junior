@@ -8,7 +8,6 @@ import {
   isReadingRoute,
   isWritingRoute,
   isFlashcardRoute,
-  isCoursesRoute,
   isMarketRoute,
   isMoreRoute,
 } from "./navUtils.ts";
@@ -82,8 +81,6 @@ describe("Navigation Route Classification", () => {
     assert.equal(isExamRoute("/dashboard"), false);
     assert.equal(isSkillsRoute("/dashboard"), false);
 
-    assert.equal(isExamRoute("/courses"), false);
-    assert.equal(isSkillsRoute("/courses"), false);
 
     assert.equal(isExamRoute("/market"), false);
     assert.equal(isSkillsRoute("/market"), false);
@@ -123,15 +120,7 @@ describe("Navigation Route Classification", () => {
     assert.equal(isFlashcardRoute("/vocabulary/study"), true);
     assert.equal(isFlashcardRoute("/vocabulary/saved"), true);
     assert.equal(isFlashcardRoute("/flashcard/1"), true);
-    assert.equal(isFlashcardRoute("/courses"), false);
 
-    // 6. Courses (includes public courses, my-courses, classes)
-    assert.equal(isCoursesRoute("/courses"), true);
-    assert.equal(isCoursesRoute("/courses/12"), true);
-    assert.equal(isCoursesRoute("/my-courses"), true);
-    assert.equal(isCoursesRoute("/classes"), true);
-    assert.equal(isCoursesRoute("/classes/45"), true);
-    assert.equal(isCoursesRoute("/market"), false);
 
     // 7. Market
     assert.equal(isMarketRoute("/market"), true);

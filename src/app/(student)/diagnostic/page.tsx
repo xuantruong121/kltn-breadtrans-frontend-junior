@@ -992,7 +992,7 @@ export default function DiagnosticPage() {
 // REDESIGNED DIAGNOSTIC RESULT VIEW
 // Counts come from the administered form; V2 attempts show the four-skill
 // profile. Practice recommendations,
-// deduplicated skills, no contradictory course cards, no retake button,
+// deduplicated skills, no retake button,
 // filterable grouped answer review.
 // ─────────────────────────────────────────────────────────────────────────────
 function DiagnosticResultView({
@@ -1246,7 +1246,7 @@ function DiagnosticResultView({
 
       {result.advice && <AdvicePanel advice={result.advice} />}
 
-      {/* 2. Concrete Practice Recommendations (NO Course Cards) */}
+      {/* 2. Concrete Practice Recommendations */}
       {practiceItems.length > 0 && (
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-9">
           <div className="flex items-center gap-2">

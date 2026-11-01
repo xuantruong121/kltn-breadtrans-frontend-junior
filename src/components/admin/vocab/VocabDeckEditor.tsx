@@ -38,7 +38,7 @@ import VocabStagePreview from "./VocabStagePreview";
 import VocabWordForm, { type AdminVocabWord } from "./VocabWordForm";
 import {
   VOCAB_LEVELS,
-  cefrToCourseLevel,
+  cefrToScaleLevel,
   parseVocabPaste,
   vocabDeckChecklist,
   type DeckStats,
@@ -311,7 +311,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
       const data = unwrap<any>(
         await axiosClient.post("/admin/vocab/ai/full-draft", {
           topic,
-          level: cefrToCourseLevel(form.level),
+          level: cefrToScaleLevel(form.level),
           context: form.description.trim() || undefined,
           count: aiCount,
         }),

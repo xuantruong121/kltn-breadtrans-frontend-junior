@@ -1,6 +1,5 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { COURSES_ENABLED } from "../../lib/featureFlags.ts";
 import {
   MAIN_NAV_ORDER,
   MORE_DROPDOWN_ITEMS,
@@ -12,7 +11,6 @@ import {
   isReadingRoute,
   isWritingRoute,
   isFlashcardRoute,
-  isCoursesRoute,
   isMarketRoute,
   isMoreRoute,
 } from "./navUtils.ts";
@@ -27,8 +25,8 @@ describe("Header Navigation Restructure Verification", () => {
       "Viết",
       "Flashcard",
       "Luyện đề",
-      ...(COURSES_ENABLED ? ["Khóa học"] : ["Cửa hàng"]),
-      ...(COURSES_ENABLED ? ["Cửa hàng"] : ["Bảng xếp hạng"]),
+      ...["Cửa hàng"],
+      ...["Bảng xếp hạng"],
       "More",
     ];
 
@@ -38,10 +36,9 @@ describe("Header Navigation Restructure Verification", () => {
     });
   });
 
-  it("ensures no standalone Grammar or My Courses items remain in global navigation", () => {
+  it("ensures no standalone Grammar item remains in global navigation", () => {
     const labels = MAIN_NAV_ORDER.map((item) => item.label);
     assert.equal(labels.includes("Ngữ pháp"), false);
-    assert.equal(labels.includes("Khóa học của tôi"), false);
     assert.equal(labels.includes("Liên hệ"), false);
     assert.equal(labels.includes("Đề xuất"), false);
   });
@@ -54,7 +51,7 @@ describe("Header Navigation Restructure Verification", () => {
     assert.equal(buttons.length, 8);
     assert.deepEqual(
       MORE_DROPDOWN_ITEMS.map((item) => item.href),
-      COURSES_ENABLED ? ["/arena", "/help"] : ["/help"],
+      ["/help"],
     );
   });
 
@@ -78,16 +75,6 @@ describe("Header Navigation Restructure Verification", () => {
     assert.equal(isReadingRoute("/listening"), false);
     assert.equal(isReadingRoute("/speaking"), false);
     assert.equal(isReadingRoute("/writing"), false);
-  });
-
-  it("activates 'Khóa học' for Course catalog, My Courses, and Class routes", () => {
-    assert.equal(isCoursesRoute("/courses"), true);
-    assert.equal(isCoursesRoute("/courses/react-toeic"), true);
-    assert.equal(isCoursesRoute("/my-courses"), true);
-    assert.equal(isCoursesRoute("/classes"), true);
-    assert.equal(isCoursesRoute("/classes/77"), true);
-
-    assert.equal(isCoursesRoute("/market"), false);
   });
 
   it("activates 'More' for Leaderboard and FAQ routes", () => {

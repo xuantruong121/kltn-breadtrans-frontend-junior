@@ -1,4 +1,3 @@
-import { whenCourses } from "../../lib/featureFlags.ts";
 /**
  * Navigation routing helpers
  * Distinguishes between Exam Practice (Luyện đề) and Skill Practice (Luyện tập kỹ năng).
@@ -71,15 +70,6 @@ export function isFlashcardRoute(pathname: string): boolean {
   );
 }
 
-export function isCoursesRoute(pathname: string): boolean {
-  if (!pathname) return false;
-  return (
-    pathname.startsWith("/courses") ||
-    pathname.startsWith("/my-courses") ||
-    pathname.startsWith("/classes")
-  );
-}
-
 export function isMarketRoute(pathname: string): boolean {
   if (!pathname) return false;
   return pathname.startsWith("/market");
@@ -121,7 +111,6 @@ export const HEADER_NAV_ITEMS: NavItemConfig[] = [
   { label: "Viết", href: "/writing" },
   { label: "Flashcard", href: "/flashcard" },
   { label: "Luyện đề", href: "/exams" },
-  ...whenCourses<NavItemConfig>({ label: "Khóa học", href: "/courses" }),
   { label: "Cửa hàng", href: "/market" },
   { label: "Bảng xếp hạng", href: "/arena" },
   { label: "FAQ", href: "/help" },

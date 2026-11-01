@@ -17,8 +17,6 @@ export function resolveNotificationAction(item: NotificationItem): string | null
     "/listening/",
     "/flashcard/",
     "/vocabulary/",
-    "/courses/",
-    "/my-courses/",
   ];
   if (exactRoutes.includes(raw) || raw.startsWith("/hub?") || routePrefixes.some((prefix) => raw.startsWith(prefix))) return raw;
   return null;

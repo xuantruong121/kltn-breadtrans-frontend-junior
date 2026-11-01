@@ -46,7 +46,6 @@ const STATUS_LABELS: Record<string, string> = {
   SUBMITTED: "Đã nộp",
   IN_PROGRESS: "Đang làm",
   PENDING_START: "Chưa bắt đầu",
-  ENROLLED: "Đã ghi danh",
 };
 
 /** "INTERMEDIATE" → "Trung cấp"; CEFR tags and free text pass through. */

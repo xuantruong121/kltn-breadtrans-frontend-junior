@@ -179,13 +179,9 @@ function sanitizeActivityCategory(title: string, type?: string | null): string {
   if (t.includes("viết") || t.includes("writing") || rawType.includes("WRITING")) {
     return "Luyện viết câu";
   }
-  if (t.includes("bài học") || t.includes("lesson") || rawType.includes("LESSON") || rawType.includes("COURSE")) {
-    return "Bài học khóa học";
-  }
   if (
     rawType ||
-    /^[A-Z0-9_]+$/.test(title || "") ||
-    /courselessonattempt/i.test(title || "")
+    /^[A-Z0-9_]+$/.test(title || "")
   ) {
     return "Hoạt động học tập";
   }
@@ -204,7 +200,7 @@ function activitySubject(
 ): string | undefined {
   const t = practiceTitle((title || "").trim(), quizId);
   if (!t || t === category) return undefined;
-  if (/^[A-Z0-9_]+$/.test(t) || /courselessonattempt/i.test(t)) return undefined;
+  if (/^[A-Z0-9_]+$/.test(t)) return undefined;
   if (/^(Học từ vựng|Hoạt động học tập)$/i.test(t)) return undefined;
   // Old rows may carry internal names ("Entry Diagnostic v2"); never show those.
   if (/\b[Vv]\d+(\.\d+)?\b|legacy|runtime/i.test(t)) return undefined;

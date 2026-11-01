@@ -37,7 +37,6 @@ import {
 } from "@/lib/practice/catalogFilters";
 import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
 import { GrammarScreen } from "@/modules/grammar/screens/GrammarScreen";
-import { isSafeCourseReturn } from "@/lib/course/navigation";
 
 const CATEGORY_OPTIONS: Array<{ id: ExerciseCategory; label: string }> = [
   { id: "READING", label: "Đọc hiểu" },
@@ -62,11 +61,6 @@ function ReadingTopicsContent() {
   const initialCategory: ExerciseCategory =
     rawCategoryParam === "grammar" ? "GRAMMAR" : "READING";
   const requestedGrammarTopicId = Number(searchParams.get("topicId"));
-  const requestedReturnTo = searchParams.get("returnTo");
-  const courseReturn =
-    requestedReturnTo && isSafeCourseReturn(requestedReturnTo)
-      ? requestedReturnTo
-      : null;
 
   const [selectedCategory, setSelectedCategory] =
     useState<ExerciseCategory>(initialCategory);
@@ -265,10 +259,6 @@ function ReadingTopicsContent() {
       <GrammarScreen
         activeTopicId={activeGrammarTopicId}
         onExit={() => {
-          if (courseReturn) {
-            router.push(courseReturn);
-            return;
-          }
           setActiveGrammarTopicId(null);
           handleCategoryChange("GRAMMAR");
         }}

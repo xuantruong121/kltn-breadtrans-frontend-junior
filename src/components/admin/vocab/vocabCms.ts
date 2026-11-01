@@ -23,8 +23,8 @@ export const POS_OPTIONS = [
   "determiner",
 ] as const;
 
-/** The AI endpoints take the course scale, not CEFR. */
-export function cefrToCourseLevel(level?: string | null) {
+/** The AI endpoints take the three-step scale, not CEFR. */
+export function cefrToScaleLevel(level?: string | null) {
   if (level === "A1" || level === "A2") return "BEGINNER";
   if (level === "C1" || level === "C2") return "ADVANCED";
   return "INTERMEDIATE";

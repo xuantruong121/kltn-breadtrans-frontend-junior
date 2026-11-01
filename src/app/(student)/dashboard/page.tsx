@@ -78,8 +78,7 @@ function getQuestProgressText(item: TodayQuestItem): string {
     type === "DO_LISTENING" ||
     type === "COMPLETE_QUIZ" ||
     type === "DO_SPEAKING" ||
-    type === "PRACTICE_SPEAKING" ||
-    type === "COMPLETE_LESSON"
+    type === "PRACTICE_SPEAKING"
   ) {
     return `${current}/${target} bài`;
   }
