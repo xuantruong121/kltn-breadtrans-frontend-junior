@@ -7,9 +7,9 @@ import { ArrowRight, Check, Lock } from "lucide-react";
 import { learningPathService } from "@/lib/api/services/learningPath.service";
 import { isStarterLearner, type LearnerProfile } from "@/lib/learning-path/onboarding";
 
-/** The Mất gốc path on the dashboard (F5.4). It leaves once every step is done. */
+/** The path for the learner's level on the dashboard (F5.4, F25). It leaves once every step is done. */
 export function StarterRoadmapCard({ profile }: { profile: LearnerProfile | undefined }) {
-  const enabled = isStarterLearner(profile);
+  const enabled = Boolean(profile?.onboarded) || isStarterLearner(profile);
   const { data } = useQuery({
     queryKey: ["learning-path-roadmap"],
     queryFn: learningPathService.getRoadmap,
@@ -25,7 +25,7 @@ export function StarterRoadmapCard({ profile }: { profile: LearnerProfile | unde
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 id="starter-roadmap-heading" className="text-xl font-black text-slate-900 dark:text-slate-100">
-          Lộ trình cho người mất gốc
+          {data.title}
         </h2>
         <p className="text-sm font-semibold tabular-nums text-slate-600 dark:text-slate-400">
           {data.done}/{data.total} bước

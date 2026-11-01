@@ -35,6 +35,7 @@ export type LearnerProfile = {
 };
 
 export type StarterRoadmap = {
+  title: string;
   steps: Array<{
     key: string;
     title: string;
