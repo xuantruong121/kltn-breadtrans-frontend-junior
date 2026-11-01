@@ -203,4 +203,37 @@ describe("Admin IA and Messaging UX Invariants", () => {
       );
     });
   });
+  describe("Sidebar comes from this config", () => {
+    const app = path.join(process.cwd(), "src", "app", "(admin)");
+    const layout = fs.readFileSync(path.join(app, "layout.tsx"), "utf8");
+
+    it("the layout renders ADMIN_NAV_GROUPS instead of its own list", () => {
+      assert.match(layout, /ADMIN_NAV_GROUPS\.map/);
+      assert.doesNotMatch(layout, /href: "\/admin\/listening"/);
+    });
+
+    it("every item opens a real page and has an icon in the layout", () => {
+      for (const group of ADMIN_NAV_GROUPS) {
+        assert.match(layout, new RegExp(`\\b${group.iconName},`));
+        for (const item of group.items) {
+          const page = path.join(app, ...item.href.slice(1).split("/"), "page.tsx");
+          assert.ok(fs.existsSync(page), `${item.href} has no page`);
+          assert.match(layout, new RegExp(`\\b${item.iconName},`));
+        }
+      }
+    });
+
+    it("lists the authoring screens that had no way in", () => {
+      const hrefs = ADMIN_NAV_GROUPS.flatMap((g) => g.items.map((i) => i.href));
+      for (const href of [
+        "/admin/toeic/assessments",
+        "/admin/toeic/writing-sets",
+        "/admin/ai-tools",
+        "/admin/practice",
+        "/admin/dictionary",
+      ])
+        assert.ok(hrefs.includes(href), href);
+      assert.ok(!hrefs.includes("/admin/quizzes"));
+    });
+  });
 });

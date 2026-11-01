@@ -27,12 +27,17 @@ import {
   Award,
   MessageSquare,
   Inbox,
+  ClipboardList,
+  FileInput,
+  FileText,
+  Tags,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSyncExternalStore, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supportService } from "@/lib/api/services/support.service";
+import { ADMIN_NAV_GROUPS } from "@/lib/admin/adminNavConfig";
 
 interface NavItem {
   id: string;
@@ -56,133 +61,41 @@ const OVERVIEW_ITEM: NavItem = {
   icon: LayoutDashboard,
 };
 
-const NAV_GROUPS: NavCategory[] = [
-  {
-    id: "content-group",
-    title: "NỘI DUNG HỌC",
-    icon: BookMarked,
-    items: [
-      {
-        id: "listening",
-        href: "/admin/listening",
-        label: "Nghe",
-        icon: Headphones,
-      },
-      {
-        id: "speaking",
-        href: "/admin/speaking",
-        label: "Nói",
-        icon: Mic,
-      },
-      {
-        id: "reading",
-        href: "/admin/reading",
-        label: "Đọc",
-        icon: BookOpen,
-      },
-      {
-        id: "writing",
-        href: "/admin/writing",
-        label: "Viết",
-        icon: PenTool,
-      },
-      {
-        id: "vocab",
-        href: "/admin/vocab",
-        label: "Từ vựng & Flashcard",
-        icon: Layers,
-      },
-      {
-        id: "dictionary",
-        href: "/admin/dictionary",
-        label: "Kho từ điển",
-        icon: BookText,
-      },
-      {
-        id: "grammar",
-        href: "/admin/grammar",
-        label: "Ngữ pháp",
-        icon: GraduationCap,
-      },
-      {
-        id: "exams",
-        href: "/admin/exams",
-        label: "Luyện đề",
-        icon: Award,
-      },
-    ],
-  },
-  {
-    id: "users-group",
-    title: "NGƯỜI DÙNG & GÓI THÀNH VIÊN",
-    icon: Users,
-    items: [
-      {
-        id: "users",
-        href: "/admin/users",
-        label: "Người dùng",
-        icon: Users,
-      },
-      {
-        id: "plan-purchases",
-        href: "/admin/plan-purchases",
-        label: "Gói nâng cấp",
-        icon: CreditCard,
-        roles: ["ADMIN"],
-      },
-    ],
-  },
-  {
-    id: "market-group",
-    title: "ĐIỂM THƯỞNG & PHẦN THƯỞNG",
-    icon: ShoppingBag,
-    items: [
-      {
-        id: "market",
-        href: "/admin/market",
-        label: "Cửa hàng đổi quà",
-        icon: ShoppingBag,
-      },
-      {
-        id: "currency",
-        href: "/admin/currency",
-        label: "Sổ Bánh Mì",
-        icon: Coins,
-      },
-    ],
-  },
-  {
-    id: "system-group",
-    title: "VẬN HÀNH & HỆ THỐNG",
-    icon: Settings,
-    items: [
-      {
-        id: "messages",
-        href: "/admin/messages",
-        label: "Tin nhắn",
-        icon: Inbox,
-      },
-      {
-        id: "issue-reports",
-        href: "/admin/issue-reports",
-        label: "Báo cáo lỗi",
-        icon: Flag,
-      },
-      {
-        id: "suggestions",
-        href: "/admin/suggestions",
-        label: "Đề xuất & Góp ý",
-        icon: MessageSquare,
-      },
-      {
-        id: "costs",
-        href: "/admin/costs",
-        label: "Chi phí & Hiệu năng",
-        icon: Activity,
-      },
-    ],
-  },
-];
+const NAV_ICONS: Record<string, NavItem["icon"]> = {
+  Activity,
+  Award,
+  BookMarked,
+  BookOpen,
+  BookText,
+  ClipboardList,
+  Coins,
+  CreditCard,
+  FileInput,
+  FileText,
+  Flag,
+  GraduationCap,
+  Headphones,
+  Inbox,
+  Layers,
+  MessageSquare,
+  Mic,
+  PenTool,
+  Settings,
+  ShoppingBag,
+  Tags,
+  Users,
+};
+
+const navIcon = (name: string) => NAV_ICONS[name] ?? LayoutDashboard;
+
+const NAV_GROUPS: NavCategory[] = ADMIN_NAV_GROUPS.map((group) => ({
+  ...group,
+  icon: navIcon(group.iconName),
+  items: group.items.map((item) => ({
+    ...item,
+    icon: navIcon(item.iconName),
+  })),
+}));
 
 const emptySubscribe = () => () => {};
 
