@@ -10,6 +10,15 @@ import toast from "react-hot-toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 
+const CATEGORY_LABELS: Record<string, string> = {
+  BILINGUAL_LEVEL: "Đọc hiểu song ngữ",
+  GRAMMAR_TOPIC: "Chuyên đề ngữ pháp",
+  GRAMMAR_LEVEL: "Ngữ pháp theo trình độ",
+  GRAMMAR_MOCK_TEST: "Bài kiểm tra ngữ pháp",
+  WRITING_PART1: "Luyện viết phần 1",
+  WRITING_PART2: "Luyện viết phần 2",
+};
+
 export default function AdminPracticePage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -167,7 +176,7 @@ export default function AdminPracticePage() {
 
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 rounded-lg text-xs font-black uppercase bg-blue-100 text-blue-700 border border-blue-200">
-                      {topic.category}
+                      {CATEGORY_LABELS[topic.category] ?? "Khác"}
                     </span>
                     <span className="text-xs font-bold text-slate-600 dark:text-slate-400">
                       Thứ tự: {topic.order || 1} • {topic._count?.quizzes || 0}{" "}
@@ -239,16 +248,11 @@ export default function AdminPracticePage() {
                     onChange={(e) => setCategory(e.target.value)}
                     className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-2.5 font-bold text-xs outline-none"
                   >
-                    <option value="BILINGUAL_LEVEL">Đọc hiểu song ngữ</option>
-                    <option value="GRAMMAR_TOPIC">Chuyên đề ngữ pháp</option>
-                    <option value="GRAMMAR_LEVEL">
-                      Ngữ pháp theo trình độ
-                    </option>
-                    <option value="GRAMMAR_MOCK_TEST">
-                      Bài kiểm tra ngữ pháp
-                    </option>
-                    <option value="WRITING_PART1">Luyện viết phần 1</option>
-                    <option value="WRITING_PART2">Luyện viết phần 2</option>
+                    {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
