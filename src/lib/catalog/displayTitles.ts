@@ -3,13 +3,12 @@
  *
  * Keyed by stable identity (quiz id, Speaking practice set key, grammar topic
  * id), never by title text: the stored English title, ids, routes, answer
- * keys and history stay as they are. The CEFR suffix is generated from the
- * API's `cefrLevel`, the same level that decides access, so the title cannot
- * disagree with the label or the lock. Content without an entry keeps its
- * stored title. Learning prompts, dictation targets and writing keywords are
- * English and are never translated here.
+ * keys and history stay as they are. Stored titles keep their authored level
+ * tag because the API reads access from it; learners never see that tag.
+ * Content without an entry keeps its stored title, minus the tag. Learning
+ * prompts, dictation targets and writing keywords are English and are never
+ * translated here.
  */
-import { parseCefrLevel, CEFR_ORDER } from "../practice/catalogFilters.ts";
 
 /** Listening, Reading and Writing practice quizzes. */
 const QUIZ_TITLES: Record<number, string> = {
@@ -149,37 +148,32 @@ const TENSE_TITLES: Record<string, string> = {
   "Future Perfect Continuous": "Thì tương lai hoàn thành tiếp diễn",
 };
 
-function withLevel(title: string, cefrLevel?: string | null): string {
-  const range = parseCefrLevel(cefrLevel);
-  if (!range) return title;
-  const span =
-    range.min === range.max
-      ? CEFR_ORDER[range.min]
-      : `${CEFR_ORDER[range.min]}–${CEFR_ORDER[range.max]}`;
-  return `${title} (${span})`;
+const LEVEL_TAG = /\b[ABC][12](?:\s*[–-]\s*[ABC][12])?\b/;
+
+/** "Writing A2 — Helping a customer" → "Helping a customer". */
+export function withoutLevelTag(title: string): string {
+  const [head, ...rest] = title.split(" — ");
+  const body = rest.length && LEVEL_TAG.test(head) ? rest.join(" — ") : title;
+  return body.replace(/\s*\([ABC][12](?:\s*[–-]\s*[ABC][12])?\)\s*$/, "");
 }
 
-/** "Viết email công việc (B1)"; the stored title when there is no entry. */
-export function quizDisplayTitle(
-  id: number | null | undefined,
-  storedTitle: string,
-  cefrLevel?: string | null,
-): string {
+/** "A store policy at level A1." → "A store policy." */
+export function withoutLevelPhrase(text: string): string {
+  return text
+    .replace(/\s+at\s+(?:(?:the|an?)\s+)?[ABC][12]\s+level\b/gi, "")
+    .replace(/\s+at\s+level\s+[ABC][12]\b/gi, "")
+    .replace(/\bAn?\s+[ABC][12](?:-level)?\s+/g, "A ");
+}
+
+/** The Vietnamese title; the stored title without its tag when there is no entry. */
+export function quizDisplayTitle(id: number | null | undefined, storedTitle: string): string {
   const title = id == null ? undefined : QUIZ_TITLES[id];
-  // Detail endpoints send no cefrLevel; the stored title carries the same
-  // authored tag the API reads for standalone practice.
-  return title
-    ? withLevel(title, cefrLevel === undefined ? storedTitle : cefrLevel)
-    : storedTitle;
+  return title ?? withoutLevelTag(storedTitle);
 }
 
-export function speakingSetDisplayTitle(
-  key: string | null | undefined,
-  storedTitle: string,
-  cefrLevel?: string | null,
-): string {
+export function speakingSetDisplayTitle(key: string | null | undefined, storedTitle: string): string {
   const title = key ? SPEAKING_SET_TITLES[key] : undefined;
-  return title ? withLevel(title, cefrLevel) : storedTitle;
+  return title ?? withoutLevelTag(storedTitle);
 }
 
 /** A recommendation names a speaking set only through the `set` in its route. */

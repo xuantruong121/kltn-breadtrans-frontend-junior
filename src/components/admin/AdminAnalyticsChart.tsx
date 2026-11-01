@@ -93,7 +93,7 @@ export default function AdminAnalyticsChart({ data, range }: AdminAnalyticsChart
             </span>
           </div>
           <p className="mt-1 text-xs sm:text-sm text-slate-600 font-medium dark:text-slate-400">
-            Dữ liệu ghi nhận thực tế từ lịch sử nộp bài, ghi danh và giao dịch của học viên
+            Dữ liệu ghi nhận thực tế từ lịch sử nộp bài và giao dịch của học viên
           </p>
         </div>
 

@@ -35,7 +35,7 @@ import {
   type DifficultyFilter,
   type StatusFilter,
 } from "@/lib/practice/catalogFilters";
-import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
+import { quizDisplayTitle, withoutLevelPhrase } from "@/lib/catalog/displayTitles";
 import { GrammarScreen } from "@/modules/grammar/screens/GrammarScreen";
 
 const CATEGORY_OPTIONS: Array<{ id: ExerciseCategory; label: string }> = [
@@ -153,10 +153,10 @@ function ReadingTopicsContent() {
     return readingExercisesData.map((exercise) => ({
       id: exercise.quizId,
       quizId: exercise.quizId,
-      title: quizDisplayTitle(exercise.quizId, exercise.title, exercise.cefrLevel),
-      name: quizDisplayTitle(exercise.quizId, exercise.title, exercise.cefrLevel),
+      title: quizDisplayTitle(exercise.quizId, exercise.title),
+      name: quizDisplayTitle(exercise.quizId, exercise.title),
       cefrLevel: exercise.cefrLevel,
-      description: exercise.description ?? undefined,
+      description: exercise.description ? withoutLevelPhrase(exercise.description) : undefined,
       level: exercise.level,
       topicName: exercise.topicName,
       vietnameseName: exercise.topicVietnameseName ?? undefined,

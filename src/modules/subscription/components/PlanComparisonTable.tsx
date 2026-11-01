@@ -23,15 +23,15 @@ const COMPARISON_FEATURES: ComparisonFeature[] = [
   },
   {
     name: "Nghe chép",
-    free: "Cơ bản (A1–A2)",
-    plus: "Mọi mức (thêm B1–C2)",
-    pro: "Mọi mức (thêm B1–C2)",
+    free: "Cơ bản",
+    plus: "Mọi mức",
+    pro: "Mọi mức",
   },
   {
     name: "Luyện Nói và Viết",
-    free: "Cơ bản (A1–A2)",
-    plus: "Thêm Trung cấp (B1–B2)",
-    pro: "Mọi mức, gồm Nâng cao (C1–C2)",
+    free: "Cơ bản",
+    plus: "Thêm Trung cấp",
+    pro: "Mọi mức, gồm Nâng cao",
   },
   {
     name: "Chấm bài Nói và Viết tự động (AI)",

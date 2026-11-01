@@ -33,7 +33,7 @@ import {
   type DifficultyFilter,
   type StatusFilter,
 } from "@/lib/practice/catalogFilters";
-import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
+import { quizDisplayTitle, withoutLevelPhrase } from "@/lib/catalog/displayTitles";
 
 const EMPTY_QUIZZES: ListeningPracticeCatalogItem[] = [];
 
@@ -113,7 +113,8 @@ function ListeningCatalogContent() {
     if (!Array.isArray(quizzesData)) return EMPTY_QUIZZES;
     return quizzesData.map((quiz) => ({
       ...quiz,
-      title: quizDisplayTitle(quiz.id, quiz.title, quiz.cefrLevel),
+      title: quizDisplayTitle(quiz.id, quiz.title),
+      description: quiz.description ? withoutLevelPhrase(quiz.description) : quiz.description,
     }));
   }, [quizzesData]);
 
@@ -250,7 +251,7 @@ function ListeningCatalogContent() {
           <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 p-4 sm:p-4.5 shadow-2xs lg:w-72 shrink-0 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                Tiến độ toàn khóa
+                Tiến độ
               </span>
               <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 text-xs font-black text-emerald-700 dark:text-emerald-300">
                 {globalCompletionPct}%

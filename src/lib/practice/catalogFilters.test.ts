@@ -10,16 +10,16 @@ import {
 } from "./catalogFilters.ts";
 
 test("B1 is Trung cấp, never Cơ bản", () => {
-  assert.equal(catalogLevelLabel("B1"), "Trung cấp · B1");
+  assert.equal(catalogLevelLabel("B1"), "Trung cấp");
   assert.equal(catalogLevelBand("B1"), "INTERMEDIATE");
   assert.equal(matchesDifficultyFilter("B1", "BASIC"), false);
   assert.equal(matchesDifficultyFilter("B1", "INTERMEDIATE"), true);
 });
 
 test("bands follow A1–A2 / B1–B2 / C1–C2; a range uses its highest level", () => {
-  assert.equal(catalogLevelLabel("A1-A2"), "Cơ bản · A1–A2");
-  assert.equal(catalogLevelLabel("B1-B2"), "Trung cấp · B1–B2");
-  assert.equal(catalogLevelLabel("B2-C1"), "Nâng cao · B2–C1");
+  assert.equal(catalogLevelLabel("A1-A2"), "Cơ bản");
+  assert.equal(catalogLevelLabel("B1-B2"), "Trung cấp");
+  assert.equal(catalogLevelLabel("B2-C1"), "Nâng cao");
   assert.equal(catalogLevelBand("A2–B1"), "INTERMEDIATE");
   assert.equal(catalogLevelBand("C1"), "ADVANCED");
 });
@@ -49,8 +49,8 @@ test("Dễ → Khó orders A1 → C2 across the whole list, stable within a leve
 });
 
 test("the server's practice level decides the label and the filter", () => {
-  assert.equal(catalogLevelLabel("A2-B1", "BASIC"), "Cơ bản · A2–B1");
-  assert.equal(catalogLevelLabel("A1", "STARTER"), "Mất gốc · A1");
+  assert.equal(catalogLevelLabel("A2-B1", "BASIC"), "Cơ bản");
+  assert.equal(catalogLevelLabel("A1", "STARTER"), "Mất gốc");
   assert.equal(matchesDifficultyFilter("A2-B1", "BASIC", "BASIC"), true);
   assert.equal(matchesDifficultyFilter("A2-B1", "INTERMEDIATE", "BASIC"), false);
   assert.equal(matchesDifficultyFilter("A1", "STARTER", "STARTER"), true);

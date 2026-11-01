@@ -343,7 +343,7 @@ export default function AdminPlanPurchasesPage() {
             </span>
           </div>
           <p className="mt-2 text-sm font-medium text-slate-600">
-            Tài khoản hiện đang có quyền học bài giảng và tính năng Plus/Pro.
+            Tài khoản hiện đang có quyền lợi gói Plus/Pro.
           </p>
         </div>
 

@@ -344,7 +344,7 @@ export default function AdminDashboardPage() {
               <div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                    Doanh thu gói học
+                    Doanh thu gói nâng cấp
                   </span>
                   <div className="flex size-8 items-center justify-center rounded-lg border border-emerald-100 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400">
                     <CreditCard size={16} />

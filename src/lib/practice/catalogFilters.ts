@@ -70,18 +70,14 @@ export function levelBand(range: CefrRange): LevelBand {
   return "ADVANCED";
 }
 
-/** "Trung cấp · B1", "Nâng cao · B2–C1"; null when the level is unknown. */
+/** "Trung cấp", "Nâng cao"; null when the level is unknown. */
 export function catalogLevelLabel(
   value?: string | null,
   practiceLevel?: PracticeLevel | null,
 ): string | null {
   const range = parseCefrLevel(value);
   if (!range) return null;
-  const span =
-    range.min === range.max
-      ? CEFR_ORDER[range.min]
-      : `${CEFR_ORDER[range.min]}–${CEFR_ORDER[range.max]}`;
-  return `${BAND_LABEL[practiceLevel ?? levelBand(range)]} · ${span}`;
+  return BAND_LABEL[practiceLevel ?? levelBand(range)];
 }
 
 export function catalogLevelBand(value?: string | null): LevelBand | null {

@@ -141,8 +141,8 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
           >
             {description ??
               (plan === "PRO"
-                ? "Bài luyện nói và luyện viết mức Nâng cao (C1–C2) thuộc gói PRO."
-                : "Nói, Viết Trung cấp (B1–B2) và Nghe chép từ B1 thuộc gói PLUS.")}
+                ? "Bài luyện nói và luyện viết mức Nâng cao thuộc gói PRO."
+                : "Nói, Viết Trung cấp và Nghe chép Trung cấp trở lên thuộc gói PLUS.")}
           </p>
 
           {/* Verified Entitlement Highlights */}
@@ -162,11 +162,11 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
               (plan === "PRO"
                 ? [
                     "Mọi quyền lợi của gói PLUS",
-                    "Bài luyện nói và luyện viết Nâng cao (C1–C2)",
+                    "Bài luyện nói và luyện viết Nâng cao",
                   ]
                 : [
-                    "Bài luyện nói và luyện viết Trung cấp (B1–B2)",
-                    "Nghe chép từ B1 đến C2",
+                    "Bài luyện nói và luyện viết Trung cấp",
+                    "Nghe chép Trung cấp trở lên",
                     "Nghe, Đọc mọi mức; flashcard, từ vựng, ngữ pháp vẫn miễn phí",
                   ]
               ).map((benefit) => (

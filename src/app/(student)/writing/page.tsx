@@ -39,7 +39,7 @@ import {
   type StatusFilter,
 } from "@/lib/practice/catalogFilters";
 import { unlockPlanFor } from "@/modules/subscription/practicePlan";
-import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
+import { quizDisplayTitle, withoutLevelTag } from "@/lib/catalog/displayTitles";
 import { PictureWritingCatalog } from "@/components/writing/PictureWritingCatalog";
 import { isPictureQuiz, pictureCards } from "@/lib/writing/pictureWriting";
 
@@ -127,7 +127,7 @@ export default function WritingTopicsPage() {
   const topics: WritingTopicItem[] = useMemo(() => {
     return (topicsData?.quizzes ?? []).map((topic) => ({
       ...topic,
-      title: topic.title && quizDisplayTitle(topic.id, topic.title, topic.cefrLevel),
+      title: topic.title && quizDisplayTitle(topic.id, topic.title),
     }));
   }, [topicsData]);
 
@@ -290,7 +290,7 @@ export default function WritingTopicsPage() {
                 className="rounded-xl border border-slate-200 bg-slate-50 p-3 transition hover:border-sky-300 hover:bg-sky-50 dark:border-slate-700 dark:bg-slate-800/70 dark:hover:border-sky-700 dark:hover:bg-sky-950/30"
               >
                 <p className="line-clamp-1 text-xs font-bold text-slate-800 dark:text-slate-100">
-                  {activity.title}
+                  {withoutLevelTag(activity.title)}
                 </p>
                 <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
                   {activity.detail ?? "Đã hoàn thành"} · {activity.score != null ? `${activity.score}%` : "Chưa có điểm"}

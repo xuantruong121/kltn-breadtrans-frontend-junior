@@ -68,7 +68,7 @@ import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { PlanLockedScreen } from "@/components/practice/PlanLockedScreen";
 import { LevelLockedScreen } from "@/components/practice/LevelLockDialog";
 import { dependsOnLevel } from "@/lib/learning-path/levelLock";
-import { speakingSetDisplayTitle } from "@/lib/catalog/displayTitles";
+import { speakingSetDisplayTitle, withoutLevelTag } from "@/lib/catalog/displayTitles";
 import {
   IS_WORD_REGEX,
   normalizeWordForMatching,
@@ -1849,12 +1849,8 @@ export default function SpeakingExerciseDetailPage() {
 
   // The set's Vietnamese title, matching its catalog card.
   const speakingTitle = activePracticeSet
-    ? speakingSetDisplayTitle(
-        activePracticeSet.key,
-        activePracticeSet.title,
-        activeCatalogExercise?.cefrLevel,
-      )
-    : exercise.title;
+    ? speakingSetDisplayTitle(activePracticeSet.key, activePracticeSet.title)
+    : withoutLevelTag(exercise.title);
 
   return (
     <PracticeShell

@@ -16,19 +16,19 @@ export interface DifficultyConfig {
 
 export const LISTENING_DIFFICULTY_CONFIG: Record<string, DifficultyConfig> = {
   BEGINNER: {
-    label: "A1 / A2",
+    label: "Cơ bản",
     badgeClass:
       "bg-emerald-50 text-emerald-800 border-emerald-200 font-bold dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800/60",
     dotClass: "bg-emerald-500",
   },
   INTERMEDIATE: {
-    label: "B1 / B2",
+    label: "Trung cấp",
     badgeClass:
       "bg-amber-50 text-amber-800 border-amber-200 font-bold dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800/60",
     dotClass: "bg-amber-500",
   },
   ADVANCED: {
-    label: "C1",
+    label: "Nâng cao",
     badgeClass:
       "bg-rose-50 text-rose-800 border-rose-200 font-bold dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800/60",
     dotClass: "bg-rose-500",
@@ -50,7 +50,7 @@ export function resolveCefrBadge(levels?: string[] | string): CefrBadgeConfig {
   if (raw.includes("C1") || raw.includes("C2") || raw.includes("ADVANCED") || raw.includes("NÂNG CAO")) {
     return {
       code: "C1",
-      label: "C1",
+      label: "Nâng cao",
       badgeClass:
         "bg-rose-50 text-rose-800 border-rose-200 font-bold dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800/60",
     };
@@ -64,14 +64,14 @@ export function resolveCefrBadge(levels?: string[] | string): CefrBadgeConfig {
     const code = raw.includes("B1") && raw.includes("B2") ? "B1 / B2" : raw.includes("B2") ? "B2" : "B1 / B2";
     return {
       code,
-      label: code,
+      label: "Trung cấp",
       badgeClass:
         "bg-amber-50 text-amber-800 border-amber-200 font-bold dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800/60",
     };
   }
   return {
     code: "A1 / A2",
-    label: "A1 / A2",
+    label: "Cơ bản",
     badgeClass:
       "bg-emerald-50 text-emerald-800 border-emerald-200 font-bold dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800/60",
   };

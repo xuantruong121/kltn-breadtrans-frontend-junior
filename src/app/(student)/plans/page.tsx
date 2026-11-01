@@ -221,7 +221,7 @@ function PlansPageContent() {
         <div className="rounded-2xl border border-amber-300 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/30 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-amber-900 dark:text-amber-200">
           <div className="flex items-center gap-2.5">
             <AlertCircle size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />
-            <span>Không thể kết nối danh mục gói học mới nhất từ máy chủ.</span>
+            <span>Không thể kết nối danh mục gói mới nhất từ máy chủ.</span>
           </div>
           <button
             type="button"
@@ -296,7 +296,7 @@ export default function PlansPage() {
       fallback={
         <div className="flex flex-col justify-center items-center h-96 gap-3">
           <Loader2 className="animate-spin text-amber-500" size={40} />
-          <span className="text-xs font-bold text-slate-500">Đang tải thông tin gói học...</span>
+          <span className="text-xs font-bold text-slate-500">Đang tải thông tin gói...</span>
         </div>
       }
     >

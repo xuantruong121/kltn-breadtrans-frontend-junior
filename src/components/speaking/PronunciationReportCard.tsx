@@ -713,7 +713,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
               <span className="size-2.5 rounded-full bg-amber-600 animate-ping" />
               <span>
                 {comparingTrack === "native"
-                  ? "Bước 1/2: Đang phát audio mẫu giáo viên..."
+                  ? "Bước 1/2: Đang phát audio mẫu..."
                   : "Bước 2/2: Đang phát bản ghi của bạn..."}
               </span>
             </span>

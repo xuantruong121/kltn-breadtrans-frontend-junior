@@ -499,7 +499,7 @@ export function AppHeader() {
               {/* Current plan links to the plan management page; FREE keeps the upgrade CTA. */}
               <Link
                 href="/plans"
-                aria-label={headerPlanLabel === "Nâng cấp" ? "Nâng cấp gói học" : `Xem ${headerPlanLabel}`}
+                aria-label={headerPlanLabel === "Nâng cấp" ? "Nâng cấp gói" : `Xem ${headerPlanLabel}`}
                 className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black text-xs sm:text-sm shadow-xs transition-all shrink-0 cursor-pointer"
               >
                 <Crown size={15} className="text-white shrink-0" aria-hidden="true" />
