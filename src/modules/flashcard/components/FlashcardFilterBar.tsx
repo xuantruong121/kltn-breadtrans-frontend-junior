@@ -1,5 +1,6 @@
 import React from "react";
 import { ArrowUpDown, Filter, RotateCcw, Search, X } from "lucide-react";
+import { deckLevelLabel } from "../flashcardLogic";
 import type {
   FlashcardSortOption,
   FlashcardStatusFilter,
@@ -114,7 +115,7 @@ export const FlashcardFilterBar: React.FC<FlashcardFilterBarProps> = ({
                 <option value="ALL">Mọi trình độ</option>
                 {levels.map((level) => (
                   <option key={level} value={level}>
-                    {level}
+                    {deckLevelLabel(level)}
                   </option>
                 ))}
               </select>

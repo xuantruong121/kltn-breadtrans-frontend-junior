@@ -1,5 +1,18 @@
 import type { VocabTopic } from "../../lib/api/services/vocab.service.ts";
 
+const DECK_LEVEL_LABELS: Record<string, string> = {
+  A1: "Mất gốc",
+  A2: "Cơ bản",
+  B1: "Trung cấp",
+  B2: "Nâng cao",
+};
+
+/** Learners see internal practice levels. A CEFR tag is a CMS tag, not a claim. */
+export function deckLevelLabel(level?: string | null): string {
+  if (!level) return "";
+  return DECK_LEVEL_LABELS[level.trim().toUpperCase()] ?? "";
+}
+
 export type FlashcardDeckStatus = "REVIEW_DUE" | "IN_PROGRESS" | "COMPLETED" | "NEW";
 
 export type FlashcardStatusFilter = "ALL" | FlashcardDeckStatus;
