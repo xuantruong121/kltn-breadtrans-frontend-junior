@@ -43,6 +43,7 @@ import { LevelChoiceCard } from "@/components/dashboard/LevelChoiceCard";
 import { SkillLevelsCard } from "@/components/dashboard/SkillLevelsCard";
 import { StarterRoadmapCard } from "@/components/learning-path/StarterRoadmapCard";
 import { TodayPlanCard } from "@/components/learning-path/TodayPlanCard";
+import { WeekPlanCard } from "@/components/learning-path/WeekPlanCard";
 import { learningPathService } from "@/lib/api/services/learningPath.service";
 import { ONBOARDING_SKIPPED_KEY, shouldOpenOnboarding } from "@/lib/learning-path/onboarding";
 import { useRouter } from "next/navigation";
@@ -1358,6 +1359,7 @@ export default function DashboardPage() {
       <LevelChoiceCard profile={learnerProfile} />
       <StarterRoadmapCard profile={learnerProfile} />
       <SkillLevelsCard profile={learnerProfile} />
+      <WeekPlanCard enabled={enabled && Boolean(learnerProfile?.onboarded)} />
       <TodayPlanCard enabled={enabled && Boolean(learnerProfile?.onboarded)} />
 
       {/* ========================================================================= */}

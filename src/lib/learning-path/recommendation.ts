@@ -32,6 +32,28 @@ export type TodayPlan = {
   foundation?: FoundationItem[];
 };
 
+export type WeekPlan = {
+  minutesPerDay: number;
+  weekStart: string;
+  skills: Array<{
+    skill: PracticeSkill;
+    unlockedLevel: PracticeLevel;
+    done: number;
+    doneThisWeek: number;
+    target: number;
+    remaining: number;
+    nextLevelLabel: string | null;
+  }>;
+  estimate: {
+    items: number;
+    days: number;
+    date: string;
+    targetDate: string | null;
+    onTrack: boolean | null;
+    minutesNeeded: number | null;
+  };
+};
+
 export type FoundationItem = {
   kind: "VOCAB_REVIEW" | "GRAMMAR" | "VOCAB_DECK";
   id: number | null;
@@ -79,6 +101,23 @@ export function otherSuggestions<T extends Pick<RecommendationItem, "route" | "s
 ): T[] {
   const fresh = items.filter((item) => !excludedRoutes.includes(item.route));
   return [...fresh.filter((i) => i.status === "OPEN"), ...fresh.filter((i) => i.status !== "OPEN")].slice(0, max);
+}
+
+/** Share of the weekly target, capped at 100 for the bar. */
+export function weekPercent(done: number, target: number): number {
+  return target > 0 ? Math.min(100, Math.round((done / target) * 100)) : 0;
+}
+
+/** The learner-facing estimate line; never a promise. */
+export function estimateText(estimate: WeekPlan["estimate"], formatDate: (iso: string) => string): string {
+  if (estimate.items === 0) return "Bạn đã đủ số bài để mở mức kế tiếp ở mọi kỹ năng.";
+  const base = `Còn ${estimate.items} bài để mở mức kế tiếp, ước tính khoảng ${estimate.days} ngày (${formatDate(estimate.date)}).`;
+  if (estimate.onTrack === false && estimate.minutesNeeded !== null) {
+    return `${base} Để kịp ngày mục tiêu, cần khoảng ${estimate.minutesNeeded} phút mỗi ngày.`;
+  }
+  if (estimate.onTrack === false) return `${base} Ngày mục tiêu đã qua, bạn có thể đặt lại.`;
+  if (estimate.onTrack === true) return `${base} Kịp ngày mục tiêu của bạn.`;
+  return base;
 }
 
 export function totalMinutes(items: Array<Pick<RecommendationItem, "minutes">>): number {

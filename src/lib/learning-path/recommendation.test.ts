@@ -1,12 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  estimateText,
   filterBySkill,
   lockLabel,
   otherSuggestions,
   skillsWithItems,
   totalMinutes,
   visibleReasons,
+  weekPercent,
 } from "./recommendation.ts";
 
 test("lock badges name the reason; open items have none", () => {
@@ -44,4 +46,20 @@ test("suggestions skip the authored links and put open items first", () => {
   ];
   assert.deepEqual(otherSuggestions(items, ["/speaking/3"], 4).map((i) => i.route), ["/speaking/2", "/speaking/1"]);
   assert.equal(otherSuggestions(items, [], 1).length, 1);
+});
+
+test("the week bar is capped at 100", () => {
+  assert.equal(weekPercent(1, 4), 25);
+  assert.equal(weekPercent(9, 4), 100);
+  assert.equal(weekPercent(1, 0), 0);
+});
+
+test("the estimate says it is an estimate and what a late target needs", () => {
+  const date = (iso: string) => iso;
+  const base = { items: 3, days: 2, date: "D", targetDate: null, onTrack: null, minutesNeeded: null };
+  assert.match(estimateText(base, date), /ước tính khoảng 2 ngày/);
+  assert.match(estimateText({ ...base, onTrack: true }, date), /Kịp ngày mục tiêu/);
+  assert.match(estimateText({ ...base, onTrack: false, minutesNeeded: 20 }, date), /khoảng 20 phút mỗi ngày/);
+  assert.match(estimateText({ ...base, onTrack: false }, date), /đã qua/);
+  assert.match(estimateText({ ...base, items: 0 }, date), /đủ số bài/);
 });
