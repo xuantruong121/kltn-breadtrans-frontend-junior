@@ -7,6 +7,7 @@ import type { LearningStatus } from "../../lib/practice/catalogFilters.ts";
 
 type TopicLike = {
   id: number;
+  title?: string;
   totalQuestions: number;
   isCompleted: boolean;
   attemptCount: number;
@@ -21,7 +22,7 @@ export function grammarTopicStatus(topic: TopicLike): LearningStatus {
 /** Sections in category order; topics keep the API's authored order. */
 export function groupGrammarTopics<T extends TopicLike>(topics: T[]) {
   return GRAMMAR_CATEGORY_ORDER.map((category: GrammarCategory) => {
-    const inSection = topics.filter((topic) => grammarCategory(topic.id) === category);
+    const inSection = topics.filter((topic) => grammarCategory(topic.id, topic.title) === category);
     return {
       category,
       topics: inSection,

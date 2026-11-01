@@ -40,7 +40,7 @@ export function GrammarCatalog({
   const visible = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
     return topics.filter((topic) => {
-      if (tab !== "ALL" && grammarCategory(topic.id) !== tab) return false;
+      if (tab !== "ALL" && grammarCategory(topic.id, topic.title) !== tab) return false;
       if (!q) return true;
       return [
         grammarDisplayTitle(topic.id, topic.title),
@@ -58,11 +58,12 @@ export function GrammarCatalog({
   const countByTab = useMemo(() => {
     const counts: Record<Tab, number> = {
       ALL: topics.length,
+      TENSE: 0,
       WORD_CLASS: 0,
       VERB: 0,
       OTHER: 0,
     };
-    for (const topic of topics) counts[grammarCategory(topic.id)] += 1;
+    for (const topic of topics) counts[grammarCategory(topic.id, topic.title)] += 1;
     return counts;
   }, [topics]);
 
