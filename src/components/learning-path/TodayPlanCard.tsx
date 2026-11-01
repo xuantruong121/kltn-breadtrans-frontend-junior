@@ -14,6 +14,7 @@ import {
   totalMinutes,
   type SkillFilter,
 } from "@/lib/learning-path/recommendation";
+import { FoundationCards } from "./FoundationCards";
 import { RecommendationItemCard } from "./RecommendationItemCard";
 
 const FIRST_VISIBLE = 6;
@@ -68,6 +69,15 @@ export function TodayPlanCard({ enabled }: { enabled: boolean }) {
           />
         ))}
       </div>
+
+      {(data.foundation?.length ?? 0) > 0 && (
+        <div className="mt-7 border-t border-slate-200 pt-6 dark:border-slate-800">
+          <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">Từ vựng và ngữ pháp</h3>
+          <div className="mt-3">
+            <FoundationCards items={data.foundation ?? []} />
+          </div>
+        </div>
+      )}
 
       {more.length > 0 && (
         <div className="mt-7 border-t border-slate-200 pt-6 dark:border-slate-800">

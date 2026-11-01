@@ -28,6 +28,17 @@ export type TodayPlan = {
   items: RecommendationItem[];
   /** Other open items, beyond the daily minutes, for the learner to choose from. */
   more?: RecommendationItem[];
+  /** Vocabulary and grammar to study next. */
+  foundation?: FoundationItem[];
+};
+
+export type FoundationItem = {
+  kind: "VOCAB_REVIEW" | "GRAMMAR" | "VOCAB_DECK";
+  id: number | null;
+  title: string;
+  route: string;
+  minutes: number;
+  reason: string;
 };
 
 export type SkillFilter = PracticeSkill | "ALL";
