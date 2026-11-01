@@ -33,8 +33,8 @@ const FAQS = [
     "Sau khi nộp bài, hệ thống hiển thị kết quả, phản hồi hoặc đáp án phù hợp với loại bài. Lịch sử và tiến độ chỉ hiển thị cho chính tài khoản của bạn.",
   ],
   [
-    "Gói học và thanh toán",
-    "Thông tin gói học của bạn nằm trong menu tài khoản tại “Gói của tôi”. Chỉ các giao dịch đã được hệ thống xác nhận mới thay đổi quyền truy cập.",
+    "Gói và thanh toán",
+    "Thông tin gói của bạn nằm trong menu tài khoản tại “Gói của tôi”. Chỉ các giao dịch đã được hệ thống xác nhận mới thay đổi quyền truy cập.",
   ],
   [
     "Âm thanh, hình ảnh hoặc bài học không tải được",

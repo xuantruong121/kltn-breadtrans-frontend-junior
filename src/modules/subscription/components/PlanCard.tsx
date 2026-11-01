@@ -84,11 +84,11 @@ export const PlanCard: React.FC<PlanCardProps> = ({
           <ul className="mt-6 space-y-3.5 text-sm text-slate-700 dark:text-slate-200">
             <li className="flex items-start gap-3">
               <Check size={18} className="text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
-              <span>Nghe và Đọc ở mọi mức (trừ Nghe chép từ B1)</span>
+              <span>Nghe và Đọc ở mọi mức (trừ Nghe chép Trung cấp trở lên)</span>
             </li>
             <li className="flex items-start gap-3">
               <Check size={18} className="text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
-              <span>Nói và Viết mức Cơ bản (A1–A2)</span>
+              <span>Nói và Viết mức Cơ bản</span>
             </li>
             <li className="flex items-start gap-3">
               <Check size={18} className="text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
@@ -150,7 +150,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
           </div>
 
           <p className="mt-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed">
-            Mở Nói, Viết Trung cấp và Nghe chép từ B1.
+            Mở Nói, Viết Trung cấp và Nghe chép Trung cấp trở lên.
           </p>
 
           <div className="mt-6 pb-6 border-b border-slate-100 dark:border-slate-800">
@@ -202,15 +202,15 @@ export const PlanCard: React.FC<PlanCardProps> = ({
             </li>
             <li className="flex items-start gap-3 font-bold text-amber-800 dark:text-amber-300">
               <Check size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
-              <span>Nói và Viết Trung cấp (B1–B2)</span>
+              <span>Nói và Viết Trung cấp</span>
             </li>
             <li className="flex items-start gap-3">
               <Check size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
-              <span>Nghe chép từ B1 đến C2</span>
+              <span>Nghe chép Trung cấp trở lên</span>
             </li>
             <li className="flex items-start gap-3 text-slate-500 dark:text-slate-400">
               <Minus size={18} className="text-slate-500 dark:text-slate-400 shrink-0 mt-0.5" aria-hidden="true" />
-              <span>Không gồm Nói, Viết Nâng cao (C1–C2)</span>
+              <span>Không gồm Nói, Viết Nâng cao</span>
             </li>
           </ul>
         </div>
@@ -312,7 +312,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
           </li>
           <li className="flex items-start gap-3">
             <Check size={18} className="text-blue-500 shrink-0 mt-0.5" aria-hidden="true" />
-            <span>Nói và Viết ở mọi mức, gồm Nâng cao (C1–C2)</span>
+            <span>Nói và Viết ở mọi mức, gồm Nâng cao</span>
           </li>
         </ul>
       </div>

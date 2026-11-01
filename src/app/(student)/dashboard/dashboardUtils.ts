@@ -184,9 +184,9 @@ export const SKILL_DETAIL_CONFIGS: Record<SkillKey, SkillDetailConfig> = {
     defaultTarget: 30,
     targetUnit: "câu",
     parts: [
-      { id: "read-basic", name: "Đọc hiểu A1 - A2 (Cơ bản)", href: "/reading?difficulty=BASIC" },
-      { id: "read-intermediate", name: "Đọc hiểu B1 - B2 (Trung cấp)", href: "/reading?difficulty=INTERMEDIATE" },
-      { id: "read-advanced", name: "Đọc hiểu C1 (Nâng cao)", href: "/reading?difficulty=ADVANCED" },
+      { id: "read-basic", name: "Đọc hiểu Cơ bản", href: "/reading?difficulty=BASIC" },
+      { id: "read-intermediate", name: "Đọc hiểu Trung cấp", href: "/reading?difficulty=INTERMEDIATE" },
+      { id: "read-advanced", name: "Đọc hiểu Nâng cao", href: "/reading?difficulty=ADVANCED" },
       { id: "read-grammar", name: "Ngữ pháp tiếng Anh (Grammar Foundation)", href: "/reading?category=grammar" },
     ],
   },

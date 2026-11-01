@@ -1344,7 +1344,7 @@ export default function DashboardPage() {
                   onClick={() => setUpgradePrompt(null)}
                   className="inline-flex min-h-11 items-center gap-1.5 px-4 py-2 rounded-xl text-base font-black text-white bg-amber-500 hover:bg-amber-600 transition shadow-xs cursor-pointer"
                 >
-                  <span>Xem các gói học</span>
+                  <span>Xem các gói</span>
                   <ArrowRight size={14} />
                 </Link>
               </div>

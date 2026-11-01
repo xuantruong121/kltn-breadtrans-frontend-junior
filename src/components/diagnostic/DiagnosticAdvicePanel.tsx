@@ -34,18 +34,8 @@ const UNASSESSED: Record<DiagnosticAdvice["unassessed"][number]["reason"], strin
 /** The same Vietnamese title the catalog shows for this exercise. */
 function adviceTitle(resource: DiagnosticAdviceResource): string {
   if (resource.kind === "SPEAKING_EXERCISE")
-    return speakingSetDisplayTitle(resource.setKey, resource.title, resource.cefrLevel);
+    return speakingSetDisplayTitle(resource.setKey, resource.title);
   return quizDisplayTitle(resource.id, resource.title);
-}
-
-/** The first "(A2)"-style content tag shown in a recommended title, if any. */
-function firstLevelTag(advice: DiagnosticAdvice): string | null {
-  for (const item of [...advice.priorities, ...advice.supplemental])
-    for (const resource of item.resources) {
-      const match = /\((?:A1|A2|B1|B2|C1|C2)\)/.exec(adviceTitle(resource));
-      if (match) return match[0];
-    }
-  return null;
 }
 
 function ResourceLink({ resource, note }: { resource: DiagnosticAdviceResource; note?: string }) {
@@ -123,7 +113,6 @@ function PriorityCard({ item, label }: { item: DiagnosticAdvicePriority; label: 
 /** D1 result guidance: what went well, what to work on first, and where. */
 export function DiagnosticAdvicePanel({ advice }: { advice: DiagnosticAdvice }) {
   const { profile } = advice;
-  const levelTag = firstLevelTag(advice);
   return (
     <section
       aria-labelledby="diagnostic-advice-title"
@@ -188,12 +177,6 @@ export function DiagnosticAdvicePanel({ advice }: { advice: DiagnosticAdvice }) 
             {advice.noWeaknessFound
               ? "Trong phạm vi bài kiểm tra này chưa thấy dạng câu hoặc tiêu chí nào cần ưu tiên. Bạn có thể chọn bài luyện ở mức khó hơn trong từng kỹ năng."
               : "Chưa đủ kỹ năng có điểm để đưa ra ưu tiên."}
-          </p>
-        )}
-        {levelTag && (
-          <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
-            Ký hiệu trong ngoặc ở tên bài luyện, ví dụ {levelTag}, là mức của nội dung bài đó trong thư viện, không phải
-            trình độ của bạn.
           </p>
         )}
       </div>

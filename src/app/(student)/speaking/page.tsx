@@ -42,7 +42,7 @@ import {
 } from "@/lib/practice/catalogFilters";
 import { presentSpeakingProgress } from "@/lib/speaking/speakingExperienceLogic";
 import { unlockPlanFor } from "@/modules/subscription/practicePlan";
-import { speakingSetDisplayTitle } from "@/lib/catalog/displayTitles";
+import { speakingSetDisplayTitle, withoutLevelPhrase } from "@/lib/catalog/displayTitles";
 
 type SpeakingPracticeSetCard = SpeakingExercise & {
   practiceSet: SpeakingPracticeSetSummary;
@@ -196,11 +196,11 @@ export default function SpeakingExercisesPage() {
       }
       const avgScore = scoreCount > 0 ? Math.round(scoreSum / scoreCount) : undefined;
 
-      const setTitle = speakingSetDisplayTitle(summary.key, summary.title, first.cefrLevel);
+      const setTitle = speakingSetDisplayTitle(summary.key, summary.title);
       return {
         ...first,
         title: setTitle,
-        description: summary.description,
+        description: summary.description ? withoutLevelPhrase(summary.description) : summary.description,
         category: summary.category,
         difficulty: summary.difficultyLabel,
         isCompleted: summary.isCompleted,

@@ -334,8 +334,8 @@ test("groupRecentActivities shows the stored exercise name, never an internal la
     },
   ]);
   assert.equal(grouped[0].title, "Luyện nghe hiểu");
-  assert.equal(grouped[0].subject, "Nghe chép A2 — Du lịch và chỉ đường");
-  assert.equal(grouped[1].subject, "Writing A2 — Messages & Simple Emails — Câu 1/5");
+  assert.equal(grouped[0].subject, "Du lịch và chỉ đường");
+  assert.equal(grouped[1].subject, "Messages & Simple Emails — Câu 1/5");
   assert.equal(grouped[2].subject, undefined);
   assert.equal(grouped[3].subject, undefined);
 });
@@ -363,6 +363,6 @@ test("groupRecentActivities shows the catalog's Vietnamese title for a practice 
       occurredAt: "2026-10-28T07:00:00.000Z",
     },
   ]);
-  assert.equal(grouped[0].subject, "Nghe chép: du lịch và chỉ đường (A2)");
-  assert.equal(grouped[1].subject, "Viết email công việc (B1) · Câu 2/5");
+  assert.equal(grouped[0].subject, "Nghe chép: du lịch và chỉ đường");
+  assert.equal(grouped[1].subject, "Viết email công việc · Câu 2/5");
 });

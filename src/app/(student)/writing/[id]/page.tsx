@@ -347,7 +347,7 @@ export default function WritingDetailPage(props: {
   return (
     <PracticeShell
       skill="writing"
-      title={topic?.title ? quizDisplayTitle(topicId, topic.title, topic.cefrLevel) : "Bài luyện viết"}
+      title={topic?.title ? quizDisplayTitle(topicId, topic.title) : "Bài luyện viết"}
       stage={feedback ? "FEEDBACK" : "PRACTICE"}
       level={topic?.level}
       mode={writingMode.label}
@@ -355,7 +355,7 @@ export default function WritingDetailPage(props: {
     >
       <div className="w-full min-h-dvh flex flex-col bg-slate-50 dark:bg-slate-950 font-sans">
         <PracticeHeader
-          title={topic?.title ? quizDisplayTitle(topicId, topic.title, topic.cefrLevel) : "Luyện viết"}
+          title={topic?.title ? quizDisplayTitle(topicId, topic.title) : "Luyện viết"}
           category={
             inExam && examQuizIds.length
               ? `Câu ${examQuizIds.indexOf(topicId) + 1}/${examQuizIds.length}`
@@ -390,7 +390,7 @@ export default function WritingDetailPage(props: {
               task={currentTask}
               tasks={exercise.questions}
               exerciseLabel={
-                topic?.title ? quizDisplayTitle(topicId, topic.title, topic.cefrLevel) : "Viết câu theo tranh"
+                topic?.title ? quizDisplayTitle(topicId, topic.title) : "Viết câu theo tranh"
               }
               content={content}
               onContentChange={setContent}
@@ -425,7 +425,7 @@ export default function WritingDetailPage(props: {
                         Chủ Đề Yêu Cầu
                       </span>
                       <h2 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">
-                        {topic?.title ? quizDisplayTitle(topicId, topic.title, topic.cefrLevel) : "Bài luyện viết"}
+                        {topic?.title ? quizDisplayTitle(topicId, topic.title) : "Bài luyện viết"}
                       </h2>
                     </div>
                   </div>

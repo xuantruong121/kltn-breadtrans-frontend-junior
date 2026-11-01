@@ -12,6 +12,7 @@ import {
   Activity,
 } from "lucide-react";
 import { levelLabel } from "@/lib/ui/displayLabels";
+import { catalogLevelLabel } from "@/lib/practice/catalogFilters";
 
 export interface PracticeHeaderProps {
   /**
@@ -186,7 +187,7 @@ export const PracticeHeader: React.FC<PracticeHeaderProps> = ({
 
           {difficulty && (
             <span className="shrink-0 rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-xs font-bold text-amber-400 uppercase tracking-wider hidden sm:inline-block">
-              {levelLabel(difficulty)}
+              {catalogLevelLabel(difficulty) ?? levelLabel(difficulty)}
             </span>
           )}
 

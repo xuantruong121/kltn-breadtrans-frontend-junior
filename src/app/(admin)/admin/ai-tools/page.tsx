@@ -597,7 +597,7 @@ export default function AdminAiToolsPage() {
                       Tải Lên Tài Liệu Giáo Trình
                     </h2>
                     <p className="text-slate-600 font-bold text-xs mt-1 dark:text-slate-400">
-                      Hỗ trợ file PDF (slide bài giảng, bài đọc), file Word
+                      Hỗ trợ file PDF (slide, bài đọc), file Word
                       .DOCX hoặc dán văn bản trực tiếp
                     </p>
                   </div>

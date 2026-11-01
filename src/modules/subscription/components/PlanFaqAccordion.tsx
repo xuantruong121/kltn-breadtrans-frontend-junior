@@ -12,7 +12,7 @@ interface FaqItem {
 const FAQS: FaqItem[] = [
   {
     id: "payment-methods",
-    question: "Tôi có thể thanh toán gói học qua những hình thức nào?",
+    question: "Tôi có thể thanh toán gói qua những hình thức nào?",
     answer:
       "Thanh toán bằng chuyển khoản ngân hàng qua mã VietQR do PayOS tạo. Quét mã bằng ứng dụng ngân hàng hoặc ví điện tử có hỗ trợ VietQR; mã đã có sẵn số tiền và nội dung chuyển khoản.",
   },
@@ -44,7 +44,7 @@ const FAQS: FaqItem[] = [
     id: "plus-vs-pro",
     question: "Gói Plus và gói Pro khác nhau thế nào?",
     answer:
-      `Nghe và Đọc miễn phí ở mọi mức, trừ Nghe chép từ B1. Plus mở Nói, Viết Trung cấp (B1–B2) và Nghe chép từ B1. Pro gồm toàn bộ Plus, thêm Nói và Viết Nâng cao (C1–C2). Bài Cơ bản của bốn kỹ năng, flashcard, từ vựng, ngữ pháp, bài kiểm tra đầu vào và luyện đề TOEIC miễn phí với mọi tài khoản.`,
+      `Nghe và Đọc miễn phí ở mọi mức, trừ Nghe chép Trung cấp trở lên. Plus mở Nói, Viết Trung cấp và Nghe chép Trung cấp trở lên. Pro gồm toàn bộ Plus, thêm Nói và Viết Nâng cao . Bài Cơ bản của bốn kỹ năng, flashcard, từ vựng, ngữ pháp, bài kiểm tra đầu vào và luyện đề TOEIC miễn phí với mọi tài khoản.`,
   },
   {
     id: "support-channel",
@@ -75,7 +75,7 @@ export function PlanFaqAccordion() {
           Các thắc mắc thường gặp
         </h2>
         <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-          Giải đáp nhanh các câu hỏi phổ biến về gói học và quyền lợi học viên tại BreadTrans
+          Giải đáp nhanh các câu hỏi phổ biến về gói và quyền lợi học viên tại BreadTrans
         </p>
       </div>
 

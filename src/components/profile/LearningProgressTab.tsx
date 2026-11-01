@@ -1,5 +1,6 @@
 "use client";
 
+import { withoutLevelTag } from "@/lib/catalog/displayTitles";
 import Link from "next/link";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -295,7 +296,7 @@ export function LearningProgressTab() {
                 id="continue-learning-title"
                 className="text-lg font-bold text-slate-950 dark:text-white truncate"
               >
-                {resumableItem.title}
+                {withoutLevelTag(resumableItem.title)}
               </h2>
               <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-1">
                 {resumableItem.subtitle}

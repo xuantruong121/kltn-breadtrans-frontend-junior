@@ -3,7 +3,7 @@ import type {
   SkillProgressSummary,
   UserLearningStats,
 } from "@/lib/api/services/user.service";
-import { quizDisplayTitle } from "../../lib/catalog/displayTitles.ts";
+import { quizDisplayTitle, withoutLevelTag } from "../../lib/catalog/displayTitles.ts";
 
 export interface DayActivity {
   dayLabel: string;
@@ -212,7 +212,7 @@ function activitySubject(
  * task suffix ("— Câu 2/5"). Rows without a quiz keep their stored text.
  */
 function practiceTitle(stored: string, quizId?: number | null): string {
-  if (quizId == null || !stored) return stored;
+  if (quizId == null || !stored) return withoutLevelTag(stored);
   const task = / — (Câu \d+\/\d+)$/.exec(stored);
   const base = task ? stored.slice(0, task.index) : stored;
   const title = quizDisplayTitle(quizId, base);
