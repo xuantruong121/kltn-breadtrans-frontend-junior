@@ -476,7 +476,7 @@ export default function AdminExamsPage() {
     <ConfirmDialog
       open={confirmRetireId !== null}
       title="Ngừng phát hành đề này?"
-      description="Học viên mới không thấy đề này nữa. Lượt đang làm vẫn nộp được và lượt đã làm vẫn xem lại được. Có thể phát hành lại bất cứ lúc nào."
+      description="Học viên mới không thấy đề này nữa. Lượt đang làm vẫn nộp được và lượt đã làm vẫn xem lại được. Đề 4 kỹ năng dùng chung phần Listening & Reading với đề này cũng ẩn theo. Có thể phát hành lại bất cứ lúc nào."
       confirmLabel="Ngừng phát hành"
       isPending={lifecycleMutation.isPending}
       onConfirm={() => {
