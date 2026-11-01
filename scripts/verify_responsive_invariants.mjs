@@ -204,8 +204,8 @@ assertInvariant(
   "TOEIC Attempt: Question palette drawer operates strictly < 1024px (lg:hidden), sidebar at 1024px+ (lg:block)",
   toeicAttemptCode.includes("lg:hidden") &&
   toeicAttemptCode.includes("lg:block") &&
-  toeicAttemptCode.includes("lg:grid-cols-[minmax(0,1fr)_360px]"),
-  "TOEIC palette uses fixed 360px sidebar on desktop/1024px+, and slide-up drawer strictly < 1024px."
+  toeicAttemptCode.includes("lg:grid-cols-[minmax(0,1fr)_220px]"),
+  "TOEIC palette uses fixed 220px sidebar on desktop/1024px+, and slide-up drawer strictly < 1024px."
 );
 
 // -----------------------------------------------------------------------------
