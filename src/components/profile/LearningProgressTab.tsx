@@ -1,6 +1,5 @@
 "use client";
 
-import { COURSES_ENABLED } from "@/lib/featureFlags";
 import Link from "next/link";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -22,8 +21,6 @@ import {
   userService,
   type SkillProgressSummary,
 } from "@/lib/api/services/user.service";
-import { courseService, type CourseV5Overview } from "@/lib/api/services/course.service";
-import { courseLessonPath } from "@/lib/course/navigation";
 import {
   computeWeeklyActivity,
   groupRecentActivities,
@@ -110,32 +107,6 @@ export function LearningProgressTab() {
     staleTime: 60_000,
   });
 
-  // 4. Canonical Course V5 progress. Enrollment.progress is legacy class data,
-  // not the learner's actual lesson completion record.
-  const { data: courseOverviews } = useQuery({
-    queryKey: ["course-v5-learning-progress", user?.id],
-    queryFn: async (): Promise<CourseV5Overview[]> => {
-      const catalog = await courseService.getPublicCatalog();
-      const accessibleCourses = catalog.filter((course) => course.canAccess);
-      return Promise.all(
-        accessibleCourses.map((course) =>
-          courseService.getCourseLearningOverview(course.id),
-        ),
-      );
-    },
-    enabled: COURSES_ENABLED && Boolean(user?.id),
-    staleTime: 60_000,
-  });
-
-  const learningCourses = useMemo(
-    () =>
-      (courseOverviews ?? []).filter(
-        (course) => course.progress.totalLessons > 0,
-      ),
-    [courseOverviews],
-  );
-
-  // 5. Daily practice recommendations (fallback for Continue Learning)
   const { data: dailyPractice } = useQuery({
     queryKey: ["daily-practice", user?.id],
     queryFn: userService.getDailyPractice,
@@ -166,31 +137,7 @@ export function LearningProgressTab() {
 
   // Resumable Continue Learning Item
   const resumableItem = useMemo(() => {
-    // Priority 1: unfinished Course V5 lesson with a learner-safe route.
-    if (learningCourses.length > 0) {
-      const activeUnfinished = learningCourses.find(
-        (course) =>
-          course.progress.totalLessons > 0 && !course.progress.isComplete,
-      );
-      if (activeUnfinished) {
-        const nextLesson = activeUnfinished.lessons.find(
-          (lesson) => !lesson.completed,
-        );
-        return {
-          type: "COURSE" as const,
-          badge: "Khóa học đang học",
-          title: activeUnfinished.course.title,
-          subtitle: `${activeUnfinished.progress.completedLessons}/${activeUnfinished.progress.totalLessons} bài học đã hoàn thành`,
-          progress: activeUnfinished.progress.percentage,
-          route: nextLesson
-            ? courseLessonPath(activeUnfinished.course.id, nextLesson.id)
-            : `/my-courses/${activeUnfinished.course.id}`,
-          ctaText: "Tiếp tục học",
-        };
-      }
-    }
-
-    // Priority 2: Unfinished daily practice item
+    // Priority 1: Unfinished daily practice item
     if (dailyPractice?.items && dailyPractice.items.length > 0) {
       const pendingPractice = dailyPractice.items.find((item) => !item.isCompleted);
       if (pendingPractice) {
@@ -216,7 +163,7 @@ export function LearningProgressTab() {
       route: "/exams",
       ctaText: "Luyện đề TOEIC",
     };
-  }, [dailyPractice, learningCourses]);
+  }, [dailyPractice]);
 
   if (isSkillsLoading && isHistoryLoading) {
     return (
@@ -357,7 +304,7 @@ export function LearningProgressTab() {
               {resumableItem.progress != null && (
                 <div className="pt-1 max-w-md">
                   <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                    <span>Tiến độ khóa học</span>
+                    <span>Tiến độ</span>
                     <span className="font-mono tabular-nums">{resumableItem.progress}%</span>
                   </div>
                   <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
@@ -489,111 +436,11 @@ export function LearningProgressTab() {
         </div>
       </section>
 
-      {/* 5. Course Progress & Weekly Activity (Balanced Split Layout) */}
+      {/* 5. Weekly Activity */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-        {/* Course Progress (7 cols) */}
-        {COURSES_ENABLED && (
-        <section
-          aria-labelledby="course-progress-heading"
-          className="lg:col-span-7 flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900"
-        >
-          <div>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
-              <div>
-                <h2
-                  id="course-progress-heading"
-                  className="text-base font-bold text-slate-900 dark:text-slate-100"
-                >
-                  Tiến độ khóa học
-                </h2>
-                <p className="text-xs text-slate-600 dark:text-slate-400">
-                  Tiến độ bài học thực tế trong các khóa học bạn có quyền truy cập.
-                </p>
-              </div>
-              <Link
-                href="/courses"
-                className="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400"
-              >
-                Xem tất cả
-              </Link>
-            </div>
-
-            {learningCourses.length > 0 ? (
-              <div className="mt-4 divide-y divide-slate-100 dark:divide-slate-800">
-                {learningCourses.slice(0, 3).map((item) => {
-                  const nextLesson = item.lessons.find((lesson) => !lesson.completed);
-                  const courseRoute = nextLesson
-                    ? courseLessonPath(item.course.id, nextLesson.id)
-                    : `/my-courses/${item.course.id}`;
-                  return (
-                  <div key={item.course.id} className="py-3.5 first:pt-0 last:pb-0">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
-                            {item.course.title}
-                          </h3>
-                          {item.course.level && (
-                            <span className="rounded bg-slate-100 px-1.5 py-0.2 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                          {levelLabel(item.course.level)}
-                            </span>
-                          )}
-                        </div>
-                        <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400 line-clamp-1">
-                          {item.progress.completedLessons}/{item.progress.totalLessons} bài học đã hoàn thành
-                        </p>
-                      </div>
-                      <Link
-                        href={courseRoute}
-                        className="inline-flex shrink-0 items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                      >
-                        Vào học <ArrowRight className="h-3 w-3" />
-                      </Link>
-                    </div>
-
-                    <div className="mt-2.5">
-                      <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 mb-1">
-                        <span>Hoàn thành</span>
-                        <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
-                          {item.progress.percentage}%
-                        </span>
-                      </div>
-                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                        <div
-                          className="h-full rounded-full bg-blue-600 dark:bg-blue-500 transition-all duration-300"
-                          style={{ width: `${Math.min(100, Math.max(item.progress.percentage ? 4 : 0, item.progress.percentage))}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="mt-4 flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 p-6 text-center dark:border-slate-700">
-                <BookOpen className="h-8 w-8 text-slate-500" />
-                <p className="mt-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  Bạn chưa có khóa học nào để theo dõi
-                </p>
-                <p className="mt-1 text-xs text-slate-600 dark:text-slate-400 max-w-sm">
-                  Khám phá danh mục khóa học để bắt đầu một lộ trình học có cấu trúc.
-                </p>
-                <Link
-                  href="/courses"
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
-                >
-                  Khám phá khóa học
-                </Link>
-              </div>
-            )}
-          </div>
-        </section>
-        )}
-
-        {/* Weekly Activity (5 cols) */}
         <section
           aria-labelledby="weekly-activity-heading"
-          className={`${COURSES_ENABLED ? "lg:col-span-5" : "lg:col-span-12"} flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900`}
+          className={`lg:col-span-12 flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900`}
         >
           <div>
             <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">

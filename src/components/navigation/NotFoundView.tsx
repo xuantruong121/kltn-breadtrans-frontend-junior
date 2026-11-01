@@ -1,6 +1,5 @@
 "use client";
 
-import { COURSES_ENABLED } from "@/lib/featureFlags";
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -124,8 +123,6 @@ export function NotFoundView() {
       query.includes("arena")
     ) {
       router.push("/arena");
-    } else if (COURSES_ENABLED && (query.includes("khóa học") || query.includes("course"))) {
-      router.push("/courses");
     } else {
       router.push(`/exams?q=${encodeURIComponent(query)}`);
     }

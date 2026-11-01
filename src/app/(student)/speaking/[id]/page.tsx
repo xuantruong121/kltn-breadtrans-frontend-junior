@@ -30,7 +30,6 @@ import {
   WordAssessmentItem,
 } from "@/lib/api/services/speaking.service";
 import axiosClient from "@/lib/api/axiosClient";
-import { isSafeCourseReturn } from "@/lib/course/navigation";
 import {
   SpeakingAttemptPhase,
   generateSpeakingIdempotencyKey,
@@ -143,7 +142,6 @@ export default function SpeakingExerciseDetailPage() {
   const router = useRouter();
   const exerciseId = Number(id);
   const practiceSetKey = searchParams.get("set");
-  const requestedReturnTo = searchParams.get("returnTo");
   const parentAttemptId = searchParams.get("parentAttemptId");
   const parentComponentId = searchParams.get("parentComponentId");
   const examExerciseIds = (searchParams.get("examExerciseIds") ?? "")
@@ -164,10 +162,7 @@ export default function SpeakingExerciseDetailPage() {
     parentAssessmentId && parentAttemptId
       ? `/toeic/assessments/${parentAssessmentId}/attempts/${parentAttemptId}`
       : null;
-  const courseReturn =
-    requestedReturnTo && isSafeCourseReturn(requestedReturnTo)
-      ? requestedReturnTo
-      : (examReturn ?? "/speaking");
+  const exitHref = examReturn ?? "/speaking";
   const queryClient = useQueryClient();
 
   // Explicit Attempt State Machine
@@ -1798,9 +1793,9 @@ export default function SpeakingExerciseDetailPage() {
 
   const loadError = classifyPracticeLoadError(exerciseError);
   if (loadError?.kind === "LEVEL_LOCKED")
-    return <LevelLockedScreen lock={loadError} backHref={courseReturn} />;
+    return <LevelLockedScreen lock={loadError} backHref={exitHref} />;
   if (loadError?.kind === "LOCKED")
-    return <PlanLockedScreen plan={loadError.requiredPlan} backHref={courseReturn} />;
+    return <PlanLockedScreen plan={loadError.requiredPlan} backHref={exitHref} />;
 
   if (isLoading || !minLaunchReady) {
     return (
@@ -1823,7 +1818,7 @@ export default function SpeakingExerciseDetailPage() {
         <div className="mt-4 flex flex-wrap justify-center gap-2.5">
           <button
             type="button"
-            onClick={() => confirmExit(courseReturn)}
+            onClick={() => confirmExit(exitHref)}
             className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 px-5 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
           >
             <ArrowLeft size={16} aria-hidden="true" />
@@ -1883,7 +1878,7 @@ export default function SpeakingExerciseDetailPage() {
               : undefined
           }
           activityLabel={examReturn ? "TOEIC Speaking" : "Đánh giá phát âm"}
-          onExit={() => confirmExit(courseReturn)}
+          onExit={() => confirmExit(exitHref)}
           exitLabel="Thoát"
           // Vietnamese translation is coaching; it is off during an exam.
           bilingualEnabled={!examReturn}
@@ -2735,7 +2730,7 @@ export default function SpeakingExerciseDetailPage() {
             )}
             <button
               type="button"
-              onClick={() => confirmExit(courseReturn)}
+              onClick={() => confirmExit(exitHref)}
               className="px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors text-xs sm:text-sm"
             >
               {examReturn ? "← Về bài thi" : "← Danh sách bài"}

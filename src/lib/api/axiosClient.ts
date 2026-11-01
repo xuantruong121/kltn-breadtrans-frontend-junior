@@ -54,7 +54,6 @@ const isPublicOrOptionalEndpoint = (url?: string): boolean => {
   const publicPaths = [
     "/gamification/leaderboard",
     "/market/products",
-    "/courses",
     "/practice",
     "/grammar",
     "/flashcard",
@@ -80,7 +79,6 @@ const isGuestAllowedPage = (): boolean => {
   )
     return true;
   const guestPrefixes = [
-    "/courses",
     "/practice",
     "/market",
     "/arena",

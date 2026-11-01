@@ -33,24 +33,6 @@ export function getApiErrorMessage(
 
   const lowerMsg = message.toLowerCase();
 
-  // A course waiting for review cannot go back to draft
-  if (
-    lowerMsg.includes("đang chờ admin duyệt") ||
-    lowerMsg.includes("đang chờ duyệt")
-  ) {
-    return "Khóa học đang chờ Admin duyệt và không thể chuyển về Bản nháp.";
-  }
-
-  // Published course direct edit block
-  if (
-    lowerMsg.includes("đã xuất bản") &&
-    (lowerMsg.includes("tiêu đề") ||
-      lowerMsg.includes("cấp độ") ||
-      lowerMsg.includes("chuyển về bản nháp"))
-  ) {
-    return "Khóa học đã xuất bản chỉ cho phép sửa trực tiếp ảnh bìa và mô tả. Để sửa tiêu đề, cấp độ hoặc giáo trình, vui lòng chuyển về Bản nháp.";
-  }
-
   // If there's an explicit custom backend message
   if (message && message.trim().length > 0) {
     const technicalLeak =

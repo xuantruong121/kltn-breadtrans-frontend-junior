@@ -1,6 +1,5 @@
 "use client";
 
-import { COURSES_ENABLED } from "@/lib/featureFlags";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
@@ -238,7 +237,6 @@ export default function AdminAiToolsPage() {
       assignmentDescription: editedAssignmentDesc,
       publishQuiz: pubQuiz,
       publishFlashcards: pubFlashcards,
-      // Classrooms are retired: an assignment draft is never published to a class.
       publishAssignment: false,
     };
   };
@@ -1196,11 +1194,6 @@ export default function AdminAiToolsPage() {
                           <p className="text-amber-800 leading-relaxed">
                             Đường dẫn ghi trực tiếp vào cơ sở dữ liệu runtime đã được đóng để bảo vệ tính toàn vẹn Single-Writer của các Studio chuyên biệt.
                             Vui lòng sao chép dữ liệu ứng viên để bàn giao và tạo bài học trong{" "}
-                            {COURSES_ENABLED && (
-                              <>
-                                <Link href="/admin/courses" className="underline font-bold text-indigo-700 hover:text-indigo-900">Studio Khóa học</Link>,{" "}
-                              </>
-                            )}
                             <Link href="/admin/vocab" className="underline font-bold text-indigo-700 hover:text-indigo-900">Studio Từ vựng</Link> hoặc{" "}
                             <Link href="/admin/exams" className="underline font-bold text-indigo-700 hover:text-indigo-900">Studio Luyện đề</Link>.
                           </p>

@@ -22,7 +22,6 @@ const KIND: Record<DiagnosticAdviceResource["kind"], string> = {
   READING_QUIZ: "Luyện đọc",
   WRITING_QUIZ: "Luyện viết",
   SPEAKING_EXERCISE: "Luyện nói",
-  COURSE: "Khoá học",
 };
 
 const UNASSESSED: Record<DiagnosticAdvice["unassessed"][number]["reason"], string> = {
@@ -36,7 +35,6 @@ const UNASSESSED: Record<DiagnosticAdvice["unassessed"][number]["reason"], strin
 function adviceTitle(resource: DiagnosticAdviceResource): string {
   if (resource.kind === "SPEAKING_EXERCISE")
     return speakingSetDisplayTitle(resource.setKey, resource.title, resource.cefrLevel);
-  if (resource.kind === "COURSE") return resource.title;
   return quizDisplayTitle(resource.id, resource.title);
 }
 

@@ -37,7 +37,6 @@ import axiosClient from "@/lib/api/axiosClient";
 import { classifyPracticeLoadError } from "@/lib/practice/practiceLoadErrorLogic";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
-import { isSafeCourseReturn, withSafeReturnTo } from "@/lib/course/navigation";
 import { PlanLockedScreen } from "@/components/practice/PlanLockedScreen";
 import { LevelLockedScreen } from "@/components/practice/LevelLockDialog";
 import { dependsOnLevel } from "@/lib/learning-path/levelLock";
@@ -52,7 +51,6 @@ export default function WritingDetailPage(props: {
   const topicId = Number(params.id);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const requestedReturnTo = searchParams.get("returnTo");
   const parentAttemptId = searchParams.get("parentAttemptId");
   const parentComponentId = searchParams.get("parentComponentId");
   // The task of a multi-task exercise being answered (?q=<questionId>).
@@ -82,11 +80,9 @@ export default function WritingDetailPage(props: {
   const examHref = (quizId: number) =>
     `/writing/${quizId}?parentAssessmentId=${parentAssessmentId}&parentAttemptId=${parentAttemptId}&parentComponentId=${parentComponentId}`;
   const inExam = Boolean(examParentContext);
-  const courseReturn =
-    requestedReturnTo && isSafeCourseReturn(requestedReturnTo)
-      ? requestedReturnTo
-      : inExam && parentAssessmentId
-        ? `/toeic/assessments/${parentAssessmentId}/attempts/${parentAttemptId}`
+  const exitHref =
+    inExam && parentAssessmentId
+      ? `/toeic/assessments/${parentAssessmentId}/attempts/${parentAttemptId}`
         : "/writing";
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
@@ -327,7 +323,7 @@ export default function WritingDetailPage(props: {
             ? "Đã nộp câu này. Chuyển sang câu tiếp theo."
             : "Đã nộp đủ phần Viết.",
         );
-        router.push(nextQuiz ? examHref(nextQuiz) : courseReturn);
+        router.push(nextQuiz ? examHref(nextQuiz) : exitHref);
         return;
       }
       if (isPictureTask) {
@@ -338,10 +334,7 @@ export default function WritingDetailPage(props: {
       }
       toast.success("Hệ thống đã hoàn tất đánh giá bài viết!");
       router.push(
-        withSafeReturnTo(
-          `/writing/submissions/${result.submissionId}`,
-          courseReturn,
-        ),
+        `/writing/submissions/${result.submissionId}`,
       );
     } catch {
       setIsEvaluating(false);
@@ -371,7 +364,7 @@ export default function WritingDetailPage(props: {
                 : topic?.taskType || topic?.type || "Writing"
           }
           activityLabel={inExam ? "TOEIC Writing" : "Luyện viết"}
-          onExit={() => confirmExit(courseReturn)}
+          onExit={() => confirmExit(exitHref)}
           exitLabel="Thoát"
           statusContent={
             <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-slate-300 bg-slate-800 border border-slate-700 px-3 py-1 rounded-lg">

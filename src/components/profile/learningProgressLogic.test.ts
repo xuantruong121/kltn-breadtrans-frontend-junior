@@ -149,8 +149,8 @@ test("groupRecentActivities does not merge unrelated exercises and hides technic
     },
     {
       id: 21,
-      type: "COURSE_LESSON",
-      title: "CourseLessonAttempt",
+      type: "GRAMMAR",
+      title: "GRAMMAR_ATTEMPT",
       detail: null,
       score: null,
       durationSec: null,
@@ -160,7 +160,7 @@ test("groupRecentActivities does not merge unrelated exercises and hides technic
 
   assert.equal(grouped.length, 2);
   assert.equal(grouped[0].title, "Luyện đề TOEIC");
-  assert.equal(grouped[1].title, "Bài học khóa học");
+  assert.equal(grouped[1].title, "Hoạt động học tập");
 });
 
 test("getSkillDisplayMetrics solves 0/13 = 0% Speaking contradiction", () => {

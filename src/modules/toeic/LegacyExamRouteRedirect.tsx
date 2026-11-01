@@ -27,7 +27,7 @@ export default function LegacyExamRouteRedirect({
 }: {
   examSetId?: number;
   assessmentId?: number;
-  /** Preserved query string, e.g. a course returnTo. */
+  /** Preserved query string. */
   search?: string;
 }) {
   const router = useRouter();

@@ -8,7 +8,6 @@ export type IssueReportArea =
   | "VOCABULARY"
   | "GRAMMAR"
   | "TOEIC"
-  | "COURSE"
   | "DASHBOARD"
   | "MARKET"
   | "PET"

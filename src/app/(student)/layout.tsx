@@ -13,7 +13,6 @@ import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { LearningFocusProvider, useLearningFocusMode } from "@/contexts/LearningFocusContext";
 import { isLearningFocusRoute } from "@/lib/practice/focusMode";
-import { isInsideCourseRoute } from "@/modules/pet/petLogic";
 import { shouldResetScrollOnPathChange } from "@/lib/navigation/forwardScrollPolicy";
 
 const FloatingAiTutor = dynamic(
@@ -63,9 +62,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   const setStats = useGamificationStore((state) => state.setStats);
   const isReady = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
-  // The deprecated root catalog is public only long enough to normalize to
-  // /courses; nested learner routes still require an authenticated student.
-  const isGuestAllowed = pathname === "/my-courses" || isGuestAllowedRoute(pathname);
+  const isGuestAllowed = isGuestAllowedRoute(pathname);
 
   const { data: learningStats } = useQuery({
     queryKey: ["user-stats", user?.id],
@@ -135,7 +132,6 @@ function StudentLayoutContent({
   const { isFocusMode } = useLearningFocusMode();
   const isPracticeRoomPage = isFocusMode || isLearningFocusRoute(pathname);
   const isPracticeCatalogPage = ["/listening", "/speaking", "/reading", "/writing", "/exams", "/toeic", "/flashcard"].includes(pathname);
-  const isCourseRoute = isInsideCourseRoute(pathname) || pathname.startsWith("/my-courses") || pathname.startsWith("/courses");
   const isDiagnosticRoute = pathname === "/diagnostic" || pathname.startsWith("/diagnostic/");
 
   // App Router keeps this shared learner layout mounted across page changes.
@@ -166,7 +162,7 @@ function StudentLayoutContent({
         className={`min-w-0 w-full ${
           isPracticeRoomPage
             ? "flex-1 flex flex-col max-w-none p-0"
-            : isPracticeCatalogPage || isCourseRoute
+            : isPracticeCatalogPage
               ? "w-full flex-1 max-w-none px-4 sm:px-6 lg:px-8 xl:px-10 py-4 sm:py-6 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8"
               : "mx-auto flex-1 max-w-7xl px-4 py-4 sm:px-6 sm:py-8 lg:px-8 xl:px-10 2xl:px-12 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8"
         }`}
@@ -176,7 +172,7 @@ function StudentLayoutContent({
       {!isPracticeRoomPage && <AppFooter />}
       {!isPracticeRoomPage && <BackToTop />}
       {user && !isPracticeRoomPage && !isDiagnosticRoute && <FloatingAiTutor />}
-      {user && !isPracticeRoomPage && !isDashboardPage && !isPetManagementPage && !isDiagnosticRoute && !isInsideCourseRoute(pathname) && (
+      {user && !isPracticeRoomPage && !isDashboardPage && !isPetManagementPage && !isDiagnosticRoute && (
         <FloatingCompanionPet />
       )}
       {!isPracticeRoomPage && <MobileBottomNav />}

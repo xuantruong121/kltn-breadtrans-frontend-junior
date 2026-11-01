@@ -1,6 +1,5 @@
 "use client";
 
-import { COURSES_ENABLED, whenCourses } from "@/lib/featureFlags";
 import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
@@ -36,10 +35,6 @@ type DashboardStats = {
   stats: {
     totalStudents: number;
     activeStudents: number;
-    totalCourses: number;
-    pendingCourses: number;
-    totalEnrollments?: number;
-    activeEnrollments?: number;
     pendingPayments: number;
     unreadSupportMessages: number;
     pendingSuggestions: number;
@@ -52,7 +47,6 @@ type DashboardStats = {
   };
   monthlyTrends?: {
     month: string;
-    enrollments: number;
     activityCount: number;
     revenueVnd?: number;
   }[];
@@ -69,13 +63,6 @@ type DashboardStats = {
     approvedOrders: number;
     pendingOrders: number;
   };
-  recentActivity: {
-    id: number;
-    type: string;
-    message: string;
-    avatar: string | null;
-    createdAt: string;
-  }[];
 };
 
 interface AttentionItem {
@@ -101,12 +88,6 @@ const RANGE_OPTIONS: { value: DashboardRange; label: string }[] = [
 ];
 
 const QUICK_ACTIONS: QuickActionItem[] = [
-  ...whenCourses<QuickActionItem>({
-    label: "Course Studio",
-    detail: "Biên soạn khóa học & bài học",
-    href: "/admin/courses",
-    icon: BookOpen,
-  }),
   {
     label: "Exam CMS",
     detail: "Quản lý đề luyện thi TOEIC",
@@ -212,14 +193,6 @@ export default function AdminDashboardPage() {
       badgeColor: "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700",
       actionLabel: "Đọc góp ý",
     },
-    ...whenCourses({
-      count: data?.stats.pendingCourses ?? 0,
-      label: "khóa học đang ở trạng thái bản nháp",
-      href: "/admin/courses",
-      icon: BookOpen,
-      badgeColor: "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700",
-      actionLabel: "Biên tập",
-    }),
   ];
 
   const attentionItems = rawAttentionItems.filter((item) => item.count > 0);
@@ -359,11 +332,7 @@ export default function AdminDashboardPage() {
                 <span className="font-medium text-slate-700 dark:text-slate-300">
                   {data.stats.activeStudents.toLocaleString("vi-VN")}
                 </span>{" "}
-                hoạt động trong {getRangeLabel(range).toLowerCase()} ·{" "}
-                <span className="font-medium text-slate-700 dark:text-slate-300">
-                  {(data.stats.activeEnrollments ?? data.stats.totalEnrollments ?? 0).toLocaleString("vi-VN")}
-                </span>{" "}
-                đang học lớp
+                hoạt động trong {getRangeLabel(range).toLowerCase()}
               </div>
             </Link>
 
@@ -406,43 +375,6 @@ export default function AdminDashboardPage() {
               </div>
             </Link>
 
-            {COURSES_ENABLED && (
-              <>
-            {/* PILLAR 3: KHO NỘI DUNG */}
-            <Link
-              href="/admin/courses"
-              className="group flex flex-col justify-between rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs transition hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-            >
-              <div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                    Khóa học xuất bản
-                  </span>
-                  <div className="flex size-8 items-center justify-center rounded-lg border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
-                    <BookOpen size={16} />
-                  </div>
-                </div>
-                <div className="mt-3 flex items-baseline gap-2">
-                  <span className="font-mono text-3xl font-bold tracking-tight tabular-nums text-slate-950 dark:text-slate-100">
-                    {data.stats.totalCourses.toLocaleString("vi-VN")}
-                  </span>
-                  <span className="text-xs text-slate-600 dark:text-slate-400">khóa học</span>
-                </div>
-              </div>
-              <div className="mt-4 border-t border-slate-100 dark:border-slate-800/80 pt-3 text-xs text-slate-600 dark:text-slate-400">
-                <span className="font-medium text-slate-700 dark:text-slate-300">
-                  {totalContentItems.toLocaleString("vi-VN")}
-                </span>{" "}
-                bài học & câu hỏi ·{" "}
-                <span className="text-slate-600 dark:text-slate-400">
-                  {data.stats.pendingCourses > 0
-                    ? `${data.stats.pendingCourses} bản nháp`
-                    : "Đã xuất bản toàn bộ"}
-                </span>
-              </div>
-            </Link>
-              </>
-            )}
 
             {/* PILLAR 4: KINH TẾ BÁNH MÌ & CỬA HÀNG */}
             <Link
@@ -578,57 +510,6 @@ export default function AdminDashboardPage() {
             {/* RIGHT COLUMN: RECENT ACTIVITY & QUICK ACTIONS */}
             <aside className="space-y-6 xl:col-span-4 xl:sticky xl:top-6">
               {/* RECENT ACTIVITY CARD */}
-              <section
-                aria-labelledby="recent-activity-heading"
-                className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs"
-              >
-                <header className="flex items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
-                  <div>
-                    <h2
-                      id="recent-activity-heading"
-                      className="text-base font-bold text-slate-950 dark:text-slate-100"
-                    >
-                      Hoạt động gần đây
-                    </h2>
-                    <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
-                      Lượt cấp quyền và ghi danh khóa học mới
-                    </p>
-                  </div>
-                  <span className="font-mono text-xs font-semibold text-slate-600 dark:text-slate-400 tabular-nums">
-                    {data.recentActivity.length} sự kiện
-                  </span>
-                </header>
-
-                {data.recentActivity.length > 0 ? (
-                  <ol className="divide-y divide-slate-100 dark:divide-slate-800/80">
-                    {data.recentActivity.map((activity) => (
-                      <li key={activity.id} className="flex items-start gap-3 py-3.5 first:pt-4">
-                        <UserAvatarWithFrame
-                          size="sm"
-                          avatarUrl={activity.avatar}
-                          overrideFrame={null}
-                          overrideBadge={null}
-                          className="shrink-0 mt-0.5"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs leading-5 text-slate-800 dark:text-slate-200 line-clamp-2">
-                            {activity.message}
-                          </p>
-                          <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
-                            <Clock size={12} />
-                            <time dateTime={activity.createdAt}>{timeAgo(activity.createdAt)}</time>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-                ) : (
-                  <div className="py-8 text-center text-xs text-slate-600 dark:text-slate-400">
-                    Chưa có lượt cấp quyền truy cập trong kỳ này.
-                  </div>
-                )}
-              </section>
-
               {/* QUICK LAUNCHPAD SHORTCUTS */}
               <section
                 aria-labelledby="quick-actions-heading"

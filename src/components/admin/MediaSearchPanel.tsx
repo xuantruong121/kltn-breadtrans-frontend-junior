@@ -73,7 +73,7 @@ type GenerationResponse = {
   reason: MediaGenerationReason;
 };
 
-/** Free-first "find suitable image" flow shared by Course cover and Lesson
+/** Free-first "find suitable image" flow shared by the editors
  * media authoring, plus an entirely separate "Sinh ảnh bằng AI" (Cloudflare
  * Workers AI / FLUX.1-schnell) generation action — these are two distinct
  * authoring actions with different provenance (existing/open media vs

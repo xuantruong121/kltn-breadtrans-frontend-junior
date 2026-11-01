@@ -1,6 +1,5 @@
 "use client";
 
-import { whenCourses } from "@/lib/featureFlags";
 import { Suspense, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
@@ -63,7 +62,6 @@ import {
   isReadingRoute,
   isWritingRoute,
   isFlashcardRoute,
-  isCoursesRoute,
   isMarketRoute,
   splitNavOverflow,
 } from "./navUtils";
@@ -281,10 +279,9 @@ export function AppHeader() {
   // 5. Viết
   // 6. Flashcard
   // 7. Luyện đề (Exam Practice: TOEIC & Certificate test hub)
-  // 8. Khóa học (unified Course Hub)
-  // 9. Cửa hàng
-  // 10. Bảng xếp hạng
-  // 11. FAQ
+  // 8. Cửa hàng
+  // 9. Bảng xếp hạng
+  // 10. FAQ
   // At most MAX_HEADER_NAV_BUTTONS are buttons; the rest go into More.
   const headerNavLinks = [
     {
@@ -329,13 +326,6 @@ export function AppHeader() {
       active: isExamRoute(pathname),
       iconColor: "text-orange-700 dark:text-orange-400",
     },
-    ...whenCourses({
-      label: "Khóa học",
-      href: "/courses",
-      icon: GraduationCap,
-      active: isCoursesRoute(pathname),
-      iconColor: "text-blue-500 dark:text-blue-400",
-    }),
     {
       label: "Cửa hàng",
       href: "/market",
@@ -369,7 +359,6 @@ export function AppHeader() {
   const mobileSecondaryLinks: HeaderNavLink[] = [
     { label: "Flashcard từ vựng", href: "/flashcard", icon: Layers },
     { label: "Luyện đề", href: "/exams", icon: Target, isExam: true },
-    ...whenCourses<HeaderNavLink>({ label: "Khóa học", href: "/courses", icon: GraduationCap }),
     { label: "Cửa hàng", href: "/market", icon: ShoppingBag },
     { label: "Bảng xếp hạng", href: "/arena", icon: Trophy },
     { label: "FAQ", href: "/help", icon: CircleHelp },

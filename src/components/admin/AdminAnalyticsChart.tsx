@@ -8,7 +8,7 @@ import {
   type DashboardTrend,
 } from "./adminDashboardChartUtils";
 
-type MetricType = "activity" | "enrollments" | "revenue";
+type MetricType = "activity" | "revenue";
 
 interface AdminAnalyticsChartProps {
   data?: DashboardTrend[];
@@ -37,8 +37,6 @@ export default function AdminAnalyticsChart({ data, range }: AdminAnalyticsChart
 
   const getValue = (trend: DashboardTrend): number => {
     switch (metric) {
-      case "enrollments":
-        return trend.enrollments;
       case "revenue":
         return trend.revenueVnd ?? 0;
       default:
@@ -48,8 +46,6 @@ export default function AdminAnalyticsChart({ data, range }: AdminAnalyticsChart
 
   const getMetricUnit = () => {
     switch (metric) {
-      case "enrollments":
-        return "lượt ghi danh";
       case "revenue":
         return "₫";
       default:
@@ -76,15 +72,11 @@ export default function AdminAnalyticsChart({ data, range }: AdminAnalyticsChart
   const barColor =
     metric === "revenue"
       ? "bg-emerald-600 hover:bg-emerald-700"
-      : metric === "enrollments"
-      ? "bg-indigo-600 hover:bg-indigo-700"
       : "bg-blue-600 hover:bg-blue-700";
 
   const activeBarColor =
     metric === "revenue"
       ? "bg-emerald-700"
-      : metric === "enrollments"
-      ? "bg-indigo-700"
       : "bg-blue-700";
 
   return (
@@ -121,22 +113,6 @@ export default function AdminAnalyticsChart({ data, range }: AdminAnalyticsChart
           >
             <Activity size={13} />
             <span>Học tập</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setMetric("enrollments");
-              setActiveIndex(null);
-            }}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
-              metric === "enrollments"
-                ? "bg-white text-indigo-700 shadow-2xs border border-slate-200/60"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <UserPlus size={13} />
-            <span>Ghi danh</span>
           </button>
 
           <button

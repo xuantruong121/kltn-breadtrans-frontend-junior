@@ -13,7 +13,7 @@ import AudioClipField from "../AudioClipField";
 import {
   DICTIONARY_STATUS,
   POS_OPTIONS,
-  cefrToCourseLevel,
+  cefrToScaleLevel,
   entryToWord,
   isBareNumber,
   sharedEntryNote,
@@ -215,7 +215,7 @@ export default function VocabWordForm({
     try {
       const response: any = await axiosClient.post(
         "/admin/vocab/ai/suggest-word",
-        { word: form.word.trim(), level: cefrToCourseLevel(level) },
+        { word: form.word.trim(), level: cefrToScaleLevel(level) },
       );
       const data = response?.data ?? response;
       // Fills only the empty fields; what the admin typed stays.

@@ -102,7 +102,7 @@ export interface PlanPurchase {
   bankInstructions: PlanBankInstructions | null;
   payos?: {
     intentId: number;
-    type: "PLAN" | "COURSE";
+    type: "PLAN";
     orderCode: number;
     description: string;
     paymentLinkId: string | null;

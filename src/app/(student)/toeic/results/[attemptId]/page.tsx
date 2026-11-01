@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useMutation } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { toeicService } from "@/lib/api/services/toeic.service";
-import { isSafeCourseReturn } from "@/lib/course/navigation";
 import { ToeicLrResult } from "@/components/toeic/result/ToeicLrResult";
 
 export default function ToeicResultPage({
@@ -16,14 +15,9 @@ export default function ToeicResultPage({
   const { attemptId: rawAttemptId } = use(params);
   const attemptId = Number(rawAttemptId);
   const searchParams = useSearchParams();
-  const requestedReturnTo = searchParams.get("returnTo");
   const parentAttemptId = searchParams.get("parentAttemptId");
   const parentComponentId = searchParams.get("parentComponentId");
   const parentAssessmentId = searchParams.get("parentAssessmentId");
-  const courseReturn =
-    requestedReturnTo && isSafeCourseReturn(requestedReturnTo)
-      ? requestedReturnTo
-      : null;
   // Arriving straight from a submitted assessment section closes that
   // section once (idempotent on the server). Reopening the result later
   // carries no parent parameters and writes nothing.
@@ -54,11 +48,6 @@ export default function ToeicResultPage({
             {parentAttemptId && parentAssessmentId && (
               <Link href={`/toeic/assessments/${parentAssessmentId}/attempts/${parentAttemptId}`} className={secondary}>
                 Quay lại tiến độ bài thi
-              </Link>
-            )}
-            {courseReturn && (
-              <Link href={courseReturn} className={secondary}>
-                Quay lại khóa học
               </Link>
             )}
           </>

@@ -48,7 +48,7 @@ export interface DiagnosticFourSkillSkill {
 export type DiagnosticSkillKey = DiagnosticFourSkillSkill["skill"];
 
 export interface DiagnosticAdviceResource {
-  kind: "LISTENING_QUIZ" | "READING_QUIZ" | "WRITING_QUIZ" | "SPEAKING_EXERCISE" | "COURSE";
+  kind: "LISTENING_QUIZ" | "READING_QUIZ" | "WRITING_QUIZ" | "SPEAKING_EXERCISE";
   id: number;
   title: string;
   route: string;
@@ -196,16 +196,6 @@ export interface DiagnosticSkillProfile {
   evidence: "SUFFICIENT" | "INSUFFICIENT";
 }
 
-export interface DiagnosticRecommendation {
-  courseId: number;
-  title: string;
-  level: string | null;
-  rank: number;
-  relevance: number;
-  reason: string;
-  recommendedLesson?: { id: number; title: string } | null;
-}
-
 export interface DiagnosticPracticeRecommendation {
   id: string;
   skill: string;
@@ -266,7 +256,6 @@ export interface DiagnosticResult {
   strengths?: string[];
   weaknesses?: string[];
   practiceRecommendations?: DiagnosticPracticeRecommendation[];
-  recommendations?: DiagnosticRecommendation[];
   questionsResult: Array<{
     questionId: number;
     selectedOption?: number;

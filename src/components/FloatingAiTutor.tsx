@@ -404,7 +404,7 @@ function FloatingAiTutorInner() {
   }, [threads, searchTerm]);
 
   // Ẩn Trợ lý khi học viên đang trong phòng thi hoặc bài tập chuyên sâu
-  const isHiddenPath = isFocusMode || pathname.includes("/lessons/");
+  const isHiddenPath = isFocusMode;
 
   // Smart scroll controls
   const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {

@@ -17,7 +17,6 @@ import {
 import { readingSubskillLabel } from "@/components/reading/readingTrackingLogic";
 import { PracticeWritingDetail } from "@/components/writing/PracticeWritingDetail";
 import { practiceDetailOf } from "@/lib/api/services/writing.service";
-import { isSafeCourseReturn, withSafeReturnTo } from "@/lib/course/navigation";
 
 export default function SubmissionAnalyticsPage(props: {
   params: Promise<{ id: string }>;
@@ -26,10 +25,6 @@ export default function SubmissionAnalyticsPage(props: {
   const router = useRouter();
   const searchParams = useSearchParams();
   const submissionId = parseInt(params.id);
-  const requestedReturnTo = searchParams.get("returnTo");
-  const courseReturn = isSafeCourseReturn(requestedReturnTo)
-    ? requestedReturnTo
-    : null;
 
   const [stoppedConfetti, setStoppedConfetti] = useState(false);
   const [windowDimension, setWindowDimension] = useState({
@@ -81,13 +76,13 @@ export default function SubmissionAnalyticsPage(props: {
     const writingFeedback = analytics.writingFeedback;
     const exercise = analytics.writingExercise;
     const taskHref = (questionId: number) =>
-      withSafeReturnTo(`/writing/${analytics.quizId}?q=${questionId}`, courseReturn);
+      `/writing/${analytics.quizId}?q=${questionId}`;
     return (
       <div className="max-w-4xl mx-auto space-y-6 pb-20">
         <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <BackButton
-            href={courseReturn ?? "/writing"}
-            label={courseReturn ? "Quay lại bài học" : "Quay lại luyện viết"}
+            href={"/writing"}
+            label={"Quay lại luyện viết"}
           />
           <div className="h-6 w-0.5 bg-slate-200 dark:bg-slate-700 hidden sm:block" />
           <div className="min-w-0">
@@ -121,7 +116,7 @@ export default function SubmissionAnalyticsPage(props: {
                 router.push(
                   exercise
                     ? taskHref(exercise.questionId)
-                    : withSafeReturnTo(`/writing/${analytics.quizId}`, courseReturn),
+                    : `/writing/${analytics.quizId}`,
                 )
               }
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-500 px-4 py-3 text-sm font-black text-white hover:bg-sky-600"
@@ -219,10 +214,7 @@ export default function SubmissionAnalyticsPage(props: {
   );
   const wrongReviewHref =
     isListeningResult && wrongQuestionIds.length > 0
-      ? withSafeReturnTo(
-          `/listening/${analytics.quizId}?review=wrong&questionIds=${wrongQuestionIds.join(",")}`,
-          courseReturn,
-        )
+      ? `/listening/${analytics.quizId}?review=wrong&questionIds=${wrongQuestionIds.join(",")}`
       : null;
   const readingMistakesHref =
     isReadingResult && wrongQuestionIds.length > 0 ? "/reading/mistakes" : null;
@@ -237,10 +229,10 @@ export default function SubmissionAnalyticsPage(props: {
       ? "Quay lại danh sách bài Reading"
       : "Quay lại danh sách bài thi";
   const retryHref = isListeningResult
-    ? withSafeReturnTo(`/listening/${analytics.quizId}`, courseReturn)
+    ? `/listening/${analytics.quizId}`
     : isReadingResult
-      ? withSafeReturnTo(`/reading/${analytics.quizId}`, courseReturn)
-      : withSafeReturnTo(`/exams/${analytics.quizId}`, courseReturn);
+      ? `/reading/${analytics.quizId}`
+      : `/exams/${analytics.quizId}`;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-20 relative">
@@ -255,8 +247,8 @@ export default function SubmissionAnalyticsPage(props: {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="flex items-center gap-4">
           <BackButton
-            href={courseReturn ?? practiceCatalogHref}
-            label={courseReturn ? "Quay lại bài học" : practiceCatalogLabel}
+            href={practiceCatalogHref}
+            label={practiceCatalogLabel}
           />
           <div className="h-6 w-0.5 bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
           <div>

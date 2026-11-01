@@ -30,13 +30,11 @@ const TOEIC_PART_NAMES: Record<number, string> = {
 export default function ToeicLrExamDetail({
   examSetId,
   canonicalExamId,
-  safeReturnTo,
 }: {
   /** ToeicExamSet id -- the runtime identity, never shown in the URL. */
   examSetId: number;
   /** Exam (product) id -- the public identity, used for auth return routes. */
   canonicalExamId: number;
-  safeReturnTo: string | null;
 }) {
   const examId = examSetId;
   const router = useRouter();
@@ -65,7 +63,7 @@ export default function ToeicLrExamDetail({
     onSuccess: async ({ id }) => {
       await toeicService.beginAttempt(id);
       router.push(
-        `/toeic/attempts/${id}${safeReturnTo ? `?returnTo=${encodeURIComponent(safeReturnTo)}` : ""}`,
+        `/toeic/attempts/${id}`,
       );
     },
   });
@@ -188,7 +186,7 @@ export default function ToeicLrExamDetail({
 
   return (
     <ToeicExamDetailShell
-      backHref={safeReturnTo || "/exams"}
+      backHref="/exams"
       backLabel="Quay lại danh sách đề thi"
       badge={data.type === "FULL_TEST" ? "TOEIC Full Test" : "Luyện theo phần"}
       title={data.title}

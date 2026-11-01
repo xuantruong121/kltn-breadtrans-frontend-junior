@@ -1,6 +1,5 @@
 "use client";
 
-import { COURSES_ENABLED } from "@/lib/featureFlags";
 import React from "react";
 import { Check, Minus, Star } from "lucide-react";
 import type { EffectivePlan, PurchasablePlanVersionInfo } from "../planLogic";
@@ -211,7 +210,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
             </li>
             <li className="flex items-start gap-3 text-slate-500 dark:text-slate-400">
               <Minus size={18} className="text-slate-500 dark:text-slate-400 shrink-0 mt-0.5" aria-hidden="true" />
-              <span>Không gồm Nói, Viết Nâng cao (C1–C2){COURSES_ENABLED ? " và khóa học" : ""}</span>
+              <span>Không gồm Nói, Viết Nâng cao (C1–C2)</span>
             </li>
           </ul>
         </div>
@@ -281,7 +280,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
         </div>
 
         <p className="mt-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed">
-          Toàn bộ quyền lợi Plus, thêm Nói và Viết Nâng cao{COURSES_ENABLED ? " và mọi khóa học" : ""}.
+          Toàn bộ quyền lợi Plus, thêm Nói và Viết Nâng cao.
         </p>
 
         <div className="mt-6 pb-6 border-b border-slate-200/80 dark:border-slate-800">
@@ -315,18 +314,6 @@ export const PlanCard: React.FC<PlanCardProps> = ({
             <Check size={18} className="text-blue-500 shrink-0 mt-0.5" aria-hidden="true" />
             <span>Nói và Viết ở mọi mức, gồm Nâng cao (C1–C2)</span>
           </li>
-          {COURSES_ENABLED && (
-            <>
-              <li className="flex items-start gap-3">
-                <Check size={18} className="text-blue-500 shrink-0 mt-0.5" aria-hidden="true" />
-                <span>Mở khóa toàn bộ khóa học</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <Check size={18} className="text-blue-500 shrink-0 mt-0.5" aria-hidden="true" />
-                <span>Lộ trình học tuần tự, tiếp tục từ bài đang học</span>
-              </li>
-            </>
-          )}
         </ul>
       </div>
 

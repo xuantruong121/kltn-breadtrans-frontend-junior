@@ -1,26 +1,25 @@
 import type { NextConfig } from "next";
 
-// Courses are hidden unless explicitly enabled (see src/lib/featureFlags.ts).
-const COURSES_ENABLED = process.env.NEXT_PUBLIC_COURSES_ENABLED === "true";
-const hiddenCourseRoutes = COURSES_ENABLED
-  ? []
-  : [
-      ...["/courses", "/my-courses", "/learn", "/classes"].flatMap((base) => [
-        { source: base, destination: "/dashboard", permanent: false },
-        { source: `${base}/:path*`, destination: "/dashboard", permanent: false },
-      ]),
-      { source: "/admin/courses", destination: "/admin", permanent: false },
-      { source: "/admin/courses/:path*", destination: "/admin", permanent: false },
-      { source: "/admin/assignments", destination: "/admin", permanent: false },
-    ];
+// Courses and classes were removed (docs/courses-restore.md in the backend).
+// Old links land on a working page instead of a 404.
+const removedRoutes = [
+  ...["/courses", "/my-courses", "/learn", "/classes", "/teacher"].flatMap((base) => [
+    { source: base, destination: "/dashboard", permanent: false },
+    { source: `${base}/:path*`, destination: "/dashboard", permanent: false },
+  ]),
+  ...["/admin/courses", "/admin/assignments", "/admin/enroll"].flatMap((base) => [
+    { source: base, destination: "/admin", permanent: false },
+    { source: `${base}/:path*`, destination: "/admin", permanent: false },
+  ]),
+];
 
 const nextConfig: NextConfig = {
   // A second dev server (the disposable QA harness) needs its own build
   // directory so it never shares .next with the owner's running instance.
   distDir: process.env.NEXT_DIST_DIR || '.next',
   images: {
-    // Course thumbnails and lesson media are resolved by the backend to this
-    // public R2 origin; the frontend never constructs object keys.
+    // Media URLs are resolved by the backend to this public R2 origin; the
+    // frontend never constructs object keys.
     remotePatterns: [
       {
         protocol: 'https',
@@ -35,10 +34,10 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/course',
-        destination: COURSES_ENABLED ? '/courses' : '/dashboard',
+        destination: '/dashboard',
         permanent: false,
       },
-      ...hiddenCourseRoutes,
+      ...removedRoutes,
     ];
   },
 };

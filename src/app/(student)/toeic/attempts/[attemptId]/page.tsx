@@ -24,7 +24,6 @@ import { toeicService, type ToeicListeningMaster, type ToeicQuestionGroup } from
 import { resolveAssessmentPolicy } from "@/lib/practice/focusMode";
 import { useAssessmentAntiCheat } from "@/hooks/useAssessmentAntiCheat";
 import { PracticeHeader } from "@/components/practice/PracticeHeader";
-import { isSafeCourseReturn } from "@/lib/course/navigation";
 import {
   buildPaperParts,
   formatMinutes,
@@ -70,11 +69,9 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
   const router = useRouter();
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
-  const requestedReturnTo = searchParams.get("returnTo");
   const parentAttemptId = searchParams.get("parentAttemptId");
   const parentComponentId = searchParams.get("parentComponentId");
   const parentAssessmentId = searchParams.get("parentAssessmentId");
-  const courseReturn = requestedReturnTo && isSafeCourseReturn(requestedReturnTo) ? requestedReturnTo : null;
 
   const [answers, setAnswers] = useState<Record<number, number> | null>(null);
   const [marked, setMarked] = useState<Set<number>>(new Set());
@@ -539,7 +536,6 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
     onSuccess: () => {
       leave();
       const query = [
-        courseReturn ? `returnTo=${encodeURIComponent(courseReturn)}` : "",
         parentAttemptId ? `parentAttemptId=${parentAttemptId}` : "",
         parentComponentId ? `parentComponentId=${parentComponentId}` : "",
         parentAssessmentId ? `parentAssessmentId=${parentAssessmentId}` : "",
@@ -553,7 +549,7 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
     mutationFn: () => toeicService.cancelAttempt(attemptId),
     onSuccess: () => {
       leave();
-      router.push(courseReturn ?? "/exams");
+      router.push("/exams");
     },
   });
 

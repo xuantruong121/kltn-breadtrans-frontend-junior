@@ -1,6 +1,5 @@
 export type DashboardTrend = {
   month: string;
-  enrollments: number;
   activityCount: number;
   revenueVnd?: number;
 };

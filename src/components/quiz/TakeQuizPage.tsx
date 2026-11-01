@@ -53,7 +53,6 @@ import {
   resolveReadingAttemptId,
   saveReadingDraft,
 } from "@/lib/reading/readingDraft";
-import { isSafeCourseReturn, withSafeReturnTo } from "@/lib/course/navigation";
 import { calculateProgressiveDictationFeedback } from "@/components/listening/listeningDictationUtils";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
@@ -149,7 +148,7 @@ export default function TakeQuizPage(props: {
           : routeContext === "exams"
             ? `/exams/submissions/${data.id}`
             : `/listening/submissions/${data.id}`;
-      router.push(withSafeReturnTo(submissionRoute, safeCourseReturn));
+      router.push(submissionRoute);
     },
     onError: (error: any) => {
       const message = getApiErrorMessage(
@@ -240,11 +239,7 @@ export default function TakeQuizPage(props: {
       );
   }, [searchParams]);
   const isWrongAnswerReview = isListening && reviewQuestionIds.length > 0;
-  const courseReturn = searchParams.get("returnTo");
-  const safeCourseReturn =
-    courseReturn && isSafeCourseReturn(courseReturn) ? courseReturn : null;
   const backHref =
-    safeCourseReturn ??
     (isListening
       ? "/listening"
       : isReading
@@ -312,8 +307,7 @@ export default function TakeQuizPage(props: {
     const skillLabel = isListeningForbidden
       ? "bài luyện nghe"
       : "bài luyện đọc";
-    const backRoute =
-      safeCourseReturn ?? (isListeningForbidden ? "/listening" : "/reading");
+    const backRoute = isListeningForbidden ? "/listening" : "/reading";
 
     return (
       <div className="min-h-dvh flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-6 text-center">
@@ -411,7 +405,6 @@ export default function TakeQuizPage(props: {
         quiz={quiz}
         reviewOnly={isWrongAnswerReview}
         reviewQuestionIds={reviewQuestionIds}
-        returnTo={safeCourseReturn ?? undefined}
       />
     );
   }

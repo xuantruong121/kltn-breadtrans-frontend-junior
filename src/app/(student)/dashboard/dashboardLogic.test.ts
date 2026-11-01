@@ -1,6 +1,5 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { COURSES_ENABLED } from "../../../lib/featureFlags.ts";
 import {
   getVietnamDayOfWeek,
   deriveDailyProgress,
@@ -90,9 +89,6 @@ test("Quest routing correctly separates COMPLETE_QUIZ from DO_LISTENING", () => 
   const vocab = getTypeSpecificQuestFallback("LEARN_VOCAB");
   assert.equal(vocab.actionUrl, "/flashcard");
 
-  // COMPLETE_LESSON -> Course catalog, or skill practice while courses are hidden
-  const lesson = getTypeSpecificQuestFallback("COMPLETE_LESSON");
-  assert.equal(lesson.actionUrl, COURSES_ENABLED ? "/courses" : "/listening");
 });
 
 test("isSafeInternalRoute validates allowed prefixes", () => {
@@ -100,8 +96,8 @@ test("isSafeInternalRoute validates allowed prefixes", () => {
   assert.equal(isSafeInternalRoute("/practice/listening"), false);
   assert.equal(isSafeInternalRoute("/listening/123"), true);
   assert.equal(isSafeInternalRoute("/flashcard"), true);
-  assert.equal(isSafeInternalRoute("/my-courses"), COURSES_ENABLED);
-  assert.equal(isSafeInternalRoute("/courses/abc"), COURSES_ENABLED);
+  assert.equal(isSafeInternalRoute("/my-courses"), false);
+  assert.equal(isSafeInternalRoute("/courses/abc"), false);
   assert.equal(isSafeInternalRoute("https://external-malicious-site.com"), false);
   assert.equal(isSafeInternalRoute("javascript:alert(1)"), false);
 });
