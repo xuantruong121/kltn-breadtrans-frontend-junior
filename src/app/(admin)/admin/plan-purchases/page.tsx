@@ -29,8 +29,9 @@ import { AdminGrantModal } from "@/modules/admin/subscription/components/AdminGr
 import { AdminExtendModal } from "@/modules/admin/subscription/components/AdminExtendModal";
 import { AdminRevokeModal } from "@/modules/admin/subscription/components/AdminRevokeModal";
 import { AdminHistoryModal } from "@/modules/admin/subscription/components/AdminHistoryModal";
+import { PlanCatalogPanel } from "@/modules/admin/subscription/components/PlanCatalogPanel";
 
-type MainTab = "ENTITLEMENTS" | "TRANSACTIONS";
+type MainTab = "ENTITLEMENTS" | "TRANSACTIONS" | "PRICING";
 
 const transactionTabs: Array<{ label: string; value?: PlanPurchaseStatus }> = [
   { label: "Chờ đối soát", value: "PENDING_PAYMENT" },
@@ -416,7 +417,20 @@ export default function AdminPlanPurchasesPage() {
         >
           Giao dịch mua gói
         </button>
+        <button
+          type="button"
+          onClick={() => setMainTab("PRICING")}
+          className={`-mb-px border-b-2 px-1 py-3 text-sm font-bold transition-all cursor-pointer ${
+            mainTab === "PRICING"
+              ? "border-slate-900 text-slate-950"
+              : "border-transparent text-slate-600 hover:text-slate-800 dark:text-slate-400"
+          }`}
+        >
+          Bảng giá
+        </button>
       </div>
+
+      {mainTab === "PRICING" && <PlanCatalogPanel />}
 
       {/* ===================== TAB 1: QUYỀN HỌC VIÊN ===================== */}
       {mainTab === "ENTITLEMENTS" && (
