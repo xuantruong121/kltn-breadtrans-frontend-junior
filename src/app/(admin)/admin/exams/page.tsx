@@ -36,6 +36,10 @@ import { useAdminList } from "@/components/admin/useAdminList";
 import { ADMIN_PAGE_SIZES } from "@/components/admin/adminList";
 import toast from "react-hot-toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import {
+  ExamRetireAction,
+  examStatusLabel,
+} from "@/components/admin/exam/ExamRetireAction";
 import ImageUploadField from "@/components/admin/ImageUploadField";
 import { formAudioPreviewSrc, groupAudioSrc } from "@/lib/toeic/adminGroupAudio";
 import AudioUploadField from "@/components/admin/AudioUploadField";
@@ -171,10 +175,6 @@ interface ExamDetail {
   };
 }
 
-const examStatusLabel = (status?: string) =>
-  ({ PUBLISHED: "Đã xuất bản", ARCHIVED: "Ngừng phát hành" })[status || ""] ||
-  "Bản nháp";
-
 const examVariantLabel = (variant?: string) =>
   ({
     TOEIC_LR: "Listening & Reading",
@@ -224,7 +224,6 @@ export default function AdminExamsPage() {
     null,
   );
 
-  const [confirmRetireId, setConfirmRetireId] = useState<number | null>(null);
   const [pendingDeleteExam, setPendingDeleteExam] = useState<{
     id: number;
     title: string;
@@ -436,56 +435,12 @@ export default function AdminExamsPage() {
       toast.error(getApiErrorMessage(err, "Không thể gỡ xuất bản")),
   });
 
-  const lifecycleMutation = useMutation({
-    mutationFn: async (input: { id: number; action: "retire" | "restore" }) =>
-      axiosClient.post(`/admin/exams/${input.id}/${input.action}`),
-    onSuccess: (_data, input) => {
-      toast.success(
-        input.action === "retire"
-          ? "Đã ngừng phát hành đề thi."
-          : "Đã phát hành lại đề thi.",
-      );
-      setConfirmRetireId(null);
-      queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
-      queryClient.invalidateQueries({
-        queryKey: ["admin-exam-detail", selectedExamId],
-      });
-    },
-    onError: (err: any) =>
-      toast.error(getApiErrorMessage(err, "Không thể đổi trạng thái đề thi")),
-  });
-
-  const retireExamButton = (id: number) => (
-    <button
-      onClick={() => setConfirmRetireId(id)}
-      className="rounded-lg border border-rose-200 bg-white px-3.5 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50"
-    >
-      Ngừng phát hành
-    </button>
-  );
-  const restoreExamButton = (id: number) => (
-    <button
-      onClick={() => lifecycleMutation.mutate({ id, action: "restore" })}
-      disabled={lifecycleMutation.isPending}
-      className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-    >
-      Phát hành lại
-    </button>
-  );
-  const retireDialog = (
-    <ConfirmDialog
-      open={confirmRetireId !== null}
-      title="Ngừng phát hành đề này?"
-      description="Học viên mới không thấy đề này nữa. Lượt đang làm vẫn nộp được và lượt đã làm vẫn xem lại được. Đề 4 kỹ năng dùng chung phần Listening & Reading với đề này cũng ẩn theo. Có thể phát hành lại bất cứ lúc nào."
-      confirmLabel="Ngừng phát hành"
-      isPending={lifecycleMutation.isPending}
-      onConfirm={() => {
-        if (confirmRetireId !== null)
-          lifecycleMutation.mutate({ id: confirmRetireId, action: "retire" });
-      }}
-      onCancel={() => setConfirmRetireId(null)}
-    />
-  );
+  const refreshExam = () => {
+    queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
+    queryClient.invalidateQueries({
+      queryKey: ["admin-exam-detail", selectedExamId],
+    });
+  };
 
   const deleteExamMutation = useMutation({
     mutationFn: async (id: number) => axiosClient.delete(`/admin/exams/${id}`),
@@ -777,7 +732,6 @@ export default function AdminExamsPage() {
       );
       return (
         <main className="mx-auto max-w-5xl space-y-6 p-6">
-          {retireDialog}
           <button
             onClick={() => setSelectedExamId(null)}
             className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-950"
@@ -802,10 +756,13 @@ export default function AdminExamsPage() {
                 <span className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700">
                   {examStatusLabel(examDetail.publicationStatus)}
                 </span>
-                {examDetail.publicationStatus === "ARCHIVED" ? (
-                  restoreExamButton(examDetail.id)
-                ) : isPublished && examDetail.attemptsCount ? (
-                  retireExamButton(examDetail.id)
+                {examDetail.publicationStatus === "ARCHIVED" ||
+                (isPublished && examDetail.attemptsCount) ? (
+                  <ExamRetireAction
+                    examId={examDetail.id}
+                    status={examDetail.publicationStatus}
+                    onChanged={refreshExam}
+                  />
                 ) : isPublished ? (
                   <button
                     onClick={() => unpublishExamMutation.mutate(examDetail.id)}
@@ -903,7 +860,6 @@ export default function AdminExamsPage() {
 
     return (
       <main className="mx-auto max-w-6xl space-y-6 p-6">
-        {retireDialog}
         {/* TOP BAR */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-5">
           <div className="flex items-center gap-3">
@@ -956,10 +912,13 @@ export default function AdminExamsPage() {
                 Candidate AI
               </a>
             )}
-            {examDetail.publicationStatus === "ARCHIVED" ? (
-              restoreExamButton(examDetail.id)
-            ) : isPublished && examDetail.attemptsCount ? (
-              retireExamButton(examDetail.id)
+            {examDetail.publicationStatus === "ARCHIVED" ||
+            (isPublished && examDetail.attemptsCount) ? (
+              <ExamRetireAction
+                examId={examDetail.id}
+                status={examDetail.publicationStatus}
+                onChanged={refreshExam}
+              />
             ) : isPublished ? (
               <button
                 onClick={() => unpublishExamMutation.mutate(examDetail.id)}
