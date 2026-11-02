@@ -27,9 +27,6 @@ import {
   Award,
   MessageSquare,
   Inbox,
-  ClipboardList,
-  FileInput,
-  FileText,
   Tags,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
@@ -67,11 +64,8 @@ const NAV_ICONS: Record<string, NavItem["icon"]> = {
   BookMarked,
   BookOpen,
   BookText,
-  ClipboardList,
   Coins,
   CreditCard,
-  FileInput,
-  FileText,
   Flag,
   GraduationCap,
   Headphones,

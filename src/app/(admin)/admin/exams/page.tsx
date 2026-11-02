@@ -44,6 +44,7 @@ import ImageUploadField from "@/components/admin/ImageUploadField";
 import { formAudioPreviewSrc, groupAudioSrc } from "@/lib/toeic/adminGroupAudio";
 import AudioUploadField from "@/components/admin/AudioUploadField";
 import ToeicSpeakingExamComposer from "@/components/admin/ToeicSpeakingExamComposer";
+import ToeicWritingExamComposer from "@/components/admin/ToeicWritingExamComposer";
 import {
   getPublishReadinessUi,
   getReadinessIssueLabel,
@@ -817,14 +818,16 @@ export default function AdminExamsPage() {
           </section>
           {(examDetail.variantCode === "TOEIC_SW" ||
             examDetail.variantCode === "TOEIC_4_SKILLS") && (
-            <ToeicSpeakingExamComposer
-              examId={examDetail.id}
-              onChanged={() =>
-                queryClient.invalidateQueries({
-                  queryKey: ["admin-exam-detail", selectedExamId],
-                })
-              }
-            />
+            <>
+              <ToeicSpeakingExamComposer
+                examId={examDetail.id}
+                onChanged={refreshExam}
+              />
+              <ToeicWritingExamComposer
+                examId={examDetail.id}
+                onChanged={refreshExam}
+              />
+            </>
           )}
         </main>
       );

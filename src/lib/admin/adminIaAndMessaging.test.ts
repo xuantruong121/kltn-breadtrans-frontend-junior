@@ -223,17 +223,17 @@ describe("Admin IA and Messaging UX Invariants", () => {
       }
     });
 
-    it("lists the authoring screens that had no way in", () => {
+    it("keeps authoring inside the tabs instead of separate entries", () => {
       const hrefs = ADMIN_NAV_GROUPS.flatMap((g) => g.items.map((i) => i.href));
+      for (const href of ["/admin/practice", "/admin/dictionary"])
+        assert.ok(hrefs.includes(href), href);
       for (const href of [
+        "/admin/quizzes",
         "/admin/toeic/assessments",
         "/admin/toeic/writing-sets",
         "/admin/ai-tools",
-        "/admin/practice",
-        "/admin/dictionary",
       ])
-        assert.ok(hrefs.includes(href), href);
-      assert.ok(!hrefs.includes("/admin/quizzes"));
+        assert.ok(!hrefs.includes(href), href);
     });
   });
 });

@@ -125,24 +125,6 @@ export const ADMIN_NAV_GROUPS: AdminNavGroupConfig[] = [
         label: "Luyện đề",
         iconName: "Award",
       },
-      {
-        id: "toeic-assessments",
-        href: "/admin/toeic/assessments",
-        label: "Cấu trúc đề TOEIC",
-        iconName: "ClipboardList",
-      },
-      {
-        id: "toeic-writing-sets",
-        href: "/admin/toeic/writing-sets",
-        label: "Bộ Writing TOEIC",
-        iconName: "FileText",
-      },
-      {
-        id: "ai-tools",
-        href: "/admin/ai-tools",
-        label: "Soạn nội dung bằng AI",
-        iconName: "FileInput",
-      },
     ],
   },
   {
