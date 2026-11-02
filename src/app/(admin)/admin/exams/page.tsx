@@ -516,10 +516,10 @@ export default function AdminExamsPage() {
 
   const fillMissingImagesMutation = useMutation({
     mutationFn: async (examId: number) => {
-      const res = await axiosClient.post(
+      // The axios client already unwraps the response envelope.
+      return (await axiosClient.post(
         `/admin/exams/${examId}/ai/images/fill-missing`,
-      );
-      return res.data.data as { filled: string[]; missing: string[] };
+      )) as unknown as { filled: string[]; missing: string[] };
     },
     onSuccess: ({ filled, missing }) => {
       if (missing.length)
