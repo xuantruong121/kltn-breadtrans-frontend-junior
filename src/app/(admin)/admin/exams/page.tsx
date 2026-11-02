@@ -143,6 +143,8 @@ interface ExamDetail {
   totalGroups?: number;
   publicationStatus: "DRAFT" | "PUBLISHED" | "ARCHIVED";
   sharedLrExams?: number;
+  /** False when a 4-skill exam reads another exam's L&R. */
+  lrEditable?: boolean;
   familyCode?: string;
   variantCode?: string;
   readiness?: {
@@ -208,7 +210,7 @@ export default function AdminExamsPage() {
     "UPDATED",
   );
   const [activeTab, setActiveTab] = useState<
-    "structure" | "preflight" | "preview" | "info"
+    "structure" | "speaking" | "writing" | "preflight" | "preview" | "info"
   >("structure");
   const [activePartFilter, setActivePartFilter] = useState<number | "all">(
     "all",
@@ -724,148 +726,6 @@ export default function AdminExamsPage() {
   // RENDER: Exam Workspace / Editor when an exam is selected
   // -------------------------------------------------------------
   if (selectedExamId && examDetail) {
-    if (examDetail.variantCode && examDetail.variantCode !== "TOEIC_LR") {
-      const readiness = examDetail.readiness;
-      const isPublished = examDetail.publicationStatus === "PUBLISHED";
-      const publishReadiness = getPublishReadinessUi(
-        examDetail.learnerReady,
-        examDetail.validation?.issues.length ?? 0,
-      );
-      const sections = [
-        {
-          label: "Listening & Reading",
-          count: examDetail.totalQuestions || 0,
-          expected: 200,
-          ready: readiness?.listeningReading,
-        },
-        {
-          label: "Speaking",
-          count: readiness?.speakingCount || 0,
-          expected: readiness?.speakingExpected || 11,
-          ready: readiness?.speaking,
-        },
-        {
-          label: "Writing",
-          count: readiness?.writingCount || 0,
-          expected: readiness?.writingExpected || 8,
-          ready: readiness?.writing,
-        },
-      ].filter(
-        (section) =>
-          section.expected > 0 &&
-          (examDetail.variantCode === "TOEIC_4_SKILLS" ||
-            section.label !== "Listening & Reading"),
-      );
-      return (
-        <main className="mx-auto max-w-5xl space-y-6 p-6">
-          <button
-            onClick={() => setSelectedExamId(null)}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-950"
-          >
-            <ArrowLeft size={16} /> Quay lại kho đề
-          </button>
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-5">
-              <div>
-                <p className="text-sm font-bold uppercase tracking-[.16em] text-slate-600 dark:text-slate-400">
-                  {examDetail.familyCode} ·{" "}
-                  {examVariantLabel(examDetail.variantCode)}
-                </p>
-                <h1 className="mt-2 text-2xl font-bold text-slate-950">
-                  {examDetail.title}
-                </h1>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                  {examDetail.description || "Chưa có mô tả."}
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700">
-                  {examStatusLabel(examDetail.publicationStatus)}
-                </span>
-                {examDetail.publicationStatus === "ARCHIVED" ||
-                (isPublished && examDetail.attemptsCount) ? (
-                  <ExamRetireAction
-                    examId={examDetail.id}
-                    status={examDetail.publicationStatus}
-                    sharedLrExams={examDetail.sharedLrExams}
-                    onChanged={refreshExam}
-                  />
-                ) : isPublished ? (
-                  <button
-                    onClick={() => unpublishExamMutation.mutate(examDetail.id)}
-                    disabled={unpublishExamMutation.isPending}
-                    className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-                  >
-                    Chuyển về bản nháp
-                  </button>
-                ) : (
-                  <div className="flex flex-col items-end gap-1">
-                    <button
-                      onClick={() => fillMissingImagesMutation.mutate(examDetail.id)}
-                      disabled={fillMissingImagesMutation.isPending}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-                    >
-                      <ImageIcon size={15} />
-                      {fillMissingImagesMutation.isPending ? "Đang tìm ảnh..." : "Tìm ảnh còn thiếu"}
-                    </button>
-                    <button
-                      onClick={() => publishExamMutation.mutate(examDetail.id)}
-                      disabled={publishExamMutation.isPending || !publishReadiness.canPublish}
-                      title={publishReadiness.helpText}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none"
-                    >
-                      <CheckCircle2 size={15} /> {publishReadiness.label}
-                    </button>
-                    {!publishReadiness.canPublish && (
-                      <p className="max-w-[260px] text-right text-sm leading-4 text-slate-500">
-                        {publishReadiness.helpText}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
-              {sections.map((section) => (
-                <div
-                  key={section.label}
-                  className="rounded-xl border border-slate-200 bg-slate-50 p-4"
-                >
-                  <p className="text-sm font-bold text-slate-900">
-                    {section.label}
-                  </p>
-                  <p className="mt-2 text-2xl font-black text-slate-950">
-                    {section.count}/{section.expected}
-                  </p>
-                  <p
-                    className={`mt-1 text-xs font-semibold ${section.ready ? "text-emerald-700" : "text-amber-700"} dark:text-emerald-400`}
-                  >
-                    {section.ready ? "Sẵn sàng" : "Chưa đủ điều kiện"}
-                  </p>
-                </div>
-              ))}
-            </div>
-            <p className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-              Nguồn Speaking/Writing là nội bộ của đề thi. Bản nháp chưa hiển
-              thị cho học viên và chỉ được xuất bản khi đủ cấu trúc chuẩn.
-            </p>
-          </section>
-          {(examDetail.variantCode === "TOEIC_SW" ||
-            examDetail.variantCode === "TOEIC_4_SKILLS") && (
-            <>
-              <ToeicSpeakingExamComposer
-                examId={examDetail.id}
-                onChanged={refreshExam}
-              />
-              <ToeicWritingExamComposer
-                examId={examDetail.id}
-                onChanged={refreshExam}
-              />
-            </>
-          )}
-        </main>
-      );
-    }
     const isPublished = examDetail.publicationStatus === "PUBLISHED";
     const groups = examDetail.groups || [];
     const allQuestions = groups.flatMap((g) => g.questions || []);
@@ -894,6 +754,51 @@ export default function AdminExamsPage() {
       activePartFilter === "all"
         ? groups
         : groups.filter((g) => g.part === activePartFilter);
+
+    const hasLr = examDetail.variantCode !== "TOEIC_SW";
+    const hasTasks =
+      examDetail.variantCode === "TOEIC_SW" ||
+      examDetail.variantCode === "TOEIC_4_SKILLS";
+    const lrEditable = hasLr && examDetail.lrEditable !== false;
+    // A tab this exam does not have falls back to one it does.
+    const tab =
+      (activeTab === "structure" && !lrEditable) ||
+      (activeTab === "preview" && !hasLr)
+        ? hasLr
+          ? "preview"
+          : "speaking"
+        : activeTab;
+    const readiness = examDetail.readiness;
+    const sections = [
+      ...(hasLr && hasTasks
+        ? [
+            {
+              label: "Listening & Reading",
+              count: examDetail.totalQuestions || 0,
+              expected: 200,
+              ready: readiness?.listeningReading,
+            },
+          ]
+        : []),
+      {
+        label: "Speaking",
+        count: readiness?.speakingCount || 0,
+        expected: readiness?.speakingExpected || 11,
+        ready: readiness?.speaking,
+      },
+      {
+        label: "Writing",
+        count: readiness?.writingCount || 0,
+        expected: readiness?.writingExpected || 8,
+        ready: readiness?.writing,
+      },
+    ];
+    const tabClass = (selected: boolean) =>
+      `px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
+        selected
+          ? "bg-slate-900 text-white"
+          : "text-slate-600 hover:bg-slate-100"
+      }`;
 
     return (
       <main className="mx-auto max-w-6xl space-y-6 p-6">
@@ -967,6 +872,7 @@ export default function AdminExamsPage() {
               </button>
                 ) : (
                   <div className="flex flex-col items-end gap-1">
+                    <div className="flex flex-wrap justify-end gap-2">
                     <button
                       onClick={() => fillMissingImagesMutation.mutate(examDetail.id)}
                       disabled={fillMissingImagesMutation.isPending}
@@ -983,6 +889,7 @@ export default function AdminExamsPage() {
                     >
                       <CheckCircle2 size={15} /> {publishReadiness.label}
                     </button>
+                    </div>
                     {!publishReadiness.canPublish && (
                       <p className="max-w-[260px] text-right text-sm leading-4 text-slate-500">
                         {publishReadiness.helpText}
@@ -993,25 +900,67 @@ export default function AdminExamsPage() {
           </div>
         </div>
 
+        {hasTasks && (
+          <div className="grid gap-3 md:grid-cols-3">
+            {sections.map((section) => (
+              <div
+                key={section.label}
+                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <p className="text-sm font-semibold text-slate-700">
+                  {section.label}
+                </p>
+                <p className="mt-1 text-xl font-bold text-slate-950">
+                  {section.count}/{section.expected}
+                </p>
+                <p
+                  className={`text-xs font-semibold ${section.ready ? "text-emerald-700" : "text-rose-700"}`}
+                >
+                  {section.ready ? "Sẵn sàng" : "Chưa đủ điều kiện"}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* WORKSPACE NAVIGATION TABS */}
-        <div className="flex gap-2 border-b border-slate-200 pb-1">
-          <button
-            onClick={() => setActiveTab("structure")}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
-              activeTab === "structure"
-                ? "bg-slate-900 text-white"
-                : "text-slate-600 hover:bg-slate-100"
-            }`}
-          >
-            Cấu trúc & Câu hỏi ({allQuestions.length})
-          </button>
+        <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-1">
+          {lrEditable && (
+            <button
+              onClick={() => setActiveTab("structure")}
+              className={tabClass(tab === "structure")}
+            >
+              {hasTasks ? "Listening & Reading" : "Cấu trúc & Câu hỏi"} (
+              {allQuestions.length})
+            </button>
+          )}
+          {hasTasks && (
+            <>
+              <button
+                onClick={() => setActiveTab("speaking")}
+                className={tabClass(tab === "speaking")}
+              >
+                Speaking ({readiness?.speakingCount || 0})
+              </button>
+              <button
+                onClick={() => setActiveTab("writing")}
+                className={tabClass(tab === "writing")}
+              >
+                Writing ({readiness?.writingCount || 0})
+              </button>
+            </>
+          )}
+          {hasLr && (
+            <button
+              onClick={() => setActiveTab("preview")}
+              className={tabClass(tab === "preview")}
+            >
+              Xem đề &amp; nghe audio
+            </button>
+          )}
           <button
             onClick={() => setActiveTab("preflight")}
-            className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
-              activeTab === "preflight"
-                ? "bg-slate-900 text-white"
-                : "text-slate-600 hover:bg-slate-100"
-            }`}
+            className={`inline-flex items-center gap-1.5 ${tabClass(tab === "preflight")}`}
           >
             <span>Kiểm tra tiền xuất bản</span>
             {issues.length > 0 ? (
@@ -1025,29 +974,28 @@ export default function AdminExamsPage() {
             )}
           </button>
           <button
-            onClick={() => setActiveTab("preview")}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
-              activeTab === "preview"
-                ? "bg-slate-900 text-white"
-                : "text-slate-600 hover:bg-slate-100"
-            }`}
-          >
-            Xem nhanh
-          </button>
-          <button
             onClick={() => setActiveTab("info")}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
-              activeTab === "info"
-                ? "bg-slate-900 text-white"
-                : "text-slate-600 hover:bg-slate-100"
-            }`}
+            className={tabClass(tab === "info")}
           >
             Thông tin chung
           </button>
         </div>
 
+        {tab === "speaking" && (
+          <ToeicSpeakingExamComposer
+            examId={examDetail.id}
+            onChanged={refreshExam}
+          />
+        )}
+        {tab === "writing" && (
+          <ToeicWritingExamComposer
+            examId={examDetail.id}
+            onChanged={refreshExam}
+          />
+        )}
+
         {/* TAB 1: STRUCTURE & QUESTIONS */}
-        {activeTab === "structure" && (
+        {tab === "structure" && (
           <div className="space-y-5">
             {/* PART FILTER PILLS */}
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1455,7 +1403,7 @@ export default function AdminExamsPage() {
         )}
 
         {/* TAB 2: PREFLIGHT CHECKLIST */}
-        {activeTab === "preflight" && (
+        {tab === "preflight" && (
           <div className="space-y-6 max-w-3xl mx-auto py-2">
             <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-4">
@@ -1581,7 +1529,7 @@ export default function AdminExamsPage() {
         )}
 
         {/* TAB 3: PREVIEW */}
-        {activeTab === "preview" && (
+        {tab === "preview" && (
           <div className="space-y-6 max-w-3xl mx-auto py-2">
             <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
               <div className="border-b border-slate-100 pb-3">
@@ -1594,8 +1542,7 @@ export default function AdminExamsPage() {
                   {examDetail.title}
                 </h2>
                 <p className="text-sm text-slate-600 mt-1 dark:text-slate-400">
-                  Xem nhanh dành cho quản trị viên · Có thể dùng các thao tác
-                  khắc phục media bên dưới · Thời lượng:{" "}
+                  Xem toàn bộ đề, nghe audio và đối chiếu đáp án · Thời lượng:{" "}
                   {Math.round(examDetail.durationSeconds / 60)} phút
                 </p>
                 <a
@@ -1606,7 +1553,25 @@ export default function AdminExamsPage() {
                 </a>
               </div>
 
-              {groups.map((group, idx) => (
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setActivePartFilter("all")}
+                  className={tabClass(activePartFilter === "all")}
+                >
+                  Tất cả
+                </button>
+                {TOEIC_PARTS.map((p) => (
+                  <button
+                    key={p.part}
+                    onClick={() => setActivePartFilter(p.part)}
+                    className={tabClass(activePartFilter === p.part)}
+                  >
+                    Part {p.part}
+                  </button>
+                ))}
+              </div>
+
+              {visibleGroups.map((group, idx) => (
                 <div
                   key={group.id}
                   className="space-y-4 rounded-xl border border-slate-200 bg-slate-50/50 p-5"
@@ -1679,6 +1644,7 @@ export default function AdminExamsPage() {
                     <div className="rounded-lg bg-white border border-slate-200 p-3">
                       <audio
                         controls
+                        preload="none"
                         src={groupAudioSrc(group) ?? undefined}
                         className="w-full h-8"
                       />
@@ -1704,6 +1670,17 @@ export default function AdminExamsPage() {
                     </div>
                   ) : null}
 
+                  {group.part <= 4 && group.transcriptText && (
+                    <details className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
+                      <summary className="cursor-pointer font-semibold text-slate-900">
+                        Lời thoại
+                      </summary>
+                      <p className="mt-2 whitespace-pre-line leading-6">
+                        {group.transcriptText}
+                      </p>
+                    </details>
+                  )}
+
                   {group.passageText && (
                     <div className="rounded-lg bg-white border border-slate-200 p-4 text-xs font-serif leading-relaxed text-slate-800 whitespace-pre-line">
                       {group.passageText}
@@ -1719,23 +1696,29 @@ export default function AdminExamsPage() {
                         <p className="font-bold text-sm text-slate-900">
                           Câu {q.questionNumber}. {q.text}
                         </p>
-                        <div className="space-y-1.5 pl-2">
-                          {q.options.map((opt, optIdx) => (
-                            <label
-                              key={optIdx}
-                              className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer"
-                            >
-                              <input
-                                type="radio"
-                                name={`q-${q.id}`}
-                                className="text-slate-900"
-                              />
-                              <span>
-                                ({String.fromCharCode(65 + optIdx)}) {opt}
-                              </span>
-                            </label>
-                          ))}
-                        </div>
+                        <ul className="space-y-1.5 pl-2">
+                          {q.options.map((opt, optIdx) => {
+                            const correct = optIdx === q.correctIndex;
+                            return (
+                              <li
+                                key={optIdx}
+                                className={`flex items-start gap-2 text-sm ${correct ? "font-semibold text-emerald-700" : "text-slate-700"}`}
+                              >
+                                <span className="w-5 shrink-0">
+                                  {correct && <CheckCircle2 size={15} />}
+                                </span>
+                                <span>
+                                  ({String.fromCharCode(65 + optIdx)}) {opt}
+                                </span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                        {q.explanation && (
+                          <p className="rounded-lg bg-slate-50 p-3 text-sm leading-6 text-slate-700">
+                            {q.explanation}
+                          </p>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -1746,7 +1729,7 @@ export default function AdminExamsPage() {
         )}
 
         {/* TAB 4: METADATA & INFO */}
-        {activeTab === "info" && (
+        {tab === "info" && (
           <form
             onSubmit={(e) => {
               e.preventDefault();

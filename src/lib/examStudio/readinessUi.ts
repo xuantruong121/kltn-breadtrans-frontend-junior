@@ -10,12 +10,12 @@ export function getPublishReadinessUi(
   issueCount: number,
 ) {
   const canPublish = learnerReady === true;
-  // No content issue left: what still blocks is an internal source in draft.
+  // No content issue was reported: what still blocks is a missing task.
   if (!canPublish && issueCount === 0)
     return {
       canPublish,
       label: "Chưa thể xuất bản",
-      helpText: "Hãy xuất bản nguồn Speaking và Writing bên dưới trước.",
+      helpText: "Hãy soạn đủ các câu Speaking và Writing trước.",
     };
   const outstandingLabel =
     issueCount === 1

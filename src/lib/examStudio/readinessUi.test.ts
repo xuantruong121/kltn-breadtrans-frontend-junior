@@ -21,7 +21,7 @@ test("readiness UI names the source step instead of counting zero items", () => 
 
   assert.equal(blocked.canPublish, false);
   assert.equal(blocked.label, "Chưa thể xuất bản");
-  assert.match(blocked.helpText ?? "", /nguồn Speaking và Writing/);
+  assert.match(blocked.helpText ?? "", /Speaking và Writing/);
 });
 
 test("readiness UI prefers the human message and never needs a raw code or DB id", () => {

@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle2, Loader2, PenLine, Save, Send } from "lucide-react";
+import { CheckCircle2, Loader2, PenLine, Save } from "lucide-react";
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import ImageUploadField from "@/components/admin/ImageUploadField";
-import { BTN_AI, BTN_PRIMARY, BTN_SECONDARY } from "@/components/admin/cmsButtons";
+import { BTN_AI, BTN_SECONDARY } from "@/components/admin/cmsButtons";
 
 type TaskKind = "PICTURE_SENTENCE" | "WRITTEN_REQUEST" | "OPINION_ESSAY";
 type Slot = {
@@ -134,20 +134,6 @@ export default function ToeicWritingExamComposer({
     }
   };
 
-  const publish = async () => {
-    setBusy(true);
-    try {
-      await axiosClient.post(`/admin/exams/${examId}/writing/publish`);
-      toast.success("Phần Writing đã sẵn sàng.");
-      await load();
-      onChanged?.();
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, "Phần Writing chưa đủ điều kiện."));
-    } finally {
-      setBusy(false);
-    }
-  };
-
   if (!section || !slot)
     return (
       <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-sm">
@@ -170,16 +156,6 @@ export default function ToeicWritingExamComposer({
           <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">
             {readyCount}/8 câu
           </span>
-          {section.editable && (
-            <button
-              type="button"
-              onClick={() => void publish()}
-              disabled={busy || readyCount < 8}
-              className={BTN_PRIMARY}
-            >
-              <Send size={15} /> Hoàn tất Writing
-            </button>
-          )}
         </div>
       </div>
 
@@ -197,7 +173,7 @@ export default function ToeicWritingExamComposer({
               type="button"
               onClick={() => setSelected(item.order)}
               aria-pressed={item.order === selected}
-              className={`rounded-lg border p-2 text-left text-sm ${item.order === selected ? "border-blue-500 bg-blue-50" : "border-slate-200 bg-white hover:bg-slate-50"}`}
+              className={`self-start rounded-lg border p-2 text-left text-sm ${item.order === selected ? "border-blue-500 bg-blue-50" : "border-slate-200 bg-white hover:bg-slate-50"}`}
             >
               <span className="flex items-center justify-between font-semibold text-slate-900">
                 Câu {item.order}
