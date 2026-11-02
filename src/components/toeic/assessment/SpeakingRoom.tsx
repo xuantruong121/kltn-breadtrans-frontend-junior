@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueries } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import { CheckCircle2, Loader2, Mic, Square } from "lucide-react";
 
 import { toeicService } from "@/lib/api/services/toeic.service";
@@ -12,11 +13,13 @@ import {
 import { uploadExamRecording } from "@/lib/speaking/examRecordingUpload";
 import { generateSpeakingIdempotencyKey } from "@/lib/speaking/speakingPracticeLogic";
 import { useWavRecorder } from "@/lib/speaking/useWavRecorder";
+import { useSectionMarks } from "@/lib/toeic/useSectionMarks";
 import {
   MAX_SPEAKING_TAKES,
   SPEAKING_GROUPS,
   questionsOf,
   speakingTimeLabel,
+  type PreviousSession,
   type RoomComponent,
 } from "@/lib/toeic/assessmentRoom";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
@@ -239,6 +242,8 @@ export function SpeakingRoom({
   attemptId,
   component,
   sections,
+  previousSession,
+  onContinueSession,
   onSubmitted,
   onExit,
 }: {
@@ -246,6 +251,8 @@ export function SpeakingRoom({
   attemptId: number;
   component: SpeakingComponent;
   sections: RoomComponent[];
+  previousSession: PreviousSession | null;
+  onContinueSession: (attemptId: number) => void;
   onSubmitted: () => void;
   onExit: () => void;
 }) {
@@ -263,6 +270,7 @@ export function SpeakingRoom({
   const exercises = results.map((result) => result.data);
 
   const [activeGroup, setActiveGroup] = useState(0);
+  const { marked, toggleMark } = useSectionMarks(attemptId, component.assessmentComponentId);
   const [takes, setTakes] = useState<Record<number, number>>(() =>
     Object.fromEntries(component.speakingTakes.map((item) => [item.exerciseId, item.takes])),
   );
@@ -337,7 +345,15 @@ export function SpeakingRoom({
       activeGroup={activeGroup}
       onGroupChange={setActiveGroup}
       answered={answered}
+      marked={marked}
       totalQuestions={component.speakingExerciseIds.length}
+      save={{
+        status: "Bản ghi được tự động lưu lên máy chủ.",
+        // A recording is stored the moment it ends, so there is nothing to send.
+        onSave: () => toast.success("Các bản ghi đã được lưu."),
+      }}
+      previousSession={previousSession}
+      onContinueSession={onContinueSession}
       submitting={submit.isPending}
       submitError={submit.isError}
       onSubmit={handleSubmit}
@@ -350,6 +366,7 @@ export function SpeakingRoom({
       )}
       <SpeakingPaper
         tasks={tasks}
+        marks={{ marked, onToggle: toggleMark }}
         renderAnswer={(task) => {
           const exercise = exercises[task.number - 1];
           return (

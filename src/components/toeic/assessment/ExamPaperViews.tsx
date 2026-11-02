@@ -22,11 +22,25 @@ export type WritingPaperTask = {
   email?: string | null;
 };
 
-function QuestionNumber({ value }: { value: number }) {
+/** Clicking a number marks it for review, as on the Listening & Reading paper. */
+export type PaperMarks = { marked: Set<number>; onToggle: (questionNumber: number) => void };
+
+function QuestionNumber({ value, marks }: { value: number; marks?: PaperMarks }) {
+  const base = "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold";
+  const plain = "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300";
+  if (!marks) return <span className={`${base} ${plain}`}>{value}</span>;
+  const flagged = marks.marked.has(value);
   return (
-    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-sm font-bold text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+    <button
+      type="button"
+      onClick={() => marks.onToggle(value)}
+      aria-pressed={flagged}
+      aria-label={flagged ? `Câu ${value}, đang đánh dấu review. Bấm để bỏ` : `Câu ${value}. Bấm để đánh dấu review`}
+      title="Bấm để đánh dấu review"
+      className={`${base} transition-colors ${flagged ? "bg-amber-400 text-amber-950 ring-2 ring-amber-200 dark:ring-amber-900" : `${plain} hover:bg-blue-100`}`}
+    >
       {value}
-    </span>
+    </button>
   );
 }
 
@@ -47,9 +61,11 @@ function PromptImage({ src, alt }: { src: string; alt: string }) {
 export function SpeakingPaper({
   tasks,
   renderAnswer,
+  marks,
 }: {
   tasks: SpeakingPaperTask[];
   renderAnswer: (task: SpeakingPaperTask) => ReactNode;
+  marks?: PaperMarks;
 }) {
   const shared = tasks.find((task) => task.stimulusText);
   if (shared && tasks.length > 1)
@@ -62,7 +78,7 @@ export function SpeakingPaper({
         <ol className="space-y-6">
           {tasks.map((task) => (
             <li key={task.id} id={`question-${task.number}`} className="flex scroll-mt-28 gap-3">
-              <QuestionNumber value={task.number} />
+              <QuestionNumber value={task.number} marks={marks} />
               <div className="min-w-0 flex-1 space-y-2">
                 <p className="text-base leading-7 text-slate-900 dark:text-slate-100">{task.text}</p>
                 {task.audioUrl && (
@@ -92,7 +108,7 @@ export function SpeakingPaper({
             )}
           </div>
           <div className="flex gap-3">
-            <QuestionNumber value={task.number} />
+            <QuestionNumber value={task.number} marks={marks} />
             <div className="min-w-0 flex-1">{renderAnswer(task)}</div>
           </div>
         </li>
@@ -105,9 +121,11 @@ export function SpeakingPaper({
 export function WritingPaper({
   tasks,
   renderAnswer,
+  marks,
 }: {
   tasks: WritingPaperTask[];
   renderAnswer: (task: WritingPaperTask) => ReactNode;
+  marks?: PaperMarks;
 }) {
   return (
     <ol className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -126,7 +144,7 @@ export function WritingPaper({
             {task.prompt && <p className="whitespace-pre-line">{task.prompt}</p>}
           </div>
           <div className="flex gap-3">
-            <QuestionNumber value={task.number} />
+            <QuestionNumber value={task.number} marks={marks} />
             <div className="min-w-0 flex-1">{renderAnswer(task)}</div>
           </div>
         </li>

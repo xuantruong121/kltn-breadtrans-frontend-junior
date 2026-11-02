@@ -3,14 +3,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQueries } from "@tanstack/react-query";
 import { CheckCircle2, Loader2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 import { toeicService } from "@/lib/api/services/toeic.service";
 import { writingService } from "@/lib/api/services/writing.service";
 import {
   WRITING_GROUPS,
   questionsOf,
+  type PreviousSession,
   type RoomComponent,
 } from "@/lib/toeic/assessmentRoom";
+import { useSectionMarks } from "@/lib/toeic/useSectionMarks";
 import { countWritingWords } from "@/lib/writing/writingExperienceLogic";
 import { AssessmentRoom } from "./AssessmentRoom";
 import { WritingPaper, type WritingPaperTask } from "./ExamPaperViews";
@@ -22,6 +25,22 @@ export type WritingComponent = RoomComponent & {
 
 const draftKey = (attemptId: number, quizId: number) =>
   `breadtrans:assessment:${attemptId}:writing:${quizId}`;
+const checkpointKey = (attemptId: number, componentId: number) =>
+  `breadtrans:assessment:${attemptId}:writing-save:${componentId}`;
+
+type Checkpoint = { texts: Record<number, string>; savedAt: string };
+
+const timeOf = (iso: string) =>
+  new Date(iso).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+
+function readCheckpoint(attemptId: number, componentId: number): Checkpoint | null {
+  try {
+    const raw = localStorage.getItem(checkpointKey(attemptId, componentId));
+    return raw ? (JSON.parse(raw) as Checkpoint) : null;
+  } catch {
+    return null;
+  }
+}
 
 function readDrafts(attemptId: number, quizIds: number[]) {
   const drafts: Record<number, string> = {};
@@ -38,6 +57,8 @@ export function WritingRoom({
   attemptId,
   component,
   sections,
+  previousSession,
+  onContinueSession,
   onSubmitted,
   onExit,
 }: {
@@ -45,6 +66,8 @@ export function WritingRoom({
   attemptId: number;
   component: WritingComponent;
   sections: RoomComponent[];
+  previousSession: PreviousSession | null;
+  onContinueSession: (attemptId: number) => void;
   onSubmitted: () => void;
   onExit: () => void;
 }) {
@@ -62,6 +85,10 @@ export function WritingRoom({
   });
   const [activeGroup, setActiveGroup] = useState(0);
   const [texts, setTexts] = useState(() => readDrafts(attemptId, quizIds));
+  const { marked, toggleMark } = useSectionMarks(attemptId, component.assessmentComponentId);
+  const [checkpoint, setCheckpoint] = useState(() =>
+    readCheckpoint(attemptId, component.assessmentComponentId),
+  );
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -85,6 +112,7 @@ export function WritingRoom({
     onSuccess: () => {
       try {
         for (const id of quizIds) localStorage.removeItem(draftKey(attemptId, id));
+        localStorage.removeItem(checkpointKey(attemptId, component.assessmentComponentId));
       } catch {
         // A leftover draft belongs to a finished attempt and is never read again.
       }
@@ -105,6 +133,17 @@ export function WritingRoom({
       ),
     [component.writtenQuizIds, quizIds, texts],
   );
+
+  const saveCheckpoint = () => {
+    const point: Checkpoint = { texts: { ...texts }, savedAt: new Date().toISOString() };
+    try {
+      localStorage.setItem(checkpointKey(attemptId, component.assessmentComponentId), JSON.stringify(point));
+      setCheckpoint(point);
+      toast.success(`Đã lưu bài làm lúc ${timeOf(point.savedAt)}`);
+    } catch {
+      toast.error("Máy này không cho lưu bài. Hãy nộp bài trước khi rời trang.");
+    }
+  };
 
   const failed = results.some((result) => result.isError);
   if (results.some((result) => result.isLoading))
@@ -138,7 +177,26 @@ export function WritingRoom({
       activeGroup={activeGroup}
       onGroupChange={setActiveGroup}
       answered={answered}
+      marked={marked}
       totalQuestions={quizIds.length}
+      save={{
+        status: checkpoint
+          ? `Bản lưu lúc ${timeOf(checkpoint.savedAt)} trên máy này`
+          : "Bài viết được tự động lưu trên máy này.",
+        onSave: saveCheckpoint,
+        restore: checkpoint
+          ? {
+              title: `Bản lưu lúc ${timeOf(checkpoint.savedAt)}`,
+              detail: "Các bài viết đã đổi sau thời điểm đó sẽ bị thay bằng bản đã lưu.",
+              onPick: () => {
+                setTexts({ ...checkpoint.texts });
+                toast.success("Đã khôi phục bản lưu.");
+              },
+            }
+          : null,
+      }}
+      previousSession={previousSession}
+      onContinueSession={onContinueSession}
       submitting={submit.isPending}
       submitError={submit.isError}
       onSubmit={handleSubmit}
@@ -151,6 +209,7 @@ export function WritingRoom({
       )}
       <WritingPaper
         tasks={tasks}
+        marks={{ marked, onToggle: toggleMark }}
         renderAnswer={(task) => {
           const text = texts[task.id] ?? "";
           const handedIn = component.writtenQuizIds.includes(task.id) && !text;

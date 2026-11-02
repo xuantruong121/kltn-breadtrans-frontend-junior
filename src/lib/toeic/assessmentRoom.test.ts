@@ -1,17 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import {
-  SPEAKING_GROUPS,
-  WRITING_GROUPS,
-  groupIndexOf,
-  groupLabel,
-  questionsOf,
-  roomStep,
-  secondsLeft,
-  speakingTimeLabel,
-  type RoomComponent,
-} from "./assessmentRoom.ts";
+import { SPEAKING_GROUPS, WRITING_GROUPS, groupIndexOf, groupLabel, questionsOf, roomStep, secondsLeft, speakingTimeLabel, type RoomComponent, isExamRoomPath, liveSession, sessionOptionDetail } from "./assessmentRoom.ts";
 
 const part = (kind: string, order: number, status: string, extra: Partial<RoomComponent> = {}): RoomComponent => ({
   assessmentComponentId: order * 10,
@@ -91,4 +81,36 @@ test("Listening & Reading runs in its own room until its paper is in", () => {
 test("a finished exam goes to its result", () => {
   assert.equal(roomStep({ status: "COMPLETED", components: [] }).kind, "DONE");
   assert.equal(roomStep({ status: "IN_PROGRESS", components: [part("WRITING", 2, "COMPLETED")] }).kind, "DONE");
+});
+
+test("fullscreen stays between the rooms of one exam and ends elsewhere", () => {
+  assert.equal(isExamRoomPath("/toeic/attempts/12"), true);
+  assert.equal(isExamRoomPath("/toeic/assessments/1/attempts/17"), true);
+  assert.equal(isExamRoomPath("/toeic/assessments/1/attempts/17/result"), false);
+  assert.equal(isExamRoomPath("/toeic/results/12"), false);
+  assert.equal(isExamRoomPath("/exams/5"), false);
+});
+
+const session = {
+  id: 7,
+  startedAt: "2026-11-02T10:00:00.000Z",
+  sectionKind: "WRITING",
+  deadlineAt: "2026-11-02T11:00:00.000Z",
+};
+
+test("a session is offered until its clock runs out", () => {
+  assert.equal(liveSession(null, 0), null);
+  assert.equal(liveSession(session, Date.parse("2026-11-02T10:59:59Z")), session);
+  assert.equal(liveSession(session, Date.parse("2026-11-02T11:00:00Z")), null);
+});
+
+test("a session between sections has no clock and stays offered", () => {
+  const between = { ...session, deadlineAt: null };
+  assert.equal(liveSession(between, Date.parse("2027-01-01")), between);
+  assert.doesNotMatch(sessionOptionDetail(between, 0), /còn khoảng/);
+});
+
+test("the restore option names the section and the minutes left", () => {
+  const detail = sessionOptionDetail(session, Date.parse("2026-11-02T10:30:30Z"));
+  assert.match(detail, /phần Writing, còn khoảng 30 phút/);
 });

@@ -10,13 +10,15 @@ import axiosClient from "@/lib/api/axiosClient";
 import { toeicService } from "@/lib/api/services/toeic.service";
 import { SpeakingRoom, type SpeakingComponent } from "@/components/toeic/assessment/SpeakingRoom";
 import { WritingRoom, type WritingComponent } from "@/components/toeic/assessment/WritingRoom";
-import { SECTION_LABEL, roomStep, type RoomComponent } from "@/lib/toeic/assessmentRoom";
+import { SECTION_LABEL, roomStep, type PreviousSession, type RoomComponent } from "@/lib/toeic/assessmentRoom";
+import { useLeaveFullscreen } from "@/lib/toeic/useExamFullscreen";
 import { useCanonicalExamPath } from "@/lib/toeic/useCanonicalExamPath";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 type Attempt = {
   status: string;
   assessment: { title: string };
+  previousSession?: PreviousSession | null;
   components: Array<RoomComponent & Partial<SpeakingComponent> & Partial<WritingComponent>>;
 };
 
@@ -48,6 +50,7 @@ export default function ToeicAssessmentAttemptPage({
   const refresh = () => client.invalidateQueries({ queryKey });
   const { path: canonicalDetailPath } = useCanonicalExamPath({ assessmentId: id });
   const backHref = canonicalDetailPath ?? `/toeic/assessments/${id}`;
+  useLeaveFullscreen();
 
   const startSection = useMutation({
     mutationFn: async (componentId: number) =>
@@ -123,13 +126,17 @@ export default function ToeicAssessmentAttemptPage({
       title,
       attemptId,
       sections,
+      previousSession: data.previousSession ?? null,
+      onContinueSession: (other: number) => router.replace(`/toeic/assessments/${id}/attempts/${other}`),
       onSubmitted: () => void refresh(),
       onExit: () => router.push(backHref),
     };
+    // Sessions share their sections, so the attempt is part of a room's identity.
+    const roomKey = `${attemptId}:${step.component.assessmentComponentId}`;
     return step.component.kind === "SPEAKING" ? (
-      <SpeakingRoom key={step.component.assessmentComponentId} {...shared} component={step.component as SpeakingComponent} />
+      <SpeakingRoom key={roomKey} {...shared} component={step.component as SpeakingComponent} />
     ) : (
-      <WritingRoom key={step.component.assessmentComponentId} {...shared} component={step.component as WritingComponent} />
+      <WritingRoom key={roomKey} {...shared} component={step.component as WritingComponent} />
     );
   }
 

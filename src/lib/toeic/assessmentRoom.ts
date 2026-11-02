@@ -52,6 +52,42 @@ export function secondsLeft(deadlineAt: string | null | undefined, nowMs: number
   return Math.max(0, (Date.parse(deadlineAt) - nowMs) / 1000);
 }
 
+/** The exam goes on in these pages, so fullscreen stays between them. */
+const EXAM_ROOM_PATH = /^\/toeic\/(attempts\/[^/]+|assessments\/[^/]+\/attempts\/[^/]+)\/?$/;
+
+export function isExamRoomPath(pathname: string): boolean {
+  return EXAM_ROOM_PATH.test(pathname);
+}
+
+/** Another unfinished session of this exam, from the server. */
+export type PreviousSession = {
+  id: number;
+  startedAt: string;
+  sectionKind: string | null;
+  deadlineAt: string | null;
+};
+
+/** The session, unless its clock ran out while this page stayed open. */
+export function liveSession(session: PreviousSession | null | undefined, nowMs: number): PreviousSession | null {
+  if (!session) return null;
+  return session.deadlineAt && Date.parse(session.deadlineAt) <= nowMs ? null : session;
+}
+
+const clockOf = (iso: string) =>
+  new Date(iso).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+
+export function sessionOptionTitle(session: PreviousSession): string {
+  return `Phiên làm dở từ ${clockOf(session.startedAt)}`;
+}
+
+export function sessionOptionDetail(session: PreviousSession, nowMs: number): string {
+  const section = session.sectionKind ? (SECTION_LABEL[session.sectionKind] ?? "phần thi") : "phần thi";
+  const left = secondsLeft(session.deadlineAt, nowMs);
+  const minutes = left === null ? null : Math.ceil(left / 60);
+  const time = minutes === null ? "" : `, còn khoảng ${minutes} phút`;
+  return `Quay lại làm tiếp phần ${section}${time}. Phiên đang làm vẫn được giữ, đồng hồ của nó vẫn chạy.`;
+}
+
 export function speakingTimeLabel(timing: {
   readingSeconds?: number;
   prepSeconds: number;
