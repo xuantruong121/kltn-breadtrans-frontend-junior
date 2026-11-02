@@ -22,6 +22,7 @@ import {
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import DocumentImportButton from "@/components/admin/DocumentImportButton";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import {
   BTN_AI,
@@ -339,6 +340,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
     },
   });
 
+  const [documentText, setDocumentText] = useState("");
   const fullDraftMutation = useMutation({
     mutationFn: async () => {
       const topic = form.title.trim() || form.description.trim();
@@ -350,6 +352,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
           category: form.category || defaultCategory,
           objective: form.description.trim() || undefined,
           count: fullDraftCount,
+          sourceText: documentText || undefined,
         }),
       );
       if (!data?.practiceSet || !Array.isArray(data.exercises))
@@ -505,6 +508,10 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                   />
                 </label>
               )}
+              <DocumentImportButton
+                onText={setDocumentText}
+                disabled={draftLocked}
+              />
               <button
                 type="button"
                 onClick={() => fullDraftMutation.mutate()}

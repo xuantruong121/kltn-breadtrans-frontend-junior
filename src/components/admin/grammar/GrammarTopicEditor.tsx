@@ -22,6 +22,7 @@ import {
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import DocumentImportButton from "@/components/admin/DocumentImportButton";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import {
   BTN_AI,
@@ -123,6 +124,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
   const [copyFrom, setCopyFrom] = useState<GrammarDraft | null>(null);
   const [panel, setPanel] = useState<"paste" | "ai" | null>(null);
   const [aiCount, setAiCount] = useState(5);
+  const [documentText, setDocumentText] = useState("");
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [editingCandidate, setEditingCandidate] = useState<number | null>(null);
   const [pendingQuestions, setPendingQuestions] = useState<GrammarDraft[]>([]);
@@ -275,6 +277,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
             topicTitle: form.title.trim(),
             level: form.level,
             count,
+            sourceText: documentText || undefined,
           }),
         );
         setForm((current) => ({
@@ -909,6 +912,9 @@ function TopicBody({ topic }: { topic: Topic | null }) {
                 >
                   <ClipboardPaste size={16} /> Dán nhiều câu
                 </button>
+                {aiDraftsWholeTopic && (
+                  <DocumentImportButton onText={setDocumentText} />
+                )}
                 <button
                   type="button"
                   onClick={() => setPanel(panel === "ai" ? null : "ai")}

@@ -24,6 +24,7 @@ import {
 
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
+import DocumentImportButton from "@/components/admin/DocumentImportButton";
 import ImageUploadField from "@/components/admin/ImageUploadField";
 import RequiredMediaNotice from "@/components/admin/RequiredMediaNotice";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -467,6 +468,9 @@ export default function SkillCmsWorkspace({
   } | null>(null);
   const [fullDraft, setFullDraft] = useState<CmsFullDraft | null>(null);
   const [fullDraftCount, setFullDraftCount] = useState(5);
+  const [documentText, setDocumentText] = useState("");
+  const [dictationTopic, setDictationTopic] = useState("");
+  const [isDictationAiLoading, setIsDictationAiLoading] = useState(false);
   // AI full draft: the listening form to write (was inferred from the
   // question being edited, so it silently produced dictation).
   const [fullDraftMode, setFullDraftMode] = useState<"DIALOGUE" | "DICTATION">(
@@ -753,6 +757,7 @@ export default function SkillCmsWorkspace({
           currentPrompt: question.prompt.trim() || undefined,
           wordMin: question.wordMin ? Number(question.wordMin) : undefined,
           wordMax: question.wordMax ? Number(question.wordMax) : undefined,
+          sourceText: documentText || undefined,
         },
       );
       const data = response?.data || response;
@@ -768,6 +773,37 @@ export default function SkillCmsWorkspace({
       );
     } finally {
       setIsWritingAiLoading(false);
+    }
+  };
+
+  const handleSuggestDictationLines = async () => {
+    const topic = dictationTopic.trim() || form.title.trim();
+    if (!topic && !documentText) {
+      toast.error("Nhập chủ đề hoặc chọn tài liệu trước.");
+      return;
+    }
+    setIsDictationAiLoading(true);
+    try {
+      const response: any = await axiosClient.post(
+        "/admin/listening/ai/dictation-lines",
+        {
+          topic: topic || "Theo tài liệu",
+          level: form.level || "A2",
+          count: 20,
+          sourceText: documentText || undefined,
+        },
+      );
+      const data = response?.data || response;
+      if (!data?.sentences?.length) {
+        toast.error("AI không trả về câu hợp lệ.");
+        return;
+      }
+      setBulkLines(data.sentences.join("\n"));
+      toast.success("Đã có các câu nháp. Xem lại rồi bấm Thêm.");
+    } catch (error: any) {
+      toast.error(getApiErrorMessage(error, "Không thể soạn câu lúc này."));
+    } finally {
+      setIsDictationAiLoading(false);
     }
   };
 
@@ -789,12 +825,14 @@ export default function SkillCmsWorkspace({
               level: form.level || "A2",
               targetLength: 180,
               count: fullDraftCount,
+              sourceText: documentText || undefined,
             }
           : {
               topic,
               level: form.level || "A2",
               mode: fullDraftMode,
               count: fullDraftCount,
+              sourceText: documentText || undefined,
             },
       );
       const data = response?.data || response;
@@ -987,7 +1025,7 @@ export default function SkillCmsWorkspace({
     }
   };
 
-  const saveQuestion = async () => {
+  const saveQuestion = async (withAudio = false) => {
     if (!id || !question.prompt.trim()) {
       toast.error("Cần nhập đề bài hoặc transcript");
       return;
@@ -1074,20 +1112,22 @@ export default function SkillCmsWorkspace({
           return;
         }
         const payload = questionDraftPayload(question, quizListeningContext());
-        if (question.id) {
-          await axiosClient.patch(
-            domain === "listening"
-              ? `/admin/skill-content/listening/${id}/questions/${question.id}`
-              : `/admin/skill-content/${domain}/${id}/questions/${question.id}`,
-            payload,
-          );
-        } else {
-          await axiosClient.post(
-            domain === "listening"
-              ? `/admin/skill-content/listening/${id}/questions`
-              : `/admin/skill-content/${domain}/${id}/questions`,
-            payload,
-          );
+        const saved = question.id
+          ? await axiosClient.patch(
+              domain === "listening"
+                ? `/admin/skill-content/listening/${id}/questions/${question.id}`
+                : `/admin/skill-content/${domain}/${id}/questions/${question.id}`,
+              payload,
+            )
+          : await axiosClient.post(
+              domain === "listening"
+                ? `/admin/skill-content/listening/${id}/questions`
+                : `/admin/skill-content/${domain}/${id}/questions`,
+              payload,
+            );
+        if (withAudio) {
+          const savedId = question.id ?? unwrap<{ id: number }>(saved)?.id;
+          if (savedId) await generateQuestionAudio(savedId);
         }
       }
       toast.success("Đã lưu câu hỏi");
@@ -1166,6 +1206,23 @@ export default function SkillCmsWorkspace({
       toast.error(
         getApiErrorMessage(error, "Không thể tải audio preview"),
       );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /** After listening to the preview: approve and publish in one step. */
+  const applyArtifact = async (artifactId: number) => {
+    if (!id) return;
+    setBusy(true);
+    try {
+      const base = `/admin/skill-content/listening/${id}/audio/${artifactId}`;
+      await axiosClient.post(`${base}/approve`);
+      await axiosClient.post(`${base}/publish`);
+      toast.success("Học viên đã nghe được audio mới.");
+      await refreshArtifacts();
+    } catch (error: any) {
+      toast.error(getApiErrorMessage(error, "Không thể áp dụng audio"));
     } finally {
       setBusy(false);
     }
@@ -2164,13 +2221,23 @@ export default function SkillCmsWorkspace({
         <div className="mt-4 flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => void saveQuestion()}
+            onClick={() => void saveQuestion(false)}
             disabled={busy || !id}
             className={BTN_PRIMARY}
           >
             {question.id ? <CheckCircle2 size={16} /> : <Plus size={16} />}{" "}
             {question.id ? "Lưu câu hỏi" : "Thêm câu hỏi"}
           </button>
+          {isListening && perQuestionAudio && (
+            <button
+              type="button"
+              onClick={() => void saveQuestion(true)}
+              disabled={busy || !id}
+              className={BTN_AI}
+            >
+              <FileAudio size={16} /> Lưu và tạo audio
+            </button>
+          )}
           <button
             type="button"
             onClick={() => {
@@ -2298,6 +2365,10 @@ export default function SkillCmsWorkspace({
                     />
                   </label>
                 )}
+                <DocumentImportButton
+                  onText={setDocumentText}
+                  disabled={draftLocked}
+                />
                 <button
                   type="button"
                   onClick={() => void handleSuggestFullDraft()}
@@ -2532,12 +2603,12 @@ export default function SkillCmsWorkspace({
                         <button
                           type="button"
                           onClick={() =>
-                            void audioAction("approve", currentArtifact.id)
+                            void applyArtifact(currentArtifact.id)
                           }
                           disabled={busy}
                           className={BTN_PRIMARY}
                         >
-                          <CheckCircle2 size={16} /> Duyệt audio
+                          <CheckCircle2 size={16} /> Áp dụng audio cho học viên
                         </button>
                       )}
                       {currentArtifact.status === "APPROVED" && (
@@ -2872,6 +2943,27 @@ export default function SkillCmsWorkspace({
             <div className="mt-4">
               {isBulkOpen ? (
                 <div className="rounded-lg border border-blue-300 bg-blue-50/30 p-4">
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                    <input
+                      aria-label="Chủ đề các câu chép chính tả"
+                      value={dictationTopic}
+                      onChange={(event) => setDictationTopic(event.target.value)}
+                      placeholder="Chủ đề, ví dụ: đặt lịch hẹn"
+                      className="min-h-10 min-w-48 flex-1 rounded-lg border border-slate-300 px-3 text-sm"
+                    />
+                    <DocumentImportButton onText={setDocumentText} />
+                    <button
+                      type="button"
+                      disabled={isDictationAiLoading}
+                      onClick={() => void handleSuggestDictationLines()}
+                      className={BTN_AI}
+                    >
+                      {isDictationAiLoading && (
+                        <Loader2 size={14} className="animate-spin" />
+                      )}
+                      AI soạn 20 câu
+                    </button>
+                  </div>
                   <label className="block text-sm font-semibold text-slate-900">
                     Thêm nhiều câu nghe chép
                     <span className="mt-0.5 block text-xs font-medium text-slate-600 dark:text-slate-400">
@@ -3900,6 +3992,7 @@ export default function SkillCmsWorkspace({
               )}
             </div>
             <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-4">
+              <DocumentImportButton onText={setDocumentText} />
               <button
                 type="button"
                 onClick={() => void handleSuggestWritingTask()}

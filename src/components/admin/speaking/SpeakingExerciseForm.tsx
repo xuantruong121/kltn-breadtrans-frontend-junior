@@ -80,7 +80,7 @@ export default function SpeakingExerciseForm({
   };
 
   const saveMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (withAudio: boolean) => {
       const dto = {
         title: form.title,
         targetText: form.targetText,
@@ -90,7 +90,7 @@ export default function SpeakingExerciseForm({
         stimulusId: form.stimulusId,
         imageUrl: form.imageUrl || null,
       };
-      return exercise
+      const saved: any = await (exercise
         ? axiosClient.patch(
             `/admin/skill-content/speaking/${set.id}/exercises/${exercise.id}`,
             dto,
@@ -98,14 +98,22 @@ export default function SpeakingExerciseForm({
         : axiosClient.post(
             `/admin/skill-content/speaking/${set.id}/exercises`,
             dto,
-          );
+          ));
+      const savedId = exercise?.id ?? (saved?.data ?? saved)?.id;
+      if (withAudio && savedId) {
+        await axiosClient.post(
+          `/admin/skill-content/speaking/${set.id}/exercises/${savedId}/reference-audio`,
+        );
+      }
     },
-    onSuccess: () => {
+    onSuccess: (_data, withAudio) => {
       const sentenceChanged =
         exercise?.audioUrl &&
         exercise.targetText.trim() !== form.targetText.trim();
       toast.success(
-        sentenceChanged
+        withAudio
+          ? "Đã lưu và tạo audio mẫu."
+          : sentenceChanged
           ? "Đã lưu. Câu mẫu đổi nên audio mẫu cũ đã ngừng dùng — hãy tạo lại."
           : exercise
             ? "Đã lưu câu luyện."
@@ -168,7 +176,7 @@ export default function SpeakingExerciseForm({
     },
   });
 
-  const submit = () => {
+  const submit = (withAudio: boolean) => {
     if (!form.title.trim() || !form.targetText.trim()) {
       toast.error("Cần nhập tiêu đề và câu mẫu.");
       return;
@@ -181,7 +189,7 @@ export default function SpeakingExerciseForm({
       toast.error("Chọn hoặc tạo thông tin dùng chung.");
       return;
     }
-    saveMutation.mutate();
+    saveMutation.mutate(withAudio);
   };
 
   return (
@@ -449,7 +457,7 @@ export default function SpeakingExerciseForm({
       <div className="mt-4 flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={submit}
+          onClick={() => submit(false)}
           disabled={saveMutation.isPending}
           className={BTN_PRIMARY}
         >
@@ -457,6 +465,14 @@ export default function SpeakingExerciseForm({
             <Loader2 size={14} className="animate-spin" />
           )}
           {exercise ? "Lưu câu luyện" : "Thêm câu luyện"}
+        </button>
+        <button
+          type="button"
+          onClick={() => submit(true)}
+          disabled={saveMutation.isPending}
+          className={BTN_AI}
+        >
+          Lưu và tạo audio
         </button>
         <button type="button" onClick={onDone} className={BTN_SECONDARY}>
           Hủy

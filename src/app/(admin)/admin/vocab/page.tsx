@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, Loader2, Plus, Search, Send, Trash2 } from "lucide-react";
+import { ArrowRight, FileUp, Loader2, Plus, Search, Send, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -12,6 +12,8 @@ import { VOCAB_LEVELS } from "@/components/admin/vocab/vocabCms";
 import { Pagination } from "@/components/ui";
 import { useAdminList } from "@/components/admin/useAdminList";
 import { ADMIN_PAGE_SIZES } from "@/components/admin/adminList";
+import { BTN_SECONDARY } from "@/components/admin/cmsButtons";
+import VocabDocumentImport from "@/components/admin/vocab/VocabDocumentImport";
 
 type DeckSummary = {
   id: number;
@@ -34,6 +36,7 @@ const wordCount = (deck: DeckSummary) => deck._count?.words ?? deck.totalWords ?
 
 export default function AdminVocabPage() {
   const queryClient = useQueryClient();
+  const [importing, setImporting] = useState(false);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("ALL");
   const [level, setLevel] = useState("ALL");
@@ -75,13 +78,24 @@ export default function AdminVocabPage() {
             {totalDecks} bộ · {published} đã xuất bản · {totalDecks - published} bản nháp
           </p>
         </div>
-        <Link
-          href="/admin/vocab/new"
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setImporting(true)}
+            className={BTN_SECONDARY}
+          >
+            <FileUp size={16} /> Tạo từ tài liệu
+          </button>
+          <Link
+            href="/admin/vocab/new"
           className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
         >
-          <Plus size={16} /> Tạo bộ từ
-        </Link>
+            <Plus size={16} /> Tạo bộ từ
+          </Link>
+        </div>
       </header>
+
+      {importing && <VocabDocumentImport onClose={() => setImporting(false)} />}
 
       <div className="space-y-3">
         <label className="relative block">
