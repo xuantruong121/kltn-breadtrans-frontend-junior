@@ -172,7 +172,7 @@ export function WritingTasksResult({ tasks }: { tasks: ToeicWritingTask[] }) {
                   {t.status === "GRADED" && t.submission ? `${t.submission.score}${t.submission.maxScore ? `/${t.submission.maxScore}` : ""}` : "—"}
                 </span>
                 <TaskStatus status={t.status} />
-                {t.submission ? (
+                {t.status === "GRADED" && t.submission ? (
                   <Link href={`/writing/submissions/${t.submission.id}`} className={detailClass}>
                     [Chi tiết]
                   </Link>

@@ -137,12 +137,15 @@ export default function ToeicAssessmentDetail({
       }
       cta={{
         label: isCompleted
-          ? "Đã hoàn thành"
+          ? "Xem kết quả"
           : data.attempt
             ? "Tiếp tục làm bài"
             : "Bắt đầu làm bài",
-        onClick: () => start.mutate(),
-        disabled: isCompleted || !readiness.ready,
+        onClick: () =>
+          isCompleted && data.attempt
+            ? router.push(`/toeic/assessments/${id}/attempts/${data.attempt.id}/result`)
+            : start.mutate(),
+        disabled: !isCompleted && !readiness.ready,
         pending: start.isPending,
       }}
       ctaError={error || null}

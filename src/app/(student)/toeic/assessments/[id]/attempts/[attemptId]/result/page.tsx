@@ -10,6 +10,7 @@ import {
   type ToeicSpeakingTask,
   type ToeicWritingTask,
 } from "@/lib/api/services/toeic.service";
+import { useCanonicalExamPath } from "@/lib/toeic/useCanonicalExamPath";
 import { ToeicLrResult } from "@/components/toeic/result/ToeicLrResult";
 import { SpeakingTasksResult, WritingTasksResult } from "@/components/toeic/result/ToeicSkillTasks";
 
@@ -46,6 +47,7 @@ export default function ToeicAssessmentResultPage({ params }: { params: Promise<
   const { id, attemptId: raw } = use(params);
   const attemptId = Number(raw);
   const [tab, setTab] = useState<Tab>("OVERVIEW");
+  const { path: canonicalPath } = useCanonicalExamPath({ assessmentId: Number(id) });
   const { data, isLoading, isError } = useQuery({
     queryKey: ["toeic-assessment-review", attemptId],
     queryFn: () => toeicService.getAssessmentReview(attemptId),
@@ -79,8 +81,8 @@ export default function ToeicAssessmentResultPage({ params }: { params: Promise<
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-20 pt-8 sm:px-6">
-      <Link href={`/toeic/assessments/${id}/attempts/${attemptId}`} className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-900 dark:text-slate-300">
-        <ArrowLeft size={16} aria-hidden="true" /> Tiến độ bài thi
+      <Link href={canonicalPath ?? `/toeic/assessments/${id}`} className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-900 dark:text-slate-300">
+        <ArrowLeft size={16} aria-hidden="true" /> Về trang đề
       </Link>
       <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100 sm:text-3xl">Kết quả thi: {data.assessment.title}</h1>
       <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">

@@ -15,6 +15,8 @@ test("Route classification: Active answering rooms hide global navigation", () =
   assert.equal(isLearningFocusRoute("/writing/789"), true);
   assert.equal(isLearningFocusRoute("/flashcard/999"), true);
   assert.equal(isLearningFocusRoute("/toeic/attempts/1"), true);
+  assert.equal(isLearningFocusRoute("/toeic/assessments/3/attempts/9"), true);
+  assert.equal(isLearningFocusRoute("/toeic/assessments/3/attempts/9/result"), false);
   assert.equal(isLearningFocusRoute("/diagnostic"), false);
   assert.equal(isLearningFocusRoute("/gate/listening"), true);
   assert.equal(isLearningFocusRoute("/vocabulary/study"), true);

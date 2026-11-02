@@ -1,9 +1,9 @@
 "use client";
 
-import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, Mic } from "lucide-react";
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import type { ToeicQuestionGroup } from "@/lib/api/services/toeic.service";
@@ -11,7 +11,9 @@ import { PracticeHeader } from "@/components/practice/PracticeHeader";
 import { ToeicExamPaper } from "@/components/toeic/paper/ToeicExamPaper";
 import { ToeicListeningBar } from "@/components/toeic/paper/ToeicListeningBar";
 import { ToeicQuestionNavigator } from "@/components/toeic/paper/ToeicQuestionNavigator";
+import { SpeakingPaper, WritingPaper } from "@/components/toeic/assessment/ExamPaperViews";
 import { buildPaperParts } from "@/lib/toeic/examPaper";
+import { SPEAKING_GROUPS, WRITING_GROUPS, groupLabel, type RoomGroup } from "@/lib/toeic/assessmentRoom";
 
 type PreviewGroup = ToeicQuestionGroup & { audioSrc: string | null };
 
@@ -48,6 +50,42 @@ type LearnerPreviewDto = {
 
 type Section = "LR" | "SPEAKING" | "WRITING";
 
+/** The same tabs a learner sees in the exam room. */
+function PreviewGroups({
+  groups,
+  children,
+}: {
+  groups: readonly RoomGroup[];
+  children: (group: RoomGroup) => ReactNode;
+}) {
+  const [active, setActive] = useState(0);
+  const group = groups[active];
+  return (
+    <div className="px-3 py-4 sm:px-5">
+      <div role="tablist" aria-label="Nhóm câu" className="flex gap-1.5 overflow-x-auto pb-1">
+        {groups.map((g, index) => (
+          <button
+            key={g.from}
+            type="button"
+            role="tab"
+            aria-selected={index === active}
+            onClick={() => setActive(index)}
+            className={`min-h-9 shrink-0 rounded-full px-3.5 text-sm font-semibold transition-colors ${
+              index === active
+                ? "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300"
+                : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            }`}
+          >
+            {groupLabel(g)}
+          </button>
+        ))}
+      </div>
+      <p className="mb-3 mt-3 text-sm font-semibold text-slate-700 dark:text-slate-300">{group.title}</p>
+      {children(group)}
+    </div>
+  );
+}
+
 const SECTION_LABELS: Record<Section, string> = {
   LR: "Listening & Reading",
   SPEAKING: "Speaking",
@@ -55,36 +93,6 @@ const SECTION_LABELS: Record<Section, string> = {
 };
 
 const PREVIEW_ONLY = "Đây là bản xem trước nên bài làm không được lưu hay nộp.";
-
-function TaskCard({
-  label,
-  imageUrl,
-  children,
-}: {
-  label: string;
-  imageUrl?: string | null;
-  children: React.ReactNode;
-}) {
-  return (
-    <article className="rounded-lg border border-slate-200 p-4 dark:border-slate-800">
-      <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
-        {label}
-      </p>
-      {imageUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={imageUrl}
-          alt={label}
-          loading="lazy"
-          className="mt-3 max-h-80 w-auto max-w-full rounded-md border border-slate-200 dark:border-slate-800"
-        />
-      )}
-      <div className="mt-2 text-[15px] leading-7 text-slate-800 dark:text-slate-100">
-        {children}
-      </div>
-    </article>
-  );
-}
 
 export default function ExamLearnerPreviewPage({
   params,
@@ -337,41 +345,40 @@ export default function ExamLearnerPreviewPage({
       )}
 
       {shownSection === "SPEAKING" && (
-        <div className="mx-auto max-w-3xl space-y-3 px-3 py-4 sm:px-5">
-          {data.speaking?.map((task) => (
-            <TaskCard
-              key={task.id}
-              label={`Câu ${task.order}`}
-              imageUrl={task.imageUrl}
-            >
-              {task.stimulusText && (
-                <p className="mb-2 whitespace-pre-line rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900">
-                  {task.stimulusText}
-                </p>
+        <PreviewGroups key="SPEAKING" groups={SPEAKING_GROUPS}>
+          {(group) => (
+            <SpeakingPaper
+              tasks={(data.speaking ?? [])
+                .filter((task) => task.order >= group.from && task.order <= group.to)
+                .map((task) => ({ id: task.id, number: task.order, text: task.targetText, imageUrl: task.imageUrl, stimulusText: task.stimulusText }))}
+              renderAnswer={() => (
+                <span className="inline-flex min-h-11 items-center gap-2 rounded-md bg-amber-500 px-4 text-sm font-bold uppercase text-white opacity-60">
+                  <Mic size={16} aria-hidden="true" /> Thu âm
+                </span>
               )}
-              <p className="whitespace-pre-line">{task.targetText}</p>
-            </TaskCard>
-          ))}
-        </div>
+            />
+          )}
+        </PreviewGroups>
       )}
 
       {shownSection === "WRITING" && (
-        <div className="mx-auto max-w-3xl space-y-3 px-3 py-4 sm:px-5">
-          {data.writing?.map((task) => (
-            <TaskCard
-              key={task.id}
-              label={`Câu ${task.order}`}
-              imageUrl={task.imageUrl}
-            >
-              <p className="whitespace-pre-line">{task.prompt}</p>
-              {Boolean(task.keywords?.length) && (
-                <p className="mt-1 font-semibold">
-                  Từ khoá: {task.keywords?.join(", ")}
-                </p>
+        <PreviewGroups key="WRITING" groups={WRITING_GROUPS}>
+          {(group) => (
+            <WritingPaper
+              tasks={(data.writing ?? [])
+                .filter((task) => task.order >= group.from && task.order <= group.to)
+                .map((task) => ({ id: task.id, number: task.order, prompt: task.prompt ?? "", imageUrl: task.imageUrl, keywords: task.keywords }))}
+              renderAnswer={(task) => (
+                <textarea
+                  disabled
+                  rows={task.number <= 5 ? 4 : 14}
+                  aria-label={`Ô viết câu ${task.number}`}
+                  className="w-full rounded-md border border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-900"
+                />
               )}
-            </TaskCard>
-          ))}
-        </div>
+            />
+          )}
+        </PreviewGroups>
       )}
 
       <audio

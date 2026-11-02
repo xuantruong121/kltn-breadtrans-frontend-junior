@@ -25,6 +25,9 @@ export interface AssessmentPolicy {
   allowContextMenu: boolean;
 }
 
+/** The S&W and 4 Skills exam room; its /result page is not part of it. */
+const ASSESSMENT_ROOM = /^\/toeic\/assessments\/[^/]+\/attempts\/[^/]+\/?$/;
+
 /**
  * Classifies a pathname into a specific practice route kind.
  */
@@ -40,7 +43,10 @@ export function classifyPracticeRoute(pathname: string): PracticeRouteKind {
   }
 
   // 2. Specific sub-routes that are Active Answering Rooms
-  if (/^\/toeic\/attempts\/[^/]+(?:\/|$)/.test(pathname)) {
+  if (
+    /^\/toeic\/attempts\/[^/]+(?:\/|$)/.test(pathname) ||
+    ASSESSMENT_ROOM.test(pathname)
+  ) {
     return "TOEIC_ATTEMPT_ROOM";
   }
   if (/^\/speaking\/[^/]+(?:\/|$)/.test(pathname)) {
@@ -104,7 +110,8 @@ export function isLearningFocusRoute(pathname: string): boolean {
   // while keeping /toeic/attempts/[attemptId]
   if (
     /^\/toeic\/[^/]+(?:\/|$)/.test(pathname) &&
-    !pathname.startsWith("/toeic/attempts/")
+    !pathname.startsWith("/toeic/attempts/") &&
+    !ASSESSMENT_ROOM.test(pathname)
   ) {
     return false;
   }
@@ -117,6 +124,7 @@ export function isLearningFocusRoute(pathname: string): boolean {
     /^\/gate\/[^/]+(?:\/|$)/.test(pathname) ||
     /^\/flashcard\/[^/]+(?:\/|$)/.test(pathname) ||
     /^\/toeic\/attempts\/[^/]+(?:\/|$)/.test(pathname) ||
+    ASSESSMENT_ROOM.test(pathname) ||
     pathname === "/vocabulary/study" ||
     pathname.startsWith("/vocabulary/study/")
   );

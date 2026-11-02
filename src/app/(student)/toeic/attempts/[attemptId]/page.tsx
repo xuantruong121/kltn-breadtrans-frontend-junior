@@ -70,8 +70,11 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const parentAttemptId = searchParams.get("parentAttemptId");
-  const parentComponentId = searchParams.get("parentComponentId");
   const parentAssessmentId = searchParams.get("parentAssessmentId");
+  const examRoom =
+    parentAttemptId && parentAssessmentId
+      ? `/toeic/assessments/${parentAssessmentId}/attempts/${parentAttemptId}`
+      : null;
 
   const [answers, setAnswers] = useState<Record<number, number> | null>(null);
   const [marked, setMarked] = useState<Set<number>>(new Set());
@@ -535,16 +538,17 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
     },
     onSuccess: () => {
       leave();
-      const query = [
-        parentAttemptId ? `parentAttemptId=${parentAttemptId}` : "",
-        parentComponentId ? `parentComponentId=${parentComponentId}` : "",
-        parentAssessmentId ? `parentAssessmentId=${parentAssessmentId}` : "",
-      ]
-        .filter(Boolean)
-        .join("&");
-      router.push(`/toeic/results/${attemptId}${query ? `?${query}` : ""}`);
+      // Inside a 4 Skills exam the next section follows; results come at the end.
+      router.push(examRoom ?? `/toeic/results/${attemptId}`);
     },
   });
+  // A part of a longer exam ends on the clock so the next section can open.
+  const { mutate: submitNow, isPending: submitPending } = submit;
+  const deadlineMs = attempt?.deadline ? Date.parse(attempt.deadline) : null;
+  const overdue = Boolean(examRoom && attempt?.status === "IN_PROGRESS" && deadlineMs && nowMs >= deadlineMs);
+  useEffect(() => {
+    if (overdue && !submitPending) submitNow();
+  }, [overdue, submitPending, submitNow]);
   const cancel = useMutation({
     mutationFn: () => toeicService.cancelAttempt(attemptId),
     onSuccess: () => {
@@ -802,15 +806,25 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
           <div role="dialog" aria-modal="true" className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900">
             <AlertTriangle className="text-rose-600 dark:text-rose-400" />
-            <h2 className="mt-3 text-xl font-bold text-slate-900 dark:text-slate-100">Thoát và hủy lượt thi?</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Lượt thi đang làm dở sẽ bị hủy và các câu trả lời chưa nộp sẽ mất.</p>
+            <h2 className="mt-3 text-xl font-bold text-slate-900 dark:text-slate-100">{examRoom ? "Thoát khỏi phòng thi?" : "Thoát và hủy lượt thi?"}</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+              {examRoom
+                ? "Đồng hồ vẫn chạy khi bạn rời đi. Mở lại đề thi để làm tiếp."
+                : "Lượt thi đang làm dở sẽ bị hủy và các câu trả lời chưa nộp sẽ mất."}
+            </p>
             <div className="mt-6 flex flex-col-reverse justify-end gap-2.5 sm:flex-row">
               <button type="button" onClick={() => setShowExit(false)} className="min-h-11 rounded-md border border-slate-200 px-4 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
                 Ở lại làm bài
               </button>
-              <button type="button" onClick={() => cancel.mutate()} disabled={cancel.isPending} className="min-h-11 rounded-md bg-rose-600 px-4 text-sm font-bold text-white hover:bg-rose-700 disabled:opacity-60">
-                {cancel.isPending ? "Đang hủy..." : "Hủy lượt thi"}
-              </button>
+              {examRoom ? (
+                <button type="button" onClick={() => router.push("/exams")} className="min-h-11 rounded-md bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700">
+                  Thoát
+                </button>
+              ) : (
+                <button type="button" onClick={() => cancel.mutate()} disabled={cancel.isPending} className="min-h-11 rounded-md bg-rose-600 px-4 text-sm font-bold text-white hover:bg-rose-700 disabled:opacity-60">
+                  {cancel.isPending ? "Đang hủy..." : "Hủy lượt thi"}
+                </button>
+              )}
             </div>
           </div>
         </div>
