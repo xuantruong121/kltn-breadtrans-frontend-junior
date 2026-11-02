@@ -514,6 +514,30 @@ export default function AdminExamsPage() {
       ),
   });
 
+  const fillMissingImagesMutation = useMutation({
+    mutationFn: async (examId: number) => {
+      const res = await axiosClient.post(
+        `/admin/exams/${examId}/ai/images/fill-missing`,
+      );
+      return res.data.data as { filled: string[]; missing: string[] };
+    },
+    onSuccess: ({ filled, missing }) => {
+      if (missing.length)
+        toast.error(
+          `Đã có ảnh cho ${filled.length} ô. Còn thiếu: ${missing.join(", ")}.`,
+        );
+      else if (filled.length)
+        toast.success(`Đã tìm được ảnh cho ${filled.length} ô.`);
+      else toast.success("Đề không còn ô nào thiếu ảnh.");
+      queryClient.invalidateQueries({
+        queryKey: ["admin-exam-detail", selectedExamId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
+    },
+    onError: (err: any) =>
+      toast.error(getApiErrorMessage(err, "Không thể tìm ảnh còn thiếu")),
+  });
+
   const imageSearchMutation = useMutation({
     mutationFn: async ({
       group,
@@ -777,6 +801,14 @@ export default function AdminExamsPage() {
                 ) : (
                   <div className="flex flex-col items-end gap-1">
                     <button
+                      onClick={() => fillMissingImagesMutation.mutate(examDetail.id)}
+                      disabled={fillMissingImagesMutation.isPending}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      <ImageIcon size={15} />
+                      {fillMissingImagesMutation.isPending ? "Đang tìm ảnh..." : "Tìm ảnh còn thiếu"}
+                    </button>
+                    <button
                       onClick={() => publishExamMutation.mutate(examDetail.id)}
                       disabled={publishExamMutation.isPending || !publishReadiness.canPublish}
                       title={publishReadiness.helpText}
@@ -935,6 +967,14 @@ export default function AdminExamsPage() {
               </button>
                 ) : (
                   <div className="flex flex-col items-end gap-1">
+                    <button
+                      onClick={() => fillMissingImagesMutation.mutate(examDetail.id)}
+                      disabled={fillMissingImagesMutation.isPending}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      <ImageIcon size={15} />
+                      {fillMissingImagesMutation.isPending ? "Đang tìm ảnh..." : "Tìm ảnh còn thiếu"}
+                    </button>
                     <button
                       onClick={() => publishExamMutation.mutate(examDetail.id)}
                       disabled={publishExamMutation.isPending || !publishReadiness.canPublish}
@@ -3030,7 +3070,7 @@ export default function AdminExamsPage() {
                   onChange={(e) =>
                     setExamForm({ ...examForm, title: e.target.value })
                   }
-                  placeholder="e.g. ETS TOEIC Practice Test 01"
+                  placeholder="VD: TOEIC Practice Test 01"
                   required
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
                 />
