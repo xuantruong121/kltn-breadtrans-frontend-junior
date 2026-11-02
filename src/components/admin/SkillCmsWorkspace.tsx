@@ -1131,6 +1131,12 @@ export default function SkillCmsWorkspace({
         }
       }
       toast.success("Đã lưu câu hỏi");
+      if (isListening && !withAudio && item?.publicationStatus === "PUBLISHED") {
+        toast(
+          "Bài đang xuất bản: nếu đã đổi câu đọc, học viên chưa nghe được cho tới khi tạo lại audio.",
+          { icon: "!" },
+        );
+      }
       setQuestion(emptyQuestion(domain));
       setIsAddingQuestion(false);
       await loadItem();
