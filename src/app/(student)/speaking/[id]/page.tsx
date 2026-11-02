@@ -29,7 +29,6 @@ import {
   SpeakingSubmissionSummary,
   WordAssessmentItem,
 } from "@/lib/api/services/speaking.service";
-import axiosClient from "@/lib/api/axiosClient";
 import {
   SpeakingAttemptPhase,
   generateSpeakingIdempotencyKey,
@@ -110,27 +109,7 @@ export default function SpeakingExerciseDetailPage() {
   const router = useRouter();
   const exerciseId = Number(id);
   const practiceSetKey = searchParams.get("set");
-  const parentAttemptId = searchParams.get("parentAttemptId");
-  const parentComponentId = searchParams.get("parentComponentId");
-  const examExerciseIds = (searchParams.get("examExerciseIds") ?? "")
-    .split(",")
-    .map(Number)
-    .filter((value) => Number.isInteger(value) && value > 0);
-  const examParentContext =
-    parentAttemptId && parentComponentId
-      ? {
-          attemptId: Number(parentAttemptId),
-          componentId: Number(parentComponentId),
-        }
-      : undefined;
-  const parentAssessmentId = searchParams.get("parentAssessmentId");
-  // In a TOEIC assessment, "back" means the exam's section list, not the
-  // practice catalogue.
-  const examReturn =
-    parentAssessmentId && parentAttemptId
-      ? `/toeic/assessments/${parentAssessmentId}/attempts/${parentAttemptId}`
-      : null;
-  const exitHref = examReturn ?? "/speaking";
+  const exitHref = "/speaking";
   const queryClient = useQueryClient();
 
   // Explicit Attempt State Machine
@@ -156,7 +135,6 @@ export default function SpeakingExerciseDetailPage() {
   const attemptIdempotencyKeyRef = useRef<string | null>(null);
   const isMountedRef = useRef(true);
   const currentSubmissionIdRef = useRef<number | null>(null);
-  const parentCompletionRef = useRef(false);
   const pollingStartTimeRef = useRef<number>(0);
   const scoreVisibilityStartRef = useRef<number | null>(null);
   const { socket } = useSocket();
@@ -195,7 +173,7 @@ export default function SpeakingExerciseDetailPage() {
   const completionToastShownRef = useRef<Set<number>>(new Set());
 
   // Utilities State
-  const [isBilingual, setIsBilingual] = useState(!examReturn);
+  const [isBilingual, setIsBilingual] = useState(true);
   const [isSaved, setIsSaved] = useState(() => {
     if (typeof window === "undefined" || !exerciseId) return false;
     try {
@@ -292,7 +270,7 @@ export default function SpeakingExerciseDetailPage() {
     refetch: refetchExercise,
   } = useQuery({
     queryKey: ["speaking-exercise", exerciseId],
-    queryFn: () => speakingService.getExerciseById(exerciseId, examParentContext),
+    queryFn: () => speakingService.getExerciseById(exerciseId),
     enabled: !!exerciseId,
   });
 
@@ -300,15 +278,6 @@ export default function SpeakingExerciseDetailPage() {
   useEffect(() => {
     maxRecordingSecondsRef.current = responseSeconds;
   }, [responseSeconds]);
-  // TOEIC exam tasks run on the exam clock: reading and preparation time,
-  // then the recording starts by itself.
-  const isExamTask = examExerciseIds.length > 0 || Boolean(parentAttemptId);
-  const prepTotalSeconds = isExamTask
-    ? (exercise?.timing?.readingSeconds ?? 0) + (exercise?.timing?.prepSeconds ?? 0)
-    : 0;
-  const [prepRemaining, setPrepRemaining] = useState<number | null>(null);
-  const [promptPlaying, setPromptPlaying] = useState(false);
-
   // UK plays the British twin when the exercise has one, otherwise the US clip.
   const referenceAudioUrl =
     (ttsAccent === "UK" ? exercise?.audioUrlUk : null) ?? exercise?.audioUrl ?? null;
@@ -362,18 +331,11 @@ export default function SpeakingExerciseDetailPage() {
       practiceSetExercises.findIndex((item) => item.id === exerciseId) + 1)
     : 0;
 
-  // Same order as "Câu tiếp theo": the exam's task list, the practice set, or the catalog.
-  // Same order as "Câu tiếp theo": the exam's task list, the practice set, or the catalog.
-  const examExerciseIdsParam = searchParams.get("examExerciseIds") ?? "";
-  const previousExerciseId = useMemo(() => {
-    const examIds = examExerciseIdsParam
-      .split(",")
-      .map(Number)
-      .filter((value) => Number.isInteger(value) && value > 0);
-    return examIds.length
-      ? getPreviousExerciseId(exerciseId, examIds.map((id) => ({ id })))
-      : getPreviousExerciseId(exerciseId, orderedExercises);
-  }, [examExerciseIdsParam, exerciseId, orderedExercises]);
+  // Same order as "Câu tiếp theo": the practice set, or the catalog.
+  const previousExerciseId = useMemo(
+    () => getPreviousExerciseId(exerciseId, orderedExercises),
+    [exerciseId, orderedExercises],
+  );
 
   const isNextAvailable = useMemo(() => {
     if (!orderedExercises.length || !exerciseId) return false;
@@ -889,39 +851,6 @@ export default function SpeakingExerciseDetailPage() {
               queryClient.invalidateQueries({ predicate: (q) => dependsOnLevel(q.queryKey) });
             }
             if (
-              parentAttemptId &&
-              parentComponentId &&
-              practiceSetKey &&
-              !parentCompletionRef.current
-            ) {
-              parentCompletionRef.current = true;
-              void speakingService
-                .getExercises()
-                .then((exercises) => {
-                  const sessionExercises = examExerciseIds.length
-                    ? examExerciseIds.map((id) => ({ id }))
-                    : exercises
-                    .filter((item) => item.practiceSet?.key === practiceSetKey)
-                    .sort(
-                      (a: { id: number; order?: number | null; practiceSet?: { position?: number } }, b: { id: number; order?: number | null; practiceSet?: { position?: number } }) =>
-                        (a.order ?? a.practiceSet?.position ?? Number.MAX_SAFE_INTEGER) -
-                          (b.order ?? b.practiceSet?.position ?? Number.MAX_SAFE_INTEGER) ||
-                        a.id - b.id,
-                    );
-                  if (getNextExerciseId(exerciseId, sessionExercises)) {
-                    parentCompletionRef.current = false;
-                    return;
-                  }
-                  return axiosClient.post(
-                    `/toeic/assessments/attempts/${parentAttemptId}/components/${parentComponentId}/complete`,
-                    {},
-                  );
-                })
-                .catch(() => {
-                  parentCompletionRef.current = false;
-                });
-            }
-            if (
               sub.feedbackStatus === "PENDING" ||
               sub.feedbackStatus === "PROCESSING"
             ) {
@@ -954,9 +883,6 @@ export default function SpeakingExerciseDetailPage() {
     [
       queryClient,
       exerciseId,
-      parentAttemptId,
-      parentComponentId,
-      practiceSetKey,
     ],
   );
 
@@ -1077,7 +1003,6 @@ export default function SpeakingExerciseDetailPage() {
           blob,
           key,
           traceId,
-          examParentContext,
         );
 
         currentSubmissionIdRef.current = response.submissionId;
@@ -1121,7 +1046,6 @@ export default function SpeakingExerciseDetailPage() {
               idempotencyKey: key,
             },
             traceId,
-            examParentContext,
           );
 
           if (intent.isAlreadyFinalized && intent.submissionId) {
@@ -1344,57 +1268,6 @@ export default function SpeakingExerciseDetailPage() {
     }
   }, [phase, startWaveformVisualizer]);
 
-  // Exam clock: start the reading/preparation time once per task, then
-  // record automatically when it runs out (ETS TOEIC Speaking flow).
-  const prepStartedForRef = useRef<number | null>(null);
-  useEffect(() => {
-    if (!isExamTask || !exercise || prepTotalSeconds <= 0) return;
-    if (phase !== "READY" || audioBlob || currentSubmission) return;
-    if (prepStartedForRef.current === exerciseId) return;
-    prepStartedForRef.current = exerciseId;
-    const startPrep = () => {
-      setPromptPlaying(false);
-      setPrepRemaining(prepTotalSeconds);
-    };
-    // Spoken questions are heard first, then the preparation clock runs. If
-    // the browser blocks autoplay the clock still starts and "Nghe câu hỏi"
-    // stays available.
-    const spoken =
-      exercise.audioUrl &&
-      !["READ_ALOUD", "PRONUNCIATION_DRILL"].includes(String(exercise.taskType ?? ""));
-    if (!spoken) {
-      startPrep();
-      return;
-    }
-    const question = new Audio(exercise.audioUrl!);
-    question.onended = startPrep;
-    question.onerror = startPrep;
-    setPromptPlaying(true);
-    question.play().catch(startPrep);
-    return () => {
-      question.onended = null;
-      question.onerror = null;
-      question.pause();
-    };
-  }, [isExamTask, exercise, prepTotalSeconds, phase, audioBlob, currentSubmission, exerciseId]);
-  useEffect(() => {
-    if (prepRemaining === null) return;
-    if (phase !== "READY") {
-      setPrepRemaining(null);
-      return;
-    }
-    if (prepRemaining <= 0) {
-      setPrepRemaining(null);
-      void startRecording();
-      return;
-    }
-    const tick = setTimeout(
-      () => setPrepRemaining((left) => (left === null ? null : left - 1)),
-      1000,
-    );
-    return () => clearTimeout(tick);
-  }, [prepRemaining, phase, startRecording]);
-
   // Countdown timer during recording (per-task limit, auto-submits on expiry)
   useEffect(() => {
     if (phase === "RECORDING") {
@@ -1462,43 +1335,32 @@ export default function SpeakingExerciseDetailPage() {
         id: number;
         order?: number | null;
         practiceSet?: { key?: string; position?: number };
-      }> = examExerciseIds.length
-        ? examExerciseIds.map((id) => ({ id }))
-        : await speakingService.getExercises();
-      const sessionExercises = examExerciseIds.length
+      }> = await speakingService.getExercises();
+      const sessionExercises = practiceSetKey
         ? exercises
-        : practiceSetKey
-          ? exercises
-              .filter((item) => item.practiceSet?.key === practiceSetKey)
-              .sort(
-                (a, b) =>
-                  (a.order ?? a.practiceSet?.position ?? Number.MAX_SAFE_INTEGER) -
-                    (b.order ?? b.practiceSet?.position ?? Number.MAX_SAFE_INTEGER) ||
-                  a.id - b.id,
-              )
-          : exercises;
+            .filter((item) => item.practiceSet?.key === practiceSetKey)
+            .sort(
+              (a, b) =>
+                (a.order ?? a.practiceSet?.position ?? Number.MAX_SAFE_INTEGER) -
+                  (b.order ?? b.practiceSet?.position ?? Number.MAX_SAFE_INTEGER) ||
+                a.id - b.id,
+            )
+        : exercises;
       const nextId = getNextExerciseId(exerciseId, sessionExercises);
       if (nextId) {
         const params = new URLSearchParams();
         if (practiceSetKey) params.set("set", practiceSetKey);
-        if (examParentContext) {
-          params.set("parentAttemptId", String(examParentContext.attemptId));
-          params.set("parentComponentId", String(examParentContext.componentId));
-          if (parentAssessmentId) params.set("parentAssessmentId", parentAssessmentId);
-          params.set("examExerciseIds", examExerciseIds.join(","));
-        }
         const query = params.toString() ? `?${params.toString()}` : "";
         router.push(`/speaking/${nextId}${query}`);
       } else {
-        // After the last exam task, back to the exam, not the practice list.
-        router.push(examReturn ?? "/speaking");
+        router.push("/speaking");
       }
     } catch (err) {
       console.error("Failed to load next exercise:", err);
       toast.error("Không thể tải bài tập tiếp theo. Đang quay về danh sách.");
-      router.push(examReturn ?? "/speaking");
+      router.push("/speaking");
     }
-  }, [examExerciseIds, examParentContext, examReturn, exerciseId, parentAssessmentId, practiceSetKey, router]);
+  }, [exerciseId, practiceSetKey, router]);
 
   const stopTtsPlayback = useCallback(() => {
     referenceAudioRef.current?.pause();
@@ -1841,11 +1703,11 @@ export default function SpeakingExerciseDetailPage() {
               ? `Câu ${currentPracticeSetPosition}/${activePracticeSet.exerciseCount}`
               : undefined
           }
-          activityLabel={examReturn ? "TOEIC Speaking" : "Đánh giá phát âm"}
+          activityLabel="Đánh giá phát âm"
           onExit={() => confirmExit(exitHref)}
           exitLabel="Thoát"
           // Vietnamese translation is coaching; it is off during an exam.
-          bilingualEnabled={!examReturn}
+          bilingualEnabled
           isBilingual={isBilingual}
           onToggleBilingual={() => setIsBilingual((v) => !v)}
           notesEnabled
@@ -2104,41 +1966,6 @@ export default function SpeakingExerciseDetailPage() {
               {/* 3. Audio Recording Controls */}
               {phase === "READY" && !audioBlob ? (
                 <div className="flex flex-col items-center justify-center gap-2 my-1">
-                  {promptPlaying && (
-                    <p role="status" className="w-full max-w-md rounded-2xl bg-sky-50 p-4 text-center text-sm font-bold text-sky-900 dark:bg-sky-950/30 dark:text-sky-200">
-                      Đang phát câu hỏi. Thời gian chuẩn bị bắt đầu khi câu hỏi kết thúc.
-                    </p>
-                  )}
-                  {prepRemaining !== null && (
-                    <div
-                      role="timer"
-                      aria-live="polite"
-                      className="w-full max-w-md rounded-2xl bg-amber-50 p-4 text-center dark:bg-amber-950/30"
-                    >
-                      <p className="text-sm font-bold text-amber-900 dark:text-amber-200">
-                        {exercise?.timing?.readingSeconds &&
-                        prepRemaining > (exercise.timing.prepSeconds ?? 0)
-                          ? "Thời gian đọc thông tin"
-                          : "Thời gian chuẩn bị"}
-                      </p>
-                      <p className="mt-1 text-4xl font-black tabular-nums text-amber-900 dark:text-amber-100">
-                        {prepRemaining}s
-                      </p>
-                      <p className="mt-1 text-sm text-amber-900/80 dark:text-amber-200/80">
-                        Hết giờ, máy sẽ tự ghi âm trong {responseSeconds} giây.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPrepRemaining(null);
-                          void startRecording();
-                        }}
-                        className="mt-3 inline-flex min-h-10 items-center rounded-xl bg-amber-600 px-4 text-sm font-bold text-white hover:bg-amber-700"
-                      >
-                        Bắt đầu nói ngay
-                      </button>
-                    </div>
-                  )}
                   <button
                     type="button"
                     onClick={startRecording}
@@ -2677,12 +2504,6 @@ export default function SpeakingExerciseDetailPage() {
                 onClick={() => {
                   const params = new URLSearchParams();
                   if (practiceSetKey) params.set("set", practiceSetKey);
-                  if (examParentContext) {
-                    params.set("parentAttemptId", String(examParentContext.attemptId));
-                    params.set("parentComponentId", String(examParentContext.componentId));
-                    if (parentAssessmentId) params.set("parentAssessmentId", parentAssessmentId);
-                    params.set("examExerciseIds", examExerciseIds.join(","));
-                  }
                   const query = params.toString() ? `?${params.toString()}` : "";
                   router.push(`/speaking/${previousExerciseId}${query}`);
                 }}
@@ -2697,7 +2518,7 @@ export default function SpeakingExerciseDetailPage() {
               onClick={() => confirmExit(exitHref)}
               className="px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors text-xs sm:text-sm"
             >
-              {examReturn ? "← Về bài thi" : "← Danh sách bài"}
+              ← Danh sách bài
             </button>
 
             {/* Contextual Action Button */}
@@ -2719,20 +2540,11 @@ export default function SpeakingExerciseDetailPage() {
             ) : phase === "READY" && !audioBlob ? (
               <button
                 type="button"
-                onClick={() => {
-                  setPrepRemaining(null);
-                  void startRecording();
-                }}
+                onClick={() => void startRecording()}
                 className="px-4 sm:px-5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1.5 text-xs sm:text-sm"
               >
                 <Mic size={15} aria-hidden="true" />
-                <span>
-                  {promptPlaying
-                    ? "Đang phát câu hỏi"
-                    : prepRemaining !== null
-                      ? `Chuẩn bị ${prepRemaining}s · Nói ngay`
-                      : "Bắt đầu thu âm"}
-                </span>
+                <span>Bắt đầu thu âm</span>
                 <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-amber-600/60 font-mono text-xs text-white">
                   Space
                 </kbd>
@@ -2798,9 +2610,7 @@ export default function SpeakingExerciseDetailPage() {
                       ? activePracticeSet
                         ? "Câu tiếp theo"
                         : "Tiếp tục bài sau"
-                      : examReturn
-                        ? "Về bài thi"
-                        : "Về danh sách"}
+                      : "Về danh sách"}
                   </span>
                   <ArrowLeft
                     size={14}

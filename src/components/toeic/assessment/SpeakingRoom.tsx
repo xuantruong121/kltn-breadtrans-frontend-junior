@@ -322,7 +322,7 @@ export function SpeakingRoom({
         text: exercise.targetText ?? "",
         imageUrl: exercise.imageUrl,
         audioUrl: exercise.audioUrl,
-        stimulusTitle: exercise.stimulus?.title,
+        stimulusTitle: exercise.stimulus?.title?.replace(`${title} — `, ""),
         stimulusText: exercise.stimulus?.kind === "INFORMATION" ? exercise.stimulus.content : null,
       },
     ];

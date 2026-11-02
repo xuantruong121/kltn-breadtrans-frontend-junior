@@ -542,13 +542,25 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
       router.push(examRoom ?? `/toeic/results/${attemptId}`);
     },
   });
-  // A part of a longer exam ends on the clock so the next section can open.
-  const { mutate: submitNow, isPending: submitPending } = submit;
+  // In a longer exam the clock moves on to the next section. The server closes
+  // an overdue paper when it is read, so saving what is left and reading it again
+  // ends the section; a save refused at the deadline must not hold that up.
   const deadlineMs = attempt?.deadline ? Date.parse(attempt.deadline) : null;
   const overdue = Boolean(examRoom && attempt?.status === "IN_PROGRESS" && deadlineMs && nowMs >= deadlineMs);
   useEffect(() => {
-    if (overdue && !submitPending) submitNow();
-  }, [overdue, submitPending, submitNow]);
+    if (!overdue) return;
+    const reread = () => void queryClient.invalidateQueries({ queryKey: ["toeic-attempt", attemptId] });
+    void Promise.race([
+      flushSave().catch(() => undefined),
+      new Promise((resolve) => window.setTimeout(resolve, 3000)),
+    ]).then(reread);
+    const timer = window.setInterval(reread, 5000);
+    return () => window.clearInterval(timer);
+  }, [overdue, flushSave, queryClient, attemptId]);
+  const closed = attempt?.status === "SUBMITTED";
+  useEffect(() => {
+    if (examRoom && closed) router.replace(examRoom);
+  }, [examRoom, closed, router]);
   const cancel = useMutation({
     mutationFn: () => toeicService.cancelAttempt(attemptId),
     onSuccess: () => {

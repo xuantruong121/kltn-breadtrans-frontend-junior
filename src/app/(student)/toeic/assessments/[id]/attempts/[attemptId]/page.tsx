@@ -41,6 +41,8 @@ export default function ToeicAssessmentAttemptPage({
     queryFn: async () =>
       (await axiosClient.get(`/toeic/assessments/attempts/${attemptId}`)) as unknown as Attempt,
     enabled: Number.isInteger(attemptId),
+    // A section ends in another room; a cached copy would reopen it on return.
+    gcTime: 0,
   });
   const refresh = () => client.invalidateQueries({ queryKey });
   const { path: canonicalDetailPath } = useCanonicalExamPath({ assessmentId: id });
@@ -124,7 +126,6 @@ export default function ToeicAssessmentAttemptPage({
 
   if (step.kind === "ROOM") {
     const shared = {
-      key: step.component.assessmentComponentId,
       title,
       attemptId,
       sections,
@@ -132,9 +133,9 @@ export default function ToeicAssessmentAttemptPage({
       onExit: () => router.push(backHref),
     };
     return step.component.kind === "SPEAKING" ? (
-      <SpeakingRoom {...shared} component={step.component as SpeakingComponent} />
+      <SpeakingRoom key={step.component.assessmentComponentId} {...shared} component={step.component as SpeakingComponent} />
     ) : (
-      <WritingRoom {...shared} component={step.component as WritingComponent} />
+      <WritingRoom key={step.component.assessmentComponentId} {...shared} component={step.component as WritingComponent} />
     );
   }
 
