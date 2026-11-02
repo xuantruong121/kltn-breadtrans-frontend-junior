@@ -166,7 +166,7 @@ export default function ToeicWritingExamComposer({
       )}
 
       <div className="grid gap-5 lg:grid-cols-[minmax(190px,0.75fr)_minmax(0,1.5fr)]">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2">
+        <div className="grid content-start grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2">
           {section.slots.map((item) => (
             <button
               key={item.order}

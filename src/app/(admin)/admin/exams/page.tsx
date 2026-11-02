@@ -1533,14 +1533,6 @@ export default function AdminExamsPage() {
           <div className="space-y-6 max-w-3xl mx-auto py-2">
             <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
               <div className="border-b border-slate-100 pb-3">
-                <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
-                  {examDetail.type === "FULL_TEST"
-                    ? "TOEIC Full Test"
-                    : "Luyện đề theo Part"}
-                </span>
-                <h2 className="text-2xl font-bold text-slate-900 mt-2">
-                  {examDetail.title}
-                </h2>
                 <p className="text-sm text-slate-600 mt-1 dark:text-slate-400">
                   Xem toàn bộ đề, nghe audio và đối chiếu đáp án · Thời lượng:{" "}
                   {Math.round(examDetail.durationSeconds / 60)} phút
