@@ -12,6 +12,8 @@ type Props = {
   /** Part 1-2: options are heard, not printed; only the letters are shown. */
   audioOnly: boolean;
   disabled: boolean;
+  /** Admin preview only: where this question is edited. */
+  editHref?: string;
   onSelect: (questionId: number, optionIndex: number) => void;
   onToggleMark: (questionId: number) => void;
 };
@@ -30,6 +32,7 @@ export const ToeicPaperQuestion = memo(function ToeicPaperQuestion({
   marked,
   audioOnly,
   disabled,
+  editHref,
   onSelect,
   onToggleMark,
 }: Props) {
@@ -48,6 +51,14 @@ export const ToeicPaperQuestion = memo(function ToeicPaperQuestion({
           {questionNumber}
         </button>
         <div className="min-w-0 flex-1">
+          {editHref && (
+            <a
+              href={editHref}
+              className="float-right ml-2 mt-1 text-sm font-semibold text-blue-700 hover:underline dark:text-blue-300"
+            >
+              Sửa
+            </a>
+          )}
           {!audioOnly && text && (
             <p id={labelId} className="pt-1.5 text-base font-medium leading-relaxed text-slate-900 dark:text-slate-100">
               {text}

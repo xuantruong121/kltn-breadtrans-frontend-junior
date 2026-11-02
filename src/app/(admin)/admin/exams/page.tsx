@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -10,13 +10,10 @@ import {
   Loader2,
   Search,
   Trash2,
-  Edit2,
   ArrowLeft,
   CheckCircle2,
   AlertTriangle,
-  Volume2,
   Image as ImageIcon,
-  FileText,
   Clock,
   ArrowUp,
   ArrowDown,
@@ -25,9 +22,7 @@ import {
   Check,
   ShieldAlert,
   FileStack,
-  RefreshCw,
   Upload,
-  ImageOff,
   ArrowRight,
 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
@@ -41,7 +36,12 @@ import {
   examStatusLabel,
 } from "@/components/admin/exam/ExamRetireAction";
 import ImageUploadField from "@/components/admin/ImageUploadField";
-import { formAudioPreviewSrc, groupAudioSrc } from "@/lib/toeic/adminGroupAudio";
+import { formAudioPreviewSrc } from "@/lib/toeic/adminGroupAudio";
+import {
+  ExamGroupCard,
+  type ExamCardQuestion,
+} from "@/components/admin/exam/ExamGroupCard";
+import { examGroupLabel, type GroupAction } from "@/lib/examStudio/examGroupCard";
 import AudioUploadField from "@/components/admin/AudioUploadField";
 import ToeicSpeakingExamComposer from "@/components/admin/ToeicSpeakingExamComposer";
 import ToeicWritingExamComposer from "@/components/admin/ToeicWritingExamComposer";
@@ -145,6 +145,10 @@ interface ExamDetail {
   sharedLrExams?: number;
   /** False when a 4-skill exam reads another exam's L&R. */
   lrEditable?: boolean;
+  /** Part 1, Speaking and Writing slots that need a picture and have none. */
+  missingImageCount?: number;
+  /** The AI draft still waits for review; false once it is applied. */
+  aiReviewPending?: boolean;
   familyCode?: string;
   variantCode?: string;
   readiness?: {
@@ -210,11 +214,18 @@ export default function AdminExamsPage() {
     "UPDATED",
   );
   const [activeTab, setActiveTab] = useState<
-    "structure" | "speaking" | "writing" | "preflight" | "preview" | "info"
+    "structure" | "speaking" | "writing" | "preflight" | "info"
   >("structure");
-  const [activePartFilter, setActivePartFilter] = useState<number | "all">(
-    "all",
+  // An exam holds 103 groups: open one Part, not all of them.
+  const [activePartFilter, setActivePartFilter] = useState<number | "all">(1);
+  const questionFromUrl = Number(searchParams.get("q"));
+  const [pendingQuestion, setPendingQuestion] = useState<number | null>(
+    Number.isInteger(questionFromUrl) && questionFromUrl > 0
+      ? questionFromUrl
+      : null,
   );
+  const [focusedQuestion, setFocusedQuestion] = useState<number | null>(null);
+  const [jumpInput, setJumpInput] = useState("");
 
   // Modals & Confirm states
   const [isExamModalOpen, setIsExamModalOpen] = useState(false);
@@ -714,6 +725,76 @@ export default function AdminExamsPage() {
     setIsGroupModalOpen(true);
   };
 
+  const openAddQuestion = (group: ExamGroup) => {
+    const numbers = (examDetail?.groups ?? []).flatMap((g) =>
+      (g.questions ?? []).map((q) => q.questionNumber),
+    );
+    setTargetGroupIdForQuestion(group.id);
+    setEditingQuestion(null);
+    setQuestionForm({
+      questionNumber: numbers.length ? Math.max(...numbers) + 1 : 1,
+      text: "",
+      options: group.part === 2 ? ["", "", ""] : ["", "", "", ""],
+      correctIndex: 0,
+      explanation: "",
+    });
+    setIsQuestionModalOpen(true);
+  };
+
+  const openEditQuestion = (group: ExamGroup, question: ExamCardQuestion) => {
+    setTargetGroupIdForQuestion(group.id);
+    setEditingQuestion(question as ExamQuestion);
+    setQuestionForm({
+      questionNumber: question.questionNumber,
+      text: question.text || "",
+      options: Array.isArray(question.options)
+        ? [...question.options]
+        : ["", "", "", ""],
+      correctIndex: question.correctIndex,
+      explanation: question.explanation || "",
+    });
+    setIsQuestionModalOpen(true);
+  };
+
+  const runGroupAction = (action: GroupAction, group: ExamGroup) => {
+    if (action === "editContent") openGroupEditor(group);
+    if (action === "findImage") openImageSearch(group);
+    if (action === "questionFromImage") visionMutation.mutate(group.id);
+    if (action === "regenerateAudio")
+      regenerateMediaMutation.mutate({ groupId: group.id, kind: "audio" });
+    if (action === "addQuestion") openAddQuestion(group);
+    if (action === "deleteGroup")
+      setPendingDeleteGroup({ id: group.id, part: group.part });
+    if (action === "suggestQuestion") {
+      setAiPart5TargetGroup(group);
+      setAiPart5Candidates([]);
+      setIsAiPart5ModalOpen(true);
+    }
+  };
+
+  // Jump to a question: from the "Đến câu" box or back from the preview.
+  useEffect(() => {
+    if (!pendingQuestion || !examDetail?.groups) return;
+    const target = pendingQuestion;
+    const group = examDetail.groups.find((g) =>
+      (g.questions ?? []).some((q) => q.questionNumber === target),
+    );
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPendingQuestion(null);
+    if (!group) {
+      toast.error(`Không tìm thấy câu ${target}.`);
+      return;
+    }
+    setActiveTab("structure");
+    setActivePartFilter(group.part);
+    setFocusedQuestion(target);
+    window.setTimeout(() => {
+      document
+        .getElementById(`exam-question-${target}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 80);
+  }, [pendingQuestion, examDetail]);
+
   const examFiltersActive =
     searchTerm.trim() !== "" ||
     statusFilter !== "ALL" ||
@@ -760,41 +841,25 @@ export default function AdminExamsPage() {
       examDetail.variantCode === "TOEIC_SW" ||
       examDetail.variantCode === "TOEIC_4_SKILLS";
     const lrEditable = hasLr && examDetail.lrEditable !== false;
-    // A tab this exam does not have falls back to one it does.
-    const tab =
-      (activeTab === "structure" && !lrEditable) ||
-      (activeTab === "preview" && !hasLr)
-        ? hasLr
-          ? "preview"
-          : "speaking"
-        : activeTab;
+    // An exam without L&R opens on Speaking.
+    const tab = activeTab === "structure" && !hasLr ? "speaking" : activeTab;
     const readiness = examDetail.readiness;
-    const sections = [
-      ...(hasLr && hasTasks
-        ? [
-            {
-              label: "Listening & Reading",
-              count: examDetail.totalQuestions || 0,
-              expected: 200,
-              ready: readiness?.listeningReading,
-            },
-          ]
-        : []),
-      {
-        label: "Speaking",
-        count: readiness?.speakingCount || 0,
-        expected: readiness?.speakingExpected || 11,
-        ready: readiness?.speaking,
-      },
-      {
-        label: "Writing",
-        count: readiness?.writingCount || 0,
-        expected: readiness?.writingExpected || 8,
-        ready: readiness?.writing,
-      },
-    ];
+    const tabStatus = (ready: boolean | undefined) =>
+      ready ? (
+        <CheckCircle2
+          size={14}
+          className="text-emerald-500"
+          aria-label="Sẵn sàng"
+        />
+      ) : (
+        <AlertTriangle
+          size={14}
+          className="text-amber-500"
+          aria-label="Chưa đủ điều kiện"
+        />
+      );
     const tabClass = (selected: boolean) =>
-      `px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
+      `inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
         selected
           ? "bg-slate-900 text-white"
           : "text-slate-600 hover:bg-slate-100"
@@ -813,7 +878,7 @@ export default function AdminExamsPage() {
               <ArrowLeft size={18} />
             </button>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-2xl font-bold text-slate-900">
                   {examDetail.title}
                 </h1>
@@ -826,32 +891,36 @@ export default function AdminExamsPage() {
                 >
                   {examStatusLabel(examDetail.publicationStatus)}
                 </span>
-                <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
-                  {examDetail.type === "FULL_TEST"
-                    ? "Full Test (200 câu)"
-                    : "Luyện tập theo Part"}
-                </span>
               </div>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                {Math.round(examDetail.durationSeconds / 60)} phút ·{" "}
+                {examDetail.totalQuestions || 0} câu ·{" "}
+                {examDetail.attemptsCount || 0} lượt làm bài
+              </p>
               {examDetail.description && (
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+                <p
+                  title={examDetail.description}
+                  className="mt-0.5 line-clamp-1 max-w-3xl text-sm text-slate-500"
+                >
                   {examDetail.description}
                 </p>
               )}
-              <p className="text-sm text-slate-600 mt-0.5 dark:text-slate-400">
-                Thời lượng: {Math.round(examDetail.durationSeconds / 60)} phút ·{" "}
-                {groups.length} nhóm · {allQuestions.length} câu hỏi ·{" "}
-                {examDetail.attemptsCount || 0} lượt làm bài
-              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            {examDetail.aiGenerationJobId && (
+          <div className="flex flex-wrap items-center gap-2">
+            <a
+              href={`/admin/exams/${examDetail.id}/learner-preview`}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+            >
+              <Eye size={15} /> Xem như học viên
+            </a>
+            {examDetail.aiGenerationJobId && examDetail.aiReviewPending && (
               <a
                 href={`/admin/exams/ai/${examDetail.aiGenerationJobId}`}
                 className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
               >
-                Candidate AI
+                Duyệt bản AI
               </a>
             )}
             {examDetail.publicationStatus === "ARCHIVED" ||
@@ -873,14 +942,18 @@ export default function AdminExamsPage() {
                 ) : (
                   <div className="flex flex-col items-end gap-1">
                     <div className="flex flex-wrap justify-end gap-2">
-                    <button
-                      onClick={() => fillMissingImagesMutation.mutate(examDetail.id)}
-                      disabled={fillMissingImagesMutation.isPending}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-                    >
-                      <ImageIcon size={15} />
-                      {fillMissingImagesMutation.isPending ? "Đang tìm ảnh..." : "Tìm ảnh còn thiếu"}
-                    </button>
+                    {(examDetail.missingImageCount ?? 0) > 0 && (
+                      <button
+                        onClick={() => fillMissingImagesMutation.mutate(examDetail.id)}
+                        disabled={fillMissingImagesMutation.isPending}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                      >
+                        <ImageIcon size={15} />
+                        {fillMissingImagesMutation.isPending
+                          ? "Đang tìm ảnh..."
+                          : `Tìm ${examDetail.missingImageCount} ảnh còn thiếu`}
+                      </button>
+                    )}
                     <button
                       onClick={() => publishExamMutation.mutate(examDetail.id)}
                       disabled={publishExamMutation.isPending || !publishReadiness.canPublish}
@@ -900,38 +973,16 @@ export default function AdminExamsPage() {
           </div>
         </div>
 
-        {hasTasks && (
-          <div className="grid gap-3 md:grid-cols-3">
-            {sections.map((section) => (
-              <div
-                key={section.label}
-                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-              >
-                <p className="text-sm font-semibold text-slate-700">
-                  {section.label}
-                </p>
-                <p className="mt-1 text-xl font-bold text-slate-950">
-                  {section.count}/{section.expected}
-                </p>
-                <p
-                  className={`text-xs font-semibold ${section.ready ? "text-emerald-700" : "text-rose-700"}`}
-                >
-                  {section.ready ? "Sẵn sàng" : "Chưa đủ điều kiện"}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-
         {/* WORKSPACE NAVIGATION TABS */}
         <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-1">
-          {lrEditable && (
+          {hasLr && (
             <button
               onClick={() => setActiveTab("structure")}
               className={tabClass(tab === "structure")}
             >
-              {hasTasks ? "Listening & Reading" : "Cấu trúc & Câu hỏi"} (
+              {hasTasks ? "Listening & Reading" : "Câu hỏi"} (
               {allQuestions.length})
+              {hasTasks && tabStatus(readiness?.listeningReading)}
             </button>
           )}
           {hasTasks && (
@@ -941,28 +992,22 @@ export default function AdminExamsPage() {
                 className={tabClass(tab === "speaking")}
               >
                 Speaking ({readiness?.speakingCount || 0})
+                {tabStatus(readiness?.speaking)}
               </button>
               <button
                 onClick={() => setActiveTab("writing")}
                 className={tabClass(tab === "writing")}
               >
                 Writing ({readiness?.writingCount || 0})
+                {tabStatus(readiness?.writing)}
               </button>
             </>
           )}
-          {hasLr && (
-            <button
-              onClick={() => setActiveTab("preview")}
-              className={tabClass(tab === "preview")}
-            >
-              Xem đề &amp; nghe audio
-            </button>
-          )}
           <button
             onClick={() => setActiveTab("preflight")}
-            className={`inline-flex items-center gap-1.5 ${tabClass(tab === "preflight")}`}
+            className={tabClass(tab === "preflight")}
           >
-            <span>Kiểm tra tiền xuất bản</span>
+            <span>Kiểm tra trước xuất bản</span>
             {issues.length > 0 ? (
               <span className="rounded-full bg-rose-500 px-1.5 py-0.2 text-xs font-bold text-white">
                 {issues.length}
@@ -994,46 +1039,67 @@ export default function AdminExamsPage() {
           />
         )}
 
-        {/* TAB 1: STRUCTURE & QUESTIONS */}
+        {/* TAB 1: QUESTIONS */}
         {tab === "structure" && (
-          <div className="space-y-5">
-            {/* PART FILTER PILLS */}
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setActivePartFilter("all")}
-                  className={`rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors ${
-                    activePartFilter === "all"
-                      ? "bg-slate-900 text-white shadow-xs"
-                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                  }`}
-                >
-                  Tất cả Part ({groups.length} nhóm)
-                </button>
-                {TOEIC_PARTS.map((p) => {
-                  const partGroupCount = groups.filter(
-                    (g) => g.part === p.part,
-                  ).length;
-                  const partQuestionCount = groups
-                    .filter((g) => g.part === p.part)
-                    .reduce((sum, g) => sum + (g.questions?.length || 0), 0);
-                  return (
-                    <button
-                      key={p.part}
-                      onClick={() => setActivePartFilter(p.part)}
-                      className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
-                        activePartFilter === p.part
-                          ? "bg-slate-900 text-white shadow-xs"
-                          : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                      }`}
-                    >
-                      Part {p.part} ({partGroupCount} nhóm · {partQuestionCount}{" "}
-                      câu)
-                    </button>
-                  );
-                })}
-              </div>
+          <div className="space-y-4">
+            <div className="sticky top-0 z-20 flex flex-wrap items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
+              {TOEIC_PARTS.map((p) => {
+                const count = groups
+                  .filter((g) => g.part === p.part)
+                  .reduce((sum, g) => sum + (g.questions?.length || 0), 0);
+                return (
+                  <button
+                    key={p.part}
+                    onClick={() => setActivePartFilter(p.part)}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                      activePartFilter === p.part
+                        ? "bg-slate-900 text-white"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    }`}
+                  >
+                    Part {p.part} · {count} câu
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => setActivePartFilter("all")}
+                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  activePartFilter === "all"
+                    ? "bg-slate-900 text-white"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
+              >
+                Tất cả
+              </button>
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const target = Number(jumpInput);
+                  if (Number.isInteger(target) && target > 0)
+                    setPendingQuestion(target);
+                }}
+                className="ml-auto"
+              >
+                <input
+                  type="number"
+                  min={1}
+                  value={jumpInput}
+                  onChange={(event) => setJumpInput(event.target.value)}
+                  placeholder="Đến câu"
+                  aria-label="Đến câu số"
+                  className="w-24 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-blue-400"
+                />
+              </form>
+            </div>
 
+            {!lrEditable && (
+              <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                Đề này dùng chung Listening & Reading với đề khác nên chỉ xem
+                được ở đây.
+              </p>
+            )}
+
+            {lrEditable && allQuestions.length < 200 && (
               <button
                 onClick={() => {
                   setEditingGroup(null);
@@ -1048,355 +1114,38 @@ export default function AdminExamsPage() {
                   });
                   setIsGroupModalOpen(true);
                 }}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors shadow-xs"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors"
               >
-                <Plus size={15} /> Thêm nhóm câu hỏi (Group)
+                <Plus size={15} /> Thêm nhóm câu hỏi
               </button>
-            </div>
+            )}
 
-            {/* GROUPS LIST */}
             {visibleGroups.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-600 dark:text-slate-400">
-                Chưa có nhóm câu hỏi nào trong phần này. Hãy nhấn &quot;Thêm
-                nhóm câu hỏi (Group)&quot; để bắt đầu.
+                Part này chưa có câu hỏi.
               </div>
             ) : (
-              <div className="space-y-5">
-                {visibleGroups.map((group) => {
-                  const partInfo = TOEIC_PARTS.find(
-                    (p) => p.part === group.part,
-                  );
-                  return (
-                    <div
-                      key={group.id}
-                      id={`exam-group-${group.id}`}
-                      className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4 hover:border-slate-300 transition-colors"
-                    >
-                      {/* GROUP HEADER */}
-                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="rounded bg-slate-900 px-2.5 py-0.5 text-xs font-bold text-white">
-                              Part {group.part}
-                            </span>
-                            <span className="text-sm font-bold text-slate-800">
-                              {partInfo?.label}
-                            </span>
-                            <span className="text-xs text-slate-600 dark:text-slate-400">
-                              · Thứ tự #{group.groupOrder}
-                            </span>
-                          </div>
-
-                          {/* MEDIA BADGES */}
-                          <div className="flex items-center gap-3 pt-0.5 text-xs text-slate-600 dark:text-slate-400">
-                            {group.audioUrl ? (
-                              <span className="inline-flex items-center gap-1 text-emerald-700 font-medium dark:text-emerald-400">
-                                <Volume2 size={13} /> Có audio stimulus
-                              </span>
-                            ) : group.part <= 4 ? (
-                              <span className="inline-flex items-center gap-1 text-rose-700 font-medium dark:text-rose-400">
-                                <AlertTriangle size={13} /> Thiếu audio Part 1-4
-                              </span>
-                            ) : null}
-
-                            {group.mediaMetadata?.audio?.stale && (
-                              <span className="inline-flex items-center gap-1 text-amber-700 font-medium dark:text-amber-400">
-                                <AlertTriangle size={13} /> Audio cần tạo lại
-                              </span>
-                            )}
-
-                            {group.imageUrl ? (
-                              <span className="inline-flex items-center gap-1 text-emerald-700 font-medium dark:text-emerald-400">
-                                <ImageIcon size={13} /> Có hình ảnh minh họa
-                              </span>
-                            ) : group.part === 1 ? (
-                              <span className="inline-flex items-center gap-1 text-rose-700 font-medium dark:text-rose-400">
-                                <AlertTriangle size={13} /> Thiếu ảnh Part 1
-                              </span>
-                            ) : null}
-
-                            {group.mediaMetadata?.image?.stale && (
-                              <span className="inline-flex items-center gap-1 text-amber-700 font-medium dark:text-amber-400">
-                                <AlertTriangle size={13} /> Ảnh cần tạo lại
-                              </span>
-                            )}
-
-                            {group.passageText ? (
-                              <span className="inline-flex items-center gap-1 text-emerald-700 font-medium dark:text-emerald-400">
-                                <FileText size={13} /> Có đoạn văn (
-                                {group.passageText.length} ký tự)
-                              </span>
-                            ) : group.part >= 6 ? (
-                              <span className="inline-flex items-center gap-1 text-rose-700 font-medium dark:text-rose-400">
-                                <AlertTriangle size={13} /> Thiếu đoạn văn Part
-                                6-7
-                              </span>
-                            ) : null}
-                          </div>
-                          {(group.part === 1 && !group.imageUrl) ||
-                          (group.part <= 4 && !group.audioUrl) ? (
-                            <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                              <AlertTriangle size={14} className="shrink-0" />
-                              <span className="font-medium">
-                                Draft còn media cần bổ sung trước khi xuất bản.
-                              </span>
-                              {group.part === 1 && !group.imageUrl && (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      regenerateMediaMutation.mutate({
-                                        groupId: group.id,
-                                        kind: "image",
-                                      })
-                                    }
-                                    disabled={regenerateMediaMutation.isPending}
-                                    className="inline-flex items-center gap-1 rounded-md border border-amber-300 bg-white px-2.5 py-1 font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-50"
-                                  >
-                                    <RefreshCw size={12} /> Tạo lại bằng AI
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => openGroupEditor(group)}
-                                    className="inline-flex items-center gap-1 rounded-md border border-amber-300 bg-white px-2.5 py-1 font-semibold text-amber-800 hover:bg-amber-100"
-                                  >
-                                    <Upload size={12} /> Tải ảnh lên
-                                  </button>
-                                </>
-                              )}
-                              {group.part <= 4 && !group.audioUrl && (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    regenerateMediaMutation.mutate({
-                                      groupId: group.id,
-                                      kind: "audio",
-                                    })
-                                  }
-                                  disabled={regenerateMediaMutation.isPending}
-                                  className="inline-flex items-center gap-1 rounded-md border border-amber-300 bg-white px-2.5 py-1 font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-50"
-                                >
-                                  <RefreshCw size={12} /> Tạo lại audio
-                                </button>
-                              )}
-                            </div>
-                          ) : null}
-                        </div>
-
-                        {/* EXPLICIT GROUP ACTION BUTTONS */}
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => {
-                              setTargetGroupIdForQuestion(group.id);
-                              setEditingQuestion(null);
-                              const nextQNum =
-                                allQuestions.length > 0
-                                  ? Math.max(
-                                      ...allQuestions.map(
-                                        (q) => q.questionNumber,
-                                      ),
-                                    ) + 1
-                                  : 1;
-                              setQuestionForm({
-                                questionNumber: nextQNum,
-                                text: "",
-                                options:
-                                  group.part === 2
-                                    ? ["", "", ""]
-                                    : ["", "", "", ""],
-                                correctIndex: 0,
-                                explanation: "",
-                              });
-                              setIsQuestionModalOpen(true);
-                            }}
-                            className="inline-flex items-center gap-1 rounded-lg bg-slate-900 hover:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white transition-colors"
-                          >
-                            <Plus size={13} /> Thêm câu hỏi
-                          </button>
-                          {group.part === 5 && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setAiPart5TargetGroup(group);
-                                setAiPart5Candidates([]);
-                                setIsAiPart5ModalOpen(true);
-                              }}
-                              className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors"
-                            >
-                              AI gợi ý câu hỏi TOEIC Part 5
-                            </button>
-                          )}
-                          {group.part === 1 && (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => openImageSearch(group)}
-                                className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:border-blue-300 hover:bg-blue-100"
-                              >
-                                <Search size={12} />{" "}
-                                {group.imageUrl ? "Tìm ảnh khác" : "Tìm ảnh"}
-                              </button>
-                              {group.imageUrl && (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    visionMutation.mutate(group.id)
-                                  }
-                                  disabled={visionMutation.isPending}
-                                  className="inline-flex items-center gap-1 rounded-lg border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-700 transition-colors hover:border-teal-300 hover:bg-teal-100 disabled:opacity-50"
-                                >
-                                  <RefreshCw
-                                    size={12}
-                                    className={
-                                      visionMutation.isPending
-                                        ? "animate-spin"
-                                        : ""
-                                    }
-                                  />{" "}
-                                  Tạo câu hỏi từ ảnh
-                                </button>
-                              )}
-                            </>
-                          )}
-                          <button
-                            onClick={() => {
-                              setEditingGroup(group);
-                              setGroupForm({
-                                part: group.part,
-                                groupOrder: group.groupOrder,
-                                audioUrl: group.audioUrl || "",
-                                imageUrl: group.imageUrl || "",
-                                passageText: group.passageText || "",
-                                transcriptText: group.transcriptText || "",
-                                imageBrief: group.imageBrief || "",
-                              });
-                              setIsGroupModalOpen(true);
-                            }}
-                            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors"
-                            title="Sửa nhóm câu hỏi"
-                          >
-                            <Edit2 size={12} /> Sửa nhóm
-                          </button>
-                          <button
-                            onClick={() =>
-                              setPendingDeleteGroup({
-                                id: group.id,
-                                part: group.part,
-                              })
-                            }
-                            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white hover:border-rose-200 hover:bg-rose-50 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:text-rose-600 transition-colors dark:text-slate-400"
-                            title="Xóa nhóm câu hỏi"
-                          >
-                            <Trash2 size={13} /> Xóa nhóm
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* PASSAGE TEXT EXCERPT IF PRESENT */}
-                      {group.passageText && (
-                        <div className="rounded-lg bg-slate-50 border border-slate-200 p-3.5 text-xs text-slate-700 max-h-40 overflow-y-auto whitespace-pre-line font-serif leading-relaxed">
-                          {group.passageText}
-                        </div>
-                      )}
-
-                      {/* QUESTIONS IN GROUP */}
-                      {group.questions && group.questions.length > 0 ? (
-                        <div className="space-y-3 pt-1">
-                          {group.questions.map((q) => (
-                            <div
-                              key={q.id}
-                              className="rounded-lg border border-slate-200 bg-slate-50/40 p-4 text-xs space-y-2.5"
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="flex items-start gap-2.5">
-                                  <span className="font-bold text-slate-900 bg-white border border-slate-200 px-2 py-0.5 rounded text-xs shrink-0 shadow-2xs">
-                                    Câu {q.questionNumber}
-                                  </span>
-                                  <p className="font-semibold text-sm text-slate-900 leading-snug">
-                                    {q.text || "—"}
-                                  </p>
-                                </div>
-                                <div className="flex items-center gap-1.5 shrink-0">
-                                  <button
-                                    onClick={() => {
-                                      setTargetGroupIdForQuestion(group.id);
-                                      setEditingQuestion(q);
-                                      setQuestionForm({
-                                        questionNumber: q.questionNumber,
-                                        text: q.text || "",
-                                        options: Array.isArray(q.options)
-                                          ? [...q.options]
-                                          : ["", "", "", ""],
-                                        correctIndex: q.correctIndex,
-                                        explanation: q.explanation || "",
-                                      });
-                                      setIsQuestionModalOpen(true);
-                                    }}
-                                    className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                                    title="Sửa câu hỏi"
-                                  >
-                                    <Edit2 size={12} /> Sửa
-                                  </button>
-                                  <button
-                                    onClick={() =>
-                                      setPendingDeleteQuestion({
-                                        id: q.id,
-                                        questionNumber: q.questionNumber,
-                                      })
-                                    }
-                                    className="rounded border border-slate-200 bg-white p-1 text-slate-600 hover:text-rose-600 hover:border-rose-200 transition-colors dark:text-slate-400"
-                                    title="Xóa câu hỏi"
-                                  >
-                                    <Trash2 size={13} />
-                                  </button>
-                                </div>
-                              </div>
-
-                              {/* OPTIONS ROW */}
-                              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 pt-1">
-                                {q.options.map((opt, optIdx) => {
-                                  const isCorrect = optIdx === q.correctIndex;
-                                  return (
-                                    <div
-                                      key={optIdx}
-                                      className={`rounded-md px-3 py-1.5 text-xs font-medium flex items-center justify-between ${
-                                        isCorrect
-                                          ? "bg-emerald-50 text-emerald-950 border border-emerald-300 font-bold"
-                                          : "bg-white text-slate-700 border border-slate-200"
-                                      }`}
-                                    >
-                                      <span className="truncate">
-                                        ({String.fromCharCode(65 + optIdx)}){" "}
-                                        {opt}
-                                      </span>
-                                      {isCorrect && (
-                                        <Check
-                                          size={12}
-                                          className="text-emerald-600 shrink-0"
-                                        />
-                                      )}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-
-                              {q.explanation && (
-                                <p className="text-sm text-slate-600 italic bg-white p-2 rounded border border-slate-100 dark:text-slate-400">
-                                  Giải thích: {q.explanation}
-                                </p>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-slate-600 italic py-2 dark:text-slate-400">
-                          Nhóm này chưa có câu hỏi nào. Hãy nhấn &quot;+ Thêm
-                          câu hỏi&quot; để bổ sung câu hỏi vào nhóm.
-                        </p>
-                      )}
-                    </div>
-                  );
-                })}
+              <div className="space-y-4">
+                {visibleGroups.map((group) => (
+                  <ExamGroupCard
+                    key={group.id}
+                    group={group}
+                    readOnly={!lrEditable}
+                    focusedQuestion={focusedQuestion}
+                    busy={
+                      regenerateMediaMutation.isPending ||
+                      visionMutation.isPending
+                    }
+                    onAction={runGroupAction}
+                    onEditQuestion={openEditQuestion}
+                    onDeleteQuestion={(question) =>
+                      setPendingDeleteQuestion({
+                        id: question.id,
+                        questionNumber: question.questionNumber,
+                      })
+                    }
+                  />
+                ))}
               </div>
             )}
           </div>
@@ -1529,197 +1278,6 @@ export default function AdminExamsPage() {
         )}
 
         {/* TAB 3: PREVIEW */}
-        {tab === "preview" && (
-          <div className="space-y-6 max-w-3xl mx-auto py-2">
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
-              <div className="border-b border-slate-100 pb-3">
-                <p className="text-sm text-slate-600 mt-1 dark:text-slate-400">
-                  Xem toàn bộ đề, nghe audio và đối chiếu đáp án · Thời lượng:{" "}
-                  {Math.round(examDetail.durationSeconds / 60)} phút
-                </p>
-                <a
-                  href={`/admin/exams/${examDetail.id}/learner-preview`}
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-                >
-                  <Eye size={14} /> Xem như học viên
-                </a>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setActivePartFilter("all")}
-                  className={tabClass(activePartFilter === "all")}
-                >
-                  Tất cả
-                </button>
-                {TOEIC_PARTS.map((p) => (
-                  <button
-                    key={p.part}
-                    onClick={() => setActivePartFilter(p.part)}
-                    className={tabClass(activePartFilter === p.part)}
-                  >
-                    Part {p.part}
-                  </button>
-                ))}
-              </div>
-
-              {visibleGroups.map((group, idx) => (
-                <div
-                  key={group.id}
-                  className="space-y-4 rounded-xl border border-slate-200 bg-slate-50/50 p-5"
-                >
-                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                    <span className="font-bold text-sm text-slate-900">
-                      Part {group.part} · Nhóm #{idx + 1}
-                    </span>
-                    <span className="text-xs text-slate-600 dark:text-slate-400">
-                      {group.questions?.length || 0} câu hỏi
-                    </span>
-                  </div>
-
-                  {group.imageUrl ? (
-                    <div className="max-w-md mx-auto overflow-hidden rounded-lg border border-slate-200">
-                      <img
-                        src={group.imageUrl}
-                        alt="Stimulus"
-                        className="w-full h-auto object-cover"
-                      />
-                    </div>
-                  ) : group.part === 1 ? (
-                    <div
-                      role="status"
-                      aria-live="polite"
-                      className="mx-auto flex max-w-md flex-col items-center gap-3 rounded-lg border border-dashed border-amber-300 bg-amber-50 p-6 text-center text-amber-900"
-                    >
-                      <ImageOff size={28} className="text-amber-600" />
-                      <div>
-                        <p className="text-sm font-semibold">
-                          Chưa có hình ảnh
-                        </p>
-                        <p className="mt-1 text-sm leading-5 text-amber-800">
-                          Nội dung đã được tạo thành công. Ảnh chưa được tạo hoặc
-                          tìm thấy. Bạn có thể bổ sung ảnh trước khi xuất bản.
-                        </p>
-                        {group.imageBrief && (
-                          <p className="mt-2 rounded-md bg-white/70 p-2 text-left text-sm text-slate-600">
-                            <span className="font-semibold">Image brief:</span>{" "}
-                            {group.imageBrief}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex flex-wrap justify-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            regenerateMediaMutation.mutate({
-                              groupId: group.id,
-                              kind: "image",
-                            })
-                          }
-                          disabled={regenerateMediaMutation.isPending}
-                          className="inline-flex items-center gap-1.5 rounded-md bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
-                        >
-                          <RefreshCw size={13} /> Tạo lại bằng AI
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => openGroupEditor(group)}
-                          className="inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100"
-                        >
-                          <Upload size={13} /> Tải ảnh lên
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {group.audioUrl ? (
-                    <div className="rounded-lg bg-white border border-slate-200 p-3">
-                      <audio
-                        controls
-                        preload="none"
-                        src={groupAudioSrc(group) ?? undefined}
-                        className="w-full h-8"
-                      />
-                    </div>
-                  ) : group.part <= 4 ? (
-                    <div
-                      role="status"
-                      aria-live="polite"
-                      className="flex items-center justify-between gap-3 rounded-lg border border-dashed border-amber-300 bg-amber-50 p-3 text-xs text-amber-900"
-                    >
-                      <span className="inline-flex items-center gap-2">
-                        <Volume2 size={16} className="text-amber-600" />
-                        Chưa có audio stimulus; transcript vẫn được giữ trong
-                        Draft.
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => openGroupEditor(group)}
-                        className="inline-flex shrink-0 items-center gap-1 rounded-md border border-amber-300 bg-white px-2.5 py-1 font-semibold text-amber-900 hover:bg-amber-100"
-                      >
-                        <Upload size={12} /> Tải audio lên
-                      </button>
-                    </div>
-                  ) : null}
-
-                  {group.part <= 4 && group.transcriptText && (
-                    <details className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
-                      <summary className="cursor-pointer font-semibold text-slate-900">
-                        Lời thoại
-                      </summary>
-                      <p className="mt-2 whitespace-pre-line leading-6">
-                        {group.transcriptText}
-                      </p>
-                    </details>
-                  )}
-
-                  {group.passageText && (
-                    <div className="rounded-lg bg-white border border-slate-200 p-4 text-xs font-serif leading-relaxed text-slate-800 whitespace-pre-line">
-                      {group.passageText}
-                    </div>
-                  )}
-
-                  <div className="space-y-4 pt-2">
-                    {group.questions?.map((q) => (
-                      <div
-                        key={q.id}
-                        className="space-y-2 bg-white p-4 rounded-lg border border-slate-200"
-                      >
-                        <p className="font-bold text-sm text-slate-900">
-                          Câu {q.questionNumber}. {q.text}
-                        </p>
-                        <ul className="space-y-1.5 pl-2">
-                          {q.options.map((opt, optIdx) => {
-                            const correct = optIdx === q.correctIndex;
-                            return (
-                              <li
-                                key={optIdx}
-                                className={`flex items-start gap-2 text-sm ${correct ? "font-semibold text-emerald-700" : "text-slate-700"}`}
-                              >
-                                <span className="w-5 shrink-0">
-                                  {correct && <CheckCircle2 size={15} />}
-                                </span>
-                                <span>
-                                  ({String.fromCharCode(65 + optIdx)}) {opt}
-                                </span>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                        {q.explanation && (
-                          <p className="rounded-lg bg-slate-50 p-3 text-sm leading-6 text-slate-700">
-                            {q.explanation}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* TAB 4: METADATA & INFO */}
         {tab === "info" && (
           <form
@@ -1871,7 +1429,7 @@ export default function AdminExamsPage() {
                     Tìm ảnh · Part 1
                   </p>
                   <h3 className="mt-1 text-lg font-bold text-slate-900">
-                    Tìm ảnh cho nhóm #{imageSearchGroup.groupOrder}
+                    Tìm ảnh cho {examGroupLabel(imageSearchGroup)}
                   </h3>
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                     Ảnh chỉ được lưu chính thức sau khi chọn, tải về server và
@@ -2053,7 +1611,7 @@ export default function AdminExamsPage() {
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <h3 className="font-bold text-slate-900">
                   {editingGroup
-                    ? "Chỉnh sửa nhóm câu hỏi"
+                    ? `Sửa ${examGroupLabel(editingGroup)}`
                     : "Thêm nhóm câu hỏi mới"}
                 </h3>
                 <button
@@ -2071,10 +1629,10 @@ export default function AdminExamsPage() {
                 }}
                 className="space-y-3.5 text-sm"
               >
-                <div className="grid grid-cols-2 gap-3">
+                {!editingGroup && <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Part TOEIC *
+                      Part *
                     </label>
                     <select
                       value={groupForm.part}
@@ -2088,7 +1646,7 @@ export default function AdminExamsPage() {
                     >
                       {TOEIC_PARTS.map((p) => (
                         <option key={p.part} value={p.part}>
-                          Part {p.part} ({p.type})
+                          Part {p.part}
                         </option>
                       ))}
                     </select>
@@ -2096,7 +1654,7 @@ export default function AdminExamsPage() {
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Thứ tự nhóm
+                      Thứ tự
                     </label>
                     <input
                       type="number"
@@ -2111,13 +1669,13 @@ export default function AdminExamsPage() {
                       className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
                     />
                   </div>
-                </div>
+                </div>}
 
                 {groupForm.part <= 4 && (
                   <>
                     <div>
                       <AudioUploadField
-                        label={`Tệp âm thanh nghe (Part ${groupForm.part}) *`}
+                        label="Audio *"
                         value={groupForm.audioUrl}
                         previewUrl={formAudioPreviewSrc(groupForm.audioUrl, editingGroup)}
                         onChange={(url) =>
@@ -2126,9 +1684,9 @@ export default function AdminExamsPage() {
                         helperText="Tải file âm thanh đoạn hội thoại/bài nghe lên R2, hoặc dán URL bên ngoài."
                       />
                     </div>
-                    <div>
+                    {groupForm.part > 1 && <div>
                       <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Transcript chuẩn (dùng để kiểm tra audio)
+                        Lời thoại
                       </label>
                       <textarea
                         rows={4}
@@ -2139,10 +1697,10 @@ export default function AdminExamsPage() {
                             transcriptText: e.target.value,
                           })
                         }
-                        placeholder="Ví dụ: Woman: ...\nMan: ..."
+                        placeholder="Ví dụ: W: ... M: ..."
                         className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs leading-relaxed text-slate-800 outline-none focus:border-slate-400"
                       />
-                    </div>
+                    </div>}
                   </>
                 )}
 
@@ -2150,7 +1708,7 @@ export default function AdminExamsPage() {
                   <>
                     <div>
                       <ImageUploadField
-                        label="Hình ảnh bài thi (Part 1 Photo) *"
+                        label="Ảnh *"
                         value={groupForm.imageUrl}
                         onChange={(url) =>
                           setGroupForm({ ...groupForm, imageUrl: url })
@@ -2160,7 +1718,7 @@ export default function AdminExamsPage() {
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Mô tả ảnh gốc (AI regeneration)
+                        Mô tả ảnh (dùng khi tìm ảnh)
                       </label>
                       <textarea
                         rows={3}
@@ -2181,7 +1739,7 @@ export default function AdminExamsPage() {
                 {groupForm.part >= 6 && (
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Đoạn văn đọc hiểu (Part 6–7) *
+                      Đoạn văn *
                     </label>
                     <textarea
                       rows={6}

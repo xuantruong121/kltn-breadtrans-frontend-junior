@@ -184,6 +184,15 @@ export default function ToeicWritingExamComposer({
               <span className="text-xs text-slate-600">
                 {TASK_LABELS[item.taskKind]}
               </span>
+              {item.imageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={item.imageUrl}
+                  alt=""
+                  loading="lazy"
+                  className="mt-1 h-14 w-full rounded object-cover"
+                />
+              )}
             </button>
           ))}
         </div>
