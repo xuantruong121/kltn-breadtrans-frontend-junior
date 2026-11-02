@@ -24,6 +24,7 @@ import {
   type GroupAction,
 } from "@/lib/examStudio/examGroupCard";
 import { groupAudioSrc } from "@/lib/toeic/adminGroupAudio";
+import { isPassageWorthShowing } from "@/lib/toeic/examPaper";
 
 export type ExamCardQuestion = {
   id: number;
@@ -196,7 +197,7 @@ export function ExamGroupCard<G extends ExamCardGroup>({
 }: Props<G>) {
   const audioSrc = groupAudioSrc(group);
   const showScript = group.part >= 3 && group.part <= 4 && group.transcriptText;
-  const showPassage = group.part >= 6 && group.passageText;
+  const showPassage = isPassageWorthShowing(group.part, group.passageText);
   const multiple = group.questions.length > 1;
 
   const questions = group.questions.length ? (

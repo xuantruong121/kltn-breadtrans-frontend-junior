@@ -27,6 +27,7 @@ import axiosClient from "@/lib/api/axiosClient";
 import DocumentImportButton from "@/components/admin/DocumentImportButton";
 import ImageUploadField from "@/components/admin/ImageUploadField";
 import RequiredMediaNotice from "@/components/admin/RequiredMediaNotice";
+import { WritingPictureList } from "@/components/admin/WritingPictureList";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import {
@@ -361,6 +362,7 @@ export default function SkillCmsWorkspace({
   const [writingTypeFilter, setWritingTypeFilter] = useState("ALL");
   const [trackFilter, setTrackFilter] = useState("ALL");
   // The list screen loads one page; search, filters and sort run on the server.
+  const [writingTab, setWritingTab] = useState<"PRACTICE" | "PICTURE">("PRACTICE");
   const list = useAdminList<
     any,
     {
@@ -1478,6 +1480,37 @@ export default function SkillCmsWorkspace({
           )}
         </header>
 
+        {domain === "writing" && (
+          <div role="tablist" aria-label="Loại bài viết" className="flex flex-wrap gap-2">
+            {(
+              [
+                ["PRACTICE", "Bài luyện viết"],
+                ["PICTURE", "Viết câu theo tranh"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                role="tab"
+                aria-selected={writingTab === value}
+                onClick={() => setWritingTab(value)}
+                className={`min-h-10 rounded-lg border px-4 text-sm font-semibold transition-colors ${
+                  writingTab === value
+                    ? "border-slate-950 bg-slate-950 text-white"
+                    : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {domain === "writing" && writingTab === "PICTURE" ? (
+          <WritingPictureList />
+        ) : (
+        <>
+
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           {domain === "listening" && (
             <div
@@ -1765,6 +1798,8 @@ export default function SkillCmsWorkspace({
           pageSizeOptions={ADMIN_PAGE_SIZES}
           alwaysShow
         />
+        </>
+        )}
       </main>
     );
   }

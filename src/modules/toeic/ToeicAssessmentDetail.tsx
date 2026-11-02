@@ -51,9 +51,11 @@ export default function ToeicAssessmentDetail({
   // route as before this page was moved onto the shared detail shell.
   const start = useMutation({
     mutationFn: async () =>
-      (await axiosClient.post(`/toeic/assessments/${id}/attempts`, {
-        idempotencyKey: `learner-${id}`,
-      })) as unknown as { id: number },
+      // No fixed key: the server resumes an open attempt, and a finished exam
+      // starts a new one, so an exam can always be taken again.
+      (await axiosClient.post(`/toeic/assessments/${id}/attempts`, {})) as unknown as {
+        id: number;
+      },
     onSuccess: (attempt) =>
       router.push(`/toeic/assessments/${id}/attempts/${attempt.id}`),
     onError: (err: unknown) => {
@@ -79,7 +81,7 @@ export default function ToeicAssessmentDetail({
   const structureRows = buildAssessmentStructureRows(components);
   const facts = buildAssessmentSummaryFacts(components, data.productFamily);
   const readiness = resolveAssessmentReadiness(components);
-  const isCompleted = data.attempt?.status === "COMPLETED";
+  const inProgress = data.attempt?.status === "IN_PROGRESS";
 
   // Each skill's size and time are already on its "Cấu trúc đề" card; the
   // side panel repeats only a single total, when every skill shares a unit.
@@ -117,7 +119,7 @@ export default function ToeicAssessmentDetail({
       summaryRows={summaryRows}
       notices={
         <>
-          {data.attempt && !isCompleted && (
+          {inProgress && (
             <div className="rounded-lg border border-amber-200 bg-amber-50/80 dark:border-amber-900/50 dark:bg-amber-950/30 p-3 text-sm text-amber-900 dark:text-amber-200 font-medium">
               Bạn đang có một lượt thi dở dang cho đề này. Bấm để tiếp tục làm
               tiếp.
@@ -136,16 +138,9 @@ export default function ToeicAssessmentDetail({
         </>
       }
       cta={{
-        label: isCompleted
-          ? "Xem kết quả"
-          : data.attempt
-            ? "Tiếp tục làm bài"
-            : "Bắt đầu làm bài",
-        onClick: () =>
-          isCompleted && data.attempt
-            ? router.push(`/toeic/assessments/${id}/attempts/${data.attempt.id}/result`)
-            : start.mutate(),
-        disabled: !isCompleted && !readiness.ready,
+        label: inProgress ? "Tiếp tục làm bài" : "Bắt đầu làm bài",
+        onClick: () => start.mutate(),
+        disabled: !readiness.ready,
         pending: start.isPending,
       }}
       ctaError={error || null}

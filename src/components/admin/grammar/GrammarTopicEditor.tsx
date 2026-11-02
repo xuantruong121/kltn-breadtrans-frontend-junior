@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { grammarDisplayTitle } from "@/lib/catalog/displayTitles";
 import { useRouter } from "next/navigation";
@@ -264,13 +264,13 @@ function TopicBody({ topic }: { topic: Topic | null }) {
   };
 
   /** Empty topic: AI writes the theory and the questions; otherwise it adds questions. */
-  const askAi = async () => {
+  const askAi = async (requested = aiCount) => {
     if (!form.title.trim()) {
       toast.error("Cần tên chủ đề để AI biết viết về gì.");
       return;
     }
     setBusy(true);
-    const count = Math.min(aiCount, aiMax);
+    const count = Math.min(requested, aiMax);
     try {
       if (aiDraftsWholeTopic) {
         const data = unwrap<any>(
@@ -307,6 +307,20 @@ function TopicBody({ topic }: { topic: Topic | null }) {
       setBusy(false);
     }
   };
+
+  // "Tạo bằng AI" on the list opens the new topic with ?ai=<count>.
+  const aiStarted = useRef(false);
+  useEffect(() => {
+    if (!topic || aiStarted.current) return;
+    const count = Number(new URLSearchParams(window.location.search).get("ai"));
+    if (!count) return;
+    aiStarted.current = true;
+    window.history.replaceState(null, "", window.location.pathname);
+    setAiCount(count);
+    setPanel("ai");
+    void askAi(count);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on arrival
+  }, [topic]);
 
   const move = async (index: number, direction: -1 | 1) => {
     if (!topic) return;

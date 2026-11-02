@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, ChevronLeft, ChevronRight, CircleSlash2, CircleX, Pause, Play, X } from "lucide-react";
 import type { ToeicReviewQuestion } from "@/lib/api/services/toeic.service";
-import { PART_TITLES, formatClock, isPassageWorthShowing, splitPassageDocuments } from "@/lib/toeic/examPaper";
+import { ToeicGraphic } from "@/components/toeic/paper/ToeicGraphic";
+import { PART_TITLES, formatClock, isListeningGraphic, isPassageWorthShowing, splitPassageDocuments } from "@/lib/toeic/examPaper";
 
 export type GroupAudio = { src: string; start: number; end: number } | null;
 
@@ -135,6 +136,7 @@ export function ToeicAnswerBody({
           )}
         </div>
       )}
+      {isListeningGraphic(question.passageText) && <ToeicGraphic text={question.passageText!} />}
       {!listening && isPassageWorthShowing(question.part, question.passageText) && (
         <div className="max-h-72 space-y-3 overflow-y-auto rounded-xl border border-slate-200 p-3 dark:border-slate-700">
           {splitPassageDocuments(question.passageText).map((doc, i) => (

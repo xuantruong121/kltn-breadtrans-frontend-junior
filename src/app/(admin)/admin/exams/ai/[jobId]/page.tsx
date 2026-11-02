@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useMemo, useState } from "react";
+import { use, useMemo, useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -84,6 +84,15 @@ export default function ExamAiCandidateWorkspacePage({
     enabled: !!statusQuery.data,
   });
 
+  // A retry rewrites the draft in the background; show it when the job ends.
+  const jobStatus = statusQuery.data?.status;
+  useEffect(() => {
+    if (jobStatus)
+      void queryClient.invalidateQueries({
+        queryKey: ["exam-ai-candidate", jobId],
+      });
+  }, [jobStatus, jobId, queryClient]);
+
   const candidate = candidateQuery.data;
   const failedUnits = candidate?.failedUnits ?? [];
 
@@ -146,7 +155,7 @@ export default function ExamAiCandidateWorkspacePage({
       });
     } catch (err: any) {
       toast.error(
-        getApiErrorMessage(err, "Không thể áp dụng candidate đã chọn"),
+        getApiErrorMessage(err, "Không thể áp dụng nội dung đã chọn"),
       );
     } finally {
       setApplying(false);
@@ -184,7 +193,7 @@ export default function ExamAiCandidateWorkspacePage({
           ...q,
         })),
       });
-      toast.success("Đã lưu chỉnh sửa candidate");
+      toast.success("Đã lưu chỉnh sửa");
       setEditingKey(null);
       await queryClient.invalidateQueries({
         queryKey: ["exam-ai-candidate", jobId],
@@ -198,7 +207,7 @@ export default function ExamAiCandidateWorkspacePage({
     setRegenerating(candidateKey);
     try {
       await examAiService.regenerateGroup(jobId, candidateKey);
-      toast.success("Đã tạo lại nhóm — candidate đã cập nhật");
+      toast.success("Đã tạo lại nhóm");
       await queryClient.invalidateQueries({
         queryKey: ["exam-ai-candidate", jobId],
       });
@@ -286,6 +295,23 @@ export default function ExamAiCandidateWorkspacePage({
             Thử lại
           </button>
         </div>
+      )}
+
+      {(status?.missingMedia?.length ?? 0) > 0 && (
+        <section className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="font-semibold">
+            Còn thiếu {status?.missingMedia?.length} ảnh. Câu hỏi và đáp án vẫn được giữ.
+          </p>
+          <ul className="mt-1 space-y-1">
+            {status?.missingMedia?.map((item) => (
+              <li key={item.label}>
+                {item.label}
+                {item.brief ? `: ${item.brief}` : ""}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1">Mở trang đề để tìm hoặc tải ảnh lên.</p>
+        </section>
       )}
 
       {hasFailedUnits && !isProcessing && (
@@ -445,6 +471,11 @@ export default function ExamAiCandidateWorkspacePage({
                             />
                             Nhóm {group.groupOrder} · {group.questions.length}{" "}
                             câu
+                            {group.standIn && (
+                              <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800">
+                                Sinh bằng nguồn dự phòng
+                              </span>
+                            )}
                           </label>
                           <div className="flex items-center gap-2">
                             <span
@@ -653,6 +684,7 @@ export default function ExamAiCandidateWorkspacePage({
                 <div className="mb-2 flex items-center justify-between">
                   <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
                     {skill === "speaking" ? "Speaking" : "Writing"}
+                    {candidate.standIn && " · Sinh bằng nguồn dự phòng"}
                   </h2>
                   {!tasks.every((t) => t.applied) && (
                     <label className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
@@ -683,6 +715,11 @@ export default function ExamAiCandidateWorkspacePage({
                             {state.label}
                           </span>
                         </div>
+                        {"email" in task && task.email && (
+                          <p className="mt-1 whitespace-pre-line rounded-md bg-slate-50 p-2 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                            {task.email}
+                          </p>
+                        )}
                         {"prompt" in task && task.prompt && (
                           <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                             {task.prompt}

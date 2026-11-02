@@ -3,7 +3,8 @@
 import { memo } from "react";
 
 import type { ToeicQuestionGroup } from "@/lib/api/services/toeic.service";
-import { isPassageWorthShowing, splitPassageDocuments, type PaperPart } from "@/lib/toeic/examPaper";
+import { isListeningGraphic, isPassageWorthShowing, splitPassageDocuments, type PaperPart } from "@/lib/toeic/examPaper";
+import { ToeicGraphic } from "./ToeicGraphic";
 import { ToeicPaperQuestion } from "./ToeicPaperQuestion";
 
 /** One short direction per Part, shown once above its questions. */
@@ -30,6 +31,7 @@ type Props = {
 };
 
 function Passage({ text }: { text: string }) {
+  if (isListeningGraphic(text)) return <ToeicGraphic text={text} />;
   return (
     <div className="space-y-3">
       {splitPassageDocuments(text).map((doc, index) => (

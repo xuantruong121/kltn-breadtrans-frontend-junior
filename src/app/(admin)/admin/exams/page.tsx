@@ -147,6 +147,12 @@ interface ExamDetail {
   lrEditable?: boolean;
   /** Part 1, Speaking and Writing slots that need a picture and have none. */
   missingImageCount?: number;
+  missingImages?: Array<{
+    section: "LR" | "SPEAKING" | "WRITING";
+    label: string;
+    brief: string | null;
+    questionNumber?: number;
+  }>;
   /** The AI draft still waits for review; false once it is applied. */
   aiReviewPending?: boolean;
   /** The one recording of the whole Listening section. */
@@ -1000,6 +1006,39 @@ export default function AdminExamsPage() {
                 )}
           </div>
         </div>
+
+        {(examDetail.missingImages?.length ?? 0) > 0 && (
+          <section
+            aria-label="Ảnh còn thiếu"
+            className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+          >
+            <p className="font-semibold">
+              Còn thiếu {examDetail.missingImages?.length} ảnh. Câu hỏi và đáp án vẫn đầy đủ; đề xuất bản được khi đủ ảnh.
+            </p>
+            <p className="mt-1">
+              Bấm từng dòng để mở câu đó rồi tìm hoặc tải ảnh lên. Với Part 1, sau khi có ảnh hãy dùng &quot;Tạo lại câu từ ảnh&quot; để đáp án khớp ảnh.
+            </p>
+            <ul className="mt-2 space-y-1">
+              {examDetail.missingImages?.map((item) => (
+                <li key={item.label}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (item.section === "LR" && item.questionNumber)
+                        setPendingQuestion(item.questionNumber);
+                      else
+                        setActiveTab(item.section === "SPEAKING" ? "speaking" : "writing");
+                    }}
+                    className="text-left underline-offset-2 hover:underline"
+                  >
+                    <span className="font-semibold">{item.label}</span>
+                    {item.brief ? `: ${item.brief}` : ""}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* WORKSPACE NAVIGATION TABS */}
         <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-1">

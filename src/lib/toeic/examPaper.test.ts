@@ -5,6 +5,7 @@ import {
   buildPaperParts,
   formatClock,
   formatMinutes,
+  parseListeningGraphic,
   nextPlayable,
   playbackSegments,
   realToVirtual,
@@ -103,4 +104,14 @@ test("navigator status and clock formatting", () => {
   assert.equal(formatClock(65), "01:05");
   assert.equal(formatClock(7200), "2:00:00");
   assert.equal(formatClock(-3), "00:00");
+});
+
+test("a Part 3 graphic is shown and split into rows, a script never is", () => {
+  const graphic = "GRAPHIC: Prices\nRoom | Price\nA | $10";
+  assert.equal(isPassageWorthShowing(3, graphic), true);
+  assert.equal(isPassageWorthShowing(3, "M: The script of the talk."), false);
+  assert.deepEqual(parseListeningGraphic(graphic), {
+    title: "Prices",
+    rows: [["Room", "Price"], ["A", "$10"]],
+  });
 });

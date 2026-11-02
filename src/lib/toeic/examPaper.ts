@@ -71,9 +71,25 @@ export function splitPassageDocuments(text: string | null | undefined) {
   });
 }
 
+/** Parts 3 and 4 may carry a small table to read; everything else stays hidden. */
+export function isListeningGraphic(text: string | null | undefined) {
+  return /^GRAPHIC:/i.test(text?.trim() ?? "");
+}
+
+export function parseListeningGraphic(text: string) {
+  const [first = "", ...rows] = text.trim().split(/\r?\n/);
+  return {
+    title: first.replace(/^GRAPHIC:\s*/i, "").trim(),
+    rows: rows
+      .filter((row) => row.trim())
+      .map((row) => row.split("|").map((cell) => cell.trim())),
+  };
+}
+
 /** A Part 5 group carries only a section label ("PART 5 — …"), not a passage. */
 export function isPassageWorthShowing(part: number, text: string | null | undefined) {
-  if (part <= 4 || !text?.trim()) return false;
+  if (!text?.trim()) return false;
+  if (part <= 4) return isListeningGraphic(text);
   return !/^PART\s+\d\b/i.test(text.trim()) || text.trim().length > 80;
 }
 
