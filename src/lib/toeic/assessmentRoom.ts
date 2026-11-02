@@ -35,12 +35,6 @@ export const SECTION_LABEL: Record<string, string> = {
   WRITING: "Writing",
 };
 
-export const SECTION_BRIEF: Record<string, string> = {
-  LISTENING_READING: "200 câu trong 120 phút. Audio phát một mạch từ đầu phần Listening.",
-  SPEAKING: "11 câu trong 20 phút. Mỗi câu có giới hạn thời gian trả lời, được thu lại 1 lần.",
-  WRITING: "8 câu trong 60 phút. Bài viết tự lưu trên máy này cho đến khi nộp.",
-};
-
 export function groupLabel(group: RoomGroup): string {
   return group.from === group.to ? `Câu ${group.from}` : `Câu ${group.from}–${group.to}`;
 }
@@ -79,7 +73,8 @@ export type RoomComponent = {
 
 export type RoomStep =
   | { kind: "DONE" }
-  | { kind: "INTRO"; component: RoomComponent; previous: RoomComponent | null }
+  /** A section opens by itself, so one click on Start runs the whole exam. */
+  | { kind: "START"; component: RoomComponent; previous: RoomComponent | null }
   | { kind: "ROOM"; component: RoomComponent }
   | { kind: "LISTENING_READING"; component: RoomComponent }
   /** The Listening & Reading paper is in, its section only has to be closed. */
@@ -91,7 +86,7 @@ export function roomStep(attempt: { status: string; components: RoomComponent[] 
   if (attempt.status === "COMPLETED" || index < 0) return { kind: "DONE" };
   const component = ordered[index];
   if (component.status === "NOT_STARTED")
-    return { kind: "INTRO", component, previous: ordered[index - 1] ?? null };
+    return { kind: "START", component, previous: ordered[index - 1] ?? null };
   if (component.kind !== "LISTENING_READING") return { kind: "ROOM", component };
   return component.childStatus === "SUBMITTED"
     ? { kind: "CLOSE_LISTENING_READING", component }

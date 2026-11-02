@@ -54,14 +54,14 @@ test("the question 8 label includes its reading time", () => {
   );
 });
 
-test("a new exam opens on the intro of its first section", () => {
+test("a new exam starts its first section", () => {
   const step = roomStep({
     status: "IN_PROGRESS",
     components: [part("SPEAKING", 1, "NOT_STARTED"), part("WRITING", 2, "NOT_STARTED")],
   });
-  assert.equal(step.kind, "INTRO");
-  assert.equal(step.kind === "INTRO" && step.component.kind, "SPEAKING");
-  assert.equal(step.kind === "INTRO" && step.previous, null);
+  assert.equal(step.kind, "START");
+  assert.equal(step.kind === "START" && step.component.kind, "SPEAKING");
+  assert.equal(step.kind === "START" && step.previous, null);
 });
 
 test("the next section follows the one just submitted", () => {
@@ -69,8 +69,8 @@ test("the next section follows the one just submitted", () => {
     status: "IN_PROGRESS",
     components: [part("WRITING", 2, "NOT_STARTED"), part("SPEAKING", 1, "COMPLETED")],
   });
-  assert.equal(step.kind === "INTRO" && step.component.kind, "WRITING");
-  assert.equal(step.kind === "INTRO" && step.previous?.kind, "SPEAKING");
+  assert.equal(step.kind === "START" && step.component.kind, "WRITING");
+  assert.equal(step.kind === "START" && step.previous?.kind, "SPEAKING");
 });
 
 test("a section being answered reopens its room", () => {

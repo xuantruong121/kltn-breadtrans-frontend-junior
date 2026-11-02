@@ -139,7 +139,12 @@ export default function ToeicAssessmentDetail({
       }
       cta={{
         label: inProgress ? "Tiếp tục làm bài" : "Bắt đầu làm bài",
-        onClick: () => start.mutate(),
+        onClick: () => {
+          // Fullscreen needs this click, and the paper may open right after it.
+          if (!inProgress && components[0]?.kind === "LISTENING_READING")
+            void document.documentElement.requestFullscreen?.().catch(() => undefined);
+          start.mutate();
+        },
         disabled: !readiness.ready,
         pending: start.isPending,
       }}

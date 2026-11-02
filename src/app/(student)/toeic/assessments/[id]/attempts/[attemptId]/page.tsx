@@ -1,15 +1,16 @@
 "use client";
 
 import { use, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Loader2 } from "lucide-react";
+import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import axiosClient from "@/lib/api/axiosClient";
 import { toeicService } from "@/lib/api/services/toeic.service";
-import { AssessmentSectionIntro } from "@/components/toeic/assessment/AssessmentSectionIntro";
 import { SpeakingRoom, type SpeakingComponent } from "@/components/toeic/assessment/SpeakingRoom";
 import { WritingRoom, type WritingComponent } from "@/components/toeic/assessment/WritingRoom";
-import { roomStep, type RoomComponent } from "@/lib/toeic/assessmentRoom";
+import { SECTION_LABEL, roomStep, type RoomComponent } from "@/lib/toeic/assessmentRoom";
 import { useCanonicalExamPath } from "@/lib/toeic/useCanonicalExamPath";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 
@@ -51,7 +52,6 @@ export default function ToeicAssessmentAttemptPage({
   const startSection = useMutation({
     mutationFn: async (componentId: number) =>
       axiosClient.post(`/toeic/assessments/attempts/${attemptId}/components/${componentId}/start`),
-    onSuccess: refresh,
     onError: (err: unknown) => setError(getApiErrorMessage(err, "Không mở được phần thi.")),
   });
 
@@ -59,7 +59,18 @@ export default function ToeicAssessmentAttemptPage({
   const leavingRef = useRef(false);
   useEffect(() => {
     if (!step || leavingRef.current) return;
-    if (step.kind === "DONE") {
+    if (step.kind === "START") {
+      leavingRef.current = true;
+      const { component, previous } = step;
+      if (previous) toast.success(`Đã nộp phần ${SECTION_LABEL[previous.kind]}`);
+      void startSection
+        .mutateAsync(component.assessmentComponentId)
+        .then(refresh)
+        .catch(() => undefined)
+        .finally(() => {
+          leavingRef.current = false;
+        });
+    } else if (step.kind === "DONE") {
       leavingRef.current = true;
       void client.invalidateQueries({ queryKey: ["toeic-assessment", id] });
       router.replace(`/toeic/assessments/${id}/attempts/${attemptId}/result`);
@@ -107,23 +118,6 @@ export default function ToeicAssessmentAttemptPage({
   const sections = [...data.components].sort((a, b) => a.order - b.order);
   const title = data.assessment.title;
 
-  if (step.kind === "INTRO")
-    return (
-      <AssessmentSectionIntro
-        title={title}
-        backHref={backHref}
-        component={step.component}
-        previous={step.previous}
-        sections={sections}
-        pending={startSection.isPending}
-        error={error}
-        onStart={() => {
-          setError(null);
-          startSection.mutate(step.component.assessmentComponentId);
-        }}
-      />
-    );
-
   if (step.kind === "ROOM") {
     const shared = {
       title,
@@ -141,7 +135,16 @@ export default function ToeicAssessmentAttemptPage({
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-3 px-5 text-center text-slate-700 dark:text-slate-300">
-      {error ? <p role="alert">{error}</p> : <Loader2 className="animate-spin text-blue-600" aria-label="Đang chuyển phần thi" />}
+      {error ? (
+        <>
+          <p role="alert">{error}</p>
+          <Link href={backHref} className="font-semibold text-blue-700 hover:underline dark:text-blue-300">
+            Về trang đề
+          </Link>
+        </>
+      ) : (
+        <Loader2 className="animate-spin text-blue-600" aria-label="Đang mở bài thi" />
+      )}
     </main>
   );
 }
