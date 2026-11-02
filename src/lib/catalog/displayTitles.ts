@@ -171,6 +171,24 @@ export function quizDisplayTitle(id: number | null | undefined, storedTitle: str
   return title ?? withoutLevelTag(storedTitle);
 }
 
+const matching = (titles: Record<string | number, string>, search: string) => {
+  const needle = search.trim().toLocaleLowerCase("vi");
+  if (!needle) return [];
+  return Object.entries(titles)
+    .filter(([, title]) => title.toLocaleLowerCase("vi").includes(needle))
+    .map(([key]) => key);
+};
+
+/**
+ * Ids whose Vietnamese title holds the text. The server only knows stored
+ * titles, so admin lists send these along with their search.
+ */
+export const quizIdsMatchingTitle = (search: string) =>
+  matching(QUIZ_TITLES, search);
+
+export const speakingSetsMatchingTitle = (search: string) =>
+  matching(SPEAKING_SET_TITLES, search);
+
 export function speakingSetDisplayTitle(key: string | null | undefined, storedTitle: string): string {
   const title = key ? SPEAKING_SET_TITLES[key] : undefined;
   return title ?? withoutLevelTag(storedTitle);

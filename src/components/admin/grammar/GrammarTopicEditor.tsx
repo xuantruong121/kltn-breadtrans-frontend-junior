@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { grammarDisplayTitle } from "@/lib/catalog/displayTitles";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -342,7 +343,9 @@ function TopicBody({ topic }: { topic: Topic | null }) {
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-slate-950">
-            {topic ? topic.title : "Tạo chủ đề ngữ pháp"}
+            {topic
+              ? grammarDisplayTitle(topic.id, topic.title)
+              : "Tạo chủ đề ngữ pháp"}
           </h1>
           <p className="mt-1 text-sm text-slate-600">
             {topic ? (published ? "Đã xuất bản" : "Bản nháp") : "Chủ đề mới, chưa lưu"} ·{" "}

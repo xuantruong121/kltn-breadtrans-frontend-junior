@@ -234,3 +234,23 @@ export function filterSkillContent<T extends ListItem>(
   };
   return visible.sort(by[filters.sort]);
 }
+
+/**
+ * Sentence-building exercises share the WRITING_PICTURE type without using
+ * pictures. A new exercise has no questions yet, so it may still need one.
+ */
+export const writingUsesPictures = (
+  type: string,
+  questions: Array<{ content?: { imageUrl?: unknown } | null }> = [],
+) =>
+  type === "WRITING_PICTURE" &&
+  (questions.length === 0 ||
+    questions.some((question) => Boolean(question.content?.imageUrl)));
+
+export const writingCardLabel = (item: {
+  type?: string;
+  thumbnailUrl?: string | null;
+}) => {
+  if (item.type !== "WRITING_PICTURE") return "Viết email";
+  return item.thumbnailUrl ? "Viết theo tranh" : "Viết câu";
+};

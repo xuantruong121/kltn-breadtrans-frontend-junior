@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { grammarDisplayTitle } from "@/lib/catalog/displayTitles";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Loader2, Lock, Plus, Search, Send, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -191,7 +192,7 @@ export default function AdminGrammarPage() {
                 </div>
                 <h2 className="mt-3 line-clamp-2 font-semibold text-slate-950">
                   <Link href={`/admin/grammar/${topic.id}`} className="hover:text-blue-700">
-                    {topic.title}
+                    {grammarDisplayTitle(topic.id, topic.title)}
                   </Link>
                 </h2>
                 {topic.description && (

@@ -42,12 +42,18 @@ import {
   CMS_LEVELS,
   cmsLevelFromTitle,
   contentLevel,
-  displayTitle,
   publishChecklist,
   trackNames,
   CONTENT_TRACKS,
+  writingCardLabel,
+  writingUsesPictures,
   type ListFilters,
 } from "./skillCmsStatus";
+import { AdminImageThumb } from "./AdminImageThumb";
+import {
+  quizDisplayTitle,
+  quizIdsMatchingTitle,
+} from "@/lib/catalog/displayTitles";
 import { TrackTagField } from "./TrackTagField";
 import { Pagination } from "@/components/ui";
 import { useAdminList } from "./useAdminList";
@@ -375,6 +381,7 @@ export default function SkillCmsWorkspace({
       mode: domain === "listening" ? listeningModeFilter : undefined,
       type: domain === "writing" ? writingTypeFilter : undefined,
       track: trackFilter,
+      titleIds: quizIdsMatchingTitle(searchTerm).join(",") || undefined,
     },
     enabled: mode === "list",
   });
@@ -1649,9 +1656,9 @@ export default function SkillCmsWorkspace({
         <div className="grid grid-cols-[repeat(auto-fill,minmax(min(320px,100%),1fr))] gap-4">
           {visibleItems.map((content) => {
             const level = contentLevel(content);
-            // The level and form show as tags, so the title drops its
-            // "Hội thoại C1 — " head.
-            const cardTitle = displayTitle(content);
+            // The same Vietnamese title learners read; the stored one keeps
+            // the level tag the API needs.
+            const cardTitle = quizDisplayTitle(content.id, content.title ?? "");
             const published = content.publicationStatus === "PUBLISHED";
             const audio = audioBadgeFor(content);
             return (
@@ -1664,6 +1671,11 @@ export default function SkillCmsWorkspace({
                   {level && (
                     <span className="flex-none rounded-md bg-blue-50 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-blue-800">
                       {level}
+                    </span>
+                  )}
+                  {domain === "writing" && (
+                    <span className="truncate text-xs text-slate-600 dark:text-slate-400">
+                      {writingCardLabel(content)}
                     </span>
                   )}
                   {domain === "listening" && (
@@ -1686,12 +1698,23 @@ export default function SkillCmsWorkspace({
                     {publicationStatusLabel(content.publicationStatus)}
                   </span>
                 </div>
-                <h2 className="mt-3 line-clamp-2 font-semibold text-slate-950">
-                  {cardTitle}
-                </h2>
-                <p className="mt-1 line-clamp-2 text-sm text-slate-600">
-                  {content.description || "Chưa có mô tả"}
-                </p>
+                <div className="mt-3 flex items-start gap-3">
+                  {content.thumbnailUrl && (
+                    <AdminImageThumb
+                      src={content.thumbnailUrl}
+                      alt={cardTitle}
+                      className="h-16 w-20"
+                    />
+                  )}
+                  <div className="min-w-0">
+                    <h2 className="line-clamp-2 font-semibold text-slate-950">
+                      {cardTitle}
+                    </h2>
+                    <p className="mt-1 line-clamp-2 text-sm text-slate-600">
+                      {content.description || "Chưa có mô tả"}
+                    </p>
+                  </div>
+                </div>
                 <p className="mt-2 truncate text-sm text-slate-600 dark:text-slate-400">
                   {trackNames(content.tracks)}
                 </p>
@@ -1751,6 +1774,8 @@ export default function SkillCmsWorkspace({
   const isListening = domain === "listening";
   const writingTaskType = question.taskType.trim().toUpperCase();
   const isPictureWriting = isWriting && form.type === "WRITING_PICTURE";
+  const needsPicture =
+    isPictureWriting && writingUsesPictures(form.type, questions);
   const isEssayWriting =
     isWriting &&
     [
@@ -1936,7 +1961,7 @@ export default function SkillCmsWorkspace({
               </label>
               {isPictureWriting && (
                 <>
-                  <div className="md:col-span-2">
+                  {needsPicture && <div className="md:col-span-2">
                     <ImageUploadField
                       label="Hình ảnh miêu tả *"
                       value={question.imageUrl}
@@ -1946,7 +1971,7 @@ export default function SkillCmsWorkspace({
                       helperText="Tải lên ảnh mô tả cho bài luyện viết (PNG, JPG hoặc WEBP)."
                     />
                     {!question.imageUrl.trim() && <RequiredMediaNotice className="mt-2" />}
-                  </div>
+                  </div>}
                   <label className="text-sm font-medium">
                     Keywords
                     <textarea
@@ -2268,7 +2293,9 @@ export default function SkillCmsWorkspace({
       </button>
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-950">{title}</h1>
+          <h1 className="text-2xl font-semibold text-slate-950">
+            {item?.title ? quizDisplayTitle(item.id, item.title) : title}
+          </h1>
           <p className="mt-1 text-sm text-slate-600">
             Trạng thái: {publicationStatusLabel(item?.publicationStatus)} ·{" "}
             {checklist.filter((entry) => entry.done).length}/{checklist.length}{" "}
@@ -2806,7 +2833,14 @@ export default function SkillCmsWorkspace({
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div>
+                  {current.content?.imageUrl && (
+                    <AdminImageThumb
+                      src={current.content.imageUrl}
+                      alt={`Ảnh câu ${index + 1}`}
+                      className="h-16 w-20"
+                    />
+                  )}
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
                       Câu {index + 1} ·{" "}
                       {isWriting

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { AdminImageThumb } from "@/components/admin/AdminImageThumb";
+import { speakingSetDisplayTitle } from "@/lib/catalog/displayTitles";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -11,7 +13,6 @@ import {
   ChevronUp,
   Circle,
   FileText,
-  ImageIcon,
   Loader2,
   Plus,
   Save,
@@ -421,7 +422,9 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-slate-950">
-            {set ? set.title : "Tạo bộ luyện nói"}
+            {set
+              ? speakingSetDisplayTitle(set.id, set.title)
+              : "Tạo bộ luyện nói"}
           </h1>
           <p className="mt-1 text-sm text-slate-600">
             {set
@@ -923,6 +926,13 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                       }`}
                     >
                       <div className="flex flex-wrap items-start gap-3">
+                        {exercise.imageUrl && (
+                          <AdminImageThumb
+                            src={exercise.imageUrl}
+                            alt={exercise.title}
+                            className="h-20 w-28"
+                          />
+                        )}
                         <span className="flex size-7 flex-none items-center justify-center rounded-md bg-slate-100 text-xs font-semibold tabular-nums text-slate-700">
                           {index + 1}
                         </span>
@@ -938,12 +948,6 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                             {exercise.targetText}
                           </p>
                           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
-                            {exercise.imageUrl && (
-                              <span className="inline-flex items-center gap-1">
-                                <ImageIcon size={14} aria-hidden="true" /> Có
-                                ảnh
-                              </span>
-                            )}
                             {stimulus && (
                               <span className="inline-flex items-center gap-1">
                                 <FileText size={14} aria-hidden="true" />{" "}

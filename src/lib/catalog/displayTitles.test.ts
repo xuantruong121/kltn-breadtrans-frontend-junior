@@ -5,8 +5,10 @@ import {
   grammarCategory,
   grammarDisplayTitle,
   quizDisplayTitle,
+  quizIdsMatchingTitle,
   recommendationDisplayTitle,
   speakingSetDisplayTitle,
+  speakingSetsMatchingTitle,
   withoutLevelPhrase,
   withoutLevelTag,
 } from "./displayTitles.ts";
@@ -92,4 +94,10 @@ test("a recommendation reads the same title as its catalog", () => {
     recommendationDisplayTitle({ contentType: "CONTENT_TOPIC", contentId: 1, title: "X", route: "/x" }),
     "X",
   );
+});
+
+test("a Vietnamese search finds titles the server does not store", () => {
+  assert.ok(quizIdsMatchingTitle("hội thoại nơi công sở").includes("5"));
+  assert.ok(speakingSetsMatchingTitle("đọc thành tiếng").includes("practice-read-aloud-a1-a2"));
+  assert.deepEqual(quizIdsMatchingTitle("  "), []);
 });
