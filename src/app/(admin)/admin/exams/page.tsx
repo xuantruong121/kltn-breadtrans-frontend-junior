@@ -149,6 +149,12 @@ interface ExamDetail {
   missingImageCount?: number;
   /** The AI draft still waits for review; false once it is applied. */
   aiReviewPending?: boolean;
+  /** The one recording of the whole Listening section. */
+  listeningMaster?: {
+    state: "NOT_NEEDED" | "MISSING" | "STALE" | "READY";
+    durationSeconds?: number;
+    url?: string | null;
+  } | null;
   familyCode?: string;
   variantCode?: string;
   readiness?: {
@@ -408,6 +414,19 @@ export default function AdminExamsPage() {
     },
     onError: (err: any) =>
       toast.error(getApiErrorMessage(err, "Không thể cập nhật đề thi")),
+  });
+
+  const buildMasterMutation = useMutation({
+    mutationFn: async (id: number) =>
+      axiosClient.post(`/admin/exams/${id}/listening-master`),
+    onSuccess: () => {
+      toast.success("Đã dựng audio Listening liền mạch.");
+      queryClient.invalidateQueries({
+        queryKey: ["admin-exam-detail", selectedExamId],
+      });
+    },
+    onError: (err: any) =>
+      toast.error(getApiErrorMessage(err, "Không dựng được audio liền mạch")),
   });
 
   const publishExamMutation = useMutation({
@@ -836,6 +855,8 @@ export default function AdminExamsPage() {
         ? groups
         : groups.filter((g) => g.part === activePartFilter);
 
+    const isDraft = examDetail.publicationStatus === "DRAFT";
+    const master = examDetail.listeningMaster;
     const hasLr = examDetail.variantCode !== "TOEIC_SW";
     const hasTasks =
       examDetail.variantCode === "TOEIC_SW" ||
@@ -960,7 +981,14 @@ export default function AdminExamsPage() {
                       title={publishReadiness.helpText}
                       className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none"
                     >
-                      <CheckCircle2 size={15} /> {publishReadiness.label}
+                      {publishExamMutation.isPending ? (
+                        <Loader2 size={15} className="animate-spin" />
+                      ) : (
+                        <CheckCircle2 size={15} />
+                      )}{" "}
+                      {publishExamMutation.isPending
+                        ? "Đang dựng audio và xuất bản..."
+                        : publishReadiness.label}
                     </button>
                     </div>
                     {!publishReadiness.canPublish && (
@@ -1026,9 +1054,18 @@ export default function AdminExamsPage() {
           </button>
         </div>
 
+        {!isDraft && (
+          <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+            {examDetail.attemptsCount
+              ? "Đề đã có lượt làm bài nên không sửa trực tiếp được, để giữ nguyên kết quả của học viên. Muốn sửa, hãy ngừng phát hành rồi nhân bản thành đề mới."
+              : 'Đề đang xuất bản nên chỉ xem được. Muốn sửa, hãy bấm "Chuyển về bản nháp".'}
+          </p>
+        )}
+
         {tab === "speaking" && (
           <ToeicSpeakingExamComposer
             examId={examDetail.id}
+            readOnly={!isDraft}
             onChanged={refreshExam}
           />
         )}
@@ -1092,6 +1129,44 @@ export default function AdminExamsPage() {
               </form>
             </div>
 
+            {master && master.state !== "NOT_NEEDED" && (
+              <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-slate-900">
+                    Audio cả phần Listening
+                    <span className="ml-2 font-normal text-slate-600">
+                      {master.state === "READY"
+                        ? `Dài ${Math.round((master.durationSeconds ?? 0) / 60)} phút`
+                        : master.state === "STALE"
+                          ? "Audio câu hỏi đã đổi, hệ thống dựng lại khi xuất bản"
+                          : "Chưa dựng, hệ thống tự dựng khi xuất bản"}
+                    </span>
+                  </p>
+                  {isDraft && lrEditable && master.state !== "READY" && (
+                    <button
+                      onClick={() => buildMasterMutation.mutate(examDetail.id)}
+                      disabled={buildMasterMutation.isPending}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      {buildMasterMutation.isPending && (
+                        <Loader2 size={13} className="animate-spin" />
+                      )}
+                      {buildMasterMutation.isPending ? "Đang dựng..." : "Dựng ngay"}
+                    </button>
+                  )}
+                </div>
+                {master.url && (
+                  <audio
+                    controls
+                    preload="none"
+                    src={master.url}
+                    aria-label="Audio cả phần Listening"
+                    className="mt-2 h-9 w-full"
+                  />
+                )}
+              </div>
+            )}
+
             {!lrEditable && (
               <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
                 Đề này dùng chung Listening & Reading với đề khác nên chỉ xem
@@ -1099,7 +1174,7 @@ export default function AdminExamsPage() {
               </p>
             )}
 
-            {lrEditable && allQuestions.length < 200 && (
+            {lrEditable && isDraft && allQuestions.length < 200 && (
               <button
                 onClick={() => {
                   setEditingGroup(null);
@@ -1130,7 +1205,7 @@ export default function AdminExamsPage() {
                   <ExamGroupCard
                     key={group.id}
                     group={group}
-                    readOnly={!lrEditable}
+                    readOnly={!lrEditable || !isDraft}
                     focusedQuestion={focusedQuestion}
                     busy={
                       regenerateMediaMutation.isPending ||

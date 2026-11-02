@@ -31,9 +31,16 @@ type WritingTask = {
   keywords?: string[];
 };
 
+type PreviewMaster = {
+  url: string;
+  durationSeconds: number;
+  timeline: Array<{ kind: string; part?: number; start: number }>;
+};
+
 type LearnerPreviewDto = {
   examId: number;
   title: string;
+  master: PreviewMaster | null;
   lr: { groups: PreviewGroup[] } | null;
   speaking: SpeakingTask[] | null;
   writing: WritingTask[] | null;
@@ -117,6 +124,7 @@ export default function ExamLearnerPreviewPage({
     [parts],
   );
   const shownPart = parts.find((p) => p.part === activePart) ?? parts[0];
+  const master = data?.master ?? null;
   const clip = clips[clipIndex];
   const showBar = section === "LR" && shownPart?.section === "LISTENING";
   const hasSpeaking = Boolean(data?.speaking?.length);
@@ -132,6 +140,15 @@ export default function ExamLearnerPreviewPage({
   const openPart = useCallback(
     (part: number) => {
       setActivePart(part);
+      if (master) {
+        // The learner's recording is one file: a Part is a place in it.
+        const start = master.timeline.find(
+          (entry) => entry.kind === "DIRECTIONS" && entry.part === part,
+        )?.start;
+        if (start === undefined) audioRef.current?.pause();
+        else if (audioRef.current) audioRef.current.currentTime = start;
+        return;
+      }
       const first = clips.findIndex((g) => g.part === part);
       if (first < 0) {
         audioRef.current?.pause();
@@ -140,7 +157,7 @@ export default function ExamLearnerPreviewPage({
       keepPlaying.current = playing;
       setClipIndex(first);
     },
-    [clips, playing],
+    [clips, master, playing],
   );
 
   useEffect(() => {
@@ -239,7 +256,11 @@ export default function ExamLearnerPreviewPage({
               seekable
               blocked={false}
               error={audioError}
-              note="Bản xem trước phát audio từng nhóm câu theo thứ tự."
+              note={
+                master
+                  ? null
+                  : "Chưa dựng audio liền mạch, đang phát từng nhóm câu. Hệ thống tự dựng khi xuất bản."
+              }
               onToggle={toggleAudio}
               onSeek={(seconds) => {
                 if (audioRef.current) audioRef.current.currentTime = seconds;
@@ -355,7 +376,7 @@ export default function ExamLearnerPreviewPage({
 
       <audio
         ref={audioRef}
-        src={clip?.audioSrc ?? undefined}
+        src={master?.url ?? clip?.audioSrc ?? undefined}
         preload="metadata"
         onLoadedMetadata={(event) => {
           setDuration(event.currentTarget.duration || 0);
@@ -365,12 +386,12 @@ export default function ExamLearnerPreviewPage({
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onEnded={() => {
-          if (clipIndex + 1 >= clips.length) return;
+          if (master || clipIndex + 1 >= clips.length) return;
           keepPlaying.current = true;
           setClipIndex(clipIndex + 1);
         }}
         onError={() => {
-          if (clip) setAudioError("Không tải được audio của nhóm câu này.");
+          if (master || clip) setAudioError("Không tải được audio phần Nghe.");
         }}
         className="hidden"
       />
