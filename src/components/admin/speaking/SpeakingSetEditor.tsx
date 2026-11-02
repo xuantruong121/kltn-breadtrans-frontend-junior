@@ -930,7 +930,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                           <AdminImageThumb
                             src={exercise.imageUrl}
                             alt={exercise.title}
-                            className="h-20 w-28"
+                            className="h-40 w-full"
                           />
                         )}
                         <span className="flex size-7 flex-none items-center justify-center rounded-md bg-slate-100 text-xs font-semibold tabular-nums text-slate-700">

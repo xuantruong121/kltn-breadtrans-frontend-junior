@@ -323,7 +323,7 @@ export function ExamGroupCard<G extends ExamCardGroup>({
         </div>
       ) : showPassage ? (
         <div className="grid gap-3 lg:grid-cols-2">
-          <div className="max-h-96 overflow-y-auto whitespace-pre-line rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-800">
+          <div className="max-h-96 self-start overflow-y-auto whitespace-pre-line rounded-lg lg:sticky lg:top-20 border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-800">
             {group.passageText}
           </div>
           {questions}
