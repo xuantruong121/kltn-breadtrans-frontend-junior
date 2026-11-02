@@ -114,12 +114,6 @@ export const ADMIN_NAV_GROUPS: AdminNavGroupConfig[] = [
         iconName: "GraduationCap",
       },
       {
-        id: "practice-topics",
-        href: "/admin/practice",
-        label: "Chủ đề luyện tập",
-        iconName: "Tags",
-      },
-      {
         id: "exams",
         href: "/admin/exams",
         label: "Luyện đề",

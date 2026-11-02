@@ -225,9 +225,9 @@ describe("Admin IA and Messaging UX Invariants", () => {
 
     it("keeps authoring inside the tabs instead of separate entries", () => {
       const hrefs = ADMIN_NAV_GROUPS.flatMap((g) => g.items.map((i) => i.href));
-      for (const href of ["/admin/practice", "/admin/dictionary"])
-        assert.ok(hrefs.includes(href), href);
+      assert.ok(hrefs.includes("/admin/dictionary"));
       for (const href of [
+        "/admin/practice",
         "/admin/quizzes",
         "/admin/toeic/assessments",
         "/admin/toeic/writing-sets",
