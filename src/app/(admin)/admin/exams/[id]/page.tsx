@@ -160,6 +160,7 @@ export default function ExamStudioPage({
             <ExamRetireAction
               examId={examId}
               status={exam.publicationStatus}
+              sharedLrExams={exam.sharedLrExams}
               onChanged={refreshExam}
             />
           ) : isPublished ? (
@@ -171,6 +172,7 @@ export default function ExamStudioPage({
                 <ExamRetireAction
                   examId={examId}
                   status={exam.publicationStatus}
+                  sharedLrExams={exam.sharedLrExams}
                   onChanged={refreshExam}
                 />
               </>

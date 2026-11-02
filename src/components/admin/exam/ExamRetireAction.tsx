@@ -15,10 +15,12 @@ export const examStatusLabel = (status?: string) =>
 export function ExamRetireAction({
   examId,
   status,
+  sharedLrExams = 0,
   onChanged,
 }: {
   examId: number;
   status: string;
+  sharedLrExams?: number;
   onChanged: () => void;
 }) {
   const [confirming, setConfirming] = useState(false);
@@ -64,7 +66,7 @@ export function ExamRetireAction({
       <ConfirmDialog
         open={confirming}
         title="Ngừng phát hành đề này?"
-        description="Học viên mới không thấy đề này nữa. Lượt đang làm vẫn nộp được và lượt đã làm vẫn xem lại được. Đề 4 kỹ năng dùng chung phần Listening & Reading với đề này cũng ẩn theo. Có thể phát hành lại bất cứ lúc nào."
+        description={`Học viên mới không thấy đề này nữa. Lượt đang làm vẫn nộp được và lượt đã làm vẫn xem lại được.${sharedLrExams > 0 ? " Đề 4 kỹ năng dùng chung phần Listening & Reading với đề này cũng ẩn theo." : ""} Có thể phát hành lại bất cứ lúc nào.`}
         confirmLabel="Ngừng phát hành"
         isPending={change.isPending}
         onConfirm={() => change.mutate("retire")}

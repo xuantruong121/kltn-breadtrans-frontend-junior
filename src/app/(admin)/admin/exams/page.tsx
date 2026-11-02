@@ -142,6 +142,7 @@ interface ExamDetail {
   totalQuestions?: number;
   totalGroups?: number;
   publicationStatus: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  sharedLrExams?: number;
   familyCode?: string;
   variantCode?: string;
   readiness?: {
@@ -762,6 +763,7 @@ export default function AdminExamsPage() {
                   <ExamRetireAction
                     examId={examDetail.id}
                     status={examDetail.publicationStatus}
+                    sharedLrExams={examDetail.sharedLrExams}
                     onChanged={refreshExam}
                   />
                 ) : isPublished ? (
@@ -920,6 +922,7 @@ export default function AdminExamsPage() {
               <ExamRetireAction
                 examId={examDetail.id}
                 status={examDetail.publicationStatus}
+                sharedLrExams={examDetail.sharedLrExams}
                 onChanged={refreshExam}
               />
             ) : isPublished ? (

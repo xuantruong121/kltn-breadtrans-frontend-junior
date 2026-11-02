@@ -7,6 +7,7 @@ export type AdminExamDetail = {
   familyCode?: string;
   variantCode?: string;
   publicationStatus: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  sharedLrExams?: number;
   durationSeconds?: number;
   totalQuestions?: number;
   totalGroups?: number;
