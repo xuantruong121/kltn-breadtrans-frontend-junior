@@ -321,6 +321,16 @@ export default function DashboardPage() {
     periodLabel: string;
   } | null>(null);
 
+  // The upgrade dialog closes with Escape, as a modal should.
+  useEffect(() => {
+    if (!upgradePrompt?.isOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setUpgradePrompt(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [upgradePrompt?.isOpen]);
+
   // Active Skill Dropdown State (Accordion detail expansion)
   const [activeDetailKey, setActiveDetailKey] = useState<SkillKey | null>(null);
 
@@ -908,6 +918,7 @@ export default function DashboardPage() {
                     key={period.key}
                     type="button"
                     onClick={() => handleSelectPeriod(period.key)}
+                    aria-pressed={isActive}
                     aria-label={
                       period.requiredTier !== "FREE"
                         ? `${period.label} (Yêu cầu gói ${period.requiredTier === "PLUS" ? "Plus trở lên" : "Pro"})`
