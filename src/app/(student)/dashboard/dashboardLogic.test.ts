@@ -124,10 +124,11 @@ test("a skill-practice quest never opens the exam pages", () => {
     resolveQuestAction({ type: "COMPLETE_QUIZ" }, [plan("READING", "/exams/2")]).actionUrl,
     "/listening",
   );
-  // The other quests keep their planner behaviour.
+  // A planned speaking item without a task type is not followed, since it
+  // might count for the other speaking quest.
   assert.equal(
     resolveQuestAction({ type: "DO_SPEAKING" }, planned).actionUrl,
-    "/speaking/4",
+    "/speaking",
   );
   assert.equal(
     resolveQuestAction({ quest: { type: "LEARN_VOCAB" }, actionUrl: "/flashcard" }).actionUrl,
@@ -304,4 +305,35 @@ test("getVietnamFormattedDate formats date as DD/MM", () => {
   const testDate = new Date("2026-10-09T08:00:00Z");
   const formatted = getVietnamFormattedDate(testDate);
   assert.equal(formatted, "09/10");
+});
+
+test("each daily quest opens practice of the kind it counts", () => {
+  const plan = (skill: string, route: string, taskType: string | null = null) => ({
+    skill,
+    route,
+    taskType,
+    isLocked: false,
+    isCompleted: false,
+  });
+  const planned = [
+    plan("LISTENING", "/listening/9"),
+    plan("READING", "/reading/6"),
+    plan("WRITING", "/writing/17"),
+    plan("SPEAKING", "/speaking/16", "RESPOND_TO_QUESTION"),
+    plan("SPEAKING", "/speaking/129", "READ_ALOUD"),
+  ];
+  const go = (type: string) => resolveQuestAction({ type }, planned);
+  assert.equal(go("DO_LISTENING").actionUrl, "/listening/9");
+  assert.equal(go("DO_READING").actionUrl, "/reading/6");
+  assert.equal(go("DO_WRITING").actionUrl, "/writing/17");
+  assert.equal(go("PERFECT_QUIZ").actionUrl, "/listening/9");
+  // Free speech for "Luyện Speaking", read-aloud for "Thực hành phát âm".
+  assert.equal(go("DO_SPEAKING").actionUrl, "/speaking/16");
+  assert.equal(go("PRACTICE_SPEAKING").actionUrl, "/speaking/129");
+  assert.equal(go("PRACTICE_SPEAKING").actionLabel, "Luyện phát âm ngay");
+  // Without a fitting planned item, the skill catalog, never an exam page.
+  for (const type of ["DO_LISTENING", "DO_READING", "DO_WRITING", "PERFECT_QUIZ", "DO_SPEAKING", "PRACTICE_SPEAKING"]) {
+    const url = resolveQuestAction({ type, actionUrl: "/exams" }).actionUrl;
+    assert.match(url, /^\/(listening|reading|writing|speaking)$/, type);
+  }
 });

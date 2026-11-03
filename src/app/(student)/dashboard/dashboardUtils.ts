@@ -31,13 +31,20 @@ export function getTypeSpecificQuestFallback(type?: string): { actionLabel: stri
       return { actionLabel: "Học từ vựng", actionUrl: "/flashcard" };
     case "DO_LISTENING":
       return { actionLabel: "Luyện nghe", actionUrl: "/listening" };
+    case "DO_READING":
+      return { actionLabel: "Luyện đọc", actionUrl: "/reading" };
+    case "DO_WRITING":
+      return { actionLabel: "Luyện viết", actionUrl: "/writing" };
+    case "PERFECT_QUIZ":
+      return { actionLabel: "Luyện nghe", actionUrl: "/listening" };
     case "COMPLETE_QUIZ":
       // Advances only on standalone Listening, Reading or Writing practice
       // (backend reward-eligibility.ts); a TOEIC exam never counts.
       return { actionLabel: "Luyện kỹ năng", actionUrl: "/listening" };
     case "DO_SPEAKING":
-    case "PRACTICE_SPEAKING":
       return { actionLabel: "Luyện nói", actionUrl: "/speaking" };
+    case "PRACTICE_SPEAKING":
+      return { actionLabel: "Luyện phát âm", actionUrl: "/speaking" };
     default:
       return { actionLabel: "Khám phá bài học", actionUrl: "/dashboard" };
   }
@@ -55,6 +62,9 @@ const SKILL_ROUTE: Record<PlannerSkill, string> = {
 /** The practice that advances each quest, in the order the planner is tried. */
 const QUEST_SKILLS: Record<string, PlannerSkill[]> = {
   DO_LISTENING: ["LISTENING"],
+  DO_READING: ["READING"],
+  DO_WRITING: ["WRITING"],
+  PERFECT_QUIZ: ["LISTENING", "READING"],
   COMPLETE_QUIZ: ["LISTENING", "READING", "WRITING"],
   DO_SPEAKING: ["SPEAKING"],
   PRACTICE_SPEAKING: ["SPEAKING"],
@@ -62,10 +72,26 @@ const QUEST_SKILLS: Record<string, PlannerSkill[]> = {
 
 const PLANNED_LABEL: Record<string, string> = {
   DO_LISTENING: "Luyện nghe ngay",
+  DO_READING: "Luyện đọc ngay",
+  DO_WRITING: "Luyện viết ngay",
+  PERFECT_QUIZ: "Luyện ngay",
   COMPLETE_QUIZ: "Luyện kỹ năng ngay",
   DO_SPEAKING: "Luyện nói ngay",
-  PRACTICE_SPEAKING: "Luyện nói ngay",
+  PRACTICE_SPEAKING: "Luyện phát âm ngay",
 };
+
+/**
+ * A speaking exercise counts for one quest only (backend
+ * daily-quest-catalog.ts): read-aloud and drills for pronunciation, the rest
+ * for free speech. A planned item without a task type is not chosen for
+ * either, since it might count for the other one.
+ */
+const PRONUNCIATION_TASKS = ["READ_ALOUD", "PRONUNCIATION_DRILL"];
+function countsForQuest(type: string, taskType: string | null | undefined) {
+  if (type === "PRACTICE_SPEAKING") return Boolean(taskType) && PRONUNCIATION_TASKS.includes(taskType!);
+  if (type === "DO_SPEAKING") return Boolean(taskType) && !PRONUNCIATION_TASKS.includes(taskType!);
+  return true;
+}
 
 export type QuestActionInput = {
   type?: string;
@@ -79,6 +105,7 @@ export type PlannedPracticeInput = {
   route: string;
   isLocked: boolean;
   isCompleted: boolean;
+  taskType?: string | null;
 };
 
 function opensQuestSkill(route: string, skills: PlannerSkill[]) {
@@ -110,6 +137,7 @@ export function resolveQuestAction(
           row.skill === skill &&
           !row.isLocked &&
           !row.isCompleted &&
+          countsForQuest(type, row.taskType) &&
           isSafeInternalRoute(row.route) &&
           opensQuestSkill(row.route, [skill]),
       );

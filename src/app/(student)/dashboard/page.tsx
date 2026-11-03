@@ -74,10 +74,15 @@ function getQuestProgressText(item: TodayQuestItem): string {
     return `${current}/${target} từ`;
   }
   if (
-    type === "DO_LISTENING" ||
-    type === "COMPLETE_QUIZ" ||
-    type === "DO_SPEAKING" ||
-    type === "PRACTICE_SPEAKING"
+    [
+      "DO_LISTENING",
+      "DO_READING",
+      "DO_WRITING",
+      "PERFECT_QUIZ",
+      "COMPLETE_QUIZ",
+      "DO_SPEAKING",
+      "PRACTICE_SPEAKING",
+    ].includes(type)
   ) {
     return `${current}/${target} bài`;
   }
@@ -104,6 +109,30 @@ function getQuestCategoryMeta(type?: string) {
         progressFill: "bg-blue-500",
         icon: Headphones,
       };
+    case "DO_READING":
+      return {
+        label: "Luyện đọc",
+        badgeClass: "bg-blue-100 dark:bg-blue-950/70 text-blue-900 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+        btnClass: "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20",
+        progressFill: "bg-blue-500",
+        icon: BookOpen,
+      };
+    case "DO_WRITING":
+      return {
+        label: "Luyện viết",
+        badgeClass: "bg-blue-100 dark:bg-blue-950/70 text-blue-900 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+        btnClass: "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20",
+        progressFill: "bg-blue-500",
+        icon: PenTool,
+      };
+    case "PERFECT_QUIZ":
+      return {
+        label: "Làm đúng 100%",
+        badgeClass: "bg-emerald-100 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+        btnClass: "bg-emerald-700 hover:bg-emerald-800 text-white shadow-emerald-600/20",
+        progressFill: "bg-emerald-500",
+        icon: Target,
+      };
     case "COMPLETE_QUIZ":
       return {
         label: "Luyện kỹ năng",
@@ -115,7 +144,7 @@ function getQuestCategoryMeta(type?: string) {
     case "DO_SPEAKING":
     case "PRACTICE_SPEAKING":
       return {
-        label: "Luyện nói",
+        label: upper === "PRACTICE_SPEAKING" ? "Phát âm" : "Luyện nói",
         badgeClass: "bg-teal-100 dark:bg-teal-950/70 text-teal-900 dark:text-teal-300 border-teal-200 dark:border-teal-800",
         btnClass: "bg-teal-700 hover:bg-teal-800 text-white shadow-teal-600/20",
         progressFill: "bg-teal-500",
